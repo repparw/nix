@@ -1,2 +1,2 @@
 rsync -aq ~/.newsboat ~/.config/scripts ~/.config/mpv ~/.config/youtube-viewer ~/.config/lf/ ~/.config/zathura/ ~/.config/nvim ~/git/desktopconfig 
-cd ~/git/desktopconfig && git add --all && git commit -am "Auto-Commit" && git push
+cd ~/git/desktopconfig; git add --all; git commit -am "Auto-Commit"; git push
