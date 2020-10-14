@@ -1,0 +1,3 @@
+#!/bin/sh
+## Pictures
+rsync -aq ~/Pictures ~/Documents /run/media/repparw/HDD/weeklybackup

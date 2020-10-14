@@ -1,0 +1,12 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhistcnt =2
+let g:netrw_dirhist_2='/home/repparw/.config/nvim/colors'
+let g:netrw_dirhist_1='/home/repparw/.newsboat'
+let g:netrw_dirhist_0='/home/repparw/.config/mpv'
+let g:netrw_dirhist_9='/home/repparw/.config/mpv/scripts'
+let g:netrw_dirhist_8='/home/repparw/.config/mpv'
+let g:netrw_dirhist_7='/home/repparw/.config/mpv/watch_later'
+let g:netrw_dirhist_6='/home/repparw/.config/mpv'
+let g:netrw_dirhist_5='/home/repparw/.newsboat'
+let g:netrw_dirhist_4='/home/repparw/.config/lf'
+let g:netrw_dirhist_3='/home/repparw/.config/zathura'
