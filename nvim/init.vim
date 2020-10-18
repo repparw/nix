@@ -1,8 +1,9 @@
 let g:python_host_prog = '/usr/bin/python2'
 let g:python3_host_prog = '/usr/bin/python3'
 let mapleader="," " Leader key
-
+" Added by me
 noremap <Leader>s :update<CR>
+set relativenumber
 
 augroup Fedora
   autocmd!
