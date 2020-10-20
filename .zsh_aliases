@@ -1,0 +1,140 @@
+## Aliases
+	# task mpv
+		alias tmpv='tsp mpv '
+
+
+	# dnf
+		alias ds='dnf search '
+		alias di='sudo dnf install '
+		alias diy='sudo dnf install -y '
+		alias dr='sudo dnf remove '	
+		alias dry='sudo dnf remove -y'	
+		alias dup='sudo dnf upgrade'
+	# Vim = Nvim
+
+		alias vim='nvim'; alias vi='nvim'
+
+		alias v='vi'
+
+		alias sv='sudo nvim'
+
+	# cd && ls	
+
+		alias ls='ls --color=auto'
+
+		alias ll='ls -lavh --ignore=..'   # show long listing of all except ".."
+
+		alias l.='ls -a'
+
+		alias ld='ls -d */'
+
+		alias r='ranger'
+
+	# Locations
+		
+		alias hdd='cd /run/media/repparw/HDD'
+
+	# Grep
+
+		alias gh='history|grep'
+
+		alias grep='grep --color=auto'
+
+
+
+	# Safety nets
+
+		alias trash='mv --force -t ~/.local/share/Trash '
+
+		alias rm='trash'
+
+		alias cp='rsync -ah --info=progress2'
+
+		alias ln='ln -i'
+
+		alias mv='mv -i'
+
+	    # Preventing changing perms on /
+
+	    	alias chown='chown --preserve-root'
+
+	    	alias chmod='chmod --preserve-root'
+
+	    	alias chgrp='chgrp --preserve-root'
+
+
+
+
+
+	# Human-readable output
+
+		alias mnt="mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort"
+
+		alias path='echo -e ${PATH//:/\\n}'
+
+		alias du='du -h'
+
+		alias diff='colordiff' # Colorize output
+
+		alias c='clear'
+
+	    # System info
+
+	    	alias meminfo='free -h -l -t'
+
+		alias cpuinfo='lscpu'
+
+	
+
+	# Create parent directories if they don't exist
+
+		alias mkdir='mkdir -pv'
+
+
+
+	# Bluetooth
+
+		alias btctl='bluetoothctl'
+
+
+
+	# Wifi
+
+		alias wific='nmcli device connect wlan0'
+
+		alias wifid='nmcli device disconnect wlan0'
+
+
+
+	# Others
+
+		alias sudo='sudo '
+
+		alias now='date +"%T"' # Time
+
+		alias ping='ping -c 5' # Stop ping
+
+		alias root='sudo -i'
+
+		alias wget='wget -c'
+
+		alias top='htop'
+
+		alias q='exit'
+
+		alias calc='qalc'
+
+		alias sys='systemctl'
+
+		alias syslist='systemctl list-unit-files'
+
+		alias sdown='shutdown now'
+
+		alias pptpdf='libreoffice --headless --convert-to pdf '
+	# yt-dl	
+
+		alias yt='youtube-dl'
+
+		alias yts='youtube-viewer'
+
+		alias yta="youtube-dl -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
