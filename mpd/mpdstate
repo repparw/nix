@@ -1,9 +1,9 @@
-sw_volume: 28
+sw_volume: 0
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
-state: pause
-current: 670
-time: 1556.165000
+state: play
+current: 493
+time: 2.287000
 random: 1
 repeat: 0
 single: 0
@@ -475,9 +475,9 @@ playlist_begin
 460:ytmusic/Malandro - 9 Ya no compro - Jolgorio & Jarana Mixtape - Flow inc.opus
 461:ytmusic/Malandro - Barrio Veneno - Con carpusa y de cayetano (album oficial).opus
 462:ytmusic/Malandro - De la risa - Syconautica (youngdogo beat).opus
-463:ytmusic/Malandro - De Local - (Dinn Donuts Beat) - Jolgorio estudio.opus
-464:ytmusic/Malandro - En un fla - syconautica (dj ram) beat.opus
-465:ytmusic/Malandro - George Gang - Con carpusa y de cayetano (album oficial).opus
+463:ytmusic/Malandro - George Gang - Con carpusa y de cayetano (album oficial).opus
+464:ytmusic/Malandro - De Local - (Dinn Donuts Beat) - Jolgorio estudio.opus
+465:ytmusic/Malandro - En un fla - syconautica (dj ram) beat.opus
 466:ytmusic/Malandro - Grueso de Mil - video oficial.opus
 467:ytmusic/Malandro - Pa los que no - Donuts Beat (Jolgorio Estudio).opus
 468:ytmusic/Malandro - Sin chamu ni auto-tune - Syconautica.opus
