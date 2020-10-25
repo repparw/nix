@@ -36,7 +36,7 @@
 
 	# Grep
 
-		alias gh='history|grep'
+		alias gh='history|rg'
 
 		alias grep='grep --color=auto'
 
@@ -62,10 +62,6 @@
 
 	    	alias chgrp='chgrp --preserve-root'
 
-
-
-
-
 	# Human-readable output
 
 		alias mnt="mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort"
@@ -84,27 +80,13 @@
 
 		alias cpuinfo='lscpu'
 
-	
-
 	# Create parent directories if they don't exist
 
 		alias mkdir='mkdir -pv'
 
-
-
 	# Bluetooth
 
 		alias btctl='bluetoothctl'
-
-
-
-	# Wifi
-
-		alias wific='nmcli device connect wlan0'
-
-		alias wifid='nmcli device disconnect wlan0'
-
-
 
 	# Others
 
@@ -123,6 +105,8 @@
 		alias q='exit'
 
 		alias calc='qalc'
+
+		alias share='firefox sharedrop.io'
 
 		alias sys='systemctl'
 
