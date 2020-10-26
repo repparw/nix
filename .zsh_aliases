@@ -106,8 +106,6 @@
 
 		alias calc='qalc'
 
-		alias share='firefox sharedrop.io'
-
 		alias sys='systemctl'
 
 		alias syslist='systemctl list-unit-files'
