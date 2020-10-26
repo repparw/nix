@@ -2,6 +2,8 @@
 	# task mpv
 		alias tmpv='tsp mpv '
 
+	# Open archivebox
+		alias openbox='cd ~/archivebox; archivebox server && firefox 127.0.0.1:8000'
 
 	# dnf
 		alias ds='dnf search '

@@ -1,3 +1,6 @@
+# Add local path
+PATH=/home/repparw/.local/bin/:$PATH
+
 # Change Spell Correction Prompt
 export SPROMPT="Correct $fg[red]%R$reset_color to $fg[green]%r$reset_color?
 
