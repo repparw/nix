@@ -1,9 +1,9 @@
-sw_volume: 30
+sw_volume: 24
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
-state: pause
-current: 617
-time: 340.949000
+state: play
+current: 227
+time: 1149.391000
 random: 1
 repeat: 0
 single: 0
@@ -404,9 +404,9 @@ playlist_begin
 389:ytmusic/Jugar Duro.m4a
 390:ytmusic/K.M.D x BARDERO$ - RAPPER$ (OfficialVideo).opus
 391:ytmusic/Kase O - Jazz Magnetism (Disco Completo).opus
-392:ytmusic/KASE.O - 10. MAZAS Y CATAPULTAS Prod  JAVATO JONES y GONZALO LASHERAS.opus
-393:ytmusic/KASE.O - BASURETA ( En Directo).opus
-394:ytmusic/KASE.O - EL CIRCULO COMPLETO.opus
+392:ytmusic/KASE.O - EL CIRCULO COMPLETO.opus
+393:ytmusic/KASE.O - 10. MAZAS Y CATAPULTAS Prod  JAVATO JONES y GONZALO LASHERAS.opus
+394:ytmusic/KASE.O - BASURETA ( En Directo).opus
 395:ytmusic/KASE.O - ESTO NO PARA (Prod. CASH FLOW) VideoLyric Oficial.m4a
 396:ytmusic/Kase.O - Mierda.opus
 397:ytmusic/KASE.O - MITAD Y MITAD feat. NAJWA (BOXINBOX Remix).opus
