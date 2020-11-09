@@ -2,7 +2,15 @@ let g:python_host_prog = '/usr/bin/python2'
 let g:python3_host_prog = '/usr/bin/python3'
 let mapleader="," " Leader key
 " Added by me
-noremap <Leader>s :update<CR>
+
+" Mappings
+	noremap <leader>s :update<CR>
+	
+	" fzf
+	nnoremap <silent> <leader>o :Files<CR>
+	nnoremap <silent> <leader>O :Files!<CR>
+	nnoremap <silent> <F1> :Helptags<CR>
+
 set relativenumber
 
 augroup Fedora
@@ -16,7 +24,8 @@ augroup END
 " Added by me
 :colorscheme wombat256mod
 call plug#begin('~/.config/nvim/plugged')
-Plug 'junegunn/fzf'
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 call plug#end()

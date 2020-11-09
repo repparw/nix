@@ -1,8 +1,9 @@
 # Add local path
 PATH=/home/repparw/.local/bin/:$PATH
 
-# fzf
-export FZF_DEFAULT_OPTS="--reverse --height 1%"
+## fzf
+	export FZF_DEFAULT_OPTS="--no-mouse --multi --select-1 --reverse --height 50% --inline-info"
+
 # lf change dir on shell
 LFCD="/home/repparw/.config/lf/lfcd.sh"
 if [ -f "$LFCD" ]; then
@@ -106,3 +107,5 @@ source $ZSH/oh-my-zsh.sh
 if [ -f ~/.zsh_aliases ]; then
 	. ~/.zsh_aliases
 fi
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
