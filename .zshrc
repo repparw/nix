@@ -1,6 +1,14 @@
 # Add local path
 PATH=/home/repparw/.local/bin/:$PATH
 
+# fzf
+export FZF_DEFAULT_OPTS="--reverse --height 1%"
+# lf change dir on shell
+LFCD="/home/repparw/.config/lf/lfcd.sh"
+if [ -f "$LFCD" ]; then
+    source "$LFCD"
+fi
+
 # Change Spell Correction Prompt
 export SPROMPT="Correct $fg[red]%R$reset_color to $fg[green]%r$reset_color?
 

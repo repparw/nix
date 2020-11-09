@@ -16,6 +16,7 @@ augroup END
 " Added by me
 :colorscheme wombat256mod
 call plug#begin('~/.config/nvim/plugged')
+Plug 'junegunn/fzf'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 call plug#end()
