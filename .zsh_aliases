@@ -1,4 +1,7 @@
 ## Aliases
+	# fzf
+		alias f='fzf'
+
 	# task mpv
 		alias tmpv='tsp mpv '
 
@@ -34,7 +37,9 @@
 
 		alias ld='ls -d */'
 
-		alias r='ranger'
+		alias e='lfcd'
+		
+		alias lf='lfcd'
 
 	# Locations
 		
@@ -44,9 +49,7 @@
 
 		alias gh='history|rg'
 
-		alias grep='grep --color=auto'
-
-
+		alias grep='rg'
 
 	# Safety nets
 

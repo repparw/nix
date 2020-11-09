@@ -53,6 +53,8 @@ cmd open ${{
  map <delete> push :delete
  map <f-2> rename
  map <enter> open
+ map <c-z> $ kill -STOP $PPID
+ map u usage
 
 # Commands
  cmd usage $du -h -d1 | less
