@@ -1,9 +1,9 @@
 sw_volume: 26
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
-state: pause
-current: 367
-time: 47.425000
+state: play
+current: 148
+time: 120.069000
 random: 1
 repeat: 0
 single: 0
@@ -736,8 +736,8 @@ playlist_begin
 721:ytmusic/Una Mirada.opus
 722:ytmusic/Unaccommodating.opus
 723:ytmusic/Underdann - Nunca me Rendí (Video Oficial).opus
-724:ytmusic/UnderMc - Todo Lo Que Tengo (ft.Frane & Miloo Beatbox).opus
-725:ytmusic/UnderMc - Voy Suelto (ft.Fianru).opus
+724:ytmusic/UnderMc - Voy Suelto (ft.Fianru).opus
+725:ytmusic/UnderMc - Todo Lo Que Tengo (ft.Frane & Miloo Beatbox).opus
 726:ytmusic/Urbanse _ C.R.U.D.O _ Rap sin Apellido _ Video Oficial 2014.opus
 727:ytmusic/URBANSE ' Nada que perder ' _ Video Oficial.opus
 728:ytmusic/Urbanse & Dj Destroy _ Buenosaifers #OSCUROYSUCIO.m4a
