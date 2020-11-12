@@ -118,6 +118,7 @@
 		alias sdown='shutdown now'
 
 		alias pptpdf='libreoffice --headless --convert-to pdf '
+
 	# yt-dl	
 
 		alias yt='youtube-dl'
