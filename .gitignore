@@ -2,4 +2,5 @@ cli-history.txt
 mpd.log
 mpdstate	
 mpd.db
+mpd.pid
 history.*
