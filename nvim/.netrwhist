@@ -1,5 +1,6 @@
 let g:netrw_dirhistmax  =10
-let g:netrw_dirhistcnt =7
+let g:netrw_dirhistcnt =8
+let g:netrw_dirhist_8='/home/repparw/git/desktopconfig/.git'
 let g:netrw_dirhist_7='/home/repparw/.config/nvim/plugged/fzf.vim/plugin'
 let g:netrw_dirhist_6='/home/repparw/.config/nvim/plugged/fzf.vim'
 let g:netrw_dirhist_5='/home/repparw/.config/nvim/plugged/fzf/plugin'
@@ -9,4 +10,3 @@ let g:netrw_dirhist_2='/home/repparw/.config/abrt'
 let g:netrw_dirhist_1='/home/repparw/git/desktopconfig'
 let g:netrw_dirhist_0='/home/repparw/git'
 let g:netrw_dirhist_9='/home/repparw/git/desktopconfig'
-let g:netrw_dirhist_8='/home/repparw/git/desktopconfig/.git'
