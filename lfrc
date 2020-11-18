@@ -50,7 +50,7 @@ cmd open ${{
 
 # Mappings
  map D trash
- map <delete> push :delete
+ map <delete> push :delete<enter>
  map <f-2> rename
  map <enter> open
  map <c-z> $ kill -STOP $PPID
