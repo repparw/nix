@@ -16,7 +16,7 @@ ConditionsCount=0
 [Data_1_1]
 Comment=KMenuEdit Global Shortcuts
 DataCount=0
-Enabled=false
+Enabled=true
 Name=KMenuEdit
 SystemGroup=1
 Type=ACTION_DATA_GROUP
@@ -158,7 +158,7 @@ ConditionsCount=0
 [Data_1_2]
 Comment=This group contains various examples demonstrating most of the features of KHotkeys. (Note that this group and all its actions are disabled by default.)
 DataCount=1
-Enabled=false
+Enabled=true
 Name=Examples
 SystemGroup=0
 Type=ACTION_DATA_GROUP
@@ -169,7 +169,7 @@ ConditionsCount=0
 
 [Data_1_2_1]
 Comment=After pressing Alt+Ctrl+H the input of 'Hello' will be simulated, as if you typed it.  This is especially useful if you have call to frequently type a word (for instance, 'unsigned').  Every keypress in the input is separated by a colon ':'. Note that the keypresses literally mean keypresses, so you have to write what you would press on the keyboard. In the table below, the left column shows the input and the right column shows what to type.\n\n"enter" (i.e. new line)                Enter or Return\na (i.e. small a)                          A\nA (i.e. capital a)                       Shift+A\n: (colon)                                  Shift+;\n' '  (space)                              Space
-Enabled=false
+Enabled=true
 Name=Type 'Hello'
 Type=SIMPLE_ACTION_DATA
 
@@ -222,7 +222,7 @@ Uuid={9005eee1-9daa-41a4-9d98-76ce0188d489}
 
 [Data_1_4]
 Comment=Media controls
-DataCount=10
+DataCount=12
 Enabled=true
 Name=Media
 SystemGroup=0
@@ -240,93 +240,197 @@ Type=SIMPLE_ACTION_DATA
 
 [Data_1_4_10]
 Comment=Comment
-DataCount=3
 Enabled=true
-Name=Thumb
-SystemGroup=0
-Type=ACTION_DATA_GROUP
+Name=bt connect
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_4_10Actions]
+ActionsCount=1
+
+[Data_1_4_10Actions0]
+CommandURL=bluetoothctl connect 00:1D:43:A0:14:D8
+Type=COMMAND_URL
 
 [Data_1_4_10Conditions]
 Comment=
 ConditionsCount=0
 
-[Data_1_4_10_1]
+[Data_1_4_10Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_1_4_10Triggers0]
+Key=Meta+B
+Type=SHORTCUT
+Uuid={fa64ef95-8541-49a2-9d1f-3183513e25ac}
+
+[Data_1_4_11]
+Comment=Comment
+Enabled=true
+Name=bt disconnect
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_4_11Actions]
+ActionsCount=1
+
+[Data_1_4_11Actions0]
+CommandURL=bluetoothctl disconnect 00:1D:43:A0:14:D8
+Type=COMMAND_URL
+
+[Data_1_4_11Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_4_11Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_1_4_11Triggers0]
+Key=Meta+Shift+B
+Type=SHORTCUT
+Uuid={bcdb4344-b94b-43e6-a885-e7a9e54b3ef1}
+
+[Data_1_4_12]
+Comment=Comment
+DataCount=5
+Enabled=true
+Name=Thumb
+SystemGroup=0
+Type=ACTION_DATA_GROUP
+
+[Data_1_4_12Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_4_12_1]
 Comment=Comment
 Enabled=true
 Name=mpc prev
 Type=SIMPLE_ACTION_DATA
 
-[Data_1_4_10_1Actions]
+[Data_1_4_12_1Actions]
 ActionsCount=1
 
-[Data_1_4_10_1Actions0]
+[Data_1_4_12_1Actions0]
 CommandURL=mpc prev
 Type=COMMAND_URL
 
-[Data_1_4_10_1Conditions]
+[Data_1_4_12_1Conditions]
 Comment=
 ConditionsCount=0
 
-[Data_1_4_10_1Triggers]
+[Data_1_4_12_1Triggers]
 Comment=Simple_action
 TriggersCount=1
 
-[Data_1_4_10_1Triggers0]
+[Data_1_4_12_1Triggers0]
 Key=Meta+F7
 Type=SHORTCUT
 Uuid={aa7ff60c-270f-4c7d-a6c3-4cd0e4b95c66}
 
-[Data_1_4_10_2]
+[Data_1_4_12_2]
 Comment=Comment
 Enabled=true
 Name=mpc next
 Type=SIMPLE_ACTION_DATA
 
-[Data_1_4_10_2Actions]
+[Data_1_4_12_2Actions]
 ActionsCount=1
 
-[Data_1_4_10_2Actions0]
+[Data_1_4_12_2Actions0]
 CommandURL=mpc next
 Type=COMMAND_URL
 
-[Data_1_4_10_2Conditions]
+[Data_1_4_12_2Conditions]
 Comment=
 ConditionsCount=0
 
-[Data_1_4_10_2Triggers]
+[Data_1_4_12_2Triggers]
 Comment=Simple_action
 TriggersCount=1
 
-[Data_1_4_10_2Triggers0]
+[Data_1_4_12_2Triggers0]
 Key=Meta+F10
 Type=SHORTCUT
 Uuid={92c5aa35-801e-44ef-aa9d-9be29c56d010}
 
-[Data_1_4_10_3]
+[Data_1_4_12_3]
 Comment=Comment
 Enabled=true
 Name=mpc toggle
 Type=SIMPLE_ACTION_DATA
 
-[Data_1_4_10_3Actions]
+[Data_1_4_12_3Actions]
 ActionsCount=1
 
-[Data_1_4_10_3Actions0]
+[Data_1_4_12_3Actions0]
 CommandURL=mpc toggle
 Type=COMMAND_URL
 
-[Data_1_4_10_3Conditions]
+[Data_1_4_12_3Conditions]
 Comment=
 ConditionsCount=0
 
-[Data_1_4_10_3Triggers]
+[Data_1_4_12_3Triggers]
 Comment=Simple_action
 TriggersCount=1
 
-[Data_1_4_10_3Triggers0]
+[Data_1_4_12_3Triggers0]
 Key=Meta+F12
 Type=SHORTCUT
 Uuid={9792072a-5995-4d78-81f2-b68f19df6602}
+
+[Data_1_4_12_4]
+Comment=Comment
+Enabled=true
+Name=mpc seek +
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_4_12_4Actions]
+ActionsCount=1
+
+[Data_1_4_12_4Actions0]
+CommandURL=mpc seek +30
+Type=COMMAND_URL
+
+[Data_1_4_12_4Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_4_12_4Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_1_4_12_4Triggers0]
+Key=Meta+Shift+F10
+Type=SHORTCUT
+Uuid={91c54b96-f63e-482f-8353-ff38903c0247}
+
+[Data_1_4_12_5]
+Comment=Comment
+Enabled=true
+Name=mpc seek -
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_4_12_5Actions]
+ActionsCount=1
+
+[Data_1_4_12_5Actions0]
+CommandURL=mpc seek -30
+Type=COMMAND_URL
+
+[Data_1_4_12_5Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_4_12_5Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_1_4_12_5Triggers0]
+Key=Meta+Shift+F7
+Type=SHORTCUT
+Uuid={67791159-fdfb-4e31-8ebf-3508f6ba2101}
 
 [Data_1_4_1Actions]
 ActionsCount=1
@@ -403,14 +507,14 @@ Uuid={89803954-3504-48c5-8728-c2268bd4bda5}
 [Data_1_4_4]
 Comment=Comment
 Enabled=true
-Name=mpc prev
+Name=mpc seek +
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_4_4Actions]
 ActionsCount=1
 
 [Data_1_4_4Actions0]
-CommandURL=mpc prev
+CommandURL=mpc seek +30
 Type=COMMAND_URL
 
 [Data_1_4_4Conditions]
@@ -422,14 +526,14 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_4_4Triggers0]
-Key=Meta+,
+Key=Meta+:
 Type=SHORTCUT
-Uuid={385c2e06-5a74-4a30-9260-ae31a2d7a145}
+Uuid={ef5033fa-e676-4d3b-9a2b-b5c43894c7fb}
 
 [Data_1_4_5]
 Comment=Comment
 Enabled=true
-Name=mpc prev 2
+Name=mpc prev
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_4_5Actions]
@@ -448,21 +552,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_4_5Triggers0]
-Key=Media Previous
+Key=Meta+,
 Type=SHORTCUT
-Uuid={21430c12-3af4-4792-9725-a01a03fea6f1}
+Uuid={385c2e06-5a74-4a30-9260-ae31a2d7a145}
 
 [Data_1_4_6]
 Comment=Comment
 Enabled=true
-Name=mpc toggle
+Name=mpc prev 2
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_4_6Actions]
 ActionsCount=1
 
 [Data_1_4_6Actions0]
-CommandURL=mpc toggle
+CommandURL=mpc prev
 Type=COMMAND_URL
 
 [Data_1_4_6Conditions]
@@ -474,21 +578,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_4_6Triggers0]
-Key=Meta+P
+Key=Media Previous
 Type=SHORTCUT
-Uuid={b34895ed-e92d-47da-b847-bb0a5e8b33af}
+Uuid={21430c12-3af4-4792-9725-a01a03fea6f1}
 
 [Data_1_4_7]
 Comment=Comment
 Enabled=true
-Name=mpc toggle 2
+Name=mpc seek -
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_4_7Actions]
 ActionsCount=1
 
 [Data_1_4_7Actions0]
-CommandURL=mpc toggle
+CommandURL=mpc seek -30
 Type=COMMAND_URL
 
 [Data_1_4_7Conditions]
@@ -500,21 +604,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_4_7Triggers0]
-Key=Media Play
+Key=Meta+;
 Type=SHORTCUT
-Uuid={da7f6bb9-0caa-493f-8397-a205eb1d5c5f}
+Uuid={1782601a-16e1-4982-9ce7-68bb16aa8580}
 
 [Data_1_4_8]
 Comment=Comment
 Enabled=true
-Name=bt connect
+Name=mpc toggle
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_4_8Actions]
 ActionsCount=1
 
 [Data_1_4_8Actions0]
-CommandURL=bluetoothctl connect 00:1D:43:A0:14:D8
+CommandURL=mpc toggle
 Type=COMMAND_URL
 
 [Data_1_4_8Conditions]
@@ -526,21 +630,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_4_8Triggers0]
-Key=Meta+B
+Key=Meta+P
 Type=SHORTCUT
-Uuid={fa64ef95-8541-49a2-9d1f-3183513e25ac}
+Uuid={b34895ed-e92d-47da-b847-bb0a5e8b33af}
 
 [Data_1_4_9]
 Comment=Comment
 Enabled=true
-Name=bt disconnect
+Name=mpc toggle 2
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_4_9Actions]
 ActionsCount=1
 
 [Data_1_4_9Actions0]
-CommandURL=bluetoothctl disconnect 00:1D:43:A0:14:D8
+CommandURL=mpc toggle
 Type=COMMAND_URL
 
 [Data_1_4_9Conditions]
@@ -552,9 +656,9 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_4_9Triggers0]
-Key=Meta+Shift+B
+Key=Media Play
 Type=SHORTCUT
-Uuid={bcdb4344-b94b-43e6-a885-e7a9e54b3ef1}
+Uuid={da7f6bb9-0caa-493f-8397-a205eb1d5c5f}
 
 [Data_1_5]
 Comment=Joplin
@@ -618,7 +722,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_1_7Actions0]
-CommandURL=freetube\s
+CommandURL=/home/repparw/.local/share/applications/freetube.desktop
 Type=COMMAND_URL
 
 [Data_1_7Conditions]
