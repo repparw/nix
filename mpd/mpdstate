@@ -1,9 +1,9 @@
 sw_volume: 26
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
-state: play
-current: 194
-time: 104.247000
+state: pause
+current: 332
+time: 176.883000
 random: 1
 repeat: 0
 single: 0
@@ -680,9 +680,9 @@ playlist_begin
 665:ytmusic/Apache - En Defensa Propia (Vídeo Oficial).opus
 666:ytmusic/Arctic Monkeys - Do I Wanna Know (Official Video).opus
 667:ytmusic/Asi Pasa La Vida (Fresh Medz Riddim) _ Los Primos Lary (Guiyo & Yapsi Mata) _ El Veneno Crew.opus
-668:ytmusic/ASIMETRÍA - ZEBALLOS (PROD BY MILI MILANSS) [ASIMETRÍA].opus
-669:ytmusic/Avísame cuando Llegues - Soy Rada And The Colibriquis.opus
-670:ytmusic/AYAX - CINDERELLA (PROD BLASFEM) VIDEOCLIP.opus
+668:ytmusic/Avísame cuando Llegues - Soy Rada And The Colibriquis.opus
+669:ytmusic/AYAX - CINDERELLA (PROD BLASFEM) VIDEOCLIP.opus
+670:ytmusic/ASIMETRÍA - ZEBALLOS (PROD BY MILI MILANSS) [ASIMETRÍA].opus
 671:ytmusic/AYAX Y PROK - REPROCHES (PROD BLASFEM) _ VIDEOCLIP.opus
 672:ytmusic/AYAX Y PROK FT AKAPELLAH - DE GRANÁ A MARACAY _ VIDEOCLIP (PROD BLASFEM) (192kbit_AAC).m4a
 673:ytmusic/AYAX Y PROK FT DANIELA - DOLCE (PROD BLASFEM) OFFICIAL LYRIC VIDEO.opus
