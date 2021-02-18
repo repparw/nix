@@ -1,6 +1,6 @@
 ## Aliases
 	# Raspberry Pi
-		alias rpi='ssh pi@192.168.0.16'
+		alias rpi='env TERM=xterm-256color ssh pi@192.168.0.16'
 	# fzf
 		alias f='fzf'
 
