@@ -1,5 +1,5 @@
 # Add local path
-PATH=/home/repparw/.local/bin/:$PATH
+PATH=/home/repparw/.local/bin:$PATH
 
 ## fzf
 	export FZF_DEFAULT_OPTS="--no-mouse --multi --select-1 --reverse --height 50% --inline-info"
