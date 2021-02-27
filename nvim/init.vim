@@ -23,6 +23,10 @@ augroup END
 "
 " Added by me
 
+" Splits
+set splitbelow
+set splitright
+
 set termguicolors
 
 set background=dark
