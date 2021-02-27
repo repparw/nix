@@ -1,9 +1,9 @@
 sw_volume: 24
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
-state: play
-current: 304
-time: 120.081000
+state: pause
+current: 1285
+time: 1.304000
 random: 1
 repeat: 0
 single: 0
@@ -1234,8 +1234,8 @@ playlist_begin
 1219:ytmusic/t&k - Race (Prod Uzl).opus
 1220:ytmusic/T&K - Respect ft JKN (Prod by 3Kids) (Film by Calavera Producciones).opus
 1221:ytmusic/T&K - Todo Irá Mejor (Prod C.Spaulding) 2019.opus
-1222:ytmusic/T&K - Voyagers.opus
-1223:ytmusic/T&K - ZEBALLOS.opus
+1222:ytmusic/T&K - ZEBALLOS.opus
+1223:ytmusic/T&K - Voyagers.opus
 1224:ytmusic/T&K & Franky Style - Chilling (by @chinojones) _ ALL-IN #1.opus
 1225:ytmusic/t&k Writing Classics 2014 Full Album.opus
 1226:ytmusic/TASH SULTANA - JUNGLE (LIVE BEDROOM RECORDING).opus

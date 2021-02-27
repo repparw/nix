@@ -10,14 +10,6 @@
 	# Open archivebox
 		alias openbox='cd ~/archivebox; archivebox server & sleep 5 && firefox 127.0.0.1:8000; fg'
 
-	# dnf
-		alias ds='dnf search '
-		alias di='sudo dnf install '
-		alias diy='sudo dnf install -y '
-		alias dr='sudo dnf remove '	
-		alias dry='sudo dnf remove -y'	
-		alias dup='sudo dnf upgrade'
-	
 	# Make zsh default shell for su
 		alias su='su --shell=/usr/bin/zsh'
 
