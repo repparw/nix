@@ -1,9 +1,9 @@
 sw_volume: 26
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
-state: pause
-current: 308
-time: 101.105000
+state: play
+current: 1135
+time: 106.368000
 random: 1
 repeat: 0
 single: 0
@@ -625,8 +625,8 @@ playlist_begin
 610:ytmusic/24_Siempre TataMc - Cypher.opus
 611:ytmusic/3_33 - FLACO VAZQUEZ (ÁLBUM COMPLETO).opus
 612:ytmusic/3. No Me Importa - McKlopedia & Orestes Gómez (Audio Oficial).opus
-613:ytmusic/36.500 Días - Letra (jazz) - Rafael Lechowski.opus
-614:ytmusic/360 Grados -  Apache.opus
+613:ytmusic/360 Grados -  Apache.opus
+614:ytmusic/36.500 Días - Letra (jazz) - Rafael Lechowski.opus
 615:ytmusic/50 Cent - Many Men (Wish Death) (Dirty Version).m4a
 616:ytmusic/7 Notas 7 Colores - 14 Billetes en la cartera.opus
 617:ytmusic/8. Kenzo   Skills.m4a
