@@ -3,7 +3,7 @@ DataCount=1
 
 [Data_1]
 Comment=should never see
-DataCount=14
+DataCount=12
 Enabled=true
 Name=should never see
 SystemGroup=2
@@ -16,7 +16,7 @@ ConditionsCount=0
 [Data_1_1]
 Comment=KMenuEdit Global Shortcuts
 DataCount=0
-Enabled=true
+Enabled=false
 Name=KMenuEdit
 SystemGroup=1
 Type=ACTION_DATA_GROUP
@@ -24,7 +24,7 @@ Type=ACTION_DATA_GROUP
 [Data_1_10]
 Comment=Comment
 Enabled=true
-Name=spectacle thumb
+Name=spectacle prscr
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_10Actions]
@@ -43,21 +43,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_10Triggers0]
-Key=Meta+F11
+Key=Print
 Type=SHORTCUT
-Uuid={f3ac6719-54ce-4e0d-9832-1f6d2579f371}
+Uuid={d33a725d-deff-43df-a9c5-1a28edf1113f}
 
 [Data_1_11]
 Comment=Comment
 Enabled=true
-Name=spectacle prscr
+Name=webcam
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_11Actions]
 ActionsCount=1
 
 [Data_1_11Actions0]
-CommandURL=spectacleclip
+CommandURL=/home/repparw/.config/scripts/webcam
 Type=COMMAND_URL
 
 [Data_1_11Conditions]
@@ -69,21 +69,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_11Triggers0]
-Key=Print
+Key=Meta++
 Type=SHORTCUT
-Uuid={d33a725d-deff-43df-a9c5-1a28edf1113f}
+Uuid={6ab20914-1083-4563-ad46-6630030a6302}
 
 [Data_1_12]
 Comment=Comment
 Enabled=true
-Name=ksysguard
+Name=tasks
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_12Actions]
 ActionsCount=1
 
 [Data_1_12Actions0]
-CommandURL=ksysguard
+CommandURL=firefox https://use01.thegood.cloud/apps/tasks/#/collections/all
 Type=COMMAND_URL
 
 [Data_1_12Conditions]
@@ -95,58 +95,6 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_12Triggers0]
-Key=Meta+S
-Type=SHORTCUT
-Uuid={daa84ef9-6115-493a-a8b0-27eaa59ec963}
-
-[Data_1_13]
-Comment=Comment
-Enabled=true
-Name=webcam
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_13Actions]
-ActionsCount=1
-
-[Data_1_13Actions0]
-CommandURL=/home/repparw/.config/scripts/webcam
-Type=COMMAND_URL
-
-[Data_1_13Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_13Triggers]
-Comment=Simple_action
-TriggersCount=1
-
-[Data_1_13Triggers0]
-Key=Meta++
-Type=SHORTCUT
-Uuid={6ab20914-1083-4563-ad46-6630030a6302}
-
-[Data_1_14]
-Comment=Comment
-Enabled=true
-Name=tasks
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_14Actions]
-ActionsCount=1
-
-[Data_1_14Actions0]
-CommandURL=firefox https://use01.thegood.cloud/apps/tasks/#/collections/all
-Type=COMMAND_URL
-
-[Data_1_14Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_14Triggers]
-Comment=Simple_action
-TriggersCount=1
-
-[Data_1_14Triggers0]
 Key=Meta+X
 Type=SHORTCUT
 Uuid={d0fc4a87-571d-4944-9ceb-87d0c833b70d}
@@ -158,7 +106,7 @@ ConditionsCount=0
 [Data_1_2]
 Comment=This group contains various examples demonstrating most of the features of KHotkeys. (Note that this group and all its actions are disabled by default.)
 DataCount=1
-Enabled=true
+Enabled=false
 Name=Examples
 SystemGroup=0
 Type=ACTION_DATA_GROUP
@@ -169,7 +117,7 @@ ConditionsCount=0
 
 [Data_1_2_1]
 Comment=After pressing Alt+Ctrl+H the input of 'Hello' will be simulated, as if you typed it.  This is especially useful if you have call to frequently type a word (for instance, 'unsigned').  Every keypress in the input is separated by a colon ':'. Note that the keypresses literally mean keypresses, so you have to write what you would press on the keyboard. In the table below, the left column shows the input and the right column shows what to type.\n\n"enter" (i.e. new line)                Enter or Return\na (i.e. small a)                          A\nA (i.e. capital a)                       Shift+A\n: (colon)                                  Shift+;\n' '  (space)                              Space
-Enabled=true
+Enabled=false
 Name=Type 'Hello'
 Type=SIMPLE_ACTION_DATA
 
@@ -204,7 +152,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_1_3Actions0]
-CommandURL=alacritty --title lf -e env LSCOLORS=Gxfxcxdxbxegedabagacad lf
+CommandURL=alacritty -e zsh -c 'source .zshrc && lf'
 Type=COMMAND_URL
 
 [Data_1_3Conditions]
@@ -722,7 +670,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_1_7Actions0]
-CommandURL=/home/repparw/.local/share/applications/freetube.desktop
+CommandURL=/home/repparw/.local/share/applications/io.freetubeapp.FreeTube.desktop
 Type=COMMAND_URL
 
 [Data_1_7Conditions]
@@ -805,14 +753,14 @@ Uuid={e677a7e0-6613-4c60-b684-56df16400e33}
 [Data_1_9]
 Comment=Comment
 Enabled=true
-Name=newsboat
+Name=spectacle thumb
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_9Actions]
 ActionsCount=1
 
 [Data_1_9Actions0]
-CommandURL=alacritty --title newsboat -e newsboat
+CommandURL=spectacleclip
 Type=COMMAND_URL
 
 [Data_1_9Conditions]
@@ -824,9 +772,9 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_9Triggers0]
-Key=Meta+N
+Key=Meta+F11
 Type=SHORTCUT
-Uuid={944a76e7-520a-4ce6-b965-a75b2405d2d5}
+Uuid={f3ac6719-54ce-4e0d-9832-1f6d2579f371}
 
 [Main]
 AllowMerge=false

@@ -4,6 +4,9 @@ PATH=/home/repparw/.local/bin:$PATH
 ## fzf
 	export FZF_DEFAULT_OPTS="--no-mouse --multi --select-1 --reverse --height 50% --inline-info"
 
+## lscolors
+	export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
+
 # lf change dir on shell
 LFCD="/home/repparw/.config/lf/lfcd.sh"
 if [ -f "$LFCD" ]; then
