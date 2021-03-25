@@ -119,6 +119,7 @@
 
 		alias yts='youtube-viewer'
 
-		alias ytf='ytfzf'
+	# ytfzf with nq for freeing the terminal
+		alias ytf="env YTFZF_PLAYER='nq -c mpv' ytfzf"
 
 		alias yta="youtube-dl -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
