@@ -35,10 +35,6 @@
 		
 		alias lf='lfcd'
 
-	# Locations
-		
-		alias hdd='cd /run/media/repparw/HDD'
-
 	# Grep
 
 		alias gh='history|rg'
