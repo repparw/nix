@@ -1,6 +1,9 @@
 # Add local path
 PATH=/home/repparw/.local/bin:$PATH
 
+## Default editor to nvim
+	export EDITOR='nvim'
+
 ## fzf
 	export FZF_DEFAULT_OPTS="--no-mouse --multi --select-1 --reverse --height 50% --inline-info"
 
