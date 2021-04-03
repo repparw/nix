@@ -2,8 +2,8 @@ sw_volume: 34
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
 state: pause
-current: 804
-time: 861.795000
+current: 937
+time: 1054.981000
 random: 1
 repeat: 0
 single: 0
