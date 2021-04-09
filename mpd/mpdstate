@@ -1,9 +1,9 @@
 sw_volume: 24
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
-state: play
-current: 376
-time: 120.070000
+state: pause
+current: 546
+time: 77.314000
 random: 1
 repeat: 0
 single: 0
@@ -1121,298 +1121,297 @@ playlist_begin
 1106:ytmusic/Naiky - El momento es ahora..opus
 1107:ytmusic/Nas feat A.Z. - Life's A Bitch.opus
 1108:ytmusic/Nas, Raekwon & Mobb Deep - Eye For An Eye (Your Beef Is Mine).opus
-1109:ytmusic/Nathy Peluso - Buenos Aires-O8BLUzAxNmQ.opus
-1110:ytmusic/Nathy Peluso - CORASHE (Video Oficial).opus
-1111:ytmusic/NATHY PELUSO - NATIKILLAH.opus
-1112:ytmusic/Natural Barrio Klan - Cerra el orto (Lucas A).m4a
-1113:ytmusic/Natural Barrio Klan - M.4.M.8.0.m4a
-1114:ytmusic/NEGRO LEGAR - DE POR VIDA (192kbit_AAC).m4a
-1115:ytmusic/NEGRO LEGAR - I WALK ALONE (Prod. La fabrica Estudio x Videoclip. Pulli chiara _ cdiem_ ).opus
-1116:ytmusic/Negro Legar - Libertad Incompleta - Ep 'Loca' - El Campito Free.opus
-1117:ytmusic/NEGRO LEGAR - MAL VIAJE (Video Oficial).opus
-1118:ytmusic/Nero x Fiucher x Latcap - Abrochense la tanga.opus
-1119:ytmusic/Neutro Shorty - El Coco [Official Video].opus
-1120:ytmusic/Neutro Shorty - Lastima (Video Oficial).opus
-1121:ytmusic/Neutro Shorty - N4 [Official Video].opus
-1122:ytmusic/NGO x ZICA x ZAICO - #NOMOLESTAR [video oficial].opus
-1123:ytmusic/Ni de Ellos Ni de Ellas.m4a
-1124:ytmusic/NIKONE - ATRÁS EN EL TIEMPO (VIDEOCLIP).opus
-1125:ytmusic/Nikone - Blanco y Negro.opus
-1126:ytmusic/NIKONE - GRAVEDAD.opus
-1127:ytmusic/NIKONE - NIBOOM ( VIDEOCLIP OFICIAL ) BIRIBIRIBAE.opus
-1128:ytmusic/Nikone - Salió el Sol (Lyric Video).opus
-1129:ytmusic/Ninguna Chavala Tiene Dueño - Porque Ella Me Lo Dijo.opus
-1130:ytmusic/Nirvana Verbal.opus
-1131:ytmusic/No Hay Nadie Como Tú.opus
-1132:ytmusic/Notas Oscuras.opus
-1133:ytmusic/Nucleo AKA TintaSucia - #StrombergSession.opus
-1134:ytmusic/Nucleo aka TintaSucia - Al limite.opus
-1135:ytmusic/Nucleo aka TintaSucia - Antes era bueno _ shot by - Yesica Romero.opus
-1136:ytmusic/Nucleo aka TintaSucia - Caminando 'R.E.A.L'.opus
-1137:ytmusic/Nucleo aka TintaSucia - Classic Shit (Videoclip).opus
-1138:ytmusic/Nucleo aka TintaSucia - Este es mi BARRIO.opus
-1139:ytmusic/Nucleo aka TintaSucia - Oscuro & Underground.opus
-1140:ytmusic/Nunca será siempre - Bely Basarte feat Rayden.opus
-1141:ytmusic/NWA Fuck tha police.opus
-1142:ytmusic/ObieWanShot  - Trap Ando Trappin (Prod. Rulits TMB).opus
-1143:ytmusic/Osx Mob - Call Me (Shot by Ballve).opus
-1144:ytmusic/OSX MOB - Frontea (Prod. RulitsTMB).opus
-1145:ytmusic/OSX Mob - Trampa - Prod  Rulits.opus
-1146:ytmusic/OSXMOB - Reggaeton prendido (Prod.RulitsTMB).opus
-1147:ytmusic/OsxWanShot - RICO (Prod.DelSurEstilo).opus
-1148:ytmusic/OsxWanShot x OsxSpekter x OSXMOB - Morena (Prod. RulitsTMB).opus
-1149:ytmusic/OTOÑO - ZEBALLOS (PROD. TADEO VAZQUEZ).opus
-1150:ytmusic/OVI P. - '99OG (MIXTAPE).opus
-1151:ytmusic/Ozelot - Comiendo sin hambre, durmiendo sin sueño, follando sin ganas  [EHDMC IV].opus
-1152:ytmusic/Pa Los Que No.opus
-1153:ytmusic/PADRE - XXL 593 - Vídeo Oficial.opus
-1154:ytmusic/Pagame.opus
-1155:ytmusic/Para Estar.opus
-1156:ytmusic/Pasado Mañana.opus
-1157:ytmusic/PECES & HATERS  _ Verano del '17 _ Buenos Muchachos.opus
-1158:ytmusic/Piezas - Blanco y Negro (con Soriano) [Official HD].opus
-1159:ytmusic/PIEZAS & JAYDER _ PANORÁMICA - 10. KING KONG (AUDIO).opus
-1160:ytmusic/PIEZAS & JAYDER - HUIR O MORIR (VIDEOCLIP OFICIAL).opus
-1161:ytmusic/PIEZAS & JAYDER - PAYASO TRISTE #ASIMETRIA VOL V.opus
-1162:ytmusic/PIEZAS & JAYDER - RETALES (VIDEOCLIP OFICIAL) #PANORÁMICA.opus
-1163:ytmusic/Piezas & Jayder - Un desencanto encantador (VIDEOCLIP OFICIAL).opus
-1164:ytmusic/PODIO - ZEBALLOS.opus
-1165:ytmusic/POMELO - ZEBALLOS-23VAxMVlsao.opus
-1166:ytmusic/Por amor al Odio - letra (Jazz) - Rafael Lechowski.opus
-1167:ytmusic/Por si mañana no estoy los aldeanos Video Oficial 2010.wmv.opus
-1168:ytmusic/Prende La Chimenea - Apache (Video Oficial).opus
-1169:ytmusic/PROK - AMOR AL PESO (PROD SCENO) _ VIDEOCLIP.opus
-1170:ytmusic/PROK - CAFÉ SOLO _ VIDEOCLIP (PROD DJ KERU).opus
-1171:ytmusic/PROK - SALVATORE MARANZANO (PROD BLASFEM)VIDEOCLIP #ROJOYNEGRO🔴⚫.opus
-1172:ytmusic/PROK FT ACRU - DISTRITO CERRAO (PROD BLASFEM) VIDEOCLIP.opus
-1173:ytmusic/PROK FT EASY-S - FUNERAL (PROD SWEETHOME) VIDEOCLIP.opus
-1174:ytmusic/PROK FT FERNANDO COSTA, HARD GZ, FOYONE - CRIMINAL (VIDEOCLIP) #ROJOYNEGRO🔴⚫.opus
-1175:ytmusic/PROVENZAL - FLACO VAZQUEZ FT. PEDRITO (Video Version).opus
-1176:ytmusic/Prueba y Error.opus
-1177:ytmusic/Que la Cuenten.opus
-1178:ytmusic/R DE RUMBA Y XHELAZZ - HAMOR REMIX  (CANAL BOA).opus
-1179:ytmusic/Rabeat - F E E L I N G S.opus
-1180:ytmusic/RABEAT - MIREN - PROD.FU LION @CASTI SESSIONS #04.opus
-1181:ytmusic/RABEAT - SIN SOL (Shot by @magicfilm.pro ).opus
-1182:ytmusic/Rabeat &  Underdann - Tiempo (Acustico) - Rio Negro.opus
-1183:ytmusic/Rabeat & MajamasMuere - FUEGO AZUL DISCO COMPLETO.opus
-1184:ytmusic/RAFAEL LECHOWSKI - HIMNO DE VIVIR (VIDEOCLIP OFICIAL, 2020).opus
-1185:ytmusic/Rafael Lechowski - Quarcissus - el arte de desamar (OBRA COMPLETA).opus
-1186:ytmusic/Rafael Lechowski & Glaç 06 - POR AMOR AL ODIO (Versión Jazz) con LETRA OFICIAL.opus
-1187:ytmusic/RAP CONTRA EL RACISMO.opus
-1188:ytmusic/Rap Contra Racismo 3.0 (feat. Gabylonia, Kaze, Ambkor, Aczino, Soge Culebra, Sara Socas, Al2,....opus
-1189:ytmusic/Rayden - A Mi Yo de Ayer.opus
-1190:ytmusic/Rayden - Matemática de la Carne - Bely Basarte cover.opus
-1191:ytmusic/Reading,Study,Relax,Background Music Slow Jazz.opus
-1192:ytmusic/Ready for Woo.opus
-1193:ytmusic/REASON - Flick It Up ft. Ab-Soul.opus
-1194:ytmusic/REASON - Might Not Make It.opus
-1195:ytmusic/REASON - Trapped In ft. Boogie & Ab-Soul.opus
-1196:ytmusic/Reggaeton Prendido (Single).opus
-1197:ytmusic/Remember The Name (Official Video) - Fort Minor.opus
-1198:ytmusic/Residente - Querido Louis.opus
-1199:ytmusic/Residente - René (Official Video).opus
-1200:ytmusic/Residente & Nach - Rap Bruto (Official Video).opus
-1201:ytmusic/Residente, Dillon Francis - Sexo (Official Video) ft. iLe.opus
-1202:ytmusic/Residente, iLe & Bad Bunny - Afilando los Cuchillos (Cover Audio).opus
-1203:ytmusic/Rimas Pa' Seducir.opus
-1204:ytmusic/Ritmo Que Pesa.opus
-1205:ytmusic/Roddy Ricch - Bacc Seat (feat. Ty Dolla $ign) [Official Lyric Video].opus
-1206:ytmusic/Rolling Stone Sessions - Mcklopedia.opus
-1207:ytmusic/RONPE 99 - D-BAP (film por @truchinicolas).opus
-1208:ytmusic/RONPE 99 - SINTOMAS (Full álbum).opus
-1209:ytmusic/RONPE 99' - BON APPETIT (VIDEO OFICIAL).m4a
-1210:ytmusic/RONPE 99' - FALTA BANDA (shot by iorch.rom).opus
-1211:ytmusic/RONPE 99' x ZICA - MAMÁ.m4a
-1212:ytmusic/RONPE 99' x ZICA x FLACO VÁZQUEZ - NOCHES SIN DORMIR.opus
-1213:ytmusic/Run The Jewels - Run The Jewels [OFFICIAL VIDEO]-AfuCLp8VEng.opus
-1214:ytmusic/Runaway.opus
-1215:ytmusic/RXNDE AKOZTA & RODESENS presentan - “V” (2020).opus
-1216:ytmusic/Saje Kamada - Meta Aforismos.opus
-1217:ytmusic/Saje Kamada - Mono Dopado (Prod. Fiyo).opus
-1218:ytmusic/SANGRE Y CREMA  _ Verano del '17 _ Buenos Muchachos.opus
-1219:ytmusic/SANK - 06. HASH Y TAGS (EL DISCO 📀).opus
-1220:ytmusic/SANK - AL QUE LE PICA QUE SE RASQUE 🐝 (VIDEOCLIP).m4a
-1221:ytmusic/SANK - ALL IN (VIDEOCLIP OFICIAL) _prod. RothBeats.opus
-1222:ytmusic/SANK - BABALITY (VIDEOCLIP OFICIAL).opus
-1223:ytmusic/SANK - BRUTALITY  ☠ (VIDEOCLIP).opus
-1224:ytmusic/SANK - CAMPAMENTO DE HIP HOP 🎡 (VIDEOCLIP).opus
-1225:ytmusic/SANK - CARA TAPADA (VIDEOLYRIC) prod.SoulBeats.opus
-1226:ytmusic/SANK - DANGER FT ALC MC (VIDEOCLIP OFICIAL).opus
-1227:ytmusic/SANK - NO SON TAN RIAL 👤 (VIDEOCLIP) _INSANO JUICIO.m4a
-1228:ytmusic/SANK - POLICIA = MAFIA (R.I.P GEORGE FLOYD) _VIDEOLYRIC OFICIAL-4GpKxipskMQ.m4a
-1229:ytmusic/SANK - REAL HIP HOPER (VIDEOCLIP OFICIAL).opus
-1230:ytmusic/SANK - SOLO (VIDEOCLIP OFICIAL).opus
-1231:ytmusic/SANK - SPELL MY NAME (VIDEOCLIP OFICIAL).opus
-1232:ytmusic/SANK - UN PAIS CON BUENA GENTE 🔫 _BALDOSA FLOJA.opus
-1233:ytmusic/SANK - WORD UP! (VIDEOCLIP OFICIAL).opus
-1234:ytmusic/SANTOZ - 1997.opus
-1235:ytmusic/SANTOZ - AUTODIDACTA (Prod. by Santoz).opus
-1236:ytmusic/SANTOZ - INTERESTELAR (FULL ALBUM).opus
-1237:ytmusic/Santoz - PIBE NIKE (Official Video).opus
-1238:ytmusic/Sathia - AMOR VERDE.opus
-1239:ytmusic/Schoolboy Q - I'm Good (feat. BJ the Chicago Kid & Punch).opus
-1240:ytmusic/SFDK - Años Muertos feat. Shabu, colabora Trizia (Video Oficial).opus
-1241:ytmusic/SFDK - Lo Intenté (Video Oficial).opus
-1242:ytmusic/SFDK - Un Pobre Con Dinero (Video Oficial).opus
-1243:ytmusic/SFDK - Volver (Video Oficial).opus
-1244:ytmusic/SFDK y Violadores del Verso - - Seguimos en linea- Letra.opus
-1245:ytmusic/Si Me Tiran (Single).opus
-1246:ytmusic/Si Me Voy ft Sáez '93  (VideoClip) 2019.m4a
-1247:ytmusic/Siempre te voy amar - Los Aldeanos (Letra).opus
-1248:ytmusic/SIGO FIRME - SANK (VIDEOCLIP OFICIAL).opus
-1249:ytmusic/SIMON FENIX & MO77O - ESE NO SOY YO.opus
-1250:ytmusic/Sin Rencor.m4a
-1251:ytmusic/Sinaph - Shorty.opus
-1252:ytmusic/SiR - Rapper Weed ft. Boogie.opus
-1253:ytmusic/SITTON - FANGO (Producido por GABRIEL ESCOBAR) _ VIDEOCLIP.opus
-1254:ytmusic/SOCIO _ RONPE 99' & ZICA - RAP (PROD. DEVAK 24 X DRIZ Q).opus
-1255:ytmusic/SOCIO - 'RICH RICHARD' - Prod. Veeyam.opus
-1256:ytmusic/SOCIO x ZICA - 'GETTING BACK' Prod. MISTERWEED (24).opus
-1257:ytmusic/SOJA - Rest of My Life (Official Video).opus
-1258:ytmusic/Somos mas - Faqq, Nucleo, Rayo y Acru (Prod. Alcazone).opus
-1259:ytmusic/Son Luka - Yo mate a Klan - ft el jardin.opus
-1260:ytmusic/Sota, Caballo y Yo.opus
-1261:ytmusic/Speaker Knockerz - Lonely (Official Video) Shot By @LoudVisuals.opus
-1262:ytmusic/Spidah Sick of it 'MGK Diss'.opus
-1263:ytmusic/Sr. Cobranza.m4a
-1264:ytmusic/Street Hustle - Fak (Film by Magma).opus
-1265:ytmusic/STUART - DEFECTOS ESCONDIDOS (videoOficial).opus
-1266:ytmusic/STUART — SI LA CASA SE QUEMA [VideoOficial].opus
-1267:ytmusic/SUENA - NIKONE  [2013].opus
-1268:ytmusic/T&K  - 1993 _ Full Album.opus
-1269:ytmusic/t&k  - Kool (ft Fazzini ) Prod by koolsouth.opus
-1270:ytmusic/T&K _ C.R.E.M.A _ Writing Classics _ VIDEO OFICIAL.opus
-1271:ytmusic/T&K - 23 (Prod.By.LaTorreDelMilenio VideoOficial).opus
-1272:ytmusic/T&K - El Libro Negro _ Full Album (Prod.By.LaTorreDelMilenio).opus
-1273:ytmusic/T&K - ESTOY FUERA (ELLIBRONEGRO).opus
-1274:ytmusic/T&K - Habrá.opus
-1275:ytmusic/T&K - ILL MATI.opus
-1276:ytmusic/t&k - Listo (ft Socio) Prod Uzl.opus
-1277:ytmusic/t&k - Race (Prod Uzl).opus
-1278:ytmusic/T&K - Respect ft JKN (Prod by 3Kids) (Film by Calavera Producciones).opus
-1279:ytmusic/T&K - Todo Irá Mejor (Prod C.Spaulding) 2019.opus
-1280:ytmusic/T&K - Voyagers.opus
-1281:ytmusic/T&K - ZEBALLOS.opus
-1282:ytmusic/T&K & Franky Style - Chilling (by @chinojones) _ ALL-IN #1.opus
-1283:ytmusic/t&k Writing Classics 2014 Full Album.opus
-1284:ytmusic/TASH SULTANA - JUNGLE (LIVE BEDROOM RECORDING).opus
-1285:ytmusic/Tata - Face to Face - [Session 30].m4a
-1286:ytmusic/TE LO ADVERTI - ZEBALLOS (PROD BY. MILI MILANSS) [ASIMETRÍA].opus
-1287:ytmusic/Teoría de la Vida - Pipe(Efe é).opus
-1288:ytmusic/THE CHOPPED ft. RENNA _ Verano del '17 _ Buenos Muchachos.opus
-1289:ytmusic/The Offspring - 'Self Esteem'.opus
-1290:ytmusic/The Rolling Stones - Paint It, Black (Official Lyric Video).m4a
-1291:ytmusic/The World Is Saved - Gamer Music Video.opus
-1292:ytmusic/Todo Irá Mejor.opus
-1293:ytmusic/TORTUZL ft Jesi B. _   AMOR Y RESPETO _ Lanzallamas Oriental _ Video Oficial.opus
-1294:ytmusic/Tote King - Merece la pena. (LETRA).opus
-1295:ytmusic/Toteking - Bartleby & Co. (Video Oficial).opus
-1296:ytmusic/Toteking - Carne Picá.opus
-1297:ytmusic/Toteking - Dos Días feat. Kaze (Prod. Stash House).opus
-1298:ytmusic/Toteking - El Premio Pa Ti (Video Oficial) ft. El Canijo de Jerez, Maria Luna.opus
-1299:ytmusic/Toteking - Libera el Estrés.opus
-1300:ytmusic/Toteking - Mi Colega (Audio).opus
-1301:ytmusic/Toteking - Mira Cómo Tiemblan (Prod. El Arkeólogo).opus
-1302:ytmusic/ToteKing - Sota, Caballo y Yo. (Prod. Acción Sánchez).opus
-1303:ytmusic/Toteking - Veneno (Prod. Stash House).opus
-1304:ytmusic/ToteKing - Ya me ven (Prod. Martello Sousa).opus
-1305:ytmusic/Toteking & Easy-S - Brindis (Prod. Stash House).opus
-1306:ytmusic/Toteking, Dheformer - Escupiéndolo (Prod. Drama Theme) (Videoclip).opus
-1307:ytmusic/TRAIGAN FERNET - Los Pugliese.opus
-1308:ytmusic/TRANKI FIUCHER X NERO (PROD NERO).opus
-1309:ytmusic/TRUCO O CAMBIO - ZEBALLOS (PROD. MILI MILANSS) [ASIMETRÍA].opus
-1310:ytmusic/Trueno - 4AM (Film by @laiomz).opus
-1311:ytmusic/Tuyo siempre (En directo 2005).opus
-1312:ytmusic/Un Deseo.opus
-1313:ytmusic/UN PÁJARO UNA GUERRA _ ELHOMBREVIENTO feat. CARLES CASELLES.opus
-1314:ytmusic/Una Carta.opus
-1315:ytmusic/Una Mirada.opus
-1316:ytmusic/Unaccommodating.opus
-1317:ytmusic/Underdann - Nunca me Rendí (Video Oficial).opus
-1318:ytmusic/UnderMc - Todo Lo Que Tengo (ft.Frane & Miloo Beatbox).opus
-1319:ytmusic/UnderMc - Voy Suelto (ft.Fianru).opus
-1320:ytmusic/Urbanse _ C.R.U.D.O _ Rap sin Apellido _ Video Oficial 2014.opus
-1321:ytmusic/URBANSE ' Nada que perder ' _ Video Oficial.opus
-1322:ytmusic/Urbanse & Dj Destroy _ Buenosaifers #OSCUROYSUCIO.m4a
-1323:ytmusic/Urbanse & Uzetaele - 02. Prueba y Error (con Dj Destroy).opus
-1324:ytmusic/Urbanse & Uzetaele - 07. Mi Gente (con T&K y Dj Destroy).opus
-1325:ytmusic/Urbanse & UZL _ Identidad (con Ali aka Mind & Dj Destroy).opus
-1326:ytmusic/Urbanse & Veeyam _ MAS NAH.opus
-1327:ytmusic/Urbanse & Veeyam _ TIEMPO.opus
-1328:ytmusic/Urbanse aka Subversivo - No Pares (Video Clip) _ Puño Arriba (2012).opus
-1329:ytmusic/URBIO -  ill mati x @Mir Nicolás  ( Prod Dabe) Film by  - @Chino Jones.opus
-1330:ytmusic/Usher - Yeah! (Official Music Video) ft. Lil Jon, Ludacris.opus
-1331:ytmusic/VACACIONES EN LA CALLE  _ Verano del '17 _ Buenos Muchachos.opus
-1332:ytmusic/VARONER & IRIVRTE INTRODUCING 'SPECTACULAR RAPS'.opus
-1333:ytmusic/Ven Y Critícame.opus
-1334:ytmusic/Veneno Crew - Hijo del sol y la luna.opus
-1335:ytmusic/VENENO CREW 'MATAHAMBRE' 04 -FUMANCHU-.opus
-1336:ytmusic/Veneno Crew 4 Life.m4a
-1337:ytmusic/Verdades.opus
-1338:ytmusic/Verso Terso.opus
-1339:ytmusic/Vertical.opus
-1340:ytmusic/Vico C - Aquel Que Habia Muerto.m4a
-1341:ytmusic/Vico C - Y Boquete Pa' Tu Techo _ Video Oficial.opus
-1342:ytmusic/VILLERO - ONE SHIT Vol. 1 x (YTHS) Shot by S. Noble.opus
-1343:ytmusic/Violadores del Verso - Qué te importan todos los demás.opus
-1344:ytmusic/Wanline - Otro martes ￦.opus
-1345:ytmusic/WC (feat. Urbanese).opus
-1346:ytmusic/Weedy Paca.opus
-1347:ytmusic/Who Dat.opus
-1348:ytmusic/Woh!!.opus
-1349:ytmusic/Wolty - Disfrutar.opus
-1350:ytmusic/Wolty - Martes 13 (Shot By Belascuen) prod.Galaxy.opus
-1351:ytmusic/Wolty - Miercoles 14 (Shot By Belascuen) prod.Fimrecords.opus
-1352:ytmusic/Wolty - Nadie entiende.opus
-1353:ytmusic/Wolty - No me culpes.opus
-1354:ytmusic/Wolty - Por Amor (Shot By Belascuen) prod.Galaxy.opus
-1355:ytmusic/Wolty - Por vos.opus
-1356:ytmusic/WOLTY - Q.E.P.D (Shot by Belascuen).opus
-1357:ytmusic/Wolty - Vuela [Shot by Ballve].opus
-1358:ytmusic/Wolty - Zona Zeta.opus
-1359:ytmusic/Wolty & Kenzo - Confianza.opus
-1360:ytmusic/Wolty & Kenzo - Wake Up (SelFilms).opus
-1361:ytmusic/Wolty & Lfu - Tan solo trato.opus
-1362:ytmusic/Wolty ft Faqq- No nos culpen (Álamo-FacetoFace).opus
-1363:ytmusic/WOLTY vs COMPÁS -Liga Baazookaa-.opus
-1364:ytmusic/Wolty x Fiucher - Calambur.opus
-1365:ytmusic/Wolty x Fiucher x Naiky - Jueves 15 (By Biscarrita)Prod.Galaxy.opus
-1366:ytmusic/Wolty x Kenzo - Tigre de bengala (Prod. Galaxy Supreme Records).opus
-1367:ytmusic/WOS - CANGURO (Video Oficial).opus
-1368:ytmusic/WOS - NO VA A BAJAR.opus
-1369:ytmusic/WOS - PURPURA.mp3
-1370:ytmusic/WOS BANZAI - PROTOCOLO (Video Oficial).m4a
-1371:ytmusic/Wu-Tang Clan - Method Man.opus
-1372:ytmusic/XHELAZZ - LA SOLEDAD COMIENZA (CANAL BOA).opus
-1373:ytmusic/Ya no sé qué hacer conmigo.opus
-1374:ytmusic/Yaco -  FÉ DE ESCRITOR.opus
-1375:ytmusic/Yaco & MP - 'Let It Go'.opus
-1376:ytmusic/Yaco & Wolty - 'Polos'.opus
-1377:ytmusic/Yah Yah.m4a
-1378:ytmusic/YBN Cordae - RNP (feat. Anderson .Paak) [Official Lyric Video].opus
-1379:ytmusic/Yendo a la casa de Damián.opus
-1380:ytmusic/Yo Soy.opus
-1381:ytmusic/Yo.Soy.Rey - Fumando Con Marciano (Video Lyric) Rap Protesta Vol.1.opus
-1382:ytmusic/You Don't Know.opus
-1383:ytmusic/ZEBALLOS x FRANUX BB - SANTA LUCÍA (prod by Fosse).opus
-1384:ytmusic/ZEVEX _ T&K _ LIFE.opus
-1385:ytmusic/ZICA - PLAYERS ft FRANE, FIANRU.opus
-1386:ytmusic/ZICA - THIS IS NOT COKE (Shot by iorch.rom).opus
-1387:ytmusic/Zombies- Violadores del Verso.opus
-1388:ytmusic/ZPU _ Papá Me Dijo (feat. Dante) (Video Oficial).opus
-1389:ytmusic/Urbanse & Veeyam _ BUSKA.opus
-1390:ytmusic/RONPE 99' - Cambia Todo [Letra].opus
-1391:ytmusic/Ultimatum (feat. Latriple & Flaco Vazquez).opus
-1392:ytmusic/ACRU - DHARMA (Video Oficial).m4a
-1393:ytmusic/FIANRU - El Que Rompe, Paga (Official Video).m4a
-1394:ytmusic/Wolty x Kenzo - Gangster (Album 3 A.M ) 1_7.m4a
-1395:ytmusic/Bizarrap, Trueno, Acru - Jugador del Año (Lyric Video).opus
-1396:ytmusic/Homer el Mero Mero, C-Kan, Lil Troca - Madrugada (VIDEO OFICIAL).opus
-1397:ytmusic/Granuja & Métricas Frías Feat T&K - Piedras.opus
-1398:ytmusic/24_siempre - Socio - Cypher.m4a
-1399:ytmusic/JULI GIULIANI feat. NICO & GHOSTPELL - WE THE NEXT [PROD. JAY LOOP$ & LAY LO] (Videoclip).m4a
-1400:ytmusic/ACRU _ THROW UP SESSION _ Vol.3.opus
-1401:ytmusic/Voyager (Love Session).opus
-1402:ytmusic/FOYONE - FXCK NPO.opus
+1109:ytmusic/Nathy Peluso - CORASHE (Video Oficial).opus
+1110:ytmusic/NATHY PELUSO - NATIKILLAH.opus
+1111:ytmusic/Natural Barrio Klan - Cerra el orto (Lucas A).m4a
+1112:ytmusic/Natural Barrio Klan - M.4.M.8.0.m4a
+1113:ytmusic/NEGRO LEGAR - DE POR VIDA (192kbit_AAC).m4a
+1114:ytmusic/NEGRO LEGAR - I WALK ALONE (Prod. La fabrica Estudio x Videoclip. Pulli chiara _ cdiem_ ).opus
+1115:ytmusic/Negro Legar - Libertad Incompleta - Ep 'Loca' - El Campito Free.opus
+1116:ytmusic/NEGRO LEGAR - MAL VIAJE (Video Oficial).opus
+1117:ytmusic/Nero x Fiucher x Latcap - Abrochense la tanga.opus
+1118:ytmusic/Neutro Shorty - El Coco [Official Video].opus
+1119:ytmusic/Neutro Shorty - Lastima (Video Oficial).opus
+1120:ytmusic/Neutro Shorty - N4 [Official Video].opus
+1121:ytmusic/NGO x ZICA x ZAICO - #NOMOLESTAR [video oficial].opus
+1122:ytmusic/Ni de Ellos Ni de Ellas.m4a
+1123:ytmusic/NIKONE - ATRÁS EN EL TIEMPO (VIDEOCLIP).opus
+1124:ytmusic/Nikone - Blanco y Negro.opus
+1125:ytmusic/NIKONE - GRAVEDAD.opus
+1126:ytmusic/NIKONE - NIBOOM ( VIDEOCLIP OFICIAL ) BIRIBIRIBAE.opus
+1127:ytmusic/Nikone - Salió el Sol (Lyric Video).opus
+1128:ytmusic/Ninguna Chavala Tiene Dueño - Porque Ella Me Lo Dijo.opus
+1129:ytmusic/Nirvana Verbal.opus
+1130:ytmusic/No Hay Nadie Como Tú.opus
+1131:ytmusic/Notas Oscuras.opus
+1132:ytmusic/Nucleo AKA TintaSucia - #StrombergSession.opus
+1133:ytmusic/Nucleo aka TintaSucia - Al limite.opus
+1134:ytmusic/Nucleo aka TintaSucia - Antes era bueno _ shot by - Yesica Romero.opus
+1135:ytmusic/Nucleo aka TintaSucia - Caminando 'R.E.A.L'.opus
+1136:ytmusic/Nucleo aka TintaSucia - Classic Shit (Videoclip).opus
+1137:ytmusic/Nucleo aka TintaSucia - Este es mi BARRIO.opus
+1138:ytmusic/Nucleo aka TintaSucia - Oscuro & Underground.opus
+1139:ytmusic/Nunca será siempre - Bely Basarte feat Rayden.opus
+1140:ytmusic/NWA Fuck tha police.opus
+1141:ytmusic/ObieWanShot  - Trap Ando Trappin (Prod. Rulits TMB).opus
+1142:ytmusic/Osx Mob - Call Me (Shot by Ballve).opus
+1143:ytmusic/OSX MOB - Frontea (Prod. RulitsTMB).opus
+1144:ytmusic/OSX Mob - Trampa - Prod  Rulits.opus
+1145:ytmusic/OSXMOB - Reggaeton prendido (Prod.RulitsTMB).opus
+1146:ytmusic/OsxWanShot - RICO (Prod.DelSurEstilo).opus
+1147:ytmusic/OsxWanShot x OsxSpekter x OSXMOB - Morena (Prod. RulitsTMB).opus
+1148:ytmusic/OTOÑO - ZEBALLOS (PROD. TADEO VAZQUEZ).opus
+1149:ytmusic/OVI P. - '99OG (MIXTAPE).opus
+1150:ytmusic/Ozelot - Comiendo sin hambre, durmiendo sin sueño, follando sin ganas  [EHDMC IV].opus
+1151:ytmusic/Pa Los Que No.opus
+1152:ytmusic/PADRE - XXL 593 - Vídeo Oficial.opus
+1153:ytmusic/Pagame.opus
+1154:ytmusic/Para Estar.opus
+1155:ytmusic/Pasado Mañana.opus
+1156:ytmusic/PECES & HATERS  _ Verano del '17 _ Buenos Muchachos.opus
+1157:ytmusic/Piezas - Blanco y Negro (con Soriano) [Official HD].opus
+1158:ytmusic/PIEZAS & JAYDER _ PANORÁMICA - 10. KING KONG (AUDIO).opus
+1159:ytmusic/PIEZAS & JAYDER - HUIR O MORIR (VIDEOCLIP OFICIAL).opus
+1160:ytmusic/PIEZAS & JAYDER - PAYASO TRISTE #ASIMETRIA VOL V.opus
+1161:ytmusic/PIEZAS & JAYDER - RETALES (VIDEOCLIP OFICIAL) #PANORÁMICA.opus
+1162:ytmusic/Piezas & Jayder - Un desencanto encantador (VIDEOCLIP OFICIAL).opus
+1163:ytmusic/PODIO - ZEBALLOS.opus
+1164:ytmusic/POMELO - ZEBALLOS-23VAxMVlsao.opus
+1165:ytmusic/Por amor al Odio - letra (Jazz) - Rafael Lechowski.opus
+1166:ytmusic/Por si mañana no estoy los aldeanos Video Oficial 2010.wmv.opus
+1167:ytmusic/Prende La Chimenea - Apache (Video Oficial).opus
+1168:ytmusic/PROK - AMOR AL PESO (PROD SCENO) _ VIDEOCLIP.opus
+1169:ytmusic/PROK - CAFÉ SOLO _ VIDEOCLIP (PROD DJ KERU).opus
+1170:ytmusic/PROK - SALVATORE MARANZANO (PROD BLASFEM)VIDEOCLIP #ROJOYNEGRO🔴⚫.opus
+1171:ytmusic/PROK FT ACRU - DISTRITO CERRAO (PROD BLASFEM) VIDEOCLIP.opus
+1172:ytmusic/PROK FT EASY-S - FUNERAL (PROD SWEETHOME) VIDEOCLIP.opus
+1173:ytmusic/PROK FT FERNANDO COSTA, HARD GZ, FOYONE - CRIMINAL (VIDEOCLIP) #ROJOYNEGRO🔴⚫.opus
+1174:ytmusic/PROVENZAL - FLACO VAZQUEZ FT. PEDRITO (Video Version).opus
+1175:ytmusic/Prueba y Error.opus
+1176:ytmusic/Que la Cuenten.opus
+1177:ytmusic/R DE RUMBA Y XHELAZZ - HAMOR REMIX  (CANAL BOA).opus
+1178:ytmusic/Rabeat - F E E L I N G S.opus
+1179:ytmusic/RABEAT - MIREN - PROD.FU LION @CASTI SESSIONS #04.opus
+1180:ytmusic/RABEAT - SIN SOL (Shot by @magicfilm.pro ).opus
+1181:ytmusic/Rabeat &  Underdann - Tiempo (Acustico) - Rio Negro.opus
+1182:ytmusic/Rabeat & MajamasMuere - FUEGO AZUL DISCO COMPLETO.opus
+1183:ytmusic/RAFAEL LECHOWSKI - HIMNO DE VIVIR (VIDEOCLIP OFICIAL, 2020).opus
+1184:ytmusic/Rafael Lechowski - Quarcissus - el arte de desamar (OBRA COMPLETA).opus
+1185:ytmusic/Rafael Lechowski & Glaç 06 - POR AMOR AL ODIO (Versión Jazz) con LETRA OFICIAL.opus
+1186:ytmusic/RAP CONTRA EL RACISMO.opus
+1187:ytmusic/Rap Contra Racismo 3.0 (feat. Gabylonia, Kaze, Ambkor, Aczino, Soge Culebra, Sara Socas, Al2,....opus
+1188:ytmusic/Rayden - A Mi Yo de Ayer.opus
+1189:ytmusic/Rayden - Matemática de la Carne - Bely Basarte cover.opus
+1190:ytmusic/Reading,Study,Relax,Background Music Slow Jazz.opus
+1191:ytmusic/Ready for Woo.opus
+1192:ytmusic/REASON - Flick It Up ft. Ab-Soul.opus
+1193:ytmusic/REASON - Might Not Make It.opus
+1194:ytmusic/REASON - Trapped In ft. Boogie & Ab-Soul.opus
+1195:ytmusic/Reggaeton Prendido (Single).opus
+1196:ytmusic/Remember The Name (Official Video) - Fort Minor.opus
+1197:ytmusic/Residente - Querido Louis.opus
+1198:ytmusic/Residente - René (Official Video).opus
+1199:ytmusic/Residente & Nach - Rap Bruto (Official Video).opus
+1200:ytmusic/Residente, Dillon Francis - Sexo (Official Video) ft. iLe.opus
+1201:ytmusic/Residente, iLe & Bad Bunny - Afilando los Cuchillos (Cover Audio).opus
+1202:ytmusic/Rimas Pa' Seducir.opus
+1203:ytmusic/Ritmo Que Pesa.opus
+1204:ytmusic/Roddy Ricch - Bacc Seat (feat. Ty Dolla $ign) [Official Lyric Video].opus
+1205:ytmusic/Rolling Stone Sessions - Mcklopedia.opus
+1206:ytmusic/RONPE 99 - D-BAP (film por @truchinicolas).opus
+1207:ytmusic/RONPE 99 - SINTOMAS (Full álbum).opus
+1208:ytmusic/RONPE 99' - BON APPETIT (VIDEO OFICIAL).m4a
+1209:ytmusic/RONPE 99' - FALTA BANDA (shot by iorch.rom).opus
+1210:ytmusic/RONPE 99' x ZICA - MAMÁ.m4a
+1211:ytmusic/RONPE 99' x ZICA x FLACO VÁZQUEZ - NOCHES SIN DORMIR.opus
+1212:ytmusic/Run The Jewels - Run The Jewels [OFFICIAL VIDEO]-AfuCLp8VEng.opus
+1213:ytmusic/Runaway.opus
+1214:ytmusic/RXNDE AKOZTA & RODESENS presentan - “V” (2020).opus
+1215:ytmusic/Saje Kamada - Meta Aforismos.opus
+1216:ytmusic/Saje Kamada - Mono Dopado (Prod. Fiyo).opus
+1217:ytmusic/SANGRE Y CREMA  _ Verano del '17 _ Buenos Muchachos.opus
+1218:ytmusic/SANK - 06. HASH Y TAGS (EL DISCO 📀).opus
+1219:ytmusic/SANK - AL QUE LE PICA QUE SE RASQUE 🐝 (VIDEOCLIP).m4a
+1220:ytmusic/SANK - ALL IN (VIDEOCLIP OFICIAL) _prod. RothBeats.opus
+1221:ytmusic/SANK - BABALITY (VIDEOCLIP OFICIAL).opus
+1222:ytmusic/SANK - BRUTALITY  ☠ (VIDEOCLIP).opus
+1223:ytmusic/SANK - CAMPAMENTO DE HIP HOP 🎡 (VIDEOCLIP).opus
+1224:ytmusic/SANK - CARA TAPADA (VIDEOLYRIC) prod.SoulBeats.opus
+1225:ytmusic/SANK - DANGER FT ALC MC (VIDEOCLIP OFICIAL).opus
+1226:ytmusic/SANK - NO SON TAN RIAL 👤 (VIDEOCLIP) _INSANO JUICIO.m4a
+1227:ytmusic/SANK - POLICIA = MAFIA (R.I.P GEORGE FLOYD) _VIDEOLYRIC OFICIAL-4GpKxipskMQ.m4a
+1228:ytmusic/SANK - REAL HIP HOPER (VIDEOCLIP OFICIAL).opus
+1229:ytmusic/SANK - SOLO (VIDEOCLIP OFICIAL).opus
+1230:ytmusic/SANK - SPELL MY NAME (VIDEOCLIP OFICIAL).opus
+1231:ytmusic/SANK - UN PAIS CON BUENA GENTE 🔫 _BALDOSA FLOJA.opus
+1232:ytmusic/SANK - WORD UP! (VIDEOCLIP OFICIAL).opus
+1233:ytmusic/SANTOZ - 1997.opus
+1234:ytmusic/SANTOZ - AUTODIDACTA (Prod. by Santoz).opus
+1235:ytmusic/SANTOZ - INTERESTELAR (FULL ALBUM).opus
+1236:ytmusic/Santoz - PIBE NIKE (Official Video).opus
+1237:ytmusic/Sathia - AMOR VERDE.opus
+1238:ytmusic/Schoolboy Q - I'm Good (feat. BJ the Chicago Kid & Punch).opus
+1239:ytmusic/SFDK - Años Muertos feat. Shabu, colabora Trizia (Video Oficial).opus
+1240:ytmusic/SFDK - Lo Intenté (Video Oficial).opus
+1241:ytmusic/SFDK - Un Pobre Con Dinero (Video Oficial).opus
+1242:ytmusic/SFDK - Volver (Video Oficial).opus
+1243:ytmusic/SFDK y Violadores del Verso - - Seguimos en linea- Letra.opus
+1244:ytmusic/Si Me Tiran (Single).opus
+1245:ytmusic/Si Me Voy ft Sáez '93  (VideoClip) 2019.m4a
+1246:ytmusic/Siempre te voy amar - Los Aldeanos (Letra).opus
+1247:ytmusic/SIGO FIRME - SANK (VIDEOCLIP OFICIAL).opus
+1248:ytmusic/SIMON FENIX & MO77O - ESE NO SOY YO.opus
+1249:ytmusic/Sin Rencor.m4a
+1250:ytmusic/Sinaph - Shorty.opus
+1251:ytmusic/SiR - Rapper Weed ft. Boogie.opus
+1252:ytmusic/SITTON - FANGO (Producido por GABRIEL ESCOBAR) _ VIDEOCLIP.opus
+1253:ytmusic/SOCIO _ RONPE 99' & ZICA - RAP (PROD. DEVAK 24 X DRIZ Q).opus
+1254:ytmusic/SOCIO - 'RICH RICHARD' - Prod. Veeyam.opus
+1255:ytmusic/SOCIO x ZICA - 'GETTING BACK' Prod. MISTERWEED (24).opus
+1256:ytmusic/SOJA - Rest of My Life (Official Video).opus
+1257:ytmusic/Somos mas - Faqq, Nucleo, Rayo y Acru (Prod. Alcazone).opus
+1258:ytmusic/Son Luka - Yo mate a Klan - ft el jardin.opus
+1259:ytmusic/Sota, Caballo y Yo.opus
+1260:ytmusic/Speaker Knockerz - Lonely (Official Video) Shot By @LoudVisuals.opus
+1261:ytmusic/Spidah Sick of it 'MGK Diss'.opus
+1262:ytmusic/Sr. Cobranza.m4a
+1263:ytmusic/Street Hustle - Fak (Film by Magma).opus
+1264:ytmusic/STUART - DEFECTOS ESCONDIDOS (videoOficial).opus
+1265:ytmusic/STUART — SI LA CASA SE QUEMA [VideoOficial].opus
+1266:ytmusic/SUENA - NIKONE  [2013].opus
+1267:ytmusic/T&K  - 1993 _ Full Album.opus
+1268:ytmusic/t&k  - Kool (ft Fazzini ) Prod by koolsouth.opus
+1269:ytmusic/T&K _ C.R.E.M.A _ Writing Classics _ VIDEO OFICIAL.opus
+1270:ytmusic/T&K - 23 (Prod.By.LaTorreDelMilenio VideoOficial).opus
+1271:ytmusic/T&K - El Libro Negro _ Full Album (Prod.By.LaTorreDelMilenio).opus
+1272:ytmusic/T&K - ESTOY FUERA (ELLIBRONEGRO).opus
+1273:ytmusic/T&K - Habrá.opus
+1274:ytmusic/T&K - ILL MATI.opus
+1275:ytmusic/t&k - Listo (ft Socio) Prod Uzl.opus
+1276:ytmusic/t&k - Race (Prod Uzl).opus
+1277:ytmusic/T&K - Respect ft JKN (Prod by 3Kids) (Film by Calavera Producciones).opus
+1278:ytmusic/T&K - Todo Irá Mejor (Prod C.Spaulding) 2019.opus
+1279:ytmusic/T&K - Voyagers.opus
+1280:ytmusic/T&K - ZEBALLOS.opus
+1281:ytmusic/T&K & Franky Style - Chilling (by @chinojones) _ ALL-IN #1.opus
+1282:ytmusic/t&k Writing Classics 2014 Full Album.opus
+1283:ytmusic/TASH SULTANA - JUNGLE (LIVE BEDROOM RECORDING).opus
+1284:ytmusic/Tata - Face to Face - [Session 30].m4a
+1285:ytmusic/TE LO ADVERTI - ZEBALLOS (PROD BY. MILI MILANSS) [ASIMETRÍA].opus
+1286:ytmusic/Teoría de la Vida - Pipe(Efe é).opus
+1287:ytmusic/THE CHOPPED ft. RENNA _ Verano del '17 _ Buenos Muchachos.opus
+1288:ytmusic/The Offspring - 'Self Esteem'.opus
+1289:ytmusic/The Rolling Stones - Paint It, Black (Official Lyric Video).m4a
+1290:ytmusic/The World Is Saved - Gamer Music Video.opus
+1291:ytmusic/Todo Irá Mejor.opus
+1292:ytmusic/TORTUZL ft Jesi B. _   AMOR Y RESPETO _ Lanzallamas Oriental _ Video Oficial.opus
+1293:ytmusic/Tote King - Merece la pena. (LETRA).opus
+1294:ytmusic/Toteking - Bartleby & Co. (Video Oficial).opus
+1295:ytmusic/Toteking - Carne Picá.opus
+1296:ytmusic/Toteking - Dos Días feat. Kaze (Prod. Stash House).opus
+1297:ytmusic/Toteking - El Premio Pa Ti (Video Oficial) ft. El Canijo de Jerez, Maria Luna.opus
+1298:ytmusic/Toteking - Libera el Estrés.opus
+1299:ytmusic/Toteking - Mi Colega (Audio).opus
+1300:ytmusic/Toteking - Mira Cómo Tiemblan (Prod. El Arkeólogo).opus
+1301:ytmusic/ToteKing - Sota, Caballo y Yo. (Prod. Acción Sánchez).opus
+1302:ytmusic/Toteking - Veneno (Prod. Stash House).opus
+1303:ytmusic/ToteKing - Ya me ven (Prod. Martello Sousa).opus
+1304:ytmusic/Toteking & Easy-S - Brindis (Prod. Stash House).opus
+1305:ytmusic/Toteking, Dheformer - Escupiéndolo (Prod. Drama Theme) (Videoclip).opus
+1306:ytmusic/TRAIGAN FERNET - Los Pugliese.opus
+1307:ytmusic/TRANKI FIUCHER X NERO (PROD NERO).opus
+1308:ytmusic/TRUCO O CAMBIO - ZEBALLOS (PROD. MILI MILANSS) [ASIMETRÍA].opus
+1309:ytmusic/Trueno - 4AM (Film by @laiomz).opus
+1310:ytmusic/Tuyo siempre (En directo 2005).opus
+1311:ytmusic/Un Deseo.opus
+1312:ytmusic/UN PÁJARO UNA GUERRA _ ELHOMBREVIENTO feat. CARLES CASELLES.opus
+1313:ytmusic/Una Carta.opus
+1314:ytmusic/Una Mirada.opus
+1315:ytmusic/Unaccommodating.opus
+1316:ytmusic/Underdann - Nunca me Rendí (Video Oficial).opus
+1317:ytmusic/UnderMc - Todo Lo Que Tengo (ft.Frane & Miloo Beatbox).opus
+1318:ytmusic/UnderMc - Voy Suelto (ft.Fianru).opus
+1319:ytmusic/Urbanse _ C.R.U.D.O _ Rap sin Apellido _ Video Oficial 2014.opus
+1320:ytmusic/URBANSE ' Nada que perder ' _ Video Oficial.opus
+1321:ytmusic/Urbanse & Dj Destroy _ Buenosaifers #OSCUROYSUCIO.m4a
+1322:ytmusic/Urbanse & Uzetaele - 02. Prueba y Error (con Dj Destroy).opus
+1323:ytmusic/Urbanse & Uzetaele - 07. Mi Gente (con T&K y Dj Destroy).opus
+1324:ytmusic/Urbanse & UZL _ Identidad (con Ali aka Mind & Dj Destroy).opus
+1325:ytmusic/Urbanse & Veeyam _ MAS NAH.opus
+1326:ytmusic/Urbanse & Veeyam _ TIEMPO.opus
+1327:ytmusic/Urbanse aka Subversivo - No Pares (Video Clip) _ Puño Arriba (2012).opus
+1328:ytmusic/URBIO -  ill mati x @Mir Nicolás  ( Prod Dabe) Film by  - @Chino Jones.opus
+1329:ytmusic/Usher - Yeah! (Official Music Video) ft. Lil Jon, Ludacris.opus
+1330:ytmusic/VACACIONES EN LA CALLE  _ Verano del '17 _ Buenos Muchachos.opus
+1331:ytmusic/VARONER & IRIVRTE INTRODUCING 'SPECTACULAR RAPS'.opus
+1332:ytmusic/Ven Y Critícame.opus
+1333:ytmusic/Veneno Crew - Hijo del sol y la luna.opus
+1334:ytmusic/VENENO CREW 'MATAHAMBRE' 04 -FUMANCHU-.opus
+1335:ytmusic/Veneno Crew 4 Life.m4a
+1336:ytmusic/Verdades.opus
+1337:ytmusic/Verso Terso.opus
+1338:ytmusic/Vertical.opus
+1339:ytmusic/Vico C - Aquel Que Habia Muerto.m4a
+1340:ytmusic/Vico C - Y Boquete Pa' Tu Techo _ Video Oficial.opus
+1341:ytmusic/VILLERO - ONE SHIT Vol. 1 x (YTHS) Shot by S. Noble.opus
+1342:ytmusic/Violadores del Verso - Qué te importan todos los demás.opus
+1343:ytmusic/Wanline - Otro martes ￦.opus
+1344:ytmusic/WC (feat. Urbanese).opus
+1345:ytmusic/Weedy Paca.opus
+1346:ytmusic/Who Dat.opus
+1347:ytmusic/Woh!!.opus
+1348:ytmusic/Wolty - Disfrutar.opus
+1349:ytmusic/Wolty - Martes 13 (Shot By Belascuen) prod.Galaxy.opus
+1350:ytmusic/Wolty - Miercoles 14 (Shot By Belascuen) prod.Fimrecords.opus
+1351:ytmusic/Wolty - Nadie entiende.opus
+1352:ytmusic/Wolty - No me culpes.opus
+1353:ytmusic/Wolty - Por Amor (Shot By Belascuen) prod.Galaxy.opus
+1354:ytmusic/Wolty - Por vos.opus
+1355:ytmusic/WOLTY - Q.E.P.D (Shot by Belascuen).opus
+1356:ytmusic/Wolty - Vuela [Shot by Ballve].opus
+1357:ytmusic/Wolty - Zona Zeta.opus
+1358:ytmusic/Wolty & Kenzo - Confianza.opus
+1359:ytmusic/Wolty & Kenzo - Wake Up (SelFilms).opus
+1360:ytmusic/Wolty & Lfu - Tan solo trato.opus
+1361:ytmusic/Wolty ft Faqq- No nos culpen (Álamo-FacetoFace).opus
+1362:ytmusic/WOLTY vs COMPÁS -Liga Baazookaa-.opus
+1363:ytmusic/Wolty x Fiucher - Calambur.opus
+1364:ytmusic/Wolty x Fiucher x Naiky - Jueves 15 (By Biscarrita)Prod.Galaxy.opus
+1365:ytmusic/Wolty x Kenzo - Tigre de bengala (Prod. Galaxy Supreme Records).opus
+1366:ytmusic/WOS - CANGURO (Video Oficial).opus
+1367:ytmusic/WOS - NO VA A BAJAR.opus
+1368:ytmusic/WOS - PURPURA.mp3
+1369:ytmusic/WOS BANZAI - PROTOCOLO (Video Oficial).m4a
+1370:ytmusic/Wu-Tang Clan - Method Man.opus
+1371:ytmusic/XHELAZZ - LA SOLEDAD COMIENZA (CANAL BOA).opus
+1372:ytmusic/Ya no sé qué hacer conmigo.opus
+1373:ytmusic/Yaco -  FÉ DE ESCRITOR.opus
+1374:ytmusic/Yaco & MP - 'Let It Go'.opus
+1375:ytmusic/Yaco & Wolty - 'Polos'.opus
+1376:ytmusic/Yah Yah.m4a
+1377:ytmusic/YBN Cordae - RNP (feat. Anderson .Paak) [Official Lyric Video].opus
+1378:ytmusic/Yendo a la casa de Damián.opus
+1379:ytmusic/Yo Soy.opus
+1380:ytmusic/Yo.Soy.Rey - Fumando Con Marciano (Video Lyric) Rap Protesta Vol.1.opus
+1381:ytmusic/You Don't Know.opus
+1382:ytmusic/ZEBALLOS x FRANUX BB - SANTA LUCÍA (prod by Fosse).opus
+1383:ytmusic/ZEVEX _ T&K _ LIFE.opus
+1384:ytmusic/ZICA - PLAYERS ft FRANE, FIANRU.opus
+1385:ytmusic/ZICA - THIS IS NOT COKE (Shot by iorch.rom).opus
+1386:ytmusic/Zombies- Violadores del Verso.opus
+1387:ytmusic/ZPU _ Papá Me Dijo (feat. Dante) (Video Oficial).opus
+1388:ytmusic/Urbanse & Veeyam _ BUSKA.opus
+1389:ytmusic/RONPE 99' - Cambia Todo [Letra].opus
+1390:ytmusic/Ultimatum (feat. Latriple & Flaco Vazquez).opus
+1391:ytmusic/ACRU - DHARMA (Video Oficial).m4a
+1392:ytmusic/FIANRU - El Que Rompe, Paga (Official Video).m4a
+1393:ytmusic/Wolty x Kenzo - Gangster (Album 3 A.M ) 1_7.m4a
+1394:ytmusic/Bizarrap, Trueno, Acru - Jugador del Año (Lyric Video).opus
+1395:ytmusic/Homer el Mero Mero, C-Kan, Lil Troca - Madrugada (VIDEO OFICIAL).opus
+1396:ytmusic/Granuja & Métricas Frías Feat T&K - Piedras.opus
+1397:ytmusic/24_siempre - Socio - Cypher.m4a
+1398:ytmusic/JULI GIULIANI feat. NICO & GHOSTPELL - WE THE NEXT [PROD. JAY LOOP$ & LAY LO] (Videoclip).m4a
+1399:ytmusic/ACRU _ THROW UP SESSION _ Vol.3.opus
+1400:ytmusic/Voyager (Love Session).opus
+1401:ytmusic/FOYONE - FXCK NPO.opus
 playlist_end
