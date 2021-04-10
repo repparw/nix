@@ -5,7 +5,7 @@
 		alias f='fzf'
 
 	# task mpv
-		alias tmpv='tsp mpv '
+		alias qmpv='nq -c mpv '
 
 	# Open archivebox
 		alias openbox='cd ~/archivebox; archivebox server & sleep 5 && firefox 127.0.0.1:8000; fg'
@@ -117,3 +117,6 @@
 		alias ytf="env YTFZF_ENABLE_FZF_DEFAULT_OPTS=1 YTFZF_PLAYER='nq -c mpv' ytfzf"
 
 		alias yta="youtube-dl -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
+
+	# temp alias
+		alias temp="watch -n 2 sensors"
