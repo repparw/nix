@@ -120,3 +120,6 @@
 
 	# temp alias
 		alias temp="watch -n 2 sensors"
+
+	# PhoenixMiner
+	    alias mine="cd ~/Downloads/PhoenixMiner_5.5c_Linux && ./PhoenixMiner -clKernel 0 -pool ssl://eu1.ethermine.org:5555 -pool2 ssl://asia1.ethermine.org:5555 -wal 0xce9b83b7e09901fc7289ca74d17669f9d26269ec.1 -proto 2 -acm -cclock 1150 -cvddc 850 -mvddc 900 -mclock 2100 -prate 0.02"
