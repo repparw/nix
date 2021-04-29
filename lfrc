@@ -90,3 +90,10 @@ cmd zip ${{
     zip -r $1.zip $1
     rm -rf $1
 }}
+
+# Bulk rename
+cmd bulk ${{
+	set -f
+	echo $fx | sed 's/ /\n/g' | tee ~/.cache/scripts/bulkold > ~/.cache/scripts/bulknew
+	nvim ~/.cache/scripts/bulknew && sh ~/.config/scripts/bulk
+}}
