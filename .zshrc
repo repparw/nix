@@ -1,5 +1,5 @@
 # Add local path
-PATH=/home/repparw/.local/bin:$PATH
+PATH=$(go env GOPATH)/bin:/home/repparw/.local/bin:$PATH
 
 ## Default editor to nvim
 	export EDITOR='nvim'
@@ -17,9 +17,9 @@ if [ -f "$LFCD" ]; then
 fi
 
 # Change Spell Correction Prompt
-export SPROMPT="Correct $fg[red]%R$reset_color to $fg[green]%r$reset_color?
+#export SPROMPT="Correct $fg[red]%R$reset_color to $fg[green]%r$reset_color?
 
- [Yes, No, Abort, Edit] "
+# [Yes, No, Abort, Edit] "
 
 # Path to your oh-my-zsh installation.
 export ZSH="/home/repparw/.oh-my-zsh"
@@ -62,7 +62,7 @@ ZSH_THEME="dstufft-time"
 # DISABLE_AUTO_TITLE="true"
 
 # Uncomment the following line to enable command auto-correction.
- ENABLE_CORRECTION="true"
+# ENABLE_CORRECTION="true"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
 # COMPLETION_WAITING_DOTS="true"
