@@ -42,14 +42,16 @@ Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 Plug 'sbdchd/neoformat'
 Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
 Plug 'Luxed/ayu-vim'
 call plug#end()
+
+let g:airline_powerline_fonts = 1
 
 set termguicolors
 
 set background=dark
 
-colorscheme ayu
+colorscheme gruvbox
+
 set tabstop=4
 set shiftwidth=2
