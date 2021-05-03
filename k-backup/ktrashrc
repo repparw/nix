@@ -1,0 +1,13 @@
+[/home/repparw/.local/share/Trash]
+Days=7
+LimitReachedAction=1
+Percent=4
+UseSizeLimit=true
+UseTimeLimit=true
+
+[/run/media/repparw/HDD/.Trash-1000]
+Days=7
+LimitReachedAction=1
+Percent=5
+UseSizeLimit=true
+UseTimeLimit=false

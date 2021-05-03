@@ -1,0 +1,11 @@
+[Favorites-org.kde.plasma.kickoff.favorites.instance-29-c2f7948f-cf52-46ec-9b7e-c825ba193393]
+ordering=preferred://browser,org.kde.kontact.desktop,kontact.desktop,systemsettings.desktop,org.kde.dolphin.desktop,org.kde.ktpcontactlist.desktop,ktpcontactlist.desktop,org.kde.kate.desktop,kate.desktop,org.kde.konsole.desktop,org.kde.apper.desktop,apper.desktop,org.kde.discover.desktop
+
+[Favorites-org.kde.plasma.kickoff.favorites.instance-29-global]
+ordering=preferred://browser,org.kde.kontact.desktop,kontact.desktop,systemsettings.desktop,org.kde.dolphin.desktop,org.kde.ktpcontactlist.desktop,ktpcontactlist.desktop,org.kde.kate.desktop,kate.desktop,org.kde.konsole.desktop,org.kde.apper.desktop,apper.desktop,org.kde.discover.desktop
+
+[Favorites-org.kde.plasma.kickoff.favorites.instance-3-c2f7948f-cf52-46ec-9b7e-c825ba193393]
+ordering=preferred://browser,applications:systemsettings.desktop,applications:org.kde.dolphin.desktop,applications:Alacritty.desktop,applications:Electrum.desktop,applications:Pomotroid.desktop,applications:net.lutris.Lutris.desktop,applications:VNC.desktop,applications:io.freetubeapp.FreeTube.desktop
+
+[Favorites-org.kde.plasma.kickoff.favorites.instance-3-global]
+ordering=preferred://browser,applications:systemsettings.desktop,applications:org.kde.dolphin.desktop,applications:Alacritty.desktop,applications:Electrum.desktop,applications:Pomotroid.desktop,applications:net.lutris.Lutris.desktop,applications:VNC.desktop,applications:io.freetubeapp.FreeTube.desktop

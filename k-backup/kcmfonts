@@ -1,0 +1,4 @@
+[General]
+dontChangeAASettings=true
+forceFontDPI=0
+forceFontDPIWayland=0

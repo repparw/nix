@@ -1,0 +1,4 @@
+[TimeZones]
+LocalZone=America/Argentina/Buenos_Aires
+ZoneinfoDir=/usr/share/zoneinfo
+Zonetab=/usr/share/zoneinfo/zone.tab

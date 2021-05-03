@@ -1,0 +1,11 @@
+[Show]
+KGetDownload=false
+decrypt-view=true
+encrypt=false
+installFont=true
+kactivitymanagerd_fileitem_linking_plugin=true
+openTerminalHere=true
+runInKonsole=true
+sharefileitemaction=true
+slideshow=true
+tagsfileitemaction=false

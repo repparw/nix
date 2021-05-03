@@ -1,0 +1,110 @@
+[$Version]
+update_info=kwinrules.upd:replace-placement-string-to-enum
+
+[1]
+Description=Application settings for mpv
+clientmachinematch=0
+fsplevel=3
+fsplevelrule=2
+position=960,0
+positionrule=3
+wmclass=gl mpv
+wmclasscomplete=true
+wmclassmatch=1
+
+[2]
+Description=Application settings for genymotion player
+clientmachinematch=0
+noborder=true
+noborderrule=3
+position=1282,0
+positionrule=3
+size=638,1050
+sizerule=3
+wmclass=player genymotion player
+wmclasscomplete=true
+wmclassmatch=1
+
+[3]
+Description=Application settings for steam_app_374320
+aboverule=2
+clientmachinematch=0
+wmclass=darksoulsiii.exe steam_app_374320
+wmclasscomplete=true
+wmclassmatch=1
+
+[4]
+Description=Window settings for mpv
+above=true
+aboverule=3
+title=video0 - mpv
+titlematch=1
+types=1
+wmclass=gl mpv
+wmclasscomplete=true
+wmclassmatch=1
+
+[5]
+Description=Application settings for steam_app_238960
+clientmachine=localhost
+noborder=true
+noborderrule=3
+wmclass=steam_app_238960
+wmclassmatch=1
+
+[6]
+Description=Window settings for steam_app_238960
+clientmachine=localhost
+noborder=true
+noborderrule=3
+title=Path of Exile
+titlematch=1
+types=1
+wmclass=steam_app_238960
+wmclassmatch=1
+
+[7]
+Description=Window settings for steam_app_238960
+clientmachine=localhost
+noborder=true
+noborderrule=3
+title=Path of Exile
+types=1
+wmclass=pathofexile_x64steam.exe steam_app_238960
+wmclasscomplete=true
+wmclassmatch=1
+
+[8]
+Description=Window settings for mpv
+position=1066,0
+positionrule=3
+title=The 22 Meme Shrapnell Ballista Build - mpv
+titlematch=1
+types=1
+wmclass=mpv
+wmclassmatch=1
+
+[9]
+Description=Window settings for alacritty
+noborder=true
+noborderrule=2
+types=1
+wmclass=alacritty
+wmclassmatch=1
+
+[General]
+ColorScheme[$d]
+count=9
+fixed[$d]
+font[$d]
+menuFont[$d]
+smallestReadableFont[$d]
+toolBarFont[$d]
+widgetStyle[$d]
+
+[Icons]
+Theme[$d]
+
+[KDE]
+ColorScheme[$d]
+widgetStyle[$d]

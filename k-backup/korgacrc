@@ -1,0 +1,13 @@
+[Alarms]
+CalendarsLastChecked=2021,3,9,1,47,50.499
+
+[General]
+Autostart=true
+DefaultSuspendUnit=0
+DefaultSuspendValue=5
+Enabled=true
+Position=57,283
+Reminders=0
+Size=840,617
+SuspendUnit=0
+SuspendValue=1
