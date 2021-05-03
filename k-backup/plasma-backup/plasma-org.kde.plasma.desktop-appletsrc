@@ -30,7 +30,7 @@ locked=true
 
 [Containments][1][Wallpaper][org.kde.image][General]
 FillMode=6
-Image=/home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg
+Image=file:///home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg
 SlidePaths=/home/repparw/.local/share/wallpapers,/usr/share/wallpapers
 
 [Containments][2]
