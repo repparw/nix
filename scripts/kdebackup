@@ -1,0 +1,4 @@
+#!/bin/sh
+cd ~/.config/
+rsync -aq kaccessrc kactivitymanagerd-statsrc kactivitymanagerdrc kateschemarc katesyntaxhighlightingrc katevirc kcalcrc kcmfonts kcminputrc kcmshell5rc kconf_updaterc kde.org kdeconnect kdeconnect.apprc kded5rc kdeglobals keditfiletyperc kfontinstuirc kfontviewrc kgetrc kglobalshortcutsrc khotkeysrc kinfocenterrc kio_ftprc kioclientrc kiorc kioslaverc klipperrc kmail2rc kmailsearchindexingrc kmenueditrc kmixrc knfsshare konquerorrc konsolerc korgacrc korganizerrc krecentconnections krfbrc krunnerrc kscreenlockerrc kservicemenurc ksmserverrc ksplashrc ksysguardrc ktimezonedrc ktorrent_infowidgetrc ktorrentrc ktrashrc kwalletrc kwin_dialogsrc kwin_rules_dialogrc kwinrc kwinrulesrc kwriterc kxkbrc k-backup
+rsync -aq plasma* k-backup/plasma-backup
