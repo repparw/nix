@@ -176,7 +176,7 @@ immutability=1
 plugin=org.kde.plasma.devicenotifier
 
 [Containments][7][Applets][12][Configuration]
-PreloadWeight=5
+PreloadWeight=10
 
 [Containments][7][Applets][13]
 immutability=1
@@ -194,7 +194,7 @@ immutability=1
 plugin=org.kde.plasma.nightcolorcontrol
 
 [Containments][7][Applets][14][Configuration]
-PreloadWeight=75
+PreloadWeight=85
 
 [Containments][7][Applets][14][Shortcuts]
 global=Meta+R
@@ -240,7 +240,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][7][Applets][19][Configuration]
-PreloadWeight=15
+PreloadWeight=49
 
 [Containments][7][Applets][20]
 immutability=1
