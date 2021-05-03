@@ -1,0 +1,15 @@
+State=AAAA/wAAAAD9AAAAAAAAAoAAAAGtAAAABAAAAAQAAAAIAAAACPwAAAAA
+
+[FrameBuffer]
+preferredFrameBufferPlugin=pw
+
+[MainWindow]
+State=AAAA/wAAAAD9AAAAAAAAAoAAAAGtAAAABAAAAAQAAAAIAAAACPwAAAAA
+ToolBarsMovable=Disabled
+
+[Security]
+allowUnattendedAccess=true
+
+[TCP]
+port=5899
+useDefaultPort=false

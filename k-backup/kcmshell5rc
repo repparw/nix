@@ -1,0 +1,18 @@
+[KFileDialog Settings]
+Recent Files[$e]=Joplin.AppImage,file:$HOME/git/desktopconfig/KDECustomShortcuts,file:$HOME/Pictures/bg/who/tardis2.jpg,file:$HOME/.joplin/Joplin.AppImage
+Recent URLs[$e]=file:$HOME/git/desktopconfig/
+detailViewIconSize=0
+
+[KPropertiesDialog]
+Height 1080=444
+Width 1920=433
+
+[Notification Messages]
+FormatSettingsChanged=false
+
+[Open-with settings]
+CompletionMode=1
+History=firef,alacr
+
+[PlasmaRunnerManager]
+LaunchCounts=

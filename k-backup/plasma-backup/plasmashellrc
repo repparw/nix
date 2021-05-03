@@ -1,0 +1,61 @@
+[ActionsWidget]
+ColumnState=AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAekAAAACAQAAAQAAAAAAAAAAAAAAAGT/////AAAAgQAAAAAAAAACAAAA+gAAAAEAAAAAAAAA7wAAAAEAAAAAAAAD6AAAAABk
+
+[ConfigDialog]
+Height 1080=489
+Width 1920=623
+
+[DownloadDialog Settings]
+Height 1080=477
+Width 1920=700
+
+[General]
+Number of Actions=0
+
+[KFileDialog Settings]
+Recent Files[$e]=tardisblack.jpg,file:$HOME/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg,https://docs.google.com/document/d/1AF7MP1ljcSj9RKIbzSWnT5_V5qT5_aniWGbtN0aypdQ/edit,https://www.reddit.com/r/Ultralight/comments/mmqeb4/i_dont_know_what_i_dont_know_about_hiking_in_the,https://justbrightideas.com/altoid-tin-crafts,https://chat.whatsapp.com/EtN4DVfBnWY3w2ERWaaopU,https://www.notboring.co/p/excel-never-dies,file:$HOME/.AppImages/.kindle.png,file:$HOME/.Genymobile/Genymotion/genymotion/icons/icon.png,file:$HOME/.Genymobile/Genymotion/genymotion/genymotion,file:$HOME/Pictures/bg/fedowa4k.png,file:$HOME/Pictures/bg/gnu-bg2.png,file:$HOME/.AppImages/.electrum.ico,file:$HOME/Pictures/bg/gnu-bg.png,https://youtu.be/sKWFx0QAW2w Otra vez estreno del loco hermoso este,https://www.youtube.com/watch?v=bUezAbQijLs O este (? wipi wipi dirias vos
+Recent URLs[$e]=file:///opt/,https://youtu.be/,file:$HOME/Pictures/bg/,file:$HOME/Pictures/,file:$HOME/.AppImages/,file:$HOME/,file:$HOME/Documents/,file:$HOME/.Genymobile/Genymotion/genymotion/,file:$HOME/.Genymobile/Genymotion/genymotion/icons/
+detailViewIconSize=16
+
+[KPropertiesDialog]
+DisplayPort-1 Height 1080=446
+DisplayPort-1 Height 1920x1080=446
+DisplayPort-1 Width 1920=433
+DisplayPort-1 Width 1920x1080=433
+Height 1080=444
+Width 1920=425
+
+[Notification Messages]
+really_clear_history=true
+
+[PlasmaRunnerManager]
+LaunchCounts=1 services_applications:deluge.desktop,6 services_applications:net.lutris.Lutris.desktop,2 services_signal-desktop.desktop,4 services_chromium-browser.desktop,2 services_systemsettings.desktop,4 services_applications:genymobile-genymotion.desktop,2 services_standard_actions.desktop,4 services_steam.desktop,2 services_freetube.desktop,1 services_applications:binance.desktop,1 services_applications:org.kde.dolphin.desktop,1 services_applications:darktable.desktop,1 services_applications:system-config-language.desktop,1 services_applications:autostart.desktop,1 services_wine-Programs-Path of Building Community.desktop,1 services_applications:kcm_desktoptheme.desktop,1 services_applications:Freezer.desktop,1 services_applications:code.desktop,3 services_applications:kde4-qalculate_kde.desktop,5 services_applications:kcm_kscreen.desktop,1 services_applications:kcm_ssl.desktop,1 services_kwincompositing.desktop,8 services_khotkeys.desktop,1 services_applications:Path of Building.desktop,1 shell_klipper,1 services_applications:kcm_keys.desktop,4 services_applications:khotkeys.desktop,23 services_applications:steam.desktop,15 services_keys.desktop,2 services_applications:telegramdesktop.desktop,2 services_applications:kwincompositing.desktop,1 services_kwintabbox.desktop,1 services_Awakened-3.desktop,4 services_kde4-qalculate_kde.desktop,1 services_applications:powerdevilactivitiesconfig.desktop,1 services_applications:signal-desktop.desktop,1 services_anki.desktop,2 services_applications:Kindle.desktop,1 services_applications:io.freetubeapp.FreeTube.desktop,6 services_applications:discord.desktop,1 services_applications:kamera.desktop,3 services_applications:Awakened.desktop,1 services_applications:org.kde.ksysguard.desktop,2 services_appimagekit-joplin.desktop,1 services_applications:Electrum.desktop,1 services_applications:kcm_colors.desktop
+pluginWhiteList=desktopsessions,services,places,PowerDevil,calculator,unitconverter,shell,bookmarks,recentdocuments,locations,baloosearch
+
+[PlasmaTransientsConfig]
+PreloadWeight=42
+
+[PlasmaViews][Panel 2][Defaults]
+thickness=30
+
+[PlasmaViews][Panel 2][Horizontal1920]
+thickness=30
+
+[PlasmaViews][Panel 28][Defaults]
+thickness=36
+
+[PlasmaViews][Panel 28][Horizontal1920]
+thickness=36
+
+[PlasmaViews][Panel 47][Defaults]
+thickness=36
+
+[PlasmaViews][Panel 47][Vertical1080]
+thickness=36
+
+[ScreenConnectors]
+0=DisplayPort-1
+1=:0.0
+
+[Updates]
+performed=/usr/share/plasma/s

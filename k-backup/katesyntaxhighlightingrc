@@ -1,0 +1,50 @@
+[Default Item Styles - Schema Breeze Dark]
+Error=ffda4453,ffda4453,0,,,1,-,-,,---
+
+[Default Item Styles - Schema Normal]
+Error=ffbf0303,ff9c0e0e,,0,,1,-,-,,---
+
+[Highlighting None - Schema Breeze Dark]
+None:Normal=0,,,,,,,,,,---
+
+[Highlighting None - Schema Normal]
+None:Normal=0,,,,,,,,,,---
+
+[Highlighting YAML - Schema Normal]
+Alerts:Alert Level 1=28,ffe85848,ffe85848,,,,,ff451e1a,ff000000,,---
+Alerts:Alert Level 2=28,ffca9219,ffca9219,,,,,ff451e1a,ff000000,,---
+Alerts:Alert Level 3=28,ff81ca2d,ff81ca2d,,,,,fff7e6e6,ff000000,,---
+Alerts:Normal Text=0,,,,,,,,,,---
+Alerts:Region Marker=25,ff0057ae,ff00316e,,,,,ffe0e9f8,ff000000,,---
+Modelines:Comment=21,ff898887,ff5e5d5d,,,,,,,,---
+Modelines:Keyword=23,ffca60ca,ffa44ea4,,,,,,,,---
+Modelines:Number=17,ffb08000,ff805c00,,,,,,,,---
+Modelines:Option OFF=29,ff006e28,ff006e28,,,,,,,,---
+Modelines:Option ON=29,ff006e28,ff006e28,,,,,,,,---
+Modelines:String=12,ffbf0303,ff9c0e0e,,,,,,,,---
+Modelines:Value=29,ff006e28,ff006e28,,,,,,,,---
+Modelines:Variable=24,ff0095ff,ffffffff,,,,,,,,---
+YAML:Alert=28,ffbf0303,ff9c0e0e,,,,,ffef9a9a,ff000000,,---
+YAML:Alias=29,ff006e28,ff006e28,,,,,,,,---
+YAML:Attribute=9,ff0057ae,ff00316e,,,,,,,,---
+YAML:Boolean=10,ff924c9d,ff6c2477,,,,,,,,---
+YAML:Comment=21,ff898887,ff5e5d5d,,,,,,,,---
+YAML:Data Types=29,ff006e28,ff006e28,,,,,,,,---
+YAML:Directive=8,ff006e28,ff006e28,,,,,,,,---
+YAML:Document Header=8,ff006e28,ff006e28,,,,,,,,---
+YAML:End of Document=21,ff898887,ff5e5d5d,,,,,,,,---
+YAML:Error=30,ffbf0303,ff9c0e0e,,,,,,,,---
+YAML:Escaped Character=11,ff3daee9,fffcfcfc,,,,,,,,---
+YAML:Float=19,ffb08000,ff805c00,,,,,,,,---
+YAML:Hash=9,ff0057ae,ff00316e,,,,,,,,---
+YAML:Integer=17,ffb08000,ff805c00,,,,,,,,---
+YAML:Key=2,ff644a9b,ff452886,1,,,,,,,---
+YAML:Key Points Operator=1,,,,,,,,,,---
+YAML:List=9,ff0057ae,ff00316e,,,,,,,,---
+YAML:Literal/Folded Block=0,,,,,,,,,,---
+YAML:Literal/Folded Operator=10,ff924c9d,ff6c2477,1,,,,,,,---
+YAML:Normal Text=9,ff0057ae,ff00316e,,,,,,,,---
+YAML:Null=10,ff924c9d,ff6c2477,,,,,,,,---
+YAML:Operator=1,,,,,,,,,,---
+YAML:Reference=29,ff006e28,ff006e28,,,,,,,,---
+YAML:String=12,ffbf0303,ff9c0e0e,,,,,,,,---

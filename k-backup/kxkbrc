@@ -1,0 +1,13 @@
+[Layout]
+DisplayNames=lat
+LayoutList=latam
+LayoutLoopCount=-1
+Model=pc101
+Options=caps:escape,shift:both_capslock_cancel
+ResetOldOptions=true
+ShowFlag=false
+ShowLabel=true
+ShowLayoutIndicator=true
+ShowSingle=false
+SwitchMode=Global
+Use=true
