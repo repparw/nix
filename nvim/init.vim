@@ -42,10 +42,19 @@ Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 Plug 'sbdchd/neoformat'
 Plug 'vim-airline/vim-airline'
-Plug 'Luxed/ayu-vim'
+" Autocomplete engine and python plugin
+Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+Plug 'zchee/deoplete-jedi'
+" Auto-pair for brackets and quotes
+Plug 'jiangmiao/auto-pairs'
 call plug#end()
 
 let g:airline_powerline_fonts = 1
+
+let g:deoplete#enable_at_startup = 1
+
+inoremap <expr><tab> pumvisible() ? "\<c-n>" : "\<tab>"
+inoremap <expr><s-tab> pumvisible() ? "\<c-p>" : "<s-tab>"
 
 set termguicolors
 
