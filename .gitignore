@@ -1,6 +1,6 @@
 cli-history.txt
-mpd.log
-mpdstate	
-mpd.db
-mpd.pid
+mpd/mpd.log
+mpd/mpdstate	
+mpd/mpd.db
+mpd/mpd.pid
 history.*
