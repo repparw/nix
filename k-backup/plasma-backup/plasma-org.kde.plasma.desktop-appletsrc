@@ -257,7 +257,7 @@ immutability=1
 plugin=org.kde.plasma.weather
 
 [Containments][7][Applets][22][Configuration]
-PreloadWeight=85
+PreloadWeight=90
 showHumidityInTooltip=false
 showPressureInTooltip=false
 showTemperatureInCompactMode=false
