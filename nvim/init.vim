@@ -47,6 +47,8 @@ Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 Plug 'zchee/deoplete-jedi'
 " Auto-pair for brackets and quotes
 Plug 'jiangmiao/auto-pairs'
+" Tree file explorer
+Plug 'preservim/nerdtree'
 call plug#end()
 
 let g:airline_powerline_fonts = 1

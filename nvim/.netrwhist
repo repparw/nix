@@ -1,5 +1,6 @@
 let g:netrw_dirhistmax  =10
-let g:netrw_dirhistcnt =7
+let g:netrw_dirhistcnt =8
+let g:netrw_dirhist_8='/home/repparw/.config/joplin'
 let g:netrw_dirhist_7='/home/repparw/git/grupo30/Mempy/src/handlers'
 let g:netrw_dirhist_6='/home/repparw/git/grupo30/Mempy/src/components'
 let g:netrw_dirhist_5='/home/repparw/git/grupo30/Mempy/src/windows'
@@ -9,4 +10,3 @@ let g:netrw_dirhist_2='/home/repparw/git/desktopconfig/.git'
 let g:netrw_dirhist_1='/home/repparw/git/desktopconfig/mpd'
 let g:netrw_dirhist_0='/home/repparw/git/desktopconfig/.git'
 let g:netrw_dirhist_9='/home/repparw/.config/joplin'
-let g:netrw_dirhist_8='/home/repparw/.config'
