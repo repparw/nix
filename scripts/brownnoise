@@ -1,0 +1,2 @@
+#!/bin/sh
+pkill -f anoisesrc || mpv --volume=18 av://lavfi:anoisesrc=color=brown
