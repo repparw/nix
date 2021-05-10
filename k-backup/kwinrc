@@ -53,7 +53,7 @@ CommandWindowWheel=Scroll
 Active=true
 LatitudeAuto=-34.9314
 LongitudeAuto=-57.9489
-NightTemperature=2800
+NightTemperature=2500
 
 [Plugins]
 grid-tilingEnabled=false
