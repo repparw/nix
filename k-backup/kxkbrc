@@ -1,13 +1,13 @@
 [Layout]
-DisplayNames=lat
-LayoutList=latam
+DisplayNames=,lat
+LayoutList=us,latam
 LayoutLoopCount=-1
 Model=pc101
-Options=caps:escape,shift:both_capslock_cancel
+Options=caps:escape,shift:both_capslock_cancel,grp:alt_space_toggle
 ResetOldOptions=true
 ShowFlag=false
 ShowLabel=true
-ShowLayoutIndicator=true
+ShowLayoutIndicator=false
 ShowSingle=false
 SwitchMode=Global
 Use=true
