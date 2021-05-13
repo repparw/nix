@@ -4,8 +4,8 @@ update_info=delete_cursor_old_default_size.upd:DeleteCursorOldDefaultSize
 [Keyboard]
 KeyboardRepeating=0
 NumLock=2
-RepeatDelay=600
-RepeatRate=25
+RepeatDelay=190
+RepeatRate=35
 
 [Mouse]
 cursorSize=24
