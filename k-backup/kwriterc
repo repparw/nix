@@ -103,7 +103,7 @@ Word Completion Minimal Word Length=3
 Word Completion Remove Tail=true
 
 [KTextEditor::Search]
-Search History=fps
+Search History=Starting plotting progress into temporary dirs: /mnt/nvme/tmp and /mnt/nvme/tmp,fps
 
 [MainWindow]
 DisplayPort-1 Height 1080=1016
@@ -115,7 +115,7 @@ DisplayPort-1 Width 1920x1080=960
 DisplayPort-1 XPosition=30
 DisplayPort-1 XPosition 1920x1080=172
 DisplayPort-1 YPosition=28
-DisplayPort-1 YPosition 1920x1080=194
+DisplayPort-1 YPosition 1920x1080=34
 Height 1080=1016
 State=AAAA/wAAAAD9AAAAAAAAA8AAAAO1AAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
 ToolBarsMovable=Disabled
@@ -126,7 +126,9 @@ File1[$e]=$HOME/.local/share/Steam/steamapps/common/PAYDAY 2/mods/base/base.lua
 File2[$e]=$HOME/.local/share/Steam/steamapps/common/PAYDAY 2/mods/base/mod.txt
 File3[$e]=https://cdn.discordapp.com/attachments/821541644557746185/828999743623004170/Ejercicio7.py
 File4[$e]=$HOME/.bash_history
+File5[$e]=$HOME/git/chia-blockchain/10plotsattmp.log
 Name1[$e]=base.lua
 Name2[$e]=mod.txt
 Name3[$e]=Ejercicio7.py
 Name4[$e]=.bash_history
+Name5[$e]=10plotsattmp.log
