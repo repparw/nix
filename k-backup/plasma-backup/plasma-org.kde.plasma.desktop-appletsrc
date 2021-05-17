@@ -114,11 +114,11 @@ DialogWidth=720
 clickCommand=echo "XRP: $(~/.config/scripts/xrp)"
 command=echo "XRP: $(~/.config/scripts/xrp)"
 fixedWidth=96
-interval=120000
+interval=60000
 outlineColor=#000000
 showOutline=true
 textAlign=4
-textColor=#689d6a
+textColor=#d79922
 useFixedWidth=true
 
 [Containments][2][Applets][58]

@@ -126,6 +126,7 @@ DirSelectDialog Size=814,596
 History Items[$e]=file:$HOME/Games/ZeldaBOTW,file:$HOME/.AppImages,file:$HOME/.AppImages,file:$HOME/bin,file:$HOME/Downloads/Torrents,file:$HOME/Downloads/Torrents,file:$HOME/Pictures/scr,file:$HOME/Pictures/scr,file:///run/media/repparw/HDD/Videos
 
 [General]
+BrowserApplication=firefox.desktop
 ColorScheme=GruvboxColors
 Name=Breeze Dark
 TerminalApplication=alacritty
