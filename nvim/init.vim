@@ -20,7 +20,7 @@ let mapleader="," " Leader key
 	nnoremap <silent> <leader>O :Files!<CR>
 	nnoremap <silent> <F1> :Helptags<CR>
 
-set relativenumber
+set number relativenumber
 
 augroup Fedora
   autocmd!
