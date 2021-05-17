@@ -1,0 +1,4 @@
+#!/bin/sh
+# String var
+price=$(curl -s -H "X-CMC_PRO_API_KEY: 470e84c6-b12f-4ff3-8338-6f2eb35c5b4c" -H "Accept: application/json" -d "convert=USD&id=52" -G https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest | python -c "import json, sys; print(json.load(sys.stdin)['data']['52']['quote']['USD']['price'])")
+echo "$price" | cut -c1-5

@@ -86,31 +86,6 @@ plugin=org.kde.plasma.pager
 [Containments][2][Applets][4][Configuration]
 PreloadWeight=0
 
-[Containments][2][Applets][50]
-immutability=1
-plugin=com.github.zren.commandoutput
-
-[Containments][2][Applets][50][Configuration]
-PreloadWeight=0
-
-[Containments][2][Applets][50][Configuration][ConfigDialog]
-DialogHeight=540
-DialogWidth=720
-
-[Containments][2][Applets][50][Configuration][General]
-clickCommand=mpc toggle
-command=sh /home/repparw/.config/scripts/currentsong
-fixedWidth=329
-fontFamily=Source Code Pro
-fontSize=15
-mousewheelDownCommand=mpc volume -2
-mousewheelUpCommand=mpc volume +2
-outlineColor=#111111
-showOutline=true
-textAlign=2
-textColor=#689c6a
-useFixedWidth=true
-
 [Containments][2][Applets][53]
 immutability=1
 plugin=org.kde.plasma.icontasks
@@ -126,6 +101,48 @@ DialogWidth=720
 launchers=
 middleClickAction=Close
 wheelEnabled=false
+
+[Containments][2][Applets][57]
+immutability=1
+plugin=com.github.zren.commandoutput
+
+[Containments][2][Applets][57][Configuration][ConfigDialog]
+DialogHeight=540
+DialogWidth=720
+
+[Containments][2][Applets][57][Configuration][General]
+clickCommand=echo "XRP: $(~/.config/scripts/xrp)"
+command=echo "XRP: $(~/.config/scripts/xrp)"
+fixedWidth=96
+interval=120000
+outlineColor=#000000
+showOutline=true
+textAlign=4
+textColor=#689d6a
+useFixedWidth=true
+
+[Containments][2][Applets][58]
+immutability=1
+plugin=com.github.zren.commandoutput
+
+[Containments][2][Applets][58][Configuration][ConfigDialog]
+DialogHeight=540
+DialogWidth=720
+
+[Containments][2][Applets][58][Configuration][General]
+command=~/.config/scripts/currentsong
+outlineColor=#000000
+showOutline=true
+textAlign=2
+textColor=#689d6a
+
+[Containments][2][Applets][59]
+immutability=1
+plugin=org.kde.plasma.panelspacer
+
+[Containments][2][Applets][59][Configuration][General]
+expanding=false
+length=20
 
 [Containments][2][Applets][6]
 immutability=1
@@ -143,7 +160,7 @@ DialogWidth=1920
 PreloadWeight=0
 
 [Containments][2][General]
-AppletOrder=3;4;53;50;6;26
+AppletOrder=3;4;53;57;59;58;6;26
 
 [Containments][7]
 activityId=
