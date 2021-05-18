@@ -25,7 +25,7 @@ PreloadWeight=0
 
 [Containments][1][General]
 ToolBoxButtonState=topcenter
-ToolBoxButtonX=606
+ToolBoxButtonX=614
 locked=true
 
 [Containments][1][Wallpaper][org.kde.image][General]
@@ -117,7 +117,7 @@ fixedWidth=96
 interval=60000
 outlineColor=#000000
 showOutline=true
-textAlign=4
+textAlign=2
 textColor=#d79922
 useFixedWidth=true
 
@@ -130,11 +130,14 @@ DialogHeight=540
 DialogWidth=720
 
 [Containments][2][Applets][58][Configuration][General]
+clickCommand=mpc toggle
 command=~/.config/scripts/currentsong
+mousewheelDownCommand=mpc volume -2
+mousewheelUpCommand=mpc volume +2
 outlineColor=#000000
 showOutline=true
 textAlign=2
-textColor=#689d6a
+textColor=#689d69
 
 [Containments][2][Applets][59]
 immutability=1
@@ -152,6 +155,33 @@ plugin=org.kde.plasma.systemtray
 PreloadWeight=100
 SystrayContainmentId=7
 
+[Containments][2][Applets][60]
+immutability=1
+plugin=com.github.zren.commandoutput
+
+[Containments][2][Applets][60][Configuration][ConfigDialog]
+DialogHeight=540
+DialogWidth=720
+
+[Containments][2][Applets][60][Configuration][General]
+clickCommand=echo "MATIC: $(~/.config/scripts/matic)"
+command=echo "MATIC: $(~/.config/scripts/matic)"
+fixedWidth=116
+interval=60000
+outlineColor=#000000
+showOutline=true
+textAlign=2
+textColor=#d79922
+useFixedWidth=true
+
+[Containments][2][Applets][61]
+immutability=1
+plugin=org.kde.plasma.panelspacer
+
+[Containments][2][Applets][61][Configuration][General]
+expanding=false
+length=6
+
 [Containments][2][ConfigDialog]
 DialogHeight=83
 DialogWidth=1920
@@ -160,7 +190,7 @@ DialogWidth=1920
 PreloadWeight=0
 
 [Containments][2][General]
-AppletOrder=3;4;53;57;59;58;6;26
+AppletOrder=3;4;53;60;61;57;59;58;6;26
 
 [Containments][7]
 activityId=
