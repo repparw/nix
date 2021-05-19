@@ -127,5 +127,5 @@
 ## Functions
 	# ytfzf + xclip for link
 	function ytl() {
-	  ytfzf -aL "$@" | xclip -sel clip
+	  ytfzf -aL "$@" | sed -e 's|^[^=]*=|https://youtu.be\/|g' | xclip -sel clip 
 	}
