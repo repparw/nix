@@ -367,6 +367,7 @@ activate widget 10=Meta+Shift+M,none,Activate Audio Volume Widget
 activate widget 14=Meta+R,none,Activate Night Colour Control Widget
 activate widget 3=,none,Activate Application Launcher Widget
 activate widget 53=none,none,Activate Icons-only Task Manager Widget
+activate widget 63=,none,Activate Application Launcher Widget
 clear-history=none,none,Clear Clipboard History
 clipboard_action=Ctrl+Alt+X,Ctrl+Alt+X,Enable Clipboard Actions
 cycleNextAction=none,none,Next History Item
