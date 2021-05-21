@@ -55,6 +55,12 @@ thickness=36
 [PlasmaViews][Panel 47][Vertical1080]
 thickness=36
 
+[PlasmaViews][Panel 62][Defaults]
+thickness=46
+
+[PlasmaViews][Panel 62][Horizontal1920]
+thickness=46
+
 [ScreenConnectors]
 0=DisplayPort-1
 1=:0.0

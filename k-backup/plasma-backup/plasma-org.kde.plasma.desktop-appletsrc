@@ -26,6 +26,7 @@ PreloadWeight=0
 [Containments][1][General]
 ToolBoxButtonState=topcenter
 ToolBoxButtonX=614
+ToolBoxButtonY=46
 locked=true
 
 [Containments][1][Wallpaper][org.kde.image][General]
@@ -112,7 +113,7 @@ DialogWidth=720
 
 [Containments][2][Applets][58][Configuration][General]
 clickCommand=mpc toggle
-command=~/.config/scripts/currentsong
+command=head -q -n1 ~/.local/share/currentsong
 mousewheelDownCommand=mpc volume -2
 mousewheelUpCommand=mpc volume +2
 outlineColor=#000000
