@@ -1,3 +1,6 @@
 #!/bin/sh
-mpc current | sed 's|^[^/ ]*/||g' | sed 's|([^)]*)||g' | sed 's/\[[^]]*\]//g' | sed 's/[ ]*\.[a-z0-9]*$//g'
-
+while :; do
+mpc current | sed 's|^[^/ ]*/||g' | sed 's|([^)]*)||g' | sed 's/\[[^]]*\]//g' | sed 's/[ ]*\.[a-z0-9]*$//g' | tee ~/.local/share/currentsong
+mpc current --wait >/dev/null
+wait;
+done &!
