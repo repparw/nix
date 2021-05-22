@@ -923,6 +923,10 @@ Theme[$d]
 ColorScheme[$d]
 widgetStyle[$d]
 
+[KDE Action Restrictions]
+action/start_new_session[$d]
+action/switch_user[$d]
+
 [Main]
 AlreadyImported=defaults,konsole,kde32b1,konqueror_gestures_kde321
 Disabled=false

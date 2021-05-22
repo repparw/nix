@@ -1,5 +1,5 @@
 [ActionPlugins][0]
-MidButton;NoModifier=org.kde.paste
+MiddleButton;NoModifier=org.kde.paste
 RightButton;NoModifier=org.kde.contextmenu
 wheel:Vertical;NoModifier=org.kde.switchdesktop
 
@@ -51,12 +51,14 @@ plugin=org.kde.plasma.digitalclock
 PreloadWeight=100
 
 [Containments][2][Applets][26][Configuration][Appearance]
-showDate=true
+customDateFormat=
+fontFamily=Noto Sans
+showDate=false
 use24hFormat=2
 
 [Containments][2][Applets][26][Configuration][ConfigDialog]
-DialogHeight=540
-DialogWidth=720
+DialogHeight=660
+DialogWidth=880
 
 [Containments][2][Applets][3]
 immutability=1
@@ -283,9 +285,9 @@ DialogWidth=720
 PreloadWeight=0
 
 [Containments][7][General]
-extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.pkupdates,org.kde.plasma.nightcolorcontrol,org.kde.plasma.keyboardindicator,org.kde.plasma.weather,onionshare-gui,org.kde.plasma.devicenotifier,ibus-ui-gtk3,KWin_kwin-virtual-keyboard,org.kde.plasma.notifications,org.kde.kdeconnect
+extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.nightcolorcontrol,org.kde.plasma.keyboardindicator,org.kde.plasma.weather,org.kde.plasma.devicenotifier,org.kde.plasma.notifications,org.kde.kdeconnect,org.kde.plasma.keyboardlayout
 hiddenItems=org.kde.plasma.networkmanagement,onionshare-gui,org.kde.plasma.devicenotifier,ibus-ui-gtk3,KWin_kwin-virtual-keyboard,org.kde.kdeconnect,org.kde.plasma.nightcolorcontrol
-knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.pkupdates,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.plasma.battery,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.kdeconnect
+knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.plasma.battery,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.kdeconnect,org.kde.plasma.keyboardlayout
 shownItems=org.kde.plasma.weather
 
 [ScreenMapping]
