@@ -3,7 +3,7 @@ audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
 state: pause
 current: 1284
-time: 176.895000
+time: 177.146000
 random: 1
 repeat: 1
 single: 0
