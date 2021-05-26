@@ -4,6 +4,9 @@ ShowBadges=false
 ShowInHistory=false
 ShowPopups=false
 
+[Applications][solaar]
+Seen=true
+
 [Badges]
 InTaskManager=false
 
