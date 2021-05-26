@@ -8,6 +8,7 @@ RepeatDelay=190
 RepeatRate=35
 
 [Mouse]
+XLbInptPointerAcceleration=-0.2
 cursorSize=24
 cursorTheme=oxy-neon-white
 
