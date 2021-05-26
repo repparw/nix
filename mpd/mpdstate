@@ -1,9 +1,9 @@
-sw_volume: 36
+sw_volume: 30
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
 state: pause
-current: 1046
-time: 172.319000
+current: 663
+time: 20.160000
 random: 1
 repeat: 1
 single: 0
@@ -879,10 +879,10 @@ playlist_begin
 864:ytmusic/Gitanas.opus
 865:ytmusic/Godzilla.opus
 866:ytmusic/GOLDEN BOYZ - L.P.M.D.H. [VIDEOCLIP].opus
-867:ytmusic/Gran Rah ft Jonas Sanche & Urbanse - Para Todas.opus
-868:ytmusic/Green A - Asesinos de la Creatividad.opus
-869:ytmusic/Green A - Exorcismo.opus
-870:ytmusic/GREEN VALLEY - Si No Te Tengo.opus
+867:ytmusic/Green A - Asesinos de la Creatividad.opus
+868:ytmusic/Green A - Exorcismo.opus
+869:ytmusic/GREEN VALLEY - Si No Te Tengo.opus
+870:ytmusic/Gran Rah ft Jonas Sanche & Urbanse - Para Todas.opus
 871:ytmusic/HABLANDO EN PLATA - EL CASTIGO DE LOS DEBILES.opus
 872:ytmusic/Habrá.opus
 873:ytmusic/HAMID - CALAMBUR PARTE II.opus
