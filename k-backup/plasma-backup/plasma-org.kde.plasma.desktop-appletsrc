@@ -7,6 +7,7 @@ wheel:Vertical;NoModifier=org.kde.switchdesktop
 RightButton;NoModifier=org.kde.contextmenu
 
 [Containments][1]
+ItemGeometries-1920x1080=
 ItemGeometriesHorizontal=
 activityId=c2f7948f-cf52-46ec-9b7e-c825ba193393
 formfactor=0
@@ -182,7 +183,7 @@ plugin=org.kde.plasma.keyboardindicator
 PreloadWeight=15
 
 [Containments][7][Applets][13][Configuration][ConfigDialog]
-DialogHeight=540
+DialogHeight=558
 DialogWidth=720
 
 [Containments][7][Applets][14]
@@ -276,6 +277,10 @@ PreloadWeight=25
 
 [Containments][7][Applets][54][Configuration]
 PreloadWeight=42
+
+[Containments][7][Applets][59]
+immutability=1
+plugin=org.kde.plasma.keyboardlayout
 
 [Containments][7][ConfigDialog]
 DialogHeight=540

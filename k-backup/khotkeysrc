@@ -921,6 +921,7 @@ Theme[$d]
 
 [KDE]
 ColorScheme[$d]
+SingleClick[$d]
 widgetStyle[$d]
 
 [KDE Action Restrictions]
