@@ -69,7 +69,7 @@ plugin=org.kde.plasma.kickoff
 PreloadWeight=100
 
 [Containments][2][Applets][3][Configuration][ConfigDialog]
-DialogHeight=540
+DialogHeight=558
 DialogWidth=720
 
 [Containments][2][Applets][3][Configuration][General]
@@ -159,8 +159,11 @@ plugin=org.kde.plasma.volume
 PreloadWeight=100
 
 [Containments][7][Applets][10][Configuration][ConfigDialog]
-DialogHeight=540
+DialogHeight=558
 DialogWidth=720
+
+[Containments][7][Applets][10][Configuration][General]
+currentTab=streams
 
 [Containments][7][Applets][10][Shortcuts]
 global=Meta+Shift+M
@@ -173,7 +176,7 @@ immutability=1
 plugin=org.kde.plasma.devicenotifier
 
 [Containments][7][Applets][12][Configuration]
-PreloadWeight=55
+PreloadWeight=60
 
 [Containments][7][Applets][13]
 immutability=1
