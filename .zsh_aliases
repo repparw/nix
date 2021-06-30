@@ -27,7 +27,7 @@
 
 		alias ll='ls -lavh --ignore=..'   # show long listing of all except ".."
 
-		alias l.='ls -a'
+		alias l.='ls -A'
 
 		alias ld='ls -d */'
 
