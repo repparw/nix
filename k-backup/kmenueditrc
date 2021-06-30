@@ -8,8 +8,8 @@ detailViewIconSize=16
 
 [MainWindow]
 DisplayPort-1 XPosition=360
-DisplayPort-1 XPosition 1920x1080=671
+DisplayPort-1 XPosition 1920x1080=16
 DisplayPort-1 YPosition=349
-DisplayPort-1 YPosition 1920x1080=317
+DisplayPort-1 YPosition 1920x1080=313
 State=AAAA/wAAAAD9AAAAAAAABOEAAAFRAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
 ToolBarsMovable=Disabled
