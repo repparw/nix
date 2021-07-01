@@ -9,8 +9,7 @@ RepeatRate=35
 
 [Mouse]
 XLbInptPointerAcceleration=-0.2
-cursorSize=24
-cursorTheme=oxy-neon-white
+cursorTheme=PearDarkCursors
 
 [Tmp]
 update_info=delete_cursor_old_default_size.upd:DeleteCursorOldDefaultSize
