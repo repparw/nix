@@ -13,6 +13,9 @@
 	# Make zsh default shell for su
 		alias su='su --shell=/usr/bin/zsh'
 
+	# Make feh borderless and default to black image background color
+		alias feh='feh -x -Z -. --image-bg black'
+
 	# Vim = Nvim
 
 		alias vim='nvim'; alias vi='nvim'

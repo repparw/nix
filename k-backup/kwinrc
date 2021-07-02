@@ -28,6 +28,9 @@ TabBoxAlternative=false
 TabBox=false
 TabBoxAlternative=false
 
+[Effect-PresentWindows]
+BorderActivateAll=9
+
 [ModifierOnlyShortcuts]
 Meta=org.kde.krunner,/App,,display
 
