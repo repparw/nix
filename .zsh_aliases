@@ -91,6 +91,10 @@
 		alias btctl='bluetoothctl'
 
 	# Others
+	
+	if [ "command -v duf" ]; then
+		alias df='duf' # Better df
+	fi
 
 		alias now='date +"%T"' # Time
 
