@@ -161,6 +161,9 @@ PreloadWeight=100
 DialogHeight=558
 DialogWidth=720
 
+[Containments][7][Applets][10][Configuration][General]
+currentTab=streams
+
 [Containments][7][Applets][10][Shortcuts]
 global=Meta+Shift+M
 
