@@ -1,10 +1,10 @@
-sw_volume: 30
+sw_volume: 54
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
-state: play
-current: 122
-time: 19.418000
-random: 1
+state: pause
+current: 1148
+time: 7.820000
+random: 0
 repeat: 1
 single: 0
 consume: 0
@@ -1467,4 +1467,13 @@ playlist_begin
 1452:KAZE/05 - SOLO - (PROD. BETO) [KAZE · L.M.A.D.D].mp3
 1453:KAZE/06 - A MI NO ME VA (FT BETO) - [KAZE · L.M.A.D.D].mp3
 1454:KAZE/08 - QUE QUIERES ENTENDER - [BONUS TRACK · KAZE · L.M.A.D.D].mp3
+1455:Apolo es Puro - Magia Sin Trucos Vol 2/APOLO ES PURO - Algún Sedante _ Magia Sin Trucos Vol.II.opus
+1456:Apolo es Puro - Magia Sin Trucos Vol 2/APOLO ES PURO - Buscando Una Nota Fija _ Magia Sin Trucos Vol.II.m4a
+1457:Apolo es Puro - Magia Sin Trucos Vol 2/APOLO ES PURO - De Por Ley Ft. Power _ Magia Sin Trucos Vol.II.m4a
+1458:Apolo es Puro - Magia Sin Trucos Vol 2/APOLO ES PURO - Esta Asperazo Andar Suave _ Magia Sin Trucos Vol.II.opus
+1459:Apolo es Puro - Magia Sin Trucos Vol 2/APOLO ES PURO - Estamos _ Magia Sin Trucos Vol.II.m4a
+1460:Apolo es Puro - Magia Sin Trucos Vol 2/APOLO ES PURO - Nahuel _ Magia Sin Trucos Vol. II.opus
+1461:Apolo es Puro - Magia Sin Trucos Vol 2/APOLO ES PURO - Pa' Verte Bien _ Magia Sin Trucos Vol.II.m4a
+1462:Apolo es Puro - Magia Sin Trucos Vol 2/APOLO ES PURO - Si Huele A Yuta Hay Mala Espina. _ Magia Sin Trucos Vol.II.opus
+1463:Apolo es Puro - Magia Sin Trucos Vol 2/BUENOS MUCHACHOS - Gratis _ Magia Sin Trucos Vol II.m4a
 playlist_end
