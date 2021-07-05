@@ -1,3 +1,6 @@
+[OSD]
+kbdLayoutChangedEnabled=false
+
 [Theme]
 name=default
 
