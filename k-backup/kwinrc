@@ -22,11 +22,9 @@ Rows=1
 Scale=1
 
 [Effect-CoverSwitch]
-TabBox=false
 TabBoxAlternative=false
 
 [Effect-FlipSwitch]
-TabBox=false
 TabBoxAlternative=false
 
 [Effect-PresentWindows]
