@@ -110,7 +110,7 @@ immutability=1
 plugin=com.github.zren.commandoutput
 
 [Containments][2][Applets][58][Configuration][ConfigDialog]
-DialogHeight=540
+DialogHeight=558
 DialogWidth=720
 
 [Containments][2][Applets][58][Configuration][General]
