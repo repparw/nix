@@ -49,6 +49,8 @@ Plug 'zchee/deoplete-jedi'
 Plug 'jiangmiao/auto-pairs'
 " Tree file explorer
 Plug 'preservim/nerdtree'
+" Rainbow CSV
+Plug 'mechatroner/rainbow_csv'
 call plug#end()
 
 let g:airline_powerline_fonts = 1
