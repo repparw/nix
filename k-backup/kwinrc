@@ -107,6 +107,7 @@ AutoRaise=false
 AutoRaiseInterval=750
 ClickRaise=true
 DelayFocusInterval=300
+ElectricBorderCornerRatio=0.15
 FocusPolicy=ClickToFocus
 FocusStealingPreventionLevel=1
 MaximizeButtonLeftClickCommand=Maximize
