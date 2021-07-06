@@ -12,24 +12,6 @@ types=1
 wmclass=guiscrcpy
 wmclassmatch=1
 
-[10]
-Description=Window settings for mpv
-position=1066,0
-positionrule=3
-title=The 22 Meme Shrapnell Ballista Build - mpv
-titlematch=1
-types=1
-wmclass=mpv
-wmclassmatch=1
-
-[11]
-Description=Window settings for alacritty
-noborder=true
-noborderrule=2
-types=1
-wmclass=alacritty
-wmclassmatch=1
-
 [2]
 Description=Window settings for scrcpy
 clientmachinematch=0
@@ -46,33 +28,23 @@ Description=Application settings for mpv
 clientmachinematch=0
 fsplevel=3
 fsplevelrule=2
-position=960,0
+fullscreen=true
+fullscreenrule=3
+position=0,0
 positionrule=3
 wmclass=gl mpv
 wmclasscomplete=true
 wmclassmatch=1
 
 [4]
-Description=Application settings for genymotion player
-noborder=true
-noborderrule=3
-position=1282,0
-positionrule=3
-size=638,1050
-sizerule=3
-wmclass=player genymotion player
-wmclasscomplete=true
-wmclassmatch=1
-
-[5]
 Description=Application settings for steam_app_374320
 aboverule=2
 wmclass=darksoulsiii.exe steam_app_374320
 wmclasscomplete=true
 wmclassmatch=1
 
-[6]
-Description=Window settings for mpv
+[5]
+Description=webcam
 above=true
 aboverule=3
 title=video0 - mpv
@@ -82,7 +54,7 @@ wmclass=gl mpv
 wmclasscomplete=true
 wmclassmatch=1
 
-[7]
+[6]
 Description=Application settings for steam_app_238960
 clientmachine=localhost
 noborder=true
@@ -90,7 +62,7 @@ noborderrule=3
 wmclass=steam_app_238960
 wmclassmatch=1
 
-[8]
+[7]
 Description=Window settings for steam_app_238960
 clientmachine=localhost
 noborder=true
@@ -101,7 +73,7 @@ types=1
 wmclass=steam_app_238960
 wmclassmatch=1
 
-[9]
+[8]
 Description=Window settings for steam_app_238960
 clientmachine=localhost
 noborder=true
@@ -112,9 +84,17 @@ wmclass=pathofexile_x64steam.exe steam_app_238960
 wmclasscomplete=true
 wmclassmatch=1
 
+[9]
+Description=Window settings for alacritty
+noborder=true
+noborderrule=2
+types=1
+wmclass=alacritty
+wmclassmatch=1
+
 [General]
 ColorScheme[$d]
-count=11
+count=9
 fixed[$d]
 font[$d]
 menuFont[$d]

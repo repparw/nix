@@ -97,12 +97,15 @@ plugin=org.kde.plasma.icontasks
 PreloadWeight=0
 
 [Containments][2][Applets][53][Configuration][ConfigDialog]
-DialogHeight=540
+DialogHeight=558
 DialogWidth=720
 
 [Containments][2][Applets][53][Configuration][General]
 launchers=
 middleClickAction=Close
+showOnlyCurrentActivity=false
+showOnlyCurrentDesktop=false
+showOnlyCurrentScreen=true
 wheelEnabled=false
 
 [Containments][2][Applets][58]
@@ -140,6 +143,29 @@ PreloadWeight=0
 
 [Containments][2][General]
 AppletOrder=3;4;53;58;6;26
+
+[Containments][59]
+ItemGeometries-1920x1080=
+ItemGeometriesHorizontal=
+activityId=c2f7948f-cf52-46ec-9b7e-c825ba193393
+formfactor=0
+immutability=1
+lastScreen=2
+location=0
+plugin=org.kde.plasma.folder
+wallpaperplugin=org.kde.image
+
+[Containments][59][ConfigDialog]
+DialogHeight=558
+DialogWidth=720
+
+[Containments][59][General]
+ToolBoxButtonState=topcenter
+ToolBoxButtonX=509
+
+[Containments][59][Wallpaper][org.kde.image][General]
+Image=/home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg
+SlidePaths=/usr/share/wallpapers
 
 [Containments][7]
 activityId=
@@ -288,10 +314,40 @@ DialogWidth=720
 PreloadWeight=0
 
 [Containments][7][General]
-extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.nightcolorcontrol,org.kde.plasma.keyboardindicator,org.kde.plasma.weather,org.kde.plasma.devicenotifier,org.kde.plasma.notifications,org.kde.kdeconnect,Discover Notifier_org.kde.DiscoverNotifier
+extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.nightcolorcontrol,org.kde.plasma.keyboardindicator,org.kde.plasma.weather,org.kde.plasma.devicenotifier,org.kde.plasma.notifications,org.kde.kdeconnect
 hiddenItems=org.kde.plasma.networkmanagement,onionshare-gui,org.kde.plasma.devicenotifier,ibus-ui-gtk3,KWin_kwin-virtual-keyboard,org.kde.kdeconnect,org.kde.plasma.nightcolorcontrol,Discover Notifier_org.kde.DiscoverNotifier
 knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.plasma.battery,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.kdeconnect,org.kde.plasma.keyboardlayout
 shownItems=org.kde.plasma.weather
+
+[Containments][83]
+activityId=
+formfactor=2
+immutability=1
+lastScreen=2
+location=4
+plugin=org.kde.panel
+wallpaperplugin=org.kde.image
+
+[Containments][83][Applets][84]
+immutability=1
+plugin=org.kde.plasma.icontasks
+
+[Containments][83][Applets][84][Configuration][ConfigDialog]
+DialogHeight=558
+DialogWidth=720
+
+[Containments][83][Applets][84][Configuration][General]
+launchers=preferred://browser
+showOnlyCurrentActivity=false
+showOnlyCurrentDesktop=false
+showOnlyCurrentScreen=true
+
+[Containments][83][ConfigDialog]
+DialogHeight=83
+DialogWidth=1920
+
+[Containments][83][General]
+AppletOrder=84
 
 [ScreenMapping]
 itemsOnDisabledScreens=
