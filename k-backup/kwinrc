@@ -55,7 +55,7 @@ CommandWindowWheel=Scroll
 Active=true
 LatitudeAuto=-34.9314
 LongitudeAuto=-57.9489
-NightTemperature=2500
+NightTemperature=2700
 
 [Plugins]
 grid-tilingEnabled=false
@@ -81,10 +81,11 @@ ActivitiesMode=0
 ApplicationsMode=0
 DesktopLayout=org.kde.breeze.desktop
 DesktopListLayout=org.kde.breeze.desktop
-HighlightWindows=true
+DesktopMode=0
+HighlightWindows=false
 LayoutName=org.kde.breezedark.desktop
 MinimizedMode=0
-MultiScreenMode=0
+MultiScreenMode=1
 ShowDesktopMode=0
 ShowTabBox=true
 SwitchingMode=0
@@ -102,7 +103,7 @@ ShowTabBox=true
 SwitchingMode=0
 
 [Windows]
-ActiveMouseScreen=true
+ActiveMouseScreen=false
 AutoRaise=false
 AutoRaiseInterval=750
 ClickRaise=true
@@ -115,7 +116,7 @@ MaximizeButtonMiddleClickCommand=Maximize (vertical only)
 MaximizeButtonRightClickCommand=Maximize (horizontal only)
 NextFocusPrefersMouse=false
 Placement=Centered
-SeparateScreenFocus=false
+SeparateScreenFocus=true
 TitlebarDoubleClickCommand=Maximize
 
 [org.kde.kdecoration2]
