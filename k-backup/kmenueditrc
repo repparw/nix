@@ -7,6 +7,8 @@ Recent URLs[$e]=file:$HOME/.wine/drive_c/Program Files (x86)/PoB/,file:$HOME/.Ap
 detailViewIconSize=16
 
 [MainWindow]
+DisplayPort-1 HDMI-A-1 XPosition 1920x1080=2506
+DisplayPort-1 HDMI-A-1 YPosition 1920x1080=495
 DisplayPort-1 XPosition=360
 DisplayPort-1 XPosition 1920x1080=16
 DisplayPort-1 YPosition=349
