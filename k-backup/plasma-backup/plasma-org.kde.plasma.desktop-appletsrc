@@ -342,12 +342,16 @@ showOnlyCurrentActivity=false
 showOnlyCurrentDesktop=false
 showOnlyCurrentScreen=true
 
+[Containments][83][Applets][85]
+immutability=1
+plugin=org.kde.plasma.digitalclock
+
 [Containments][83][ConfigDialog]
 DialogHeight=83
 DialogWidth=1920
 
 [Containments][83][General]
-AppletOrder=84
+AppletOrder=84;85
 
 [ScreenMapping]
 itemsOnDisabledScreens=
