@@ -10,7 +10,7 @@ ctime=1624891243
 mtime=1624387937
 
 [delete_cursor_old_default_size.upd]
-ctime=1624891289
+ctime=1625936237
 done=DeleteCursorOldDefaultSize
 mtime=1624389098
 
@@ -25,22 +25,22 @@ done=filepicker-remove-old-previews-entry
 mtime=1623486382
 
 [fonts_akregator.upd]
-ctime=1624891289
+ctime=1625936237
 done=Plasma_Fonts_Akregator
 mtime=1624388860
 
 [fonts_global.upd]
-ctime=1624891289
+ctime=1625936237
 done=Fonts_Global
 mtime=1624388860
 
 [fonts_global_toolbar.upd]
-ctime=1624891289
+ctime=1625936237
 done=Fonts_Global_Toolbar
 mtime=1624388860
 
 [fonts_kate.upd]
-ctime=1624891289
+ctime=1625936237
 done=Plasma_Fonts_Kate
 mtime=1624388860
 
@@ -55,7 +55,7 @@ done=SideBar_StatusBar_Rename,ImageView_AlphaBackgroundMode_Update,DeleteThumbna
 mtime=1578318795
 
 [icons_remove_effects.upd]
-ctime=1624891289
+ctime=1625936237
 done=IconsRemoveEffects
 mtime=1624389098
 
@@ -74,12 +74,12 @@ ctime=1600289415
 mtime=1580771831
 
 [kcminputrc_fix_botched_5_21_0.upd]
-ctime=1624891291
+ctime=1625936239
 done=kcminputrc_fix_botched_5_21_0_pre,kcminputrc_fix_botched_5_21_0
 mtime=1624388740
 
 [kcminputrc_repeat.upd]
-ctime=1624891291
+ctime=1625936239
 done=kcminputrc_migrate_key_repeat
 mtime=1624388740
 
@@ -112,19 +112,19 @@ done=korganizer-15.08-kickoff
 mtime=1611952031
 
 [krdb_libpathwipe.upd]
-ctime=1621628262
-mtime=1620132570
+ctime=1625935773
+mtime=1615898414
 
 [krunnerglobalshortcuts.upd]
-ctime=1621628197
-mtime=1620132570
+ctime=1625935772
+mtime=1615898414
 
 [krunnerglobalshortcuts2.upd]
-ctime=1624891242
+ctime=1625936236
 mtime=1624389098
 
 [krunnerhistory.upd]
-ctime=1624891242
+ctime=1625936236
 mtime=1624389098
 
 [krunnerplugins.upd]
@@ -137,22 +137,22 @@ done=0.1-autolock
 mtime=1624388391
 
 [ksmserver_update_loginMode_value.upd]
-ctime=1624891291
+ctime=1625936239
 done=ksmserver_update_loginMode_value_default_enum
 mtime=1624388740
 
 [kwin.upd]
-ctime=1624891242
+ctime=1625935352
 done=replace-scalein-with-scale,port-minimizeanimation-effect-to-js,port-scale-effect-to-js,port-dimscreen-effect-to-js,auto-bordersize,animation-speed,desktop-grid-click-behavior,no-swap-encourage
 mtime=1624388520
 
 [kwinrules.upd]
-ctime=1624891242
+ctime=1625935352
 done=replace-placement-string-to-enum
 mtime=1624388520
 
 [kxkb_variants.upd]
-ctime=1624891291
+ctime=1625936239
 done=split-variants
 mtime=1624388740
 
@@ -191,7 +191,7 @@ done=spectacle-migrate-shortcuts
 mtime=1620411729
 
 [style_widgetstyle_default_breeze.upd]
-ctime=1624891289
+ctime=1625936237
 done=StyleWidgetStyleDefaultBreeze
 mtime=1624389098
 

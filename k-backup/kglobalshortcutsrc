@@ -97,12 +97,17 @@ Standalone=,,Open in standalone mode
 _k_friendly_name=Kodi
 _launch=Meta+N,,Kodi
 
+[krunner.desktop]
+RunClipboard=none,Alt+Shift+F2,Run command on clipboard contents
+_k_friendly_name=KRunner
+_launch=none,Alt+Space\tAlt+F2\tSearch,KRunner
+
 [ksmserver]
-Halt Without Confirmation=Ctrl+Alt+Shift+PgDown,none,Halt Without Confirmation
+Halt Without Confirmation=Ctrl+Alt+Shift+PgDown,Ctrl+Alt+Shift+PgDown,Halt Without Confirmation
 Lock Session=\tCtrl+Alt+L\tScreensaver,Meta+L\tCtrl+Alt+L\tScreensaver,Lock Session
 Log Out=Ctrl+Alt+Del,Ctrl+Alt+Del,Log Out
-Log Out Without Confirmation=Ctrl+Alt+Shift+Del,none,Log Out Without Confirmation
-Reboot Without Confirmation=Ctrl+Alt+Shift+PgUp,none,Reboot Without Confirmation
+Log Out Without Confirmation=Ctrl+Alt+Shift+Del,Ctrl+Alt+Shift+Del,Log Out Without Confirmation
+Reboot Without Confirmation=Ctrl+Alt+Shift+PgUp,Ctrl+Alt+Shift+PgUp,Reboot Without Confirmation
 _k_friendly_name=Session Management
 
 [kwin]
@@ -302,6 +307,8 @@ _k_friendly_name=Media Controller
 mediavolumedown=none,none,Media volume down
 mediavolumeup=none,none,Media volume up
 nextmedia=,Media Next,Media playback next
+pausemedia=Media Pause,Media Pause,Pause media playback
+playmedia=none,none,Play media playback
 playpausemedia=\t,Media Play,Play/Pause media playback
 previousmedia=,Media Previous,Media playback previous
 stopmedia=Media Stop,Media Stop,Stop media playback
@@ -313,7 +320,7 @@ _launch=Meta+Shift+E,Meta+E,Dolphin
 [org.kde.krunner.desktop]
 RunClipboard=,Alt+Shift+F2,Run command on clipboard contents
 _k_friendly_name=KRunner
-_launch=Alt+F2,Alt+Space\tAlt+F2\tSearch,KRunner
+_launch=none,Alt+Space\tAlt+F2\tSearch,KRunner
 
 [org.kde.plasma.emojier.desktop]
 _k_friendly_name=Emoji Selector
@@ -361,17 +368,18 @@ activate task manager entry 9=none,Meta+9,Activate Task Manager Entry 9
 activate widget 10=Meta+Shift+M,none,Activate Audio Volume Widget
 activate widget 14=Meta+R,none,Activate Night Colour Control Widget
 activate widget 3=Alt+F1,none,Activate Application Launcher Widget
+activate widget 4=,none,Activate Application Launcher Widget
 activate widget 53=none,none,Activate Icons-only Task Manager Widget
 activate widget 63=,none,Activate Application Launcher Widget
 clear-history=none,none,Clear Clipboard History
-clipboard_action=Ctrl+Alt+X,Ctrl+Alt+X,Enable Clipboard Actions
+clipboard_action=none,Ctrl+Alt+X,Enable Clipboard Actions
 cycleNextAction=none,none,Next History Item
 cyclePrevAction=none,none,Previous History Item
 edit_clipboard=none,none,Edit Contents...
 manage activities=none,Meta+Q,Show Activity Switcher
 next activity=none,Meta+Tab,Walk through activities
 previous activity=,Meta+Shift+Tab,Walk through activities (Reverse)
-repeat_action=Ctrl+Alt+R,Ctrl+Alt+R,Manually Invoke Action on Current Clipboard
+repeat_action=none,Ctrl+Alt+R,Manually Invoke Action on Current Clipboard
 show dashboard=Ctrl+F12,Ctrl+F12,Show Desktop
 show-barcode=none,none,Show Barcode...
 show-on-mouse-pos=none,Meta+V,Open Klipper at Mouse Position
