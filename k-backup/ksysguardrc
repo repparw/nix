@@ -6,6 +6,7 @@ DisplayPort-1 XPosition 1920x1080=1010
 DisplayPort-1 YPosition=242
 DisplayPort-1 YPosition 1920x1080=28
 HostList=
+RestorePositionForNextInstance=false
 SelectedSheets[$e]=ProcessTable.sgrd,SystemLoad2.sgrd
 SplitterSizeList=10,90
 State=AAAA/wAAAAD9AAAAAAAAAyAAAAIlAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgAAAAAA/////wAAAAAAAAAA

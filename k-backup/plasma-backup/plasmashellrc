@@ -1,7 +1,9 @@
 [ActionsWidget]
-ColumnState=AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAekAAAACAQAAAQAAAAAAAAAAAAAAAGT/////AAAAgQAAAAAAAAACAAAA+gAAAAEAAAAAAAAA7wAAAAEAAAAAAAAD6AAAAABk
+ColumnState=AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAi4AAAACAQAAAQAAAAAAAAAAAAAAAGT/////AAAAgQAAAAAAAAACAAAA+gAAAAEAAAAAAAABNAAAAAEAAAAAAAAD6AAAAABk
 
 [ConfigDialog]
+DisplayPort-1 HDMI-A-1 Height 1920x1080=485
+DisplayPort-1 HDMI-A-1 Width 1920x1080=700
 Height 1080=489
 Width 1920=623
 
@@ -34,17 +36,44 @@ klipperClearHistoryAskAgain=false
 LaunchCounts=1 services_applications:io.freetubeapp.FreeTube.desktop,2 services_systemsettings.desktop,2 services_signal-desktop.desktop,3 services_applications:kde4-qalculate_kde.desktop,4 services_steam.desktop,4 services_applications:genymobile-genymotion.desktop,1 services_applications:darktable.desktop,4 services_applications:khotkeys.desktop,1 services_applications:org.kde.dolphin.desktop,1 services_applications:signal-desktop.desktop,4 services_chromium-browser.desktop,1 services_applications:powerdevilactivitiesconfig.desktop,1 services_anki.desktop,1 services_applications:torbrowser.desktop,1 services_wine-Programs-Path of Building Community.desktop,5 services_applications:kcm_kscreen.desktop,1 services_applications:deluge.desktop,15 services_keys.desktop,6 services_applications:discord.desktop,23 services_applications:steam.desktop,1 services_applications:binance.desktop,2 services_applications:kwincompositing.desktop,2 services_freetube.desktop,1 shell_klipper,2 services_applications:kcm_desktoptheme.desktop,2 services_applications:telegramdesktop.desktop,1 services_applications:kamera.desktop,1 services_kwintabbox.desktop,1 services_applications:Electrum.desktop,1 services_applications:org.kde.ksysguard.desktop,8 services_khotkeys.desktop,1 services_applications:kcm_keys.desktop,6 services_applications:net.lutris.Lutris.desktop,1 services_Awakened-3.desktop,1 services_applications:system-config-language.desktop,2 services_standard_actions.desktop,1 services_applications:gimp.desktop,4 services_kde4-qalculate_kde.desktop,1 services_kwincompositing.desktop,1 services_applications:code.desktop,1 services_applications:autostart.desktop,3 services_applications:Awakened.desktop,1 services_applications:kcm_ssl.desktop,2 services_appimagekit-joplin.desktop,1 services_applications:Path of Building.desktop,1 services_applications:kcm_colors.desktop,2 services_applications:Kindle.desktop,1 services_applications:Freezer.desktop
 pluginWhiteList=desktopsessions,services,places,PowerDevil,calculator,unitconverter,shell,bookmarks,recentdocuments,locations,baloosearch
 
+[PlasmaTransientsConfig]
+PreloadWeight=0
+
 [PlasmaViews][Panel 2][Defaults]
 thickness=30
 
 [PlasmaViews][Panel 2][Horizontal1920]
 thickness=30
 
+[PlasmaViews][Panel 25][Defaults]
+thickness=36
+
+[PlasmaViews][Panel 25][Horizontal1920]
+thickness=36
+
+[PlasmaViews][Panel 27][Defaults]
+thickness=27
+
+[PlasmaViews][Panel 27][Horizontal1920]
+thickness=27
+
 [PlasmaViews][Panel 28][Defaults]
 thickness=36
 
 [PlasmaViews][Panel 28][Horizontal1920]
 thickness=36
+
+[PlasmaViews][Panel 29][Defaults]
+thickness=36
+
+[PlasmaViews][Panel 29][Horizontal1920]
+thickness=36
+
+[PlasmaViews][Panel 29][Vertical1080]
+thickness=44
+
+[PlasmaViews][Panel 3]
+alignment=132
 
 [PlasmaViews][Panel 47][Defaults]
 thickness=36
