@@ -10,6 +10,9 @@ Seen=true
 [Badges]
 InTaskManager=false
 
+[DoNotDisturb]
+Until=2022,7,10,14,31,3.782
+
 [Jobs]
 PermanentPopups=false
 
