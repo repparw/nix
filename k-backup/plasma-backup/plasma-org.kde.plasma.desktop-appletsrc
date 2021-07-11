@@ -192,6 +192,7 @@ launchers=
 showOnlyCurrentActivity=false
 showOnlyCurrentDesktop=false
 showOnlyCurrentScreen=true
+wheelEnabled=false
 
 [Containments][3][Applets][8]
 immutability=1
@@ -232,7 +233,7 @@ immutability=1
 plugin=org.kde.plasma.notifications
 
 [Containments][9][Applets][12][Configuration]
-PreloadWeight=60
+PreloadWeight=70
 
 [Containments][9][Applets][13]
 immutability=1
@@ -254,6 +255,9 @@ global=Meta+R
 [Containments][9][Applets][15]
 immutability=1
 plugin=org.kde.kdeconnect
+
+[Containments][9][Applets][15][Configuration]
+PreloadWeight=60
 
 [Containments][9][Applets][16][Configuration]
 PreloadWeight=42
@@ -311,7 +315,7 @@ DialogWidth=720
 
 [Containments][9][General]
 extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.weather
-hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.networkmanagement,org.kde.plasma.devicenotifier
+hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.networkmanagement,org.kde.plasma.devicenotifier,org.kde.kdeconnect
 knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.battery,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout
 shownItems=org.kde.plasma.weather
 
