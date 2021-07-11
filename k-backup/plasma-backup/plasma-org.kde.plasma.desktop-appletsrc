@@ -128,7 +128,7 @@ immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][3][Applets][19][Configuration]
-PreloadWeight=55
+PreloadWeight=65
 
 [Containments][3][Applets][19][Configuration][Appearance]
 fontFamily=Noto Sans
@@ -188,7 +188,7 @@ DialogHeight=558
 DialogWidth=720
 
 [Containments][3][Applets][6][Configuration][General]
-launchers=preferred://browser
+launchers=
 showOnlyCurrentActivity=false
 showOnlyCurrentDesktop=false
 showOnlyCurrentScreen=true
@@ -246,7 +246,7 @@ immutability=1
 plugin=org.kde.plasma.nightcolorcontrol
 
 [Containments][9][Applets][14][Configuration]
-PreloadWeight=55
+PreloadWeight=60
 
 [Containments][9][Applets][14][Shortcuts]
 global=Meta+R
