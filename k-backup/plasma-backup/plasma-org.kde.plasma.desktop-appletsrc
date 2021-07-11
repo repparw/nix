@@ -232,14 +232,14 @@ immutability=1
 plugin=org.kde.plasma.notifications
 
 [Containments][9][Applets][12][Configuration]
-PreloadWeight=55
+PreloadWeight=60
 
 [Containments][9][Applets][13]
 immutability=1
 plugin=org.kde.plasma.devicenotifier
 
 [Containments][9][Applets][13][Configuration]
-PreloadWeight=90
+PreloadWeight=100
 
 [Containments][9][Applets][14]
 immutability=1
@@ -261,9 +261,8 @@ PreloadWeight=42
 [Containments][9][Applets][17][Configuration]
 PreloadWeight=42
 
-[Containments][9][Applets][18]
-immutability=1
-plugin=org.kde.plasma.keyboardlayout
+[Containments][9][Applets][18][Configuration]
+PreloadWeight=42
 
 [Containments][9][Applets][21][Configuration]
 PreloadWeight=42
@@ -297,11 +296,13 @@ weatherServiceProviders=wettercom,bbcukmet
 DialogHeight=558
 DialogWidth=720
 
-[Containments][9][Applets][51]
-immutability=1
-plugin=org.kde.plasma.keyboardindicator
+[Containments][9][Applets][51][Configuration]
+PreloadWeight=42
 
 [Containments][9][Applets][52][Configuration]
+PreloadWeight=42
+
+[Containments][9][Applets][53][Configuration]
 PreloadWeight=42
 
 [Containments][9][ConfigDialog]
@@ -309,8 +310,8 @@ DialogHeight=558
 DialogWidth=720
 
 [Containments][9][General]
-extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.keyboardlayout,org.kde.plasma.weather,org.kde.plasma.keyboardindicator
-hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.keyboardlayout,org.kde.plasma.keyboardindicator,org.kde.plasma.networkmanagement
+extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.weather
+hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.networkmanagement,org.kde.plasma.devicenotifier
 knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.battery,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout
 shownItems=org.kde.plasma.weather
 
