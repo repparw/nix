@@ -26,7 +26,7 @@ ToolBoxButtonState=topcenter
 ToolBoxButtonX=509
 
 [Containments][1][Wallpaper][org.kde.image][General]
-Image=/home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg
+Image=file:///home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg
 SlidePaths=/usr/share/wallpapers
 
 [Containments][2]
@@ -63,7 +63,7 @@ ToolBoxButtonState=topcenter
 ToolBoxButtonX=509
 
 [Containments][21][Wallpaper][org.kde.image][General]
-Image=/home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg
+Image=file:///home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg
 SlidePaths=/usr/share/wallpapers
 
 [Containments][29]
