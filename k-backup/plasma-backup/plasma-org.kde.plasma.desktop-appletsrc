@@ -128,7 +128,7 @@ immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][3][Applets][19][Configuration]
-PreloadWeight=65
+PreloadWeight=80
 
 [Containments][3][Applets][19][Configuration][Appearance]
 fontFamily=Noto Sans
@@ -276,7 +276,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][9][Applets][22][Configuration]
-PreloadWeight=60
+PreloadWeight=52
 
 [Containments][9][Applets][23]
 immutability=1
