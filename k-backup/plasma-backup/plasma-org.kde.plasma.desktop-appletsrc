@@ -128,7 +128,7 @@ immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][3][Applets][19][Configuration]
-PreloadWeight=95
+PreloadWeight=100
 
 [Containments][3][Applets][19][Configuration][Appearance]
 fontFamily=Noto Sans
@@ -233,7 +233,7 @@ immutability=1
 plugin=org.kde.plasma.notifications
 
 [Containments][9][Applets][12][Configuration]
-PreloadWeight=70
+PreloadWeight=80
 
 [Containments][9][Applets][13]
 immutability=1
