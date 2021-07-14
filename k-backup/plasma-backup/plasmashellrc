@@ -81,6 +81,18 @@ thickness=36
 [PlasmaViews][Panel 47][Vertical1080]
 thickness=36
 
+[PlasmaViews][Panel 51][Defaults]
+thickness=27
+
+[PlasmaViews][Panel 51][Horizontal1920]
+thickness=27
+
+[PlasmaViews][Panel 53][Defaults]
+thickness=36
+
+[PlasmaViews][Panel 53][Horizontal1920]
+thickness=36
+
 [PlasmaViews][Panel 62][Defaults]
 thickness=44
 
@@ -101,8 +113,8 @@ thickness=36
 
 [ScreenConnectors]
 0=DisplayPort-1
-1=:0.0
-2=HDMI-A-1
+1=HDMI-A-1
+2=:0.0
 
 [Updates]
 performed=/usr/share/plasma/s,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/move_desktop_layout_config.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/00-start-here-2.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/maintain_existing_desktop_icon_sizes.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/obsolete_kickoffrc.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/unlock_widgets.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/systemloadviewer_systemmonitor.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/containmentactions_middlebutton.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/klipper_clear_config.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/digitalclock_rename_timezonedisplay_key.js
