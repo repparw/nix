@@ -240,6 +240,7 @@ launchers=
 showOnlyCurrentActivity=false
 showOnlyCurrentDesktop=false
 showOnlyCurrentScreen=true
+wheelEnabled=false
 
 [Containments][53][Applets][57]
 immutability=1
@@ -248,6 +249,9 @@ plugin=org.kde.plasma.marginsseparator
 [Containments][53][Applets][69]
 immutability=1
 plugin=org.kde.plasma.digitalclock
+
+[Containments][53][Applets][69][Configuration]
+PreloadWeight=55
 
 [Containments][53][Applets][69][Configuration][Appearance]
 dateDisplayFormat=BesideTime
