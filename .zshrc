@@ -7,6 +7,19 @@ PATH=$(go env GOPATH)/bin:/home/repparw/.local/bin:$PATH
 ## fzf
 	export FZF_DEFAULT_OPTS="--no-mouse --multi --select-1 --reverse --height 50% --inline-info"
 
+	# Use fd (https://github.com/sharkdp/fd) instead of the default find
+	# command for listing path candidates.
+	# - The first argument to the function ($1) is the base path to start traversal
+	# - See the source code (completion.{bash,zsh}) for the details.
+	_fzf_compgen_path() {
+	  fd --hidden --follow --exclude ".git" . "$1"
+	}
+
+	# Use fd to generate the list for directory completion
+	_fzf_compgen_dir() {
+	  fd --type d --hidden --follow --exclude ".git" . "$1"
+	}
+
 ## lscolors
 	export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
 
