@@ -5,6 +5,8 @@ PATH=$(go env GOPATH)/bin:/home/repparw/.local/bin:$PATH
 	export EDITOR='nvim'
 
 ## fzf
+	export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
+
 	export FZF_DEFAULT_OPTS="--no-mouse --multi --select-1 --reverse --height 50% --inline-info"
 
 	# Use fd (https://github.com/sharkdp/fd) instead of the default find
