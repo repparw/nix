@@ -10,7 +10,7 @@ ctime=1626290971
 mtime=1625566253
 
 [delete_cursor_old_default_size.upd]
-ctime=1626290971
+ctime=1626627671
 done=DeleteCursorOldDefaultSize
 mtime=1625567477
 
@@ -55,7 +55,7 @@ done=SideBar_StatusBar_Rename,ImageView_AlphaBackgroundMode_Update,DeleteThumbna
 mtime=1578318795
 
 [icons_remove_effects.upd]
-ctime=1626290971
+ctime=1626627671
 done=IconsRemoveEffects
 mtime=1625567477
 
@@ -120,11 +120,11 @@ ctime=1625935772
 mtime=1615898414
 
 [krunnerglobalshortcuts2.upd]
-ctime=1626290968
+ctime=1626627671
 mtime=1625567477
 
 [krunnerhistory.upd]
-ctime=1626290968
+ctime=1626627671
 mtime=1625567477
 
 [krunnerplugins.upd]
@@ -191,7 +191,7 @@ done=spectacle-migrate-shortcuts
 mtime=1620411729
 
 [style_widgetstyle_default_breeze.upd]
-ctime=1626290971
+ctime=1626627671
 done=StyleWidgetStyleDefaultBreeze
 mtime=1625567477
 
