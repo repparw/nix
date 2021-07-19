@@ -107,7 +107,7 @@ immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][29][Applets][45][Configuration]
-PreloadWeight=60
+PreloadWeight=65
 
 [Containments][29][Applets][45][Configuration][Appearance]
 dateDisplayFormat=BesideTime
@@ -340,7 +340,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][9][Applets][22][Configuration]
-PreloadWeight=52
+PreloadWeight=57
 
 [Containments][9][Applets][23]
 immutability=1
