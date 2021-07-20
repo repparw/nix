@@ -70,7 +70,7 @@
 
 		alias path='echo -e ${PATH//:/\\n}'
 
-		alias du='du -h'
+		alias du='dust'
 
 		alias diff='colordiff' # Colorize output
 
