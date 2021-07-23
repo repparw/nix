@@ -160,6 +160,7 @@ DialogWidth=720
 clickCommand=mpc toggle
 command=head -q -n1 ~/.local/share/currentsong
 fixedWidth=105
+fontFamily=Source Code Pro Semibold
 mousewheelDownCommand=mpc volume -2
 mousewheelUpCommand=mpc volume +2
 outlineColor=#000000
