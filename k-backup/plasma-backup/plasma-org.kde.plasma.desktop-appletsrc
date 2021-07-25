@@ -347,6 +347,9 @@ PreloadWeight=57
 immutability=1
 plugin=org.kde.plasma.networkmanagement
 
+[Containments][9][Applets][23][Configuration]
+PreloadWeight=55
+
 [Containments][9][Applets][50]
 immutability=1
 plugin=org.kde.plasma.weather
