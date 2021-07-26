@@ -123,6 +123,10 @@
 	# ytfzf with nq for freeing the terminal
 		alias ytf="env YTFZF_ENABLE_FZF_DEFAULT_OPTS=1 YTFZF_PLAYER='nq -c mpv' ytfzf"
 
+		alias ytfa='ytf -a'
+
+		alias ytfh='ytf -H'
+
 		alias yta="youtube-dl -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
 
 	# temp alias
@@ -137,5 +141,5 @@
 ## Functions
 	# ytfzf + xclip for link
 	function ytl() {
-	  ytfzf -aL "$@" | sed -e 's|^[^=]*=|https://youtu.be\/|g' | xclip -sel clip 
+	  ytfzf -aL "$@" | sed -e 's|^[^=]*=|https://youtu.be/|g' | xclip -sel clip 
 	}
