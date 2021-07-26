@@ -158,9 +158,10 @@ DialogWidth=720
 
 [Containments][3][Applets][24][Configuration][General]
 clickCommand=mpc toggle
-command=head -q -n1 ~/.local/share/currentsong
+command=/home/repparw/.config/scripts/currentsong
 fixedWidth=105
 fontFamily=Source Code Pro Semibold
+interval=0
 mousewheelDownCommand=mpc volume -2
 mousewheelUpCommand=mpc volume +2
 outlineColor=#000000
@@ -355,7 +356,7 @@ immutability=1
 plugin=org.kde.plasma.weather
 
 [Containments][9][Applets][50][Configuration]
-PreloadWeight=65
+PreloadWeight=70
 pressureUnit=5008
 source=wettercom|weather|La Plata, Provincia de Buenos Aires, AR|AR0BA0009;La Plata
 speedUnit=9000
