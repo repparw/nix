@@ -10,7 +10,7 @@ let g:neoformat_basic_format_trim = 1
 let g:python_host_prog = '/usr/bin/python2'
 let g:python3_host_prog = '/usr/bin/python3'
 let mapleader="," " Leader key
-" Added by me
+"--------Added by me
 
 " Mappings
 	noremap <leader>s :update<CR>
@@ -19,7 +19,7 @@ let mapleader="," " Leader key
 	nnoremap <silent> <leader>o :Files<CR>
 	nnoremap <silent> <leader>O :Files!<CR>
 	nnoremap <silent> <F1> :Helptags<CR>
-
+" ---------
 set number relativenumber
 
 augroup Fedora
@@ -30,7 +30,7 @@ augroup END
 
 " vim: et ts=2 sw=2
 "
-" Added by me
+"--------Added by me
 
 " Splits
 set splitbelow
@@ -38,7 +38,7 @@ set splitright
 
 
 call plug#begin('~/.config/nvim/plugged')
-Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf'
 Plug 'junegunn/fzf.vim'
 Plug 'sbdchd/neoformat'
 Plug 'vim-airline/vim-airline'
@@ -62,9 +62,16 @@ inoremap <expr><s-tab> pumvisible() ? "\<c-p>" : "<s-tab>"
 
 set termguicolors
 
-set background=dark
+"set background=dark
 
 colorscheme gruvbox
 
+" Transparent bg
+highlight Normal ctermbg=NONE guibg=NONE
+highlight LineNr ctermbg=NONE guibg=NONE
+highlight SignColumn ctermbg=NONE guibg=NONE
+
 set tabstop=4
 set shiftwidth=2
+
+" ---------
