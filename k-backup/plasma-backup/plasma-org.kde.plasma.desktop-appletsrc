@@ -160,7 +160,6 @@ DialogWidth=720
 clickCommand=mpc toggle
 command=/home/repparw/.config/scripts/currentsong
 fixedWidth=105
-fontFamily=Source Code Pro Semibold
 interval=0
 mousewheelDownCommand=mpc volume -2
 mousewheelUpCommand=mpc volume +2
@@ -246,30 +245,44 @@ showOnlyCurrentDesktop=false
 showOnlyCurrentScreen=true
 wheelEnabled=false
 
-[Containments][53][Applets][57]
-immutability=1
-plugin=org.kde.plasma.marginsseparator
-
 [Containments][53][Applets][69]
 immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][53][Applets][69][Configuration]
-PreloadWeight=55
+PreloadWeight=60
 
 [Containments][53][Applets][69][Configuration][Appearance]
 dateDisplayFormat=BesideTime
+dateFormat=longDate
+firstDayOfWeek=0
 
 [Containments][53][Applets][69][Configuration][ConfigDialog]
 DialogHeight=558
 DialogWidth=720
+
+[Containments][53][Applets][70]
+immutability=1
+plugin=com.github.zren.commandoutput
+
+[Containments][53][Applets][70][Configuration][ConfigDialog]
+DialogHeight=558
+DialogWidth=720
+
+[Containments][53][Applets][70][Configuration][General]
+command=echo $(btc)
+interval=30000
+outlineColor=#000000
+showOutline=true
+textAlign=2
+textColor=#689d69
 
 [Containments][53][ConfigDialog]
 DialogHeight=83
 DialogWidth=1920
 
 [Containments][53][General]
-AppletOrder=56;57;69
+AppletOrder=56;70;69
 
 [Containments][9]
 activityId=
@@ -349,7 +362,7 @@ immutability=1
 plugin=org.kde.plasma.networkmanagement
 
 [Containments][9][Applets][23][Configuration]
-PreloadWeight=55
+PreloadWeight=80
 
 [Containments][9][Applets][50]
 immutability=1
