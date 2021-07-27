@@ -62,8 +62,6 @@ inoremap <expr><s-tab> pumvisible() ? "\<c-p>" : "<s-tab>"
 
 set termguicolors
 
-"set background=dark
-
 colorscheme gruvbox
 
 " Transparent bg
