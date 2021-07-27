@@ -3,6 +3,7 @@ PATH=$(go env GOPATH)/bin:/home/repparw/.local/bin:$PATH
 
 ## Default editor to nvim
 	export EDITOR='nvim'
+	export VISUAL=$EDITOR
 
 ## fzf
 	export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
