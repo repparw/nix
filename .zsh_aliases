@@ -10,8 +10,8 @@
 	# Open archivebox
 		alias openbox='cd ~/archivebox; archivebox server & sleep 5 && firefox 127.0.0.1:8000; fg'
 
-	# Make zsh default shell for su
-		alias su='su --shell=/usr/bin/zsh'
+	# Asks your passwords, becomes root, opens a interactive non login shell
+		alias su='sudo -s'
 
 	# Make feh borderless and default to black image background color
 		alias feh='feh -x -Z -. --image-bg black'
