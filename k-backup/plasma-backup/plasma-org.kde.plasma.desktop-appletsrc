@@ -98,10 +98,6 @@ showOnlyCurrentActivity=false
 showOnlyCurrentDesktop=false
 showOnlyCurrentScreen=true
 
-[Containments][29][Applets][33]
-immutability=1
-plugin=org.kde.plasma.marginsseparator
-
 [Containments][29][Applets][45]
 immutability=1
 plugin=org.kde.plasma.digitalclock
@@ -116,12 +112,28 @@ dateDisplayFormat=BesideTime
 DialogHeight=558
 DialogWidth=720
 
+[Containments][29][Applets][71]
+immutability=1
+plugin=com.github.zren.commandoutput
+
+[Containments][29][Applets][71][Configuration][ConfigDialog]
+DialogHeight=558
+DialogWidth=720
+
+[Containments][29][Applets][71][Configuration][General]
+command=echo $(btc)
+interval=60000
+outlineColor=#000000
+showOutline=true
+textAlign=2
+textColor=#689d69
+
 [Containments][29][ConfigDialog]
 DialogHeight=83
 DialogWidth=1920
 
 [Containments][29][General]
-AppletOrder=32;33;45
+AppletOrder=32;71;45
 
 [Containments][3]
 activityId=
