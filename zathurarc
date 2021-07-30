@@ -40,6 +40,9 @@ set recolor                     "true"
 # set recolor-keephue             true      # keep original color
 
 
+set guioptions ''
+
+
 set recolor true
 set sandbox none
 set statusbar-h-padding 0
