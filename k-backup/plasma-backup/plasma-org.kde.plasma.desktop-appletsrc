@@ -381,7 +381,7 @@ immutability=1
 plugin=org.kde.plasma.weather
 
 [Containments][9][Applets][50][Configuration]
-PreloadWeight=75
+PreloadWeight=80
 pressureUnit=5008
 source=wettercom|weather|La Plata, Provincia de Buenos Aires, AR|AR0BA0009;La Plata
 speedUnit=9000
