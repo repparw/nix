@@ -100,7 +100,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_13Actions0]
-CommandURL=tmux new-session -d -s mpv; tmux send-keys -t mpv "mpv --no-terminal $(xclip -sel clipboard -o)" C-m; tmux send-keys -t mpv "clear" C-m
+CommandURL=tmux new-session -d -s mpv; tmux send-keys -t mpv "mpv --no-terminal $(xclip -sel clipboard -o) &" C-m; tmux send-keys -t mpv "clear" C-m
 Type=COMMAND_URL
 
 [Data_13Conditions]
