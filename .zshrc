@@ -1,5 +1,5 @@
 # Add local path
-PATH=$(go env GOPATH)/bin:/home/repparw/.local/bin:$PATH
+PATH=/home/repparw/go/bin:/home/repparw/.local/bin:$PATH
 
 ## Default editor to nvim
 	export EDITOR='nvim'
