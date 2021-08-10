@@ -17,6 +17,16 @@ Id_1=df1695a6-c8fa-4be1-89fd-2ebcd8f061fd
 Number=1
 Rows=1
 
+[DrmOutputs][6474a46e60][416ed248-2b00-573a-ae93-6da648fe1fd6]
+Mode=1920x1080_119982
+Scale=1
+Transform=normal
+
+[DrmOutputs][6474a46e60][9621f5fb-b3e1-59fa-8e12-dcbd5712dce3]
+Mode=1920x1080_60000
+Scale=1
+Transform=normal
+
 [DrmOutputs][850bc09d9d][850bc09d9d]
 Scale=1
 
@@ -52,8 +62,8 @@ CommandWindowWheel=Scroll
 
 [NightColor]
 Active=true
-LatitudeAuto=-34.9314
-LongitudeAuto=-57.9489
+LatitudeAuto=-35.0965
+LongitudeAuto=-59.7793
 NightTemperature=2600
 
 [Plugins]
