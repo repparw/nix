@@ -1,9 +1,9 @@
-sw_volume: 22
+sw_volume: 28
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
-state: play
-current: 728
-time: 120.047000
+state: pause
+current: 645
+time: 128.854000
 random: 1
 repeat: 0
 single: 0
@@ -1403,4 +1403,18 @@ playlist_begin
 1388:ytmusic/Voyager (Love Session).opus
 1389:ytmusic/FOYONE - FXCK NPO.opus
 1390:ytmusic/YSY A _ BZRP Music Sessions #37.opus
+1391:Bo Burnham/Inside (The Songs)/Bo Burnham - Look Who’s Inside Again.flac
+1392:Bo Burnham/Inside (The Songs)/Bo Burnham - Shit.flac
+1393:Bo Burnham/Inside (The Songs)/Bo Burnham - Welcome to the Internet.flac
+1394:Bo Burnham/Inside (The Songs)/Bo Burnham - That Funny Feeling.flac
+1395:Bo Burnham/Inside (The Songs)/Bo Burnham - Goodbye.flac
+1396:Argentina/Fianru/Vicio/Fianru - El Que Rompe, Paga.flac
+1397:Argentina/Fianru/Vicio/Fianru - Ready.flac
+1398:Argentina/Fianru/Vicio/Fianru - Sigo Frío.flac
+1399:Argentina/Fianru/Vicio/Fianru - Fresh.flac
+1400:Argentina/Fianru/Vicio/Fianru - Hijo de Imigrante.flac
+1401:Argentina/Fianru/Vicio/Fianru - Que la Cuenten.flac
+1402:Argentina/Fianru/Vicio/Fianru - Victoria.flac
+1403:Argentina/Fianru/Vicio/Fianru - Og's.flac
+1404:Argentina/Fianru/Vicio/Fianru - Cerrá la Puerta.flac
 playlist_end
