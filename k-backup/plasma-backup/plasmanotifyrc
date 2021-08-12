@@ -7,6 +7,9 @@ ShowPopups=false
 [Applications][solaar]
 Seen=true
 
+[Applications][telegramdesktop]
+Seen=true
+
 [Badges]
 InTaskManager=false
 
