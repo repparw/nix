@@ -96,6 +96,9 @@
 		alias df='duf' # Better df
 	fi
 
+	
+		alias ddgr='ddgr -n3'
+
 		alias now='date +"%T"' # Time
 
 		alias ping='ping -c 5' # Stop ping
@@ -141,5 +144,5 @@
 ## Functions
 	# ytfzf + xclip for link
 	function ytl() {
-	  ytfzf -aL "$@" | sed -e 's|^[^=]*=|https://youtu.be/|g' | xclip -sel clip 
+	  ytfzf -L "$@" | sed -e 's|^[^=]*=|https://youtu.be/|g' | xclip -sel clip 
 	}
