@@ -22,8 +22,6 @@
 
 		alias v='vi'
 
-		alias sv='sudo nvim'
-
 	# cd && ls	
 
 		alias ls='ls --color=auto'
@@ -144,5 +142,5 @@
 ## Functions
 	# ytfzf + xclip for link
 	function ytl() {
-	  ytfzf -L "$@" | sed -re 's|^https://www.youtube.com/(watch\?v=)?|youtu.be/|g' | xclip -sel clip 
+	  ytfzf -L "$@" | sed -re 's|^https://www.youtube.com/(watch\?v=)?|https://youtu.be/|g' | xclip -sel clip 
 	}

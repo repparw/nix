@@ -2,8 +2,8 @@ sw_volume: 28
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
 state: pause
-current: 1335
-time: 1.650000
+current: 893
+time: 211.726000
 random: 1
 repeat: 0
 single: 0
@@ -1346,8 +1346,8 @@ playlist_begin
 1331:ytmusic/Veneno Crew 4 Life.m4a
 1332:ytmusic/Verdades.opus
 1333:ytmusic/Verso Terso.opus
-1334:ytmusic/Vertical.opus
-1335:ytmusic/Vico C - Aquel Que Habia Muerto.m4a
+1334:ytmusic/Vico C - Aquel Que Habia Muerto.m4a
+1335:ytmusic/Vertical.opus
 1336:ytmusic/Vico C - Y Boquete Pa' Tu Techo _ Video Oficial.opus
 1337:ytmusic/VILLERO - ONE SHIT Vol. 1 x (YTHS) Shot by S. Noble.opus
 1338:ytmusic/Violadores del Verso - Qué te importan todos los demás.opus
