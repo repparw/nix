@@ -121,6 +121,7 @@ DialogHeight=558
 DialogWidth=720
 
 [Containments][29][Applets][71][Configuration][General]
+clickCommand=/opt/Binance/binance %U
 command=echo BTC:$(btc)
 interval=60000
 outlineColor=#000000
@@ -414,21 +415,21 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][9][Applets][22][Configuration]
-PreloadWeight=49
+PreloadWeight=54
 
 [Containments][9][Applets][23]
 immutability=1
 plugin=org.kde.plasma.networkmanagement
 
 [Containments][9][Applets][23][Configuration]
-PreloadWeight=80
+PreloadWeight=85
 
 [Containments][9][Applets][50]
 immutability=1
 plugin=org.kde.plasma.weather
 
 [Containments][9][Applets][50][Configuration]
-PreloadWeight=90
+PreloadWeight=95
 pressureUnit=5008
 source=wettercom|weather|La Plata, Provincia de Buenos Aires, AR|AR0BA0009;La Plata
 speedUnit=9000

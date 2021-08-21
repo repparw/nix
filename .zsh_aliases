@@ -1,6 +1,6 @@
 ## Aliases
 	# Raspberry Pi
-		alias rpi='env TERM=xterm-256color ssh pi@192.168.0.16'
+		alias rpi='env TERM=xterm-256color ssh -p2222 pi@192.168.0.16'
 	# fzf
 		alias f='fzf'
 
@@ -144,5 +144,5 @@
 ## Functions
 	# ytfzf + xclip for link
 	function ytl() {
-	  ytfzf -L "$@" | sed -e 's|^[^=]*=|https://youtu.be/|g' | xclip -sel clip 
+	  ytfzf -L "$@" | sed -re 's|^https://www.youtube.com/(watch\?v=)?|youtu.be/|g' | xclip -sel clip 
 	}
