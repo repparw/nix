@@ -9,7 +9,7 @@ RepeatRate=35
 
 [Mouse]
 XLbInptPointerAcceleration=-0.6
-cursorTheme=Adwaita
+cursorTheme=breeze_cursors
 
 [Tmp]
 update_info=delete_cursor_old_default_size.upd:DeleteCursorOldDefaultSize
