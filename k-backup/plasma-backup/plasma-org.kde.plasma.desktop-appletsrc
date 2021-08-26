@@ -203,7 +203,7 @@ systemFavorites=suspend\\,hibernate\\,reboot\\,shutdown
 global=Alt+F1
 
 [Containments][3][Applets][4][Shortcuts]
-global=Alt+F1
+global=
 
 [Containments][3][Applets][6]
 immutability=1
