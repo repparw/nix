@@ -97,6 +97,7 @@ launchers=
 showOnlyCurrentActivity=false
 showOnlyCurrentDesktop=false
 showOnlyCurrentScreen=true
+wheelEnabled=false
 
 [Containments][29][Applets][45]
 immutability=1
