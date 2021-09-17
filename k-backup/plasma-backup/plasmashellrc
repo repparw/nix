@@ -22,6 +22,8 @@ Recent URLs[$e]=file:///opt/,https://youtu.be/,file:$HOME/Pictures/bg/,file:$HOM
 detailViewIconSize=16
 
 [KPropertiesDialog]
+DP-0 HDMI-0 Height 1920x1080=454
+DP-0 HDMI-0 Width 1920x1080=742
 DisplayPort-1 HDMI-A-1 Height 1920x1080=446
 DisplayPort-1 HDMI-A-1 Width 1920x1080=682
 DisplayPort-1 Height 1080=446
@@ -37,6 +39,24 @@ klipperClearHistoryAskAgain=false
 [PlasmaRunnerManager]
 LaunchCounts=1 services_applications:io.freetubeapp.FreeTube.desktop,2 services_systemsettings.desktop,2 services_signal-desktop.desktop,3 services_applications:kde4-qalculate_kde.desktop,4 services_steam.desktop,4 services_applications:genymobile-genymotion.desktop,1 services_applications:darktable.desktop,4 services_applications:khotkeys.desktop,1 services_applications:org.kde.dolphin.desktop,1 services_applications:signal-desktop.desktop,4 services_chromium-browser.desktop,1 services_applications:powerdevilactivitiesconfig.desktop,1 services_anki.desktop,1 services_applications:torbrowser.desktop,1 services_wine-Programs-Path of Building Community.desktop,5 services_applications:kcm_kscreen.desktop,1 services_applications:deluge.desktop,15 services_keys.desktop,6 services_applications:discord.desktop,23 services_applications:steam.desktop,1 services_applications:binance.desktop,2 services_applications:kwincompositing.desktop,2 services_freetube.desktop,1 shell_klipper,2 services_applications:kcm_desktoptheme.desktop,2 services_applications:telegramdesktop.desktop,1 services_applications:kamera.desktop,1 services_kwintabbox.desktop,1 services_applications:Electrum.desktop,1 services_applications:org.kde.ksysguard.desktop,8 services_khotkeys.desktop,1 services_applications:kcm_keys.desktop,6 services_applications:net.lutris.Lutris.desktop,1 services_Awakened-3.desktop,1 services_applications:system-config-language.desktop,2 services_standard_actions.desktop,1 services_applications:gimp.desktop,4 services_kde4-qalculate_kde.desktop,1 services_kwincompositing.desktop,1 services_applications:code.desktop,1 services_applications:autostart.desktop,3 services_applications:Awakened.desktop,1 services_applications:kcm_ssl.desktop,2 services_appimagekit-joplin.desktop,1 services_applications:Path of Building.desktop,1 services_applications:kcm_colors.desktop,2 services_applications:Kindle.desktop,1 services_applications:Freezer.desktop
 pluginWhiteList=desktopsessions,services,places,PowerDevil,calculator,unitconverter,shell,bookmarks,recentdocuments,locations,baloosearch
+
+[PlasmaTransientsConfig]
+PreloadWeight=0
+
+[PlasmaViews][Panel 119][Defaults]
+thickness=44
+
+[PlasmaViews][Panel 119][Horizontal1920]
+thickness=44
+
+[PlasmaViews][Panel 140][Defaults]
+thickness=34
+
+[PlasmaViews][Panel 140][Horizontal1920]
+thickness=34
+
+[PlasmaViews][Panel 140][Vertical1080]
+thickness=44
 
 [PlasmaViews][Panel 2][Defaults]
 thickness=30
@@ -107,6 +127,18 @@ thickness=44
 [PlasmaViews][Panel 62][Vertical1080]
 thickness=46
 
+[PlasmaViews][Panel 76][Defaults]
+thickness=36
+
+[PlasmaViews][Panel 76][Horizontal1920]
+thickness=36
+
+[PlasmaViews][Panel 77][Defaults]
+thickness=44
+
+[PlasmaViews][Panel 77][Horizontal1920]
+thickness=44
+
 [PlasmaViews][Panel 83][Defaults]
 thickness=36
 
@@ -116,13 +148,20 @@ thickness=36
 [PlasmaViews][Panel 83][Vertical1080]
 thickness=36
 
+[PlasmaViews][Panel 98][Defaults]
+thickness=44
+
+[PlasmaViews][Panel 98][Vertical1080]
+thickness=44
+
 [ScreenConnectors]
-0=DisplayPort-1
+0=DP-0
 1=:0.0
 2=HDMI-A-1
 3=HDMI-A-2
 4=Screen48
 5=Screen49
+6=HDMI-0
 
 [Updates]
 performed=/usr/share/plasma/s,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/move_desktop_layout_config.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/00-start-here-2.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/maintain_existing_desktop_icon_sizes.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/obsolete_kickoffrc.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/unlock_widgets.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/systemloadviewer_systemmonitor.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/containmentactions_middlebutton.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/klipper_clear_config.js,/usr/share/plasma/shells/org.kde.plasma.desktop/contents/updates/digitalclock_rename_timezonedisplay_key.js
