@@ -133,8 +133,7 @@
 	# temp alias
 		alias temp="watch -n 2 sensors"
 
-	# PhoenixMiner
-	    alias mine="cd ~/.mining/PhoenixMiner && ./PhoenixMiner -clKernel 0 -pool ssl://eu1.ethermine.org:5555 -pool2 ssl://asia1.ethermine.org:5555 -wal 0xec69ef48d0f5e5db709c03e8d828d0e5dcf7f9af.1 -acm -cclock 1150 -cvddc 850 -mvddc 900 -mclock 2000 -prate 0.02"
+	# Raven mine
 
 	# minexmr
 		alias minexmr="cd ~/.mining/xmrig && sudo ./xmrig -o pool.minexmr.com:443 -u 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ -k --tls --cpu-max-threads-hint=85 --donate-level=0"
