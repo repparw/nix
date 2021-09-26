@@ -131,7 +131,8 @@
 		alias yta="youtube-dl -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
 
 	# temp alias
-		alias temp="watch -n 2 sensors"
+		alias temp="watch -d -n 2 sensors"
+		alias gputemp="watch -n 2 nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader 39"
 
 	# Raven mine
 
