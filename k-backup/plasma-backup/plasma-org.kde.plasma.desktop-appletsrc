@@ -60,7 +60,7 @@ immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][140][Applets][156][Configuration]
-PreloadWeight=65
+PreloadWeight=70
 
 [Containments][140][Applets][156][Configuration][Appearance]
 dateDisplayFormat=BesideTime
