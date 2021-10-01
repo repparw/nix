@@ -103,7 +103,11 @@
 
 		alias wget='wget -c'
 
-		alias top='htop'
+	 #if [ "command -v btop" ]; then
+		alias top='btop'
+	 #else
+		#alias top='htop'
+	 #fi
 
 		alias q='exit'
 
