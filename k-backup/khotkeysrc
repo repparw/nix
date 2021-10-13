@@ -135,14 +135,14 @@ Type=ACTION_DATA_GROUP
 [Data_10]
 Comment=Comment
 Enabled=true
-Name=maimclip prscr
+Name=maimwin prscr
 Type=SIMPLE_ACTION_DATA
 
 [Data_10Actions]
 ActionsCount=1
 
 [Data_10Actions0]
-CommandURL=maimclip
+CommandURL=maimwin
 Type=COMMAND_URL
 
 [Data_10Conditions]
