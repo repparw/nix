@@ -21,6 +21,9 @@ wallpaperplugin=org.kde.image
 DialogHeight=558
 DialogWidth=720
 
+[Containments][1][Configuration]
+PreloadWeight=42
+
 [Containments][1][General]
 ToolBoxButtonState=topcenter
 ToolBoxButtonX=509
@@ -42,6 +45,9 @@ wallpaperplugin=org.kde.image
 immutability=1
 plugin=org.kde.plasma.icontasks
 
+[Containments][140][Applets][143][Configuration]
+PreloadWeight=42
+
 [Containments][140][Applets][143][Configuration][ConfigDialog]
 DialogHeight=558
 DialogWidth=720
@@ -55,12 +61,15 @@ wheelEnabled=false
 immutability=1
 plugin=org.kde.plasma.marginsseparator
 
+[Containments][140][Applets][144][Configuration]
+PreloadWeight=42
+
 [Containments][140][Applets][156]
 immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][140][Applets][156][Configuration]
-PreloadWeight=70
+PreloadWeight=62
 
 [Containments][140][Applets][156][Configuration][Appearance]
 dateDisplayFormat=BesideTime
@@ -73,6 +82,9 @@ DialogWidth=720
 [Containments][140][Applets][161]
 immutability=1
 plugin=com.github.zren.commandoutput
+
+[Containments][140][Applets][161][Configuration]
+PreloadWeight=42
 
 [Containments][140][Applets][161][Configuration][ConfigDialog]
 DialogHeight=558
@@ -91,6 +103,9 @@ textColor=#689d69
 DialogHeight=83
 DialogWidth=1920
 
+[Containments][140][Configuration]
+PreloadWeight=42
+
 [Containments][140][General]
 AppletOrder=143;144;161;156
 
@@ -108,6 +123,9 @@ wallpaperplugin=org.kde.image
 [Containments][2][ConfigDialog]
 DialogHeight=558
 DialogWidth=720
+
+[Containments][2][Configuration]
+PreloadWeight=42
 
 [Containments][2][General]
 ToolBoxButtonState=topcenter
@@ -132,6 +150,9 @@ wallpaperplugin=org.kde.image
 DialogHeight=558
 DialogWidth=720
 
+[Containments][21][Configuration]
+PreloadWeight=42
+
 [Containments][21][General]
 ToolBoxButtonState=topcenter
 ToolBoxButtonX=509
@@ -153,6 +174,9 @@ wallpaperplugin=org.kde.image
 immutability=1
 plugin=org.kde.plasma.icontasks
 
+[Containments][29][Applets][32][Configuration]
+PreloadWeight=42
+
 [Containments][29][Applets][32][Configuration][ConfigDialog]
 DialogHeight=558
 DialogWidth=720
@@ -169,7 +193,7 @@ immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][29][Applets][45][Configuration]
-PreloadWeight=90
+PreloadWeight=82
 
 [Containments][29][Applets][45][Configuration][Appearance]
 dateDisplayFormat=BesideTime
@@ -182,6 +206,9 @@ DialogWidth=720
 [Containments][29][Applets][71]
 immutability=1
 plugin=com.github.zren.commandoutput
+
+[Containments][29][Applets][71][Configuration]
+PreloadWeight=42
 
 [Containments][29][Applets][71][Configuration][ConfigDialog]
 DialogHeight=558
@@ -199,6 +226,9 @@ textColor=#689d69
 [Containments][29][ConfigDialog]
 DialogHeight=83
 DialogWidth=1920
+
+[Containments][29][Configuration]
+PreloadWeight=42
 
 [Containments][29][General]
 AppletOrder=32;71;45
@@ -232,6 +262,9 @@ DialogWidth=720
 immutability=1
 plugin=com.github.zren.commandoutput
 
+[Containments][3][Applets][24][Configuration]
+PreloadWeight=42
+
 [Containments][3][Applets][24][Configuration][ConfigDialog]
 DialogHeight=558
 DialogWidth=720
@@ -254,7 +287,7 @@ immutability=1
 plugin=org.kde.plasma.kickoff
 
 [Containments][3][Applets][4][Configuration]
-PreloadWeight=100
+PreloadWeight=92
 
 [Containments][3][Applets][4][Configuration][ConfigDialog]
 DialogHeight=558
@@ -274,6 +307,9 @@ global=
 [Containments][3][Applets][6]
 immutability=1
 plugin=org.kde.plasma.icontasks
+
+[Containments][3][Applets][6][Configuration]
+PreloadWeight=42
 
 [Containments][3][Applets][6][Configuration][ConfigDialog]
 DialogHeight=558
@@ -298,6 +334,9 @@ SystrayContainmentId=9
 DialogHeight=83
 DialogWidth=1920
 
+[Containments][3][Configuration]
+PreloadWeight=42
+
 [Containments][3][General]
 AppletOrder=4;6;24;8;19
 
@@ -313,6 +352,9 @@ wallpaperplugin=org.kde.image
 [Containments][53][Applets][56]
 immutability=1
 plugin=org.kde.plasma.icontasks
+
+[Containments][53][Applets][56][Configuration]
+PreloadWeight=42
 
 [Containments][53][Applets][56][Configuration][ConfigDialog]
 DialogHeight=558
@@ -330,7 +372,7 @@ immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][53][Applets][69][Configuration]
-PreloadWeight=65
+PreloadWeight=57
 
 [Containments][53][Applets][69][Configuration][Appearance]
 dateDisplayFormat=BesideTime
@@ -344,6 +386,9 @@ DialogWidth=720
 [Containments][53][Applets][70]
 immutability=1
 plugin=com.github.zren.commandoutput
+
+[Containments][53][Applets][70][Configuration]
+PreloadWeight=42
 
 [Containments][53][Applets][70][Configuration][ConfigDialog]
 DialogHeight=558
@@ -360,6 +405,9 @@ textColor=#689d69
 [Containments][53][ConfigDialog]
 DialogHeight=83
 DialogWidth=1920
+
+[Containments][53][Configuration]
+PreloadWeight=42
 
 [Containments][53][General]
 AppletOrder=56;70;69
@@ -379,6 +427,9 @@ wallpaperplugin=org.kde.image
 DialogHeight=558
 DialogWidth=720
 
+[Containments][72][Configuration]
+PreloadWeight=42
+
 [Containments][72][Wallpaper][org.kde.image][General]
 Image=file:///usr/share/wallpapers/Next/contents/images/1920x1080.png
 
@@ -395,6 +446,9 @@ wallpaperplugin=org.kde.image
 DialogHeight=558
 DialogWidth=720
 
+[Containments][73][Configuration]
+PreloadWeight=42
+
 [Containments][73][Wallpaper][org.kde.image][General]
 Image=/home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg
 SlidePaths=/usr/share/wallpapers
@@ -407,6 +461,9 @@ lastScreen=5
 location=0
 plugin=org.kde.plasma.folder
 wallpaperplugin=org.kde.image
+
+[Containments][74][Configuration]
+PreloadWeight=42
 
 [Containments][74][Wallpaper][org.kde.image][General]
 Image=file:///usr/share/wallpapers/Next/contents/images/1920x1080.png
@@ -425,6 +482,9 @@ wallpaperplugin=org.kde.image
 [Containments][75][ConfigDialog]
 DialogHeight=558
 DialogWidth=720
+
+[Containments][75][Configuration]
+PreloadWeight=42
 
 [Containments][75][General]
 ToolBoxButtonState=topcenter
@@ -448,7 +508,7 @@ immutability=1
 plugin=org.kde.plasma.volume
 
 [Containments][9][Applets][10][Configuration]
-PreloadWeight=100
+PreloadWeight=92
 
 [Containments][9][Applets][10][Configuration][ConfigDialog]
 DialogHeight=558
@@ -479,7 +539,7 @@ immutability=1
 plugin=org.kde.plasma.nightcolorcontrol
 
 [Containments][9][Applets][14][Configuration]
-PreloadWeight=100
+PreloadWeight=97
 
 [Containments][9][Applets][14][Shortcuts]
 global=Meta+R
@@ -489,7 +549,7 @@ immutability=1
 plugin=org.kde.kdeconnect
 
 [Containments][9][Applets][15][Configuration]
-PreloadWeight=65
+PreloadWeight=57
 
 [Containments][9][Applets][16][Configuration]
 PreloadWeight=42
@@ -508,21 +568,21 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][9][Applets][22][Configuration]
-PreloadWeight=51
+PreloadWeight=43
 
 [Containments][9][Applets][23]
 immutability=1
 plugin=org.kde.plasma.networkmanagement
 
 [Containments][9][Applets][23][Configuration]
-PreloadWeight=90
+PreloadWeight=82
 
 [Containments][9][Applets][50]
 immutability=1
 plugin=org.kde.plasma.weather
 
 [Containments][9][Applets][50][Configuration]
-PreloadWeight=100
+PreloadWeight=92
 pressureUnit=5008
 source=wettercom|weather|La Plata, Provincia de Buenos Aires, AR|AR0BA0009;La Plata
 speedUnit=9000
@@ -547,6 +607,9 @@ PreloadWeight=42
 [Containments][9][ConfigDialog]
 DialogHeight=558
 DialogWidth=720
+
+[Containments][9][Configuration]
+PreloadWeight=42
 
 [Containments][9][General]
 extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.weather
