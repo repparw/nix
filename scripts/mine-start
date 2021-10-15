@@ -10,6 +10,6 @@ tmux split-window -v 'cd ~/git/chia-blockchain && . ./activate && chia start far
 tmux split-window -h
 tmux send-keys 'gputemp' 'C-m'
 tmux select-pane -t 2
-tmux resize-pane -R 5
+tmux resize-pane -R 15
 tmux select-pane -t 0
 tmux -2 attach-session -t mine
