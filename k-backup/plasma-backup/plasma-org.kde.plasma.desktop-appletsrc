@@ -69,7 +69,7 @@ immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][140][Applets][156][Configuration]
-PreloadWeight=62
+PreloadWeight=67
 
 [Containments][140][Applets][156][Configuration][Appearance]
 dateDisplayFormat=BesideTime
@@ -513,9 +513,6 @@ PreloadWeight=100
 [Containments][9][Applets][10][Configuration][ConfigDialog]
 DialogHeight=558
 DialogWidth=720
-
-[Containments][9][Applets][10][Configuration][General]
-currentTab=streams
 
 [Containments][9][Applets][11][Configuration]
 PreloadWeight=42
