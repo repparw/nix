@@ -40,8 +40,6 @@
 
 		alias gh='history|rg'
 
-		alias grep='rg'
-
 	# Safety nets
 
 		alias trash='mv --force -t ~/.local/share/Trash '
