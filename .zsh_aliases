@@ -133,10 +133,11 @@
 		alias yta="youtube-dl -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
 
 	# temp alias
-		alias temp="watch -d -n 2 sensors"
+		alias temp="watch -d -n 2 sensors -A"
 		alias gputemp="watch -n 2 nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader 39"
 
-	# Raven mine
+	# ergo mine
+		alias mineergo="cd ~/.mining/lolminer && ./lolminer --config=/home/repparw/.mining/lolMiner.cfg"
 
 	# minexmr
 		alias minexmr="cd ~/.mining/xmrig && sudo ./xmrig -o pool.minexmr.com:443 -u 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ -k --tls --cpu-max-threads-hint=85 --donate-level=0"
