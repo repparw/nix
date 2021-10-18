@@ -57,13 +57,6 @@ launchers=
 showOnlyCurrentScreen=true
 wheelEnabled=false
 
-[Containments][140][Applets][144]
-immutability=1
-plugin=org.kde.plasma.marginsseparator
-
-[Containments][140][Applets][144][Configuration]
-PreloadWeight=42
-
 [Containments][140][Applets][156]
 immutability=1
 plugin=org.kde.plasma.digitalclock
@@ -92,10 +85,25 @@ DialogWidth=720
 
 [Containments][140][Applets][161][Configuration][General]
 clickCommand=/opt/Binance/binance %U
-command=echo $(btc)
+command=echo "BTC:$(btc)"
 interval=60000
 outlineColor=#000000
 showBackground=false
+showOutline=true
+textColor=#689d69
+
+[Containments][140][Applets][162]
+immutability=1
+plugin=com.github.zren.commandoutput
+
+[Containments][140][Applets][162][Configuration][ConfigDialog]
+DialogHeight=558
+DialogWidth=720
+
+[Containments][140][Applets][162][Configuration][General]
+command=echo "XRP:$(~/.config/scripts/xrp) "
+interval=60000
+outlineColor=#000000
 showOutline=true
 textColor=#689d69
 
@@ -107,7 +115,7 @@ DialogWidth=1920
 PreloadWeight=42
 
 [Containments][140][General]
-AppletOrder=143;144;161;156
+AppletOrder=143;162;161;156
 
 [Containments][2]
 ItemGeometries-1920x1080=
@@ -287,7 +295,7 @@ immutability=1
 plugin=org.kde.plasma.kickoff
 
 [Containments][3][Applets][4][Configuration]
-PreloadWeight=92
+PreloadWeight=97
 
 [Containments][3][Applets][4][Configuration][ConfigDialog]
 DialogHeight=558
