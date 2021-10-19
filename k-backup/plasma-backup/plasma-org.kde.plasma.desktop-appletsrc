@@ -105,6 +105,23 @@ command=echo "XRP:$(~/.config/scripts/xrp) "
 interval=60000
 outlineColor=#000000
 showOutline=true
+textAlign=2
+textColor=#689d69
+
+[Containments][140][Applets][163]
+immutability=1
+plugin=com.github.zren.commandoutput
+
+[Containments][140][Applets][163][Configuration][ConfigDialog]
+DialogHeight=558
+DialogWidth=720
+
+[Containments][140][Applets][163][Configuration][General]
+command=echo "XMR:$(~/.config/scripts/xmr) "
+interval=60000
+outlineColor=#000000
+showOutline=true
+textAlign=2
 textColor=#689d69
 
 [Containments][140][ConfigDialog]
@@ -115,7 +132,7 @@ DialogWidth=1920
 PreloadWeight=42
 
 [Containments][140][General]
-AppletOrder=143;162;161;156
+AppletOrder=143;163;162;161;156
 
 [Containments][2]
 ItemGeometries-1920x1080=
@@ -521,6 +538,9 @@ PreloadWeight=100
 [Containments][9][Applets][10][Configuration][ConfigDialog]
 DialogHeight=558
 DialogWidth=720
+
+[Containments][9][Applets][10][Configuration][General]
+currentTab=streams
 
 [Containments][9][Applets][11][Configuration]
 PreloadWeight=42
