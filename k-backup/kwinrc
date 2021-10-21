@@ -67,12 +67,16 @@ LongitudeAuto=-59.7793
 NightTemperature=2600
 
 [Plugins]
+bismuthEnabled=true
 grid-tilingEnabled=false
 highlightwindowEnabled=true
 krohnkiteEnabled=false
 minimizeallEnabled=false
 synchronizeskipswitcherEnabled=false
 videowallEnabled=false
+
+[Script-bismuth]
+ignoreClass=krunner,yakuake,spectacle,kded5,steam
 
 [Script-grid-tiling]
 gap=4
@@ -132,6 +136,6 @@ TitlebarDoubleClickCommand=Maximize
 BorderSize=None
 BorderSizeAuto=false
 ButtonsOnLeft=
-ButtonsOnRight=X
+ButtonsOnRight=IX
 library=org.kde.kwin.aurorae
 theme=__aurorae__svg__GruvboxAurorae

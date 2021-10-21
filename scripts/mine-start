@@ -9,8 +9,8 @@ tmux split-window -v
 tmux send-keys 'temp' 'C-m'
 tmux select-pane -t 0
 tmux split-window -v 'cd ~/git/chia-blockchain && . ./activate && chia start farmer && sleep 30s && watch -n 43200 chia farm summary'
-tmux split-window -h
-tmux send-keys 'gputemp' 'C-m'
+#tmux split-window -h
+#tmux send-keys 'gputemp' 'C-m'
 tmux select-pane -t 2
 tmux resize-pane -R 15
 tmux select-pane -t 0
