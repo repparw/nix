@@ -561,7 +561,7 @@ immutability=1
 plugin=org.kde.plasma.nightcolorcontrol
 
 [Containments][9][Applets][14][Configuration]
-PreloadWeight=97
+PreloadWeight=100
 
 [Containments][9][Applets][14][Shortcuts]
 global=Meta+R
@@ -597,7 +597,7 @@ immutability=1
 plugin=org.kde.plasma.networkmanagement
 
 [Containments][9][Applets][23][Configuration]
-PreloadWeight=87
+PreloadWeight=97
 
 [Containments][9][Applets][50]
 immutability=1
