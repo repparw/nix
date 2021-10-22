@@ -76,7 +76,12 @@ synchronizeskipswitcherEnabled=false
 videowallEnabled=false
 
 [Script-bismuth]
+enableSpiralLayout=false
+enableSpreadLayout=false
+enableStairLayout=false
+enableThreeColumnLayout=false
 ignoreClass=krunner,yakuake,spectacle,kded5,steam
+tileLayoutGap=2
 
 [Script-grid-tiling]
 gap=4
