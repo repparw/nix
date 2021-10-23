@@ -1,9 +1,9 @@
-sw_volume: 30
+sw_volume: 32
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
 state: pause
-current: 26
-time: 233.025000
+current: 891
+time: 27.512000
 random: 1
 repeat: 0
 single: 0
@@ -704,8 +704,8 @@ playlist_begin
 689:ytmusic/Al-Qamaru - 'VACÍO' (video lyrics).opus
 690:ytmusic/Al-Qamaru - PERSIANAS BAJAS (Lyrics).opus
 691:ytmusic/Alas - T&K ( Prod by Abud Sp) VideoOficial Film By @aph.uru.opus
-692:ytmusic/ALC Mc - Bon Voyage (Shot By @serssama).opus
-693:ytmusic/Alunisaje.m4a
+692:ytmusic/Alunisaje.m4a
+693:ytmusic/ALC Mc - Bon Voyage (Shot By @serssama).opus
 694:ytmusic/Amor -Los Aldeanos-.opus
 695:ytmusic/ANIMAL.opus
 696:ytmusic/Antwan - 90 no muere.opus
