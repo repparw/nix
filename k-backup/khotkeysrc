@@ -350,7 +350,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_18Actions0]
-CommandURL=chromium-browser
+CommandURL=chromium-browser-privacy --password-store=basic
 Type=COMMAND_URL
 
 [Data_18Conditions]
@@ -364,7 +364,7 @@ TriggersCount=1
 [Data_18Triggers0]
 Key=Meta+Shift+Space
 Type=SHORTCUT
-Uuid={65ab804b-0716-4f74-8d73-ab0fce09a668}
+Uuid={baf4ae5b-ebf9-48e1-9838-d70a173716e5}
 
 [Data_1Conditions]
 Comment=
