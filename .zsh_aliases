@@ -140,7 +140,7 @@
 		alias mineergo="cd ~/.mining/lolminer && ./lolMiner --config=/home/repparw/.mining/lolMiner.cfg"
 
 	# minexmr
-		alias minexmr="cd ~/.mining/xmrig && sudo ./xmrig -o pool.minexmr.com:443 -u 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ -k --tls --cpu-max-threads-hint=85 --donate-level=0"
+		alias minexmr="cd ~/.mining/xmrig && sudo ./xmrig -o us-west.minexmr.com:443 -u 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ -k --tls --cpu-max-threads-hint=85 --donate-level=0"
 
 ## Functions
 	# ytfzf + xclip for link
