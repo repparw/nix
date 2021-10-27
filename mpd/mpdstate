@@ -2,8 +2,8 @@ sw_volume: 34
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
 state: pause
-current: 1278
-time: 191.813000
+current: 314
+time: 199.729000
 random: 1
 repeat: 0
 single: 0
@@ -705,11 +705,11 @@ playlist_begin
 690:ytmusic/Al-Qamaru - PERSIANAS BAJAS (Lyrics).opus
 691:ytmusic/Alas - T&K ( Prod by Abud Sp) VideoOficial Film By @aph.uru.opus
 692:ytmusic/Alunisaje.m4a
-693:ytmusic/ALC Mc - Bon Voyage (Shot By @serssama).opus
-694:ytmusic/Amor -Los Aldeanos-.opus
-695:ytmusic/ANIMAL.opus
-696:ytmusic/Antwan - 90 no muere.opus
-697:ytmusic/Apache - En Defensa Propia (Vídeo Oficial).opus
+693:ytmusic/Amor -Los Aldeanos-.opus
+694:ytmusic/ANIMAL.opus
+695:ytmusic/Antwan - 90 no muere.opus
+696:ytmusic/Apache - En Defensa Propia (Vídeo Oficial).opus
+697:ytmusic/ALC Mc - Bon Voyage (Shot By @serssama).opus
 698:ytmusic/APOLO ES PURO x DRACO & BENZO _ Proyecto Atmosfera.opus
 699:ytmusic/Arctic Monkeys - Do I Wanna Know (Official Video).opus
 700:ytmusic/Asi Pasa La Vida (Fresh Medz Riddim) _ Los Primos Lary (Guiyo & Yapsi Mata) _ El Veneno Crew.opus
