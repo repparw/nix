@@ -1,0 +1,2 @@
+#!/bin/sh
+alacritty -t mine -e mine-start
