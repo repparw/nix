@@ -537,6 +537,9 @@ PreloadWeight=100
 DialogHeight=558
 DialogWidth=720
 
+[Containments][9][Applets][10][Configuration][General]
+currentTab=streams
+
 [Containments][9][Applets][11][Configuration]
 PreloadWeight=42
 
@@ -588,7 +591,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][9][Applets][22][Configuration]
-PreloadWeight=48
+PreloadWeight=40
 
 [Containments][9][Applets][23]
 immutability=1
