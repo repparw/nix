@@ -1,9 +1,12 @@
 [Show]
 KGetDownload=false
+SetAsWallpaperAndLockScreen=true
 decrypt-view=true
 encrypt=false
 installFont=true
 kactivitymanagerd_fileitem_linking_plugin=true
+kdeconnectfileitemaction=true
+mountisoaction=true
 openTerminalHere=true
 runInKonsole=true
 sharefileitemaction=true
