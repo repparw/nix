@@ -54,6 +54,8 @@ DialogWidth=720
 
 [Containments][140][Applets][143][Configuration][General]
 launchers=
+showOnlyCurrentActivity=false
+showOnlyCurrentDesktop=false
 showOnlyCurrentScreen=true
 wheelEnabled=false
 
