@@ -1,7 +1,25 @@
 [ActionPlugins][0]
 MiddleButton;NoModifier=org.kde.paste
 RightButton;NoModifier=org.kde.contextmenu
-wheel:Vertical;NoModifier=org.kde.switchdesktop
+
+[ActionPlugins][0][RightButton;NoModifier]
+_add panel=true
+_context=true
+_lock_screen=true
+_logout=true
+_run_command=true
+_run_konsole=true
+_sep1=true
+_sep2=true
+_sep3=true
+_wallpaper=true
+add widgets=true
+configure=true
+configure shortcuts=false
+edit mode=true
+manage activities=true
+remove=true
+run associated application=true
 
 [ActionPlugins][1]
 RightButton;NoModifier=org.kde.contextmenu
@@ -40,24 +58,6 @@ lastScreen=6
 location=4
 plugin=org.kde.panel
 wallpaperplugin=org.kde.image
-
-[Containments][140][Applets][143]
-immutability=1
-plugin=org.kde.plasma.icontasks
-
-[Containments][140][Applets][143][Configuration]
-PreloadWeight=42
-
-[Containments][140][Applets][143][Configuration][ConfigDialog]
-DialogHeight=558
-DialogWidth=720
-
-[Containments][140][Applets][143][Configuration][General]
-launchers=
-showOnlyCurrentActivity=false
-showOnlyCurrentDesktop=false
-showOnlyCurrentScreen=true
-wheelEnabled=false
 
 [Containments][140][Applets][156]
 immutability=1
@@ -126,6 +126,19 @@ showOutline=true
 textAlign=2
 textColor=#689d69
 
+[Containments][140][Applets][165]
+immutability=1
+plugin=org.kde.plasma.icontasks
+
+[Containments][140][Applets][165][Configuration][ConfigDialog]
+DialogHeight=558
+DialogWidth=720
+
+[Containments][140][Applets][165][Configuration][General]
+launchers=
+showOnlyCurrentScreen=true
+wheelEnabled=false
+
 [Containments][140][ConfigDialog]
 DialogHeight=83
 DialogWidth=1920
@@ -134,7 +147,7 @@ DialogWidth=1920
 PreloadWeight=42
 
 [Containments][140][General]
-AppletOrder=143;163;162;161;156
+AppletOrder=165;163;162;161;156
 
 [Containments][2]
 ItemGeometries-1920x1080=
@@ -635,6 +648,10 @@ hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.networkmanagement,or
 knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.plasma.battery,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout
 scaleIconsToFit=true
 shownItems=org.kde.plasma.weather
+
+[Containments140Appletsts][143][Configuration][General]
+showOnlyCurrentActivity=false
+showOnlyCurrentScreen=true
 
 [Containments98Appletsts][101][Configuration][General]
 launchers=applications:systemsettings.desktop,preferred://filemanager,applications:org.kde.discover.desktop,preferred://browser
