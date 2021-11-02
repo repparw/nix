@@ -406,6 +406,7 @@ activate task manager entry 9=none,Meta+9,Activate Task Manager Entry 9
 activate widget 10=none,none,Activate Audio Volume Widget
 activate widget 120=,none,Activate Application Launcher Widget
 activate widget 14=Meta+R,none,Activate Night Colour Control Widget
+activate widget 165=none,none,Activate Icons-only Task Manager Widget
 activate widget 3=Alt+F1,none,Activate Application Launcher Widget
 activate widget 4=,none,Activate Application Launcher Widget
 activate widget 53=none,none,Activate Icons-only Task Manager Widget
