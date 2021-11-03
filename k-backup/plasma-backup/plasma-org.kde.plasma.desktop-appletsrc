@@ -126,18 +126,17 @@ showOutline=true
 textAlign=2
 textColor=#689d69
 
-[Containments][140][Applets][165]
+[Containments][140][Applets][168]
 immutability=1
 plugin=org.kde.plasma.icontasks
 
-[Containments][140][Applets][165][Configuration][ConfigDialog]
+[Containments][140][Applets][168][Configuration][ConfigDialog]
 DialogHeight=558
 DialogWidth=720
 
-[Containments][140][Applets][165][Configuration][General]
+[Containments][140][Applets][168][Configuration][General]
 launchers=
 showOnlyCurrentScreen=true
-wheelEnabled=false
 
 [Containments][140][ConfigDialog]
 DialogHeight=83
@@ -147,7 +146,7 @@ DialogWidth=1920
 PreloadWeight=42
 
 [Containments][140][General]
-AppletOrder=165;163;162;161;156
+AppletOrder=168;163;162;161;156
 
 [Containments][2]
 ItemGeometries-1920x1080=
@@ -585,6 +584,10 @@ PreloadWeight=42
 [Containments][9][Applets][16][Configuration]
 PreloadWeight=42
 
+[Containments][9][Applets][166]
+immutability=1
+plugin=org.kde.plasma.vault
+
 [Containments][9][Applets][17][Configuration]
 PreloadWeight=42
 
@@ -599,7 +602,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][9][Applets][22][Configuration]
-PreloadWeight=50
+PreloadWeight=70
 
 [Containments][9][Applets][23]
 immutability=1
@@ -643,9 +646,9 @@ DialogWidth=720
 PreloadWeight=42
 
 [Containments][9][General]
-extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.plasma.weather
+extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.plasma.weather,org.kde.plasma.vault
 hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.networkmanagement,org.kde.plasma.devicenotifier,KWin_kwin-virtual-keyboard,ibus-ui-gtk3
-knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.plasma.battery,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout
+knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.plasma.battery,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout,org.kde.plasma.vault
 scaleIconsToFit=true
 shownItems=org.kde.plasma.weather
 
