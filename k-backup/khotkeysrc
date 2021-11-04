@@ -912,7 +912,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_6Actions0]
-CommandURL=anki
+CommandURL=flatpak run net.ankiweb.Anki
 Type=COMMAND_URL
 
 [Data_6Conditions]
