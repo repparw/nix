@@ -56,6 +56,12 @@ types=1
 wmclass=alacritty
 wmclassmatch=1
 
+[15]
+Description=New window settings
+minsize=1,1
+minsizerule=2
+types=1
+
 [2]
 Description=Window settings for guiscrcpy
 clientmachinematch=0
@@ -139,7 +145,7 @@ wmclassmatch=1
 
 [General]
 ColorScheme[$d]
-count=14
+count=15
 fixed[$d]
 font[$d]
 menuFont[$d]
