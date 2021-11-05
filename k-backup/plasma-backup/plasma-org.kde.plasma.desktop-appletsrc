@@ -551,9 +551,6 @@ PreloadWeight=100
 DialogHeight=558
 DialogWidth=720
 
-[Containments][9][Applets][10][Configuration][General]
-currentTab=streams
-
 [Containments][9][Applets][11][Configuration]
 PreloadWeight=42
 
@@ -590,6 +587,9 @@ PreloadWeight=42
 [Containments][9][Applets][166]
 immutability=1
 plugin=org.kde.plasma.vault
+
+[Containments][9][Applets][166][Configuration]
+PreloadWeight=55
 
 [Containments][9][Applets][17][Configuration]
 PreloadWeight=42
