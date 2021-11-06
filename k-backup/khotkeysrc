@@ -872,7 +872,7 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_4_9Triggers0]
-Key=Media Play
+Key=Media Pause
 Type=SHORTCUT
 Uuid={da7f6bb9-0caa-493f-8397-a205eb1d5c5f}
 
