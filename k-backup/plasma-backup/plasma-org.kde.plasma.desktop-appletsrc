@@ -589,7 +589,7 @@ immutability=1
 plugin=org.kde.plasma.vault
 
 [Containments][9][Applets][166][Configuration]
-PreloadWeight=55
+PreloadWeight=60
 
 [Containments][9][Applets][17][Configuration]
 PreloadWeight=42
@@ -605,7 +605,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][9][Applets][22][Configuration]
-PreloadWeight=70
+PreloadWeight=75
 
 [Containments][9][Applets][23]
 immutability=1
