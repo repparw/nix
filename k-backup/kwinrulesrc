@@ -2,67 +2,6 @@
 update_info=kwinrules.upd:replace-placement-string-to-enum
 
 [1]
-Description=Application settings for pcmanfm
-clientmachinematch=0
-wmclass=pcmanfm
-wmclassmatch=1
-
-[10]
-Description=webcam
-above=true
-aboverule=3
-title=video0 - mpv
-titlematch=1
-types=1
-wmclass=gl mpv
-wmclasscomplete=true
-wmclassmatch=1
-
-[11]
-Description=Application settings for steam_app_238960
-clientmachine=localhost
-noborder=true
-noborderrule=3
-wmclass=steam_app_238960
-wmclassmatch=1
-
-[12]
-Description=Window settings for steam_app_238960
-clientmachine=localhost
-noborder=true
-noborderrule=3
-title=Path of Exile
-titlematch=1
-types=1
-wmclass=steam_app_238960
-wmclassmatch=1
-
-[13]
-Description=Window settings for steam_app_238960
-clientmachine=localhost
-noborder=true
-noborderrule=3
-title=Path of Exile
-types=1
-wmclass=pathofexile_x64steam.exe steam_app_238960
-wmclasscomplete=true
-wmclassmatch=1
-
-[14]
-Description=Window settings for alacritty
-noborder=true
-noborderrule=2
-types=1
-wmclass=alacritty
-wmclassmatch=1
-
-[15]
-Description=New window settings
-minsize=1,1
-minsizerule=2
-types=1
-
-[2]
 Description=Window settings for guiscrcpy
 clientmachinematch=0
 position=2005,914
@@ -73,7 +12,51 @@ types=1
 wmclass=guiscrcpy
 wmclassmatch=1
 
-[3]
+[10]
+Description=Application settings for steam_app_238960
+clientmachine=localhost
+noborder=true
+noborderrule=3
+wmclass=steam_app_238960
+wmclassmatch=1
+
+[11]
+Description=Window settings for steam_app_238960
+clientmachine=localhost
+noborder=true
+noborderrule=3
+title=Path of Exile
+titlematch=1
+types=1
+wmclass=steam_app_238960
+wmclassmatch=1
+
+[12]
+Description=Window settings for steam_app_238960
+clientmachine=localhost
+noborder=true
+noborderrule=3
+title=Path of Exile
+types=1
+wmclass=pathofexile_x64steam.exe steam_app_238960
+wmclasscomplete=true
+wmclassmatch=1
+
+[13]
+Description=Window settings for alacritty
+noborder=true
+noborderrule=2
+types=1
+wmclass=alacritty
+wmclassmatch=1
+
+[14]
+Description=New window settings
+minsize=1,1
+minsizerule=2
+types=1
+
+[2]
 Description=Window settings for toplevel
 clientmachinematch=0
 position=2769,261
@@ -83,15 +66,16 @@ wmclass=!toplevel5 toplevel
 wmclasscomplete=true
 wmclassmatch=1
 
-[4]
+[3]
 Description=Window settings for freetube
+clientmachinematch=0
 size=1920,1044
 sizerule=3
 types=1
 wmclass=freetube
 wmclassmatch=1
 
-[5]
+[4]
 Description=Application settings for steam_app_369110
 fullscreen=true
 fullscreenrule=3
@@ -100,7 +84,7 @@ screenrule=3
 wmclass=steam_app_369110
 wmclassmatch=1
 
-[6]
+[5]
 Description=Window settings for steam_app_369110
 fullscreen=true
 fullscreenrule=3
@@ -111,7 +95,7 @@ types=1
 wmclass=steam_app_369110
 wmclassmatch=1
 
-[7]
+[6]
 Description=Window settings for scrcpy
 position=23,174
 positionrule=3
@@ -122,7 +106,7 @@ types=1
 wmclass=scrcpy
 wmclassmatch=1
 
-[8]
+[7]
 Description=Application settings for mpv
 fsplevel=3
 fsplevelrule=2
@@ -136,16 +120,27 @@ wmclass=gl mpv
 wmclasscomplete=true
 wmclassmatch=1
 
-[9]
+[8]
 Description=Application settings for steam_app_374320
 aboverule=2
 wmclass=darksoulsiii.exe steam_app_374320
 wmclasscomplete=true
 wmclassmatch=1
 
+[9]
+Description=webcam
+above=true
+aboverule=3
+title=video0 - mpv
+titlematch=1
+types=1
+wmclass=gl mpv
+wmclasscomplete=true
+wmclassmatch=1
+
 [General]
 ColorScheme[$d]
-count=15
+count=14
 fixed[$d]
 font[$d]
 menuFont[$d]
