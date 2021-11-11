@@ -1,0 +1,5 @@
+#!/bin/sh
+curl -sX 'GET' \
+  "https://api.coingecko.com/api/v3/simple/price?ids=$1&vs_currencies=usd" \
+  -H 'accept: application/json' | cut -d: -f3 | tr -d \}
+
