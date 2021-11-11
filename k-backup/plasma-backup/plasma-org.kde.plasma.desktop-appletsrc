@@ -87,7 +87,7 @@ DialogWidth=720
 
 [Containments][140][Applets][161][Configuration][General]
 clickCommand=/opt/Binance/binance %U
-command=echo "BTC:$(btc)"
+command=echo "BTC:$(~/.config/scripts/crypto bitcoin)"
 interval=60000
 outlineColor=#000000
 showBackground=false
@@ -103,7 +103,7 @@ DialogHeight=558
 DialogWidth=720
 
 [Containments][140][Applets][162][Configuration][General]
-command=echo "BCH:$(~/.config/scripts/bch) "
+command=echo "BCH:$(~/.config/scripts/crypto bitcoin-cash) "
 interval=60000
 outlineColor=#000000
 showOutline=true
@@ -119,7 +119,7 @@ DialogHeight=558
 DialogWidth=720
 
 [Containments][140][Applets][163][Configuration][General]
-command=echo "XMR:$(~/.config/scripts/xmr) "
+command=echo "XMR:$(~/.config/scripts/crypto monero) "
 interval=60000
 outlineColor=#000000
 showOutline=true
