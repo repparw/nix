@@ -81,7 +81,7 @@ enableSpreadLayout=false
 enableStairLayout=false
 enableThreeColumnLayout=false
 ignoreClass=krunner,yakuake,spectacle,kded5,steam
-tileLayoutGap=2
+tileLayoutGap=3
 
 [Script-grid-tiling]
 gap=4
