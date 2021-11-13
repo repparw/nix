@@ -324,6 +324,7 @@ bismuth_prev_layout=Meta+|,none,Bismuth: Switch to the Previous Layout
 bismuth_push_window_to_master=,none,Bismuth: Push Active Window to Master Area
 bismuth_rotate=,none,Bismuth: Rotate
 bismuth_rotate_part=Meta+Shift+R,none,Bismuth: Rotate Part
+bismuth_rotate_reverse=none,none,Bismuth: Rotate (Reverse)
 bismuth_toggle_float_layout=none,none,Bismuth: Toggle Floating Layout
 bismuth_toggle_monocle_layout=Meta+Shift+M,none,Bismuth: Toggle Monocle Layout
 bismuth_toggle_quarter_layout=none,none,Bismuth: Toggle Quarter Layout
