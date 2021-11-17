@@ -103,7 +103,7 @@ DialogHeight=558
 DialogWidth=720
 
 [Containments][140][Applets][162][Configuration][General]
-command=echo "BCH:$(~/.config/scripts/crypto bitcoin-cash) "
+command=echo "WAVES:$(~/.config/scripts/crypto waves) "
 interval=60000
 outlineColor=#000000
 showOutline=true
@@ -119,7 +119,7 @@ DialogHeight=558
 DialogWidth=720
 
 [Containments][140][Applets][163][Configuration][General]
-command=echo "XMR:$(~/.config/scripts/crypto monero) "
+command=echo "GRT:$(~/.config/scripts/crypto the-graph) "
 interval=60000
 outlineColor=#000000
 showOutline=true
@@ -138,6 +138,20 @@ DialogWidth=720
 launchers=
 showOnlyCurrentScreen=true
 
+[Containments][140][Applets][169]
+immutability=1
+plugin=com.github.zren.commandoutput
+
+[Containments][140][Applets][169][Configuration][ConfigDialog]
+DialogHeight=558
+DialogWidth=720
+
+[Containments][140][Applets][169][Configuration][General]
+command=echo "ADA:$(~/.config/scripts/crypto cardano) "
+outlineColor=#000000
+showOutline=true
+textColor=#689d69
+
 [Containments][140][ConfigDialog]
 DialogHeight=83
 DialogWidth=1920
@@ -146,7 +160,7 @@ DialogWidth=1920
 PreloadWeight=42
 
 [Containments][140][General]
-AppletOrder=168;163;162;161;156
+AppletOrder=168;169;163;162;161;156
 
 [Containments][2]
 ItemGeometries-1920x1080=
