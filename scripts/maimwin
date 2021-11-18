@@ -1,2 +1,3 @@
 #!/bin/sh
-maim -Bui $(xdotool getactivewindow) -f png | xclip -selection clipboard -t image/png
+maim -m 10 -Bui $(xdotool getactivewindow) -f png | xclip -selection clipboard -t image/png;
+paplay /usr/share/sounds/speech-dispatcher/piano-3.wav

@@ -361,14 +361,6 @@ _launch=none,Alt+Space\tAlt+F2\tSearch,KRunner
 _k_friendly_name=Emoji Selector
 _launch=Meta+-,Meta+.,Emoji Selector
 
-[org.kde.spectacle.desktop]
-ActiveWindowScreenShot=Meta+Print,Meta+Print,Capture Active Window
-CurrentMonitorScreenShot=,none,Capture Current Monitor
-FullScreenScreenShot=Shift+Print,Shift+Print,Capture Entire Desktop
-RectangularRegionScreenShot=Meta+Shift+Print,Meta+Shift+Print,Capture Rectangular Region
-_k_friendly_name=Spectacle
-_launch=,Print,Launch Spectacle
-
 [org.qutebrowser.qutebrowser.desktop]
 _k_friendly_name=Launch qutebrowser
 _launch=,none,Launch qutebrowser
@@ -408,7 +400,7 @@ activate widget 10=none,none,Activate Audio Volume Widget
 activate widget 120=,none,Activate Application Launcher Widget
 activate widget 14=Meta+R,none,Activate Night Colour Control Widget
 activate widget 168=none,none,Activate Icons-only Task Manager Widget
-activate widget 3=Alt+F1,none,Activate Application Launcher Widget
+activate widget 3=none,none,Activate Application Launcher Widget
 activate widget 4=,none,Activate Application Launcher Widget
 activate widget 53=none,none,Activate Icons-only Task Manager Widget
 activate widget 63=,none,Activate Application Launcher Widget
@@ -434,7 +426,3 @@ toggle do not disturb=none,none,Toggle do not disturb
 [systemsettings.desktop]
 _k_friendly_name=System Settings
 _launch=Tools,Tools,System Settings
-
-[wine-winemine.desktop]
-_k_friendly_name=WineMine
-_launch=none,none,Launch WineMine
