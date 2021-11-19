@@ -86,7 +86,7 @@ DialogHeight=558
 DialogWidth=720
 
 [Containments][140][Applets][161][Configuration][General]
-clickCommand=/opt/Binance/binance %U
+clickCommand=binance %U
 command=echo "BTC:$(~/.config/scripts/crypto bitcoin)"
 interval=60000
 outlineColor=#000000
