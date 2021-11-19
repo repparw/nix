@@ -148,6 +148,7 @@ DialogWidth=720
 
 [Containments][140][Applets][169][Configuration][General]
 command=echo "ADA:$(~/.config/scripts/crypto cardano) "
+interval=60000
 outlineColor=#000000
 showOutline=true
 textColor=#689d69
