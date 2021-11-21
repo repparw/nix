@@ -44,7 +44,7 @@ PreloadWeight=42
 
 [Containments][1][General]
 ToolBoxButtonState=topcenter
-ToolBoxButtonX=509
+ToolBoxButtonX=525
 
 [Containments][1][Wallpaper][org.kde.image][General]
 Image=file:///home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg
@@ -383,7 +383,7 @@ PreloadWeight=100
 SystrayContainmentId=9
 
 [Containments][3][ConfigDialog]
-DialogHeight=83
+DialogHeight=84
 DialogWidth=1920
 
 [Containments][3][Configuration]
@@ -613,6 +613,24 @@ PreloadWeight=42
 immutability=1
 plugin=org.kde.plasma.manage-inputmethod
 
+[Containments][9][Applets][171]
+immutability=1
+plugin=org.kde.weatherWidget
+
+[Containments][9][Applets][171][Configuration]
+PreloadWeight=100
+
+[Containments][9][Applets][171][Configuration][ConfigDialog]
+DialogHeight=540
+DialogWidth=720
+
+[Containments][9][Applets][171][Configuration][General]
+lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1637460183858}
+places=[{"providerId":"owm","placeIdentifier":"3430568","placeAlias":"Moquehuá"},{"providerId":"owm","placeIdentifier":"3432043","placeAlias":"La Plata"}]
+
+[Containments][9][Applets][171][Configuration][Units]
+windSpeedType=2
+
 [Containments][9][Applets][18][Configuration]
 PreloadWeight=42
 
@@ -633,23 +651,8 @@ plugin=org.kde.plasma.networkmanagement
 [Containments][9][Applets][23][Configuration]
 PreloadWeight=100
 
-[Containments][9][Applets][50]
-immutability=1
-plugin=org.kde.plasma.weather
-
 [Containments][9][Applets][50][Configuration]
-PreloadWeight=100
-pressureUnit=5008
-source=wettercom|weather|La Plata, Provincia de Buenos Aires, AR|AR0BA0009;La Plata
-speedUnit=9000
-temperatureUnit=6001
-updateInterval=60
-visibilityUnit=2007
-weatherServiceProviders=wettercom,bbcukmet
-
-[Containments][9][Applets][50][Configuration][ConfigDialog]
-DialogHeight=558
-DialogWidth=720
+PreloadWeight=42
 
 [Containments][9][Applets][51][Configuration]
 PreloadWeight=42
@@ -668,11 +671,11 @@ DialogWidth=720
 PreloadWeight=42
 
 [Containments][9][General]
-extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.plasma.weather,org.kde.plasma.vault,org.kde.plasma.manage-inputmethod
+extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.plasma.vault,org.kde.plasma.manage-inputmethod,org.kde.weatherWidget
 hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.networkmanagement,org.kde.plasma.devicenotifier,KWin_kwin-virtual-keyboard,ibus-ui-gtk3
 knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.plasma.battery,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout,org.kde.plasma.vault,org.kde.plasma.manage-inputmethod
 scaleIconsToFit=true
-shownItems=org.kde.plasma.weather
+shownItems=org.kde.weatherWidget
 
 [Containments140Appletsts][143][Configuration][General]
 showOnlyCurrentActivity=false
