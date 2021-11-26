@@ -18,6 +18,10 @@ _k_friendly_name=Keyboard Layout Switcher
 _k_friendly_name=ArchiSteamFarm
 _launch=none,none,Launch ArchiSteamFarm
 
+[binance.desktop]
+_k_friendly_name=Binance
+_launch=none,none,Launch Binance
+
 [electrum.desktop]
 _k_friendly_name=Electrum
 _launch=none,none,Launch Electrum
