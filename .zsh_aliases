@@ -137,11 +137,11 @@
 		alias temp="watch -d -n 2 sensors -A"
 		alias gputemp="watch -n 2 nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader 39"
 
-	# ergo mine
-		alias mineergo="cd ~/.mining/lolminer && ./lolMiner --config=/home/repparw/.mining/lolMiner.cfg"
+	# GPU mining (mm.js gminer)
+		alias gpumine="cd ~/.mining/gminer && ./mine_ravencoin.sh"
 
-	# minexmr
-		alias minexmr="cd ~/.mining/xmrig && sudo ./xmrig -c config.json"
+	# CPU Mining (xmrig)
+		alias cpumine="cd ~/.mining/xmrig && sudo ./xmrig -c config.json"
 
 ## Functions
 	# ytfzf + xclip for link
