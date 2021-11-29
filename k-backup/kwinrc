@@ -64,10 +64,12 @@ CommandWindowWheel=Scroll
 Active=true
 LatitudeAuto=-35.0965
 LongitudeAuto=-59.7793
+Mode=Constant
 NightTemperature=2600
 
 [Plugins]
 bismuthEnabled=true
+forceblurEnabled=true
 grid-tilingEnabled=false
 highlightwindowEnabled=true
 krohnkiteEnabled=false
@@ -81,7 +83,10 @@ enableSpreadLayout=false
 enableStairLayout=false
 enableThreeColumnLayout=false
 ignoreClass=krunner,yakuake,spectacle,kded5,steam
-tileLayoutGap=3
+tileLayoutGap=2
+
+[Script-forceblur]
+patterns=alacritty
 
 [Script-grid-tiling]
 gap=4

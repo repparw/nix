@@ -336,7 +336,7 @@ bismuth_toggle_spread_layout=none,none,Bismuth: Toggle Spread Layout
 bismuth_toggle_stair_layout=none,none,Bismuth: Toggle Stair Layout
 bismuth_toggle_three_column_layout=none,none,Bismuth: Toggle Three Column Layout
 bismuth_toggle_tile_layout=Meta+Shift+T,none,Bismuth: Toggle Tile Layout
-bismuth_toggle_window_floating=none,none,Bismuth: Toggle Active Window Floating
+bismuth_toggle_window_floating=Meta+S,none,Bismuth: Toggle Active Window Floating
 view_actual_size=,Meta+0,Actual Size
 view_zoom_in=none,Meta+=,Zoom In
 view_zoom_out=none,Meta+-,Zoom Out
