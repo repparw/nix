@@ -430,3 +430,7 @@ toggle do not disturb=none,none,Toggle do not disturb
 [systemsettings.desktop]
 _k_friendly_name=System Settings
 _launch=Tools,Tools,System Settings
+
+[vnc.desktop]
+_k_friendly_name=VNC
+_launch=none,none,Launch VNC
