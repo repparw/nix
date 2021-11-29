@@ -1,15 +1,11 @@
-State=AAAA/wAAAAD9AAAAAAAAAoAAAAGtAAAABAAAAAQAAAAIAAAACPwAAAAA
-
-[FrameBuffer]
-preferredFrameBufferPlugin=pw
-
 [MainWindow]
-State=AAAA/wAAAAD9AAAAAAAAAoAAAAGtAAAABAAAAAQAAAAIAAAACPwAAAAA
+DP-0 HDMI-0 Height 1920x1080=1021
+DP-0 HDMI-0 Width 1920x1080=1920
+DP-0 HDMI-0 XPosition 1920x1080=2058
+DP-0 HDMI-0 YPosition 1920x1080=27
+RestorePositionForNextInstance=false
+State=AAAA/wAAAAD9AAAAAAAAB4AAAAPIAAAABAAAAAQAAAAIAAAACPwAAAAA
 ToolBarsMovable=Disabled
 
 [Security]
 allowUnattendedAccess=true
-
-[TCP]
-port=5899
-useDefaultPort=false

@@ -1,5 +1,5 @@
 [General]
-SplitterSizes=401,546
+SplitterSizes=649,884
 
 [KFileDialog Settings]
 Recent Files[$e]=Electrum,file:$HOME/.AppImages/MyMonero-1.1.20.AppImage,file:$HOME/.AppImages/.freezer.png,file:$HOME/.AppImages/Freezer-1.1.17.AppImage,file:$HOME/.AppImages/.kindle.png,file:$HOME/.Genymobile/Genymotion/genymotion/player,file:$HOME/.AppImages/.heroic.png,file:$HOME/.AppImages/heroic.AppImage,file:$HOME/.wine/drive_c/Program Files (x86)/PoB/Path of Building.exe,file:$HOME/.AppImages/Awakened-PoE-Trade.AppImage
@@ -7,15 +7,15 @@ Recent URLs[$e]=file:$HOME/.wine/drive_c/Program Files (x86)/PoB/,file:$HOME/.Ap
 detailViewIconSize=16
 
 [MainWindow]
-DP-0 HDMI-0 Height 1920x1080=496
-DP-0 HDMI-0 Width 1920x1080=958
-DP-0 HDMI-0 XPosition 1920x1080=3019
-DP-0 HDMI-0 YPosition 1920x1080=551
+DP-0 HDMI-0 Height 1920x1080=321
+DP-0 HDMI-0 Width 1920x1080=1544
+DP-0 HDMI-0 XPosition 1920x1080=2433
+DP-0 HDMI-0 YPosition 1920x1080=727
 DisplayPort-1 HDMI-A-1 XPosition 1920x1080=2506
 DisplayPort-1 HDMI-A-1 YPosition 1920x1080=495
 DisplayPort-1 XPosition=360
 DisplayPort-1 XPosition 1920x1080=16
 DisplayPort-1 YPosition=349
 DisplayPort-1 YPosition 1920x1080=313
-State=AAAA/wAAAAD9AAAAAAAAA74AAAGlAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
+State=AAAA/wAAAAD9AAAAAAAABggAAAD1AAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
 ToolBarsMovable=Disabled
