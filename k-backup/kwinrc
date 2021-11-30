@@ -64,7 +64,6 @@ CommandWindowWheel=Scroll
 Active=true
 LatitudeAuto=-35.0965
 LongitudeAuto=-59.7793
-Mode=Constant
 NightTemperature=2600
 
 [Plugins]
