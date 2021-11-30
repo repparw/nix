@@ -44,7 +44,7 @@
 
 		alias trash='mv --force -t ~/.local/share/Trash '
 
-		alias rm='trash'
+		alias x='trash'
 
 		alias cp='rsync -ah --info=progress2'
 
