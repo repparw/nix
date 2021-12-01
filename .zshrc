@@ -1,6 +1,7 @@
 # Add local path
 PATH=/home/repparw/go/bin:/home/repparw/.local/bin:$PATH
 
+	export HISTCONTROL=ignoreboth:erasedups
 ## Default editor to nvim
 	export EDITOR='nvim'
 	export VISUAL=$EDITOR
@@ -131,3 +132,13 @@ if [ -f ~/.zsh_aliases ]; then
 fi
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+## History ignore dups
+setopt EXTENDED_HISTORY
+setopt HIST_EXPIRE_DUPS_FIRST
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_FIND_NO_DUPS
+setopt HIST_SAVE_NO_DUPS
+setopt HIST_BEEP
