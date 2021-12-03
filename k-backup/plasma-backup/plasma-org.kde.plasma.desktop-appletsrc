@@ -44,7 +44,7 @@ PreloadWeight=42
 
 [Containments][1][General]
 ToolBoxButtonState=topcenter
-ToolBoxButtonX=525
+ToolBoxButtonX=499
 
 [Containments][1][Wallpaper][org.kde.image][General]
 Image=file:///home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg
@@ -86,7 +86,7 @@ DialogHeight=558
 DialogWidth=720
 
 [Containments][140][Applets][161][Configuration][General]
-command=echo "BTC:$(~/.config/scripts/crypto bitcoin)"
+command=echo "ETH:$(~/.config/scripts/crypto ethereum)"
 interval=60000
 outlineColor=#000000
 showBackground=false
@@ -152,15 +152,30 @@ outlineColor=#000000
 showOutline=true
 textColor=#689d69
 
+[Containments][140][Applets][173]
+immutability=1
+plugin=com.github.zren.commandoutput
+
+[Containments][140][Applets][173][Configuration][ConfigDialog]
+DialogHeight=540
+DialogWidth=720
+
+[Containments][140][Applets][173][Configuration][General]
+command=echo "SOL:$(~/.config/scripts/crypto solana) "
+interval=60000
+outlineColor=#000000
+showOutline=true
+textColor=#689d69
+
 [Containments][140][ConfigDialog]
-DialogHeight=83
+DialogHeight=84
 DialogWidth=1920
 
 [Containments][140][Configuration]
 PreloadWeight=42
 
 [Containments][140][General]
-AppletOrder=168;169;163;162;161;156
+AppletOrder=168;173;169;163;162;161;156
 
 [Containments][2]
 ItemGeometries-1920x1080=
@@ -520,8 +535,8 @@ PreloadWeight=42
 Image=file:///usr/share/wallpapers/Next/contents/images/1920x1080.png
 
 [Containments][75]
-ItemGeometries-1920x1080=
-ItemGeometriesHorizontal=
+ItemGeometries-1920x1080=Applet-172:240,288,64,64,0;
+ItemGeometriesHorizontal=Applet-172:240,288,64,64,0;
 activityId=c2f7948f-cf52-46ec-9b7e-c825ba193393
 formfactor=0
 immutability=1
@@ -529,6 +544,10 @@ lastScreen=6
 location=0
 plugin=org.kde.plasma.folder
 wallpaperplugin=org.kde.image
+
+[Containments][75][Applets][172]
+immutability=1
+plugin=com.github.zren.commandoutput
 
 [Containments][75][ConfigDialog]
 DialogHeight=558
@@ -564,6 +583,9 @@ PreloadWeight=100
 [Containments][9][Applets][10][Configuration][ConfigDialog]
 DialogHeight=558
 DialogWidth=720
+
+[Containments][9][Applets][10][Configuration][General]
+currentTab=streams
 
 [Containments][9][Applets][11][Configuration]
 PreloadWeight=42
@@ -624,7 +646,7 @@ DialogHeight=540
 DialogWidth=720
 
 [Containments][9][Applets][171][Configuration][General]
-lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1638468698049}
+lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1638499706963}
 places=[{"providerId":"owm","placeIdentifier":"3430568","placeAlias":"Moquehuá"},{"providerId":"owm","placeIdentifier":"3432043","placeAlias":"La Plata"}]
 
 [Containments][9][Applets][171][Configuration][Units]
