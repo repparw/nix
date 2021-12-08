@@ -86,6 +86,7 @@ DialogHeight=558
 DialogWidth=720
 
 [Containments][140][Applets][161][Configuration][General]
+clickCommand=xdg-open https://www.binance.com/en/my/wallet/account/main
 command=echo "ETH:$(~/.config/scripts/crypto ethereum)"
 interval=60000
 outlineColor=#000000
@@ -646,7 +647,7 @@ DialogHeight=540
 DialogWidth=720
 
 [Containments][9][Applets][171][Configuration][General]
-lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1638957959081}
+lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1638987639023}
 places=[{"providerId":"owm","placeIdentifier":"3430568","placeAlias":"Moquehuá"},{"providerId":"owm","placeIdentifier":"3432043","placeAlias":"La Plata"}]
 
 [Containments][9][Applets][171][Configuration][Units]
@@ -670,7 +671,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][9][Applets][22][Configuration]
-PreloadWeight=92
+PreloadWeight=97
 
 [Containments][9][Applets][23]
 immutability=1
