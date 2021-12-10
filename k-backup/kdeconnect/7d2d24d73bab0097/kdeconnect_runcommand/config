@@ -1,0 +1,2 @@
+[General]
+commands="@ByteArray({\"_51f94153_c5fb_4b3d_92d0_d7ae8e39b2d7_\":{\"command\":\"mpc toggle\",\"name\":\"mpc toggle\"},\"_80c2d48b_cdc5_46c5_bf7a_23024b5a67c4_\":{\"command\":\"bluetoothctl disconnect 00:1D:43:A0:14:D8\",\"name\":\"bt disc\"},\"_ab5f1a7f_a763_45b5_b3e6_5139a87a854d_\":{\"command\":\"bluetoothctl connect 00:1D:43:A0:14:D8\",\"name\":\"bt connect\"}})"
