@@ -585,9 +585,6 @@ PreloadWeight=100
 DialogHeight=558
 DialogWidth=720
 
-[Containments][9][Applets][10][Configuration][General]
-currentTab=streams
-
 [Containments][9][Applets][11][Configuration]
 PreloadWeight=42
 
@@ -647,7 +644,7 @@ DialogHeight=540
 DialogWidth=720
 
 [Containments][9][Applets][171][Configuration][General]
-lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1639072909375}
+lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1639101747982}
 places=[{"providerId":"owm","placeIdentifier":"3430568","placeAlias":"Moquehuá"},{"providerId":"owm","placeIdentifier":"3432043","placeAlias":"La Plata"}]
 
 [Containments][9][Applets][171][Configuration][Units]
@@ -658,7 +655,7 @@ immutability=1
 plugin=org.kde.kdeconnect
 
 [Containments][9][Applets][174][Configuration]
-PreloadWeight=65
+PreloadWeight=100
 
 [Containments][9][Applets][18][Configuration]
 PreloadWeight=42
