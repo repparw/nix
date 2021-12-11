@@ -121,7 +121,7 @@
 
 	# yt-dl	
 
-		alias yt='youtube-dl'
+		alias yt='yt-dlp'
 
 	# ytfzf with nq for freeing the terminal
 		alias y='ytf'
@@ -131,7 +131,7 @@
 
 		alias ytfh='ytf -H'
 
-		alias yta="youtube-dl -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
+		alias yta="yt-dlp -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
 
 	# temp alias
 		alias temp="watch -d -n 2 sensors -A"
