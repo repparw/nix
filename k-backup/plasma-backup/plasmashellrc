@@ -41,7 +41,7 @@ LaunchCounts=1 services_applications:io.freetubeapp.FreeTube.desktop,2 services_
 pluginWhiteList=desktopsessions,services,places,PowerDevil,calculator,unitconverter,shell,bookmarks,recentdocuments,locations,baloosearch
 
 [PlasmaTransientsConfig]
-PreloadWeight=42
+PreloadWeight=34
 
 [PlasmaViews][Panel 119][Defaults]
 thickness=44
