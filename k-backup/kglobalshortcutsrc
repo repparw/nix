@@ -54,6 +54,7 @@ display=Display\t,Display\tMeta+P,Switch Display
 
 [khotkeys]
 _k_friendly_name=Custom Shortcuts Service
+{02c7ab00-02d3-4b1d-b993-965fe801edeb}=none,none,New Action
 {1782601a-16e1-4982-9ce7-68bb16aa8580}=Meta+<,none,mpc seek -
 {21430c12-3af4-4792-9725-a01a03fea6f1}=Media Previous,none,mpc prev 2
 {269bd72c-00ab-4d46-8fa2-a1abec6f454a}=Meta+F4,none,shutdown
@@ -82,6 +83,7 @@ _k_friendly_name=Custom Shortcuts Service
 {e1957fad-5b65-4a37-89fc-fc3a8d41f5a0}=Meta+M,none,ncmpcpp
 {e3161821-2534-4ece-b465-000da75bc0b5}=Launch (1),none,qalc
 {e677a7e0-6613-4c60-b684-56df16400e33}=Meta+Shift+F4,none,reboot
+{ef1743e3-1fbc-4b88-8da2-7fd606945bd2}=none,none,New Action
 {ef5033fa-e676-4d3b-9a2b-b5c43894c7fb}=Meta+>,none,mpc seek +
 {f3ac6719-54ce-4e0d-9832-1f6d2579f371}=Meta+F11,none,maimclip thumb
 {fa64ef95-8541-49a2-9d1f-3183513e25ac}=Meta+B,none,bt connect
