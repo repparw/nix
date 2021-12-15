@@ -142,8 +142,6 @@ SeparateScreenFocus=true
 TitlebarDoubleClickCommand=Maximize
 
 [org.kde.kdecoration2]
-BorderSize=None
-BorderSizeAuto=false
 ButtonsOnLeft=
 ButtonsOnRight=IX
 library=org.kde.kwin.aurorae

@@ -61,14 +61,6 @@ wmclass=gl mpv
 wmclasscomplete=true
 wmclassmatch=1
 
-[5]
-Description=alacritty no titlebar
-noborder=true
-noborderrule=2
-types=1
-wmclass=alacritty
-wmclassmatch=1
-
 [6]
 Description=Minimum size for windows
 minsize=1,1
@@ -106,7 +98,7 @@ count=6
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6
+rules=1,2,3,4,6,d45badfa-bdc4-4db4-875b-2befdc3f0fe0
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
@@ -117,3 +109,10 @@ Theme[$d]
 [KDE]
 ColorScheme[$d]
 widgetStyle[$d]
+
+[d45badfa-bdc4-4db4-875b-2befdc3f0fe0]
+Description=No titlebars for all
+noborder=true
+noborderrule=2
+wmclass=.*
+wmclassmatch=3
