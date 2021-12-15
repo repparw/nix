@@ -536,8 +536,8 @@ PreloadWeight=42
 Image=file:///usr/share/wallpapers/Next/contents/images/1920x1080.png
 
 [Containments][75]
-ItemGeometries-1920x1080=Applet-172:240,288,64,64,0;
-ItemGeometriesHorizontal=Applet-172:240,288,64,64,0;
+ItemGeometries-1920x1080=
+ItemGeometriesHorizontal=
 activityId=c2f7948f-cf52-46ec-9b7e-c825ba193393
 formfactor=0
 immutability=1
@@ -545,10 +545,6 @@ lastScreen=6
 location=0
 plugin=org.kde.plasma.folder
 wallpaperplugin=org.kde.image
-
-[Containments][75][Applets][172]
-immutability=1
-plugin=com.github.zren.commandoutput
 
 [Containments][75][ConfigDialog]
 DialogHeight=558
@@ -647,7 +643,7 @@ DialogHeight=540
 DialogWidth=720
 
 [Containments][9][Applets][171][Configuration][General]
-lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1639508076464}
+lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1639534030645}
 places=[{"providerId":"owm","placeIdentifier":"3430568","placeAlias":"Moquehuá"},{"providerId":"owm","placeIdentifier":"3432043","placeAlias":"La Plata"}]
 
 [Containments][9][Applets][171][Configuration][Units]
