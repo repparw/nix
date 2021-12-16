@@ -123,7 +123,7 @@ ForegroundVisited=127,140,141
 
 [DirSelect Dialog]
 DirSelectDialog Size=847,598
-History Items[$e]=file:///mnt/seagate,file:///mnt,file:$HOME/Downloads/chromestore,file:$HOME/Games/ZeldaBOTW,file:$HOME/.AppImages,file:$HOME/.AppImages,file:$HOME/bin,file:$HOME/Downloads/Torrents,file:$HOME/Downloads/Torrents,file:$HOME/Pictures/scr,file:$HOME/Pictures/scr,file:///run/media/repparw/HDD/Videos
+History Items[$e]=file:///run/media/repparw/HDD/Torrents,file:///mnt/seagate,file:///mnt,file:$HOME/Downloads/chromestore,file:$HOME/Games/ZeldaBOTW,file:$HOME/.AppImages,file:$HOME/.AppImages,file:$HOME/bin,file:$HOME/Downloads/Torrents,file:$HOME/Downloads/Torrents,file:$HOME/Pictures/scr,file:$HOME/Pictures/scr,file:///run/media/repparw/HDD/Videos
 
 [General]
 BrowserApplication=userapp-Firefox-RJ7Z10.desktop
