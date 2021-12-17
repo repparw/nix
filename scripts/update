@@ -1,0 +1,8 @@
+#!/bin/sh
+tmux new-session -d -s update
+tmux send-keys 'sudo dnf update' 'C-m'
+tmux select-window -t update:0
+tmux split-window -v
+tmux send-keys 'flatpak update' 'C-m'
+tmux select-pane -t 0
+tmux -2 attach-session -t update
