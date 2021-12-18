@@ -83,7 +83,6 @@ _k_friendly_name=Custom Shortcuts Service
 {e1957fad-5b65-4a37-89fc-fc3a8d41f5a0}=Meta+M,none,ncmpcpp
 {e3161821-2534-4ece-b465-000da75bc0b5}=Launch (1),none,qalc
 {e677a7e0-6613-4c60-b684-56df16400e33}=Meta+Shift+F4,none,reboot
-{ec65584f-9f38-49d2-9010-aa7ee9fcebbb}=none,none,New Action
 {ef5033fa-e676-4d3b-9a2b-b5c43894c7fb}=Meta+>,none,mpc seek +
 {f3ac6719-54ce-4e0d-9832-1f6d2579f371}=Meta+F11,none,maimclip thumb
 {fa64ef95-8541-49a2-9d1f-3183513e25ac}=Meta+B,none,bt connect

@@ -61,11 +61,19 @@ wmclass=gl mpv
 wmclasscomplete=true
 wmclassmatch=1
 
-[6]
+[5]
 Description=Minimum size for windows
 minsize=1,1
 minsizerule=2
 types=1
+
+[6]
+Description=No titlebars for all
+minsize=1,1
+noborder=true
+noborderrule=2
+wmclass=.*
+wmclassmatch=3
 
 [7]
 Description=Application settings for mpv
@@ -98,7 +106,7 @@ count=6
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,6,d45badfa-bdc4-4db4-875b-2befdc3f0fe0
+rules=1,2,3,4,5,6
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
