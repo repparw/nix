@@ -108,5 +108,5 @@ showPopups=false
 startDownloadsOnLowDiskSpace=1
 tempDir=/home/repparw/.local/share/ktorrent/
 torrentCopyDir=/home/repparw
-udpTrackerPort=54535
+udpTrackerPort=53597
 useSaveDir=true
