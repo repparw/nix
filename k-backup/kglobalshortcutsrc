@@ -26,13 +26,6 @@ _launch=none,none,Launch Binance
 _k_friendly_name=Electrum
 _launch=none,none,Launch Electrum
 
-[firefox.desktop]
-_k_friendly_name=Launch Firefox
-_launch=Meta+Space,none,Launch Firefox
-new-private-window=,none,New Private Window
-new-window=none,none,New Window
-profile-manager-window=,none,Open the Profile Manager
-
 [freetube.desktop]
 _k_friendly_name=FreeTube
 _launch=none,none,Launch FreeTube
@@ -54,6 +47,7 @@ display=Display\t,Display\tMeta+P,Switch Display
 
 [khotkeys]
 _k_friendly_name=Custom Shortcuts Service
+{04985832-6dc3-433e-9bb8-68dcb30bf7a1}=Meta+Space,none,firefox
 {1782601a-16e1-4982-9ce7-68bb16aa8580}=Meta+<,none,mpc seek -
 {21430c12-3af4-4792-9725-a01a03fea6f1}=Media Previous,none,mpc prev 2
 {269bd72c-00ab-4d46-8fa2-a1abec6f454a}=Meta+F4,none,shutdown
