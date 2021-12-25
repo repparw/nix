@@ -1,9 +1,9 @@
-sw_volume: 28
+sw_volume: 30
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
 state: pause
-current: 401
-time: 93.228000
+current: 1016
+time: 137.558000
 random: 1
 repeat: 0
 single: 0
@@ -714,9 +714,9 @@ playlist_begin
 699:ytmusic/APOLO ES PURO x DRACO & BENZO _ Proyecto Atmosfera.opus
 700:ytmusic/Arctic Monkeys - Do I Wanna Know (Official Video).opus
 701:ytmusic/Asi Pasa La Vida (Fresh Medz Riddim) _ Los Primos Lary (Guiyo & Yapsi Mata) _ El Veneno Crew.opus
-702:ytmusic/ASIMETRÍA - ZEBALLOS (PROD BY MILI MILANSS) [ASIMETRÍA].opus
-703:ytmusic/Aukan feat. Nucleo aka TintaSucia - El Faro (Vídeo oficial).opus
-704:ytmusic/Avísame cuando Llegues - Soy Rada And The Colibriquis.opus
+702:ytmusic/Aukan feat. Nucleo aka TintaSucia - El Faro (Vídeo oficial).opus
+703:ytmusic/Avísame cuando Llegues - Soy Rada And The Colibriquis.opus
+704:ytmusic/ASIMETRÍA - ZEBALLOS (PROD BY MILI MILANSS) [ASIMETRÍA].opus
 705:ytmusic/AYAX - CINDERELLA (PROD BLASFEM) VIDEOCLIP.opus
 706:ytmusic/AYAX - ZINEDINE (PROD. HUECO PRODS) VIDEOCLIP.m4a
 707:ytmusic/AYAX Y PROK - REPROCHES (PROD BLASFEM) _ VIDEOCLIP.opus
