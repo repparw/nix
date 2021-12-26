@@ -121,17 +121,17 @@
 
 	# yt-dl	
 
-		alias yt='yt-dlp'
+		alias yd='yt-dlp'
 
 	# ytfzf with nq for freeing the terminal
 		alias y='ytf'
 		alias ytf="env YTFZF_ENABLE_FZF_DEFAULT_OPTS=1 YTFZF_PLAYER='nq -c mpv' ytfzf"
 
-		alias ytfa='ytf -a'
+		alias ya='ytf -a'
 
-		alias ytfh='ytf -H'
+		alias yh='ytf -H'
 
-		alias yta="yt-dlp -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
+		alias yda="yt-dlp -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
 
 	# temp alias
 		alias temp="watch -d -n 2 sensors -A"
