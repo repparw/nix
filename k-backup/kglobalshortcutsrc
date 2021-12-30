@@ -18,9 +18,17 @@ _k_friendly_name=Keyboard Layout Switcher
 _k_friendly_name=ArchiSteamFarm
 _launch=none,none,Launch ArchiSteamFarm
 
+[awakened.desktop]
+_k_friendly_name=Awakened
+_launch=none,none,Launch Awakened
+
 [binance.desktop]
 _k_friendly_name=Binance
 _launch=none,none,Launch Binance
+
+[currentsong.desktop]
+_k_friendly_name=currentsong
+_launch=none,none,Launch currentsong
 
 [electrum.desktop]
 _k_friendly_name=Electrum
@@ -36,6 +44,10 @@ profile-manager-window=,,Open the Profile Manager
 [freetube.desktop]
 _k_friendly_name=FreeTube
 _launch=none,none,Launch FreeTube
+
+[heroic games launcher.desktop]
+_k_friendly_name=Heroic Games Launcher
+_launch=none,none,Launch Heroic Games Launcher
 
 [kaccess]
 Toggle Screen Reader On and Off=none,Meta+Alt+S,Toggle Screen Reader On and Off
@@ -87,6 +99,10 @@ _k_friendly_name=Custom Shortcuts Service
 {f3ac6719-54ce-4e0d-9832-1f6d2579f371}=Meta+F11,none,maimclip thumb
 {fa64ef95-8541-49a2-9d1f-3183513e25ac}=Meta+B,none,bt connect
 {fe785ecd-6514-4573-80a7-934fbd4b91c0}=Meta+.,none,mpc next
+
+[kindle.desktop]
+_k_friendly_name=Kindle
+_launch=none,none,Launch Kindle
 
 [kmix]
 _k_friendly_name=Audio Volume
@@ -353,6 +369,10 @@ playpausemedia=\t,Media Play,Play/Pause media playback
 previousmedia=,Media Previous,Media playback previous
 stopmedia=Media Stop,Media Stop,Stop media playback
 
+[mymonero.desktop]
+_k_friendly_name=MyMonero
+_launch=none,none,Launch MyMonero
+
 [org.kde.dolphin.desktop]
 _k_friendly_name=Dolphin
 _launch=none,Meta+E,Dolphin
@@ -384,6 +404,10 @@ Sleep=Sleep,Sleep,Suspend
 Toggle Keyboard Backlight=Keyboard Light On/Off,Keyboard Light On/Off,Toggle Keyboard Backlight
 Turn Off Screen=none,none,Turn Off Screen
 _k_friendly_name=Power Management
+
+[path of building.desktop]
+_k_friendly_name=Path of Building
+_launch=none,none,Launch Path of Building
 
 [pcmanfm.desktop]
 _k_friendly_name=File Manager PCManFM
@@ -428,9 +452,29 @@ switch to next activity=none,none,Switch to Next Activity
 switch to previous activity=none,none,Switch to Previous Activity
 toggle do not disturb=none,none,Toggle do not disturb
 
+[rinfo.desktop]
+_k_friendly_name=rInfo
+_launch=none,none,Launch rInfo
+
+[samsung-configurator.desktop]
+_k_friendly_name=Samsung Unified Driver Configurator
+_launch=none,none,Launch Samsung Unified Driver Configurator
+
+[samsung-helpviewer.desktop]
+_k_friendly_name=Samsung Unified Driver Help
+_launch=none,none,Launch Samsung Unified Driver Help
+
+[samsung-uninstallud.desktop]
+_k_friendly_name=Uninstall Samsung Unified Driver
+_launch=none,none,Launch Uninstall Samsung Unified Driver
+
 [systemsettings.desktop]
 _k_friendly_name=System Settings
 _launch=Tools,Tools,System Settings
+
+[vitetris.desktop]
+_k_friendly_name=vitetris
+_launch=none,none,Launch vitetris
 
 [vnc.desktop]
 _k_friendly_name=VNC
