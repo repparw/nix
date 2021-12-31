@@ -2,8 +2,8 @@
 SplitterSizes=807,1102
 
 [KFileDialog Settings]
-Recent Files[$e]=Electrum,file:$HOME/.AppImages/MyMonero-1.1.20.AppImage,file:$HOME/.AppImages/.freezer.png,file:$HOME/.AppImages/Freezer-1.1.17.AppImage,file:$HOME/.AppImages/.kindle.png,file:$HOME/.Genymobile/Genymotion/genymotion/player,file:$HOME/.AppImages/.heroic.png,file:$HOME/.AppImages/heroic.AppImage,file:$HOME/.wine/drive_c/Program Files (x86)/PoB/Path of Building.exe,file:$HOME/.AppImages/Awakened-PoE-Trade.AppImage
-Recent URLs[$e]=file:$HOME/.wine/drive_c/Program Files (x86)/PoB/,file:$HOME/.AppImages/,file:$HOME/,file:$HOME/Documents/,file:$HOME/.Genymobile/Genymotion/genymotion/,file:$HOME/.Genymobile/
+Recent Files[$e]=Electrum,file:$HOME/Games/tetrio/logo.png,file:$HOME/.Genymobile/Genymotion/genymotion/player
+Recent URLs[$e]=file:$HOME/.AppImages/,file:$HOME/,file:$HOME/Documents/,file:$HOME/.Genymobile/Genymotion/genymotion/,file:$HOME/.Genymobile/,file:$HOME/Games/tetrio/
 detailViewIconSize=16
 
 [MainWindow]
