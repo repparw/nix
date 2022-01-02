@@ -320,7 +320,7 @@ Window to Screen 6=none,none,Window to Screen 6
 Window to Screen 7=none,none,Window to Screen 7
 WindowGeometry=Ctrl+Shift+F11,Ctrl+Shift+F11,Toggle window geometry display (effect only)
 _k_friendly_name=KWin
-bismuth_decrease_master_size=none,none,Bismuth: Decrease Master Area Size
+bismuth_decrease_master_size=Meta+-,none,Bismuth: Decrease Master Area Size
 bismuth_decrease_master_win_count=Meta+[,none,Bismuth: Decrease Master Area Window Count
 bismuth_decrease_window_height=Meta+Ctrl+K,none,Bismuth: Decrease Window Height
 bismuth_decrease_window_width=Meta+Ctrl+H,none,Bismuth: Decrease Window Width
@@ -330,7 +330,7 @@ bismuth_focus_next_window=none,none,Bismuth: Focus Next Window
 bismuth_focus_prev_window=none,none,Bismuth: Focus Previous Window
 bismuth_focus_right_window=Meta+L,none,Bismuth: Focus Right Window
 bismuth_focus_upper_window=Meta+K,none,Bismuth: Focus Upper Window
-bismuth_increase_master_size=none,none,Bismuth: Increase Master Area Size
+bismuth_increase_master_size=Meta+=,none,Bismuth: Increase Master Area Size
 bismuth_increase_master_win_count=Meta+],none,Bismuth: Increase Master Area Window Count
 bismuth_increase_window_height=Meta+Ctrl+J,none,Bismuth: Increase Window Height
 bismuth_increase_window_width=Meta+Ctrl+L,none,Bismuth: Increase Window Width
@@ -384,7 +384,7 @@ _launch=none,Alt+Space\tAlt+F2\tSearch,KRunner
 
 [org.kde.plasma.emojier.desktop]
 _k_friendly_name=Emoji Selector
-_launch=Meta+-,Meta+.,Emoji Selector
+_launch=none,Meta+.,Emoji Selector
 
 [org.qutebrowser.qutebrowser.desktop]
 _k_friendly_name=Launch qutebrowser
