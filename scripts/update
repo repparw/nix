@@ -1,6 +1,6 @@
 #!/bin/sh
 tmux new-session -d -s update
-tmux send-keys 'sudo dnf update' 'C-m'
+tmux send-keys 'sudo dnf upgrade' 'C-m'
 tmux select-window -t update:0
 tmux split-window -v
 tmux send-keys 'flatpak update' 'C-m'
