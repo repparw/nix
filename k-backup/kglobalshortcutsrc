@@ -26,6 +26,14 @@ _launch=none,none,Launch Awakened
 _k_friendly_name=Binance
 _launch=none,none,Launch Binance
 
+[com.github.eloston.ungoogledchromium.flextop.chrome-dbjlimibnhmfcgadnpbfgkmmeijhieif-default.desktop]
+_k_friendly_name=Deezer
+_launch=none,none,Launch Deezer
+
+[com.github.eloston.ungoogledchromium.flextop.chrome-egmafekfmcnknbdlbfbhafbllplmjlhn-default.desktop]
+_k_friendly_name=GeForce NOW
+_launch=none,none,Launch GeForce NOW
+
 [currentsong.desktop]
 _k_friendly_name=currentsong
 _launch=none,none,Launch currentsong
@@ -391,6 +399,10 @@ _k_friendly_name=Launch qutebrowser
 _launch=,none,Launch qutebrowser
 new-window=none,none,New Window
 preferences=,none,Preferences
+
+[org.winehq.flatpak-wine.desktop]
+_k_friendly_name=flatpak-wine (5.0.5)
+_launch=none,none,Launch flatpak-wine (5.0.5)
 
 [org_kde_powerdevil]
 Decrease Keyboard Brightness=Keyboard Brightness Down,Keyboard Brightness Down,Decrease Keyboard Brightness
