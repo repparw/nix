@@ -26,14 +26,6 @@ minsize=1,1
 minsizerule=2
 types=1
 
-[2]
-Description=Window settings for freetube
-size=1920,1044
-sizerule=3
-types=1
-wmclass=freetube
-wmclassmatch=1
-
 [3]
 Description=Application settings for mpv
 clientmachinematch=0
@@ -102,11 +94,11 @@ wmclassmatch=1
 
 [General]
 ColorScheme[$d]
-count=6
+count=5
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6
+rules=1,3,4,5,6
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
