@@ -43,6 +43,7 @@ Height 1080=494
 MenuBar=Disabled
 Priority_plugins_wght_5=128
 Priority_torrents_wght_0=128
+RestorePositionForNextInstance=false
 State=AAAA/wAAAAD9AAAAAAAAB4AAAAPNAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAIAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAAAAAAHgBUAG8AcgByAGUAbgB0AHMAVABvAG8AbABCAGEAcgEAAANy/////wAAAAAAAAAA
 ToolBarsMovable=Disabled
 Width 1920=960
@@ -73,7 +74,7 @@ show_uploads=true
 view_state=AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB04AAAAEAQAAAQAAAAAAAAAAAAAAAGn/////AAAAgQAAAAAAAAAEAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAGIgAAAAEAAAAAAAAD6AAAAABk
 
 [Recent Dirs]
-saveTorrentData[$e]=/mnt/nvme/games,$HOME/Documents
+saveTorrentData[$e]=$HOME/Downloads,/mnt/nvme/Games,/mnt/nvme/Games/Forza.Horizon.5.PE.RePack.by.Chovka
 
 [SpeedLimitsDlg]
 size=546,372
@@ -103,7 +104,6 @@ alwaysMinimizeToSystemTray=true
 completedDir=/home/repparw
 lastSaveDir=/home/repparw/Downloads/Torrents/
 maxConnectingSockets=80
-maxDownloadRate=550
 maxRatio=1.5
 maxUploadRate=30
 networkInterface=All interfaces
