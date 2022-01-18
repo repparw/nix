@@ -78,7 +78,7 @@ show_uploads=true
 view_state=AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB04AAAAEAQAAAQAAAAAAAAAAAAAAAGn/////AAAAgQAAAAAAAAAEAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAGIgAAAAEAAAAAAAAD6AAAAABk
 
 [Recent Dirs]
-saveTorrentData[$e]=$HOME/Downloads,/mnt/nvme/Games,/mnt/nvme/Games/Forza.Horizon.5.PE.RePack.by.Chovka
+saveTorrentData[$e]=/run/media/repparw/HDD/Videos/Movies/ghibli,$HOME/Downloads,/mnt/nvme/Games
 
 [SpeedLimitsDlg]
 size=546,372
