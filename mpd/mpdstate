@@ -1,9 +1,9 @@
-sw_volume: 30
+sw_volume: 34
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
 state: pause
-current: 535
-time: 119.211000
+current: 78
+time: 116.945000
 random: 1
 repeat: 0
 single: 0
@@ -1046,4 +1046,5 @@ playlist_begin
 1031:ytmusic/ISRAEL B  - MÁS NÁ (PROD 0-600).opus
 1032:ytmusic/FOYONE - FXCK NPO.opus
 1033:ytmusic/YSY A _ BZRP Music Sessions #37.opus
+1034:Sam Tompkins - You Broke My Heart So Gently.opus
 playlist_end
