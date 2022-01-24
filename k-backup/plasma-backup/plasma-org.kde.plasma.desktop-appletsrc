@@ -154,21 +154,6 @@ outlineColor=#000000
 showOutline=true
 textColor=#689d69
 
-[Containments][140][Applets][173]
-immutability=1
-plugin=com.github.zren.commandoutput
-
-[Containments][140][Applets][173][Configuration][ConfigDialog]
-DialogHeight=540
-DialogWidth=720
-
-[Containments][140][Applets][173][Configuration][General]
-command=echo "SOL:$(~/.config/scripts/crypto solana) "
-interval=60000
-outlineColor=#000000
-showOutline=true
-textColor=#689d69
-
 [Containments][140][ConfigDialog]
 DialogHeight=84
 DialogWidth=1920
@@ -177,7 +162,7 @@ DialogWidth=1920
 PreloadWeight=42
 
 [Containments][140][General]
-AppletOrder=168;173;162;169;163;161;156
+AppletOrder=168;162;169;163;161;156
 
 [Containments][2]
 ItemGeometries-1920x1080=
@@ -641,7 +626,7 @@ DialogHeight=540
 DialogWidth=720
 
 [Containments][9][Applets][171][Configuration][General]
-lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1642960941003}
+lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1642989778364}
 places=[{"providerId":"owm","placeIdentifier":"3430568","placeAlias":"Moquehuá"},{"providerId":"owm","placeIdentifier":"3432043","placeAlias":"La Plata"}]
 
 [Containments][9][Applets][171][Configuration][Units]
