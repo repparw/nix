@@ -13,9 +13,6 @@ Seen=true
 [Badges]
 InTaskManager=false
 
-[DoNotDisturb]
-NotificationSoundsMuted=true
-
 [Jobs]
 PermanentPopups=false
 
