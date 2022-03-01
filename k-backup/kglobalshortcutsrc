@@ -34,6 +34,10 @@ _launch=none,none,Launch Deezer
 _k_friendly_name=GeForce NOW
 _launch=none,none,Launch GeForce NOW
 
+[com.valvesoftware.Steam.desktop]
+_k_friendly_name=Steam
+_launch=,none,Launch Steam
+
 [currentsong.desktop]
 _k_friendly_name=currentsong
 _launch=none,none,Launch currentsong
@@ -120,12 +124,6 @@ increase_microphone_volume=Microphone Volume Up,Microphone Volume Up,Increase Mi
 increase_volume=Volume Up,Volume Up,Increase Volume
 mic_mute=Microphone Mute,Microphone Mute\tMeta+Volume Mute,Mute Microphone
 mute=Volume Mute,Volume Mute,Mute
-
-[kodi.desktop]
-Fullscreen=none,none,Open in fullscreen
-Standalone=none,none,Open in standalone mode
-_k_friendly_name=Kodi
-_launch=Meta+N,none,Kodi
 
 [krunner.desktop]
 RunClipboard=none,Alt+Shift+F2,Run command on clipboard contents
@@ -384,7 +382,7 @@ _launch=none,none,Launch MyMonero
 
 [org.kde.dolphin.desktop]
 _k_friendly_name=Dolphin
-_launch=none,Meta+E,Dolphin
+_launch=Meta+Shift+E,Meta+E,Dolphin
 
 [org.kde.krunner.desktop]
 RunClipboard=none,Alt+Shift+F2,Run command on clipboard contents
@@ -421,10 +419,6 @@ _k_friendly_name=Power Management
 [path of building.desktop]
 _k_friendly_name=Path of Building
 _launch=none,none,Launch Path of Building
-
-[pcmanfm.desktop]
-_k_friendly_name=File Manager PCManFM
-_launch=Meta+Shift+E,none,File Manager PCManFM
 
 [plasmashell]
 _k_friendly_name=Plasma

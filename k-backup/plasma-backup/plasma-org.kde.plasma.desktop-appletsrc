@@ -62,7 +62,7 @@ DialogWidth=720
 [Containments][140][Applets][161][Configuration][General]
 clickCommand=xdg-open https://www.binance.com/en/my/wallet/account/main
 command=echo "ETH:$(~/.config/scripts/crypto ethereum)"
-interval=60000
+interval=30000
 outlineColor=#000000
 showBackground=false
 showOutline=true
@@ -107,7 +107,7 @@ DialogWidth=720
 
 [Containments][140][Applets][177][Configuration][General]
 command=echo " BTC:$(~/.config/scripts/crypto bitcoin)"
-interval=60000
+interval=30000
 outlineColor=#000000
 showOutline=true
 textAlign=2
@@ -496,7 +496,7 @@ DialogHeight=540
 DialogWidth=720
 
 [Containments][9][Applets][171][Configuration][General]
-lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1646073490326}
+lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1646102334319}
 places=[{"providerId":"owm","placeIdentifier":"3430568","placeAlias":"Moquehuá"},{"providerId":"owm","placeIdentifier":"3432043","placeAlias":"La Plata"}]
 
 [Containments][9][Applets][171][Configuration][Units]
