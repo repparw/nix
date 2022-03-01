@@ -48,7 +48,6 @@ state=AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB3wAAAADAQAAAQAAAAAAAA
 [MainWindow]
 DP-0 HDMI-0 Height 1920x1080=1046
 DP-0 HDMI-0 Width 1920x1080=1920
-DP-0 HDMI-0 Window-Maximized 1920x1080=true
 DP-0 HDMI-0 XPosition 1920x1080=0
 DP-0 HDMI-0 YPosition 1920x1080=0
 DP-0 Height 1920x1080=1048
@@ -93,10 +92,10 @@ search_text=
 show_downloads=true
 show_not_queued=true
 show_uploads=true
-view_state=AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB04AAAAEAQAAAQAAAAAAAAAAAAAAAGn/////AAAAgQAAAAAAAAAEAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAGIgAAAAEAAAAAAAAD6AAAAABk
+view_state=AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABzkAAAAEAQAAAQAAAAAAAAAAAAAAAGn/////AAAAgQAAAAAAAAAEAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAGDQAAAAEAAAAAAAAD6AAAAABk
 
 [Recent Dirs]
-saveTorrentData[$e]=/run/media/repparw/HDD/Videos/Movies/ghibli,$HOME/Downloads,/mnt/nvme/Games
+saveTorrentData[$e]=/run/media/repparw/HDD/Videos/Series,/run/media/repparw/HDD/Videos/Series/Sherlock.Season.1-4.S01-S04.1080p.10bit.BluRay.5.1.x265.HEVC-MZABI,/run/media/repparw/HDD/Videos/Movies/ghibli
 
 [ScanFolderPlugin]
 ScanFolderPluginEnabled=false
@@ -121,7 +120,7 @@ StatsPluginEnabled=false
 SyndicationPluginEnabled=false
 
 [TorrentActivityBottomTabBar]
-current_tab=Files
+current_tab=Queue Manager
 shrunken=true
 
 [TorrentActivitySplitters]
