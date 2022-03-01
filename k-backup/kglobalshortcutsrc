@@ -36,7 +36,7 @@ _launch=none,none,Launch GeForce NOW
 
 [com.valvesoftware.Steam.desktop]
 _k_friendly_name=Steam
-_launch=,none,Launch Steam
+_launch=none,none,Launch Steam
 
 [currentsong.desktop]
 _k_friendly_name=currentsong
