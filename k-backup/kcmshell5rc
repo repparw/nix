@@ -1,7 +1,7 @@
 [KFileDialog Settings]
 Recent Files[$e]=Joplin.AppImage,file:$HOME/git/desktopconfig/KDECustomShortcuts,file:$HOME/Pictures/bg/who/tardis2.jpg,file:$HOME/.joplin/Joplin.AppImage
 Recent URLs[$e]=file:$HOME/git/desktopconfig/
-detailViewIconSize=0
+detailViewIconSize=16
 
 [KPropertiesDialog]
 Height 1080=444
