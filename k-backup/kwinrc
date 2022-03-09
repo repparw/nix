@@ -68,7 +68,7 @@ NightTemperature=2600
 
 [Plugins]
 bismuthEnabled=true
-forceblurEnabled=true
+forceblurEnabled=false
 grid-tilingEnabled=false
 highlightwindowEnabled=true
 krohnkiteEnabled=false
