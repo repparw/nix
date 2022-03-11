@@ -94,7 +94,7 @@ ForegroundPositive=39,174,96
 ForegroundVisited=127,140,141
 
 [DirSelect Dialog]
-DirSelectDialog Size=1126,598
+DirSelectDialog Size=1093,598
 History Items[$e]=file:///run/media/repparw/HDD/Videos/Series,file:///run/media/repparw/HDD/Videos/Series/Sherlock.Season.1-4.S01-S04.1080p.10bit.BluRay.5.1.x265.HEVC-MZABI,file:///run/media/repparw/HDD/Videos/Movies/ghibli,file:$HOME/Downloads,file:///mnt/nvme/Games,file:///mnt/nvme/Games/Forza.Horizon.5.PE.RePack.by.Chovka,file:///mnt/nvme/games,file:///run/media/repparw/HDD/Torrents,file:///mnt/seagate,file:///mnt,file:$HOME/Downloads/chromestore,file:$HOME/Games/ZeldaBOTW,file:$HOME/.AppImages,file:$HOME/.AppImages,file:$HOME/bin,file:$HOME/Downloads/Torrents,file:$HOME/Downloads/Torrents,file:$HOME/Pictures/scr,file:$HOME/Pictures/scr,file:///run/media/repparw/HDD/Videos
 
 [General]

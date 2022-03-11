@@ -53,10 +53,6 @@ new-private-window=none,none,Open a New Private Window
 new-window=none,none,Open a New Window
 profile-manager-window=none,none,Open the Profile Manager
 
-[freetube.desktop]
-_k_friendly_name=FreeTube
-_launch=none,none,Launch FreeTube
-
 [heroic games launcher.desktop]
 _k_friendly_name=Heroic Games Launcher
 _launch=none,none,Launch Heroic Games Launcher
@@ -89,6 +85,7 @@ _k_friendly_name=Custom Shortcuts Service
 {6ab20914-1083-4563-ad46-6630030a6302}=Meta++,none,webcam
 {6de45335-a9a5-4cb7-92e8-630394e3ec16}=Meta+O,none,brownnoise
 {74790651-2d78-401b-baba-397b21c6c6a7}=Meta+G,none,gpodder
+{7d2cfdce-5cf6-4954-ac20-0cbce791fbbd}=Ctrl+Alt+L,none,screens off
 {89803954-3504-48c5-8728-c2268bd4bda5}=Media Next,none,mpc next 2
 {9005eee1-9daa-41a4-9d98-76ce0188d489}=Meta+E,none,lf
 {91c54b96-f63e-482f-8353-ff38903c0247}=Meta+Shift+F10,none,mpc seek +
@@ -132,7 +129,7 @@ _launch=Alt+F2,Alt+Space\tAlt+F2\tSearch,KRunner
 
 [ksmserver]
 Halt Without Confirmation=Ctrl+Alt+Shift+PgDown,,Halt Without Confirmation
-Lock Session=Ctrl+Alt+L\tScreensaver,Meta+L\tCtrl+Alt+L\tScreensaver,Lock Session
+Lock Session=\tScreensaver,Meta+L\tCtrl+Alt+L\tScreensaver,Lock Session
 Log Out=Ctrl+Alt+Del,Ctrl+Alt+Del,Log Out
 Log Out Without Confirmation=Ctrl+Alt+Shift+Del,,Log Out Without Confirmation
 Reboot Without Confirmation=Ctrl+Alt+Shift+PgUp,,Reboot Without Confirmation
