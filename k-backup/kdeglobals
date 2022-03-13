@@ -106,12 +106,12 @@ TerminalService=Alacritty.desktop
 XftHintStyle=hintslight
 XftSubPixel=rgb
 dbfile=/home/repparw/.mozilla/firefox/o3rowi7a.default/places.sqlite
-fixed=SauceCodePro Nerd Font,10,-1,5,50,0,0,0,0,0
-font=SauceCodePro Nerd Font,10,-1,5,50,0,0,0,0,0
-menuFont=SauceCodePro Nerd Font,10,-1,5,50,0,0,0,0,0
+fixed=Noto Sans Mono,10,-1,5,50,0,0,0,0,0
+font=Noto Sans Mono,10,-1,5,50,0,0,0,0,0
+menuFont=Noto Sans Mono,10,-1,5,50,0,0,0,0,0
 shadeSortColumn=true
-smallestReadableFont=SauceCodePro Nerd Font,8,-1,5,50,0,0,0,0,0
-toolBarFont=SauceCodePro Nerd Font,10,-1,5,50,0,0,0,0,0
+smallestReadableFont=Noto Sans Mono,8,-1,5,50,0,0,0,0,0
+toolBarFont=Noto Sans Mono,10,-1,5,50,0,0,0,0,0
 
 [Icons]
 Theme=Gruvbox
@@ -156,7 +156,7 @@ MaximumRemoteSize=0
 [WM]
 activeBackground=39,39,39
 activeBlend=235,219,178
-activeFont=SauceCodePro Nerd Font,10,-1,5,63,0,0,0,0,0,Semibold
+activeFont=Noto Sans Mono,10,-1,5,63,0,0,0,0,0,Semibold
 activeForeground=235,219,178
 frame=61,174,233
 inactiveBackground=40,40,40

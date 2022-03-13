@@ -6,7 +6,7 @@ tmux select-window -t mine:0
 tmux split-window -h
 tmux send-keys 'gpumine' 'C-m'
 tmux split-window -v
-tmux send-keys 'temp' 'C-m'
+tmux send-keys '~/.config/scripts/tmux_watcher&!; temp' 'C-m'
 tmux select-pane -t 0
 tmux split-window -v 
 tmux send-keys 'cd ~/git/chia-blockchain && . ./activate && chia start farmer && sleep 30s; watch -n 43200 chia farm summary' 'C-m'
