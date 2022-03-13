@@ -28,10 +28,6 @@ PATH=/home/repparw/go/bin:/home/repparw/.local/bin:$PATH
 	export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
 
 # lf change dir on shell
-LFCD="/home/repparw/.config/lf/lfcd.sh"
-if [ -f "$LFCD" ]; then
-    source "$LFCD"
-fi
 
 # Change Spell Correction Prompt
 #export SPROMPT="Correct $fg[red]%R$reset_color to $fg[green]%r$reset_color?
@@ -125,6 +121,15 @@ source $ZSH/oh-my-zsh.sh
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
+
+# Use vim keys in tab complete menu:
+bindkey -M menuselect 'h' vi-backward-char
+bindkey -M menuselect 'k' vi-up-line-or-history
+bindkey -M menuselect 'l' vi-forward-char
+bindkey -M menuselect 'j' vi-down-line-or-history
+bindkey -v '^?' backward-delete-char
+
+bindkey -s '^e' 'lf\n'
 
 ## Aliases
 if [ -f ~/.zsh_aliases ]; then
