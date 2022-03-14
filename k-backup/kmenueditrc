@@ -1,5 +1,5 @@
 [General]
-SplitterSizes=807,1102
+SplitterSizes=401,547
 
 [KFileDialog Settings]
 Recent Files[$e]=Electrum,file:$HOME/Games/tetrio/logo.png,file:$HOME/.Genymobile/Genymotion/genymotion/player
@@ -18,5 +18,5 @@ DisplayPort-1 XPosition=360
 DisplayPort-1 XPosition 1920x1080=16
 DisplayPort-1 YPosition=349
 DisplayPort-1 YPosition 1920x1080=313
-State=AAAA/wAAAAD9AAAAAAAAB4AAAAPMAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
+State=AAAA/wAAAAD9AAAAAAAAA78AAAPKAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
 ToolBarsMovable=Disabled
