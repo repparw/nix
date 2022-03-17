@@ -105,6 +105,7 @@ _k_friendly_name=Custom Shortcuts Service
 {e3161821-2534-4ece-b465-000da75bc0b5}=Launch (1),none,qalc
 {e677a7e0-6613-4c60-b684-56df16400e33}=Meta+Shift+F4,none,reboot
 {ef5033fa-e676-4d3b-9a2b-b5c43894c7fb}=Meta+>,none,mpc seek +
+{f2b7cadb-e716-4aec-ab3d-8c2694fab554}=Media Pause,none,mpc toggle 3
 {f3ac6719-54ce-4e0d-9832-1f6d2579f371}=Meta+F11,none,maimclip thumb
 {fa64ef95-8541-49a2-9d1f-3183513e25ac}=Meta+B,none,bt connect
 {fe785ecd-6514-4573-80a7-934fbd4b91c0}=Meta+.,none,mpc next
