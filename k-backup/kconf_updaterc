@@ -5,6 +5,21 @@ ctime=1621628249
 done=akregator-15.08-kickoff
 mtime=1611951952
 
+[bismuth_new_logger.upd]
+ctime=1647737907
+done=bismuth-new-logger
+mtime=1647737425
+
+[bismuth_old_conf_ui.upd]
+ctime=1647737907
+done=bismuth-old-conf-ui
+mtime=1647737425
+
+[bismuth_shortcuts_category.upd]
+ctime=1647737907
+done=bismuth-shortcuts-category
+mtime=1647737425
+
 [breezehighcontrasttobreezedark.upd]
 ctime=1647553568
 mtime=1646737887
@@ -189,9 +204,9 @@ done=annotation-toolbar,builtin-annotations
 mtime=1620411842
 
 [old_conf_ui.upd]
-ctime=1636424786
+ctime=1647737342
 done=bismuth-old-conf-ui
-mtime=1636002637
+mtime=1647736820
 
 [pimsettingexporter.upd]
 ctime=1600635915
