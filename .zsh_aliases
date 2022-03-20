@@ -125,7 +125,7 @@
 
 	# ytfzf with nq for freeing the terminal
 		alias y='ytf'
-		alias ytf="env YTFZF_ENABLE_FZF_DEFAULT_OPTS=1 YTFZF_PLAYER='nq -c mpv' ytfzf -t"
+		alias ytf="env YTFZF_ENABLE_FZF_DEFAULT_OPTS=1 ytfzf"
 
 		alias ya='ytf -a'
 
@@ -142,9 +142,3 @@
 
 	# CPU Mining (xmrig)
 		alias cpumine="cd ~/.mining/xmrig && sudo ./xmrig -c config.json"
-
-## Functions
-	# ytfzf + xclip for link
-	function ytl() {
-	  ytfzf -I l "$@" | tr -d '\n' | sed -re 's|^https://www.youtube.com/(watch\?v=)?|https://youtu.be/|g' | xclip -sel clip 
-	}
