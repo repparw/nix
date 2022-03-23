@@ -128,6 +128,8 @@
 		alias ytf="env YTFZF_ENABLE_FZF_DEFAULT_OPTS=1 ytfzf"
 
 		alias ya='ytf -a'
+		alias yam='ytf -am'
+		alias ym='ytf -m'
 
 		alias yh='ytf -H'
 
