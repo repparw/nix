@@ -4,7 +4,7 @@ tmux new-session -d -s mine
 tmux send-keys 'cpumine --cpu-max-threads-hint=85' 'C-m'
 tmux select-window -t mine:0
 tmux split-window -h
-tmux send-keys 'gpumine' 'C-m'
+tmux send-keys 'gpumine -i 100' 'C-m'
 tmux split-window -v
 tmux send-keys '~/.config/scripts/tmux_watcher&!; temp' 'C-m'
 tmux select-pane -t 0
