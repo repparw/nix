@@ -140,7 +140,7 @@
 		alias gputemp="watch -n 2 nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader 39"
 
 	# GPU mining (mm.js gminer)
-		alias gpumine="cd ~/.mining/gminer && ./mine_ravencoin.sh"
+		alias gpumine="cd ~/.mining/gminer && ./miner --algo kawpow --server gulf.moneroocean.stream:20128 --ssl 1 --user 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ --pass gpu~kawpow"
 
 	# CPU Mining (xmrig)
 		alias cpumine="cd ~/.mining/xmrig && sudo ./xmrig -c config.json"
