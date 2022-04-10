@@ -350,7 +350,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_18Actions0]
-CommandURL=alacritty -e /home/repparw/.config/scripts/update
+CommandURL=alacritty -t update -e /home/repparw/.config/scripts/update
 Type=COMMAND_URL
 
 [Data_18Conditions]
