@@ -24,13 +24,22 @@
 
 	# cd && ls	
 
+	if [ "command -v exa" ]; then
+		alias ls='exa' # Better df
+
+		alias ll='exa -lah'
+
+		alias l.='exa -a'
+
+		alias la='l.'
+	  else
 		alias ls='ls --color=auto'
 
 		alias ll='ls -lavh --ignore=..'   # show long listing of all except ".."
 
 		alias l.='ls -A'
 
-		alias ld='ls -d */'
+	fi
 
 		alias e='lfub'
 		
@@ -70,8 +79,6 @@
 
 		alias diff='colordiff' # Colorize output
 
-		alias c='clear'
-
 	    # System info
 
 	    	alias meminfo='free -h -l -t'
@@ -92,6 +99,9 @@
 		alias df='duf' # Better df
 	fi
 
+	if [ "command -v bat" ]; then
+		alias cat='bat' # Better cat
+	fi
 	
 		alias ddgr='ddgr -n3'
 
