@@ -8,7 +8,7 @@ RepeatDelay=190
 RepeatRate=35
 
 [Mouse]
-XLbInptAccelProfileFlat=true
+XLbInptAccelProfileFlat=false
 XLbInptPointerAcceleration=-0.4
 cursorTheme=breeze_cursors
 
