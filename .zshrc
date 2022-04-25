@@ -101,7 +101,7 @@ ZSH_THEME="dstufft-time"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git dnf tmux)
+plugins=(git dnf tmux zsh-vi-mode)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -128,8 +128,6 @@ bindkey -M menuselect 'k' vi-up-line-or-history
 bindkey -M menuselect 'l' vi-forward-char
 bindkey -M menuselect 'j' vi-down-line-or-history
 bindkey -v '^?' backward-delete-char
-
-bindkey -s '^e' 'lf\n'
 
 ## Aliases
 if [ -f ~/.zsh_aliases ]; then
