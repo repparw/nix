@@ -53,7 +53,6 @@ DP-0 HDMI-0 XPosition 1920x1080=0
 DP-0 HDMI-0 YPosition 1920x1080=0
 DP-0 Height 1920x1080=1048
 DP-0 Width 1920x1080=1920
-DP-0 Window-Maximized 1920x1080=true
 DP-0 XPosition 1920x1080=0
 DP-0 YPosition 1920x1080=0
 HDMI-0 Height 1920x1080=1048
@@ -98,7 +97,7 @@ show_uploads=true
 view_state=AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB04AAAAEAQAAAQAAAAAAAAAAAAAAAGT/////AAAAgQAAAAAAAAAEAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAGIgAAAAEAAAAAAAAD6AAAAABk
 
 [Recent Dirs]
-saveTorrentData[$e]=/run/media/repparw/HDD/Videos/Series/WheelOfTime,$HOME/Downloads,$HOME/Downloads/tmp
+saveTorrentData[$e]=/run/media/repparw/HDD/Torrents/Better.Call.Saul.S06E03.REPACK.1080p.WEB.H264-CAKES[rarbg],/run/media/repparw/HDD/Videos/Series/WheelOfTime,$HOME/Downloads
 
 [ScanFolderPlugin]
 ScanFolderPluginEnabled=false
