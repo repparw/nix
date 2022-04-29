@@ -82,6 +82,7 @@ enableSpreadLayout=false
 enableStairLayout=false
 enableThreeColumnLayout=false
 ignoreClass=krunner,yakuake,spectacle,kded5,steam
+keepFloatAbove=false
 tileLayoutGap=2
 
 [Script-forceblur]
