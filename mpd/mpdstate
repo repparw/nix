@@ -2,8 +2,8 @@ sw_volume: 22
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
 state: pause
-current: 651
-time: 181.033000
+current: 323
+time: 15.833000
 random: 1
 repeat: 0
 single: 0
@@ -314,8 +314,8 @@ playlist_begin
 299:ytmusic/KAZE - CÁLMATE - VIDEOCLIP [PROD. DJ FIGU].opus
 300:ytmusic/KAZE - CURTEM - VIDEOCLIP [PROD. DJ FIGU].opus
 301:ytmusic/KAZE - DESCARNAR.opus
-302:ytmusic/KAZE - EL TECHO DE MI HABITACIÓN.opus
-303:ytmusic/KAZE - FUERA LLUEVE.opus
+302:ytmusic/KAZE - FUERA LLUEVE.opus
+303:ytmusic/KAZE - EL TECHO DE MI HABITACIÓN.opus
 304:ytmusic/KAZE - GRANDE - VIDEOCLIP [PROD. FIGU].opus
 305:ytmusic/KAZE - MODO TURBIO - VIDEOCLIP [PROD. FIGU].opus
 306:ytmusic/KAZE - NO SOY TUYO.opus
