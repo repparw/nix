@@ -97,7 +97,6 @@ cmd zip ${{
 
 # Bulk rename
 cmd bulk ${{
-	set -f
-	echo $fx | sed 's/$/\n/g' | sed 's/ /\\ /g' | tee ~/.cache/scripts/bulkold > ~/.cache/scripts/bulknew
-	nvim ~/.cache/scripts/bulknew && sh ~/.config/scripts/bulk
+  /bin/sh -c "vimv $(echo -e "$fx" | xargs -i echo "\\'{}\\'" | xargs echo)"
 }}
+map b bulk
