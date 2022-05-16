@@ -21,56 +21,56 @@ done=bismuth-shortcuts-category
 mtime=1649622998
 
 [breezehighcontrasttobreezedark.upd]
-ctime=1652274441
-mtime=1648552357
+ctime=1652706874
+mtime=1651572026
 
 [breezetobreezeclassic.upd]
-ctime=1652274441
-mtime=1648552357
+ctime=1652706874
+mtime=1651572026
 
 [breezetobreezelight.upd]
-ctime=1652274441
-mtime=1648552357
+ctime=1652706874
+mtime=1651572026
 
 [delete_cursor_old_default_size.upd]
-ctime=1652274461
+ctime=1652706884
 done=DeleteCursorOldDefaultSize
-mtime=1648553682
+mtime=1651574305
 
 [disable_kmix.upd]
-ctime=1652274444
+ctime=1652706850
 done=PlasmaVolume_DisableKMixAutostart
-mtime=1648553516
+mtime=1651574153
 
 [filepicker.upd]
-ctime=1652274399
+ctime=1652706844
 done=filepicker-remove-old-previews-entry
-mtime=1644659901
+mtime=1648894943
 
 [fonts_akregator.upd]
-ctime=1652274461
+ctime=1652706883
 done=Plasma_Fonts_Akregator
-mtime=1648553410
+mtime=1651574044
 
 [fonts_global.upd]
-ctime=1652274461
+ctime=1652706883
 done=Fonts_Global
-mtime=1648553410
+mtime=1651574044
 
 [fonts_global_toolbar.upd]
-ctime=1652274461
+ctime=1652706883
 done=Fonts_Global_Toolbar
-mtime=1648553410
+mtime=1651574044
 
 [fonts_kate.upd]
-ctime=1652274461
+ctime=1652706883
 done=Plasma_Fonts_Kate
-mtime=1648553410
+mtime=1651574044
 
 [gtkconfig.upd]
-ctime=1652274506
+ctime=1652706888
 done=dont_use_gtk_css_for_window_decorations
-mtime=1648552601
+mtime=1651572278
 
 [gwenview.upd]
 ctime=1600289390
@@ -78,9 +78,9 @@ done=SideBar_StatusBar_Rename,ImageView_AlphaBackgroundMode_Update,DeleteThumbna
 mtime=1578318795
 
 [icons_remove_effects.upd]
-ctime=1652274461
+ctime=1652706884
 done=IconsRemoveEffects
-mtime=1648553682
+mtime=1651574305
 
 [importwizard.upd]
 ctime=1621628249
@@ -97,19 +97,19 @@ ctime=1600289415
 mtime=1580771831
 
 [kcm_rename_plasma_desktop.upd]
-ctime=1652274460
+ctime=1652706882
 done=5.24PlasmaDesktopKCMRename
-mtime=1648553264
+mtime=1651573885
 
 [kcminputrc_fix_botched_5_21_0.upd]
-ctime=1652274460
+ctime=1652706882
 done=kcminputrc_fix_botched_5_21_0_pre,kcminputrc_fix_botched_5_21_0
-mtime=1648553264
+mtime=1651573885
 
 [kcminputrc_repeat.upd]
-ctime=1652274460
+ctime=1652706882
 done=kcminputrc_migrate_key_repeat
-mtime=1648553264
+mtime=1651573885
 
 [kde4breeze.upd]
 ctime=1643891954
@@ -148,46 +148,46 @@ ctime=1625935772
 mtime=1615898414
 
 [krunnerglobalshortcuts2.upd]
-ctime=1652274427
-mtime=1648553682
+ctime=1652706848
+mtime=1651574305
 
 [krunnerhistory.upd]
-ctime=1652274427
-mtime=1648553682
+ctime=1652706848
+mtime=1651574305
 
 [krunnerplugins.upd]
 ctime=1610935274
 mtime=1609850579
 
 [kscreenlocker.upd]
-ctime=1652274430
+ctime=1652706846
 done=0.1-autolock
-mtime=1648552868
+mtime=1651572561
 
 [ksmserver_update_loginMode_value.upd]
-ctime=1652274460
+ctime=1652706882
 done=ksmserver_update_loginMode_value_default_enum
-mtime=1648553264
+mtime=1651573885
 
 [kwin.upd]
-ctime=1652274430
+ctime=1652706847
 done=replace-scalein-with-scale,port-minimizeanimation-effect-to-js,port-scale-effect-to-js,port-dimscreen-effect-to-js,auto-bordersize,animation-speed,desktop-grid-click-behavior,no-swap-encourage,make-translucency-effect-disabled-by-default,remove-flip-switch-effect,remove-cover-switch-effect,remove-cubeslide-effect,remove-xrender-backend,enable-scale-effect-by-default
-mtime=1648553016
+mtime=1651572697
 
 [kwinrules.upd]
-ctime=1652274430
+ctime=1652706847
 done=replace-placement-string-to-enum,use-virtual-desktop-ids
-mtime=1648553016
+mtime=1651572697
 
 [kxkb.upd]
-ctime=1652274460
+ctime=1652706882
 done=remove-empty-lists,add-back-resetoptions
-mtime=1648553264
+mtime=1651573885
 
 [kxkb_variants.upd]
-ctime=1652274460
+ctime=1652706882
 done=split-variants
-mtime=1648553264
+mtime=1651573885
 
 [languagetool_kmail.upd]
 ctime=1621628250
@@ -229,9 +229,9 @@ done=spectacle-migrate-shortcuts
 mtime=1620411729
 
 [style_widgetstyle_default_breeze.upd]
-ctime=1652274461
+ctime=1652706884
 done=StyleWidgetStyleDefaultBreeze
-mtime=1648553682
+mtime=1651574305
 
 [webengineurlinterceptoradblock.upd]
 ctime=1621628250
