@@ -157,6 +157,7 @@ thickness=44
 
 [ScreenConnectors]
 0=DP-0
+1=:0.0
 2=HDMI-A-1
 3=HDMI-A-2
 4=Screen48
