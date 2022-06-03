@@ -41,9 +41,7 @@
 
 	fi
 
-		alias e='lfub'
-		
-		alias lf='lfub'
+		alias e='lf'
 
 	# Grep
 

@@ -22,8 +22,8 @@ set scrolloff 10
 
 set icons
 set period 1
-set cleaner '~/.config/lf/cleaner'
-set previewer '~/.config/lf/scope'
+set cleaner lf-cleaner
+set previewer lf-previewer
 
 # execute current file (must be executable)
 map x $$f
@@ -100,3 +100,15 @@ cmd bulk ${{
   /bin/sh -c "vimv $(echo -e "$fx" | xargs -i echo "\\'{}\\'" | xargs echo)"
 }}
 map b bulk
+
+cmd on-cd &{{
+        printf "\033]0; $PWD\007" > /dev/tty
+    }}
+on-cd
+
+map q quitcd
+map Q quit
+cmd quitcd ${{
+	echo "1" > "$LF_TEMPDIR"/cdtolastdir
+	lf -remote "send $id quit"
+}}
