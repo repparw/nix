@@ -458,7 +458,7 @@ Uuid={a3f93496-a9ae-485b-ae68-c926db08bb2b}
 ActionsCount=1
 
 [Data_2Actions0]
-CommandURL=alacritty -t lf -e zsh -c 'source .zshrc && ~/.config/scripts/lfub'
+CommandURL=alacritty -e zsh -c 'source .zshrc && lf'
 Type=COMMAND_URL
 
 [Data_2Conditions]

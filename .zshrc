@@ -27,7 +27,16 @@ PATH=/home/repparw/go/bin:/home/repparw/.local/bin:$PATH
 ## lscolors
 	export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
 
-# lf change dir on shell
+# lf with image previews and on-quit cd
+lf () {
+	LF_TEMPDIR="$(mktemp -d -t lf-tempdir-XXXXXX)"
+	LF_TEMPDIR="$LF_TEMPDIR" lf-run -last-dir-path="$LF_TEMPDIR/lastdir" "$@"
+	if [ "$(cat "$LF_TEMPDIR/cdtolastdir" 2>/dev/null)" = "1" ]; then
+		cd "$(cat "$LF_TEMPDIR/lastdir")"
+	fi
+	rm -r "$LF_TEMPDIR"
+	unset LF_TEMPDIR
+}
 
 # Change Spell Correction Prompt
 #export SPROMPT="Correct $fg[red]%R$reset_color to $fg[green]%r$reset_color?
