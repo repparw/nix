@@ -151,3 +151,9 @@
 
 	# CPU Mining (xmrig)
 		alias cpumine="cd ~/.mining/xmrig && sudo ./xmrig -c config.json"
+
+# notes with echo
+
+note () {
+  echo "$@" >> notes
+}
