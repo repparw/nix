@@ -168,6 +168,17 @@ ToolBoxButtonX=478
 Image=file:///home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.jpg
 SlidePaths=/usr/share/wallpapers
 
+[Containments][178]
+ItemGeometries-1920x1080=
+ItemGeometriesHorizontal=
+activityId=00000000-0000-0000-0000-000000000000
+formfactor=0
+immutability=1
+lastScreen=0
+location=0
+plugin=org.kde.plasma.folder
+wallpaperplugin=org.kde.image
+
 [Containments][29]
 activityId=
 formfactor=2
@@ -497,7 +508,7 @@ DialogHeight=540
 DialogWidth=720
 
 [Containments][9][Applets][171][Configuration][General]
-lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1647278757341,"cache_e7b23a5cdac83e33276c5bfc80fbbc02":1654626765509}
+lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1647278757341,"cache_e7b23a5cdac83e33276c5bfc80fbbc02":1654655480405}
 placeIndex=1
 places=[{"providerId":"owm","placeIdentifier":"3430568","placeAlias":"Moquehuá"},{"providerId":"owm","placeIdentifier":"3432043","placeAlias":"La Plata"}]
 
