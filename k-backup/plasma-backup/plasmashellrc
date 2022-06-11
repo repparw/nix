@@ -101,6 +101,9 @@ panelVisibility=0
 [PlasmaViews][Panel 3][Defaults]
 thickness=32
 
+[PlasmaViews][Panel 3][Horizontal1024]
+thickness=32
+
 [PlasmaViews][Panel 3][Horizontal1920]
 thickness=32
 
