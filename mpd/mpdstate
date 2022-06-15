@@ -2,8 +2,8 @@ sw_volume: 20
 audio_device_state:1:pulse audio
 audio_device_state:1:my_fifo
 state: pause
-current: 760
-time: 192.182000
+current: 852
+time: 0.375000
 random: 1
 repeat: 0
 single: 0
@@ -812,208 +812,208 @@ playlist_begin
 797:ytmusic/YSY A _ BZRP Music Sessions #37.opus
 798:ytmusic/BEELZE - YUIGON (CLIP - MATIAS LANARO) (BEAT CBM).opus
 799:ytmusic/AYAX - ZINEDINE (PROD. HUECO PRODS) VIDEOCLIP.opus
-800:SpotiFlyer/Albums/Robarse_Shangh_i/Estelar.mp3
-801:SpotiFlyer/Albums/Robarse_Shangh_i/Akira.mp3
-802:SpotiFlyer/Albums/Robarse_Shangh_i/Mantra.mp3
-803:SpotiFlyer/Albums/Robarse_Shangh_i/Robarse_Shangh_i.mp3
-804:SpotiFlyer/Albums/Robarse_Shangh_i/Alas.mp3
-805:SpotiFlyer/Albums/Robarse_Shangh_i/Corte.mp3
-806:SpotiFlyer/Albums/Robarse_Shangh_i/D_as_Mejores.mp3
-807:SpotiFlyer/Albums/Robarse_Shangh_i/Tundra.mp3
-808:KINGTEAM - LA FAMILIA/01 - KINGTEAM - Plata y oro (Forreando suave) (Video Lyrics) - Prod -  'RulitsTMB'.opus
-809:KINGTEAM - LA FAMILIA/02 - KINGTEAM - MVP - (Video Lyrics) - Prod -  'RulitsTMB'.opus
-810:KINGTEAM - LA FAMILIA/03 - KINGTEAM - Morir callado - (Video Lyrics) - Prod -  'RulitsTMB'.opus
-811:KINGTEAM - LA FAMILIA/04 - KINGTEAM - KA TE - (Video Lyrics) - Prod -  'RulitsTMB'.opus
-812:KINGTEAM - LA FAMILIA/05 - KINGTEAM - Hijo del pecado - (Video Lyrics) - Prod -  'RulitsTMB'.opus
-813:KINGTEAM - LA FAMILIA/06- KINGTEAM - No friendzone - (Video Lyrics) - Prod -  'RulitsTMB'.opus
-814:KINGTEAM - LA FAMILIA/07- KINGTEAM - Black and Yellow - (Video Lyrics) - Prod -  'RulitsTMB'.opus
-815:KINGTEAM - LA FAMILIA/08 - KINGTEAM - Leyend Remix - (Video Lyrics) - Prod -  'RulitsTMB'.opus
-816:KINGTEAM - LA FAMILIA/09 - KINGTEAM - En mi Equipo  (En To`Lao) - (Video Lyrics) - Prod -  'RulitsTMB'.opus
-817:KINGTEAM - LA FAMILIA/10 - KINGTEAM - Mala fama y buena vida (Video Lyrics) - Prod -  'RulitsTMB'.opus
-818:KINGTEAM - LA FAMILIA/11 - KINGTEAM ft. YoungKilla X Ocho - Dime Mentiras  (Video Lyrics) - Prod -  'RulitsTMB'.opus
-819:KINGTEAM - LA FAMILIA/12 - KINGTEAM - Money Never Sleep  (Video Lyrics) - Prod -  'RulitsTMB'.opus
-820:KINGTEAM - LA FAMILIA/13 - KINGTEAM - Porros Bates (Video Lyrics) - Prod -  'RulitsTMB'.opus
-821:Ghostpell's Olga Korbut/01 Ghostpell's Olga Kórbut.mp3
-822:Ghostpell's Olga Korbut/02 Soldiers & Business.mp3
-823:Ghostpell's Olga Korbut/03 Brother Mouzone Skit.mp3
-824:Ghostpell's Olga Korbut/04 Palacete.mp3
-825:Ghostpell's Olga Korbut/05 Mr. Ego.mp3
-826:Ghostpell's Olga Korbut/07 Five Times Betta.mp3
-827:Ghostpell's Olga Korbut/06 Le Sexe et la Musique.mp3
-828:Ghostpell's Olga Korbut/08 Two Enemigos.mp3
-829:Ghostpell's Olga Korbut/09 Breakfast at Pyrex.mp3
-830:Ghostpell's Olga Korbut/10 Hot Spot.mp3
-831:Ghostpell's Olga Korbut/11 Cocaine & Lipton.mp3
-832:Ghostpell's Olga Korbut/12 Transbordo.mp3
-833:flac/Conway the Machine - From King To A GOD FLAC/01. From King.flac
-834:flac/Conway the Machine - From King To A GOD FLAC/02. Fear Of God (feat. Dej Loaf).flac
-835:flac/Conway the Machine - From King To A GOD FLAC/03. Lemon (feat. Method Man).flac
-836:flac/Conway the Machine - From King To A GOD FLAC/04. Dough & Damani.flac
-837:flac/Conway the Machine - From King To A GOD FLAC/05. JuvenileаHell (feat. Flee Lord, Havoc & Lloyd Banks).flac
-838:flac/Conway the Machine - From King To A GOD FLAC/06. Words From Shay (Interlude).flac
-839:flac/Conway the Machine - From King To A GOD FLAC/07. Front Lines.flac
-840:flac/Conway the Machine - From King To A GOD FLAC/08. Anza (feat. Armani Caesar).flac
-841:flac/Conway the Machine - From King To A GOD FLAC/09. Seen Everything But Jesus (feat. Freddie Gibbs).flac
-842:flac/Conway the Machine - From King To A GOD FLAC/10. Words From Shay (Interlude 2).flac
-843:flac/Conway the Machine - From King To A GOD FLAC/11. Spurs 3 (feat. Benny The Butcher & Westside Gunn).flac
-844:flac/Conway the Machine - From King To A GOD FLAC/12. Forever Droppin Tears (feat. El Camino).flac
-845:flac/Conway the Machine - From King To A GOD FLAC/13. Jesus Khrysis.flac
-846:flac/Conway the Machine - From King To A GOD FLAC/14. Nothin Less.flac
-847:flac/Eminem - Music To Be Murdered By (Explicit)/1. Premonition (Intro).flac
-848:flac/Eminem - Music To Be Murdered By (Explicit)/2. Unaccommodating.flac
-849:flac/Eminem - Music To Be Murdered By (Explicit)/3. You Gon’ Learn.flac
-850:flac/Eminem - Music To Be Murdered By (Explicit)/4. Alfred (Interlude).flac
-851:flac/Eminem - Music To Be Murdered By (Explicit)/5. Those Kinda Nights.flac
-852:flac/Eminem - Music To Be Murdered By (Explicit)/6. In Too Deep.flac
-853:flac/Eminem - Music To Be Murdered By (Explicit)/7. Godzilla.flac
-854:flac/Eminem - Music To Be Murdered By (Explicit)/8. Darkness.flac
-855:flac/Eminem - Music To Be Murdered By (Explicit)/9. Leaving Heaven.flac
-856:flac/Eminem - Music To Be Murdered By (Explicit)/10. Yah Yah.flac
-857:flac/Eminem - Music To Be Murdered By (Explicit)/11. Stepdad (Intro).flac
-858:flac/Eminem - Music To Be Murdered By (Explicit)/12. Stepdad.flac
-859:flac/Eminem - Music To Be Murdered By (Explicit)/13. Marsh.flac
-860:flac/Eminem - Music To Be Murdered By (Explicit)/14. Never Love Again.flac
-861:flac/Eminem - Music To Be Murdered By (Explicit)/15. Little Engine.flac
-862:flac/Eminem - Music To Be Murdered By (Explicit)/16. Lock It Up.flac
-863:flac/Eminem - Music To Be Murdered By (Explicit)/17. Farewell.flac
-864:flac/Eminem - Music To Be Murdered By (Explicit)/18. No Regrets.flac
-865:flac/Eminem - Music To Be Murdered By (Explicit)/19. I Will.flac
-866:flac/Eminem - Music To Be Murdered By (Explicit)/20. Alfred (Outro).flac
-867:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/01 - Alfred (Intro).flac
-868:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/02 - Black Magic.flac
-869:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/03 - Alfreds Theme.flac
-870:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/04 - Tone Deaf.flac
-871:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/05 - Book of Rhymes.flac
-872:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/06 - Favorite Bitch.flac
-873:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/07 - Guns Blazing.flac
-874:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/08 - Gnat.flac
-875:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/09 - Higher.flac
-876:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/10 - These Demons.flac
-877:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/11 - Key (Skit).flac
-878:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/12 - She Loves Me.flac
-879:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/13 - Killer.flac
-880:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/14 - Zeus.flac
-881:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/15 - Thus Far (Interlude).flac
-882:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/16 - Discombobulated.flac
-883:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/17 - Premonition (Intro).flac
-884:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/18 - Unaccommodating.flac
-885:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/19 - You Gon Learn.flac
-886:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/20 - Alfred (Interlude).flac
-887:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/21 - Those Kinda Nights.flac
-888:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/22 - In Too Deep.flac
-889:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/23 - Godzilla.flac
-890:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/24 - Darkness.flac
-891:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/25 - Leaving Heaven.flac
-892:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/26 - Yah Yah.flac
-893:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/27 - Stepdad (Intro).flac
-894:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/28 - Stepdad.flac
-895:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/29 - Marsh.flac
-896:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/30 - Never Love Again.flac
-897:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/31 - Little Engine.flac
-898:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/32 - Lock It Up.flac
-899:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/33 - Farewell.flac
-900:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/34 - No Regrets.flac
-901:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/35 - I Will.flac
-902:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/36 - Alfred (Outro).flac
-903:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/01.-Public Service Announcement.flac
-904:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/02.-My Name Is.flac
-905:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/03.-Guilty Conscience.flac
-906:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/04.-Brain Damage.flac
-907:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/05.-Paul.flac
-908:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/06.-If I Had.flac
-909:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/07.-97' Bonnie & Clyde.flac
-910:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/08.-Bitch.flac
-911:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/09.-Role Model.flac
-912:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/10.-Lounge.flac
-913:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/11.-My Fault.flac
-914:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/12.-Ken Kaniff.flac
-915:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/13.-Cum On Everybody.flac
-916:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/14.-Rock Bottom.flac
-917:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/15.-Just Don't Give A Fuck.flac
-918:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/16.-Soap.flac
-919:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/17.-As The World Turns.flac
-920:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/18.-I'm Shady.flac
-921:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/19.-Bad Meets Evil.flac
-922:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/20.-Still Don't Give A Fuck.flac
-923:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 01 Enter Hallownest.flac
-924:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 02 Dirtmouth.flac
-925:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 03 Crossroads.flac
-926:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 04 False Knight.flac
-927:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 05 Greenpath.flac
-928:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 06 Hornet.flac
-929:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 07 Reflection.flac
-930:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 08 Mantis Lords.flac
-931:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 09 City of Tears.flac
-932:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 10 Dung Defender.flac
-933:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 11 Crystal Peak.flac
-934:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 12 Fungal Wastes.flac
-935:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 13 Decisive Battle.flac
-936:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 14 Soul Sanctum.flac
-937:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 15 Resting Grounds.flac
-938:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 16 Queen's Gardens.flac
-939:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 17 The White Lady.flac
-940:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 18 Broken Vessel.flac
-941:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 19 Kingdom's Edge.flac
-942:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 20 Nosk.flac
-943:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 21 Dream.flac
-944:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 22 Dream Battle.flac
-945:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 23 White Palace.flac
-946:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 24 Sealed Vessel.flac
-947:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 25 Radiance.flac
-948:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 26 Hollow Knight.flac
-949:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/01 Hive Knight.flac
-950:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/02 Truth, Beauty and Hatred.flac
-951:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/03 Nightmare Lantern (Interlude).flac
-952:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/04 The Grimm Troupe.flac
-953:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/05 Nightmare King.flac
-954:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/06 White Defender.flac
-955:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/07 Dreamers.flac
-956:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/08 Pale Court.flac
-957:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/09 Gods _ Glory.flac
-958:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/10 Daughter of Hallownest.flac
-959:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/11 Godhome.flac
-960:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/12 Sisters of Battle.flac
-961:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/13 Haunted Foes.flac
-962:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/14 Furious Gods.flac
-963:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/15 Pure Vessel.flac
-964:flac/Inside (The Songs) [2021]/CD1/01 - Bo Burnham - Content.flac
-965:flac/Inside (The Songs) [2021]/CD1/02 - Bo Burnham - Comedy (Explicit).flac
-966:flac/Inside (The Songs) [2021]/CD1/03 - Bo Burnham - FaceTime with my Mom (Tonight).flac
-967:flac/Inside (The Songs) [2021]/CD1/04 - Bo Burnham - How the World Works (Explicit).flac
-968:flac/Inside (The Songs) [2021]/CD1/05 - Bo Burnham - White Woman’s Instagram.flac
-969:flac/Inside (The Songs) [2021]/CD1/06 - Bo Burnham - Unpaid Intern.flac
-970:flac/Inside (The Songs) [2021]/CD1/07 - Bo Burnham - Bezos I (Explicit).flac
-971:flac/Inside (The Songs) [2021]/CD1/08 - Bo Burnham - Sexting (Explicit).flac
-972:flac/Inside (The Songs) [2021]/CD1/09 - Bo Burnham - Look Who’s Inside Again (Explicit).flac
-973:flac/Inside (The Songs) [2021]/CD1/10 - Bo Burnham - Problematic (Explicit).flac
-974:flac/Inside (The Songs) [2021]/CD1/11 - Bo Burnham - 30 (Explicit).flac
-975:flac/Inside (The Songs) [2021]/CD2/01 - Bo Burnham - Don't Wanna Know.flac
-976:flac/Inside (The Songs) [2021]/CD2/02 - Bo Burnham - Shit (Explicit).flac
-977:flac/Inside (The Songs) [2021]/CD2/03 - Bo Burnham - All Time Low.flac
-978:flac/Inside (The Songs) [2021]/CD2/04 - Bo Burnham - Welcome to the Internet (Explicit).flac
-979:flac/Inside (The Songs) [2021]/CD2/05 - Bo Burnham - Bezos II.flac
-980:flac/Inside (The Songs) [2021]/CD2/06 - Bo Burnham - That Funny Feeling.flac
-981:flac/Inside (The Songs) [2021]/CD2/07 - Bo Burnham - All Eyes On Me (Explicit).flac
-982:flac/Inside (The Songs) [2021]/CD2/08 - Bo Burnham - Goodbye (Explicit).flac
-983:flac/Inside (The Songs) [2021]/CD2/09 - Bo Burnham - Any Day Now.flac
-984:flac/Pricele$$/John -JP- Price - PRICELE$$ - 01 Intro.flac
-985:flac/Pricele$$/John -JP- Price - PRICELE$$ - 02 The Take Over.flac
-986:flac/Pricele$$/John -JP- Price - PRICELE$$ - 03 The Come Up (feat. Godemis of Ces Cru, Joey Cool, STEDDY P).flac
-987:flac/Pricele$$/John -JP- Price - PRICELE$$ - 04 Jump (feat. Dutch Newman).flac
-988:flac/Pricele$$/John -JP- Price - PRICELE$$ - 05 Start A Mosh Pit.flac
-989:flac/Pricele$$/John -JP- Price - PRICELE$$ - 07 Party Life.flac
-990:flac/Pricele$$/John -JP- Price - PRICELE$$ - 08 Try This.flac
-991:flac/Pricele$$/John -JP- Price - PRICELE$$ - 09 Whatever You Like (feat. SpitRaw & Ziggy).flac
-992:flac/Pricele$$/John -JP- Price - PRICELE$$ - 10 I Love Big Booty.flac
-993:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/01. Sunshine Intro.flac
-994:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/02. The Butcher and The Blade.flac
-995:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/03. Ishkabibble's.flac
-996:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/04. All Praises.flac
-997:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/05. Big Basha's.flac
-998:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/06. Liz Loves Luger.flac
-999:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/07. Ocean Prime.flac
-1000:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/08. Lessie.flac
-1001:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/09. Frank Murphy.flac
-1002:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/10. Good Night.flac
-1003:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/11. 98 Sabres.flac
+800:KINGTEAM - LA FAMILIA/01 - KINGTEAM - Plata y oro (Forreando suave) (Video Lyrics) - Prod -  'RulitsTMB'.opus
+801:KINGTEAM - LA FAMILIA/02 - KINGTEAM - MVP - (Video Lyrics) - Prod -  'RulitsTMB'.opus
+802:KINGTEAM - LA FAMILIA/03 - KINGTEAM - Morir callado - (Video Lyrics) - Prod -  'RulitsTMB'.opus
+803:KINGTEAM - LA FAMILIA/04 - KINGTEAM - KA TE - (Video Lyrics) - Prod -  'RulitsTMB'.opus
+804:KINGTEAM - LA FAMILIA/05 - KINGTEAM - Hijo del pecado - (Video Lyrics) - Prod -  'RulitsTMB'.opus
+805:KINGTEAM - LA FAMILIA/06- KINGTEAM - No friendzone - (Video Lyrics) - Prod -  'RulitsTMB'.opus
+806:KINGTEAM - LA FAMILIA/07- KINGTEAM - Black and Yellow - (Video Lyrics) - Prod -  'RulitsTMB'.opus
+807:KINGTEAM - LA FAMILIA/08 - KINGTEAM - Leyend Remix - (Video Lyrics) - Prod -  'RulitsTMB'.opus
+808:KINGTEAM - LA FAMILIA/09 - KINGTEAM - En mi Equipo  (En To`Lao) - (Video Lyrics) - Prod -  'RulitsTMB'.opus
+809:KINGTEAM - LA FAMILIA/10 - KINGTEAM - Mala fama y buena vida (Video Lyrics) - Prod -  'RulitsTMB'.opus
+810:KINGTEAM - LA FAMILIA/11 - KINGTEAM ft. YoungKilla X Ocho - Dime Mentiras  (Video Lyrics) - Prod -  'RulitsTMB'.opus
+811:KINGTEAM - LA FAMILIA/12 - KINGTEAM - Money Never Sleep  (Video Lyrics) - Prod -  'RulitsTMB'.opus
+812:KINGTEAM - LA FAMILIA/13 - KINGTEAM - Porros Bates (Video Lyrics) - Prod -  'RulitsTMB'.opus
+813:Ghostpell's Olga Korbut/01 Ghostpell's Olga Kórbut.mp3
+814:Ghostpell's Olga Korbut/02 Soldiers & Business.mp3
+815:Ghostpell's Olga Korbut/03 Brother Mouzone Skit.mp3
+816:Ghostpell's Olga Korbut/04 Palacete.mp3
+817:Ghostpell's Olga Korbut/05 Mr. Ego.mp3
+818:Ghostpell's Olga Korbut/07 Five Times Betta.mp3
+819:Ghostpell's Olga Korbut/06 Le Sexe et la Musique.mp3
+820:Ghostpell's Olga Korbut/08 Two Enemigos.mp3
+821:Ghostpell's Olga Korbut/09 Breakfast at Pyrex.mp3
+822:Ghostpell's Olga Korbut/10 Hot Spot.mp3
+823:Ghostpell's Olga Korbut/11 Cocaine & Lipton.mp3
+824:Ghostpell's Olga Korbut/12 Transbordo.mp3
+825:flac/Conway the Machine - From King To A GOD FLAC/01. From King.flac
+826:flac/Conway the Machine - From King To A GOD FLAC/02. Fear Of God (feat. Dej Loaf).flac
+827:flac/Conway the Machine - From King To A GOD FLAC/03. Lemon (feat. Method Man).flac
+828:flac/Conway the Machine - From King To A GOD FLAC/04. Dough & Damani.flac
+829:flac/Conway the Machine - From King To A GOD FLAC/05. JuvenileаHell (feat. Flee Lord, Havoc & Lloyd Banks).flac
+830:flac/Conway the Machine - From King To A GOD FLAC/06. Words From Shay (Interlude).flac
+831:flac/Conway the Machine - From King To A GOD FLAC/07. Front Lines.flac
+832:flac/Conway the Machine - From King To A GOD FLAC/08. Anza (feat. Armani Caesar).flac
+833:flac/Conway the Machine - From King To A GOD FLAC/09. Seen Everything But Jesus (feat. Freddie Gibbs).flac
+834:flac/Conway the Machine - From King To A GOD FLAC/10. Words From Shay (Interlude 2).flac
+835:flac/Conway the Machine - From King To A GOD FLAC/11. Spurs 3 (feat. Benny The Butcher & Westside Gunn).flac
+836:flac/Conway the Machine - From King To A GOD FLAC/12. Forever Droppin Tears (feat. El Camino).flac
+837:flac/Conway the Machine - From King To A GOD FLAC/13. Jesus Khrysis.flac
+838:flac/Conway the Machine - From King To A GOD FLAC/14. Nothin Less.flac
+839:flac/Eminem - Music To Be Murdered By (Explicit)/1. Premonition (Intro).flac
+840:flac/Eminem - Music To Be Murdered By (Explicit)/2. Unaccommodating.flac
+841:flac/Eminem - Music To Be Murdered By (Explicit)/3. You Gon’ Learn.flac
+842:flac/Eminem - Music To Be Murdered By (Explicit)/4. Alfred (Interlude).flac
+843:flac/Eminem - Music To Be Murdered By (Explicit)/5. Those Kinda Nights.flac
+844:flac/Eminem - Music To Be Murdered By (Explicit)/6. In Too Deep.flac
+845:flac/Eminem - Music To Be Murdered By (Explicit)/7. Godzilla.flac
+846:flac/Eminem - Music To Be Murdered By (Explicit)/8. Darkness.flac
+847:flac/Eminem - Music To Be Murdered By (Explicit)/9. Leaving Heaven.flac
+848:flac/Eminem - Music To Be Murdered By (Explicit)/10. Yah Yah.flac
+849:flac/Eminem - Music To Be Murdered By (Explicit)/11. Stepdad (Intro).flac
+850:flac/Eminem - Music To Be Murdered By (Explicit)/12. Stepdad.flac
+851:flac/Eminem - Music To Be Murdered By (Explicit)/13. Marsh.flac
+852:flac/Eminem - Music To Be Murdered By (Explicit)/14. Never Love Again.flac
+853:flac/Eminem - Music To Be Murdered By (Explicit)/15. Little Engine.flac
+854:flac/Eminem - Music To Be Murdered By (Explicit)/16. Lock It Up.flac
+855:flac/Eminem - Music To Be Murdered By (Explicit)/17. Farewell.flac
+856:flac/Eminem - Music To Be Murdered By (Explicit)/18. No Regrets.flac
+857:flac/Eminem - Music To Be Murdered By (Explicit)/19. I Will.flac
+858:flac/Eminem - Music To Be Murdered By (Explicit)/20. Alfred (Outro).flac
+859:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/01 - Alfred (Intro).flac
+860:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/02 - Black Magic.flac
+861:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/03 - Alfreds Theme.flac
+862:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/04 - Tone Deaf.flac
+863:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/05 - Book of Rhymes.flac
+864:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/06 - Favorite Bitch.flac
+865:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/07 - Guns Blazing.flac
+866:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/08 - Gnat.flac
+867:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/09 - Higher.flac
+868:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/10 - These Demons.flac
+869:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/11 - Key (Skit).flac
+870:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/12 - She Loves Me.flac
+871:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/13 - Killer.flac
+872:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/14 - Zeus.flac
+873:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/15 - Thus Far (Interlude).flac
+874:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/16 - Discombobulated.flac
+875:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/17 - Premonition (Intro).flac
+876:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/18 - Unaccommodating.flac
+877:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/19 - You Gon Learn.flac
+878:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/20 - Alfred (Interlude).flac
+879:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/21 - Those Kinda Nights.flac
+880:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/22 - In Too Deep.flac
+881:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/23 - Godzilla.flac
+882:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/24 - Darkness.flac
+883:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/25 - Leaving Heaven.flac
+884:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/26 - Yah Yah.flac
+885:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/27 - Stepdad (Intro).flac
+886:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/28 - Stepdad.flac
+887:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/29 - Marsh.flac
+888:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/30 - Never Love Again.flac
+889:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/31 - Little Engine.flac
+890:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/32 - Lock It Up.flac
+891:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/33 - Farewell.flac
+892:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/34 - No Regrets.flac
+893:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/35 - I Will.flac
+894:flac/Eminem - Music To Be Murdered By Side B (Deluxe Edition) (2020) [24 Bit Hi-Res] FLAC Album [PMEDIA] ⭐️/36 - Alfred (Outro).flac
+895:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/01.-Public Service Announcement.flac
+896:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/02.-My Name Is.flac
+897:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/03.-Guilty Conscience.flac
+898:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/04.-Brain Damage.flac
+899:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/05.-Paul.flac
+900:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/06.-If I Had.flac
+901:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/07.-97' Bonnie & Clyde.flac
+902:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/08.-Bitch.flac
+903:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/09.-Role Model.flac
+904:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/10.-Lounge.flac
+905:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/11.-My Fault.flac
+906:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/12.-Ken Kaniff.flac
+907:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/13.-Cum On Everybody.flac
+908:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/14.-Rock Bottom.flac
+909:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/15.-Just Don't Give A Fuck.flac
+910:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/16.-Soap.flac
+911:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/17.-As The World Turns.flac
+912:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/18.-I'm Shady.flac
+913:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/19.-Bad Meets Evil.flac
+914:flac/Eminem - The Slim Shady LP (1999) (PBTHAL LP 24-96) [FLAC] vtwin88cube/20.-Still Don't Give A Fuck.flac
+915:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 01 Enter Hallownest.flac
+916:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 02 Dirtmouth.flac
+917:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 03 Crossroads.flac
+918:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 04 False Knight.flac
+919:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 05 Greenpath.flac
+920:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 06 Hornet.flac
+921:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 07 Reflection.flac
+922:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 08 Mantis Lords.flac
+923:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 09 City of Tears.flac
+924:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 10 Dung Defender.flac
+925:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 11 Crystal Peak.flac
+926:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 12 Fungal Wastes.flac
+927:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 13 Decisive Battle.flac
+928:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 14 Soul Sanctum.flac
+929:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 15 Resting Grounds.flac
+930:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 16 Queen's Gardens.flac
+931:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 17 The White Lady.flac
+932:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 18 Broken Vessel.flac
+933:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 19 Kingdom's Edge.flac
+934:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 20 Nosk.flac
+935:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 21 Dream.flac
+936:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 22 Dream Battle.flac
+937:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 23 White Palace.flac
+938:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 24 Sealed Vessel.flac
+939:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 25 Radiance.flac
+940:flac/Hollow Knight/Hollow Knight/Christopher Larkin - Hollow Knight (Original Soundtrack) - 26 Hollow Knight.flac
+941:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/01 Hive Knight.flac
+942:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/02 Truth, Beauty and Hatred.flac
+943:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/03 Nightmare Lantern (Interlude).flac
+944:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/04 The Grimm Troupe.flac
+945:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/05 Nightmare King.flac
+946:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/06 White Defender.flac
+947:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/07 Dreamers.flac
+948:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/08 Pale Court.flac
+949:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/09 Gods _ Glory.flac
+950:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/10 Daughter of Hallownest.flac
+951:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/11 Godhome.flac
+952:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/12 Sisters of Battle.flac
+953:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/13 Haunted Foes.flac
+954:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/14 Furious Gods.flac
+955:flac/Hollow Knight/Hollow Knight - Gods & Nightmares/15 Pure Vessel.flac
+956:flac/Inside (The Songs) [2021]/CD1/01 - Bo Burnham - Content.flac
+957:flac/Inside (The Songs) [2021]/CD1/02 - Bo Burnham - Comedy (Explicit).flac
+958:flac/Inside (The Songs) [2021]/CD1/03 - Bo Burnham - FaceTime with my Mom (Tonight).flac
+959:flac/Inside (The Songs) [2021]/CD1/04 - Bo Burnham - How the World Works (Explicit).flac
+960:flac/Inside (The Songs) [2021]/CD1/05 - Bo Burnham - White Woman’s Instagram.flac
+961:flac/Inside (The Songs) [2021]/CD1/06 - Bo Burnham - Unpaid Intern.flac
+962:flac/Inside (The Songs) [2021]/CD1/07 - Bo Burnham - Bezos I (Explicit).flac
+963:flac/Inside (The Songs) [2021]/CD1/08 - Bo Burnham - Sexting (Explicit).flac
+964:flac/Inside (The Songs) [2021]/CD1/09 - Bo Burnham - Look Who’s Inside Again (Explicit).flac
+965:flac/Inside (The Songs) [2021]/CD1/10 - Bo Burnham - Problematic (Explicit).flac
+966:flac/Inside (The Songs) [2021]/CD1/11 - Bo Burnham - 30 (Explicit).flac
+967:flac/Inside (The Songs) [2021]/CD2/01 - Bo Burnham - Don't Wanna Know.flac
+968:flac/Inside (The Songs) [2021]/CD2/02 - Bo Burnham - Shit (Explicit).flac
+969:flac/Inside (The Songs) [2021]/CD2/03 - Bo Burnham - All Time Low.flac
+970:flac/Inside (The Songs) [2021]/CD2/04 - Bo Burnham - Welcome to the Internet (Explicit).flac
+971:flac/Inside (The Songs) [2021]/CD2/05 - Bo Burnham - Bezos II.flac
+972:flac/Inside (The Songs) [2021]/CD2/06 - Bo Burnham - That Funny Feeling.flac
+973:flac/Inside (The Songs) [2021]/CD2/07 - Bo Burnham - All Eyes On Me (Explicit).flac
+974:flac/Inside (The Songs) [2021]/CD2/08 - Bo Burnham - Goodbye (Explicit).flac
+975:flac/Inside (The Songs) [2021]/CD2/09 - Bo Burnham - Any Day Now.flac
+976:flac/Pricele$$/John -JP- Price - PRICELE$$ - 01 Intro.flac
+977:flac/Pricele$$/John -JP- Price - PRICELE$$ - 02 The Take Over.flac
+978:flac/Pricele$$/John -JP- Price - PRICELE$$ - 03 The Come Up (feat. Godemis of Ces Cru, Joey Cool, STEDDY P).flac
+979:flac/Pricele$$/John -JP- Price - PRICELE$$ - 04 Jump (feat. Dutch Newman).flac
+980:flac/Pricele$$/John -JP- Price - PRICELE$$ - 05 Start A Mosh Pit.flac
+981:flac/Pricele$$/John -JP- Price - PRICELE$$ - 07 Party Life.flac
+982:flac/Pricele$$/John -JP- Price - PRICELE$$ - 08 Try This.flac
+983:flac/Pricele$$/John -JP- Price - PRICELE$$ - 09 Whatever You Like (feat. SpitRaw & Ziggy).flac
+984:flac/Pricele$$/John -JP- Price - PRICELE$$ - 10 I Love Big Booty.flac
+985:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/01. Sunshine Intro.flac
+986:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/02. The Butcher and The Blade.flac
+987:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/03. Ishkabibble's.flac
+988:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/04. All Praises.flac
+989:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/05. Big Basha's.flac
+990:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/06. Liz Loves Luger.flac
+991:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/07. Ocean Prime.flac
+992:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/08. Lessie.flac
+993:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/09. Frank Murphy.flac
+994:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/10. Good Night.flac
+995:flac/Westside Gunn - WHO MADE THE SUNSHINE (2020) [Hi-Res]/11. 98 Sabres.flac
+996:SpotiFlyer/Albums/Robarse_Shangh_i/1 - Estelar.mp3
+997:SpotiFlyer/Albums/Robarse_Shangh_i/2 - Akira.mp3
+998:SpotiFlyer/Albums/Robarse_Shangh_i/5 - Alas.mp3
+999:SpotiFlyer/Albums/Robarse_Shangh_i/4 - Robarse_Shanghái.mp3
+1000:SpotiFlyer/Albums/Robarse_Shangh_i/3 - Mantra.mp3
+1001:SpotiFlyer/Albums/Robarse_Shangh_i/6 - Corte.mp3
+1002:SpotiFlyer/Albums/Robarse_Shangh_i/7 - Días_Mejores.mp3
+1003:SpotiFlyer/Albums/Robarse_Shangh_i/8 - Tundra.mp3
 playlist_end
