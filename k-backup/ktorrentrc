@@ -1,11 +1,5 @@
-[BandwidthSchedulerPlugin]
-BandwidthSchedulerPluginEnabled=false
-
 [ChunkDownloadView]
 state=AAAA/wAAAAAAAAABAAAAAQAAAAABAAAAAAAAAAAAAAAAAAAAAAAAB2cAAAAFAQEAAQAAAAAAAAAAAAAAAGT/////AAAAgQAAAAAAAAAFAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAF1wAAAAEAAAAAAAAD6AAAAABk
-
-[DownloadOrderPlugin]
-DownloadOrderPluginEnabled=false
 
 [FileSelectDlg]
 download_location_history=/home/repparw/Downloads/Torrents/
@@ -27,20 +21,8 @@ tab0_settings=\x00\x00\x00\xff\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x01\x
 expanded=/all,/all/active,/all/downloads,/all/uploads,/all/passive
 visible=false
 
-[IPFilterPlugin]
-IPFilterPluginEnabled=false
-
-[InfoWidgetPlugin]
-InfoWidgetPluginEnabled=true
-
 [KFileDialog Settings]
 detailViewIconSize=16
-
-[LogViewerPlugin]
-LogViewerPluginEnabled=false
-
-[MagnetGeneratorPlugin]
-MagnetGeneratorPluginEnabled=false
 
 [MagnetView]
 state=AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB3wAAAADAQAAAQAAAAAAAAAAAAAAAGT/////AAAAgQAAAAAAAAADAAACoQAAAAEAAAAAAAAAZAAAAAEAAAAAAAAEdwAAAAEAAAAAAAAD6AAAAABk
@@ -72,15 +54,29 @@ hidden_on_exit=false
 menubar_hidden=true
 statusbar_hidden=false
 
-[MediaPlayerPlugin]
-MediaPlayerPluginEnabled=false
-
 [PasteDlg]
 group=0
 silently=false
 
 [PeerView]
 state=AAAA/wAAAAAAAAABAAAAAQAAAAABAAAAAAAAAAAAAAAAAAAAAAAAB2cAAAAQAQEAAQAAAAAAAAAAAAAAAGT/////AAAAgQAAAAAAAAAQAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAXwAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAABkAAAAAEAAAAAAAAD6AAAAABk
+
+[Plugins]
+BandwidthSchedulerPluginEnabled=false
+DownloadOrderPluginEnabled=false
+IPFilterPluginEnabled=false
+InfoWidgetPluginEnabled=true
+LogViewerPluginEnabled=false
+MagnetGeneratorPluginEnabled=false
+MediaPlayerPluginEnabled=false
+ScanFolderPluginEnabled=false
+ScanForLostFilesPluginEnabled=false
+SearchPluginEnabled=false
+ShutdownPluginEnabled=false
+StatsPluginEnabled=false
+SyndicationPluginEnabled=false
+UPnPPluginEnabled=false
+ZeroconfPluginEnabled=false
 
 [PrefDialog]
 size=814,510
@@ -99,27 +95,9 @@ view_state=AAAA/wAAAAAAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB04AAAAEAQAAAQAAA
 [Recent Dirs]
 saveTorrentData[$e]=/run/media/repparw/HDD/Torrents/Better.Call.Saul.S06E03.REPACK.1080p.WEB.H264-CAKES[rarbg],/run/media/repparw/HDD/Videos/Series/WheelOfTime,$HOME/Downloads
 
-[ScanFolderPlugin]
-ScanFolderPluginEnabled=false
-
-[ScanForLostFilesPlugin]
-ScanForLostFilesPluginEnabled=false
-
-[SearchPlugin]
-SearchPluginEnabled=false
-
-[ShutdownPlugin]
-ShutdownPluginEnabled=false
-
 [SpeedLimitsDlg]
 size=546,372
 view_state=AAAA/wAAAAAAAAABAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAfQAAAAFAQEAAQAAAAAAAAAAAAAAAGn/////AAAAgQAAAAAAAAAFAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAD6AAAAABk
-
-[StatsPlugin]
-StatsPluginEnabled=false
-
-[SyndicationPlugin]
-SyndicationPluginEnabled=false
 
 [TorrentActivityBottomTabBar]
 current_tab=Files
@@ -137,14 +115,8 @@ text=
 state=AAAA/wAAAAAAAAABAAAAAQAAAAABAAAAAAAAAAAAAAAAAAAAAAAABrQAAAAGAQEAAQAAAAAAAAAAAAAAAGT/////AAAAgQAAAAAAAAAGAAABpQAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAADfwAAAAEAAAAAAAAD6AAAAABk
 tracker_hints=udp://tracker.publicbt.com:80/announce,udp://tracker.openbittorrent.com:80/announce
 
-[UPnPPlugin]
-UPnPPluginEnabled=false
-
 [WebSeedsTab]
 state=AAAA/wAAAAAAAAABAAAAAQAAAAABAAAAAAAAAAAAAAAAAAAAAAAABtgAAAAEAQEAAQAAAAAAAAAAAAAAAGT/////AAAAgQAAAAAAAAAEAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAAZAAAAAEAAAAAAAAFrAAAAAEAAAAAAAAD6AAAAABk
-
-[ZeroconfPlugin]
-ZeroconfPluginEnabled=false
 
 [downloads]
 alwaysMinimizeToSystemTray=true
