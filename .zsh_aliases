@@ -143,8 +143,8 @@
 		alias yda="yt-dlp -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
 
 	# temp alias
-		alias temp="watch -d -n 2 sensors -A"
-		alias gputemp="watch -n 2 nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader 39"
+		alias temp="watch -d -n 60 sensors -A"
+		alias gputemp="watch -n 60 nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader 39"
 
 	# GPU mining (mm.js gminer)
 		alias gpumine="cd ~/.mining/gminer && ./miner --algo kawpow --server gulf.moneroocean.stream:20128 --ssl 1 --user 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ --pass gpu~kawpow"
