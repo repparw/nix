@@ -150,6 +150,7 @@ Image=file:///home/repparw/Pictures/bg/wallpapersden.com_linux-retro_1920x1080.j
 SlidePaths=/usr/share/wallpapers
 
 [Containments][176]
+ItemGeometries-1024x768=
 ItemGeometries-1920x1080=
 ItemGeometriesHorizontal=
 activityId=c2f7948f-cf52-46ec-9b7e-c825ba193393
@@ -501,7 +502,7 @@ DialogHeight=540
 DialogWidth=720
 
 [Containments][9][Applets][171][Configuration][General]
-lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1647278757341,"cache_e7b23a5cdac83e33276c5bfc80fbbc02":1656756470275}
+lastReloadedMsJson={"cache_5a5440a6c6026f3e61c6aee598cae8dc":1637445672420,"cache_a268225e9e1884335295a33d47ba878e":1647278757341,"cache_e7b23a5cdac83e33276c5bfc80fbbc02":1656788145696}
 placeIndex=1
 places=[{"providerId":"owm","placeIdentifier":"3430568","placeAlias":"Moquehuá"},{"providerId":"owm","placeIdentifier":"3432043","placeAlias":"La Plata"}]
 
