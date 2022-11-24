@@ -1,5 +1,5 @@
 [$Version]
-update_info=bismuth_shortcuts_category.upd:bismuth-shortcuts-category
+update_info=bismuth_shortcuts_category.upd:bismuth-shortcuts-category,bismuth_shortcuts_from_kwin.upd:bismuth-shortcuts-from-kwin
 
 [ActivityManager]
 _k_friendly_name=Activity Manager
@@ -17,6 +17,18 @@ Switch keyboard layout to Spanish (Latin American)=none,none,Switch keyboard lay
 Switch to Next Keyboard Layout=none,Ctrl+Alt+K,Switch to Next Keyboard Layout
 _k_friendly_name=Keyboard Layout Switcher
 
+[League of Legends.desktop]
+_k_friendly_name=League of Legends
+_launch=none,none,Launch League of Legends
+
+[Mobalytics Desktop.desktop]
+_k_friendly_name=Mobalytics Desktop
+_launch=none,none,Launch Mobalytics Desktop
+
+[Riot Client.desktop]
+_k_friendly_name=Riot Client
+_launch=none,none,Launch Riot Client
+
 [archisteamfarm.desktop]
 _k_friendly_name=ArchiSteamFarm
 _launch=none,none,Launch ArchiSteamFarm
@@ -29,6 +41,44 @@ _launch=none,none,Launch Awakened
 _k_friendly_name=Binance
 _launch=none,none,Launch Binance
 
+[bismuth]
+_k_friendly_name=Window Tiling
+decrease_master_size=none,none,Decrease Master Area Size
+decrease_master_win_count=none,Meta+[,Decrease Master Area Window Count
+decrease_window_height=none,Meta+Ctrl+K,Decrease Window Height
+decrease_window_width=none,Meta+Ctrl+H,Decrease Window Width
+focus_bottom_window=none,Meta+J,Focus Bottom Window
+focus_left_window=none,Meta+H,Focus Left Window
+focus_next_window=none,none,Focus Next Window
+focus_prev_window=none,none,Focus Previous Window
+focus_right_window=none,Meta+L,Focus Right Window
+focus_upper_window=none,Meta+K,Focus Upper Window
+increase_master_size=none,none,Increase Master Area Size
+increase_master_win_count=none,Meta+],Increase Master Area Window Count
+increase_window_height=none,Meta+Ctrl+J,Increase Window Height
+increase_window_width=none,Meta+Ctrl+L,Increase Window Width
+move_window_to_bottom_pos=Meta+Shift+J,Meta+Shift+J,Move Window Down
+move_window_to_left_pos=Meta+Shift+H,Meta+Shift+H,Move Window Left
+move_window_to_next_pos=none,none,Move Window to the Next Position
+move_window_to_prev_pos=none,none,Move Window to the Previous Position
+move_window_to_right_pos=Meta+Shift+L,Meta+Shift+L,Move Window Right
+move_window_to_upper_pos=Meta+Shift+K,Meta+Shift+K,Move Window Up
+next_layout=Meta+\\\\,Meta+\\\\,Switch to the Next Layout
+prev_layout=Meta+|,Meta+|,Switch to the Previous Layout
+push_window_to_master=none,Meta+Return,Push Active Window to Master Area
+rotate=none,Meta+R,Rotate
+rotate_part=none,Meta+Shift+R,Rotate Part
+rotate_reverse=none,none,Rotate (Reverse)
+toggle_float_layout=none,Meta+Shift+F,Toggle Floating Layout
+toggle_monocle_layout=none,Meta+M,Toggle Monocle Layout
+toggle_quarter_layout=none,none,Toggle Quarter Layout
+toggle_spiral_layout=none,none,Toggle Spiral Layout
+toggle_spread_layout=none,none,Toggle Spread Layout
+toggle_stair_layout=none,none,Toggle Stair Layout
+toggle_three_column_layout=none,none,Toggle Three Column Layout
+toggle_tile_layout=none,Meta+T,Toggle Tile Layout
+toggle_window_floating=Meta+S,Meta+F,Toggle Active Window Floating
+
 [com.github.eloston.ungoogledchromium.flextop.chrome-dbjlimibnhmfcgadnpbfgkmmeijhieif-default.desktop]
 _k_friendly_name=Deezer
 _launch=none,none,Launch Deezer
@@ -36,6 +86,10 @@ _launch=none,none,Launch Deezer
 [com.github.eloston.ungoogledchromium.flextop.chrome-egmafekfmcnknbdlbfbhafbllplmjlhn-default.desktop]
 _k_friendly_name=GeForce NOW
 _launch=none,none,Launch GeForce NOW
+
+[com.spotify.Client.desktop]
+_k_friendly_name=Spotify
+_launch=none,none,Launch Spotify
 
 [com.valvesoftware.Steam.desktop]
 _k_friendly_name=Steam
@@ -60,6 +114,10 @@ profile-manager-window=none,none,Open the Profile Manager
 _k_friendly_name=Heroic Games Launcher
 _launch=none,none,Launch Heroic Games Launcher
 
+[io.github.spacingbat3.webcord.desktop]
+_k_friendly_name=Discord
+_launch=none,none,Launch Discord
+
 [kaccess]
 Toggle Screen Reader On and Off=none,Meta+Alt+S,Toggle Screen Reader On and Off
 _k_friendly_name=Accessibility
@@ -77,11 +135,10 @@ display=Display,Display\tMeta+P,Switch Display
 
 [khotkeys]
 _k_friendly_name=Custom Shortcuts Service
+{01f565cc-766e-423b-85b5-d85d7dc70099}=Meta+N,none,scrcpy
 {1782601a-16e1-4982-9ce7-68bb16aa8580}=Meta+<,none,mpc seek -
-{21430c12-3af4-4792-9725-a01a03fea6f1}=Media Previous,none,mpc prev 2
 {24b536a3-a4fc-43f8-94c0-30c44c4440d5}=Meta+Shift+F11,none,maimqr
 {269bd72c-00ab-4d46-8fa2-a1abec6f454a}=Meta+F4,none,shutdown
-{2cb85601-01fb-48ba-9e0d-6465ff53d4fa}=Meta+Y,none,freetube
 {2f20a989-7528-4da7-bb2a-7f60f24e3f7e}=Meta+V,none,Joplin
 {385c2e06-5a74-4a30-9260-ae31a2d7a145}=Meta+\\,,none,mpc prev
 {42a49e96-f3c8-45dd-9b16-d064d66e88b1}=Meta+A,none,Anki
@@ -89,14 +146,14 @@ _k_friendly_name=Custom Shortcuts Service
 {6ab20914-1083-4563-ad46-6630030a6302}=Meta++,none,webcam
 {6de45335-a9a5-4cb7-92e8-630394e3ec16}=Meta+O,none,brownnoise
 {74790651-2d78-401b-baba-397b21c6c6a7}=Meta+G,none,gpodder
+{7995b6ff-0029-44ef-a5c1-efd54a9a7d77}=Meta+Y,none,freetube
 {7d2cfdce-5cf6-4954-ac20-0cbce791fbbd}=Ctrl+Alt+L,none,screens off
-{89803954-3504-48c5-8728-c2268bd4bda5}=Media Next,none,mpc next 2
 {9005eee1-9daa-41a4-9d98-76ce0188d489}=Meta+E,none,lf
 {91c54b96-f63e-482f-8353-ff38903c0247}=Meta+Shift+F10,none,mpc seek +
 {92c5aa35-801e-44ef-aa9d-9be29c56d010}=Meta+F10,none,mpc next
 {9792072a-5995-4d78-81f2-b68f19df6602}=Meta+F12,none,mpc toggle
 {a3f93496-a9ae-485b-ae68-c926db08bb2b}=Meta+R,none,rpi tmux
-{a6387294-f354-4723-998c-fc8c6f9f26f0}=Meta+T,none,htop
+{a6387294-f354-4723-998c-fc8c6f9f26f0}=Meta+T,none,top
 {a78614b6-3b89-456f-9deb-1e48bf250fa0}=Meta+Z,none,mpv clipboard
 {aa7ff60c-270f-4c7d-a6c3-4cd0e4b95c66}=Meta+F7,none,mpc prev
 {b34895ed-e92d-47da-b847-bb0a5e8b33af}=Meta+P,none,mpc toggle
@@ -105,12 +162,10 @@ _k_friendly_name=Custom Shortcuts Service
 {c974294c-4459-4171-acdb-c0200fc71ca4}=Meta+U,none,update
 {d0fc4a87-571d-4944-9ceb-87d0c833b70d}=Meta+X,none,tasks
 {d33a725d-deff-43df-a9c5-1a28edf1113f}=Print,none,maimwin prscr
-{da7f6bb9-0caa-493f-8397-a205eb1d5c5f}=Media Play,none,mpc toggle 2
 {e1957fad-5b65-4a37-89fc-fc3a8d41f5a0}=Meta+M,none,ncmpcpp
 {e3161821-2534-4ece-b465-000da75bc0b5}=Launch (1),none,qalc
 {e677a7e0-6613-4c60-b684-56df16400e33}=Meta+Shift+F4,none,reboot
 {ef5033fa-e676-4d3b-9a2b-b5c43894c7fb}=Meta+>,none,mpc seek +
-{f2b7cadb-e716-4aec-ab3d-8c2694fab554}=Media Pause,none,mpc toggle 3
 {f3ac6719-54ce-4e0d-9832-1f6d2579f371}=Meta+F11,none,maimclip mouse
 {fa64ef95-8541-49a2-9d1f-3183513e25ac}=Meta+B,none,bt connect
 {fe785ecd-6514-4573-80a7-934fbd4b91c0}=Meta+.,none,mpc next
@@ -147,18 +202,19 @@ Decrease Opacity=none,,Decrease Opacity of Active Window by 5 %
 Expose=Ctrl+F9,Ctrl+F9,Toggle Present Windows (Current desktop)
 ExposeAll=Ctrl+F10\tLaunch (C),Ctrl+F10\tLaunch (C),Toggle Present Windows (All desktops)
 ExposeClass=Ctrl+F7,Ctrl+F7,Toggle Present Windows (Window class)
+ExposeClassCurrentDesktop=none,none,Toggle Present Windows (Window class on current desktop)
 Increase Opacity=none,,Increase Opacity of Active Window by 5 %
 Invert Screen Colors=none,,Invert Screen Colours
 Kill Window=Ctrl+Alt+Esc,Meta+Ctrl+Esc,Kill Window
 MoveMouseToCenter=Meta+F6,Meta+F6,Move Mouse to Centre
 MoveMouseToFocus=Meta+F5,Meta+F5,Move Mouse to Focus
-MoveZoomDown=none,none,Move Zoomed Area Downwards
-MoveZoomLeft=none,none,Move Zoomed Area to Left
-MoveZoomRight=none,none,Move Zoomed Area to Right
-MoveZoomUp=none,none,Move Zoomed Area Upwards
-Overview=none,Meta+W,Toggle Overview
+MoveZoomDown=none,Meta+Ctrl+Down,Move Down
+MoveZoomLeft=none,Meta+Ctrl+Left,Move Left
+MoveZoomRight=none,Meta+Ctrl+Right,Move Right
+MoveZoomUp=none,Meta+Ctrl+Up,Move Up
+Overview=Ctrl+F12,Meta+W,Toggle Overview
 Setup Window Shortcut=none,,Setup Window Shortcut
-Show Desktop=Meta+D,Meta+D,Show Desktop
+Show Desktop=Meta+D,Meta+D,Peek at Desktop
 ShowDesktopGrid=Ctrl+F8,Meta+F8,Show Desktop Grid
 Suspend Compositing=Alt+Shift+F12,Alt+Shift+F12,Suspend Compositing
 Switch One Desktop Down=none,Meta+Ctrl+Down,Switch One Desktop Down
@@ -201,7 +257,7 @@ Switch to Screen 4=none,,Switch to Screen 4
 Switch to Screen 5=none,,Switch to Screen 5
 Switch to Screen 6=none,,Switch to Screen 6
 Switch to Screen 7=none,,Switch to Screen 7
-Toggle Night Color=none,none,Toggle Night Colour
+Toggle Night Color=Meta+Shift+R,none,Toggle Night Colour
 Toggle Window Raise/Lower=none,,Toggle Window Raise/Lower
 Walk Through Desktop List=none,,Walk Through Desktop List
 Walk Through Desktop List (Reverse)=none,,Walk Through Desktop List (Reverse)
@@ -276,8 +332,8 @@ Window to Next Desktop=none,,Window to Next Desktop
 Window to Next Screen=none,Meta+Shift+Right,Window to Next Screen
 Window to Previous Desktop=none,,Window to Previous Desktop
 Window to Previous Screen=none,Meta+Shift+Left,Window to Previous Screen
-Window to Screen 0=Alt+2\tMeta+2,,Window to Screen 0
-Window to Screen 1=Meta+1\tAlt+1,,Window to Screen 1
+Window to Screen 0=Meta+2,,Window to Screen 0
+Window to Screen 1=Meta+1,,Window to Screen 1
 Window to Screen 2=none,,Window to Screen 2
 Window to Screen 3=none,,Window to Screen 3
 Window to Screen 4=none,,Window to Screen 4
@@ -285,58 +341,32 @@ Window to Screen 5=none,,Window to Screen 5
 Window to Screen 6=none,,Window to Screen 6
 Window to Screen 7=none,,Window to Screen 7
 _k_friendly_name=KWin
-bismuth_decrease_master_size=none,none,Bismuth: Decrease Master Area Size
-bismuth_decrease_master_win_count=none,none,Bismuth: Decrease Master Area Window Count
-bismuth_decrease_window_height=none,none,Bismuth: Decrease Window Height
-bismuth_decrease_window_width=none,none,Bismuth: Decrease Window Width
-bismuth_focus_bottom_window=none,none,Bismuth: Focus Bottom Window
-bismuth_focus_left_window=none,none,Bismuth: Focus Left Window
-bismuth_focus_next_window=none,none,Bismuth: Focus Next Window
-bismuth_focus_prev_window=none,none,Bismuth: Focus Previous Window
-bismuth_focus_right_window=none,none,Bismuth: Focus Right Window
-bismuth_focus_upper_window=none,none,Bismuth: Focus Upper Window
-bismuth_increase_master_size=none,none,Bismuth: Increase Master Area Size
-bismuth_increase_master_win_count=none,none,Bismuth: Increase Master Area Window Count
-bismuth_increase_window_height=none,none,Bismuth: Increase Window Height
-bismuth_increase_window_width=none,none,Bismuth: Increase Window Width
-bismuth_move_window_to_bottom_pos=Meta+Shift+J,none,Bismuth: Move Window Down
-bismuth_move_window_to_left_pos=Meta+Shift+H,none,Bismuth: Move Window Left
-bismuth_move_window_to_next_pos=none,none,Bismuth: Move Window to the Next Position
-bismuth_move_window_to_prev_pos=none,none,Bismuth: Move Window to the Previous Position
-bismuth_move_window_to_right_pos=Meta+Shift+L,none,Bismuth: Move Window Right
-bismuth_move_window_to_upper_pos=Meta+Shift+K,none,Bismuth: Move Window Up
-bismuth_next_layout=Meta+\\\\,none,Bismuth: Switch to the Next Layout
-bismuth_prev_layout=Meta+|,none,Bismuth: Switch to the Previous Layout
-bismuth_push_window_to_master=none,none,Bismuth: Push Active Window to Master Area
-bismuth_rotate=none,none,Bismuth: Rotate
-bismuth_rotate_part=none,none,Bismuth: Rotate Part
-bismuth_rotate_reverse=none,none,Bismuth: Rotate (Reverse)
-bismuth_toggle_float_layout=none,none,Bismuth: Toggle Floating Layout
-bismuth_toggle_monocle_layout=none,none,Bismuth: Toggle Monocle Layout
-bismuth_toggle_quarter_layout=none,none,Bismuth: Toggle Quarter Layout
-bismuth_toggle_spread_layout=none,none,Bismuth: Toggle Spread Layout
-bismuth_toggle_stair_layout=none,none,Bismuth: Toggle Stair Layout
-bismuth_toggle_three_column_layout=none,none,Bismuth: Toggle Three Column Layout
-bismuth_toggle_tile_layout=none,none,Bismuth: Toggle Tile Layout
-bismuth_toggle_window_floating=Meta+S,none,Bismuth: Toggle Active Window Floating
-view_actual_size=none,Meta+0,Actual Size
+view_actual_size=none,Meta+0,Zoom to Actual Size
 view_zoom_in=none,Meta+=,Zoom In
 view_zoom_out=none,Meta+-,Zoom Out
 
 [mediacontrol]
 _k_friendly_name=Media Controller
-mediavolumedown=none,none,Media volume down
-mediavolumeup=none,none,Media volume up
-nextmedia=none,Media Next,Media playback next
-pausemedia=none,Media Pause,Pause media playback
-playmedia=none,none,Play media playback
-playpausemedia=none,Media Play,Play/Pause media playback
-previousmedia=none,Media Previous,Media playback previous
+mediavolumedown=none,,Media volume down
+mediavolumeup=none,,Media volume up
+nextmedia=Media Next,Media Next,Media playback next
+pausemedia=Media Pause,Media Pause,Pause media playback
+playmedia=none,,Play media playback
+playpausemedia=Media Play,Media Play,Play/Pause media playback
+previousmedia=Media Previous,Media Previous,Media playback previous
 stopmedia=Media Stop,Media Stop,Stop media playback
 
 [mymonero.desktop]
 _k_friendly_name=MyMonero
 _launch=none,none,Launch MyMonero
+
+[net.lutris.league-of-legends-1.desktop]
+_k_friendly_name=League of Legends
+_launch=none,none,Launch League of Legends
+
+[net.lutris.mobalytics-2.desktop]
+_k_friendly_name=mobalytics
+_launch=none,none,Launch mobalytics
 
 [org.kde.dolphin.desktop]
 _k_friendly_name=Dolphin
@@ -392,8 +422,10 @@ activate task manager entry 8=none,Meta+8,Activate Task Manager Entry 8
 activate task manager entry 9=none,Meta+9,Activate Task Manager Entry 9
 activate widget 10=none,none,Activate Audio Volume Widget
 activate widget 120=none,none,Activate Application Launcher Widget
-activate widget 14=Meta+Shift+R,none,Activate Night Colour Control Widget
+activate widget 14=none,none,Activate Night Colour Control Widget
 activate widget 168=none,none,Activate Icons-only Task Manager Widget
+activate widget 184=Alt+F1,none,Activate Application Launcher Widget
+activate widget 260=none,none,Activate Media Player Widget
 activate widget 3=none,none,Activate Application Launcher Widget
 activate widget 4=none,none,Activate Application Launcher Widget
 activate widget 53=none,none,Activate Icons-only Task Manager Widget
@@ -401,17 +433,17 @@ activate widget 63=none,none,Activate Application Launcher Widget
 activate widget 78=none,none,Activate Application Launcher Widget
 activate widget 99=none,none,Activate Application Launcher Widget
 clear-history=none,none,Clear Clipboard History
-clipboard_action=none,Ctrl+Alt+X,Enable Clipboard Actions
+clipboard_action=none,Meta+Ctrl+X,Automatic Action Popup Menu
 cycle-panels=Meta+Alt+P,Meta+Alt+P,Move keyboard focus between panels
 cycleNextAction=none,none,Next History Item
 cyclePrevAction=none,none,Previous History Item
-edit_clipboard=none,none,Edit Contents...
+edit_clipboard=none,none,Edit Contents…
 manage activities=none,Meta+Q,Show Activity Switcher
 next activity=none,Meta+Tab,Walk through activities
 previous activity=none,Meta+Shift+Tab,Walk through activities (Reverse)
-repeat_action=none,Ctrl+Alt+R,Manually Invoke Action on Current Clipboard
-show dashboard=Ctrl+F12,Ctrl+F12,Show Desktop
-show-barcode=none,none,Show Barcode...
+repeat_action=none,Meta+Ctrl+R,Manually Invoke Action on Current Clipboard
+show dashboard=none,Ctrl+F12,Show Desktop
+show-barcode=none,none,Show Barcode…
 show-on-mouse-pos=none,Meta+V,Open Klipper at Mouse Position
 stop current activity=none,Meta+S,Stop Current Activity
 switch to next activity=none,,Switch to Next Activity

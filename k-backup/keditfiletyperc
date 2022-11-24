@@ -1,4 +1,8 @@
 [KFileDialog Settings]
-Recent Files[$e]=electrum-4.0.3-x86_64.AppImage,file:$HOME/wallet/electrum-4.0.3-x86_64.AppImage
-Recent URLs[$e]=file:$HOME/wallet/
-detailViewIconSize=0
+Recent Files[$e]=electrum-4.0.3-x86_64.AppImage,file:$HOME/Games/league-of-legends/drive_c/Riot Games/League of Legends/Game/League of Legends.exe
+Recent URLs[$e]=file:$HOME/Games/league-of-legends/drive_c/Riot Games/League of Legends/Game/
+detailViewIconSize=16
+
+[Open-with settings]
+CompletionMode=1
+History='/home/repparw/Games/league-of-legends/drive_c/Riot Games/League of Legends/Game/League of Legends.exe'

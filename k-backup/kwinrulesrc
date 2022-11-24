@@ -2,14 +2,18 @@
 update_info=kwinrules.upd:replace-placement-string-to-enum,kwinrules.upd:use-virtual-desktop-ids
 
 [1]
-Description=Window settings for guiscrcpy
-clientmachinematch=0
-position=2005,914
-positionrule=3
-title=guiscrcpy
+Description=Window settings for scrcpy
+clientmachine=localhost
+fsplevel=3
+fullscreen=true
+noborderrule=2
+position=3489,68
+positionrule=2
+screen=1
+title=2201117TG
 titlematch=1
 types=1
-wmclass=guiscrcpy
+wmclass=scrcpy
 wmclassmatch=1
 
 [13]
@@ -28,7 +32,8 @@ types=1
 
 [2]
 Description=Application settings for mpv
-fsplevel=3
+above=true
+fsplevel=1
 fsplevelrule=2
 fullscreen=true
 fullscreenrule=3
@@ -36,6 +41,7 @@ position=0,0
 positionrule=3
 screen=1
 screenrule=3
+title=video0 - mpv
 wmclass=gl mpv
 wmclasscomplete=true
 wmclassmatch=1
@@ -47,6 +53,7 @@ aboverule=3
 clientmachinematch=0
 fsplevel=3
 fullscreen=true
+minsize=1,1
 position=0,0
 screen=1
 size=1920,1044
@@ -62,6 +69,7 @@ Description=Minimum size for windows
 above=true
 minsize=1,1
 minsizerule=2
+noborder=true
 title=video0 - mpv
 types=1
 
@@ -70,6 +78,7 @@ Description=No titlebars for all
 minsize=1,1
 noborder=true
 noborderrule=2
+title=video0 - mpv
 wmclass=.*
 wmclassmatch=3
 
@@ -123,6 +132,17 @@ Theme[$d]
 [KDE]
 ColorScheme[$d]
 widgetStyle[$d]
+
+[b6b9521f-a344-457e-a93e-57bab1b0a3ce]
+Description=Window settings for scrcpy
+clientmachine=localhost
+position=3486,88
+positionrule=3
+title=2201117TG
+titlematch=1
+types=1
+wmclass=scrcpy
+wmclassmatch=1
 
 [d45badfa-bdc4-4db4-875b-2befdc3f0fe0]
 Description=No titlebars for all

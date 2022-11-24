@@ -22,6 +22,9 @@ let mapleader="," " Leader key
 " ---------
 set number relativenumber
 
+set ignorecase
+set smartcase
+
 augroup Fedora
   autocmd!
   " RPM spec file template
@@ -42,7 +45,7 @@ Plug 'junegunn/fzf'
 Plug 'junegunn/fzf.vim'
 Plug 'sbdchd/neoformat'
 Plug 'vim-airline/vim-airline'
-" Autocomplete engine and python plugin
+" Autocomplete engine, tabnine and python plugin
 Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
 Plug 'zchee/deoplete-jedi'
 " Auto-pair for brackets and quotes
