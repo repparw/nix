@@ -1,5 +1,5 @@
 # Add local path
-PATH=/home/repparw/go/bin:/home/repparw/.local/bin:$PATH
+PATH=/home/repparw/.cargo/bin:/usr/local/cuda/bin:/home/repparw/go/bin:/home/repparw/.local/bin:$PATH
 
 	export HISTCONTROL=ignoreboth:erasedups
 ## Default editor to nvim
@@ -9,7 +9,7 @@ PATH=/home/repparw/go/bin:/home/repparw/.local/bin:$PATH
 ## fzf
 	export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
 
-	export FZF_DEFAULT_OPTS="--no-mouse --multi --select-1 --reverse --height 50% --inline-info"
+	export FZF_DEFAULT_OPTS="--no-mouse --multi --select-1 --reverse --height 50% --inline-info --scheme=history"
 
 	# Use fd (https://github.com/sharkdp/fd) instead of the default find
 	# command for listing path candidates.
@@ -110,11 +110,16 @@ ZSH_THEME="dstufft-time"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git dnf tmux zsh-vi-mode)
+plugins=(git dnf tmux zsh-vi-mode fzf)
 
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
+
+# autocompletion fixes
+
+_comps[rsync]=_cp
+
 
 # export MANPATH="/usr/local/man:$MANPATH"
 
@@ -143,6 +148,9 @@ if [ -f ~/.zsh_aliases ]; then
 	. ~/.zsh_aliases
 fi
 
+#if [ -f /usr/share/fzf/shell/key-bindings.zsh ]; then
+#	. /usr/share/fzf/shell/key-bindings.zsh
+#fi
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 ## History ignore dups
@@ -154,3 +162,5 @@ setopt HIST_IGNORE_SPACE
 setopt HIST_FIND_NO_DUPS
 setopt HIST_SAVE_NO_DUPS
 setopt HIST_BEEP
+export PATH=$PATH:/home/repparw/.spicetify
+alias ryujinx="__GL_THREADED_OPTIMIZATIONS=0 __GL_SYNC_TO_VBLANK=0 gamemoderun COMPlus_EnableAlternateStackCheck=1 GDK_BACKEND=x11 /home/repparw/.local/share/Ryujinx/Ryujinx"

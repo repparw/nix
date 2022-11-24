@@ -4,6 +4,9 @@ ShowBadges=false
 ShowInHistory=false
 ShowPopups=false
 
+[Applications][io.github.spacingbat3.webcord]
+Seen=true
+
 [Applications][org.telegram.desktop]
 Seen=true
 
@@ -13,8 +16,15 @@ Seen=true
 [Applications][telegramdesktop]
 Seen=true
 
+[Applications][webcord]
+Seen=true
+
 [Badges]
 InTaskManager=false
+
+[DoNotDisturb]
+NotificationSoundsMuted=true
+Until=2023,9,12,20,11,41.969
 
 [Jobs]
 PermanentPopups=false

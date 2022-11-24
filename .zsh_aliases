@@ -1,6 +1,6 @@
 ## Aliases
 	# Raspberry Pi
-		alias rpi='env TERM=xterm-256color ssh -p2222 pi@192.168.0.16'
+		alias rpi='env TERM=xterm-256color ssh -p2222 dietpi@192.168.0.4'
 	# fzf
 		alias f='fzf'
 
@@ -73,7 +73,10 @@
 
 		alias path='echo -e ${PATH//:/\\n}'
 
+
+	if [ "command -v dust" ]; then
 		alias du='dust'
+	fi
 
 		alias diff='colordiff' # Colorize output
 
@@ -109,11 +112,11 @@
 
 		alias wget='wget -c'
 
-	 #if [ "command -v btop" ]; then
-		alias top='btop'
-	 #else
-		#alias top='htop'
-	 #fi
+	 if [ "command -v btm" ]; then
+		alias top='btm --color gruvbox'
+	  elif [ "command -v htop" ]; then
+		alias top='htop'
+	 fi
 
 		alias q='exit'
 
@@ -136,21 +139,21 @@
 		alias ytf="env YTFZF_ENABLE_FZF_DEFAULT_OPTS=1 ytfzf"
 
 		alias ya='ytf -a'
-		alias ym='mpsyt'
+		alias ym='yt'
 
 		alias yh='ytf -H'
 
 		alias yda="yt-dlp -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
 
 	# temp alias
-		alias temp="watch -d -n 60 sensors -A"
-		alias gputemp="watch -n 60 nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader 39"
+		alias temp="watch -d -n 300 sensors -A"
+		alias gputemp="watch -n 300 'echo \"\$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader)°C\"'"
 
-	# GPU mining (mm.js gminer)
-		alias gpumine="cd ~/.mining/gminer && ./miner --algo kawpow --server gulf.moneroocean.stream:20128 --ssl 1 --user 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ --pass gpu~kawpow"
+	# GPU mining
+		alias gpumine='cd ~/.mining/gminer && ./miner --server gulf.moneroocean.stream:20128 --user 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ --pass gpu --algo kawpow --ssl 1'
 
 	# CPU Mining (xmrig)
-		alias cpumine="cd ~/.mining/xmrig && sudo ./xmrig -c config.json"
+	alias cpumine="cd ~/.mining/xmrig && sudo ./xmrig -c config.json"
 
 # notes with echo
 

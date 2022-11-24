@@ -1,5 +1,5 @@
 [General]
-SplitterSizes=807,1102
+SplitterSizes=805,1104
 
 [KFileDialog Settings]
 Recent Files[$e]=Electrum,file:$HOME/Games/tetrio/logo.png,file:$HOME/.Genymobile/Genymotion/genymotion/player
@@ -7,11 +7,16 @@ Recent URLs[$e]=file:$HOME/.AppImages/,file:$HOME/,file:$HOME/Documents/,file:$H
 detailViewIconSize=16
 
 [MainWindow]
-DP-0 HDMI-0 Height 1920x1080=1048
+DP-0 HDMI-0=DP-0
+DP-0 HDMI-0 Height 1920x1080=1080
+DP-0 HDMI-0 Height 1920x1080 DP-0=1080
 DP-0 HDMI-0 Width 1920x1080=1920
+DP-0 HDMI-0 Width 1920x1080 DP-0=1920
 DP-0 HDMI-0 Window-Maximized 1920x1080=true
-DP-0 HDMI-0 XPosition 1920x1080=2001
+DP-0 HDMI-0 XPosition 1920x1080=2000
+DP-0 HDMI-0 XPosition 1920x1080 DP-0=2000
 DP-0 HDMI-0 YPosition 1920x1080=0
+DP-0 HDMI-0 YPosition 1920x1080 DP-0=0
 DP-0 Height 1920x1080=1048
 DP-0 Width 1920x1080=1920
 DP-0 XPosition 1920x1080=0
@@ -22,5 +27,5 @@ DisplayPort-1 XPosition=360
 DisplayPort-1 XPosition 1920x1080=16
 DisplayPort-1 YPosition=349
 DisplayPort-1 YPosition 1920x1080=313
-State=AAAA/wAAAAD9AAAAAAAAB4AAAAPMAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
+State=AAAA/wAAAAD9AAAAAAAAB4AAAAPsAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
 ToolBarsMovable=Disabled
