@@ -3,7 +3,7 @@ DataCount=1
 
 [Data_1]
 Comment=should never see
-DataCount=20
+DataCount=22
 Enabled=true
 Name=should never see
 SystemGroup=2
@@ -16,7 +16,7 @@ ConditionsCount=0
 [Data_1_1]
 Comment=KMenuEdit Global Shortcuts
 DataCount=0
-Enabled=true
+Enabled=false
 Name=KMenuEdit
 SystemGroup=1
 Type=ACTION_DATA_GROUP
@@ -24,14 +24,14 @@ Type=ACTION_DATA_GROUP
 [Data_1_10]
 Comment=Comment
 Enabled=true
-Name=webcam
+Name=tasks
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_10Actions]
 ActionsCount=1
 
 [Data_1_10Actions0]
-CommandURL=/home/repparw/.config/scripts/webcam
+CommandURL=firefox https://use01.thegood.cloud/apps/tasks/#/collections/all
 Type=COMMAND_URL
 
 [Data_1_10Conditions]
@@ -43,21 +43,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_10Triggers0]
-Key=Meta++
+Key=Meta+X
 Type=SHORTCUT
-Uuid={6ab20914-1083-4563-ad46-6630030a6302}
+Uuid={d0fc4a87-571d-4944-9ceb-87d0c833b70d}
 
 [Data_1_11]
 Comment=Comment
 Enabled=true
-Name=tasks
+Name=mpv clipboard
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_11Actions]
 ActionsCount=1
 
 [Data_1_11Actions0]
-CommandURL=firefox https://use01.thegood.cloud/apps/tasks/#/collections/all
+CommandURL=tmux new-session -d -s mpv; tmux send-keys -t mpv "mpv --no-terminal $(xclip -sel clipboard -o) &" C-m; tmux send-keys -t mpv "clear" C-m
 Type=COMMAND_URL
 
 [Data_1_11Conditions]
@@ -69,21 +69,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_11Triggers0]
-Key=Meta+X
+Key=Meta+Z
 Type=SHORTCUT
-Uuid={d0fc4a87-571d-4944-9ceb-87d0c833b70d}
+Uuid={a78614b6-3b89-456f-9deb-1e48bf250fa0}
 
 [Data_1_12]
 Comment=Comment
 Enabled=true
-Name=mpv clipboard
+Name=gotop
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_12Actions]
 ActionsCount=1
 
 [Data_1_12Actions0]
-CommandURL=tmux new-session -d -s mpv; tmux send-keys -t mpv "mpv --no-terminal $(xclip -sel clipboard -o) &" C-m; tmux send-keys -t mpv "clear" C-m
+CommandURL=alacritty --command gotop
 Type=COMMAND_URL
 
 [Data_1_12Conditions]
@@ -95,21 +95,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_12Triggers0]
-Key=Meta+Z
+Key=Meta+T
 Type=SHORTCUT
-Uuid={a78614b6-3b89-456f-9deb-1e48bf250fa0}
+Uuid={a6387294-f354-4723-998c-fc8c6f9f26f0}
 
 [Data_1_13]
 Comment=Comment
 Enabled=true
-Name=htop
+Name=brownnoise
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_13Actions]
 ActionsCount=1
 
 [Data_1_13Actions0]
-CommandURL=alacritty -e btop
+CommandURL=/home/repparw/.config/scripts/brownnoise
 Type=COMMAND_URL
 
 [Data_1_13Conditions]
@@ -121,21 +121,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_13Triggers0]
-Key=Meta+T
+Key=Meta+O
 Type=SHORTCUT
-Uuid={a6387294-f354-4723-998c-fc8c6f9f26f0}
+Uuid={6de45335-a9a5-4cb7-92e8-630394e3ec16}
 
 [Data_1_14]
 Comment=Comment
 Enabled=true
-Name=brownnoise
+Name=qalc
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_14Actions]
 ActionsCount=1
 
 [Data_1_14Actions0]
-CommandURL=/home/repparw/.config/scripts/brownnoise
+CommandURL=alacritty -t qalc -e zsh -c 'source .zshrc && qalc'
 Type=COMMAND_URL
 
 [Data_1_14Conditions]
@@ -147,21 +147,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_14Triggers0]
-Key=Meta+O
+Key=Launch (1)
 Type=SHORTCUT
-Uuid={6de45335-a9a5-4cb7-92e8-630394e3ec16}
+Uuid={e3161821-2534-4ece-b465-000da75bc0b5}
 
 [Data_1_15]
 Comment=Comment
 Enabled=true
-Name=qalc
+Name=gpodder
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_15Actions]
 ActionsCount=1
 
 [Data_1_15Actions0]
-CommandURL=alacritty -t qalc -e zsh -c 'source .zshrc && qalc'
+CommandURL=gpodder
 Type=COMMAND_URL
 
 [Data_1_15Conditions]
@@ -173,21 +173,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_15Triggers0]
-Key=Launch (1)
+Key=Meta+G
 Type=SHORTCUT
-Uuid={e3161821-2534-4ece-b465-000da75bc0b5}
+Uuid={74790651-2d78-401b-baba-397b21c6c6a7}
 
 [Data_1_16]
 Comment=Comment
 Enabled=true
-Name=gpodder
+Name=chromium
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_16Actions]
 ActionsCount=1
 
 [Data_1_16Actions0]
-CommandURL=gpodder
+CommandURL=flatpak run com.github.Eloston.UngoogledChromium --password-store=basic
 Type=COMMAND_URL
 
 [Data_1_16Conditions]
@@ -199,21 +199,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_16Triggers0]
-Key=Meta+G
+Key=Meta+Shift+Space
 Type=SHORTCUT
-Uuid={74790651-2d78-401b-baba-397b21c6c6a7}
+Uuid={baf4ae5b-ebf9-48e1-9838-d70a173716e5}
 
 [Data_1_17]
 Comment=Comment
 Enabled=true
-Name=chromium
+Name=update
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_17Actions]
 ActionsCount=1
 
 [Data_1_17Actions0]
-CommandURL=flatpak run com.github.Eloston.UngoogledChromium --password-store=basic
+CommandURL=alacritty -t update -e /home/repparw/.config/scripts/update
 Type=COMMAND_URL
 
 [Data_1_17Conditions]
@@ -225,21 +225,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_17Triggers0]
-Key=Meta+Shift+Space
+Key=Meta+U
 Type=SHORTCUT
-Uuid={baf4ae5b-ebf9-48e1-9838-d70a173716e5}
+Uuid={c974294c-4459-4171-acdb-c0200fc71ca4}
 
 [Data_1_18]
 Comment=Comment
 Enabled=true
-Name=update
+Name=screens off
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_18Actions]
 ActionsCount=1
 
 [Data_1_18Actions0]
-CommandURL=alacritty -t update -e /home/repparw/.config/scripts/update
+CommandURL=sleep 2 && xset dpms force suspend
 Type=COMMAND_URL
 
 [Data_1_18Conditions]
@@ -251,21 +251,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_18Triggers0]
-Key=Meta+U
+Key=Ctrl+Alt+L
 Type=SHORTCUT
-Uuid={c974294c-4459-4171-acdb-c0200fc71ca4}
+Uuid={7d2cfdce-5cf6-4954-ac20-0cbce791fbbd}
 
 [Data_1_19]
 Comment=Comment
 Enabled=true
-Name=screens off
+Name=maimqr
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_19Actions]
 ActionsCount=1
 
 [Data_1_19Actions0]
-CommandURL=sleep 2 && xset dpms force suspend
+CommandURL=maim -qs | zbarimg -q --raw - | xclip -selection clipboard -f
 Type=COMMAND_URL
 
 [Data_1_19Conditions]
@@ -277,9 +277,9 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_19Triggers0]
-Key=
+Key=Meta+Shift+F11
 Type=SHORTCUT
-Uuid={7d2cfdce-5cf6-4954-ac20-0cbce791fbbd}
+Uuid={24b536a3-a4fc-43f8-94c0-30c44c4440d5}
 
 [Data_1_1Conditions]
 Comment=
@@ -294,14 +294,14 @@ Type=SIMPLE_ACTION_DATA
 [Data_1_20]
 Comment=Comment
 Enabled=true
-Name=maimqr
+Name=rpi tmux
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_20Actions]
 ActionsCount=1
 
 [Data_1_20Actions0]
-CommandURL=maim -qs | zbarimg -q --raw - | xclip -selection clipboard -f
+CommandURL=alacritty -t rpi -e zsh -ic rpi
 Type=COMMAND_URL
 
 [Data_1_20Conditions]
@@ -313,15 +313,67 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_20Triggers0]
-Key=Meta+Shift+F11
+Key=Meta+R
 Type=SHORTCUT
-Uuid={24b536a3-a4fc-43f8-94c0-30c44c4440d5}
+Uuid={a3f93496-a9ae-485b-ae68-c926db08bb2b}
+
+[Data_1_21]
+Comment=Comment
+Enabled=true
+Name=scrcpy
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_21Actions]
+ActionsCount=1
+
+[Data_1_21Actions0]
+CommandURL=scrcpy -e -S
+Type=COMMAND_URL
+
+[Data_1_21Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_21Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_1_21Triggers0]
+Key=Meta+N
+Type=SHORTCUT
+Uuid={01f565cc-766e-423b-85b5-d85d7dc70099}
+
+[Data_1_22]
+Comment=Comment
+Enabled=true
+Name=freetube
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_22Actions]
+ActionsCount=1
+
+[Data_1_22Actions0]
+CommandURL=flatpak run io.freetubeapp.FreeTube
+Type=COMMAND_URL
+
+[Data_1_22Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_22Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_1_22Triggers0]
+Key=Meta+Y
+Type=SHORTCUT
+Uuid={7995b6ff-0029-44ef-a5c1-efd54a9a7d77}
 
 [Data_1_2Actions]
 ActionsCount=1
 
 [Data_1_2Actions0]
-CommandURL=alacritty -t lf -e zsh -c 'source .zshrc && ~/.config/scripts/lfub'
+CommandURL=alacritty -e zsh -c 'source .zshrc && lf'
 Type=COMMAND_URL
 
 [Data_1_2Conditions]
@@ -339,7 +391,7 @@ Uuid={9005eee1-9daa-41a4-9d98-76ce0188d489}
 
 [Data_1_3]
 Comment=Media controls
-DataCount=13
+DataCount=9
 Enabled=true
 Name=Media
 SystemGroup=0
@@ -354,226 +406,6 @@ Comment=Music player in konsole
 Enabled=true
 Name=ncmpcpp
 Type=SIMPLE_ACTION_DATA
-
-[Data_1_3_10]
-Comment=Comment
-Enabled=true
-Name=bt connect
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_3_10Actions]
-ActionsCount=1
-
-[Data_1_3_10Actions0]
-CommandURL=bluetoothctl connect 00:1D:43:A0:14:D8
-Type=COMMAND_URL
-
-[Data_1_3_10Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_3_10Triggers]
-Comment=Simple_action
-TriggersCount=1
-
-[Data_1_3_10Triggers0]
-Key=Meta+B
-Type=SHORTCUT
-Uuid={fa64ef95-8541-49a2-9d1f-3183513e25ac}
-
-[Data_1_3_11]
-Comment=Comment
-Enabled=true
-Name=bt disconnect
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_3_11Actions]
-ActionsCount=1
-
-[Data_1_3_11Actions0]
-CommandURL=bluetoothctl disconnect 00:1D:43:A0:14:D8
-Type=COMMAND_URL
-
-[Data_1_3_11Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_3_11Triggers]
-Comment=Simple_action
-TriggersCount=1
-
-[Data_1_3_11Triggers0]
-Key=Meta+Shift+B
-Type=SHORTCUT
-Uuid={bcdb4344-b94b-43e6-a885-e7a9e54b3ef1}
-
-[Data_1_3_12]
-Comment=Comment
-DataCount=5
-Enabled=true
-Name=Thumb
-SystemGroup=0
-Type=ACTION_DATA_GROUP
-
-[Data_1_3_12Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_3_12_1]
-Comment=Comment
-Enabled=true
-Name=mpc prev
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_3_12_1Actions]
-ActionsCount=1
-
-[Data_1_3_12_1Actions0]
-CommandURL=mpc prev
-Type=COMMAND_URL
-
-[Data_1_3_12_1Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_3_12_1Triggers]
-Comment=Simple_action
-TriggersCount=1
-
-[Data_1_3_12_1Triggers0]
-Key=Meta+F7
-Type=SHORTCUT
-Uuid={aa7ff60c-270f-4c7d-a6c3-4cd0e4b95c66}
-
-[Data_1_3_12_2]
-Comment=Comment
-Enabled=true
-Name=mpc next
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_3_12_2Actions]
-ActionsCount=1
-
-[Data_1_3_12_2Actions0]
-CommandURL=mpc next
-Type=COMMAND_URL
-
-[Data_1_3_12_2Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_3_12_2Triggers]
-Comment=Simple_action
-TriggersCount=1
-
-[Data_1_3_12_2Triggers0]
-Key=Meta+F10
-Type=SHORTCUT
-Uuid={92c5aa35-801e-44ef-aa9d-9be29c56d010}
-
-[Data_1_3_12_3]
-Comment=Comment
-Enabled=true
-Name=mpc toggle
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_3_12_3Actions]
-ActionsCount=1
-
-[Data_1_3_12_3Actions0]
-CommandURL=mpc toggle
-Type=COMMAND_URL
-
-[Data_1_3_12_3Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_3_12_3Triggers]
-Comment=Simple_action
-TriggersCount=1
-
-[Data_1_3_12_3Triggers0]
-Key=Meta+F12
-Type=SHORTCUT
-Uuid={9792072a-5995-4d78-81f2-b68f19df6602}
-
-[Data_1_3_12_4]
-Comment=Comment
-Enabled=true
-Name=mpc seek +
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_3_12_4Actions]
-ActionsCount=1
-
-[Data_1_3_12_4Actions0]
-CommandURL=mpc seek +30
-Type=COMMAND_URL
-
-[Data_1_3_12_4Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_3_12_4Triggers]
-Comment=Simple_action
-TriggersCount=1
-
-[Data_1_3_12_4Triggers0]
-Key=Meta+Shift+F10
-Type=SHORTCUT
-Uuid={91c54b96-f63e-482f-8353-ff38903c0247}
-
-[Data_1_3_12_5]
-Comment=Comment
-Enabled=true
-Name=mpc seek -
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_3_12_5Actions]
-ActionsCount=1
-
-[Data_1_3_12_5Actions0]
-CommandURL=mpc seek -30
-Type=COMMAND_URL
-
-[Data_1_3_12_5Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_3_12_5Triggers]
-Comment=Simple_action
-TriggersCount=1
-
-[Data_1_3_12_5Triggers0]
-Key=Meta+Shift+F7
-Type=SHORTCUT
-Uuid={67791159-fdfb-4e31-8ebf-3508f6ba2101}
-
-[Data_1_3_13]
-Comment=Comment
-Enabled=true
-Name=mpc toggle 3
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_3_13Actions]
-ActionsCount=1
-
-[Data_1_3_13Actions0]
-CommandURL=mpc toggle
-Type=COMMAND_URL
-
-[Data_1_3_13Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_3_13Triggers]
-Comment=Simple_action
-TriggersCount=1
-
-[Data_1_3_13Triggers0]
-Key=Media Pause
-Type=SHORTCUT
-Uuid={f2b7cadb-e716-4aec-ab3d-8c2694fab554}
 
 [Data_1_3_1Actions]
 ActionsCount=1
@@ -624,14 +456,14 @@ Uuid={fe785ecd-6514-4573-80a7-934fbd4b91c0}
 [Data_1_3_3]
 Comment=Comment
 Enabled=true
-Name=mpc next 2
+Name=mpc seek +
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_3_3Actions]
 ActionsCount=1
 
 [Data_1_3_3Actions0]
-CommandURL=mpc next
+CommandURL=mpc seek +30
 Type=COMMAND_URL
 
 [Data_1_3_3Conditions]
@@ -643,21 +475,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_3_3Triggers0]
-Key=Media Next
+Key=Meta+>
 Type=SHORTCUT
-Uuid={89803954-3504-48c5-8728-c2268bd4bda5}
+Uuid={ef5033fa-e676-4d3b-9a2b-b5c43894c7fb}
 
 [Data_1_3_4]
 Comment=Comment
 Enabled=true
-Name=mpc seek +
+Name=mpc prev
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_3_4Actions]
 ActionsCount=1
 
 [Data_1_3_4Actions0]
-CommandURL=mpc seek +30
+CommandURL=mpc prev
 Type=COMMAND_URL
 
 [Data_1_3_4Conditions]
@@ -669,21 +501,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_3_4Triggers0]
-Key=Meta+>
+Key=Meta+,
 Type=SHORTCUT
-Uuid={ef5033fa-e676-4d3b-9a2b-b5c43894c7fb}
+Uuid={385c2e06-5a74-4a30-9260-ae31a2d7a145}
 
 [Data_1_3_5]
 Comment=Comment
 Enabled=true
-Name=mpc prev
+Name=mpc seek -
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_3_5Actions]
 ActionsCount=1
 
 [Data_1_3_5Actions0]
-CommandURL=mpc prev
+CommandURL=mpc seek -30
 Type=COMMAND_URL
 
 [Data_1_3_5Conditions]
@@ -695,21 +527,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_3_5Triggers0]
-Key=Meta+,
+Key=Meta+<
 Type=SHORTCUT
-Uuid={385c2e06-5a74-4a30-9260-ae31a2d7a145}
+Uuid={1782601a-16e1-4982-9ce7-68bb16aa8580}
 
 [Data_1_3_6]
 Comment=Comment
 Enabled=true
-Name=mpc prev 2
+Name=mpc toggle
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_3_6Actions]
 ActionsCount=1
 
 [Data_1_3_6Actions0]
-CommandURL=mpc prev
+CommandURL=mpc toggle
 Type=COMMAND_URL
 
 [Data_1_3_6Conditions]
@@ -721,21 +553,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_3_6Triggers0]
-Key=Media Previous
+Key=Meta+P
 Type=SHORTCUT
-Uuid={21430c12-3af4-4792-9725-a01a03fea6f1}
+Uuid={b34895ed-e92d-47da-b847-bb0a5e8b33af}
 
 [Data_1_3_7]
 Comment=Comment
 Enabled=true
-Name=mpc seek -
+Name=bt connect
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_3_7Actions]
 ActionsCount=1
 
 [Data_1_3_7Actions0]
-CommandURL=mpc seek -30
+CommandURL=bluetoothctl connect 00:1D:43:A0:14:D8
 Type=COMMAND_URL
 
 [Data_1_3_7Conditions]
@@ -747,21 +579,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_3_7Triggers0]
-Key=Meta+<
+Key=Meta+B
 Type=SHORTCUT
-Uuid={1782601a-16e1-4982-9ce7-68bb16aa8580}
+Uuid={fa64ef95-8541-49a2-9d1f-3183513e25ac}
 
 [Data_1_3_8]
 Comment=Comment
 Enabled=true
-Name=mpc toggle
+Name=bt disconnect
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_3_8Actions]
 ActionsCount=1
 
 [Data_1_3_8Actions0]
-CommandURL=mpc toggle
+CommandURL=bluetoothctl disconnect 00:1D:43:A0:14:D8
 Type=COMMAND_URL
 
 [Data_1_3_8Conditions]
@@ -773,35 +605,151 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_3_8Triggers0]
-Key=Meta+P
+Key=Meta+Shift+B
 Type=SHORTCUT
-Uuid={b34895ed-e92d-47da-b847-bb0a5e8b33af}
+Uuid={bcdb4344-b94b-43e6-a885-e7a9e54b3ef1}
 
 [Data_1_3_9]
 Comment=Comment
+DataCount=5
 Enabled=true
-Name=mpc toggle 2
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_3_9Actions]
-ActionsCount=1
-
-[Data_1_3_9Actions0]
-CommandURL=mpc toggle
-Type=COMMAND_URL
+Name=Thumb
+SystemGroup=0
+Type=ACTION_DATA_GROUP
 
 [Data_1_3_9Conditions]
 Comment=
 ConditionsCount=0
 
-[Data_1_3_9Triggers]
+[Data_1_3_9_1]
+Comment=Comment
+Enabled=true
+Name=mpc prev
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_3_9_1Actions]
+ActionsCount=1
+
+[Data_1_3_9_1Actions0]
+CommandURL=mpc prev
+Type=COMMAND_URL
+
+[Data_1_3_9_1Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_3_9_1Triggers]
 Comment=Simple_action
 TriggersCount=1
 
-[Data_1_3_9Triggers0]
-Key=Media Play
+[Data_1_3_9_1Triggers0]
+Key=Meta+F7
 Type=SHORTCUT
-Uuid={da7f6bb9-0caa-493f-8397-a205eb1d5c5f}
+Uuid={aa7ff60c-270f-4c7d-a6c3-4cd0e4b95c66}
+
+[Data_1_3_9_2]
+Comment=Comment
+Enabled=true
+Name=mpc next
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_3_9_2Actions]
+ActionsCount=1
+
+[Data_1_3_9_2Actions0]
+CommandURL=mpc next
+Type=COMMAND_URL
+
+[Data_1_3_9_2Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_3_9_2Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_1_3_9_2Triggers0]
+Key=Meta+F10
+Type=SHORTCUT
+Uuid={92c5aa35-801e-44ef-aa9d-9be29c56d010}
+
+[Data_1_3_9_3]
+Comment=Comment
+Enabled=true
+Name=mpc toggle
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_3_9_3Actions]
+ActionsCount=1
+
+[Data_1_3_9_3Actions0]
+CommandURL=mpc toggle
+Type=COMMAND_URL
+
+[Data_1_3_9_3Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_3_9_3Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_1_3_9_3Triggers0]
+Key=Meta+F12
+Type=SHORTCUT
+Uuid={9792072a-5995-4d78-81f2-b68f19df6602}
+
+[Data_1_3_9_4]
+Comment=Comment
+Enabled=true
+Name=mpc seek +
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_3_9_4Actions]
+ActionsCount=1
+
+[Data_1_3_9_4Actions0]
+CommandURL=mpc seek +30
+Type=COMMAND_URL
+
+[Data_1_3_9_4Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_3_9_4Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_1_3_9_4Triggers0]
+Key=Meta+Shift+F10
+Type=SHORTCUT
+Uuid={91c54b96-f63e-482f-8353-ff38903c0247}
+
+[Data_1_3_9_5]
+Comment=Comment
+Enabled=true
+Name=mpc seek -
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_3_9_5Actions]
+ActionsCount=1
+
+[Data_1_3_9_5Actions0]
+CommandURL=mpc seek -30
+Type=COMMAND_URL
+
+[Data_1_3_9_5Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_3_9_5Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_1_3_9_5Triggers0]
+Key=Meta+Shift+F7
+Type=SHORTCUT
+Uuid={67791159-fdfb-4e31-8ebf-3508f6ba2101}
 
 [Data_1_4]
 Comment=Opens Joplin in alacritty
@@ -857,105 +805,105 @@ Uuid={42a49e96-f3c8-45dd-9b16-d064d66e88b1}
 
 [Data_1_6]
 Comment=Comment
-Enabled=true
-Name=freetube
-Type=SIMPLE_ACTION_DATA
-
-[Data_1_6Actions]
-ActionsCount=1
-
-[Data_1_6Actions0]
-CommandURL=/home/repparw/.local/share/applications/io.freetubeapp.FreeTube.desktop
-Type=COMMAND_URL
-
-[Data_1_6Conditions]
-Comment=
-ConditionsCount=0
-
-[Data_1_6Triggers]
-Comment=Simple_action
-TriggersCount=1
-
-[Data_1_6Triggers0]
-Key=Meta+Y
-Type=SHORTCUT
-Uuid={2cb85601-01fb-48ba-9e0d-6465ff53d4fa}
-
-[Data_1_7]
-Comment=Comment
 DataCount=2
 Enabled=true
 Name=Sh/R
 SystemGroup=0
 Type=ACTION_DATA_GROUP
 
-[Data_1_7Conditions]
+[Data_1_6Conditions]
 Comment=
 ConditionsCount=0
 
-[Data_1_7_1]
+[Data_1_6_1]
 Comment=Comment
 Enabled=true
 Name=shutdown
 Type=SIMPLE_ACTION_DATA
 
-[Data_1_7_1Actions]
+[Data_1_6_1Actions]
 ActionsCount=1
 
-[Data_1_7_1Actions0]
+[Data_1_6_1Actions0]
 CommandURL=shutdown 0
 Type=COMMAND_URL
 
-[Data_1_7_1Conditions]
+[Data_1_6_1Conditions]
 Comment=
 ConditionsCount=0
 
-[Data_1_7_1Triggers]
+[Data_1_6_1Triggers]
 Comment=Simple_action
 TriggersCount=1
 
-[Data_1_7_1Triggers0]
+[Data_1_6_1Triggers0]
 Key=Meta+F4
 Type=SHORTCUT
 Uuid={269bd72c-00ab-4d46-8fa2-a1abec6f454a}
 
-[Data_1_7_2]
+[Data_1_6_2]
 Comment=Comment
 Enabled=true
 Name=reboot
 Type=SIMPLE_ACTION_DATA
 
-[Data_1_7_2Actions]
+[Data_1_6_2Actions]
 ActionsCount=1
 
-[Data_1_7_2Actions0]
+[Data_1_6_2Actions0]
 CommandURL=reboot
 Type=COMMAND_URL
 
-[Data_1_7_2Conditions]
+[Data_1_6_2Conditions]
 Comment=
 ConditionsCount=0
 
-[Data_1_7_2Triggers]
+[Data_1_6_2Triggers]
 Comment=Simple_action
 TriggersCount=1
 
-[Data_1_7_2Triggers0]
+[Data_1_6_2Triggers0]
 Key=Meta+Shift+F4
 Type=SHORTCUT
 Uuid={e677a7e0-6613-4c60-b684-56df16400e33}
 
-[Data_1_8]
+[Data_1_7]
 Comment=Comment
 Enabled=true
 Name=maimclip mouse
+Type=SIMPLE_ACTION_DATA
+
+[Data_1_7Actions]
+ActionsCount=1
+
+[Data_1_7Actions0]
+CommandURL=maimclip
+Type=COMMAND_URL
+
+[Data_1_7Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_1_7Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_1_7Triggers0]
+Key=Meta+F11
+Type=SHORTCUT
+Uuid={f3ac6719-54ce-4e0d-9832-1f6d2579f371}
+
+[Data_1_8]
+Comment=Comment
+Enabled=true
+Name=maimwin prscr
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_8Actions]
 ActionsCount=1
 
 [Data_1_8Actions0]
-CommandURL=maimclip
+CommandURL=maimwin
 Type=COMMAND_URL
 
 [Data_1_8Conditions]
@@ -967,21 +915,21 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_8Triggers0]
-Key=Meta+F11
+Key=Print
 Type=SHORTCUT
-Uuid={f3ac6719-54ce-4e0d-9832-1f6d2579f371}
+Uuid={d33a725d-deff-43df-a9c5-1a28edf1113f}
 
 [Data_1_9]
 Comment=Comment
 Enabled=true
-Name=maimwin prscr
+Name=webcam
 Type=SIMPLE_ACTION_DATA
 
 [Data_1_9Actions]
 ActionsCount=1
 
 [Data_1_9Actions0]
-CommandURL=maimwin
+CommandURL=/home/repparw/.config/scripts/webcam
 Type=COMMAND_URL
 
 [Data_1_9Conditions]
@@ -993,10 +941,10 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_1_9Triggers0]
-Key=Print
+Key=Meta++
 Type=SHORTCUT
-Uuid={d33a725d-deff-43df-a9c5-1a28edf1113f}
+Uuid={6ab20914-1083-4563-ad46-6630030a6302}
 
 [Main]
-AllowMerge=false
+AllowMerge=true
 Version=2
