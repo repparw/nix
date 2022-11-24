@@ -41,8 +41,11 @@ plugin=org.kde.plasma.digitalclock
 PreloadWeight=100
 
 [Containments][140][Applets][156][Configuration][Appearance]
+autoFontAndSize=false
 dateDisplayFormat=BesideTime
 firstDayOfWeek=0
+fontFamily=Noto Sans Mono
+fontSize=14
 
 [Containments][140][Applets][156][Configuration][ConfigDialog]
 DialogHeight=558
@@ -109,12 +112,14 @@ immutability=1
 plugin=org.kde.plasma.panelspacer
 
 [Containments][140][Applets][178][Configuration][General]
-expanding=false
 length=400
 
 [Containments][140][Applets][179]
 immutability=1
 plugin=org.kde.plasma.panelspacer
+
+[Containments][140][Applets][179][Configuration][General]
+length=330
 
 [Containments][140][Applets][230]
 immutability=1
@@ -129,7 +134,15 @@ immutability=1
 plugin=org.kde.plasma.compact-shutdown
 
 [Containments][140][Applets][249][Configuration]
-PreloadWeight=55
+PreloadWeight=75
+
+[Containments][140][Applets][249][Configuration][Apperance]
+showHibernate=false
+showSuspend=false
+
+[Containments][140][Applets][249][Configuration][ConfigDialog]
+DialogHeight=540
+DialogWidth=720
 
 [Containments][140][Applets][260]
 immutability=1
@@ -157,7 +170,7 @@ DialogWidth=1920
 PreloadWeight=42
 
 [Containments][140][General]
-AppletOrder=249;156;230;179;260;178;162;161;177
+AppletOrder=162;177;161;179;260;178;230;156;249
 
 [Containments][175]
 ItemGeometries-1024x768=
@@ -320,7 +333,6 @@ extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma
 hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.devicenotifier
 iconSpacing=1
 knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.battery,org.kde.plasma.vault,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout,org.kde.plasma.mediacontroller_plus
-scaleIconsToFit=true
 
 [Containments][262]
 ItemGeometries-1920x1080=
