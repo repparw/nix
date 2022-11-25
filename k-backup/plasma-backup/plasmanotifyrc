@@ -23,8 +23,7 @@ Seen=true
 InTaskManager=false
 
 [DoNotDisturb]
-NotificationSoundsMuted=true
-Until=2023,9,12,20,11,41.969
+Until=2023,11,24,22,29,7.662
 
 [Jobs]
 PermanentPopups=false
