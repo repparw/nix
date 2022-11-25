@@ -5,11 +5,6 @@ update_info=bismuth_shortcuts_category.upd:bismuth-shortcuts-category,bismuth_sh
 _k_friendly_name=Activity Manager
 switch-to-activity-c2f7948f-cf52-46ec-9b7e-c825ba193393=none,none,Switch to activity "Default"
 
-[Alacritty.desktop]
-New=none,none,New Terminal
-_k_friendly_name=Launch Alacritty
-_launch=Meta+Return,none,Launch Alacritty
-
 [KDE Keyboard Layout Switcher]
 Switch keyboard layout to English (US)=none,none,Switch keyboard layout to English (US)
 Switch keyboard layout to Español (latinoamericano)=none,none,Cambiar la distribución del teclado a Español (latinoamericano)
@@ -136,6 +131,7 @@ display=Display,Display\tMeta+P,Switch Display
 [khotkeys]
 _k_friendly_name=Custom Shortcuts Service
 {01f565cc-766e-423b-85b5-d85d7dc70099}=Meta+N,none,scrcpy
+{14f555ce-1676-435b-b3fc-83d6080d323c}=Meta+Return,none,term
 {1782601a-16e1-4982-9ce7-68bb16aa8580}=Meta+<,none,mpc seek -
 {24b536a3-a4fc-43f8-94c0-30c44c4440d5}=Meta+Shift+F11,none,maimqr
 {269bd72c-00ab-4d46-8fa2-a1abec6f454a}=Meta+F4,none,shutdown

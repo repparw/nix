@@ -30,7 +30,7 @@ PATH=/home/repparw/.cargo/bin:/usr/local/cuda/bin:/home/repparw/go/bin:/home/rep
 # lf with image previews and on-quit cd
 lf () {
 	LF_TEMPDIR="$(mktemp -d -t lf-tempdir-XXXXXX)"
-	LF_TEMPDIR="$LF_TEMPDIR" lf-run -last-dir-path="$LF_TEMPDIR/lastdir" "$@"
+	LF_TEMPDIR="$LF_TEMPDIR" /bin/lf -last-dir-path="$LF_TEMPDIR/lastdir" "$@"
 	if [ "$(cat "$LF_TEMPDIR/cdtolastdir" 2>/dev/null)" = "1" ]; then
 		cd "$(cat "$LF_TEMPDIR/lastdir")"
 	fi
@@ -162,5 +162,10 @@ setopt HIST_IGNORE_SPACE
 setopt HIST_FIND_NO_DUPS
 setopt HIST_SAVE_NO_DUPS
 setopt HIST_BEEP
-export PATH=$PATH:/home/repparw/.spicetify
-alias ryujinx="__GL_THREADED_OPTIMIZATIONS=0 __GL_SYNC_TO_VBLANK=0 gamemoderun COMPlus_EnableAlternateStackCheck=1 GDK_BACKEND=x11 /home/repparw/.local/share/Ryujinx/Ryujinx"
+
+# Blur {{{
+#if [[ $(ps --no-header -p $PPID -o comm) =~ '^kitty$' ]]; then
+#        for wid in $(xdotool search --pid $PPID); do
+#            xprop -f _KDE_NET_WM_BLUR_BEHIND_REGION 32c -set _KDE_NET_WM_BLUR_BEHIND_REGION 0 -id $wid; done
+#fi
+# }}}

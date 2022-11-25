@@ -22,8 +22,6 @@ set scrolloff 10
 
 set icons
 set period 1
-set cleaner lf-cleaner
-set previewer lf-previewer
 
 # execute current file (must be executable)
 map x $$f
@@ -112,3 +110,8 @@ cmd quitcd ${{
 	echo "1" > "$LF_TEMPDIR"/cdtolastdir
 	lf -remote "send $id quit"
 }}
+
+set cleaner ctpvclear
+set previewer ctpv
+&ctpv -s $id
+&ctpvquit $id
