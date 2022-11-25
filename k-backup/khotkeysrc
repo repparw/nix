@@ -136,7 +136,7 @@ ForegroundPositive[$d]
 ForegroundVisited[$d]
 
 [Data]
-DataCount=22
+DataCount=23
 
 [Data_1]
 Comment=KMenuEdit Global Shortcuts
@@ -411,7 +411,7 @@ Comment=
 ConditionsCount=0
 
 [Data_2]
-Comment=Opens lf in alacritty
+Comment=Opens lf in kitty\n
 Enabled=true
 Name=lf
 Type=SIMPLE_ACTION_DATA
@@ -426,7 +426,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_20Actions0]
-CommandURL=alacritty -t rpi -e zsh -ic rpi
+CommandURL=kitty -T rpi zsh -ic rpi
 Type=COMMAND_URL
 
 [Data_20Conditions]
@@ -494,11 +494,37 @@ Key=Meta+Y
 Type=SHORTCUT
 Uuid={7995b6ff-0029-44ef-a5c1-efd54a9a7d77}
 
+[Data_23]
+Comment=Comment
+Enabled=true
+Name=term
+Type=SIMPLE_ACTION_DATA
+
+[Data_23Actions]
+ActionsCount=1
+
+[Data_23Actions0]
+CommandURL=kitty
+Type=COMMAND_URL
+
+[Data_23Conditions]
+Comment=
+ConditionsCount=0
+
+[Data_23Triggers]
+Comment=Simple_action
+TriggersCount=1
+
+[Data_23Triggers0]
+Key=Meta+Return
+Type=SHORTCUT
+Uuid={14f555ce-1676-435b-b3fc-83d6080d323c}
+
 [Data_2Actions]
 ActionsCount=1
 
 [Data_2Actions0]
-CommandURL=alacritty -e zsh -c 'source .zshrc && lf'
+CommandURL=kitty zsh -c 'source .zshrc && lf'
 Type=COMMAND_URL
 
 [Data_2Conditions]
@@ -877,7 +903,7 @@ Type=SHORTCUT
 Uuid={67791159-fdfb-4e31-8ebf-3508f6ba2101}
 
 [Data_4]
-Comment=Opens Joplin in alacritty
+Comment=Opens Joplin in kitty
 Enabled=true
 Name=Joplin
 Type=SIMPLE_ACTION_DATA
@@ -886,7 +912,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_4Actions0]
-CommandURL=alacritty -t joplin -e zsh -c 'source .zshrc && joplin'
+CommandURL=kitty -T joplin zsh -c 'source .zshrc && joplin'
 Type=COMMAND_URL
 
 [Data_4Conditions]
