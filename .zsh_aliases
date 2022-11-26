@@ -147,10 +147,10 @@
 
 		alias yda="yt-dlp -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
 
-	# temp alias
-		alias temp="watch -d -n 300 sensors -A"
-		alias gputemp="watch -n 300 'echo \"\$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader)°C\"'"
+	# Temperature 
+	alias temp="watch -td -n 300 'echo -e \"\$(sensors -A nvme-pci-0400 k10temp-pci-00c3)
 
+GPU:          +\$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader).0°C\"'"
 	# GPU mining
 		alias gpumine='cd ~/.mining/gminer && ./miner --server gulf.moneroocean.stream:20128 --user 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ --pass gpu --algo kawpow --ssl 1'
 
