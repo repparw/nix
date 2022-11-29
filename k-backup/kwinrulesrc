@@ -30,6 +30,15 @@ minsize=1,1
 minsizerule=2
 types=1
 
+[1598d7d9-9756-499e-a3a3-bc096f8ecc33]
+Description=Application settings for firefox
+above=true
+aboverule=3
+clientmachine=localhost
+wmclass=toolkit firefox
+wmclasscomplete=true
+wmclassmatch=1
+
 [2]
 Description=Application settings for mpv
 above=true
@@ -117,11 +126,11 @@ wmclassmatch=1
 
 [General]
 ColorScheme[$d]
-count=5
+count=6
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5
+rules=1598d7d9-9756-499e-a3a3-bc096f8ecc33,1,2,3,4,5
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]

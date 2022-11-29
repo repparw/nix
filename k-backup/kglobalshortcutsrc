@@ -473,3 +473,7 @@ _launch=none,none,Launch vitetris
 [vnc.desktop]
 _k_friendly_name=VNC
 _launch=none,none,Launch VNC
+
+[webcord.desktop]
+_k_friendly_name=WebCord
+_launch=,none,Launch WebCord
