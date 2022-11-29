@@ -249,9 +249,6 @@ plugin=org.kde.plasma.volume
 [Containments][231][Applets][232][Configuration]
 PreloadWeight=100
 
-[Containments][231][Applets][232][Configuration][General]
-currentTab=streams
-
 [Containments][231][Applets][233][Configuration]
 PreloadWeight=42
 
@@ -308,7 +305,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][231][Applets][244][Configuration]
-PreloadWeight=100
+PreloadWeight=92
 
 [Containments][231][Applets][245]
 immutability=1
