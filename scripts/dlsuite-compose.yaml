@@ -1,0 +1,52 @@
+# symlink in /etc/docker/compose/dlsuite/docker-compose.yaml
+version: '3.3'
+services:
+    jackett:
+        container_name: jackett
+        environment:
+            - AUTO_UPDATE=true
+        ports:
+            - '9117:9117'
+        volumes:
+            - '/home/docker/jackett:/config:Z'
+        restart: unless-stopped
+        image: 'linuxserver/jackett:latest'
+    qbittorrent:
+        container_name: qbittorrent
+        volumes:
+            - '/home/docker/qbittorrent:/config:Z'
+            - '/home/docker/data/torrents:/data/torrents:z'
+        ports:
+            - '54536:54536'
+            - '8080:8080'
+        restart: always
+        image: linuxserver/qbittorrent
+    radarr:
+        container_name: radarr
+        volumes:
+            - '/home/docker/radarr:/config:Z'
+            - '/home/docker/data/:/data:z'
+        ports:
+            - '7878:7878'
+        links:
+            - jackett
+            - qbittorrent
+        restart: always
+        image: linuxserver/radarr
+    sonarr:
+        container_name: sonarr
+        volumes:
+            - '/dev/rtc:/dev/rtc:ro'
+            - '/home/docker/sonarr:/config:Z'
+            - '/home/docker/data:/data:z'
+        ports:
+            - '8989:8989'
+        links:
+            - jackett
+            - qbittorrent
+        restart: always
+        image: linuxserver/sonarr
+
+          #        environment:
+          #  - PUID=1000
+          #  - PGID=1000

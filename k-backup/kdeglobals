@@ -105,11 +105,11 @@ History Items[$e]=file:///run/media/repparw/seagate,file:///mnt,file:///mnt/seag
 
 [General]
 AccentColor=104,157,105
-BrowserApplication=userapp-Firefox-RJ7Z10.desktop
+BrowserApplication=firefox.desktop
 ColorSchemeHash=68f7da041112b660ac4e6911cf4bf8a7b361feda
 Name=Breeze Dark
-TerminalApplication=alacritty
-TerminalService=Alacritty.desktop
+TerminalApplication=kitty
+TerminalService=kitty.desktop
 XftHintStyle=hintfull
 XftSubPixel=rgb
 accentColorFromWallpaper=false
