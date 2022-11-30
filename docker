@@ -1,4 +1,0 @@
-docker run -d --name=jackett -e PUID=1000 -e PGID=963 -e AUTO_UPDATE=true `#optional` -p 9117:9117 -v /home/docker/jackett:/config:Z --restart unless-stopped linuxserver/jackett:latest
-docker run -d --name=qbittorrent --env=PUID=1000 --env=PGID=963 --volume=/home/docker/qbittorrent:/config:Z --volume=/home/docker/data/torrents:/data/torrents:z --volume=/config -p 54536:54536 -p 8080:8080 --restart=always linuxserver/qbittorrent
-docker run -d --name=radarr --env=PUID=1000 --env=PGID=963 --volume=/home/docker/radarr:/config:Z --volume=/home/docker/data/:/data:z --volume=/config -p 7878:7878 --link=jackett:jackett --link=qbittorrent:qbittorrent --restart=always linuxserver/radarr
-docker run -d --name=sonarr --env=PUID=1000 --env=PGID=963 --volume=/dev/rtc:/dev/rtc:ro --volume=/home/docker/sonarr:/config:Z --volume=/home/docker/data:/data:z --volume=/config -p 8989:8989 --link=jackett:jackett --link=qbittorrent:qbittorrent --restart=always linuxserver/sonarr
