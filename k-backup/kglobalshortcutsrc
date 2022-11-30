@@ -476,4 +476,4 @@ _launch=none,none,Launch VNC
 
 [webcord.desktop]
 _k_friendly_name=WebCord
-_launch=,none,Launch WebCord
+_launch=none,none,Launch WebCord
