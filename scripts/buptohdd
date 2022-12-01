@@ -1,3 +1,3 @@
 #!/bin/sh
-rsync -ahq ~/.config/ /run/media/repparw/HDD/backup/config/
-rsync -ahq ~/Pictures ~/Documents /run/media/repparw/HDD/backup/
+rsync -ahq --delete ~/.config/ /run/media/repparw/HDD/backup/config
+rsync -ahq --delete ~/Pictures ~/Documents /run/media/repparw/HDD/backup
