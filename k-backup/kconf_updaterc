@@ -21,26 +21,26 @@ done=bismuth-shortcuts-category
 mtime=1663952669
 
 [breezehighcontrasttobreezedark.upd]
-ctime=1669229928
-mtime=1667937844
+ctime=1669961653
+mtime=1669720742
 
 [breezetobreezeclassic.upd]
-ctime=1669229928
-mtime=1667937844
+ctime=1669961653
+mtime=1669720742
 
 [breezetobreezelight.upd]
-ctime=1669229928
-mtime=1667937844
+ctime=1669961653
+mtime=1669720742
 
 [delete_cursor_old_default_size.upd]
-ctime=1669229947
+ctime=1669961654
 done=DeleteCursorOldDefaultSize
-mtime=1667910204
+mtime=1669732352
 
 [disable_kmix.upd]
-ctime=1669229931
+ctime=1669961653
 done=PlasmaVolume_DisableKMixAutostart
-mtime=1667909803
+mtime=1669722168
 
 [dolphin_detailsmodesettings.upd]
 ctime=1669726916
@@ -53,29 +53,29 @@ done=filepicker-remove-old-previews-entry
 mtime=1667699878
 
 [fonts_akregator.upd]
-ctime=1669229947
+ctime=1669961656
 done=Plasma_Fonts_Akregator
-mtime=1667909763
+mtime=1669722046
 
 [fonts_global.upd]
-ctime=1669229947
+ctime=1669961656
 done=Fonts_Global
-mtime=1667909763
+mtime=1669722046
 
 [fonts_global_toolbar.upd]
-ctime=1669229947
+ctime=1669961656
 done=Fonts_Global_Toolbar
-mtime=1667909763
+mtime=1669722046
 
 [fonts_kate.upd]
-ctime=1669229947
+ctime=1669961656
 done=Plasma_Fonts_Kate
-mtime=1667909763
+mtime=1669722046
 
 [gtkconfig.upd]
-ctime=1669229957
+ctime=1669961657
 done=dont_use_gtk_css_for_window_decorations
-mtime=1667909190
+mtime=1669721028
 
 [gwenview.upd]
 ctime=1600289390
@@ -83,9 +83,9 @@ done=SideBar_StatusBar_Rename,ImageView_AlphaBackgroundMode_Update,DeleteThumbna
 mtime=1578318795
 
 [icons_remove_effects.upd]
-ctime=1669229947
+ctime=1669961654
 done=IconsRemoveEffects
-mtime=1667910204
+mtime=1669732352
 
 [importwizard.upd]
 ctime=1621628249
@@ -102,19 +102,19 @@ ctime=1600289415
 mtime=1580771831
 
 [kcm_rename_plasma_desktop.upd]
-ctime=1669229951
+ctime=1669961657
 done=5.24PlasmaDesktopKCMRename
-mtime=1667909670
+mtime=1669721861
 
 [kcminputrc_fix_botched_5_21_0.upd]
-ctime=1669229951
+ctime=1669961657
 done=kcminputrc_fix_botched_5_21_0_pre,kcminputrc_fix_botched_5_21_0
-mtime=1667909670
+mtime=1669721861
 
 [kcminputrc_repeat.upd]
-ctime=1669229951
+ctime=1669961657
 done=kcminputrc_migrate_key_repeat
-mtime=1667909670
+mtime=1669721861
 
 [kde4breeze.upd]
 ctime=1643891954
@@ -153,46 +153,46 @@ ctime=1625935772
 mtime=1615898414
 
 [krunnerglobalshortcuts2.upd]
-ctime=1669229944
-mtime=1667910204
+ctime=1669961653
+mtime=1669732352
 
 [krunnerhistory.upd]
-ctime=1669229944
-mtime=1667910204
+ctime=1669961653
+mtime=1669732352
 
 [krunnerplugins.upd]
 ctime=1610935274
 mtime=1609850579
 
 [kscreenlocker.upd]
-ctime=1669229923
+ctime=1669961651
 done=0.1-autolock
-mtime=1667909318
+mtime=1669721357
 
 [ksmserver_update_loginMode_value.upd]
-ctime=1669229951
+ctime=1669961657
 done=ksmserver_update_loginMode_value_default_enum
-mtime=1667909670
+mtime=1669721861
 
 [kwin.upd]
-ctime=1669229923
+ctime=1669961651
 done=replace-scalein-with-scale,port-minimizeanimation-effect-to-js,port-scale-effect-to-js,port-dimscreen-effect-to-js,auto-bordersize,animation-speed,desktop-grid-click-behavior,no-swap-encourage,make-translucency-effect-disabled-by-default,remove-flip-switch-effect,remove-cover-switch-effect,remove-cubeslide-effect,remove-xrender-backend,enable-scale-effect-by-default,overview-group-plugin-id,animation-speed-cleanup
-mtime=1667909343
+mtime=1669721494
 
 [kwinrules.upd]
-ctime=1669229923
+ctime=1669961651
 done=replace-placement-string-to-enum,use-virtual-desktop-ids
-mtime=1667909343
+mtime=1669721494
 
 [kxkb.upd]
-ctime=1669229951
+ctime=1669961657
 done=remove-empty-lists,add-back-resetoptions
-mtime=1667909670
+mtime=1669721861
 
 [kxkb_variants.upd]
-ctime=1669229951
+ctime=1669961657
 done=split-variants
-mtime=1667909670
+mtime=1669721861
 
 [languagetool_kmail.upd]
 ctime=1621628250
@@ -234,9 +234,9 @@ done=spectacle-migrate-shortcuts
 mtime=1620411729
 
 [style_widgetstyle_default_breeze.upd]
-ctime=1669229947
+ctime=1669961654
 done=StyleWidgetStyleDefaultBreeze
-mtime=1667910204
+mtime=1669732352
 
 [webengineurlinterceptoradblock.upd]
 ctime=1621628250
