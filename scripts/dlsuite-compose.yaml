@@ -5,6 +5,8 @@ services:
         container_name: jackett
         environment:
             - AUTO_UPDATE=true
+            - PUID=1001
+            - PGID=963
         ports:
             - '9117:9117'
         volumes:
@@ -13,6 +15,9 @@ services:
         image: 'linuxserver/jackett:latest'
     qbittorrent:
         container_name: qbittorrent
+        environment:
+            - PUID=1001
+            - PGID=963
         volumes:
             - '/home/docker/qbittorrent:/config:Z'
             - '/home/docker/data/torrents:/data/torrents:z'
@@ -23,6 +28,9 @@ services:
         image: linuxserver/qbittorrent
     radarr:
         container_name: radarr
+        environment:
+            - PUID=1001
+            - PGID=963
         volumes:
             - '/home/docker/radarr:/config:Z'
             - '/home/docker/data/:/data:z'
@@ -35,6 +43,9 @@ services:
         image: linuxserver/radarr
     sonarr:
         container_name: sonarr
+        environment:
+            - PUID=1001
+            - PGID=963
         volumes:
             - '/dev/rtc:/dev/rtc:ro'
             - '/home/docker/sonarr:/config:Z'
@@ -46,7 +57,3 @@ services:
             - qbittorrent
         restart: always
         image: linuxserver/sonarr
-
-          #        environment:
-          #  - PUID=1000
-          #  - PGID=1000
