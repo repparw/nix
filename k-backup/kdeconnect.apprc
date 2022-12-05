@@ -1,4 +1,4 @@
 [KFileDialog Settings]
-Recent Files[$e]=pocowp.jpg,file:$HOME/Downloads/pocowp.jpg
-Recent URLs[$e]=file:$HOME/Downloads/
+Recent Files[$e]=pocowp.jpg,file:$HOME/git/NewPipePlaylistExtractor/Script/Playlists/playlists.csv
+Recent URLs[$e]=file:$HOME/Downloads/,file:$HOME/git/NewPipePlaylistExtractor/Script/Playlists/
 detailViewIconSize=16
