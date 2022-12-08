@@ -238,8 +238,8 @@ immutability=1
 lastScreen=6
 location=4
 plugin=org.kde.plasma.private.systemtray
-popupHeight=432
-popupWidth=432
+popupHeight=640
+popupWidth=499
 wallpaperplugin=org.kde.image
 
 [Containments][231][Applets][232]
@@ -279,7 +279,7 @@ immutability=1
 plugin=org.kde.kdeconnect
 
 [Containments][231][Applets][238][Configuration]
-PreloadWeight=70
+PreloadWeight=75
 
 [Containments][231][Applets][239]
 immutability=1
@@ -305,7 +305,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][231][Applets][244][Configuration]
-PreloadWeight=92
+PreloadWeight=97
 
 [Containments][231][Applets][245]
 immutability=1
