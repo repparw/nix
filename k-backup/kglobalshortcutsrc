@@ -478,7 +478,7 @@ Servers=none,none,Servers
 Settings=none,none,Settings
 Store=none,none,Store
 _k_friendly_name=Steam bp
-_launch=,none,Launch Steam bp
+_launch=none,none,Launch Steam bp
 
 [steam.desktop]
 BigPicture=none,none,Big Picture
@@ -491,7 +491,7 @@ Servers=none,none,Servers
 Settings=none,none,Settings
 Store=none,none,Store
 _k_friendly_name=Steam
-_launch=,none,Launch Steam
+_launch=none,none,Launch Steam
 
 [systemsettings.desktop]
 _k_friendly_name=System Settings
