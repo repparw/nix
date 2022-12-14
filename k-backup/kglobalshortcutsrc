@@ -467,6 +467,32 @@ _launch=none,none,Launch Samsung Unified Driver Help
 _k_friendly_name=Uninstall Samsung Unified Driver
 _launch=none,none,Launch Uninstall Samsung Unified Driver
 
+[steam-2.desktop]
+BigPicture=none,none,Big Picture
+Community=none,none,Community
+Friends=none,none,Friends
+Library=none,none,Library
+News=none,none,News
+Screenshots=none,none,Screenshots
+Servers=none,none,Servers
+Settings=none,none,Settings
+Store=none,none,Store
+_k_friendly_name=Steam bp
+_launch=,none,Launch Steam bp
+
+[steam.desktop]
+BigPicture=none,none,Big Picture
+Community=none,none,Community
+Friends=none,none,Friends
+Library=none,none,Library
+News=none,none,News
+Screenshots=none,none,Screenshots
+Servers=none,none,Servers
+Settings=none,none,Settings
+Store=none,none,Store
+_k_friendly_name=Steam
+_launch=,none,Launch Steam
+
 [systemsettings.desktop]
 _k_friendly_name=System Settings
 _launch=Tools,Tools,System Settings
