@@ -26,7 +26,7 @@
 
 	# cd && ls	
 
-	if [ "command -v exa" ]; then
+	if command -v exa >/dev/null 2>&1; then
 		alias ls='exa' # Better df
 
 		alias ll='exa -lah'
@@ -76,7 +76,7 @@
 		alias path='echo -e ${PATH//:/\\n}'
 
 
-	if [ "command -v dust" ]; then
+	if command -v dust >/dev/null 2>&1; then
 		alias du='dust'
 	fi
 
@@ -98,11 +98,11 @@
 
 	# Others
 	
-	if [ "command -v duf" ]; then
+	if command -v duf >/dev/null 2>&1; then
 		alias df='duf' # Better df
 	fi
 
-	if [ "command -v bat" ]; then
+	if command -v bat >/dev/null 2>&1; then
 		alias cat='bat' # Better cat
 	fi
 	
@@ -114,9 +114,9 @@
 
 		alias wget='wget -c'
 
-	 if [ "command -v btm" ]; then
+	 if command -v btm >/dev/null 2>&1; then
 		alias top='btm --color gruvbox'
-	  elif [ "command -v htop" ]; then
+	  elif command -v htop >/dev/null 2>&1; then
 		alias top='htop'
 	 fi
 
@@ -148,9 +148,9 @@
 		alias yda="yt-dlp -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
 
 	# Temperature 
-	alias temp="watch -td -n 300 'echo -e \"\$(sensors -A nvme-pci-0400 k10temp-pci-00c3)
-
-GPU:          +\$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader).0°C\"'"
+	alias temp="watch -td -n 300 'echo -e \"\$(sensors -A nvme-pci-0400 k10temp-pci-00c3 amdgpu-pci-2d00)
+\"'"
+#GPU:          +\$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader).0°C
 	# GPU mining
 		alias gpumine='cd ~/.mining/gminer && ./miner --server gulf.moneroocean.stream:20128 --user 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ --pass gpu --algo kawpow --ssl 1'
 

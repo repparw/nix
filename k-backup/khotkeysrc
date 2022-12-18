@@ -443,7 +443,7 @@ Type=SHORTCUT
 Uuid={01f565cc-766e-423b-85b5-d85d7dc70099}
 
 [Data_21]
-Comment=Comment
+Comment=Launch piped on new firefox window, and moves it to second screen
 Enabled=true
 Name=freetube
 Type=SIMPLE_ACTION_DATA
@@ -452,7 +452,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_21Actions0]
-CommandURL=flatpak run io.freetubeapp.FreeTube
+CommandURL=firefox -new-window -kiosk piped.kavin.rocks && sleep 0.3 && qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Window to Screen 1"\s
 Type=COMMAND_URL
 
 [Data_21Conditions]
