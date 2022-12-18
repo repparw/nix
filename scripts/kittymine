@@ -1,2 +1,2 @@
 #!/bin/sh
-kitty -T mine mine-start
+kitty -T mine ~/.config/scripts/mine-start
