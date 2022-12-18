@@ -1,6 +1,18 @@
 [$Version]
 update_info=kwinrules.upd:replace-placement-string-to-enum,kwinrules.upd:use-virtual-desktop-ids
 
+[0e17d444-72a1-4429-825e-f9b9ac128ed9]
+Description=Window settings for firefox
+clientmachine=localhost
+fsplevelrule=2
+title=Feed - Piped — Mozilla Firefox
+types=1
+windowrole=browser
+windowrolematch=1
+wmclass=navigator firefox
+wmclasscomplete=true
+wmclassmatch=1
+
 [1]
 Description=Application settings for firefox
 clientmachine=localhost
@@ -148,11 +160,11 @@ wmclassmatch=1
 
 [General]
 ColorScheme[$d]
-count=6
+count=7
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6
+rules=0e17d444-72a1-4429-825e-f9b9ac128ed9,1,2,3,4,5,6
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]

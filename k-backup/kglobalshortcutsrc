@@ -382,6 +382,16 @@ _launch=none,Alt+Space\tAlt+F2\tSearch,KRunner
 _k_friendly_name=Emoji Selector
 _launch=none,Meta+.,Emoji Selector
 
+[org.kde.spectacle.desktop]
+ActiveWindowScreenShot=Meta+Print,Meta+Print,Capture Active Window
+CurrentMonitorScreenShot=none,none,Capture Current Monitor
+FullScreenScreenShot=Shift+Print,Shift+Print,Capture Entire Desktop
+OpenWithoutScreenshot=none,none,Launch without taking a screenshot
+RectangularRegionScreenShot=Meta+Shift+Print,Meta+Shift+Print,Capture Rectangular Region
+WindowUnderCursorScreenShot=Meta+Ctrl+Print,Meta+Ctrl+Print,Capture Window Under Cursor
+_k_friendly_name=Spectacle
+_launch=none,Print,Spectacle
+
 [org.qutebrowser.qutebrowser.desktop]
 _k_friendly_name=Launch qutebrowser
 _launch=none,none,Launch qutebrowser
