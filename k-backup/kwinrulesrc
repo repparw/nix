@@ -14,14 +14,15 @@ wmclasscomplete=true
 wmclassmatch=1
 
 [1]
-Description=Application settings for firefox
+Description=Window settings for firefox
 clientmachine=localhost
-fsplevel=3
+fsplevelrule=2
 fullscreen=true
-fullscreenrule=3
-title=2201117TG
+title=Feed - Piped — Mozilla Firefox
+types=1
 windowrole=browser
-wmclass=toolkit firefox
+windowrolematch=1
+wmclass=navigator firefox
 wmclasscomplete=true
 wmclassmatch=1
 
@@ -49,20 +50,18 @@ wmclasscomplete=true
 wmclassmatch=1
 
 [2]
-Description=Window settings for scrcpy
+Description=Application settings for firefox
 above=true
 clientmachine=localhost
 fsplevel=1
 fullscreen=true
-noborderrule=2
+fullscreenrule=3
 position=3489,68
-positionrule=2
 screen=1
 title=2201117TG
-titlematch=1
-types=1
 windowrole=browser
-wmclass=scrcpy
+wmclass=toolkit firefox
+wmclasscomplete=true
 wmclassmatch=1
 
 [28153bcb-e62e-4037-96c7-7ed9ced30c6f]
@@ -80,36 +79,51 @@ wmclasscomplete=true
 wmclassmatch=1
 
 [3]
-Description=Application settings for mpv
+Description=Window settings for scrcpy
 above=true
 clientmachine=localhost
 clientmachinematch=0
+fsplevel=1
+fullscreen=true
+minsize=1,1
+noborderrule=2
+position=3489,68
+positionrule=2
+screen=1
+size=1920,1044
+title=2201117TG
+titlematch=1
+types=1
+windowrole=browser
+wmclass=scrcpy
+wmclassmatch=1
+
+[4]
+Description=Application settings for mpv
+above=true
+clientmachine=localhost
 fsplevel=1
 fsplevelrule=2
 fullscreen=true
 fullscreenrule=3
 minsize=1,1
+noborder=true
 position=0,0
 positionrule=3
 screen=1
 screenrule=3
-size=1920,1044
 title=video0 - mpv
 wmclass=gl mpv
 wmclasscomplete=true
 wmclassmatch=1
 
-[4]
+[5]
 Description=webcam
 above=true
 aboverule=3
 clientmachine=localhost
-fsplevel=1
-fullscreen=true
 minsize=1,1
 noborder=true
-position=0,0
-screen=1
 title=video0 - mpv
 titlematch=1
 types=1
@@ -117,23 +131,13 @@ wmclass=gl mpv
 wmclasscomplete=true
 wmclassmatch=1
 
-[5]
+[6]
 Description=Minimum size for windows
-above=true
 minsize=1,1
 minsizerule=2
 noborder=true
 title=video0 - mpv
 types=1
-
-[6]
-Description=No titlebars for all
-minsize=1,1
-noborder=true
-noborderrule=2
-title=video0 - mpv
-wmclass=.*
-wmclassmatch=3
 
 [7]
 Description=No titlebars for all
@@ -164,7 +168,7 @@ count=7
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=0e17d444-72a1-4429-825e-f9b9ac128ed9,1,2,3,4,5,6
+rules=1,2,3,4,5,6,7
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
