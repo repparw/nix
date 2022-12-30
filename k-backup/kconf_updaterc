@@ -43,9 +43,9 @@ done=PlasmaVolume_DisableKMixAutostart
 mtime=1669722168
 
 [dolphin_detailsmodesettings.upd]
-ctime=1671334824
+ctime=1672418723
 done=rename-leading-padding
-mtime=1667162847
+mtime=1669864129
 
 [filepicker.upd]
 ctime=1671334819
@@ -78,9 +78,9 @@ done=dont_use_gtk_css_for_window_decorations
 mtime=1669721028
 
 [gwenview.upd]
-ctime=1671334823
+ctime=1672418702
 done=SideBar_StatusBar_Rename,ImageView_AlphaBackgroundMode_Update,DeleteThumbnailSetting_Rename
-mtime=1667163324
+mtime=1669864159
 
 [icons_remove_effects.upd]
 ctime=1671334827
@@ -98,8 +98,8 @@ done=kaddressbook-15.08-kickoff
 mtime=1611951964
 
 [kcalcrc.upd]
-ctime=1671334832
-mtime=1667163549
+ctime=1672418732
+mtime=1669766725
 
 [kcm_rename_plasma_desktop.upd]
 ctime=1671334826
@@ -135,8 +135,8 @@ done=kmail2
 mtime=1580772867
 
 [konsole_globalaccel.upd]
-ctime=1671334823
-mtime=1667162804
+ctime=1672418730
+mtime=1669796709
 
 [kontact.upd]
 ctime=1600635918
@@ -199,8 +199,8 @@ done=split-variants
 mtime=1669721861
 
 [languagetool_kmail.upd]
-ctime=1671334825
-mtime=1665723182
+ctime=1672418725
+mtime=1669691843
 
 [messageviewer.upd]
 ctime=1621628247
@@ -208,9 +208,9 @@ done=messageviewer_move_gravatar
 mtime=1611483591
 
 [okular.upd]
-ctime=1671334830
+ctime=1672418730
 done=annotation-toolbar,builtin-annotations
-mtime=1667163481
+mtime=1669766635
 
 [old_conf_ui.upd]
 ctime=1647737342
@@ -228,24 +228,24 @@ done=sieveeditor-15.08-kickoff
 mtime=1580772937
 
 [spectacle_clipboard.upd]
-ctime=1671334831
+ctime=1672418730
 done=clipboard-settings-change
-mtime=1667163452
+mtime=1669766601
 
 [spectacle_newConfig.upd]
-ctime=1671334831
+ctime=1672418730
 done=spectacle-new-config
-mtime=1667163452
+mtime=1669766601
 
 [spectacle_rememberregion.upd]
-ctime=1671334831
+ctime=1672418730
 done=spectacle-migrate-rememberregion
-mtime=1667163452
+mtime=1669766601
 
 [spectacle_shortcuts.upd]
-ctime=1671334831
+ctime=1672418730
 done=spectacle-migrate-shortcuts
-mtime=1667163452
+mtime=1669766601
 
 [style_widgetstyle_default_breeze.upd]
 ctime=1671334827
@@ -253,6 +253,6 @@ done=StyleWidgetStyleDefaultBreeze
 mtime=1669732352
 
 [webengineurlinterceptoradblock.upd]
-ctime=1671334825
+ctime=1672418725
 done=webengineurlinterceptoradblock_move_settings
-mtime=1665723182
+mtime=1669691843
