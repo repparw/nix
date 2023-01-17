@@ -136,12 +136,12 @@ display=Display,Display\tMeta+P,Switch Display
 
 [khotkeys]
 _k_friendly_name=Custom Shortcuts Service
-{01f565cc-766e-423b-85b5-d85d7dc70099}=Meta+N,none,scrcpy
+{01f565cc-766e-423b-85b5-d85d7dc70099}=Meta+Shift+S,none,scrcpy
 {14f555ce-1676-435b-b3fc-83d6080d323c}=Meta+Return,none,term
 {1782601a-16e1-4982-9ce7-68bb16aa8580}=Meta+<,none,mpc seek -
 {24b536a3-a4fc-43f8-94c0-30c44c4440d5}=Meta+Shift+F11,none,maimqr
 {269bd72c-00ab-4d46-8fa2-a1abec6f454a}=Meta+F4,none,shutdown
-{2f20a989-7528-4da7-bb2a-7f60f24e3f7e}=Meta+V,none,Joplin
+{2f20a989-7528-4da7-bb2a-7f60f24e3f7e}=Meta+N,none,Joplin
 {385c2e06-5a74-4a30-9260-ae31a2d7a145}=Meta+\\,,none,mpc prev
 {42a49e96-f3c8-45dd-9b16-d064d66e88b1}=Meta+A,none,Anki
 {67791159-fdfb-4e31-8ebf-3508f6ba2101}=Meta+Shift+F7,none,mpc seek -
@@ -372,6 +372,10 @@ _launch=none,none,Launch mobalytics
 [org.kde.dolphin.desktop]
 _k_friendly_name=Dolphin
 _launch=Meta+Shift+E,Meta+E,Dolphin
+
+[org.kde.kcalc.desktop]
+_k_friendly_name=KCalc
+_launch=none,Launch (1),KCalc
 
 [org.kde.krunner.desktop]
 RunClipboard=none,Alt+Shift+F2,Run command on clipboard contents

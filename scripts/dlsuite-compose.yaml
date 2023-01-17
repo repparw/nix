@@ -25,7 +25,7 @@ services:
             - '54536:54536'
             - '8080:8080'
         restart: always
-        image: linuxserver/qbittorrent
+        image: 'linuxserver/qbittorrent:latest'
     radarr:
         container_name: radarr
         environment:
@@ -40,7 +40,7 @@ services:
             - jackett
             - qbittorrent
         restart: always
-        image: linuxserver/radarr
+        image: 'linuxserver/radarr:latest'
     sonarr:
         container_name: sonarr
         environment:
@@ -56,4 +56,4 @@ services:
             - jackett
             - qbittorrent
         restart: always
-        image: linuxserver/sonarr
+        image: 'linuxserver/sonarr:latest'
