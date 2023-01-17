@@ -11,7 +11,8 @@ RepeatRate=35
 X11LibInputXAccelProfileFlat=false
 XLbInptAccelProfileFlat=false
 XLbInptPointerAcceleration=-0.4
-cursorTheme=Capitaine Cursors (Gruvbox)
+cursorSize=32
+cursorTheme=Capitaine Cursors (Gruvbox) - White
 
 [Tmp]
 update_info=delete_cursor_old_default_size.upd:DeleteCursorOldDefaultSize
