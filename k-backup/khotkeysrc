@@ -528,7 +528,7 @@ ConditionsCount=0
 
 [Data_3_1]
 Comment=Music player in konsole
-Enabled=true
+Enabled=false
 Name=ncmpcpp
 Type=SIMPLE_ACTION_DATA
 
@@ -554,7 +554,7 @@ Uuid={e1957fad-5b65-4a37-89fc-fc3a8d41f5a0}
 
 [Data_3_2]
 Comment=Comment
-Enabled=true
+Enabled=false
 Name=mpc next
 Type=SIMPLE_ACTION_DATA
 
@@ -580,7 +580,7 @@ Uuid={fe785ecd-6514-4573-80a7-934fbd4b91c0}
 
 [Data_3_3]
 Comment=Comment
-Enabled=true
+Enabled=false
 Name=mpc seek +
 Type=SIMPLE_ACTION_DATA
 
@@ -606,7 +606,7 @@ Uuid={ef5033fa-e676-4d3b-9a2b-b5c43894c7fb}
 
 [Data_3_4]
 Comment=Comment
-Enabled=true
+Enabled=false
 Name=mpc prev
 Type=SIMPLE_ACTION_DATA
 
@@ -632,7 +632,7 @@ Uuid={385c2e06-5a74-4a30-9260-ae31a2d7a145}
 
 [Data_3_5]
 Comment=Comment
-Enabled=true
+Enabled=false
 Name=mpc seek -
 Type=SIMPLE_ACTION_DATA
 
@@ -658,7 +658,7 @@ Uuid={1782601a-16e1-4982-9ce7-68bb16aa8580}
 
 [Data_3_6]
 Comment=Comment
-Enabled=true
+Enabled=false
 Name=mpc toggle
 Type=SIMPLE_ACTION_DATA
 
