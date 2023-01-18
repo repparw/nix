@@ -445,7 +445,7 @@ Uuid={01f565cc-766e-423b-85b5-d85d7dc70099}
 [Data_21]
 Comment=Launch piped on new firefox window, and moves it to second screen
 Enabled=true
-Name=freetube
+Name=yt
 Type=SIMPLE_ACTION_DATA
 
 [Data_21Actions]
