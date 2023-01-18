@@ -142,6 +142,7 @@ _k_friendly_name=Custom Shortcuts Service
 {24b536a3-a4fc-43f8-94c0-30c44c4440d5}=Meta+Shift+F11,none,maimqr
 {269bd72c-00ab-4d46-8fa2-a1abec6f454a}=Meta+F4,none,shutdown
 {2f20a989-7528-4da7-bb2a-7f60f24e3f7e}=Meta+N,none,Joplin
+{37a6155b-d4fc-448e-97ec-f77dbd4bf542}=,none,New Action
 {385c2e06-5a74-4a30-9260-ae31a2d7a145}=Meta+\\,,none,mpc prev
 {42a49e96-f3c8-45dd-9b16-d064d66e88b1}=Meta+A,none,Anki
 {67791159-fdfb-4e31-8ebf-3508f6ba2101}=Meta+Shift+F7,none,mpc seek -
@@ -424,7 +425,7 @@ _k_friendly_name=Path of Building
 _launch=none,none,Launch Path of Building
 
 [plasmashell]
-_k_friendly_name=Plasma
+_k_friendly_name=Activity switching
 activate task manager entry 1=none,Meta+1,Activate Task Manager Entry 1
 activate task manager entry 10=Meta+0,Meta+0,Activate Task Manager Entry 10
 activate task manager entry 2=none,Meta+2,Activate Task Manager Entry 2
