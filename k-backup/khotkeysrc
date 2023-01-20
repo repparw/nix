@@ -452,7 +452,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_21Actions0]
-CommandURL=firefox -new-window -kiosk piped.kavin.rocks && sleep 0.3 && qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Window to Screen 1"\s
+CommandURL=firefox -profile /home/repparw/.mozilla/firefox/b0ux3pq7.kiosk -kiosk piped.kavin.rocks && sleep 0.3 && qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Window to Screen 1"\s
 Type=COMMAND_URL
 
 [Data_21Conditions]
