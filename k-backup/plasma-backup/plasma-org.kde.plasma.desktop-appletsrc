@@ -157,6 +157,7 @@ PreloadWeight=100
 maximumWidthUnits=101
 minimumWidthUnits=24
 showAlbumArt=false
+showPlaybackControls=false
 showPrevNextControls=0
 showProgressBar=false
 
