@@ -2,8 +2,8 @@
 SplitterSizes=805,1104
 
 [KFileDialog Settings]
-Recent Files[$e]=Electrum,file:$HOME/Downloads/icon.svg,file:$HOME/Documents/deemix-gui.AppImage
-Recent URLs[$e]=file:$HOME/,file:$HOME/Documents/,file:$HOME/Downloads/
+Recent Files[$e]=Electrum,file:$HOME/.config/Ryujinx/games/Persona 5 Royal.nsp,file:$HOME/.config/Ryujinx/games/icon.png,file:$HOME/Documents/deemix-gui.AppImage
+Recent URLs[$e]=file:$HOME/,file:$HOME/Documents/,file:$HOME/Downloads/,file:$HOME/.config/Ryujinx/games/,file:$HOME/.config/Ryujinx/
 detailViewIconSize=16
 
 [MainWindow]
@@ -25,6 +25,7 @@ DP-0 YPosition 1920x1080=0
 DisplayPort-1 HDMI-A-0=DisplayPort-1
 DisplayPort-1 HDMI-A-0 Height 1920x1080 DisplayPort-1=1080
 DisplayPort-1 HDMI-A-0 Width 1920x1080 DisplayPort-1=1920
+DisplayPort-1 HDMI-A-0 Window-Maximized 1920x1080 DisplayPort-1=true
 DisplayPort-1 HDMI-A-0 XPosition 1920x1080 DisplayPort-1=2010
 DisplayPort-1 HDMI-A-0 YPosition 1920x1080 DisplayPort-1=0
 DisplayPort-1 HDMI-A-1 XPosition 1920x1080=2506
