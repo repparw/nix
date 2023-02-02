@@ -151,7 +151,7 @@ immutability=1
 plugin=org.kde.plasma.mediacontroller
 
 [Containments][140][Applets][270][Configuration]
-PreloadWeight=65
+PreloadWeight=70
 popupHeight=360
 popupWidth=360
 
