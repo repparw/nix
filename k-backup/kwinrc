@@ -6,7 +6,6 @@ Backend=OpenGL
 GLCore=true
 GLTextureFilter=1
 HiddenPreviews=5
-LatencyPolicy=Low
 OpenGLIsUnsafe=false
 WindowsBlockCompositing=false
 XRenderSmoothScale=false
