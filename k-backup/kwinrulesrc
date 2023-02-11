@@ -64,6 +64,17 @@ wmclass=toolkit firefox
 wmclasscomplete=true
 wmclassmatch=1
 
+[226737ec-ed2c-4b58-8d73-037e8902d0aa]
+Description=Window settings for kitty
+clientmachine=localhost
+screen=1
+screenrule=3
+title=mine
+titlematch=1
+types=1
+wmclass=kitty
+wmclassmatch=1
+
 [28153bcb-e62e-4037-96c7-7ed9ced30c6f]
 Description=Window settings for firefox
 above=true
@@ -158,11 +169,11 @@ wmclassmatch=1
 
 [General]
 ColorScheme[$d]
-count=7
+count=8
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6,7
+rules=226737ec-ed2c-4b58-8d73-037e8902d0aa,1,2,3,4,5,6,7
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]

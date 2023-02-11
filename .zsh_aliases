@@ -152,7 +152,7 @@
 \"'"
 #GPU:          +\$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader).0°C
 	# GPU mining
-		alias gpumine='cd ~/.mining/gminer && ./miner --server gulf.moneroocean.stream:20128 --user 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ --pass gpu --algo kawpow --ssl 1'
+#		alias gpumine='cd ~/.mining/gminer && ./miner --server gulf.moneroocean.stream:20128 --user 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ --pass gpu --algo kawpow --ssl 1'
 
 	# CPU Mining (xmrig)
 	alias cpumine="cd ~/.mining/xmrig && sudo ./xmrig -c config.json"
