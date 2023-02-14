@@ -504,7 +504,7 @@ Type=SIMPLE_ACTION_DATA
 ActionsCount=1
 
 [Data_23Actions0]
-CommandURL=firefox -profile /home/repparw/.mozilla/firefox/b0ux3pq7.kiosk -kiosk 127.0.0.1:8096 && sleep 0.3 && qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Window to Screen 1"\s
+CommandURL=firefox -profile /home/repparw/.mozilla/firefox/b0ux3pq7.kiosk -kiosk jellyfin.repparw.com.ar && sleep 0.3 && qdbus org.kde.kglobalaccel /component/kwin invokeShortcut "Window to Screen 1"\s
 Type=COMMAND_URL
 
 [Data_23Conditions]

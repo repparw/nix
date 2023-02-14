@@ -1,6 +1,25 @@
 # symlink in /etc/docker/compose/dlsuite/docker-compose.yaml
 version: '3.3'
 services:
+    swag:
+        image: 'linuxserver/swag:latest'
+        container_name: swag
+        cap_add:
+          - NET_ADMIN
+        environment:
+          - PUID=1001
+          - PGID=963
+          - TZ=America/Argentina/Buenos_Aires
+          - URL=repparw.com.ar
+          - SUBDOMAINS=wildcard
+          - VALIDATION=dns
+          - DNSPLUGIN=cloudflare 
+        volumes:
+          - '/home/docker/swag:/config:Z'
+        ports:
+          - 443:443
+          - 80:80 #optional
+        restart: unless-stopped
     jackett:
         container_name: jackett
         environment:
