@@ -2,7 +2,7 @@
 
 tmux new-session -d -s mine
 tmux select-window -t mine:0
-tmux send-keys '~/.config/scripts/tmux_watcher&!; temp' 'C-m'
+tmux send-keys 'temp' 'C-m'
 #tmux split-window -v
 #tmux send-keys 'chia start farmer && sleep 30s; watch -n 43200 chia farm summary' 'C-m'
 #tmux select-pane -t 0
