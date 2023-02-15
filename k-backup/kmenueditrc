@@ -1,5 +1,5 @@
 [General]
-SplitterSizes=400,548
+SplitterSizes=805,1104
 
 [KFileDialog Settings]
 Recent Files[$e]=Electrum,file:$HOME/.config/Ryujinx/games/Persona 5 Royal.nsp,file:$HOME/.config/Ryujinx/games/icon.png,file:$HOME/Documents/deemix-gui.AppImage
@@ -34,5 +34,5 @@ DisplayPort-1 XPosition=360
 DisplayPort-1 XPosition 1920x1080=16
 DisplayPort-1 YPosition=349
 DisplayPort-1 YPosition 1920x1080=313
-State=AAAA/wAAAAD9AAAAAAAAA78AAAPsAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
+State=AAAA/wAAAAD9AAAAAAAAB4AAAAPsAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
 ToolBarsMovable=Disabled
