@@ -5,25 +5,6 @@ networks:
         name: dlsuite
         external: true
 services:
-    swag:
-        image: 'linuxserver/swag:latest'
-        container_name: swag
-        cap_add:
-              - NET_ADMIN
-        environment:
-              - PUID=1001
-              - PGID=963
-              - TZ=America/Argentina/Buenos_Aires
-              - URL=repparw.com.ar
-              - SUBDOMAINS=wildcard
-              - VALIDATION=dns
-              - DNSPLUGIN=cloudflare 
-        volumes:
-              - '/home/docker/swag:/config:Z'
-        ports:
-              - 443:443
-              - 80:80 #optional
-        restart: unless-stopped
     prowlarr:
         image: 'linuxserver/prowlarr:latest'
         container_name: prowlarr
@@ -49,21 +30,6 @@ services:
             - '8080:8080'
         restart: unless-stopped
         image: 'linuxserver/qbittorrent:latest'
-    radarr:
-        container_name: radarr
-        environment:
-            - PUID=1001
-            - PGID=963
-            - TZ=America/Argentina/Buenos_Aires
-        volumes:
-            - '/home/docker/radarr:/config:Z'
-            - '/home/docker/data/:/data:z'
-        ports:
-            - '7878:7878'
-        links:
-            - qbittorrent
-        restart: unless-stopped
-        image: 'linuxserver/radarr:latest'
     sonarr:
         container_name: sonarr
         environment:
@@ -80,6 +46,21 @@ services:
             - qbittorrent
         restart: unless-stopped
         image: 'linuxserver/sonarr:latest'
+    radarr:
+        container_name: radarr
+        environment:
+            - PUID=1001
+            - PGID=963
+            - TZ=America/Argentina/Buenos_Aires
+        volumes:
+            - '/home/docker/radarr:/config:Z'
+            - '/home/docker/data/:/data:z'
+        ports:
+            - '7878:7878'
+        links:
+            - qbittorrent
+        restart: unless-stopped
+        image: 'linuxserver/radarr:latest'
     bazarr:
         image: 'linuxserver/bazarr:latest'
         container_name: bazarr
@@ -93,4 +74,23 @@ services:
           - '/home/docker/data/media/movies:/movies:z'
         ports:
           - '6767:6767'
+        restart: unless-stopped
+    swag:
+        image: 'linuxserver/swag:latest'
+        container_name: swag
+        cap_add:
+              - NET_ADMIN
+        environment:
+              - PUID=1001
+              - PGID=963
+              - TZ=America/Argentina/Buenos_Aires
+              - URL=repparw.com.ar
+              - SUBDOMAINS=wildcard
+              - VALIDATION=dns
+              - DNSPLUGIN=cloudflare 
+        volumes:
+              - '/home/docker/swag:/config:Z'
+        ports:
+              - 443:443
+              - 80:80 #optional
         restart: unless-stopped
