@@ -135,6 +135,15 @@ ShowDesktopMode=0
 ShowTabBox=true
 SwitchingMode=0
 
+[Tiling]
+padding=4
+
+[Tiling][0e4ae190-3cf8-51bb-928e-b5e73df5ef03]
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
+
+[Tiling][3abc82c6-edfd-5bf6-9c66-35fc0f511408]
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
+
 [Windows]
 ActiveMouseScreen=false
 AutoRaise=false
