@@ -28,7 +28,7 @@ RightButton;NoModifier=org.kde.contextmenu
 activityId=
 formfactor=2
 immutability=1
-lastScreen=8
+lastScreen=1
 location=4
 plugin=org.kde.panel
 wallpaperplugin=org.kde.image
@@ -173,7 +173,7 @@ AppletOrder=162;177;161;179;272;178;230;156;249
 activityId=
 formfactor=2
 immutability=1
-lastScreen=8
+lastScreen=1
 location=4
 plugin=org.kde.plasma.private.systemtray
 popupHeight=640
@@ -189,6 +189,7 @@ PreloadWeight=100
 
 [Containments][231][Applets][232][Configuration][General]
 currentTab=streams
+migrated=true
 
 [Containments][231][Applets][233][Configuration]
 PreloadWeight=42
@@ -270,15 +271,19 @@ PreloadWeight=42
 [Containments][231][Applets][271][Configuration]
 PreloadWeight=42
 
+[Containments][231][Applets][273]
+immutability=1
+plugin=org.kde.kscreen
+
 [Containments][231][ConfigDialog]
 DialogHeight=600
 DialogWidth=800
 
 [Containments][231][General]
-extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.vault
-hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.devicenotifier
+extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.vault,org.kde.kscreen
+hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.bluetooth,org.kde.plasma.devicenotifier
 iconSpacing=1
-knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.battery,org.kde.plasma.vault,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout
+knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.battery,org.kde.plasma.vault,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout,org.kde.kscreen
 
 [Containments][263]
 ItemGeometries-1920x1080=
@@ -309,7 +314,7 @@ ItemGeometriesHorizontal=Applet-265:816,112,256,240,0;
 activityId=c2f7948f-cf52-46ec-9b7e-c825ba193393
 formfactor=0
 immutability=1
-lastScreen=8
+lastScreen=1
 location=0
 plugin=org.kde.plasma.folder
 wallpaperplugin=org.kde.image
