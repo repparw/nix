@@ -78,5 +78,19 @@ services:
             - '8989:8989'
         links:
             - qbittorrent
-        restart: always
+        restart: unless-stopped
         image: 'linuxserver/sonarr:latest'
+    bazarr:
+        image: 'linuxserver/bazarr:latest'
+        container_name: bazarr
+        environment:
+          - PUID=1001
+          - PGID=963
+          - TZ=America/Argentina/Buenos_Aires
+        volumes:
+          - '/home/docker/bazarr:/config:Z'
+          - '/home/docker/data/media/tv:/tv:z'
+          - '/home/docker/data/media/movies:/movies:z'
+        ports:
+          - '6767:6767'
+        restart: unless-stopped
