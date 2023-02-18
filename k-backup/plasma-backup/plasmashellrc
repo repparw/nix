@@ -46,9 +46,6 @@ PreloadWeight=34
 [PlasmaViews][Panel 119][Defaults]
 thickness=44
 
-[PlasmaViews][Panel 119][Horizontal1920]
-thickness=44
-
 [PlasmaViews][Panel 140]
 alignment=132
 floating=0
@@ -58,22 +55,10 @@ panelVisibility=0
 [PlasmaViews][Panel 140][Defaults]
 thickness=38
 
-[PlasmaViews][Panel 140][Horizontal1920]
-thickness=38
-
-[PlasmaViews][Panel 140][Vertical1080]
-thickness=44
-
 [PlasmaViews][Panel 183][Defaults]
 thickness=50
 
-[PlasmaViews][Panel 183][Horizontal1920]
-thickness=50
-
 [PlasmaViews][Panel 2][Defaults]
-thickness=30
-
-[PlasmaViews][Panel 2][Horizontal1920]
 thickness=30
 
 [PlasmaViews][Panel 206]
@@ -89,12 +74,8 @@ thickness=34
 [PlasmaViews][Panel 206][Vertical1080]
 maxLength=1080
 minLength=1045
-thickness=34
 
 [PlasmaViews][Panel 25][Defaults]
-thickness=36
-
-[PlasmaViews][Panel 25][Horizontal1920]
 thickness=36
 
 [PlasmaViews][Panel 263]
@@ -103,29 +84,14 @@ floating=1
 [PlasmaViews][Panel 263][Defaults]
 thickness=30
 
-[PlasmaViews][Panel 263][Horizontal1920]
-thickness=30
-
 [PlasmaViews][Panel 27][Defaults]
-thickness=27
-
-[PlasmaViews][Panel 27][Horizontal1920]
 thickness=27
 
 [PlasmaViews][Panel 28][Defaults]
 thickness=36
 
-[PlasmaViews][Panel 28][Horizontal1920]
-thickness=36
-
 [PlasmaViews][Panel 29][Defaults]
 thickness=30
-
-[PlasmaViews][Panel 29][Horizontal1920]
-thickness=30
-
-[PlasmaViews][Panel 29][Vertical1080]
-thickness=44
 
 [PlasmaViews][Panel 3]
 alignment=132
@@ -134,64 +100,28 @@ panelVisibility=0
 [PlasmaViews][Panel 3][Defaults]
 thickness=32
 
-[PlasmaViews][Panel 3][Horizontal1024]
-thickness=32
-
-[PlasmaViews][Panel 3][Horizontal1920]
-thickness=32
-
 [PlasmaViews][Panel 47][Defaults]
-thickness=36
-
-[PlasmaViews][Panel 47][Vertical1080]
 thickness=36
 
 [PlasmaViews][Panel 51][Defaults]
 thickness=27
 
-[PlasmaViews][Panel 51][Horizontal1920]
-thickness=27
-
 [PlasmaViews][Panel 53][Defaults]
-thickness=34
-
-[PlasmaViews][Panel 53][Horizontal1920]
 thickness=34
 
 [PlasmaViews][Panel 62][Defaults]
 thickness=44
 
-[PlasmaViews][Panel 62][Horizontal1920]
-thickness=44
-
-[PlasmaViews][Panel 62][Vertical1080]
-thickness=46
-
 [PlasmaViews][Panel 76][Defaults]
-thickness=36
-
-[PlasmaViews][Panel 76][Horizontal1920]
 thickness=36
 
 [PlasmaViews][Panel 77][Defaults]
 thickness=44
 
-[PlasmaViews][Panel 77][Horizontal1920]
-thickness=44
-
 [PlasmaViews][Panel 83][Defaults]
 thickness=36
 
-[PlasmaViews][Panel 83][Horizontal1920]
-thickness=36
-
-[PlasmaViews][Panel 83][Vertical1080]
-thickness=36
-
 [PlasmaViews][Panel 98][Defaults]
-thickness=44
-
-[PlasmaViews][Panel 98][Vertical1080]
 thickness=44
 
 [ScreenConnectors]
