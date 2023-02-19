@@ -247,7 +247,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][231][Applets][244][Configuration]
-PreloadWeight=99
+PreloadWeight=92
 
 [Containments][231][Applets][245]
 immutability=1
@@ -309,6 +309,7 @@ Image=/home/repparw/Pictures/wallpapersden.com_linux-retro_1920x1080.jpg
 SlidePaths=/home/repparw/.local/share/wallpapers/,/usr/share/wallpapers/
 
 [Containments][264]
+ItemGeometries-0x0=Applet-265:816,112,256,240,0;
 ItemGeometries-1920x1080=Applet-265:816,112,256,240,0;
 ItemGeometriesHorizontal=Applet-265:816,112,256,240,0;
 activityId=c2f7948f-cf52-46ec-9b7e-c825ba193393
