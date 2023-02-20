@@ -3,8 +3,8 @@ immutability=1
 plugin=org.kde.plasma.colorpicker
 
 [Applets][3][Configuration]
-PreloadWeight=42
+PreloadWeight=34
 geometry=880,441,160,160
 
 [Applets][3][Configuration][General]
-history=#6aaeed,#3771bc,#6aacea,#e66001,#04a3db,#a95cc3,#ffc230,#00ccff
+history=#ed2224,#6aaeed,#3771bc,#6aacea,#e66001,#04a3db,#a95cc3,#ffc230,#00ccff
