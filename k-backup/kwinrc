@@ -136,13 +136,16 @@ ShowTabBox=true
 SwitchingMode=0
 
 [Tiling]
-padding=2
+padding=4
 
 [Tiling][0e4ae190-3cf8-51bb-928e-b5e73df5ef03]
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.2510416666666647},{"width":0.49895833333332906}]}
 
 [Tiling][3abc82c6-edfd-5bf6-9c66-35fc0f511408]
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.505208333333333},{"layoutDirection":"floating","tiles":[{"height":0.4814814814814822,"width":0.4338541666666529,"x":0.5052083333333395,"y":0}],"width":0.49479166666666696}]}
+
+[Tiling][d63db7c0-d7f5-551b-8eab-144277bb4d41]
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
 
 [Windows]
 ActiveMouseScreen=false
