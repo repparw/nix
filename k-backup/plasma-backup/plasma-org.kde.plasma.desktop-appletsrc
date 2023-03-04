@@ -167,7 +167,7 @@ DialogWidth=1920
 PreloadWeight=42
 
 [Containments][140][General]
-AppletOrder=162;177;161;179;272;178;230;156;249;
+AppletOrder=162;177;161;179;272;178;230;156;249
 
 [Containments][231]
 activityId=
