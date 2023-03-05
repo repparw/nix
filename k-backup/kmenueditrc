@@ -2,8 +2,8 @@
 SplitterSizes=805,1104
 
 [KFileDialog Settings]
-Recent Files[$e]=Electrum,file:$HOME/.config/Ryujinx/games/Persona 5 Royal.nsp,file:$HOME/.config/Ryujinx/games/icon.png,file:$HOME/Documents/deemix-gui.AppImage
-Recent URLs[$e]=file:$HOME/,file:$HOME/Documents/,file:$HOME/Downloads/,file:$HOME/.config/Ryujinx/games/,file:$HOME/.config/Ryujinx/
+Recent Files[$e]=Electrum,file:///usr/share/icons/socials.png,file:///bin/firefox,file:$HOME/.config/Ryujinx/games/icon.png
+Recent URLs[$e]=file:$HOME/,file:$HOME/Documents/,file:$HOME/Downloads/,file:$HOME/.config/Ryujinx/games/,file:$HOME/.config/Ryujinx/,file:///bin/,file:///usr/share/icons/
 detailViewIconSize=16
 
 [MainWindow]
