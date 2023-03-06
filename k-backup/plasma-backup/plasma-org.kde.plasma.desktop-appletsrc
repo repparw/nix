@@ -40,7 +40,7 @@ plugin=org.kde.plasma.digitalclock
 [Containments][140][Applets][156][Configuration]
 PreloadWeight=100
 popupHeight=450
-popupWidth=396
+popupWidth=350
 
 [Containments][140][Applets][156][Configuration][Appearance]
 autoFontAndSize=false
@@ -152,7 +152,7 @@ plugin=org.kde.plasma.mediacontroller
 
 [Containments][140][Applets][272][Configuration]
 PreloadWeight=100
-popupHeight=359
+popupHeight=360
 popupWidth=360
 
 [Containments][140][Applets][272][Configuration][ConfigDialog]
@@ -281,12 +281,19 @@ plugin=org.kde.kscreen
 [Containments][231][Applets][273][Configuration]
 PreloadWeight=55
 
+[Containments][231][Applets][274]
+immutability=1
+plugin=org.kde.plasma.clipboard
+
+[Containments][231][Applets][274][Configuration]
+PreloadWeight=55
+
 [Containments][231][ConfigDialog]
 DialogHeight=600
 DialogWidth=800
 
 [Containments][231][General]
-extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.vault,org.kde.kscreen
+extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.vault,org.kde.kscreen,org.kde.plasma.clipboard
 hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.devicenotifier
 iconSpacing=1
 knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.battery,org.kde.plasma.vault,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout,org.kde.kscreen
