@@ -120,16 +120,16 @@ _k_friendly_name=Custom Shortcuts Service
 {92c5aa35-801e-44ef-aa9d-9be29c56d010}=Meta+F10,none,mpc next
 {9792072a-5995-4d78-81f2-b68f19df6602}=none,none,mpc toggle
 {a3f93496-a9ae-485b-ae68-c926db08bb2b}=Meta+R,none,rpi tmux
-{a6387294-f354-4723-998c-fc8c6f9f26f0}=none,none,top
+{a6387294-f354-4723-998c-fc8c6f9f26f0}=Meta+Shift+T,none,top
 {a78614b6-3b89-456f-9deb-1e48bf250fa0}=Meta+Z,none,mpv clipboard
 {aa7ff60c-270f-4c7d-a6c3-4cd0e4b95c66}=Meta+F7,none,mpc prev
 {bcdb4344-b94b-43e6-a885-e7a9e54b3ef1}=Meta+Shift+B,none,bt disconnect
 {c974294c-4459-4171-acdb-c0200fc71ca4}=Meta+U,none,update
 {d0fc4a87-571d-4944-9ceb-87d0c833b70d}=Meta+X,none,tasks
-{d33a725d-deff-43df-a9c5-1a28edf1113f}=Print,none,maimwin prscr
+{d33a725d-deff-43df-a9c5-1a28edf1113f}=none,none,maimwin prscr
 {e3161821-2534-4ece-b465-000da75bc0b5}=Launch (1),none,qalc
 {e677a7e0-6613-4c60-b684-56df16400e33}=Meta+Shift+F4,none,reboot
-{f3ac6719-54ce-4e0d-9832-1f6d2579f371}=Meta+F11,none,maimclip mouse
+{f3ac6719-54ce-4e0d-9832-1f6d2579f371}=none,none,maimclip mouse
 {fa64ef95-8541-49a2-9d1f-3183513e25ac}=Meta+B,none,bt connect
 
 [kindle.desktop]
@@ -353,14 +353,14 @@ _k_friendly_name=Emoji Selector
 _launch=none,Meta+.,Emoji Selector
 
 [org.kde.spectacle.desktop]
-ActiveWindowScreenShot=Meta+Print,Meta+Print,Capture Active Window
+ActiveWindowScreenShot=Print,Meta+Print,Capture Active Window
 CurrentMonitorScreenShot=none,none,Capture Current Monitor
 FullScreenScreenShot=Shift+Print,Shift+Print,Capture Entire Desktop
-OpenWithoutScreenshot=none,none,Launch without taking a screenshot
-RectangularRegionScreenShot=Meta+Shift+Print,Meta+Shift+Print,Capture Rectangular Region
+OpenWithoutScreenshot=none,none,Launch Spectacle without capturing
+RectangularRegionScreenShot=Meta+Shift+Print\tMeta+F11,Meta+Shift+Print,Capture Rectangular Region
 WindowUnderCursorScreenShot=Meta+Ctrl+Print,Meta+Ctrl+Print,Capture Window Under Cursor
 _k_friendly_name=Spectacle
-_launch=none,Print,Spectacle
+_launch=,Print,Launch Spectacle
 
 [org.qutebrowser.qutebrowser.desktop]
 _k_friendly_name=Launch qutebrowser
@@ -412,19 +412,19 @@ activate widget 53=none,none,Activate Icons-only Task Manager Widget
 activate widget 63=none,none,Activate Application Launcher Widget
 activate widget 78=none,none,Activate Application Launcher Widget
 activate widget 99=none,none,Activate Application Launcher Widget
-clear-history=none,none,Clear Clipboard History
+clear-history=none,,Clear Clipboard History
 clipboard_action=none,Meta+Ctrl+X,Automatic Action Popup Menu
 cycle-panels=Meta+Alt+P,Meta+Alt+P,Move keyboard focus between panels
-cycleNextAction=none,none,Next History Item
-cyclePrevAction=none,none,Previous History Item
-edit_clipboard=none,none,Edit Contents…
+cycleNextAction=none,,Next History Item
+cyclePrevAction=none,,Previous History Item
+edit_clipboard=none,,Edit Contents…
 manage activities=none,Meta+Q,Show Activity Switcher
 next activity=none,Meta+Tab,Walk through activities
 previous activity=none,Meta+Shift+Tab,Walk through activities (Reverse)
 repeat_action=none,Meta+Ctrl+R,Manually Invoke Action on Current Clipboard
 show dashboard=none,Ctrl+F12,Show Desktop
-show-barcode=none,none,Show Barcode…
-show-on-mouse-pos=none,Meta+V,Open Klipper at Mouse Position
+show-barcode=none,,Show Barcode…
+show-on-mouse-pos=none,Meta+V,Show Items at Mouse Position
 stop current activity=none,Meta+S,Stop Current Activity
 switch to next activity=none,,Switch to Next Activity
 switch to previous activity=none,,Switch to Previous Activity
