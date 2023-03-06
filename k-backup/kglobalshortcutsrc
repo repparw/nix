@@ -9,7 +9,7 @@ switch-to-activity-c2f7948f-cf52-46ec-9b7e-c825ba193393=none,none,Switch to acti
 Switch keyboard layout to English (US)=none,none,Switch keyboard layout to English (US)
 Switch keyboard layout to Español (latinoamericano)=none,none,Cambiar la distribución del teclado a Español (latinoamericano)
 Switch keyboard layout to Spanish (Latin American)=none,none,Switch keyboard layout to Spanish (Latin American)
-Switch to Next Keyboard Layout=none,Ctrl+Alt+K,Switch to Next Keyboard Layout
+Switch to Next Keyboard Layout=none,Meta+Alt+K,Switch to Next Keyboard Layout
 _k_friendly_name=Keyboard Layout Switcher
 
 [League of Legends.desktop]
@@ -92,7 +92,7 @@ _k_friendly_name=Accessibility
 [kcm_touchpad]
 Disable Touchpad=Touchpad Off,Touchpad Off,Disable Touchpad
 Enable Touchpad=Touchpad On,Touchpad On,Enable Touchpad
-Toggle Touchpad=Touchpad Toggle,Touchpad Toggle,Toggle Touchpad
+Toggle Touchpad=Touchpad Toggle,Touchpad Toggle\tMeta+Ctrl+Zenkaku Hankaku,Toggle Touchpad
 _k_friendly_name=Touchpad
 
 [kded5]
@@ -114,7 +114,7 @@ _k_friendly_name=Custom Shortcuts Service
 {6de45335-a9a5-4cb7-92e8-630394e3ec16}=Meta+O,none,brownnoise
 {74790651-2d78-401b-baba-397b21c6c6a7}=Meta+G,none,gpodder
 {7995b6ff-0029-44ef-a5c1-efd54a9a7d77}=Meta+Y,none,yt
-{7d2cfdce-5cf6-4954-ac20-0cbce791fbbd}=Ctrl+Alt+L,none,screens off
+{7d2cfdce-5cf6-4954-ac20-0cbce791fbbd}=none,none,screens off
 {9005eee1-9daa-41a4-9d98-76ce0188d489}=Meta+E,none,lf
 {91c54b96-f63e-482f-8353-ff38903c0247}=Meta+Shift+F10,none,mpc seek +
 {92c5aa35-801e-44ef-aa9d-9be29c56d010}=Meta+F10,none,mpc next
@@ -147,7 +147,7 @@ mute=Volume Mute,Volume Mute,Mute
 
 [ksmserver]
 Halt Without Confirmation=Ctrl+Alt+Shift+PgDown,,Halt Without Confirmation
-Lock Session=Screensaver,Meta+L\tScreensaver,Lock Session
+Lock Session=Screensaver\tCtrl+Alt+L,Meta+L\tScreensaver,Lock Session
 Log Out=Ctrl+Alt+Del,Ctrl+Alt+Del,Log Out
 Log Out Without Confirmation=Ctrl+Alt+Shift+Del,,Log Out Without Confirmation
 Reboot Without Confirmation=Ctrl+Alt+Shift+PgUp,,Reboot Without Confirmation
@@ -164,6 +164,7 @@ ExposeClassCurrentDesktop=none,none,Toggle Present Windows (Window class on curr
 Increase Opacity=none,,Increase Opacity of Active Window by 5%
 Invert Screen Colors=none,none,Invert Screen Colours
 Kill Window=Ctrl+Alt+Esc,Meta+Ctrl+Esc,Kill Window
+Move Tablet to Next Output=none,none,Move the tablet to the next output
 MoveMouseToCenter=Meta+F6,Meta+F6,Move Mouse to Centre
 MoveMouseToFocus=Meta+F5,Meta+F5,Move Mouse to Focus
 MoveZoomDown=none,Meta+Ctrl+Down,Move Down
