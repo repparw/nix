@@ -1,0 +1,7 @@
+[Plugins]
+kdeconnect_connectivity_reportEnabled=false
+kdeconnect_contactsEnabled=false
+kdeconnect_pausemusicEnabled=false
+kdeconnect_presenterEnabled=false
+kdeconnect_smsEnabled=false
+kdeconnect_telephonyEnabled=false

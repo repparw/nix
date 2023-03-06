@@ -24,6 +24,10 @@ _launch=none,none,Launch Mobalytics Desktop
 _k_friendly_name=Riot Client
 _launch=none,none,Launch Riot Client
 
+[Socials.desktop]
+_k_friendly_name=Socials
+_launch=Meta+S,none,Socials
+
 [archisteamfarm.desktop]
 _k_friendly_name=ArchiSteamFarm
 _launch=none,none,Launch ArchiSteamFarm
@@ -57,10 +61,6 @@ _launch=none,none,Launch Spotify
 [com.valvesoftware.Steam.desktop]
 _k_friendly_name=Steam
 _launch=none,none,Launch Steam
-
-[currentsong.desktop]
-_k_friendly_name=currentsong
-_launch=none,none,Launch currentsong
 
 [deemix.desktop]
 _k_friendly_name=deemix
@@ -118,7 +118,7 @@ _k_friendly_name=Custom Shortcuts Service
 {9005eee1-9daa-41a4-9d98-76ce0188d489}=Meta+E,none,lf
 {91c54b96-f63e-482f-8353-ff38903c0247}=Meta+Shift+F10,none,mpc seek +
 {92c5aa35-801e-44ef-aa9d-9be29c56d010}=Meta+F10,none,mpc next
-{9792072a-5995-4d78-81f2-b68f19df6602}=Meta+F12,none,mpc toggle
+{9792072a-5995-4d78-81f2-b68f19df6602}=none,none,mpc toggle
 {a3f93496-a9ae-485b-ae68-c926db08bb2b}=Meta+R,none,rpi tmux
 {a6387294-f354-4723-998c-fc8c6f9f26f0}=none,none,top
 {a78614b6-3b89-456f-9deb-1e48bf250fa0}=Meta+Z,none,mpv clipboard
