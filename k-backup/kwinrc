@@ -144,6 +144,12 @@ tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.2510416
 [Tiling][3abc82c6-edfd-5bf6-9c66-35fc0f511408]
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.505208333333333},{"layoutDirection":"floating","tiles":[{"height":0.4814814814814822,"width":0.4338541666666529,"x":0.5052083333333395,"y":0}],"width":0.49479166666666696}]}
 
+[Tiling][82d97420-bb9f-5388-bbae-c84c330825a2]
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
+
+[Tiling][a0e88e20-a6d5-5806-af8e-c17619799dbc]
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
+
 [Tiling][d63db7c0-d7f5-551b-8eab-144277bb4d41]
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
 
@@ -163,6 +169,9 @@ NextFocusPrefersMouse=false
 Placement=Centered
 SeparateScreenFocus=true
 TitlebarDoubleClickCommand=Maximize
+
+[Xwayland]
+Scale=1
 
 [org.kde.kdecoration2]
 ButtonsOnLeft=
