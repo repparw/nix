@@ -40,6 +40,14 @@ _launch=none,none,Launch Awakened
 _k_friendly_name=Binance
 _launch=none,none,Launch Binance
 
+[bluetoothctl.desktop]
+_k_friendly_name=bluetoothctl connect F8:4E:17:E6:22:D2
+_launch=Meta+Shift+B,none,bluetoothctl connect F8:4E:17:E6:22:D2
+
+[bttoggle.desktop]
+_k_friendly_name=bttoggle
+_launch=Meta+B,none,/home/repparw/.config/scripts/bttoggle
+
 [com.github.eloston.ungoogledchromium.flextop.chrome-dbjlimibnhmfcgadnpbfgkmmeijhieif-default.desktop]
 _k_friendly_name=Deezer
 _launch=none,none,Launch Deezer
@@ -123,14 +131,14 @@ _k_friendly_name=Custom Shortcuts Service
 {a6387294-f354-4723-998c-fc8c6f9f26f0}=Meta+Shift+T,none,top
 {a78614b6-3b89-456f-9deb-1e48bf250fa0}=Meta+Z,none,mpv clipboard
 {aa7ff60c-270f-4c7d-a6c3-4cd0e4b95c66}=Meta+F7,none,mpc prev
-{bcdb4344-b94b-43e6-a885-e7a9e54b3ef1}=Meta+Shift+B,none,bt disconnect
+{bcdb4344-b94b-43e6-a885-e7a9e54b3ef1}=none,none,bt disconnect
 {c974294c-4459-4171-acdb-c0200fc71ca4}=Meta+U,none,update
 {d0fc4a87-571d-4944-9ceb-87d0c833b70d}=Meta+X,none,tasks
 {d33a725d-deff-43df-a9c5-1a28edf1113f}=none,none,maimwin prscr
 {e3161821-2534-4ece-b465-000da75bc0b5}=Launch (1),none,qalc
 {e677a7e0-6613-4c60-b684-56df16400e33}=Meta+Shift+F4,none,reboot
 {f3ac6719-54ce-4e0d-9832-1f6d2579f371}=none,none,maimclip mouse
-{fa64ef95-8541-49a2-9d1f-3183513e25ac}=Meta+B,none,bt connect
+{fa64ef95-8541-49a2-9d1f-3183513e25ac}=none,none,bt connect
 
 [kindle.desktop]
 _k_friendly_name=Kindle

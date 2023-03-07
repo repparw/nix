@@ -730,7 +730,7 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_3_7Triggers0]
-Key=Meta+B
+Key=
 Type=SHORTCUT
 Uuid={fa64ef95-8541-49a2-9d1f-3183513e25ac}
 
@@ -756,7 +756,7 @@ Comment=Simple_action
 TriggersCount=1
 
 [Data_3_8Triggers0]
-Key=Meta+Shift+B
+Key=
 Type=SHORTCUT
 Uuid={bcdb4344-b94b-43e6-a885-e7a9e54b3ef1}
 
