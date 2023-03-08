@@ -1,0 +1,2 @@
+#!/bin/sh
+firefox -P kiosk 2>/dev/null & sleep 2 && dbus-send --session --type=method_call --dest=org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component.invokeShortcut string:'Window to Screen 1'
