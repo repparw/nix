@@ -121,14 +121,14 @@ _k_friendly_name=Custom Shortcuts Service
 {6ab20914-1083-4563-ad46-6630030a6302}=Meta++,none,webcam
 {6de45335-a9a5-4cb7-92e8-630394e3ec16}=Meta+O,none,brownnoise
 {74790651-2d78-401b-baba-397b21c6c6a7}=Meta+G,none,gpodder
-{7995b6ff-0029-44ef-a5c1-efd54a9a7d77}=Meta+Y,none,yt
+{7995b6ff-0029-44ef-a5c1-efd54a9a7d77}=none,none,yt
 {7d2cfdce-5cf6-4954-ac20-0cbce791fbbd}=none,none,screens off
 {9005eee1-9daa-41a4-9d98-76ce0188d489}=Meta+E,none,lf
 {91c54b96-f63e-482f-8353-ff38903c0247}=Meta+Shift+F10,none,mpc seek +
 {92c5aa35-801e-44ef-aa9d-9be29c56d010}=Meta+F10,none,mpc next
 {9792072a-5995-4d78-81f2-b68f19df6602}=none,none,mpc toggle
 {a3f93496-a9ae-485b-ae68-c926db08bb2b}=Meta+R,none,rpi tmux
-{a6387294-f354-4723-998c-fc8c6f9f26f0}=Meta+Shift+T,none,top
+{a6387294-f354-4723-998c-fc8c6f9f26f0}=Meta+T,none,top
 {a78614b6-3b89-456f-9deb-1e48bf250fa0}=Meta+Z,none,mpv clipboard
 {aa7ff60c-270f-4c7d-a6c3-4cd0e4b95c66}=Meta+F7,none,mpc prev
 {bcdb4344-b94b-43e6-a885-e7a9e54b3ef1}=none,none,bt disconnect
@@ -143,6 +143,10 @@ _k_friendly_name=Custom Shortcuts Service
 [kindle.desktop]
 _k_friendly_name=Kindle
 _launch=none,none,Launch Kindle
+
+[kiosk.desktop]
+_k_friendly_name=kiosk
+_launch=Meta+Y,none,/home/repparw/.config/scripts/kiosk
 
 [kmix]
 _k_friendly_name=Audio Volume
@@ -164,7 +168,7 @@ _k_friendly_name=Session Management
 [kwin]
 Activate Window Demanding Attention=Ctrl+Alt+A,Meta+Ctrl+A,Activate Window Demanding Attention
 Decrease Opacity=none,,Decrease Opacity of Active Window by 5%
-Edit Tiles=Meta+T,Meta+T,Toggle Tiles Editor
+Edit Tiles=,Meta+T,Toggle Tiles Editor
 Expose=Ctrl+F9,Ctrl+F9,Toggle Present Windows (Current desktop)
 ExposeAll=Ctrl+F10\tLaunch (C),Ctrl+F10\tLaunch (C),Toggle Present Windows (All desktops)
 ExposeClass=Ctrl+F7,Ctrl+F7,Toggle Present Windows (Window class)
@@ -363,7 +367,7 @@ _launch=none,Meta+.,Emoji Selector
 [org.kde.spectacle.desktop]
 ActiveWindowScreenShot=Print,Meta+Print,Capture Active Window
 CurrentMonitorScreenShot=Shift+Print,none,Capture Current Monitor
-FullScreenScreenShot=,Shift+Print,Capture Entire Desktop
+FullScreenScreenShot=none,Shift+Print,Capture Entire Desktop
 OpenWithoutScreenshot=none,none,Launch Spectacle without capturing
 RectangularRegionScreenShot=Meta+Shift+Print\tMeta+F11,Meta+Shift+Print,Capture Rectangular Region
 WindowUnderCursorScreenShot=Meta+Ctrl+Print,Meta+Ctrl+Print,Capture Window Under Cursor
