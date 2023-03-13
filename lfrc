@@ -111,7 +111,5 @@ cmd quitcd ${{
 	lf -remote "send $id quit"
 }}
 
-set cleaner ctpvclear
-set previewer ctpv
-&ctpv -s $id
-&ctpvquit $id
+set previewer ~/.config/lf/lf_kitty_preview
+set cleaner ~/.config/lf/lf_kitty_clean
