@@ -217,7 +217,7 @@ immutability=1
 plugin=org.kde.plasma.nightcolorcontrol
 
 [Containments][231][Applets][237][Configuration]
-PreloadWeight=18
+PreloadWeight=10
 
 [Containments][231][Applets][238]
 immutability=1
