@@ -136,7 +136,7 @@ immutability=1
 plugin=org.kde.plasma.compact-shutdown
 
 [Containments][140][Applets][249][Configuration]
-PreloadWeight=90
+PreloadWeight=95
 
 [Containments][140][Applets][249][Configuration][Apperance]
 showHibernate=false
@@ -217,7 +217,7 @@ immutability=1
 plugin=org.kde.plasma.nightcolorcontrol
 
 [Containments][231][Applets][237][Configuration]
-PreloadWeight=2
+PreloadWeight=0
 
 [Containments][231][Applets][238]
 immutability=1
