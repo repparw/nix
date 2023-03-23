@@ -1,5 +1,5 @@
 [General]
-SplitterSizes=805,1104
+SplitterSizes=462,633
 
 [KFileDialog Settings]
 Recent Files[$e]=Electrum,file:///usr/share/icons/socials.png,file:///bin/firefox,file:$HOME/.config/Ryujinx/games/icon.png
@@ -34,5 +34,5 @@ DisplayPort-1 XPosition=360
 DisplayPort-1 XPosition 1920x1080=16
 DisplayPort-1 YPosition=349
 DisplayPort-1 YPosition 1920x1080=313
-State=AAAA/wAAAAD9AAAAAAAAB4AAAAPsAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
+State=AAAA/wAAAAD9AAAAAAAABFIAAAFWAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAG0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA
 ToolBarsMovable=Disabled
