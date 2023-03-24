@@ -279,7 +279,7 @@ immutability=1
 plugin=org.kde.kscreen
 
 [Containments][231][Applets][273][Configuration]
-PreloadWeight=55
+PreloadWeight=60
 
 [Containments][231][Applets][274]
 immutability=1
