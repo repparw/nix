@@ -147,7 +147,7 @@
 		alias yda="yt-dlp -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
 
 	# Temperature 
-	alias temp="watch -td -n 300 'echo -e \"\$(sensors -A nvme-pci-0400 k10temp-pci-00c3 amdgpu-pci-2d00)
+	alias temp="watch -td -n 300 'echo -e \"\$(sensors -A nvme-pci-0100 k10temp-pci-00c3 amdgpu-pci-2d00)
 \"'"
 #GPU:          +\$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader).0°C
 	# GPU mining
