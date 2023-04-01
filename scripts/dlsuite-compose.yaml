@@ -9,9 +9,9 @@ services:
         image: 'linuxserver/prowlarr:latest'
         container_name: prowlarr
         environment:
-              - PUID=1001
-              - PGID=963
-              - TZ=America/Argentina/Buenos_Aires
+            - PUID=1001
+            - PGID=963
+            - TZ=America/Argentina/Buenos_Aires
         volumes:
             - '/home/docker/prowlarr:/config:Z'
         ports:
@@ -65,32 +65,50 @@ services:
         image: 'linuxserver/bazarr:latest'
         container_name: bazarr
         environment:
-          - PUID=1001
-          - PGID=963
-          - TZ=America/Argentina/Buenos_Aires
+            - PUID=1001
+            - PGID=963
+            - TZ=America/Argentina/Buenos_Aires
         volumes:
-          - '/home/docker/bazarr:/config:Z'
-          - '/home/docker/data/media/tv:/tv:z'
-          - '/home/docker/data/media/movies:/movies:z'
+            - '/home/docker/bazarr:/config:Z'
+            - '/home/docker/data/media/tv:/tv:z'
+            - '/home/docker/data/media/movies:/movies:z'
         ports:
-          - '6767:6767'
+            - '6767:6767'
         restart: unless-stopped
+    jellyfin:
+        image: 'linuxserver/jellyfin:latest'
+        container_name: jellyfin
+        environment:
+            - PUID=974
+            - PGID=971
+            - TZ=America/Argentina/Buenos_Aires
+            - JELLYFIN_PublishedServerUrl=jellyfin.repparw.com.ar
+        volumes:
+            - '/home/docker/jellyfin:/config:Z'
+            - '/home/docker/data/media:/data/media:z'
+            - '/run/media/repparw/HDD:/data/hdd:Z'
+        ports:
+            - '8096:8096'
+            - '8920:8920' #optional
+            - '7359:7359/udp' #optional
+            - '1900:1900/udp' #optional
+        restart: 'unless-stopped'
     swag:
         image: 'linuxserver/swag:latest'
         container_name: swag
         cap_add:
-              - NET_ADMIN
+            - NET_ADMIN
         environment:
-              - PUID=1001
-              - PGID=963
-              - TZ=America/Argentina/Buenos_Aires
-              - URL=repparw.com.ar
-              - SUBDOMAINS=wildcard
-              - VALIDATION=dns
-              - DNSPLUGIN=cloudflare 
+            - PUID=1001
+            - PGID=963
+            - TZ=America/Argentina/Buenos_Aires
+            - URL=repparw.com.ar
+            - SUBDOMAINS=wildcard
+            - VALIDATION=dns
+            - DNSPLUGIN=cloudflare 
         volumes:
-              - '/home/docker/swag:/config:Z'
+            - '/home/docker/swag:/config:Z'
         ports:
-              - 443:443
-              - 80:80 #optional
+            - 443:443
+            - 80:80 #optional
         restart: unless-stopped
