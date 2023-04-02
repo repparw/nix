@@ -5,4 +5,5 @@ update_info=kscreenlocker.upd:0.1-autolock
 Autolock=false
 
 [Greeter][Wallpaper][org.kde.image][General]
-Image=file:///home/repparw/.local/share/wallpapers/Sweet-Wallpapers/Sweet-space.png
+Image=/home/repparw/Pictures/bg/tardisblack.jpg
+PreviewImage=/home/repparw/Pictures/bg/tardisblack.jpg
