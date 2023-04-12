@@ -286,7 +286,7 @@ immutability=1
 plugin=org.kde.plasma.clipboard
 
 [Containments][231][Applets][274][Configuration]
-PreloadWeight=65
+PreloadWeight=70
 
 [Containments][231][ConfigDialog]
 DialogHeight=600
