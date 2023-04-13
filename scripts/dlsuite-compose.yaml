@@ -110,5 +110,5 @@ services:
             - '/home/docker/swag:/config:Z'
         ports:
             - 443:443
-            - 80:80 #optional
+            - 80:80
         restart: unless-stopped
