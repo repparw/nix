@@ -70,8 +70,7 @@ services:
             - TZ=America/Argentina/Buenos_Aires
         volumes:
             - '/home/docker/bazarr:/config:Z'
-            - '/home/docker/data/media/tv:/tv:z'
-            - '/home/docker/data/media/movies:/movies:z'
+            - '/home/docker/data:/data:z'
         ports:
             - '6767:6767'
         restart: unless-stopped
