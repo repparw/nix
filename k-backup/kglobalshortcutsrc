@@ -20,6 +20,10 @@ _launch=none,none,Launch League of Legends
 _k_friendly_name=Mobalytics Desktop
 _launch=none,none,Launch Mobalytics Desktop
 
+[Persona 5 Royal.desktop]
+_k_friendly_name=Persona 5 Royal
+_launch=,none,Launch Persona 5 Royal
+
 [Riot Client.desktop]
 _k_friendly_name=Riot Client
 _launch=none,none,Launch Riot Client
