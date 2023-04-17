@@ -56,24 +56,24 @@ done=filepicker-remove-old-previews-entry
 mtime=1677888000
 
 [fonts_akregator.upd]
-ctime=1681510554
+ctime=1681745991
 done=Plasma_Fonts_Akregator
-mtime=1680566400
+mtime=1680604939
 
 [fonts_global.upd]
-ctime=1681510554
+ctime=1681745991
 done=Fonts_Global
-mtime=1680566400
+mtime=1680604939
 
 [fonts_global_toolbar.upd]
-ctime=1681510554
+ctime=1681745991
 done=Fonts_Global_Toolbar
-mtime=1680566400
+mtime=1680604939
 
 [fonts_kate.upd]
-ctime=1681510554
+ctime=1681745991
 done=Plasma_Fonts_Kate
-mtime=1680566400
+mtime=1680604939
 
 [gtkconfig.upd]
 ctime=1681510569
