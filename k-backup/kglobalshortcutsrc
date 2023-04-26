@@ -466,6 +466,10 @@ _launch=none,none,Launch Samsung Unified Driver Help
 _k_friendly_name=Uninstall Samsung Unified Driver
 _launch=none,none,Launch Uninstall Samsung Unified Driver
 
+[spotify.desktop]
+_k_friendly_name=Spotify
+_launch=,none,Launch Spotify
+
 [steam-2.desktop]
 BigPicture=none,none,Big Picture
 Community=none,none,Community
