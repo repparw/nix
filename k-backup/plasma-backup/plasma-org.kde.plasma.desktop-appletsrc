@@ -136,7 +136,7 @@ immutability=1
 plugin=org.kde.plasma.compact-shutdown
 
 [Containments][140][Applets][249][Configuration]
-PreloadWeight=95
+PreloadWeight=100
 
 [Containments][140][Applets][249][Configuration][Apperance]
 showHibernate=false
