@@ -66,10 +66,6 @@ _launch=Meta+Shift+Space,none,Microsoft Edge
 new-private-window=none,none,New InPrivate Window
 new-window=none,none,New Window
 
-[com.spotify.Client.desktop]
-_k_friendly_name=Spotify
-_launch=none,none,Launch Spotify
-
 [com.valvesoftware.Steam.desktop]
 _k_friendly_name=Steam
 _launch=none,none,Launch Steam
@@ -137,7 +133,7 @@ _k_friendly_name=Custom Shortcuts Service
 {9792072a-5995-4d78-81f2-b68f19df6602}=none,none,mpc toggle
 {a3f93496-a9ae-485b-ae68-c926db08bb2b}=Meta+R,none,rpi tmux
 {a6387294-f354-4723-998c-fc8c6f9f26f0}=Meta+T,none,top
-{a78614b6-3b89-456f-9deb-1e48bf250fa0}=Meta+Z,none,mpv clipboard
+{a78614b6-3b89-456f-9deb-1e48bf250fa0}=none,none,mpv clipboard
 {aa7ff60c-270f-4c7d-a6c3-4cd0e4b95c66}=Meta+F7,none,mpc prev
 {bcdb4344-b94b-43e6-a885-e7a9e54b3ef1}=none,none,bt disconnect
 {c974294c-4459-4171-acdb-c0200fc71ca4}=Meta+U,none,update
@@ -343,6 +339,10 @@ playpausemedia=Media Play,Media Play,Play/Pause media playback
 previousmedia=Media Previous,Media Previous,Media playback previous
 stopmedia=none,Media Stop,Stop media playback
 
+[mpvclip.desktop]
+_k_friendly_name=mpvclip
+_launch=Meta+Z,none,/home/repparw/.config/scripts/mpvclip
+
 [mymonero.desktop]
 _k_friendly_name=MyMonero
 _launch=none,none,Launch MyMonero
@@ -465,10 +465,6 @@ _launch=none,none,Launch Samsung Unified Driver Help
 [samsung-uninstallud.desktop]
 _k_friendly_name=Uninstall Samsung Unified Driver
 _launch=none,none,Launch Uninstall Samsung Unified Driver
-
-[spotify.desktop]
-_k_friendly_name=Spotify
-_launch=none,none,Launch Spotify
 
 [steam-2.desktop]
 BigPicture=none,none,Big Picture
