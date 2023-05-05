@@ -26,6 +26,14 @@ windowrole=browser
 wmclass=kitty
 wmclassmatch=1
 
+[12fd6497-5ead-47c6-b1ce-2c29d19d10c2]
+Description=Application settings for scrcpy
+clientmachine=localhost
+position=3399,134
+positionrule=3
+wmclass=scrcpy
+wmclassmatch=1
+
 [13]
 Description=alacritty no titlebar
 noborder=true
@@ -184,11 +192,11 @@ wmclassmatch=1
 
 [General]
 ColorScheme[$d]
-count=8
+count=9
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6,7,8
+rules=12fd6497-5ead-47c6-b1ce-2c29d19d10c2,1,2,3,4,5,6,7,8
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
