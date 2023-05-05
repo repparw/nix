@@ -114,7 +114,7 @@ display=Display,Display\tMeta+P,Switch Display
 
 [khotkeys]
 _k_friendly_name=Custom Shortcuts Service
-{01f565cc-766e-423b-85b5-d85d7dc70099}=Meta+Shift+S,none,scrcpy
+{01f565cc-766e-423b-85b5-d85d7dc70099}=none,none,scrcpy
 {14f555ce-1676-435b-b3fc-83d6080d323c}=Meta+Return,none,term
 {24b536a3-a4fc-43f8-94c0-30c44c4440d5}=none,none,maimqr
 {269bd72c-00ab-4d46-8fa2-a1abec6f454a}=Meta+F4,none,shutdown
@@ -465,6 +465,10 @@ _launch=none,none,Launch Samsung Unified Driver Help
 [samsung-uninstallud.desktop]
 _k_friendly_name=Uninstall Samsung Unified Driver
 _launch=none,none,Launch Uninstall Samsung Unified Driver
+
+[scrcpy-2.desktop]
+_k_friendly_name=scrcpy
+_launch=Meta+Shift+S,none,/home/repparw/.config/scripts/scrcpy
 
 [steam-2.desktop]
 BigPicture=none,none,Big Picture
