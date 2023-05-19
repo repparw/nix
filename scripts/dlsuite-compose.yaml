@@ -82,6 +82,9 @@ services:
             - PGID=971
             - TZ=America/Argentina/Buenos_Aires
             - JELLYFIN_PublishedServerUrl=jellyfin.repparw.com.ar
+            - DOCKER_MODS=linuxserver/mods:jellyfin-amd
+        devices:
+            - '/dev/dri:/dev/dri'
         volumes:
             - '/home/docker/jellyfin:/config:Z'
             - '/home/docker/data/media:/data/media:ro'
