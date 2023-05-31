@@ -363,6 +363,12 @@ _launch=Meta+Shift+E,Meta+E,Dolphin
 _k_friendly_name=KCalc
 _launch=none,Launch (1),KCalc
 
+[org.kde.konsole.desktop]
+NewTab=none,none,Open a New Tab
+NewWindow=none,none,Open a New Window
+_k_friendly_name=Konsole
+_launch=Ctrl+Alt+T,Ctrl+Alt+T,Konsole
+
 [org.kde.krunner.desktop]
 RunClipboard=none,Alt+Shift+F2,Run command on clipboard contents
 _k_friendly_name=KRunner
