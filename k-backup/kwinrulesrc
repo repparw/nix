@@ -177,6 +177,16 @@ wmclass=gl mpv
 wmclasscomplete=true
 wmclassmatch=1
 
+[7674cf56-ca5f-469c-8b37-4f31f559ad66]
+Description=Application settings for hearthstone.exe
+clientmachine=localhost
+position=1920,0
+positionrule=3
+size=1920,1080
+sizerule=3
+wmclass=hearthstone.exe
+wmclassmatch=1
+
 [8]
 Description=Minimum size for windows
 minsize=1,1
@@ -196,11 +206,11 @@ wmclassmatch=3
 
 [General]
 ColorScheme[$d]
-count=9
+count=10
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6,7,8,9
+rules=7674cf56-ca5f-469c-8b37-4f31f559ad66,1,2,3,4,5,6,7,8,9
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
