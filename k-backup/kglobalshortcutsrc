@@ -5,6 +5,14 @@ update_info=bismuth_shortcuts_category.upd:bismuth-shortcuts-category,bismuth_sh
 _k_friendly_name=Activity Manager
 switch-to-activity-c2f7948f-cf52-46ec-9b7e-c825ba193393=none,none,Switch to activity "Default"
 
+[Hearthstone Deck Tracker.desktop]
+_k_friendly_name=Hearthstone Deck Tracker
+_launch=,none,Launch Hearthstone Deck Tracker
+
+[Hearthstone.desktop]
+_k_friendly_name=Hearthstone
+_launch=,none,Launch Hearthstone
+
 [KDE Keyboard Layout Switcher]
 Switch keyboard layout to English (US)=none,none,Switch keyboard layout to English (US)
 Switch keyboard layout to Español (latinoamericano)=none,none,Cambiar la distribución del teclado a Español (latinoamericano)
