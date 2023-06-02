@@ -7,11 +7,11 @@ switch-to-activity-c2f7948f-cf52-46ec-9b7e-c825ba193393=none,none,Switch to acti
 
 [Hearthstone Deck Tracker.desktop]
 _k_friendly_name=Hearthstone Deck Tracker
-_launch=,none,Launch Hearthstone Deck Tracker
+_launch=none,none,Launch Hearthstone Deck Tracker
 
 [Hearthstone.desktop]
 _k_friendly_name=Hearthstone
-_launch=,none,Launch Hearthstone
+_launch=none,none,Launch Hearthstone
 
 [KDE Keyboard Layout Switcher]
 Switch keyboard layout to English (US)=none,none,Switch keyboard layout to English (US)
