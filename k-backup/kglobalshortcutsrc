@@ -355,6 +355,10 @@ _launch=Meta+Z,none,/home/repparw/.config/scripts/mpvclip
 _k_friendly_name=MyMonero
 _launch=none,none,Launch MyMonero
 
+[net.lutris.hearthstone-40.desktop]
+_k_friendly_name=Hearthstone
+_launch=,none,Launch Hearthstone
+
 [net.lutris.league-of-legends-1.desktop]
 _k_friendly_name=League of Legends
 _launch=none,none,Launch League of Legends
