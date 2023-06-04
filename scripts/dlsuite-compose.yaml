@@ -94,6 +94,18 @@ services:
             - '8920:8920' #optional
             - '7359:7359/udp' #optional
         restart: 'unless-stopped'
+    freshrss:
+        image: 'linuxserver/freshrss:latest'
+        container_name: freshrss
+        environment:
+            - PUID=1001
+            - PGID=963
+            - TZ=America/Argentina/Buenos_Aires
+        volumes:
+          - '/home/docker/freshrss:/config:Z'
+        ports:
+            - '81:80'
+        restart: unless-stopped
     swag:
         image: 'linuxserver/swag:latest'
         container_name: swag
