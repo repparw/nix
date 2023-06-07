@@ -357,7 +357,7 @@ _launch=none,none,Launch MyMonero
 
 [net.lutris.hearthstone-40.desktop]
 _k_friendly_name=Hearthstone
-_launch=,none,Launch Hearthstone
+_launch=none,none,Launch Hearthstone
 
 [net.lutris.league-of-legends-1.desktop]
 _k_friendly_name=League of Legends
