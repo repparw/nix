@@ -52,13 +52,9 @@ _launch=none,none,Launch Awakened
 _k_friendly_name=Binance
 _launch=none,none,Launch Binance
 
-[bluetoothctl.desktop]
-_k_friendly_name=bluetoothctl connect F8:4E:17:E6:22:D2
-_launch=Meta+Shift+B,none,bluetoothctl connect F8:4E:17:E6:22:D2
-
 [bttoggle.desktop]
 _k_friendly_name=bttoggle
-_launch=Meta+B,none,/home/repparw/.config/scripts/bttoggle
+_launch=Meta+Shift+B,none,/home/repparw/.config/scripts/bttoggle
 
 [com.github.eloston.ungoogledchromium.flextop.chrome-dbjlimibnhmfcgadnpbfgkmmeijhieif-default.desktop]
 _k_friendly_name=Deezer
@@ -81,6 +77,10 @@ _launch=none,none,Launch Steam
 [deemix.desktop]
 _k_friendly_name=deemix
 _launch=none,none,Launch deemix
+
+[device="F8:4E:17:E6:22:D2".desktop]
+_k_friendly_name=\s/home/repparw/.config/scripts/bttoggle
+_launch=Meta+B,none,device="F8:4E:17:E6:22:D2" /home/repparw/.config/scripts/bttoggle\n
 
 [electrum.desktop]
 _k_friendly_name=Electrum
