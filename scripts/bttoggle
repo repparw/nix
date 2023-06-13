@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-device="F8:4E:17:E6:22:D2"
 
-if bluetoothctl info "$device" | grep 'Connected: yes' -q; then
-  bluetoothctl disconnect "$device"
+#if bluetoothctl info "$device" | grep 'Connected: yes' -q; then
+#  bluetoothctl disconnect "$device"
+#else
+#  bluetoothctl connect "$device"
+#fi
+
+if [ -n "$(bluetoothctl devices Connected)" ]; then
+  bluetoothctl disconnect
 else
   bluetoothctl connect "$device"
 fi
