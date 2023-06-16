@@ -249,7 +249,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][231][Applets][244][Configuration]
-PreloadWeight=100
+PreloadWeight=97
 
 [Containments][231][Applets][245]
 immutability=1
@@ -357,4 +357,4 @@ launchers=applications:systemsettings.desktop,preferred://filemanager,applicatio
 
 [ScreenMapping]
 itemsOnDisabledScreens=
-screenMapping=desktop:/Diablo III.desktop,0,c2f7948f-cf52-46ec-9b7e-c825ba193393,desktop:/Hearthstone.desktop,0,c2f7948f-cf52-46ec-9b7e-c825ba193393
+screenMapping=
