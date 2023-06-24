@@ -167,7 +167,7 @@ DialogWidth=1920
 PreloadWeight=42
 
 [Containments][140][General]
-AppletOrder=162;177;161;179;272;178;230;156;;249
+AppletOrder=162;177;161;179;272;178;230;156;249
 
 [Containments][231]
 activityId=
@@ -249,7 +249,7 @@ immutability=1
 plugin=org.kde.plasma.bluetooth
 
 [Containments][231][Applets][244][Configuration]
-PreloadWeight=97
+PreloadWeight=100
 
 [Containments][231][Applets][245]
 immutability=1
