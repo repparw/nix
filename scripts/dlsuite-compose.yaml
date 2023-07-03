@@ -88,7 +88,6 @@ services:
         volumes:
             - '/home/docker/jellyfin:/config:Z'
             - '/home/docker/data/media:/data/media:ro'
-            - '/run/media/repparw/HDD:/data/hdd:ro'
         ports:
             - '8096:8096'
             - '8920:8920' #optional
