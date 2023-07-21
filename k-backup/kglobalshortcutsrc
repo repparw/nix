@@ -293,6 +293,10 @@ stopmedia=none,Media Stop,Stop media playback
 _k_friendly_name=mpvclip
 _launch=Meta+Z,none,/home/repparw/.config/scripts/mpvclip
 
+[obs_buffer.desktop]
+_k_friendly_name=obs_buffer
+_launch=Ctrl+Alt+Shift+D,none,obs_buffer
+
 [org.kde.dolphin.desktop]
 _k_friendly_name=Dolphin
 _launch=Meta+Shift+E,Meta+E,Dolphin
