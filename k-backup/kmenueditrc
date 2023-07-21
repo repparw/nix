@@ -2,8 +2,8 @@
 SplitterSizes=462,633
 
 [KFileDialog Settings]
-Recent Files[$e]=Electrum,file:///usr/share/icons/socials.png,file:///bin/firefox,file:$HOME/.config/Ryujinx/games/icon.png
-Recent URLs[$e]=file:$HOME/,file:$HOME/Documents/,file:$HOME/Downloads/,file:$HOME/.config/Ryujinx/games/,file:$HOME/.config/Ryujinx/,file:///bin/,file:///usr/share/icons/
+Recent Files[$e]=Electrum,file:$HOME/Games/Red Dead Redemption 2/game/prefix/drive_c/game/icon.png,file:///usr/share/icons/socials.png,file:///bin/firefox
+Recent URLs[$e]=file:$HOME/,file:$HOME/Documents/,file:$HOME/Downloads/,file:///bin/,file:///usr/share/icons/,file:$HOME/Games/Red Dead Redemption 2/game/prefix/drive_c/game/
 detailViewIconSize=16
 
 [MainWindow]
