@@ -5,14 +5,6 @@ update_info=bismuth_shortcuts_category.upd:bismuth-shortcuts-category,bismuth_sh
 _k_friendly_name=Activity Manager
 switch-to-activity-c2f7948f-cf52-46ec-9b7e-c825ba193393=none,none,Switch to activity "Default"
 
-[Hearthstone Deck Tracker.desktop]
-_k_friendly_name=Hearthstone Deck Tracker
-_launch=none,none,Launch Hearthstone Deck Tracker
-
-[Hearthstone.desktop]
-_k_friendly_name=Hearthstone
-_launch=none,none,Launch Hearthstone
-
 [KDE Keyboard Layout Switcher]
 Switch keyboard layout to English (US)=none,none,Switch keyboard layout to English (US)
 Switch keyboard layout to Español (latinoamericano)=none,none,Cambiar la distribución del teclado a Español (latinoamericano)
@@ -20,71 +12,17 @@ Switch keyboard layout to Spanish (Latin American)=none,none,Switch keyboard lay
 Switch to Next Keyboard Layout=none,Meta+Alt+K,Switch to Next Keyboard Layout
 _k_friendly_name=Keyboard Layout Switcher
 
-[League of Legends.desktop]
-_k_friendly_name=League of Legends
-_launch=none,none,Launch League of Legends
-
-[Mobalytics Desktop.desktop]
-_k_friendly_name=Mobalytics Desktop
-_launch=none,none,Launch Mobalytics Desktop
-
-[Persona 5 Royal.desktop]
-_k_friendly_name=Persona 5 Royal
-_launch=none,none,Launch Persona 5 Royal
-
-[Riot Client.desktop]
-_k_friendly_name=Riot Client
-_launch=none,none,Launch Riot Client
-
 [Socials.desktop]
 _k_friendly_name=Socials
 _launch=Meta+S,none,Socials
-
-[archisteamfarm.desktop]
-_k_friendly_name=ArchiSteamFarm
-_launch=none,none,Launch ArchiSteamFarm
-
-[awakened.desktop]
-_k_friendly_name=Awakened
-_launch=none,none,Launch Awakened
-
-[binance.desktop]
-_k_friendly_name=Binance
-_launch=none,none,Launch Binance
 
 [bttoggle.desktop]
 _k_friendly_name=bttoggle
 _launch=Meta+Shift+B,none,/home/repparw/.config/scripts/bttoggle
 
-[com.github.eloston.ungoogledchromium.flextop.chrome-dbjlimibnhmfcgadnpbfgkmmeijhieif-default.desktop]
-_k_friendly_name=Deezer
-_launch=none,none,Launch Deezer
-
-[com.github.eloston.ungoogledchromium.flextop.chrome-egmafekfmcnknbdlbfbhafbllplmjlhn-default.desktop]
-_k_friendly_name=GeForce NOW
-_launch=none,none,Launch GeForce NOW
-
-[com.microsoft.Edge.desktop]
-_k_friendly_name=Microsoft Edge
-_launch=Meta+Shift+Space,none,Microsoft Edge
-new-private-window=none,none,New InPrivate Window
-new-window=none,none,New Window
-
-[com.valvesoftware.Steam.desktop]
-_k_friendly_name=Steam
-_launch=none,none,Launch Steam
-
-[deemix.desktop]
-_k_friendly_name=deemix
-_launch=none,none,Launch deemix
-
 [device="F8:4E:17:E6:22:D2".desktop]
 _k_friendly_name=\s/home/repparw/.config/scripts/bttoggle
 _launch=Meta+B,none,device="F8:4E:17:E6:22:D2" /home/repparw/.config/scripts/bttoggle\n
-
-[electrum.desktop]
-_k_friendly_name=Electrum
-_launch=none,none,Launch Electrum
 
 [firefox.desktop]
 _k_friendly_name=Firefox
@@ -96,10 +34,6 @@ profile-manager-window=none,none,Open the Profile Manager
 [heroic games launcher.desktop]
 _k_friendly_name=Heroic Games Launcher
 _launch=none,none,Launch Heroic Games Launcher
-
-[io.github.spacingbat3.webcord.desktop]
-_k_friendly_name=Discord
-_launch=none,none,Launch Discord
 
 [jelly.desktop]
 _k_friendly_name=jelly
@@ -152,9 +86,17 @@ _k_friendly_name=Custom Shortcuts Service
 {f3ac6719-54ce-4e0d-9832-1f6d2579f371}=none,none,maimclip mouse
 {fa64ef95-8541-49a2-9d1f-3183513e25ac}=none,none,bt connect
 
-[kindle.desktop]
-_k_friendly_name=Kindle
-_launch=none,none,Launch Kindle
+[killall-4.desktop]
+_k_friendly_name=\ssteam || steam -gamepadui
+_launch=Ctrl+Alt+Shift+A,none,killall steam || steam -gamepadui
+
+[killall-6.desktop]
+_k_friendly_name=\sDiscord || Discord
+_launch=Ctrl+Alt+Shift+E,none,killall Discord || Discord
+
+[killall.desktop]
+_k_friendly_name=\sspotify || flatpak run com.spotify.Client
+_launch=Ctrl+Alt+Shift+H,none,killall spotify || flatpak run com.spotify.Client
 
 [kiosk.desktop]
 _k_friendly_name=kiosk
@@ -351,22 +293,6 @@ stopmedia=none,Media Stop,Stop media playback
 _k_friendly_name=mpvclip
 _launch=Meta+Z,none,/home/repparw/.config/scripts/mpvclip
 
-[mymonero.desktop]
-_k_friendly_name=MyMonero
-_launch=none,none,Launch MyMonero
-
-[net.lutris.hearthstone-40.desktop]
-_k_friendly_name=Hearthstone
-_launch=none,none,Launch Hearthstone
-
-[net.lutris.league-of-legends-1.desktop]
-_k_friendly_name=League of Legends
-_launch=none,none,Launch League of Legends
-
-[net.lutris.mobalytics-2.desktop]
-_k_friendly_name=mobalytics
-_launch=none,none,Launch mobalytics
-
 [org.kde.dolphin.desktop]
 _k_friendly_name=Dolphin
 _launch=Meta+Shift+E,Meta+E,Dolphin
@@ -400,16 +326,6 @@ WindowUnderCursorScreenShot=Meta+Ctrl+Print,Meta+Ctrl+Print,Capture Window Under
 _k_friendly_name=Spectacle
 _launch=none,Print,Launch Spectacle
 
-[org.qutebrowser.qutebrowser.desktop]
-_k_friendly_name=Launch qutebrowser
-_launch=none,none,Launch qutebrowser
-new-window=none,none,New Window
-preferences=none,none,Preferences
-
-[org.winehq.flatpak-wine.desktop]
-_k_friendly_name=flatpak-wine (5.0.5)
-_launch=none,none,Launch flatpak-wine (5.0.5)
-
 [org_kde_powerdevil]
 Decrease Keyboard Brightness=Keyboard Brightness Down,Keyboard Brightness Down,Decrease Keyboard Brightness
 Decrease Screen Brightness=Monitor Brightness Down,Monitor Brightness Down,Decrease Screen Brightness
@@ -422,10 +338,6 @@ Sleep=Sleep,Sleep,Suspend
 Toggle Keyboard Backlight=Keyboard Light On/Off,Keyboard Light On/Off,Toggle Keyboard Backlight
 Turn Off Screen=none,none,Turn Off Screen
 _k_friendly_name=Power Management
-
-[path of building.desktop]
-_k_friendly_name=Path of Building
-_launch=none,none,Launch Path of Building
 
 [plasmashell]
 _k_friendly_name=Plasma
@@ -468,64 +380,14 @@ switch to next activity=none,,Switch to Next Activity
 switch to previous activity=none,,Switch to Previous Activity
 toggle do not disturb=none,,Toggle do not disturb
 
-[rinfo.desktop]
-_k_friendly_name=rInfo
-_launch=none,none,Launch rInfo
-
 [samsung-configurator.desktop]
 _k_friendly_name=Samsung Unified Driver Configurator
 _launch=none,none,Launch Samsung Unified Driver Configurator
-
-[samsung-helpviewer.desktop]
-_k_friendly_name=Samsung Unified Driver Help
-_launch=none,none,Launch Samsung Unified Driver Help
-
-[samsung-uninstallud.desktop]
-_k_friendly_name=Uninstall Samsung Unified Driver
-_launch=none,none,Launch Uninstall Samsung Unified Driver
 
 [scrcpy-2.desktop]
 _k_friendly_name=scrcpy
 _launch=Meta+Shift+S,none,/home/repparw/.config/scripts/scrcpy
 
-[steam-2.desktop]
-BigPicture=none,none,Big Picture
-Community=none,none,Community
-Friends=none,none,Friends
-Library=none,none,Library
-News=none,none,News
-Screenshots=none,none,Screenshots
-Servers=none,none,Servers
-Settings=none,none,Settings
-Store=none,none,Store
-_k_friendly_name=Steam bp
-_launch=none,none,Launch Steam bp
-
-[steam.desktop]
-BigPicture=none,none,Big Picture
-Community=none,none,Community
-Friends=none,none,Friends
-Library=none,none,Library
-News=none,none,News
-Screenshots=none,none,Screenshots
-Servers=none,none,Servers
-Settings=none,none,Settings
-Store=none,none,Store
-_k_friendly_name=Steam
-_launch=none,none,Launch Steam
-
 [systemsettings.desktop]
 _k_friendly_name=System Settings
 _launch=Tools,Tools,System Settings
-
-[vitetris.desktop]
-_k_friendly_name=vitetris
-_launch=none,none,Launch vitetris
-
-[vnc.desktop]
-_k_friendly_name=VNC
-_launch=none,none,Launch VNC
-
-[webcord.desktop]
-_k_friendly_name=WebCord
-_launch=none,none,Launch WebCord
