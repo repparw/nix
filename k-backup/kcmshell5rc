@@ -1,6 +1,6 @@
 [KFileDialog Settings]
-Recent Files[$e]=Joplin.AppImage,file:$HOME/git/desktopconfig/KDECustomShortcuts,file:$HOME/Pictures/bg/who/tardis2.jpg,file:$HOME/.joplin/Joplin.AppImage
-Recent URLs[$e]=file:$HOME/git/desktopconfig/
+Recent Files[$e]=Joplin.AppImage,file:$HOME/.config/scripts/obs_start,file:$HOME/.config/scripts/obs_stop,file:$HOME/git/desktopconfig/KDECustomShortcuts
+Recent URLs[$e]=file:$HOME/.config/scripts/,file:$HOME/git/desktopconfig/,file:$HOME/
 detailViewIconSize=16
 
 [KPropertiesDialog]
