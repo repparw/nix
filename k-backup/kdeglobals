@@ -110,16 +110,16 @@ ColorSchemeHash=68f7da041112b660ac4e6911cf4bf8a7b361feda
 Name=Breeze Dark
 TerminalApplication=kitty
 TerminalService=kitty.desktop
-XftHintStyle=hintfull
-XftSubPixel=rgb
+XftHintStyle=hintslight
+XftSubPixel=none
 accentColorFromWallpaper=false
 dbfile=/home/repparw/.mozilla/firefox/o3rowi7a.default/places.sqlite
-fixed=Fira Code,10,-1,5,50,0,0,0,0,0
-font=Fira Code,10,-1,5,50,0,0,0,0,0
-menuFont=Fira Code,10,-1,5,50,0,0,0,0,0
+fixed=Noto Sans Mono,10,-1,5,50,0,0,0,0,0
+font=Noto Sans,10,-1,5,50,0,0,0,0,0
+menuFont=Noto Sans,10,-1,5,50,0,0,0,0,0
 shadeSortColumn=true
-smallestReadableFont=Fira Code,8,-1,5,50,0,0,0,0,0
-toolBarFont=Fira Code,10,-1,5,50,0,0,0,0,0
+smallestReadableFont=Noto Sans,8,-1,5,50,0,0,0,0,0
+toolBarFont=Noto Sans,10,-1,5,50,0,0,0,0,0
 
 [Icons]
 Theme=Gruvbox
@@ -165,7 +165,7 @@ MaximumRemoteSize=0
 [WM]
 activeBackground=36,42,36
 activeBlend=235,219,178
-activeFont=Fira Code,10,-1,5,50,0,0,0,0,0
+activeFont=Noto Sans,10,-1,5,50,0,0,0,0,0
 activeForeground=255,255,255
 frame=61,174,233
 inactiveBackground=36,42,36

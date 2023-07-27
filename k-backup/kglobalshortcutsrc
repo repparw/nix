@@ -24,13 +24,6 @@ _launch=Meta+Shift+B,none,/home/repparw/.config/scripts/bttoggle
 _k_friendly_name=\s/home/repparw/.config/scripts/bttoggle
 _launch=Meta+B,none,device="F8:4E:17:E6:22:D2" /home/repparw/.config/scripts/bttoggle\n
 
-[firefox.desktop]
-_k_friendly_name=Firefox
-_launch=Meta+Space,none,Firefox
-new-private-window=none,none,Open a New Private Window
-new-window=none,none,Open a New Window
-profile-manager-window=none,none,Open the Profile Manager
-
 [heroic games launcher.desktop]
 _k_friendly_name=Heroic Games Launcher
 _launch=none,none,Launch Heroic Games Launcher
@@ -194,12 +187,12 @@ Walk Through Desktops=none,,Walk Through Desktops
 Walk Through Desktops (Reverse)=none,,Walk Through Desktops (Reverse)
 Walk Through Windows=Meta+C,Alt+Tab,Walk Through Windows
 Walk Through Windows (Reverse)=Meta+Shift+C,Alt+Shift+Backtab,Walk Through Windows (Reverse)
-Walk Through Windows Alternative=none,,Walk Through Windows Alternative
-Walk Through Windows Alternative (Reverse)=none,,Walk Through Windows Alternative (Reverse)
+Walk Through Windows Alternative=,,Walk Through Windows Alternative
+Walk Through Windows Alternative (Reverse)=,,Walk Through Windows Alternative (Reverse)
 Walk Through Windows of Current Application=Alt+`,Alt+`,Walk Through Windows of Current Application
 Walk Through Windows of Current Application (Reverse)=Alt+~,Alt+~,Walk Through Windows of Current Application (Reverse)
-Walk Through Windows of Current Application Alternative=none,,Walk Through Windows of Current Application Alternative
-Walk Through Windows of Current Application Alternative (Reverse)=none,,Walk Through Windows of Current Application Alternative (Reverse)
+Walk Through Windows of Current Application Alternative=,,Walk Through Windows of Current Application Alternative
+Walk Through Windows of Current Application Alternative (Reverse)=,,Walk Through Windows of Current Application Alternative (Reverse)
 Window Above Other Windows=none,,Keep Window Above Others
 Window Below Other Windows=none,,Keep Window Below Others
 Window Close=Meta+W,Alt+F4,Close Window
@@ -329,6 +322,13 @@ RectangularRegionScreenShot=Meta+Shift+Print\tMeta+F11,Meta+Shift+Print,Capture 
 WindowUnderCursorScreenShot=Meta+Ctrl+Print,Meta+Ctrl+Print,Capture Window Under Cursor
 _k_friendly_name=Spectacle
 _launch=none,Print,Launch Spectacle
+
+[org.mozilla.firefox.desktop]
+_k_friendly_name=Firefox Web Browser
+_launch=Meta+Space,none,Firefox Web Browser
+new-private-window=none,none,New Private Window
+new-window=none,none,New Window
+profile-manager-window=none,none,Open the Profile Manager
 
 [org_kde_powerdevil]
 Decrease Keyboard Brightness=Keyboard Brightness Down,Keyboard Brightness Down,Decrease Keyboard Brightness
