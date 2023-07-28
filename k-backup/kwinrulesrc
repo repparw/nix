@@ -14,15 +14,15 @@ wmclasscomplete=true
 wmclassmatch=1
 
 [1]
-Description=Application settings for firefox
+Description=Application settings for lutris
 clientmachine=localhost
-desktopfile=org.mozilla.firefox
+desktopfile=lutris
 desktopfilerule=3
 fullscreen=true
 position=3399,134
 screen=1
 windowrole=browser
-wmclass=\sfirefox
+wmclass=python3.11 lutris
 wmclasscomplete=true
 wmclassmatch=1
 
@@ -66,18 +66,18 @@ wmclasscomplete=true
 wmclassmatch=1
 
 [2]
-Description=Application settings for scrcpy
+Description=Application settings for firefox
 above=true
 clientmachine=localhost
-desktopfile=mozilla-firefox
+desktopfile=org.mozilla.firefox
 desktopfilerule=3
 fullscreen=true
 position=3399,134
-positionrule=3
 screen=1
 title=mine
 windowrole=browser
-wmclass=scrcpy
+wmclass=\sfirefox
+wmclasscomplete=true
 wmclassmatch=1
 
 [226737ec-ed2c-4b58-8d73-037e8902d0aa]
@@ -106,8 +106,22 @@ wmclasscomplete=true
 wmclassmatch=1
 
 [3]
+Description=Application settings for scrcpy
+clientmachine=localhost
+desktopfile=mozilla-firefox
+desktopfilerule=3
+position=3399,134
+positionrule=3
+screen=1
+title=mine
+windowrole=browser
+wmclass=scrcpy
+wmclassmatch=1
+
+[4]
 Description=Window settings for kitty
 clientmachine=localhost
+fsplevel=1
 position=3489,68
 screen=1
 screenrule=3
@@ -118,10 +132,13 @@ windowrole=browser
 wmclass=kitty
 wmclassmatch=1
 
-[4]
+[5]
 Description=Window settings for scrcpy
+above=true
 clientmachine=localhost
 fsplevel=1
+fullscreen=true
+minsize=1,1
 noborderrule=2
 position=3489,68
 positionrule=2
@@ -132,32 +149,15 @@ windowrole=browser
 wmclass=scrcpy
 wmclassmatch=1
 
-[5]
+[6]
 Description=Application settings for mpv
 above=true
 clientmachine=localhost
 fsplevel=1
 fsplevelrule=2
-fullscreen=true
 minsize=1,1
 position=3489,68
 title=video0 - mpv
-windowrole=browser
-wmclass=gl mpv
-wmclasscomplete=true
-wmclassmatch=1
-
-[6]
-Description=webcam
-above=true
-aboverule=3
-clientmachine=localhost
-fsplevel=1
-minsize=1,1
-position=3489,68
-title=video0 - mpv
-titlematch=1
-types=1
 windowrole=browser
 wmclass=gl mpv
 wmclasscomplete=true
@@ -172,19 +172,23 @@ wmclasscomplete=true
 wmclassmatch=1
 
 [7]
-Description=Minimum size for windows
+Description=webcam
 above=true
+aboverule=3
 clientmachine=localhost
 fsplevel=1
 fullscreen=true
 minsize=1,1
-minsizerule=2
 noborder=true
 position=0,0
 screen=1
 title=video0 - mpv
+titlematch=1
 types=1
 windowrole=browser
+wmclass=gl mpv
+wmclasscomplete=true
+wmclassmatch=1
 
 [7674cf56-ca5f-469c-8b37-4f31f559ad66]
 Description=Application settings for hearthstone.exe
@@ -197,10 +201,19 @@ wmclass=hearthstone.exe
 wmclassmatch=1
 
 [8]
-Description=No titlebars for all
+Description=Minimum size for windows
 above=true
 clientmachine=localhost
 minsize=1,1
+minsizerule=2
+noborder=true
+title=video0 - mpv
+types=1
+windowrole=browser
+
+[9]
+Description=No titlebars for all
+clientmachine=localhost
 noborder=true
 noborderrule=2
 title=video0 - mpv
@@ -214,7 +227,7 @@ count=9
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=6aca8946-c1d2-4797-b01f-723a9431e2f7,1,2,3,4,5,6,7,8
+rules=1,2,3,4,5,6,7,8,9
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
