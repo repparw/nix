@@ -1,0 +1,2 @@
+[General]
+commands="@ByteArray({\"_0bfe288d_61d2_454d_b762_51801be9323f_\":{\"command\":\"bluetoothctl disconnect\",\"name\":\"bt disc\"}})"
