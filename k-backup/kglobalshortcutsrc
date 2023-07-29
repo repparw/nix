@@ -53,7 +53,7 @@ _k_friendly_name=Custom Shortcuts Service
 {14f555ce-1676-435b-b3fc-83d6080d323c}=Meta+Return,none,term
 {24b536a3-a4fc-43f8-94c0-30c44c4440d5}=none,none,maimqr
 {269bd72c-00ab-4d46-8fa2-a1abec6f454a}=Meta+F4,none,shutdown
-{2f20a989-7528-4da7-bb2a-7f60f24e3f7e}=Meta+N,none,notes
+{2f20a989-7528-4da7-bb2a-7f60f24e3f7e}=none,none,notes
 {3fe7dfc5-1d7c-4395-8188-6b497699c878}=none,none,jellyfin
 {42a49e96-f3c8-45dd-9b16-d064d66e88b1}=none,none,Anki
 {67791159-fdfb-4e31-8ebf-3508f6ba2101}=Meta+Shift+F7,none,mpc seek -
@@ -395,6 +395,10 @@ _launch=Meta+Shift+S,none,/home/repparw/.config/scripts/scrcpy
 [systemsettings.desktop]
 _k_friendly_name=System Settings
 _launch=Tools,Tools,System Settings
+
+[xdg-open-2.desktop]
+_k_friendly_name=xdg-open https://notion.so
+_launch=Meta+N,none,xdg-open https://notion.so
 
 [xdg-open.desktop]
 _k_friendly_name=xdg-open https://todoist.com/app/
