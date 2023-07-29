@@ -105,7 +105,7 @@ History Items[$e]=file:///mnt/hdd/Videos,file:///mnt/seagate,file:///mnt/hdd,fil
 
 [General]
 AccentColor=104,157,105
-BrowserApplication=firefox.desktop
+BrowserApplication=org.mozilla.firefox.desktop
 ColorSchemeHash=68f7da041112b660ac4e6911cf4bf8a7b361feda
 Name=Breeze Dark
 TerminalApplication=kitty
