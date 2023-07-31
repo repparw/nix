@@ -290,6 +290,10 @@ _launch=Meta+Z,none,/home/repparw/.config/scripts/mpvclip
 _k_friendly_name=obs_buffer
 _launch=Ctrl+Alt+Shift+D,none,obs_buffer
 
+[obs_togglerec-2.desktop]
+_k_friendly_name=obs_togglerec
+_launch=Ctrl+Alt+Shift+C,none,obs_togglerec
+
 [org.kde.dolphin.desktop]
 _k_friendly_name=Dolphin
 _launch=Meta+Shift+E,Meta+E,Dolphin
