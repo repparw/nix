@@ -7,10 +7,10 @@ tmux send-keys 'temp' 'C-m'
 #tmux send-keys 'chia start farmer && sleep 30s; watch -n 43200 chia farm summary' 'C-m'
 #tmux select-pane -t 0
 tmux split-window -v 
-tmux send-keys 'cpumine --cpu-max-threads-hint=85' 'C-m'
+tmux send-keys 'cpumine --cpu-max-threads-hint=40' 'C-m'
 tmux resize-pane -U 25
-#tmux split-window -h
-#tmux send-keys 'gputemp' 'C-m'
+tmux split-window -h
+tmux send-keys 'cd ~/Games/mcserver && java -jar puffer.jar --nogui' 'C-m'
 tmux select-pane -t 2
 #tmux resize-pane -R 15
 tmux select-pane -t 0
