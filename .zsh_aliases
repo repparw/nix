@@ -161,3 +161,8 @@
 note () {
   echo "$@" >> notes
 }
+
+timer () {
+  sleep "$@" && mpv --really-quiet --volume=150 ~/Music/ringtone.mp3
+
+}
