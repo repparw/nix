@@ -67,7 +67,7 @@ _k_friendly_name=Custom Shortcuts Service
 {92c5aa35-801e-44ef-aa9d-9be29c56d010}=Meta+F10,none,mpc next
 {9792072a-5995-4d78-81f2-b68f19df6602}=none,none,mpc toggle
 {a3f93496-a9ae-485b-ae68-c926db08bb2b}=Meta+R,none,rpi tmux
-{a6387294-f354-4723-998c-fc8c6f9f26f0}=Meta+T,none,top
+{a6387294-f354-4723-998c-fc8c6f9f26f0}=none,none,top
 {a78614b6-3b89-456f-9deb-1e48bf250fa0}=none,none,mpv clipboard
 {aa7ff60c-270f-4c7d-a6c3-4cd0e4b95c66}=Meta+F7,none,mpc prev
 {bcdb4344-b94b-43e6-a885-e7a9e54b3ef1}=none,none,bt disconnect
@@ -94,6 +94,10 @@ _launch=Ctrl+Alt+Shift+H,none,killall spotify || flatpak run com.spotify.Client
 [kiosk.desktop]
 _k_friendly_name=kiosk
 _launch=Meta+Y,none,/home/repparw/.config/scripts/kiosk
+
+[kitty-2.desktop]
+_k_friendly_name=kitty btm
+_launch=Meta+T,none,kitty btm
 
 [kmix]
 _k_friendly_name=Audio Volume
