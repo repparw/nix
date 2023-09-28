@@ -36,9 +36,9 @@ done=BreezeToBreezeLight
 mtime=1694476800
 
 [delete_cursor_old_default_size.upd]
-ctime=1694865522
+ctime=1695910225
 done=DeleteCursorOldDefaultSize
-mtime=1694476800
+mtime=1694514763
 
 [disable_kmix.upd]
 ctime=1694865522
@@ -86,9 +86,9 @@ done=SideBar_StatusBar_Rename,ImageView_AlphaBackgroundMode_Update,DeleteThumbna
 mtime=1688446686
 
 [icons_remove_effects.upd]
-ctime=1694865522
+ctime=1695910225
 done=IconsRemoveEffects
-mtime=1694476800
+mtime=1694514763
 
 [importwizard.upd]
 ctime=1621628249
@@ -166,14 +166,14 @@ ctime=1625935772
 mtime=1615898414
 
 [krunnerglobalshortcuts2.upd]
-ctime=1694865495
+ctime=1695910173
 done=5.22KRunnerGlobalShortcuts
-mtime=1694476800
+mtime=1694514764
 
 [krunnerhistory.upd]
-ctime=1694865495
+ctime=1695910173
 done=5.21KRunnerHistory
-mtime=1694476800
+mtime=1694514764
 
 [krunnerplugins.upd]
 ctime=1610935274
@@ -234,9 +234,9 @@ done=pimsettingexporter-15.08-kickoff
 mtime=1580772925
 
 [plasmashell-5.27-use-panel-thickness-in-default-group.upd]
-ctime=1694865495
+ctime=1695910173
 done=plasmashell-5.27-use-panel-thickness-in-default-group
-mtime=1694476800
+mtime=1694514764
 
 [sieveeditor.upd]
 ctime=1600635915
@@ -264,9 +264,9 @@ done=spectacle-migrate-shortcuts
 mtime=1688446826
 
 [style_widgetstyle_default_breeze.upd]
-ctime=1694865522
+ctime=1695910225
 done=StyleWidgetStyleDefaultBreeze
-mtime=1694476800
+mtime=1694514764
 
 [webengineurlinterceptoradblock.upd]
 ctime=1673961145
