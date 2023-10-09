@@ -46,14 +46,14 @@ done=PlasmaVolume_DisableKMixAutostart
 mtime=1694476800
 
 [dolphin_detailsmodesettings.upd]
-ctime=1690385015
-done=rename-leading-padding
-mtime=1688448822
+ctime=1696877035
+done=rename-leading-padding,move-content-display
+mtime=1694440132
 
 [filepicker.upd]
-ctime=1692737032
+ctime=1696877031
 done=filepicker-remove-old-previews-entry
-mtime=1691239057
+mtime=1693726530
 
 [fonts_akregator.upd]
 ctime=1694865522
@@ -81,9 +81,9 @@ done=dont_use_gtk_css_for_window_decorations,gtk_theme,remove_deprecated_gtk4_op
 mtime=1694476800
 
 [gwenview.upd]
-ctime=1690385012
+ctime=1696877033
 done=SideBar_StatusBar_Rename,ImageView_AlphaBackgroundMode_Update,DeleteThumbnailSetting_Rename
-mtime=1688446686
+mtime=1694487968
 
 [icons_remove_effects.upd]
 ctime=1695910225
@@ -101,8 +101,8 @@ done=kaddressbook-15.08-kickoff
 mtime=1611951964
 
 [kcalcrc.upd]
-ctime=1690385022
-mtime=1688448977
+ctime=1696877055
+mtime=1694248504
 
 [kcm_rename_plasma_desktop.upd]
 ctime=1694865525
@@ -244,24 +244,24 @@ done=sieveeditor-15.08-kickoff
 mtime=1580772937
 
 [spectacle_clipboard.upd]
-ctime=1690385018
+ctime=1696877054
 done=clipboard-settings-change
-mtime=1688446826
+mtime=1694248417
 
 [spectacle_newConfig.upd]
-ctime=1690385018
+ctime=1696877054
 done=spectacle-new-config
-mtime=1688446826
+mtime=1694248417
 
 [spectacle_rememberregion.upd]
-ctime=1690385018
+ctime=1696877054
 done=spectacle-migrate-rememberregion
-mtime=1688446826
+mtime=1694248417
 
 [spectacle_shortcuts.upd]
-ctime=1690385018
+ctime=1696877054
 done=spectacle-migrate-shortcuts
-mtime=1688446826
+mtime=1694248417
 
 [style_widgetstyle_default_breeze.upd]
 ctime=1695910225
