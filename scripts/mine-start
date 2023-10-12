@@ -9,9 +9,9 @@ tmux send-keys 'temp' 'C-m'
 tmux split-window -v 
 tmux send-keys 'cpumine --cpu-max-threads-hint=40' 'C-m'
 tmux resize-pane -U 25
-tmux split-window -h
-tmux send-keys 'cd ~/Games/mcserver && java -jar puffer.jar --nogui' 'C-m'
-tmux select-pane -t 2
+#tmux split-window -h
+#tmux send-keys 'cd ~/Games/mcserver && java -jar puffer.jar --nogui' 'C-m'
+#tmux select-pane -t 2
 #tmux resize-pane -R 15
 tmux select-pane -t 0
 tmux -2 attach-session -t mine
