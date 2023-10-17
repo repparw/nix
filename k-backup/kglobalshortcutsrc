@@ -298,6 +298,12 @@ _launch=Ctrl+Alt+Shift+D,none,obs_buffer
 _k_friendly_name=obs_togglerec
 _launch=Ctrl+Alt+Shift+C,none,obs_togglerec
 
+[org.chromium.Chromium.desktop]
+_k_friendly_name=Chromium
+_launch=Meta+Shift+Space,none,Chromium
+new-private-window=none,none,New Incognito window
+new-window=none,none,New Window
+
 [org.kde.dolphin.desktop]
 _k_friendly_name=Dolphin
 _launch=Meta+Shift+E,Meta+E,Dolphin
