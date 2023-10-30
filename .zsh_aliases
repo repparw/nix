@@ -53,7 +53,7 @@
 
 		alias trash='mv --force -t ~/.local/share/Trash '
 
-		alias x='trash'
+		alias x='xdg-open'
 
 		alias cp='rsync -ah --info=progress2'
 
