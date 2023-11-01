@@ -15,9 +15,9 @@ local assdraw = require 'mp.assdraw'
 local opts = {
     --key bindings
     toggle_menu_binding = "ctrl+f",
-    up_binding = "UP",
-    down_binding = "DOWN",
-    select_binding = "ENTER",
+    up_binding = "k",
+    down_binding = "j",
+    select_binding = "l",
 
     --formatting / cursors
     selected_and_active     = "▶ - ",
@@ -26,7 +26,7 @@ local opts = {
     unselected_and_inactive = "○ - ",
 
 	--font size scales by window, if false requires larger font and padding sizes
-	scale_playlist_by_window=false,
+	scale_playlist_by_window=true,
 
     --playlist ass style overrides inside curly brackets, \keyvalue is one field, extra \ for escape in lua
     --example {\\fnUbuntu\\fs10\\b0\\bord1} equals: font=Ubuntu, size=10, bold=no, border=1
