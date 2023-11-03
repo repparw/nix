@@ -29,7 +29,7 @@ services:
             - '54536:54536'
             - '8080:8080'
         restart: unless-stopped
-        image: 'linuxserver/qbittorrent:latest'
+        image: 'ghcr.io/hotio/qbittorrent:latest'
     sonarr:
         container_name: sonarr
         environment:
