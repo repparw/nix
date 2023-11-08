@@ -1,17 +1,20 @@
 # symlink in /etc/docker/compose/dlsuite/docker-compose.yaml
-version: '3.3'
+version: '3.4'
 networks:
     default:
         name: dlsuite
         external: true
+
+x-environment: &default-tz-puid-pgid
+  TZ: America/Argentina/Buenos_Aires
+  PUID: 1001
+  PGID: 963
+
 services:
     prowlarr:
-        image: 'linuxserver/prowlarr:latest'
+        image: 'lscr.io/linuxserver/prowlarr:latest'
         container_name: prowlarr
-        environment:
-            - PUID=1001
-            - PGID=963
-            - TZ=America/Argentina/Buenos_Aires
+        environment: *default-tz-puid-pgid
         volumes:
             - '/home/docker/prowlarr:/config:Z'
         ports:
@@ -19,9 +22,7 @@ services:
         restart: unless-stopped
     qbittorrent:
         container_name: qbittorrent
-        environment:
-            - PUID=1001
-            - PGID=963
+        environment: *default-tz-puid-pgid
         volumes:
             - '/home/docker/qbittorrent:/config:Z'
             - '/home/docker/data/torrents:/data/torrents:z'
@@ -32,10 +33,7 @@ services:
         image: 'ghcr.io/hotio/qbittorrent:latest'
     sonarr:
         container_name: sonarr
-        environment:
-            - PUID=1001
-            - PGID=963
-            - TZ=America/Argentina/Buenos_Aires
+        environment: *default-tz-puid-pgid
         volumes:
             - '/dev/rtc:/dev/rtc:ro'
             - '/home/docker/sonarr:/config:Z'
@@ -45,13 +43,10 @@ services:
         links:
             - qbittorrent
         restart: unless-stopped
-        image: 'linuxserver/sonarr:latest'
+        image: 'lscr.io/linuxserver/sonarr:latest'
     radarr:
         container_name: radarr
-        environment:
-            - PUID=1001
-            - PGID=963
-            - TZ=America/Argentina/Buenos_Aires
+        environment: *default-tz-puid-pgid
         volumes:
             - '/home/docker/radarr:/config:Z'
             - '/home/docker/data/:/data:z'
@@ -60,14 +55,11 @@ services:
         links:
             - qbittorrent
         restart: unless-stopped
-        image: 'linuxserver/radarr:latest'
+        image: 'lscr.io/linuxserver/radarr:latest'
     bazarr:
-        image: 'linuxserver/bazarr:latest'
+        image: 'lscr.io/linuxserver/bazarr:latest'
         container_name: bazarr
-        environment:
-            - PUID=1001
-            - PGID=963
-            - TZ=America/Argentina/Buenos_Aires
+        environment: *default-tz-puid-pgid
         volumes:
             - '/home/docker/bazarr:/config:Z'
             - '/home/docker/data:/data:z'
@@ -75,7 +67,7 @@ services:
             - '6767:6767'
         restart: unless-stopped
     jellyfin:
-        image: 'linuxserver/jellyfin:latest'
+        image: 'lscr.io/linuxserver/jellyfin:latest'
         container_name: jellyfin
         environment:
             - PUID=974
@@ -94,26 +86,22 @@ services:
             - '7359:7359/udp' #optional
         restart: 'unless-stopped'
     freshrss:
-        image: 'linuxserver/freshrss:latest'
+        image: 'lscr.io/linuxserver/freshrss:latest'
         container_name: freshrss
-        environment:
-            - PUID=1001
-            - PGID=963
-            - TZ=America/Argentina/Buenos_Aires
         volumes:
-          - '/home/docker/freshrss:/config:Z'
+            - '/home/docker/freshrss:/config:Z'
         ports:
             - '81:80'
         restart: unless-stopped
     swag:
-        image: 'linuxserver/swag:latest'
+        image: 'lscr.io/linuxserver/swag:latest'
         container_name: swag
         cap_add:
             - NET_ADMIN
         environment:
+            - TZ=America/Argentina/Buenos_Aires
             - PUID=1001
             - PGID=963
-            - TZ=America/Argentina/Buenos_Aires
             - URL=repparw.com.ar
             - SUBDOMAINS=wildcard
             - VALIDATION=dns
