@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cd /mnt/hdd/Videos/obs;
+FILE=$(ls -Art1 ${CURRENT_DIR} | tail -n 1)
+ffmpeg -i $FILE -vcodec copy -ac 1 -acodec copy wsp/"${FILE%.*}".mp4; 
+

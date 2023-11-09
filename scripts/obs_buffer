@@ -1,2 +1,2 @@
 #!/bin/sh
-python -c "import obsws_python;obsws_python.ReqClient(host='localhost',port=4455,password='4x9zB2wqXHC0nNrz').save_replay_buffer()"
+python -c "import obsws_python;obsws_python.ReqClient(host='localhost',port=4455,password='SLm51wOgG7xsGnOl').save_replay_buffer()"
