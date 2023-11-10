@@ -155,6 +155,9 @@ PreloadWeight=100
 popupHeight=360
 popupWidth=360
 
+[Containments][140][Applets][278][Configuration][CompactView]
+maximumWidthUnits=18
+
 [Containments][140][Applets][278][Configuration][ConfigDialog]
 DialogHeight=540
 DialogWidth=720
@@ -291,13 +294,23 @@ PreloadWeight=100
 [Containments][231][Applets][275][Configuration]
 PreloadWeight=42
 
+[Containments][231][Applets][279][Configuration]
+PreloadWeight=42
+
+[Containments][231][Applets][280]
+immutability=1
+plugin=org.kde.plasma.mediacontroller
+
+[Containments][231][Applets][280][Configuration]
+PreloadWeight=60
+
 [Containments][231][ConfigDialog]
 DialogHeight=600
 DialogWidth=800
 
 [Containments][231][General]
-extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.vault,org.kde.kscreen,org.kde.plasma.clipboard,Portal,obs,spotify-client
-hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.devicenotifier,Portal,obs,spotify-client
+extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.vault,org.kde.kscreen,org.kde.plasma.clipboard,Portal,obs,spotify-client,org.kde.plasma.mediacontroller
+hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.devicenotifier,Portal,obs,spotify-client,org.kde.plasma.mediacontroller
 iconSpacing=1
 knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.battery,org.kde.plasma.vault,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout,org.kde.kscreen,org.kde.plasma.mediacontroller_plus
 
