@@ -282,7 +282,7 @@ immutability=1
 plugin=org.kde.kscreen
 
 [Containments][231][Applets][273][Configuration]
-PreloadWeight=60
+PreloadWeight=65
 
 [Containments][231][Applets][274]
 immutability=1
@@ -297,20 +297,16 @@ PreloadWeight=42
 [Containments][231][Applets][279][Configuration]
 PreloadWeight=42
 
-[Containments][231][Applets][280]
-immutability=1
-plugin=org.kde.plasma.mediacontroller
-
 [Containments][231][Applets][280][Configuration]
-PreloadWeight=60
+PreloadWeight=42
 
 [Containments][231][ConfigDialog]
 DialogHeight=600
 DialogWidth=800
 
 [Containments][231][General]
-extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.vault,org.kde.kscreen,org.kde.plasma.clipboard,Portal,obs,spotify-client,org.kde.plasma.mediacontroller
-hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.devicenotifier,Portal,obs,spotify-client,org.kde.plasma.mediacontroller
+extraItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.vault,org.kde.kscreen,org.kde.plasma.clipboard
+hiddenItems=org.kde.plasma.nightcolorcontrol,org.kde.plasma.devicenotifier,Portal,obs,spotify-client
 iconSpacing=1
 knownItems=org.kde.plasma.volume,org.kde.plasma.networkmanagement,org.kde.plasma.printmanager,org.kde.plasma.bluetooth,org.kde.plasma.manage-inputmethod,org.kde.plasma.mediacontroller,org.kde.plasma.notifications,org.kde.plasma.devicenotifier,org.kde.plasma.nightcolorcontrol,org.kde.kdeconnect,org.kde.plasma.battery,org.kde.plasma.vault,org.kde.plasma.clipboard,org.kde.plasma.keyboardindicator,org.kde.plasma.keyboardlayout,org.kde.kscreen,org.kde.plasma.mediacontroller_plus
 
