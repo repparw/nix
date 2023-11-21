@@ -6,9 +6,9 @@ done=akregator-15.08-kickoff
 mtime=1611951952
 
 [ark.upd]
-ctime=1699401773
+ctime=1700576087
 done=add-hamburgermenu-to-toolbar
-mtime=1694488214
+mtime=1699185678
 
 [bismuth_new_logger.upd]
 ctime=1671335509
@@ -51,9 +51,9 @@ done=PlasmaVolume_DisableKMixAutostart
 mtime=1698105600
 
 [dolphin_detailsmodesettings.upd]
-ctime=1699401776
+ctime=1700576086
 done=rename-leading-padding,move-content-display
-mtime=1694440132
+mtime=1699153766
 
 [filepicker.upd]
 ctime=1699401767
@@ -86,9 +86,9 @@ done=dont_use_gtk_css_for_window_decorations,gtk_theme,remove_deprecated_gtk4_op
 mtime=1698105600
 
 [gwenview.upd]
-ctime=1699401776
+ctime=1700576086
 done=SideBar_StatusBar_Rename,ImageView_AlphaBackgroundMode_Update,DeleteThumbnailSetting_Rename
-mtime=1694487968
+mtime=1699149915
 
 [icons_remove_effects.upd]
 ctime=1699412116
@@ -106,8 +106,8 @@ done=kaddressbook-15.08-kickoff
 mtime=1611951964
 
 [kcalcrc.upd]
-ctime=1699401814
-mtime=1694248504
+ctime=1700576103
+mtime=1699095708
 
 [kcm_rename_plasma_desktop.upd]
 ctime=1699412122
@@ -195,12 +195,12 @@ done=ksmserver_update_loginMode_value_default_enum
 mtime=1698105600
 
 [kwin.upd]
-ctime=1699412097
+ctime=1700576042
 done=replace-scalein-with-scale,port-minimizeanimation-effect-to-js,port-scale-effect-to-js,port-dimscreen-effect-to-js,auto-bordersize,animation-speed,desktop-grid-click-behavior,no-swap-encourage,make-translucency-effect-disabled-by-default,remove-flip-switch-effect,remove-cover-switch-effect,remove-cubeslide-effect,remove-xrender-backend,enable-scale-effect-by-default,overview-group-plugin-id,animation-speed-cleanup,replace-cascaded-zerocornered
 mtime=1698152196
 
 [kwinrules.upd]
-ctime=1699412097
+ctime=1700576042
 done=replace-placement-string-to-enum,use-virtual-desktop-ids
 mtime=1698152196
 
@@ -249,24 +249,24 @@ done=sieveeditor-15.08-kickoff
 mtime=1580772937
 
 [spectacle_clipboard.upd]
-ctime=1699401806
+ctime=1700576105
 done=clipboard-settings-change
-mtime=1694248417
+mtime=1699095620
 
 [spectacle_newConfig.upd]
-ctime=1699401806
+ctime=1700576105
 done=spectacle-new-config
-mtime=1694248417
+mtime=1699095620
 
 [spectacle_rememberregion.upd]
-ctime=1699401806
+ctime=1700576105
 done=spectacle-migrate-rememberregion
-mtime=1694248417
+mtime=1699095620
 
 [spectacle_shortcuts.upd]
-ctime=1699401806
+ctime=1700576105
 done=spectacle-migrate-shortcuts
-mtime=1694248417
+mtime=1699095620
 
 [style_widgetstyle_default_breeze.upd]
 ctime=1699412116
