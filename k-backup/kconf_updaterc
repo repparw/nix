@@ -41,7 +41,7 @@ done=BreezeToBreezeLight
 mtime=1698105600
 
 [delete_cursor_old_default_size.upd]
-ctime=1699412116
+ctime=1701131365
 done=DeleteCursorOldDefaultSize
 mtime=1698228343
 
@@ -91,7 +91,7 @@ done=SideBar_StatusBar_Rename,ImageView_AlphaBackgroundMode_Update,DeleteThumbna
 mtime=1699149915
 
 [icons_remove_effects.upd]
-ctime=1699412116
+ctime=1701131365
 done=IconsRemoveEffects
 mtime=1698228343
 
@@ -171,12 +171,12 @@ ctime=1625935772
 mtime=1615898414
 
 [krunnerglobalshortcuts2.upd]
-ctime=1699412113
+ctime=1701131365
 done=5.22KRunnerGlobalShortcuts
 mtime=1698228343
 
 [krunnerhistory.upd]
-ctime=1699412113
+ctime=1701131365
 done=5.21KRunnerHistory
 mtime=1698228343
 
@@ -239,7 +239,7 @@ done=pimsettingexporter-15.08-kickoff
 mtime=1580772925
 
 [plasmashell-5.27-use-panel-thickness-in-default-group.upd]
-ctime=1699412113
+ctime=1701131365
 done=plasmashell-5.27-use-panel-thickness-in-default-group
 mtime=1698228343
 
@@ -269,7 +269,7 @@ done=spectacle-migrate-shortcuts
 mtime=1699095620
 
 [style_widgetstyle_default_breeze.upd]
-ctime=1699412116
+ctime=1701131365
 done=StyleWidgetStyleDefaultBreeze
 mtime=1698228343
 
