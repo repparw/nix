@@ -40,7 +40,7 @@ plugin=org.kde.plasma.digitalclock
 [Containments][140][Applets][156][Configuration]
 PreloadWeight=100
 popupHeight=450
-popupWidth=396
+popupWidth=350
 
 [Containments][140][Applets][156][Configuration][Appearance]
 autoFontAndSize=false
@@ -179,8 +179,8 @@ immutability=1
 lastScreen=1
 location=4
 plugin=org.kde.plasma.private.systemtray
-popupHeight=640
-popupWidth=499
+popupHeight=432
+popupWidth=432
 wallpaperplugin=org.kde.image
 
 [Containments][231][Applets][232]
