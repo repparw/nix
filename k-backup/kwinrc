@@ -68,8 +68,8 @@ CommandWindowWheel=Scroll
 
 [NightColor]
 Active=true
-LatitudeAuto=-34.9215
-LongitudeAuto=-57.9545
+LatitudeAuto=-34.9314
+LongitudeAuto=-57.9489
 NightTemperature=2600
 
 [Plugins]
@@ -152,6 +152,9 @@ tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"wi
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
 
 [Tiling][a0e88e20-a6d5-5806-af8e-c17619799dbc]
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
+
+[Tiling][c1de4ee9-3f63-588e-ba53-085115567d30]
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
 
 [Tiling][d63db7c0-d7f5-551b-8eab-144277bb4d41]
