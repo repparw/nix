@@ -5,6 +5,7 @@ SplitterSizes=462,633
 Recent Files[$e]=Electrum,file:///bin/flatpak,file:$HOME/Games/Red Dead Redemption 2/game/prefix/drive_c/game/icon.png,file:///usr/share/icons/socials.png
 Recent URLs[$e]=file:$HOME/,file:$HOME/Documents/,file:$HOME/Downloads/,file:///bin/,file:///usr/share/icons/,file:$HOME/Games/Red Dead Redemption 2/game/prefix/drive_c/game/
 detailViewIconSize=16
+iconViewIconSize=64
 
 [MainWindow]
 DP-0 HDMI-0=DP-0

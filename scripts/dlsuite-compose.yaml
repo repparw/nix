@@ -93,6 +93,15 @@ services:
         ports:
             - '81:80'
         restart: unless-stopped
+    grocy:
+        image: lscr.io/linuxserver/grocy:latest
+        container_name: grocy
+        environment: *default-tz-puid-pgid
+        volumes:
+          - '/home/docker/grocy:/config:Z'
+        ports:
+          - 9283:80
+        restart: unless-stopped
     swag:
         image: 'lscr.io/linuxserver/swag:latest'
         container_name: swag
