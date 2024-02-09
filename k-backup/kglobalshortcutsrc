@@ -335,6 +335,12 @@ WindowUnderCursorScreenShot=Meta+Ctrl+Print,Meta+Ctrl+Print,Capture Window Under
 _k_friendly_name=Spectacle
 _launch=none,Print,Launch Spectacle
 
+[org.mozilla.Thunderbird.desktop]
+ComposeMessage=none,none,Write New Message
+OpenAddressBook=none,none,Open the Address Book
+_k_friendly_name=Thunderbird
+_launch=Meta+G,none,Thunderbird
+
 [org.mozilla.firefox.desktop]
 _k_friendly_name=Firefox Web Browser
 _launch=Meta+Space,none,Firefox Web Browser
