@@ -14,6 +14,9 @@ RepeatRate=35
 [Libinput][1133][49298][Logitech G203 LIGHTSYNC Gaming Mouse]
 PointerAccelerationProfile=1
 
+[Libinput][52156][49408][Churrosoft Deck-8 Mouse]
+PointerAccelerationProfile=2
+
 [Mouse]
 X11LibInputXAccelProfileFlat=false
 XLbInptAccelProfileFlat=false

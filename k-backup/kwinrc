@@ -179,6 +179,7 @@ TitlebarDoubleClickCommand=Maximize
 
 [Xwayland]
 Scale=1
+XwaylandEavesdrops=Combinations
 
 [org.kde.kdecoration2]
 ButtonsOnLeft=
