@@ -184,3 +184,5 @@ XwaylandEavesdrops=Combinations
 [org.kde.kdecoration2]
 ButtonsOnLeft=
 ButtonsOnRight=IX
+library=org.kde.kwin.aurorae
+theme=__aurorae__svg__GruvboxAurorae
