@@ -23,11 +23,10 @@ Seen=true
 InTaskManager=false
 
 [DoNotDisturb]
-Until=2024,12,11,17,4,0.954
+WhenScreenSharing=false
 
 [Jobs]
 PermanentPopups=false
 
 [Notifications]
 LowPriorityPopups=false
-PopupTimeout=1000
