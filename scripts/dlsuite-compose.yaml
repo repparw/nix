@@ -119,6 +119,7 @@ services:
         cap_add:
             - NET_ADMIN
         environment:
+            - DOCKER_MODS=linuxserver/mods:universal-cron
             - TZ=America/Argentina/Buenos_Aires
             - PUID=1001
             - PGID=963
