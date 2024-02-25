@@ -87,10 +87,6 @@ _launch=Ctrl+Alt+Shift+A,none,killall steam || steam -gamepadui
 _k_friendly_name=\sDiscord || Discord
 _launch=Ctrl+Alt+Shift+E,none,killall Discord || Discord
 
-[killall-7.desktop]
-_k_friendly_name=\s-s 3 Obsidian || flatpak run md.obsidian.Obsidian
-_launch=Meta+N,none,killall -s 3 Obsidian || flatpak run md.obsidian.Obsidian
-
 [killall.desktop]
 _k_friendly_name=\sspotify || flatpak run com.spotify.Client
 _launch=Ctrl+Alt+Shift+H,none,killall spotify || flatpak run com.spotify.Client
@@ -282,6 +278,10 @@ view_zoom_out=none,Meta+-,Zoom Out
 [maestral.desktop]
 _k_friendly_name=Maestral
 _launch=,none,Launch Maestral
+
+[md.obsidian.Obsidian.desktop]
+_k_friendly_name=Obsidian
+_launch=Meta+N,none,Obsidian
 
 [mediacontrol]
 _k_friendly_name=Media Controller
