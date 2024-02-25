@@ -87,6 +87,10 @@ _launch=Ctrl+Alt+Shift+A,none,killall steam || steam -gamepadui
 _k_friendly_name=\sDiscord || Discord
 _launch=Ctrl+Alt+Shift+E,none,killall Discord || Discord
 
+[killall-7.desktop]
+_k_friendly_name=\s-s 3 Obsidian || flatpak run md.obsidian.Obsidian
+_launch=Meta+N,none,killall -s 3 Obsidian || flatpak run md.obsidian.Obsidian
+
 [killall.desktop]
 _k_friendly_name=\sspotify || flatpak run com.spotify.Client
 _launch=Ctrl+Alt+Shift+H,none,killall spotify || flatpak run com.spotify.Client
@@ -275,6 +279,10 @@ view_actual_size=none,Meta+0,Zoom to Actual Size
 view_zoom_in=none,Meta+=,Zoom In
 view_zoom_out=none,Meta+-,Zoom Out
 
+[maestral.desktop]
+_k_friendly_name=Maestral
+_launch=,none,Launch Maestral
+
 [mediacontrol]
 _k_friendly_name=Media Controller
 mediavolumedown=none,,Media volume down
@@ -414,10 +422,6 @@ _launch=Meta+Shift+S,none,/home/repparw/.config/scripts/scrcpy
 [systemsettings.desktop]
 _k_friendly_name=System Settings
 _launch=Tools,Tools,System Settings
-
-[xdg-open-2.desktop]
-_k_friendly_name=xdg-open https://notion.so
-_launch=Meta+N,none,xdg-open https://notion.so
 
 [xdg-open.desktop]
 _k_friendly_name=xdg-open https://todoist.com/app/
