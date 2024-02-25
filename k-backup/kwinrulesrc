@@ -65,6 +65,14 @@ wmclass=toolkit firefox
 wmclasscomplete=true
 wmclassmatch=1
 
+[1e1385a9-fc81-4f8f-ad5b-e058559db809]
+Description=Application settings for obsidian
+clientmachine=localhost
+desktopfile=md.obsidian.Obsidian
+desktopfilerule=3
+wmclass=obsidian
+wmclassmatch=1
+
 [2]
 Description=Application settings for firefox
 above=true
@@ -223,11 +231,11 @@ wmclassmatch=3
 
 [General]
 ColorScheme[$d]
-count=9
+count=10
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6,7,8,9
+rules=1e1385a9-fc81-4f8f-ad5b-e058559db809,1,2,3,4,5,6,7,8,9
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]

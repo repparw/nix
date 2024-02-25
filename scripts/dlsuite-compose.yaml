@@ -104,6 +104,11 @@ services:
         ports:
             - '81:80'
         restart: unless-stopped
+    mercury:
+        image: wangqiru/mercury-parser-api:latest
+        ports:
+          - 3000:3000
+        restart: unless-stopped
     grocy:
         image: lscr.io/linuxserver/grocy:latest
         container_name: grocy
