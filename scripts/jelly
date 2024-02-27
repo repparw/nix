@@ -1,2 +1,2 @@
 #!/bin/sh
-flatpak run org.mozilla.firefox -P kiosk jellyfin.repparw.com.ar 2>/dev/null & sleep 2 && dbus-send --session --type=method_call --dest=org.kde.kglobalaccel /component/kwin org.kde.kglobalaccel.Component.invokeShortcut string:'Window to Screen 1'
+flatpak run org.mozilla.firefox -P kiosk jellyfin.repparw.com.ar 2>/dev/null
