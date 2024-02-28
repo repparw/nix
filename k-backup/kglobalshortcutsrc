@@ -277,7 +277,7 @@ view_zoom_out=none,Meta+-,Zoom Out
 
 [maestral.desktop]
 _k_friendly_name=Maestral
-_launch=,none,Launch Maestral
+_launch=none,none,Launch Maestral
 
 [md.obsidian.Obsidian.desktop]
 _k_friendly_name=Obsidian
