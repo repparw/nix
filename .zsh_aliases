@@ -26,12 +26,12 @@
 
 	# cd && ls	
 
-	if command -v exa >/dev/null 2>&1; then
-		alias ls='exa' # Better df
+	if command -v eza >/dev/null 2>&1; then
+		alias ls='eza' # Better df
 
-		alias ll='exa -lah'
+		alias ll='eza -lah'
 
-		alias l.='exa -a'
+		alias l.='eza -a'
 
 		alias la='l.'
 	  else
