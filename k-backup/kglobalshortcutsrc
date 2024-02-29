@@ -191,12 +191,12 @@ Walk Through Desktops=none,,Walk Through Desktops
 Walk Through Desktops (Reverse)=none,,Walk Through Desktops (Reverse)
 Walk Through Windows=Meta+C,Alt+Tab,Walk Through Windows
 Walk Through Windows (Reverse)=Meta+Shift+C,Alt+Shift+Backtab,Walk Through Windows (Reverse)
-Walk Through Windows Alternative=none,,Walk Through Windows Alternative
-Walk Through Windows Alternative (Reverse)=none,,Walk Through Windows Alternative (Reverse)
-Walk Through Windows of Current Application=Alt+`,Alt+`,Walk Through Windows of Current Application
-Walk Through Windows of Current Application (Reverse)=Alt+~,Alt+~,Walk Through Windows of Current Application (Reverse)
-Walk Through Windows of Current Application Alternative=none,,Walk Through Windows of Current Application Alternative
-Walk Through Windows of Current Application Alternative (Reverse)=none,,Walk Through Windows of Current Application Alternative (Reverse)
+Walk Through Windows Alternative=,,Walk Through Windows Alternative
+Walk Through Windows Alternative (Reverse)=,,Walk Through Windows Alternative (Reverse)
+Walk Through Windows of Current Application=Meta+Ctrl+C,Alt+`,Walk Through Windows of Current Application
+Walk Through Windows of Current Application (Reverse)=Meta+Ctrl+Shift+C,Alt+~,Walk Through Windows of Current Application (Reverse)
+Walk Through Windows of Current Application Alternative=,,Walk Through Windows of Current Application Alternative
+Walk Through Windows of Current Application Alternative (Reverse)=,,Walk Through Windows of Current Application Alternative (Reverse)
 Window Above Other Windows=none,,Keep Window Above Others
 Window Below Other Windows=none,,Keep Window Below Others
 Window Close=Meta+W,Alt+F4,Close Window
@@ -281,7 +281,7 @@ _launch=none,none,Launch Maestral
 
 [md.obsidian.Obsidian.desktop]
 _k_friendly_name=Obsidian
-_launch=Meta+N,none,Obsidian
+_launch=Meta+N,none,Launch Obsidian
 
 [mediacontrol]
 _k_friendly_name=Media Controller
