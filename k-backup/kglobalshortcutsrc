@@ -386,6 +386,7 @@ activate widget 120=none,none,Activate Application Launcher Widget
 activate widget 14=none,none,Activate Night Colour Control Widget
 activate widget 168=none,none,Activate Icons-only Task Manager Widget
 activate widget 184=Alt+F1,none,Activate Application Launcher Widget
+activate widget 265=,none,Activate Fokus Widget
 activate widget 278=none,none,Activate Media Player Widget
 activate widget 3=none,none,Activate Application Launcher Widget
 activate widget 4=none,none,Activate Application Launcher Widget
