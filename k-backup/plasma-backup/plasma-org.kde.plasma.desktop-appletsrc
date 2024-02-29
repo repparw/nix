@@ -191,7 +191,6 @@ plugin=org.kde.plasma.volume
 PreloadWeight=100
 
 [Containments][231][Applets][232][Configuration][General]
-currentTab=streams
 migrated=true
 
 [Containments][231][Applets][233][Configuration]
@@ -348,6 +347,16 @@ wallpaperplugin=org.kde.image
 [Containments][264][Applets][265]
 immutability=1
 plugin=fokus
+
+[Containments][264][Applets][265][Configuration]
+PreloadWeight=55
+
+[Containments][264][Applets][265][Configuration][ConfigDialog]
+DialogHeight=540
+DialogWidth=720
+
+[Containments][264][Applets][265][Shortcuts]
+global=
 
 [Containments][264][ConfigDialog]
 DialogHeight=540
