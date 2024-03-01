@@ -234,13 +234,21 @@ title=video0 - mpv
 types=1
 windowrole=browser
 
+[91c8ba2c-e5b7-4d7b-8ed5-ef092f003c70]
+Description=Application settings for pomatez
+clientmachine=localhost
+position=1580,0
+positionrule=3
+wmclass=pomatez
+wmclassmatch=1
+
 [General]
 ColorScheme[$d]
-count=10
+count=11
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6,7,8,9,10
+rules=91c8ba2c-e5b7-4d7b-8ed5-ef092f003c70,1,2,3,4,5,6,7,8,9,10
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
