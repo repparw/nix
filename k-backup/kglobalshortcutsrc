@@ -412,6 +412,10 @@ switch to next activity=none,,Switch to Next Activity
 switch to previous activity=none,,Switch to Previous Activity
 toggle do not disturb=none,,Toggle do not disturb
 
+[pomatez.desktop]
+_k_friendly_name=Pomatez
+_launch=Meta+P,none,Pomatez
+
 [samsung-configurator.desktop]
 _k_friendly_name=Samsung Unified Driver Configurator
 _launch=none,none,Launch Samsung Unified Driver Configurator

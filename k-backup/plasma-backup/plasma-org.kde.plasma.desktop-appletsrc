@@ -191,6 +191,7 @@ plugin=org.kde.plasma.volume
 PreloadWeight=100
 
 [Containments][231][Applets][232][Configuration][General]
+currentTab=streams
 migrated=true
 
 [Containments][231][Applets][233][Configuration]
