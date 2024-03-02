@@ -24,6 +24,13 @@ _launch=Meta+Shift+B,none,/home/repparw/.config/scripts/bttoggle
 _k_friendly_name=\s/home/repparw/.config/scripts/bttoggle
 _launch=Meta+B,none,device="F8:4E:17:E6:22:D2" /home/repparw/.config/scripts/bttoggle\n
 
+[firefox.desktop]
+_k_friendly_name=Firefox
+_launch=Meta+Space,none,Firefox
+new-private-window=none,none,New Private Window
+new-window=none,none,New Window
+profile-manager-window=none,none,Open the Profile Manager
+
 [heroic games launcher.desktop]
 _k_friendly_name=Heroic Games Launcher
 _launch=none,none,Launch Heroic Games Launcher
@@ -348,13 +355,6 @@ ComposeMessage=none,none,Write New Message
 OpenAddressBook=none,none,Open the Address Book
 _k_friendly_name=Thunderbird
 _launch=Meta+G,none,Thunderbird
-
-[org.mozilla.firefox.desktop]
-_k_friendly_name=Firefox Web Browser
-_launch=Meta+Space,none,Firefox Web Browser
-new-private-window=none,none,New Private Window
-new-window=none,none,New Window
-profile-manager-window=none,none,Open the Profile Manager
 
 [org_kde_powerdevil]
 Decrease Keyboard Brightness=Keyboard Brightness Down,Keyboard Brightness Down,Decrease Keyboard Brightness
