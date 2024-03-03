@@ -282,6 +282,10 @@ view_actual_size=none,Meta+0,Zoom to Actual Size
 view_zoom_in=none,Meta+=,Zoom In
 view_zoom_out=none,Meta+-,Zoom Out
 
+[md.obsidian.Obsidian.desktop]
+_k_friendly_name=Obsidian
+_launch=Meta+N,none,Obsidian
+
 [mediacontrol]
 _k_friendly_name=Media Controller
 mediavolumedown=none,,Media volume down
