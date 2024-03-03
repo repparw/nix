@@ -282,14 +282,6 @@ view_actual_size=none,Meta+0,Zoom to Actual Size
 view_zoom_in=none,Meta+=,Zoom In
 view_zoom_out=none,Meta+-,Zoom Out
 
-[maestral.desktop]
-_k_friendly_name=Maestral
-_launch=none,none,Launch Maestral
-
-[md.obsidian.Obsidian.desktop]
-_k_friendly_name=Obsidian
-_launch=Meta+N,none,Launch Obsidian
-
 [mediacontrol]
 _k_friendly_name=Media Controller
 mediavolumedown=none,,Media volume down
@@ -327,10 +319,6 @@ new-window=none,none,New Window
 _k_friendly_name=Dolphin
 _launch=Meta+Shift+E,Meta+E,Dolphin
 
-[org.kde.kcalc.desktop]
-_k_friendly_name=KCalc
-_launch=none,Launch (1),KCalc
-
 [org.kde.krunner.desktop]
 RunClipboard=none,Alt+Shift+F2,Run command on clipboard contents
 _k_friendly_name=KRunner
@@ -338,7 +326,7 @@ _launch=Alt+F2,Alt+Space\tAlt+F2\tSearch,KRunner
 
 [org.kde.plasma.emojier.desktop]
 _k_friendly_name=Emoji Selector
-_launch=none,Meta+.,Emoji Selector
+_launch=Meta+.,Meta+.,Emoji Selector
 
 [org.kde.spectacle.desktop]
 ActiveWindowScreenShot=Print,Meta+Print,Capture Active Window
