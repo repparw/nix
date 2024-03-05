@@ -1,0 +1,1 @@
+sh -c 'flatpak run --branch=stable --arch=x86_64 --command=obsidian.sh --file-forwarding md.obsidian.Obsidian'

@@ -41,6 +41,7 @@ BorderActivateAll=9
 
 [Effect-overview]
 BlurBackground=false
+IgnoreMinimized=true
 
 [Effect-presentwindows]
 BorderActivateAll=9
