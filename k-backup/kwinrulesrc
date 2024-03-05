@@ -14,21 +14,29 @@ wmclasscomplete=true
 wmclassmatch=1
 
 [1]
-Description=Application settings for pomatez
+Description=obsidian
 above=true
-aboverule=3
+below=true
+belowrule=3
 clientmachine=localhost
 desktopfile=md.obsidian.Obsidian
 fullscreen=true
+minimize=true
+minimizerule=2
 position=1580,0
-positionrule=3
 screen=1
+skipswitcher=true
+skipswitcherrule=3
+title=Obsidian
+titlematch=1
+types=1
 windowrole=browser
-wmclass=pomatez
+wmclass=kitty
 wmclassmatch=1
 
 [10]
 Description=Minimum size for windows
+above=true
 clientmachine=localhost
 minsize=1,1
 minsizerule=2
@@ -38,6 +46,17 @@ types=1
 windowrole=browser
 
 [11]
+Description=No titlebars for all
+clientmachine=localhost
+minsize=1,1
+noborder=true
+noborderrule=2
+title=video0 - mpv
+windowrole=browser
+wmclass=.*
+wmclassmatch=3
+
+[12]
 Description=No titlebars for all
 clientmachine=localhost
 noborder=true
@@ -87,17 +106,18 @@ wmclass=obsidian
 wmclassmatch=1
 
 [2]
-Description=Application settings for obsidian
+Description=Application settings for pomatez
 above=true
+aboverule=3
 clientmachine=localhost
 desktopfile=md.obsidian.Obsidian
-desktopfilerule=3
 fullscreen=true
-position=3399,134
+position=1580,0
+positionrule=3
 screen=1
 title=mine
 windowrole=browser
-wmclass=obsidian
+wmclass=pomatez
 wmclassmatch=1
 
 [226737ec-ed2c-4b58-8d73-037e8902d0aa]
@@ -130,12 +150,22 @@ Description=Application settings for lutris
 clientmachine=localhost
 desktopfile=lutris
 desktopfilerule=3
-position=3399,134
-screen=1
 title=mine
 windowrole=browser
 wmclass=python3.11 lutris
 wmclasscomplete=true
+wmclassmatch=1
+
+[3d43fc74-b861-404f-b8a8-97bdde579932]
+Description=Window settings for obsidian
+clientmachine=localhost
+desktopfile=Obsidian
+desktopfilerule=3
+title=New tab - obsidian - Obsidian v1.5.8
+types=1
+windowrole=browser-window
+windowrolematch=1
+wmclass=obsidian
 wmclassmatch=1
 
 [4]
@@ -170,12 +200,13 @@ wmclass=scrcpy
 wmclassmatch=1
 
 [6]
-Description=Window settings for kitty
+Description=mine
 above=true
 clientmachine=localhost
+desktopfile=mozilla-firefox
 fsplevel=1
 minsize=1,1
-position=3489,68
+position=3399,134
 screen=1
 screenrule=3
 title=mine
@@ -228,7 +259,7 @@ clientmachine=localhost
 fsplevel=1
 fsplevelrule=2
 minsize=1,1
-noborder=true
+position=3489,68
 title=video0 - mpv
 windowrole=browser
 wmclass=gl mpv
@@ -240,6 +271,7 @@ Description=webcam
 above=true
 aboverule=3
 clientmachine=localhost
+fsplevel=1
 minsize=1,1
 noborder=true
 title=video0 - mpv
@@ -260,11 +292,11 @@ wmclassmatch=1
 
 [General]
 ColorScheme[$d]
-count=11
+count=12
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6,7,8,9,10,11
+rules=3d43fc74-b861-404f-b8a8-97bdde579932,1,2,3,4,5,6,7,8,9,10,11
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
@@ -285,6 +317,18 @@ title=2201117TG
 titlematch=1
 types=1
 wmclass=scrcpy
+wmclassmatch=1
+
+[b8e05d8c-1b36-4eac-9ae2-12c646aef48f]
+Description=Window settings for kitty
+minimize=true
+minimizerule=3
+skipswitcher=true
+skipswitcherrule=3
+title=Obsidian.AppImage
+titlematch=1
+types=1
+wmclass=kitty
 wmclassmatch=1
 
 [bcf6f652-821a-4ce7-a56b-782d31d7d6e9]

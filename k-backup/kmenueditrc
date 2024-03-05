@@ -2,8 +2,8 @@
 SplitterSizes=462,633
 
 [KFileDialog Settings]
-Recent Files[$e]=Electrum,file:$HOME/.local/share/applications/MyMonero.AppImage,file:///bin/flatpak,file:///usr/share/icons/socials.png
-Recent URLs[$e]=file:$HOME/,file:$HOME/Documents/,file:$HOME/Downloads/,file:///bin/,file:///usr/share/icons/,file:$HOME/.local/share/applications/
+Recent Files[$e]=Electrum,file:$HOME/Apps/Obsidian.AppImage,file:$HOME/.local/share/applications/MyMonero.AppImage,file:///bin/flatpak,file:///usr/share/icons/socials.png
+Recent URLs[$e]=file:$HOME/,file:$HOME/Documents/,file:$HOME/Downloads/,file:///bin/,file:///usr/share/icons/,file:$HOME/.local/share/applications/,file:$HOME/Apps/
 detailViewIconSize=16
 iconViewIconSize=64
 
