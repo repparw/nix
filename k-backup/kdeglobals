@@ -105,7 +105,7 @@ History Items[$e]=file:$HOME,file:$HOME,file:$HOME/.wine/,file:$HOME/Games,file:
 
 [General]
 AccentColor=104,157,105
-BrowserApplication=org.mozilla.firefox.desktop
+BrowserApplication=firefox.desktop
 ColorScheme=GruvboxColors
 ColorSchemeHash=68f7da041112b660ac4e6911cf4bf8a7b361feda
 Name=Breeze Dark
