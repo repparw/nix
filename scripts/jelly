@@ -1,2 +1,2 @@
 #!/bin/sh
-flatpak run org.mozilla.firefox -P kiosk jellyfin.repparw.com.ar 2>/dev/null
+firefox -P kiosk jellyfin.repparw.com.ar 2>/dev/null
