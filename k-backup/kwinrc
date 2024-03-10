@@ -13,7 +13,8 @@ XRenderSmoothScale=false
 
 [Desktops]
 Id_1=df1695a6-c8fa-4be1-89fd-2ebcd8f061fd
-Number=1
+Id_2=390ac226-471f-45b7-ad36-276af728622b
+Number=2
 Rows=1
 
 [DrmOutputs][6474a46e60][416ed248-2b00-573a-ae93-6da648fe1fd6]
@@ -116,7 +117,6 @@ ActivitiesMode=0
 ApplicationsMode=0
 DesktopLayout=org.kde.breeze.desktop
 DesktopListLayout=org.kde.breeze.desktop
-DesktopMode=0
 HighlightWindows=false
 LayoutName=thumbnail_grid
 MinimizedMode=0
