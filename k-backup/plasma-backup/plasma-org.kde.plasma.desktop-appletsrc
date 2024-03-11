@@ -335,8 +335,8 @@ SlidePaths=/home/repparw/.local/share/wallpapers/,/usr/share/wallpapers/
 
 [Containments][264]
 ItemGeometries-0x0=Applet-265:816,112,256,240,0;
-ItemGeometries-1920x1080=Applet-265:816,112,256,240,0;
-ItemGeometriesHorizontal=Applet-265:816,112,256,240,0;
+ItemGeometries-1920x1080=
+ItemGeometriesHorizontal=
 activityId=c2f7948f-cf52-46ec-9b7e-c825ba193393
 formfactor=0
 immutability=1
@@ -344,20 +344,6 @@ lastScreen=1
 location=0
 plugin=org.kde.plasma.folder
 wallpaperplugin=org.kde.image
-
-[Containments][264][Applets][265]
-immutability=1
-plugin=fokus
-
-[Containments][264][Applets][265][Configuration]
-PreloadWeight=55
-
-[Containments][264][Applets][265][Configuration][ConfigDialog]
-DialogHeight=540
-DialogWidth=720
-
-[Containments][264][Applets][265][Shortcuts]
-global=
 
 [Containments][264][ConfigDialog]
 DialogHeight=540
