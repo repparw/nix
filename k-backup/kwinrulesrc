@@ -208,6 +208,18 @@ wmclass=\sfirefox
 wmclasscomplete=true
 wmclassmatch=1
 
+[5b97fc30-8ff8-4bd1-964a-cc8ab965ada7]
+Description=Application settings for spotify
+clientmachine=localhost
+maximizehoriz=true
+maximizehorizrule=3
+maximizevert=true
+maximizevertrule=3
+screen=1
+screenrule=3
+wmclass=spotify
+wmclassmatch=1
+
 [6]
 Description=Application settings for scrcpy
 above=true
@@ -299,11 +311,11 @@ wmclassmatch=1
 
 [General]
 ColorScheme[$d]
-count=12
+count=13
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6,7,8,9,10,11,12
+rules=5b97fc30-8ff8-4bd1-964a-cc8ab965ada7,1,2,3,4,5,6,7,8,9,10,11,12
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
