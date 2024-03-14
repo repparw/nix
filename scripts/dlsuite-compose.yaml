@@ -99,6 +99,7 @@ services:
     freshrss:
         image: 'lscr.io/linuxserver/freshrss:latest'
         container_name: freshrss
+        environment: *default-tz-puid-pgid
         volumes:
             - '/home/docker/freshrss:/config:Z'
         ports:
@@ -106,6 +107,7 @@ services:
         restart: unless-stopped
     mercury:
         image: wangqiru/mercury-parser-api:latest
+        container_name: mercury
         ports:
           - 3000:3000
         restart: unless-stopped
