@@ -11,4 +11,4 @@ State=AAAA/wAAAAD9AAAAAAAAAlgAAAF/AAAABAAAAAQAAAAIAAAACPwAAAAA
 ToolBarsMovable=Disabled
 
 [Security]
-allowUnattendedAccess=true
+allowUnattendedAccess=false
