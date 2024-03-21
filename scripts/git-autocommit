@@ -1,3 +1,3 @@
 #!/bin/sh
-rsync -aq ~/.zshrc ~/.zsh_aliases ~/.zprofile ~/.zsh_history ~/.config/scripts ~/.config/systemd ~/.config/kitty ~/.config/mpv ~/.config/lf/ ~/.config/zathura/ ~/.config/nvim ~/.config/feh ~/.config/k-backup ~/git/desktopconfig 
+rsync -aq ~/.zshrc ~/.aliases ~/.zprofile ~/.zsh_history ~/.config/scripts ~/.config/systemd ~/.config/kitty ~/.config/mpv ~/.config/lf/ ~/.config/zathura/ ~/.config/nvim ~/.config/feh ~/.config/k-backup ~/git/desktopconfig 
 cd ~/git/desktopconfig; git add .; git commit -am "Auto-Commit"; git push

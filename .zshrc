@@ -144,8 +144,8 @@ bindkey -M menuselect 'j' vi-down-line-or-history
 bindkey -v '^?' backward-delete-char
 
 ## Aliases
-if [ -f ~/.zsh_aliases ]; then
-	. ~/.zsh_aliases
+if [ -f ~/.aliases ]; then
+	. ~/.aliases
 fi
 
 #if [ -f /usr/share/fzf/shell/key-bindings.zsh ]; then

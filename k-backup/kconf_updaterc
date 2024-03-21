@@ -86,7 +86,7 @@ done=dont_use_gtk_css_for_window_decorations,gtk_theme,remove_deprecated_gtk4_op
 mtime=1709726374
 
 [gwenview.upd]
-ctime=1708437488
+ctime=1710964026
 done=SideBar_StatusBar_Rename,ImageView_AlphaBackgroundMode_Update,DeleteThumbnailSetting_Rename
 mtime=1707796771
 
