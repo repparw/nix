@@ -120,6 +120,18 @@ services:
         ports:
           - 9283:80
         restart: unless-stopped
+#   keycloak:
+        # internal: keycloak on port 8080
+#       image: 'quay.io/keycloak/keycloak:latest'
+#       command: start
+#       environment:
+#           KC_HOSTNAME: 'auth.example.com'
+#           KC_PROXY: 'edge'
+#           KEYCLOAK_ADMIN: 'admin'
+#           KEYCLOAK_ADMIN_PASSWORD: 'admin'
+#       volumes:
+#         - '/home/docker/keycloak:/opt/keycloak/data:Z'
+#       restart: unless-stopped
     swag:
         image: 'lscr.io/linuxserver/swag:latest'
         container_name: swag
