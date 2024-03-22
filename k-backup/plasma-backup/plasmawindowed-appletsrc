@@ -13,4 +13,4 @@ plugin=org.kde.desktopcontainment
 wallpaperplugin=org.kde.image
 
 [Containments][2][Configuration]
-PreloadWeight=42
+PreloadWeight=34
