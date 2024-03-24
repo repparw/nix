@@ -173,4 +173,5 @@ setopt HIST_BEEP
 if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
   tmux new-session -A -s ssh_tmux
 fi
-alias ryujinx="AMD_DEBUG=w32ge,w32cs,nohyperz,nofmask glsl_zero_init=true radeonsi_clamp_div_by_zero=true force_integer_tex_nearest=true mesa_glthread=false vblank_mode=0 RADV_PERFTEST=bolist gamemoderun DOTNET_EnableAlternateStackCheck=1 GDK_BACKEND=x11 /home/repparw/.local/share/Ryujinx/Ryujinx"
+
+eval "$(zoxide init --cmd cd zsh)"
