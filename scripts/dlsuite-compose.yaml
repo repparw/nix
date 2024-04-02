@@ -1,5 +1,4 @@
 # symlink in /etc/docker/compose/dlsuite/docker-compose.yaml
-version: '3.4'
 networks:
     default:
         name: dlsuite
