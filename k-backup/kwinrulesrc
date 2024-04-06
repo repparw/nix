@@ -35,26 +35,10 @@ wmclass=spotify
 wmclassmatch=1
 
 [10]
-Description=Application settings for mpv
-above=true
-clientmachine=localhost
-fsplevel=1
-fsplevelrule=2
-minsize=1,1
-noborder=true
-title=video0 - mpv
-windowrole=browser
-wmclass=gl mpv
-wmclasscomplete=true
-wmclassmatch=1
-
-[11]
 Description=webcam
 above=true
 aboverule=3
 clientmachine=localhost
-minsize=1,1
-noborder=true
 title=video0 - mpv
 titlematch=1
 types=1
@@ -63,8 +47,9 @@ wmclass=gl mpv
 wmclasscomplete=true
 wmclassmatch=1
 
-[12]
+[11]
 Description=Minimum size for windows
+above=true
 clientmachine=localhost
 minsize=1,1
 minsizerule=2
@@ -72,6 +57,17 @@ noborder=true
 title=video0 - mpv
 types=1
 windowrole=browser
+
+[12]
+Description=No titlebars for all
+clientmachine=localhost
+minsize=1,1
+noborder=true
+noborderrule=2
+title=video0 - mpv
+windowrole=browser
+wmclass=.*
+wmclassmatch=3
 
 [12fd6497-5ead-47c6-b1ce-2c29d19d10c2]
 Description=Application settings for scrcpy
@@ -284,6 +280,14 @@ sizerule=3
 wmclass=hearthstone.exe
 wmclassmatch=1
 
+[7d5ea4f8-b47d-402a-920a-1c9ef0a52e13]
+Description=Window settings for mpv
+fsplevel=1
+fsplevelrule=2
+types=1
+wmclass=mpv
+wmclassmatch=1
+
 [8]
 Description=mine
 above=true
@@ -330,7 +334,7 @@ count=13
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6,7,8,9,10,11,12,13
+rules=7d5ea4f8-b47d-402a-920a-1c9ef0a52e13,1,2,3,4,5,6,7,8,9,10,11,12
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
