@@ -171,7 +171,7 @@ setopt HIST_BEEP
 # }}}
 
 if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
-  tmux new-session -A -s ssh_tmux
+  tmux new-session -A -s ssh
 fi
 
 eval "$(zoxide init --cmd cd zsh)"

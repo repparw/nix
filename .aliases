@@ -1,16 +1,12 @@
 ## Aliases
 	# Sudo expansion
 		alias sudo='sudo '
+
 	# Raspberry Pi
 		alias rpi='env TERM=xterm-256color ssh -p2222 dietpi@192.168.0.4'
+
 	# fzf
 		alias f='fzf'
-
-	# task mpv
-		alias qmpv='nq -c mpv '
-
-	# Open archivebox
-		alias openbox='cd ~/archivebox; archivebox server & sleep 5 && firefox 127.0.0.1:8000; fg'
 
 	# Asks your passwords, becomes root, opens a interactive non login shell
 		alias su='sudo -s'
@@ -29,7 +25,7 @@
 
 	# ls	
 	if command -v eza >/dev/null 2>&1; then
-		alias ls='eza' # Better df
+		alias ls='eza' # Better ls
 
 		alias ll='eza -lah'
 
@@ -108,8 +104,6 @@
 		alias cat='bat' # Better cat
 	fi
 	
-		alias ddgr='ddgr -n3'
-
 		alias now='date +"%T"' # Time
 
 		alias ping='ping -c 5' # Stop ping
@@ -146,14 +140,12 @@
 
 		alias yh='ytf -H'
 
-		alias yda="yt-dlp -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
+	#	alias yda="yt-dlp -x --add-metadata --audio-quality 0 --output '/home/repparw/Music/ytmusic/%(title)s.%(ext)s'"
 
 	# Temperature 
 	alias temp="watch -td -n 300 'echo -e \"\$(sensors -A nvme-pci-0100 k10temp-pci-00c3 amdgpu-pci-2d00)
 \"'"
 #GPU:          +\$(nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader).0°C
-	# GPU mining
-#		alias gpumine='cd ~/.mining/gminer && ./miner --server gulf.moneroocean.stream:20128 --user 88pbrXKtt2p5DxSuX6Tasc9mK5Kdu7ZVQLDq8yDMJLAb9mCvBSbnn3UjA4Vp96WxZiUPXSCduMeMPLqaqQfioyxY4oBH1DQ --pass gpu --algo kawpow --ssl 1'
 
 	# CPU Mining (xmrig)
 	alias mine="cd ~/.mining/xmrig && sudo nice -n 19 ./xmrig -c config.json"
