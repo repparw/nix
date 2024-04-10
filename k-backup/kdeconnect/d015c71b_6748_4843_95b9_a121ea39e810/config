@@ -3,4 +3,5 @@ kdeconnect_bigscreenEnabled=false
 kdeconnect_contactsEnabled=false
 kdeconnect_photoEnabled=false
 kdeconnect_presenterEnabled=false
+kdeconnect_sendnotificationsEnabled=false
 kdeconnect_smsEnabled=false
