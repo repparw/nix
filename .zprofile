@@ -1,4 +1,20 @@
-export LF_ICONS="di=📁:\
+# Add local path
+	export PATH=/home/repparw/.cargo/bin:/usr/local/cuda/bin:/home/repparw/go/bin:/home/repparw/.local/bin:$PATH
+
+	export HISTCONTROL=ignoreboth:erasedups
+## Default editor to nvim
+	export EDITOR='nvim'
+	export VISUAL=$EDITOR
+
+## fzf
+	export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
+
+	export FZF_DEFAULT_OPTS="--no-mouse --multi --select-1 --reverse --height 50% --inline-info --scheme=history"
+
+# Path to your oh-my-zsh installation.
+	export ZSH="/home/repparw/.oh-my-zsh"
+
+	export LF_ICONS="di=📁:\
 fi=📃:\
 tw=🤝:\
 ow=📂:\
@@ -75,10 +91,3 @@ ex=🎯:\
 *.jar=♨:\
 *.java=♨:\
 "
-
-# prepend ~/.local/bin to $PATH unless it is already there
-if ! [[ "$PATH" =~ "$HOME/.local/bin:" ]]
-then
-    PATH="$HOME/.local/bin:$PATH"
-fi
-export PATH

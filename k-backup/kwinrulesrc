@@ -14,30 +14,46 @@ wmclasscomplete=true
 wmclassmatch=1
 
 [1]
-Description=Window settings for mpv
+Description=Window settings for kitty
 above=true
 below=true
 clientmachine=localhost
 desktopfile=Obsidian
 fsplevel=1
-fsplevelrule=2
 fullscreen=true
 maximizehoriz=true
 maximizevert=true
 minimize=true
 position=1580,0
-screen=1
+screen=2
+screenrule=3
 skipswitcher=true
-title=New tab - obsidian - Obsidian v1.5.8
+title=spotify_player
+titlematch=1
 types=1
 windowrole=browser-window
-wmclass=mpv
+wmclass=kitty
 wmclassmatch=1
 
 [10]
+Description=mine
+above=true
+clientmachine=localhost
+position=3489,68
+screen=1
+screenrule=3
+title=mine
+titlematch=1
+types=1
+windowrole=browser
+wmclass=kitty
+wmclassmatch=1
+
+[11]
 Description=Window settings for scrcpy
 above=true
 clientmachine=localhost
+minsize=1,1
 noborderrule=2
 position=3489,68
 positionrule=2
@@ -48,7 +64,7 @@ windowrole=browser
 wmclass=scrcpy
 wmclassmatch=1
 
-[11]
+[12]
 Description=webcam
 above=true
 aboverule=3
@@ -63,16 +79,6 @@ wmclass=gl mpv
 wmclasscomplete=true
 wmclassmatch=1
 
-[12]
-Description=Minimum size for windows
-clientmachine=localhost
-minsize=1,1
-minsizerule=2
-noborder=true
-title=video0 - mpv
-types=1
-windowrole=browser
-
 [12fd6497-5ead-47c6-b1ce-2c29d19d10c2]
 Description=Application settings for scrcpy
 clientmachine=localhost
@@ -82,20 +88,25 @@ wmclass=scrcpy
 wmclassmatch=1
 
 [13]
+Description=Minimum size for windows
+clientmachine=localhost
+minsize=1,1
+minsizerule=2
+noborder=true
+title=video0 - mpv
+types=1
+windowrole=browser
+
+[14]
 Description=No titlebars for all
 clientmachine=localhost
+minsize=1,1
 noborder=true
 noborderrule=2
 title=video0 - mpv
 windowrole=browser
 wmclass=.*
 wmclassmatch=3
-
-[14]
-Description=Minimum size for windows
-minsize=1,1
-minsizerule=2
-types=1
 
 [1598d7d9-9756-499e-a3a3-bc096f8ecc33]
 Description=Application settings for firefox
@@ -115,24 +126,24 @@ wmclass=obsidian
 wmclassmatch=1
 
 [2]
-Description=Application settings for spotify
+Description=Window settings for mpv
 above=true
 below=true
 clientmachine=localhost
 desktopfile=Obsidian
+fsplevel=1
+fsplevelrule=2
 fullscreen=true
 maximizehoriz=true
-maximizehorizrule=3
 maximizevert=true
-maximizevertrule=3
 minimize=true
 position=1580,0
 screen=1
-screenrule=3
 skipswitcher=true
 title=New tab - obsidian - Obsidian v1.5.8
+types=1
 windowrole=browser-window
-wmclass=spotify
+wmclass=mpv
 wmclassmatch=1
 
 [226737ec-ed2c-4b58-8d73-037e8902d0aa]
@@ -161,20 +172,23 @@ wmclasscomplete=true
 wmclassmatch=1
 
 [3]
-Description=Window settings for obsidian
+Description=Application settings for spotify
 above=true
 below=true
 clientmachine=localhost
 desktopfile=Obsidian
-desktopfilerule=3
+maximizehoriz=true
+maximizehorizrule=3
+maximizevert=true
+maximizevertrule=3
 minimize=true
 position=1580,0
+screen=1
+screenrule=3
 skipswitcher=true
 title=New tab - obsidian - Obsidian v1.5.8
-types=1
 windowrole=browser-window
-windowrolematch=1
-wmclass=obsidian
+wmclass=spotify
 wmclassmatch=1
 
 [3d43fc74-b861-404f-b8a8-97bdde579932]
@@ -190,6 +204,25 @@ wmclass=obsidian
 wmclassmatch=1
 
 [4]
+Description=Window settings for obsidian
+above=true
+below=true
+clientmachine=localhost
+desktopfile=Obsidian
+desktopfilerule=3
+fsplevel=1
+minimize=true
+position=1580,0
+screen=1
+skipswitcher=true
+title=New tab - obsidian - Obsidian v1.5.8
+types=1
+windowrole=browser-window
+windowrolematch=1
+wmclass=obsidian
+wmclassmatch=1
+
+[5]
 Description=obsidian
 above=true
 below=true
@@ -197,8 +230,10 @@ belowrule=3
 clientmachine=localhost
 desktopfile=lutris
 fsplevel=1
+fullscreen=true
 minimize=true
 minimizerule=2
+minsize=1,1
 position=1580,0
 screen=1
 skipswitcher=true
@@ -208,23 +243,6 @@ titlematch=1
 types=1
 windowrole=browser
 wmclass=kitty
-wmclassmatch=1
-
-[5]
-Description=Application settings for pomatez
-above=true
-aboverule=3
-clientmachine=localhost
-desktopfile=lutris
-fsplevel=1
-fullscreen=true
-minsize=1,1
-position=1580,0
-positionrule=3
-screen=1
-title=mine
-windowrole=browser
-wmclass=pomatez
 wmclassmatch=1
 
 [5b97fc30-8ff8-4bd1-964a-cc8ab965ada7]
@@ -240,19 +258,19 @@ wmclass=spotify
 wmclassmatch=1
 
 [6]
-Description=Application settings for lutris
+Description=Application settings for pomatez
 above=true
+aboverule=3
 clientmachine=localhost
 desktopfile=lutris
-desktopfilerule=3
 fsplevel=1
 minsize=1,1
-position=3399,134
+position=1580,0
+positionrule=3
 screen=1
 title=mine
 windowrole=browser
-wmclass=python3.11 lutris
-wmclasscomplete=true
+wmclass=pomatez
 wmclassmatch=1
 
 [6aca8946-c1d2-4797-b01f-723a9431e2f7]
@@ -264,10 +282,10 @@ wmclasscomplete=true
 wmclassmatch=1
 
 [7]
-Description=Application settings for firefox
+Description=Application settings for lutris
 above=true
 clientmachine=localhost
-desktopfile=org.mozilla.firefox
+desktopfile=lutris
 desktopfilerule=3
 fsplevel=1
 fullscreen=true
@@ -276,7 +294,7 @@ position=3399,134
 screen=1
 title=mine
 windowrole=browser
-wmclass=\sfirefox
+wmclass=python3.11 lutris
 wmclasscomplete=true
 wmclassmatch=1
 
@@ -299,6 +317,22 @@ wmclass=mpv
 wmclassmatch=1
 
 [8]
+Description=Application settings for firefox
+above=true
+clientmachine=localhost
+desktopfile=org.mozilla.firefox
+desktopfilerule=3
+fsplevel=1
+minsize=1,1
+position=3399,134
+screen=1
+title=mine
+windowrole=browser
+wmclass=\sfirefox
+wmclasscomplete=true
+wmclassmatch=1
+
+[9]
 Description=Application settings for scrcpy
 above=true
 clientmachine=localhost
@@ -314,22 +348,6 @@ windowrole=browser
 wmclass=scrcpy
 wmclassmatch=1
 
-[9]
-Description=mine
-above=true
-clientmachine=localhost
-fsplevel=1
-minsize=1,1
-position=3489,68
-screen=1
-screenrule=3
-title=mine
-titlematch=1
-types=1
-windowrole=browser
-wmclass=kitty
-wmclassmatch=1
-
 [91c8ba2c-e5b7-4d7b-8ed5-ef092f003c70]
 Description=Application settings for pomatez
 clientmachine=localhost
@@ -340,11 +358,11 @@ wmclassmatch=1
 
 [General]
 ColorScheme[$d]
-count=13
+count=14
 fixed[$d]
 font[$d]
 menuFont[$d]
-rules=1,2,3,4,5,6,7,8,9,10,11,12,13
+rules=1,2,3,4,5,6,7,8,9,10,11,12,13,14
 smallestReadableFont[$d]
 toolBarFont[$d]
 widgetStyle[$d]
@@ -406,6 +424,16 @@ desktopfile=org.mozilla.firefox
 desktopfilerule=3
 wmclass=\sfirefox
 wmclasscomplete=true
+wmclassmatch=1
+
+[e8c8af29-c887-4412-88b9-a18b20dc914c]
+Description=Window settings for kitty
+screen=1
+screenrule=3
+title=spotify_player
+titlematch=1
+types=1
+wmclass=kitty
 wmclassmatch=1
 
 [f80e4af8-3f7f-486a-9b4c-a47877eed1df]

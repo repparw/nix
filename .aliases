@@ -8,6 +8,11 @@
 	# fzf
 		alias f='fzf'
 
+	# nq default dir for files
+		alias nq='NQDIR=/tmp/nq nq'
+		alias tq='NQDIR=/tmp/nq/tmux tq'
+		alias fq='NQDIR=/tmp/nq fq'
+
 	# Asks your passwords, becomes root, opens a interactive non login shell
 		alias su='sudo -s'
 
@@ -22,6 +27,7 @@
 
 	# Configs
 		alias vdl='v ~/.config/scripts/dlsuite-compose.yaml'
+		alias vn='v ~/.config/nvim/init.lua'
 
 	# ls	
 	if command -v eza >/dev/null 2>&1; then
@@ -132,7 +138,7 @@
 
 		alias yd='yt-dlp'
 
-	# ytfzf with nq for freeing the terminal
+	# ytfzf
 		alias y='ytf'
 		alias ytf="env YTFZF_ENABLE_FZF_DEFAULT_OPTS=1 ytfzf"
 
