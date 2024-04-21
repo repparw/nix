@@ -20,11 +20,6 @@ _launch=Meta+N,none,Launch Obsidian
 _k_friendly_name=Socials
 _launch=Meta+S,none,Socials
 
-[appimagekit_869486f1b56f0e87775128f7c421d042-Obsidian.desktop]
-Remove=none,none,Remove AppImage from system
-_k_friendly_name=Obsidian (1.5.8)
-_launch=none,none,Launch Obsidian (1.5.8)
-
 [bttoggle.desktop]
 _k_friendly_name=bttoggle
 _launch=Meta+Shift+B,none,/home/repparw/.config/scripts/bttoggle
@@ -103,10 +98,6 @@ _launch=Ctrl+Alt+Shift+A,none,killall steam || steam -gamepadui
 _k_friendly_name=\sDiscord || Discord
 _launch=Ctrl+Alt+Shift+E,none,killall Discord || Discord
 
-[killall.desktop]
-_k_friendly_name=\sspotify || flatpak run com.spotify.Client
-_launch=Ctrl+Alt+Shift+H,none,killall spotify || flatpak run com.spotify.Client
-
 [kiosk.desktop]
 _k_friendly_name=kiosk
 _launch=Meta+Y,none,/home/repparw/.config/scripts/kiosk
@@ -114,6 +105,10 @@ _launch=Meta+Y,none,/home/repparw/.config/scripts/kiosk
 [kitty-2.desktop]
 _k_friendly_name=kitty btm
 _launch=Meta+T,none,kitty btm
+
+[kitty-3.desktop]
+_k_friendly_name=kitty spotify_player
+_launch=\tMeta+M,none,kitty spotify_player
 
 [kmix]
 _k_friendly_name=Audio Volume
@@ -296,14 +291,6 @@ NewDocument=none,none,New Spreadsheet
 _k_friendly_name=LibreOffice Calc
 _launch=none,none,Launch LibreOffice Calc
 
-[md.obsidian.Obsidian-2.desktop]
-_k_friendly_name=Obsidian
-_launch=none,none,Launch Obsidian
-
-[md.obsidian.Obsidian.desktop]
-_k_friendly_name=Obsidian
-_launch=none,none,Launch Obsidian
-
 [mediacontrol]
 _k_friendly_name=Media Controller
 mediavolumedown=none,,Media volume down
@@ -315,7 +302,7 @@ playpausemedia=Media Play,Media Play,Play/Pause media playback
 previousmedia=Media Previous,Media Previous,Media playback previous
 stopmedia=none,Media Stop,Stop media playback
 
-[mpvclip.desktop]
+[mpvclip-2.desktop]
 _k_friendly_name=mpvclip
 _launch=Meta+Z,none,/home/repparw/.config/scripts/mpvclip
 
@@ -368,7 +355,7 @@ _launch=none,Print,Launch Spectacle
 ComposeMessage=none,none,Write New Message
 OpenAddressBook=none,none,Open the Address Book
 _k_friendly_name=Thunderbird
-_launch=Meta+G,none,Thunderbird
+_launch=none,none,Thunderbird
 
 [org_kde_powerdevil]
 Decrease Keyboard Brightness=Keyboard Brightness Down,Keyboard Brightness Down,Decrease Keyboard Brightness
@@ -441,6 +428,10 @@ _launch=Meta+Shift+S,none,/home/repparw/.config/scripts/scrcpy
 [systemsettings.desktop]
 _k_friendly_name=System Settings
 _launch=Tools,Tools,System Settings
+
+[xdg-open-3.desktop]
+_k_friendly_name=xdg-open https://mail.google.com
+_launch=Meta+G,none,xdg-open https://mail.google.com
 
 [xdg-open.desktop]
 _k_friendly_name=xdg-open https://todoist.com/app/

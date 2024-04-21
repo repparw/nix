@@ -19,18 +19,8 @@ services:
         ports:
             - '9696:9696'
         restart: unless-stopped
-#    flaresolverr:
-#        image: 'ghcr.io/flaresolverr/flaresolverr:latest'
-#        container_name: flaresolverr
-#        environment:
-#          - LOG_LEVEL=${LOG_LEVEL:-info}
-#          - LOG_HTML=${LOG_HTML:-false}
-#          - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
-#          - TZ=America/Argentina/Buenos_Aires
-#        ports:
-#          - '8191:8191'
-#        restart: unless-stopped
     qbittorrent:
+        image: 'ghcr.io/hotio/qbittorrent:latest'
         container_name: qbittorrent
         environment: *default-tz-puid-pgid
         volumes:
@@ -40,8 +30,8 @@ services:
             - '54536:54536'
             - '8080:8080'
         restart: unless-stopped
-        image: 'ghcr.io/hotio/qbittorrent:latest'
     sonarr:
+        image: 'lscr.io/linuxserver/sonarr:latest'
         container_name: sonarr
         environment: *default-tz-puid-pgid
         volumes:
@@ -53,8 +43,8 @@ services:
         links:
             - qbittorrent
         restart: unless-stopped
-        image: 'lscr.io/linuxserver/sonarr:latest'
     radarr:
+        image: 'lscr.io/linuxserver/radarr:latest'
         container_name: radarr
         environment: *default-tz-puid-pgid
         volumes:
@@ -65,7 +55,6 @@ services:
         links:
             - qbittorrent
         restart: unless-stopped
-        image: 'lscr.io/linuxserver/radarr:latest'
     bazarr:
         image: 'lscr.io/linuxserver/bazarr:latest'
         container_name: bazarr
@@ -108,7 +97,7 @@ services:
         image: wangqiru/mercury-parser-api:latest
         container_name: mercury
         ports:
-          - 3000:3000
+          - '3000:3000'
         restart: unless-stopped
     grocy:
         image: lscr.io/linuxserver/grocy:latest
@@ -117,20 +106,8 @@ services:
         volumes:
           - '/home/docker/grocy:/config:Z'
         ports:
-          - 9283:80
+          - '9283:80'
         restart: unless-stopped
-#   keycloak:
-        # internal: keycloak on port 8080
-#       image: 'quay.io/keycloak/keycloak:latest'
-#       command: start
-#       environment:
-#           KC_HOSTNAME: 'auth.example.com'
-#           KC_PROXY: 'edge'
-#           KEYCLOAK_ADMIN: 'admin'
-#           KEYCLOAK_ADMIN_PASSWORD: 'admin'
-#       volumes:
-#         - '/home/docker/keycloak:/opt/keycloak/data:Z'
-#       restart: unless-stopped
     swag:
         image: 'lscr.io/linuxserver/swag:latest'
         container_name: swag
@@ -151,3 +128,74 @@ services:
             - '443:443'
             - '80:80'
         restart: unless-stopped
+    authelia:
+        image: authelia/authelia:latest
+        container_name: authelia
+        environment:
+            - TZ=America/Argentina/Buenos_Aires
+            - PUID=1001
+            - PGID=963
+            - AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE=/secrets/JWT_SECRET
+            - AUTHELIA_SESSION_SECRET_FILE=/secrets/SESSION_SECRET
+#           - AUTHELIA_STORAGE_PASSWORD_FILE=/secrets/STORAGE_PASSWORD Storage password for Postgresql
+            - AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE=/secrets/STORAGE_ENCRYPTION_KEY
+        volumes:
+            - '/home/docker/authelia/config:/config:Z'
+            - '/home/docker/authelia/secrets:/secrets:Z'
+        ports:
+            - '9091:9091'
+        depends_on:
+            - valkey
+        restart: unless-stopped
+    valkey:
+        image: valkey/valkey:7.2-alpine
+        container_name: valkey
+        command: valkey-server --save 60 1 --loglevel warning
+        environment: *default-tz-puid-pgid
+        volumes: 
+            - '/home/docker/authelia/valkey:/data:Z'
+        ports:
+            - '6379:6379'
+        restart: unless-stopped
+### Paperless
+    broker:
+        image: docker.io/library/redis:7
+        container_name: broker
+        volumes:
+          - '/home/docker/paper/redis:/data:Z'
+        restart: unless-stopped
+    db:
+        image: docker.io/library/postgres:15
+        container_name: db
+        environment:
+            POSTGRES_DB: paperless
+            POSTGRES_USER: paperless
+            POSTGRES_PASSWORD: paperless
+        volumes:
+          - '/home/docker/paper/pg:/var/lib/postgresql/data:Z'
+        restart: unless-stopped
+
+    paperless:
+        image: ghcr.io/paperless-ngx/paperless-ngx:latest
+        container_name: paperless
+        depends_on:
+            - db
+            - broker
+        ports:
+            - '8000:8000'
+        volumes:
+          - '/home/docker/paper/data:/usr/src/paperless/data:Z'
+          - '/home/docker/paper/media:/usr/src/paperless/media:Z'
+          - '/home/docker/paper/export:/usr/src/paperless/export:Z'
+          - '/home/repparw/Documents/consume:/usr/src/paperless/consume:Z'
+        environment:
+            - PAPERLESS_REDIS=redis://broker:6379
+            - PAPERLESS_DBHOST=db
+            - USERMAP_UID=1001
+            - USERMAP_GID=963
+            - PAPERLESS_OCR_LANGUAGE=spa
+            - PAPERLESS_DISABLE_REGULAR_LOGIN=1
+            - PAPERLESS_URL=https://paper.repparw.com.ar
+            - PAPERLESS_TIME_ZONE=America/Argentina/Buenos_Aires
+        restart: unless-stopped
+### Paperless
