@@ -160,6 +160,9 @@ Dialog Size=600,480
 [PreviewSettings]
 MaximumRemoteSize=0
 
+[Sounds]
+Enable=false
+
 [WM]
 activeBackground=39,39,39
 activeBlend=235,219,178
