@@ -31,3 +31,6 @@ key_sequence = "p"
 [[keymaps]]
 command = "Quit"
 key_sequence = "C-q"
+[[keymaps]]
+command = "LibraryPage"
+key_sequence = "g h"
