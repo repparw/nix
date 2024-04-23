@@ -8,7 +8,7 @@ After=network-online.target
 
 [Service]
 ExecStart=/usr/bin/spotifyd --no-daemon
-Restart=unless-stopped
+Restart=always
 RestartSec=12
 
 [Install]
