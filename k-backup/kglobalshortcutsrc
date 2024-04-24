@@ -9,7 +9,7 @@ switch-to-activity-c2f7948f-cf52-46ec-9b7e-c825ba193393=none,none,Switch to acti
 Switch keyboard layout to English (US)=none,none,Switch keyboard layout to English (US)
 Switch keyboard layout to Español (latinoamericano)=none,none,Cambiar la distribución del teclado a Español (latinoamericano)
 Switch keyboard layout to Spanish (Latin American)=none,none,Switch keyboard layout to Spanish (Latin American)
-Switch to Last-Used Keyboard Layout=Meta+Alt+L,Meta+Alt+L,
+Switch to Last-Used Keyboard Layout=Meta+Alt+L,Meta+Alt+L,Switch to Last-Used Keyboard Layout
 Switch to Next Keyboard Layout=none,Meta+Alt+K,Switch to Next Keyboard Layout
 _k_friendly_name=Keyboard Layout Switcher
 
@@ -51,22 +51,23 @@ Halt Without Confirmation=Ctrl+Alt+Shift+PgDown,,Shut Down Without Confirmation
 Lock Session=Screensaver\tCtrl+Alt+L,Meta+L\tScreensaver,Lock Session
 Log Out=Ctrl+Alt+Del,Ctrl+Alt+Del,Log Out
 Log Out Without Confirmation=Ctrl+Alt+Shift+Del,,Log Out Without Confirmation
-Reboot=,,Reboot
+Reboot=none,,Reboot
 Reboot Without Confirmation=Ctrl+Alt+Shift+PgUp,,Reboot Without Confirmation
-Shut Down=,,Shut Down
+Shut Down=none,,Shut Down
 _k_friendly_name=Session Management
 
 [kwin]
 Activate Window Demanding Attention=Ctrl+Alt+A,Meta+Ctrl+A,Activate Window Demanding Attention
+Cube=none,Meta+C,Toggle Cube
 Cycle Overview=none,none,Cycle through Overview and Grid View
 Cycle Overview Opposite=none,none,Cycle through Grid View and Overview
 Decrease Opacity=none,,Decrease Opacity of Active Window by 5%
 Edit Tiles=none,Meta+T,Toggle Tiles Editor
 Expose=Ctrl+F9,Ctrl+F9,Toggle Present Windows (Current desktop)
-ExposeAll=Ctrl+F10\tLaunch (C),Ctrl+F10\tLaunch (C),Toggle Present Windows (All desktops)
+ExposeAll=Ctrl+F10\tLaunch (C),Ctrl+F10,Toggle Present Windows (All desktops)
 ExposeClass=Ctrl+F7,Ctrl+F7,Toggle Present Windows (Window class)
 ExposeClassCurrentDesktop=none,none,Toggle Present Windows (Window class on current desktop)
-Grid View=,Meta+G,Toggle Grid View
+Grid View=none,Meta+G,Toggle Grid View
 Increase Opacity=none,,Increase Opacity of Active Window by 5%
 Invert Screen Colors=none,none,Invert Screen Colours
 Kill Window=Ctrl+Alt+Esc,Meta+Ctrl+Esc,Kill Window
@@ -110,7 +111,7 @@ Switch to Desktop 6=none,,Switch to Desktop 6
 Switch to Desktop 7=none,,Switch to Desktop 7
 Switch to Desktop 8=none,,Switch to Desktop 8
 Switch to Desktop 9=none,,Switch to Desktop 9
-Switch to Next Desktop=none,,Switch to Next Desktop
+Switch to Next Desktop=Meta+Shift+C,,Switch to Next Desktop
 Switch to Next Screen=Alt+Tab,,Switch to Next Screen
 Switch to Previous Desktop=none,,Switch to Previous Desktop
 Switch to Previous Screen=none,,Switch to Previous Screen
@@ -238,8 +239,8 @@ PowerOff=Power Off,Power Off,Power Off
 Sleep=Sleep,Sleep,Suspend
 Toggle Keyboard Backlight=Keyboard Light On/Off,Keyboard Light On/Off,Toggle Keyboard Backlight
 Turn Off Screen=none,none,Turn Off Screen
-_k_friendly_name=Power Management
-powerProfile=Battery\t,Battery\tMeta+B,Switch Power Profile
+_k_friendly_name=KDE Power Management System
+powerProfile=Battery,Battery\tMeta+B,Switch Power Profile
 
 [plasmashell]
 _k_friendly_name=plasmashell
@@ -262,6 +263,7 @@ activate widget 265=none,none,Activate Fokus Widget
 activate widget 278=none,none,Activate Media Player Widget
 activate widget 3=none,none,Activate Application Launcher Widget
 activate widget 4=none,none,Activate Application Launcher Widget
+activate widget 51=none,none,Activate Digital Clock Widget
 activate widget 53=none,none,Activate Icons-only Task Manager Widget
 activate widget 63=none,none,Activate Application Launcher Widget
 activate widget 78=none,none,Activate Application Launcher Widget
@@ -273,6 +275,8 @@ cycleNextAction=none,,Next History Item
 cyclePrevAction=none,,Previous History Item
 edit_clipboard=none,none,Edit Contents…
 manage activities=none,Meta+Q,Show Activity Switcher
+next activity=Meta+A,none,Walk through activities
+previous activity=Meta+Shift+A,none,Walk through activities (Reverse)
 repeat_action=none,Meta+Ctrl+R,Manually Invoke Action on Current Clipboard
 show dashboard=none,Ctrl+F12,Show Desktop
 show-barcode=none,,Show Barcode…
@@ -344,18 +348,18 @@ _launch=Alt+F2
 ShowOSD=Display
 
 [services][org.kde.spectacle.desktop]
-ActiveWindowScreenShot=
+ActiveWindowScreenShot=none
 CurrentMonitorScreenShot=Shift+Print
 FullScreenScreenShot=none
-RecordRegion=\tMeta+R
+RecordRegion=Meta+R
 RectangularRegionScreenShot=Meta+Shift+Print\tMeta+F11
 _launch=none
 
+[services][org.mozilla.firefox.desktop]
+_launch=Meta+Space
+
 [services][pomatez.desktop]
 _launch=Meta+P
-
-[services][scrcpy-2.desktop]
-_launch=
 
 [services][xdg-open-3.desktop]
 _launch=Meta+G
@@ -374,9 +378,6 @@ _launch=Meta+O
 
 [services][{9005eee1-9daa-41a4-9d98-76ce0188d489}.desktop]
 _launch=Meta+E
-
-[services][{a3f93496-a9ae-485b-ae68-c926db08bb2b}.desktop]
-_launch=
 
 [services][{c974294c-4459-4171-acdb-c0200fc71ca4}.desktop]
 _launch=Meta+U
