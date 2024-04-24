@@ -1,6 +1,6 @@
 local options = {
-  splitbelow = true,
   splitright = true,
+  splitbelow = true,
   termguicolors = true,
   ignorecase = true,
   smartcase = true,
@@ -11,9 +11,13 @@ local options = {
   list = true,
   listchars = { tab = '» ', trail = '·', nbsp = '␣' },
   scrolloff = 10,
-  inccommand = "split",
-  background = "dark",
+  inccommand = 'split',
+  background = 'dark',
   showmode = false,
+  mouse = 'a',
+  updatetime = 250,
+  timeoutlen = 300,
+  cursorline = true,
 }
 
 for k,v in pairs(options) do
