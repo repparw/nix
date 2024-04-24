@@ -42,6 +42,7 @@ BorderActivateAll=9
 
 [Effect-overview]
 BlurBackground=false
+BorderActivate=9
 IgnoreMinimized=true
 
 [Effect-presentwindows]
@@ -76,6 +77,7 @@ NightTemperature=2600
 
 [Plugins]
 bismuthEnabled=true
+desktopchangeosdEnabled=true
 forceblurEnabled=false
 grid-tilingEnabled=false
 highlightwindowEnabled=true
@@ -83,6 +85,7 @@ krohnkiteEnabled=false
 minimizeallEnabled=false
 synchronizeskipswitcherEnabled=false
 videowallEnabled=false
+windowviewEnabled=false
 zoomEnabled=false
 
 [Script-bismuth]
@@ -97,6 +100,9 @@ ignoreTitle=2201117TG
 keepFloatAbove=false
 maximizeSoleTile=true
 tileLayoutGap=2
+
+[Script-desktopchangeosd]
+PopupHideDelay=200
 
 [Script-forceblur]
 patterns=alacritty
@@ -117,7 +123,6 @@ ActivitiesMode=0
 ApplicationsMode=0
 DesktopLayout=org.kde.breeze.desktop
 DesktopListLayout=org.kde.breeze.desktop
-HighlightWindows=false
 LayoutName=thumbnail_grid
 MinimizedMode=0
 MultiScreenMode=1
@@ -175,18 +180,17 @@ InputMethod[$d]
 VirtualKeyboardEnabled=false
 
 [Windows]
+ActiveMouseScreen=0
 AutoRaise=false
 AutoRaiseInterval=750
 ClickRaise=true
 DelayFocusInterval=300
 ElectricBorderCornerRatio=0.15
-FocusPolicy=ClickToFocus
-FocusStealingPreventionLevel=1
 MaximizeButtonLeftClickCommand=Maximize
 MaximizeButtonMiddleClickCommand=Maximize (vertical only)
 MaximizeButtonRightClickCommand=Maximize (horizontal only)
-NextFocusPrefersMouse=false
 Placement=Centered
+RollOverDesktops=true
 SeparateScreenFocus=true
 TitlebarDoubleClickCommand=Maximize
 
