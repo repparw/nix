@@ -1,6 +1,6 @@
 #!/bin/sh
 
-tmux new-session -d -s mine
+tmux new-session -A -d -s mine
 tmux select-window -t mine:0
 tmux send-keys 'temp' 'C-m'
 #tmux split-window -v

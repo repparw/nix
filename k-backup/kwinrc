@@ -123,6 +123,7 @@ ActivitiesMode=0
 ApplicationsMode=0
 DesktopLayout=org.kde.breeze.desktop
 DesktopListLayout=org.kde.breeze.desktop
+HighlightWindows=false
 LayoutName=thumbnail_grid
 MinimizedMode=0
 MultiScreenMode=1
