@@ -21,9 +21,9 @@
 
 	# Vim = Nvim
 
-		alias vim='nvim'; alias vi='nvim'
+		alias vim='nvim'
 
-		alias v='vi'
+		alias v='nvim'
 
 	# Configs
 		alias vdl='v ~/.config/scripts/dlsuite-compose.yaml'
