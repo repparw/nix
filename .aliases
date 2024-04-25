@@ -28,7 +28,6 @@
 	# Configs
 		alias vdl='v ~/.config/scripts/dlsuite-compose.yaml'
 		alias vn='v ~/.config/nvim/init.lua'
-		alias vnp='v ~/.config/nvim/lua/plugins.lua'
 
 	# ls	
 	if command -v eza >/dev/null 2>&1; then

@@ -115,12 +115,12 @@ XftHintStyle=hintslight
 XftSubPixel=none
 accentColorFromWallpaper=false
 dbfile=/home/repparw/.mozilla/firefox/o3rowi7a.default/places.sqlite
-fixed=NotoSansM Nerd Font,10,-1,5,50,0,0,0,0,0
-font=NotoSans Nerd Font,10,-1,5,50,0,0,0,0,0
-menuFont=NotoSans Nerd Font,10,-1,5,50,0,0,0,0,0
+fixed=NotoSansM Nerd Font Propo,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+font=NotoSans Nerd Font Propo,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+menuFont=NotoSans Nerd Font Propo,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 shadeSortColumn=true
-smallestReadableFont=NotoSans Nerd Font,8,-1,5,50,0,0,0,0,0
-toolBarFont=NotoSans Nerd Font,10,-1,5,50,0,0,0,0,0
+smallestReadableFont=NotoSans Nerd Font Propo,8,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+toolBarFont=NotoSans Nerd Font Propo,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 
 [KDE]
 LookAndFeelPackage=org.kde.breezedark.desktop
@@ -166,7 +166,7 @@ Enable=false
 [WM]
 activeBackground=39,39,39
 activeBlend=235,219,178
-activeFont=NotoSans Nerd Font,10,-1,5,50,0,0,0,0,0
+activeFont=NotoSans Nerd Font Propo,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 activeForeground=235,219,178
 frame=61,174,233
 inactiveBackground=40,40,40

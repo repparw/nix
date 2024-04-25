@@ -2171,6 +2171,6 @@
 
 
 # BEGIN_KITTY_THEME
-# Gruvbox Material Dark Medium
+# Gruvbox Material Dark Hard
 include current-theme.conf
 # END_KITTY_THEME
