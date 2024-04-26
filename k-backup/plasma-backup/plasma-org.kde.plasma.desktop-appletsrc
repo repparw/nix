@@ -97,7 +97,7 @@ immutability=1
 plugin=org.kde.plasma.systemtray
 
 [Containments][31][Applets][32][Configuration]
-PreloadWeight=70
+PreloadWeight=75
 SystrayContainmentId=33
 
 [Containments][31][Applets][51]
@@ -105,7 +105,7 @@ immutability=1
 plugin=org.kde.plasma.digitalclock
 
 [Containments][31][Applets][51][Configuration]
-PreloadWeight=95
+PreloadWeight=100
 popupHeight=450
 popupWidth=560
 
@@ -143,7 +143,7 @@ immutability=1
 plugin=org.kde.plasma.notifications
 
 [Containments][33][Applets][35][Configuration]
-PreloadWeight=85
+PreloadWeight=90
 
 [Containments][33][Applets][36]
 immutability=1
