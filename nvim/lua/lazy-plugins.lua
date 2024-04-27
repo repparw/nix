@@ -7,6 +7,9 @@ require("lazy").setup({
   require 'plugins/lspconfig',
   require 'plugins/gitsigns',
   require 'plugins/telescope',
+  require 'plugins/copilot',
+  require 'plugins/copilot-cmp',
+--  require 'plugins/codeium',
   }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
