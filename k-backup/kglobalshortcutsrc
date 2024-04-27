@@ -351,7 +351,7 @@ ShowOSD=Display
 ActiveWindowScreenShot=none
 CurrentMonitorScreenShot=Shift+Print
 FullScreenScreenShot=none
-RecordRegion=Meta+R
+RecordRegion=none
 RectangularRegionScreenShot=Meta+Shift+Print\tMeta+F11
 _launch=none
 
@@ -378,6 +378,9 @@ _launch=Meta+O
 
 [services][{9005eee1-9daa-41a4-9d98-76ce0188d489}.desktop]
 _launch=Meta+E
+
+[services][{a3f93496-a9ae-485b-ae68-c926db08bb2b}.desktop]
+_launch=Meta+R
 
 [services][{c974294c-4459-4171-acdb-c0200fc71ca4}.desktop]
 _launch=Meta+U
