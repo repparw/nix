@@ -162,6 +162,9 @@ PreloadWeight=42
 immutability=1
 plugin=org.kde.kdeconnect
 
+[Containments][33][Applets][38][Configuration]
+PreloadWeight=55
+
 [Containments][33][Applets][39][Configuration]
 PreloadWeight=42
 
@@ -179,6 +182,9 @@ PreloadWeight=42
 [Containments][33][Applets][43]
 immutability=1
 plugin=org.kde.plasma.devicenotifier
+
+[Containments][33][Applets][43][Configuration]
+PreloadWeight=65
 
 [Containments][33][Applets][44]
 immutability=1
