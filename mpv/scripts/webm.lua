@@ -15,7 +15,7 @@ local options = {
 	-- and [[/home/john]] (on Unix-like systems eg. Linux).
 	-- The [[]] delimiter is not needed when using from a configuration file
 	-- in the script-opts folder.
-	output_directory = [[/home/repparw]],
+	output_directory = [[]],
 	run_detached = false,
 	-- Template string for the output file
 	-- %f - Filename, with extension
@@ -37,7 +37,7 @@ local options = {
 	-- used on the encode. If this is set to <= 0, the video bitrate will be set
 	-- to 0, which might enable constant quality modes, depending on the
 	-- video codec that's used (VP8 and VP9, for example).
-	target_filesize = 14000,
+	target_filesize = 2500,
 	-- If true, will use stricter flags to ensure the resulting file doesn't
 	-- overshoot the target filesize. Not recommended, as constrained quality
 	-- mode should work well, unless you're really having trouble hitting
@@ -48,25 +48,27 @@ local options = {
 	strict_audio_bitrate = 64,
 	-- Sets the output format, from a few predefined ones.
 	-- Currently we have:
-	-- webm-vp8 (libvpx/libvorbis)
+	-- av1
+	-- hevc
 	-- webm-vp9 (libvpx-vp9/libopus)
-	-- mp4 (h264/AAC)
-	-- mp4-nvenc (h264-NVENC/AAC)
-	-- raw (rawvideo/pcm_s16le).
+	-- avc (h264/AAC)
+	-- avc-nvenc (h264-NVENC/AAC)
+	-- webm-vp8 (libvpx/libvorbis)
+	-- gif
 	-- mp3 (libmp3lame)
-	-- and gif
-	output_format = "mp4",
+	-- and raw (rawvideo/pcm_s16le).
+	output_format = "webm-vp8",
 	twopass = true,
 	-- If set, applies the video filters currently used on the playback to the encode.
 	apply_current_filters = true,
 	-- If set, writes the video's filename to the "Title" field on the metadata.
 	write_filename_on_metadata = false,
 	-- Set the number of encoding threads, for codecs libvpx and libvpx-vp9
-	libvpx_threads = 4,
+	threads = 4,
 	additional_flags = "",
 	-- Constant Rate Factor (CRF). The value meaning and limits may change,
 	-- from codec to codec. Set to -1 to disable.
-	crf = 18,
+	crf = 10,
 	-- Useful for flags that may impact output filesize, such as qmin, qmax etc
 	-- Won't be applied when strict_filesize_constraint is on.
 	non_strict_additional_flags = "",
@@ -262,6 +264,7 @@ format_filename = function(startTime, endTime, videoFormat)
     ["%%T"] = mp.get_property("media-title"),
     ["%%M"] = (mp.get_property_native('aid') and not mp.get_property_native('mute') and hasAudioCodec) and '-audio' or '',
     ["%%R"] = (options.scale_height ~= -1) and "-" .. tostring(options.scale_height) .. "p" or "-" .. tostring(mp.get_property_native('height')) .. "p",
+    ["%%mb"] = options.target_filesize / 1000,
     ["%%t%%"] = "%%"
   }
   local filename = options.output_template
@@ -939,7 +942,7 @@ do
     end,
     getFlags = function(self)
       return {
-        "--ovcopts-add=threads=" .. tostring(options.libvpx_threads),
+        "--ovcopts-add=threads=" .. tostring(options.threads),
         "--ovcopts-add=auto-alt-ref=1",
         "--ovcopts-add=lag-in-frames=25",
         "--ovcopts-add=quality=good",
@@ -993,7 +996,7 @@ do
   local _base_0 = {
     getFlags = function(self)
       return {
-        "--ovcopts-add=threads=" .. tostring(options.libvpx_threads)
+        "--ovcopts-add=threads=" .. tostring(options.threads)
       }
     end
   }
@@ -1036,16 +1039,22 @@ do
   WebmVP9 = _class_0
 end
 formats["webm-vp9"] = WebmVP9()
-local MP4
+local AVC
 do
   local _class_0
   local _parent_0 = Format
-  local _base_0 = { }
+  local _base_0 = {
+    getFlags = function(self)
+      return {
+        "--ovcopts-add=threads=" .. tostring(options.threads)
+      }
+    end
+  }
   _base_0.__index = _base_0
   setmetatable(_base_0, _parent_0.__base)
   _class_0 = setmetatable({
     __init = function(self)
-      self.displayName = "MP4 (h264/AAC)"
+      self.displayName = "AVC (h264/AAC)"
       self.supportsTwopass = true
       self.videoCodec = "libx264"
       self.audioCodec = "aac"
@@ -1053,7 +1062,7 @@ do
       self.acceptsBitrate = true
     end,
     __base = _base_0,
-    __name = "MP4",
+    __name = "AVC",
     __parent = _parent_0
   }, {
     __index = function(cls, name)
@@ -1077,19 +1086,25 @@ do
   if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end
-  MP4 = _class_0
+  AVC = _class_0
 end
-formats["mp4"] = MP4()
-local MP4NVENC
+formats["avc"] = AVC()
+local AVCNVENC
 do
   local _class_0
   local _parent_0 = Format
-  local _base_0 = { }
+  local _base_0 = {
+    getFlags = function(self)
+      return {
+        "--ovcopts-add=bf=0"
+      }
+    end
+  }
   _base_0.__index = _base_0
   setmetatable(_base_0, _parent_0.__base)
   _class_0 = setmetatable({
     __init = function(self)
-      self.displayName = "MP4 (h264-NVENC/AAC)"
+      self.displayName = "AVC (h264-NVENC/AAC)"
       self.supportsTwopass = true
       self.videoCodec = "h264_nvenc"
       self.audioCodec = "aac"
@@ -1097,7 +1112,7 @@ do
       self.acceptsBitrate = true
     end,
     __base = _base_0,
-    __name = "MP4NVENC",
+    __name = "AVCNVENC",
     __parent = _parent_0
   }, {
     __index = function(cls, name)
@@ -1121,9 +1136,109 @@ do
   if _parent_0.__inherited then
     _parent_0.__inherited(_parent_0, _class_0)
   end
-  MP4NVENC = _class_0
+  AVCNVENC = _class_0
 end
-formats["mp4-nvenc"] = MP4NVENC()
+formats["avc-nvenc"] = AVCNVENC()
+local AV1
+do
+  local _class_0
+  local _parent_0 = Format
+  local _base_0 = {
+    getFlags = function(self)
+      return {
+        "--ovcopts-add=threads=" .. tostring(options.threads)
+      }
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  _class_0 = setmetatable({
+    __init = function(self)
+      self.displayName = "AV1"
+      self.supportsTwopass = true
+      self.videoCodec = "libaom-av1"
+      self.audioCodec = "aac"
+      self.outputExtension = "mp4"
+      self.acceptsBitrate = true
+    end,
+    __base = _base_0,
+    __name = "AV1",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        local parent = rawget(cls, "__parent")
+        if parent then
+          return parent[name]
+        end
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  AV1 = _class_0
+end
+formats["av1"] = AV1()
+local HEVC
+do
+  local _class_0
+  local _parent_0 = Format
+  local _base_0 = {
+    getFlags = function(self)
+      return {
+        "--ovcopts-add=threads=" .. tostring(options.threads)
+      }
+    end
+  }
+  _base_0.__index = _base_0
+  setmetatable(_base_0, _parent_0.__base)
+  _class_0 = setmetatable({
+    __init = function(self)
+      self.displayName = "HEVC"
+      self.supportsTwopass = true
+      self.videoCodec = "libx265"
+      self.audioCodec = "aac"
+      self.outputExtension = "mp4"
+      self.acceptsBitrate = true
+    end,
+    __base = _base_0,
+    __name = "HEVC",
+    __parent = _parent_0
+  }, {
+    __index = function(cls, name)
+      local val = rawget(_base_0, name)
+      if val == nil then
+        local parent = rawget(cls, "__parent")
+        if parent then
+          return parent[name]
+        end
+      else
+        return val
+      end
+    end,
+    __call = function(cls, ...)
+      local _self_0 = setmetatable({}, _base_0)
+      cls.__init(_self_0, ...)
+      return _self_0
+    end
+  })
+  _base_0.__class = _class_0
+  if _parent_0.__inherited then
+    _parent_0.__inherited(_parent_0, _class_0)
+  end
+  HEVC = _class_0
+end
+formats["hevc"] = HEVC()
 local MP3
 do
   local _class_0
@@ -1221,12 +1336,11 @@ do
       end
       cfilter = cfilter .. "[vidtmp]split[topal][vidf];"
       cfilter = cfilter .. "[topal]palettegen[pal];"
-      cfilter = cfilter .. "[vidf]fifo[vidf];"
-      if options.gif_dither == 6 then
-        cfilter = cfilter .. "[vidf][pal]paletteuse[vo]"
-      else
-        cfilter = cfilter .. "[vidf][pal]paletteuse=dither=bayer:bayer_scale=" .. tostring(options.gif_dither) .. ":diff_mode=rectangle[vo]"
+      cfilter = cfilter .. "[vidf][pal]paletteuse=diff_mode=rectangle"
+      if options.gif_dither ~= 6 then
+        cfilter = cfilter .. ":dither=bayer:bayer_scale=" .. tostring(options.gif_dither)
       end
+      cfilter = cfilter .. "[vo]"
       append(new_command, {
         "--lavfi-complex=" .. tostring(cfilter)
       })
@@ -1623,6 +1737,7 @@ get_playback_options = function()
   append_property(ret, "sub-ass-force-style")
   append_property(ret, "sub-ass-vsfilter-aspect-compat")
   append_property(ret, "sub-auto")
+  append_property(ret, "sub-pos")
   append_property(ret, "sub-delay")
   append_property(ret, "video-rotate")
   append_property(ret, "ytdl-format")
@@ -2417,13 +2532,15 @@ do
         }
       }
       local formatIds = {
-        "webm-vp8",
+        "av1",
+        "hevc",
         "webm-vp9",
-        "mp4",
-        "mp4-nvenc",
-        "raw",
+        "avc",
+        "avc-nvenc",
+        "webm-vp8",
+        "gif",
         "mp3",
-        "gif"
+        "raw"
       }
       local formatOpts = {
         possibleValues = (function()
@@ -2711,6 +2828,12 @@ do
         return self:draw()
       end
     end,
+    jumpToStartTime = function(self)
+      return mp.set_property("time-pos", self.startTime)
+    end,
+    jumpToEndTime = function(self)
+      return mp.set_property("time-pos", self.endTime)
+    end,
     setupStartAndEndTimes = function(self)
       if mp.get_property_native("duration") then
         self.startTime = 0
@@ -2733,6 +2856,8 @@ do
       ass:append(tostring(bold('c:')) .. " crop\\N")
       ass:append(tostring(bold('1:')) .. " set start time (current is " .. tostring(seconds_to_time_string(self.startTime)) .. ")\\N")
       ass:append(tostring(bold('2:')) .. " set end time (current is " .. tostring(seconds_to_time_string(self.endTime)) .. ")\\N")
+      ass:append(tostring(bold('!:')) .. " jump to start time\\N")
+      ass:append(tostring(bold('@:')) .. " jump to end time\\N")
       ass:append(tostring(bold('o:')) .. " change encode options\\N")
       ass:append(tostring(bold('p:')) .. " preview\\N")
       ass:append(tostring(bold('e:')) .. " encode\\N\\N")
@@ -2827,6 +2952,20 @@ do
         ["2"] = (function()
           local _base_1 = self
           local _fn_0 = _base_1.setEndTime
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)(),
+        ["!"] = (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.jumpToStartTime
+          return function(...)
+            return _fn_0(_base_1, ...)
+          end
+        end)(),
+        ["@"] = (function()
+          local _base_1 = self
+          local _fn_0 = _base_1.jumpToEndTime
           return function(...)
             return _fn_0(_base_1, ...)
           end
