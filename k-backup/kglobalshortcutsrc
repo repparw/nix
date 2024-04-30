@@ -317,7 +317,7 @@ _launch=Meta+Y
 _launch=Meta+T
 
 [services][kitty-3.desktop]
-_launch=Meta+M
+_launch=Meta+M\tCtrl+Alt+Shift+H
 
 [services][mpvclip-2.desktop]
 _launch=Meta+Z
