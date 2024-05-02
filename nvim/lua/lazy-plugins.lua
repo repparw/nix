@@ -3,6 +3,7 @@ require("lazy").setup({
   require 'plugins/autopairs',
   require 'plugins/nvim-surround',
   require 'plugins/lualine',
+  require 'plugins/whichkey',
   require 'plugins/cmp',
   require 'plugins/lspconfig',
   require 'plugins/gitsigns',
