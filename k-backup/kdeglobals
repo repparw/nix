@@ -111,16 +111,17 @@ ColorSchemeHash=68f7da041112b660ac4e6911cf4bf8a7b361feda
 Name=Breeze Dark
 TerminalApplication=kitty
 TerminalService=kitty.desktop
+XftAntialias=true
 XftHintStyle=hintslight
-XftSubPixel=none
+XftSubPixel=rgb
 accentColorFromWallpaper=false
 dbfile=/home/repparw/.mozilla/firefox/o3rowi7a.default/places.sqlite
-fixed=NotoSansM Nerd Font Propo,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
-font=NotoSans Nerd Font Propo,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
-menuFont=NotoSans Nerd Font Propo,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+fixed=FiraCode Nerd Font,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+font=FiraCode Nerd Font,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+menuFont=FiraCode Nerd Font,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 shadeSortColumn=true
-smallestReadableFont=NotoSans Nerd Font Propo,8,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
-toolBarFont=NotoSans Nerd Font Propo,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+smallestReadableFont=FiraCode Nerd Font,8,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+toolBarFont=FiraCode Nerd Font,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 
 [KDE]
 LookAndFeelPackage=org.kde.breezedark.desktop
@@ -166,7 +167,7 @@ Enable=false
 [WM]
 activeBackground=39,39,39
 activeBlend=235,219,178
-activeFont=NotoSans Nerd Font Propo,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
+activeFont=FiraCode Nerd Font,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1
 activeForeground=235,219,178
 frame=61,174,233
 inactiveBackground=40,40,40
