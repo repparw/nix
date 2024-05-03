@@ -6,4 +6,4 @@ mpd/mpd.pid
 history.*
 nvim/plugged/fzf
 nvim/plugged/vim-airline
-
+zsh/.antidote
