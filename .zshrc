@@ -26,7 +26,7 @@ lf () {
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="dstufft-time"
+ ZSH_THEME='dst' # tjkirch
 
 # Uncomment the following line to automatically update without prompting.
  DISABLE_UPDATE_PROMPT="true"
@@ -40,7 +40,16 @@ ZSH_THEME="dstufft-time"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git dnf tmux zsh-vi-mode)
+plugins=(
+	git
+	docker
+	dnf
+	tmux
+	zsh-vi-mode
+	ohmyzsh-full-autoupdate
+	zsh-syntax-highlighting
+	zsh-autosuggestions
+  )
 
 source $ZSH/oh-my-zsh.sh
 
