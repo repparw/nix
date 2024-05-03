@@ -1,3 +1,7 @@
+# Set ~/.zshenv to
+# ZDOTDIR=$HOME/.config/zsh
+# to keep all zsh configs in this folder
+
 	# Use fd (https://github.com/sharkdp/fd) instead of the default find
 	# command for listing path candidates.
 	# - The first argument to the function ($1) is the base path to start traversal
@@ -22,42 +26,17 @@ lf () {
 	unset LF_TEMPDIR
 }
 
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time oh-my-zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
- ZSH_THEME='dst' # tjkirch
-
-# Uncomment the following line to automatically update without prompting.
- DISABLE_UPDATE_PROMPT="true"
-
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
-
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-plugins=(
-	git
-	docker
-	dnf
-	tmux
-	zsh-vi-mode
-	ohmyzsh-full-autoupdate
-	zsh-syntax-highlighting
-	zsh-autosuggestions
-  )
-
-source $ZSH/oh-my-zsh.sh
+source ${ZDOTDIR:-$HOME}/.antidote/antidote.zsh
+antidote load ${ZDOTDIR:-$HOME}/.zsh_plugins.txt
 
 # User configuration
 
 # autocompletion fixes
 
 _comps[rsync]=_cp
+
+# Bind zsh-autosuggestions accept to ctrl+y
+bindkey '^ ' autosuggest-accept
 
 # Use vim keys in tab complete menu:
 bindkey -M menuselect 'h' vi-backward-char
