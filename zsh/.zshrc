@@ -67,13 +67,16 @@ bindkey -M menuselect 'j' vi-down-line-or-history
 bindkey -v '^?' backward-delete-char
 
 ## Aliases
-if [ -f ~/.aliases ]; then
-	. ~/.aliases
+if [ -f ${ZDOTDIR:-$HOME}/.aliases ]; then
+	. ${ZDOTDIR:-$HOME}/.aliases
 fi
 
 eval "$(zoxide init --cmd cd zsh)"
 
 FZF_ALT_C_COMMAND= eval "$(fzf --zsh)"
+
+# Histfile settings
+HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
 
 ## History ignore dups
 setopt EXTENDED_HISTORY
