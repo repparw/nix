@@ -1,3 +1,25 @@
+# Theme (dstufft with added time)
+function prompt_char {
+    git branch >/dev/null 2>/dev/null && echo '±' && return
+    echo '○'
+}
+
+function virtualenv_info {
+    [ $VIRTUAL_ENV ] && echo '('`basename $VIRTUAL_ENV`') '
+}
+
+export PROMPT='
+%{$fg[magenta]%}%n%{$reset_color%} at %{$fg[yellow]%}%m%{$reset_color%} in %{$fg_bold[green]%}%~%{$reset_color%}$(git_prompt_info)
+$(virtualenv_info)$(prompt_char) '
+
+export RPROMPT='%{$fg[green]%}[%*]%{$reset_color%}'
+
+export ZSH_THEME_GIT_PROMPT_PREFIX=' on %{$fg[magenta]%}'
+export ZSH_THEME_GIT_PROMPT_SUFFIX='%{$reset_color%}'
+export ZSH_THEME_GIT_PROMPT_DIRTY='%{$fg[green]%}!'
+export ZSH_THEME_GIT_PROMPT_UNTRACKED='%{$fg[green]%}?'
+export ZSH_THEME_GIT_PROMPT_CLEAN=''
+
 # Add local path
 	export PATH=/home/repparw/.cargo/bin:/usr/local/cuda/bin:/home/repparw/go/bin:/home/repparw/.local/bin:$PATH
 
