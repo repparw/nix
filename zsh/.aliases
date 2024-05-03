@@ -29,6 +29,9 @@
 		alias vdl='v ~/.config/scripts/dlsuite-compose.yaml'
 		alias vn='v ~/.config/nvim/init.lua'
 
+	# cd	
+	eval "$(zoxide init --cmd cd zsh)"
+
 	# ls	
 	if command -v eza >/dev/null 2>&1; then
 		alias ls='eza' # Better ls
