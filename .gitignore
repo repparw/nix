@@ -7,3 +7,4 @@ history.*
 nvim/plugged/fzf
 nvim/plugged/vim-airline
 zsh/.antidote
+zsh/.zsh_plugins.zsh
