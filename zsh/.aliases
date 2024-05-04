@@ -30,7 +30,11 @@
 		alias vn='v ~/.config/nvim/init.lua'
 
 	# cd	
-	eval "$(zoxide init --cmd cd zsh)"
+	if (( $+commands[zoxide] )); then
+	  eval "$(zoxide init --cmd=cd zsh)"
+	else
+	  echo 'zoxide: command not found, please install it from https://github.com/ajeetdsouza/zoxide'
+	fi
 
 	# ls	
 	if command -v eza >/dev/null 2>&1; then
@@ -56,13 +60,12 @@
 
 		alias gh='history|rg'
 
-	# Safety nets
 
 		alias trash='mv --force -t ~/.local/share/Trash '
 
 		alias x='xdg-open'
 
-		alias cp='rsync -ah --info=progress2'
+	# Safety nets
 
 		alias ln='ln -i'
 
@@ -124,8 +127,6 @@
 	  elif command -v htop >/dev/null 2>&1; then
 		alias top='htop'
 	 fi
-
-		alias q='exit'
 
 		alias calc='qalc'
 
