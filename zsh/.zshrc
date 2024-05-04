@@ -46,14 +46,17 @@
 # Functions END
 
 # clone antidote if not present
-[[ -d ${ZDOTDIR:-~}/.antidote ]] ||
-  git clone https://github.com/mattmc3/antidote ${ZDOTDIR:-~}/.antidote
+[[ -d ~/.cache/antidote ]] ||
+  git clone https://github.com/mattmc3/antidote ~/.cache/antidote
 
-source ${ZDOTDIR:-$HOME}/.antidote/antidote.zsh
+source ~/.cache/antidote/antidote.zsh
 
 # set OMZ variables before loading OMZ plugins
 export ZSH=$(antidote path ohmyzsh/ohmyzsh)
+
 export ZSH_CACHE_DIR="$ZSH/cache"
+# create completions dir if not present
+[[ -d $ZSH_CACHE_DIR/completions ]] || mkdir -p $ZSH_CACHE_DIR/completions
 
 antidote load # Default location ${ZDOTDIR:-$HOME}/.zsh_plugins.txt
 
@@ -69,6 +72,14 @@ fi
 zvm_after_init_commands+=('FZF_ALT_C_COMMAND= eval "$(fzf --zsh)"')
 # Bind zsh-autosuggestions accept to ctrl-y
 zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
+
+# history search with arrow keys
+zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')
+zvm_after_init_commands+=('bindkey "^[OB" history-substring-search-down')
+
+# history search on vi mode
+zvm_after_init_commands+=('bindkey -M vicmd "k" history-substring-search-up')
+zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
 
 # If ssh and not in tmux, attach to ssh session
 if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
