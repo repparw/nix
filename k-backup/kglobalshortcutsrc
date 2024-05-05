@@ -334,9 +334,6 @@ _launch=Ctrl+Alt+Shift+B
 [services][org.chromium.Chromium.desktop]
 _launch=Meta+Shift+Space
 
-[services][org.kde.dolphin.desktop]
-_launch=Meta+Shift+E
-
 [services][org.kde.kcalc.desktop]
 _launch=none
 
@@ -375,9 +372,6 @@ _launch=Meta++
 
 [services][{6de45335-a9a5-4cb7-92e8-630394e3ec16}.desktop]
 _launch=Meta+O
-
-[services][{9005eee1-9daa-41a4-9d98-76ce0188d489}.desktop]
-_launch=Meta+E
 
 [services][{a3f93496-a9ae-485b-ae68-c926db08bb2b}.desktop]
 _launch=Meta+R
