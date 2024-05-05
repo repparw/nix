@@ -158,8 +158,12 @@
 	# CPU Mining (xmrig)
 	alias mine="cd ~/.mining/xmrig && sudo nice -n 19 ./xmrig -c config.json"
 
-# notes with echo
+# Global aliases
+alias -g G='| grep'
+alias -g W='| wc -l'
+alias -g C='| tr -d ''\n'' | wl-copy'
 
+# notes with echo
 note () {
   echo "$@" >> notes
 }

@@ -62,6 +62,10 @@ antidote load # Default location ${ZDOTDIR:-$HOME}/.zsh_plugins.txt
 
 # User configuration
 
+# NVM setup
+export NVM_DIR="$HOME/.config/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+
 ## Aliases
 if [ -f ${ZDOTDIR:-$HOME}/.aliases ]; then
 	. ${ZDOTDIR:-$HOME}/.aliases
