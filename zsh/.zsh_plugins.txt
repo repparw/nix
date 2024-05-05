@@ -15,6 +15,9 @@ ohmyzsh/ohmyzsh path:plugins/docker-compose
 ohmyzsh/ohmyzsh path:plugins/tmux
 ohmyzsh/ohmyzsh path:themes/dst.zsh-theme
 
+# Alias tips
+MichaelAquilina/zsh-you-should-use
+
 # fish-like features
 zsh-users/zsh-syntax-highlighting
 zsh-users/zsh-autosuggestions
