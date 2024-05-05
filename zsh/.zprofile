@@ -1,3 +1,5 @@
+# Add cargo installed binaries to PATH
+	export PATH="$HOME/.cargo/bin:$PATH"
 # Ensure path doesn't have duplicates
 	typeset -gU path
 ## Default editor to nvim
