@@ -21,16 +21,6 @@
 # Zsh options END
 
 # Functions
-  # lf with image previews and on-quit cd
-  lf () {
-	  LF_TEMPDIR="$(mktemp -d -t lf-tempdir-XXXXXX)"
-	  LF_TEMPDIR="$LF_TEMPDIR" /bin/lf -last-dir-path="$LF_TEMPDIR/lastdir" "$@"
-	  if [ "$(cat "$LF_TEMPDIR/cdtolastdir" 2>/dev/null)" = "1" ]; then
-		  cd "$(cat "$LF_TEMPDIR/lastdir")"
-	  fi
-	  rm -r "$LF_TEMPDIR"
-	  unset LF_TEMPDIR
-  }
   # Use fd (https://github.com/sharkdp/fd) instead of the default find
   # command for listing path candidates.
   # - The first argument to the function ($1) is the base path to start traversal
@@ -74,8 +64,11 @@ fi
 # Load conflicting keybinds after zsh-vi-mode
 # FZF ctrl-r and ctrl-t
 zvm_after_init_commands+=('FZF_ALT_C_COMMAND= eval "$(fzf --zsh)"')
-# Bind zsh-autosuggestions accept to ctrl-y
+# zsh-autosuggestions accept to ctrl-y
 zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
+
+# lfcd
+zvm_after_init_commands+=("bindkey -s '^e' 'lf\n'")
 
 # history search with arrow keys
 zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')

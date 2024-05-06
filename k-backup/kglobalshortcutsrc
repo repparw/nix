@@ -286,6 +286,9 @@ switch to next activity=none,,Switch to Next Activity
 switch to previous activity=none,,Switch to Previous Activity
 toggle do not disturb=none,,Toggle do not disturb
 
+[services][LS_COLORS='di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43'-2.desktop]
+_launch=Meta+E
+
 [services][Obsidian.desktop]
 _launch=Meta+N
 
@@ -333,6 +336,9 @@ _launch=Ctrl+Alt+Shift+B
 
 [services][org.chromium.Chromium.desktop]
 _launch=Meta+Shift+Space
+
+[services][org.kde.dolphin.desktop]
+_launch=Meta+Shift+E
 
 [services][org.kde.kcalc.desktop]
 _launch=none
