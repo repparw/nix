@@ -144,7 +144,7 @@ ShowTabBox=true
 SwitchingMode=0
 
 [Tiling]
-padding=4
+padding=2
 
 [Tiling][0e4ae190-3cf8-51bb-928e-b5e73df5ef03]
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.2510416666666647},{"width":0.49895833333332906}]}
@@ -162,7 +162,7 @@ tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"wi
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
 
 [Tiling][b1bef463-4ffe-5435-879f-b25af2e2fefc]
-tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
+tiles={"layoutDirection":"vertical","tiles":[{"height":0.33425925925925654,"layoutDirection":"horizontal","tiles":[{"width":0.39947916666666045},{"width":0.6005208333333396}]},{"height":0.6657407407407405,"layoutDirection":"horizontal","tiles":[{"width":0.3994791666666617},{"width":0.6005208333333276}]}]}
 
 [Tiling][c1de4ee9-3f63-588e-ba53-085115567d30]
 tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"width":0.25}]}
@@ -193,6 +193,7 @@ MaximizeButtonRightClickCommand=Maximize (horizontal only)
 Placement=Centered
 RollOverDesktops=true
 SeparateScreenFocus=true
+SnapOnlyWhenOverlapping=true
 TitlebarDoubleClickCommand=Maximize
 
 [Xwayland]
