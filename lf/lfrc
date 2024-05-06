@@ -100,16 +100,12 @@ cmd bulk ${{
 map b bulk
 
 cmd on-cd &{{
-        printf "\033]0; $PWD\007" > /dev/tty
+        printf "\033]0; $PWD\007" > /dev/tty;
+		zoxide add "$PWD"
     }}
 on-cd
 
-map q quitcd
-map Q quit
-cmd quitcd ${{
-	echo "1" > "$LF_TEMPDIR"/cdtolastdir
-	lf -remote "send $id quit"
-}}
+map q quit
 
 set previewer ~/.config/lf/lf_kitty_preview
 set cleaner ~/.config/lf/lf_kitty_clean
