@@ -1,3 +1,2 @@
 #!/bin/sh
-rsync -aq ~/.config/zsh ~/.config/scripts ~/.config/systemd ~/.config/kitty ~/.config/mpv ~/.config/tmux/tmux.conf ~/.config/spotifyd ~/.config/spotify-player ~/.config/wireplumber ~/.config/lf ~/.config/zathura/ ~/.config/nvim ~/.config/feh ~/.config/k-backup ~/git/desktopconfig 
-cd ~/git/desktopconfig; git add .; git commit -am "Auto-Commit"; git push
+cd ~/dotfiles; git add .; git commit -am "Auto-Commit"; git push
