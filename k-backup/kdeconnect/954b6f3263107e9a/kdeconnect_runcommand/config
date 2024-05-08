@@ -1,2 +1,0 @@
-[General]
-commands="@ByteArray({\"_63c9d388_ec7c_49b6_b5f2_10edf2ad9ed6_\":{\"command\":\"bluetoothctl disconnect\",\"name\":\"BT Disconnect\"},\"_a712f51e_630f_4d55_a062_45ac5eb917ae_\":{\"command\":\"loginctl lock-session\",\"name\":\"Lock Screen\"},\"_c367b389_8760_4cfa_ab65_01274c51af93_\":{\"command\":\"bluetoothctl connect F8:4E:17:E6:22:D2\",\"name\":\"BT Connect\"},\"_e91ae74c_4af4_4cc9_bbf9_e2922a4c8219_\":{\"command\":\"reboot\",\"name\":\"Reboot\"}})"
