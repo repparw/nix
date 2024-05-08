@@ -169,6 +169,6 @@ note () {
 }
 
 timer () {
-  sleep "$@" && mpv --really-quiet --volume=150 ~/Music/ringtone.mp3
+  sleep "$@" && mpv --really-quiet --volume=120 ~/Music/ringtone.mp3
 
 }
