@@ -1,0 +1,12 @@
+[user]
+	email = ubritos@gmail.com
+	name = repparw
+[safe]
+	directory = /run/media/repparw/seagate/docker/freshrss
+	directory = /mnt/hdd/docker/qbittorrent/vuetorrent
+[rerere]
+	enabled = true
+[column]
+	ui = auto
+[maintenance]
+	repo = /home/repparw/dotfiles
