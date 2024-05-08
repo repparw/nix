@@ -1,7 +1,0 @@
-[General]
-Index=PocoF1
-
-[PocoF1]
-Port=12345
-Type=FTP
-URL=ftp://repparw@192.168.0.12:12345/storage/emulated/0

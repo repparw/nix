@@ -1,8 +1,0 @@
-[192.168.0.1]
-Charset=UTF-8
-
-[192.168.0.12]
-Charset=UTF-8
-
-[ftp://192.168.0.12]
-Charset=UTF-8

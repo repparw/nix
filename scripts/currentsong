@@ -1,6 +1,0 @@
-#!/bin/sh
-mpc current --wait | sed 's|^/[A-z0-9]*/||g
-s|ytmusic/||g
-s|([^)]*)||g
-s/\[[^]]*\]//g'
-#s/[ ]*\.[a-z0-9]*$//g'
