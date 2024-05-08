@@ -2,6 +2,7 @@ require("lazy").setup({
   require 'plugins/gruvbox',
   require 'plugins/autopairs',
   require 'plugins/nvim-surround',
+  require 'plugins/undotree',
   require 'plugins/lualine',
   require 'plugins/whichkey',
   require 'plugins/cmp',

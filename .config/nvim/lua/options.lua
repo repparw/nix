@@ -25,6 +25,7 @@ local options = {
   updatetime = 250,
   timeoutlen = 300,
   cursorline = true,
+  undofile = true,
 }
 
 for k,v in pairs(options) do
