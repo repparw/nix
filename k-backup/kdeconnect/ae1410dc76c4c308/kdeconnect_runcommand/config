@@ -1,2 +1,0 @@
-[General]
-commands="@ByteArray({\"_1aab4bf9_d195_408a_aefe_141dd53258d4_\":{\"command\":\"systemctl reboot\",\"name\":\"Reboot\"},\"_dc4c40c5_b587_43ab_95b0_fc2b2a37f5ec_\":{\"command\":\"sleep 2 && xset dpms force suspend\",\"name\":\"Screens off\"},\"_e917ee3a_f53c_42b8_b0f5_78c6b9baf7c4_\":{\"command\":\"systemctl poweroff\",\"name\":\"Shutdown\"}})"

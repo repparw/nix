@@ -1,0 +1,4 @@
+link 
+mpv.conf
+input.conf
+scripts/

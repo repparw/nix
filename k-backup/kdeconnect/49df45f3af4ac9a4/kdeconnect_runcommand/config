@@ -1,2 +1,0 @@
-[General]
-commands="@ByteArray({\"_94cc275f_e11d_4f27_8d5a_8efdca134ff8_\":{\"command\":\"shutdown 0\",\"name\":\"shutdown\"},\"_cc8d2775_d10e_45a7_bf00_f244132621e2_\":{\"command\":\"mpc toggle\",\"name\":\"music togg\"},\"_f0ec24a6_c0f0_428d_8166_fc0269f2778b_\":{\"command\":\"reboot\",\"name\":\"reboot\"}})"

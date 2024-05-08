@@ -1,2 +1,0 @@
-#!/bin/sh
-maim -Bus -f png | xclip -selection clipboard -t image/png
