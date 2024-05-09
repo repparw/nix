@@ -51,17 +51,6 @@ in
   # Enable the X11 windowing system.
   services.xserver.enable = true;
 
-  # Enable the KDE Plasma Desktop Environment.
-  services.xserver.displayManager.sddm.enable = true;
-  services.xserver.displayManager.sddm.wayland.enable = true;
-  services.xserver.desktopManager.plasma5.enable = true;
-
-  environment.plasma5.excludePackages = with pkgs.libsForQt5; [
-  plasma-browser-integration
-  konsole
-  oxygen
-];
-
   # Configure keymap in X11
   services.xserver = {
     layout = "us";
@@ -198,6 +187,10 @@ in
 
   programs.mosh.enable = true;
   programs.zsh.enable = true;
+
+  programs.hyprland = {
+  enable = true;
+  }
 
   programs.steam = {
   enable = true;
