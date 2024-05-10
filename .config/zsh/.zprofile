@@ -4,6 +4,8 @@
 ## Default editor to nvim
 	export EDITOR='nvim'
 	export VISUAL=$EDITOR
+
+	export PATH=$HOME/.local/bin:$PATH
 ## fzf
 	export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
 

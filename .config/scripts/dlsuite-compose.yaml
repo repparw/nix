@@ -97,16 +97,16 @@ services:
         image: wangqiru/mercury-parser-api:latest
         container_name: mercury
         ports:
-          - '3000:3000'
+            - '3000:3000'
         restart: unless-stopped
     grocy:
         image: lscr.io/linuxserver/grocy:latest
         container_name: grocy
         environment: *default-tz-puid-pgid
         volumes:
-          - '/home/docker/grocy:/config:Z'
+            - '/home/docker/grocy:/config:Z'
         ports:
-          - '9283:80'
+            - '9283:80'
         restart: unless-stopped
     swag:
         image: 'lscr.io/linuxserver/swag:latest'
@@ -162,7 +162,7 @@ services:
         image: docker.io/library/redis:7
         container_name: broker
         volumes:
-          - '/home/docker/paper/redis:/data:Z'
+            - '/home/docker/paper/redis:/data:Z'
         restart: unless-stopped
     db:
         image: docker.io/library/postgres:15
@@ -172,7 +172,7 @@ services:
             POSTGRES_USER: paperless
             POSTGRES_PASSWORD: paperless
         volumes:
-          - '/home/docker/paper/pg:/var/lib/postgresql/data:Z'
+            - '/home/docker/paper/pg:/var/lib/postgresql/data:Z'
         restart: unless-stopped
 
     paperless:
@@ -184,10 +184,10 @@ services:
         ports:
             - '8000:8000'
         volumes:
-          - '/home/docker/paper/data:/usr/src/paperless/data:Z'
-          - '/home/docker/paper/media:/usr/src/paperless/media:Z'
-          - '/home/docker/paper/export:/usr/src/paperless/export:Z'
-          - '/home/repparw/Documents/consume:/usr/src/paperless/consume:Z'
+            - '/home/docker/paper/data:/usr/src/paperless/data:Z'
+            - '/home/docker/paper/media:/usr/src/paperless/media:Z'
+            - '/home/docker/paper/export:/usr/src/paperless/export:Z'
+            - '/home/repparw/Documents/consume:/usr/src/paperless/consume:Z'
         environment:
             - PAPERLESS_REDIS=redis://broker:6379
             - PAPERLESS_DBHOST=db
