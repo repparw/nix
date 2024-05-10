@@ -30,7 +30,7 @@ args = []
 [device]
 name = "Terminal UI"
 device_type = "computer"
-volume = 70
+volume = 40
 bitrate = 320
 audio_cache = false
 normalization = false
