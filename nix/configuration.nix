@@ -141,6 +141,10 @@ in
 	  zoxide
 	  eza
 
+	  hyprland
+	  swaynotificationcenter
+	  waybar
+
 	  # GUI
 	  feh
 	  firefox
@@ -150,7 +154,7 @@ in
 	  zathura
 	  heroic
 	  lutris
-	  discord
+	  vesktop
 	  spotify
 	  obs-studio
 	  kiwix
