@@ -1,0 +1,13 @@
+[Unit]
+Description=Jellyfin Client
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/jellyfin-mpv-shim
+ExecStop=/bin/kill -s SIGINT $MAINPID
+RestartSec=5
+Restart=unless-stopped
+
+[Install]
+WantedBy=default.target
