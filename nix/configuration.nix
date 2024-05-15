@@ -142,6 +142,7 @@ in
 	  eza
 
 	  hyprland
+	  # install hyprland contrib
 	  swaynotificationcenter
 	  waybar
 
