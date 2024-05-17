@@ -1,2 +1,2 @@
 #!/bin/zsh
-tmux new-session -d -s mpv; tmux send-keys -t mpv "nq -cq mpv --no-terminal $(wl-paste) 2>/dev/null" C-m; tmux send-keys -t mpv "clear" C-m
+tmux new-session -d -s mpv; tmux send-keys -t mpv "  nq -cq mpv --no-terminal $(wl-paste) 2>/dev/null" C-m; tmux send-keys -t mpv "clear" C-m
