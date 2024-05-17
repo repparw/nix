@@ -13,7 +13,10 @@ ohmyzsh/ohmyzsh path:plugins/dnf
 ohmyzsh/ohmyzsh path:plugins/docker
 ohmyzsh/ohmyzsh path:plugins/docker-compose
 ohmyzsh/ohmyzsh path:plugins/tmux
-ohmyzsh/ohmyzsh path:themes/dst.zsh-theme
+# ohmyzsh/ohmyzsh path:themes/dst.zsh-theme
+
+# powerlevel10k
+romkatv/powerlevel10k
 
 # Alias tips
 MichaelAquilina/zsh-you-should-use
