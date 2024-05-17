@@ -1,0 +1,568 @@
+20:00:47.335: Command Line Arguments: --disable-shutdown-check --startreplaybuffer --minimize-to-tray
+20:00:47.335: Platform: Wayland
+20:00:47.335: CPU Name: AMD Ryzen 5 5600X 6-Core Processor
+20:00:47.335: CPU Speed: 3717.641MHz
+20:00:47.335: Physical Cores: 6, Logical Cores: 12
+20:00:47.335: Physical Memory: 32007MB Total, 2345MB Free
+20:00:47.335: Kernel Version: Linux 6.8.9-300.fc40.x86_64
+20:00:47.335: Distribution: "Fedora Linux" 40
+20:00:47.335: Desktop Environment: Hyprland
+20:00:47.336: Qt Version: 6.7.0 (runtime), 6.7.0 (compiled)
+20:00:47.336: Portable mode: false
+20:00:47.358: OBS 30.1.1 (linux)
+20:00:47.358: ---------------------------------
+20:00:47.358: ---------------------------------
+20:00:47.358: audio settings reset:
+20:00:47.358: 	samples per sec: 48000
+20:00:47.358: 	speakers:        2
+20:00:47.358: 	max buffering:   960 milliseconds
+20:00:47.358: 	buffering type:  dynamically increasing
+20:00:47.366: ---------------------------------
+20:00:47.366: Initializing OpenGL...
+20:00:47.366: Using EGL/Wayland
+20:00:47.399: Initialized EGL 1.5
+20:00:47.411: Loading up OpenGL on adapter AMD AMD Radeon RX 6700 XT (radeonsi, navi22, LLVM 18.1.1, DRM 3.57, 6.8.9-300.fc40.x86_64)
+20:00:47.411: OpenGL loaded successfully, version 4.6 (Core Profile) Mesa 24.0.6, shading language 4.60
+20:00:47.434: ---------------------------------
+20:00:47.434: video settings reset:
+20:00:47.434: 	base resolution:   1920x1080
+20:00:47.434: 	output resolution: 1280x720
+20:00:47.434: 	downscale filter:  Bicubic
+20:00:47.434: 	fps:               30/1
+20:00:47.434: 	format:            NV12
+20:00:47.434: 	YUV mode:          Rec. 709/Partial
+20:00:47.434: NV12 texture support enabled
+20:00:47.434: P010 texture support not available
+20:00:47.436: Audio monitoring device:
+20:00:47.436: 	name: Default
+20:00:47.436: 	id: default
+20:00:47.436: ---------------------------------
+20:00:47.449: Failed to load 'en-US' text for module: 'decklink-captions.so'
+20:00:47.460: Failed to load 'en-US' text for module: 'decklink-output-ui.so'
+20:00:47.471: A DeckLink iterator could not be created.  The DeckLink drivers may not be installed
+20:00:47.471: Failed to initialize module 'decklink.so'
+20:00:47.631: [pipewire] Available captures:
+20:00:47.631: [pipewire]     - Desktop capture
+20:00:47.631: [pipewire]     - Window capture
+20:00:47.656: v4l2loopback not installed, virtual camera disabled
+20:00:47.706: [obs-browser]: Version 2.23.4
+20:00:47.706: [obs-browser]: CEF Version 103.0.5060.134 (runtime), 103.0.0+g17f8588+chromium-103.0.5060.134 (compiled)
+20:00:47.800: VAAPI: API version 1.21
+20:00:47.801: FFmpeg VAAPI H264 encoding supported
+20:00:47.807: FFmpeg VAAPI AV1 encoding not supported
+20:00:47.812: FFmpeg VAAPI HEVC encoding supported
+20:00:47.954: [obs-websocket] [obs_module_load] you can haz websockets (Version: 5.4.2 | RPC Version: 1)
+20:00:47.954: [obs-websocket] [obs_module_load] Qt version (compile-time): 6.7.0 | Qt version (run-time): 6.7.0
+20:00:47.954: [obs-websocket] [obs_module_load] Linked ASIO Version: 102801
+20:00:47.958: [obs-websocket] [obs_module_load] Module loaded.
+20:00:48.008: [vlc-video]: VLC 3.0.20 Vetinari found, VLC video source enabled
+20:00:48.008: ---------------------------------
+20:00:48.008:   Loaded Modules:
+20:00:48.008:     vlc-video.so
+20:00:48.008:     text-freetype2.so
+20:00:48.008:     rtmp-services.so
+20:00:48.008:     obs-x264.so
+20:00:48.008:     obs-websocket.so
+20:00:48.008:     obs-webrtc.so
+20:00:48.008:     obs-webkitgtk.so
+20:00:48.008:     obs-vst.so
+20:00:48.008:     obs-transitions.so
+20:00:48.008:     obs-qsv11.so
+20:00:48.008:     obs-outputs.so
+20:00:48.008:     obs-libfdk.so
+20:00:48.008:     obs-filters.so
+20:00:48.008:     obs-ffmpeg.so
+20:00:48.008:     obs-browser.so
+20:00:48.008:     linux-v4l2.so
+20:00:48.008:     linux-pulseaudio.so
+20:00:48.008:     linux-pipewire.so
+20:00:48.008:     linux-jack.so
+20:00:48.008:     linux-capture.so
+20:00:48.008:     linux-alsa.so
+20:00:48.008:     image-source.so
+20:00:48.008:     frontend-tools.so
+20:00:48.008:     decklink-output-ui.so
+20:00:48.008:     decklink-captions.so
+20:00:48.008: ---------------------------------
+20:00:48.008: [obs-websocket] [obs_module_post_load] WebSocket server is enabled, starting...
+20:00:48.009: [obs-websocket] [WebSocketServer::Start] Not locked to IPv4 bindings
+20:00:48.009: [obs-websocket] [WebSocketServer::ServerRunner] IO thread started.
+20:00:48.010: [obs-websocket] [WebSocketServer::Start] Server started successfully on port 4455. Possible connect address: 192.168.0.18
+20:00:48.010: ==== Startup complete ===============================================
+20:00:48.044: All scene data cleared
+20:00:48.044: ------------------------------------------------
+20:00:48.046: pulse-input: Server name: 'PulseAudio (on PipeWire 1.0.6) 15.0.0'
+20:00:48.046: pulse-input: Audio format: float32le, 48000 Hz, 2 channels
+20:00:48.047: pulse-input: Started recording from 'bluez_output.F8_4E_17_E6_22_D2.1.monitor'
+20:00:48.047: [Loaded global audio device]: 'desktop'
+20:00:48.047: pulse-input: Server name: 'PulseAudio (on PipeWire 1.0.6) 15.0.0'
+20:00:48.047: pulse-input: Audio format: s32le, 48000 Hz, 2 channels
+20:00:48.047: pulse-input: Started recording from 'alsa_input.pci-0000_2f_00.4.analog-stereo'
+20:00:48.047: [Loaded global audio device]: 'mic'
+20:00:48.047: PipeWire initialized
+20:00:48.048: PipeWire initialized
+20:00:48.048: Switched to scene 'scr1'
+20:00:48.048: ------------------------------------------------
+20:00:48.048: Loaded scenes:
+20:00:48.048: - scene 'scr0':
+20:00:48.048:     - source: 'mic' (pulse_input_capture)
+20:00:48.048:     - source: 'desktop' (pulse_output_capture)
+20:00:48.048:     - source: 'screen0' (pipewire-desktop-capture-source)
+20:00:48.048: - scene 'scr1':
+20:00:48.048:     - source: 'mic' (pulse_input_capture)
+20:00:48.048:     - source: 'desktop' (pulse_output_capture)
+20:00:48.048:     - source: 'screen1' (pipewire-desktop-capture-source)
+20:00:48.048: ------------------------------------------------
+20:00:48.106: ---------------------------------
+20:00:48.106: [FFmpeg VAAPI encoder: 'advanced_video_recording'] settings:
+20:00:48.106: 	device:       /dev/dri/by-path/pci-0000:2d:00.0-render
+20:00:48.106: 	rate_control: CQP
+20:00:48.106: 	profile:      100
+20:00:48.106: 	level:        -99
+20:00:48.106: 	qp:           16
+20:00:48.106: 	bitrate:      0
+20:00:48.106: 	maxrate:      0
+20:00:48.106: 	keyint:       120
+20:00:48.106: 	width:        1280
+20:00:48.106: 	height:       720
+20:00:48.106: 	b-frames:     0
+20:00:48.106: 	ffmpeg opts:  
+20:00:48.106: 
+20:00:48.116: ---------------------------------
+20:00:48.116: [FFmpeg aac encoder: 'all'] bitrate: 160, channels: 2, channel_layout: stereo
+20:00:48.116: 
+20:00:48.116: ---------------------------------
+20:00:48.116: [FFmpeg aac encoder: 'desktop'] bitrate: 160, channels: 2, channel_layout: stereo
+20:00:48.116: 
+20:00:48.117: ---------------------------------
+20:00:48.117: [FFmpeg aac encoder: 'mic'] bitrate: 160, channels: 2, channel_layout: stereo
+20:00:48.117: 
+20:00:48.155: ==== Replay Buffer Start ===========================================
+20:00:48.157: [pipewire] Screencast session created
+20:00:48.157: [pipewire] Screencast session created
+20:00:48.158: Failed to inhibit: GDBus.Error:org.freedesktop.DBus.Error.UnknownMethod: No such interface “org.freedesktop.portal.Inhibit” on object at path /org/freedesktop/portal/desktop
+20:00:48.160: [pipewire] Asking for desktop
+20:00:48.162: [pipewire] desktop selected, setting up screencast
+20:00:48.162: [pipewire] Asking for desktop
+20:00:48.167: [pipewire] Server version: 1.0.6
+20:00:48.167: [pipewire] Library version: 1.0.6
+20:00:48.167: [pipewire] Header version: 1.0.4
+20:00:48.167: [pipewire] Created stream 0x55bbc8f97cc0
+20:00:48.167: [pipewire] Stream 0x55bbc8f97cc0 state: "connecting" (error: none)
+20:00:48.167: [pipewire] Playing stream 0x55bbc8f97cc0
+20:00:48.167: [pipewire] desktop selected, setting up screencast
+20:00:48.167: [pipewire] Stream 0x55bbc8f97cc0 state: "paused" (error: none)
+20:00:48.170: [pipewire] Server version: 1.0.6
+20:00:48.170: [pipewire] Library version: 1.0.6
+20:00:48.170: [pipewire] Header version: 1.0.4
+20:00:48.170: [pipewire] Created stream 0x55bbca954d20
+20:00:48.170: [pipewire] Stream 0x55bbca954d20 state: "connecting" (error: none)
+20:00:48.170: [pipewire] Playing stream 0x55bbca954d20
+20:00:48.170: [pipewire] Stream 0x55bbca954d20 state: "paused" (error: none)
+20:00:48.177: [pipewire] Negotiated format:
+20:00:48.177: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:48.177: [pipewire]     Modifier: 0x0
+20:00:48.177: [pipewire]     Size: 1920x1080
+20:00:48.177: [pipewire]     Framerate: 0/1
+20:00:48.178: [pipewire] Negotiated format:
+20:00:48.178: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:48.178: [pipewire]     Modifier: 0x20000001896bb03
+20:00:48.178: [pipewire]     Size: 1920x1080
+20:00:48.178: [pipewire]     Framerate: 0/1
+20:00:48.179: [pipewire] Stream 0x55bbc8f97cc0 state: "streaming" (error: none)
+20:00:48.185: [pipewire] Negotiated format:
+20:00:48.185: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:48.185: [pipewire]     Modifier: 0x0
+20:00:48.185: [pipewire]     Size: 1920x1080
+20:00:48.185: [pipewire]     Framerate: 0/1
+20:00:48.185: [pipewire] Negotiated format:
+20:00:48.185: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:48.185: [pipewire]     Modifier: 0x20000001896bb03
+20:00:48.185: [pipewire]     Size: 1920x1080
+20:00:48.185: [pipewire]     Framerate: 0/1
+20:00:48.185: [pipewire] Stream 0x55bbca954d20 state: "streaming" (error: none)
+20:00:48.596: adding 42 milliseconds of audio buffering, total audio buffering is now 42 milliseconds (source: desktop)
+20:00:48.596: 
+20:00:49.009: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+20:00:49.009: [pipewire] Renegotiating stream
+20:00:49.010: [pipewire] Negotiated format:
+20:00:49.010: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:49.010: [pipewire]     Modifier: 0x20000001896bb03
+20:00:49.010: [pipewire]     Size: 1920x1080
+20:00:49.010: [pipewire]     Framerate: 0/1
+20:00:49.010: [pipewire] Negotiated format:
+20:00:49.010: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:49.010: [pipewire]     Modifier: 0x200000018967b03
+20:00:49.010: [pipewire]     Size: 1920x1080
+20:00:49.010: [pipewire]     Framerate: 0/1
+20:00:50.001: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+20:00:50.001: [pipewire] Renegotiating stream
+20:00:50.002: [pipewire] Stream 0x55bbca954d20 state: "paused" (error: none)
+20:00:50.002: [pipewire] Negotiated format:
+20:00:50.002: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:50.002: [pipewire]     Modifier: 0x200000018967b03
+20:00:50.002: [pipewire]     Size: 1920x1080
+20:00:50.002: [pipewire]     Framerate: 0/1
+20:00:50.002: [pipewire] Negotiated format:
+20:00:50.002: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:50.002: [pipewire]     Modifier: 0x200000018937b03
+20:00:50.002: [pipewire]     Size: 1920x1080
+20:00:50.002: [pipewire]     Framerate: 0/1
+20:00:50.003: [pipewire] Stream 0x55bbca954d20 state: "streaming" (error: none)
+20:00:50.018: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+20:00:50.018: [pipewire] Renegotiating stream
+20:00:50.018: [pipewire] Negotiated format:
+20:00:50.018: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:50.018: [pipewire]     Modifier: 0x200000018937b03
+20:00:50.018: [pipewire]     Size: 1920x1080
+20:00:50.018: [pipewire]     Framerate: 0/1
+20:00:50.018: [pipewire] Negotiated format:
+20:00:50.018: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:50.018: [pipewire]     Modifier: 0x200000018801b03
+20:00:50.018: [pipewire]     Size: 1920x1080
+20:00:50.018: [pipewire]     Framerate: 0/1
+20:00:50.711: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+20:00:50.711: [pipewire] Renegotiating stream
+20:00:50.712: [pipewire] Negotiated format:
+20:00:50.712: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:50.712: [pipewire]     Modifier: 0x20000001896bb03
+20:00:50.712: [pipewire]     Size: 1920x1080
+20:00:50.712: [pipewire]     Framerate: 0/1
+20:00:50.712: [pipewire] Negotiated format:
+20:00:50.712: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:50.712: [pipewire]     Modifier: 0x200000018967b03
+20:00:50.712: [pipewire]     Size: 1920x1080
+20:00:50.712: [pipewire]     Framerate: 0/1
+20:00:50.730: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+20:00:50.730: [pipewire] Renegotiating stream
+20:00:50.730: [pipewire] Stream 0x55bbc8f97cc0 state: "paused" (error: none)
+20:00:50.730: [pipewire] Negotiated format:
+20:00:50.730: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:50.730: [pipewire]     Modifier: 0x200000018967b03
+20:00:50.730: [pipewire]     Size: 1920x1080
+20:00:50.730: [pipewire]     Framerate: 0/1
+20:00:50.731: [pipewire] Negotiated format:
+20:00:50.731: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:50.731: [pipewire]     Modifier: 0x200000018937b03
+20:00:50.731: [pipewire]     Size: 1920x1080
+20:00:50.731: [pipewire]     Framerate: 0/1
+20:00:50.732: [pipewire] Stream 0x55bbc8f97cc0 state: "streaming" (error: none)
+20:00:50.733: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+20:00:50.733: [pipewire] Renegotiating stream
+20:00:50.734: [pipewire] Negotiated format:
+20:00:50.734: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:50.734: [pipewire]     Modifier: 0x200000018937b03
+20:00:50.734: [pipewire]     Size: 1920x1080
+20:00:50.734: [pipewire]     Framerate: 0/1
+20:00:50.734: [pipewire] Negotiated format:
+20:00:50.734: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+20:00:50.734: [pipewire]     Modifier: 0x200000018801b03
+20:00:50.734: [pipewire]     Size: 1920x1080
+20:00:50.734: [pipewire]     Framerate: 0/1
+20:01:41.017: [obs-websocket] [WebSocketServer::onOpen] New WebSocket client has connected from [::1]:48630
+20:01:41.020: [obs-websocket] [WebSocketServer::onClose] WebSocket client `[::1]:48630` has disconnected with code `1006` and reason: End of File
+20:01:41.225: [ffmpeg muxer: 'Replay Buffer'] Wrote replay buffer to '/mnt/hdd/Videos/obs/Replay_2024-05-14_20-01-41.mkv'
+20:02:12.852: User switched to scene 'scr0'
+20:02:13.236: [pipewire] Stream 0x55bbca954d20 state: "paused" (error: none)
+20:03:33.542: [obs-websocket] [WebSocketServer::onOpen] New WebSocket client has connected from [::1]:44758
+20:03:33.544: [obs-websocket] [WebSocketServer::onClose] WebSocket client `[::1]:44758` has disconnected with code `1006` and reason: End of File
+20:03:33.755: [ffmpeg muxer: 'Replay Buffer'] Wrote replay buffer to '/mnt/hdd/Videos/obs/Replay_2024-05-14_20-03-33.mkv'
+20:04:47.108:   OpenType support missing for "Open Sans", script 11
+20:04:47.109:   OpenType support missing for "Open Sans", script 12
+20:04:47.110:   OpenType support missing for "Open Sans", script 16
+20:04:47.111:   OpenType support missing for "Open Sans", script 20
+20:04:47.111:   OpenType support missing for "DejaVu Sans", script 20
+20:04:47.112:   OpenType support missing for "Liberation Sans Narrow", script 20
+20:04:47.112:   OpenType support missing for "Nimbus Sans", script 20
+20:04:47.112:   OpenType support missing for "URW Gothic", script 20
+20:04:47.113:   OpenType support missing for "Nimbus Sans Narrow", script 20
+20:04:47.113:   OpenType support missing for "Mingzat", script 20
+20:04:47.113:   OpenType support missing for "Padauk", script 20
+20:04:47.113:   OpenType support missing for "Nuosu SIL", script 20
+20:04:47.113:   OpenType support missing for "Droid Arabic Kufi", script 20
+20:04:47.114:   OpenType support missing for "Droid Sans Armenian", script 20
+20:04:47.114:   OpenType support missing for "Droid Sans Devanagari", script 20
+20:04:47.114:   OpenType support missing for "Droid Sans Ethiopic", script 20
+20:04:47.114:   OpenType support missing for "Droid Sans Fallback", script 20
+20:04:47.115:   OpenType support missing for "Droid Sans Georgian", script 20
+20:04:47.115:   OpenType support missing for "Droid Sans Hebrew", script 20
+20:04:47.115:   OpenType support missing for "Droid Sans Japanese", script 20
+20:04:47.115:   OpenType support missing for "Droid Sans Tamil", script 20
+20:04:47.115:   OpenType support missing for "Droid Sans Thai", script 20
+20:04:47.115:   OpenType support missing for "Waree", script 20
+20:04:47.116:   OpenType support missing for "Lohit Bengali", script 20
+20:04:47.116:   OpenType support missing for "Lohit Gujarati", script 20
+20:04:47.116:   OpenType support missing for "Lohit Marathi", script 20
+20:04:47.116:   OpenType support missing for "Lohit Tamil", script 20
+20:04:47.116:   OpenType support missing for "Lohit Kannada", script 20
+20:04:47.116:   OpenType support missing for "Lohit Telugu", script 20
+20:04:47.117:   OpenType support missing for "Font Awesome 6 Brands", script 20
+20:04:47.117:   OpenType support missing for "Font Awesome 6 Free", script 20
+20:04:47.117:   OpenType support missing for "Vazirmatn", script 20
+20:04:47.117:   OpenType support missing for "FiraCode Nerd Font", script 20
+20:04:47.117:   OpenType support missing for "FiraCode Nerd Font Mono", script 20
+20:04:47.118:   OpenType support missing for "FiraCode Nerd Font Propo", script 20
+20:04:47.118:   OpenType support missing for "PakType Naskh Basic", script 20
+20:04:47.118:   OpenType support missing for "Khmer OS System", script 20
+20:04:47.118:   OpenType support missing for "Lohit Odia", script 20
+20:04:47.118:   OpenType support missing for "Lohit Devanagari", script 20
+20:04:47.118:   OpenType support missing for "Lohit Assamese", script 20
+20:04:47.119:   OpenType support missing for "Liberation Mono", script 20
+20:04:47.119:   OpenType support missing for "Liberation Sans", script 20
+20:04:47.119:   OpenType support missing for "Liberation Serif", script 20
+20:04:47.119:   OpenType support missing for "D050000L", script 20
+20:04:47.120:   OpenType support missing for "Standard Symbols PS", script 20
+20:04:47.120:   OpenType support missing for "RIT Rachana", script 20
+20:04:47.120:   OpenType support missing for "C059", script 20
+20:04:47.120:   OpenType support missing for "Nimbus Mono PS", script 20
+20:04:47.121:   OpenType support missing for "Nimbus Roman", script 20
+20:04:47.121:   OpenType support missing for "P052", script 20
+20:04:47.121:   OpenType support missing for "RIT Meera New", script 20
+20:04:47.121:   OpenType support missing for "Cantarell", script 20
+20:04:47.121:   OpenType support missing for "Jomolhari", script 20
+20:04:47.122:   OpenType support missing for "STIX", script 20
+20:04:47.122:   OpenType support missing for "Utopia", script 20
+20:04:47.123:   OpenType support missing for "Courier 10 Pitch", script 20
+20:04:47.123:   OpenType support missing for "Bitstream Charter", script 20
+20:04:47.123:   OpenType support missing for "Symbola", script 20
+20:04:47.123:   OpenType support missing for "Cursor", script 20
+20:04:47.124:   OpenType support missing for "URW Bookman", script 20
+20:04:47.124:   OpenType support missing for "Z003", script 20
+20:04:47.125:   OpenType support missing for "Noto Color Emoji", script 20
+20:04:47.125:   OpenType support missing for "", script 20
+20:04:47.125:   OpenType support missing for "", script 20
+20:04:47.125:   OpenType support missing for "", script 20
+20:04:47.126:   OpenType support missing for "", script 20
+20:04:47.126:   OpenType support missing for "", script 20
+20:04:47.126:   OpenType support missing for "", script 20
+20:04:47.126:   OpenType support missing for "", script 20
+20:04:47.126:   OpenType support missing for "", script 20
+20:04:47.127:   OpenType support missing for "", script 20
+20:04:47.127:   OpenType support missing for "", script 20
+20:04:47.127:   OpenType support missing for "", script 20
+20:04:47.127:   OpenType support missing for "", script 20
+20:04:47.127:   OpenType support missing for "", script 20
+20:04:47.128:   OpenType support missing for "", script 20
+20:04:47.128:   OpenType support missing for "", script 20
+20:04:47.128:   OpenType support missing for "", script 20
+20:04:47.128:   OpenType support missing for "", script 20
+20:04:47.128:   OpenType support missing for "", script 20
+20:04:47.129:   OpenType support missing for "", script 20
+20:04:47.129:   OpenType support missing for "", script 20
+20:04:47.129:   OpenType support missing for "DejaVu Sans", script 20
+20:04:47.130:   OpenType support missing for "Liberation Sans Narrow", script 20
+20:04:47.130:   OpenType support missing for "Nimbus Sans", script 20
+20:04:47.130:   OpenType support missing for "Open Sans", script 20
+20:04:47.130:   OpenType support missing for "URW Gothic", script 20
+20:04:47.131:   OpenType support missing for "Nimbus Sans Narrow", script 20
+20:04:47.131:   OpenType support missing for "Mingzat", script 20
+20:04:47.131:   OpenType support missing for "Padauk", script 20
+20:04:47.131:   OpenType support missing for "Nuosu SIL", script 20
+20:04:47.131:   OpenType support missing for "Droid Arabic Kufi", script 20
+20:04:47.132:   OpenType support missing for "Droid Sans Armenian", script 20
+20:04:47.132:   OpenType support missing for "Droid Sans Devanagari", script 20
+20:04:47.132:   OpenType support missing for "Droid Sans Ethiopic", script 20
+20:04:47.132:   OpenType support missing for "Droid Sans Fallback", script 20
+20:04:47.132:   OpenType support missing for "Droid Sans Georgian", script 20
+20:04:47.132:   OpenType support missing for "Droid Sans Hebrew", script 20
+20:04:47.133:   OpenType support missing for "Droid Sans Japanese", script 20
+20:04:47.133:   OpenType support missing for "Droid Sans Tamil", script 20
+20:04:47.133:   OpenType support missing for "Droid Sans Thai", script 20
+20:04:47.133:   OpenType support missing for "Waree", script 20
+20:04:47.133:   OpenType support missing for "Lohit Bengali", script 20
+20:04:47.134:   OpenType support missing for "Lohit Gujarati", script 20
+20:04:47.134:   OpenType support missing for "Lohit Marathi", script 20
+20:04:47.134:   OpenType support missing for "Lohit Tamil", script 20
+20:04:47.134:   OpenType support missing for "Lohit Kannada", script 20
+20:04:47.134:   OpenType support missing for "Lohit Telugu", script 20
+20:04:47.134:   OpenType support missing for "Font Awesome 6 Brands", script 20
+20:04:47.135:   OpenType support missing for "Font Awesome 6 Free", script 20
+20:04:47.135:   OpenType support missing for "Vazirmatn", script 20
+20:04:47.135:   OpenType support missing for "FiraCode Nerd Font", script 20
+20:04:47.135:   OpenType support missing for "FiraCode Nerd Font Mono", script 20
+20:04:47.135:   OpenType support missing for "FiraCode Nerd Font Propo", script 20
+20:04:47.136:   OpenType support missing for "PakType Naskh Basic", script 20
+20:04:47.136:   OpenType support missing for "Khmer OS System", script 20
+20:04:47.136:   OpenType support missing for "Lohit Odia", script 20
+20:04:47.136:   OpenType support missing for "Lohit Devanagari", script 20
+20:04:47.136:   OpenType support missing for "Lohit Assamese", script 20
+20:04:47.137:   OpenType support missing for "Liberation Mono", script 20
+20:04:47.137:   OpenType support missing for "Liberation Sans", script 20
+20:04:47.137:   OpenType support missing for "Liberation Serif", script 20
+20:04:47.137:   OpenType support missing for "D050000L", script 20
+20:04:47.138:   OpenType support missing for "Standard Symbols PS", script 20
+20:04:47.138:   OpenType support missing for "RIT Rachana", script 20
+20:04:47.139:   OpenType support missing for "C059", script 20
+20:04:47.139:   OpenType support missing for "Nimbus Mono PS", script 20
+20:04:47.139:   OpenType support missing for "Nimbus Roman", script 20
+20:04:47.139:   OpenType support missing for "P052", script 20
+20:04:47.139:   OpenType support missing for "RIT Meera New", script 20
+20:04:47.140:   OpenType support missing for "Cantarell", script 20
+20:04:47.140:   OpenType support missing for "Jomolhari", script 20
+20:04:47.140:   OpenType support missing for "STIX", script 20
+20:04:47.141:   OpenType support missing for "Utopia", script 20
+20:04:47.141:   OpenType support missing for "Courier 10 Pitch", script 20
+20:04:47.141:   OpenType support missing for "Bitstream Charter", script 20
+20:04:47.141:   OpenType support missing for "Symbola", script 20
+20:04:47.142:   OpenType support missing for "Cursor", script 20
+20:04:47.143:   OpenType support missing for "URW Bookman", script 20
+20:04:47.143:   OpenType support missing for "Z003", script 20
+20:04:47.143:   OpenType support missing for "Noto Color Emoji", script 20
+20:04:47.143:   OpenType support missing for "", script 20
+20:04:47.144:   OpenType support missing for "", script 20
+20:04:47.144:   OpenType support missing for "", script 20
+20:04:47.144:   OpenType support missing for "", script 20
+20:04:47.144:   OpenType support missing for "", script 20
+20:04:47.144:   OpenType support missing for "", script 20
+20:04:47.145:   OpenType support missing for "", script 20
+20:04:47.145:   OpenType support missing for "", script 20
+20:04:47.145:   OpenType support missing for "", script 20
+20:04:47.145:   OpenType support missing for "", script 20
+20:04:47.145:   OpenType support missing for "", script 20
+20:04:47.146:   OpenType support missing for "", script 20
+20:04:47.146:   OpenType support missing for "", script 20
+20:04:47.146:   OpenType support missing for "", script 20
+20:04:47.146:   OpenType support missing for "", script 20
+20:04:47.146:   OpenType support missing for "", script 20
+20:04:47.146:   OpenType support missing for "", script 20
+20:04:47.147:   OpenType support missing for "", script 20
+20:04:47.147:   OpenType support missing for "", script 20
+20:04:47.147:   OpenType support missing for "", script 20
+20:04:47.147:   OpenType support missing for "", script 20
+20:05:04.239: Settings changed (outputs)
+20:05:04.239: ------------------------------------------------
+20:05:58.679: [obs-websocket] [WebSocketServer::onOpen] New WebSocket client has connected from [::1]:45376
+20:05:58.682: [obs-websocket] [WebSocketServer::onClose] WebSocket client `[::1]:45376` has disconnected with code `1006` and reason: End of File
+20:05:58.890: [ffmpeg muxer: 'Replay Buffer'] Wrote replay buffer to '/mnt/hdd/Videos/obs/Replay_2024-05-14_20-05-58.mkv'
+20:07:13.172: Output 'Replay Buffer': stopping
+20:07:13.172: Output 'Replay Buffer': Total frames output: 11547
+20:07:13.172: Output 'Replay Buffer': Total drawn frames: 11551
+20:07:13.173: ==== Replay Buffer Stop ============================================
+20:07:13.646: ---------------------------------
+20:07:13.646: [FFmpeg VAAPI encoder: 'advanced_video_recording'] settings:
+20:07:13.646: 	device:       /dev/dri/by-path/pci-0000:2d:00.0-render
+20:07:13.646: 	rate_control: CQP
+20:07:13.646: 	profile:      100
+20:07:13.646: 	level:        -99
+20:07:13.646: 	qp:           16
+20:07:13.646: 	bitrate:      0
+20:07:13.646: 	maxrate:      0
+20:07:13.646: 	keyint:       120
+20:07:13.646: 	width:        1280
+20:07:13.646: 	height:       720
+20:07:13.646: 	b-frames:     0
+20:07:13.646: 	ffmpeg opts:  
+20:07:13.646: 
+20:07:13.655: ---------------------------------
+20:07:13.655: [FFmpeg aac encoder: 'all'] bitrate: 160, channels: 2, channel_layout: stereo
+20:07:13.655: 
+20:07:13.655: ---------------------------------
+20:07:13.655: [FFmpeg aac encoder: 'desktop'] bitrate: 160, channels: 2, channel_layout: stereo
+20:07:13.655: 
+20:07:13.655: ---------------------------------
+20:07:13.655: [FFmpeg aac encoder: 'mic'] bitrate: 160, channels: 2, channel_layout: stereo
+20:07:13.655: 
+20:07:13.656: ==== Replay Buffer Start ===========================================
+20:07:13.658: Failed to inhibit: GDBus.Error:org.freedesktop.DBus.Error.UnknownMethod: No such interface “org.freedesktop.portal.Inhibit” on object at path /org/freedesktop/portal/desktop
+20:09:16.330: Output 'Replay Buffer': stopping
+20:09:16.330: Output 'Replay Buffer': Total frames output: 3676
+20:09:16.330: Output 'Replay Buffer': Total drawn frames: 3680
+20:09:16.330: ==== Replay Buffer Stop ============================================
+20:09:16.613: ==== Shutting down ==================================================
+20:09:16.616: [pipewire] Stream 0x55bbca954d20 state: "unconnected" (error: none)
+20:09:16.617: pulse-input: Stopped recording from 'alsa_input.pci-0000_2f_00.4.analog-stereo'
+20:09:16.617: pulse-input: Got 20342 packets with 24410400 frames
+20:09:16.617: pulse-input: Stopped recording from 'bluez_output.F8_4E_17_E6_22_D2.1.monitor'
+20:09:16.617: pulse-input: Got 20342 packets with 24410400 frames
+20:09:16.617: [pipewire] Stream 0x55bbc8f97cc0 state: "paused" (error: none)
+20:09:16.617: [pipewire] Stream 0x55bbc8f97cc0 state: "unconnected" (error: none)
+20:09:16.650: All scene data cleared
+20:09:16.650: ------------------------------------------------
+20:09:16.716: [obs-websocket] [obs_module_unload] Shutting down...
+20:09:16.716: [obs-websocket] [WebSocketServer::ServerRunner] IO thread exited.
+20:09:16.716: [obs-websocket] [WebSocketServer::Stop] Server stopped successfully
+20:09:16.716: Tried to call obs_frontend_remove_event_callback with no callbacks!
+20:09:16.716: [obs-websocket] [obs_module_unload] Finished shutting down.
+20:09:16.721: [Scripting] Total detached callbacks: 0
+20:09:16.721: Freeing OBS context data
+20:09:16.734: == Profiler Results =============================
+20:09:16.734: run_program_init: 824.375 ms
+20:09:16.734:  ┣OBSApp::AppInit: 3.506 ms
+20:09:16.734:  ┃ ┗OBSApp::InitLocale: 0.549 ms
+20:09:16.734:  ┗OBSApp::OBSInit: 770.013 ms
+20:09:16.734:    ┣obs_startup: 1.84 ms
+20:09:16.734:    ┗OBSBasic::OBSInit: 746.58 ms
+20:09:16.734:      ┣OBSBasic::InitBasicConfig: 0.086 ms
+20:09:16.734:      ┣OBSBasic::ResetAudio: 0.193 ms
+20:09:16.734:      ┣OBSBasic::ResetVideo: 77.457 ms
+20:09:16.734:      ┃ ┗obs_init_graphics: 75.397 ms
+20:09:16.734:      ┃   ┗shader compilation: 22.214 ms
+20:09:16.734:      ┣OBSBasic::InitOBSCallbacks: 0.002 ms
+20:09:16.734:      ┣OBSBasic::InitHotkeys: 0.012 ms
+20:09:16.734:      ┣obs_load_all_modules2: 572.319 ms
+20:09:16.734:      ┃ ┣obs_init_module(decklink-captions.so): 0 ms
+20:09:16.734:      ┃ ┣obs_init_module(decklink-output-ui.so): 0 ms
+20:09:16.734:      ┃ ┣obs_init_module(decklink.so): 0.083 ms
+20:09:16.734:      ┃ ┣obs_init_module(frontend-tools.so): 59.365 ms
+20:09:16.734:      ┃ ┣obs_init_module(image-source.so): 0.009 ms
+20:09:16.734:      ┃ ┣obs_init_module(linux-alsa.so): 0.002 ms
+20:09:16.734:      ┃ ┣obs_init_module(linux-capture.so): 0 ms
+20:09:16.734:      ┃ ┣obs_init_module(linux-jack.so): 0.004 ms
+20:09:16.734:      ┃ ┣obs_init_module(linux-pipewire.so): 11.465 ms
+20:09:16.734:      ┃ ┣obs_init_module(linux-pulseaudio.so): 0.002 ms
+20:09:16.734:      ┃ ┣obs_init_module(linux-v4l2.so): 2.734 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-browser.so): 0.055 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-ffmpeg.so): 19.801 ms
+20:09:16.734:      ┃ ┃ ┗nvenc_check: 1.067 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-filters.so): 0.018 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-libfdk.so): 0.002 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-outputs.so): 0.004 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-qsv11.so): 12.083 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-transitions.so): 0.006 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-vst.so): 0.002 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-webkitgtk.so): 0.004 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-webrtc.so): 0.006 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-websocket.so): 3.632 ms
+20:09:16.734:      ┃ ┣obs_init_module(obs-x264.so): 0.001 ms
+20:09:16.734:      ┃ ┣obs_init_module(rtmp-services.so): 0.418 ms
+20:09:16.734:      ┃ ┣obs_init_module(text-freetype2.so): 0.009 ms
+20:09:16.734:      ┃ ┗obs_init_module(vlc-video.so): 1.832 ms
+20:09:16.734:      ┣OBSBasic::InitService: 0.681 ms
+20:09:16.734:      ┣OBSBasic::ResetOutputs: 11.874 ms
+20:09:16.734:      ┣OBSBasic::CreateHotkeys: 0.016 ms
+20:09:16.734:      ┣OBSBasic::InitPrimitives: 0.075 ms
+20:09:16.734:      ┗OBSBasic::Load: 29.113 ms
+20:09:16.734: obs_hotkey_thread(25 ms): min=0 ms, median=0 ms, max=0.011 ms, 99th percentile=0.001 ms, 100% below 25 ms
+20:09:16.734: audio_thread(Audio): min=0.007 ms, median=1.635 ms, max=18.986 ms, 99th percentile=6.964 ms
+20:09:16.734:  ┗receive_audio: min=0.001 ms, median=0.471 ms, max=7.941 ms, 99th percentile=3.293 ms, 2.99033 calls per parent call
+20:09:16.734:    ┣buffer_audio: min=0 ms, median=0 ms, max=0.039 ms, 99th percentile=0.001 ms
+20:09:16.734:    ┗do_encode: min=0.003 ms, median=0.47 ms, max=7.94 ms, 99th percentile=3.291 ms
+20:09:16.734:      ┣encode(all): min=0.009 ms, median=0.459 ms, max=7.597 ms, 99th percentile=3.619 ms, 0.333333 calls per parent call
+20:09:16.734:      ┣send_packet: min=0 ms, median=0.001 ms, max=2.911 ms, 99th percentile=0.003 ms
+20:09:16.734:      ┣encode(desktop): min=0.004 ms, median=0.461 ms, max=7.938 ms, 99th percentile=3.271 ms, 0.333333 calls per parent call
+20:09:16.734:      ┗encode(mic): min=0.003 ms, median=0.509 ms, max=7.849 ms, 99th percentile=2.807 ms, 0.333333 calls per parent call
+20:09:16.734: obs_graphics_thread(33.3333 ms): min=0.08 ms, median=0.452 ms, max=10.57 ms, 99th percentile=0.706 ms, 100% below 33.333 ms
+20:09:16.734:  ┣tick_sources: min=0 ms, median=0.005 ms, max=0.049 ms, 99th percentile=0.009 ms
+20:09:16.734:  ┣output_frame: min=0.065 ms, median=0.326 ms, max=10.548 ms, 99th percentile=0.478 ms
+20:09:16.734:  ┃ ┣gs_context(video->graphics): min=0.065 ms, median=0.21 ms, max=10.547 ms, 99th percentile=0.346 ms
+20:09:16.734:  ┃ ┃ ┣render_video: min=0.013 ms, median=0.094 ms, max=1.455 ms, 99th percentile=0.164 ms
+20:09:16.734:  ┃ ┃ ┃ ┣render_main_texture: min=0.009 ms, median=0.04 ms, max=1.366 ms, 99th percentile=0.075 ms
+20:09:16.734:  ┃ ┃ ┃ ┣render_output_texture: min=0.009 ms, median=0.02 ms, max=0.934 ms, 99th percentile=0.038 ms
+20:09:16.734:  ┃ ┃ ┃ ┣render_convert_texture: min=0.009 ms, median=0.019 ms, max=0.236 ms, 99th percentile=0.036 ms
+20:09:16.734:  ┃ ┃ ┃ ┗stage_output_texture: min=0.006 ms, median=0.011 ms, max=0.259 ms, 99th percentile=0.019 ms
+20:09:16.734:  ┃ ┃ ┣gs_flush: min=0.001 ms, median=0.075 ms, max=2.622 ms, 99th percentile=0.127 ms
+20:09:16.734:  ┃ ┃ ┗download_frame: min=0 ms, median=0.033 ms, max=0.597 ms, 99th percentile=0.065 ms
+20:09:16.734:  ┃ ┗output_video_data: min=0.08 ms, median=0.116 ms, max=1.123 ms, 99th percentile=0.141 ms
+20:09:16.734:  ┗render_displays: min=0.002 ms, median=0.118 ms, max=1.003 ms, 99th percentile=0.228 ms
+20:09:16.734: video_thread(video): min=0.393 ms, median=0.644 ms, max=2.064 ms, 99th percentile=0.973 ms
+20:09:16.734:  ┗receive_video: min=0.392 ms, median=0.643 ms, max=2.063 ms, 99th percentile=0.972 ms
+20:09:16.734:    ┗do_encode: min=0.392 ms, median=0.642 ms, max=2.063 ms, 99th percentile=0.971 ms
+20:09:16.734:      ┣encode(advanced_video_recording): min=0.39 ms, median=0.639 ms, max=2.059 ms, 99th percentile=0.966 ms
+20:09:16.734:      ┗send_packet: min=0.001 ms, median=0.002 ms, max=0.1 ms, 99th percentile=0.007 ms
+20:09:16.734: OBSBasic::ResetOutputs: 8.472 ms
+20:09:16.734: =================================================
+20:09:16.734: == Profiler Time Between Calls ==================
+20:09:16.734: obs_hotkey_thread(25 ms): min=25.01 ms, median=25.061 ms, max=26.888 ms, 99.9902% within ±2% of 25 ms (0% lower, 0.00984058% higher)
+20:09:16.734: obs_graphics_thread(33.3333 ms): min=31.975 ms, median=33.333 ms, max=34.727 ms, 99.9607% within ±2% of 33.333 ms (0.0196374% lower, 0.0196374% higher)
+20:09:16.734: =================================================
+20:09:16.748: Number of memory leaks: 0

@@ -13,12 +13,9 @@ in
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+	  ./sound.nix
+	  ./hyprland.nix
     ];
-
-  nix.settings = {
-    substituters = ["https://hyprland.cachix.org"];
-    trusted-public-keys = ["hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
-  };
 
   # Bootloader.
   boot.loader.grub.enable = true;
@@ -27,10 +24,6 @@ in
 
   networking.hostName = "alpha"; # Define your hostname.
   networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
 
   # Enable networking
   networking.networkmanager.enable = true;
@@ -79,22 +72,6 @@ in
 	};
   };
 
-  # Enable sound with pipewire.
-  sound.enable = true;
-  hardware.pulseaudio.enable = false;
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
-
-    wireplumber.enable = true;
-    # use the example session manager (no others are packaged yet so this is enabled by default,
-    # no need to redefine it in your config for now)
-    #media-session.enable = true;
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
@@ -105,11 +82,9 @@ in
     isNormalUser = true;
 	shell = pkgs.zsh;
     description = "repparw";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "docker" ];
     packages = with pkgs; [
 	  xmrig-mo
-
-	  kitty
 
 	  # CLI tools
 	  keyd
@@ -121,15 +96,14 @@ in
 	  fzf
 	  ytfzf
 	  playerctl
-	  docker
 	  docker-compose
 	  spotifyd
 	  rclone
-	  wl-clipboard
 	  ueberzugpp
 	  libqalculate
 	  fastfetch
 	  axel
+	  manix # man for Nix
 	  tlrc # tldr
 	  nq # Command queue
 
@@ -146,31 +120,33 @@ in
 	  zoxide
 	  eza
 
-	  hyprland
 	  # install hyprland contrib
 	  swaynotificationcenter
 	  waybar
 
 	  # GUI
-	  feh
 	  firefox
 	  ungoogled-chromium
+	  jellyfin-mpv-shim
 	  mpv
 	  mpvScripts.mpris
+	  feh
 	  zathura
-	  heroic
-	  lutris
 	  vesktop
-	  spotify
+	  spotify-player
 	  obs-studio
-	  kiwix
 	  waydroid
 	  scrcpy
 	  unstable.obsidian
-	  xone
 	  unstable.xpadneo
+	  kitty
 	  # find pomo app in nixpkgs
 
+	  # Gaming
+	  heroic
+	  lutris
+	  xone
+	  mangohud
     ];
   };
 
@@ -180,11 +156,10 @@ in
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-    vim # Do not forget to add an editor to edit configuration.nix! Nano is also installed by default.
+	vim
 	zsh
-    wget
+	wget
 	tmux
-	mangohud
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -195,12 +170,10 @@ in
   #   enableSSHSupport = true;
   # };
 
-  programs.mosh.enable = true;
-  programs.zsh.enable = true;
+  # Docker
+  virtualisation.docker.enable = true;
 
-  programs.hyprland = {
-  enable = true;
-  }
+  programs.mosh.enable = true;
 
   programs.steam = {
   enable = true;
@@ -226,5 +199,7 @@ in
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "23.11"; # Did you read the comment?
+
+  nix.settings.experimental-features = "nix-command flakes";
 
 }
