@@ -3,18 +3,12 @@
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
 { config, pkgs, ... }:
-let
-  unstable = import
-    (builtins.fetchTarball https://github.com/nixos/nixpkgs/tarball/master)
-    # reuse the current configuration
-    { config = config.nixpkgs.config; };
-in
+
 {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-	  ./sound.nix
-	  ./hyprland.nix
+	  ./home.nix
     ];
 
   # Bootloader.
@@ -83,75 +77,7 @@ in
 	shell = pkgs.zsh;
     description = "repparw";
     extraGroups = [ "networkmanager" "wheel" "docker" ];
-    packages = with pkgs; [
-	  xmrig-mo
-
-	  # CLI tools
-	  keyd
-	  neovim
-	  yt-dlp
-	  ffmpeg
-	  git
-	  tig
-	  fzf
-	  ytfzf
-	  playerctl
-	  docker-compose
-	  spotifyd
-	  rclone
-	  ueberzugpp
-	  libqalculate
-	  fastfetch
-	  axel
-	  manix # man for Nix
-	  tlrc # tldr
-	  nq # Command queue
-
-	  pdfgrep
-	  catdoc # provides catppt and xls2csv
-
-	  # Modern replacements of basic tools
-	  bat
-	  colordiff
-	  duf
-	  du-dust
-	  fd
-	  ripgrep
-	  zoxide
-	  eza
-
-	  # install hyprland contrib
-	  swaynotificationcenter
-	  waybar
-
-	  # GUI
-	  firefox
-	  ungoogled-chromium
-	  jellyfin-mpv-shim
-	  mpv
-	  mpvScripts.mpris
-	  feh
-	  zathura
-	  vesktop
-	  spotify-player
-	  obs-studio
-	  waydroid
-	  scrcpy
-	  unstable.obsidian
-	  unstable.xpadneo
-	  kitty
-	  # find pomo app in nixpkgs
-
-	  # Gaming
-	  heroic
-	  lutris
-	  xone
-	  mangohud
-    ];
   };
-
-  # Allow unfree packages
-  nixpkgs.config.allowUnfree = true;
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
@@ -170,17 +96,19 @@ in
   #   enableSSHSupport = true;
   # };
 
-  # Docker
-  virtualisation.docker.enable = true;
+  virtualisation.docker = {
+	enable = true;
+	rootless.enable = true;
+	rootless.setSocketVariable = true;
+  }
 
   programs.mosh.enable = true;
 
   programs.steam = {
-  enable = true;
-  remotePlay.openFirewall = true;
-  gamescopeSession.enable = true;
+	enable = true;
+	remotePlay.openFirewall = true;
+	gamescopeSession.enable = true;
   }
-
   # List services that you want to enable:
 
   # Enable the OpenSSH daemon.
