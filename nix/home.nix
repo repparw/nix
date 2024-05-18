@@ -96,7 +96,12 @@
 	];
 
 	programs = {
-		git = { enable = true; userEmail = "ubritos@gmail.com"; userName = "repparw"; };
+		git = { 
+		  enable = true;
+		  userEmail = "ubritos@gmail.com";
+		  userName = "repparw";
+		  rerere.enabled = true;
+		};
 		zsh = (import = ./zsh.nix; { inherit config, pkgs; });
 	}
 	
