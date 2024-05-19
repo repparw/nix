@@ -14,12 +14,12 @@
 
   home.stateVersion = "23.11";
 
-  hyprland-nix.homeManagerModules.default
+  hyprland-nix.homeManagerModules.default =
   {
 	enable = true;
 	reloadCOnfig = true;
 	systemdIntegration = true;
-  }
+  };
 
   home.packages = with pkgs; [
   		# Essential packages
@@ -96,12 +96,12 @@
 	];
 
 	programs = {
-		git = { 
+		git = ({ 
 		  enable = true;
 		  userEmail = "ubritos@gmail.com";
 		  userName = "repparw";
 		  rerere.enabled = true;
-		};
+		});
 		zsh = (import = ./zsh.nix; { inherit config, pkgs; });
 	}
 	
