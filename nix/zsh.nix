@@ -6,6 +6,6 @@ programs.zsh = {
   enableCompletion = true;
   enableGlobbing = true;
   dotDir = "${config.home.homeDirectory}/.config/zsh";
-}
+};
 
 }
