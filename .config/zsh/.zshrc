@@ -10,9 +10,11 @@ fi
 # .zshrc - Zsh file loaded on interactive shell sessions.
 #
 
+# To customize prompt, run `p10k configure` or edit ~/.config/zsh/.p10k.zsh.
+[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
+
 # Zsh options
   setopt extended_glob
-
   # Histfile settings
   HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
   ## History ignore dups
@@ -96,5 +98,7 @@ fi
 
 zstyle ':completion:*' list-colors "di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
 
-# To customize prompt, run `p10k configure` or edit ~/.config/zsh/.p10k.zsh.
-[[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
+
+# source cargo env if installed
+[[ -f $HOME/.cargo/env ]] && source $HOME/.cargo/env
+
