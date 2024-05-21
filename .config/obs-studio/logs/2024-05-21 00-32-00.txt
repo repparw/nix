@@ -1,0 +1,280 @@
+00:32:00.456: Command Line Arguments: --disable-shutdown-check --startreplaybuffer --minimize-to-tray
+00:32:00.456: Platform: Wayland
+00:32:00.456: CPU Name: AMD Ryzen 5 5600X 6-Core Processor
+00:32:00.456: CPU Speed: 3718.433MHz
+00:32:00.457: Physical Cores: 6, Logical Cores: 12
+00:32:00.457: Physical Memory: 32007MB Total, 1894MB Free
+00:32:00.457: Kernel Version: Linux 6.8.9-300.fc40.x86_64
+00:32:00.457: Distribution: "Fedora Linux" 40
+00:32:00.457: Desktop Environment: Hyprland
+00:32:00.458: Qt Version: 6.7.0 (runtime), 6.7.0 (compiled)
+00:32:00.458: Portable mode: false
+00:32:00.490: OBS 30.1.1 (linux)
+00:32:00.490: ---------------------------------
+00:32:00.490: ---------------------------------
+00:32:00.490: audio settings reset:
+00:32:00.490: 	samples per sec: 48000
+00:32:00.490: 	speakers:        2
+00:32:00.490: 	max buffering:   960 milliseconds
+00:32:00.490: 	buffering type:  dynamically increasing
+00:32:00.499: ---------------------------------
+00:32:00.499: Initializing OpenGL...
+00:32:00.499: Using EGL/Wayland
+00:32:00.531: Initialized EGL 1.5
+00:32:00.540: Loading up OpenGL on adapter AMD AMD Radeon RX 6700 XT (radeonsi, navi22, LLVM 18.1.1, DRM 3.57, 6.8.9-300.fc40.x86_64)
+00:32:00.540: OpenGL loaded successfully, version 4.6 (Core Profile) Mesa 24.0.7, shading language 4.60
+00:32:00.635: ---------------------------------
+00:32:00.635: video settings reset:
+00:32:00.635: 	base resolution:   1920x1080
+00:32:00.635: 	output resolution: 1280x720
+00:32:00.635: 	downscale filter:  Bicubic
+00:32:00.635: 	fps:               30/1
+00:32:00.635: 	format:            NV12
+00:32:00.635: 	YUV mode:          Rec. 709/Partial
+00:32:00.635: NV12 texture support enabled
+00:32:00.635: P010 texture support not available
+00:32:00.637: Audio monitoring device:
+00:32:00.637: 	name: Default
+00:32:00.637: 	id: default
+00:32:00.637: ---------------------------------
+00:32:00.650: Failed to load 'en-US' text for module: 'decklink-captions.so'
+00:32:00.662: Failed to load 'en-US' text for module: 'decklink-output-ui.so'
+00:32:00.674: A DeckLink iterator could not be created.  The DeckLink drivers may not be installed
+00:32:00.674: Failed to initialize module 'decklink.so'
+00:32:00.844: [pipewire] Available captures:
+00:32:00.844: [pipewire]     - Desktop capture
+00:32:00.844: [pipewire]     - Window capture
+00:32:00.870: v4l2loopback not installed, virtual camera disabled
+00:32:00.944: [obs-browser]: Version 2.23.4
+00:32:00.944: [obs-browser]: CEF Version 103.0.5060.134 (runtime), 103.0.0+g17f8588+chromium-103.0.5060.134 (compiled)
+00:32:01.051: VAAPI: API version 1.21
+00:32:01.052: FFmpeg VAAPI H264 encoding supported
+00:32:01.058: FFmpeg VAAPI AV1 encoding not supported
+00:32:01.064: FFmpeg VAAPI HEVC encoding supported
+00:32:01.238: [obs-websocket] [obs_module_load] you can haz websockets (Version: 5.4.2 | RPC Version: 1)
+00:32:01.238: [obs-websocket] [obs_module_load] Qt version (compile-time): 6.7.0 | Qt version (run-time): 6.7.0
+00:32:01.238: [obs-websocket] [obs_module_load] Linked ASIO Version: 102801
+00:32:01.244: [obs-websocket] [obs_module_load] Module loaded.
+00:32:01.309: [vlc-video]: VLC 3.0.20 Vetinari found, VLC video source enabled
+00:32:01.309: ---------------------------------
+00:32:01.309:   Loaded Modules:
+00:32:01.309:     vlc-video.so
+00:32:01.309:     text-freetype2.so
+00:32:01.309:     rtmp-services.so
+00:32:01.309:     obs-x264.so
+00:32:01.309:     obs-websocket.so
+00:32:01.309:     obs-webrtc.so
+00:32:01.309:     obs-webkitgtk.so
+00:32:01.309:     obs-vst.so
+00:32:01.309:     obs-transitions.so
+00:32:01.309:     obs-qsv11.so
+00:32:01.309:     obs-outputs.so
+00:32:01.309:     obs-libfdk.so
+00:32:01.309:     obs-filters.so
+00:32:01.309:     obs-ffmpeg.so
+00:32:01.309:     obs-browser.so
+00:32:01.309:     linux-v4l2.so
+00:32:01.309:     linux-pulseaudio.so
+00:32:01.309:     linux-pipewire.so
+00:32:01.309:     linux-jack.so
+00:32:01.309:     linux-capture.so
+00:32:01.309:     linux-alsa.so
+00:32:01.309:     image-source.so
+00:32:01.309:     frontend-tools.so
+00:32:01.309:     decklink-output-ui.so
+00:32:01.309:     decklink-captions.so
+00:32:01.309: ---------------------------------
+00:32:01.309: [obs-websocket] [obs_module_post_load] WebSocket server is enabled, starting...
+00:32:01.310: [obs-websocket] [WebSocketServer::Start] Not locked to IPv4 bindings
+00:32:01.310: [obs-websocket] [WebSocketServer::ServerRunner] IO thread started.
+00:32:01.311: [obs-websocket] [WebSocketServer::Start] Server started successfully on port 4455. Possible connect address: 192.168.0.18
+00:32:01.312: ==== Startup complete ===============================================
+00:32:01.389: All scene data cleared
+00:32:01.389: ------------------------------------------------
+00:32:01.393: pulse-input: Server name: 'PulseAudio (on PipeWire 1.0.6) 15.0.0'
+00:32:01.393: pulse-input: Audio format: float32le, 48000 Hz, 2 channels
+00:32:01.393: pulse-input: Started recording from 'bluez_output.F8_4E_17_E6_22_D2.1.monitor'
+00:32:01.393: [Loaded global audio device]: 'desktop'
+00:32:01.394: pulse-input: Server name: 'PulseAudio (on PipeWire 1.0.6) 15.0.0'
+00:32:01.394: pulse-input: Audio format: s32le, 48000 Hz, 2 channels
+00:32:01.394: pulse-input: Started recording from 'alsa_input.pci-0000_2f_00.4.analog-stereo'
+00:32:01.394: [Loaded global audio device]: 'mic'
+00:32:01.394: PipeWire initialized
+00:32:01.395: PipeWire initialized
+00:32:01.395: Switched to scene 'scr0'
+00:32:01.395: ------------------------------------------------
+00:32:01.395: Loaded scenes:
+00:32:01.395: - scene 'scr0':
+00:32:01.395:     - source: 'mic' (pulse_input_capture)
+00:32:01.395:     - source: 'desktop' (pulse_output_capture)
+00:32:01.395:     - source: 'screen0' (pipewire-desktop-capture-source)
+00:32:01.395: - scene 'scr1':
+00:32:01.395:     - source: 'mic' (pulse_input_capture)
+00:32:01.395:     - source: 'desktop' (pulse_output_capture)
+00:32:01.395:     - source: 'screen1' (pipewire-desktop-capture-source)
+00:32:01.395: ------------------------------------------------
+00:32:01.461: ---------------------------------
+00:32:01.461: [FFmpeg VAAPI encoder: 'advanced_video_recording'] settings:
+00:32:01.461: 	device:       /dev/dri/by-path/pci-0000:2d:00.0-render
+00:32:01.461: 	rate_control: CQP
+00:32:01.461: 	profile:      100
+00:32:01.461: 	level:        -99
+00:32:01.461: 	qp:           16
+00:32:01.461: 	bitrate:      0
+00:32:01.461: 	maxrate:      0
+00:32:01.461: 	keyint:       120
+00:32:01.461: 	width:        1280
+00:32:01.461: 	height:       720
+00:32:01.461: 	b-frames:     0
+00:32:01.461: 	ffmpeg opts:  
+00:32:01.461: 
+00:32:01.472: ---------------------------------
+00:32:01.472: [FFmpeg aac encoder: 'all'] bitrate: 160, channels: 2, channel_layout: stereo
+00:32:01.472: 
+00:32:01.472: ---------------------------------
+00:32:01.472: [FFmpeg aac encoder: 'desktop'] bitrate: 160, channels: 2, channel_layout: stereo
+00:32:01.472: 
+00:32:01.473: ---------------------------------
+00:32:01.473: [FFmpeg aac encoder: 'mic'] bitrate: 160, channels: 2, channel_layout: stereo
+00:32:01.473: 
+00:32:01.513: ==== Replay Buffer Start ===========================================
+00:32:01.518: [pipewire] Screencast session created
+00:32:01.519: [pipewire] Screencast session created
+00:32:01.520: Failed to inhibit: GDBus.Error:org.freedesktop.DBus.Error.UnknownMethod: No such interface “org.freedesktop.portal.Inhibit” on object at path /org/freedesktop/portal/desktop
+00:32:01.522: [pipewire] Asking for desktop
+00:32:01.588: [pipewire] desktop selected, setting up screencast
+00:32:01.588: [pipewire] Asking for desktop
+00:32:01.592: [pipewire] Server version: 1.0.6
+00:32:01.592: [pipewire] Library version: 1.0.6
+00:32:01.592: [pipewire] Header version: 1.0.4
+00:32:01.592: [pipewire] Created stream 0x5635e40ef960
+00:32:01.592: [pipewire] Stream 0x5635e40ef960 state: "connecting" (error: none)
+00:32:01.592: [pipewire] Playing stream 0x5635e40ef960
+00:32:01.592: [pipewire] desktop selected, setting up screencast
+00:32:01.593: [pipewire] Stream 0x5635e40ef960 state: "paused" (error: none)
+00:32:01.594: [pipewire] Server version: 1.0.6
+00:32:01.594: [pipewire] Library version: 1.0.6
+00:32:01.595: [pipewire] Header version: 1.0.4
+00:32:01.595: [pipewire] Created stream 0x5635e7577e80
+00:32:01.595: [pipewire] Stream 0x5635e7577e80 state: "connecting" (error: none)
+00:32:01.595: [pipewire] Playing stream 0x5635e7577e80
+00:32:01.595: [pipewire] Stream 0x5635e7577e80 state: "paused" (error: none)
+00:32:01.600: [pipewire] Negotiated format:
+00:32:01.600: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:01.600: [pipewire]     Modifier: 0x0
+00:32:01.600: [pipewire]     Size: 1920x1080
+00:32:01.600: [pipewire]     Framerate: 0/1
+00:32:01.601: [pipewire] Negotiated format:
+00:32:01.601: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:01.601: [pipewire]     Modifier: 0x20000001896bb03
+00:32:01.601: [pipewire]     Size: 1920x1080
+00:32:01.601: [pipewire]     Framerate: 0/1
+00:32:01.602: [pipewire] Stream 0x5635e40ef960 state: "streaming" (error: none)
+00:32:01.607: [pipewire] Negotiated format:
+00:32:01.607: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:01.607: [pipewire]     Modifier: 0x0
+00:32:01.607: [pipewire]     Size: 1920x1080
+00:32:01.607: [pipewire]     Framerate: 0/1
+00:32:01.607: [pipewire] Negotiated format:
+00:32:01.607: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:01.607: [pipewire]     Modifier: 0x20000001896bb03
+00:32:01.607: [pipewire]     Size: 1920x1080
+00:32:01.607: [pipewire]     Framerate: 0/1
+00:32:01.615: [pipewire] Stream 0x5635e7577e80 state: "streaming" (error: none)
+00:32:01.620: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+00:32:01.620: [pipewire] Renegotiating stream
+00:32:01.620: [pipewire] Negotiated format:
+00:32:01.620: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:01.620: [pipewire]     Modifier: 0x20000001896bb03
+00:32:01.620: [pipewire]     Size: 1920x1080
+00:32:01.620: [pipewire]     Framerate: 0/1
+00:32:01.620: [pipewire] Negotiated format:
+00:32:01.620: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:01.620: [pipewire]     Modifier: 0x200000018967b03
+00:32:01.620: [pipewire]     Size: 1920x1080
+00:32:01.620: [pipewire]     Framerate: 0/1
+00:32:01.638: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+00:32:01.638: [pipewire] Renegotiating stream
+00:32:01.638: [pipewire] Stream 0x5635e7577e80 state: "paused" (error: none)
+00:32:01.638: [pipewire] Negotiated format:
+00:32:01.638: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:01.638: [pipewire]     Modifier: 0x200000018967b03
+00:32:01.638: [pipewire]     Size: 1920x1080
+00:32:01.638: [pipewire]     Framerate: 0/1
+00:32:01.638: [pipewire] Negotiated format:
+00:32:01.638: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:01.638: [pipewire]     Modifier: 0x200000018937b03
+00:32:01.638: [pipewire]     Size: 1920x1080
+00:32:01.638: [pipewire]     Framerate: 0/1
+00:32:01.639: [pipewire] Stream 0x5635e7577e80 state: "streaming" (error: none)
+00:32:01.644: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+00:32:01.644: [pipewire] Renegotiating stream
+00:32:01.644: [pipewire] Negotiated format:
+00:32:01.644: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:01.644: [pipewire]     Modifier: 0x200000018937b03
+00:32:01.644: [pipewire]     Size: 1920x1080
+00:32:01.644: [pipewire]     Framerate: 0/1
+00:32:01.644: [pipewire] Negotiated format:
+00:32:01.644: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:01.644: [pipewire]     Modifier: 0x200000018801b03
+00:32:01.644: [pipewire]     Size: 1920x1080
+00:32:01.644: [pipewire]     Framerate: 0/1
+00:32:01.963: adding 21 milliseconds of audio buffering, total audio buffering is now 21 milliseconds (source: desktop)
+00:32:01.963: 
+00:32:02.037: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+00:32:02.037: [pipewire] Renegotiating stream
+00:32:02.038: [pipewire] Negotiated format:
+00:32:02.038: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:02.038: [pipewire]     Modifier: 0x20000001896bb03
+00:32:02.038: [pipewire]     Size: 1920x1080
+00:32:02.038: [pipewire]     Framerate: 0/1
+00:32:02.038: [pipewire] Negotiated format:
+00:32:02.038: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:02.038: [pipewire]     Modifier: 0x200000018967b03
+00:32:02.038: [pipewire]     Size: 1920x1080
+00:32:02.038: [pipewire]     Framerate: 0/1
+00:32:02.078: [rtmp-services plugin] Successfully updated file 'services.json' (version 252)
+00:32:02.078: [rtmp-services plugin] Successfully updated package (version 252)
+00:32:02.081: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+00:32:02.081: [pipewire] Renegotiating stream
+00:32:02.081: [pipewire] Stream 0x5635e40ef960 state: "paused" (error: none)
+00:32:02.081: [pipewire] Negotiated format:
+00:32:02.081: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:02.081: [pipewire]     Modifier: 0x200000018967b03
+00:32:02.081: [pipewire]     Size: 1920x1080
+00:32:02.081: [pipewire]     Framerate: 0/1
+00:32:02.081: [pipewire] Negotiated format:
+00:32:02.081: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:02.081: [pipewire]     Modifier: 0x200000018937b03
+00:32:02.081: [pipewire]     Size: 1920x1080
+00:32:02.081: [pipewire]     Framerate: 0/1
+00:32:02.082: [pipewire] Stream 0x5635e40ef960 state: "streaming" (error: none)
+00:32:02.097: Cannot create EGLImage: Arguments are inconsistent (for example, a valid context requires buffers not supplied by a valid surface).
+00:32:02.097: [pipewire] Renegotiating stream
+00:32:02.097: [pipewire] Negotiated format:
+00:32:02.097: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:02.097: [pipewire]     Modifier: 0x200000018937b03
+00:32:02.097: [pipewire]     Size: 1920x1080
+00:32:02.097: [pipewire]     Framerate: 0/1
+00:32:02.097: [pipewire] Negotiated format:
+00:32:02.097: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:32:02.097: [pipewire]     Modifier: 0x200000018801b03
+00:32:02.097: [pipewire]     Size: 1920x1080
+00:32:02.097: [pipewire]     Framerate: 0/1
+00:32:15.362: [obs-websocket] [WebSocketServer::onOpen] New WebSocket client has connected from [::1]:45732
+00:32:15.365: [obs-websocket] [WebSocketServer::onClose] WebSocket client `[::1]:45732` has disconnected with code `1006` and reason: End of File
+00:32:15.557: [ffmpeg muxer: 'Replay Buffer'] Wrote replay buffer to '/mnt/hdd/Videos/obs/Replay_2024-05-21_00-32-15.mkv'
+00:53:37.004: [pipewire] Stream 0x5635e40ef960 state: "paused" (error: none)
+00:53:37.779: [pipewire] Stream 0x5635e7577e80 state: "paused" (error: none)
+00:53:38.135: [pipewire] Negotiated format:
+00:53:38.135: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:53:38.135: [pipewire]     Modifier: 0x200000018801b03
+00:53:38.135: [pipewire]     Size: 1920x1080
+00:53:38.135: [pipewire]     Framerate: 0/1
+00:53:38.136: [pipewire] Stream 0x5635e40ef960 state: "streaming" (error: none)
+00:53:38.138: [pipewire] Negotiated format:
+00:53:38.138: [pipewire]     Format: 8 (Spa:Enum:VideoFormat:BGRx)
+00:53:38.138: [pipewire]     Modifier: 0x200000018801b03
+00:53:38.138: [pipewire]     Size: 1920x1080
+00:53:38.138: [pipewire]     Framerate: 0/1
+00:53:38.139: [pipewire] Stream 0x5635e7577e80 state: "streaming" (error: none)
