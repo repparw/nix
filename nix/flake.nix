@@ -3,36 +3,39 @@
   description = "repparw's flake";
 
   inputs = {
-	nixpkgs = {
-	  url = "nixpkgs/nixpkgs-23.11"; # github:NixOS/nixpkgs/branch
-	  config.allowUnfree = true;
-	};
-	nixpkgs-unstable.url = "nixpkgs/nixpkgs-unstable";
-	hyprland-nix.url = "github:hyprland-community/hyprnix";
-	home-manager = {
-	  url = "github:nix-community/home-manager";
-	  inputs.nixpkgs.follows = "nixpkgs";
-	}
+    nixpkgs = {
+      url = "github:NixOS/nixpkgs/nixos-23.11"; # Modification: Correct URL syntax
+    };
+	nixpkgs-unstable = {
+      url = "github:NixOS/nixpkgs/nixpkgs-unstable"; # Modification: Correct URL syntax
+    };
+    hyprland-nix = {
+      url = "github:hyprland-community/hyprnix";
+    };
+    stylix = {
+      url = "github:danth/stylix";
+    };
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, ... }:
+  outputs = { self, ... }@inputs:
 	let
 		system = "x86_64-linux";
-		pkgs = import nixpkgs { inherit system; };
-		unstable = import nixpkgs-unstable { inherit system; };
+		pkgs = nixpkgs.legacyPackages.${system};
+		unstable = nixpkgs-unstable.legacyPackages.${system};
 	in {
 	  nixosConfigurations = {
-		repparw = nixpkgs.lib.nixosSystem {
-		  inherit system;
+		beta = nixpkgs.lib.nixosSystem {
+		  extraSpecialArgs = { inherit inputs; };
 		  modules = [
-			./configuration.nix
+			stylix.nixosModules.stylix { image = "/home/repparw/Pictures/gruvbox.jpg"; }
+			hyprland-nix.nixosModules.hyprland-nix { enable = true; }
 			home-manager.nixosModules.home-manager
-			{
-			  home-manager.useUserPackages = true;
-			  home-manager.users.repparw = homeManagerConfFor ./home.nix
-			  home-manager.extraSpecialArgs = { inherit unstable; };
-			}
-		  ];
+			./hosts/default/configuration.nix
+			];
 		};
 	  };
   };

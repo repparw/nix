@@ -2,24 +2,27 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, nixpkgs, ... }:
 
 {
   imports =
     [ # Include the results of the hardware scan.
-	  ./home.nix
+	  ./hardware-configuration.nix
+	  # ./t440hw.nix
     ];
+
+  nixpkgs.config.allowUnfree = true;
 
   # Bootloader.
   boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/sda";
+  boot.loader.grub.device = "/dev/vda";
   boot.loader.grub.useOSProber = true;
 
-  networking.hostName = "alpha"; # Define your hostname.
+  networking.hostName = "beta"; # Define your hostname.
   networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Enable networking
-  networking.networkmanager.enable = true;
+  # networking.networkmanager.enable = true;
 
   # Set your time zone.
   time.timeZone = "America/Argentina/Buenos_Aires";
@@ -53,13 +56,13 @@
 
   # Nerdfonts
   fonts = {
-	packages = with pkgs; [
+	packages = with nixpkgs; [
 	  (nerdfonts.override { fonts = [ "FiraCode" ]; })
 	];
 
   # Set default font
     fontconfig.defaultFonts = {
-	  "sans-serif" = [ "FiraCode Nerd Font" ];
+	  "sansSerif" = [ "FiraCode Nerd Font" ];
 	  "serif" = [ "FiraCode Nerd Font" ];
 	  "monospace" = [ "FiraCode Nerd Font Mono" ];
 	};
@@ -71,14 +74,20 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.repparw = {
     isNormalUser = true;
-	shell = pkgs.zsh;
+	shell = nixpkgs.zsh;
     description = "repparw";
     extraGroups = [ "networkmanager" "wheel" "docker" ];
   };
 
+  home-manager = {
+	extraSpecialArgs = { inherit inputs; };
+	useUserPackages = true;
+	users.repparw = import ./home.nix;
+};
+
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = with nixpkgs; [
 	vim
 	zsh
 	wget
@@ -92,6 +101,11 @@
   #   enable = true;
   #   enableSSHSupport = true;
   # };
+
+  programs.hyprland.enable = true;
+
+
+  programs.zsh.enable = true;
 
   virtualisation.docker = {
 	enable = true;
@@ -116,6 +130,22 @@
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
+
+  # Enable sound with pipewire.
+  sound.enable = true;
+  hardware.pulseaudio.enable = false;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    # If you want to use JACK applications, uncomment this
+    #jack.enable = true;
+
+    wireplumber.enable = true;
+  };
+
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

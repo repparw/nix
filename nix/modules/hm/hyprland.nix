@@ -11,9 +11,7 @@
 	hyprpicker
 	wl-clipboard
 	# hyprwm/contrib
-	inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
-	inputs.hyprland-contrib.packages.${pkgs.system}.hdrop
+	inputs.hyprland-contrib.packages.${pkgs}.grimblast
+	inputs.hyprland-contrib.packages.${pkgs}.hdrop
   	];
-
-  ]
 }
