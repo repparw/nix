@@ -1,8 +1,6 @@
 { config, pkgs, inputs, ... }:
 {
   imports = [
-		inputs.hyprland-nix.homeManagerModules.default
-		./desktop/sound.nix
 		./desktop/hyprland.nix
 		];
 
@@ -12,14 +10,14 @@
   home.username = "repparw";
   home.homeDirectory = "/home/repparw";
 
-  home.stateVersion = "23.11";
+  stylix.base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-medium.yaml";
 
-  hyprland-nix.homeManagerModules.default =
-  {
-	enable = true;
-	reloadCOnfig = true;
-	systemdIntegration = true;
-  };
+# wayland.windowManager.hyprland =
+# {
+#   enable = true;
+#   reloadConfig = true;
+#   systemdIntegration = true;
+# };
 
   home.packages = with pkgs; [
   		# Essential packages
@@ -32,6 +30,7 @@
   		imagemagick
 		tmux
 		less
+		base16-schemes
 
 		# CLI tools
 		docker-compose
@@ -83,9 +82,10 @@
 		obs-studio
 		waydroid
 		scrcpy
+		# find pomo app in nixpkgs
+
 		unstable.obsidian
 		unstable.xpadneo
-		# find pomo app in nixpkgs
 
 		# Gaming
 		steam
@@ -96,14 +96,22 @@
 	];
 
 	programs = {
-		git = ({ 
+		git = { 
 		  enable = true;
 		  userEmail = "ubritos@gmail.com";
 		  userName = "repparw";
-		  rerere.enabled = true;
-		});
-		zsh = (import = ./zsh.nix; { inherit config, pkgs; });
-	}
-	
+		  extraConfig = {
+			rerere.enabled = true;
+		  };
+		};
+		zsh = {
+		  enable = true;
+		  enableCompletion = true;
+#		  enableGlobbing = true;
+		  dotDir = "${config.home.homeDirectory}/.config/zsh";
+		};
+	};
+
+  home.stateVersion = "23.11";
 
 }
