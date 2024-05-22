@@ -13,8 +13,8 @@
 	  nixosConfigurations = {
 		beta = inputs.nixpkgs.lib.nixosSystem {
 		  modules = [
-			/home/repparw/nix/hosts/beta/configuration.nix
-			inputs.stylix.nixosModules.stylix { image = "/home/repparw/Pictures/gruvbox.jpg"; }
+			./hosts/beta/configuration.nix
+			inputs.stylix.nixosModules.stylix { image = "./gruvbox.jpg"; }
 			inputs.home-manager.nixosModules.home-manager
 			];
 		  specialArgs = {
