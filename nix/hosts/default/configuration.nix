@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, nixpkgs, ... }:
+{ config, pkgs, ... }:
 
 {
   imports =
@@ -10,8 +10,6 @@
 	  ./hardware-configuration.nix
 	  # ./t440hw.nix
     ];
-
-  nixpkgs.config.allowUnfree = true;
 
   # Bootloader.
   boot.loader.grub.enable = true;
@@ -56,7 +54,7 @@
 
   # Nerdfonts
   fonts = {
-	packages = with nixpkgs; [
+	packages = with pkgs; [
 	  (nerdfonts.override { fonts = [ "FiraCode" ]; })
 	];
 
@@ -74,12 +72,12 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.repparw = {
     isNormalUser = true;
-	shell = nixpkgs.zsh;
+	shell = pkgs.zsh;
     description = "repparw";
     extraGroups = [ "networkmanager" "wheel" "docker" ];
   };
 
-  home-manager = {
+  inputs.home-manager = {
 	extraSpecialArgs = { inherit inputs; };
 	useUserPackages = true;
 	users.repparw = import ./home.nix;
@@ -87,7 +85,7 @@
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.systemPackages = with nixpkgs; [
+  environment.systemPackages = with pkgs; [
 	vim
 	zsh
 	wget
@@ -103,7 +101,6 @@
   # };
 
   programs.hyprland.enable = true;
-
 
   programs.zsh.enable = true;
 

@@ -1,7 +1,8 @@
 { config, pkgs, inputs, ... }:
 {
   imports = [
-		./desktop/hyprland.nix
+		inputs.hyprland-nix.homeManagerModules.default
+		../../modules/hyprland.nix
 		];
 
   # Let Home Manager install and manage itself.

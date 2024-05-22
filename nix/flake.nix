@@ -1,6 +1,31 @@
 {
-
   description = "repparw's flake";
+
+  outputs = { self, ... }@inputs:
+	let
+
+		system = "x86_64-linux";
+
+		pkgs = inputs.nixpkgs.legacyPackages.${system};
+		unstable = inputs.nixpkgs-unstable.legacyPackages.${system};
+
+	in {
+	  nixosConfigurations = {
+		beta = inputs.nixpkgs.lib.nixosSystem {
+		  modules = [
+			/home/repparw/nix/hosts/beta/configuration.nix
+			inputs.stylix.nixosModules.stylix { image = "/home/repparw/Pictures/gruvbox.jpg"; }
+			inputs.home-manager.nixosModules.home-manager
+			];
+		  specialArgs = {
+			inherit system;
+			inherit pkgs;
+			inherit unstable; 
+			inherit inputs;
+		  };
+		};
+	  };
+  };
 
   inputs = {
     nixpkgs = {
@@ -19,25 +44,6 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-  };
-
-  outputs = { self, ... }@inputs:
-	let
-		system = "x86_64-linux";
-		pkgs = nixpkgs.legacyPackages.${system};
-		unstable = nixpkgs-unstable.legacyPackages.${system};
-	in {
-	  nixosConfigurations = {
-		beta = nixpkgs.lib.nixosSystem {
-		  extraSpecialArgs = { inherit inputs; };
-		  modules = [
-			stylix.nixosModules.stylix { image = "/home/repparw/Pictures/gruvbox.jpg"; }
-			hyprland-nix.nixosModules.hyprland-nix { enable = true; }
-			home-manager.nixosModules.home-manager
-			./hosts/default/configuration.nix
-			];
-		};
-	  };
   };
 
 }
