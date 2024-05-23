@@ -43,17 +43,17 @@
 
   inputs = {
     nixpkgs = {
-      url = "github:NixOS/nixpkgs/nixpkgs-unstable"; # Modification: Correct URL syntax
+      url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     };
 	nixpkgs-stable = {
-      url = "github:NixOS/nixpkgs/nixos-23.11"; # Modification: Correct URL syntax
+      url = "github:NixOS/nixpkgs/nixos-23.11";
     };
     hyprland-nix = {
       url = "github:hyprland-community/hyprnix"; # Follows unstable
     };
-	hyprland-contrib = {
-	  url = "github:hyprwm/contrib";
-	};
+    hyprland-contrib = {
+      url = "github:hyprwm/contrib";
+    };
     stylix = {
       url = "github:danth/stylix";
     };

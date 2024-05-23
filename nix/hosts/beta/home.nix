@@ -37,6 +37,7 @@
 		spotifyd
 		keyd
 		neovim
+		nil # nix lsp
 		yt-dlp
 		tig
 		fzf
