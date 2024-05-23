@@ -16,7 +16,6 @@ fi
 # Zsh options
   setopt extended_glob
   # Histfile settings
-  HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
   ## History ignore dups
   setopt EXTENDED_HISTORY
   setopt HIST_EXPIRE_DUPS_FIRST
@@ -26,6 +25,7 @@ fi
   setopt HIST_FIND_NO_DUPS
   setopt HIST_SAVE_NO_DUPS
   setopt HIST_BEEP
+  HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
 
 # Zsh options END
 
