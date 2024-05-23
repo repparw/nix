@@ -33,7 +33,6 @@
 		# CLI tools
 		docker-compose
 		spotifyd
-		keyd
 		neovim
 		nil # nix lsp
 		yt-dlp
