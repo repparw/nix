@@ -13,15 +13,12 @@
     ];
 
   # Bootloader.
-  boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/vda";
-  boot.loader.grub.useOSProber = true;
+  boot.loader.systemd-boot.enable = true;
 
   networking.hostName = "beta"; # Define your hostname.
-  networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Enable networking
-  # networking.networkmanager.enable = true;
+  networking.networkmanager.enable = true;
 
   # Set your time zone.
   time.timeZone = "America/Argentina/Buenos_Aires";
@@ -43,6 +40,11 @@
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
+
+  services.keyd = {
+	enable = true;
+	keyboards.default.settings = { main = { capslock = "overload(control, esc)"; }; };
+  };
 
   # Nerdfonts
   fonts = {
