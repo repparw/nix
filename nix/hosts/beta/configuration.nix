@@ -75,6 +75,9 @@
 	zsh
 	wget
 	tmux
+
+	cmake
+	libdrm
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -106,6 +109,21 @@
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
+
+  services.greetd = {
+	enable = true;
+	vt = 1;
+	settings = {
+	initial_session = {
+	  command = "Hyprland";
+	  user = "repparw";
+	};
+	default_session = {
+	  command = "${pkgs.greetd.greetd}/bin/agreety --cmd Hyprland";
+	  user = "repparw";
+	};
+	};
+  };
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
