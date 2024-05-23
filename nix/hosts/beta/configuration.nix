@@ -2,12 +2,13 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ inputs, config, pkgs, ... }:
 
 {
   imports =
     [ # Include the results of the hardware scan.
 	  ./hardware-configuration.nix
+	  ../../modules/nixos/cachix.nix
 	  # ./t440hw.nix
     ];
 
@@ -75,9 +76,6 @@
 	zsh
 	wget
 	tmux
-
-	cmake
-	libdrm
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
