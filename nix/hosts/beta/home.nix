@@ -11,15 +11,16 @@
   home.username = "repparw";
   home.homeDirectory = "/home/repparw";
 
-# wayland.windowManager.hyprland =
-# {
-#   enable = true;
-#   reloadConfig = true;
-#   systemdIntegration = true;
-# };
+  wayland.windowManager.hyprland =
+  {
+    enable = true;
+    reloadConfig = true;
+    systemdIntegration = true;
+  };
 
   home.packages = with pkgs; [
   		# Essential packages
+		nodejs
   		curl
   		wget
   		unzip
@@ -108,6 +109,8 @@
 		  dotDir = "${config.home.homeDirectory}/.config/zsh";
 		};
 	};
+
+  services.ssh-agent.enable = true;
 
   home.stateVersion = "23.11";
 

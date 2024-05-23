@@ -3,6 +3,7 @@
 {
   home.packages = with pkgs; [
 	# Desktop
+	libdrm
 	swaylock
 	swayidle
 	swaynotificationcenter
