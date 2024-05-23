@@ -1,8 +1,8 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, inputs, stylix, ... }:
 {
   imports = [
 		inputs.hyprland-nix.homeManagerModules.default
-		../../modules/hyprland.nix
+		../../modules/hm/hyprland.nix
 		];
 
   # Let Home Manager install and manage itself.
@@ -10,8 +10,6 @@
 
   home.username = "repparw";
   home.homeDirectory = "/home/repparw";
-
-  stylix.base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-medium.yaml";
 
 # wayland.windowManager.hyprland =
 # {
@@ -83,16 +81,14 @@
 		obs-studio
 		waydroid
 		scrcpy
+		obsidian
 		# find pomo app in nixpkgs
 
-		unstable.obsidian
-		unstable.xpadneo
 
 		# Gaming
 		steam
 		heroic
 		lutris
-		xone
 		mangohud
 	];
 

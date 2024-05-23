@@ -1,7 +1,7 @@
 {
   description = "repparw's flake";
 
-  outputs = { self, home-manager, ... }@inputs:
+  outputs = { self, home-manager, stylix, ... }@inputs:
 	let
 
 		system = "x86_64-linux";
@@ -9,8 +9,8 @@
 				hostName = "beta";
 		};
 
-		pkgs = inputs.nixpkgs.legacyPackages.${system};
-		stable = inputs.nixpkgs-stable.legacyPackages.${system};
+		pkgs = import inputs.nixpkgs { inherit system; config.allowUnfree = true; };
+		stable = import inputs.nixpkgs-stable { inherit system; config.allowUnfree = true; };
 
 	in {
 	  nixosConfigurations = {
@@ -19,14 +19,15 @@
 			./hosts/${systemSettings.hostName}/configuration.nix
 #			inputs.stylix.nixosModules.stylix
 			home-manager.nixosModules.home-manager {
-			home-manager.useGlobalPkgs = true;
-			home-manager.useUserPackages = true;
-			home-manager.users.repparw = import ./hosts/${systemSettings.hostName}/home.nix;
-			home-manager.extraSpecialArgs = {
-			  inherit system;
-			  inherit pkgs;
-			  inherit stable; 
-			  inherit inputs;
+			  home-manager.useGlobalPkgs = true;
+			  home-manager.useUserPackages = true;
+			  home-manager.backupFileExtension = "bak";
+			  home-manager.users.repparw = import ./hosts/${systemSettings.hostName}/home.nix;
+			  home-manager.extraSpecialArgs = {
+				inherit system;
+				inherit pkgs;
+				inherit stable; 
+				inherit inputs;
 			  };
 			}
 			];
@@ -50,6 +51,9 @@
     hyprland-nix = {
       url = "github:hyprland-community/hyprnix"; # Follows unstable
     };
+	hyprland-contrib = {
+	  url = "github:hyprwm/contrib";
+	};
     stylix = {
       url = "github:danth/stylix";
     };
