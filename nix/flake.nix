@@ -10,7 +10,7 @@
 		};
 
 		pkgs = import inputs.nixpkgs { inherit system; config.allowUnfree = true; };
-		stable = import inputs.nixpkgs-stable { inherit system; config.allowUnfree = true; };
+		unstable = import inputs.nixpkgs-unstable { inherit system; config.allowUnfree = true; };
 
 	in {
 	  nixosConfigurations = {
@@ -26,7 +26,7 @@
 			  home-manager.extraSpecialArgs = {
 				inherit system;
 				inherit pkgs;
-				inherit stable; 
+				inherit unstable; 
 				inherit inputs;
 			  };
 			}
@@ -34,7 +34,7 @@
 		  specialArgs = {
 			inherit system;
 			inherit pkgs;
-			inherit stable; 
+			inherit unstable; 
 			inherit inputs;
 		  };
 		};
@@ -43,13 +43,10 @@
 
   inputs = {
     nixpkgs = {
-      url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    };
-	nixpkgs-stable = {
       url = "github:NixOS/nixpkgs/nixos-23.11";
     };
-    hyprland-nix = {
-      url = "github:hyprland-community/hyprnix"; # Follows unstable
+	nixpkgs-unstable = {
+      url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     };
     hyprland-contrib = {
       url = "github:hyprwm/contrib";
@@ -58,7 +55,7 @@
       url = "github:danth/stylix";
     };
     home-manager = {
-      url = "github:nix-community/home-manager"; # Follows unstable, has branches for stable
+      url = "github:nix-community/home-manager/release-23.11"; # Branches for stable, master follows unstable
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

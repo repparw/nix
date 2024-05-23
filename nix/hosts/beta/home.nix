@@ -1,7 +1,6 @@
-{ config, pkgs, inputs, stylix, ... }:
+{ config, pkgs, unstable, inputs, stylix, ... }:
 {
   imports = [
-		inputs.hyprland-nix.homeManagerModules.default
 		../../modules/hm/hyprland.nix
 		];
 
@@ -11,13 +10,12 @@
   home.username = "repparw";
   home.homeDirectory = "/home/repparw";
 
-  wayland.windowManager.hyprland =
-  {
-    enable = true;
-    reloadConfig = true;
-    systemdIntegration = true;
+  wayland.windowManager.hyprland = {
+	enable = true;
+	package = unstable.hyprland;
+	xwayland.enable = true;
+	systemd.enable = true;
   };
-
   home.packages = with pkgs; [
   		# Essential packages
 		nodejs
@@ -83,7 +81,6 @@
 		obs-studio
 		waydroid
 		scrcpy
-		obsidian
 		# find pomo app in nixpkgs
 
 
@@ -92,6 +89,8 @@
 		heroic
 		lutris
 		mangohud
+	]++[
+	  unstable.obsidian
 	];
 
 	programs = {
