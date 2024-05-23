@@ -72,6 +72,7 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
+	vesktop # for screensharing w/ audio in wayland, has to be on system?
 	vim
 	zsh
 	wget
@@ -85,8 +86,6 @@
   #   enable = true;
   #   enableSSHSupport = true;
   # };
-
-  programs.hyprland.enable = true;
 
   programs.zsh.enable = true;
 
@@ -111,15 +110,12 @@
   services.greetd = {
 	enable = true;
 	vt = 1;
-	settings = {
+	settings = rec {
 	initial_session = {
-	  command = "Hyprland";
+	  command = "${pkgs.hyprland}/bin/Hyprland";
 	  user = "repparw";
 	};
-	default_session = {
-	  command = "${pkgs.greetd.greetd}/bin/agreety --cmd Hyprland";
-	  user = "repparw";
-	};
+	default_session = initial_session;
 	};
   };
 
