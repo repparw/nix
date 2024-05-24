@@ -1,9 +1,22 @@
--- NOTE: Plugins can specify dependencies.
---
--- The dependencies are proper plugin specifications as well - anything
--- you do for a plugin at the top level, you can do for a dependency.
---
--- Use the `dependencies` key to specify the dependencies of a particular plugin
+-- project_files from telescope wiki (failsafe for non git repos)
+local is_inside_work_tree = {}
+
+local function project_files()
+  local opts = {} -- define here if you want to define something
+
+  local cwd = vim.fn.getcwd()
+  if is_inside_work_tree[cwd] == nil then
+    vim.fn.system("git rev-parse --is-inside-work-tree")
+    is_inside_work_tree[cwd] = vim.v.shell_error == 0
+  end
+
+  local builtin = require('telescope.builtin')
+  if is_inside_work_tree[cwd] then
+    builtin.git_files(opts)
+  else
+    builtin.find_files(opts)
+  end
+end
 
 return {
   { -- Fuzzy Finder (files, lsp, etc)
@@ -88,7 +101,7 @@ return {
 	  vim.keymap.set('n', '<leader>fr', builtin.resume, { desc = '[F]ind [R]esume' })
 	  vim.keymap.set('n', '<leader>f.', builtin.oldfiles, { desc = '[F]ind Recent Files ("." for repeat)' })
 	  vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
-	  vim.keymap.set('n', '<C-p>', builtin.git_files, { desc = 'Find git files' })
+    vim.keymap.set('n', '<C-p>', project_files, { desc = 'Find project files' })
 
 
       -- Slightly advanced example of overriding default behavior and theme
