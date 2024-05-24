@@ -1,4 +1,2 @@
 #!/bin/sh
-tmux new-session -d -s update
-tmux send-keys ' sudo dnf upgrade -y' 'C-m'
-tmux -2 attach-session -t update
+kitty --hold zsh -c ' sudo dnf upgrade -y'
