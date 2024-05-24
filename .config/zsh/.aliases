@@ -25,6 +25,7 @@
 
 		alias v='nvim'
 
+		alias vo='cd ~/Documents/obsidian/ && nvim 02-Areas/Facu/Finales/TALLER.md; 1'
 	# Configs
 		alias vdl='v ~/.config/scripts/dlsuite-compose.yaml'
 		alias vn='v ~/.config/nvim/init.lua'

@@ -11,6 +11,7 @@ require("lazy").setup({
   require 'plugins/telescope',
   require 'plugins/copilot',
   require 'plugins/copilot-cmp',
+  require 'plugins/obsidian',
 --  require 'plugins/codeium',
   }, {
   ui = {
