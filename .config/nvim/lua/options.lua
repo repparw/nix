@@ -26,6 +26,7 @@ local options = {
   timeoutlen = 300,
   cursorline = true,
   undofile = true,
+  conceallevel = 1,
 }
 
 for k,v in pairs(options) do
