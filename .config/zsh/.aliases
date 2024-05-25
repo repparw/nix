@@ -87,7 +87,7 @@
 		alias path='echo -e ${PATH//:/\\n}'
 
 
-	if command -v dust >/dev/null 2>&1; then
+	if (( $+commands[dust] )); then
 		alias du='dust'
 	fi
 
@@ -95,7 +95,7 @@
 
 	    # System info
 
-	    	alias meminfo='free -h -l -t'
+	    alias meminfo='free -h -l -t'
 
 		alias cpuinfo='lscpu'
 

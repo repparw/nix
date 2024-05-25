@@ -44,7 +44,11 @@ fi
   }
 # Functions END
 
+
+[[ -f $HOME/.cargo/env ]] && source $HOME/.cargo/env
+
 # clone antidote if not present
+
 [[ -d ~/.cache/antidote ]] ||
   git clone https://github.com/mattmc3/antidote ~/.cache/antidote
 
@@ -78,6 +82,7 @@ zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
 
 # lfcd
 zvm_after_init_commands+=("bindkey -s '^e' 'lf\n'")
+zvm_after_init_commands+=("bindkey -s '^f' 'cdi\n'")
 
 # history search with arrow keys
 zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')
@@ -100,5 +105,4 @@ zstyle ':completion:*' list-colors "di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=
 
 
 # source cargo env if installed
-[[ -f $HOME/.cargo/env ]] && source $HOME/.cargo/env
 
