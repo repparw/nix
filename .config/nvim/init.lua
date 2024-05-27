@@ -5,7 +5,10 @@ vim.g.mapleader = ' '
 
 require 'options'
 
+require 'utils'
+
 require 'keymaps'
+
 
 require 'lazy-bootstrap'
 require 'lazy-plugins'

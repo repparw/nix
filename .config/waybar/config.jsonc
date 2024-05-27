@@ -76,7 +76,7 @@
     },
     "tray": {
         //"icon-size": 14,
-        "spacing": 2
+        "spacing": 6
     },
     "clock#time": {
         "timezone": "America/Argentina/Buenos_Aires",
