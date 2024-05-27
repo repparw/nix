@@ -22,6 +22,18 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
+-- Set void registers for x, s and c operations
+-- This is useful to prevent overriding the system clipboard
+vim.keymap.set('n', 'x', '"_x')
+vim.keymap.set('n', 'X', '"_X')
+vim.keymap.set('n', 's', '"_s')
+vim.keymap.set('n', 'c', '"_c')
+
+-- quickfix and location list
+vim.keymap.set('n', '<C-q>', ':lua require("utils").toggle_qf()<CR>', { desc = 'Toggle quickfix' })
+vim.keymap.set('n', '<C-l>', ':lua require("utils").toggle_ll()<CR>', { desc = 'Toggle location list' })
+vim.keymap.set('n', '<leader><C-o>', ':lua require("utils").jumps_to_qf()<CR>', { desc = 'Send jumplist to quickfix' })
+
 vim.keymap.set('n', '<leader>o', function() vim.cmd('ObsidianOpen') end, { noremap = true, silent = true, desc = 'Open Obsidian' })
 
 vim.keymap.set('n', '<leader>y', '"+y', { desc = 'Yank to clipboard' }) -- Copy to clipboard
