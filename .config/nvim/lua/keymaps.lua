@@ -13,15 +13,6 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 vim.keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true })
 vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true })
 
--- Keybinds to make split navigation easier.
---  Use CTRL+<hjkl> to switch between windows
---
---  See `:help wincmd` for a list of all window commands
-vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
-
 -- Set void registers for x, s and c operations
 -- This is useful to prevent overriding the system clipboard
 vim.keymap.set('n', 'x', '"_x')
@@ -31,7 +22,7 @@ vim.keymap.set('n', 'c', '"_c')
 
 -- quickfix and location list
 vim.keymap.set('n', '<C-q>', ':lua require("utils").toggle_qf()<CR>', { desc = 'Toggle quickfix' })
-vim.keymap.set('n', '<C-l>', ':lua require("utils").toggle_ll()<CR>', { desc = 'Toggle location list' })
+vim.keymap.set('n', '<leader>l', ':lua require("utils").toggle_ll()<CR>', { desc = 'Toggle location list' })
 vim.keymap.set('n', '<leader><C-o>', ':lua require("utils").jumps_to_qf()<CR>', { desc = 'Send jumplist to quickfix' })
 
 vim.keymap.set('n', '<leader>o', function() vim.cmd('ObsidianOpen') end, { noremap = true, silent = true, desc = 'Open Obsidian' })
