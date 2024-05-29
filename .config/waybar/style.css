@@ -86,8 +86,8 @@
 #waybar {
     background: @bg;
     color: @light;
-    font-family: "Fira Code Nerd Font", "Cantarell", "Font Awesome 5 Pro";
-    font-size: 9pt;
+    font-family: "Fira Code Nerd Font";
+    font-size: 10pt;
     font-weight: bold;
 }
 

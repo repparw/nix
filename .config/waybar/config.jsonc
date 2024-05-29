@@ -87,12 +87,12 @@
     "network": {
         // "interface": "wlan0", // (Optional) To force the use of this interface,
         "format-wifi": "<span color=\"#ebdbb2\"></span>  {essid}",
-        "format-ethernet": "",
+        "format-ethernet": "󰛳",
         "format-linked": "{ifname} (No IP) ",
-        "format-disconnected": "",
+        "format-disconnected": "󰅛",
         "family": "ipv4",
         "tooltip-format-wifi": "  {ifname} @ {essid}\nIP: {ipaddr}\nStrength: {signalStrength}%\nFreq: {frequency}MHz\n {bandwidthUpBits}  {bandwidthDownBits}",
-        "tooltip-format-ethernet": " {ifname}\nIP: {ipaddr}\n {bandwidthUpBits}  {bandwidthDownBits}",
+        "tooltip-format-ethernet": "󰈁 {ifname}\nIP: {ipaddr}\n {bandwidthUpBits}  {bandwidthDownBits}",
         "on-click": "kitty nmtui"
     },
     "pulseaudio": {
