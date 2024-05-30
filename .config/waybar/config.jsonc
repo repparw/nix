@@ -10,7 +10,7 @@
     // "custom/gpu",  "custom/weather","sway/window", "custom/gpu",  "custom/media",  
     // Choose the order of the modules
 
-    "modules-left": ["clock#time", "hyprland/language", "custom/arrow1", "hyprland/workspaces", "custom/arrow2"],
+    "modules-left": ["clock#time", "hyprland/language"], //, "custom/arrow1", "hyprland/workspaces", "custom/arrow2"
     "modules-center": ["custom/arrow4", "mpris", "custom/arrow5" ],
     "modules-right": ["custom/arrow6", "bluetooth", "network", "custom/arrow7", "pulseaudio", "custom/arrow8", "custom/notification", "tray"],
     
