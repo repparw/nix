@@ -90,6 +90,7 @@
 		mangohud
 	]++[
 	  unstable.obsidian
+	  unstable.nh ## yet another nix helper
 	];
 
 	programs = {
