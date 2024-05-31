@@ -4,7 +4,9 @@
   home.packages = with pkgs; [
 	# Desktop
 	libdrm
-	unstable.hyprlock
+	swaybg
+	wlsunset
+	hyprlock
 	swayidle # unstable.hypridle?
 	swaynotificationcenter
 	waybar

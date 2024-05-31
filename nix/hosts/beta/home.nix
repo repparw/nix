@@ -108,6 +108,10 @@
 #		  enableGlobbing = true;
 		  dotDir = "${config.home.homeDirectory}/.config/zsh";
 		};
+		ssh = {
+		  enable = true;
+		  addKeysToAgent = "yes";
+		};
 	};
 
   services.ssh-agent.enable = true;
