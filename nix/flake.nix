@@ -43,7 +43,7 @@
 
   inputs = {
     nixpkgs = {
-      url = "github:NixOS/nixpkgs/nixos-23.11";
+      url = "github:NixOS/nixpkgs/nixos-24.05";
     };
 	nixpkgs-unstable = {
       url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -55,7 +55,7 @@
       url = "github:danth/stylix";
     };
     home-manager = {
-      url = "github:nix-community/home-manager/release-23.11"; # Branches for stable, master follows unstable
+      url = "github:nix-community/home-manager/release-24.05"; # Branches for stable, master follows unstable
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

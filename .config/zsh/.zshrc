@@ -92,17 +92,13 @@ zvm_after_init_commands+=('bindkey "^[OB" history-substring-search-down')
 zvm_after_init_commands+=('bindkey -M vicmd "k" history-substring-search-up')
 zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
 
-# If ssh and not in tmux, attach to ssh session
-if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
-  tmux new-session -A -s ssh
-fi
-
 ## lscolors
   export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
 ## Leave this here because omz overwrites this after .zprofile
 
 zstyle ':completion:*' list-colors "di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
 
-
-# source cargo env if installed
-
+# If ssh and not in tmux, attach to ssh session
+if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
+  tmux new-session -A -s ssh
+fi
