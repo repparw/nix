@@ -64,8 +64,6 @@
 		eza
 		tree
 
-		xmrig-mo
-
 		# GUI
 		kitty
 		firefox
