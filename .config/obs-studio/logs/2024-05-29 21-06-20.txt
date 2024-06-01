@@ -414,3 +414,4 @@
 00:20:29.655: [pipewire] Error id:0 seq:1414 res:-32 (Broken pipe): connection error
 00:20:29.655: [pipewire] Stream 0x55b638c829d0 state: "unconnected" (error: connection error)
 14:04:24.811: QDBusTrayIcon encountered a D-Bus error: QDBusError("org.freedesktop.DBus.Error.NoReply", "Did not receive a reply. Possible causes include: the remote application did not send a reply, the message bus security policy blocked the reply, the reply timeout expired, or the network connection was broken.")
+13:07:16.810: QDBusTrayIcon encountered a D-Bus error: QDBusError("org.freedesktop.DBus.Error.NoReply", "Did not receive a reply. Possible causes include: the remote application did not send a reply, the message bus security policy blocked the reply, the reply timeout expired, or the network connection was broken.")
