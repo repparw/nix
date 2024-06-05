@@ -111,6 +111,8 @@ services:
     swag:
         image: 'lscr.io/linuxserver/swag:latest'
         container_name: swag
+        extra_hosts:
+            - host.docker.internal:host-gateway
         cap_add:
             - NET_ADMIN
         environment:

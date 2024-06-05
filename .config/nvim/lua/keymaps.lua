@@ -38,4 +38,4 @@ vim.keymap.set('n', '<leader>Y', '"+Y', { desc = 'Yank lines to clipboard' }) --
 
 vim.keymap.set('n', 'Q', '<Nop>') -- Disable Ex mode
 
-vim.keymap.set({'n', 'v'}, '<leader>s', ':update<CR>', { desc = '[S]ave'}) -- Save
+vim.keymap.set({'n', 'v'}, '<leader>s', ':update<CR>', { silent = true, desc = '[S]ave'}) -- Save
