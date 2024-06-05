@@ -1,3 +1,5 @@
 .config/zsh/.zsh_history
 .config/zsh/.zcompdump
 .config/jellyfin-mpv-shim/cred.json
+logs/
+.config/obs-studio/profiler_data/
