@@ -17,11 +17,16 @@ vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true })
 -- This is useful to prevent overriding the system clipboard
 vim.keymap.set('n', 'x', '"_x')
 vim.keymap.set('n', 'X', '"_X')
-vim.keymap.set('n', 's', '"_s')
-vim.keymap.set('n', 'c', '"_c')
+
+-- move visual selection with JK
+vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", {silent = true})
+vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", {silent = true})
 
 -- quickfix and location list
 vim.keymap.set('n', '<C-q>', ':lua require("utils").toggle_qf()<CR>', { desc = 'Toggle quickfix' })
+vim.keymap.set('n', 's', '"_s')
+vim.keymap.set('n', 'c', '"_c')
+
 vim.keymap.set('n', '<leader>l', ':lua require("utils").toggle_ll()<CR>', { desc = 'Toggle location list' })
 vim.keymap.set('n', '<leader><C-o>', ':lua require("utils").jumps_to_qf()<CR>', { desc = 'Send jumplist to quickfix' })
 
