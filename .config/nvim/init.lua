@@ -9,9 +9,7 @@ require 'utils'
 
 require 'keymaps'
 
-
-require 'lazy-bootstrap'
-require 'lazy-plugins'
+require 'lazycfg'
 
 vim.cmd [[ colorscheme gruvbox ]]
 
