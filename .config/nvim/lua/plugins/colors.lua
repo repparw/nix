@@ -31,15 +31,22 @@ return  {
   },
 
   {
-  "folke/tokyonight.nvim",
-  lazy = false,
-  priority = 1000,
-  opts = {},
+	"folke/tokyonight.nvim",
+	lazy = true,
+	priority = 1000,
+	opts = {
+--	  transparent = true,
+	},
   },
 
   {
 	"rose-pine/neovim",
 	name = "rose-pine",
+	lazy = true,
+	priority = 1000,
+	opts = {
+--	  styles = { transparency = true },
+	},
   },
 
 }
