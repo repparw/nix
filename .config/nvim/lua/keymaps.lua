@@ -36,6 +36,9 @@ vim.keymap.set('n', '<C-l>', '<C-w>l')
 vim.keymap.set('n', '<leader>l', ':lua require("utils").toggle_ll()<CR>', { desc = 'Toggle location list' })
 vim.keymap.set('n', '<leader><C-o>', ':lua require("utils").jumps_to_qf()<CR>', { desc = 'Send jumplist to quickfix' })
 
+vim.keymap.set('n', '[q', ':cprevious<CR>', { desc = 'Previous quickfix' })
+vim.keymap.set('n', ']q', ':cnext<CR>', { desc = 'Next quickfix' })
+
 vim.keymap.set('n', '<leader>o', function() vim.cmd('ObsidianOpen') end, { noremap = true, silent = true, desc = 'Open Obsidian' })
 
 vim.keymap.set('n', '<leader>y', '"+y', { desc = 'Yank to clipboard' }) -- Copy to clipboard
