@@ -27,6 +27,12 @@ vim.keymap.set('n', '<C-q>', ':lua require("utils").toggle_qf()<CR>', { desc = '
 vim.keymap.set('n', 's', '"_s')
 vim.keymap.set('n', 'c', '"_c')
 
+-- move between splits with Ctrl + hjkl
+vim.keymap.set('n', '<C-h>', '<C-w>h')
+vim.keymap.set('n', '<C-j>', '<C-w>j')
+vim.keymap.set('n', '<C-k>', '<C-w>k')
+vim.keymap.set('n', '<C-l>', '<C-w>l')
+
 vim.keymap.set('n', '<leader>l', ':lua require("utils").toggle_ll()<CR>', { desc = 'Toggle location list' })
 vim.keymap.set('n', '<leader><C-o>', ':lua require("utils").jumps_to_qf()<CR>', { desc = 'Send jumplist to quickfix' })
 

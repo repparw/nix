@@ -76,6 +76,8 @@
     "shader_pack_profile": null,
     "shader_pack_remember": true,
     "shader_pack_subtype": "lq",
+    "skip_credits_always": false,
+    "skip_credits_prompt": false,
     "skip_intro_always": false,
     "skip_intro_prompt": true,
     "stop_cmd": null,
