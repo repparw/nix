@@ -14,120 +14,16 @@
   home.username = "repparw";
   home.homeDirectory = "/home/repparw";
 
-  wayland.windowManager.hyprland = {
-	enable = true;
-	package = unstable.hyprland;
-	xwayland.enable = true;
-	systemd.enable = true;
-  };
   home.packages = with pkgs; [
   		# Essential packages
-<<<<<<< HEAD
-		nodejs
-  		curl
-  		wget
-  		unzip
-  		jq
-  		tree
-		ffmpeg
-  		imagemagick
-		tmux
-		less
-		base16-schemes
-=======
 		nodejs # remove after porting nvim plugins to nix cfg
->>>>>>> c01ce74e (Auto-Commit)
 
-		# CLI tools
 		docker-compose
 		spotifyd
-<<<<<<< HEAD
-		neovim
-		nil # nix lsp
-		yt-dlp
-		tig
-		fzf
-		ytfzf
-		playerctl
-		rclone
-		ueberzugpp
-		libqalculate
-		fastfetch
-		axel
-		manix # man for Nix
-		tlrc # tldr
-		nq # Command queue
-		lf
-		pdfgrep
-		catdoc # provides catppt and xls2csv
-
-		# Modern replacements of basic tools
-  		bottom
-		bat
-		colordiff
-		duf
-		du-dust
-		fd
-		ripgrep
-		zoxide
-		eza
-		tree
-
-		# GUI
-		kitty
-		firefox
-		ungoogled-chromium
-		jellyfin-mpv-shim
-		mpv
-		mpvScripts.mpris
-		feh
-		zathura
-		vesktop
-		spotify-player
-		obs-studio
-		waydroid
-		scrcpy
-		# find pomo app in nixpkgs
-
-
-		# Gaming
-		steam
-		heroic
-		lutris
-		mangohud
-=======
->>>>>>> c01ce74e (Auto-Commit)
 	]++[
 	  unstable.obsidian
-	  unstable.nh ## yet another nix helper
 	];
 
-<<<<<<< HEAD
-	programs = {
-		git = { 
-		  enable = true;
-		  userEmail = "ubritos@gmail.com";
-		  userName = "repparw";
-		  extraConfig = {
-			rerere.enabled = true;
-		  };
-		};
-		zsh = {
-		  enable = true;
-		  enableCompletion = true;
-#		  enableGlobbing = true;
-		  dotDir = "${config.home.homeDirectory}/.config/zsh";
-		};
-		ssh = {
-		  enable = true;
-		  addKeysToAgent = "yes";
-		};
-	};
-
-  services.ssh-agent.enable = true;
-
-=======
->>>>>>> c01ce74e (Auto-Commit)
   home.stateVersion = "23.11";
 
 }

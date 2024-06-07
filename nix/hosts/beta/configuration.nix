@@ -34,70 +34,12 @@
   #   enableSSHSupport = true;
   # };
 
-<<<<<<< HEAD
-  programs.zsh.enable = true;
-
-  virtualisation.docker = {
-	enable = true;
-	rootless.enable = true;
-	rootless.setSocketVariable = true;
-  };
-
-  programs.mosh.enable = true;
-
-  programs.steam = {
-	enable = true;
-	remotePlay.openFirewall = true;
-	gamescopeSession.enable = true;
-  };
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
-
-  services.greetd = {
-	enable = true;
-	vt = 1;
-	settings = rec {
-	initial_session = {
-	  command = "${pkgs.hyprland}/bin/Hyprland";
-	  user = "repparw";
-	};
-	default_session = initial_session;
-	};
-  };
-
-=======
->>>>>>> c01ce74e (Auto-Commit)
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
 
-<<<<<<< HEAD
-  # Enable sound with pipewire.
-  sound.enable = true;
-  hardware.pulseaudio.enable = false;
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
-
-    wireplumber.enable = true;
-  };
-
-  hardware.xone.enable = true;
-  hardware.xpadneo.enable = true;
-
-  services.logind.lidSwitchExternalPower = "ignore";
-
-=======
->>>>>>> c01ce74e (Auto-Commit)
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
