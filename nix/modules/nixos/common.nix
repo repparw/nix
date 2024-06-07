@@ -67,10 +67,7 @@
 # Enable the OpenSSH daemon.
   services.openssh.enable = true;
 
-  programs.ssh {
-	enable = true;
-	startAgent = true;
-  };
+  programs.ssh.startAgent = true;
 
   services.greetd = {
 	enable = true;
