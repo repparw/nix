@@ -26,16 +26,6 @@
     extraGroups = [ "networkmanager" "wheel" ];
   };
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
-  environment.systemPackages = with pkgs; [
-	vesktop # for screensharing w/ audio in wayland, has to be on system?
-	vim
-	zsh
-	wget
-	tmux
-  ];
-
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
