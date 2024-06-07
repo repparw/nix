@@ -1,6 +1,13 @@
 { inputs, config, lib, pkgs, ... }:
 
 {
+  wayland.windowManager.hyprland = {
+	enable = true;
+	package = unstable.hyprland;
+	xwayland.enable = true;
+	systemd.enable = true;
+  };
+
   home.packages = with pkgs; [
 	# Desktop
 	libdrm
