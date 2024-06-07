@@ -1,0 +1,108 @@
+{ inputs, config, pkgs, ... }:
+
+{
+
+  # Bootloader.
+  boot.loader.systemd-boot.enable = true;
+
+
+  # Enable networking
+  networking.networkmanager.enable = true;
+
+  # Set your time zone.
+  time.timeZone = "America/Argentina/Buenos_Aires";
+
+  # Select internationalisation properties.
+  i18n.defaultLocale = "en_US.UTF-8";
+
+  i18n.extraLocaleSettings = {
+    LC_ADDRESS = "es_AR.UTF-8";
+    LC_IDENTIFICATION = "es_AR.UTF-8";
+    LC_MEASUREMENT = "es_AR.UTF-8";
+    LC_MONETARY = "es_AR.UTF-8";
+    LC_NAME = "es_AR.UTF-8";
+    LC_NUMERIC = "es_AR.UTF-8";
+    LC_PAPER = "es_AR.UTF-8";
+    LC_TELEPHONE = "es_AR.UTF-8";
+    LC_TIME = "es_AR.UTF-8";
+  };
+
+  # Enable CUPS to print documents.
+  services.printing.enable = true;
+
+  services.keyd = {
+	enable = true;
+	keyboards.default.settings = { main = { capslock = "overload(control, esc)"; }; };
+  };
+
+  # Nerdfonts
+  fonts = {
+	packages = with pkgs; [
+	  (nerdfonts.override { fonts = [ "FiraCode" ]; })
+	];
+
+  # Set default font
+    fontconfig.defaultFonts = {
+	  "sansSerif" = [ "FiraCode Nerd Font" ];
+	  "serif" = [ "FiraCode Nerd Font" ];
+	  "monospace" = [ "FiraCode Nerd Font Mono" ];
+	};
+  };
+
+  # List packages installed in system profile. To search, run:
+  # $ nix search wget
+  environment.systemPackages = with pkgs; [
+	vesktop # for screensharing w/ audio in wayland, has to be on system?
+	vim
+	zsh
+	wget
+	tmux
+  ];
+
+  programs.zsh.enable = true;
+
+  programs.mosh.enable = true;
+
+# List services that you want to enable:
+
+# Enable the OpenSSH daemon.
+  services.openssh.enable = true;
+
+  programs.ssh {
+	enable = true;
+	startAgent = true;
+  };
+
+  services.greetd = {
+	enable = true;
+	vt = 1;
+	settings = rec {
+	  initial_session = {
+		command = "${pkgs.hyprland}/bin/Hyprland";
+		user = "repparw";
+	  };
+	  default_session = initial_session;
+	};
+  };
+
+  # Enable sound with pipewire.
+  sound.enable = true;
+  security.rtkit.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    # If you want to use JACK applications, uncomment this
+    #jack.enable = true;
+
+    wireplumber.enable = true;
+  };
+  hardware.pulseaudio.enable = false;
+
+
+  hardware.xone.enable = true;
+  hardware.xpadneo.enable = true;
+
+  nix.settings.experimental-features = "nix-command flakes";
+}
