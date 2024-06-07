@@ -2,6 +2,10 @@
 {
   imports = [
 		../../modules/hm/hyprland.nix
+		../../modules/hm/cli.nix
+		../../modules/hm/nix.nix
+		../../modules/hm/gui.nix
+	#	../../modules/hm/gaming.nix
 		];
 
   # Let Home Manager install and manage itself.
@@ -18,6 +22,7 @@
   };
   home.packages = with pkgs; [
   		# Essential packages
+<<<<<<< HEAD
 		nodejs
   		curl
   		wget
@@ -29,10 +34,14 @@
 		tmux
 		less
 		base16-schemes
+=======
+		nodejs # remove after porting nvim plugins to nix cfg
+>>>>>>> c01ce74e (Auto-Commit)
 
 		# CLI tools
 		docker-compose
 		spotifyd
+<<<<<<< HEAD
 		neovim
 		nil # nix lsp
 		yt-dlp
@@ -86,11 +95,14 @@
 		heroic
 		lutris
 		mangohud
+=======
+>>>>>>> c01ce74e (Auto-Commit)
 	]++[
 	  unstable.obsidian
 	  unstable.nh ## yet another nix helper
 	];
 
+<<<<<<< HEAD
 	programs = {
 		git = { 
 		  enable = true;
@@ -114,6 +126,8 @@
 
   services.ssh-agent.enable = true;
 
+=======
+>>>>>>> c01ce74e (Auto-Commit)
   home.stateVersion = "23.11";
 
 }
