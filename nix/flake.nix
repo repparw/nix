@@ -6,7 +6,7 @@
 
 		system = "x86_64-linux";
 		systemSettings = {
-				hostName = "beta";
+				hostName = 
 		};
 
 		pkgs = import inputs.nixpkgs { inherit system; config.allowUnfree = true; };
