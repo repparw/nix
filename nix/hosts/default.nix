@@ -1,0 +1,7 @@
+{ hostName, ... }:
+
+{
+  imports = [
+	  ./${hostName}
+  	];
+}

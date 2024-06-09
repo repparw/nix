@@ -109,8 +109,7 @@
   };
   hardware.pulseaudio.enable = false;
 
-
-  hardware.xone.enable = true;
+  # Add xone?
   hardware.xpadneo.enable = true;
 
   nix.settings.experimental-features = "nix-command flakes";
