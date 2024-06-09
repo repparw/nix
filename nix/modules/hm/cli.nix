@@ -32,11 +32,21 @@
 		tmux
 		less
 		base16-schemes
-		neovim
 		yt-dlp
 		fzf
 		ytfzf
 
+		neovim
+		# HACK Copilot
+		(python3.withPackages (python-pkgs: [
+				python-pkgs.python-dotenv
+				python-pkgs.requests
+				python-pkgs.pynvim
+				python-pkgs.prompt-toolkit
+				python-pkgs.tiktoken
+				python-pkgs.virtualenv
+			  ]))
+		
 		# CLI tools
 		playerctl
 		rclone
