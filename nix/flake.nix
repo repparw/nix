@@ -6,7 +6,7 @@
 
 		system = "x86_64-linux";
 		systemSettings = {
-				hostName = 
+				hostName = "beta";
 		};
 
 		pkgs = import inputs.nixpkgs { inherit system; config.allowUnfree = true; };
@@ -24,16 +24,12 @@
 			  home-manager.backupFileExtension = "bak";
 			  home-manager.users.repparw = import ./hosts/${systemSettings.hostName}/home.nix;
 			  home-manager.extraSpecialArgs = {
-				inherit system;
-				inherit pkgs;
 				inherit unstable; 
 				inherit inputs;
 			  };
 			}
 			];
 		  specialArgs = {
-			inherit system;
-			inherit pkgs;
 			inherit unstable; 
 			inherit inputs;
 		  };
