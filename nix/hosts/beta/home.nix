@@ -19,7 +19,6 @@
 		nodejs # remove after porting nvim plugins to nix cfg
 
 		docker-compose
-		spotifyd
 	]++[
 	  unstable.obsidian
 	];
