@@ -102,4 +102,6 @@ wayland.windowManager.hyprland.settings = {
 	"$mod, mouse_down, workspace, m+1"
 	"$mod, mouse_up, workspace, m-1"
   ];
+};
+
 }

@@ -18,24 +18,26 @@
 		  modules = [
 			./hosts/${systemSettings.hostName}/configuration.nix
 #			inputs.stylix.nixosModules.stylix
-			home-manager.nixosModules.home-manager {
+			home-manager.nixosModules.home-manager
+			({config, ...}: {
 			  home-manager.useGlobalPkgs = true;
 			  home-manager.useUserPackages = true;
 			  home-manager.backupFileExtension = "bak";
-			  home-manager.users.repparw = import ./hosts/${systemSettings.hostName}/home.nix;
 			  home-manager.extraSpecialArgs = {
 				inherit unstable; 
 				inherit inputs;
+			    inherit (config.networking) hostName;
 			  };
-			}
+			  home-manager.users.repparw = import ./hosts/${systemSettings.hostName}/home.nix;
+			})
 			];
+			};
 		  specialArgs = {
 			inherit unstable; 
 			inherit inputs;
 		  };
 		};
 	  };
-  };
 
   inputs = {
     nixpkgs = {
