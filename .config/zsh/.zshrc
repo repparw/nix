@@ -42,6 +42,38 @@ fi
   _fzf_compgen_dir() {
 	fd --type d --hidden --follow --exclude ".git" . "$1"
   }
+
+  atuin-setup() {
+  if ! which atuin &> /dev/null; then return 1; fi
+
+  export ATUIN_NOBIND="true"
+  eval "$(atuin init zsh)"
+  fzf-atuin-history-widget() {
+  local selected num
+  setopt localoptions noglobsubst noposixbuiltins pipefail no_aliases 2>/dev/null
+
+			# local atuin_opts="--cmd-only --limit ${ATUIN_LIMIT:-5000}"
+			local atuin_opts="--cmd-only"
+			local fzf_opts=(
+			--no-mouse --multi --select-1 --reverse --height 50% --inline-info --scheme=history
+			"--bind=ctrl-d:reload(atuin search $atuin_opts -c $PWD),ctrl-r:reload(atuin search $atuin_opts)"
+		  )
+
+		  selected=$(
+		  eval "atuin search ${atuin_opts}" |
+			fzf "${fzf_opts[@]}"
+		  )
+		  local ret=$?
+		  if [ -n "$selected" ]; then
+			# the += lets it insert at current pos instead of replacing
+			LBUFFER+="${selected}"
+		  fi
+		  zle reset-prompt
+		  return $ret
+		}
+		zle -N fzf-atuin-history-widget
+		bindkey '^R' fzf-atuin-history-widget
+	  }
 # Functions END
 
 
@@ -49,10 +81,10 @@ fi
 
 # clone antidote if not present
 
-[[ -d ~/.cache/antidote ]] ||
-  git clone https://github.com/mattmc3/antidote ~/.cache/antidote
+[[ -d ${XDG_CACHE_HOME:-$HOME/.cache}/antidote ]] ||
+  git clone https://github.com/mattmc3/antidote ${XDG_CACHE_HOME:-$HOME/.cache}/antidote
 
-source ~/.cache/antidote/antidote.zsh
+source ${XDG_CACHE_HOME:-$HOME/.cache}/antidote/antidote.zsh
 
 # set OMZ variables before loading OMZ plugins
 export ZSH=$(antidote path ohmyzsh/ohmyzsh)
@@ -74,9 +106,16 @@ if [ -f ${ZDOTDIR:-$HOME}/.aliases ]; then
 	. ${ZDOTDIR:-$HOME}/.aliases
 fi
 
+
 # Load conflicting keybinds after zsh-vi-mode
 # FZF ctrl-r and ctrl-t
 zvm_after_init_commands+=('FZF_ALT_C_COMMAND= eval "$(fzf --zsh)"')
+
+
+##FZF_CTRL_R_COMMAND= 
+##zvm_after_init_commands+=('atuin-setup')
+
+
 # zsh-autosuggestions accept to ctrl-y
 zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
 
