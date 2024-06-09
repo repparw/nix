@@ -1,4 +1,3 @@
-# Add cargo installed binaries to PATH
 	# Ensure path doesn't have duplicates
 	typeset -gU path
 ## Default editor to nvim
@@ -8,7 +7,6 @@
 	export PATH=$HOME/.local/bin:$PATH
 ## fzf
 	export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
-
 	export FZF_DEFAULT_OPTS="--no-mouse --multi --select-1 --reverse --height 50% --inline-info --scheme=history"
 
 	export LF_ICONS="di=📁:\

@@ -13,8 +13,8 @@
 	xwayland.enable = true;
 	systemd.enable = true;
 	settings = {
-	  mkMerge [
-	  lib.mkIf (lib.equalStrings config.system.build.hostName "alpha") {[
+	  mkMerge [{
+	  (lib.mkIf (lib.equalStrings config.system.build.hostName "alpha") {[
 		"$monitor" = "DP-2";
 		"$monitor2" = "HDMI-A-1";
 		monitor = [
@@ -98,9 +98,9 @@
 		  "$mod SHIFT, 0, movetoworkspace, 10"
 		];
 	  ];
-	  };
+	  });
 	  # !alpha
-	  lib.mkIf !(lib.equalStrings config.system.build.hostName "alpha") {[
+	  (lib.mkIf !(lib.equalStrings config.system.build.hostName "alpha") {[
 		monitor = ",preferred,auto,1";
 		bind = [
 		  # Switch workspaces with mainMod + [0-9]
@@ -129,7 +129,8 @@
 		  "$mod SHIFT, 0, movetoworkspace, 10"
 		];
 
-	  ];};
+	  ];
+	  });
 	  # SHARED CONFIG
 	  env = [
 		 "XCURSOR_SIZE,24"
@@ -238,7 +239,7 @@
 		  disable_hyprland_logo = "true";
 	  };
 	
-	};
+	}];
   };
 
 }
