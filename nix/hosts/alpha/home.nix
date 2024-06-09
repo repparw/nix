@@ -1,7 +1,7 @@
 { config, pkgs, unstable, inputs, stylix, ... }:
 {
   imports = [
-		../../modules/hm/hyprland.nix
+		../../modules/hm/hypr/hyprland.nix
 		../../modules/hm/cli.nix
 		../../modules/hm/nix.nix
 		../../modules/hm/gui.nix
