@@ -4,26 +4,28 @@
 
 wayland.windowManager.hyprland.settings = {
 # GUI
-"$browser = firefox"
-"$socials = $browser -P social"
-"$kiosk = $browser -P kiosk"
-"$browser2 = chromium-browser"
-"$notes = ~/Apps/Obsidian.AppImage"
-"$discord = vesktop"
-"$GUIfileManager = thunar"
-"$pomodoro = pomatez"
-"$showkeys = wshowkeys -a bottom -m 108 -b 00000066"
+"$browser" = "firefox";
+"$socials" = "$browser -P social";
+"$kiosk" = "$browser -P kiosk";
+"$browser2" = "chromium-browser";
+"$notes" = "~/Apps/Obsidian.AppImage";
+"$discord" = "vesktop";
+"$GUIfileManager" = "thunar";
+"$pomodoro" = "pomatez";
+"$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
 
-"$desktopmenu = killall tofi-drun || tofi-drun"
-"$cmdmenu = killall tofi-run || tofi-run | xargs hyprctl dispatch exec --"
-"$notificationsDaemon = swaync"
+"$desktopmenu" = "killall tofi-drun || tofi-drun";
+"$cmdmenu" = "killall tofi-run || tofi-run | xargs hyprctl dispatch exec --";
+"$notificationsDaemon" = "swaync";
 
-"$lockscreen = swaylock -e -f -c 000000 -i ~/Pictures/bg/tardisblack.jpg -t"
-"$screenoff = swayidle -w timeout 1 'hyprctl dispatch dpms off' resume 'hyprctl dispatch dpms on; pkill -nx swayidle'"
+"$lockscreen" = "swaylock -e -f -c 000000 -i ~/Pictures/bg/tardisblack.jpg -t";
+"$screenoff" = "swayidle -w timeout 1 'hyprctl dispatch dpms off' resume 'hyprctl dispatch dpms on; pkill -nx swayidle'";
 
 # Terminal
-"$terminal = kitty"
-"$top = $terminal btm --color gruvbox"
-"$fileManager = LS_COLORS='di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43' $terminal zsh -c /usr/bin/lf"
-"$spotify = $terminal --class spotify spotify_player"
+"$terminal" = "kitty";
+"$top" = "$terminal btm --color gruvbox";
+"$fileManager" = "LS_COLORS='di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43' $terminal zsh -c /usr/bin/lf";
+"$spotify" = "$terminal --class spotify spotify_player";
+};
+
 }
