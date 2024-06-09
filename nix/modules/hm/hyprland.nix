@@ -6,6 +6,9 @@
 	package = unstable.hyprland;
 	xwayland.enable = true;
 	systemd.enable = true;
+	settings = {
+
+	};
   };
 
   home.packages = with pkgs; [

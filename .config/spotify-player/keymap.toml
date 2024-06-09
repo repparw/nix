@@ -9,10 +9,13 @@ command = "Mute"
 key_sequence = "m"
 [[keymaps]]
 command = "NextTrack"
-key_sequence = "K"
+key_sequence = "n"
 [[keymaps]]
 command = "PreviousTrack"
-key_sequence = "J"
+key_sequence = "b"
+[[keymaps]]
+command = "PreviousTrack"
+key_sequence = "p"
 [[keymaps]]
 command = "PreviousPage"
 key_sequence = "q"
@@ -25,9 +28,6 @@ key_sequence = "l"
 [[keymaps]]
 command = "FocusPreviousWindow"
 key_sequence = "h"
-[[keymaps]]
-command = "ResumePause"
-key_sequence = "p"
 [[keymaps]]
 command = "Quit"
 key_sequence = "C-q"
