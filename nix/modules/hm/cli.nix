@@ -36,17 +36,6 @@
 		fzf
 		ytfzf
 
-		neovim
-		# HACK Copilot
-		(python3.withPackages (python-pkgs: [
-				python-pkgs.python-dotenv
-				python-pkgs.requests
-				python-pkgs.pynvim
-				python-pkgs.prompt-toolkit
-				python-pkgs.tiktoken
-				python-pkgs.virtualenv
-			  ]))
-		
 		# CLI tools
 		playerctl
 		rclone
@@ -76,4 +65,20 @@
 		eza
 		tree
   	];
+
+	programs.neovim = {
+	  enable = true;
+	  extraPackages = with pkgs; [
+		stylua
+		nil # nix lsp
+		nixpkgs-fmt
+		typescript
+		rust-analyzer
+		lua-language-server
+		marksman
+		beautysh
+	  ]++[
+		unstable.basedpyright
+	  ];
+	};
 }
