@@ -6,38 +6,10 @@
 
 		system = "x86_64-linux";
 
-		pkgs = import inputs.nixpkgs { inherit system; config.allowUnfree = true; };
 		unstable = import inputs.nixpkgs-unstable { inherit system; config.allowUnfree = true; };
 
 	in {
 	  nixosConfigurations = {
-		beta = inputs.nixpkgs.lib.nixosSystem {
-		  modules = [
-#			inputs.stylix.nixosModules.stylix
-			./hosts/default.nix
-			./modules/nixos/cachix.nix
-			./modules/nixos/common.nix
-			home-manager.nixosModules.home-manager {
-			  home-manager.useGlobalPkgs = true;
-			  home-manager.useUserPackages = true;
-			  home-manager.backupFileExtension = "bak";
-			  home-manager.extraSpecialArgs = {
-				inherit unstable; 
-				inherit inputs;
-			  };
-			  home-manager.users.repparw = import ./hosts/beta/home.nix
-			}
-			./modules/hm/cli.nix
-			./modules/hm/nix.nix
-			./modules/hm/hypr/hyprland.nix
-			./modules/hm/gui.nix
-			];
-			};
-		  specialArgs = {
-			hostName = "beta";
-			inherit unstable; 
-			inherit inputs;
-		  };
 
 		alpha = inputs.nixpkgs.lib.nixosSystem {
 		  modules = [
@@ -48,24 +20,47 @@
 			home-manager.nixosModules.home-manager {
 			  home-manager.useGlobalPkgs = true;
 			  home-manager.useUserPackages = true;
-			  home-manager.backupFileExtension = "bak";
+			  home-manager.backupFileExtension = "hm-backup";
 			  home-manager.extraSpecialArgs = {
+				hostName = "alpha";
 				inherit unstable; 
 				inherit inputs;
 			  };
-			  home-manager.users.repparw = import ./hosts/alpha/home.nix
+			  home-manager.users.repparw = import ./hosts/alpha/home.nix;
 			}
-			./modules/hm/cli.nix
-			./modules/hm/nix.nix
-			./modules/hm/hypr/hyprland.nix
-			./modules/hm/gui.nix
 			];
+			specialArgs = {
+			  hostName = "alpha";
+			  inherit unstable; 
+			  inherit inputs;
 			};
+			};
+
+		beta = inputs.nixpkgs.lib.nixosSystem {
+		  modules = [
+#			inputs.stylix.nixosModules.stylix
+			  ./hosts/default.nix
+			  ./modules/nixos/cachix.nix
+			  ./modules/nixos/common.nix
+			  home-manager.nixosModules.home-manager {
+				home-manager.useGlobalPkgs = true;
+				home-manager.useUserPackages = true;
+				home-manager.backupFileExtension = "hm-backup";
+				home-manager.extraSpecialArgs = {
+				  hostName = "beta";
+				  inherit unstable; 
+				  inherit inputs;
+				};
+				home-manager.users.repparw = import ./hosts/beta/home.nix;
+			  }
+		  ];
 		  specialArgs = {
-			hostName = "alpha";
+			hostName = "beta";
 			inherit unstable; 
 			inherit inputs;
 		  };
+		};
+
 
 		};
 
