@@ -1,4 +1,4 @@
-{ inputs, config, lib, pkgs, unstable, ... }:
+{ inputs, pkgs, ... }:
 
 {
   home.packages = with pkgs; [
@@ -9,6 +9,7 @@
 	wshowkeys
 	hyprlock
 	swayidle # unstable.hypridle?
+	mako # dunst alt
 	swaynotificationcenter
 	waybar
 	hyprpicker
