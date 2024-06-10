@@ -1,5 +1,12 @@
-{ config, pkgs, unstable, inputs, stylix, ... }:
+{ pkgs, unstable, ... }:
 {
+  imports = [
+		../../modules/hm/cli.nix
+		../../modules/hm/nix.nix
+		../../modules/hm/hypr/hyprland.nix
+		../../modules/hm/gui.nix
+		];
+
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
