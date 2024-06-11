@@ -3,7 +3,7 @@
 {
     "layer": "top", // Waybar at top layer
     "position": "top", // Waybar position (top|bottom|left|right)
-//	"output": "HDMI-A-1", // Waybar output
+	"output": "HDMI-A-1", // Waybar output
     
     // "height": 30, // Waybar height (to be removed for auto height)
     // Archived modules
