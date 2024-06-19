@@ -8,6 +8,7 @@
 		  userName = "repparw";
 		  extraConfig = {
 			rerere.enabled = true;
+			pull.rebase = true;
 		  };
 		};
 		zsh = {
@@ -25,6 +26,7 @@
   		curl
   		wget
   		unzip
+		bluez
   		jq
   		tree
 		ffmpeg
