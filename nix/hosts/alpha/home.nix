@@ -1,10 +1,10 @@
-{ config, pkgs, unstable, inputs, stylix, ... }:
+{ pkgs, unstable, ... }:
 {
   imports = [
-		../../modules/hm/hypr/hyprland.nix
 		../../modules/hm/cli.nix
 		../../modules/hm/nix.nix
 		../../modules/hm/gui.nix
+		../../modules/hm/hypr/hypr-pkgs.nix
 		../../modules/hm/gaming.nix
 		];
 
@@ -17,6 +17,8 @@
   home.packages = with pkgs; [
   		# Essential packages
 		nodejs # remove after porting nvim plugins to nix cfg
+
+		jellyfin-mpv-shim
 
 		docker-compose
 

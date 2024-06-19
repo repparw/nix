@@ -7,7 +7,6 @@
 		kitty
 		firefox
 		chromium
-		jellyfin-mpv-shim
 		mpv
 		mpvScripts.mpris
 		mpvScripts.mpv-webm
@@ -21,6 +20,7 @@
 		scrcpy
 		# find pomo app in nixpkgs
   	];
+
 
   programs.feh = {
 	enable = true;

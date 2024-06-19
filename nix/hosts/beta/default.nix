@@ -8,6 +8,9 @@
   imports =
     [ # Include the results of the hardware scan.
 	  ./hardware-configuration.nix
+	  ../../modules/nixos/cachix.nix
+	  ../../modules/nixos/common.nix
+	  ../../modules/nixos/hyprland.nix
     ];
 
   networking.hostName = "beta"; # Define your hostname.

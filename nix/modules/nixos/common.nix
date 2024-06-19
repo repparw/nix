@@ -69,18 +69,6 @@
 
   programs.ssh.startAgent = true;
 
-  services.greetd = {
-	enable = true;
-	vt = 1;
-	settings = rec {
-	  initial_session = {
-	   command = "${pkgs.hyprland}/bin/Hyprland";
-	   user = "repparw";
-		};
-	  default_session = initial_session;
-	 };
-  };
-
   # Enable sound with pipewire.
   sound.enable = true;
   security.rtkit.enable = true;
