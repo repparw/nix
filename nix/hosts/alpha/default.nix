@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ inputs, config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
   imports =
@@ -16,10 +16,6 @@
 
   networking.hostName = "alpha"; # Define your hostname.
 
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.xserver.libinput.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.repparw = {
     isNormalUser = true;
 	shell = pkgs.zsh;
