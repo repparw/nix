@@ -5,13 +5,11 @@
   home.packages = with pkgs; [
 		# GUI
 		kitty
-		firefox
 		chromium
 		mpv
 		mpvScripts.mpris
 		mpvScripts.mpv-webm
 		mpvScripts.quality-menu
-		zathura
 		vesktop
 		spotifyd
 		spotify-player
@@ -21,6 +19,24 @@
 		# find pomo app in nixpkgs
   	];
 
+
+  programs.firefox = {
+	enable = true;
+	profiles = {
+	  default = {
+	  	isDefault = true;
+		userChrome = (builtins.readFile ../source/userChrome.css);
+		settings = {
+		  "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+		  "layers.acceleration.force-enabled" = true;
+		  "gfx.webrender.all" = true;
+		  "gfx.webrender.enabled" = true;
+		  "layout.css.backdrop-filter.enabled" = true;
+		  "svg.context-properties.content.enabled" = true;
+		};
+	  };
+	};
+  };
 
   programs.feh = {
 	enable = true;
@@ -35,6 +51,7 @@
   };
 
   programs.zathura = {
+	enable = true;
 	options = {
 	  notification-error-bg    =  "#282828";# bg
 	  notification-error-fg    =  "#fb4934";# bright:red
@@ -79,7 +96,6 @@
 
 	  guioptions = "";
 
-	  recolor = true;
 	  sandbox = "none";
 	  statusbar-h-padding = 0;
 	  statusbar-v-padding = 0;
