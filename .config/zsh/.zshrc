@@ -15,7 +15,6 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-
 # To customize prompt, run `p10k configure` or edit ~/.config/zsh/.p10k.zsh.
 [[ ! -f ~/.config/zsh/.p10k.zsh ]] || source ~/.config/zsh/.p10k.zsh
 
@@ -34,53 +33,6 @@ fi
   HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
 
 # Zsh options END
-
-# Functions
-  # Use fd (https://github.com/sharkdp/fd) instead of the default find
-  # command for listing path candidates.
-  # - The first argument to the function ($1) is the base path to start traversal
-  # - See the source code (completion.{bash,zsh}) for the details.
-  _fzf_compgen_path() {
-	fd --hidden --follow --exclude ".git" . "$1"
-  }
-
-  # Use fd to generate the list for directory completion
-  _fzf_compgen_dir() {
-	fd --type d --hidden --follow --exclude ".git" . "$1"
-  }
-
-  atuin-setup() {
-  if ! which atuin &> /dev/null; then return 1; fi
-
-  export ATUIN_NOBIND="true"
-  eval "$(atuin init zsh)"
-  fzf-atuin-history-widget() {
-  local selected num
-  setopt localoptions noglobsubst noposixbuiltins pipefail no_aliases 2>/dev/null
-
-			# local atuin_opts="--cmd-only --limit ${ATUIN_LIMIT:-5000}"
-			local atuin_opts="--cmd-only"
-			local fzf_opts=(
-			--no-mouse --multi --select-1 --reverse --height 50% --inline-info --scheme=history
-			"--bind=ctrl-d:reload(atuin search $atuin_opts -c $PWD),ctrl-r:reload(atuin search $atuin_opts)"
-		  )
-
-		  selected=$(
-		  eval "atuin search ${atuin_opts}" |
-			fzf "${fzf_opts[@]}"
-		  )
-		  local ret=$?
-		  if [ -n "$selected" ]; then
-			# the += lets it insert at current pos instead of replacing
-			LBUFFER+="${selected}"
-		  fi
-		  zle reset-prompt
-		  return $ret
-		}
-		zle -N fzf-atuin-history-widget
-		bindkey '^R' fzf-atuin-history-widget
-	  }
-# Functions END
 
 
 [[ -f $HOME/.cargo/env ]] && source $HOME/.cargo/env
@@ -143,3 +95,4 @@ zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
 
 zstyle ':completion:*' list-colors "di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
 
+source <(ng completion script)
