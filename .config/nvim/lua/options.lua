@@ -9,7 +9,7 @@ local options = {
   number = true,
   relativenumber = true,
   list = true,
-  listchars = { eol = '↲',
+  listchars = { -- eol = '↲',
 				tab = '» ',
 				trail = '·',
 				extends = '<',
