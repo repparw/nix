@@ -26,6 +26,7 @@ require('lualine').setup {
   },
 }
 
+-- TODO for nixos! remove mason, add lsp-zero on lspconfig, check kickstart nix?
 --local lsp_zero = require('lsp-zero')
 
 --lsp_zero.on_attach(function(client, bufnr)
