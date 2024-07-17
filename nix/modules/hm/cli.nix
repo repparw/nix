@@ -19,7 +19,7 @@
 		};
 	};
 
-	programs.ssh.addKeysToAgent = true;
+	programs.ssh.addKeysToAgent = "yes";
 
 	home.packages = with pkgs; [
 		# essentials

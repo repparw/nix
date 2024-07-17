@@ -11,6 +11,7 @@
 	swayidle # unstable.hypridle?
 	mako # dunst alt
 	swaynotificationcenter
+	tofi
 	waybar
 	hyprpicker
 	wl-clipboard
@@ -19,4 +20,5 @@
 	inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
 	inputs.hyprland-contrib.packages.${pkgs.system}.hdrop
   	];
+
 }
