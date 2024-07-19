@@ -11,7 +11,11 @@
   boot.initrd.availableKernelModules = [ "xhci_pci" "ehci_pci" "ahci" "usb_storage" "sd_mod" "rtsx_pci_sdmmc" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
-  boot.extraModulePackages = [ ];
+ #boot.extraModulePackages = [ ];
+
+  boot.extraModprobeConfig = ''
+	options thinkpad_acpi force_load=1 fan_control=1
+  '';
 
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/198b9a58-8838-440f-b2e7-1181826dda06";

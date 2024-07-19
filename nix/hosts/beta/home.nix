@@ -17,6 +17,7 @@
   home.packages = with pkgs; [
   		# Essential packages
 		nodejs # remove after porting nvim plugins to nix cfg
+		brightnessctl # backlight
 
 		docker-compose
 	]++[
