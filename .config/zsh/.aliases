@@ -7,7 +7,8 @@
 		alias ssh='kitten ssh'
 	fi
 
-		alias rpi='ssh -p2222 dietpi@192.168.0.4'
+		alias rpi='ssh -p2222 dietpi@rpi'
+
 	if [ "$HOSTNAME" != "alpha" ]; then
 		alias pc=' mosh -P 60000 --ssh "ssh -p 10000" repparw@repparw.com.ar'
 	fi

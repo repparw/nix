@@ -10,7 +10,6 @@
 	  ./hardware-configuration.nix
 	  ../../modules/nixos/cachix.nix
 	  ../../modules/nixos/common.nix
-	  # ./t440hw.nix
     ];
 
 
