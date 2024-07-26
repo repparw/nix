@@ -170,12 +170,7 @@
 # Global aliases
 alias -g G='| grep'
 alias -g W='| wc -l'
-alias -g C='| tr -d ''\n'' | wl-copy'
-
-# notes with echo
-note () {
-  echo "$@" >> notes
-}
+alias -g C="| tr -d '\n' | wl-copy"
 
 timer () {
   sleep "$@" && mpv --really-quiet --volume=120 ~/Music/ringtone.mp3
