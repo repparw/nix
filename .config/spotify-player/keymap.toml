@@ -20,9 +20,6 @@ key_sequence = "p"
 command = "PreviousPage"
 key_sequence = "q"
 [[keymaps]]
-command = "LyricPage"
-key_sequence = "y"
-[[keymaps]]
 command = "FocusNextWindow"
 key_sequence = "l"
 [[keymaps]]
@@ -34,3 +31,21 @@ key_sequence = "C-q"
 [[keymaps]]
 command = "LibraryPage"
 key_sequence = "g h"
+[[keymaps]]
+command = "LyricPage"
+key_sequence = "g l"
+
+# === #
+
+[[actions]]
+action = "CopyLink"
+key_sequence = "y"
+[[actions]]
+action = "GoToArtist"
+key_sequence = "g A"
+[[actions]]
+action = "GoToAlbum"
+key_sequence = "g B"
+[[actions]]
+action="ToggleLiked"
+key_sequence="C-l"
