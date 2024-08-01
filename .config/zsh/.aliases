@@ -18,7 +18,7 @@
 
 	# nq default dir for files
 		alias nq='NQDIR=/tmp/nq nq'
-		alias tq='NQDIR=/tmp/nq/tmux tq'
+		alias tq='NQDIR=/tmp/nq tq'
 		alias fq='NQDIR=/tmp/nq fq'
 
 	# Asks your passwords, becomes root, opens a interactive non login shell
@@ -132,7 +132,7 @@
 		alias wget='wget -c'
 
 	 if command -v btm >/dev/null 2>&1; then
-		alias top='btm --color gruvbox'
+		alias top='btm --theme gruvbox'
 	  elif command -v htop >/dev/null 2>&1; then
 		alias top='htop'
 	 fi
