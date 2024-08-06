@@ -23,6 +23,8 @@ set scrolloff 10
 # show hidden files by default
 set hidden
 
+set drawbox
+
 set icons
 set period 1
 
