@@ -3,7 +3,7 @@
 {
   home.packages = with pkgs; [
 		# Gaming
-		steam
+#		TODO steam
 		heroic
 		lutris
 		mangohud
