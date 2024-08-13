@@ -16,13 +16,7 @@
 
   home.packages = with pkgs; [
   		# Essential packages
-		nodejs # remove after porting nvim plugins to nix cfg
-
 		jellyfin-mpv-shim
-
-		docker-compose
-
-		xmrig-mo
 	]++[
 	  unstable.obsidian
 	];
