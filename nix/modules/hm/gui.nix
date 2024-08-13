@@ -7,6 +7,7 @@
 		kitty
 		chromium
 		ferdium
+		thunar
 		mpv
 		mpvScripts.mpris
 		mpvScripts.mpv-webm
