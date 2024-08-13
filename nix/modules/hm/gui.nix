@@ -6,6 +6,7 @@
 		# GUI
 		kitty
 		chromium
+		ferdium
 		mpv
 		mpvScripts.mpris
 		mpvScripts.mpv-webm
@@ -16,6 +17,7 @@
 		obs-studio
 		waydroid
 		scrcpy
+		logiops
 		# find pomo app in nixpkgs
   	];
 
@@ -53,11 +55,11 @@
   programs.zathura = {
 	enable = true;
 	options = {
-	  notification-error-bg    =  "#282828";# bg
+	  notification-error-bg    =  "#32302f";# bg
 	  notification-error-fg    =  "#fb4934";# bright:red
-	  notification-warning-bg  =  "#282828";# bg
+	  notification-warning-bg  =  "#32302f";# bg
 	  notification-warning-fg  =  "#fabd2f";# bright:yellow
-	  notification-bg          =  "#282828";# bg
+	  notification-bg          =  "#32302f";# bg
 	  notification-fg          =  "#b8bb26";# bright:green
 
 	  completion-bg            =  "#504945";# bg2
@@ -73,7 +75,7 @@
 	  index-active-bg          =  "#83a598";# bright:blue
 	  index-active-fg          =  "#504945";# bg2
 
-	  inputbar-bg              =  "#282828";# bg
+	  inputbar-bg              =  "#32302f";# bg
 	  inputbar-fg              =  "#ebdbb2";# fg
 
 	  statusbar-bg             =  "#504945";# bg2
@@ -82,14 +84,14 @@
 	  highlight-color          =  "#fabd2f";# bright:yellow
 	  highlight-active-color   =  "#fe8019";# bright:orange
 
-	  default-bg               =  "#282828";# bg
+	  default-bg               =  "#32302f";# bg
 	  default-fg               =  "#ebdbb2";# fg
 	  render-loading           =  "true";
-	  render-loading-bg        =  "#282828";# bg
+	  render-loading-bg        =  "#32302f";# bg
 	  render-loading-fg        =  "#ebdbb2";# fg
 
 	  # Recolor book content's color
-	  recolor-lightcolor       =  "#282828";# bg
+	  recolor-lightcolor       =  "#32302f";# bg
 	  recolor-darkcolor        =  "#ebdbb2";# fg
 	  recolor                  =  "true";
 	  # set recolor-keephue             true      # keep original color
@@ -114,8 +116,8 @@
 	};
   };
 
-# systemd.user.services = { // TODO Migrate OBS and spotifyd
-	
-	
+# systemd.user.services = { // TODO Migrate OBS
+
+  services.spotifyd.enable = true;
 
 }
