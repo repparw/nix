@@ -6,8 +6,8 @@
 		# GUI
 		kitty
 		chromium
+		xfce.thunar
 		ferdium
-		thunar
 		mpv
 		mpvScripts.mpris
 		mpvScripts.mpv-webm
