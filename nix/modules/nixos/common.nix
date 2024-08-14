@@ -4,7 +4,7 @@
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
-
+  boot.loader.efi.canTouchEfiVariables = true;
 
   # Enable networking
   networking.networkmanager.enable = true;
@@ -67,6 +67,7 @@
 # Enable the OpenSSH daemon.
   services.openssh = {
 	enable = true;
+	ports = [ 10000 ];
 	settings.PasswordAuthentication = false;
   };
 
@@ -105,7 +106,44 @@
   hardware.pulseaudio.enable = false;
 
   # Add xone?
-  hardware.xpadneo.enable = true;
+  #hardware.xpadneo.enable = true;
+
+  environment.etc = {
+  # Creates /etc/nanorc
+	"logid.cfg" = {
+    text = ''
+	devices: (
+	{
+		name: "MX Vertical Advanced Ergonomic Mouse";
+		smartshift:
+		{
+			on: true;
+			threshold: 30;
+		};
+		hiresscroll:
+		{
+			hires: true;
+			invert: false;
+			target: false;
+		};
+		dpi: 1600;
+
+		buttons: (
+			{
+				cid: 0xfd;
+				action =
+				{
+					type: "Keypress";
+					keys: ["KEY_LEFTSHIFT", "KEY_LEFTMETA", "KEY_PRINT"];
+				};
+			}
+		);
+	}
+	);
+    '';
+	};
+  };
+
 
   nix.settings.experimental-features = "nix-command flakes";
 }
