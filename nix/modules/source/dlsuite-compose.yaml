@@ -11,7 +11,7 @@ x-environment: &default-tz-puid-pgid
 
 services:
     prowlarr:
-        image: 'lscr.io/linuxserver/prowlarr:latest'
+        image: 'linuxserver/prowlarr:latest'
         container_name: prowlarr
         environment: *default-tz-puid-pgid
         volumes:
@@ -42,7 +42,7 @@ services:
             - '8080:8080'
         restart: unless-stopped
     sonarr:
-        image: 'lscr.io/linuxserver/sonarr:latest'
+        image: 'linuxserver/sonarr:latest'
         container_name: sonarr
         environment: *default-tz-puid-pgid
         volumes:
@@ -55,7 +55,7 @@ services:
             - qbittorrent
         restart: unless-stopped
     radarr:
-        image: 'lscr.io/linuxserver/radarr:latest'
+        image: 'linuxserver/radarr:latest'
         container_name: radarr
         environment: *default-tz-puid-pgid
         volumes:
@@ -67,7 +67,7 @@ services:
             - qbittorrent
         restart: unless-stopped
     bazarr:
-        image: 'lscr.io/linuxserver/bazarr:latest'
+        image: 'linuxserver/bazarr:latest'
         container_name: bazarr
         environment: *default-tz-puid-pgid
         volumes:
@@ -96,7 +96,7 @@ services:
             - '7359:7359/udp' #optional
         restart: 'unless-stopped'
     freshrss:
-        image: 'lscr.io/linuxserver/freshrss:latest'
+        image: 'linuxserver/freshrss:latest'
         container_name: freshrss
         environment: *default-tz-puid-pgid
         volumes:
@@ -111,7 +111,7 @@ services:
             - '3000:3000'
         restart: unless-stopped
     grocy:
-        image: lscr.io/linuxserver/grocy:latest
+        image: 'linuxserver/grocy:latest'
         container_name: grocy
         environment: *default-tz-puid-pgid
         volumes:
@@ -120,7 +120,7 @@ services:
             - '9283:80'
         restart: unless-stopped
     swag:
-        image: 'lscr.io/linuxserver/swag:latest'
+        image: 'linuxserver/swag:latest'
         container_name: swag
         extra_hosts:
             - host.docker.internal:host-gateway
