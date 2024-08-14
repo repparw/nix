@@ -77,6 +77,10 @@ zvm_after_init_commands+=('FZF_ALT_C_COMMAND= eval "$(fzf --zsh)"')
 # zsh-autosuggestions accept to ctrl-y
 zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
 
+lfcd() {
+    cd "$(command lf -print-last-dir "$@")"
+      }
+
 # lfcd
 zvm_after_init_commands+=("bindkey -s '^e' 'lf\n'")
 zvm_after_init_commands+=("bindkey -s '^f' 'cdi\n'")
