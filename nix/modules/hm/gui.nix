@@ -10,15 +10,14 @@
 		ferdium
 		mpv
 		mpvScripts.mpris
-		mpvScripts.mpv-webm
-		mpvScripts.quality-menu
 		vesktop
 		spotifyd
 		spotify-player
+		pavucontrol
 		obs-studio
 		waydroid
 		scrcpy
-		logiops
+		logiops_0_2_3
 
 		# find pomo app in nixpkgs
   	];
@@ -31,20 +30,24 @@
 
   programs.firefox = {
 	enable = true;
-	profiles = {
-	  default = {
-	  	isDefault = true;
-		userChrome = (builtins.readFile ../source/userChrome.css);
-		settings = {
-		  "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-		  "layers.acceleration.force-enabled" = true;
-		  "gfx.webrender.all" = true;
-		  "gfx.webrender.enabled" = true;
-		  "layout.css.backdrop-filter.enabled" = true;
-		  "svg.context-properties.content.enabled" = true;
-		};
-	  };
-	};
+####profiles = {
+####  default = {
+####  	isDefault = true;
+####	userChrome = (builtins.readFile ../source/userChrome.css);
+####	Path="ii5adzcc.default-release";
+####	settings = {
+####	  "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+####	  "layers.acceleration.force-enabled" = true;
+####	  "gfx.webrender.all" = true;
+####	  "gfx.webrender.enabled" = true;
+####	  "layout.css.backdrop-filter.enabled" = true;
+####	  "svg.context-properties.content.enabled" = true;
+####	};
+####  };
+####  kiosk = {
+
+####  }
+####};
   };
 
   programs.feh = {

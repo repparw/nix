@@ -2,7 +2,7 @@
 networks:
     default:
         name: dlsuite
-        external: true
+#       external: true
 
 x-environment: &default-tz-puid-pgid
   TZ: America/Argentina/Buenos_Aires
@@ -20,7 +20,7 @@ services:
             - '9696:9696'
         restart: unless-stopped
     flaresolverr:
-        image: 'ghcr.io/flaresolverr/flaresolverr:latest'
+        image: 'flaresolverr/flaresolverr:latest'
         container_name: flaresolverr
         environment:
             - LOG_LEVEL=${LOG_LEVEL:-info}
@@ -31,8 +31,8 @@ services:
             - '8191:8191'
         restart: unless-stopped
     qbittorrent:
-        image: 'ghcr.io/hotio/qbittorrent:latest'
-        container_name: qbittorrent
+        image: 'hotio/qbittorrent:latest'
+        container_name: qbitttorrent
         environment: *default-tz-puid-pgid
         volumes:
             - '/home/docker/qbittorrent:/config:Z'

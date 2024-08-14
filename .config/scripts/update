@@ -1,2 +1,2 @@
 #!/bin/sh
-kitty --hold zsh -c ' sudo dnf upgrade -y'
+kitty --hold zsh -c " sudo nixos-rebuild switch --flake --upgrade '~/.dotfiles/nix#' "
