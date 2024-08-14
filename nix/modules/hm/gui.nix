@@ -19,9 +19,15 @@
 		waydroid
 		scrcpy
 		logiops
+
 		# find pomo app in nixpkgs
   	];
 
+  home.pointerCursor = {
+	package = pkgs.capitaine-cursors-themed;
+	name = "Gruvbox";
+	size = 24;
+  };
 
   programs.firefox = {
 	enable = true;
@@ -117,7 +123,25 @@
 	};
   };
 
-# systemd.user.services = { // TODO Migrate OBS
+ systemd.user.services = {
+  obs = {
+	Unit = {
+	  StartLimitIntervalSec=60;
+	  StartLimitBurst=4;
+	};
+
+	Service = {
+	  ExecStart=[ "${pkgs.obs-studio}/bin/obs --disable-shutdown-check --startreplaybuffer --minimize-to-tray" ];
+	  Restart=[ "on-failure" ];
+	  RestartSec=1;
+	};
+
+	Install = {
+	  WantedBy=[ "graphical-session.target" ];
+	};
+  };
+};
+
 
   services.spotifyd.enable = true;
 

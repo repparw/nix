@@ -8,7 +8,7 @@
 
 		unstable = import inputs.nixpkgs-unstable { inherit system; config.allowUnfree = true; };
 		
-		nixpkgs = import inputs.nixpkgs { inherit system; config.allowUnfree = true; };
+#########		nixpkgs = import inputs.nixpkgs { inherit system; config.allowUnfree = true; };
 
 	in {
 	  nixosConfigurations = {
@@ -17,8 +17,6 @@
 		  modules = [
 #			inputs.stylix.nixosModules.stylix
 			./hosts/default.nix
-			./modules/nixos/cachix.nix
-			./modules/nixos/common.nix
 			home-manager.nixosModules.home-manager {
 			  home-manager.useGlobalPkgs = true;
 			  home-manager.useUserPackages = true;
@@ -42,8 +40,6 @@
 		  modules = [
 #			inputs.stylix.nixosModules.stylix
 			  ./hosts/default.nix
-			  ./modules/nixos/cachix.nix
-			  ./modules/nixos/common.nix
 			  home-manager.nixosModules.home-manager {
 				home-manager.useGlobalPkgs = true;
 				home-manager.useUserPackages = true;
