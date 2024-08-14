@@ -5,7 +5,7 @@
 	serviceConfig = {
 	  Type="oneshot";
 	  User="repparw";
-	  ExecStart="${pkgs.rsync}/bin/rsync -aq --delete ~/Pictures ~/Documents ~/.config /mnt/hdd/backup";
+	  ExecStart="${pkgs.rsync}/bin/rsync -aq --delete /home/repparw/Pictures /home/repparw/Documents /home/repparw/.config /mnt/hdd/backup";
 	};
   };
 
