@@ -1,25 +1,28 @@
 { pkgs, ... }:
-
 {
 
   systemd.services.buptohdd = {
 	serviceConfig = {
 	  Type="oneshot";
-	  ExecStart="${pkgs.bashInteractive}/bin/sh ~/.config/scripts/buptohdd";
+	  User="repparw";
+	  ExecStart="${pkgs.rsync}/bin/rsync -aq --delete ~/Pictures ~/Documents ~/.config /mnt/hdd/backup";
 	};
   };
 
   systemd.services.git-autocommit = {
 	serviceConfig = {
+	  WorkingDirectory="/home/repparw/.dotfiles";
 	  Type="oneshot";
-	  ExecStart="${pkgs.bashInteractive}/bin/sh ~/.config/scripts/git-autocommit";
+	  User="repparw";
+	  ExecStart="${pkgs.git}/bin/git add .; ${pkgs.git}/bin/git commit -am 'Auto-commit'; ${pkgs.git}/bin/git push";
 	};
   };
 
   systemd.services.rclone-sync = {
 	serviceConfig = {
 	  Type="oneshot";
-	  ExecStart="${pkgs.rclone}/bin/rclone sync ~/.config/dlsuite crypt:dlsuite";
+	  User="repparw";
+	  ExecStart="${pkgs.rclone}/bin/rclone sync /home/repparw/.config/dlsuite crypt:dlsuite";
 	};
   };
 
@@ -29,9 +32,8 @@
 	after = ["docker.service"];
 	serviceConfig = {
 	  Type="oneshot";
+	  User="repparw";
 	  WorkingDirectory="/tmp";
-	  User="root";
-	  Group="root";
 	  ExecStart="${pkgs.docker}/bin/docker system prune -af";
 	};
   };
@@ -39,7 +41,7 @@
   systemd.timers.buptohdd = {
 	wantedBy = ["timers.target"];
 	timerConfig = {
-	  OnCalendar="* 03:00:00";
+	  OnCalendar="03:00:00";
 	  Persistent=true;
 	};
   };
@@ -55,7 +57,7 @@
   systemd.timers.rclone-sync= {
 	wantedBy = ["timers.target"];
 	timerConfig = {
-	  OnCalendar="*-*-*/7 00:00:00";
+	  OnCalendar="*-*-7,14,21,28 00:00:00";
 	  Persistent=true;
 	};
   };
@@ -63,7 +65,7 @@
   systemd.timers.docker-cleanup = {
 	wantedBy = ["timers.target"];
 	timerConfig = {
-	  OnCalendar="*-*-*/14 12:00:00";
+	  OnCalendar="*-*-1,15 12:00:00";
 	  Persistent=true;
 	};
   };
