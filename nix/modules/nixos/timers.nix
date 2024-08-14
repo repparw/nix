@@ -14,7 +14,7 @@
 	  WorkingDirectory="/home/repparw/.dotfiles";
 	  Type="oneshot";
 	  User="repparw";
-	  ExecStart=["${pkgs.git}/bin/git add -A" "${pkgs.git}/bin/git commit -am Autocommit" "${pkgs.git}/bin/git push" ];
+	  ExecStart=["${pkgs.git}/bin/git add -A" "${pkgs.git}/bin/git diff-index --quiet --cached HEAD || ${pkgs.git}/bin/git commit -m Autocommit" "${pkgs.git}/bin/git push" ];
 	};
   };
 
