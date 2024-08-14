@@ -7,7 +7,7 @@ networks:
 x-environment: &default-tz-puid-pgid
   TZ: America/Argentina/Buenos_Aires
   PUID: 1001
-  PGID: 963
+  PGID: 131
 
 services:
     prowlarr:
@@ -130,7 +130,7 @@ services:
             - DOCKER_MODS=linuxserver/mods:universal-cron
             - TZ=America/Argentina/Buenos_Aires
             - PUID=1001
-            - PGID=963
+            - PGID=131
             - URL=repparw.com.ar
             - SUBDOMAINS=wildcard
             - VALIDATION=dns
@@ -147,7 +147,7 @@ services:
         environment:
             - TZ=America/Argentina/Buenos_Aires
             - PUID=1001
-            - PGID=963
+            - PGID=131
             - AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE=/secrets/JWT_SECRET
             - AUTHELIA_SESSION_SECRET_FILE=/secrets/SESSION_SECRET
 #           - AUTHELIA_STORAGE_PASSWORD_FILE=/secrets/STORAGE_PASSWORD Storage password for Postgresql
@@ -205,7 +205,7 @@ services:
             - PAPERLESS_REDIS=redis://broker:6379
             - PAPERLESS_DBHOST=db
             - USERMAP_UID=1001
-            - USERMAP_GID=963
+            - USERMAP_GID=131
             - PAPERLESS_OCR_LANGUAGE=spa
             - PAPERLESS_DISABLE_REGULAR_LOGIN=1
             - PAPERLESS_URL=https://paper.repparw.com.ar
