@@ -1,2 +1,0 @@
-#!/bin/sh
-rsync -aq --delete ~/Pictures ~/Documents ~/.config /mnt/hdd/backup
