@@ -2,27 +2,33 @@
 {
 
   systemd.services.buptohdd = {
+	path = [ pkgs.rsync ];
 	serviceConfig = {
 	  Type="oneshot";
 	  User="repparw";
-	  ExecStart="${pkgs.rsync}/bin/rsync -aq --delete /home/repparw/Pictures /home/repparw/Documents /home/repparw/.config --exclude='dlsuite' /mnt/hdd/backup";
+	  ExecStart="rsync -aq --delete /home/repparw/Pictures /home/repparw/Documents /home/repparw/.config --exclude='dlsuite' /mnt/hdd/backup";
 	};
   };
 
   systemd.services.git-autocommit = {
+	path = [ pkgs.git pkgs.openssh ];
+	environment = {
+	  GIT_SSH_CONFIG = "ssh -i /home/repparw/.ssh/id_ed25519";
+	};
 	serviceConfig = {
 	  WorkingDirectory="/home/repparw/.dotfiles";
 	  Type="oneshot";
 	  User="repparw";
-	  ExecStart=["${pkgs.git}/bin/git add -A" "${pkgs.git}/bin/git diff-index --quiet --cached HEAD || ${pkgs.git}/bin/git commit -m Autocommit" "${pkgs.git}/bin/git push" ];
+	  ExecStart=["git add -A" "if ! git diff-index --quiet --cached HEAD; then git commit -m Autocommit; fi" "git push" ];
 	};
   };
 
   systemd.services.rclone-sync = {
+	path = [ pkgs.rclone ];
 	serviceConfig = {
 	  Type="oneshot";
 	  User="repparw";
-	  ExecStart="${pkgs.rclone}/bin/rclone sync /home/repparw/.config/dlsuite crypt:dlsuite";
+	  ExecStart="rclone -L sync --exclude \"authelia/valkey/\" --exclude \"authelia/config/notification.txt\" --exclude \"authelia/config/users_database.yml\" --exclude \"swag/keys/\" --exclude \"**/fail2ban/fail2ban.sqlite3\" --exclude \"**/letsencrypt/live/\" --exclude \"**/letsencrypt/archive/\" --exclude \"**/letsencrypt/accounts/\" /home/repparw/.config/dlsuite crypt:dlsuite";
 	};
   };
 
