@@ -152,6 +152,10 @@
        gamescopeSession.enable = true;
   };
 
+  programs.gamescope.enable = true;
+
+  programs.gamemode.enable = true;
+
   systemd.services.logid = {
 	wants = ["multi-user.target"];
 	after = ["multi-user.target"];
