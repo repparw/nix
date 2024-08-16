@@ -67,8 +67,7 @@
 
 	# Grep
 
-		alias gh='history|rg'
-
+		alias gh='history | rg'
 
 		alias trash='mv --force -t ~/.local/share/Trash '
 
@@ -168,7 +167,8 @@
 	alias mine="cd ~/.mining/xmrig && sudo nice -n 19 ./xmrig -c config.json"
 
 # Global aliases
-alias -g G='| grep'
+alias -g G='| rg'
+alias -g L='| less'
 alias -g W='| wc -l'
 alias -g C="| tr -d '\n' | wl-copy"
 
