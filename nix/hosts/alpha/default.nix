@@ -5,14 +5,14 @@
 { pkgs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-	  ./hardware-configuration.nix
-	  ../../modules/nixos/cachix.nix
-	  ../../modules/nixos/common.nix
-	  ../../modules/nixos/timers.nix
-	  ../../modules/nixos/hyprland.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+    ../../modules/nixos/cachix.nix
+    ../../modules/nixos/common.nix
+    ../../modules/nixos/timers.nix
+    ../../modules/nixos/hyprland.nix
+  ];
 
   networking.hostName = "alpha"; # Define your hostname.
 
@@ -20,9 +20,13 @@
 
   users.users.repparw = {
     isNormalUser = true;
-	shell = pkgs.zsh;
+    shell = pkgs.zsh;
     description = "repparw";
-    extraGroups = [ "networkmanager" "wheel" "docker" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+      "docker"
+    ];
   };
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -33,123 +37,162 @@
   #   enableSSHSupport = true;
   # };
 
-#### FSTAB
+  #### FSTAB
 
-  fileSystems."/mnt/hdd" =
-    { device = "/dev/disk/by-uuid/7a4240ed-59fb-4683-9293-2955c241d199";
-      fsType = "btrfs";
-	  label = "hdd";
+  fileSystems."/mnt/hdd" = {
+    device = "/dev/disk/by-uuid/7a4240ed-59fb-4683-9293-2955c241d199";
+    fsType = "btrfs";
+    label = "hdd";
 
-      options = [ "noatime" "nodiratime" ];
-    };
-
-## bind mounts
-
-  fileSystems."/home/repparw/.config/dlsuite/authelia" =
-	{ depends = [
-	  "/"
-	  "/mnt/hdd"
-	  ];
-	  device = "/mnt/hdd/docker/authelia";
-      options = [ "bind" "ro" ];
-	};
-
-  fileSystems."/home/repparw/.config/dlsuite/bazarr" =
-	{ depends = [
-	  "/"
-	  "/mnt/hdd"
-	  ];
-	  device = "/mnt/hdd/docker/bazarr/backup";
-      options = [ "bind" "ro" ];
-	};
-
-  fileSystems."/home/repparw/.config/dlsuite/grocy" =
-	{ depends = [
-	  "/"
-	  "/mnt/hdd"
-	  ];
-	  device = "/mnt/hdd/docker/grocy/data";
-      options = [ "bind" "ro" ];
-	};
-
-  fileSystems."/home/repparw/.config/dlsuite/prowlarr" =
-	{ depends = [
-	  "/"
-	  "/mnt/hdd"
-	  ];
-	  device = "/mnt/hdd/docker/prowlarr/Backups";
-      options = [ "bind" "ro" ];
-	};
-	
-  fileSystems."/home/repparw/.config/dlsuite/qbittorrent" =
-	{ depends = [
-	  "/"
-	  "/mnt/hdd"
-	  ];
-	  device = "/mnt/hdd/docker/qbittorrent/config";
-      options = [ "bind" "ro" ];
-	};
-
-  fileSystems."/home/repparw/.config/dlsuite/radarr" =
-	{ depends = [
-	  "/"
-	  "/mnt/hdd"
-	  ];
-	  device = "/mnt/hdd/docker/radarr/Backups";
-      options = [ "bind" "ro" ];
-	};
-
-  fileSystems."/home/repparw/.config/dlsuite/sonarr" =
-  { depends = [
-	"/"
-	  "/mnt/hdd"
-  ];
-	device = "/mnt/hdd/docker/sonarr/Backups";
-	options = [ "bind" "ro" ];
+    options = [
+      "noatime"
+      "nodiratime"
+    ];
   };
 
-  fileSystems."/home/repparw/.config/dlsuite/swag" =
-  { depends = [
-	"/"
-	  "/mnt/hdd"
-  ];
-	device = "/mnt/hdd/docker/swag";
-	options = [ "bind" "ro" ];
+  ## bind mounts
+
+  fileSystems."/home/repparw/.config/dlsuite/authelia" = {
+    depends = [
+      "/"
+      "/mnt/hdd"
+    ];
+    device = "/mnt/hdd/docker/authelia";
+    options = [
+      "bind"
+      "ro"
+    ];
   };
 
-  fileSystems."/home/repparw/.config/dlsuite/paper" =
-  { depends = [
-	"/"
-	  "/mnt/hdd"
-  ];
-	device = "/mnt/hdd/docker/paper/export";
-	options = [ "bind" "ro" ];
+  fileSystems."/home/repparw/.config/dlsuite/bazarr" = {
+    depends = [
+      "/"
+      "/mnt/hdd"
+    ];
+    device = "/mnt/hdd/docker/bazarr/backup";
+    options = [
+      "bind"
+      "ro"
+    ];
   };
-  
-#### FSTAB
+
+  fileSystems."/home/repparw/.config/dlsuite/grocy" = {
+    depends = [
+      "/"
+      "/mnt/hdd"
+    ];
+    device = "/mnt/hdd/docker/grocy/data";
+    options = [
+      "bind"
+      "ro"
+    ];
+  };
+
+  fileSystems."/home/repparw/.config/dlsuite/prowlarr" = {
+    depends = [
+      "/"
+      "/mnt/hdd"
+    ];
+    device = "/mnt/hdd/docker/prowlarr/Backups";
+    options = [
+      "bind"
+      "ro"
+    ];
+  };
+
+  fileSystems."/home/repparw/.config/dlsuite/qbittorrent" = {
+    depends = [
+      "/"
+      "/mnt/hdd"
+    ];
+    device = "/mnt/hdd/docker/qbittorrent/config";
+    options = [
+      "bind"
+      "ro"
+    ];
+  };
+
+  fileSystems."/home/repparw/.config/dlsuite/radarr" = {
+    depends = [
+      "/"
+      "/mnt/hdd"
+    ];
+    device = "/mnt/hdd/docker/radarr/Backups";
+    options = [
+      "bind"
+      "ro"
+    ];
+  };
+
+  fileSystems."/home/repparw/.config/dlsuite/sonarr" = {
+    depends = [
+      "/"
+      "/mnt/hdd"
+    ];
+    device = "/mnt/hdd/docker/sonarr/Backups";
+    options = [
+      "bind"
+      "ro"
+    ];
+  };
+
+  fileSystems."/home/repparw/.config/dlsuite/swag" = {
+    depends = [
+      "/"
+      "/mnt/hdd"
+    ];
+    device = "/mnt/hdd/docker/swag";
+    options = [
+      "bind"
+      "ro"
+    ];
+  };
+
+  fileSystems."/home/repparw/.config/dlsuite/paper" = {
+    depends = [
+      "/"
+      "/mnt/hdd"
+    ];
+    device = "/mnt/hdd/docker/paper/export";
+    options = [
+      "bind"
+      "ro"
+    ];
+  };
+
+  #### FSTAB
 
   virtualisation.docker = {
-	enable = true;
-	rootless.enable = true;
-	rootless.setSocketVariable = true;
- };
+    enable = true;
+    rootless.enable = true;
+    rootless.setSocketVariable = true;
+  };
 
   systemd.services.dlsuite = {
-	wantedBy = ["multi-user.target"];
-	partOf = ["docker.service"];
-	after = ["docker.service" "docker.socket"];
-	serviceConfig = {
-	  Type = "oneshot";
-	  RemainAfterExit=true;
-	  ExecStart = "${pkgs.docker}/bin/docker compose -f ${../../modules/source/dlsuite-compose.yaml} up -d --remove-orphans";
-	  ExecStop = "${pkgs.docker}/bin/docker compose -f ${../../modules/source/dlsuite-compose.yaml} down";
-	};
+    wantedBy = [ "multi-user.target" ];
+    partOf = [ "docker.service" ];
+    after = [
+      "docker.service"
+      "docker.socket"
+    ];
+    unitConfig = {
+      StartLimitInterval = 200;
+      StartLimitBurst = 5;
+    };
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      Restart = "always";
+      RestartSec = 30;
+      ExecStart = "${pkgs.docker}/bin/docker compose -f ${../../modules/source/dlsuite-compose.yaml} up -d --remove-orphans";
+      ExecStop = "${pkgs.docker}/bin/docker compose -f ${../../modules/source/dlsuite-compose.yaml} down";
+    };
   };
 
   programs.steam = {
-       enable = true;
-       remotePlay.openFirewall = true;
-       gamescopeSession.enable = true;
+    enable = true;
+    remotePlay.openFirewall = true;
+    gamescopeSession.enable = true;
   };
 
   programs.gamescope.enable = true;
@@ -157,18 +200,24 @@
   programs.gamemode.enable = true;
 
   systemd.services.logid = {
-	wants = ["multi-user.target"];
-	after = ["multi-user.target"];
-	wantedBy = ["graphical.target"];
-	serviceConfig = {
-	  Type="simple";
-	  User="root";
-	  ExecStart="${pkgs.logiops_0_2_3}/bin/logid";
-	};
+    wants = [ "multi-user.target" ];
+    after = [ "multi-user.target" ];
+    wantedBy = [ "graphical.target" ];
+    serviceConfig = {
+      Type = "simple";
+      User = "root";
+      ExecStart = "${pkgs.logiops_0_2_3}/bin/logid";
+    };
 
   };
 
   services.sunshine.enable = true;
+
+  services.changedetection-io = {
+    enable = true;
+    user = "repparw";
+    playwrightSupport = true;
+  };
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];

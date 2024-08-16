@@ -1,83 +1,91 @@
-{ config, pkgs, unstable, ... }:
+{
+  config,
+  pkgs,
+  unstable,
+  ...
+}:
 
 {
-	programs = {
-		git = { 
-		  enable = true;
-		  userEmail = "ubritos@gmail.com";
-		  userName = "repparw";
-		  extraConfig = {
-			rerere.enabled = true;
-			pull.rebase = true;
-		  };
-		};
-	};
+  programs = {
+    git = {
+      enable = true;
+      userEmail = "ubritos@gmail.com";
+      userName = "repparw";
+      extraConfig = {
+        rerere.enabled = true;
+        pull.rebase = true;
+      };
+    };
+  };
 
-	programs.ssh.addKeysToAgent = "yes";
+  programs.ssh.addKeysToAgent = "yes";
 
-	home.packages = with pkgs; [
-		# essentials
-		zsh
-  		curl
-  		wget
-  		unzip
-		bluez
-  		jq
-  		tree
-		ffmpeg
-  		imagemagick
-		tmux
-		less
-		base16-schemes
-		yt-dlp
-		fzf
-		ytfzf
+  home.packages = with pkgs; [
+    # essentials
+    zsh
+    curl
+    wget
+    unzip
+    bluez
+    jq
+    tree
+    ffmpeg
+    imagemagick
+    tmux
+    less
+    base16-schemes
+    yt-dlp
+    fzf
+    ytfzf
 
-		# CLI tools
-		playerctl
-		rclone
-		melt #ssh ed25519 keys to seed words 
-		ueberzugpp
-		libqalculate
+    # CLI tools
+    playerctl
+    rclone
+    melt # ssh ed25519 keys to seed words
+    ueberzugpp
+    libqalculate
 
-		fastfetch
-		axel
-		tlrc # tldr
-		nq # Command queue
-		lf
-		pdfgrep
-		catdoc # provides catppt and xls2csv
+    fastfetch
+    axel
+    tlrc # tldr
+    nq # Command queue
+    lf
+    pdfgrep
+    catdoc # provides catppt and xls2csv
 
-		tig
+    tig
 
-		# Modern replacements of basic tools
-  		bottom
-		bat
-		colordiff
-		duf
-		du-dust
-		fd
-		ripgrep
-		zoxide
-		eza
-		tree
+    # Modern replacements of basic tools
+    bottom
+    bat
+    colordiff
+    duf
+    du-dust
+    fd
+    ripgrep
+    zoxide
+    eza
+    tree
 
-		nodejs # remove after porting nvim plugins to nix cfg
-  	];
+    nodejs # remove after porting nvim plugins to nix cfg
+  ];
 
-	programs.neovim = {
-	  enable = true;
-	  extraPackages = with pkgs; [
-		stylua
-		nil # nix lsp
-		nixpkgs-fmt
-		typescript
-		rust-analyzer
-		lua-language-server
-		marksman
-		beautysh
-	  ]++[
-		unstable.basedpyright
-	  ];
-	};
+  programs.neovim = {
+    enable = true;
+    package = unstable.neovim-unwrapped;
+    extraPackages =
+      with pkgs;
+      [
+        stylua
+        nil # nix lsp
+        nixfmt-rfc-style
+        nodePackages_latest.typescript-language-server
+        biome
+        rust-analyzer
+        lua-language-server
+        marksman
+        beautysh
+      ]
+      ++ [ unstable.basedpyright ];
+  };
 }
