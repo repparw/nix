@@ -26,9 +26,10 @@ return {
 			end,
 			formatters_by_ft = {
 				lua = { "stylua" },
-				nix = { "nixpkgs-fmt" },
+				nix = { "nixfmt" },
 				sh = { "beautysh" },
 				typescript = { "biome", "prettierd", "prettier" },
+				json = { "biome" },
 				css = { "prettierd", "prettier" },
 				html = { "prettierd", "prettier" },
 				-- Conform can also run multiple formatters sequentially

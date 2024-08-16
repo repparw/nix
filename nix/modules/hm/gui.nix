@@ -22,6 +22,24 @@
 		# find pomo app in nixpkgs
   	];
 
+  xdg.mimeApps = {
+	enable = true;
+	associations.added = {
+	  "application/pdf" = [ "org.pwmt.zathura.desktop" "firefox.desktop" ];
+	};
+	associations.removed = {
+	  "application/pdf" = [ "chromium-browser.desktop" ];
+	};
+	defaultApplications = {
+	  "application/pdf" = [ "org.pwmt.zathura.desktop" "firefox.desktop" ];
+      "text/html" = "firefox.desktop";
+	  "x-scheme-handler/http" = "firefox.desktop";
+	  "x-scheme-handler/https" = "firefox.desktop";
+	  "x-scheme-handler/about" = "firefox.desktop";
+	  "x-scheme-handler/unknown" = "firefox.desktop";
+	};
+  };
+
   home.pointerCursor = {
 	package = pkgs.capitaine-cursors-themed;
 	name = "Gruvbox";

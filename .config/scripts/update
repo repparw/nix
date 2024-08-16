@@ -1,2 +1,2 @@
 #!/bin/sh
-kitty --hold zsh -c " sudo nixos-rebuild switch --flake --upgrade '~/.dotfiles/nix#' "
+kitty --hold zsh -c " cd ~/.dotfiles/nix && sudo nixos-rebuild switch --flake '.#' --upgrade"
