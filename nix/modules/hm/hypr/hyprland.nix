@@ -50,7 +50,7 @@
         "$notificationsDaemon"
         "waybar"
         "jellyfin-mpv-shim"
-        "[monitor $display;workspace 5 silent] $socials"
+        "[workspace 5 silent] $socials"
       ];
 
       general = {
@@ -189,14 +189,14 @@
         "$mod ALT, SPACE, exec, $socials"
         "$mod SHIFT, SPACE, exec, $browser2"
         "$mod, T, exec, $top"
-        "$mod, Y, exec, [monitor $display2;workspace 6 silent;fullscreen;noinitialfocus] $kiosk"
+        "$mod, Y, exec, [workspace 6 silent;fullscreen;noinitialfocus] $kiosk"
         "$mod, U, exec, ~/.config/scripts/update"
         "$mod, V, exec, ~/.config/scripts/jelly"
         "$mod, Z, exec, ~/.config/scripts/mpvclip"
         "$mod, N, exec, $notes"
         "$mod, R, exec, $terminal zsh -ic rpi"
         "$mod, B, exec, ~/.config/scripts/bttoggle"
-        "$mod, P, exec, [monitor $display2;workspace 6 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
+        "$mod, P, exec, [workspace 6 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
 
         "$mod, G, exec, xdg-open https://mail.google.com"
         "$mod, X, exec, xdg-open https://app.todoist.com/app/project/personal-2302473483"
@@ -255,7 +255,7 @@
       ];
 
       windowrulev2 = [
-        "monitor $display2,class:^(mpv)$"
+        "monitor 1,class:^(mpv)$"
         "noinitialfocus,class:^(mpv)$"
         "noblur,class:^(mpv)$"
         "nodim,class:^(mpv)$"
@@ -275,6 +275,7 @@
         "immediate, class:^(cs2)$"
 
         "float, title:^(Picture-in-Picture|Picture in picture)$"
+        "monitor 0, title:^(Picture-in-Picture|Picture in picture)$"
         "move 100%-w-25 100%-w-0, title:^(Picture-in-Picture|Picture in picture)$"
         "size 400 225, title:^(Picture-in-Picture|Picture in picture)$"
         "pin, title:^(Picture-in-Picture|Picture in picture)$"

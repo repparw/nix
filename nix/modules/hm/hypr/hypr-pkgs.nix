@@ -1,4 +1,9 @@
-{ inputs, pkgs, ... }:
+{
+  inputs,
+  pkgs,
+  unstable,
+  ...
+}:
 
 {
   home.packages = with pkgs; [
@@ -46,6 +51,7 @@
 
   programs.hyprlock = {
     enable = true;
+    package = unstable.hyprlock;
     settings = {
       general = {
         disable_loading_bar = true;
