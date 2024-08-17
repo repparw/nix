@@ -22,6 +22,7 @@ playback_window_width = 6
 enable_streaming = "Always"
 enable_cover_image_cache = true
 default_device = "spotifyd"
+enable_notify = false
 
 [copy_command]
 command = "wl-copy"
