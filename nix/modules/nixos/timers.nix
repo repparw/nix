@@ -18,7 +18,9 @@
       WorkingDirectory = "/home/repparw/.dotfiles";
       Type = "oneshot";
       User = "repparw";
-      ExecStart = [ "git add -A; git diff-index --quiet --cached HEAD || git commit -m 'Autocommit'" ];
+      ExecStart = [
+        "git add -A; git diff-index --quiet --cached HEAD && git commit -m \"Autocommit\"; git push"
+      ];
     };
   };
 
