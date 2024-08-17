@@ -38,6 +38,10 @@
 		alias vdl='v ~/.config/scripts/dlsuite-compose.yaml'
 		alias vn='v ~/.config/nvim/init.lua'
 
+	# Nix
+		alias nrb="cd ~/.dotfiles/nix && sudo nixos-rebuild switch --flake '.#' --show-trace"
+		alias nrbt="cd ~/.dotfiles/nix && sudo nixos-rebuild boot --flake '.#' --show-trace"
+
 	# cd	
 	if (( $+commands[zoxide] )); then
 	  eval "$(zoxide init --cmd=cd zsh)"

@@ -34,7 +34,7 @@
 
       "$lockscreen" = "loginctl lock-session";
 
-      "$screenoff" = "hypridle";
+      "$screenoff" = "sleep 3; hyprctl dispatch dpms off";
 
       # Terminal
       "$terminal" = "kitty";
@@ -122,6 +122,8 @@
       misc = {
         force_default_wallpaper = "0";
         disable_hyprland_logo = "true";
+
+        key_press_enables_dpms = true; # mouse_move is false by default
       };
 
       ## keybinds
@@ -163,8 +165,9 @@
         "$mod ALT, K, resizeactive, 0 -10"
         "$mod ALT, L, resizeactive, 10 0"
       ];
-      bindl = [ "CTRL ALT, L, exec, $lockscreen; $screenoff" ];
+      bindl = [ "CTRL ALT, L, exec, $screenoff" ];
       bind = [
+        "CTRL ALT, L, exec, $lockscreen; $screenoff"
         "ALT, Tab, focusmonitor,+1 "
         "SHIFT ALT, Tab, movewindow,mon:+1"
         "$mod, comma, movecurrentworkspacetomonitor,l"
@@ -189,7 +192,7 @@
         "$mod ALT, SPACE, exec, $socials"
         "$mod SHIFT, SPACE, exec, $browser2"
         "$mod, T, exec, $top"
-        "$mod, Y, exec, [workspace 6 silent;fullscreen;noinitialfocus] $kiosk"
+        "$mod, Y, exec, [workspace 6 silent;noinitialfocus] $kiosk"
         "$mod, U, exec, ~/.config/scripts/update"
         "$mod, V, exec, ~/.config/scripts/jelly"
         "$mod, Z, exec, ~/.config/scripts/mpvclip"
@@ -206,11 +209,13 @@
         "$mod, Print, exec, grimblast --notify copysave active ## Active window"
         "Shift $mod, Print, exec, grimblast --freeze copysave area ## Region"
 
+        "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy ## OCR"
+
         # Macropad
         "CTRL ALT SHIFT, A, exec, hdrop steam"
-        "CTRL ALT SHIFT, B, exec, ~/.config/scripts/obs_togglerec"
+        "CTRL ALT SHIFT, B, exec, obs-cmd replay toggle"
         "CTRL ALT SHIFT, C, exec, ~/.config/scripts/obs_last_remux2wsp"
-        "CTRL ALT SHIFT, D, exec, ~/.config/scripts/obs_buffer"
+        "CTRL ALT SHIFT, D, exec, obs-cmd replay save"
         "CTRL ALT SHIFT, E, exec, hdrop $discord"
         "CTRL ALT SHIFT, F, exec, pactl set-source-mute @DEFAULT_SOURCE@ toggle"
         # CTRL ALT SHIFT, G, exec, 

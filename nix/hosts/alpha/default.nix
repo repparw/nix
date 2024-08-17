@@ -216,7 +216,13 @@
 
   };
 
-  services.sunshine.enable = true;
+  services.sunshine = {
+    enable = true;
+    capSysAdmin = true;
+    settings = {
+      output_name = 1;
+    };
+  };
 
   services.changedetection-io = {
     enable = true;
