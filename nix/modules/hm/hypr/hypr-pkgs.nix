@@ -18,7 +18,10 @@
     waybar
     hyprpicker
     wl-clipboard
+    pulseaudio
 
+    # ocr
+    tesseract
     # hyprwm/contrib
     inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
     inputs.hyprland-contrib.packages.${pkgs.system}.hdrop
@@ -31,17 +34,16 @@
         before_sleep_cmd = "loginctl lock-session";
         after_sleep_cmd = "hyprctl dispatch dpms on";
         ignore_dbus_inhibit = false;
-        lock_cmd = "pidof hyprlock || hyprlock";
       };
 
       listener = [
         {
-          timeout = 300;
+          timeout = 120;
           on-timeout = "hyprctl dispatch dpms off";
           on-resume = "hyprctl dispatch dpms on";
         }
         {
-          timeout = 310;
+          timeout = 180;
           on-timeout = "loginctl lock-session";
         }
       ];
@@ -55,7 +57,6 @@
     settings = {
       general = {
         disable_loading_bar = true;
-        grace = 300;
         hide_cursor = true;
         no_fade_in = false;
       };
@@ -75,9 +76,9 @@
           monitor = "";
           dots_center = true;
           fade_on_empty = false;
-          font_color = "rgb(202, 211, 245)";
-          inner_color = "rgb(91, 96, 120)";
-          outer_color = "rgb(24, 25, 38)";
+          outer_color = "rgb(a9b665)";
+          inner_color = "rgb(282828)";
+          font_color = "rgb(a9b665)";
           outline_thickness = 5;
           shadow_passes = 2;
         }

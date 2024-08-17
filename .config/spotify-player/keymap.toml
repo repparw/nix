@@ -40,12 +40,21 @@ key_sequence = "g l"
 [[actions]]
 action = "CopyLink"
 key_sequence = "y"
+target = "PlayingTrack"
+
+[[actions]]
+action = "CopyLink"
+key_sequence = "Y"
+
 [[actions]]
 action = "GoToArtist"
 key_sequence = "g A"
+target = "PlayingTrack"
 [[actions]]
 action = "GoToAlbum"
 key_sequence = "g B"
+target = "PlayingTrack"
 [[actions]]
 action="ToggleLiked"
 key_sequence="C-l"
+target = "PlayingTrack"

@@ -1,6 +1,8 @@
-{ pkgs, ... }:
+{ pkgs, unstable, ... }:
 
 {
+  imports = [ ./spotifyd.nix ];
+
   home.packages = with pkgs; [
     # GUI
     kitty
@@ -10,15 +12,18 @@
     mpv
     mpvScripts.mpris
     vesktop
-    spotify-player
     pavucontrol
     obs-studio
+    obs-cmd
     waydroid
     scrcpy
     logiops_0_2_3
 
     # find pomo app in nixpkgs
+    unstable.spotify-player
   ];
+
+  gtk.enable = true;
 
   xdg.mimeApps = {
     enable = true;
@@ -45,9 +50,10 @@
   };
 
   home.pointerCursor = {
+    name = "Capitaine Cursors (Gruvbox)";
     package = pkgs.capitaine-cursors-themed;
-    name = "Gruvbox";
     size = 24;
+    gtk.enable = true;
   };
 
   programs.firefox = {
@@ -168,7 +174,5 @@
       };
     };
   };
-
-  services.spotifyd.enable = true;
 
 }
