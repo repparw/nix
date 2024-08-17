@@ -1,4 +1,0 @@
-0 3 * * * sh ~/.config/scripts/buptohdd
-0 */8 * * * cd ~/.config/scripts && sh kdebackup && sh git-autocommit
-0 12 */14 * * docker system prune -af
-0 0 */7 * * rclone sync ~/.config/dlsuite crypt:dlsuite

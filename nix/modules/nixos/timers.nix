@@ -11,19 +11,14 @@
 
   systemd.services.git-autocommit = {
     path = [
-      pkgs.gitFull
+      pkgs.bashInteractive
+      pkgs.git
       pkgs.openssh
     ];
-    environment = {
-      GIT_SSH_COMMAND = "ssh -i /home/repparw/.ssh/id_ed25519";
-    };
     serviceConfig = {
-      WorkingDirectory = "/home/repparw/.dotfiles";
       Type = "oneshot";
       User = "repparw";
-      ExecStart = [
-        "git add -A; git diff-index --quiet --cached HEAD && git commit -m Autocommit; git pull --rebase; git push"
-      ];
+      ExecStart = [ "/home/repparw/.config/scripts/git-autocommit" ];
     };
   };
 
