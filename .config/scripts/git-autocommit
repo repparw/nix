@@ -1,2 +1,2 @@
 #!usr/bin/env bash
-cd /home/repparw/.dotfiles; git add -A; git diff-index --quiet --cached HEAD && git commit -m Autocommit; git pull --rebase; git push
+cd /home/repparw/.dotfiles; git add -A; git commit -m Autocommit; git pull --rebase; git push
