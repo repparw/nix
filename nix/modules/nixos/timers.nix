@@ -12,16 +12,13 @@
   systemd.services.git-autocommit = {
     path = [ pkgs.git ];
     environment = {
-      GIT_SSH_CONFIG = "${pkgs.openssh}/bin/ssh -i /home/repparw/.ssh/id_ed25519";
+      GIT_SSH_COMMAND = "${pkgs.openssh}/bin/ssh -i /home/repparw/.ssh/id_ed25519";
     };
     serviceConfig = {
       WorkingDirectory = "/home/repparw/.dotfiles";
       Type = "oneshot";
       User = "repparw";
-      ExecStart = [
-        "git add -A"
-        "git diff-index --quiet --cached HEAD || git commit -m 'Autocommit'"
-      ];
+      ExecStart = [ "git add -A; git diff-index --quiet --cached HEAD || git commit -m 'Autocommit'" ];
     };
   };
 
