@@ -20,6 +20,10 @@
 
   users.users.repparw = {
     isNormalUser = true;
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF3x0wWO/hQmfN3U8x0OxVqKJ7/nQDWcfg3GkyYKKOkf u0_a452@localhost #termux"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN6UbXeSlW/2jkIU9mQIN5xWElnFbA9tw0BfT072WXgR t440"
+    ];
     shell = pkgs.zsh;
     description = "repparw";
     extraGroups = [
@@ -164,6 +168,7 @@
 
   virtualisation.docker = {
     enable = true;
+    storageDriver = "btrfs";
     rootless.enable = true;
     rootless.setSocketVariable = true;
   };
@@ -181,8 +186,8 @@
     };
     serviceConfig = {
       Type = "oneshot";
-      RemainAfterExit = true;
-      Restart = "always";
+      RemainAfterExit = "yes";
+      Restart = "on-failure";
       RestartSec = 30;
       ExecStart = "${pkgs.docker}/bin/docker compose -f ${../../modules/source/dlsuite-compose.yaml} up -d --remove-orphans";
       ExecStop = "${pkgs.docker}/bin/docker compose -f ${../../modules/source/dlsuite-compose.yaml} down";
