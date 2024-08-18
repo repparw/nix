@@ -16,8 +16,6 @@
 
   networking.hostName = "alpha"; # Define your hostname.
 
-  nixpkgs.config.allowUnfree = true;
-
   users.users.repparw = {
     isNormalUser = true;
     openssh.authorizedKeys.keys = [
