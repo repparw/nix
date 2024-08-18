@@ -82,9 +82,6 @@
     nixpkgs-unstable = {
       url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     };
-    hyprland-contrib = {
-      url = "github:hyprwm/contrib";
-    };
     stylix = {
       url = "github:danth/stylix";
     };
