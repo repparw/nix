@@ -205,8 +205,7 @@
         "$mod, G, exec, xdg-open https://mail.google.com"
         "$mod, X, exec, xdg-open https://app.todoist.com/app/project/personal-2302473483"
 
-        ", Print, exec, $screenshot output ## Both monitors"
-        "Shift, Print, exec, $screenshot active -m output ## Active monitor"
+        ", Print, exec, $screenshot active -m output ## Active monitor"
         "$mod, Print, exec, $screenshot active -m window ## Active window"
         "Shift $mod, Print, exec, $screenshot region -z ## Region"
 
