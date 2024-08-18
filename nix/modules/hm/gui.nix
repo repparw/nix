@@ -23,6 +23,11 @@
     unstable.spotify-player
   ];
 
+  services.kdeconnect = {
+    enable = true;
+    indicator = true;
+  };
+
   gtk.enable = true;
 
   xdg.mimeApps = {
