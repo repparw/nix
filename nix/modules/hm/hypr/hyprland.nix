@@ -27,6 +27,7 @@
       "$GUIfileManager" = "thunar";
       "$pomodoro" = "pomatez";
       "$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
+      "$screenshot" = "hyprshot -o '$XDG_SCREENSHOTS_DIR' -m";
 
       "$desktopmenu" = "killall tofi-drun || tofi-drun";
       "$cmdmenu" = "killall tofi-run || tofi-run | xargs hyprctl dispatch exec --";
@@ -204,10 +205,10 @@
         "$mod, G, exec, xdg-open https://mail.google.com"
         "$mod, X, exec, xdg-open https://app.todoist.com/app/project/personal-2302473483"
 
-        ", Print, exec, grimblast --notify copysave screen ## Both monitors"
-        "Shift, Print, exec, grimblast --notify copysave output ## Active monitor"
-        "$mod, Print, exec, grimblast --notify copysave active ## Active window"
-        "Shift $mod, Print, exec, grimblast --freeze copysave area ## Region"
+        ", Print, exec, $screenshot output ## Both monitors"
+        "Shift, Print, exec, $screenshot active -m output ## Active monitor"
+        "$mod, Print, exec, $screenshot active -m window ## Active window"
+        "Shift $mod, Print, exec, $screenshot region -z ## Region"
 
         "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy ## OCR"
 
