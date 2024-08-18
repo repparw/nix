@@ -1,9 +1,4 @@
-{
-  inputs,
-  pkgs,
-  unstable,
-  ...
-}:
+{ pkgs, unstable, ... }:
 
 {
   home.packages = with pkgs; [
@@ -22,9 +17,9 @@
     # ocr
     tesseract
 
-    inputs.hyprland-contrib.packages.${pkgs.system}.hdrop
+    hdrop
 
-    inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
+    grimblast
     unstable.hyprpicker
   ];
 
