@@ -16,15 +16,16 @@
     swaynotificationcenter
     tofi
     waybar
-    hyprpicker
     wl-clipboard
     pulseaudio
 
     # ocr
     tesseract
-    # hyprwm/contrib
-    inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
+
     inputs.hyprland-contrib.packages.${pkgs.system}.hdrop
+
+    inputs.hyprland-contrib.packages.${pkgs.system}.grimblast
+    unstable.hyprpicker
   ];
 
   services.hypridle = {
