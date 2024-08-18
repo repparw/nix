@@ -19,7 +19,7 @@
 
     hdrop
 
-    grimblast
+    unstable.hyprshot
     unstable.hyprpicker
   ];
 
