@@ -4,6 +4,7 @@
   imports = [ ./hypr-pkgs.nix ];
   wayland.windowManager.hyprland = {
     enable = true;
+    systemd.variables = [ "--all" ];
     ${
       if osConfig.networking.hostName == "alpha" then "extraConfig" else null
     } = builtins.readFile ../../source/hyprland-alpha.conf;
