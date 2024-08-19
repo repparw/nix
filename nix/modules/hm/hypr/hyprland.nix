@@ -168,7 +168,6 @@
       ];
       bindl = [ "CTRL ALT, L, exec, $lockscreen; $screenoff" ];
       bind = [
-        "CTRL ALT, L, exec, $lockscreen; $screenoff"
         "ALT, Tab, focusmonitor,+1 "
         "SHIFT ALT, Tab, movewindow,mon:+1"
         "$mod, comma, movecurrentworkspacetomonitor,l"
