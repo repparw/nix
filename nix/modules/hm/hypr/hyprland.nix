@@ -46,7 +46,7 @@
       # Autostart
       exec-once = [
         "swaybg -i ~/Pictures/gruvbox.jpg"
-        "wlsunset -l -34.9 -L -57.9 -t 2500j"
+        "wlsunset -l -34.9 -L -57.9 -t 2500"
         "/usr/libexec/kf6/polkit-kde-authentication-agent-1" # TODO WARN probably doesnt work? make systemd service
         "$notificationsDaemon"
         "waybar"
