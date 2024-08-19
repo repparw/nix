@@ -87,6 +87,7 @@
         lua-language-server
         marksman
         beautysh
+        ruby-lsp
       ]
       ++ [ unstable.basedpyright ];
   };
