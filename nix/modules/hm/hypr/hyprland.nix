@@ -94,7 +94,7 @@
 
       # https://wiki.hyprland.org/Configuring/Variables/#animations
       animations = {
-        enabled = true;
+        enabled = false;
 
         # Default animations, see https://wiki.hyprland.org/Configuring/Animations/ for more
 
