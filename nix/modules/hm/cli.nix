@@ -78,15 +78,21 @@
     extraPackages =
       with pkgs;
       [
+        beautysh
+
+        marksman
+
+        lua-language-server
         stylua
+
         nil # nix lsp
         nixfmt-rfc-style
+
         nodePackages_latest.typescript-language-server
         biome
+
         rust-analyzer
-        lua-language-server
-        marksman
-        beautysh
+
         ruby-lsp
         rufo
       ]
