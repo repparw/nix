@@ -24,6 +24,7 @@
 
   services.hypridle = {
     enable = true;
+    lockCmd = "pidof hyprlock || hyprlock";
     settings = {
       general = {
         before_sleep_cmd = "loginctl lock-session";
