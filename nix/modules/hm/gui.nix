@@ -24,10 +24,19 @@
 
   programs.kitty = {
     enable = true;
-    config = {
+    theme = "Gruvbox Material Dark Medium";
+    font = {
+      name = "FiraCode Nerd Font Mono";
+      size = 12;
+    };
+    settings = {
+      disable_ligatures = "cursor";
+      enable_audio_bell = "no";
+      window_padding_width = "5 0";
+      hide_window_decorations = "no";
+      confirm_os_window_close = 0;
+      background_opacity = 0.9;
       #font = "FiraCode Nerd Font Mono";
-      fontSize = 12;
-      theme = "Gruvbox Material Dark Medium";
     };
   };
 
