@@ -8,8 +8,13 @@
     ./${hostName}
   ];
 
-  environment.sessionVariables = {
-    FLAKE = ".dotfiles/nix";
+  programs.nh = {
+    enable = true;
+    flake = "/home/repparw/.dotfiles/nix";
+    clean = {
+      enable = true;
+      extraArgs = "--keep 3 -keep-since 7d";
+    };
   };
 
   nixpkgs.config.allowUnfree = true;

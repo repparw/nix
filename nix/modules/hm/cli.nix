@@ -67,6 +67,8 @@
     eza
     tree
 
+    manix
+
     nodejs # remove after porting nvim plugins to nix cfg
   ];
 
