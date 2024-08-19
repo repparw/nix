@@ -28,8 +28,7 @@
       "$GUIfileManager" = "thunar";
       "$pomodoro" = "pomatez";
       "$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
-      "$screenshot" = "hyprshot -o '$XDG_SCREENSHOTS_DIR' -m";
-
+      "$screenshot" = "hyprshot -o $XDG_SCREENSHOTS_DIR -m";
       "$desktopmenu" = "killall tofi-drun || tofi-drun";
       "$cmdmenu" = "killall tofi-run || tofi-run | xargs hyprctl dispatch exec --";
       "$notificationsDaemon" = "swaync";
