@@ -6,7 +6,7 @@
     libdrm
     swaybg
     wshowkeys
-    mako # dunst alt
+    # mako # dunst alt
     swaynotificationcenter
     tofi
     waybar
