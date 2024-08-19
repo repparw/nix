@@ -1,4 +1,4 @@
-{ pkgs, unstable, ... }:
+{ pkgs, ... }:
 
 {
 
@@ -15,7 +15,7 @@
     vt = 1;
     settings = rec {
       initial_session = {
-        command = "${unstable.hyprland}/bin/Hyprland";
+        command = "${pkgs.hyprland}/bin/Hyprland";
         user = "repparw";
       };
       default_session = initial_session;
