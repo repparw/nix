@@ -5,7 +5,6 @@
 
   home.packages = with pkgs; [
     # GUI
-    kitty
     chromium
     xfce.thunar
     ferdium
@@ -22,6 +21,15 @@
     # find pomo app in nixpkgs
     unstable.spotify-player
   ];
+
+  programs.kitty = {
+    enable = true;
+    config = {
+      #font = "FiraCode Nerd Font Mono";
+      fontSize = 12;
+      theme = "Gruvbox Material Dark Medium";
+    };
+  };
 
   services.kdeconnect = {
     enable = true;
