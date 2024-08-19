@@ -4,7 +4,6 @@
 
   programs.hyprland = {
     enable = true;
-    package = unstable.hyprland;
   };
 
   environment.systemPackages = [
