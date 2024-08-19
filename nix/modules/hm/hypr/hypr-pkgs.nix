@@ -18,8 +18,8 @@
 
     hdrop
 
-    unstable.hyprshot
-    unstable.hyprpicker
+    hyprshot
+    hyprpicker
   ];
 
   services.hypridle = {
@@ -56,7 +56,6 @@
 
   programs.hyprlock = {
     enable = true;
-    package = unstable.hyprlock;
     settings = {
       general = {
         disable_loading_bar = true;
