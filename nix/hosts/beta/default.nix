@@ -5,13 +5,10 @@
 { pkgs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-	  ./hardware-configuration.nix
-	  ../../modules/nixos/cachix.nix
-	  ../../modules/nixos/common.nix
-	  ../../modules/nixos/hyprland.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
   networking.hostName = "beta"; # Define your hostname.
 
@@ -21,9 +18,12 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.repparw = {
     isNormalUser = true;
-	shell = pkgs.zsh;
+    shell = pkgs.zsh;
     description = "repparw";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
   };
 
   # ignore lid close on AC power
