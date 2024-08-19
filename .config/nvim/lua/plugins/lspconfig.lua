@@ -119,7 +119,7 @@ return {
 			})
 
 			-- List of LSP server names
-			local servers = { "basedpyright", "tsserver", "nil_ls", "rust_analyzer", "lua_ls", "marksman" }
+			local servers = { "basedpyright", "tsserver", "nil_ls", "rust_analyzer", "lua_ls", "marksman", "ruby_lsp" }
 
 			-- Loop through the server names and set up each one
 			for _, server in ipairs(servers) do
