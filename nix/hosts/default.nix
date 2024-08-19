@@ -9,7 +9,7 @@
   ];
 
   environment.sessionVariables = {
-    FLAKE = ".dotfiles/";
+    FLAKE = ".dotfiles/nix";
   };
 
   nixpkgs.config.allowUnfree = true;
