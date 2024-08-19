@@ -33,7 +33,7 @@
       disable_ligatures = "cursor";
       enable_audio_bell = "no";
       window_padding_width = "5 0";
-      hide_window_decorations = "no";
+      #hide_window_decorations = "no";
       confirm_os_window_close = 0;
       background_opacity = "0.9";
       #shell_integration = "no-sudo"; do not alias sudo to ensure kitty terminfo files are in env. Needed if you have sudo to unset env vars
