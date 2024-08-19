@@ -25,13 +25,10 @@
   services.hypridle = {
     enable = true;
     lockCmd = "pidof hyprlock || hyprlock";
+    beforeSleepCmd = "loginctl lock-session";
+    afterSleepCmd = "hyprctl dispatch dpms on";
+    ignoreDbusInhibit = false;
     settings = {
-      general = {
-        before_sleep_cmd = "loginctl lock-session";
-        after_sleep_cmd = "hyprctl dispatch dpms on";
-        ignore_dbus_inhibit = false;
-      };
-
       listener = [
         {
           timeout = 120;
