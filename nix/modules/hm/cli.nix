@@ -88,6 +88,7 @@
         marksman
         beautysh
         ruby-lsp
+        rufo
       ]
       ++ [ unstable.basedpyright ];
   };
