@@ -8,6 +8,10 @@
     ./${hostName}
   ];
 
+  environment.sessionVariables = {
+    FLAKE = "~/.dotfiles/";
+  };
+
   nixpkgs.config.allowUnfree = true;
 
   nix.optimise.automatic = true;
