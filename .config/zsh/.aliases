@@ -39,8 +39,10 @@
 		alias vn='v ~/.config/nvim/init.lua'
 
 	# Nix
-		alias nrb="cd ~/.dotfiles/nix && sudo nixos-rebuild switch --flake '.#' --show-trace"
-		alias nrbt="cd ~/.dotfiles/nix && sudo nixos-rebuild boot --flake '.#' --show-trace"
+		alias nrb="nh os switch"
+		alias nrbt="nh os boot"
+		alias nup="nh os switch -u"
+		alias nupt="nh os boot -u"
 
 	# cd	
 	if (( $+commands[zoxide] )); then
