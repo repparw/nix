@@ -27,6 +27,7 @@ return {
 			formatters_by_ft = {
 				lua = { "stylua" },
 				nix = { "nixfmt" },
+				rb = { "rufo" },
 				sh = { "beautysh" },
 				typescript = { "biome", "prettierd", "prettier" },
 				json = { "biome" },
