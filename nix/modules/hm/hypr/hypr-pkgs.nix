@@ -5,7 +5,6 @@
     # Desktop
     libdrm
     swaybg
-    wlsunset
     wshowkeys
     mako # dunst alt
     swaynotificationcenter
@@ -45,6 +44,14 @@
       ];
     };
 
+  };
+
+  services.wlsunset = {
+    enable = true;
+    gamma = 2500;
+    temperature.night = 2500;
+    latitude = -34.9;
+    longitude = -57.9;
   };
 
   programs.hyprlock = {
