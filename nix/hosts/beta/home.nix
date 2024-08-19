@@ -2,7 +2,6 @@
 {
   imports = [
     ../../modules/hm/cli.nix
-    ../../modules/hm/nix.nix
     ../../modules/hm/gui.nix
     ../../modules/hm/hypr/hyprland.nix
     ../../modules/hm/kanshi.nix # Dynamic display
