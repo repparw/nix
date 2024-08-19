@@ -166,7 +166,7 @@
         "$mod ALT, K, resizeactive, 0 -10"
         "$mod ALT, L, resizeactive, 10 0"
       ];
-      bindl = [ "CTRL ALT, L, exec, $screenoff" ];
+      bindl = [ "CTRL ALT, L, exec, $lockscreen; $screenoff" ];
       bind = [
         "CTRL ALT, L, exec, $lockscreen; $screenoff"
         "ALT, Tab, focusmonitor,+1 "
