@@ -9,6 +9,7 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ../../modules/nixos/timers.nix
+    ../../modules/nixos/gaming.nix
   ];
 
   networking.hostName = "alpha"; # Define your hostname.
@@ -188,16 +189,6 @@
       ExecStop = "${pkgs.docker}/bin/docker compose -f ${../../modules/source/dlsuite-compose.yaml} down";
     };
   };
-
-  programs.steam = {
-    enable = true;
-    remotePlay.openFirewall = true;
-    gamescopeSession.enable = true;
-  };
-
-  programs.gamescope.enable = true;
-
-  programs.gamemode.enable = true;
 
   systemd.services.logid = {
     wants = [ "multi-user.target" ];
