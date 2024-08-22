@@ -3,8 +3,6 @@ networks:
     default:
         name: dlsuite
 
-extra_hosts:
-    - "host.docker.internal:host-gateway"
 
 x-environment: &default-tz-puid-pgid
   TZ: America/Argentina/Buenos_Aires
@@ -12,6 +10,8 @@ x-environment: &default-tz-puid-pgid
   PGID: 131
 
 services:
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     prowlarr:
         image: 'linuxserver/prowlarr:latest'
         container_name: prowlarr
