@@ -46,7 +46,7 @@ return {
 			-- Telescope picker. This is really useful to discover what Telescope can
 			-- do as well as how to actually do it!
 
-			local project_files = function()
+			_G.project_files = function()
 				local opts = {} -- define here if you want to define something
 				local ok = pcall(require("telescope.builtin").git_files, opts)
 				if not ok then
@@ -99,7 +99,7 @@ return {
 			vim.keymap.set("n", "<leader>fr", builtin.resume, { desc = "[F]ind [R]esume" })
 			vim.keymap.set("n", "<leader>f.", builtin.oldfiles, { desc = '[F]ind Recent Files ("." for repeat)' })
 			vim.keymap.set("n", "<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
-			vim.keymap.set("n", "<C-p>", project_files(), { desc = "Find project files" })
+			vim.keymap.set("n", "<C-p>", "<cmd>lua project_files()<CR>", { desc = "Find project files" })
 
 			-- Slightly advanced example of overriding default behavior and theme
 			vim.keymap.set("n", "<leader>/", function()
