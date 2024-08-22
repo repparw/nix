@@ -26,20 +26,6 @@ return {
 			{ "nvim-tree/nvim-web-devicons", enabled = vim.g.have_nerd_font },
 		},
 
-    local is_inside_work_tree = {}
-
-    local project_files = function()
-      local opts = {}
-      local cwd = vim.fn.getcwd()
-      if is_inside_work_tree[cwd] == nil then
-        vim.fn.system("git rev-parse --is-inside-work-tree")
-        is_inside_work_tree[cwd] = vim.v.shell_error == 0
-      end
-      opts.cwd = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
-      end
-      require("telescope.builtin").find_files(opts)
-    end
-
 		config = function()
 			-- Telescope is a fuzzy finder that comes with a lot of different things that
 			-- it can fuzzy find! It's more than just a "file finder", it can search
