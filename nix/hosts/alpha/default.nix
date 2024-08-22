@@ -214,6 +214,7 @@
     enable = true;
     user = "repparw";
     playwrightSupport = true;
+    behindProxy = true;
   };
 
   # Open ports in the firewall.
