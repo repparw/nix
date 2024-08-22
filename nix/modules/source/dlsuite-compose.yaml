@@ -2,7 +2,7 @@
 networks:
     default:
         name: dlsuite
-#       external: true
+        external: true
 
 x-environment: &default-tz-puid-pgid
   TZ: America/Argentina/Buenos_Aires
