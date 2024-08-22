@@ -213,8 +213,8 @@
   services.changedetection-io = {
     enable = true;
     user = "repparw";
-    playwrightSupport = true;
     behindProxy = true;
+    playwrightSupport = true;
   };
 
   # Open ports in the firewall.
