@@ -10,8 +10,6 @@ x-environment: &default-tz-puid-pgid
   PGID: 131
 
 services:
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
     prowlarr:
         image: 'linuxserver/prowlarr:latest'
         container_name: prowlarr
@@ -124,10 +122,10 @@ services:
     swag:
         image: 'linuxserver/swag:latest'
         container_name: swag
-        extra_hosts:
-            - host.docker.internal:host-gateway
         cap_add:
             - NET_ADMIN
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
         environment:
             - DOCKER_MODS=linuxserver/mods:universal-cron
             - TZ=America/Argentina/Buenos_Aires
