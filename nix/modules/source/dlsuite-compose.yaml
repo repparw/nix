@@ -188,7 +188,7 @@ services:
         restart: unless-stopped
 
     paperless:
-        image: 'paperless-ngx/paperless-ngx:latest'
+        image: 'ghcr.io/paperless-ngx/paperless-ngx:latest'
         container_name: paperless
         depends_on:
             - db
@@ -214,6 +214,29 @@ services:
 
 ### change-detection.io
 
+    playwright:
+        container_name: playwright
+        image: 'browserless/chrome:1.60-chrome-stable'
+        restart: unless-stopped
+        environment:
+          - SCREEN_WIDTH=1920
+          - SCREEN_HEIGHT=1024
+          - SCREEN_DEPTH=16
+          - ENABLE_DEBUGGER=false
+          - PREBOOT_CHROME=true
+          - CONNECTION_TIMEOUT=300000
+          - MAX_CONCURRENT_SESSIONS=10
+          - CHROME_REFRESH_TIME=600000
+          - DEFAULT_BLOCK_ADS=true
+          - DEFAULT_STEALTH=true
+          - DEFAULT_IGNORE_HTTPS_ERRORS=true
+        healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost:3000"]
+          interval: 30s
+          timeout: 10s
+          retries: 5
+          start_period: 10s
+
     changedetection:
         image: 'dgtlmoon/changedetection.io'
         container_name: changedetection
@@ -223,35 +246,12 @@ services:
           - PORT=5000
           - PUID=1001
           - PGID=131
-          - WEBDRIVER_URL=http://playwright-chrome:3000/wd/hub
-          - PLAYWRIGHT_DRIVER_URL=ws://playwright-chrome:3000
+          - WEBDRIVER_URL=http://playwright:3000/wd/hub
+          - PLAYWRIGHT_DRIVER_URL=ws://playwright:3000
           - BASE_URL=https://repparw.com.ar
           - HIDE_REFERER=true
         ports:
           - "5000:5000"
         restart: unless-stopped
         depends_on:
-          - playwright-chrome
-
-    playwright-chrome:
-      container_name: playwright-chrome
-      image: 'browserless/chrome:1.60-chrome-stable'
-      restart: unless-stopped
-      environment:
-        - SCREEN_WIDTH=1920
-        - SCREEN_HEIGHT=1024
-        - SCREEN_DEPTH=16
-        - ENABLE_DEBUGGER=false
-        - PREBOOT_CHROME=true
-        - CONNECTION_TIMEOUT=300000
-        - MAX_CONCURRENT_SESSIONS=10
-        - CHROME_REFRESH_TIME=600000
-        - DEFAULT_BLOCK_ADS=true
-        - DEFAULT_STEALTH=true
-        - DEFAULT_IGNORE_HTTPS_ERRORS=true
-      healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:3000"]
-        interval: 30s
-        timeout: 10s
-        retries: 5
-        start_period: 10s
+          - playwright
