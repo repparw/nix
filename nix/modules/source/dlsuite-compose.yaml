@@ -232,28 +232,27 @@ services:
         - "5000:5000"
       restart: unless-stopped
       depends_on:
-        playwright-chrome:
-          condition: service_healthy
+        - playwright-chrome
 
-  playwright-chrome:
-    hostname: playwright-chrome
-    image: 'browserless/chrome:1.60-chrome-stable'
-    restart: unless-stopped
-    environment:
-      - SCREEN_WIDTH=1920
-      - SCREEN_HEIGHT=1024
-      - SCREEN_DEPTH=16
-      - ENABLE_DEBUGGER=false
-      - PREBOOT_CHROME=true
-      - CONNECTION_TIMEOUT=300000
-      - MAX_CONCURRENT_SESSIONS=10
-      - CHROME_REFRESH_TIME=600000
-      - DEFAULT_BLOCK_ADS=true
-      - DEFAULT_STEALTH=true
-      - DEFAULT_IGNORE_HTTPS_ERRORS=true
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 10s
+    playwright-chrome:
+      hostname: playwright-chrome
+      image: 'browserless/chrome:1.60-chrome-stable'
+      restart: unless-stopped
+      environment:
+        - SCREEN_WIDTH=1920
+        - SCREEN_HEIGHT=1024
+        - SCREEN_DEPTH=16
+        - ENABLE_DEBUGGER=false
+        - PREBOOT_CHROME=true
+        - CONNECTION_TIMEOUT=300000
+        - MAX_CONCURRENT_SESSIONS=10
+        - CHROME_REFRESH_TIME=600000
+        - DEFAULT_BLOCK_ADS=true
+        - DEFAULT_STEALTH=true
+        - DEFAULT_IGNORE_HTTPS_ERRORS=true
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:3000"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+        start_period: 10s
