@@ -1,4 +1,3 @@
-# symlink in /etc/docker/compose/dlsuite/docker-compose.yaml
 networks:
     default:
         name: dlsuite
@@ -215,26 +214,26 @@ services:
 
 ### change-detection.io
 
-        changedetection:
-    image: 'dgtlmoon/changedetection.io'
-    container_name: changedetection.io
-    hostname: changedetection.io
-    volumes:
-      - '/var/lib/changedetection-io:/datastore:Z'
-    environment:
-      - PORT=5000
-      - PUID=1000
-      - PGID=1000
-      - WEBDRIVER_URL=http://playwright-chrome:3000/wd/hub
-      - PLAYWRIGHT_DRIVER_URL=ws://playwright-chrome:3000
-      - BASE_URL=https://repparw.com.ar
-      - HIDE_REFERER=true
-    ports:
-      - "5000:5000"
-    restart: unless-stopped
-    depends_on:
-      playwright-chrome:
-        condition: service_healthy
+    changedetection:
+      image: 'dgtlmoon/changedetection.io'
+      container_name: changedetection
+      hostname: changedetection
+      volumes:
+        - '/var/lib/changedetection-io:/datastore:Z'
+      environment:
+        - PORT=5000
+        - PUID=1000
+        - PGID=1000
+        - WEBDRIVER_URL=http://playwright-chrome:3000/wd/hub
+        - PLAYWRIGHT_DRIVER_URL=ws://playwright-chrome:3000
+        - BASE_URL=https://repparw.com.ar
+        - HIDE_REFERER=true
+      ports:
+        - "5000:5000"
+      restart: unless-stopped
+      depends_on:
+        playwright-chrome:
+          condition: service_healthy
 
   playwright-chrome:
     hostname: playwright-chrome
