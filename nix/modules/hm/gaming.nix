@@ -2,9 +2,9 @@
 
 {
   home.packages = with pkgs; [
-		# Gaming
-		heroic
-		lutris
-		mangohud
-  	];
+    # Gaming
+    legendary-gl
+    lutris
+    mangohud
+  ];
 }
