@@ -210,14 +210,6 @@
     };
   };
 
-  services.changedetection-io = {
-    enable = true;
-    user = "repparw";
-    behindProxy = true;
-    baseURL = "changedetection.repparw.com.ar";
-    playwrightSupport = true;
-  };
-
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
