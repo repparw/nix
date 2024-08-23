@@ -214,6 +214,7 @@
     enable = true;
     user = "repparw";
     behindProxy = true;
+    baseURL = "changedetection.repparw.com.ar";
     playwrightSupport = true;
   };
 
