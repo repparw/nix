@@ -2,12 +2,7 @@
   description = "repparw's flake";
 
   outputs =
-    {
-      self,
-      home-manager,
-      stylix,
-      ...
-    }@inputs:
+    { self, home-manager, ... }@inputs:
     let
 
       system = "x86_64-linux";
@@ -81,9 +76,6 @@
     };
     nixpkgs-unstable = {
       url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    };
-    stylix = {
-      url = "github:danth/stylix";
     };
     home-manager = {
       url = "github:nix-community/home-manager/release-24.05"; # Branches for stable, master follows unstable
