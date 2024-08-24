@@ -56,7 +56,7 @@
     tig
 
     # Modern replacements of basic tools
-    bottom
+    unstable.bottom
     bat
     colordiff
     duf
