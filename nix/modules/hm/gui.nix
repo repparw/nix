@@ -5,6 +5,7 @@
 
   home.packages = with pkgs; [
     # GUI
+    tridactyl-native
     chromium
     xfce.thunar
     mpv
