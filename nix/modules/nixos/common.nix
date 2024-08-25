@@ -39,8 +39,6 @@
     };
   };
 
-  programs.firefox.nativeMessagingHosts.tridactyl = true;
-
   # Nerdfonts
   fonts = {
     packages = with pkgs; [ (nerdfonts.override { fonts = [ "FiraCode" ]; }) ];
@@ -95,16 +93,16 @@
     wireplumber.enable = true;
     wireplumber.configPackages = [
       (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/11-disable-autoswitch.conf" ''
-        	wireplumber.settings = {
-        	  bluetooth.autoswitch-to-headset-profile = false;
-        	}
-          '')
+        wireplumber.settings = {
+          bluetooth.autoswitch-to-headset-profile = false;
+        }
+      '')
       (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/20-bt.conf" ''
-        	monitor.bluez.properties = {
-        	  bluez5.roles = [ a2dp_sink a2dp_source bap_sink bap_source ]
-        	  bluez5.enable-hw-volume = false
-        	}
-          '')
+        monitor.bluez.properties = {
+          bluez5.roles = [ a2dp_sink a2dp_source bap_sink bap_source ]
+          bluez5.enable-hw-volume = false
+        }
+      '')
     ];
   };
 
