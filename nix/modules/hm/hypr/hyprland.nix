@@ -50,7 +50,7 @@
         "$notificationsDaemon"
         "waybar"
         "jellyfin-mpv-shim"
-        "[workspace 5 silent] $socials"
+        "[workspace 5 silent; fullscreen] $socials"
       ];
 
       general = {
