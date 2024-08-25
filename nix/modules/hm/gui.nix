@@ -76,6 +76,9 @@
 
   programs.firefox = {
     enable = true;
+
+    nativeMessagingHosts = [ pkgs.tridactyl-native ];
+
     ####profiles = {
     ####  default = {
     ####  	isDefault = true;
