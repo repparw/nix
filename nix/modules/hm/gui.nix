@@ -5,7 +5,6 @@
 
   home.packages = with pkgs; [
     # GUI
-    tridactyl-native
     chromium
     xfce.thunar
     mpv
@@ -77,6 +76,7 @@
 
   programs.firefox = {
     enable = true;
+    nativeMessagingHosts.tridactyl = true;
     ####profiles = {
     ####  default = {
     ####  	isDefault = true;
@@ -94,6 +94,7 @@
     ####  kiosk = {
 
     ####  }
+    ####  socials = {
     ####};
   };
 
