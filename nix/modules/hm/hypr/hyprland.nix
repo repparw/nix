@@ -20,7 +20,7 @@
 
       # GUI
       "$browser" = "firefox";
-      "$socials" = "ferdium";
+      "$socials" = "$browser -P socials";
       "$kiosk" = "$browser -P kiosk";
       "$browser2" = "chromium-browser";
       "$notes" = "obsidian";
