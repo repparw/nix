@@ -7,7 +7,6 @@
     # GUI
     chromium
     xfce.thunar
-    ferdium
     mpv
     mpvScripts.mpris
     vesktop
