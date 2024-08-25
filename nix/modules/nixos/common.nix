@@ -31,52 +31,52 @@
   services.printing.enable = true;
 
   services.keyd = {
-	enable = true;
-	keyboards.default.settings = { main = { capslock = "overload(control, esc)"; }; };
+    enable = true;
+    keyboards.default.settings = {
+      main = {
+        capslock = "overload(control, esc)";
+      };
+    };
   };
+
+  programs.firefox.nativeMessagingHosts.tridactyl = true;
 
   # Nerdfonts
   fonts = {
-	packages = with pkgs; [
-	  (nerdfonts.override { fonts = [ "FiraCode" ]; })
-	];
+    packages = with pkgs; [ (nerdfonts.override { fonts = [ "FiraCode" ]; }) ];
 
-  # Set default font
+    # Set default font
     fontconfig.defaultFonts = {
-	  "sansSerif" = [ "FiraCode Nerd Font" ];
-	  "serif" = [ "FiraCode Nerd Font" ];
-	  "monospace" = [ "FiraCode Nerd Font Mono" ];
-	};
+      "sansSerif" = [ "FiraCode Nerd Font" ];
+      "serif" = [ "FiraCode Nerd Font" ];
+      "monospace" = [ "FiraCode Nerd Font Mono" ];
+    };
   };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-	vim
-	zsh
-	wget
-	tmux
+    vim
+    zsh
+    wget
+    tmux
   ];
 
   nixpkgs.overlays = [
-    (self: super: {
-      mpv = super.mpv.override {
-        scripts = [ self.mpvScripts.mpris ];
-      };
-    })
+    (self: super: { mpv = super.mpv.override { scripts = [ self.mpvScripts.mpris ]; }; })
   ];
 
   programs.zsh.enable = true;
 
   programs.mosh.enable = true;
 
-# List services that you want to enable:
+  # List services that you want to enable:
 
-# Enable the OpenSSH daemon.
+  # Enable the OpenSSH daemon.
   services.openssh = {
-	enable = true;
-	ports = [ 10000 ];
-	settings.PasswordAuthentication = false;
+    enable = true;
+    ports = [ 10000 ];
+    settings.PasswordAuthentication = false;
   };
 
   programs.ssh.startAgent = true;
@@ -93,19 +93,19 @@
     #jack.enable = true;
 
     wireplumber.enable = true;
-	wireplumber.configPackages = [
-	  (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/11-disable-autoswitch.conf" ''
-		wireplumber.settings = {
-		  bluetooth.autoswitch-to-headset-profile = false;
-		}
-	  '')
-	  (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/20-bt.conf" ''
-		monitor.bluez.properties = {
-		  bluez5.roles = [ a2dp_sink a2dp_source bap_sink bap_source ]
-		  bluez5.enable-hw-volume = false
-		}
-	  '')
-	];
+    wireplumber.configPackages = [
+      (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/11-disable-autoswitch.conf" ''
+        	wireplumber.settings = {
+        	  bluetooth.autoswitch-to-headset-profile = false;
+        	}
+          '')
+      (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/20-bt.conf" ''
+        	monitor.bluez.properties = {
+        	  bluez5.roles = [ a2dp_sink a2dp_source bap_sink bap_source ]
+        	  bluez5.enable-hw-volume = false
+        	}
+          '')
+    ];
   };
 
   hardware.bluetooth.enable = true;
@@ -117,41 +117,40 @@
   #hardware.xpadneo.enable = true;
 
   environment.etc = {
-  # Creates /etc/nanorc
-	"logid.cfg" = {
-    text = ''
-	devices: (
-	{
-		name: "MX Vertical Advanced Ergonomic Mouse";
-		smartshift:
-		{
-			on: true;
-			threshold: 30;
-		};
-		hiresscroll:
-		{
-			hires: true;
-			invert: false;
-			target: false;
-		};
-		dpi: 1600;
+    # Creates /etc/nanorc
+    "logid.cfg" = {
+      text = ''
+        devices: (
+        {
+        	name: "MX Vertical Advanced Ergonomic Mouse";
+        	smartshift:
+        	{
+        		on: true;
+        		threshold: 30;
+        	};
+        	hiresscroll:
+        	{
+        		hires: true;
+        		invert: false;
+        		target: false;
+        	};
+        	dpi: 1600;
 
-		buttons: (
-			{
-				cid: 0xfd;
-				action =
-				{
-					type: "Keypress";
-					keys: ["KEY_LEFTSHIFT", "KEY_LEFTMETA", "KEY_PRINT"];
-				};
-			}
-		);
-	}
-	);
-    '';
-	};
+        	buttons: (
+        		{
+        			cid: 0xfd;
+        			action =
+        			{
+        				type: "Keypress";
+        				keys: ["KEY_LEFTSHIFT", "KEY_LEFTMETA", "KEY_PRINT"];
+        			};
+        		}
+        	);
+        }
+        );
+      '';
+    };
   };
-
 
   nix.settings.experimental-features = "nix-command flakes";
 }
