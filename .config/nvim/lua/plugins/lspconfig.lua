@@ -127,7 +127,7 @@ return {
 				"lua_ls",
 				"marksman",
 				"ruby_lsp",
-				"vue-language-server",
+				"volar",
 			}
 
 			-- Loop through the server names and set up each one
