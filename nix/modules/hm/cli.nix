@@ -1,9 +1,4 @@
-{
-  config,
-  pkgs,
-  unstable,
-  ...
-}:
+{ pkgs, unstable, ... }:
 
 {
   programs = {
@@ -98,6 +93,9 @@
         ruby-lsp
         rufo
       ]
-      ++ [ unstable.basedpyright ];
+      ++ [
+        unstable.basedpyright
+        unstable.vue-language-server
+      ];
   };
 }
