@@ -49,7 +49,9 @@
     axel
     tlrc # tldr
     nq # Command queue
+
     lf
+    vimv-rs # bulk rename
     pdfgrep
     catdoc # provides catppt and xls2csv
 
