@@ -93,9 +93,9 @@
         ruby-lsp
         rufo
       ]
-      ++ [
-        unstable.basedpyright
-        unstable.vue-language-server
-      ];
+      ++ (with unstable; [
+        basedpyright
+        vue-language-server
+      ]);
   };
 }
