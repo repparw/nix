@@ -73,8 +73,7 @@
     enable = true;
     package = unstable.neovim-unwrapped;
     extraPackages =
-      with pkgs;
-      [
+      (with pkgs; [
         beautysh
 
         marksman
@@ -92,7 +91,7 @@
 
         ruby-lsp
         rufo
-      ]
+      ])
       ++ (with unstable; [
         basedpyright
         vue-language-server
