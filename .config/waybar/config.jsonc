@@ -36,9 +36,9 @@
         }
     },
 	"mpris": {
-    "max-width": 60,
-    "min-width": 60,
+	"dynamic-len": 70,
 	"artist-len": 20,
+	"dynamic-importance-order": ["title", "position", "length", "album", "artist" ],
     "format": "{player_icon} {dynamic}",
     "format-paused": "{status_icon} <i>{dynamic}</i>",
     "player-icons": {
