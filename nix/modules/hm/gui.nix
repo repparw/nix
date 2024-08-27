@@ -50,6 +50,7 @@
         "org.pwmt.zathura.desktop"
         "firefox.desktop"
       ];
+      "image/png" = "feh.desktop";
     };
     associations.removed = {
       "application/pdf" = [ "chromium-browser.desktop" ];
