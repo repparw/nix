@@ -38,6 +38,7 @@
 	"mpris": {
     "max-width": 60,
     "min-width": 60,
+	"artist-len": 20,
     "format": "{player_icon} {dynamic}",
     "format-paused": "{status_icon} <i>{dynamic}</i>",
     "player-icons": {
