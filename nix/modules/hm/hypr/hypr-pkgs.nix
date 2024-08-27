@@ -13,8 +13,8 @@
     wl-clipboard
     pulseaudio
 
-    # ocr
-    tesseract
+    tesseract # ocr
+    zbar # qr
 
     hdrop
 
