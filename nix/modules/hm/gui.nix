@@ -51,6 +51,9 @@
         "firefox.desktop"
       ];
       "image/png" = "feh.desktop";
+      "image/jpeg" = "feh.desktop";
+      "image/gif" = "feh.desktop";
+      "image/webp" = "feh.desktop";
     };
     associations.removed = {
       "application/pdf" = [ "chromium-browser.desktop" ];
