@@ -18,8 +18,8 @@
 
     hdrop
 
-    hyprpicker
     unstable.hyprshot
+    unstable.hyprpicker
   ];
 
   services.hypridle = {
