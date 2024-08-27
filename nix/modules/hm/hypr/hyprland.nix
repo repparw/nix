@@ -208,6 +208,7 @@
         "Shift $mod, Print, exec, $screenshot region -z ## Region"
 
         "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy ## OCR"
+        "$mod, O, exec, wl-paste --type image/png | zbarimg --raw - | wl-copy ## OCR"
 
         # Macropad
         "CTRL ALT SHIFT, A, exec, hdrop steam"
