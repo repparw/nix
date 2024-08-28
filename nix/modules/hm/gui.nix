@@ -5,7 +5,6 @@
 
   home.packages = with pkgs; [
     # GUI
-    chromium
     xfce.thunar
     mpv
     mpvScripts.mpris
@@ -77,6 +76,8 @@
     size = 24;
     gtk.enable = true;
   };
+
+  programs.chromium.enable = true;
 
   programs.firefox = {
     enable = true;
