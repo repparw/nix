@@ -39,8 +39,6 @@ vim.keymap.set("n", "<leader><C-o>", ':lua require("utils").jumps_to_qf()<CR>', 
 vim.keymap.set("n", "[q", ":cprevious<CR>", { desc = "Previous quickfix" })
 vim.keymap.set("n", "]q", ":cnext<CR>", { desc = "Next quickfix" })
 
---vim.keymap.set("n", "<leader>o", ":ObsidianOpen<CR>", { noremap = true, silent = true, desc = "Open Obsidian" })
-
 vim.keymap.set("n", "<leader>y", '"+y', { desc = "Yank to clipboard" }) -- Copy to clipboard
 vim.keymap.set("v", "<leader>y", '"+y', { desc = "Yank to clipboard" }) -- Copy to clipboard
 vim.keymap.set("n", "<leader>Y", '"+Y', { desc = "Yank lines to clipboard" }) -- Copy to clipboard
