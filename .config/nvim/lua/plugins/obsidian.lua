@@ -26,7 +26,7 @@ return {
 			},
 			["<leader>o"] = {
 				action = function()
-					return require("obsidian").get_client().open_note()
+					return require("obsidian").get_client():command("ObsidianOpen")
 					-- return require("obsidian").get_client():command("ObsidianNew", { args = "Foo" })
 				end,
 				opts = { noremap = false, expr = true, buffer = true },
