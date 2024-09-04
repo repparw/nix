@@ -43,7 +43,7 @@
       "$fileManager" = "LS_COLORS='di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43' hdrop $terminal --class filemanager zsh -c lf";
       "$spotify" = "$terminal --class spotify spotify_player";
       "$notes2" = ''
-        hdrop -c obsinvim '$terminal --class obsinvim --hold zsh -ic "cd /home/repparw/Documents/obsidian; v ."'
+        hdrop -c obsinvim "$terminal --class obsinvim --hold zsh -ic /home/repparw/.config/scripts/obsinvim"
       '';
 
       # Autostart
