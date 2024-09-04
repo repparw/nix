@@ -3,22 +3,26 @@
 {
   imports = [ ./spotifyd.nix ];
 
-  home.packages = with pkgs; [
-    # GUI
-    xfce.thunar
-    mpv
-    mpvScripts.mpris
-    vesktop
-    pavucontrol
-    obs-studio
-    obs-cmd
-    waydroid
-    scrcpy
-    logiops_0_2_3
+  home.packages =
+    with pkgs;
+    [
+      # GUI
+      xfce.thunar
+      mpv
+      mpvScripts.mpris
+      vesktop
+      pavucontrol
+      obs-studio
+      obs-cmd
+      waydroid
+      scrcpy
+      logiops_0_2_3
 
-    # find pomo app in nixpkgs
-    unstable.spotify-player
-  ];
+      obsidian
+
+      # find pomo app in nixpkgs
+    ]
+    ++ (with unstable; [ spotify-player ]);
 
   programs.kitty = {
     enable = true;
