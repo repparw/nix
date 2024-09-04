@@ -23,7 +23,7 @@
       "$socials" = "$browser -P socials";
       "$kiosk" = "$browser -P kiosk";
       "$browser2" = "chromium-browser";
-      "$notes" = "obsidian";
+      "$notes" = "hdrop obsidian";
       "$discord" = "vesktop";
       "$GUIfileManager" = "thunar";
       "$pomodoro" = "pomatez";
