@@ -24,6 +24,7 @@
       "$kiosk" = "$browser -P kiosk";
       "$browser2" = "chromium-browser";
       "$notes" = "obsidian";
+      "$notes2" = "kitty --hold zsh -ic ' cd /home/repparw/Documents/obsidian; v .'";
       "$discord" = "vesktop";
       "$GUIfileManager" = "thunar";
       "$pomodoro" = "pomatez";
@@ -196,6 +197,7 @@
         "$mod, V, exec, ~/.config/scripts/jelly"
         "$mod, Z, exec, ~/.config/scripts/mpvclip"
         "$mod, N, exec, $notes"
+        "$mod SHIFT, N, exec, $notes2"
         "$mod, R, exec, $terminal zsh -ic rpi"
         "$mod, B, exec, ~/.config/scripts/bttoggle"
         "$mod, P, exec, [workspace 6 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
