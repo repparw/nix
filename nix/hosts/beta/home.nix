@@ -13,12 +13,9 @@
   home.username = "repparw";
   home.homeDirectory = "/home/repparw";
 
-  home.packages =
-    with pkgs;
-    [
-      brightnessctl # backlight
-    ]
-    ++ [ unstable.obsidian ];
+  home.packages = with pkgs; [
+    brightnessctl # backlight
+  ];
 
   home.stateVersion = "23.11";
 
