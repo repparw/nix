@@ -14,6 +14,8 @@
 
   networking.hostName = "alpha"; # Define your hostname.
 
+  networking.interfaces.enp42s0.wakeOnLan.enable = true;
+
   users.users.repparw = {
     isNormalUser = true;
     openssh.authorizedKeys.keys = [
