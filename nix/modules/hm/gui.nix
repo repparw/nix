@@ -191,8 +191,7 @@
   };
 
   systemd.user.services = {
-    obs = {
-      ${if osConfig.networking.hostName == "alpha" then null else "enable"} = false;
+    ${if osConfig.networking.hostName == "alpha" then "obs" else null} = {
       Unit = {
         StartLimitIntervalSec = 60;
         StartLimitBurst = 4;
