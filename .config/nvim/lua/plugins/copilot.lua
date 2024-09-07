@@ -16,13 +16,4 @@ return {
 			require("copilot_cmp").setup()
 		end,
 	},
-	{
-		"CopilotC-Nvim/CopilotChat.nvim",
-		branch = "canary",
-		dependencies = {
-			{ "zbirenbaum/copilot.lua" },
-			{ "nvim-lua/plenary.nvim" }, -- for curl, log wrapper
-		},
-		opts = {},
-	},
 }
