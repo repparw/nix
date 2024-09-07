@@ -1,4 +1,9 @@
-{ pkgs, unstable, ... }:
+{
+  pkgs,
+  unstable,
+  osConfig,
+  ...
+}:
 
 {
   imports = [ ./spotifyd.nix ];
@@ -187,6 +192,7 @@
 
   systemd.user.services = {
     obs = {
+      enable = if osConfig.networking.hostName == "alpha" then true else false;
       Unit = {
         StartLimitIntervalSec = 60;
         StartLimitBurst = 4;
