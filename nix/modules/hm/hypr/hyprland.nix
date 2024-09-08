@@ -50,8 +50,6 @@
         "/usr/libexec/kf6/polkit-kde-authentication-agent-1" # TODO WARN probably doesnt work? make systemd service
         "$notificationsDaemon"
         "waybar"
-        "jellyfin-mpv-shim"
-        "[workspace 5 silent; fullscreen] $socials"
       ];
 
       general = {
