@@ -44,4 +44,8 @@
     "$mod SHIFT, 0, movewindow, mon:$monitor2"
     "$mod SHIFT, 0, movetoworkspace, 10"
   ];
+  exec-once = [
+    "jellyfin-mpv-shim"
+    "[workspace 5 silent; fullscreen] $socials"
+  ];
 }
