@@ -4,6 +4,7 @@
     ../../modules/hm/cli.nix
     ../../modules/hm/gui.nix
     ../../modules/hm/hypr/hyprland.nix
+    ../../modules/hm/kanshi.nix # Dynamic display
   ];
 
   # Let Home Manager install and manage itself.
