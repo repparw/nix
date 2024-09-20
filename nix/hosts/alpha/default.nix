@@ -213,12 +213,11 @@
   };
 
   services.postgresql = {
-	enable = true;
-	dataDir = "/mnt/hdd/docker/postgres";
-	settings = ''
-		listen_addresses = 'localhost'
-	'';
-		};
+    enable = true;
+    dataDir = "/mnt/hdd/docker/postgres";
+    settings = ''
+      	listen_addresses = 'localhost'
+    '';
   };
 
   # Open ports in the firewall.
