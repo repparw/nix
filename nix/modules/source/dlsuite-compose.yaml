@@ -10,13 +10,15 @@ x-environment: &default-tz-puid-pgid
 
 services:
   ## remove after proy
-    postgres:
+    grupo10:
         image: 'docker.io/library/postgres:15'
-        container_name: postgres
+        container_name: grupo10
         environment:
             POSTGRES_DB: grupo10
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
+        ports:
+            - '5432:5432'
         volumes:
             - '/home/docker/grupo10:/var/lib/postgresql/data:Z'
         restart: unless-stopped
