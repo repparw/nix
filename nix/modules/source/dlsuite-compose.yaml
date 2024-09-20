@@ -9,6 +9,18 @@ x-environment: &default-tz-puid-pgid
   PGID: 131
 
 services:
+  ## remove after proy
+    postgres:
+        image: 'docker.io/library/postgres:15'
+        container_name: postgres
+        environment:
+            POSTGRES_DB: grupo10
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        volumes:
+            - '/home/docker/grupo10:/var/lib/postgresql/data:Z'
+        restart: unless-stopped
+  ## remove after proy
     prowlarr:
         image: 'linuxserver/prowlarr:latest'
         container_name: prowlarr
