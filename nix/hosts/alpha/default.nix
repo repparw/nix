@@ -212,15 +212,6 @@
     };
   };
 
-  services.postgresql = {
-    enable = true;
-    dataDir = "/home/repparw/Documents/postgres";
-    ensureDatabases = [ "grupo10" ];
-    settings = {
-      listen_addresses = "localhost";
-    };
-  };
-
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
