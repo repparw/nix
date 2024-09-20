@@ -214,7 +214,7 @@
 
   services.postgresql = {
     enable = true;
-    dataDir = "/mnt/hdd/docker/postgres";
+    dataDir = "/home/repparw/Documents/postgres";
     ensureDatabases = [ "grupo10" ];
     settings = {
       listen_addresses = "localhost";
