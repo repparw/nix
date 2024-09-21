@@ -22,6 +22,18 @@ services:
         volumes:
             - '/home/docker/grupo10:/var/lib/postgresql/data:Z'
         restart: unless-stopped
+    pgadmin:
+        image: 'dpage/pgadmin4:latest'
+        container_name: pgadmin
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@admin.com
+            PGADMIN_DEFAULT_PASSWORD: admin
+        ports:
+            - '5050:5050'
+        depends_on:
+            - grupo10
+        restart: unless-stopped
+
   ## remove after proy
     prowlarr:
         image: 'linuxserver/prowlarr:latest'
