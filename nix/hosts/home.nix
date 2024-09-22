@@ -1,4 +1,4 @@
-{ hostName, pkgs, ... }:
+{ hostName, ... }:
 
 {
   imports = [
@@ -13,11 +13,6 @@
 
   home.username = "repparw";
   home.homeDirectory = "/home/repparw";
-
-  home.packages = with pkgs; [
-    # Essential packages
-    jellyfin-mpv-shim
-  ];
 
   home.stateVersion = "23.11";
 }
