@@ -17,6 +17,11 @@
     };
   };
 
+  nix.trustedUsers = [
+    "root"
+    "repparw"
+  ];
+
   nix.optimise.automatic = true;
 
   nixpkgs.config.allowUnfree = true;
