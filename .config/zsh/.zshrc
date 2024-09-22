@@ -64,6 +64,7 @@ if [ -f ${ZDOTDIR:-$HOME}/.aliases ]; then
 	. ${ZDOTDIR:-$HOME}/.aliases
 fi
 
+eval "$(direnv hook zsh)"
 
 # Load conflicting keybinds after zsh-vi-mode
 # FZF ctrl-r and ctrl-t
