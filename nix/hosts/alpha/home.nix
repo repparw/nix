@@ -1,22 +1,10 @@
-{ pkgs, unstable, ... }:
+{ pkgs, ... }:
 {
-  imports = [
-    ../../modules/hm/cli.nix
-    ../../modules/hm/gui.nix
-    ../../modules/hm/hypr/hyprland.nix
-    ../../modules/hm/gaming.nix
-  ];
-
-  # Let Home Manager install and manage itself.
-  programs.home-manager.enable = true;
-
-  home.username = "repparw";
-  home.homeDirectory = "/home/repparw";
+  imports = [ ../../modules/hm/gaming.nix ];
 
   home.packages = with pkgs; [
     # Essential packages
     jellyfin-mpv-shim
   ];
 
-  home.stateVersion = "23.11";
 }
