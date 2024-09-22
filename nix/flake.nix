@@ -32,7 +32,7 @@
                 inherit unstable;
                 inherit inputs;
               };
-              home-manager.users.repparw = import ./hosts/alpha/home.nix;
+              home-manager.users.repparw = import ./hosts/home.nix;
             }
           ];
           specialArgs = {
@@ -56,7 +56,7 @@
                 inherit unstable;
                 inherit inputs;
               };
-              home-manager.users.repparw = import ./hosts/beta/home.nix;
+              home-manager.users.repparw = import ./hosts/home.nix;
             }
           ];
           specialArgs = {
