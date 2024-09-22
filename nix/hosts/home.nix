@@ -11,6 +11,11 @@
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
+  };
+
   home.username = "repparw";
   home.homeDirectory = "/home/repparw";
 
