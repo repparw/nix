@@ -11,7 +11,7 @@ x-environment: &default-tz-puid-pgid
 services:
   ## remove after proy
     grupo10:
-        image: 'docker.io/library/postgres:15'
+        image: 'docker.io/library/postgres:16'
         container_name: grupo10
         environment:
             POSTGRES_DB: grupo10
