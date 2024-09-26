@@ -23,7 +23,6 @@
       "$socials" = "$browser -P socials";
       "$kiosk" = "$browser -P kiosk";
       "$browser2" = "chromium-browser";
-      "$notes" = "hdrop obsidian";
       "$discord" = "vesktop";
       "$GUIfileManager" = "thunar";
       "$pomodoro" = "pomatez";
@@ -42,7 +41,7 @@
       "$top" = "$terminal btm --theme gruvbox";
       "$fileManager" = "LS_COLORS='di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43' hdrop $terminal --class filemanager zsh -c lf";
       "$spotify" = "$terminal --class spotify spotify_player";
-      "$notes2" = "hdrop -c obsinvim '$terminal --class obsinvim --hold zsh -ic /home/repparw/.config/scripts/obsinvim'";
+      "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim --hold zsh -ic /home/repparw/.config/scripts/obsinvim'";
 
       # Autostart
       exec-once = [
@@ -194,8 +193,7 @@
         "$mod, U, exec, ~/.config/scripts/update"
         "$mod, V, exec, ~/.config/scripts/jelly"
         "$mod, Z, exec, ~/.config/scripts/mpvclip"
-        "$mod, N, exec, $notes2"
-        "$mod SHIFT, N, exec, $notes"
+        "$mod, N, exec, $notes"
         "$mod, R, exec, $terminal zsh -ic rpi"
         "$mod, B, exec, ~/.config/scripts/bttoggle"
         "$mod, P, exec, [workspace 6 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
