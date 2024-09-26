@@ -17,6 +17,25 @@
     };
   };
 
+  services.vdirsyncer = {
+    enable = true;
+    jobs.gcal = {
+      enable = true;
+      timerConfig = {
+        OnBootSec = "1h";
+        OnUnitActiveSec = "2h";
+      };
+	  config.storages = {
+		my_cloud_contacts = {
+		  type = "carddav";
+		  url = "https://dav.example.com/";
+		  read_only = true;
+		  username = "user";
+		  "password.fetch" = [ "command" "cat" "/etc/vdirsyncer/cloud.passwd" ];
+		};
+    };
+  };
+
   nix.trustedUsers = [
     "root"
     "repparw"
