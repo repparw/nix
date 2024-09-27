@@ -85,7 +85,9 @@
         nixfmt-rfc-style
 
         nodePackages_latest.typescript-language-server
+
         biome
+        nodePackages.prettier
 
         rust-analyzer
 
