@@ -31,8 +31,8 @@ return {
 				sh = { "beautysh" },
 				typescript = { "biome", "prettierd", "prettier" },
 				json = { "biome" },
-				css = { "prettierd", "prettier" },
-				html = { "prettierd", "prettier" },
+				css = { "prettier" },
+				html = { "prettier" },
 				-- Conform can also run multiple formatters sequentially
 				-- python = { "isort", "black" },
 				--
