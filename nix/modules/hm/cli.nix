@@ -17,6 +17,7 @@
 
   home.packages = with pkgs; [
     # essentials
+    nvim-pkg
     zsh
     curl
     wget
@@ -68,37 +69,4 @@
 
     nodejs # remove after porting nvim plugins to nix cfg
   ];
-
-  programs.neovim = {
-    enable = true;
-    package = unstable.neovim-unwrapped;
-    extraPackages =
-      (with pkgs; [
-        beautysh
-
-        marksman
-
-        lua-language-server
-        stylua
-
-        nil # nix lsp
-        nixfmt-rfc-style
-
-        nodePackages_latest.typescript-language-server
-
-        biome
-        nodePackages.prettier
-
-        rust-analyzer
-
-        ruby-lsp
-        rufo
-      ])
-      ++ (with unstable; [
-        basedpyright
-        vue-language-server
-
-        vimPlugins.avante-nvim
-      ]);
-  };
 }
