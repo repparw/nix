@@ -7,8 +7,10 @@ return {
 		hints = { enabled = false },
 		behaviour = { auto_suggestions = false },
 		mappings = {
-			toggle = "<leader>a",
-			ask = "<leader>Aa",
+			ask = "<leader>a",
+			edit = "<leader>e",
+			toggle = "<leader>At",
+			refresh = "<leader>Ar",
 		},
 	},
 	-- if you want to download pre-built binary, then pass source=false. Make sure to follow instruction above.
