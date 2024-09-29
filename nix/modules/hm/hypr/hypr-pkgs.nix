@@ -56,7 +56,6 @@
   programs.tofi = {
     enable = true;
     settings = {
-      font = "/usr/share/fonts/FiraCode-NF/FiraCodeNerdFontMono-Regular.ttf";
       font-size = 24;
 
       hint-font = true;
