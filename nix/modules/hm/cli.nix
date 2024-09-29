@@ -97,6 +97,8 @@
       ++ (with unstable; [
         basedpyright
         vue-language-server
+
+        vimPlugins.avante-nvim
       ]);
   };
 }
