@@ -90,11 +90,11 @@
       text-cursor-style = "bar";
       text-cursor-corner-radius = 0;
 
-      prompt-text = "run: ";
+      prompt-text = "\"run:\"";
 
       prompt-padding = 0;
 
-      placeholder-text = "" "";
+      placeholder-text = "\"\"";
 
       horizontal = false;
 
@@ -113,7 +113,7 @@
       num-results = 5;
       background-color = "#000000AA";
       ### Window positioning
-      output = "" "";
+      output = "\"\"";
 
       anchor = "center";
 
@@ -139,7 +139,7 @@
 
       hide-input = false;
 
-      hidden-character = "" * "";
+      hidden-character = "\"*\"";
 
       physical-keybindings = true;
 
