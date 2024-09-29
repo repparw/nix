@@ -118,7 +118,7 @@
 
   programs.spotify-player = {
     enable = true;
-    package = unstable.spotify-player;
+    #package = unstable.spotify-player;
     keymaps = { };
     settings = {
       theme = "gruvbox_dark";
