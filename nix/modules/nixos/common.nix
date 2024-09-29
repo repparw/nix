@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, nixvim, ... }:
 
 {
 
@@ -62,6 +62,7 @@
 
   nixpkgs.overlays = [
     (self: super: { mpv = super.mpv.override { scripts = [ self.mpvScripts.mpris ]; }; })
+    nixvim.overlays.default
   ];
 
   programs.zsh.enable = true;

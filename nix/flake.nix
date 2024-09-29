@@ -2,7 +2,12 @@
   description = "repparw's flake";
 
   outputs =
-    { self, home-manager, ... }@inputs:
+    {
+      self,
+      home-manager,
+      nixvim,
+      ...
+    }@inputs:
     let
 
       system = "x86_64-linux";
@@ -11,8 +16,6 @@
         inherit system;
         config.allowUnfree = true;
       };
-
-      #########		nixpkgs = import inputs.nixpkgs { inherit system; config.allowUnfree = true; };
 
     in
     {
@@ -71,6 +74,9 @@
     };
 
   inputs = {
+    nixvim = {
+      url = "github:repparw/nixvim/main";
+    };
     nixpkgs = {
       url = "github:NixOS/nixpkgs/nixos-24.05";
     };
