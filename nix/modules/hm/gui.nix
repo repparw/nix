@@ -27,7 +27,9 @@
 
       # find pomo app in nixpkgs
     ]
-    ++ (with unstable; [ spotify-player ]);
+    ++ (with unstable; [
+      #spotify-player 
+    ]);
 
   programs.kitty = {
     enable = true;
@@ -112,6 +114,14 @@
     ####  }
     ####  socials = {
     ####};
+  };
+
+  programs.spotify-player = {
+    enable = true;
+    package = unstable.spotify-player;
+    keymaps = { };
+    settings = { };
+    themes = { };
   };
 
   programs.feh = {
