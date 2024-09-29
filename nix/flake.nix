@@ -42,6 +42,7 @@
             hostName = "alpha";
             inherit unstable;
             inherit inputs;
+            inherit nixvim;
           };
         };
 
