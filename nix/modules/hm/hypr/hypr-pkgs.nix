@@ -8,7 +8,6 @@
     wshowkeys
     # mako # dunst alt
     swaynotificationcenter
-    tofi
     waybar
     wl-clipboard
     pulseaudio
@@ -52,6 +51,113 @@
     temperature.night = 2500;
     latitude = -34.9;
     longitude = -57.9;
+  };
+
+  programs.tofi = {
+  settings = {
+		font = "/usr/share/fonts/FiraCode-NF/FiraCodeNerdFontMono-Regular.ttf";
+	font-size = 24;
+	font-features = "";
+	font-variations = "";
+
+	hint-font = true;
+
+	text-color = #d4be98;
+
+	prompt-background = #00000000;
+	prompt-background-padding = 0;
+	prompt-background-corner-radius = 0;
+
+	placeholder-color = #d4be98;
+	placeholder-background = #00000000;
+	placeholder-background-padding = 0;
+	placeholder-background-corner-radius = 0;
+
+	input-background = #00000000;
+	input-background-padding = 0;
+	input-background-corner-radius = 0;
+
+	default-result-background = #00000000;
+	default-result-background-padding = 0;
+	default-result-background-corner-radius = 0;
+
+	selection-color = #a9b665;
+	selection-background = #00000000;
+	selection-background-padding = 0;
+	selection-background-corner-radius = 0;
+
+	selection-match-color = #00000000;
+
+	text-cursor-style = bar;
+	text-cursor-corner-radius = 0;
+
+	prompt-text = "run: ";
+
+	prompt-padding = 0;
+
+	placeholder-text = "";
+
+	num-results = 0;
+
+	result-spacing = 0;
+
+	horizontal = false;
+
+	min-input-width = 0;
+
+### Window theming;
+	clip-to-padding = true;
+
+	width = 100%;
+	height = 100%;
+	border-width = 0;
+	outline-width = 0;
+	padding-left = 35%;
+	padding-top = 35%;
+	result-spacing = 25;
+	num-results = 5;
+	background-color = "#000000AA";
+### Window positioning
+	output = "";
+
+	anchor = center;
+
+	exclusive-zone = -1;
+
+	margin-top = 0;
+	margin-bottom = 0;
+	margin-left = 0;
+	margin-right = 0;
+
+### Behaviour;
+	hide-cursor = false;
+
+	text-cursor = true;
+
+	history = true;
+
+	matching-algorithm = normal;
+
+	require-match = true;
+
+	auto-accept-single = false;
+
+	hide-input = false;
+
+	hidden-character = "*";
+
+	physical-keybindings = true;
+
+	print-index = false;
+
+	drun-launch = true;
+
+	late-keyboard-init = false;
+
+	multi-instance = false;
+
+	ascii-input = false;
+  };
   };
 
   programs.hyprlock = {
