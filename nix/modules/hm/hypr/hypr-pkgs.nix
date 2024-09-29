@@ -54,110 +54,106 @@
   };
 
   programs.tofi = {
-  settings = {
-		font = "/usr/share/fonts/FiraCode-NF/FiraCodeNerdFontMono-Regular.ttf";
-	font-size = 24;
-	font-features = "";
-	font-variations = "";
+    settings = {
+      font = "/usr/share/fonts/FiraCode-NF/FiraCodeNerdFontMono-Regular.ttf";
+      font-size = 24;
+      font-features = "";
+      font-variations = "";
 
-	hint-font = true;
+      hint-font = true;
 
-	text-color = "#d4be98";
+      text-color = "#d4be98";
 
-	prompt-background = "#00000000";
-	prompt-background-padding = 0;
-	prompt-background-corner-radius = 0;
+      prompt-background = "#00000000";
+      prompt-background-padding = 0;
+      prompt-background-corner-radius = 0;
 
-	placeholder-color = "#d4be98";
-	placeholder-background = #00000000;
-	placeholder-background-padding = 0;
-	placeholder-background-corner-radius = 0;
+      placeholder-color = "#d4be98";
+      placeholder-background = "#00000000";
+      placeholder-background-padding = 0;
+      placeholder-background-corner-radius = 0;
 
-	input-background = #00000000;
-	input-background-padding = 0;
-	input-background-corner-radius = 0;
+      input-background = "#00000000";
+      input-background-padding = 0;
+      input-background-corner-radius = 0;
 
-	default-result-background = #00000000;
-	default-result-background-padding = 0;
-	default-result-background-corner-radius = 0;
+      default-result-background = "#00000000";
+      default-result-background-padding = 0;
+      default-result-background-corner-radius = 0;
 
-	selection-color = #a9b665;
-	selection-background = #00000000;
-	selection-background-padding = 0;
-	selection-background-corner-radius = 0;
+      selection-color = "#a9b665";
+      selection-background = "#00000000";
+      selection-background-padding = 0;
+      selection-background-corner-radius = 0;
 
-	selection-match-color = #00000000;
+      selection-match-color = "#00000000";
 
-	text-cursor-style = bar;
-	text-cursor-corner-radius = 0;
+      text-cursor-style = "bar";
+      text-cursor-corner-radius = 0;
 
-	prompt-text = "run: ";
+      prompt-text = "run: ";
 
-	prompt-padding = 0;
+      prompt-padding = 0;
 
-	placeholder-text = "";
+      placeholder-text = "";
 
-	num-results = 0;
+      horizontal = false;
 
-	result-spacing = 0;
+      min-input-width = 0;
 
-	horizontal = false;
+      ### Window theming;
+      clip-to-padding = true;
 
-	min-input-width = 0;
+      width = "100%";
+      height = "100%";
+      border-width = 0;
+      outline-width = 0;
+      padding-left = "35%";
+      padding-top = "35%";
+      result-spacing = 25;
+      num-results = 5;
+      background-color = "#000000AA";
+      ### Window positioning
+      output = "";
 
-### Window theming;
-	clip-to-padding = true;
+      anchor = "center";
 
-	width = 100%;
-	height = 100%;
-	border-width = 0;
-	outline-width = 0;
-	padding-left = 35%;
-	padding-top = 35%;
-	result-spacing = 25;
-	num-results = 5;
-	background-color = "#000000AA";
-### Window positioning
-	output = "";
+      exclusive-zone = -1;
 
-	anchor = center;
+      margin-top = 0;
+      margin-bottom = 0;
+      margin-left = 0;
+      margin-right = 0;
 
-	exclusive-zone = -1;
+      ### Behaviour;
+      hide-cursor = false;
 
-	margin-top = 0;
-	margin-bottom = 0;
-	margin-left = 0;
-	margin-right = 0;
+      text-cursor = true;
 
-### Behaviour;
-	hide-cursor = false;
+      history = true;
 
-	text-cursor = true;
+      matching-algorithm = "normal";
 
-	history = true;
+      require-match = true;
 
-	matching-algorithm = normal;
+      auto-accept-single = false;
 
-	require-match = true;
+      hide-input = false;
 
-	auto-accept-single = false;
+      hidden-character = "*";
 
-	hide-input = false;
+      physical-keybindings = true;
 
-	hidden-character = "*";
+      print-index = false;
 
-	physical-keybindings = true;
+      drun-launch = true;
 
-	print-index = false;
+      late-keyboard-init = false;
 
-	drun-launch = true;
+      multi-instance = false;
 
-	late-keyboard-init = false;
-
-	multi-instance = false;
-
-	ascii-input = false;
-  };
+      ascii-input = false;
+    };
   };
 
   programs.hyprlock = {
