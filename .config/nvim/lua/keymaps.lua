@@ -28,7 +28,7 @@ vim.keymap.set("n", "s", '"_s')
 vim.keymap.set("n", "c", '"_c')
 
 -- avante
-vim.keymap.set("n", "<leader>ac", ":AvanteChat<CR>", { desc = "Create a new Avante component" })
+vim.keymap.set("n", "<leader>ac", ":AvanteChat<CR>", { desc = "avante: chat" })
 
 -- move between splits with Ctrl + hjkl
 vim.keymap.set("n", "<C-h>", "<C-w>h")
