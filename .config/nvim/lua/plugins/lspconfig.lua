@@ -121,7 +121,7 @@ return {
 			-- List of LSP server names
 			local servers = {
 				"basedpyright",
-				"tsserver",
+				"ts_ls",
 				"nil_ls",
 				"rust_analyzer",
 				"lua_ls",
