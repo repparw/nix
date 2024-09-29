@@ -27,6 +27,9 @@ vim.keymap.set("n", "<C-q>", ':lua require("utils").toggle_qf()<CR>', { desc = "
 vim.keymap.set("n", "s", '"_s')
 vim.keymap.set("n", "c", '"_c')
 
+-- avante
+vim.keymap.set("n", "<leader>ac", ":AvanteChat<CR>", { desc = "Create a new Avante component" })
+
 -- move between splits with Ctrl + hjkl
 vim.keymap.set("n", "<C-h>", "<C-w>h")
 vim.keymap.set("n", "<C-j>", "<C-w>j")
