@@ -54,11 +54,10 @@
   };
 
   programs.tofi = {
+    enable = true;
     settings = {
       font = "/usr/share/fonts/FiraCode-NF/FiraCodeNerdFontMono-Regular.ttf";
       font-size = 24;
-      font-features = "";
-      font-variations = "";
 
       hint-font = true;
 
@@ -95,7 +94,7 @@
 
       prompt-padding = 0;
 
-      placeholder-text = "";
+      placeholder-text = "" "";
 
       horizontal = false;
 
@@ -114,7 +113,7 @@
       num-results = 5;
       background-color = "#000000AA";
       ### Window positioning
-      output = "";
+      output = "" "";
 
       anchor = "center";
 
@@ -140,7 +139,7 @@
 
       hide-input = false;
 
-      hidden-character = "*";
+      hidden-character = "" * "";
 
       physical-keybindings = true;
 
