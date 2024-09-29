@@ -62,13 +62,13 @@
 
 	hint-font = true;
 
-	text-color = #d4be98;
+	text-color = "#d4be98";
 
-	prompt-background = #00000000;
+	prompt-background = "#00000000";
 	prompt-background-padding = 0;
 	prompt-background-corner-radius = 0;
 
-	placeholder-color = #d4be98;
+	placeholder-color = "#d4be98";
 	placeholder-background = #00000000;
 	placeholder-background-padding = 0;
 	placeholder-background-corner-radius = 0;
