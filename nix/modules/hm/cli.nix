@@ -23,7 +23,7 @@
     baseIndex = 1;
     newSession = true;
     keyMode = "vi";
-    plugins = with pkgs.tmuxPlugins; [
+    plugins = with unstable.tmuxPlugins; [
       {
         plugin = power-theme;
         extraConfig = ''
@@ -66,8 +66,6 @@
 
       set-option -g update-environment "DISPLAY WAYLAND_DISPLAY SSH_AUTH_SOCK"
 
-      bind C-l send-keys 'C-l'
-
       # keybindings
       bind-key -T copy-mode-vi v send-keys -X begin-selection
       bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
@@ -75,6 +73,8 @@
 
       bind '"' split-window -v -c "#{pane_current_path}"
       bind % split-window -h -c "#{pane_current_path}"
+
+      bind C-l send-keys 'C-l'
     '';
   };
 
