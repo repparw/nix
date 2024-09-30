@@ -12,7 +12,7 @@
 
       system = "x86_64-linux";
 
-      unstable = import inputs.nixpkgs-unstable {
+      stable = import inputs.nixpkgs-unstable {
         inherit system;
         config.allowUnfree = true;
       };
@@ -32,7 +32,7 @@
               home-manager.backupFileExtension = "hm-backup";
               home-manager.extraSpecialArgs = {
                 hostName = "alpha";
-                inherit unstable;
+                inherit stable;
                 inherit inputs;
               };
               home-manager.users.repparw = import ./hosts/home.nix;
@@ -40,7 +40,7 @@
           ];
           specialArgs = {
             hostName = "alpha";
-            inherit unstable;
+            inherit stable;
             inherit inputs;
           };
         };
@@ -56,7 +56,7 @@
               home-manager.backupFileExtension = "hm-backup";
               home-manager.extraSpecialArgs = {
                 hostName = "beta";
-                inherit unstable;
+                inherit stable;
                 inherit inputs;
               };
               home-manager.users.repparw = import ./hosts/home.nix;
@@ -64,7 +64,7 @@
           ];
           specialArgs = {
             hostName = "beta";
-            inherit unstable;
+            inherit stable;
             inherit inputs;
           };
         };
@@ -78,14 +78,13 @@
       url = "github:repparw/nixvim/main";
     };
     nixpkgs = {
-      url = "github:NixOS/nixpkgs/nixos-24.05";
-    };
-    nixpkgs-unstable = {
       url = "github:NixOS/nixpkgs/nixos-unstable";
     };
+    stable = {
+      url = "github:NixOS/nixpkgs/nixos-24.05";
+    };
     home-manager = {
-      url = "github:nix-community/home-manager/release-24.05"; # Branches for stable, master follows unstable
-      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:nix-community/home-manager"; # Branches for stable, master follows unstable
     };
   };
 
