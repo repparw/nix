@@ -1,4 +1,4 @@
-{ pkgs, unstable, ... }:
+{ pkgs, stable, ... }:
 
 {
   programs = {
@@ -23,7 +23,7 @@
     baseIndex = 1;
     newSession = true;
     keyMode = "vi";
-    plugins = with unstable.tmuxPlugins; [
+    plugins = with pkgs.tmuxPlugins; [
       {
         plugin = power-theme;
         extraConfig = ''
@@ -84,6 +84,7 @@
     with pkgs;
     [
       # essentials
+      nvim-pkg
       zsh
       curl
       wget
@@ -119,7 +120,7 @@
       tig
 
       # Modern replacements of basic tools
-      unstable.bottom
+      bottom
       bat
       colordiff
       duf
@@ -134,7 +135,9 @@
 
       nodejs # remove after porting nvim plugins to nix cfg
     ]
-    ++ (with unstable; [
-      nvim-pkg
-    ]);
+    ++ (
+      with stable;
+      [
+      ]
+    );
 }
