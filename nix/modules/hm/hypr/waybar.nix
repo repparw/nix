@@ -6,6 +6,8 @@
     settings = {
       position = "top";
       ${if osConfig.networking.hostName == "alpha" then "output" else null} = "HDMI-A-1";
+	  modules-left = [
+			${if osConfig.networking.hostName == "alpha" then "clock/time" else "clock/time" "hyprland/language"}; ];
       modules = [
         {
           type = "custom/text";
