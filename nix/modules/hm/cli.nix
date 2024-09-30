@@ -24,8 +24,8 @@
     newSession = true;
     keyMode = "vi";
     plugins = with pkgs.tmuxPlugins; [
-      { plugin = gruvbox; }
       {
+        plugin = gruvbox;
         extraConfig = ''
           # THEME
           # disable unused functionality in gruvbox theme
