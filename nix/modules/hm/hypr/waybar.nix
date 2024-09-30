@@ -1,7 +1,18 @@
-{ ... }:
+{ osConfig, ... }:
 {
   programs.waybar = {
     enable = true;
+    systemd.enable = true;
+    settings = {
+      position = "top";
+      ${if osConfig.networking.hostName == "alpha" then "output" else null} = "HDMI-A-1";
+      modules = [
+        {
+          type = "custom/text";
+          exec = "echo 'Hello, World!'";
+        }
+      ];
+    };
     style = ''
       	  @keyframes blink-warning {
       		70% {
@@ -346,14 +357,5 @@
         font-weight: normal;
       }
     '';
-    settings = {
-      position = "top";
-      modules = [
-        {
-          type = "custom/text";
-          exec = "echo 'Hello, World!'";
-        }
-      ];
-    };
   };
 }
