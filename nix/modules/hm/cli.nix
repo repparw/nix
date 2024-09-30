@@ -59,7 +59,6 @@
       #tmux-floax TODO
       vim-tmux-navigator
       yank
-      continuum
     ];
     extraConfig = ''
       bind-key @ command-prompt -p "create pane from:" "join-pane -s ':%%'"
