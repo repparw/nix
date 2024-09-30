@@ -17,7 +17,6 @@
       # GUI
       xfce.thunar
       mpv
-      mpvScripts.mpris
       vesktop
       pavucontrol
       obs-studio
