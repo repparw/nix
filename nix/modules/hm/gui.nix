@@ -35,12 +35,12 @@
 
   programs.kitty = {
     enable = true;
-    theme = "Gruvbox Material Dark Medium";
     font = {
       name = "FiraCode Nerd Font Mono";
       size = 12;
     };
     settings = {
+      theme = "Gruvbox Material Dark Medium";
       disable_ligatures = "cursor";
       enable_audio_bell = "no";
       window_margin = "2 2 0";
