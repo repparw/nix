@@ -57,7 +57,6 @@
     vim
     zsh
     wget
-    tmux
   ];
 
   nixpkgs.overlays = [
