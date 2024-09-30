@@ -1,4 +1,4 @@
-{ hostName, nixvim, ... }:
+{ hostName, inputs, ... }:
 
 {
   imports = [
@@ -13,7 +13,7 @@
 
   nixpkgs.overlays = [
     (self: super: { mpv = super.mpv.override { scripts = [ self.mpvScripts.mpris ]; }; })
-    nixvim.overlays.default
+    inputs.nixvim.overlays.default
   ];
 
   programs.direnv = {
