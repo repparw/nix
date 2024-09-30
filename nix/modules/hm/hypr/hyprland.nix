@@ -182,7 +182,6 @@
         "$mod, E, exec, $fileManager"
         "$mod, F, fullscreen"
         "$mod SHIFT, F, fullscreen, 2"
-        "$mod SHIFT ALT, F, fakefullscreen"
         "$mod ALT, F, togglefloating"
         "$mod SHIFT, E, exec, $GUIfileManager"
         "$mod, SPACE, exec, $browser"
