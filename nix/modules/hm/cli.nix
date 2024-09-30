@@ -24,21 +24,21 @@
     newSession = true;
     keyMode = "vi";
     plugins = with pkgs.tmuxPlugins; [
+      { plugin = gruvbox; }
       {
-        plugin = gruvbox;
         extraConfig = ''
-                # THEME
-                # disable unused functionality in gruvbox theme
-                set -g @gruvbox-show-battery false
-                set -g @gruvbox-show-network false
-                set -g @gruvbox-show-timezone false
-                set -g @gruvbox-show-weather false
-                set -g @gruvbox-show-fahrenheit false
-                # enable non default functionality in gruvbox theme
-                set -g @gruvbox-show-left-icon session
-                set -g @gruvbox-show-powerline true
-                set -g @gruvbox-military-time true
-                set -g @gruvbox-day-month true
+          # THEME
+          # disable unused functionality in gruvbox theme
+          	  set -g @gruvbox-show-battery false
+          	  set -g @gruvbox-show-network false
+          	  set -g @gruvbox-show-timezone false
+          	  set -g @gruvbox-show-weather false
+          	  set -g @gruvbox-show-fahrenheit false
+          # enable non default functionality in gruvbox theme
+          	  set -g @gruvbox-show-left-icon session
+          	  set -g @gruvbox-show-powerline true
+          	  set -g @gruvbox-military-time true
+          	  set -g @gruvbox-day-month true
           	  '';
       }
       {
