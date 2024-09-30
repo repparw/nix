@@ -67,6 +67,7 @@
             hostName = "beta";
             inherit unstable;
             inherit inputs;
+            inherit nixvim;
           };
         };
 
