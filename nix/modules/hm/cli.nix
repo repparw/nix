@@ -13,6 +13,25 @@
     };
   };
 
+  programs.tmux = {
+      enable = true;
+    shell = "${pkgs.zsh}/bin/zsh";
+    terminal = "xterm-kitty";
+    historyLimit = 10000;
+    plugins = with pkgs;
+      [
+        {
+          plugin = tmux-super-fingers;
+          extraConfig = "set -g @super-fingers-key f";
+        }
+        tmuxPlugins.better-mouse-mode
+      ];
+    extraConfig = ''
+    '';
+  };
+}
+
+
   programs.ssh.addKeysToAgent = "yes";
 
   home.packages = with pkgs; [
@@ -27,7 +46,6 @@
     tree
     ffmpeg
     imagemagick
-    tmux
     less
     base16-schemes
     yt-dlp
