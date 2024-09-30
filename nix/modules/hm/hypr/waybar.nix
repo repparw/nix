@@ -6,8 +6,21 @@
     settings = {
       position = "top";
       ${if osConfig.networking.hostName == "alpha" then "output" else null} = "HDMI-A-1";
-	  modules-left = [
-			${if osConfig.networking.hostName == "alpha" then "clock/time" else "clock/time" "hyprland/language"}; ];
+      modules-left =
+        if osConfig.networking.hostName == "alpha" then
+          ''["clock/time"]''
+        else
+          ''["clock/time" "hyprland/language"]'';
+      modules-center = [
+        "custom/arrow4"
+        "mpris"
+        "custom/arrow5"
+      ];
+      modules-right =
+        if osConfig.networking.hostName == "alpha" then
+          ''["clock/time"]''
+        else
+          ''["clock/time" "hyprland/language"]'';
       modules = [
         {
           type = "custom/text";
