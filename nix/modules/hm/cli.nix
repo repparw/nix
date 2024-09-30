@@ -24,6 +24,8 @@
     newSession = true;
     keyMode = "vi";
     plugins = with pkgs.tmuxPlugins; [
+      gruvbox
+
       pain-control
       #power-zoom
       #tmux-floax TODO
@@ -31,8 +33,6 @@
       yank
       resurrect
       continuum
-
-      gruvbox
     ];
     extraConfig = ''
       bind-key @ command-prompt -p "create pane from:" "join-pane -s ':%%'"
