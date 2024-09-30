@@ -44,7 +44,7 @@
     settings = {
       disable_ligatures = "cursor";
       enable_audio_bell = "no";
-      window_padding_width = "5 0";
+      window_padding_width = "0";
       confirm_os_window_close = 0;
       background_opacity = "0.9";
     };
