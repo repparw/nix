@@ -16,7 +16,6 @@
   programs.tmux = {
     enable = true;
     shell = "${pkgs.zsh}/bin/zsh";
-    terminal = "xterm-kitty";
     historyLimit = 10000;
     prefix = "C-a";
     mouse = true;
