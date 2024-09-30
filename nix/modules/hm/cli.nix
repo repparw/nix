@@ -80,57 +80,61 @@
 
   programs.ssh.addKeysToAgent = "yes";
 
-  home.packages = with pkgs; [
-    # essentials
-    nvim-pkg
-    zsh
-    curl
-    wget
-    unzip
-    bluez
-    jq
-    tree
-    ffmpeg
-    imagemagick
-    less
-    base16-schemes
-    yt-dlp
-    fzf
-    ytfzf
+  home.packages =
+    with pkgs;
+    [
+      # essentials
+      zsh
+      curl
+      wget
+      unzip
+      bluez
+      jq
+      tree
+      ffmpeg
+      imagemagick
+      less
+      base16-schemes
+      yt-dlp
+      fzf
+      ytfzf
 
-    # CLI tools
-    playerctl
-    rclone
-    melt # ssh ed25519 keys to seed words
-    ueberzugpp
-    libqalculate
+      # CLI tools
+      playerctl
+      rclone
+      melt # ssh ed25519 keys to seed words
+      ueberzugpp
+      libqalculate
 
-    fastfetch
-    axel
-    tlrc # tldr
-    nq # Command queue
+      fastfetch
+      axel
+      tlrc # tldr
+      nq # Command queue
 
-    lf
-    vimv-rs # bulk rename
-    pdfgrep
-    catdoc # provides catppt and xls2csv
+      lf
+      vimv-rs # bulk rename
+      pdfgrep
+      catdoc # provides catppt and xls2csv
 
-    tig
+      tig
 
-    # Modern replacements of basic tools
-    unstable.bottom
-    bat
-    colordiff
-    duf
-    du-dust
-    fd
-    ripgrep
-    zoxide
-    eza
-    tree
+      # Modern replacements of basic tools
+      unstable.bottom
+      bat
+      colordiff
+      duf
+      du-dust
+      fd
+      ripgrep
+      zoxide
+      eza
+      tree
 
-    manix
+      manix
 
-    nodejs # remove after porting nvim plugins to nix cfg
-  ];
+      nodejs # remove after porting nvim plugins to nix cfg
+    ]
+    ++ (with unstable; [
+      nvim-pkg
+    ]);
 }
