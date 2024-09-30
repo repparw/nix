@@ -28,6 +28,12 @@
         plugin = power-theme;
         extraConfig = ''
           set -g @tmux_power_theme 'everforest'
+          set -g @tmux_power_date_icon ' '
+          set -g @tmux_power_time_icon ' '
+          set -g @tmux_power_user_icon ' '
+          set -g @tmux_power_session_icon ' '
+          set -g @tmux_power_right_arrow_icon     ''
+          set -g @tmux_power_left_arrow_icon      ''
         '';
       }
       {
