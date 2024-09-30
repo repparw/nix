@@ -17,6 +17,10 @@
     };
   };
 
+  nix.settings = {
+    access-tokens = "github.com=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";
+  };
+
   nix.trustedUsers = [
     "root"
     "repparw"
