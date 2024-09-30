@@ -11,7 +11,6 @@
     wshowkeys
     # mako # dunst alt
     swaynotificationcenter
-    waybar
     wl-clipboard
     pulseaudio
 
