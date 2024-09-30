@@ -1,4 +1,4 @@
-{ pkgs, unstable, ... }:
+{ pkgs, ... }:
 
 {
   home.packages = with pkgs; [
@@ -17,8 +17,8 @@
 
     hdrop
 
-    unstable.hyprshot
-    unstable.hyprpicker
+    hyprshot
+    hyprpicker
   ];
 
   services.hypridle = {

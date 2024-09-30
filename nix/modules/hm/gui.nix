@@ -1,6 +1,6 @@
 {
   pkgs,
-  unstable,
+  stable,
   osConfig,
   ...
 }:
@@ -29,7 +29,7 @@
 
       # find pomo app in nixpkgs
     ]
-    ++ (with unstable; [
+    ++ (with stable; [
       #add here and uncomment
     ]);
 
