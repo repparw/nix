@@ -336,6 +336,8 @@
 }
 #battery {
     background: @battery;
+    background-color: @bluetint;
+    color: @font_gruv_normal;
 }
 
 #backlight {

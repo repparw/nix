@@ -1,6 +1,9 @@
 { pkgs, ... }:
 
 {
+
+  imports = [ ./waybar.nix ];
+
   home.packages = with pkgs; [
     # Desktop
     libdrm
