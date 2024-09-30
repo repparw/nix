@@ -1,6 +1,6 @@
 { ... }:
 {
-  services.waybar = {
+  programs.waybar = {
     enable = true;
     config = {
       position = "top";
