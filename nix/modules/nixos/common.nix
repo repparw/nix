@@ -61,6 +61,9 @@
 
   nixpkgs.overlays = [
     (self: super: { mpv = super.mpv.override { scripts = [ self.mpvScripts.mpris ]; }; })
+  ];
+
+  inputs.unstable.overlays = [
     inputs.nixvim.overlays.default
   ];
 
