@@ -59,11 +59,6 @@
     wget
   ];
 
-  nixpkgs.overlays = [
-    (self: super: { mpv = super.mpv.override { scripts = [ self.mpvScripts.mpris ]; }; })
-    nixvim.overlays.default
-  ];
-
   programs.zsh.enable = true;
 
   programs.mosh.enable = true;

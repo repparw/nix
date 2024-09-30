@@ -1,4 +1,4 @@
-{ hostName, ... }:
+{ hostName, nixvim, ... }:
 
 {
   imports = [
@@ -10,6 +10,11 @@
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
+
+  nixpkgs.overlays = [
+    (self: super: { mpv = super.mpv.override { scripts = [ self.mpvScripts.mpris ]; }; })
+    nixvim.overlays.default
+  ];
 
   programs.direnv = {
     enable = true;
