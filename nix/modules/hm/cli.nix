@@ -28,6 +28,8 @@
         plugin = power-theme;
         extraConfig = ''
           set -g @tmux_power_theme 'everforest'
+          set -g @tmux_power_date_format '%F'
+          set -g @tmux_power_time_format '%H:%M'
           set -g @tmux_power_date_icon ' '
           set -g @tmux_power_time_icon ' '
           set -g @tmux_power_user_icon ' '
@@ -63,8 +65,6 @@
       bind -n M-L next-window
 
       set-option -g update-environment "DISPLAY WAYLAND_DISPLAY SSH_AUTH_SOCK"
-
-
 
       bind C-l send-keys 'C-l'
 
