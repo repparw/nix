@@ -21,9 +21,10 @@
 	prefix = "C-a";
 	mouse = true;
 	baseIndex = 1;
+	newSession = true;
+	keyMode = "vi";
     plugins = with pkgs.tmuxPlugins;
       [
-	  sensible
 	  pain-control
 	  #power-zoom
 	  #tmux-floax TODO
@@ -36,6 +37,10 @@
       ];
     extraConfig = ''
 		bind-key @ command-prompt -p "create pane from:" "join-pane -s ':%%'"
+
+		# Shift Alt vim keys to switch windows
+		bind -n M-H previous-window
+		bind -n M-L next-window
 
 		set-option -g update-environment "DISPLAY WAYLAND_DISPLAY SSH_AUTH_SOCK"
 
@@ -56,6 +61,15 @@
 		set -g @gruvbox-day-month true
 
 		bind C-l send-keys 'C-l'
+
+		# keybindings
+		bind-key -T copy-mode-vi v send-keys -X begin-selection
+		bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle
+		bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
+
+		bind '"' split-window -v -c "#{pane_current_path}"
+		bind % split-window -h -c "#{pane_current_path}"
+
     '';
   };
 }
