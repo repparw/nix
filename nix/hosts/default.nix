@@ -19,12 +19,11 @@
 
   nix.settings = {
     access-tokens = "github.com=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";
+    trusted-users = [
+      "root"
+      "repparw"
+    ];
   };
-
-  nix.trustedUsers = [
-    "root"
-    "repparw"
-  ];
 
   nix.optimise.automatic = true;
 
