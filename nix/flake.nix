@@ -34,7 +34,6 @@
                 hostName = "alpha";
                 inherit unstable;
                 inherit inputs;
-                inherit nixvim;
               };
               home-manager.users.repparw = import ./hosts/home.nix;
             }
@@ -59,7 +58,6 @@
                 hostName = "beta";
                 inherit unstable;
                 inherit inputs;
-                inherit nixvim;
               };
               home-manager.users.repparw = import ./hosts/home.nix;
             }
