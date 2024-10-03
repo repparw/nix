@@ -8,7 +8,7 @@
         position = "top";
         ${if osConfig.networking.hostName == "alpha" then "output" else null} = [ "HDMI-A-1" ];
         modules-left = [
-          "clock/time"
+          "clock#time"
         ] ++ (if osConfig.networking.hostName == "beta" then [ "hyprland/language" ] else [ ]);
         modules-center = [
           "custom/arrow4"
@@ -95,7 +95,7 @@
         "tray" = {
           spacing = 6;
         };
-        "clock/time" = {
+        "clock#time" = {
           timezone = "America/Argentina/Buenos_Aires";
           interval = 10;
           format = "  {:%H:%M}";
