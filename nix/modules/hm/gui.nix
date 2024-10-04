@@ -195,25 +195,4 @@
     };
   };
 
-  systemd.user.services = {
-    ${if osConfig.networking.hostName == "alpha" then "obs" else null} = {
-      Unit = {
-        StartLimitIntervalSec = 60;
-        StartLimitBurst = 4;
-      };
-
-      Service = {
-        ExecStart = [
-          "${pkgs.obs-studio}/bin/obs --disable-shutdown-check --startreplaybuffer --minimize-to-tray"
-        ];
-        Restart = [ "on-failure" ];
-        RestartSec = 1;
-      };
-
-      Install = {
-        WantedBy = [ "graphical-session.target" ];
-      };
-    };
-  };
-
 }
