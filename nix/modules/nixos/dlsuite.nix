@@ -51,10 +51,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."bazarr" = {
@@ -88,10 +88,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."broker" = {
@@ -116,10 +116,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."changedetection" = {
@@ -159,10 +159,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."db" = {
@@ -192,10 +192,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."flaresolverr" = {
@@ -226,10 +226,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."freshrss" = {
@@ -262,10 +262,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."grocy" = {
@@ -298,10 +298,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."grupo10" = {
@@ -334,10 +334,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."jellyfin" = {
@@ -376,10 +376,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."mercury" = {
@@ -404,10 +404,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."paperless" = {
@@ -452,10 +452,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."pgadmin" = {
@@ -487,10 +487,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."playwright" = {
@@ -530,10 +530,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."prowlarr" = {
@@ -566,10 +566,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."qbitttorrent" = {
@@ -604,10 +604,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."radarr" = {
@@ -644,10 +644,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."sonarr" = {
@@ -685,10 +685,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."swag" = {
@@ -729,10 +729,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
   virtualisation.oci-containers.containers."valkey" = {
@@ -773,10 +773,10 @@
       "podman-network-dlsuite.service"
     ];
     partOf = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
     wantedBy = [
-      "podman-compose-dlsuite-root.target"
+      "dlsuite.target"
     ];
   };
 
@@ -791,14 +791,14 @@
     script = ''
       podman network inspect dlsuite || podman network create dlsuite
     '';
-    partOf = [ "podman-compose-dlsuite-root.target" ];
-    wantedBy = [ "podman-compose-dlsuite-root.target" ];
+    partOf = [ "dlsuite.target" ];
+    wantedBy = [ "dlsuite.target" ];
   };
 
   # Root service
   # When started, this will automatically create all resources and start
   # the containers. When stopped, this will teardown all resources.
-  systemd.targets."podman-compose-dlsuite-root" = {
+  systemd.targets."dlsuite" = {
     unitConfig = {
       Description = "Root target generated by compose2nix.";
     };
