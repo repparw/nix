@@ -2,14 +2,9 @@
 
 {
   # Runtime
-  virtualisation.podman = {
+  virtualisation.docker = {
     enable = true;
     autoPrune.enable = true;
-    dockerCompat = true;
-    defaultNetwork.settings = {
-      # Required for container networking to be able to use names.
-      dns_enabled = true;
-    };
   };
   virtualisation.oci-containers.backend = "docker";
 
@@ -40,15 +35,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-authelia" = {
+  systemd.services."docker-authelia" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -77,15 +72,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-bazarr" = {
+  systemd.services."docker-bazarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -105,15 +100,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-broker" = {
+  systemd.services."docker-broker" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -148,15 +143,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-changedetection" = {
+  systemd.services."docker-changedetection" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -181,15 +176,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-db" = {
+  systemd.services."docker-db" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -215,15 +210,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-flaresolverr" = {
+  systemd.services."docker-flaresolverr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -251,15 +246,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-freshrss" = {
+  systemd.services."docker-freshrss" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -287,15 +282,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-grocy" = {
+  systemd.services."docker-grocy" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -323,15 +318,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-grupo10" = {
+  systemd.services."docker-grupo10" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -365,15 +360,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-jellyfin" = {
+  systemd.services."docker-jellyfin" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -393,15 +388,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-mercury" = {
+  systemd.services."docker-mercury" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -441,15 +436,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-paperless" = {
+  systemd.services."docker-paperless" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -476,15 +471,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-pgadmin" = {
+  systemd.services."docker-pgadmin" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -519,15 +514,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-playwright" = {
+  systemd.services."docker-playwright" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -555,15 +550,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-prowlarr" = {
+  systemd.services."docker-prowlarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -593,15 +588,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-qbitttorrent" = {
+  systemd.services."docker-qbitttorrent" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -633,15 +628,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-radarr" = {
+  systemd.services."docker-radarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -674,15 +669,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-sonarr" = {
+  systemd.services."docker-sonarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -718,15 +713,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-swag" = {
+  systemd.services."docker-swag" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -762,15 +757,15 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-valkey" = {
+  systemd.services."docker-valkey" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
       "dlsuite.target"
@@ -781,15 +776,15 @@
   };
 
   # Networks
-  systemd.services."podman-network-dlsuite" = {
-    path = [ pkgs.podman ];
+  systemd.services."docker-network-dlsuite" = {
+    path = [ pkgs.docker ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStop = "podman network rm -f dlsuite";
+      ExecStop = "docker network rm -f dlsuite";
     };
     script = ''
-      podman network inspect dlsuite || podman network create dlsuite
+      docker network inspect dlsuite || docker network create dlsuite
     '';
     partOf = [ "dlsuite.target" ];
     wantedBy = [ "dlsuite.target" ];
