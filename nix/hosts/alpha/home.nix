@@ -1,6 +1,9 @@
 { pkgs, ... }:
 {
-  imports = [ ../../modules/hm/gaming.nix ];
+  imports = [
+    ../../modules/hm/gaming.nix
+    ../../modules/hm/obs.nix
+  ];
 
   home.packages = with pkgs; [
     # Essential packages
