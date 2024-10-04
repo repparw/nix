@@ -29,7 +29,6 @@
       "adbusers"
       "networkmanager"
       "wheel"
-      "docker"
     ];
   };
 
@@ -167,35 +166,6 @@
   };
 
   #### FSTAB
-
-  virtualisation.docker = {
-    enable = false; # TODO
-    storageDriver = "btrfs";
-    rootless.enable = true;
-    rootless.setSocketVariable = true;
-  };
-
-  systemd.services.dlsuite = {
-    enable = false; # TODO
-    wantedBy = [ "multi-user.target" ];
-    partOf = [ "docker.service" ];
-    after = [
-      "docker.service"
-      "docker.socket"
-    ];
-    unitConfig = {
-      StartLimitInterval = 200;
-      StartLimitBurst = 5;
-    };
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = "yes";
-      Restart = "on-failure";
-      RestartSec = 30;
-      ExecStart = "${pkgs.docker}/bin/docker compose -f ${../../modules/source/dlsuite-compose.yaml} up -d --remove-orphans";
-      ExecStop = "${pkgs.docker}/bin/docker compose -f ${../../modules/source/dlsuite-compose.yaml} down";
-    };
-  };
 
   systemd.services.logid = {
     wants = [ "multi-user.target" ];
