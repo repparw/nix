@@ -1,21 +1,17 @@
+# Auto-generated using compose2nix v0.2.3.
 { pkgs, lib, ... }:
 
 {
   # Runtime
-  virtualisation.podman = {
+  virtualisation.docker = {
     enable = true;
     autoPrune.enable = true;
-    dockerCompat = true;
-    defaultNetwork.settings = {
-      # Required for container networking to be able to use names.
-      dns_enabled = true;
-    };
   };
   virtualisation.oci-containers.backend = "docker";
 
   # Containers
   virtualisation.oci-containers.containers."authelia" = {
-    image = "docker.io/authelia/authelia:latest";
+    image = "authelia/authelia:latest";
     environment = {
       "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
       "AUTHELIA_SESSION_SECRET_FILE" = "/secrets/SESSION_SECRET";
@@ -40,25 +36,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-authelia" = {
+  systemd.services."docker-authelia" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."bazarr" = {
-    image = "docker.io/linuxserver/bazarr:latest";
+    image = "linuxserver/bazarr:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -77,21 +76,24 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-bazarr" = {
+  systemd.services."docker-bazarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."broker" = {
@@ -105,25 +107,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-broker" = {
+  systemd.services."docker-broker" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."changedetection" = {
-    image = "docker.io/dgtlmoon/changedetection.io";
+    image = "dgtlmoon/changedetection.io";
     environment = {
       "BASE_URL" = "https://repparw.com.ar";
       "HIDE_REFERER" = "true";
@@ -148,21 +153,24 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-changedetection" = {
+  systemd.services."docker-changedetection" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."db" = {
@@ -181,25 +189,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-db" = {
+  systemd.services."docker-db" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."flaresolverr" = {
-    image = "docker.io/flaresolverr/flaresolverr:latest";
+    image = "flaresolverr/flaresolverr:latest";
     environment = {
       "CAPTCHA_SOLVER" = "none";
       "LOG_HTML" = "false";
@@ -215,25 +226,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-flaresolverr" = {
+  systemd.services."docker-flaresolverr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."freshrss" = {
-    image = "docker.io/linuxserver/freshrss:latest";
+    image = "linuxserver/freshrss:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -251,25 +265,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-freshrss" = {
+  systemd.services."docker-freshrss" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."grocy" = {
-    image = "docker.io/linuxserver/grocy:latest";
+    image = "linuxserver/grocy:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -287,21 +304,24 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-grocy" = {
+  systemd.services."docker-grocy" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."grupo10" = {
@@ -323,30 +343,33 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-grupo10" = {
+  systemd.services."docker-grupo10" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."jellyfin" = {
-    image = "docker.io/linuxserver/jellyfin:latest";
+    image = "linuxserver/jellyfin:latest";
     environment = {
       "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
       "JELLYFIN_PublishedServerUrl" = "jellyfin.repparw.com.ar";
-      "PGID" = "131";
-      "PUID" = "1001";
+      "PGID" = "971";
+      "PUID" = "974";
       "TZ" = "America/Argentina/Buenos_Aires";
     };
     volumes = [
@@ -365,25 +388,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-jellyfin" = {
+  systemd.services."docker-jellyfin" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."mercury" = {
-    image = "docker.io/wangqiru/mercury-parser-api:latest";
+    image = "wangqiru/mercury-parser-api:latest";
     ports = [
       "3000:3000/tcp"
     ];
@@ -393,25 +419,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-mercury" = {
+  systemd.services."docker-mercury" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."paperless" = {
-    image = "docker.io/paperless-ngx/paperless-ngx:latest";
+    image = "ghcr.io/paperless-ngx/paperless-ngx:latest";
     environment = {
       "PAPERLESS_DBHOST" = "db";
       "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
@@ -441,25 +470,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-paperless" = {
+  systemd.services."docker-paperless" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."pgadmin" = {
-    image = "docker.io/dpage/pgadmin4:latest";
+    image = "dpage/pgadmin4:latest";
     environment = {
       "PGADMIN_DEFAULT_EMAIL" = "admin@admin.com";
       "PGADMIN_DEFAULT_PASSWORD" = "admin";
@@ -476,25 +508,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-pgadmin" = {
+  systemd.services."docker-pgadmin" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."playwright" = {
-    image = "docker.io/browserless/chrome:1.60-chrome-stable";
+    image = "browserless/chrome:1.60-chrome-stable";
     environment = {
       "CHROME_REFRESH_TIME" = "600000";
       "CONNECTION_TIMEOUT" = "300000";
@@ -519,25 +554,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-playwright" = {
+  systemd.services."docker-playwright" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."prowlarr" = {
-    image = "docker.io/linuxserver/prowlarr:latest";
+    image = "linuxserver/prowlarr:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -555,25 +593,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-prowlarr" = {
+  systemd.services."docker-prowlarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."qbitttorrent" = {
-    image = "docker.io/hotio/qbittorrent:latest";
+    image = "hotio/qbittorrent:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -593,25 +634,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-qbitttorrent" = {
+  systemd.services."docker-qbitttorrent" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."radarr" = {
-    image = "docker.io/linuxserver/radarr:latest";
+    image = "linuxserver/radarr:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -633,25 +677,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-radarr" = {
+  systemd.services."docker-radarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."sonarr" = {
-    image = "docker.io/linuxserver/sonarr:latest";
+    image = "linuxserver/sonarr:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -674,25 +721,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-sonarr" = {
+  systemd.services."docker-sonarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."swag" = {
-    image = "docker.io/linuxserver/swag:latest";
+    image = "linuxserver/swag:latest";
     environment = {
       "DNSPLUGIN" = "cloudflare";
       "DOCKER_MODS" = "linuxserver/mods:universal-cron";
@@ -718,25 +768,28 @@
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-swag" = {
+  systemd.services."docker-swag" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
   virtualisation.oci-containers.containers."valkey" = {
-    image = "docker.io/valkey/valkey:7.2-alpine";
+    image = "valkey/valkey:7.2-alpine";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -748,57 +801,53 @@
     ports = [
       "6379:6379/tcp"
     ];
-    cmd = [
-      "valkey-server"
-      "--save"
-      "60"
-      "1"
-      "--loglevel"
-      "warning"
-    ];
+    cmd = [ "valkey-server" "--save" "60" "1" "--loglevel" "warning" ];
     log-driver = "journald";
     extraOptions = [
       "--network-alias=valkey"
       "--network=dlsuite"
     ];
   };
-  systemd.services."podman-valkey" = {
+  systemd.services."docker-valkey" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
+      RestartMaxDelaySec = lib.mkOverride 500 "1m";
+      RestartSec = lib.mkOverride 500 "100ms";
+      RestartSteps = lib.mkOverride 500 9;
     };
     after = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     requires = [
-      "podman-network-dlsuite.service"
+      "docker-network-dlsuite.service"
     ];
     partOf = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
     wantedBy = [
-      "dlsuite.target"
+      "docker-compose-dlsuite-root.target"
     ];
   };
 
   # Networks
-  systemd.services."podman-network-dlsuite" = {
-    path = [ pkgs.podman ];
+  systemd.services."docker-network-dlsuite" = {
+    path = [ pkgs.docker ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStop = "podman network rm -f dlsuite";
+      ExecStop = "docker network rm -f dlsuite";
     };
     script = ''
-      podman network inspect dlsuite || podman network create dlsuite
+      docker network inspect dlsuite || docker network create dlsuite
     '';
-    partOf = [ "dlsuite.target" ];
-    wantedBy = [ "dlsuite.target" ];
+    partOf = [ "docker-compose-dlsuite-root.target" ];
+    wantedBy = [ "docker-compose-dlsuite-root.target" ];
   };
 
   # Root service
   # When started, this will automatically create all resources and start
   # the containers. When stopped, this will teardown all resources.
-  systemd.targets."dlsuite" = {
+  systemd.targets."docker-compose-dlsuite-root" = {
     unitConfig = {
       Description = "Root target generated by compose2nix.";
     };
