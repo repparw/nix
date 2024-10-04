@@ -8,6 +8,7 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+    ../../modules/nixos/dlsuite.nix
     ../../modules/nixos/timers.nix
     ../../modules/nixos/gaming.nix
   ];
@@ -168,14 +169,14 @@
   #### FSTAB
 
   virtualisation.docker = {
-    enable = true;
+    enable = false; # TODO
     storageDriver = "btrfs";
     rootless.enable = true;
     rootless.setSocketVariable = true;
   };
 
   systemd.services.dlsuite = {
-    enable = false;
+    enable = false; # TODO
     wantedBy = [ "multi-user.target" ];
     partOf = [ "docker.service" ];
     after = [
