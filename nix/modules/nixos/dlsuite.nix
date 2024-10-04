@@ -344,8 +344,8 @@
     environment = {
       "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
       "JELLYFIN_PublishedServerUrl" = "jellyfin.repparw.com.ar";
-      "PGID" = "971";
-      "PUID" = "974";
+      "PGID" = "131";
+      "PUID" = "1001";
       "TZ" = "America/Argentina/Buenos_Aires";
     };
     volumes = [
