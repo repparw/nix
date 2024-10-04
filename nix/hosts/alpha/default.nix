@@ -195,7 +195,7 @@
   # networking.firewall.enable = false;
   networking.firewall.trustedInterfaces = [
     "enp42s0"
-    "podman1"
+    "docker0"
   ];
 
   # This value determines the NixOS release from which the default
