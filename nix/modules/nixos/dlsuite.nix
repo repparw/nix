@@ -15,7 +15,7 @@
 
   # Containers
   virtualisation.oci-containers.containers."authelia" = {
-    image = "authelia/authelia:latest";
+    image = "docker.io/authelia/authelia:latest";
     environment = {
       "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
       "AUTHELIA_SESSION_SECRET_FILE" = "/secrets/SESSION_SECRET";
@@ -58,7 +58,7 @@
     ];
   };
   virtualisation.oci-containers.containers."bazarr" = {
-    image = "linuxserver/bazarr:latest";
+    image = "docker.io/linuxserver/bazarr:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -123,7 +123,7 @@
     ];
   };
   virtualisation.oci-containers.containers."changedetection" = {
-    image = "dgtlmoon/changedetection.io";
+    image = "docker.io/dgtlmoon/changedetection.io";
     environment = {
       "BASE_URL" = "https://repparw.com.ar";
       "HIDE_REFERER" = "true";
@@ -199,7 +199,7 @@
     ];
   };
   virtualisation.oci-containers.containers."flaresolverr" = {
-    image = "flaresolverr/flaresolverr:latest";
+    image = "docker.io/flaresolverr/flaresolverr:latest";
     environment = {
       "CAPTCHA_SOLVER" = "none";
       "LOG_HTML" = "false";
@@ -233,7 +233,7 @@
     ];
   };
   virtualisation.oci-containers.containers."freshrss" = {
-    image = "linuxserver/freshrss:latest";
+    image = "docker.io/linuxserver/freshrss:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -269,7 +269,7 @@
     ];
   };
   virtualisation.oci-containers.containers."grocy" = {
-    image = "linuxserver/grocy:latest";
+    image = "docker.io/linuxserver/grocy:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -341,7 +341,7 @@
     ];
   };
   virtualisation.oci-containers.containers."jellyfin" = {
-    image = "linuxserver/jellyfin:latest";
+    image = "docker.io/linuxserver/jellyfin:latest";
     environment = {
       "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
       "JELLYFIN_PublishedServerUrl" = "jellyfin.repparw.com.ar";
@@ -383,7 +383,7 @@
     ];
   };
   virtualisation.oci-containers.containers."mercury" = {
-    image = "wangqiru/mercury-parser-api:latest";
+    image = "docker.io/wangqiru/mercury-parser-api:latest";
     ports = [
       "3000:3000/tcp"
     ];
@@ -411,7 +411,7 @@
     ];
   };
   virtualisation.oci-containers.containers."paperless" = {
-    image = "ghcr.io/paperless-ngx/paperless-ngx:latest";
+    image = "docker.io/paperless-ngx/paperless-ngx:latest";
     environment = {
       "PAPERLESS_DBHOST" = "db";
       "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
@@ -459,7 +459,7 @@
     ];
   };
   virtualisation.oci-containers.containers."pgadmin" = {
-    image = "dpage/pgadmin4:latest";
+    image = "docker.io/dpage/pgadmin4:latest";
     environment = {
       "PGADMIN_DEFAULT_EMAIL" = "admin@admin.com";
       "PGADMIN_DEFAULT_PASSWORD" = "admin";
@@ -494,7 +494,7 @@
     ];
   };
   virtualisation.oci-containers.containers."playwright" = {
-    image = "browserless/chrome:1.60-chrome-stable";
+    image = "docker.io/browserless/chrome:1.60-chrome-stable";
     environment = {
       "CHROME_REFRESH_TIME" = "600000";
       "CONNECTION_TIMEOUT" = "300000";
@@ -537,7 +537,7 @@
     ];
   };
   virtualisation.oci-containers.containers."prowlarr" = {
-    image = "linuxserver/prowlarr:latest";
+    image = "docker.io/linuxserver/prowlarr:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -573,7 +573,7 @@
     ];
   };
   virtualisation.oci-containers.containers."qbitttorrent" = {
-    image = "hotio/qbittorrent:latest";
+    image = "docker.io/hotio/qbittorrent:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -611,7 +611,7 @@
     ];
   };
   virtualisation.oci-containers.containers."radarr" = {
-    image = "linuxserver/radarr:latest";
+    image = "docker.io/linuxserver/radarr:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -651,7 +651,7 @@
     ];
   };
   virtualisation.oci-containers.containers."sonarr" = {
-    image = "linuxserver/sonarr:latest";
+    image = "docker.io/linuxserver/sonarr:latest";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
@@ -692,7 +692,7 @@
     ];
   };
   virtualisation.oci-containers.containers."swag" = {
-    image = "linuxserver/swag:latest";
+    image = "docker.io/linuxserver/swag:latest";
     environment = {
       "DNSPLUGIN" = "cloudflare";
       "DOCKER_MODS" = "linuxserver/mods:universal-cron";
@@ -736,7 +736,7 @@
     ];
   };
   virtualisation.oci-containers.containers."valkey" = {
-    image = "valkey/valkey:7.2-alpine";
+    image = "docker.io/valkey/valkey:7.2-alpine";
     environment = {
       "PGID" = "131";
       "PUID" = "1001";
