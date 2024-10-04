@@ -1,6 +1,5 @@
 # OMZ completions requiring compinit
-ohmyzsh/ohmyzsh path:plugins/docker/completions kind:fpath
-ohmyzsh/ohmyzsh path:plugins/docker-compose/completions kind:fpath
+# add podman completions
 
 # compinit
 belak/zsh-utils path:completion
@@ -10,8 +9,7 @@ ohmyzsh/ohmyzsh path:lib
 ohmyzsh/ohmyzsh path:plugins/git
 ohmyzsh/ohmyzsh path:plugins/rsync
 ohmyzsh/ohmyzsh path:plugins/dnf
-ohmyzsh/ohmyzsh path:plugins/docker
-ohmyzsh/ohmyzsh path:plugins/docker-compose
+# add podman plugin
 ohmyzsh/ohmyzsh path:plugins/tmux
 # ohmyzsh/ohmyzsh path:themes/dst.zsh-theme
 
