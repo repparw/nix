@@ -175,6 +175,7 @@
   };
 
   systemd.services.dlsuite = {
+    enable = false;
     wantedBy = [ "multi-user.target" ];
     partOf = [ "docker.service" ];
     after = [
