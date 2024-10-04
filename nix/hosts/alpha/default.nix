@@ -29,7 +29,7 @@
       "adbusers"
       "networkmanager"
       "wheel"
-      "dlsuite"
+      "docker"
     ];
   };
 

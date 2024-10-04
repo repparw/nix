@@ -5,7 +5,11 @@
   virtualisation.docker = {
     enable = true;
     autoPrune.enable = true;
+    storageDriver = "btrfs";
+    rootless.enable = true;
+    rootless.setSocketVariable = true;
   };
+
   virtualisation.oci-containers.backend = "docker";
 
   # Containers
