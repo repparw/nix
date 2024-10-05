@@ -171,7 +171,7 @@
 
         # Scroll through monitor active workspaces with mainMod + scroll
         "$mod, C, workspace, m+1"
-        "$mod SHIFT, C, workspace, previous_per_monitor"
+        "$mod SHIFT, C, focuscurrentorlast"
 
         ", mouse:276, workspace, m+1"
 
