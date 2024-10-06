@@ -3,7 +3,7 @@
   "notes": "",
   "documentation": "\"This file is a QMK Configurator export. You can import this at <https://config.qmk.fm>. It can also be used directly with QMK's source code.\n\nTo setup your QMK environment check out the tutorial: <https://docs.qmk.fm/#/newbs>\n\nYou can convert this file to a keymap.c using this command: `qmk json2c {keymap}`\n\nYou can compile this keymap using this command: `qmk compile {keymap}`\"\n",
   "keyboard": "cantor",
-  "keymap": "cantor_cantor_qmk",
+  "keymap": "cantor_cantor_cantor_qmk",
   "layout": "LAYOUT_split_3x6_3",
   "layers": [
     [
@@ -31,7 +31,7 @@
       "KC_L",
       "KC_SCLN",
       "KC_QUOT",
-      "LSFT_T(OSM(MOD_LSFT))",
+      "ANY(LSFT_T(OSM(MOD_LSFT)))",
       "KC_Z",
       "KC_X",
       "KC_C",
@@ -45,13 +45,13 @@
       "SC_SENT",
       "OSM(MOD_LALT)",
       "LT(1,KC_SPC)",
-      "LGUI_T(OSM(MOD_LGUI))",
-      "RGUI_T(OSM(MOD_RGUI))",
+      "ANY(LGUI_T(OSM(MOD_LGUI)))",
+      "ANY(RGUI_T(OSM(MOD_RGUI)))",
       "LT(1,KC_SPC)",
       "OSM(MOD_LALT)"
     ],
     [
-      "KC_NO",
+      "KC_GRV",
       "KC_1",
       "KC_2",
       "KC_3",
@@ -71,7 +71,7 @@
       "KC_0",
       "KC_PMNS",
       "KC_PEQL",
-      "KC_GRV",
+      "KC_NO",
       "KC_LBRC",
       "KC_RBRC",
       "KC_BSLS",
