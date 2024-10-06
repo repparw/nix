@@ -30,6 +30,8 @@
   # Enable CUPS to print documents.
   # services.printing.enable = true;
 
+  services.earlyoom.enable = true;
+
   services.keyd = {
     enable = true;
     keyboards.default.settings = {
