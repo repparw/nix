@@ -5,7 +5,6 @@
 
     git = {
       enable = true;
-      package = pkgs.gitFull;
       userEmail = "ubritos@gmail.com";
       userName = "repparw";
       extraConfig = {
