@@ -8,6 +8,9 @@
     ./${hostName}
   ];
 
+  services.udisks2.enable = true;
+  services.udiskie.enable = true;
+
   programs.nh = {
     enable = true;
     flake = "/home/repparw/.dotfiles/nix";
