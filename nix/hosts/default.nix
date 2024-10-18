@@ -8,7 +8,7 @@
     ./${hostName}
   ];
 
-  services.udisks2.enable = true;
+  services.gvfs.enable = true;
 
   programs.nh = {
     enable = true;

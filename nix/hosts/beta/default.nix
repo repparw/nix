@@ -15,6 +15,13 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
+  virtualisation.docker = {
+    enable = true;
+    autoPrune.enable = true;
+    rootless.enable = true;
+    rootless.setSocketVariable = true;
+  };
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.repparw = {
     isNormalUser = true;
@@ -23,6 +30,7 @@
     extraGroups = [
       "networkmanager"
       "wheel"
+      "docker"
     ];
   };
 
@@ -44,6 +52,12 @@
   # networking.firewall.allowedUDPPorts = [ ... ];
   # Or disable the firewall altogether.
   # networking.firewall.enable = false;
+
+  networking.firewall.trustedInterfaces = [
+    "enp0s25"
+    "wlp3s0"
+    "docker0"
+  ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

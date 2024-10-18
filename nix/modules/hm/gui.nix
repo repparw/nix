@@ -15,7 +15,6 @@
     with pkgs;
     [
       # GUI
-      xfce.thunar
       mpv
       vesktop
       pavucontrol
