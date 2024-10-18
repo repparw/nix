@@ -24,7 +24,7 @@
       "$kiosk" = "$browser -P kiosk";
       "$browser2" = "chromium-browser";
       "$discord" = "vesktop";
-      "$GUIfileManager" = "thunar";
+      "$GUIfileManager" = "nautilus";
       "$pomodoro" = "pomatez";
       "$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
       "$screenshot" = "hyprshot -o $XDG_SCREENSHOTS_DIR -m";
