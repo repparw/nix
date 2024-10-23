@@ -1,4 +1,4 @@
-{ hostName, ... }:
+{ inputs, hostName, ... }:
 
 {
   imports = [
@@ -18,6 +18,8 @@
       extraArgs = "--keep 3 -keep-since 7d";
     };
   };
+
+  nix.nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
 
   nix.settings = {
     access-tokens = "github.com=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";
