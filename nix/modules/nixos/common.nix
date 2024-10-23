@@ -2,9 +2,10 @@
 
 {
 
-  # Bootloader.
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader = {
+    systemd-boot.enable = true;
+    efi.canTouchEfiVariables = true;
+  };
 
   # Enable networking
   networking.networkmanager.enable = true;
@@ -13,33 +14,23 @@
   time.timeZone = "America/Argentina/Buenos_Aires";
 
   # Select internationalisation properties.
-  i18n.defaultLocale = "en_US.UTF-8";
+  i18n = {
+    defaultLocale = "en_US.UTF-8";
 
-  i18n.extraLocaleSettings = {
-    LC_ADDRESS = "es_AR.UTF-8";
-    LC_IDENTIFICATION = "es_AR.UTF-8";
-    LC_MEASUREMENT = "es_AR.UTF-8";
-    LC_MONETARY = "es_AR.UTF-8";
-    LC_NAME = "es_AR.UTF-8";
-    LC_NUMERIC = "es_AR.UTF-8";
-    LC_PAPER = "es_AR.UTF-8";
-    LC_TELEPHONE = "es_AR.UTF-8";
-    LC_TIME = "es_AR.UTF-8";
-  };
-
-  # Enable CUPS to print documents.
-  # services.printing.enable = true;
-
-  services.earlyoom.enable = true;
-
-  services.keyd = {
-    enable = true;
-    keyboards.default.settings = {
-      main = {
-        capslock = "overload(control, esc)";
-      };
+    extraLocaleSettings = {
+      LC_ADDRESS = "es_AR.UTF-8";
+      LC_IDENTIFICATION = "es_AR.UTF-8";
+      LC_MEASUREMENT = "es_AR.UTF-8";
+      LC_MONETARY = "es_AR.UTF-8";
+      LC_NAME = "es_AR.UTF-8";
+      LC_NUMERIC = "es_AR.UTF-8";
+      LC_PAPER = "es_AR.UTF-8";
+      LC_TELEPHONE = "es_AR.UTF-8";
+      LC_TIME = "es_AR.UTF-8";
     };
   };
+
+  # services.printing.enable = true; # CUPS printing
 
   # Nerdfonts
   fonts = {
@@ -66,52 +57,67 @@
     inputs.nixvim.overlays.default
   ];
 
-  programs.zsh.enable = true;
+  programs = {
+    zsh.enable = true;
 
-  programs.mosh.enable = true;
+    mosh.enable = true;
 
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  services.openssh = {
-    enable = true;
-    ports = [ 10000 ];
-    settings.PasswordAuthentication = false;
+    ssh.startAgent = true;
   };
 
-  programs.ssh.startAgent = true;
+  services = {
 
-  # Enable sound with pipewire.
-  security.rtkit.enable = true;
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
-    #jack.enable = true;
+    earlyoom.enable = true;
 
-    wireplumber.enable = true;
-    wireplumber.configPackages = [
-      (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/11-disable-autoswitch.conf" ''
-        wireplumber.settings = {
+    keyd = {
+      enable = true;
+      keyboards.default.settings = {
+        main = {
+          capslock = "overload(control, esc)";
+        };
+      };
+    };
+
+    openssh = {
+      enable = true;
+      ports = [ 10000 ];
+      settings.PasswordAuthentication = false;
+    };
+
+    pipewire = {
+      enable = true;
+      alsa.enable = true;
+      alsa.support32Bit = true;
+      pulse.enable = true;
+      # If you want to use JACK applications, uncomment this
+      #jack.enable = true;
+
+      wireplumber.enable = true;
+      wireplumber.configPackages = [
+        (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/11-disable-autoswitch.conf" ''
+          wireplumber.settings = {
           bluetooth.autoswitch-to-headset-profile = false;
-        }
-      '')
-      (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/20-bt.conf" ''
-        monitor.bluez.properties = {
+          }
+        '')
+        (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/20-bt.conf" ''
+          monitor.bluez.properties = {
           bluez5.roles = [ a2dp_sink a2dp_source bap_sink bap_source ]
           bluez5.enable-hw-volume = false
-        }
-      '')
-    ];
+          }
+        '')
+      ];
+    };
+
   };
 
-  hardware.bluetooth.enable = true;
-  hardware.bluetooth.powerOnBoot = true;
+  security.rtkit.enable = true;
 
-  hardware.pulseaudio.enable = false;
+  hardware = {
+    bluetooth.enable = true;
+    bluetooth.powerOnBoot = true;
 
+    pulseaudio.enable = false;
+  };
   # Add xone?
   #hardware.xpadneo.enable = true;
 
