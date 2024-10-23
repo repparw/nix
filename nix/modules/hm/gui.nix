@@ -20,7 +20,6 @@
       pavucontrol
       obs-studio
       obs-cmd
-      waydroid
       scrcpy
       logiops_0_2_3
 
