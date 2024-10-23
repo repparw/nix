@@ -15,8 +15,6 @@
 
   networking.hostName = "alpha"; # Define your hostname.
 
-  virtualisation.waydroid.enable = true;
-
   networking.interfaces.enp42s0.wakeOnLan.enable = true;
 
   users.users.repparw = {
