@@ -39,6 +39,7 @@
         zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
       '';
       shellAliases = {
+        sudo = "sudo ";
         # check if kitty
         ssh = "kitten ssh";
 
@@ -157,6 +158,8 @@
         ];
       };
     };
+
+    zoxide.enable = true;
 
     eza.enable = true;
 
@@ -287,7 +290,6 @@
       du-dust
       fd
       ripgrep
-      zoxide
       tree
 
       manix
