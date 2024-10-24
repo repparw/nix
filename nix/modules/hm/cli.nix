@@ -39,7 +39,38 @@
         zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
       '';
       shellAliases = {
+        rpi = "ssh -p2222 dietpi@rpi";
 
+        pc = " mosh -P 60000 --ssh " ssh - p 10000 " repparw@repparw.com.ar";
+
+        f = "fzf";
+
+        nq = "NQDIR=/tmp/nq nq";
+        tq = "NQDIR=/tmp/nq tq";
+        fq = "NQDIR=/tmp/nq fq";
+
+        # Asks your passwords, becomes root, opens a interactive non login shell
+        su = "sudo -s";
+
+        # Make feh borderless and default to black image background color
+        feh = "feh -x -Z -. --image-bg black";
+
+        # Vim = Nvim
+
+        vim = "nvim";
+
+        v = "nvim";
+
+        vo = "cd ~/Documents/obsidian/ && nvim 02-Areas/Facu/Finales/TALLER.md; 1";
+        # Configs
+        vdl = "v ~/.dotfiles/nix/modules/source/dlsuite-compose.yaml";
+        vn = "v ~/.config/nvim/init.lua";
+
+        # Nix
+        nrb = "nh os switch";
+        nrbt = "nh os boot";
+        nup = "nh os switch -u";
+        nupt = "nh os boot -u";
       };
       dotDir = ".config/zsh";
       antidote = {
