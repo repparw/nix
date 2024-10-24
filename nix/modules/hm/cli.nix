@@ -86,6 +86,15 @@
         mnt = "mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort";
 
         path = "echo -e \${PATH//:/\\n}";
+
+        diff = "colordiff";
+
+        meminfo = "free -h -l -t";
+        cpuinfo = "lscpu";
+
+        mkdir = "mkdir -pv";
+
+        btctl = "bluetoothctl";
       };
 
       dotDir = ".config/zsh";
