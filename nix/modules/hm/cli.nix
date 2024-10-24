@@ -55,15 +55,11 @@
         # Make feh borderless and default to black image background color
         feh = "feh -x -Z -. --image-bg black";
 
-        # Vim = Nvim
-
         vim = "nvim";
-
         v = "nvim";
 
         vo = "cd ~/Documents/obsidian/ && nvim 02-Areas/Facu/Finales/TALLER.md; 1";
         # Configs
-        vdl = "v ~/.dotfiles/nix/modules/source/dlsuite-compose.yaml";
         vn = "v ~/.config/nvim/init.lua";
 
         # Nix
@@ -87,7 +83,14 @@
 
         path = "echo -e \${PATH//:/\\n}";
 
+        # replace default utils
+        # add eza ls
+        df = "duf";
+        cat = "bat";
         diff = "colordiff";
+        top = "btm --theme gruvbox";
+
+        ping = "ping -c 5";
 
         meminfo = "free -h -l -t";
         cpuinfo = "lscpu";
@@ -95,6 +98,22 @@
         mkdir = "mkdir -pv";
 
         btctl = "bluetoothctl";
+
+        sys = "systemctl";
+        syslist = "systemctl list-unit-files";
+
+        #yt
+        yd = "yt-dlp";
+        y = "ytf";
+        ytf = "env YTFZF_ENABLE_FZF_DEFAULT_OPTS=1 ytfzf";
+        ya = "ytf -a";
+        yh = "ytf -H";
+      };
+      shellGlobalAliases = {
+        G = " | rg";
+        L = " | less";
+        W = " | wc -l";
+        C = " | tr -d '\n' | wl-copy";
       };
 
       dotDir = ".config/zsh";
