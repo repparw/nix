@@ -6,14 +6,6 @@
       if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
           tmux new-session -A -s ssh
       fi
-
-      if [[ -r "$XDG_CACHE_HOME/p10k-instant-prompt-repparw.zsh" ]]; then
-        source "$XDG_CACHE_HOME/p10k-instant-prompt-repparw.zsh"
-      fi
-    '';
-    initExtraBeforeCompInit = ''
-      	[[ -d $ZSH_CACHE_DIR/completions ]] || mkdir -p $ZSH_CACHE_DIR/completions
-      	fpath=($ZSH_CACHE_DIR/completions $fpath)
     '';
     initExtra = ''
         [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
