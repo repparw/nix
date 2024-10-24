@@ -9,6 +9,7 @@
 
     FZF_DEFAULT_COMMAND = "fd --type f --hidden --follow --exclude .git";
     FZF_DEFAULT_OPTS = "--no-mouse --multi --select-1 --reverse --height 50% --inline-info --scheme=history";
+    FZF_CTRL_R_COMMAND = "";
 
   };
 
@@ -16,6 +17,30 @@
 
     zsh = {
       enable = true;
+      initExtra = ''
+        # zsh-autosuggestions accept to ctrl-y
+        zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
+
+        lfcd() {
+        	cd "$(command lf -print-last-dir "$@")"
+        	  }
+
+
+        # lfcd
+        zvm_after_init_commands+=("bindkey -s '^e' 'lf\n'")
+        zvm_after_init_commands+=("bindkey -s '^f' 'cdi\n'")
+
+        # history search with arrow keys
+        zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')
+        zvm_after_init_commands+=('bindkey "^[OB" history-substring-search-down')
+
+        # history search on vi mode
+        zvm_after_init_commands+=('bindkey -M vicmd "k" history-substring-search-up')
+        zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
+      '';
+      shellAliases = {
+
+      };
       dotDir = ".config/zsh";
       antidote = {
         enable = true;
