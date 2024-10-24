@@ -17,6 +17,11 @@
 
     zsh = {
       enable = true;
+      initExtraFirst = ''
+        if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
+          tmux new-session -A -s ssh
+        fi
+      '';
       initExtra = ''
         # zsh-autosuggestions accept to ctrl-y
         zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
