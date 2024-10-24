@@ -71,7 +71,20 @@
         nrbt = "nh os boot";
         nup = "nh os switch -u";
         nupt = "nh os boot -u";
+
+        x = "xdg-open";
+        trash = "mv --force -t ~/.local/share/Trash ";
+        ln = "ln -i";
+        mv = "mv -i";
+
+        chown = "chown --preserve-root";
+
+        chmod = "chmod --preserve-root";
+
+        chgrp = "chgrp --preserve-root";
+
       };
+
       dotDir = ".config/zsh";
       antidote = {
         enable = true;
@@ -109,6 +122,8 @@
         ];
       };
     };
+
+    eza.enable = true;
 
     git = {
       enable = true;
@@ -238,7 +253,6 @@
       fd
       ripgrep
       zoxide
-      eza
       tree
 
       manix
