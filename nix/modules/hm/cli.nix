@@ -9,7 +9,6 @@
 
     FZF_DEFAULT_COMMAND = "fd --type f --hidden --follow --exclude .git";
     FZF_DEFAULT_OPTS = "--no-mouse --multi --select-1 --reverse --height 50% --inline-info --scheme=history";
-    FZF_CTRL_R_COMMAND = "";
 
   };
 
@@ -22,29 +21,40 @@
           tmux new-session -A -s ssh
         fi
 
+		if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+		  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+		fi
       '';
       initExtra = ''
-        		[[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
-        		
-                # zsh-autosuggestions accept to ctrl-y
-                zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
+		[[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
+		
+        # zsh-autosuggestions accept to ctrl-y
+        zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
 
-                lfcd() {
-                	cd "$(command lf -print-last-dir "$@")"
-                	  }
+        lfcd() {
+        	cd "$(command lf -print-last-dir "$@")"
+        	  }
 
 
-                # lfcd
-                zvm_after_init_commands+=("bindkey -s '^e' 'lf\n'")
-                zvm_after_init_commands+=("bindkey -s '^f' 'cdi\n'")
+        # lfcd
+        zvm_after_init_commands+=("bindkey -s '^e' 'lf\n'")
+        zvm_after_init_commands+=("bindkey -s '^f' 'cdi\n'")
 
-                # history search with arrow keys
-                zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')
-                zvm_after_init_commands+=('bindkey "^[OB" history-substring-search-down')
+        # history search with arrow keys
+        zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')
+        zvm_after_init_commands+=('bindkey "^[OB" history-substring-search-down')
 
-                # history search on vi mode
-                zvm_after_init_commands+=('bindkey -M vicmd "k" history-substring-search-up')
-                zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
+        # history search on vi mode
+        zvm_after_init_commands+=('bindkey -M vicmd "k" history-substring-search-up')
+        zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
+
+		lfcd() {
+			cd "$(command lf -print-last-dir "$@")"
+			  }
+
+		export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
+		## Leave this here because omz overwrites this after .zprofile
+		zstyle ':completion:*' list-colors "di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
       '';
       shellAliases = {
         sudo = "sudo ";
