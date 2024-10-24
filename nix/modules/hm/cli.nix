@@ -39,8 +39,12 @@
         zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
       '';
       shellAliases = {
+        # check if kitty
+        ssh = "kitten ssh";
+
         rpi = "ssh -p2222 dietpi@rpi";
 
+        # check if not alpha?
         pc = " mosh -P 60000 --ssh 'ssh - p 10000' repparw@repparw.com.ar";
 
         f = "fzf";
@@ -83,7 +87,7 @@
 
         path = "echo -e \${PATH//:/\\n}";
 
-        # replace default utils
+        # replace default utils, add checks if installed
         # add eza ls
         df = "duf";
         cat = "bat";
