@@ -2,6 +2,8 @@
 {
   programs.zsh = {
     enable = true;
+    autosuggestion.enable = true;
+    syntaxHighlighting.enable = true;
     initExtraFirst = ''
       if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
           tmux new-session -A -s ssh
