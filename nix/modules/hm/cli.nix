@@ -13,6 +13,11 @@
   };
 
   programs = {
+	gh = {
+	enable = true;
+	extensions = [ pkgs.gh-copilot ];
+	settings.git_protocol = "ssh";
+	};
 
     zsh = {
       enable = true;
@@ -289,7 +294,6 @@
       melt # ssh ed25519 keys to seed words
       ueberzugpp
       libqalculate
-      gh
 
       fastfetch
       axel
