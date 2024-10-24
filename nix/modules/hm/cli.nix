@@ -1,6 +1,8 @@
 { pkgs, stable, ... }:
 
 {
+  xdg.enable = true;
+
   programs = {
 
     zsh = {

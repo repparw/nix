@@ -4,7 +4,6 @@
 	export EDITOR='nvim'
 	export VISUAL=$EDITOR
 
-	export PATH=$HOME/.local/bin:$PATH
 ## fzf
 	export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git"
 	export FZF_DEFAULT_OPTS="--no-mouse --multi --select-1 --reverse --height 50% --inline-info --scheme=history"
