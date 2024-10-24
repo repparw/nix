@@ -7,15 +7,14 @@
           tmux new-session -A -s ssh
       fi
 
-      if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-        source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+      if [[ -r "$XDG_CACHE_HOME/p10k-instant-prompt-repparw.zsh" ]]; then
+        source "$XDG_CACHE_HOME/p10k-instant-prompt-repparw.zsh"
       fi
     '';
     initExtraBeforeCompInit = ''
-		ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
-		[[ -d $ZSH_CACHE_DIR/completions ]] || mkdir -p $ZSH_CACHE_DIR/completions
-		fpath=($ZSH_CACHE_DIR/completions $fpath)
-	'';
+      	[[ -d $ZSH_CACHE_DIR/completions ]] || mkdir -p $ZSH_CACHE_DIR/completions
+      	fpath=($ZSH_CACHE_DIR/completions $fpath)
+    '';
     initExtra = ''
         [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
 

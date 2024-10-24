@@ -10,6 +10,7 @@
   home.sessionVariables = {
     EDITOR = "nvim";
     VISUAL = "$EDITOR";
+    ZSH_CACHE_DIR = "$XDG_CACHE_HOME/zsh";
   };
 
   programs = {
