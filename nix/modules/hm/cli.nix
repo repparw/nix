@@ -41,7 +41,7 @@
       shellAliases = {
         rpi = "ssh -p2222 dietpi@rpi";
 
-        pc = " mosh -P 60000 --ssh " ssh - p 10000 " repparw@repparw.com.ar";
+        pc = " mosh -P 60000 --ssh 'ssh - p 10000' repparw@repparw.com.ar";
 
         f = "fzf";
 
@@ -83,6 +83,9 @@
 
         chgrp = "chgrp --preserve-root";
 
+        mnt = "mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort";
+
+        path = "echo -e \${PATH//:/\\n}";
       };
 
       dotDir = ".config/zsh";
