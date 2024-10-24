@@ -7,10 +7,8 @@
           tmux new-session -A -s ssh
       fi
 
-      if
-
-      if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-        source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+      if [[ -r "$XDG_CACHE_HOME/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
+        source "$XDG_CACHE_HOME/p10k-instant-prompt-''${(%):-%n}.zsh"
       fi
     '';
     initExtraBeforeCompInit = ''
