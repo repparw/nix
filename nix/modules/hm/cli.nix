@@ -20,7 +20,6 @@
 
     fzf = {
       enable = true;
-      hidden = true;
       defaultOptions = [
         "--no-mouse"
         "--multi"
