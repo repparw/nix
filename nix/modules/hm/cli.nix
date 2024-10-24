@@ -159,7 +159,10 @@
       };
     };
 
-    zoxide.enable = true;
+    zoxide = {
+      enable = true;
+      options = [ "--cmd=cd" ];
+    };
 
     eza.enable = true;
 
