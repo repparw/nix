@@ -148,7 +148,7 @@
 
 		alias sdown='shutdown now'
 
-	# yt-dl	
+	# yt-dl
 
 		alias yd='yt-dlp'
 
