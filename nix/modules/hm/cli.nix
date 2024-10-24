@@ -3,40 +3,43 @@
 {
   programs = {
 
-    zsh.antidote = {
+    zsh = {
       enable = true;
-      plugins = [
+      antidote = {
+        enable = true;
+        plugins = [
 
-        # OMZ completions requiring compinit
-        "ohmyzsh/ohmyzsh path:plugins/docker/completions kind:fpath"
-        "ohmyzsh/ohmyzsh path:plugins/docker-compose/completions kind:fpath"
+          # OMZ completions requiring compinit
+          "ohmyzsh/ohmyzsh path:plugins/docker/completions kind:fpath"
+          "ohmyzsh/ohmyzsh path:plugins/docker-compose/completions kind:fpath"
 
-        # compinit
-        "belak/zsh-utils path:completion"
+          # compinit
+          "belak/zsh-utils path:completion"
 
-        # ohmyzsh plugins
-        "ohmyzsh/ohmyzsh path:lib"
-        "ohmyzsh/ohmyzsh path:plugins/git"
-        "ohmyzsh/ohmyzsh path:plugins/gh"
-        "ohmyzsh/ohmyzsh path:plugins/rsync"
-        "ohmyzsh/ohmyzsh path:plugins/docker"
-        "ohmyzsh/ohmyzsh path:plugins/docker-compose"
-        "ohmyzsh/ohmyzsh path:plugins/tmux"
+          # ohmyzsh plugins
+          "ohmyzsh/ohmyzsh path:lib"
+          "ohmyzsh/ohmyzsh path:plugins/git"
+          "ohmyzsh/ohmyzsh path:plugins/gh"
+          "ohmyzsh/ohmyzsh path:plugins/rsync"
+          "ohmyzsh/ohmyzsh path:plugins/docker"
+          "ohmyzsh/ohmyzsh path:plugins/docker-compose"
+          "ohmyzsh/ohmyzsh path:plugins/tmux"
 
-        # powerlevel10k
-        "romkatv/powerlevel10k"
+          # powerlevel10k
+          "romkatv/powerlevel10k"
 
-        # Alias tips
-        "MichaelAquilina/zsh-you-should-use"
+          # Alias tips
+          "MichaelAquilina/zsh-you-should-use"
 
-        # fish-like features
-        "zsh-users/zsh-syntax-highlighting"
-        "zsh-users/zsh-autosuggestions"
-        "zsh-users/zsh-history-substring-search"
+          # fish-like features
+          "zsh-users/zsh-syntax-highlighting"
+          "zsh-users/zsh-autosuggestions"
+          "zsh-users/zsh-history-substring-search"
 
-        # zvm
-        "jeffreytse/zsh-vi-mode"
-      ];
+          # zvm
+          "jeffreytse/zsh-vi-mode"
+        ];
+      };
     };
 
     git = {
