@@ -73,8 +73,6 @@
 
 	# Grep
 
-		alias gh='history | rg'
-
 		alias trash='mv --force -t ~/.local/share/Trash '
 
 		alias x='xdg-open'
