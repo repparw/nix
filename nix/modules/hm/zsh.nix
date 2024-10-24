@@ -13,13 +13,15 @@
         source "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh"
       fi
     '';
+    initExtraBeforeCompInit = ''
+      export ZSH_CACHE_DIR="$(antidote path ohmyzsh/ohmyzsh)/cache"
+
+      # create completions dir if not present
+      [[ -d $ZSH_CACHE_DIR/completions ]] || mkdir -p $ZSH_CACHE_DIR/completions
+
+    '';
     initExtra = ''
         [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
-
-        export ZSH_CACHE_DIR="$(antidote path ohmyzsh/ohmyzsh)/cache"
-
-        # create completions dir if not present
-        [[ -d $ZSH_CACHE_DIR/completions ]] || mkdir -p $ZSH_CACHE_DIR/completions
 
         # zsh-autosuggestions accept to ctrl-y
         zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
