@@ -21,27 +21,30 @@
         if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
           tmux new-session -A -s ssh
         fi
+
       '';
       initExtra = ''
-        # zsh-autosuggestions accept to ctrl-y
-        zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
+        		[[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
+        		
+                # zsh-autosuggestions accept to ctrl-y
+                zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
 
-        lfcd() {
-        	cd "$(command lf -print-last-dir "$@")"
-        	  }
+                lfcd() {
+                	cd "$(command lf -print-last-dir "$@")"
+                	  }
 
 
-        # lfcd
-        zvm_after_init_commands+=("bindkey -s '^e' 'lf\n'")
-        zvm_after_init_commands+=("bindkey -s '^f' 'cdi\n'")
+                # lfcd
+                zvm_after_init_commands+=("bindkey -s '^e' 'lf\n'")
+                zvm_after_init_commands+=("bindkey -s '^f' 'cdi\n'")
 
-        # history search with arrow keys
-        zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')
-        zvm_after_init_commands+=('bindkey "^[OB" history-substring-search-down')
+                # history search with arrow keys
+                zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')
+                zvm_after_init_commands+=('bindkey "^[OB" history-substring-search-down')
 
-        # history search on vi mode
-        zvm_after_init_commands+=('bindkey -M vicmd "k" history-substring-search-up')
-        zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
+                # history search on vi mode
+                zvm_after_init_commands+=('bindkey -M vicmd "k" history-substring-search-up')
+                zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
       '';
       shellAliases = {
         sudo = "sudo ";
