@@ -7,12 +7,22 @@
           tmux new-session -A -s ssh
       fi
 
-      if [[ -r "$\{XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$\{(%):-%n}.zsh" ]]; then
-        source "$\{XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-$\{(%):-%n}.zsh"
+      if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+        source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
       fi
     '';
+    initExtraBeforeCompInit = ''
+		ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+		[[ -d $ZSH_CACHE_DIR/completions ]] || mkdir -p $ZSH_CACHE_DIR/completions
+		fpath=($ZSH_CACHE_DIR/completions $fpath)
+	'';
     initExtra = ''
-      [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
+        [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
+
+        export ZSH_CACHE_DIR="$(antidote path ohmyzsh/ohmyzsh)/cache"
+
+        # create completions dir if not present
+        [[ -d $ZSH_CACHE_DIR/completions ]] || mkdir -p $ZSH_CACHE_DIR/completions
 
         # zsh-autosuggestions accept to ctrl-y
         zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
@@ -34,13 +44,13 @@
         zvm_after_init_commands+=('bindkey -M vicmd "k" history-substring-search-up')
         zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
 
-      lfcd() {
-      	cd "$(command lf -print-last-dir "$@")"
-      	  }
+        lfcd() {
+      	  cd "$(command lf -print-last-dir "$@")"
+      		}
 
-      export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
-      ## Leave this here because omz overwrites this after .zprofile
-      zstyle ':completion:*' list-colors "di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
+        export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
+        ## Leave this here because omz overwrites this after .zprofile
+        zstyle ':completion:*' list-colors "di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
     '';
     shellAliases = {
       sudo = "sudo ";
