@@ -41,30 +41,25 @@ eval "$(gh copilot alias -- zsh)"
 
 # Zsh options END
 
-
-[[ -f $HOME/.cargo/env ]] && source $HOME/.cargo/env
-
-# clone antidote if not present
-
-[[ -d ${XDG_CACHE_HOME:-$HOME/.cache}/antidote ]] ||
-  git clone https://github.com/mattmc3/antidote ${XDG_CACHE_HOME:-$HOME/.cache}/antidote
-
-source ${XDG_CACHE_HOME:-$HOME/.cache}/antidote/antidote.zsh
-
-# set OMZ variables before loading OMZ plugins
-export ZSH=$(antidote path ohmyzsh/ohmyzsh)
-
-export ZSH_CACHE_DIR="$ZSH/cache"
-# create completions dir if not present
-[[ -d $ZSH_CACHE_DIR/completions ]] || mkdir -p $ZSH_CACHE_DIR/completions
-
-antidote load # Default location ${ZDOTDIR:-$HOME}/.zsh_plugins.txt
+## TODO delete when ported to hm
+## clone antidote if not present
+#
+#[[ -d ${XDG_CACHE_HOME:-$HOME/.cache}/antidote ]] ||
+#  git clone https://github.com/mattmc3/antidote ${XDG_CACHE_HOME:-$HOME/.cache}/antidote
+#
+#source ${XDG_CACHE_HOME:-$HOME/.cache}/antidote/antidote.zsh
+#
+## set OMZ variables before loading OMZ plugins
+#export ZSH=$(antidote path ohmyzsh/ohmyzsh)
+#
+#export ZSH_CACHE_DIR="$ZSH/cache"
+## create completions dir if not present
+#[[ -d $ZSH_CACHE_DIR/completions ]] || mkdir -p $ZSH_CACHE_DIR/completions
+#
+#antidote load # Default location ${ZDOTDIR:-$HOME}/.zsh_plugins.txt
+## TODO delete when ported to hm
 
 # User configuration
-
-# NVM setup
-export NVM_DIR="$HOME/.config/nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 
 ## Aliases
 if [ -f ${ZDOTDIR:-$HOME}/.aliases ]; then
