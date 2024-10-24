@@ -3,9 +3,15 @@
   programs.zsh = {
     enable = true;
     initExtraFirst = ''
-      if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
-          tmux new-session -A -s ssh
-      fi
+            if [[ $- =~ i ]] && [[ -z "$TMUX" ]] && [[ -n "$SSH_TTY" ]]; then
+                tmux new-session -A -s ssh
+            fi
+
+      	  if
+
+      	  if [[ -r "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
+      		source "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh"
+      	  fi
     '';
     initExtra = ''
         [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
