@@ -5,6 +5,7 @@
 
     zsh = {
       enable = true;
+      dotDir = ".config/zsh";
       antidote = {
         enable = true;
         plugins = [
