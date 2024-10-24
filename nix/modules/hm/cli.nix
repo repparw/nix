@@ -10,10 +10,6 @@
   home.sessionVariables = {
     EDITOR = "nvim";
     VISUAL = "$EDITOR";
-
-    FZF_DEFAULT_COMMAND = "fd --type f --hidden --follow --exclude .git";
-    FZF_DEFAULT_OPTS = "--no-mouse --multi --select-1 --reverse --height 50% --inline-info --scheme=history";
-
   };
 
   programs = {
@@ -21,6 +17,22 @@
       enable = true;
       hidden = true;
     };
+
+    fzf = {
+      enable = true;
+      hidden = true;
+      defaultOptions = [
+        "--no-mouse"
+        "--multi"
+        "--select-1"
+        "--reverse"
+        "--height 50%"
+        "--inline-info"
+        "--scheme=history"
+      ];
+      defaultCommand = "fd --type f --hidden --follow --exclude .git";
+    };
+
     gh = {
       enable = true;
       extensions = [ pkgs.gh-copilot ];
