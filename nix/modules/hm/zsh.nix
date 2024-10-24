@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   programs.zsh = {
     enable = true;
@@ -12,6 +12,8 @@
       if [[ -r "$XDG_CACHE_HOME/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
         source "$XDG_CACHE_HOME/p10k-instant-prompt-''${(%):-%n}.zsh"
       fi
+
+      source ${pkgs.zsh-vi-mode}/share/zsh-vi-mode/zsh-vi-mode.plugin.zsh
     '';
     initExtraBeforeCompInit = ''
 
@@ -164,9 +166,6 @@
         "zsh-users/zsh-syntax-highlighting"
         "zsh-users/zsh-autosuggestions"
         "zsh-users/zsh-history-substring-search"
-
-        # zvm
-        "jeffreytse/zsh-vi-mode"
       ];
     };
   };
