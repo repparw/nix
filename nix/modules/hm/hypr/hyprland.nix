@@ -208,7 +208,7 @@
 
         # Macropad
         "CTRL ALT SHIFT, A, exec, hdrop steam"
-        "CTRL ALT SHIFT, B, exec, obs-cmd replay toggle"
+        "CTRL ALT SHIFT, B, exec, obs-cmd recording toggle-pause"
         "CTRL ALT SHIFT, C, exec, ~/.config/scripts/obs_last_remux2wsp"
         "CTRL ALT SHIFT, D, exec, obs-cmd replay save"
         "CTRL ALT SHIFT, E, exec, hdrop $discord"
