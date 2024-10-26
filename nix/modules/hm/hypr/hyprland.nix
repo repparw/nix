@@ -149,7 +149,7 @@
 
       bindr = [
         "$mod, SUPER_L, exec, $desktopmenu"
-        "$mod SHIFT, SUPER_L, exec, $cmdmenu"
+        "$mod ALT, SUPER_L, exec, $cmdmenu"
       ];
       bindm = [
         "$mod, mouse:272, movewindow"
@@ -181,10 +181,10 @@
         "$mod, E, exec, $fileManager"
         "$mod, F, fullscreen"
         "$mod SHIFT, F, fullscreen, 2"
-        "$mod CTRL, F, togglefloating"
+        "$mod ALT, F, togglefloating"
         "$mod SHIFT, E, exec, $GUIfileManager"
         "$mod, SPACE, exec, $browser"
-        "$mod CTRL, SPACE, exec, $socials"
+        "$mod ALT, SPACE, exec, $socials"
         "$mod SHIFT, SPACE, exec, $browser2"
         "$mod, T, exec, $top"
         "$mod, Y, exec, [workspace 6 silent;noinitialfocus] $kiosk"
