@@ -164,8 +164,8 @@
       ];
       bindl = [ "CTRL ALT, L, exec, $lockscreen; $screenoff" ];
       bind = [
-        "ALT, Tab, focusmonitor,+1 "
-        "SHIFT ALT, Tab, movewindow,mon:+1"
+        "$mod, X, focusmonitor,+1 "
+        "SHIFT $mod, X, movewindow,mon:+1"
         "$mod, comma, movecurrentworkspacetomonitor,l"
         "$mod, period, movecurrentworkspacetomonitor,r"
 
@@ -197,7 +197,6 @@
         "$mod, P, exec, [workspace 6 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
 
         "$mod, G, exec, xdg-open https://mail.google.com"
-        "$mod, X, exec, xdg-open https://app.todoist.com/app/project/personal-2302473483"
 
         ", Print, exec, $screenshot active -m output ## Active monitor"
         "$mod, Print, exec, $screenshot active -m window ## Active window"
