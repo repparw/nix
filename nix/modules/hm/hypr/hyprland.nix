@@ -149,7 +149,7 @@
 
       bindr = [
         "$mod, SUPER_L, exec, $desktopmenu"
-        "$mod ALT, SUPER_L, exec, $cmdmenu"
+        "$mod SHIFT, SUPER_L, exec, $cmdmenu"
       ];
       bindm = [
         "$mod, mouse:272, movewindow"
@@ -157,10 +157,10 @@
       ];
       binde = [
         # Resize window
-        "$mod ALT, H, resizeactive, -10 0"
-        "$mod ALT, J, resizeactive, 0 10"
-        "$mod ALT, K, resizeactive, 0 -10"
-        "$mod ALT, L, resizeactive, 10 0"
+        "$mod CTRL, H, resizeactive, -10 0"
+        "$mod CTRL, J, resizeactive, 0 10"
+        "$mod CTRL, K, resizeactive, 0 -10"
+        "$mod CTRL, L, resizeactive, 10 0"
       ];
       bindl = [ "$mod SHIFT, L, exec, $lockscreen; $screenoff" ];
       bind = [
@@ -181,10 +181,10 @@
         "$mod, E, exec, $fileManager"
         "$mod, F, fullscreen"
         "$mod SHIFT, F, fullscreen, 2"
-        "$mod ALT, F, togglefloating"
+        "$mod CTRL, F, togglefloating"
         "$mod SHIFT, E, exec, $GUIfileManager"
         "$mod, SPACE, exec, $browser"
-        "$mod ALT, SPACE, exec, $socials"
+        "$mod CTRL, SPACE, exec, $socials"
         "$mod SHIFT, SPACE, exec, $browser2"
         "$mod, T, exec, $top"
         "$mod, Y, exec, [workspace 6 silent;noinitialfocus] $kiosk"
