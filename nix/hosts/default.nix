@@ -35,4 +35,6 @@
 
   hardware.xpadneo.enable = true;
 
+  hardware.keyboard.qmk.enable = true;
+
 }
