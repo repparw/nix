@@ -1,11 +1,11 @@
-{ hostName, inputs, ... }:
+{ osConfig, ... }:
 
 {
   imports = [
     ../modules/hm/cli.nix
     ../modules/hm/gui.nix
     ../modules/hm/hypr/hyprland.nix
-    ./${hostName}/home.nix
+    ./${osConfig.networking.hostName}/home.nix
   ];
 
   # Let Home Manager install and manage itself.
