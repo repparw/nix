@@ -95,7 +95,7 @@
     firefox = {
       enable = true;
 
-      nativeMessagingHosts.tridactyl = true;
+      nativeMessagingHosts = [ pkgs.tridactyl-native ];
 
       ####profiles = {
       ####  default = {
