@@ -34,7 +34,7 @@
 
       "$lockscreen" = "loginctl lock-session";
 
-      "$screenoff" = "sleep 3; hyprctl dispatch dpms off";
+      "$screenoff" = "sleep 3 && hyprctl dispatch dpms off";
 
       # Terminal
       "$terminal" = "kitty";
