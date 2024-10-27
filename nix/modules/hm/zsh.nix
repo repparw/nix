@@ -124,7 +124,7 @@
       #yt
       yd = "yt-dlp";
       y = "ytf";
-      ytf = "env YTFZF_ENABLE_FZF_DEFAULT_OPTS=1 ytfzf";
+      ytf = "ytfzf";
       ya = "ytf -a";
       yh = "ytf -H";
     };
