@@ -3,9 +3,7 @@
 
   outputs =
     {
-      self,
       home-manager,
-      nixvim,
       ...
     }@inputs:
     let
@@ -23,7 +21,6 @@
 
         alpha = inputs.nixpkgs.lib.nixosSystem {
           modules = [
-            #			inputs.stylix.nixosModules.stylix
             ./hosts/default.nix
             home-manager.nixosModules.home-manager
             {
@@ -45,7 +42,6 @@
 
         beta = inputs.nixpkgs.lib.nixosSystem {
           modules = [
-            #			inputs.stylix.nixosModules.stylix
             ./hosts/default.nix
             home-manager.nixosModules.home-manager
             {
