@@ -135,8 +135,6 @@
 
         history = true;
 
-        matching-algorithm = "normal";
-
         require-match = true;
 
         auto-accept-single = false;
@@ -144,10 +142,6 @@
         hide-input = false;
 
         hidden-character = "\"*\"";
-
-        physical-keybindings = true;
-
-        print-index = false;
 
         drun-launch = true;
 
