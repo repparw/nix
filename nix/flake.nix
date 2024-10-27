@@ -21,7 +21,7 @@
 
         alpha = inputs.nixpkgs.lib.nixosSystem {
           modules = [
-            ./hosts/default.nix
+            ./hosts/alpha
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;
@@ -31,7 +31,7 @@
                 inherit stable;
                 inherit inputs;
               };
-              home-manager.users.repparw = import ./hosts/home.nix;
+              home-manager.users.repparw = import ./home/alpha;
             }
           ];
           specialArgs = {
@@ -42,7 +42,7 @@
 
         beta = inputs.nixpkgs.lib.nixosSystem {
           modules = [
-            ./hosts/default.nix
+            ./hosts/beta
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;
@@ -52,7 +52,7 @@
                 inherit stable;
                 inherit inputs;
               };
-              home-manager.users.repparw = import ./hosts/home.nix;
+              home-manager.users.repparw = import ./home/beta;
             }
           ];
           specialArgs = {
