@@ -162,7 +162,7 @@
         "$mod CTRL, K, resizeactive, 0 -10"
         "$mod CTRL, L, resizeactive, 10 0"
       ];
-      bindl = [ "$mod SHIFT, L, exec, $lockscreen; $screenoff" ];
+      bindl = [ "$mod ALT, L, exec, $lockscreen; $screenoff" ];
       bind = [
         "$mod, X, focusmonitor,+1 "
         "SHIFT $mod, X, movewindow,mon:+1"
