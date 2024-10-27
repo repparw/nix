@@ -8,6 +8,7 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+    ../common.nix
     ../../modules/nixos/dlsuite.nix
     ../../modules/nixos/timers.nix
     ../../modules/nixos/gaming.nix
