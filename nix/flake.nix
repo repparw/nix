@@ -31,7 +31,6 @@
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "hm-backup";
               home-manager.extraSpecialArgs = {
-                hostName = "alpha";
                 inherit stable;
                 inherit inputs;
               };
@@ -39,7 +38,6 @@
             }
           ];
           specialArgs = {
-            hostName = "alpha";
             inherit stable;
             inherit inputs;
           };
@@ -55,7 +53,6 @@
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "hm-backup";
               home-manager.extraSpecialArgs = {
-                hostName = "beta";
                 inherit stable;
                 inherit inputs;
               };
@@ -63,7 +60,6 @@
             }
           ];
           specialArgs = {
-            hostName = "beta";
             inherit stable;
             inherit inputs;
           };
