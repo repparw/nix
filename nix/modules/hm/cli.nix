@@ -45,7 +45,10 @@
       options = [ "--cmd=cd" ];
     };
 
-    eza.enable = true;
+    eza = {
+      enable = true;
+      extraOptions = [ "--no-emoji" ];
+    };
 
     git = {
       enable = true;
