@@ -47,7 +47,7 @@
 
     eza = {
       enable = true;
-      extraOptions = [ "--no-emoji" ];
+      extraOptions = [ "--icons" ];
     };
 
     git = {
