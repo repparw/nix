@@ -136,6 +136,7 @@
     };
 
     dotDir = ".config/zsh";
+    history.path = "$ZDOTDIR/.zsh_history";
     antidote = {
       enable = true;
       plugins = [
