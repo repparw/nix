@@ -11,6 +11,7 @@
     ../common.nix
     ../../modules/nixos/dlsuite.nix
     ../../modules/nixos/timers.nix
+    ../../modules/nixos/autoUpgrade.nix
     ../../modules/nixos/gaming.nix
   ];
 
