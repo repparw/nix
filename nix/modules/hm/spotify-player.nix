@@ -2,9 +2,82 @@
 {
   programs.spotify-player = {
     enable = true;
-    #keymaps = [ { command = "VolumeUp"; key_sequence = "0"; } { command = "VolumeDown"; key_sequence = "9"; } { command = "Mute"; key_sequence = "m"; } { command = "NextTrack"; key_sequence = "n"; } { command = "PreviousTrack"; key_sequence = "b"; } { command = "PreviousTrack"; key_sequence = "p"; } { command = "PreviousPage"; key_sequence = "q"; } { command = "FocusNextWindow"; key_sequence = "l"; } { command = "FocusPreviousWindow"; key_sequence = "h"; } { command = "Quit"; key_sequence = "C-q"; } { command = "LibraryPage"; key_sequence = "g h"; } { command = "LyricPage"; key_sequence = "g l"; } ];
-    #actions = [ { action = "CopyLink"; key_sequence = "y"; target = "PlayingTrack"; } { action = "CopyLink"; key_sequence = "Y"; } { action = "GoToArtist"; key_sequence = "g A"; target = "PlayingTrack"; } { action = "GoToAlbum"; key_sequence = "g B"; target = "PlayingTrack"; } { action = "ToggleLiked"; key_sequence = "C-l"; target = "PlayingTrack"; } ];
-    # uncomment actions and keymaps and rm from dotfiles when merged
+    keymaps = [
+      {
+        command = "VolumeUp";
+        key_sequence = "0";
+      }
+      {
+        command = "VolumeDown";
+        key_sequence = "9";
+      }
+      {
+        command = "Mute";
+        key_sequence = "m";
+      }
+      {
+        command = "NextTrack";
+        key_sequence = "n";
+      }
+      {
+        command = "PreviousTrack";
+        key_sequence = "b";
+      }
+      {
+        command = "PreviousTrack";
+        key_sequence = "p";
+      }
+      {
+        command = "PreviousPage";
+        key_sequence = "q";
+      }
+      {
+        command = "FocusNextWindow";
+        key_sequence = "l";
+      }
+      {
+        command = "FocusPreviousWindow";
+        key_sequence = "h";
+      }
+      {
+        command = "Quit";
+        key_sequence = "C-q";
+      }
+      {
+        command = "LibraryPage";
+        key_sequence = "g h";
+      }
+      {
+        command = "LyricPage";
+        key_sequence = "g l";
+      }
+    ];
+    actions = [
+      {
+        action = "CopyLink";
+        key_sequence = "y";
+        target = "PlayingTrack";
+      }
+      {
+        action = "CopyLink";
+        key_sequence = "Y";
+      }
+      {
+        action = "GoToArtist";
+        key_sequence = "g A";
+        target = "PlayingTrack";
+      }
+      {
+        action = "GoToAlbum";
+        key_sequence = "g B";
+        target = "PlayingTrack";
+      }
+      {
+        action = "ToggleLiked";
+        key_sequence = "C-l";
+        target = "PlayingTrack";
+      }
+    ];
     settings = {
       theme = "gruvbox_dark";
       client_id = "2728200c381a418983c3de5b30bc77a9";
