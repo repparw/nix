@@ -8,7 +8,7 @@
 
   home.packages = with pkgs; [
     # Essential packages
-    jellyfin-mpv-shim
+    # jellyfin-mpv-shim
   ];
 
 }
