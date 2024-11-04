@@ -14,7 +14,7 @@
     flake = "/home/repparw/.dotfiles/nix";
     clean = {
       enable = true;
-      extraArgs = "--keep 3 -keep-since 7d";
+      extraArgs = "--keep 3 --keep-since 7d";
     };
   };
 
