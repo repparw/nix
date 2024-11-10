@@ -39,6 +39,7 @@
         # history search with arrow keys
         zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')
         zvm_after_init_commands+=('bindkey "^[OB" history-substring-search-down')
+        zvm_after_init_commands+=('bindkey "^R" fzf-history-widget')
 
         # history search on vi mode
         zvm_after_init_commands+=('bindkey -M vicmd "k" history-substring-search-up')
