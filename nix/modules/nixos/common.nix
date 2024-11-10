@@ -1,4 +1,10 @@
-{ pkgs, inputs, ... }:
+{
+  pkgs,
+  inputs,
+  lib,
+  config,
+  ...
+}:
 
 {
 
@@ -72,18 +78,12 @@
     earlyoom.enable = true;
 
     keyd = {
-      enable = true;
+      enable = lib.mkIf (config.networking.hostName != "alpha") true;
       keyboards = {
         default.settings = {
           main = {
             capslock = "overload(control, esc)";
           };
-
-        };
-        cantor.settings = {
-          main =
-            {
-            };
         };
       };
     };
