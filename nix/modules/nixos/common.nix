@@ -73,9 +73,17 @@
 
     keyd = {
       enable = true;
-      keyboards.default.settings = {
-        main = {
-          capslock = "overload(control, esc)";
+      keyboards = {
+        default.settings = {
+          main = {
+            capslock = "overload(control, esc)";
+          };
+
+        };
+        cantor.settings = {
+          main =
+            {
+            };
         };
       };
     };
