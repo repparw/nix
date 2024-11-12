@@ -54,6 +54,7 @@
       "application/pdf" = [ "chromium-browser.desktop" ];
     };
     defaultApplications = {
+      "inode/directory" = "org.gnome.Nautilus.desktop";
       "application/pdf" = [
         "org.pwmt.zathura.desktop"
         "firefox.desktop"
