@@ -4,7 +4,10 @@
   imports = [ ./hypr-pkgs.nix ];
   wayland.windowManager.hyprland = {
     enable = true;
-    plugins = with pkgs; [ hyprlandPlugins.hyprsplit ];
+    plugins = with pkgs.hyprlandPlugins; [
+      hyprsplit
+      hyprexpo
+    ];
 
     systemd.variables = [ "--all" ];
     ${
@@ -175,7 +178,7 @@
         "$mod, C, workspace, m+1"
         "$mod SHIFT, C, workspace, previous_per_monitor"
 
-        ", mouse:276, workspace, m+1"
+        ", mouse:276, hyprexpo:expo, toggle"
 
         "$mod, RETURN, exec, $terminal"
         "$mod, W, killactive,"
