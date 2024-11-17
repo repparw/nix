@@ -12,6 +12,7 @@
     VISUAL = "$EDITOR";
     YTFZF_ENABLE_FZF_DEFAULT_OPTS = 1;
     ZSH_CACHE_DIR = "$XDG_CACHE_HOME/zsh";
+    RIP_GRAVEYARD = "$XDG_DATA_HOME/Trash";
   };
 
   programs = {
