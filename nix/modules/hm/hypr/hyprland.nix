@@ -6,7 +6,6 @@
     enable = true;
     plugins = with pkgs.hyprlandPlugins; [
       hyprsplit
-      hyprexpo
     ];
 
     systemd.variables = [ "--all" ];
@@ -170,7 +169,7 @@
         "$mod, C, workspace, m+1"
         "$mod SHIFT, C, workspace, previous_per_monitor"
 
-        ", mouse:276, hyprexpo:expo, enable"
+        ", mouse:276, workspace, m+1"
 
         "$mod, RETURN, exec, $terminal"
         "$mod, W, killactive,"
