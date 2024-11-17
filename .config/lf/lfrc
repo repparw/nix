@@ -53,11 +53,10 @@ cmd open ${{
 
 # move current file or selected files to trash folder
 # (also see 'man mv' for backup/overwrite options)
- cmd trash $mv $fx ~/.local/share/Trash
+ cmd trash $rip $fx
 
 # Mappings
- map D trash
- map <delete> push :delete<enter>
+ map D rip
  map <f-2> rename
  map <enter> open
  map <c-z> $ kill -STOP $PPID
