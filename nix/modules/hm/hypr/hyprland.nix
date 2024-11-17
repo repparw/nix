@@ -77,14 +77,8 @@
       # https://wiki.hyprland.org/Configuring/Variables/#decoration
       decoration = {
         rounding = "14";
-        drop_shadow = "1";
-        shadow_ignore_window = "true";
-        shadow_offset = "7 7";
-        shadow_range = "15";
         shadow_render_power = "4";
         shadow_scale = "0.99";
-        "col.shadow" = "rgba(000000BB)";
-        #"col.shadow_inactive" = "rgba(000000BB)";
         dim_inactive = "true";
         dim_strength = "0.1";
         active_opacity = "1";
