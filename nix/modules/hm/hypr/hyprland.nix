@@ -77,8 +77,6 @@
       # https://wiki.hyprland.org/Configuring/Variables/#decoration
       decoration = {
         rounding = "14";
-        shadow_render_power = "4";
-        shadow_scale = "0.99";
         dim_inactive = "true";
         dim_strength = "0.1";
         active_opacity = "1";
