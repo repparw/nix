@@ -179,7 +179,7 @@
 
       manix
 
-      nodejs # remove after porting nvim plugins to nix cfg
+      nodejs # TODO remove after finishing tp proy
     ]
     ++ (
       with stable;
