@@ -176,6 +176,7 @@
       du-dust
       ripgrep
       tree
+      rip2
 
       manix
 

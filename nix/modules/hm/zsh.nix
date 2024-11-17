@@ -93,6 +93,8 @@
       ln = "ln -i";
       mv = "mv -i";
 
+      rm = "echo Use rip instead of rm";
+
       chown = "chown --preserve-root";
 
       chmod = "chmod --preserve-root";
