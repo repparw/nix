@@ -2,7 +2,6 @@
 
 {
   imports = [
-    ../modules/nixos/cachix.nix
     ../modules/nixos/common.nix
     ../modules/nixos/hyprland.nix
   ];
