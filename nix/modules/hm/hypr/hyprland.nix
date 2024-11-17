@@ -1,9 +1,11 @@
-{ osConfig, ... }:
+{ osConfig, pkgs, ... }:
 
 {
   imports = [ ./hypr-pkgs.nix ];
   wayland.windowManager.hyprland = {
     enable = true;
+    plugins = with pkgs; [ hyprlandPlugins.hyprsplit ];
+
     systemd.variables = [ "--all" ];
     ${
       if osConfig.networking.hostName == "alpha" then "extraConfig" else null
