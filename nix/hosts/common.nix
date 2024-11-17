@@ -25,6 +25,7 @@
       "root"
       "repparw"
     ];
+
   };
 
   nix.optimise.automatic = true;
@@ -35,4 +36,8 @@
 
   hardware.keyboard.qmk.enable = true;
 
+  substituters = [
+    "https://cache.nixos.org"
+    "https://nixos.hyprland.org"
+  ];
 }
