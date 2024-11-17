@@ -52,11 +52,10 @@ cmd open ${{
 # map r push :rename<space>
 
 # move current file or selected files to trash folder
-# (also see 'man mv' for backup/overwrite options)
  cmd trash $rip $fx
 
 # Mappings
- map D rip
+ map D trash
  map <f-2> rename
  map <enter> open
  map <c-z> $ kill -STOP $PPID
