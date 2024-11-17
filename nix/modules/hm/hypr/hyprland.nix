@@ -170,7 +170,7 @@
         "$mod, C, workspace, m+1"
         "$mod SHIFT, C, workspace, previous_per_monitor"
 
-        ", mouse:276, hyprexpo:expo, toggle"
+        ", mouse:276, hyprexpo:expo, enable"
 
         "$mod, RETURN, exec, $terminal"
         "$mod, W, killactive,"
