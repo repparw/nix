@@ -206,7 +206,7 @@
         "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy ## OCR"
         "$mod, Q, exec, wl-paste --type image/png | zbarimg --raw - | wl-copy ## OCR"
 
-        # Macropad
+        # Macropad churro
         "CTRL ALT SHIFT, A, exec, hdrop steam"
         "CTRL ALT SHIFT, B, exec, obs-cmd recording toggle-pause"
         "CTRL ALT SHIFT, C, exec, ~/.config/scripts/obs_last_remux2wsp"
@@ -250,8 +250,8 @@
         "$mod SHIFT, S, movetoworkspace, special:magic"
 
         # Scroll through monitor active workspaces with mainMod + scroll
-        "$mod, mouse_down, workspace, m+1"
-        "$mod, mouse_up, workspace, m-1"
+        "$mod, mouse_down, split:workspace, m+1"
+        "$mod, mouse_up, split:workspace, m-1"
       ];
 
       windowrulev2 = [
