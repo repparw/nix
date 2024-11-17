@@ -168,7 +168,7 @@
       bind = [
         "$mod, X, focusmonitor,+1 "
         "SHIFT $mod, X, movewindow,mon:+1"
-        "$mod, comma, movecurrentworkspacetomonitor,l"
+        "$mod, comma, movecurrentworkspacetomonitor,l" # rm if hyprsplit
         "$mod, period, movecurrentworkspacetomonitor,r"
 
         # Scroll through monitor active workspaces with mainMod + scroll
@@ -198,8 +198,6 @@
         "$mod, R, exec, $terminal zsh -ic rpi"
         "$mod, B, exec, ~/.config/scripts/bttoggle"
         "$mod, P, exec, [workspace 6 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
-
-        "$mod, G, exec, xdg-open https://mail.google.com"
 
         ", Print, exec, $screenshot active -m output ## Active monitor"
         "$mod, Print, exec, $screenshot active -m window ## Active window"
