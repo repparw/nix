@@ -129,7 +129,7 @@
     pulseaudio.enable = false;
   };
   # Add xone?
-  #hardware.xpadneo.enable = true;
+  hardware.xpadneo.enable = true;
 
   environment.etc = {
     # Creates /etc/nanorc
