@@ -23,9 +23,18 @@
 
     lf = {
       enable = true;
-      settings =
-        {
-        };
+      settings = {
+        shell = "zsh";
+        shellopts = "-eu";
+        ifs = "\n";
+        scrolloff = 10;
+        hidden = true;
+        drawbox = true;
+        icons = true;
+        period = 1;
+
+        cmd = [ "trash $rip $fx" ];
+      };
       keybindings = {
         D = "trash";
         U = "!du -sh";
