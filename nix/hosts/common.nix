@@ -40,8 +40,6 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  hardware.xpadneo.enable = true;
-
   hardware.keyboard.qmk.enable = true;
 
 }

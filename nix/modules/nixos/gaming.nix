@@ -1,5 +1,8 @@
 { ... }:
 {
+  hardware.xpadneo.enable = true;
+  hardware.steam-hardware.enable = true;
+
   programs = {
     steam = {
       enable = true;
