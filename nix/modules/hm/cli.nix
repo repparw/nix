@@ -21,6 +21,21 @@
       hidden = true;
     };
 
+    lf = {
+      enable = true;
+      settings =
+        {
+        };
+      keybindings = {
+        D = "trash";
+        U = "!du -sh";
+        b = "bulk";
+        r = "rename";
+        q = "quit";
+      };
+
+    };
+
     fzf = {
       enable = true;
       defaultOptions = [
@@ -162,7 +177,6 @@
       tlrc # tldr
       nq # Command queue
 
-      lf
       vimv-rs # bulk rename
       pdfgrep
       catdoc # provides catppt and xls2csv
