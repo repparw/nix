@@ -529,7 +529,7 @@
 
 	  pistol # preview images lf+kitty
 
-      vimv-rs # bulk rename
+      renameutils # bulk rename
       pdfgrep
       catdoc # provides catppt and xls2csv
 
