@@ -32,7 +32,7 @@
           "bulk \${{ clear; qmv -d -- $fx; lf -remote send $id unselect}}"
         ];
 
-        cleaner = pkgs.writeShellScript "lf_kitty_clean" ''
+        cleaner = pkgs.writeShellScriptBin "lf_kitty_clean" ''
           kitty +kitten icat --clear --stdin no --silent --transfer-mode file < /dev/null > /dev/tty
         '';
 
