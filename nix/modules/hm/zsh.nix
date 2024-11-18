@@ -22,36 +22,23 @@
 
     '';
     initExtra = ''
-        [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
+      [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
 
-        # zsh-autosuggestions accept to ctrl-y
-        zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
+      # zsh-autosuggestions accept to ctrl-y
+      zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
 
-        lfcd() {
-        	cd "$(command lf -print-last-dir "$@")"
-        	  }
+      # history search with arrow keys
+      zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')
+      zvm_after_init_commands+=('bindkey "^[OB" history-substring-search-down')
+      zvm_after_init_commands+=('bindkey "^R" fzf-history-widget')
 
+      # history search on vi mode
+      zvm_after_init_commands+=('bindkey -M vicmd "k" history-substring-search-up')
+      zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
 
-        # lfcd
-        zvm_after_init_commands+=("bindkey -s '^e' 'lf\n'")
-        zvm_after_init_commands+=("bindkey -s '^f' 'cdi\n'")
-
-        # history search with arrow keys
-        zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')
-        zvm_after_init_commands+=('bindkey "^[OB" history-substring-search-down')
-        zvm_after_init_commands+=('bindkey "^R" fzf-history-widget')
-
-        # history search on vi mode
-        zvm_after_init_commands+=('bindkey -M vicmd "k" history-substring-search-up')
-        zvm_after_init_commands+=('bindkey -M vicmd "j" history-substring-search-down')
-
-        lfcd() {
-      	  cd "$(command lf -print-last-dir "$@")"
-      		}
-
-        export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
-        ## Leave this here because omz overwrites this after .zprofile
-        zstyle ':completion:*' list-colors "di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
+      export LS_COLORS="di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
+      ## Leave this here because omz overwrites this after .zprofile
+      zstyle ':completion:*' list-colors "di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
     '';
     shellAliases = {
       sudo = "sudo ";
