@@ -163,9 +163,6 @@
       tlrc # tldr
       nq # Command queue
 
-      pistol # preview images lf+kitty
-
-      renameutils # bulk rename
       pdfgrep
       catdoc # provides catppt and xls2csv
 
