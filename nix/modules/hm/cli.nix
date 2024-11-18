@@ -47,7 +47,7 @@
         icons = true;
         period = 1;
 
-        cmd = [ "trash $rip $fx" ];
+		cmd = [ "trash $rip $fx" "bulk ${{ vimv $(echo -e "$fx" | xargs -i echo "\\'{}\\'" | xargs echo) }}" ];
 
 		cleaner = pkgs.writeShellScript "lf_kitty_clean" ''
 		  kitty +kitten icat --clear --stdin no --silent --transfer-mode file < /dev/null > /dev/tty
@@ -59,6 +59,8 @@
         U = "!du -sh";
         b = "bulk";
         q = "quit";
+		x = "$$f";
+		X = "!$f";
       };
 
     };
