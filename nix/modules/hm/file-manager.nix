@@ -26,16 +26,9 @@
         drawbox = true;
         icons = true;
         period = 1;
-
-        cmd = [
-          "trash $rip $fx"
-          "bulk \${{ clear; qmv -d -- $fx; lf -remote send $id unselect}}"
-        ];
       };
       keybindings = {
-        D = "trash";
         U = "!du -sh";
-        b = "bulk";
         q = "quit";
         x = "$$f";
         X = "!$f";
