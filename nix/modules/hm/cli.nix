@@ -34,6 +34,7 @@
         period = 1;
 
         cmd = [ "trash $rip $fx" ];
+
       };
       keybindings = {
         D = "trash";
@@ -44,6 +45,13 @@
       };
 
     };
+    programs.zsh.initExtra = ''
+      lfcd() {
+      	cd "$(command lf -print-last-dir "$@")"
+      	  }
+      zvm_after_init_commands+=("bindkey -s '^e' 'lf\n'")
+      zvm_after_init_commands+=("bindkey -s '^f' 'cdi\n'")
+    '';
 
     fzf = {
       enable = true;
