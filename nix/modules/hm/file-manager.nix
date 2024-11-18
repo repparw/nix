@@ -5,7 +5,9 @@
       enable = true;
       enableZshIntegration = true;
       settings = {
-        flavor = "use gruvbox-dark";
+        flavor = {
+          use = "gruvbox-dark";
+        };
       };
       flavors = {
         gruvbox-dark = fetchTarball {
