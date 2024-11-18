@@ -4,7 +4,7 @@
     yazi = {
       enable = true;
       enableZshIntegration = true;
-      settings = {
+      theme = {
         flavor = {
           use = "gruvbox-dark";
         };
