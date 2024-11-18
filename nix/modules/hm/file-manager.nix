@@ -1,6 +1,15 @@
 { pkgs, ... }:
 {
   programs = {
+    yazi = {
+      enable = true;
+      enableZshIntegration = true;
+
+    };
+    zsh.initExtra = ''
+      zvm_after_init_commands+=("bindkey -s '^e' 'yazi\n'")
+    '';
+
     lf = {
       enable = true;
       previewer.source = pkgs.writeShellScript "lf_kitty_preview" ''
@@ -35,12 +44,6 @@
       };
 
     };
-    zsh.initExtra = ''
-      lfcd() {
-      	cd "$(command lf -print-last-dir "$@")"
-      	  }
-      zvm_after_init_commands+=("bindkey -s '^e' 'lfcd\n'")
-    '';
   };
 
   home.file.".config/lf/icons".text = ''
