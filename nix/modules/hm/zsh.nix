@@ -27,6 +27,7 @@
       # zsh-autosuggestions accept to ctrl-y
       zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
 
+      zvm_after_init_commands+=("bindkey -s '^f' 'cdi\n'")
       # history search with arrow keys
       zvm_after_init_commands+=('bindkey "^[OA" history-substring-search-up')
       zvm_after_init_commands+=('bindkey "^[OB" history-substring-search-down')
