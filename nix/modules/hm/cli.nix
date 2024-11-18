@@ -3,6 +3,7 @@
 {
   imports = [
     ./zsh.nix
+    ./lf.nix
   ];
 
   xdg.enable = true;
