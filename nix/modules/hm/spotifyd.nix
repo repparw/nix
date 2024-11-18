@@ -23,7 +23,7 @@
         # NOTE: This variable's type will change in v0.4, to a number (instead of string)
         initial_volume = "45";
 
-        volume_normalisation = true;
+        volume_normalisation = false;
 
         normalisation_pregain = 3;
 
