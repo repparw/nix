@@ -12,7 +12,7 @@
     VISUAL = "$EDITOR";
     YTFZF_ENABLE_FZF_DEFAULT_OPTS = 1;
     ZSH_CACHE_DIR = "$XDG_CACHE_HOME/zsh";
-    RIP_GRAVEYARD = "${XDG_DATA_HOME:-$HOME/.local/share}/Trash";
+    RIP_GRAVEYARD = "$XDG_DATA_HOME/Trash";
   };
 
   programs = {
@@ -47,7 +47,9 @@
         icons = true;
         period = 1;
 
-		cmd = [ "trash $rip $fx" "bulk ${{ vimv $(echo -e "$fx" | xargs -i echo "\\'{}\\'" | xargs echo) }}" ];
+		cmd = [ "trash $rip $fx"
+		''bulk ${{ clear; qmv -d -- $fx; lf -remote "send $id unselect"}}''
+		];
 
 		cleaner = pkgs.writeShellScript "lf_kitty_clean" ''
 		  kitty +kitten icat --clear --stdin no --silent --transfer-mode file < /dev/null > /dev/tty
