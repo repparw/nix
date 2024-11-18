@@ -12,7 +12,7 @@
     VISUAL = "$EDITOR";
     YTFZF_ENABLE_FZF_DEFAULT_OPTS = 1;
     ZSH_CACHE_DIR = "$XDG_CACHE_HOME/zsh";
-    RIP_GRAVEYARD = "$XDG_DATA_HOME/Trash";
+    RIP_GRAVEYARD = "${XDG_DATA_HOME:-$HOME/.local/share}/Trash";
   };
 
   programs = {
@@ -49,8 +49,7 @@
       lfcd() {
       	cd "$(command lf -print-last-dir "$@")"
       	  }
-      zvm_after_init_commands+=("bindkey -s '^e' 'lf\n'")
-      zvm_after_init_commands+=("bindkey -s '^f' 'cdi\n'")
+      zvm_after_init_commands+=("bindkey -s '^e' 'lfcd\n'")
     '';
     home.file.".config/lf/icons".text = ''
       ln             # LINK
