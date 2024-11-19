@@ -184,7 +184,7 @@
         "$mod ALT, SPACE, exec, $socials"
         "$mod SHIFT, SPACE, exec, $browser2"
         "$mod, T, exec, $top"
-        "$mod, Y, exec, [monitor 1;workspace 1 silent;noinitialfocus] $kiosk"
+        "$mod, Y, exec, [monitor 1;noinitialfocus] $kiosk"
         "$mod, U, exec, ~/.config/scripts/update"
         "$mod, V, exec, ~/.config/scripts/jelly"
         "$mod, Z, exec, ~/.config/scripts/mpvclip"
