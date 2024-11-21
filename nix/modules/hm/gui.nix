@@ -127,11 +127,22 @@
 			"svg.context-properties.content.enabled" = true;
 		  };
         };
-      ####  kiosk = {
+        kiosk = {
+		  userChrome = (builtins.readFile ../source/userChrome.css);
+		  Path="kiosk";
 
-      ####  }
-      ####  socials = {
-      ####};
+        };
+        socials = {
+		  Path="socials";
+				userChrome = ''
+				  #sidebar-box {
+					max-width: none !important;
+					min-width: 50px !important;
+				  }
+				  #TabsToolbar, #sidebar-header, #sidebar-splitter { display: none !important; }
+				'';
+    };
+    };
     };
 
     feh = {
