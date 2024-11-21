@@ -99,20 +99,20 @@
 
       nativeMessagingHosts = [ pkgs.tridactyl-native ];
 
-      ####profiles = {
-      ####  default = {
-      ####  	isDefault = true;
-      ####	userChrome = (builtins.readFile ../source/userChrome.css);
-      ####	Path="ii5adzcc.default-release";
-      ####	settings = {
-      ####	  "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-      ####	  "layers.acceleration.force-enabled" = true;
-      ####	  "gfx.webrender.all" = true;
-      ####	  "gfx.webrender.enabled" = true;
-      ####	  "layout.css.backdrop-filter.enabled" = true;
-      ####	  "svg.context-properties.content.enabled" = true;
-      ####	};
-      ####  };
+      profiles = {
+        default = {
+        	isDefault = true;
+      	userChrome = (builtins.readFile ../source/userChrome.css);
+      	Path="ii5adzcc.default-release";
+      	settings = {
+      	  "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+      	  "layers.acceleration.force-enabled" = true;
+      	  "gfx.webrender.all" = true;
+      	  "gfx.webrender.enabled" = true;
+      	  "layout.css.backdrop-filter.enabled" = true;
+      	  "svg.context-properties.content.enabled" = true;
+      	};
+        };
       ####  kiosk = {
 
       ####  }
