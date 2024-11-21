@@ -1,58 +1,51 @@
-#TabsToolbar,
-#sidebar-header {
-  display: none !important;
-}
+/* Source file https://github.com/MrOtherGuy/firefox-csshacks/tree/master/chrome/hide_tabs_toolbar_v2.css made available under Mozilla Public License v. 2.0
+See the above repository for updates as well as full license text. */
 
-/* #sidebar-splitter styles the divider between the sidebar and the rest of the browser. */
-#sidebar-splitter {
-  display: none;
-}
+/* This requires Firefox 133+ to work */
 
-:root {
-  --autohide-sidebar-extended: 230px; /* width of panel extended */
-  --autohide-sidebar-collapsed: 34px; /* width of panel collapsed */
-  --sidebar-height: 100vh;
+@media (-moz-bool-pref: "sidebar.verticalTabs") {
+  #sidebar-main {
+    visibility: collapse;
+  }
 }
-
-/* --------Sidebery Auto-hiding Sidebar ----------- */
-/* width of panel (grey box) (different from width of each tab) */
-#main-window:not([extradragspace="true"])
-  #sidebar-box[sidebarcommand="_3c078156-979c-498b-8990-85f7987dd929_-sidebar-action"]:not(
-    [hidden]
-  ) {
-  width: var(--autohide-sidebar-collapsed) !important;
-  min-width: unset !important;
-  z-index: 1;
-  transition: all 0.2s ease-in-out; /* doesn't do anything unless you uncomment lower bit of code */
+@media (-moz-bool-pref: "userchrome.force-window-controls-on-left.enabled") {
+  #nav-bar > .titlebar-buttonbox-container {
+    order: -1 !important;
+    > .titlebar-buttonbox {
+      flex-direction: row-reverse;
+    }
+  }
 }
-
-/* width of panel (grey box) on hover */
-/* uncomment this section if you want the webpage to move when your tabs are extended- otherwise covers */
-/* #main-window:not([extradragspace="true"])
-    #sidebar-box[sidebarcommand="_3c078156-979c-498b-8990-85f7987dd929_-sidebar-action"]:not([hidden]):hover {
-    width: var(--autohide-sidebar-extended) !important;
-    min-width: unset !important;
-    z-index: 1;
-} */
-
-/* width of tabs */
-#main-window:not([extradragspace="true"])
-  #sidebar-box[sidebarcommand="_3c078156-979c-498b-8990-85f7987dd929_-sidebar-action"]
-  #sidebar {
-  width: var(--autohide-sidebar-collapsed) !important;
-  transition: all 0.2s ease-in-out;
-}
-/* width of tabs on hover */
-#main-window:not([extradragspace="true"])
-  #sidebar-box[sidebarcommand="_3c078156-979c-498b-8990-85f7987dd929_-sidebar-action"]:hover
-  #sidebar {
-  width: var(--autohide-sidebar-extended) !important;
-}
-
-/* adjust if your sidebery is not tall enough */
-#main-window:not([extradragspace="true"])[inFullscreen]
-  #sidebar-box[sidebarcommand="_3c078156-979c-498b-8990-85f7987dd929_-sidebar-action"],
-#main-window:not([extradragspace="true"])
-  #sidebar-box[sidebarcommand="_3c078156-979c-498b-8990-85f7987dd929_-sidebar-action"] {
-  height: var(--sidebar-height);
+@media not (-moz-bool-pref: "sidebar.verticalTabs") {
+  #TabsToolbar {
+    visibility: collapse;
+  }
+  :root[sizemode="fullscreen"] #nav-bar > .titlebar-buttonbox-container {
+    display: flex !important;
+  }
+  :root[tabsintitlebar] #toolbar-menubar:not([autohide="false"]) ~ #nav-bar {
+    > .titlebar-buttonbox-container {
+      display: flex !important;
+    }
+    :root[sizemode="normal"] & {
+      > .titlebar-spacer {
+        display: flex !important;
+      }
+    }
+    :root[sizemode="maximized"] & {
+      > .titlebar-spacer[type="post-tabs"] {
+        display: flex !important;
+      }
+      @media (-moz-bool-pref: "userchrome.force-window-controls-on-left.enabled"),
+        (-moz-gtk-csd-reversed-placement),
+        (-moz-platform: macos) {
+        > .titlebar-spacer[type="post-tabs"] {
+          display: none !important;
+        }
+        > .titlebar-spacer[type="pre-tabs"] {
+          display: flex !important;
+        }
+      }
+    }
+  }
 }
