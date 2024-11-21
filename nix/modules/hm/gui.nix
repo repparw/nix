@@ -99,50 +99,68 @@
 
       nativeMessagingHosts = [ pkgs.tridactyl-native ];
 
-	  policies = {
-      DisableTelemetry = true;
-      DisableFirefoxStudies = true;
-      DisablePocket = true;
-      DisableProfileImport = true;
-      NoDefaultBookmarks = true;
-      OverrideFirstRunPage = "";
-      OverridePostUpdatePage = "";
-      Preferences = {
-        "datareporting.policy.firstRunURL" = "";
-        "browser.display.use_document_fonts" = 0;
-        "browser.translations.automaticallyPopup" = false;
+      policies = {
+        DisableTelemetry = true;
+        DisableFirefoxStudies = true;
+        DisablePocket = true;
+        DisableProfileImport = true;
+        NoDefaultBookmarks = true;
+        OverrideFirstRunPage = "";
+        OverridePostUpdatePage = "";
+        Preferences = {
+          "datareporting.policy.firstRunURL" = "";
+          "browser.display.use_document_fonts" = 0;
+          "browser.translations.automaticallyPopup" = false;
+        };
       };
 
       profiles = {
         default = {
-		  isDefault = true;
-		  userChrome = (builtins.readFile ../source/userChrome.css);
-		  Path="default";
-		  settings = {
-			"toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-			"layers.acceleration.force-enabled" = true;
-			"gfx.webrender.all" = true;
-			"gfx.webrender.enabled" = true;
-			"layout.css.backdrop-filter.enabled" = true;
-			"svg.context-properties.content.enabled" = true;
-		  };
+          id = 0;
+          userChrome = (builtins.readFile ../source/userChrome.css);
+          path = "default";
+          settings = {
+            "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+            "layers.acceleration.force-enabled" = true;
+            "gfx.webrender.all" = true;
+            "gfx.webrender.enabled" = true;
+            "layout.css.backdrop-filter.enabled" = true;
+            "svg.context-properties.content.enabled" = true;
+          };
         };
         kiosk = {
-		  userChrome = (builtins.readFile ../source/userChrome.css);
-		  Path="kiosk";
-
+          id = 1;
+          userChrome = (builtins.readFile ../source/userChrome.css);
+          path = "kiosk";
+          settings = {
+            "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+            "layers.acceleration.force-enabled" = true;
+            "gfx.webrender.all" = true;
+            "gfx.webrender.enabled" = true;
+            "layout.css.backdrop-filter.enabled" = true;
+            "svg.context-properties.content.enabled" = true;
+          };
         };
         socials = {
-		  Path="socials";
-				userChrome = ''
-				  #sidebar-box {
-					max-width: none !important;
-					min-width: 50px !important;
-				  }
-				  #TabsToolbar, #sidebar-header, #sidebar-splitter { display: none !important; }
-				'';
-    };
-    };
+          id = 2;
+          path = "socials";
+          userChrome = ''
+              #sidebar-box {
+            	max-width: none !important;
+            	min-width: 50px !important;
+              }
+              #TabsToolbar, #sidebar-header, #sidebar-splitter { display: none !important; }
+          '';
+          settings = {
+            "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+            "layers.acceleration.force-enabled" = true;
+            "gfx.webrender.all" = true;
+            "gfx.webrender.enabled" = true;
+            "layout.css.backdrop-filter.enabled" = true;
+            "svg.context-properties.content.enabled" = true;
+          };
+        };
+      };
     };
 
     feh = {
