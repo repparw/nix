@@ -59,14 +59,12 @@
       extraConfig = {
         rerere.enabled = true;
         pull.rebase = true;
-	user = { 
-	email = ubritos@gmail.com;
-	name = repparw};
-column.ui = auto;
-[maintenance]
-	repo = /home/repparw/.dotfiles
-	repo = /home/repparw/Documents/facu/Cursando/Proyecto de Software/code
-
+        user = {
+          email = "ubritos@gmail.com";
+          name = "repparw";
+        };
+        column.ui = "auto";
+        maintenance.repo = "/home/repparw/.dotfiles";
       };
     };
 
