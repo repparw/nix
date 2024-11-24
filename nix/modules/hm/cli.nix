@@ -57,13 +57,12 @@
       userEmail = "ubritos@gmail.com";
       userName = "repparw";
       extraConfig = {
-        rerere.enabled = true;
-        pull.rebase = true;
         user = {
           email = "ubritos@gmail.com";
           name = "repparw";
         };
-        column.ui = "auto";
+        rerere.enabled = true;
+        pull.rebase = true;
         maintenance.repo = "/home/repparw/.dotfiles";
       };
     };
