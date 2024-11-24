@@ -73,7 +73,7 @@
       url = "github:NixOS/nixpkgs/nixos-unstable";
     };
     stable = {
-      url = "github:NixOS/nixpkgs/nixos-24.05";
+      url = "github:NixOS/nixpkgs/nixos-24.11";
     };
     home-manager = {
       url = "github:nix-community/home-manager"; # Branches for stable, master follows unstable
