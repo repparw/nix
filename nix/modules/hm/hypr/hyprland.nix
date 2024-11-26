@@ -5,7 +5,7 @@
   wayland.windowManager.hyprland = {
     enable = true;
     plugins = with pkgs.hyprlandPlugins; [
-      hyprsplit
+      #hyprsplit
     ];
 
     systemd.variables = [ "--all" ];
@@ -34,7 +34,6 @@
       "$screenshot" = "hyprshot -o $XDG_SCREENSHOTS_DIR -m";
       "$desktopmenu" = "killall tofi-drun || tofi-drun";
       "$cmdmenu" = "killall tofi-run || tofi-run | xargs hyprctl dispatch exec --";
-      "$notificationsDaemon" = "swaync";
 
       "$lockscreen" = "loginctl lock-session";
 
@@ -50,7 +49,6 @@
       # Autostart
       exec-once = [
         "swaybg -i ~/Pictures/gruvbox.jpg"
-        "/usr/libexec/kf6/polkit-kde-authentication-agent-1" # TODO WARN probably doesnt work? make systemd service
         "$notificationsDaemon"
       ];
 
