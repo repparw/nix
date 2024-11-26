@@ -191,7 +191,8 @@
         "$mod, N, exec, $notes"
         "$mod, R, exec, $terminal zsh -ic rpi"
         "$mod, B, exec, ~/.config/scripts/bttoggle"
-        "$mod, P, exec, [monitor 1;workspace 2 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
+        "$mod, P, exec, scrcpy -S"
+        #"$mod, P, exec, [monitor 1;workspace 2 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
 
         ", Print, exec, $screenshot active -m output ## Active monitor"
         "$mod, Print, exec, $screenshot active -m window ## Active window"
