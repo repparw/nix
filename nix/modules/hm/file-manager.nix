@@ -1,4 +1,12 @@
-{ ... }:
+{ pkgs, ... }:
+let
+  plugins-repo = pkgs.fetchFromGitHub {
+    owner = "yazi-rs";
+    repo = "plugins";
+    rev = "main";
+    sha256 = "38418ddc9247de206645ed284c804b5e179452a1";
+  };
+in
 {
   programs = {
     yazi = {
@@ -16,10 +24,7 @@
         };
       };
       plugins = {
-        smart-enter = fetchTarball {
-          url = "https://github.com/yazi-rs/plugins/tree/main/smart-enter.yazi";
-          sha256 = "0bac6gcdqbl8hvqv3ylykz3nhbc6103p8sll7457mky7pavrwali";
-        };
+        smart-enter = "${plugins-repo}/smart-enter.yazi";
       };
       keymap = {
         manager.prepend_keymap = [
@@ -32,9 +37,9 @@
           }
         ];
       };
-      zsh.initExtra = ''
-        zvm_after_init_commands+=("bindkey -s '^e' 'yazi\n'")
-      '';
     };
+    zsh.initExtra = ''
+      zvm_after_init_commands+=("bindkey -s '^e' 'yazi\n'")
+    '';
   };
 }
