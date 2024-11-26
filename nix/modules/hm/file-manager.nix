@@ -28,10 +28,12 @@ in
       };
       settings = {
         opener = {
-          open = {
-            run = ''xdg-open "$1"'';
-            orphan = true;
-          };
+          open = [
+            {
+              run = ''xdg-open "$1"'';
+              orphan = true;
+            }
+          ];
         };
       };
       keymap = {
