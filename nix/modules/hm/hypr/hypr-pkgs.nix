@@ -10,7 +10,6 @@
     swaybg
     wshowkeys
     # mako # dunst alt
-    swaynotificationcenter
     wl-clipboard
     pulseaudio
 
@@ -24,6 +23,8 @@
   ];
 
   services = {
+    swaync.enable = true;
+
     hypridle = {
       enable = true;
       settings = {
