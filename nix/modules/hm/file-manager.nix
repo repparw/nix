@@ -26,6 +26,14 @@ in
       plugins = {
         smart-enter = "${plugins-repo}/smart-enter.yazi";
       };
+      settings = {
+        opener = {
+          open = {
+            run = ''xdg-open "$1"'';
+            orphan = true;
+          };
+        };
+      };
       keymap = {
         manager.prepend_keymap = [
           {
