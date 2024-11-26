@@ -25,6 +25,7 @@ in
       };
       plugins = {
         smart-enter = "${plugins-repo}/smart-enter.yazi";
+        jump-to-char = "${plugins-repo}/jump-to-char.yazi";
       };
       settings = {
         opener = {
@@ -44,6 +45,11 @@ in
             # For upcoming Yazi 0.4 (nightly version):
             # run  = "plugin smart-enter"
             desc = "Enter the child directory, or open the file";
+          }
+          {
+            on = [ "f" ];
+            run = "plugin jump-to-char";
+            desc = "Jump to char";
           }
         ];
       };
