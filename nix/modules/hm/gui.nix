@@ -15,7 +15,6 @@
     with pkgs;
     [
       # GUI
-      mpv
       vesktop
       pwvucontrol
       obs-studio
@@ -89,6 +88,23 @@
         window_padding_width = "1 1 0";
         confirm_os_window_close = 0;
         background_opacity = "0.9";
+      };
+    };
+
+    mpv = {
+      enable = true;
+      bindings = {
+        WHEEL_UP = "add volume 2";
+        WHEEL_DOWN = "add volume -2";
+        WHEEL_LEFT = "add volume 2";
+        WHEEL_RIGHT = "add volume -2";
+        "." = "seek 5";
+        "," = "seek -5";
+        ">" = "no-osd seek 1 exact";
+        "<" = "no-osd seek -1 exact";
+        RIGHT = "frame-step";
+        LEFT = "frame-back-step";
+        "~" = "script-binding console/enable";
       };
     };
 
