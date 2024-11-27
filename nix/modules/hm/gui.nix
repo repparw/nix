@@ -93,6 +93,10 @@
 
     mpv = {
       enable = true;
+      scripts = with pkgs.mpvScripts; [
+        mpv-webm
+        quality-menu
+      ];
       bindings = {
         WHEEL_UP = "add volume 2";
         WHEEL_DOWN = "add volume -2";
