@@ -205,7 +205,7 @@
         "CTRL ALT SHIFT, C, exec, ~/.config/scripts/obs_last_remux2wsp"
         "CTRL ALT SHIFT, D, exec, obs-cmd replay save"
         "CTRL ALT SHIFT, E, exec, hdrop $discord"
-        "CTRL ALT SHIFT, F, exec, pactl set-source-mute @DEFAULT_SOURCE@ toggle"
+        "CTRL ALT SHIFT, F, exec, wpctl set-source-mute @DEFAULT_SOURCE@ toggle"
         # CTRL ALT SHIFT, G, exec, 
         "CTRL ALT SHIFT, H, exec, hdrop $spotify"
 
