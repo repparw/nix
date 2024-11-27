@@ -7,8 +7,6 @@
   };
 
   environment.systemPackages = with pkgs; [
-    kdePackages.polkit-kde-agent-1 # launch?
-
     nautilus
   ];
 
