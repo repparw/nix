@@ -96,6 +96,7 @@
       scripts = with pkgs.mpvScripts; [
         mpv-webm
         quality-menu
+        sponsorblock-minimal
       ];
       bindings = {
         WHEEL_UP = "add volume 2";
