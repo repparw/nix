@@ -132,6 +132,15 @@
         fs = "yes";
         fs-screen = 1;
 
+        osc = "no";
+        osd-font-size = 32; # Default 55
+        sub-font-size = 40; # Default 55
+
+        osd-border-size = 2; # Default 3
+        sub-border-size = 2; # Default 3
+
+        profile = "gpu-vulkan-vaapi";
+
       };
     };
 
