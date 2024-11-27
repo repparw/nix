@@ -133,7 +133,7 @@
             ];
           };
           on-click = "pwvucontrol";
-          on-click-right = "pactl set-source-mute @DEFAULT_SOURCE@ toggle";
+          on-click-right = "wpctl set-source-mute @DEFAULT_SOURCE@ toggle";
         };
         "battery" = {
           states = {
