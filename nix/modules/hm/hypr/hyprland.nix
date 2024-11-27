@@ -49,6 +49,7 @@
       # Autostart
       exec-once = [
         "swaybg -i ~/Pictures/gruvbox.jpg"
+        "systemctl --user start hyprpolkitagent"
       ];
 
       general = {

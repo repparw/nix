@@ -17,6 +17,8 @@
 
     hdrop
 
+    hyprpolkitagent
+
     hyprshot
     hyprpicker
   ];
