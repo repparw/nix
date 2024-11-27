@@ -22,7 +22,6 @@
   ];
 
   services = {
-    mako.enable = true;
     swaync.enable = true;
 
     hypridle = {
