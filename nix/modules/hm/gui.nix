@@ -17,7 +17,7 @@
       # GUI
       mpv
       vesktop
-      pavucontrol
+      pwvucontrol
       obs-studio
       obs-cmd
       scrcpy
