@@ -9,7 +9,6 @@
     libdrm
     swaybg
     wshowkeys
-    # mako # dunst alt
     wl-clipboard
     pulseaudio
 
@@ -23,6 +22,7 @@
   ];
 
   services = {
+    mako.enable = true;
     swaync.enable = true;
 
     hypridle = {

@@ -37,7 +37,7 @@
 
       "$lockscreen" = "loginctl lock-session";
 
-      "$screenoff" = "sleep 3 && hyprctl dispatch dpms off";
+      "$screenoff" = "sleep 3 && systemctl sleep";
 
       # Terminal
       "$terminal" = "kitty";
@@ -49,7 +49,6 @@
       # Autostart
       exec-once = [
         "swaybg -i ~/Pictures/gruvbox.jpg"
-        "$notificationsDaemon"
       ];
 
       general = {
