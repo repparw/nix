@@ -105,6 +105,33 @@
         RIGHT = "frame-step";
         LEFT = "frame-back-step";
         "~" = "script-binding console/enable";
+        # Play in reverse toggle
+        # <bind> set-cache yes ; cycle play-dir
+      };
+      profiles = {
+        gpu-vulkan = {
+          vo = "gpu-next";
+          gpu-api = "vulkan";
+          hwdec = "vulkan";
+          gpu-context = "waylandvk";
+        };
+        gpu-vulkan-vaapi = {
+          vo = "gpu-next";
+          gpu-api = "vulkan";
+          hwdec = "vaapi";
+          gpu-context = "waylandvk";
+        };
+      };
+      config = {
+        no-border = true;
+        volume = 30;
+        slang = "eng";
+        ytdl-raw-options = "format=bestvideo[height<=?1080]+bestaudio/best,sub-format=en/es,write-srt=";
+        sub-auto = "fuzzy";
+        screen = 1;
+        fs = "yes";
+        fs-screen = 1;
+
       };
     };
 
