@@ -40,7 +40,7 @@
 
   # Nerdfonts
   fonts = {
-    packages = with pkgs; [ (nerdfonts.override { fonts = [ "FiraCode" ]; }) ];
+    packages = with pkgs.nerd-fonts; [ fira-mono ];
 
     # Set default font
     fontconfig.defaultFonts = {
