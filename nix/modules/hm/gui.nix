@@ -201,13 +201,7 @@
         socials = {
           id = 2;
           path = "socials";
-          userChrome = ''
-              #sidebar-box {
-            	max-width: none !important;
-            	min-width: 50px !important;
-              }
-              #TabsToolbar, #sidebar-header, #sidebar-splitter { display: none !important; }
-          '';
+          userChrome = (builtins.readFile ../source/userChrome.css);
           settings = {
             "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
             "layers.acceleration.force-enabled" = true;
