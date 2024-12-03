@@ -1,18 +1,9 @@
 {
   pkgs,
   stable,
-  lib,
   ...
 }:
 
-let
-  src = pkgs.fetchFromGitHub {
-    owner = "jaclu";
-    repo = "tmux-power-zoom";
-    rev = "30eb97c";
-    hash = "sha256-FMzdN+xEejjZfmQ65q7sK9sRbSoK/bZYtcaEPgeDGBc=";
-  };
-in
 {
   imports = [
     ./zsh.nix
@@ -119,9 +110,14 @@ in
         }
 
         pain-control
-        {
-          plugin = import "${src}";
-        }
+
+		mkTmuxPlugin {
+    owner = "jaclu";
+    repo = "tmux-power-zoom";
+    rev = "30eb97c";
+    hash = "sha256-FMzdN+xEejjZfmQ65q7sK9sRbSoK/bZYtcaEPgeDGBc=";
+		};
+
         vim-tmux-navigator
         yank
       ];
