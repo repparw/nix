@@ -107,11 +107,10 @@
 
         pain-control
         {
-          plugin = pkgs.fetchFromGitHub {
-            owner = "jaclu";
-            repo = "tmux-power-zoom";
-            rev = "30eb97c";
-            hash = "sha256-05qqhc3kx166nmcbdz8a59ni3nrbxjpfcfk4gvckhyj4xhvxvk0l";
+          plugin = fetchGit {
+            ref = "main";
+            url = "https://github.com/jaclu/tmux-power-zoom";
+            #hash = "sha256-05qqhc3kx166nmcbdz8a59ni3nrbxjpfcfk4gvckhyj4xhvxvk0l";
           };
           extraConfig = ''
             set -g @continuum-restore 'on'
