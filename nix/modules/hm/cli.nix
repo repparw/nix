@@ -1,5 +1,13 @@
 { pkgs, stable, ... }:
 
+let
+  src = pkgs.fetchFromGitHub {
+    owner = "jaclu";
+    repo = "tmux-power-zoom";
+    rev = "30eb97c";
+    hash = "sha256-05qqhc3kx166nmcbdz8a59ni3nrbxjpfcfk4gvckhyj4xhvxvk0l";
+  };
+in
 {
   imports = [
     ./zsh.nix
@@ -107,12 +115,7 @@
 
         pain-control
         {
-          pname = "tmux-power-zoom";
-          src = fetchGit {
-            rev = "30eb97c090ff07c8e957b2e761f25931c1d49133";
-            url = "https://github.com/jaclu/tmux-power-zoom";
-            #hash = "sha256-05qqhc3kx166nmcbdz8a59ni3nrbxjpfcfk4gvckhyj4xhvxvk0l";
-          };
+		plugin = ${src}/tmux-power-zoom;
         }
         vim-tmux-navigator
         yank
