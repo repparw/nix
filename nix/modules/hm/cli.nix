@@ -107,7 +107,6 @@
 
         pain-control
         #power-zoom
-        #tmux-floax TODO
         vim-tmux-navigator
         yank
       ];
