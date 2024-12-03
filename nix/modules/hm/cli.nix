@@ -10,7 +10,7 @@ let
     owner = "jaclu";
     repo = "tmux-power-zoom";
     rev = "30eb97c";
-    hash = lib.fakeHash;
+    hash = "sha256-FMzdN+xEejjZfmQ65q7sK9sRbSoK/bZYtcaEPgeDGBc=";
   };
 in
 {
@@ -120,7 +120,7 @@ in
 
         pain-control
         {
-          plugin = "${src}/power-zoom.tmux";
+          plugin = import src;
         }
         vim-tmux-navigator
         yank
