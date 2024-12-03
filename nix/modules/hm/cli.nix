@@ -106,7 +106,17 @@
         }
 
         pain-control
-        #power-zoom
+        {
+          plugin = pkgs.fetchFromGitHub {
+            owner = "jaclu";
+            repo = "tmux-power-zoom";
+            rev = "30eb97c";
+            hash = "sha256-05qqhc3kx166nmcbdz8a59ni3nrbxjpfcfk4gvckhyj4xhvxvk0l";
+          };
+          extraConfig = ''
+            set -g @continuum-restore 'on'
+          '';
+        }
         vim-tmux-navigator
         yank
       ];
