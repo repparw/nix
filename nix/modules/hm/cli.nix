@@ -108,7 +108,7 @@
         pain-control
         {
           plugin = fetchGit {
-            ref = "main";
+            rev = "30eb97c090ff07c8e957b2e761f25931c1d49133";
             url = "https://github.com/jaclu/tmux-power-zoom";
             #hash = "sha256-05qqhc3kx166nmcbdz8a59ni3nrbxjpfcfk4gvckhyj4xhvxvk0l";
           };
