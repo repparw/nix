@@ -111,12 +111,18 @@
 
         pain-control
 
-		mkTmuxPlugin {
-    owner = "jaclu";
-    repo = "tmux-power-zoom";
-    rev = "30eb97c";
-    hash = "sha256-FMzdN+xEejjZfmQ65q7sK9sRbSoK/bZYtcaEPgeDGBc=";
-		};
+        {
+          name = "tmux-power-zoom";
+          plugin = mkTmuxPlugin {
+            pluginName = "tmux-power-zoom";
+            src = pkgs.fetchFromGitHub {
+              owner = "jaclu";
+              repo = "tmux-power-zoom";
+              rev = "30eb97c";
+              hash = "sha256-FMzdN+xEejjZfmQ65q7sK9sRbSoK/bZYtcaEPgeDGBc=";
+            };
+          };
+        }
 
         vim-tmux-navigator
         yank
