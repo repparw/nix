@@ -3,7 +3,6 @@
   stable,
   ...
 }:
-
 {
   imports = [
     ./zsh.nix
@@ -112,9 +111,9 @@
         pain-control
 
         {
-          name = "tmux-power-zoom";
           plugin = mkTmuxPlugin {
             pluginName = "tmux-power-zoom";
+            name = "tmux-power-zoom";
             src = pkgs.fetchFromGitHub {
               owner = "jaclu";
               repo = "tmux-power-zoom";
