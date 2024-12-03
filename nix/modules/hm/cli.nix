@@ -121,6 +121,9 @@
               hash = "sha256-FMzdN+xEejjZfmQ65q7sK9sRbSoK/bZYtcaEPgeDGBc=";
             };
           };
+          extraConfig = ''
+            set -g @power_zoom_trigger "z"
+          '';
         }
 
         vim-tmux-navigator
