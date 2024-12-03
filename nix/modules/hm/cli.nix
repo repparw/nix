@@ -120,7 +120,7 @@ in
 
         pain-control
         {
-          plugin = import src;
+          plugin = import "${src}";
         }
         vim-tmux-navigator
         yank
