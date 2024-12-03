@@ -1,11 +1,16 @@
-{ pkgs, stable, ... }:
+{
+  pkgs,
+  stable,
+  lib,
+  ...
+}:
 
 let
   src = pkgs.fetchFromGitHub {
     owner = "jaclu";
     repo = "tmux-power-zoom";
     rev = "30eb97c";
-    hash = "sha256-05qqhc3kx166nmcbdz8a59ni3nrbxjpfcfk4gvckhyj4xhvxvk0l";
+    hash = lib.fakeHash;
   };
 in
 {
@@ -115,7 +120,7 @@ in
 
         pain-control
         {
-		plugin = ${src}/tmux-power-zoom;
+          plugin = "${src}/power-zoom.tmux";
         }
         vim-tmux-navigator
         yank
