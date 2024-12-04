@@ -128,7 +128,6 @@
         };
       };
       config = {
-        no-border = true;
         volume = 30;
         slang = "eng";
         ytdl-raw-options = "format=bestvideo[height<=?1080]+bestaudio/best,sub-format=en/es,write-srt=";
