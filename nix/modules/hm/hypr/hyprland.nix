@@ -42,7 +42,7 @@
       # Terminal
       "$terminal" = "kitty";
       "$top" = "$terminal btm --theme gruvbox";
-      "$fileManager" = "LS_COLORS='di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43' hdrop $terminal --class filemanager yazi";
+      "$fileManager" = "hdrop $terminal --class filemanager zsh -ic yazi";
       "$spotify" = "$terminal --class spotify spotify_player";
       "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim zsh -ic /home/repparw/.config/scripts/obsinvim'";
 
@@ -206,7 +206,7 @@
         "CTRL ALT SHIFT, D, exec, obs-cmd replay save"
         "CTRL ALT SHIFT, E, exec, hdrop $discord"
         "CTRL ALT SHIFT, F, exec, wpctl set-source-mute @DEFAULT_SOURCE@ toggle"
-        # CTRL ALT SHIFT, G, exec, 
+        # CTRL ALT SHIFT, G, exec,
         "CTRL ALT SHIFT, H, exec, hdrop $spotify"
 
         # Media keys
