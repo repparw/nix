@@ -48,9 +48,8 @@
   #### FSTAB
 
   fileSystems."/mnt/hdd" = {
-    device = "/dev/disk/by-uuid/7a4240ed-59fb-4683-9293-2955c241d199";
     fsType = "btrfs";
-    label = "hdd";
+    label = "HDD";
 
     options = [
       "noatime"
