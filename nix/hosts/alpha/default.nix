@@ -8,12 +8,14 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
-    ../common.nix
     ../../modules/nixos/dlsuite.nix
     ../../modules/nixos/timers.nix
     ../../modules/nixos/autoUpgrade.nix
     ../../modules/nixos/gaming.nix
   ];
+
+  # Enable networking (can't use with wireless)
+  networking.networkmanager.enable = true;
 
   networking.hostName = "alpha"; # Define your hostname.
 
