@@ -27,7 +27,7 @@
     ];
 
     substituters = [
-      "nix-community.cachix.org"
+      "https://nix-community.cachix.org"
     ];
 
     trusted-public-keys = [
