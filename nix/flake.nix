@@ -7,7 +7,6 @@
       ...
     }@inputs:
     let
-
       system = "x86_64-linux";
 
       stable = import inputs.nixpkgs-unstable {
@@ -15,54 +14,38 @@
         config.allowUnfree = true;
       };
 
+      # Helper function to create a NixOS configuration
+      mkSystem =
+        hostname:
+        inputs.nixpkgs.lib.nixosSystem {
+          modules = [
+            # Host-specific configuration
+            ./hosts/${hostname}
+            # Home-manager configuration
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                backupFileExtension = "hm-backup";
+                extraSpecialArgs = {
+                  inherit stable inputs;
+                };
+                users.repparw = import ./home/${hostname};
+              };
+            }
+          ];
+          specialArgs = {
+            inherit stable inputs;
+          };
+        };
+
     in
     {
       nixosConfigurations = {
-
-        alpha = inputs.nixpkgs.lib.nixosSystem {
-          modules = [
-            ./hosts/alpha
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.backupFileExtension = "hm-backup";
-              home-manager.extraSpecialArgs = {
-                inherit stable;
-                inherit inputs;
-              };
-              home-manager.users.repparw = import ./home/alpha;
-            }
-          ];
-          specialArgs = {
-            inherit stable;
-            inherit inputs;
-          };
-        };
-
-        beta = inputs.nixpkgs.lib.nixosSystem {
-          modules = [
-            ./hosts/beta
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.backupFileExtension = "hm-backup";
-              home-manager.extraSpecialArgs = {
-                inherit stable;
-                inherit inputs;
-              };
-              home-manager.users.repparw = import ./home/beta;
-            }
-          ];
-          specialArgs = {
-            inherit stable;
-            inherit inputs;
-          };
-        };
-
+        alpha = mkSystem "alpha";
+        beta = mkSystem "beta";
       };
-
     };
 
   inputs = {
