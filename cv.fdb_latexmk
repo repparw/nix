@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1733764634.13128 "cv.tex" "cv.pdf" "cv" 1733764634.75726 0
+["pdflatex"] 1733765221.14112 "cv.tex" "cv.pdf" "cv" 1733765221.71039 0
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1 2971 def0b6c1f0b107b3b936def894055589 ""
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/fonts/enc/dvips/fontawesome5/fa5free1.enc" 1 3042 0e2b14b9be7d01075a4c4591d5d1781b ""
@@ -189,9 +189,9 @@
   "/nix/store/5pdnkwz78wgq66x4907qskf43asm3lzn-texlive-2024-env/share/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1 5475591 f06ef2c0edd09f355335c6f645c644dd ""
   "/nix/store/5pdnkwz78wgq66x4907qskf43asm3lzn-texlive-2024-env/share/texmf-var/web2c/pdftex/pdflatex.fmt" 1 3326190 3221568613ecb4f345dfb8dcc61633bb ""
   "/nix/store/5pdnkwz78wgq66x4907qskf43asm3lzn-texlive-2024-env/share/texmf-var/web2c/texmf.cnf" 1 43655 fa7e3499aafd60051925a16cc17c9f5e ""
-  "cv.aux" 1733764634.65027 590 2e8d5084b6b9109d4ca05dbaac7ab523 "pdflatex"
-  "cv.out" 1733764634.65027 440 f406e4e488a1380b3096e3814bb1a39b "pdflatex"
-  "cv.tex" 1733764632.23628 1101 24db6748544c6a2e72e6fff77c3a9f5a ""
+  "cv.aux" 1733765221.63443 590 2e8d5084b6b9109d4ca05dbaac7ab523 "pdflatex"
+  "cv.out" 1733765221.63443 440 f406e4e488a1380b3096e3814bb1a39b "pdflatex"
+  "cv.tex" 1733765220.23443 1049 09cc997570724b6338c54fffdd329b3c ""
   (generated)
   "cv.aux"
   "cv.log"
