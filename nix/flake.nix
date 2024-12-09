@@ -43,10 +43,44 @@
       nixosConfigurations = {
         alpha = mkSystem "alpha";
         beta = mkSystem "beta";
-        iso = mkSystem "beta" // {
+        iso = inputs.nixpkgs.lib.nixosSystem {
+          inherit system;
           modules = [
             "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-          ] ++ (mkSystem "beta").modules;
+            ./hosts/beta
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                backupFileExtension = "hm-backup";
+                extraSpecialArgs = {
+                  inherit stable inputs;
+                };
+                users.repparw = import ./home/beta;
+              };
+            }
+          ];
+          specialArgs = {
+            inherit stable inputs;
+          };
+        };
+            home-manager.nixosModules.home-manager
+            {
+              home-manager = {
+                useGlobalPkgs = true;
+                useUserPackages = true;
+                backupFileExtension = "hm-backup";
+                extraSpecialArgs = {
+                  inherit stable inputs;
+                };
+                users.repparw = import ./home/beta;
+              };
+            }
+          ];
+          specialArgs = {
+            inherit stable inputs;
+          };
         };
       };
     };
