@@ -19,9 +19,7 @@
         hostname:
         inputs.nixpkgs.lib.nixosSystem {
           modules = [
-            # Host-specific configuration
             ./hosts/${hostname}
-            # Home-manager configuration
             home-manager.nixosModules.home-manager
             {
               home-manager = {
@@ -45,6 +43,11 @@
       nixosConfigurations = {
         alpha = mkSystem "alpha";
         beta = mkSystem "beta";
+        iso = mkSystem "beta" // {
+          modules = [
+            "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+          ] ++ (mkSystem "beta").modules;
+        };
       };
     };
 
