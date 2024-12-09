@@ -254,11 +254,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1733780008,
-        "narHash": "sha256-KpOHprHNcPFpP7Hf2LLWb8ETnsfPxF5iHrQzDT4W4xY=",
+        "lastModified": 1733781226,
+        "narHash": "sha256-y6WRFGDcu/HuVaS7jAo2Z/EoMcMtBpc6xHnKthbZ2H4=",
         "owner": "repparw",
         "repo": "nixvim",
-        "rev": "522a3d9e1411f0377dd6d907e97a439ab90f4021",
+        "rev": "83f3291f57857a812693fcf5079cdee48204875a",
         "type": "github"
       },
       "original": {
