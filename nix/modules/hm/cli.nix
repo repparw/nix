@@ -203,11 +203,8 @@
 
       manix
 
-      nodejs # TODO remove after finishing tp proy
+      texliveFull
     ]
-    ++ (
-      with stable;
-      [
-      ]
-    );
+    ++ (with stable; [
+    ]);
 }
