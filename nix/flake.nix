@@ -14,70 +14,47 @@
         config.allowUnfree = true;
       };
 
-      # Helper function to create a NixOS configuration
-      mkSystem =
-        hostname:
-        inputs.nixpkgs.lib.nixosSystem {
-          modules = [
-            ./hosts/${hostname}
-            home-manager.nixosModules.home-manager
-            {
-              home-manager = {
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                backupFileExtension = "hm-backup";
-                extraSpecialArgs = {
-                  inherit stable inputs;
-                };
-                users.repparw = import ./home/${hostname};
-              };
-            }
-          ];
+      # Base modules configuration for all systems
+      mkModules = hostname: [
+        ./hosts/${hostname}
+        home-manager.nixosModules.home-manager
+        {
+          home-manager = {
+            useGlobalPkgs = true;
+            useUserPackages = true;
+            backupFileExtension = "hm-backup";
+            extraSpecialArgs = {
+              inherit stable inputs;
+            };
+            users.repparw = import ./home/${hostname};
+          };
+        }
+      ];
+
+    in
+    {
+      nixosConfigurations = {
+        alpha = inputs.nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = mkModules "alpha";
           specialArgs = {
             inherit stable inputs;
           };
         };
 
-    in
-    {
-      nixosConfigurations = {
-        alpha = mkSystem "alpha";
-        beta = mkSystem "beta";
-        iso = inputs.nixpkgs.lib.nixosSystem {
+        beta = inputs.nixpkgs.lib.nixosSystem {
           inherit system;
-          modules = [
-            "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
-            ./hosts/beta
-            home-manager.nixosModules.home-manager
-            {
-              home-manager = {
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                backupFileExtension = "hm-backup";
-                extraSpecialArgs = {
-                  inherit stable inputs;
-                };
-                users.repparw = import ./home/beta;
-              };
-            }
-          ];
+          modules = mkModules "beta";
           specialArgs = {
             inherit stable inputs;
           };
         };
-            home-manager.nixosModules.home-manager
-            {
-              home-manager = {
-                useGlobalPkgs = true;
-                useUserPackages = true;
-                backupFileExtension = "hm-backup";
-                extraSpecialArgs = {
-                  inherit stable inputs;
-                };
-                users.repparw = import ./home/beta;
-              };
-            }
-          ];
+
+        iso = inputs.nixpkgs.lib.nixosSystem {
+          inherit system;
+          modules = [
+            "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+          ] ++ (mkModules "beta");
           specialArgs = {
             inherit stable inputs;
           };
