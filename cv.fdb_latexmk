@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1733764301.1871 "cv.tex" "cv.pdf" "cv" 1733764301.76975 0
+["pdflatex"] 1733764565.57687 "cv.tex" "cv.pdf" "cv" 1733764566.16889 0
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1 2971 def0b6c1f0b107b3b936def894055589 ""
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/fonts/enc/dvips/fontawesome5/fa5free1.enc" 1 3042 0e2b14b9be7d01075a4c4591d5d1781b ""
@@ -158,7 +158,7 @@
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/tex/latex/moderncv/moderncv.cls" 1 38355 2067ab189eb1410d4960181db5ba59dc ""
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/tex/latex/moderncv/moderncvbodyiii.sty" 1 11609 bf49b36b21ad3bf2beaf6c5f674cfec8 ""
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/tex/latex/moderncv/moderncvcollection.sty" 1 3575 7a726fdd1cec14598e06d54b61035165 ""
-  "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/tex/latex/moderncv/moderncvcolorgreen.sty" 1 1051 56fed4994540be321ca5b582957c906e ""
+  "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/tex/latex/moderncv/moderncvcolorblue.sty" 1 1056 7fe1850bd1e513ac47b1d282b69d9630 ""
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/tex/latex/moderncv/moderncvcolors.tex" 1 1516 80feaf1b10c57336645979b2d8fa3ab6 ""
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/tex/latex/moderncv/moderncvcompatibility.sty" 1 4486 4079e75a63bc1541b0f3f2716f2bbe53 ""
   "/nix/store/0jql6cn8jrks2l11dkisx5rl7nggaybg-texlive-2024-env-texmfdist/tex/latex/moderncv/moderncvheadiii.sty" 1 9377 6dfa23a339ccc30ffcfdb412b8d4fff5 ""
@@ -191,9 +191,9 @@
   "/nix/store/5pdnkwz78wgq66x4907qskf43asm3lzn-texlive-2024-env/share/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1 5475591 f06ef2c0edd09f355335c6f645c644dd ""
   "/nix/store/5pdnkwz78wgq66x4907qskf43asm3lzn-texlive-2024-env/share/texmf-var/web2c/pdftex/pdflatex.fmt" 1 3326190 3221568613ecb4f345dfb8dcc61633bb ""
   "/nix/store/5pdnkwz78wgq66x4907qskf43asm3lzn-texlive-2024-env/share/texmf-var/web2c/texmf.cnf" 1 43655 fa7e3499aafd60051925a16cc17c9f5e ""
-  "cv.aux" 1733764301.6903 575 fad3e06560622ff4f418e36269529694 "pdflatex"
-  "cv.out" 1733764301.6913 361 e600295af438e452f7cb633453406b3b "pdflatex"
-  "cv.tex" 1733764296.07932 1258 8f3c04046a7e8431a4d7c5276bc278fc ""
+  "cv.aux" 1733764566.07848 575 fad3e06560622ff4f418e36269529694 "pdflatex"
+  "cv.out" 1733764566.07848 361 e600295af438e452f7cb633453406b3b "pdflatex"
+  "cv.tex" 1733764563.77848 1233 3c85ae8f1f488f42dc210039ea176255 ""
   (generated)
   "cv.aux"
   "cv.log"
