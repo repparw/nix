@@ -1,7 +1,6 @@
 { pkgs, ... }:
 {
   imports = [
-    ../common
     ../../modules/hm/gaming.nix
     ../../modules/hm/obs.nix
   ];
