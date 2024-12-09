@@ -16,6 +16,7 @@
 
       # Base modules configuration for all systems
       mkModules = hostname: [
+        ./hosts/common.nix
         ./hosts/${hostname}
         home-manager.nixosModules.home-manager
         {
@@ -26,7 +27,12 @@
             extraSpecialArgs = {
               inherit stable inputs;
             };
-            users.repparw = import ./home/${hostname};
+            users.repparw = {
+              imports = [
+                ./home/common
+                ./home/${hostname}
+              ];
+            };
           };
         }
       ];
