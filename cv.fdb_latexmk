@@ -1,9 +1,9 @@
 # Fdb version 4
-["pdflatex"] 1733762067.94041 "cv.tex" "cv.pdf" "cv" 1733762067.98912 2
+["pdflatex"] 1733762290.09966 "cv.tex" "cv.pdf" "cv" 1733762290.15047 2
   "/nix/store/6yccmazlb6fwxyvq3nvhx50wd9bc5195-texlive-2024-env/share/texmf-var/web2c/pdftex/pdflatex.fmt" 1 3116565 6df8318bf2feb41e30e795f6cd4f8777 ""
   "/nix/store/6yccmazlb6fwxyvq3nvhx50wd9bc5195-texlive-2024-env/share/texmf-var/web2c/texmf.cnf" 1 43655 2ba440ead0d80b8acec3f911389ceb65 ""
   "cv.aux" 1733761337.12989 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
-  "cv.tex" 1733762066.10052 788 482f37f795ee9a7821fcb0228818aacc ""
+  "cv.tex" 1733762289.56483 912 47a047370683987ffd7a9c5ab7712a7a ""
   "moderncv.cls" 0 -1 0 ""
   (generated)
   "cv.aux"
