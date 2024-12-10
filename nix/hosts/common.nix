@@ -4,6 +4,7 @@
   imports = [
     ../modules/nixos/common.nix
     ../modules/nixos/hyprland.nix
+    ../modules/nixos/autoUpgrade.nix
   ];
 
   services.gvfs.enable = true;

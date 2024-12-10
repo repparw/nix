@@ -10,7 +10,6 @@
     ./hardware-configuration.nix
     ../../modules/nixos/dlsuite.nix
     ../../modules/nixos/timers.nix
-    ../../modules/nixos/autoUpgrade.nix
     ../../modules/nixos/gaming.nix
   ];
 
@@ -184,7 +183,7 @@
   };
 
   services.sunshine = {
-    enable = true;
+    enable = false; # TODO use sunshine when moving pc to Moque
     capSysAdmin = true;
     settings = {
       output_name = 1;
