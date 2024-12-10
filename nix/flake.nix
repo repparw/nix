@@ -60,6 +60,7 @@
           inherit system;
           modules = [
             "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+			  isoImage.squashfsCompression = "gzip -Xcompression-level 1";
           ] ++ (mkModules "beta");
           specialArgs = {
             inherit stable inputs;
