@@ -4,11 +4,11 @@
     enable = true;
     keymaps = [
       {
-        command = "VolumeUp";
+        command = { VolumeChange = { offset = 2 } };
         key_sequence = "0";
       }
       {
-        command = "VolumeDown";
+        command = { VolumeChange = { offset = -2 } };
         key_sequence = "9";
       }
       {
