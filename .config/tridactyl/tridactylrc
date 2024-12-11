@@ -37,6 +37,8 @@ bind gg scrollto 0
 bind J tabnext
 bind K tabprev
 
+bind e reader
+
 " Subconfig Settings
 seturl youtube.com modeindicatormodes.normal false
 seturl www.google.com followpagepatterns.next Next
