@@ -9,32 +9,6 @@ x-environment: &default-tz-puid-pgid
   PGID: 131
 
 services:
-  ## remove after proy
-    grupo10:
-        image: 'docker.io/library/postgres:16'
-        container_name: grupo10
-        environment:
-            POSTGRES_DB: grupo10
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
-        ports:
-            - '5432:5432'
-        volumes:
-            - '/home/docker/grupo10:/var/lib/postgresql/data:Z'
-        restart: unless-stopped
-    pgadmin:
-        image: 'dpage/pgadmin4:latest'
-        container_name: pgadmin
-        environment:
-            PGADMIN_DEFAULT_EMAIL: admin@admin.com
-            PGADMIN_DEFAULT_PASSWORD: admin
-        ports:
-            - '5050:80'
-        depends_on:
-            - grupo10
-        restart: unless-stopped
-
-  ## remove after proy
     prowlarr:
         image: 'linuxserver/prowlarr:latest'
         container_name: prowlarr
@@ -134,15 +108,6 @@ services:
         container_name: mercury
         ports:
             - '3000:3000'
-        restart: unless-stopped
-    grocy:
-        image: 'linuxserver/grocy:latest'
-        container_name: grocy
-        environment: *default-tz-puid-pgid
-        volumes:
-            - '/home/docker/grocy:/config:Z'
-        ports:
-            - '9283:80'
         restart: unless-stopped
     swag:
         image: 'linuxserver/swag:latest'
