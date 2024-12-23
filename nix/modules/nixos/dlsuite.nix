@@ -385,41 +385,6 @@
       "dlsuite.target"
     ];
   };
-  virtualisation.oci-containers.containers."pgadmin" = {
-    image = "docker.io/dpage/pgadmin4:latest";
-    environment = {
-      "PGADMIN_DEFAULT_EMAIL" = "admin@admin.com";
-      "PGADMIN_DEFAULT_PASSWORD" = "admin";
-    };
-    ports = [
-      "5050:80/tcp"
-    ];
-    dependsOn = [
-      "grupo10"
-    ];
-    log-driver = "journald";
-    extraOptions = [
-      "--network-alias=pgadmin"
-      "--network=dlsuite"
-    ];
-  };
-  systemd.services."docker-pgadmin" = {
-    serviceConfig = {
-      Restart = lib.mkOverride 500 "always";
-    };
-    after = [
-      "docker-network-dlsuite.service"
-    ];
-    requires = [
-      "docker-network-dlsuite.service"
-    ];
-    partOf = [
-      "dlsuite.target"
-    ];
-    wantedBy = [
-      "dlsuite.target"
-    ];
-  };
   virtualisation.oci-containers.containers."playwright" = {
     image = "docker.io/browserless/chrome:1.60-chrome-stable";
     environment = {
