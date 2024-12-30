@@ -49,7 +49,7 @@
       rpi = "ssh -p2222 dietpi@rpi";
 
       # check if not alpha?
-      pc = " mosh -P 60000 --ssh 'ssh - p 10000' repparw@repparw.com.ar";
+      pc = " mosh -P 60000 --ssh 'ssh -p 10000' repparw@repparw.com.ar";
 
       f = "fzf";
 
