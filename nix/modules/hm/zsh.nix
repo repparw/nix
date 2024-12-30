@@ -24,6 +24,11 @@
     initExtra = ''
       [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
 
+      # Add SSH key if on beta machine
+      if [[ $(hostname) == "beta" ]]; then
+        ssh-add ~/.ssh/id_t440 2>/dev/null
+      fi
+
       # zsh-autosuggestions accept to ctrl-y
       zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
 
