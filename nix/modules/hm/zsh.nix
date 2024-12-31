@@ -51,7 +51,7 @@
       # check if kitty
       ssh = "kitten ssh";
 
-      rpi = "ssh -p2222 dietpi@rpi";
+      rpi = " mosh -P 60001 --ssh 'ssh -p 2222' rpi";
 
       # check if not alpha?
       pc = " mosh -P 60000 --ssh 'ssh -p 10000' repparw@repparw.com.ar";
