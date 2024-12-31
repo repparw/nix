@@ -7,6 +7,8 @@
     ../modules/nixos/autoUpgrade.nix
   ];
 
+  networking.networkmanager.enable = true;
+
   services.gvfs.enable = true;
 
   programs.nh = {
