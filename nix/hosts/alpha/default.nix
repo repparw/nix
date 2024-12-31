@@ -13,9 +13,6 @@
     ../../modules/nixos/gaming.nix
   ];
 
-  # Enable networking (can't use with wireless)
-  networking.networkmanager.enable = true;
-
   networking.hostName = "alpha"; # Define your hostname.
 
   networking.interfaces.enp42s0.wakeOnLan.enable = true;
