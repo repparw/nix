@@ -20,6 +20,8 @@
     };
   };
 
+  programs.localsend.enable = true;
+
   nix.nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
 
   nix.settings = {
