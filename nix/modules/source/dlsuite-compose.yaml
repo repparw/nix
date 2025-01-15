@@ -179,7 +179,7 @@ services:
         restart: unless-stopped
 
     paperless:
-        image: 'ghcr.io/paperless-ngx/paperless-ngx:latest'
+        image: 'ghcr.io/paperlessngx/paperless-ngx:latest'
         container_name: paperless
         depends_on:
             - db
