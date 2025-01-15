@@ -338,7 +338,7 @@
     ];
   };
   virtualisation.oci-containers.containers."paperless" = {
-    image = "docker.io/paperless-ngx/paperless-ngx:latest";
+    image = "docker.io/paperlessngx/paperless-ngx:latest";
     environment = {
       "PAPERLESS_DBHOST" = "db";
       "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
