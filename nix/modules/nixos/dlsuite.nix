@@ -229,9 +229,6 @@
     volumes = [
       "/home/docker/freshrss:/config:rw,Z"
     ];
-    ports = [
-      "127.0.0.1:81:80/tcp"
-    ];
     log-driver = "journald";
     extraOptions = [
       "--network-alias=freshrss"
@@ -269,7 +266,6 @@
       "/home/docker/jellyfin:/config:rw,Z"
     ];
     ports = [
-      "8096:8096/tcp"
       "127.0.0.1:8920:8920/tcp"
       "127.0.0.1:7359:7359/udp"
     ];
@@ -339,9 +335,6 @@
       "/home/docker/paper/export:/usr/src/paperless/export:rw,Z"
       "/home/docker/paper/media:/usr/src/paperless/media:rw,Z"
       "/home/repparw/Documents/consume:/usr/src/paperless/consume:rw,Z"
-    ];
-    ports = [
-      "8000:8000/tcp"
     ];
     dependsOn = [
       "broker"
@@ -423,9 +416,6 @@
     volumes = [
       "/home/docker/prowlarr:/config:rw,Z"
     ];
-    ports = [
-      "9696:9696/tcp"
-    ];
     log-driver = "journald";
     extraOptions = [
       "--network-alias=prowlarr"
@@ -461,8 +451,7 @@
       "/home/docker/qbittorrent:/config:rw,Z"
     ];
     ports = [
-      "54536:54536/tcp"
-      "8080:8080/tcp"
+      "127.0.0.1:54536:54536/tcp"
     ];
     log-driver = "journald";
     extraOptions = [
@@ -497,9 +486,6 @@
     volumes = [
       "/home/docker/data/:/data:rw,z"
       "/home/docker/radarr:/config:rw,Z"
-    ];
-    ports = [
-      "7878:7878/tcp"
     ];
     dependsOn = [
       "qbitttorrent"
@@ -538,9 +524,6 @@
       "/dev/rtc:/dev/rtc:ro"
       "/home/docker/data:/data:rw,z"
       "/home/docker/sonarr:/config:rw,Z"
-    ];
-    ports = [
-      "8989:8989/tcp"
     ];
     dependsOn = [
       "qbitttorrent"
@@ -621,9 +604,6 @@
     };
     volumes = [
       "/home/docker/authelia/valkey:/data:rw,Z"
-    ];
-    ports = [
-      "6379:6379/tcp"
     ];
     cmd = [
       "valkey-server"
