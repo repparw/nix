@@ -27,9 +27,6 @@
       "/home/docker/authelia/config:/config:rw,Z"
       "/home/docker/authelia/secrets:/secrets:rw,Z"
     ];
-    ports = [
-      "9091:9091/tcp"
-    ];
     dependsOn = [
       "valkey"
     ];
@@ -66,9 +63,6 @@
     volumes = [
       "/home/docker/bazarr:/config:rw,Z"
       "/home/docker/data:/data:rw,z"
-    ];
-    ports = [
-      "6767:6767/tcp"
     ];
     log-driver = "journald";
     extraOptions = [
@@ -134,9 +128,6 @@
     };
     volumes = [
       "/var/lib/changedetection-io:/datastore:rw,Z"
-    ];
-    ports = [
-      "5000:5000/tcp"
     ];
     dependsOn = [
       "playwright"
@@ -205,9 +196,6 @@
       "LOG_LEVEL" = "info";
       "TZ" = "America/Argentina/Buenos_Aires";
     };
-    ports = [
-      "8191:8191/tcp"
-    ];
     log-driver = "journald";
     extraOptions = [
       "--network-alias=flaresolverr"
@@ -242,7 +230,7 @@
       "/home/docker/freshrss:/config:rw,Z"
     ];
     ports = [
-      "81:80/tcp"
+      "127.0.0.1:81:80/tcp"
     ];
     log-driver = "journald";
     extraOptions = [
@@ -282,8 +270,8 @@
     ];
     ports = [
       "8096:8096/tcp"
-      "8920:8920/tcp"
-      "7359:7359/udp"
+      "127.0.0.1:8920:8920/tcp"
+      "127.0.0.1:7359:7359/udp"
     ];
     log-driver = "journald";
     extraOptions = [
@@ -311,9 +299,6 @@
   };
   virtualisation.oci-containers.containers."mercury" = {
     image = "docker.io/wangqiru/mercury-parser-api:latest";
-    ports = [
-      "3000:3000/tcp"
-    ];
     log-driver = "journald";
     extraOptions = [
       "--network-alias=mercury"
