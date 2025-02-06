@@ -36,6 +36,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-authelia" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -53,6 +54,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."bazarr" = {
     image = "docker.io/linuxserver/bazarr:latest";
     environment = {
@@ -70,6 +72,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-bazarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -87,6 +90,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."broker" = {
     image = "docker.io/library/redis:7";
     volumes = [
@@ -98,6 +102,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-broker" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -115,6 +120,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."changedetection" = {
     image = "docker.io/dgtlmoon/changedetection.io";
     environment = {
@@ -138,6 +144,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-changedetection" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -155,6 +162,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."db" = {
     image = "docker.io/library/postgres:15";
     environment = {
@@ -171,6 +179,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-db" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -188,6 +197,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."flaresolverr" = {
     image = "docker.io/flaresolverr/flaresolverr:latest";
     environment = {
@@ -202,6 +212,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-flaresolverr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -219,6 +230,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."freshrss" = {
     image = "docker.io/linuxserver/freshrss:latest";
     environment = {
@@ -235,6 +247,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-freshrss" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -252,6 +265,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."jellyfin" = {
     image = "docker.io/linuxserver/jellyfin:latest";
     environment = {
@@ -276,6 +290,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-jellyfin" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -293,6 +308,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."mercury" = {
     image = "docker.io/wangqiru/mercury-parser-api:latest";
     log-driver = "journald";
@@ -301,6 +317,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-mercury" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -318,6 +335,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."paperless" = {
     image = "docker.io/paperlessngx/paperless-ngx:latest";
     environment = {
@@ -346,6 +364,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-paperless" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -363,6 +382,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."playwright" = {
     image = "docker.io/browserless/chrome:1.60-chrome-stable";
     environment = {
@@ -389,6 +409,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-playwright" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -406,6 +427,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."prowlarr" = {
     image = "docker.io/linuxserver/prowlarr:latest";
     environment = {
@@ -422,6 +444,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-prowlarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -439,6 +462,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."qbitttorrent" = {
     image = "docker.io/hotio/qbittorrent:latest";
     environment = {
@@ -459,6 +483,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-qbitttorrent" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -476,6 +501,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."radarr" = {
     image = "docker.io/linuxserver/radarr:latest";
     environment = {
@@ -496,6 +522,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-radarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -513,6 +540,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."sonarr" = {
     image = "docker.io/linuxserver/sonarr:latest";
     environment = {
@@ -534,6 +562,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-sonarr" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -551,6 +580,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."swag" = {
     image = "docker.io/linuxserver/swag:latest";
     environment = {
@@ -578,6 +608,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-swag" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -595,6 +626,7 @@
       "dlsuite.target"
     ];
   };
+
   virtualisation.oci-containers.containers."valkey" = {
     image = "docker.io/valkey/valkey:7.2-alpine";
     environment = {
@@ -619,6 +651,7 @@
       "--network=dlsuite"
     ];
   };
+
   systemd.services."docker-valkey" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
