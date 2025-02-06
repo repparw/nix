@@ -13,6 +13,7 @@
   virtualisation.oci-containers.backend = "docker";
 
   virtualisation.oci-containers.containers = {
+
     "authelia" = {
       image = "docker.io/authelia/authelia:latest";
       environment = {
@@ -36,6 +37,7 @@
         "--network=dlsuite"
       ];
     };
+
     "broker" = {
       image = "docker.io/library/redis:7";
       volumes = [
@@ -47,6 +49,7 @@
         "--network=dlsuite"
       ];
     };
+
     "bazarr" = {
       image = "docker.io/linuxserver/bazarr:latest";
       environment = {
@@ -64,6 +67,7 @@
         "--network=dlsuite"
       ];
     };
+
     "changedetection" = {
       image = "docker.io/dgtlmoon/changedetection.io";
       environment = {
@@ -87,6 +91,7 @@
         "--network=dlsuite"
       ];
     };
+
     "db" = {
       image = "docker.io/library/postgres:15";
       environment = {
@@ -103,6 +108,27 @@
         "--network=dlsuite"
       ];
     };
+
+    "diun" = {
+      image = "docker.io/crazymax/diun:latest";
+      environment = {
+        "TZ" = "America/Argentina/Buenos_Aires";
+        "DIUN_WATCH_WORKERS" = "20";
+        "DIUN_WATCH_SCHEDULE" = "@every 12h";
+        "DIUN_PROVIDERS_DOCKER" = "true";
+        "DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT" = "true";
+      };
+      volumes = [
+        "/home/docker/diun:/data:rw,Z"
+        "/var/run/docker.sock:/var/run/docker.sock:ro"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=diun"
+        "--network=dlsuite"
+      ];
+    };
+
     "flaresolverr" = {
       image = "docker.io/flaresolverr/flaresolverr:latest";
       environment = {
@@ -117,6 +143,7 @@
         "--network=dlsuite"
       ];
     };
+
     "freshrss" = {
       image = "docker.io/linuxserver/freshrss:latest";
       environment = {
@@ -133,6 +160,7 @@
         "--network=dlsuite"
       ];
     };
+
     "jellyfin" = {
       image = "docker.io/linuxserver/jellyfin:latest";
       environment = {
@@ -157,6 +185,7 @@
         "--network=dlsuite"
       ];
     };
+
     "mercury" = {
       image = "docker.io/wangqiru/mercury-parser-api:latest";
       log-driver = "journald";
@@ -165,6 +194,7 @@
         "--network=dlsuite"
       ];
     };
+
     "paperless" = {
       image = "docker.io/paperlessngx/paperless-ngx:latest";
       environment = {
@@ -193,6 +223,7 @@
         "--network=dlsuite"
       ];
     };
+
     "playwright" = {
       image = "docker.io/browserless/chrome:1.60-chrome-stable";
       environment = {
@@ -219,6 +250,7 @@
         "--network=dlsuite"
       ];
     };
+
     "prowlarr" = {
       image = "docker.io/linuxserver/prowlarr:latest";
       environment = {
@@ -235,6 +267,7 @@
         "--network=dlsuite"
       ];
     };
+
     "qbitttorrent" = {
       image = "docker.io/hotio/qbittorrent:latest";
       environment = {
@@ -298,6 +331,7 @@
         "--network=dlsuite"
       ];
     };
+
     "swag" = {
       image = "docker.io/linuxserver/swag:latest";
       environment = {
@@ -325,6 +359,7 @@
         "--network=dlsuite"
       ];
     };
+
     "valkey" = {
       image = "docker.io/valkey/valkey:7.2-alpine";
       environment = {
@@ -427,6 +462,24 @@
     };
 
     "docker-db" = {
+      serviceConfig = {
+        Restart = lib.mkOverride 500 "always";
+      };
+      after = [
+        "docker-network-dlsuite.service"
+      ];
+      requires = [
+        "docker-network-dlsuite.service"
+      ];
+      partOf = [
+        "dlsuite.target"
+      ];
+      wantedBy = [
+        "dlsuite.target"
+      ];
+    };
+
+    "docker-diun" = {
       serviceConfig = {
         Restart = lib.mkOverride 500 "always";
       };
