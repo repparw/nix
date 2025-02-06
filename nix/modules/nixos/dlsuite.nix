@@ -12,31 +12,233 @@
 
   virtualisation.oci-containers.backend = "docker";
 
-  # Containers
-  virtualisation.oci-containers.containers."authelia" = {
-    image = "docker.io/authelia/authelia:latest";
-    environment = {
-      "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
-      "AUTHELIA_SESSION_SECRET_FILE" = "/secrets/SESSION_SECRET";
-      "AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE" = "/secrets/STORAGE_ENCRYPTION_KEY";
-      "PGID" = "131";
-      "PUID" = "1001";
-      "TZ" = "America/Argentina/Buenos_Aires";
+  virtualisation.oci-containers.containers = {
+    "authelia" = {
+      image = "docker.io/authelia/authelia:latest";
+      environment = {
+        "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
+        "AUTHELIA_SESSION_SECRET_FILE" = "/secrets/SESSION_SECRET";
+        "AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE" = "/secrets/STORAGE_ENCRYPTION_KEY";
+        "PGID" = "131";
+        "PUID" = "1001";
+        "TZ" = "America/Argentina/Buenos_Aires";
+      };
+      volumes = [
+        "/home/docker/authelia/config:/config:rw,Z"
+        "/home/docker/authelia/secrets:/secrets:rw,Z"
+      ];
+      dependsOn = [
+        "valkey"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=authelia"
+        "--network=dlsuite"
+      ];
     };
-    volumes = [
-      "/home/docker/authelia/config:/config:rw,Z"
-      "/home/docker/authelia/secrets:/secrets:rw,Z"
-    ];
-    dependsOn = [
-      "valkey"
-    ];
-    log-driver = "journald";
-    extraOptions = [
-      "--network-alias=authelia"
-      "--network=dlsuite"
-    ];
+    "broker" = {
+      image = "docker.io/library/redis:7";
+      volumes = [
+        "/home/docker/paper/redis:/data:rw,Z"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=broker"
+        "--network=dlsuite"
+      ];
+    };
+    "bazarr" = {
+      image = "docker.io/linuxserver/bazarr:latest";
+      environment = {
+        "PGID" = "131";
+        "PUID" = "1001";
+        "TZ" = "America/Argentina/Buenos_Aires";
+      };
+      volumes = [
+        "/home/docker/bazarr:/config:rw,Z"
+        "/home/docker/data:/data:rw,z"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=bazarr"
+        "--network=dlsuite"
+      ];
+    };
+    "changedetection" = {
+      image = "docker.io/dgtlmoon/changedetection.io";
+      environment = {
+        "BASE_URL" = "https://repparw.com.ar";
+        "HIDE_REFERER" = "true";
+        "PGID" = "131";
+        "PLAYWRIGHT_DRIVER_URL" = "ws://playwright:3000";
+        "PORT" = "5000";
+        "PUID" = "1001";
+        "WEBDRIVER_URL" = "http://playwright:3000/wd/hub";
+      };
+      volumes = [
+        "/var/lib/changedetection-io:/datastore:rw,Z"
+      ];
+      dependsOn = [
+        "playwright"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=changedetection"
+        "--network=dlsuite"
+      ];
+    };
+    "db" = {
+      image = "docker.io/library/postgres:15";
+      environment = {
+        "POSTGRES_DB" = "paperless";
+        "POSTGRES_PASSWORD" = "paperless";
+        "POSTGRES_USER" = "paperless";
+      };
+      volumes = [
+        "/home/docker/paper/pg:/var/lib/postgresql/data:rw,Z"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=db"
+        "--network=dlsuite"
+      ];
+    };
+    "flaresolverr" = {
+      image = "docker.io/flaresolverr/flaresolverr:latest";
+      environment = {
+        "CAPTCHA_SOLVER" = "none";
+        "LOG_HTML" = "false";
+        "LOG_LEVEL" = "info";
+        "TZ" = "America/Argentina/Buenos_Aires";
+      };
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=flaresolverr"
+        "--network=dlsuite"
+      ];
+    };
+    "freshrss" = {
+      image = "docker.io/linuxserver/freshrss:latest";
+      environment = {
+        "PGID" = "131";
+        "PUID" = "1001";
+        "TZ" = "America/Argentina/Buenos_Aires";
+      };
+      volumes = [
+        "/home/docker/freshrss:/config:rw,Z"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=freshrss"
+        "--network=dlsuite"
+      ];
+    };
+    "jellyfin" = {
+      image = "docker.io/linuxserver/jellyfin:latest";
+      environment = {
+        "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
+        "JELLYFIN_PublishedServerUrl" = "jellyfin.repparw.com.ar";
+        "PGID" = "131";
+        "PUID" = "1001";
+        "TZ" = "America/Argentina/Buenos_Aires";
+      };
+      volumes = [
+        "/home/docker/data/media:/data/media:ro"
+        "/home/docker/jellyfin:/config:rw,Z"
+      ];
+      ports = [
+        "127.0.0.1:8920:8920/tcp"
+        "127.0.0.1:7359:7359/udp"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--device=/dev/dri:/dev/dri:rwm"
+        "--network-alias=jellyfin"
+        "--network=dlsuite"
+      ];
+    };
+    "mercury" = {
+      image = "docker.io/wangqiru/mercury-parser-api:latest";
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=mercury"
+        "--network=dlsuite"
+      ];
+    };
+    "paperless" = {
+      image = "docker.io/paperlessngx/paperless-ngx:latest";
+      environment = {
+        "PAPERLESS_DBHOST" = "db";
+        "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
+        "PAPERLESS_OCR_LANGUAGE" = "spa";
+        "PAPERLESS_REDIS" = "redis://broker:6379";
+        "PAPERLESS_TIME_ZONE" = "America/Argentina/Buenos_Aires";
+        "PAPERLESS_URL" = "https://paper.repparw.com.ar";
+        "USERMAP_GID" = "131";
+        "USERMAP_UID" = "1001";
+      };
+      volumes = [
+        "/home/docker/paper/data:/usr/src/paperless/data:rw,Z"
+        "/home/docker/paper/export:/usr/src/paperless/export:rw,Z"
+        "/home/docker/paper/media:/usr/src/paperless/media:rw,Z"
+        "/home/repparw/Documents/consume:/usr/src/paperless/consume:rw,Z"
+      ];
+      dependsOn = [
+        "broker"
+        "db"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=paperless"
+        "--network=dlsuite"
+      ];
+    };
+    "playwright" = {
+      image = "docker.io/browserless/chrome:1.60-chrome-stable";
+      environment = {
+        "CHROME_REFRESH_TIME" = "600000";
+        "CONNECTION_TIMEOUT" = "300000";
+        "DEFAULT_BLOCK_ADS" = "true";
+        "DEFAULT_IGNORE_HTTPS_ERRORS" = "true";
+        "DEFAULT_STEALTH" = "true";
+        "ENABLE_DEBUGGER" = "false";
+        "MAX_CONCURRENT_SESSIONS" = "10";
+        "PREBOOT_CHROME" = "true";
+        "SCREEN_DEPTH" = "16";
+        "SCREEN_HEIGHT" = "1024";
+        "SCREEN_WIDTH" = "1920";
+      };
+      log-driver = "journald";
+      extraOptions = [
+        "--health-cmd=[\"curl\",\"-f\",\"http://localhost:3000\"]"
+        "--health-interval=30s"
+        "--health-retries=5"
+        "--health-start-period=10s"
+        "--health-timeout=10s"
+        "--network-alias=playwright"
+        "--network=dlsuite"
+      ];
+    };
+    "prowlarr" = {
+      image = "docker.io/linuxserver/prowlarr:latest";
+      environment = {
+        "PGID" = "131";
+        "PUID" = "1001";
+        "TZ" = "America/Argentina/Buenos_Aires";
+      };
+      volumes = [
+        "/home/docker/prowlarr:/config:rw,Z"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=prowlarr"
+        "--network=dlsuite"
+      ];
+    };
+
   };
 
+  # Services
   systemd.services."docker-authelia" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -52,24 +254,6 @@
     ];
     wantedBy = [
       "dlsuite.target"
-    ];
-  };
-
-  virtualisation.oci-containers.containers."bazarr" = {
-    image = "docker.io/linuxserver/bazarr:latest";
-    environment = {
-      "PGID" = "131";
-      "PUID" = "1001";
-      "TZ" = "America/Argentina/Buenos_Aires";
-    };
-    volumes = [
-      "/home/docker/bazarr:/config:rw,Z"
-      "/home/docker/data:/data:rw,z"
-    ];
-    log-driver = "journald";
-    extraOptions = [
-      "--network-alias=bazarr"
-      "--network=dlsuite"
     ];
   };
 
@@ -91,18 +275,6 @@
     ];
   };
 
-  virtualisation.oci-containers.containers."broker" = {
-    image = "docker.io/library/redis:7";
-    volumes = [
-      "/home/docker/paper/redis:/data:rw,Z"
-    ];
-    log-driver = "journald";
-    extraOptions = [
-      "--network-alias=broker"
-      "--network=dlsuite"
-    ];
-  };
-
   systemd.services."docker-broker" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -118,30 +290,6 @@
     ];
     wantedBy = [
       "dlsuite.target"
-    ];
-  };
-
-  virtualisation.oci-containers.containers."changedetection" = {
-    image = "docker.io/dgtlmoon/changedetection.io";
-    environment = {
-      "BASE_URL" = "https://repparw.com.ar";
-      "HIDE_REFERER" = "true";
-      "PGID" = "131";
-      "PLAYWRIGHT_DRIVER_URL" = "ws://playwright:3000";
-      "PORT" = "5000";
-      "PUID" = "1001";
-      "WEBDRIVER_URL" = "http://playwright:3000/wd/hub";
-    };
-    volumes = [
-      "/var/lib/changedetection-io:/datastore:rw,Z"
-    ];
-    dependsOn = [
-      "playwright"
-    ];
-    log-driver = "journald";
-    extraOptions = [
-      "--network-alias=changedetection"
-      "--network=dlsuite"
     ];
   };
 
@@ -163,23 +311,6 @@
     ];
   };
 
-  virtualisation.oci-containers.containers."db" = {
-    image = "docker.io/library/postgres:15";
-    environment = {
-      "POSTGRES_DB" = "paperless";
-      "POSTGRES_PASSWORD" = "paperless";
-      "POSTGRES_USER" = "paperless";
-    };
-    volumes = [
-      "/home/docker/paper/pg:/var/lib/postgresql/data:rw,Z"
-    ];
-    log-driver = "journald";
-    extraOptions = [
-      "--network-alias=db"
-      "--network=dlsuite"
-    ];
-  };
-
   systemd.services."docker-db" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -195,21 +326,6 @@
     ];
     wantedBy = [
       "dlsuite.target"
-    ];
-  };
-
-  virtualisation.oci-containers.containers."flaresolverr" = {
-    image = "docker.io/flaresolverr/flaresolverr:latest";
-    environment = {
-      "CAPTCHA_SOLVER" = "none";
-      "LOG_HTML" = "false";
-      "LOG_LEVEL" = "info";
-      "TZ" = "America/Argentina/Buenos_Aires";
-    };
-    log-driver = "journald";
-    extraOptions = [
-      "--network-alias=flaresolverr"
-      "--network=dlsuite"
     ];
   };
 
@@ -231,23 +347,6 @@
     ];
   };
 
-  virtualisation.oci-containers.containers."freshrss" = {
-    image = "docker.io/linuxserver/freshrss:latest";
-    environment = {
-      "PGID" = "131";
-      "PUID" = "1001";
-      "TZ" = "America/Argentina/Buenos_Aires";
-    };
-    volumes = [
-      "/home/docker/freshrss:/config:rw,Z"
-    ];
-    log-driver = "journald";
-    extraOptions = [
-      "--network-alias=freshrss"
-      "--network=dlsuite"
-    ];
-  };
-
   systemd.services."docker-freshrss" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -263,31 +362,6 @@
     ];
     wantedBy = [
       "dlsuite.target"
-    ];
-  };
-
-  virtualisation.oci-containers.containers."jellyfin" = {
-    image = "docker.io/linuxserver/jellyfin:latest";
-    environment = {
-      "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
-      "JELLYFIN_PublishedServerUrl" = "jellyfin.repparw.com.ar";
-      "PGID" = "131";
-      "PUID" = "1001";
-      "TZ" = "America/Argentina/Buenos_Aires";
-    };
-    volumes = [
-      "/home/docker/data/media:/data/media:ro"
-      "/home/docker/jellyfin:/config:rw,Z"
-    ];
-    ports = [
-      "127.0.0.1:8920:8920/tcp"
-      "127.0.0.1:7359:7359/udp"
-    ];
-    log-driver = "journald";
-    extraOptions = [
-      "--device=/dev/dri:/dev/dri:rwm"
-      "--network-alias=jellyfin"
-      "--network=dlsuite"
     ];
   };
 
@@ -309,15 +383,6 @@
     ];
   };
 
-  virtualisation.oci-containers.containers."mercury" = {
-    image = "docker.io/wangqiru/mercury-parser-api:latest";
-    log-driver = "journald";
-    extraOptions = [
-      "--network-alias=mercury"
-      "--network=dlsuite"
-    ];
-  };
-
   systemd.services."docker-mercury" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -333,35 +398,6 @@
     ];
     wantedBy = [
       "dlsuite.target"
-    ];
-  };
-
-  virtualisation.oci-containers.containers."paperless" = {
-    image = "docker.io/paperlessngx/paperless-ngx:latest";
-    environment = {
-      "PAPERLESS_DBHOST" = "db";
-      "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
-      "PAPERLESS_OCR_LANGUAGE" = "spa";
-      "PAPERLESS_REDIS" = "redis://broker:6379";
-      "PAPERLESS_TIME_ZONE" = "America/Argentina/Buenos_Aires";
-      "PAPERLESS_URL" = "https://paper.repparw.com.ar";
-      "USERMAP_GID" = "131";
-      "USERMAP_UID" = "1001";
-    };
-    volumes = [
-      "/home/docker/paper/data:/usr/src/paperless/data:rw,Z"
-      "/home/docker/paper/export:/usr/src/paperless/export:rw,Z"
-      "/home/docker/paper/media:/usr/src/paperless/media:rw,Z"
-      "/home/repparw/Documents/consume:/usr/src/paperless/consume:rw,Z"
-    ];
-    dependsOn = [
-      "broker"
-      "db"
-    ];
-    log-driver = "journald";
-    extraOptions = [
-      "--network-alias=paperless"
-      "--network=dlsuite"
     ];
   };
 
@@ -383,33 +419,6 @@
     ];
   };
 
-  virtualisation.oci-containers.containers."playwright" = {
-    image = "docker.io/browserless/chrome:1.60-chrome-stable";
-    environment = {
-      "CHROME_REFRESH_TIME" = "600000";
-      "CONNECTION_TIMEOUT" = "300000";
-      "DEFAULT_BLOCK_ADS" = "true";
-      "DEFAULT_IGNORE_HTTPS_ERRORS" = "true";
-      "DEFAULT_STEALTH" = "true";
-      "ENABLE_DEBUGGER" = "false";
-      "MAX_CONCURRENT_SESSIONS" = "10";
-      "PREBOOT_CHROME" = "true";
-      "SCREEN_DEPTH" = "16";
-      "SCREEN_HEIGHT" = "1024";
-      "SCREEN_WIDTH" = "1920";
-    };
-    log-driver = "journald";
-    extraOptions = [
-      "--health-cmd=[\"curl\",\"-f\",\"http://localhost:3000\"]"
-      "--health-interval=30s"
-      "--health-retries=5"
-      "--health-start-period=10s"
-      "--health-timeout=10s"
-      "--network-alias=playwright"
-      "--network=dlsuite"
-    ];
-  };
-
   systemd.services."docker-playwright" = {
     serviceConfig = {
       Restart = lib.mkOverride 500 "always";
@@ -425,23 +434,6 @@
     ];
     wantedBy = [
       "dlsuite.target"
-    ];
-  };
-
-  virtualisation.oci-containers.containers."prowlarr" = {
-    image = "docker.io/linuxserver/prowlarr:latest";
-    environment = {
-      "PGID" = "131";
-      "PUID" = "1001";
-      "TZ" = "America/Argentina/Buenos_Aires";
-    };
-    volumes = [
-      "/home/docker/prowlarr:/config:rw,Z"
-    ];
-    log-driver = "journald";
-    extraOptions = [
-      "--network-alias=prowlarr"
-      "--network=dlsuite"
     ];
   };
 
@@ -652,22 +644,24 @@
     ];
   };
 
-  systemd.services."docker-valkey" = {
-    serviceConfig = {
-      Restart = lib.mkOverride 500 "always";
+  systemd.services = {
+    "docker-valkey" = {
+      serviceConfig = {
+        Restart = lib.mkOverride 500 "always";
+      };
+      after = [
+        "docker-network-dlsuite.service"
+      ];
+      requires = [
+        "docker-network-dlsuite.service"
+      ];
+      partOf = [
+        "dlsuite.target"
+      ];
+      wantedBy = [
+        "dlsuite.target"
+      ];
     };
-    after = [
-      "docker-network-dlsuite.service"
-    ];
-    requires = [
-      "docker-network-dlsuite.service"
-    ];
-    partOf = [
-      "dlsuite.target"
-    ];
-    wantedBy = [
-      "dlsuite.target"
-    ];
   };
 
   # Networks
