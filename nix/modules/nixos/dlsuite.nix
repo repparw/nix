@@ -117,6 +117,7 @@
         "DIUN_WATCH_SCHEDULE" = "@every 12h";
         "DIUN_PROVIDERS_DOCKER" = "true";
         "DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT" = "true";
+        "DIUN_NOTIF_WEBHOOK_ENDPOINT" = "https://webhook.site/1b1b1b1b-1b1b-1b1b-1b1b-1b1b1b1b1b1b";
       };
       volumes = [
         "/home/docker/diun:/data:rw,Z"
