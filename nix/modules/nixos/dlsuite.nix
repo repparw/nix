@@ -117,7 +117,7 @@
         "DIUN_WATCH_SCHEDULE" = "@every 12h";
         "DIUN_PROVIDERS_DOCKER" = "true";
         "DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT" = "true";
-        "DIUN_NOTIF_DISCORD_WEBHOOKURLFILE" = "/run/secrets/discord-webhook-url";
+        "DIUN_NOTIF_DISCORD_WEBHOOKURLFILE" = "/data/discord-webhook-url";
       };
       volumes = [
         "/home/docker/diun:/data:rw,Z"
