@@ -74,6 +74,8 @@
 
     earlyoom.enable = true;
 
+    pulseaudio.enable = false;
+
     keyd = {
       enable = lib.mkIf (config.networking.hostName != "alpha") true;
       keyboards = {
@@ -125,8 +127,6 @@
   hardware = {
     bluetooth.enable = true;
     bluetooth.powerOnBoot = true;
-
-    pulseaudio.enable = false;
   };
 
   environment.etc = {
