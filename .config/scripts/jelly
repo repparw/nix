@@ -1,2 +1,2 @@
 #!/bin/sh
-firefox -P kiosk --kiosk-monitor 1 jellyfin.repparw.com.ar 2>/dev/null
+firefox -P kiosk --kiosk-monitor 1 jellyfin.repparw.me 2>/dev/null
