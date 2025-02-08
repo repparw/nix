@@ -23,7 +23,6 @@
         "PGID" = "131";
         "PUID" = "1001";
         "TZ" = "America/Argentina/Buenos_Aires";
-        "DOMAIN" = "repparw.me";
       };
       volumes = [
         "/home/docker/authelia/config:/config:rw,Z"
