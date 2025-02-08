@@ -23,7 +23,7 @@
         "PGID" = "131";
         "PUID" = "1001";
         "TZ" = "America/Argentina/Buenos_Aires";
-        "DOMAIN" = "repparw.com.ar";
+        "DOMAIN" = "repparw.me";
       };
       volumes = [
         "/home/docker/authelia/config:/config:rw,Z"
@@ -72,7 +72,7 @@
     "changedetection" = {
       image = "docker.io/dgtlmoon/changedetection.io";
       environment = {
-        "BASE_URL" = "https://repparw.com.ar";
+        "BASE_URL" = "https://repparw.me";
         "HIDE_REFERER" = "true";
         "PGID" = "131";
         "PLAYWRIGHT_DRIVER_URL" = "ws://playwright:3000";
@@ -167,7 +167,7 @@
       image = "docker.io/linuxserver/jellyfin:latest";
       environment = {
         "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
-        "JELLYFIN_PublishedServerUrl" = "jellyfin.repparw.com.ar";
+        "JELLYFIN_PublishedServerUrl" = "jellyfin.repparw.me";
         "PGID" = "131";
         "PUID" = "1001";
         "TZ" = "America/Argentina/Buenos_Aires";
@@ -205,7 +205,7 @@
         "PAPERLESS_OCR_LANGUAGE" = "spa";
         "PAPERLESS_REDIS" = "redis://broker:6379";
         "PAPERLESS_TIME_ZONE" = "America/Argentina/Buenos_Aires";
-        "PAPERLESS_URL" = "https://paper.repparw.com.ar";
+        "PAPERLESS_URL" = "https://paper.repparw.me";
         "USERMAP_GID" = "131";
         "USERMAP_UID" = "1001";
       };
@@ -343,7 +343,7 @@
         "PUID" = "1001";
         "SUBDOMAINS" = "wildcard";
         "TZ" = "America/Argentina/Buenos_Aires";
-        "URL" = "repparw.com.ar";
+        "URL" = "repparw.me";
         "VALIDATION" = "dns";
       };
       volumes = [
