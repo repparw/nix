@@ -95,7 +95,7 @@
             set -g @tmux_power_left_arrow_icon      ''
           '';
         }
-        #{ plugin = resurrect; extraConfig = '' set -g @resurrect-dir "$XDG_DATA_HOME/tmux/resurrect" ''; }
+        #       { plugin = resurrect; extraConfig = '' set -g @resurrect-dir "$XDG_DATA_HOME/tmux/resurrect" ''; }
         {
           plugin = continuum;
           extraConfig = ''
