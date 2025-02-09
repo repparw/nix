@@ -58,6 +58,10 @@
         "org.pwmt.zathura.desktop"
         "firefox.desktop"
       ];
+      "image/png" = "feh.desktop";
+      "image/jpeg" = "feh.desktop";
+      "image/gif" = "feh.desktop";
+      "image/webp" = "feh.desktop";
       "text/html" = "firefox.desktop";
       "x-scheme-handler/http" = "firefox.desktop";
       "x-scheme-handler/https" = "firefox.desktop";
