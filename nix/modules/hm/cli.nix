@@ -178,6 +178,7 @@
       melt # ssh ed25519 keys to seed words
       ueberzugpp
       libqalculate
+      todoist
 
       fastfetch
       axel
