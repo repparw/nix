@@ -9,12 +9,10 @@
     ];
 
     systemd.variables = [ "--all" ];
-    ${
-      if osConfig.networking.hostName == "alpha" then "extraConfig" else null
-    } = builtins.readFile ../../source/hyprland-alpha.conf;
-    ${
-      if osConfig.networking.hostName != "alpha" then "extraConfig" else null
-    } = builtins.readFile ../../source/hyprland-not-alpha.conf;
+    ${if osConfig.networking.hostName == "alpha" then "extraConfig" else null} =
+      builtins.readFile ../../source/hyprland-alpha.conf;
+    ${if osConfig.networking.hostName != "alpha" then "extraConfig" else null} =
+      builtins.readFile ../../source/hyprland-not-alpha.conf;
     settings = {
       env = [
         "XCURSOR_SIZE,24"
@@ -44,7 +42,9 @@
       "$top" = "$terminal btm --theme gruvbox";
       "$fileManager" = "hdrop $terminal --class filemanager zsh -ic yazi";
       "$spotify" = "$terminal --class spotify spotify_player";
-      "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim zsh -ic /home/repparw/.config/scripts/obsinvim'";
+      "$notes" =
+        "hdrop -c obsinvim '$terminal --class obsinvim zsh -ic /home/repparw/.config/scripts/obsinvim'";
+      "$notes2" = "hdrop -c obsidian 'obsidian'";
 
       # Autostart
       exec-once = [
@@ -187,6 +187,7 @@
         "$mod, V, exec, ~/.config/scripts/jelly"
         "$mod, Z, exec, ~/.config/scripts/mpvclip"
         "$mod, N, exec, $notes"
+        "$mod SHIFT, N, exec, $notes2"
         "$mod, R, exec, $terminal zsh -ic rpi"
         "$mod, B, exec, ~/.config/scripts/bttoggle"
         "$mod, P, exec, scrcpy -S"
