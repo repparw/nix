@@ -201,10 +201,9 @@
       environment = {
         "PAPERLESS_DBHOST" = "db";
         "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
-        "PAPERLESS_AUTO_LOGIN_USERNAME" = "repparw";
-"PAPERLESS_ENABLE_HTTP_REMOTE_USER"="true";
-"PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME"="HTTP_REMOTE_USER";
-"PAPERLESS_LOGOUT_REDIRECT_URL"="https://auth.repparw.me/logout"
+        "PAPERLESS_ENABLE_HTTP_REMOTE_USER" = "true";
+        "PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME" = "HTTP_REMOTE_USER";
+        "PAPERLESS_LOGOUT_REDIRECT_URL" = "https://auth.repparw.me/logout";
         "PAPERLESS_OCR_LANGUAGE" = "spa";
         "PAPERLESS_REDIS" = "redis://broker:6379";
         "PAPERLESS_TIME_ZONE" = "America/Argentina/Buenos_Aires";
