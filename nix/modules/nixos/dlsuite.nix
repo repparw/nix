@@ -200,12 +200,11 @@
       image = "docker.io/paperlessngx/paperless-ngx:latest";
       environment = {
         "PAPERLESS_DBHOST" = "db";
-        "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
+        #"PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
         "PAPERLESS_OCR_LANGUAGE" = "spa";
         "PAPERLESS_REDIS" = "redis://broker:6379";
         "PAPERLESS_TIME_ZONE" = "America/Argentina/Buenos_Aires";
         "PAPERLESS_URL" = "https://paper.repparw.me";
-        "PAPERLESS_ALLOWED_HOSTS" = "localhost";
         "USERMAP_GID" = "131";
         "USERMAP_UID" = "1001";
       };
