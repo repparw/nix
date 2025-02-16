@@ -205,6 +205,7 @@
         "PAPERLESS_REDIS" = "redis://broker:6379";
         "PAPERLESS_TIME_ZONE" = "America/Argentina/Buenos_Aires";
         "PAPERLESS_URL" = "https://paper.repparw.me";
+        "PAPERLESS_ALLOWED_HOSTS" = "192.168.0.18";
         "USERMAP_GID" = "131";
         "USERMAP_UID" = "1001";
       };
