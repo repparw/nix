@@ -125,8 +125,13 @@
   security.polkit.enable = true;
 
   hardware = {
-    bluetooth.enable = true;
-    bluetooth.powerOnBoot = true;
+    bluetooth = {
+      enable = true;
+      powerOnBoot = true;
+      settings = {
+
+      };
+    };
   };
 
   environment.etc = {
