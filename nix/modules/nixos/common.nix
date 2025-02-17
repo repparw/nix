@@ -74,7 +74,7 @@
 
     earlyoom.enable = true;
 
-    pulseaudio.enable = false;
+    blueman.enable = true;
 
     keyd = {
       enable = lib.mkIf (config.networking.hostName != "alpha") true;
