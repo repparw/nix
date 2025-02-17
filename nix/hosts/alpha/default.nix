@@ -11,6 +11,7 @@
     ../../modules/nixos/dlsuite.nix
     ../../modules/nixos/timers.nix
     ../../modules/nixos/gaming.nix
+    ../../modules/nixos/virtualisation.nix
   ];
 
   networking.hostName = "alpha"; # Define your hostname.
