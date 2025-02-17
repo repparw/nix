@@ -86,7 +86,7 @@
       ln = "ln -i";
       mv = "mv -i";
 
-      rm = "echo Use rip instead of rm";
+      rm = "rip";
 
       chown = "chown --preserve-root";
 
