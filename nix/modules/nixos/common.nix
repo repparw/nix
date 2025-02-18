@@ -129,6 +129,10 @@
       enable = true;
       powerOnBoot = true;
       settings = {
+
+        General = {
+          JustWorksRepairing = "confirm";
+        };
         LE = {
           MinConnectionInterval = "7";
           MaxConnectionInterval = "9";
