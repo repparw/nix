@@ -129,7 +129,6 @@
       enable = true;
       powerOnBoot = true;
       settings = {
-
         General = {
           JustWorksRepairing = "confirm";
         };
