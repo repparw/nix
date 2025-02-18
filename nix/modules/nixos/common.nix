@@ -133,11 +133,6 @@
         General = {
           JustWorksRepairing = "confirm";
         };
-        LE = {
-          MinConnectionInterval = "7";
-          MaxConnectionInterval = "9";
-          ConnectionLatency = "0";
-        };
       };
     };
   };
