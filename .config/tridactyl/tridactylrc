@@ -47,11 +47,9 @@ seturl https://jellyfin.repparw.com.ar/web/#/video modeindicatormodes.normal fal
 
 " Autocmds
 autocmd DocStart 127.0.0.1:8096 mode ignore
-autocmd DocStart https://repparw.com.ar mode ignore
+autocmd DocStart https://repparw.me mode ignore
 autocmd DocStart tradingview.com mode ignore
 autocmd DocStart inoreader.com mode ignore
-autocmd DocStart en.wikipedia.org urlmodify -t en.wikipedia.org wikiless.tiekoetter.com
-autocmd DocStart es.wikipedia.org composite urlmodify_js -t es.wikipedia.org wikiless.tiekoetter.com | urlmodify -su lang es
 autocmd DocStart tldraw.com mode ignore
 autocmd DocStart config.qmk.fm mode ignore
 autocmd DocLoad ^https://github.com/tridactyl/tridactyl/issues/new$ issue
