@@ -4,13 +4,19 @@
     enable = true;
     keymaps = [
       {
-        command = "VolumeUp";
-        #command = { VolumeChange = { offset = 2; }; };
+        command = {
+          VolumeChange = {
+            offset = 2;
+          };
+        };
         key_sequence = "0";
       }
       {
-        command = "VolumeDown";
-        #command = { VolumeChange = { offset = -2; }; };
+        command = {
+          VolumeChange = {
+            offset = -2;
+          };
+        };
         key_sequence = "9";
       }
       {
@@ -50,7 +56,7 @@
         key_sequence = "g h";
       }
       {
-        command = "LyricPage";
+        command = "LyricsPage";
         key_sequence = "g l";
       }
     ];
