@@ -9,10 +9,6 @@
     let
       system = "x86_64-linux";
 
-      pkgs = import nixpkgs {
-        config.allowUnfree = true;
-      };
-
       # Base modules configuration for all systems
       mkModules = hostname: [
         ./hosts/common.nix
