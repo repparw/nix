@@ -9,8 +9,7 @@
     let
       system = "x86_64-linux";
 
-      stable = import inputs.nixpkgs {
-        inherit system;
+      pkgs = import nixpkgs {
         config.allowUnfree = true;
       };
 
@@ -25,7 +24,7 @@
             useUserPackages = true;
             backupFileExtension = "hm-backup";
             extraSpecialArgs = {
-              inherit stable inputs;
+              inherit inputs;
             };
             users.repparw = {
               imports = [
@@ -44,7 +43,7 @@
           inherit system;
           modules = mkModules "alpha";
           specialArgs = {
-            inherit stable inputs;
+            inherit inputs;
           };
         };
 
@@ -52,7 +51,7 @@
           inherit system;
           modules = mkModules "beta";
           specialArgs = {
-            inherit stable inputs;
+            inherit inputs;
           };
         };
 
@@ -68,7 +67,7 @@
             )
           ] ++ (mkModules "beta");
           specialArgs = {
-            inherit stable inputs;
+            inherit inputs;
           };
         };
       };
