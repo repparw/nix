@@ -130,6 +130,7 @@
       powerOnBoot = true;
       settings = {
         General = {
+          Privacy = "device";
           JustWorksRepairing = "confirm";
         };
       };
