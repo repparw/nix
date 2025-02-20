@@ -1,8 +1,6 @@
 { ... }:
 {
   hardware.xpadneo.enable = true;
-  hardware.xone.enable = true;
-  hardware.uinput.enable = true;
 
   programs = {
     steam = {
