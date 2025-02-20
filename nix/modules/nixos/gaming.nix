@@ -6,13 +6,13 @@
     steam = {
       enable = true;
       remotePlay.openFirewall = true;
-      gamescopeSession.enable = false;
+      gamescopeSession.enable = true;
       localNetworkGameTransfers.openFirewall = true;
     };
 
     gamescope = {
       enable = true;
-      capSysNice = false;
+      capSysNice = true;
     };
   };
 }
