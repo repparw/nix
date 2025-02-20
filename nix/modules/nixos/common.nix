@@ -127,8 +127,13 @@
   hardware = {
     bluetooth = {
       enable = true;
-      #powerOnBoot = true;
-      #settings = { General = { Privacy = "device"; JustWorksRepairing = "confirm"; };
+      powerOnBoot = true;
+      settings = {
+        General = {
+          Privacy = "device";
+          JustWorksRepairing = "confirm";
+        };
+      };
     };
   };
 
