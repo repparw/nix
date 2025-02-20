@@ -86,7 +86,7 @@
       ln = "ln -i";
       mv = "mv -i";
 
-      rm = "rip";
+      rm = "rm -i";
 
       chown = "chown --preserve-root";
 
