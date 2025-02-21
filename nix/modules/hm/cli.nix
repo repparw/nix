@@ -171,6 +171,8 @@
       fzf
       ytfzf
 
+      qmk
+
       # CLI tools
       playerctl
       rclone
