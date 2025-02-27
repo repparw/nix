@@ -353,6 +353,7 @@
       };
       volumes = [
         "/home/docker/swag:/config:rw,Z"
+        "/git/homepage:/config/www:rw,Z"
       ];
       ports = [
         "443:443/tcp"
