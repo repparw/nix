@@ -101,6 +101,7 @@
       # replace default utils, add checks if installed
       # add eza ls
       df = "duf";
+      du = "dust";
       cat = "bat";
       diff = "colordiff";
       top = "btm --theme gruvbox";
