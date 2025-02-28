@@ -39,7 +39,7 @@ bind K tabprev
 
 bind e reader
 
-reseturl whatsapp.com e
+reseturl ^https://web.whatsapp.com e
 
 " Subconfig Settings
 seturl youtube.com modeindicatormodes.normal false
