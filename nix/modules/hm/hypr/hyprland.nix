@@ -142,8 +142,8 @@
       "$mod" = "SUPER";
 
       bindr = [
-        "$mod, SUPER_L, exec, $desktopmenu"
-        "$mod ALT, SUPER_L, exec, $cmdmenu"
+        "$mod, d, exec, $desktopmenu"
+        "$mod SHIFT, d, exec, $cmdmenu"
       ];
       bindm = [
         "$mod, mouse:272, movewindow"
