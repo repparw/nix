@@ -39,7 +39,7 @@ bind K tabprev
 
 bind e reader
 
-reseturl ^https://web.whatsapp.com e
+bindurl ^https://web.whatsapp.com e echo "e in wsp"
 
 " Subconfig Settings
 seturl youtube.com modeindicatormodes.normal false
