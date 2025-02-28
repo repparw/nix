@@ -39,6 +39,8 @@ bind K tabprev
 
 bind e reader
 
+reseturl whatsapp.com e
+
 " Subconfig Settings
 seturl youtube.com modeindicatormodes.normal false
 seturl www.google.com followpagepatterns.next Next
