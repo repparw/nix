@@ -141,10 +141,6 @@
 
       "$mod" = "SUPER";
 
-      bindr = [
-        "$mod, d, exec, $desktopmenu"
-        "$mod SHIFT, d, exec, $cmdmenu"
-      ];
       bindm = [
         "$mod, mouse:272, movewindow"
         "$mod, mouse:273, resizewindow"
@@ -158,6 +154,9 @@
       ];
       bindl = [ "$mod ALT, L, exec, $lockscreen; $screenoff" ];
       bind = [
+        "$mod, d, exec, $desktopmenu"
+        "$mod SHIFT, d, exec, $cmdmenu"
+
         "$mod, X, focusmonitor,+1 "
         "SHIFT $mod, X, movewindow,mon:+1"
         "$mod, comma, movecurrentworkspacetomonitor,l" # rm if hyprsplit
