@@ -52,6 +52,7 @@
   environment.pathsToLink = [ "/share/zsh" ];
 
   environment.systemPackages = with pkgs; [
+    inputs.agenix.packages."${system}".default
     vim
     zsh
     wget
