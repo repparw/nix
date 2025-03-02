@@ -13,7 +13,7 @@
       mkModules = hostname: [
         ./hosts/common.nix
         ./hosts/${hostname}
-        agenix.nixosModules.default
+        inputs.agenix.nixosModules.default
         home-manager.nixosModules.home-manager
         {
           home-manager = {
