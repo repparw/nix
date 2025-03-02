@@ -13,6 +13,7 @@
       mkModules = hostname: [
         ./hosts/common.nix
         ./hosts/${hostname}
+        agenix.nixosModules.default
         home-manager.nixosModules.home-manager
         {
           home-manager = {
@@ -72,6 +73,9 @@
   inputs = {
     nixvim = {
       url = "github:repparw/nixvim/main";
+    };
+    agenix = {
+      url = "github:ryantm/agenix";
     };
     nixpkgs = {
       url = "github:NixOS/nixpkgs/nixos-unstable";
