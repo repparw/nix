@@ -24,8 +24,12 @@
 
   nix.nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
 
+  age.secrets.github = {
+    type = "age";
+  };
+
   nix.settings = {
-    access-tokens = "github.com=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";
+    access-tokens = config.age.secrets.github;
     trusted-users = [
       "root"
       "repparw"
