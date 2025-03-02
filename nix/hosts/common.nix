@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ config, inputs, ... }:
 
 {
   imports = [
@@ -25,7 +25,9 @@
   nix.nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
 
   age.secrets.github = {
-    type = "age";
+    file = ../secrets/github.age;
+    owner = "root";
+    group = "root";
   };
 
   nix.settings = {
