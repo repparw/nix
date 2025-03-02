@@ -7,6 +7,5 @@
     lutris
     heroic
     mangohud
-    nexusmods-app-unfree
   ];
 }
