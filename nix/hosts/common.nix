@@ -26,12 +26,10 @@
 
   age.secrets.github = {
     file = ../secrets/github.age;
-    owner = "root";
-    group = "root";
   };
 
   nix.settings = {
-    access-tokens = config.age.secrets.github;
+    access-tokens = config.age.secrets.github.path;
     trusted-users = [
       "root"
       "repparw"
