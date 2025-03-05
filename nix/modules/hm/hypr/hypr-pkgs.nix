@@ -25,6 +25,17 @@
   services = {
     swaync.enable = true;
 
+    hyprpaper = {
+      enable = true;
+      settings = {
+        preload = [
+          "~/Pictures/gruvbox.jpg"
+          "~/git/kbd/layout.png"
+        ];
+        monitor = "eDP-1";
+      };
+    };
+
     hypridle = {
       enable = true;
       settings = {
