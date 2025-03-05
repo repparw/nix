@@ -15,6 +15,7 @@
         ./hosts/${hostname}
         inputs.agenix.nixosModules.default
         home-manager.nixosModules.home-manager
+        inputs.nixvim.homeManagerModules.nixvim
         {
           home-manager = {
             useGlobalPkgs = true;
@@ -72,7 +73,7 @@
 
   inputs = {
     nixvim = {
-      url = "github:repparw/nixvim/main";
+      url = "github:nix-community/nixvim";
     };
     agenix = {
       url = "github:ryantm/agenix";
