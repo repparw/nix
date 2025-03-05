@@ -44,7 +44,7 @@
       if ok and stats and stats.size > max_filesize then
         return true
       end
-    end,
+    end
 ";
         };
       };
@@ -139,18 +139,18 @@
       i = {
         "<C-q>" = { __raw = "require('telescope.actions').send_to_qflist"; };
         "<C-l>" = { __raw = "require('telescope.actions').send_to_loclist"; };
-        "<C-l>" = "actions.send_to_loclist";
-        "<C-s>" = "actions.cycle_previewers_next";
-        "<C-a>" = "actions.cycle_previewers_prev";
+        "<C-s>" = { __raw = "require('telescope.actions').cycle_previewers_next"; };
+        "<C-a>" = { __raw = "require('telescope.actions').cycle_previewers_prev"; };
       };
       n = {
-        q = "actions.close";
+        q = { __raw = "require('telescope.actions').close"; };
       };
     };
 
     preview = {
       treesitter = true;
     };
+
     history = {
       path = "vim.fn.stdpath('data') .. '/telescope_history.sqlite3'";
       limit = 1000;
