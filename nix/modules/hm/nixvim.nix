@@ -137,7 +137,8 @@
 
     mappings = {
       i = {
-        "<C-q>" = "actions.send_to_qflist";
+        "<C-q>" = { __raw = "require('telescope.actions').send_to_qflist"; };
+        "<C-l>" = { __raw = "require('telescope.actions').send_to_loclist"; };
         "<C-l>" = "actions.send_to_loclist";
         "<C-s>" = "actions.cycle_previewers_next";
         "<C-a>" = "actions.cycle_previewers_prev";
@@ -155,7 +156,7 @@
       limit = 1000;
     };
     color_devicons = true;
-    set_env = "{ ['COLORTERM'] = 'truecolor' }";
+    set_env = { COLORTERM = "truecolor";};
     prompt_prefix = "   ";
     selection_caret = "  ";
     entry_prefix = "  ";
@@ -170,14 +171,18 @@
       "--column";
       "--smart-case";
     };
+  pickers = {
+    find_files = {
+      hidden = true;
+      follow = true;
+    };
+  };
 
-  extensions = {
-    "['ui-select']" = "require('telescope.themes').get_dropdown()";
-
-        };
+  extensions = { "ui-select" = { __raw = "require('telescope.themes').get_dropdown()"; };};
 
         };
       };
+
     };
 
   };
