@@ -27,6 +27,7 @@
     hyprpaper = {
       enable = true;
       settings = {
+        ipc = "off";
         preload = [
           "/home/repparw/Pictures/gruvbox.jpg"
           "/home/repparw/git/kbd/layout.png"
