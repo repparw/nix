@@ -28,12 +28,12 @@
       enable = true;
       settings = {
         preload = [
-          "~/Pictures/gruvbox.jpg"
-          "~/git/kbd/layout.png"
+          "/home/repparw/Pictures/gruvbox.jpg"
+          "/home/repparw/git/kbd/layout.png"
         ];
         wallpaper = [
-          "HDMI-A-1,contain:~/git/kbd/layout.png"
-          ",~/Pictures/gruvbox.jpg"
+          "HDMI-A-1,contain:/home/repparw/git/kbd/layout.png"
+          ",/home/repparw/Pictures/gruvbox.jpg"
         ];
       };
     };
