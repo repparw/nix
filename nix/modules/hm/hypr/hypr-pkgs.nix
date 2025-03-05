@@ -7,7 +7,6 @@
   home.packages = with pkgs; [
     # Desktop
     libdrm
-    swaybg
     wshowkeys
     wl-clipboard
     pulseaudio
@@ -32,7 +31,10 @@
           "~/Pictures/gruvbox.jpg"
           "~/git/kbd/layout.png"
         ];
-        monitor = "eDP-1";
+        wallpaper = [
+          "HDMI-A-1,contain:~/git/kbd/layout.png"
+          ",~/Pictures/gruvbox.jpg"
+        ];
       };
     };
 
