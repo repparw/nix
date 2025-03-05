@@ -334,11 +334,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1740928780,
-        "narHash": "sha256-Db3WC3MWkUVd+iPIIM9re9FbaOEakHuk0gWi4xr6xm0=",
+        "lastModified": 1741206989,
+        "narHash": "sha256-T7Ski/LrVdx/HsWFhWL/jHK0aLE4myyicdaBK7NZbNY=",
         "owner": "repparw",
         "repo": "nixvim",
-        "rev": "712ad2673a389538418bc0ebd52ea99b33c7e6bc",
+        "rev": "5c3549ed690ca703f38e8800ccbf5f91180924b5",
         "type": "github"
       },
       "original": {
