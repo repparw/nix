@@ -47,6 +47,18 @@
       conceallevel = 1;
     };
     plugins = {
+      which-key.enable = true;
+
+      obsidian = {
+        enable = true;
+        settings = {
+				workspaces = [
+				{
+				name = "obsidian";
+				path = "~/Documents/obsidian";
+        }
+        ];
+      };
       treesitter.settings = {
         highlight = {
           enable = true;
