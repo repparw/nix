@@ -3,6 +3,18 @@
   programs.nixvim = {
     enable = true;
     defaultEditor = true;
+
+    colorscheme = "gruvbox";
+
+    colorschemes.gruvbox = {
+      enable = true;
+      settings = {
+        transparent_mode = true;
+      };
+    };
+    colorschemes.rose-pine.enable = true;
+    colorschemes.tokyonight.enable = true;
+
     opts = {
       splitright = true;
       splitbelow = true;
