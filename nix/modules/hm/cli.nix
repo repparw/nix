@@ -155,7 +155,6 @@
     with pkgs;
     [
       # essentials
-      nvim-pkg
       zsh
       curl
       wget
