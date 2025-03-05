@@ -125,7 +125,50 @@
           };
         };
 
+		extensions.ui-select.enable = true;
+		extensions.fzf.enable = true;
+		extensions.zoxide.enable = true;
+
         settings = {
+		defaults = {
+    path_display = {
+      "truncate";
+    };
+    mappings = {
+      i = {
+        ["<C-q>"] = "actions.send_to_qflist";
+        ["<C-l>"] = "actions.send_to_loclist";
+        ["<C-s>"] = "actions.cycle_previewers_next";
+        ["<C-a>"] = "actions.cycle_previewers_prev";
+      };
+      n = {
+        q = "actions.close";
+      };
+    };
+    preview = {
+      treesitter = true;
+    };
+    history = {
+      path = "vim.fn.stdpath('data') .. '/telescope_history.sqlite3'";
+      limit = 1000;
+    };
+    color_devicons = true;
+    set_env = "{ ['COLORTERM'] = 'truecolor' }";
+    prompt_prefix = "   ";
+    selection_caret = "  ";
+    entry_prefix = "  ";
+    initial_mode = "insert";
+    vimgrep_arguments = {
+      "rg";
+      "-L";
+      "--color=never";
+      "--no-heading";
+      "--with-filename";
+      "--line-number";
+      "--column";
+      "--smart-case";
+    };
+
 
         };
       };
