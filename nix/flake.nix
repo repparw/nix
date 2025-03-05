@@ -14,8 +14,8 @@
         ./hosts/common.nix
         ./hosts/${hostname}
         inputs.agenix.nixosModules.default
-        home-manager.nixosModules.home-manager
         inputs.nixvim.homeManagerModules.nixvim
+        home-manager.nixosModules.home-manager
         {
           home-manager = {
             useGlobalPkgs = true;
