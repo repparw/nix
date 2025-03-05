@@ -125,64 +125,70 @@
           };
         };
 
-		extensions.ui-select.enable = true;
-		extensions.fzf.enable = true;
-		extensions.zoxide.enable = true;
+        extensions.ui-select.enable = true;
+        extensions.fzf.enable = true;
+        extensions.zoxide.enable = true;
 
         settings = {
-		defaults = {
-    path_display = "truncate";
+          defaults = {
+            path_display = "truncate";
 
-    mappings = {
-      i = {
-        "<C-q>" = { __raw = "require('telescope.actions').send_to_qflist"; };
-        "<C-l>" = { __raw = "require('telescope.actions').send_to_loclist"; };
-        "<C-s>" = { __raw = "require('telescope.actions').cycle_previewers_next"; };
-        "<C-a>" = { __raw = "require('telescope.actions').cycle_previewers_prev"; };
-      };
-      n = {
-        q = { __raw = "require('telescope.actions').close"; };
-      };
-    };
+            mappings = {
+              i = {
+                "<C-q>" = {
+                  __raw = "require('telescope.actions').send_to_qflist";
+                };
+                "<C-l>" = {
+                  __raw = "require('telescope.actions').send_to_loclist";
+                };
+                "<C-s>" = {
+                  __raw = "require('telescope.actions').cycle_previewers_next";
+                };
+                "<C-a>" = {
+                  __raw = "require('telescope.actions').cycle_previewers_prev";
+                };
+              };
+              n = {
+                q = {
+                  __raw = "require('telescope.actions').close";
+                };
+              };
+            };
 
-    preview = {
-      treesitter = true;
-    };
+            preview = {
+              treesitter = true;
+            };
 
-    history = {
-      path = "vim.fn.stdpath('data') .. '/telescope_history.sqlite3'";
-      limit = 1000;
-    };
-    color_devicons = true;
-    set_env = { COLORTERM = "truecolor";};
-    prompt_prefix = "   ";
-    selection_caret = "  ";
-    entry_prefix = "  ";
-	initial_mode = "insert";
-	vimgrep_arguments = {
-      "rg";
-      "-L";
-      "--color=never";
-      "--no-heading";
-      "--with-filename";
-      "--line-number";
-      "--column";
-      "--smart-case";
-    };
-  pickers = {
-    find_files = {
-      hidden = true;
-      follow = true;
-    };
-  };
+            history = {
+              path = "vim.fn.stdpath('data') .. '/telescope_history.sqlite3'";
+              limit = 1000;
+            };
+            color_devicons = true;
+            set_env = {
+              COLORTERM = "truecolor";
+            };
+            prompt_prefix = "   ";
+            selection_caret = "  ";
+            entry_prefix = "  ";
+            initial_mode = "insert";
 
-  extensions = { "ui-select" = { __raw = "require('telescope.themes').get_dropdown()"; };};
+            extensions = {
+              "ui-select" = {
+                __raw = "require('telescope.themes').get_dropdown()";
+              };
+            };
 
+          };
+          pickers = {
+            find_files = {
+              hidden = true;
+              follow = true;
+            };
+          };
         };
+
       };
 
     };
-
-  };
   };
 }
