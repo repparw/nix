@@ -134,17 +134,19 @@
     path_display = {
       "truncate";
     };
+
     mappings = {
       i = {
-        ["<C-q>"] = "actions.send_to_qflist";
-        ["<C-l>"] = "actions.send_to_loclist";
-        ["<C-s>"] = "actions.cycle_previewers_next";
-        ["<C-a>"] = "actions.cycle_previewers_prev";
+        "<C-q>" = "actions.send_to_qflist";
+        "<C-l>" = "actions.send_to_loclist";
+        "<C-s>" = "actions.cycle_previewers_next";
+        "<C-a>" = "actions.cycle_previewers_prev";
       };
       n = {
         q = "actions.close";
       };
     };
+
     preview = {
       treesitter = true;
     };
@@ -157,8 +159,8 @@
     prompt_prefix = "   ";
     selection_caret = "  ";
     entry_prefix = "  ";
-    initial_mode = "insert";
-    vimgrep_arguments = {
+	initial_mode = "insert";
+	vimgrep_arguments = {
       "rg";
       "-L";
       "--color=never";
@@ -169,10 +171,15 @@
       "--smart-case";
     };
 
+  extensions = {
+    "['ui-select']" = "require('telescope.themes').get_dropdown()";
+
+        };
 
         };
       };
     };
 
+  };
   };
 }
