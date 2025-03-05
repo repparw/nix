@@ -9,7 +9,6 @@
     libdrm
     wshowkeys
     wl-clipboard
-    pulseaudio
 
     tesseract # ocr
     zbar # qr
