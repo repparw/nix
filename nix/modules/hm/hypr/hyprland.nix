@@ -49,7 +49,7 @@
       # Autostart
       exec-once = [
         "swaybg -i ~/Pictures/gruvbox.jpg"
-        "swaybg -o HDMI-A-1 -i ~/git/kbd/layout.png"
+        "swaybg -o HDMI-A-1 -i ~/git/kbd/layout.png -m fit"
         "systemctl --user start hyprpolkitagent"
       ];
 
