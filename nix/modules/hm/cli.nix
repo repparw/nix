@@ -7,6 +7,7 @@
   imports = [
     ./zsh.nix
     ./file-manager.nix
+    ./nixvim.nix
   ];
 
   xdg.enable = true;
