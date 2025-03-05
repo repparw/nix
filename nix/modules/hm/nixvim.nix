@@ -131,9 +131,7 @@
 
         settings = {
 		defaults = {
-    path_display = {
-      "truncate";
-    };
+    path_display = "truncate";
 
     mappings = {
       i = {

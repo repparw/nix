@@ -14,7 +14,6 @@
         ./hosts/common.nix
         ./hosts/${hostname}
         inputs.agenix.nixosModules.default
-        inputs.nixvim.homeManagerModules.nixvim
         home-manager.nixosModules.home-manager
         {
           home-manager = {
@@ -28,6 +27,7 @@
               imports = [
                 ./home/common
                 ./home/${hostname}
+                inputs.nixvim.homeManagerModules.nixvim
               ];
             };
           };
