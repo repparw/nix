@@ -14,7 +14,6 @@
   home.packages =
     with pkgs;
     [
-      # GUI
       vesktop
       pwvucontrol
       obs-studio
@@ -27,7 +26,7 @@
       # find pomo app in nixpkgs
     ]
     ++ (with stable; [
-      #add here and uncomment
+      # Add here and uncomment
     ]);
 
   services.kdeconnect = {
