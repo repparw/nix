@@ -14,76 +14,145 @@ programs.nixvim.keymaps = [
 	options = { desc = "[Y]ank to end of line"; silent = true; };
   }
   {
-  action = "bprevious";
+  action = "<cmd>bprevious<CR>";
   key = "[b";
 	mode = "n";
   options = { desc = "previous [b]uffer"; silent = true; };
   	}
   {
-  action = "bnext";
+  action = "<cmd>bnext<CR>";
   key = "]b";
 	mode = "n";
   options = { desc = "next [b]uffer"; silent = true; };
   		}
   	{
-	action = "bfirst";
+	action = "<cmd>bfirst<CR>";
 	key = "[B";
 	mode = "n";
 	options = { desc = "first [B]uffer"; silent = true; };
 		}
 		{
-		action = "blast";
+		action = "<cmd>blast<CR>";
 		key = "]B";
 	mode = "n";
 		options = { desc = "last [B]uffer"; silent = true; };
 			}
 			{
-			action = "cleft";
+			action = "<cmd>cleft<CR>";
 			key = "[c";
 	mode = "n";
 			options = { desc = "[c]ycle quickfix left"; silent = true; };
 				}
 				{
-				action = "cright";
+				action = "<cmd>cright<CR>";
 				key = "]c";
 	mode = "n";
 				options = { desc = "[c]ycle quickfix right"; silent = true; };
 					}
 					{
-					action = "cfirst";
+					action = "<cmd>cfirst<CR>";
 					key = "[C";
 	mode = "n";
 					options = { desc = "first quickfix entry"; silent = true; };
 				}
 				{
-				action = "clast";
+				action = "<cmd>clast<CR>";
 				key = "]C";
 	mode = "n";
 				options = { desc = "last quickfix entry"; silent = true; };
 					}
 					{
-					action = "toggle_qf_list";
+					action = "<cmd>toggle_qf_list<CR>";
 					key = "<C-c>";
 	mode = "n";
 					options = { desc = "toggle quickfix list"; };
 						}
+						{
+						action = "<cmd>lleft<CR>";
+						key = "[l";
+						mode = "n";
+						options = { silent = true; desc = "cycle [l]oclist left"; };
+							}
+							{
+							action = "<cmd>lright<CR>";
+							key = "]l";
+							mode = "n";
+							options = { silent = true; desc = "cycle [l]oclist right"; };
+								}
+								{
+								action = "<cmd>lfirst<CR>";
+								key = "[L";
+								mode = "n";
+								options = { silent = true; desc = "first [L]oclist entry"; };
+									}
+									{
+									action = "<cmd>llast<CR>";
+									key = "]L";
+									mode = "n";
+									options = { silent = true; desc = "last [L]oclist entry"; };
+										}
+										{
+										action = "<C-d>zz";
+										key = "<C-d>";
+										mode = "n";
+										options = { desc = "move [d]own half-page and center"; };
+											}
+											{
+											action = "<C-u>zz";
+											key = "<C-u>";
+											mode = "n";
+											options = { desc = "move [u]p half-page and center"; };
+							}
+							{
+							action = "<C-f>zz";
+							key = "<C-f>";
+							mode = "n";
+							options = { desc = "move DOWN [f]ull-page and center"; };
+								}
+								{
+								action = "<C-b>zz";
+								key = "<C-b>";
+								mode = "n";
+								options = { desc = "move UP full-page and center"; };
+									}
+									{
+									action = "\"_x";
+									key = "x";
+									mode = "n";
+										}
+										{
+										action = "\"_X";
+										key = "X";
+										mode = "n";
+											}
+											{
+											action = "\"_s";
+											key = "s";
+											mode = "n";
+												}
+												{
+												action = "\"_c";
+												key = "c";
+												mode = "n";
+													}
+													{
+													action = "\"_dP";
+													key = "<leader>p";
+													mode = "n";
+													}
+													{
+													action = "v:count == 0 ? 'gk' : 'k'";
+													key = "k";
+													mode = "n";
+													options = { expr = true; };
+													}
+													{
+													action = "v:count == 0 ? 'gj' : 'j'";
+													key = "j";
+													mode = "n";
+													options = { expr = true; };
+													}
 ];
-
-keymap.set('n', '<C-d>', '<C-d>zz', { desc = 'move [d]own half-page and center' })
-keymap.set('n', '<C-u>', '<C-u>zz', { desc = 'move [u]p half-page and center' })
-keymap.set('n', '<C-f>', '<C-f>zz', { desc = 'move DOWN [f]ull-page and center' })
-keymap.set('n', '<C-b>', '<C-b>zz', { desc = 'move UP full-page and center' })
-
--- Visual line wraps
-keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true })
-keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true })
-
--- set void registers for operations
-keymap.set('n', 'x', '"_x')
-keymap.set('n', 'X', '"_X')
-keymap.set('n', 's', '"_s')
-keymap.set('n', 'c', '"_c')
-keymap.set('n', '<leader>p', '"_dP')
 
 -- move visual selection
 keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { silent = true })
@@ -150,35 +219,6 @@ local function lright()
   }
 end
 
-keymap.set('n', '[l', lleft, { silent = true, desc = 'cycle [l]oclist left' })
-keymap.set('n', ']l', lright, { silent = true, desc = 'cycle [l]oclist right' })
-keymap.set('n', '[L', vim.cmd.lfirst, { silent = true, desc = 'first [L]oclist entry' })
-keymap.set('n', ']L', vim.cmd.llast, { silent = true, desc = 'last [L]oclist entry' })
-
--- Resize vertical splits
-local toIntegral = math.ceil
-keymap.set('n', '<leader>w+', function()
-  local curWinWidth = api.nvim_win_get_width(0)
-  api.nvim_win_set_width(0, toIntegral(curWinWidth * 3 / 2))
-end, { silent = true, desc = 'inc window [w]idth' })
-keymap.set('n', '<leader>w-', function()
-  local curWinWidth = api.nvim_win_get_width(0)
-  api.nvim_win_set_width(0, toIntegral(curWinWidth * 2 / 3))
-end, { silent = true, desc = 'dec window [w]idth' })
-keymap.set('n', '<leader>h+', function()
-  local curWinHeight = api.nvim_win_get_height(0)
-  api.nvim_win_set_height(0, toIntegral(curWinHeight * 3 / 2))
-end, { silent = true, desc = 'inc window [h]eight' })
-keymap.set('n', '<leader>h-', function()
-  local curWinHeight = api.nvim_win_get_height(0)
-  api.nvim_win_set_height(0, toIntegral(curWinHeight * 2 / 3))
-end, { silent = true, desc = 'dec window [h]eight' })
-
--- Close floating windows [Neovim 0.10 and above]
-keymap.set('n', '<leader>fq', function()
-  vim.cmd('fclose!')
-end, { silent = true, desc = '[f]loating windows: [q]uit/close all' })
-
 -- Shortcut for expanding to current buffer's directory in command mode
 keymap.set('c', '%%', function()
   if fn.getcmdtype() == ':' then
@@ -187,9 +227,6 @@ keymap.set('c', '%%', function()
     return '%%'
   end
 end, { expr = true, desc = "expand to current buffer's directory" })
-
-keymap.set('n', '<space>tn', vim.cmd.tabnew, { desc = '[t]ab: [n]ew' })
-keymap.set('n', '<space>tq', vim.cmd.tabclose, { desc = '[t]ab: [q]uit/close' })
 
 local severity = diagnostic.severity
 
