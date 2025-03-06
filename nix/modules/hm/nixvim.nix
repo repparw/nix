@@ -42,8 +42,8 @@
 
     globals = {
       have_nerd_font = true;
-      mapleader = "";
-      maplocalleader = "";
+      mapleader = " ";
+      maplocalleader = " ";
     };
 
     opts = {
