@@ -69,7 +69,7 @@
         settings.background_colour = "#000000";
       };
 
-      conform = {
+      conform-nvim = {
         enable = true;
         settings = {
           notify_on_error = false;
@@ -148,15 +148,15 @@
               };
             };
           };
-        };
-        ui.checkboxes = {
-          " " = {
-            char = "󰄱";
-            hl_group = "ObsidianTodo";
-          };
-          x = {
-            char = "";
-            hl_group = "ObsidianDone";
+          ui.checkboxes = {
+            " " = {
+              char = "󰄱";
+              hl_group = "ObsidianTodo";
+            };
+            x = {
+              char = "";
+              hl_group = "ObsidianDone";
+            };
           };
         };
       };
@@ -366,8 +366,8 @@
         };
 
         extensions.ui-select.enable = true;
-        extensions.fzf.enable = true;
-        extensions.zoxide.enable = true;
+        extensions.fzf-native.enable = true;
+        #extensions.zoxide.enable = true;
 
         settings = {
           defaults = {
