@@ -159,6 +159,30 @@ programs.nixvim.keymaps = [
 													mode = "v";
 													options = { silent = true; };
 													}
+													{
+													action = "\"+y";
+													key = "<leader>y";
+													mode = ["n" "v"];
+													options = { desc = "Yank to clipboard"; };
+													}
+													{
+													action = "\"+Y";
+													key = "<leader>Y";
+													mode = "n";
+													options = { desc = "Yank lines to clipboard"; };
+													}
+													{
+													action = "<Nop>";
+													key = "Q";
+													mode = "n";
+													options = { desc = "Disable Ex mode"; };
+													}
+													{
+													action = "<cmd>update<CR>";
+													key = "<leader>s";
+													mode = ["n" "v"];
+													options = { desc = "[S]ave"; silent = true; };
+													}
 ];
 }
 /*
@@ -167,16 +191,6 @@ keymap.set('n', '<C-h>', '<C-w>h')
 keymap.set('n', '<C-j>', '<C-w>j')
 keymap.set('n', '<C-k>', '<C-w>k')
 keymap.set('n', '<C-l>', '<C-w>l')
-
--- clipboard operations
-keymap.set('n', '<leader>y', '"+y', { desc = 'Yank to clipboard' })
-keymap.set('v', '<leader>y', '"+y', { desc = 'Yank to clipboard' })
-keymap.set('n', '<leader>Y', '"+Y', { desc = 'Yank lines to clipboard' })
-
--- Disable Ex mode and add save shortcut
-keymap.set('n', 'Q', '<Nop>')
-keymap.set({ 'n', 'v' }, '<leader>s', ':update<CR>', { silent = true, desc = '[S]ave' })
-
 
 -- Toggle the quickfix list (only opens if it is populated)
 local function toggle_qf_list()
