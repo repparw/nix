@@ -12,7 +12,7 @@
       };
     }
     {
-      action = "<cmd>require('CopilotChat').toggle()<CR>";
+      action = "<cmd>lua require('CopilotChat').toggle()<CR>";
       key = "<leader>aa";
       mode = "n";
       options = {
