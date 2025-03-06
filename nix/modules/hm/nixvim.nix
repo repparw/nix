@@ -103,7 +103,7 @@
       noice = {
         enable = true;
         settings = {
-          cmdline.view = "cmdline_popupmenu";
+          cmdline.view = "cmdline_popup";
           presets = {
             bottom_search = true;
             command_palette = true;
@@ -112,7 +112,7 @@
             lsp_doc_border = false;
           };
         };
-        views.cmdline_popupmenu = {
+        views.cmdline_popup = {
           view = "popupmenu";
           position = {
             row = "40%";
@@ -371,8 +371,6 @@
 
         settings = {
           defaults = {
-            path_display = "truncate";
-
             mappings = {
               i = {
                 "<C-q>" = {
