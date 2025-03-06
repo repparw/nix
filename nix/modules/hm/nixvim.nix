@@ -1,5 +1,23 @@
 { ... }:
 {
+
+  home.packages = with pkgs; [
+	stylua
+	lua-language-server
+
+	biome
+	nodePackages.prettier
+
+	beautysh
+
+	marksman
+
+	nixd
+	nixfmt-rfc-style
+
+	typescript-language-server
+  ];
+
   programs.nixvim = {
     enable = true;
     defaultEditor = true;
@@ -54,6 +72,7 @@
       which-key.enable = true;
       gitsigns.enable = true;
       colorizer.enable = true;
+      todo-comments.enable = true;
       web-devicons.enable = true;
 
       nvim-surround.enable = true;
