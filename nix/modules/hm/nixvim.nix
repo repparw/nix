@@ -117,14 +117,42 @@
       cmp = {
         enable = true;
         settings = {
-		sources = {
-		{ name = "nvim_lsp"; }
-		{ name = "copilot"; }
-		{ name = "luasnip"; }
-		{ name = "path"; }
-		{ name = "buffer"; }
-		{ name = "latex_symbols"; }
-        };
+          sources = [
+            {
+              name = "nvim_lsp";
+              group_index = 2;
+            }
+            {
+              name = "copilot";
+              group_index = 2;
+            }
+            {
+              name = "luasnip";
+              group_index = 2;
+            }
+            {
+              name = "path";
+              group_index = 2;
+            }
+            {
+              name = "buffer";
+              group_index = 3;
+            }
+            {
+              name = "latex_symbols";
+              group_index = 3;
+            }
+          ];
+          window.completion.order = [
+            "╭"
+            "─"
+            "╮"
+            "│"
+            "╯"
+            "─"
+            "╰"
+            "│"
+          ];
         };
       };
       vimtex = {
