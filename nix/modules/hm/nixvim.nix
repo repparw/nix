@@ -4,7 +4,9 @@
     enable = true;
     defaultEditor = true;
 
-    files = { };
+    files = {
+      "ftplugin/lua.lua" = { };
+    };
 
     colorscheme = "gruvbox";
 
