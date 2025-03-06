@@ -1,24 +1,24 @@
 { pkgs, ... }:
 {
   imports = [
-	./keymaps.nix
+    ./keymaps.nix
   ];
 
   home.packages = with pkgs; [
-	stylua
-	lua-language-server
+    stylua
+    lua-language-server
 
-	biome
-	nodePackages.prettier
+    biome
+    nodePackages.prettier
 
-	beautysh
+    beautysh
 
-	marksman
+    marksman
 
-	nixd
-	nixfmt-rfc-style
+    nixd
+    nixfmt-rfc-style
 
-	typescript-language-server
+    typescript-language-server
   ];
 
   programs.nixvim = {
@@ -39,6 +39,12 @@
     };
     colorschemes.rose-pine.enable = true;
     colorschemes.tokyonight.enable = true;
+
+    globals = {
+      have_nerd_font = true;
+      mapleader = "";
+      maplocalleader = "";
+    };
 
     opts = {
       splitright = true;
@@ -134,16 +140,16 @@
             inc_rename = false;
             lsp_doc_border = false;
           };
-        views.cmdline_popup = {
-          view = "popupmenu";
-		  opts = {
-          position = {
-            row = "40%";
-            col = "50%";
-          };
-          zindex = 200;
-          size.width = 120;
-        };
+          views.cmdline_popup = {
+            view = "popupmenu";
+            opts = {
+              position = {
+                row = "40%";
+                col = "50%";
+              };
+              zindex = 200;
+              size.width = 120;
+            };
           };
         };
       };
