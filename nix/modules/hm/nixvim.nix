@@ -1,5 +1,8 @@
-{ ... }:
+{ pkgs, ... }:
 {
+  imports = [
+	./keymaps.nix
+  ];
 
   home.packages = with pkgs; [
 	stylua
@@ -131,7 +134,6 @@
             inc_rename = false;
             lsp_doc_border = false;
           };
-        };
         views.cmdline_popup = {
           view = "popupmenu";
 		  opts = {
@@ -143,6 +145,7 @@
           size.width = 120;
         };
           };
+        };
       };
       obsidian = {
         enable = true;
