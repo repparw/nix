@@ -12,7 +12,9 @@
       };
     }
     {
-      action = "require('CopilotChat').toggle()";
+      action = "function()
+		return require('CopilotChat').toggle()
+	  end";
       key = "<leader>aa";
       mode = "n";
       options = {
