@@ -1,15 +1,25 @@
 { ... }:
 {
-if vim.g.did_load_keymaps_plugin then
-  return
-end
-vim.g.did_load_keymaps_plugin = true
 
 local api = vim.api
 local fn = vim.fn
 local keymap = vim.keymap
 local diagnostic = vim.diagnostic
 
+programs.nixvim.keymaps = [
+  {
+	action = "y$";
+	key = "Y";
+	options = { desc = "[Y]ank to end of line"; silent = true; };
+  }
+  {
+  action = "bprevious";
+  key = "[b";
+  options = { desc = "previous [b]uffer"; silent = true; };
+  	}
+  	{
+
+];
 -- Yank from current position till end of current line
 keymap.set('n', 'Y', 'y$', { silent = true, desc = '[Y]ank to end of line' })
 
