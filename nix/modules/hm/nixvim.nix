@@ -91,7 +91,12 @@
       copilot-lua.enable = true;
       copilot-cmp.enable = true;
 
-      copilot-chat.enable = true;
+      copilot-chat = {
+        enable = true;
+        settings = {
+          model = "claude-3.5-sonnet";
+        };
+      };
 
       notify = {
         enable = true;
