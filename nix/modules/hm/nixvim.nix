@@ -49,6 +49,8 @@
     plugins = {
       which-key.enable = true;
 
+      noice.enable = true;
+
       obsidian = {
         enable = true;
         settings = {
