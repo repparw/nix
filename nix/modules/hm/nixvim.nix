@@ -48,6 +48,7 @@
     };
     plugins = {
       which-key.enable = true;
+      gitsigns.enable = true;
 
       noice = {
         enable = true;
@@ -67,6 +68,7 @@
             row = "40%";
             col = "50%";
           };
+          zindex = 200;
           size.width = 120;
         };
       };
