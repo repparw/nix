@@ -52,12 +52,33 @@
       obsidian = {
         enable = true;
         settings = {
-				workspaces = [
-				{
-				name = "obsidian";
-				path = "~/Documents/obsidian";
-        }
-        ];
+          workspaces = [
+            {
+              name = "obsidian";
+              path = "~/Documents/obsidian";
+            }
+          ];
+		mappings = {
+		 {
+  "<cr>" = {
+    action = "require('obsidian').util.smart_action";
+    opts = {
+      buffer = true;
+      expr = true;
+    };
+  };
+  gf = {
+    action = "require('obsidian').util.gf_passthrough";
+    opts = {
+      buffer = true;
+      expr = true;
+      noremap = false;
+    };
+  };
+        };
+        };
+		ui.checkboxes = {
+		};
       };
       treesitter.settings = {
         highlight = {
