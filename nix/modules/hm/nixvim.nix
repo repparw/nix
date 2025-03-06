@@ -109,9 +109,7 @@
             "toggleterm"
             "quickfix"
           ];
-
           #sections = { lualine_x = [ { "require('noice').api.statusline.mode.get" cond = "require('noice').api.statusline.mode.has"; "color = { fg = # ff9e64 }" }]; TODO noice in statusline
-
         };
       };
       cmp = {
@@ -143,16 +141,37 @@
               group_index = 3;
             }
           ];
-          window.completion.order = [
-            "╭"
-            "─"
-            "╮"
-            "│"
-            "╯"
-            "─"
-            "╰"
-            "│"
-          ];
+          window = {
+            completion = {
+              border = [
+                "╭"
+                "─"
+                "╮"
+                "│"
+                "╯"
+                "─"
+                "╰"
+                "│"
+              ];
+              winhighlight = "Normal:CmpNormal,FloatBorder:CmpBorder,CursorLine:CmpSelection,Search:None";
+            };
+            documentation = {
+              border = [
+                "╭"
+                "─"
+                "╮"
+                "│"
+                "╯"
+                "─"
+                "╰"
+                "│"
+              ];
+              winhighlight = "Normal:CmpDocNormal,FloatBorder:CmpDocBorder";
+            };
+          };
+          experimental = {
+            ghost_text = true;
+          };
         };
       };
       vimtex = {
