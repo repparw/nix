@@ -54,6 +54,7 @@
       which-key.enable = true;
       gitsigns.enable = true;
       colorizer.enable = true;
+      web-devicons.enable = true;
 
       nvim-surround.enable = true;
 
