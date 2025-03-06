@@ -114,6 +114,7 @@
         };
         views.cmdline_popup = {
           view = "popupmenu";
+		  opts = {
           position = {
             row = "40%";
             col = "50%";
@@ -121,6 +122,7 @@
           zindex = 200;
           size.width = 120;
         };
+          };
       };
       obsidian = {
         enable = true;
@@ -397,10 +399,6 @@
               treesitter = true;
             };
 
-            history = {
-              path = "vim.fn.stdpath('data') .. '/telescope_history.sqlite3'";
-              limit = 1000;
-            };
             color_devicons = true;
             set_env = {
               COLORTERM = "truecolor";
