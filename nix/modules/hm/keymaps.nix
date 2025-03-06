@@ -1,11 +1,6 @@
 { ... }:
 {
 
-local api = vim.api
-local fn = vim.fn
-local keymap = vim.keymap
-local diagnostic = vim.diagnostic
-
 programs.nixvim.keymaps = [
   {
 	action = "y$";
@@ -141,23 +136,32 @@ programs.nixvim.keymaps = [
 													mode = "n";
 													}
 													{
+													action = "v:count == 0 ? 'gj' : 'j'";
+													key = "j";
+													mode = "n";
+													options = { expr = true; };
+													}
+													{
 													action = "v:count == 0 ? 'gk' : 'k'";
 													key = "k";
 													mode = "n";
 													options = { expr = true; };
 													}
 													{
-													action = "v:count == 0 ? 'gj' : 'j'";
-													key = "j";
-													mode = "n";
-													options = { expr = true; };
+													action = ":m '>+1<CR>gv=gv";
+													key = "J";
+													mode = "v";
+													options = { silent = true; };
+													}
+													{
+													action = ":m '<-2<CR>gv=gv";
+													key = "K";
+													mode = "v";
+													options = { silent = true; };
 													}
 ];
-
--- move visual selection
-keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { silent = true })
-keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { silent = true })
-
+}
+/*
 -- move between splits
 keymap.set('n', '<C-h>', '<C-w>h')
 keymap.set('n', '<C-j>', '<C-w>j')
@@ -270,4 +274,4 @@ keymap.set('n', ']h', function()
     severity = severity.HINT,
   }
 end, { noremap = true, silent = true, desc = 'next [h]int diagnostic' })
-
+*/
