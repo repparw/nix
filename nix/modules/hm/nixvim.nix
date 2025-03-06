@@ -103,14 +103,15 @@
       lualine = {
         enable = true;
         settings = {
-          sections = {
-            lualine_x = [ {
-              "require('noice').api.statusline.mode.get"
-              cond = "require('noice').api.statusline.mode.has";
-              "color = { fg = # ff9e64 }"
-            }];
+          options.globalStatus = true;
+          extensions = [
+            "fzf"
+            "toggleterm"
+            "quickfix"
+          ];
 
-          };
+          #sections = { lualine_x = [ { "require('noice').api.statusline.mode.get" cond = "require('noice').api.statusline.mode.has"; "color = { fg = # ff9e64 }" }]; TODO noice in statusline
+
         };
       };
       telescope = {
