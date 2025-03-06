@@ -142,7 +142,6 @@
           };
           views.cmdline_popup = {
             view = "popupmenu";
-            opts = {
               position = {
                 row = "40%";
                 col = "50%";
