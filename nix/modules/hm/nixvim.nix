@@ -58,27 +58,34 @@
               path = "~/Documents/obsidian";
             }
           ];
-		mappings = {
-		 {
-  "<cr>" = {
-    action = "require('obsidian').util.smart_action";
-    opts = {
-      buffer = true;
-      expr = true;
-    };
-  };
-  gf = {
-    action = "require('obsidian').util.gf_passthrough";
-    opts = {
-      buffer = true;
-      expr = true;
-      noremap = false;
-    };
-  };
+          mappings = {
+            "<cr>" = {
+              action = "require('obsidian').util.smart_action";
+              opts = {
+                buffer = true;
+                expr = true;
+              };
+            };
+            gf = {
+              action = "require('obsidian').util.gf_passthrough";
+              opts = {
+                buffer = true;
+                expr = true;
+                noremap = false;
+              };
+            };
+          };
         };
+        ui.checkboxes = {
+          " " = {
+            char = "󰄱";
+            hl_group = "ObsidianTodo";
+          };
+          x = {
+            char = "";
+            hl_group = "ObsidianDone";
+          };
         };
-		ui.checkboxes = {
-		};
       };
       treesitter.settings = {
         highlight = {
@@ -91,6 +98,21 @@
       end
     end
 ";
+        };
+      };
+      lualine = {
+        enable = true;
+        settings = {
+          sections = {
+            lualine_x = {
+			      {
+        "require('noice').api.statusline.mode.get";
+        cond = require('noice').api.statusline.mode.has;
+        color = { fg = "#ff9e64" };
+      };
+
+            };
+          };
         };
       };
       telescope = {
