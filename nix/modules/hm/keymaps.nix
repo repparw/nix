@@ -10,103 +10,69 @@ programs.nixvim.keymaps = [
   {
 	action = "y$";
 	key = "Y";
+	mode = "n";
 	options = { desc = "[Y]ank to end of line"; silent = true; };
   }
   {
   action = "bprevious";
   key = "[b";
+	mode = "n";
   options = { desc = "previous [b]uffer"; silent = true; };
   	}
   {
   action = "bnext";
   key = "]b";
+	mode = "n";
   options = { desc = "next [b]uffer"; silent = true; };
   		}
   	{
 	action = "bfirst";
 	key = "[B";
+	mode = "n";
 	options = { desc = "first [B]uffer"; silent = true; };
 		}
 		{
 		action = "blast";
 		key = "]B";
+	mode = "n";
 		options = { desc = "last [B]uffer"; silent = true; };
 			}
 			{
 			action = "cleft";
 			key = "[c";
+	mode = "n";
 			options = { desc = "[c]ycle quickfix left"; silent = true; };
 				}
 				{
 				action = "cright";
 				key = "]c";
+	mode = "n";
 				options = { desc = "[c]ycle quickfix right"; silent = true; };
 					}
 					{
 					action = "cfirst";
 					key = "[C";
+	mode = "n";
 					options = { desc = "first quickfix entry"; silent = true; };
 				}
 				{
 				action = "clast";
 				key = "]C";
+	mode = "n";
 				options = { desc = "last quickfix entry"; silent = true; };
 					}
 					{
 					action = "toggle_qf_list";
 					key = "<C-c>";
+	mode = "n";
 					options = { desc = "toggle quickfix list"; };
 						}
 ];
 
-
--- Toggle the quickfix list (only opens if it is populated)
-local function toggle_qf_list()
-  local qf_exists = false
-  for _, win in pairs(fn.getwininfo() or {}) do
-    if win['quickfix'] == 1 then
-      qf_exists = true
-    end
-  end
-  if qf_exists == true then
-    vim.cmd.cclose()
-    return
-  end
-  if not vim.tbl_isempty(vim.fn.getqflist()) then
-    vim.cmd.copen()
-  end
-end
-
-keymap.set('n', '<C-c>', toggle_qf_list, { desc = 'toggle quickfix list' })
-
-local function try_fallback_notify(opts)
-  local success, _ = pcall(opts.try)
-  if success then
-    return
-  end
-  success, _ = pcall(opts.fallback)
-  if success then
-    return
-  end
-  vim.notify(opts.notify, vim.log.levels.INFO)
-end
-
--- Cycle the quickfix and location lists
-local function cleft()
-  try_fallback_notify {
-    try = vim.cmd.cprev,
-    fallback = vim.cmd.clast,
-    notify = 'Quickfix list is empty!',
-  }
-end
-
-local function cright()
-  try_fallback_notify {
-    try = vim.cmd.cnext,
-    fallback = vim.cmd.cfirst,
-    notify = 'Quickfix list is empty!',
-  }
-end
+keymap.set('n', '<C-d>', '<C-d>zz', { desc = 'move [d]own half-page and center' })
+keymap.set('n', '<C-u>', '<C-u>zz', { desc = 'move [u]p half-page and center' })
+keymap.set('n', '<C-f>', '<C-f>zz', { desc = 'move DOWN [f]ull-page and center' })
+keymap.set('n', '<C-b>', '<C-b>zz', { desc = 'move UP full-page and center' })
 
 -- Visual line wraps
 keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true })
@@ -137,6 +103,36 @@ keymap.set('n', '<leader>Y', '"+Y', { desc = 'Yank lines to clipboard' })
 -- Disable Ex mode and add save shortcut
 keymap.set('n', 'Q', '<Nop>')
 keymap.set({ 'n', 'v' }, '<leader>s', ':update<CR>', { silent = true, desc = '[S]ave' })
+
+
+-- Toggle the quickfix list (only opens if it is populated)
+local function toggle_qf_list()
+  local qf_exists = false
+  for _, win in pairs(fn.getwininfo() or {}) do
+    if win['quickfix'] == 1 then
+      qf_exists = true
+    end
+  end
+  if qf_exists == true then
+    vim.cmd.cclose()
+    return
+  end
+  if not vim.tbl_isempty(vim.fn.getqflist()) then
+    vim.cmd.copen()
+  end
+end
+
+local function try_fallback_notify(opts)
+  local success, _ = pcall(opts.try)
+  if success then
+    return
+  end
+  success, _ = pcall(opts.fallback)
+  if success then
+    return
+  end
+  vim.notify(opts.notify, vim.log.levels.INFO)
+end
 
 local function lleft()
   try_fallback_notify {
@@ -238,17 +234,3 @@ keymap.set('n', ']h', function()
   }
 end, { noremap = true, silent = true, desc = 'next [h]int diagnostic' })
 
-keymap.set('n', '<C-d>', '<C-d>zz', { desc = 'move [d]own half-page and center' })
-keymap.set('n', '<C-u>', '<C-u>zz', { desc = 'move [u]p half-page and center' })
-keymap.set('n', '<C-f>', '<C-f>zz', { desc = 'move DOWN [f]ull-page and center' })
-keymap.set('n', '<C-b>', '<C-b>zz', { desc = 'move UP full-page and center' })
-
--- Location list and jumplist operations
-keymap.set('n', '<leader>l', function()
-  require('utils').toggle_ll()
-end, { silent = true, desc = 'Toggle location list' })
-
-keymap.set('n', '<leader><C-o>', function()
-  require('utils').jumps_to_qf()
-end, { silent = true, desc = 'Send jumplist to quickfix' })
-};
