@@ -4,6 +4,8 @@
     enable = true;
     defaultEditor = true;
 
+    files = { };
+
     colorscheme = "gruvbox";
 
     colorschemes.gruvbox = {
