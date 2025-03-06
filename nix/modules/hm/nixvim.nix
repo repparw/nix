@@ -114,6 +114,9 @@
 
         };
       };
+      vimtex = {
+        enable = true;
+      };
       telescope = {
         enable = true;
         keymaps = {
