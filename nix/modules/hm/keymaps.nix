@@ -12,7 +12,7 @@
       };
     }
     {
-      action = "<cmd>CopilotChat<CR>";
+      action = "require('CopilotChat').toggle()";
       key = "<leader>aa";
       mode = "n";
       options = {
