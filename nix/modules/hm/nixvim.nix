@@ -49,6 +49,21 @@
     plugins = {
       which-key.enable = true;
       gitsigns.enable = true;
+      colorizer.enable = true;
+
+      nvim-surround.enable = true;
+
+      trouble.enable = true;
+
+      copilot-lua.enable = true;
+      copilot-cmp.enable = true;
+
+      copilot-chat.enable = true;
+
+      notify = {
+        enable = true;
+        settings.background_colour = "#000000";
+      };
 
       noice = {
         enable = true;
