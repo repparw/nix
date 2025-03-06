@@ -17,17 +17,48 @@ programs.nixvim.keymaps = [
   key = "[b";
   options = { desc = "previous [b]uffer"; silent = true; };
   	}
+  {
+  action = "bnext";
+  key = "]b";
+  options = { desc = "next [b]uffer"; silent = true; };
+  		}
   	{
-
+	action = "bfirst";
+	key = "[B";
+	options = { desc = "first [B]uffer"; silent = true; };
+		}
+		{
+		action = "blast";
+		key = "]B";
+		options = { desc = "last [B]uffer"; silent = true; };
+			}
+			{
+			action = "cleft";
+			key = "[c";
+			options = { desc = "[c]ycle quickfix left"; silent = true; };
+				}
+				{
+				action = "cright";
+				key = "]c";
+				options = { desc = "[c]ycle quickfix right"; silent = true; };
+					}
+					{
+					action = "cfirst";
+					key = "[C";
+					options = { desc = "first quickfix entry"; silent = true; };
+				}
+				{
+				action = "clast";
+				key = "]C";
+				options = { desc = "last quickfix entry"; silent = true; };
+					}
+					{
+					action = "toggle_qf_list";
+					key = "<C-c>";
+					options = { desc = "toggle quickfix list"; };
+						}
 ];
--- Yank from current position till end of current line
-keymap.set('n', 'Y', 'y$', { silent = true, desc = '[Y]ank to end of line' })
 
--- Buffer list navigation
-keymap.set('n', '[b', vim.cmd.bprevious, { silent = true, desc = 'previous [b]uffer' })
-keymap.set('n', ']b', vim.cmd.bnext, { silent = true, desc = 'next [b]uffer' })
-keymap.set('n', '[B', vim.cmd.bfirst, { silent = true, desc = 'first [B]uffer' })
-keymap.set('n', ']B', vim.cmd.blast, { silent = true, desc = 'last [B]uffer' })
 
 -- Toggle the quickfix list (only opens if it is populated)
 local function toggle_qf_list()
@@ -76,11 +107,6 @@ local function cright()
     notify = 'Quickfix list is empty!',
   }
 end
-
-keymap.set('n', '[c', cleft, { silent = true, desc = '[c]ycle quickfix left' })
-keymap.set('n', ']c', cright, { silent = true, desc = '[c]ycle quickfix right' })
-keymap.set('n', '[C', vim.cmd.cfirst, { silent = true, desc = 'first quickfix entry' })
-keymap.set('n', ']C', vim.cmd.clast, { silent = true, desc = 'last quickfix entry' })
 
 -- Visual line wraps
 keymap.set('n', 'k', "v:count == 0 ? 'gk' : 'k'", { expr = true })
