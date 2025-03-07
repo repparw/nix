@@ -80,17 +80,6 @@ in
         "--network=dlsuite"
       ];
     };
-    "broker" = {
-      image = "docker.io/library/redis:7";
-      volumes = [
-        "/home/docker/paper/redis:/data:rw,Z"
-      ];
-      log-driver = "journald";
-      extraOptions = [
-        "--network-alias=broker"
-        "--network=dlsuite"
-      ];
-    };
     "bazarr" = {
       image = "docker.io/linuxserver/bazarr:latest";
       environment = {
@@ -105,6 +94,17 @@ in
       log-driver = "journald";
       extraOptions = [
         "--network-alias=bazarr"
+        "--network=dlsuite"
+      ];
+    };
+    "broker" = {
+      image = "docker.io/library/redis:7";
+      volumes = [
+        "/home/docker/paper/redis:/data:rw,Z"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=broker"
         "--network=dlsuite"
       ];
     };
