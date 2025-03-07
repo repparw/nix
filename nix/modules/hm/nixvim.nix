@@ -426,9 +426,11 @@
           };
         };
 
-        extensions.ui-select.enable = true;
-        extensions.fzf-native.enable = true;
-        #extensions.zoxide.enable = true;
+        extensions = {
+          ui-select.enable = true;
+          fzf-native.enable = true;
+          file-browser.enable = true;
+        };
 
         settings = {
           defaults = {
