@@ -401,7 +401,7 @@
             };
           };
           "<leader>fd" = {
-            action = "zoxide.list";
+            action = "zoxide list";
             options = {
               desc = "[F]ind by [D]irectory";
             };
