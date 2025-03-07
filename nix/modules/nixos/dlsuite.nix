@@ -361,7 +361,6 @@
       image = "docker.io/linuxserver/swag:latest";
       environment = {
         "DNSPLUGIN" = "cloudflare";
-        "DOCKER_MODS" = "linuxserver/mods:universal-cron";
         "PGID" = "131";
         "PUID" = "1001";
         "SUBDOMAINS" = "wildcard";
