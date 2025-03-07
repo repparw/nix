@@ -153,11 +153,12 @@
       addKeysToAgent = "yes";
 
       matchBlocks = {
-Host = "rpi";
-	Hostname home.repparw.me
-	Port 2222
-	User dietpi
-};
+        rpi = {
+          hostname = "home.repparw.me";
+          port = 2222;
+          user = "dietpi";
+        };
+      };
     };
 
   };
