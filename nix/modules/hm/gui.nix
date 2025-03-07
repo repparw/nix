@@ -227,15 +227,6 @@
       };
     };
 
-    obs-studio = {
-      enable = true;
-      enableVirtualCamera = true;
-      plugins = with pkgs.obs-studio-plugins; [
-        obs-pipewire-audio-capture
-        obs-backgroundremoval
-      ];
-    };
-
     zathura = {
       enable = true;
       options = {
