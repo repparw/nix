@@ -112,6 +112,9 @@
     "ddclient" = {
       image = "docker.io/linuxserver/ddclient:latest";
       environment = {
+        "PGID" = "131";
+        "PUID" = "1001";
+        "TZ" = "America/Argentina/Buenos_Aires";
       };
       volumes = [
         "/home/docker/ddclient:/config:rw,Z"
