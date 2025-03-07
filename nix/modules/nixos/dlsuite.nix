@@ -1,5 +1,51 @@
-{ pkgs, lib, ... }:
-
+{
+  pkgs,
+  lib,
+  ...
+}:
+let
+  containers = [
+    "authelia"
+    "bazarr"
+    "broker"
+    "changedetection"
+    "db"
+    "ddclient"
+    "diun"
+    "flaresolverr"
+    "freshrss"
+    "jellyfin"
+    "mercury"
+    "paperless"
+    "playwright"
+    "prowlarr"
+    "qbittorrent"
+    "radarr"
+    "sonarr"
+    "swag"
+    "valkey"
+  ];
+  mkSystemService = suffix: {
+    "docker-${suffix}" = {
+      serviceConfig = {
+        Restart = lib.mkOverride 500 "always";
+      };
+      after = [
+        "docker-network-dlsuite.service"
+      ];
+      requires = [
+        "docker-network-dlsuite.service"
+      ];
+      partOf = [
+        "dlsuite.target"
+      ];
+      wantedBy = [
+        "dlsuite.target"
+      ];
+    };
+  };
+  systemdServices = lib.mkMerge (map mkSystemService containers);
+in
 {
   # Runtime
   virtualisation.docker = {
@@ -9,11 +55,8 @@
     rootless.enable = true;
     rootless.setSocketVariable = true;
   };
-
   virtualisation.oci-containers.backend = "docker";
-
   virtualisation.oci-containers.containers = {
-
     "authelia" = {
       image = "docker.io/authelia/authelia:latest";
       environment = {
@@ -37,7 +80,6 @@
         "--network=dlsuite"
       ];
     };
-
     "broker" = {
       image = "docker.io/library/redis:7";
       volumes = [
@@ -49,7 +91,6 @@
         "--network=dlsuite"
       ];
     };
-
     "bazarr" = {
       image = "docker.io/linuxserver/bazarr:latest";
       environment = {
@@ -67,7 +108,6 @@
         "--network=dlsuite"
       ];
     };
-
     "changedetection" = {
       image = "docker.io/dgtlmoon/changedetection.io";
       environment = {
@@ -91,7 +131,6 @@
         "--network=dlsuite"
       ];
     };
-
     "db" = {
       image = "docker.io/library/postgres:15";
       environment = {
@@ -108,7 +147,6 @@
         "--network=dlsuite"
       ];
     };
-
     "ddclient" = {
       image = "docker.io/linuxserver/ddclient:latest";
       environment = {
@@ -124,9 +162,7 @@
         "--network-alias=ddclient"
         "--network=dlsuite"
       ];
-
     };
-
     "diun" = {
       image = "docker.io/crazymax/diun:latest";
       environment = {
@@ -147,7 +183,6 @@
         "--network=dlsuite"
       ];
     };
-
     "flaresolverr" = {
       image = "docker.io/flaresolverr/flaresolverr:latest";
       environment = {
@@ -162,7 +197,6 @@
         "--network=dlsuite"
       ];
     };
-
     "freshrss" = {
       image = "docker.io/linuxserver/freshrss:latest";
       environment = {
@@ -179,7 +213,6 @@
         "--network=dlsuite"
       ];
     };
-
     "jellyfin" = {
       image = "docker.io/linuxserver/jellyfin:latest";
       environment = {
@@ -204,7 +237,6 @@
         "--network=dlsuite"
       ];
     };
-
     "mercury" = {
       image = "docker.io/wangqiru/mercury-parser-api:latest";
       log-driver = "journald";
@@ -213,7 +245,6 @@
         "--network=dlsuite"
       ];
     };
-
     "paperless" = {
       image = "docker.io/paperlessngx/paperless-ngx:latest";
       environment = {
@@ -248,7 +279,6 @@
         "--network=dlsuite"
       ];
     };
-
     "playwright" = {
       image = "docker.io/browserless/chrome:1.60-chrome-stable";
       environment = {
@@ -275,7 +305,6 @@
         "--network=dlsuite"
       ];
     };
-
     "prowlarr" = {
       image = "docker.io/linuxserver/prowlarr:latest";
       environment = {
@@ -292,8 +321,7 @@
         "--network=dlsuite"
       ];
     };
-
-    "qbitttorrent" = {
+    "qbittorrent" = {
       image = "docker.io/hotio/qbittorrent:latest";
       environment = {
         "PGID" = "131";
@@ -313,7 +341,6 @@
         "--network=dlsuite"
       ];
     };
-
     "radarr" = {
       image = "docker.io/linuxserver/radarr:latest";
       environment = {
@@ -326,7 +353,7 @@
         "/home/docker/radarr:/config:rw,Z"
       ];
       dependsOn = [
-        "qbitttorrent"
+        "qbittorrent"
       ];
       log-driver = "journald";
       extraOptions = [
@@ -334,7 +361,6 @@
         "--network=dlsuite"
       ];
     };
-
     "sonarr" = {
       image = "docker.io/linuxserver/sonarr:latest";
       environment = {
@@ -348,7 +374,7 @@
         "/home/docker/sonarr:/config:rw,Z"
       ];
       dependsOn = [
-        "qbitttorrent"
+        "qbittorrent"
       ];
       log-driver = "journald";
       extraOptions = [
@@ -356,7 +382,6 @@
         "--network=dlsuite"
       ];
     };
-
     "swag" = {
       image = "docker.io/linuxserver/swag:latest";
       environment = {
@@ -384,7 +409,6 @@
         "--network=dlsuite"
       ];
     };
-
     "valkey" = {
       image = "docker.io/valkey/valkey:7.2-alpine";
       environment = {
@@ -409,356 +433,14 @@
         "--network=dlsuite"
       ];
     };
-
   };
-
   # Services
-  systemd.services = {
-    "docker-authelia" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-bazarr" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-broker" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-changedetection" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-db" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-ddclient" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-diun" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-flaresolverr" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-freshrss" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-jellyfin" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-mercury" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-paperless" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-playwright" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-prowlarr" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-qbitttorrent" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-radarr" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-sonarr" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-swag" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
-    "docker-valkey" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-
+  systemd.services = systemdServices // {
     # Networks
     "docker-network-dlsuite" = {
-      path = [ pkgs.docker ];
+      path = [
+        pkgs.docker
+      ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -767,11 +449,14 @@
       script = ''
         docker network inspect dlsuite || docker network create dlsuite
       '';
-      partOf = [ "dlsuite.target" ];
-      wantedBy = [ "dlsuite.target" ];
+      partOf = [
+        "dlsuite.target"
+      ];
+      wantedBy = [
+        "dlsuite.target"
+      ];
     };
   };
-
   # Root service
   # When started, this will automatically create all resources and start
   # the containers. When stopped, this will teardown all resources.
@@ -779,6 +464,8 @@
     unitConfig = {
       Description = "Root target generated by compose2nix.";
     };
-    wantedBy = [ "multi-user.target" ];
+    wantedBy = [
+      "multi-user.target"
+    ];
   };
 }
