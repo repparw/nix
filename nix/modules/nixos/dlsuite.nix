@@ -3,49 +3,6 @@
   lib,
   ...
 }:
-let
-  containers = [
-    "authelia"
-    "bazarr"
-    "broker"
-    "changedetection"
-    "db"
-    "ddclient"
-    "diun"
-    "flaresolverr"
-    "freshrss"
-    "jellyfin"
-    "mercury"
-    "paperless"
-    "playwright"
-    "prowlarr"
-    "qbittorrent"
-    "radarr"
-    "sonarr"
-    "swag"
-    "valkey"
-  ];
-  mkSystemService = suffix: {
-    "docker-${suffix}" = {
-      serviceConfig = {
-        Restart = lib.mkOverride 500 "always";
-      };
-      after = [
-        "docker-network-dlsuite.service"
-      ];
-      requires = [
-        "docker-network-dlsuite.service"
-      ];
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
-    };
-  };
-  systemdServices = lib.mkMerge (map mkSystemService containers);
-in
 {
   # Runtime
   virtualisation.docker = {
@@ -435,28 +392,76 @@ in
     };
   };
   # Services
-  systemd.services = systemdServices // {
-    # Networks
-    "docker-network-dlsuite" = {
-      path = [
-        pkgs.docker
+  systemd.services =
+    let
+      containerSuffixes = [
+        "authelia"
+        "bazarr"
+        "broker"
+        "changedetection"
+        "db"
+        "ddclient"
+        "diun"
+        "flaresolverr"
+        "freshrss"
+        "jellyfin"
+        "mercury"
+        "paperless"
+        "playwright"
+        "prowlarr"
+        "qbittorrent"
+        "radarr"
+        "sonarr"
+        "swag"
+        "valkey"
       ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStop = "docker network rm -f dlsuite";
+
+      mkSystemService = suffix: {
+        "docker-${suffix}" = {
+          serviceConfig = {
+            Restart = lib.mkOverride 500 "always";
+          };
+          after = [
+            "docker-network-dlsuite.service"
+          ];
+          requires = [
+            "docker-network-dlsuite.service"
+          ];
+          partOf = [
+            "dlsuite.target"
+          ];
+          wantedBy = [
+            "dlsuite.target"
+          ];
+        };
       };
-      script = ''
-        docker network inspect dlsuite || docker network create dlsuite
-      '';
-      partOf = [
-        "dlsuite.target"
-      ];
-      wantedBy = [
-        "dlsuite.target"
-      ];
+
+      systemdServices = builtins.foldl' lib.recursiveUpdate { } (map mkSystemService containerSuffixes);
+
+    in
+    systemdServices
+    // {
+      # Networks
+      "docker-network-dlsuite" = {
+        path = [
+          pkgs.docker
+        ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStop = "docker network rm -f dlsuite";
+        };
+        script = ''
+          docker network inspect dlsuite || docker network create dlsuite
+        '';
+        partOf = [
+          "dlsuite.target"
+        ];
+        wantedBy = [
+          "dlsuite.target"
+        ];
+      };
     };
-  };
 
   # Root service
   # When started, this will automatically create all resources and start
