@@ -148,7 +148,9 @@
         		'';
     };
 
-    ssh.addKeysToAgent = "yes";
+    ssh = {
+      addKeysToAgent = "yes";
+    };
 
   };
 
