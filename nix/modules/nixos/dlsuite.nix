@@ -109,6 +109,21 @@
       ];
     };
 
+    "ddclient" = {
+      image = "docker.io/linuxserver/ddclient:latest";
+      environment = {
+      };
+      volumes = [
+        "/home/docker/ddclient:/config:rw,Z"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=ddclient"
+        "--network=dlsuite"
+      ];
+
+    };
+
     "diun" = {
       image = "docker.io/crazymax/diun:latest";
       environment = {
@@ -470,6 +485,24 @@
     };
 
     "docker-db" = {
+      serviceConfig = {
+        Restart = lib.mkOverride 500 "always";
+      };
+      after = [
+        "docker-network-dlsuite.service"
+      ];
+      requires = [
+        "docker-network-dlsuite.service"
+      ];
+      partOf = [
+        "dlsuite.target"
+      ];
+      wantedBy = [
+        "dlsuite.target"
+      ];
+    };
+
+    "docker-ddclient" = {
       serviceConfig = {
         Restart = lib.mkOverride 500 "always";
       };
