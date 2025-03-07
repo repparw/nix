@@ -122,11 +122,10 @@
           formatters_by_ft = {
             lua = [ "stylua" ];
             nix = [ "nixfmt" ];
-            rb = [ "rufo" ];
+            #rb = [ "rufo" ];
             sh = [ "beautysh" ];
             typescript = [
               "biome"
-              "prettierd"
               "prettier"
             ];
             json = [ "biome" ];
@@ -259,6 +258,10 @@
               group_index = 2;
             }
             {
+              name = "emoji";
+              group_index = 2;
+            }
+            {
               name = "copilot";
               group_index = 2;
             }
@@ -312,6 +315,10 @@
           };
         };
       };
+      cmp-nvim-lsp.enable = true;
+      cmp-luasnip.enable = true;
+      cmp-buffer.enable = true;
+      cmp-path.enable = true;
       vimtex = {
         enable = true;
         settings = {
