@@ -431,6 +431,8 @@
           fzf-native.enable = true;
         };
 
+        enabledExtensions = [ "zoxide" ];
+
         settings = {
           defaults = {
             mappings = {
