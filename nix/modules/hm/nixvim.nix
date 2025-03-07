@@ -91,9 +91,7 @@
 
       copilot-lua = {
         enable = true;
-        suggestion = {
-          enabled = false;
-        };
+        settings.suggestion.enabled = false;
       };
       copilot-cmp.enable = true;
 
@@ -401,7 +399,7 @@
             };
           };
           "<leader>fd" = {
-            action = "zoxide.list";
+            action = "extensions.file_browser.file_browser";
             options = {
               desc = "[F]ind by [D]irectory";
             };
