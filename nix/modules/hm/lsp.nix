@@ -14,6 +14,7 @@
     keymaps = {
       silent = true;
       lspBuf = {
+        # TODO toggle inlayHints?
         gd = {
           action = "definition";
           desc = "Goto Definition";
@@ -45,6 +46,10 @@
         "<leader>cr" = {
           action = "rename";
           desc = "Rename";
+        };
+        "<leader>ca" = {
+          action = "code_action";
+          desc = "Code Action";
         };
       };
       diagnostic = {
