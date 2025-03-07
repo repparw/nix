@@ -89,7 +89,12 @@
 
       trouble.enable = true;
 
-      copilot-lua.enable = true;
+      copilot-lua = {
+        enable = true;
+        suggestion = {
+          enabled = false;
+        };
+      };
       copilot-cmp.enable = true;
 
       copilot-chat = {
@@ -223,6 +228,16 @@
           #sections = { lualine_x = [ { "require('noice').api.statusline.mode.get" cond = "require('noice').api.statusline.mode.has"; "color = { fg = # ff9e64 }" }]; TODO noice in statusline
         };
       };
+      lspkind = {
+        enable = true;
+        symbolMap = {
+          Copilot = " ";
+        };
+        extraOptions = {
+          maxwidth = 50;
+          ellipsis_char = "...";
+        };
+      };
       cmp = {
         enable = true;
         settings = {
@@ -316,7 +331,7 @@
         };
       };
       cmp-nvim-lsp.enable = true;
-      cmp-luasnip.enable = true;
+      cmp_luasnip.enable = true;
       cmp-buffer.enable = true;
       cmp-path.enable = true;
       vimtex = {
