@@ -149,7 +149,15 @@
     };
 
     ssh = {
+      enable = true;
       addKeysToAgent = "yes";
+
+      matchBlocks = {
+Host = "rpi";
+	Hostname home.repparw.me
+	Port 2222
+	User dietpi
+};
     };
 
   };
