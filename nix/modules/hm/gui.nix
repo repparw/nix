@@ -16,7 +16,6 @@
     [
       vesktop
       pwvucontrol
-      obs-cmd
       scrcpy
       logiops_0_2_3
 
