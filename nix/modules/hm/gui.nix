@@ -16,7 +16,6 @@
     [
       vesktop
       pwvucontrol
-      obs-studio
       obs-cmd
       scrcpy
       logiops_0_2_3
@@ -226,6 +225,15 @@
         prev_img = "comma";
         next_img = "period";
       };
+    };
+
+    obs-studio = {
+      enable = true;
+      enableVirtualCamera = true;
+      plugins = with pkgs.obs-studio-plugins; [
+        obs-pipewire-audio-capture
+        obs-backgroundremoval
+      ];
     };
 
     zathura = {
