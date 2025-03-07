@@ -11,6 +11,21 @@
         silent = true;
       };
     }
+	{
+	  action = "<cmd>Trouble diagnostics toggle<cr>";
+	  key = "<leader>tt";
+	  mode = "n";
+			options = {
+			  desc = "[T]rouble [T]oggle";
+			};
+			}
+
+
+
+
+	keymap.set("n", "<space>tt", "<cmd>Trouble diagnostics toggle<cr>", { desc = "[T]rouble [T]oggle" })
+keymap.set("n", "[t", "<cmd>Trouble previous<cr>", { desc = "[T]rouble previous" })
+keymap.set("n", "]t", "<cmd>Trouble next<cr>", { desc = "[T]rouble next" })
     {
       action = "<cmd>lua require('CopilotChat').toggle()<CR>";
       key = "<leader>aa";
