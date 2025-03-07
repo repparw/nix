@@ -2,6 +2,7 @@
 {
   imports = [
     ./keymaps.nix
+    ./lsp.nix
   ];
 
   home.packages = with pkgs; [
