@@ -26,6 +26,8 @@
     enable = true;
     defaultEditor = true;
 
+    extraPlugins = with pkgs.vimPlugins; [ telescope-zoxide ];
+
     files = {
       "ftplugin/lua.lua" = { };
     };
@@ -399,7 +401,7 @@
             };
           };
           "<leader>fd" = {
-            action = "extensions.file_browser.file_browser";
+            action = "zoxide.list";
             options = {
               desc = "[F]ind by [D]irectory";
             };
