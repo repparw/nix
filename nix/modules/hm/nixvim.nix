@@ -427,7 +427,6 @@
         extensions = {
           ui-select.enable = true;
           fzf-native.enable = true;
-          file-browser.enable = true;
         };
 
         settings = {
