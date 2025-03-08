@@ -393,11 +393,8 @@
         "VIKUNJA_SERVICE_TIMEZONE" = "America/Argentina/Buenos_Aires";
         "VIKUNJA_SERVICE_PUBLICURL" = "https://todo.repparw.me";
         "VIKUNJA_DATABASE_HOST" = "vikunjadb";
-        "VIKUNJA_DATABASE_PASSWORD" = "vikunja";
         "VIKUNJA_DATABASE_TYPE" = "postgres";
-        "VIKUNJA_DATABASE_USER" = "vikunja";
-        "VIKUNJA_DATABASE_DATABASE" = "vikunja";
-        "VIKUNJA_SERVICE_JWTSECRET_FILE" = "/secrets/JWT_SECRET";
+        "VIKUNJA_DATABASE_PASSWORD" = "vikunja";
       };
       volumes = [
         "/home/docker/vikunja/files:/app/vikunja/files:rw,Z"
