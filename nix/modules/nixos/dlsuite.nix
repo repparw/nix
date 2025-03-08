@@ -399,13 +399,12 @@
         "VIKUNJA_DATABASE_DATABASE" = "vikunja";
         "VIKUNJA_SERVICE_JWTSECRET_FILE" = "/secrets/JWT_SECRET";
       };
-      user = "1001:131";
       volumes = [
         "/home/docker/vikunja/files:/app/vikunja/files:rw,Z"
         "/home/docker/vikunja/secrets:/secrets:rw,Z"
       ];
       ports = [
-        "127.0.0.1:3456:3456/tcp"
+        "3456:3456/tcp"
       ];
       dependsOn = [
         "vikunjadb"
