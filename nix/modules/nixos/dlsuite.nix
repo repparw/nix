@@ -408,7 +408,19 @@
         "--network=dlsuite"
       ];
     };
-	"vikunjadb" = {};
+	"vikunjadb" = {
+      image = "mariadb:10";
+	  command = "--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci";
+	  environment = {
+      MYSQL_ROOT_PASSWORD= "supersecret";
+      MYSQL_USER= "vikunja";
+      MYSQL_PASSWORD= "changeme";
+      MYSQL_DATABASE= "vikunja";
+	  };
+      volumes = [
+        "/home/docker/vikunja/db:/var/lib/mysql:rw,Z"
+      ];
+	};
   };
   # Services
   systemd.services =
