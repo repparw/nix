@@ -405,6 +405,9 @@
         "/home/docker/vikunja/files:/app/vikunja/files:rw,Z"
         "/home/docker/vikunja/secrets:/secrets:rw,Z"
       ];
+      ports = [
+        "127.0.0.1:3456:3456/tcp"
+      ];
       dependsOn = [
         "vikunjadb"
       ];
