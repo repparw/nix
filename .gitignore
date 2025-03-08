@@ -27,4 +27,4 @@ logs/
 _minted*
 *.pyg
 *.synctex.gz
-
+*.fdb_latexmk
