@@ -398,7 +398,6 @@
       };
       volumes = [
         "/home/docker/vikunja/files:/app/vikunja/files:rw,Z"
-        "/home/docker/vikunja/secrets:/secrets:rw,Z"
       ];
       ports = [
         "3456:3456/tcp"
