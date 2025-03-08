@@ -391,7 +391,7 @@
       image = "docker.io/vikunja/vikunja:latest";
       environment = {
         "VIKUNJA_SERVICE_TIMEZONE" = "America/Argentina/Buenos_Aires";
-        #"VIKUNJA_SERVICE_PUBLICURL" = "https://todo.repparw.me";
+        "VIKUNJA_SERVICE_PUBLICURL" = "https://todo.repparw.me";
         "VIKUNJA_DATABASE_HOST" = "vikunjadb";
         "VIKUNJA_DATABASE_PASSWORD" = "vikunja";
         "VIKUNJA_DATABASE_TYPE" = "postgres";
