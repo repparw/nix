@@ -453,6 +453,7 @@
         "swag"
         "valkey"
         "vikunja"
+        "vikunjadb"
       ];
 
       mkSystemService = suffix: {
