@@ -396,7 +396,7 @@
         VIKUNJA_DATABASE_TYPE = "mysql";
         VIKUNJA_DATABASE_USER = "vikunja";
         VIKUNJA_DATABASE_DATABASE = "vikunja";
-        VIKUNJA_SERVICE_JWTSECRET_FILE" = "/secrets/JWT_SECRET";
+        VIKUNJA_SERVICE_JWTSECRET_FILE = "/secrets/JWT_SECRET";
       };
       volumes = [
         "/home/docker/vikunja/files:/app/vikunja/files:rw,Z"
@@ -407,6 +407,11 @@
       ];
       log-driver = "journald";
       extraOptions = [
+        "--health-cmd=[ \"mysqladmin ping -h localhost -u $$MYSQL_USER --password=$$MYSQL_PASSWORD\" ]"
+        "--health-interval=30s"
+        "--health-retries=5"
+        "--health-start-period=10s"
+        "--health-timeout=10s"
         "--network-alias=vikunja"
         "--network=dlsuite"
       ];
@@ -417,7 +422,7 @@
       environment = {
         MYSQL_ROOT_PASSWORD = "supersecret";
         MYSQL_USER = "vikunja";
-        MYSQL_PASSWORD = "changeme";
+        MYSQL_PASSWORD = "vikunja";
         MYSQL_DATABASE = "vikunja";
       };
       volumes = [
