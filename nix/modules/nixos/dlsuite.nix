@@ -88,22 +88,6 @@
         "--network=dlsuite"
       ];
     };
-    "db" = {
-      image = "docker.io/library/postgres:15";
-      environment = {
-        "POSTGRES_DB" = "paperless";
-        "POSTGRES_PASSWORD" = "paperless";
-        "POSTGRES_USER" = "paperless";
-      };
-      volumes = [
-        "/home/docker/paper/pg:/var/lib/postgresql/data:rw,Z"
-      ];
-      log-driver = "journald";
-      extraOptions = [
-        "--network-alias=db"
-        "--network=dlsuite"
-      ];
-    };
     "ddclient" = {
       image = "docker.io/linuxserver/ddclient:latest";
       environment = {
@@ -202,10 +186,26 @@
         "--network=dlsuite"
       ];
     };
+    "paperdb" = {
+      image = "docker.io/library/postgres:15";
+      environment = {
+        "POSTGRES_DB" = "paperless";
+        "POSTGRES_PASSWORD" = "paperless";
+        "POSTGRES_USER" = "paperless";
+      };
+      volumes = [
+        "/home/docker/paper/pg:/var/lib/postgresql/data:rw,Z"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=paperdb"
+        "--network=dlsuite"
+      ];
+    };
     "paperless" = {
       image = "docker.io/paperlessngx/paperless-ngx:latest";
       environment = {
-        "PAPERLESS_DBHOST" = "db";
+        "PAPERLESS_DBHOST" = "paperdb";
         "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
         "PAPERLESS_ENABLE_HTTP_REMOTE_USER" = "true";
         "PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME" = "HTTP_REMOTE_USER";
@@ -225,7 +225,7 @@
       ];
       dependsOn = [
         "broker"
-        "db"
+        "paperdb"
       ];
       log-driver = "journald";
       extraOptions = [
@@ -389,7 +389,26 @@
     };
     "vikunja" = {
       image = "docker.io/vikunja/vikunja:latest";
+      environment = {
+	    VIKUNJA_SERVICE_PUBLICURL: http://repparw.me
+		VIKUNJA_DATABASE_HOST: db
+		#VIKUNJA_DATABASE_PASSWORD: changeme
+		VIKUNJA_DATABASE_TYPE: mysql
+		#VIKUNJA_DATABASE_USER: vikunja
+		#VIKUNJA_DATABASE_DATABASE: vikunja
+		#VIKUNJA_SERVICE_JWTSECRET: <a super secure random secret>
+
+      };
+      volumes = [
+        "/home/docker/vikunja:/app/vikunja/files:rw,Z"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=vikunja"
+        "--network=dlsuite"
+      ];
     };
+	"vikunjadb" = {};
   };
   # Services
   systemd.services =
@@ -399,13 +418,13 @@
         "bazarr"
         "broker"
         "changedetection"
-        "db"
         "ddclient"
         "diun"
         "flaresolverr"
         "freshrss"
         "jellyfin"
         "mercury"
+        "paperdb"
         "paperless"
         "playwright"
         "prowlarr"
