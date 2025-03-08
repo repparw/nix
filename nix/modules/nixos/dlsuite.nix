@@ -227,9 +227,6 @@
         "broker"
         "db"
       ];
-      ports = [
-        "127.0.0.1:8000:8000/tcp"
-      ];
       log-driver = "journald";
       extraOptions = [
         "--network-alias=paperless"
@@ -390,6 +387,9 @@
         "--network=dlsuite"
       ];
     };
+    "vikunja" = {
+      image = "docker.io/vikunja/vikunja:latest";
+    };
   };
   # Services
   systemd.services =
@@ -414,6 +414,7 @@
         "sonarr"
         "swag"
         "valkey"
+        "vikunja"
       ];
 
       mkSystemService = suffix: {
