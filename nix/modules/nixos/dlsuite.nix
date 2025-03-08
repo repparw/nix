@@ -390,17 +390,20 @@
     "vikunja" = {
       image = "docker.io/vikunja/vikunja:latest";
       environment = {
-	    VIKUNJA_SERVICE_PUBLICURL: http://repparw.me
-		VIKUNJA_DATABASE_HOST: db
-		#VIKUNJA_DATABASE_PASSWORD: changeme
-		VIKUNJA_DATABASE_TYPE: mysql
-		#VIKUNJA_DATABASE_USER: vikunja
-		#VIKUNJA_DATABASE_DATABASE: vikunja
-		#VIKUNJA_SERVICE_JWTSECRET: <a super secure random secret>
+        VIKUNJA_SERVICE_PUBLICURL = "http://todo.repparw.me";
+        VIKUNJA_DATABASE_HOST = "db";
+        #VIKUNJA_DATABASE_PASSWORD="changeme";
+        VIKUNJA_DATABASE_TYPE = "mysql";
+        VIKUNJA_DATABASE_USER = "vikunja";
+        VIKUNJA_DATABASE_DATABASE = "vikunja";
+        #VIKUNJA_SERVICE_JWTSECRET= "<a super secure random secret>";
 
       };
       volumes = [
-        "/home/docker/vikunja:/app/vikunja/files:rw,Z"
+        "/home/docker/vikunja/files:/app/vikunja/files:rw,Z"
+      ];
+      dependsOn = [
+        "vikunjadb"
       ];
       log-driver = "journald";
       extraOptions = [
@@ -408,19 +411,19 @@
         "--network=dlsuite"
       ];
     };
-	"vikunjadb" = {
+    "vikunjadb" = {
       image = "mariadb:10";
-	  command = "--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci";
-	  environment = {
-      MYSQL_ROOT_PASSWORD= "supersecret";
-      MYSQL_USER= "vikunja";
-      MYSQL_PASSWORD= "changeme";
-      MYSQL_DATABASE= "vikunja";
-	  };
+      command = "--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci";
+      environment = {
+        MYSQL_ROOT_PASSWORD = "supersecret";
+        MYSQL_USER = "vikunja";
+        MYSQL_PASSWORD = "changeme";
+        MYSQL_DATABASE = "vikunja";
+      };
       volumes = [
         "/home/docker/vikunja/db:/var/lib/mysql:rw,Z"
       ];
-	};
+    };
   };
   # Services
   systemd.services =
