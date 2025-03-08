@@ -394,7 +394,7 @@
         "VIKUNJA_SERVICE_PUBLICURL" = "http://todo.repparw.me";
         "VIKUNJA_DATABASE_HOST" = "vikunjadb";
         "VIKUNJA_DATABASE_PASSWORD" = "vikunja";
-        "VIKUNJA_DATABASE_TYPE" = "mysql";
+        "VIKUNJA_DATABASE_TYPE" = "postgres";
         "VIKUNJA_DATABASE_USER" = "vikunja";
         "VIKUNJA_DATABASE_DATABASE" = "vikunja";
         "VIKUNJA_SERVICE_JWTSECRET_FILE" = "/secrets/JWT_SECRET";
@@ -417,25 +417,18 @@
       ];
     };
     "vikunjadb" = {
-      image = "mariadb:10";
-      cmd = [
-        "--character-set-server=utf8mb4"
-        "--collation-server=utf8mb4_unicode_ci"
-      ];
+      image = "postgres:17";
       environment = {
-        "MYSQL_ROOT_PASSWORD" = "vikunja";
-        "MYSQL_USER" = "vikunja";
-        "MYSQL_PASSWORD" = "vikunja";
-        "MYSQL_DATABASE" = "vikunja";
+        "POSTGRES_USER" = "vikunja";
+        "POSTGRES_PASSWORD" = "vikunja";
       };
       volumes = [
-        "/home/docker/vikunja/db:/var/lib/mysql:rw,Z"
+        "/home/docker/vikunja/db:/var/lib/postgresql/data:rw,Z"
       ];
       log-driver = "journald";
       extraOptions = [
-        "--health-cmd=mysqladmin ping -h localhost -u $$MYSQL_USER --password=$$MYSQL_PASSWORD"
+        "--health-cmd=pg_isready -h localhost -U $$POSTGRES_USER"
         "--health-interval=2s"
-        "--health-start-period=30s"
         "--network-alias=vikunjadb"
         "--network=dlsuite"
       ];
