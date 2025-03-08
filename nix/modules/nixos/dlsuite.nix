@@ -392,6 +392,7 @@
       environment = {
         "VIKUNJA_SERVICE_TIMEZONE" = "America/Argentina/Buenos_Aires";
         "VIKUNJA_SERVICE_PUBLICURL" = "https://todo.repparw.me";
+        "VIKUNJA_CORS_ENABLE" = "true";
         "VIKUNJA_DATABASE_HOST" = "vikunjadb";
         "VIKUNJA_DATABASE_TYPE" = "postgres";
         "VIKUNJA_DATABASE_PASSWORD" = "vikunja";
