@@ -397,6 +397,8 @@
         "VIKUNJA_DATABASE_TYPE" = "postgres";
         "VIKUNJA_DATABASE_PASSWORD" = "vikunja";
         "VIKUNJA_MIGRATION_TODOIST_ENABLE" = "true";
+        "VIKUNJA_MIGRATION_TODOIST_CLIENTID" = "true";
+        "VIKUNJA_MIGRATION_TODOIST_CLIENTSECRET" = "true";
       };
       volumes = [
         "/home/docker/vikunja/files:/app/vikunja/files:rw,Z"
