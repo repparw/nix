@@ -250,7 +250,7 @@
       };
       log-driver = "journald";
       extraOptions = [
-        "--health-cmd=[\"curl\",\"-f\",\"http://localhost:3000\"]"
+        "--health-cmd=curl -f http://localhost:3000"
         "--health-interval=30s"
         "--health-retries=5"
         "--health-start-period=10s"
@@ -391,7 +391,7 @@
       image = "docker.io/vikunja/vikunja:latest";
       environment = {
         VIKUNJA_SERVICE_PUBLICURL = "http://todo.repparw.me";
-        VIKUNJA_DATABASE_HOST = "db";
+        VIKUNJA_DATABASE_HOST = "vikunjadb";
         VIKUNJA_DATABASE_PASSWORD = "vikunja";
         VIKUNJA_DATABASE_TYPE = "mysql";
         VIKUNJA_DATABASE_USER = "vikunja";
@@ -407,18 +407,16 @@
       ];
       log-driver = "journald";
       extraOptions = [
-        "--health-cmd=[ \"mysqladmin ping -h localhost -u $$MYSQL_USER --password=$$MYSQL_PASSWORD\" ]"
-        "--health-interval=30s"
-        "--health-retries=5"
-        "--health-start-period=10s"
-        "--health-timeout=10s"
         "--network-alias=vikunja"
         "--network=dlsuite"
       ];
     };
     "vikunjadb" = {
       image = "mariadb:10";
-      command = "--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci";
+      cmd = [
+        "--character-set-server=utf8mb4"
+        "--collation-server=utf8mb4_unicode_ci"
+      ];
       environment = {
         MYSQL_ROOT_PASSWORD = "supersecret";
         MYSQL_USER = "vikunja";
@@ -430,6 +428,9 @@
       ];
       log-driver = "journald";
       extraOptions = [
+        "--health-cmd=mysqladmin ping -h localhost -u $$MYSQL_USER --password=$$MYSQL_PASSWORD"
+        "--health-interval=2s"
+        "--health-start-period=30s"
         "--network-alias=vikunjadb"
         "--network=dlsuite"
       ];
