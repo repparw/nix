@@ -392,15 +392,15 @@
       environment = {
         VIKUNJA_SERVICE_PUBLICURL = "http://todo.repparw.me";
         VIKUNJA_DATABASE_HOST = "db";
-        #VIKUNJA_DATABASE_PASSWORD="changeme";
+        VIKUNJA_DATABASE_PASSWORD = "vikunja";
         VIKUNJA_DATABASE_TYPE = "mysql";
         VIKUNJA_DATABASE_USER = "vikunja";
         VIKUNJA_DATABASE_DATABASE = "vikunja";
-        #VIKUNJA_SERVICE_JWTSECRET= "<a super secure random secret>";
-
+        VIKUNJA_SERVICE_JWTSECRET_FILE" = "/secrets/JWT_SECRET";
       };
       volumes = [
         "/home/docker/vikunja/files:/app/vikunja/files:rw,Z"
+        "/home/docker/vikunja/secrets:/secrets:rw,Z"
       ];
       dependsOn = [
         "vikunjadb"
@@ -422,6 +422,11 @@
       };
       volumes = [
         "/home/docker/vikunja/db:/var/lib/mysql:rw,Z"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=vikunjadb"
+        "--network=dlsuite"
       ];
     };
   };
