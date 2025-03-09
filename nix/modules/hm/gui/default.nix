@@ -7,6 +7,7 @@
 
 {
   imports = [
+    ./mpv.nix
     ./spotifyd.nix
     ./spotify-player.nix
   ];
@@ -17,7 +18,7 @@
       vesktop
       pwvucontrol
       scrcpy
-      logiops_0_2_3
+      logiops
 
       obsidian
 
@@ -92,127 +93,7 @@
       };
     };
 
-    mpv = {
-      enable = true;
-      scripts = with pkgs.mpvScripts; [
-        mpv-webm
-        quality-menu
-        sponsorblock-minimal
-      ];
-      bindings = {
-        WHEEL_UP = "add volume 2";
-        WHEEL_DOWN = "add volume -2";
-        WHEEL_LEFT = "add volume 2";
-        WHEEL_RIGHT = "add volume -2";
-        "." = "seek 5";
-        "," = "seek -5";
-        ">" = "no-osd seek 1 exact";
-        "<" = "no-osd seek -1 exact";
-        RIGHT = "frame-step";
-        LEFT = "frame-back-step";
-        "~" = "script-binding console/enable";
-        # Play in reverse toggle
-        # <bind> set-cache yes ; cycle play-dir
-      };
-      profiles = {
-        gpu-vulkan = {
-          vo = "gpu-next";
-          gpu-api = "vulkan";
-          hwdec = "vulkan";
-          gpu-context = "waylandvk";
-        };
-        gpu-vulkan-vaapi = {
-          vo = "gpu-next";
-          gpu-api = "vulkan";
-          hwdec = "vaapi";
-          gpu-context = "waylandvk";
-        };
-      };
-      config = {
-        volume = 30;
-        slang = "eng";
-        ytdl-raw-options = "format=bestvideo[height<=?1080]+bestaudio/best,sub-format=en/es,write-srt=";
-        sub-auto = "fuzzy";
-        screen = 1;
-        fs = "yes";
-        fs-screen = 1;
-
-        osc = "no";
-        osd-font-size = 32; # Default 55
-        sub-font-size = 40; # Default 55
-
-        osd-border-size = 2; # Default 3
-        sub-border-size = 2; # Default 3
-
-        profile = "gpu-vulkan-vaapi";
-
-      };
-    };
-
     chromium.enable = true;
-
-    firefox = {
-      enable = true;
-
-      nativeMessagingHosts = [ pkgs.tridactyl-native ];
-
-      policies = {
-        DisableTelemetry = true;
-        DisableFirefoxStudies = true;
-        DisablePocket = true;
-        DisableProfileImport = true;
-        NoDefaultBookmarks = true;
-        OverrideFirstRunPage = "";
-        OverridePostUpdatePage = "";
-        Preferences = {
-          "datareporting.policy.firstRunURL" = "";
-          "browser.display.use_document_fonts" = 0;
-          "browser.translations.automaticallyPopup" = false;
-        };
-      };
-
-      profiles = {
-        default = {
-          id = 0;
-          userChrome = (builtins.readFile ../source/userChrome.css);
-          path = "default";
-          settings = {
-            "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-            "layers.acceleration.force-enabled" = true;
-            "gfx.webrender.all" = true;
-            "gfx.webrender.enabled" = true;
-            "layout.css.backdrop-filter.enabled" = true;
-            "svg.context-properties.content.enabled" = true;
-          };
-        };
-        kiosk = {
-          id = 1;
-          userChrome = (builtins.readFile ../source/userChrome.css);
-          path = "kiosk";
-          settings = {
-            "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-            "layers.acceleration.force-enabled" = true;
-            "gfx.webrender.all" = true;
-            "gfx.webrender.enabled" = true;
-            "layout.css.backdrop-filter.enabled" = true;
-            "svg.context-properties.content.enabled" = true;
-          };
-        };
-        socials = {
-          id = 2;
-          path = "socials";
-          userChrome = (builtins.readFile ../source/userChrome.css);
-          settings = {
-            "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-            "layers.acceleration.force-enabled" = true;
-            "gfx.webrender.all" = true;
-            "gfx.webrender.enabled" = true;
-            "layout.css.backdrop-filter.enabled" = true;
-            "svg.context-properties.content.enabled" = true;
-          };
-        };
-      };
-    };
 
     feh = {
       enable = true;
