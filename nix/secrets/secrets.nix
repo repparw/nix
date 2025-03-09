@@ -12,4 +12,8 @@ in
     repparw-alpha
     alpha
   ];
+  "vikunja.age".publicKeys = [
+    repparw-alpha
+    alpha
+  ];
 }
