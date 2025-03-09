@@ -4,6 +4,10 @@
   ...
 }:
 {
+  age.secrets.vikunja = {
+    file = ../../secrets/vikunja.age;
+  };
+
   # Runtime
   virtualisation.docker = {
     enable = true;
