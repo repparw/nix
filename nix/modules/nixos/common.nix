@@ -58,10 +58,6 @@
     wget
   ];
 
-  nixpkgs.overlays = [
-    (self: super: { mpv = super.mpv.override { scripts = [ self.mpvScripts.mpris ]; }; })
-  ];
-
   programs = {
     zsh.enable = true;
 
