@@ -26,7 +26,7 @@
     profiles = {
       default = {
         id = 0;
-        userChrome = (builtins.readFile ../source/userChrome.css);
+        userChrome = (builtins.readFile ../../source/userChrome.css);
         path = "default";
         settings = {
           "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
@@ -39,7 +39,7 @@
       };
       kiosk = {
         id = 1;
-        userChrome = (builtins.readFile ../source/userChrome.css);
+        userChrome = (builtins.readFile ../../source/userChrome.css);
         path = "kiosk";
         settings = {
           "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
@@ -53,7 +53,7 @@
       socials = {
         id = 2;
         path = "socials";
-        userChrome = (builtins.readFile ../source/userChrome.css);
+        userChrome = (builtins.readFile ../../source/userChrome.css);
         settings = {
           "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
           "layers.acceleration.force-enabled" = true;
