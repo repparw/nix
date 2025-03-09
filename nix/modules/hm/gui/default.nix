@@ -7,8 +7,8 @@
   imports = [
     ./firefox.nix
     ./mpv.nix
-    ./spotifyd.nix
     ./spotify-player.nix
+    ./spotifyd.nix
     ./zathura.nix
   ];
 
