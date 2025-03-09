@@ -1,7 +1,5 @@
 {
   pkgs,
-  stable,
-  osConfig,
   ...
 }:
 {
@@ -9,6 +7,7 @@
     enable = true;
     scripts = with pkgs.mpvScripts; [
       mpv-webm
+      mpris
       quality-menu
       sponsorblock-minimal
     ];
