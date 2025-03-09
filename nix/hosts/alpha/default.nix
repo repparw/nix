@@ -34,6 +34,8 @@
     ];
   };
 
+  age.identityPaths = [ "/home/repparw/.ssh/id_ed25519" ];
+
   #virtualisation.vmware.host.enable = true;
 
   programs.adb.enable = true;
