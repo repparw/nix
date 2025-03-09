@@ -6,6 +6,7 @@
 {
   imports = [
     ./firefox.nix
+    ./hypr
     ./mpv.nix
     ./spotify-player.nix
     ./spotifyd.nix
