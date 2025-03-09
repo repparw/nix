@@ -3,7 +3,7 @@
 {
   imports = [
     ../../modules/hm/cli.nix
-    ../../modules/hm/gui.nix
+    ../../modules/hm/gui
     ../../modules/hm/hypr/hyprland.nix
   ];
 
