@@ -403,6 +403,7 @@
       };
       volumes = [
         "/home/docker/vikunja/files:/app/vikunja/files:rw,Z"
+        "${config.age.secrets.vikunja.path}:/secrets/jwt:ro"
       ];
       dependsOn = [
         "vikunjadb"
