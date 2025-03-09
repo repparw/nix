@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  config,
   ...
 }:
 {
@@ -400,6 +401,7 @@
         "VIKUNJA_DATABASE_HOST" = "vikunjadb";
         "VIKUNJA_DATABASE_TYPE" = "postgres";
         "VIKUNJA_DATABASE_PASSWORD" = "vikunja";
+        "VIKUNJA_SERVICE_JWTSECRET_FILE" = "/secrets/jwt";
       };
       volumes = [
         "/home/docker/vikunja/files:/app/vikunja/files:rw,Z"
