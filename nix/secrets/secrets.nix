@@ -9,7 +9,7 @@ let
 in
 {
   "github.age".publicKeys = [
-    users
-    systems
+    repparw
+    alpha
   ];
 }
