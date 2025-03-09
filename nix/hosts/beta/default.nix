@@ -39,6 +39,8 @@
     ];
   };
 
+  age.identityPaths = [ "/home/repparw/.ssh/id_t440" ];
+
   # ignore lid close on AC power
   services.logind.lidSwitchExternalPower = "ignore";
 
