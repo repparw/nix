@@ -10,9 +10,9 @@
 
     systemd.variables = [ "--all" ];
     ${if osConfig.networking.hostName == "alpha" then "extraConfig" else null} =
-      builtins.readFile ../../source/hyprland-alpha.conf;
+      builtins.readFile ../../../source/hyprland-alpha.conf;
     ${if osConfig.networking.hostName != "alpha" then "extraConfig" else null} =
-      builtins.readFile ../../source/hyprland-not-alpha.conf;
+      builtins.readFile ../../../source/hyprland-not-alpha.conf;
     settings = {
       env = [
         "XCURSOR_SIZE,24"
