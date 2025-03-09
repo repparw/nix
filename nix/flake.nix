@@ -11,8 +11,8 @@
 
       # Base modules configuration for all systems
       mkModules = hostname: [
-        ./hosts/common.nix
-        ./hosts/${hostname}
+        ./systems/common.nix
+        ./systems/${hostname}
         inputs.agenix.nixosModules.default
         home-manager.nixosModules.home-manager
         {
