@@ -8,5 +8,8 @@ let
   ];
 in
 {
-  "github.age".publicKeys = users;
+  "github.age".publicKeys = [
+    users
+    systems
+  ];
 }
