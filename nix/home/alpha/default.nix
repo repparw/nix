@@ -2,7 +2,7 @@
 {
   imports = [
     ../../modules/hm/gaming.nix
-    ../../modules/hm/obs.nix
+    ../../modules/hm/gui/obs.nix
   ];
 
   home.packages = with pkgs; [
