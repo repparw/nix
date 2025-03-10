@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
 
-  home.packages = {
+  home.packages = [
     obsinvim =
       with pkgs;
       writeShellApplication {
@@ -26,6 +26,6 @@
           git push
         '';
       };
-  };
+  ];
 
 }
