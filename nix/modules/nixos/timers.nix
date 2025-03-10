@@ -18,7 +18,7 @@
     serviceConfig = {
       Type = "oneshot";
       User = "repparw";
-      ExecStart = [ "/home/repparw/.config/scripts/git-autocommit" ];
+      ExecStart = [ "git-autocommit" ];
     };
   };
 

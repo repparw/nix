@@ -1,2 +1,0 @@
-#!/bin/sh
-firefox -P kiosk --kiosk-monitor 1 jellyfin.repparw.me 2>/dev/null

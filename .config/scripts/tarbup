@@ -1,6 +1,0 @@
-#!/bin/sh
-
-cd /run/media/repparw/HDD && 
-tar -cf weeklybackup.tar weeklybackup &&
-gzip --best weeklybackup.tar &&
-zip -P sasukeuchi weeklybackup.zip weeklybackup.tar.gz && 'rm' weeklybackup.tar.gz && 'rm' -r weeklybackup/
