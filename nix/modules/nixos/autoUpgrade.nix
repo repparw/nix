@@ -1,8 +1,8 @@
-{ inputs, ... }:
+{ ... }:
 {
   system.autoUpgrade = {
     enable = true;
-    flake = inputs.self.outPath;
+    flake = "github:repparw/dotfiles/nix";
     flags = [
       "--update-input"
       "nixpkgs"
