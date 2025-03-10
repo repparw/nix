@@ -21,12 +21,11 @@
       name = "git-autocommit";
       runtimeInputs = [ git ];
       text = ''
-        DIR=${"1:-/home/repparw/nix"}
-        cd "$DIR" || exit 1
-        git add -A
-        git commit -m "Autocommit"
-        git pull --rebase
-        git push
+        DIR=''${1:-/home/repparw/nix}
+        git -C "$DIR" add -A
+        git -C "$DIR" commit -m "Autocommit"
+        git -C "$DIR" pull --rebase
+        git -C "$DIR" push
       '';
     })
 

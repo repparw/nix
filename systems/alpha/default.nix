@@ -179,7 +179,7 @@
     serviceConfig = {
       Type = "simple";
       User = "root";
-      ExecStart = "${pkgs.logiops_0_2_3}/bin/logid";
+      ExecStart = "${pkgs.logiops}/bin/logid";
     };
 
   };
