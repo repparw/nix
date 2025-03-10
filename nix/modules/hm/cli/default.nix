@@ -7,6 +7,7 @@
   imports = [
     ./file-manager.nix
     ./nixvim
+    ./scripts.nix
     ./tmux.nix
     ./zsh.nix
   ];
