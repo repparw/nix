@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 {
   programs.zsh = {
     enable = true;
@@ -167,4 +167,5 @@
       ];
     };
   };
+  home.file."${config.programs.zsh.dotDir}/.p10k.zsh".source = ../../source/p10k.zsh;
 }
