@@ -21,7 +21,7 @@
       name = "git-autocommit";
       runtimeInputs = [ git ];
       text = ''
-        DIR=${"1:-/home/repparw/.dotfiles"}
+        DIR=${"1:-/home/repparw/nix"}
         cd "$DIR" || exit 1
         git add -A
         git commit -m "Autocommit"

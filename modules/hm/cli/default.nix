@@ -68,7 +68,7 @@
         };
         rerere.enabled = true;
         pull.rebase = true;
-        maintenance.repo = "/home/repparw/.dotfiles";
+        maintenance.repo = "/home/repparw/nix";
       };
     };
 

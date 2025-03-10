@@ -3,6 +3,11 @@
   ...
 }:
 {
+
+  imports = [
+    ./tridactyl.nix
+  ];
+
   programs.firefox = {
     enable = true;
 
