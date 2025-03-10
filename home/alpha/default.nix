@@ -1,4 +1,19 @@
 { pkgs, ... }:
+let
+  git-autocommit =
+    with pkgs;
+    writeShellApplication {
+      name = "git-autocommit";
+      runtimeInputs = [ git ];
+      text = ''
+        DIR=''${1:-/home/repparw/nix}
+        git -C "$DIR" add -A
+        git -C "$DIR" commit -m "Autocommit"
+        git -C "$DIR" pull --rebase
+        git -C "$DIR" push
+      '';
+    };
+in
 {
   imports = [
     ../../modules/hm/gaming.nix
@@ -15,10 +30,9 @@
   systemd.user.services.git-autocommit = {
     Service = {
       Type = "oneshot";
-      User = "repparw";
-      Group = "users";
-      ExecStart = [ "git-autocommit" ];
+      ExecStart = [ "${git-autocommit}/bin/git-autocommit" ];
     };
+
   };
 
   systemd.user.timers.git-autocommit = {
