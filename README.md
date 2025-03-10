@@ -1,7 +1,5 @@
 # Dotfiles
-clone repo to ~
-run stow .
-And it all should be set-up.
+clone repo to ~, get keys, build from flake
 
 ## Other things
 ssh privkey on rclone crypt

@@ -5,9 +5,9 @@
     ../../modules/hm/gui/obs.nix
   ];
 
+  services.jellyfin-mpv-shim.enable = true;
+
   home.packages = with pkgs; [
-    # Essential packages
-    jellyfin-mpv-shim
   ];
 
 }

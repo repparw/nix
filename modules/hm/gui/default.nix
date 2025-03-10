@@ -11,6 +11,7 @@
     ./spotify-player.nix
     ./spotifyd.nix
     ./zathura.nix
+    ./jellyfin-mpv-shim.nix
   ];
 
   home.packages =
