@@ -1,6 +1,7 @@
 {
   pkgs,
   stable,
+  config,
   ...
 }:
 {
@@ -18,7 +19,7 @@
     EDITOR = "nvim";
     VISUAL = "$EDITOR";
     YTFZF_ENABLE_FZF_DEFAULT_OPTS = 1;
-    ZSH_CACHE_DIR = "$XDG_CACHE_HOME/zsh";
+    ZSH_CACHE_DIR = "${config.xdg.cacheHome}/zsh";
   };
 
   programs = {
