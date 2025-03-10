@@ -1,7 +1,7 @@
 { ... }:
 {
 
-  home.file."~/.config/tridactyl/tridactylrc".text = ''
+  home.file.".config/tridactyl/tridactylrc".text = ''
       " General Settings
     set update.lastchecktime 1729971571332
     set update.nag true

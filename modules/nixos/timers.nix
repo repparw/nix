@@ -9,19 +9,6 @@
     };
   };
 
-  systemd.services.git-autocommit = {
-    path = [
-      pkgs.bashInteractive
-      pkgs.git
-      pkgs.openssh
-    ];
-    serviceConfig = {
-      Type = "oneshot";
-      User = "repparw";
-      ExecStart = [ "git-autocommit" ];
-    };
-  };
-
   systemd.services.rclone-sync = {
     serviceConfig = {
       Type = "oneshot";
@@ -46,14 +33,6 @@
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnCalendar = "03:00:00";
-      Persistent = true;
-    };
-  };
-
-  systemd.timers.git-autocommit = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "*:0/4";
       Persistent = true;
     };
   };
