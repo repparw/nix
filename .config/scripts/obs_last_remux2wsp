@@ -1,6 +1,0 @@
-#!/bin/sh
-
-cd /mnt/hdd/Videos/obs;
-FILE=$(ls -Art1 ${CURRENT_DIR} *.mkv | tail -n 1)
-ffmpeg -sseof -60 -i $FILE -vcodec libx264 -ac 1 -acodec copy -pix_fmt yuv420p "${FILE%.*}".mp4;
-

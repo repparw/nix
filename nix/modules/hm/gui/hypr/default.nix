@@ -42,8 +42,7 @@
       "$top" = "$terminal btm --theme gruvbox";
       "$fileManager" = "hdrop $terminal --class filemanager zsh -ic yazi";
       "$spotify" = "$terminal --class spotify spotify_player";
-      "$notes" =
-        "hdrop -c obsinvim '$terminal --class obsinvim zsh -ic /home/repparw/.config/scripts/obsinvim'";
+      "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim zsh -ic obsinvim'";
       "$notes2" = "hdrop -c obsidian 'obsidian'";
 
       # Autostart
@@ -181,14 +180,14 @@
         "$mod SHIFT, SPACE, exec, $browser2"
         "$mod, T, exec, $top"
         "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
-        "$mod, U, exec, ~/.config/scripts/update"
-        "$mod, V, exec, ~/.config/scripts/jelly"
-        "$mod, Z, exec, ~/.config/scripts/mpvclip"
+        "$mod, U, exec, update"
+        "$mod, V, exec, $kiosk jellyfin.repparw.me"
+        "$mod, Z, exec, mpvclip"
         "$mod, N, exec, $notes"
         "$mod SHIFT, N, exec, $notes2"
         "$mod, R, exec, $terminal zsh -ic rpi"
-        "$mod, B, exec, ~/.config/scripts/bttoggle"
-        "$mod, P, exec, scrcpy -S"
+        "$mod, B, exec, bttoggle"
+        "$mod, P, exec, scrcpy -e -S"
         #"$mod, P, exec, [monitor 1;workspace 2 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
 
         ", Print, exec, $screenshot active -m output ## Active monitor"
@@ -201,7 +200,7 @@
         # Macropad churro
         "CTRL ALT SHIFT, A, exec, hdrop steam"
         "CTRL ALT SHIFT, B, exec, obs-cmd recording toggle-pause"
-        "CTRL ALT SHIFT, C, exec, ~/.config/scripts/obs_last_remux2wsp"
+        "CTRL ALT SHIFT, C, exec, obs_remux2wsp"
         "CTRL ALT SHIFT, D, exec, obs-cmd replay save"
         "CTRL ALT SHIFT, E, exec, hdrop $discord"
         "CTRL ALT SHIFT, F, exec, wpctl set-source-mute @DEFAULT_SOURCE@ toggle"
