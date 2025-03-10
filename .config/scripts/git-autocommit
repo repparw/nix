@@ -1,7 +1,0 @@
-#!usr/bin/env bash
-DIR=${1:-/home/repparw/.dotfiles}  # Use provided directory or default to .dotfiles
-cd "$DIR" || exit 1
-git add -A
-git commit -m "Autocommit"
-git pull --rebase
-git push

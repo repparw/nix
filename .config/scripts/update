@@ -1,2 +1,0 @@
-#!/bin/sh
-kitty --hold zsh -c " nh os switch -u"

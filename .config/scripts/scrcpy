@@ -1,3 +1,0 @@
-#!/bin/sh
-export SDL_VIDEODRIVER=x11
-scrcpy -e -S
