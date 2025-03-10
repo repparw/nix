@@ -18,18 +18,6 @@
     })
 
     (writeShellApplication {
-      name = "git-autocommit";
-      runtimeInputs = [ git ];
-      text = ''
-        DIR=''${1:-/home/repparw/nix}
-        git -C "$DIR" add -A
-        git -C "$DIR" commit -m "Autocommit"
-        git -C "$DIR" pull --rebase
-        git -C "$DIR" push
-      '';
-    })
-
-    (writeShellApplication {
       name = "mpvclip";
       runtimeInputs = [
         tmux
