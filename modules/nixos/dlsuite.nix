@@ -159,6 +159,22 @@
         "--network=dlsuite"
       ];
     };
+    "linkding" = {
+      image = "docker.io/sissbruecker/linkding:latest";
+      environment = {
+        "PGID" = "131";
+        "PUID" = "1001";
+        "TZ" = "America/Argentina/Buenos_Aires";
+      };
+      volumes = [
+        "/home/docker/linkding:/etc/linkding/data:rw,Z"
+      ];
+      log-driver = "journald";
+      extraOptions = [
+        "--network-alias=linkding"
+        "--network=dlsuite"
+      ];
+    };
     "jellyfin" = {
       image = "docker.io/linuxserver/jellyfin:latest";
       environment = {
