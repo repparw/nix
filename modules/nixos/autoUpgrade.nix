@@ -2,7 +2,7 @@
 {
   system.autoUpgrade = {
     enable = true;
-    flake = "github:repparw/dotfiles/nix";
+    flake = "github:repparw/nix";
     flags = [
       "--update-input"
       "nixpkgs"
