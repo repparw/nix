@@ -1,10 +1,10 @@
-{ boot, config, ... }:
+{ config, ... }:
 {
   hardware.xpadneo.enable = true;
 
   boot = {
     extraModulePackages = with config.boot.kernelPackages; [ xpadneo ];
-    extraModProbeConfig = ''
+    extraModprobeConfig = ''
       	  options bluetooth disable_ertm=Y
       	'';
   };
