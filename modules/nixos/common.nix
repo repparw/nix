@@ -128,8 +128,11 @@
       powerOnBoot = true;
       settings = {
         General = {
+          experimental = true; # show battery
           Privacy = "device";
-          JustWorksRepairing = "confirm";
+          JustWorksRepairing = "always";
+          Class = "0x000100";
+          FastConnectable = true;
         };
       };
     };
