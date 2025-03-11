@@ -1,6 +1,13 @@
-{ ... }:
+{ boot, config, ... }:
 {
   hardware.xpadneo.enable = true;
+
+  boot = {
+    extraModulePackages = with config.boot.kernelPackages; [ xpadneo ];
+    extraModProbeConfig = ''
+      	  options bluetooth disable_ertm=Y
+      	'';
+  };
 
   programs = {
     steam = {
