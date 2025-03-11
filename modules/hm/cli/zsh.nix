@@ -76,8 +76,7 @@
       vn = "v ~/.config/nvim/init.lua";
 
       # Nix
-      nrb = "nh os switch";
-      nrbt = "nh os boot";
+      nrs = "nh os switch";
       nup = "nh os switch -u";
       nupt = "nh os boot -u";
 
