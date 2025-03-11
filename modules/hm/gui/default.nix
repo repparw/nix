@@ -21,7 +21,6 @@
       vesktop
       pwvucontrol
       scrcpy
-      logiops
 
       obsidian
 
