@@ -7,10 +7,8 @@
       pname = "odin4";
       version = "4";
 
-      src = pkgs.fetchFromGitHub {
-        owner = "Adrilaw";
-        repo = "OdinV4";
-        rev = "4bdaf86";
+      src = pkgs.fetchzip {
+        url = "https://github.com/Adrilaw/OdinV4/releases/download/v1.0/odin.zip";
         hash = "sha256-ECuMA6EPfbL96U5But0rz8KeAzizGKOsDG7NO1lbkJc=";
       };
 
