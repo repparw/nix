@@ -15,7 +15,8 @@
       nativeBuildInputs = [ pkgs.autoPatchelfHook ];
 
       installPhase = ''
-        install -m755 -D odin4 $out/bin/odin
+        runHook preInstall
+        install -m755 -D odin4 $out/bin/odin4
       '';
     })
 
