@@ -9,7 +9,7 @@
 
       src = pkgs.fetchzip {
         url = "https://github.com/Adrilaw/OdinV4/releases/download/v1.0/odin.zip";
-        hash = "sha256-ECuMA6EPfbL96U5But0rz8KeAzizGKOsDG7NO1lbkJc=";
+        hash = "sha256-1mf618b94sr3ian0nm3n22pswc10gw1kf35ns01kfjpylqgd6ijb";
       };
 
       nativeBuildInputs = [ pkgs.autoPatchelfHook ];
