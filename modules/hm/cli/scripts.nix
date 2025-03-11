@@ -1,6 +1,25 @@
 { pkgs, ... }:
 {
 
+stdenv.mkDerivation rec {
+  pname = "odin";
+  version = "4";
+
+          src = pkgs.fetchFromGitHub {
+            owner = "Adrilaw";
+            repo = "OdinV4";
+            rev = "4bdaf86";
+            hash = "sha256-FMzdN+xEejjZfmQ65q7sK9sRbSoK/bZYtcaEPgeDGBc=";
+          };
+
+  nativeBuildInputs = [ autoPatchelfHook ];
+
+  sourceRoot = ".";
+
+  installPhase = ''
+    install -m755 -D odin4 $out/bin/odin
+  '';
+}
   home.packages = with pkgs; [
 
     (writeShellApplication {
