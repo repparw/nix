@@ -9,12 +9,10 @@
 
       src = pkgs.fetchzip {
         url = "https://github.com/Adrilaw/OdinV4/releases/download/v1.0/odin.zip";
-        hash = "sha256-1mf618b94sr3ian0nm3n22pswc10gw1kf35ns01kfjpylqgd6ijb";
+        hash = "sha256-SoznK53UD/vblqeXBLRlkokaLJwhMZy7wqKufR0I8hI=";
       };
 
       nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-
-      sourceRoot = ".";
 
       installPhase = ''
         install -m755 -D odin4 $out/bin/odin
