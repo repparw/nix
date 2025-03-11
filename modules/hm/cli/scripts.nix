@@ -1,26 +1,27 @@
 { pkgs, ... }:
 {
 
-stdenv.mkDerivation rec {
-  pname = "odin";
-  version = "4";
-
-          src = pkgs.fetchFromGitHub {
-            owner = "Adrilaw";
-            repo = "OdinV4";
-            rev = "4bdaf86";
-            hash = "sha256-FMzdN+xEejjZfmQ65q7sK9sRbSoK/bZYtcaEPgeDGBc=";
-          };
-
-  nativeBuildInputs = [ autoPatchelfHook ];
-
-  sourceRoot = ".";
-
-  installPhase = ''
-    install -m755 -D odin4 $out/bin/odin
-  '';
-}
   home.packages = with pkgs; [
+
+    (stdenv.mkDerivation {
+      pname = "odin4";
+      version = "4";
+
+      src = pkgs.fetchFromGitHub {
+        owner = "Adrilaw";
+        repo = "OdinV4";
+        rev = "4bdaf86";
+        hash = "sha256-ECuMA6EPfbL96U5But0rz8KeAzizGKOsDG7NO1lbkJc=";
+      };
+
+      nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+
+      sourceRoot = ".";
+
+      installPhase = ''
+        install -m755 -D odin4 $out/bin/odin
+      '';
+    })
 
     (writeShellApplication {
       name = "bttoggle";
