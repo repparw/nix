@@ -37,7 +37,10 @@
 
   # Nerdfonts
   fonts = {
-    packages = with pkgs.nerd-fonts; [ fira-code ];
+    packages = with pkgs; [
+      fira-code
+      nerd-fonts.fira-code
+    ];
 
     # Set default font
     fontconfig.defaultFonts = {
