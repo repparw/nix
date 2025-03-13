@@ -172,18 +172,6 @@
 
   #### FSTAB
 
-  systemd.services.logid = {
-    wants = [ "multi-user.target" ];
-    after = [ "multi-user.target" ];
-    wantedBy = [ "graphical.target" ];
-    serviceConfig = {
-      Type = "simple";
-      User = "root";
-      ExecStart = "${pkgs.logiops}/bin/logid";
-    };
-
-  };
-
   services.sunshine = {
     enable = false; # TODO use sunshine when moving pc to Moque
     capSysAdmin = true;
