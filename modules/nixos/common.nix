@@ -138,8 +138,14 @@
     };
   };
 
+  systemd.services.logid = {
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${pkgs.logiops}/bin/logid";
+    };
+  };
+
   environment.etc = {
-    # Creates /etc/nanorc
     "logid.cfg" = {
       text = ''
         devices: (
