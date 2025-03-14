@@ -10,8 +10,6 @@
     wshowkeys
     wl-clipboard
 
-    nautilus
-
     tesseract # ocr
     zbar # qr
 
