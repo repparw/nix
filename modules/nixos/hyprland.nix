@@ -6,10 +6,6 @@
     enable = true;
   };
 
-  environment.systemPackages = with pkgs; [
-    nautilus
-  ];
-
   services.greetd = {
     enable = true;
     vt = 1;
