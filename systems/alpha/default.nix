@@ -9,8 +9,9 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ../../modules/nixos/timers.nix
-    ../../modules/nixos/gaming.nix
   ];
+
+  modules.gaming.enable = true;
 
   programs.obs-studio.enable = true;
 

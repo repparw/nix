@@ -1,26 +1,34 @@
-{ config, ... }:
+{ config, lib, ... }:
+let
+  cfg = config.modules.gaming;
+in
 {
-  hardware.xpadneo.enable = true;
-
-  boot = {
-    extraModulePackages = with config.boot.kernelPackages; [ xpadneo ];
-    extraModprobeConfig = ''
-      	  options bluetooth disable_ertm=Y
-      	'';
+  options.modules.gaming = {
+    enable = lib.mkEnableOption "gaming setup";
   };
 
-  programs = {
-    steam = {
-      enable = true;
-      remotePlay.openFirewall = true;
-      gamescopeSession.enable = true;
-      localNetworkGameTransfers.openFirewall = true;
+  config = lib.mkIf cfg.enable {
+    hardware.xpadneo.enable = true;
+
+    boot = {
+      extraModulePackages = with config.boot.kernelPackages; [ xpadneo ];
+      extraModprobeConfig = ''
+        	  options bluetooth disable_ertm=Y
+        	'';
     };
 
-    gamescope = {
-      enable = true;
-      capSysNice = true;
+    programs = {
+      steam = {
+        enable = true;
+        remotePlay.openFirewall = true;
+        gamescopeSession.enable = true;
+        localNetworkGameTransfers.openFirewall = true;
+      };
+
+      gamescope = {
+        enable = true;
+        capSysNice = true;
+      };
     };
   };
-
 }
