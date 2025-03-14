@@ -27,7 +27,7 @@
       "$browser2" = "chromium-browser";
       "$discord" = "vesktop";
       "$GUIfileManager" = "nautilus";
-      "$pomodoro" = "pomatez";
+      #"$pomodoro" = "pomatez";
       "$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
       "$screenshot" = "hyprshot -o $XDG_SCREENSHOTS_DIR -m";
       "$desktopmenu" = "killall tofi-drun || tofi-drun";
@@ -231,10 +231,6 @@
         "$mod, 9, split:workspace, 9"
         "$mod, 0, split:workspace, 10"
 
-        # Example special workspace (scratchpad)
-        "$mod, S, togglespecialworkspace, magic"
-        "$mod SHIFT, S, movetoworkspace, special:magic"
-
         # Scroll through monitor active workspaces with mainMod + scroll
         "$mod, mouse_down, split:workspace, m+1"
         "$mod, mouse_up, split:workspace, m-1"
@@ -253,8 +249,6 @@
 
         "noborder, onworkspace:w[t1]"
 
-        "suppressevent maximize, class:.*"
-
         "nodim, class:^(cs2)$"
         "noblur, class:^(cs2)$"
         "maximize, class:^(cs2)$"
@@ -265,7 +259,6 @@
         "move 100%-w-25 100%-w-0, title:^(Picture-in-Picture|Picture in picture)$"
         "size 400 225, title:^(Picture-in-Picture|Picture in picture)$"
         "pin, title:^(Picture-in-Picture|Picture in picture)$"
-
       ];
 
     };
