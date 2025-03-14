@@ -5,10 +5,6 @@
   ...
 }:
 {
-  age.secrets.vikunja = {
-    file = ../../secrets/vikunja.age;
-  };
-
   # Runtime
   virtualisation.docker = {
     enable = true;
@@ -392,47 +388,6 @@
         "--network=dlsuite"
       ];
     };
-    "vikunja" = {
-      image = "docker.io/vikunja/vikunja:latest";
-      environment = {
-        "VIKUNJA_SERVICE_TIMEZONE" = "America/Argentina/Buenos_Aires";
-        "VIKUNJA_SERVICE_PUBLICURL" = "https://todo.repparw.me";
-        "VIKUNJA_CORS_ENABLE" = "true";
-        "VIKUNJA_DATABASE_HOST" = "vikunjadb";
-        "VIKUNJA_DATABASE_TYPE" = "postgres";
-        "VIKUNJA_DATABASE_PASSWORD" = "vikunja";
-        "VIKUNJA_SERVICE_JWTSECRET_FILE" = "/secrets/jwt";
-      };
-      volumes = [
-        "/home/docker/vikunja/files:/app/vikunja/files:rw,Z"
-        "${config.age.secrets.vikunja.path}:/secrets/jwt:ro"
-      ];
-      dependsOn = [
-        "vikunjadb"
-      ];
-      log-driver = "journald";
-      extraOptions = [
-        "--network-alias=vikunja"
-        "--network=dlsuite"
-      ];
-    };
-    "vikunjadb" = {
-      image = "postgres:17";
-      environment = {
-        "POSTGRES_USER" = "vikunja";
-        "POSTGRES_PASSWORD" = "vikunja";
-      };
-      volumes = [
-        "/home/docker/vikunja/db:/var/lib/postgresql/data:rw,Z"
-      ];
-      log-driver = "journald";
-      extraOptions = [
-        "--health-cmd=pg_isready -h localhost -U $$POSTGRES_USER"
-        "--health-interval=2s"
-        "--network-alias=vikunjadb"
-        "--network=dlsuite"
-      ];
-    };
   };
   # Services
   systemd.services =
@@ -457,8 +412,6 @@
         "sonarr"
         "swag"
         "valkey"
-        "vikunja"
-        "vikunjadb"
       ];
 
       mkSystemService = suffix: {
