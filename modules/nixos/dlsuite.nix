@@ -15,7 +15,7 @@ in
 
     dataDir = mkOption {
       type = types.path;
-      default = "${cfg.dataDir}";
+      default = "/home/docker";
       description = "Directory to store container data";
     };
 
@@ -147,7 +147,7 @@ in
       "diun" = {
         image = "docker.io/crazymax/diun:latest";
         environment = {
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "TZ" = cfg.timezone;
           "DIUN_WATCH_WORKERS" = "20";
           "DIUN_WATCH_SCHEDULE" = "@every 12h";
           "DIUN_PROVIDERS_DOCKER" = "true";
@@ -170,7 +170,7 @@ in
           "CAPTCHA_SOLVER" = "none";
           "LOG_HTML" = "false";
           "LOG_LEVEL" = "info";
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "TZ" = cfg.timezone;
         };
         log-driver = "journald";
         extraOptions = [
@@ -252,7 +252,7 @@ in
           "PAPERLESS_LOGOUT_REDIRECT_URL" = "https://auth.${cfg.domain}/logout";
           "PAPERLESS_OCR_LANGUAGE" = "spa";
           "PAPERLESS_REDIS" = "redis://broker:6379";
-          "PAPERLESS_TIME_ZONE" = "America/Argentina/Buenos_Aires";
+          "PAPERLESS_TIME_ZONE" = cfg.timezone;
           "PAPERLESS_URL" = "https://paper.${cfg.domain}";
           "USERMAP_GID" = cfg.group;
           "USERMAP_UID" = cfg.user;
@@ -302,9 +302,9 @@ in
       "prowlarr" = {
         image = "docker.io/linuxserver/prowlarr:latest";
         environment = {
-          "PGID" = "131";
-          "PUID" = "1001";
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "PGID" = cfg.group;
+          "PUID" = cfg.user;
+          "TZ" = cfg.timezone;
         };
         volumes = [
           "${cfg.dataDir}/prowlarr:/config:rw,Z"
@@ -318,9 +318,9 @@ in
       "qbittorrent" = {
         image = "docker.io/hotio/qbittorrent:latest";
         environment = {
-          "PGID" = "131";
-          "PUID" = "1001";
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "PGID" = cfg.group;
+          "PUID" = cfg.user;
+          "TZ" = cfg.timezone;
         };
         volumes = [
           "${cfg.dataDir}/data/torrents:/data/torrents:rw,z"
@@ -338,9 +338,9 @@ in
       "radarr" = {
         image = "docker.io/linuxserver/radarr:latest";
         environment = {
-          "PGID" = "131";
-          "PUID" = "1001";
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "PGID" = cfg.group;
+          "PUID" = cfg.user;
+          "TZ" = cfg.timezone;
         };
         volumes = [
           "${cfg.dataDir}/data/:/data:rw,z"
@@ -358,9 +358,9 @@ in
       "sonarr" = {
         image = "docker.io/linuxserver/sonarr:latest";
         environment = {
-          "PGID" = "131";
-          "PUID" = "1001";
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "PGID" = cfg.group;
+          "PUID" = cfg.user;
+          "TZ" = cfg.timezone;
         };
         volumes = [
           "/dev/rtc:/dev/rtc:ro"
@@ -380,10 +380,10 @@ in
         image = "docker.io/linuxserver/swag:latest";
         environment = {
           "DNSPLUGIN" = "cloudflare";
-          "PGID" = "131";
-          "PUID" = "1001";
+          "PGID" = cfg.group;
+          "PUID" = cfg.user;
+          "TZ" = cfg.timezone;
           "SUBDOMAINS" = "wildcard";
-          "TZ" = "America/Argentina/Buenos_Aires";
           "URL" = cfg.domain;
           "VALIDATION" = "dns";
         };
@@ -406,9 +406,9 @@ in
       "valkey" = {
         image = "docker.io/valkey/valkey:7.2-alpine";
         environment = {
-          "PGID" = "131";
-          "PUID" = "1001";
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "PGID" = cfg.group;
+          "PUID" = cfg.user;
+          "TZ" = cfg.timezone;
         };
         volumes = [
           "${cfg.dataDir}/authelia/valkey:/data:rw,Z"

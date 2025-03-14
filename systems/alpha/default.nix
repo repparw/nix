@@ -8,11 +8,12 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
-    ../../modules/nixos/dlsuite.nix
     ../../modules/nixos/timers.nix
     ../../modules/nixos/gaming.nix
     ../../modules/nixos/obs.nix
   ];
+
+  services.dlsuite.enable = true;
 
   networking.hostName = "alpha"; # Define your hostname.
 
