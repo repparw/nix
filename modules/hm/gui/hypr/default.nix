@@ -228,7 +228,7 @@
       ];
 
       workspace = [
-        "1, on-created-empty"
+        "1, on-created-empty:$browser"
       ];
 
       windowrulev2 = [
