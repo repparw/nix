@@ -56,20 +56,17 @@
 
         border_size = "1";
 
-        # https://wiki.hyprland.org/Configuring/Variables/#variable-types for info about colors
         "col.active_border" = "rgba(D4BE98FF)";
         "col.inactive_border" = "rgba(ebdbb211)";
 
         # Set to true enable resizing windows by clicking and dragging on borders and gaps
         resize_on_border = "false";
 
-        # Please see https://wiki.hyprland.org/Configuring/Tearing/ before you turn this on
         allow_tearing = "false";
 
         layout = "dwindle";
       };
 
-      # https://wiki.hyprland.org/Configuring/Variables/#decoration
       decoration = {
         rounding = "14";
         dim_inactive = "true";
@@ -81,7 +78,6 @@
         # the more passes, the more you can up the blur_size without noticing artifacts.
       };
 
-      # https://wiki.hyprland.org/Configuring/Variables/#animations
       animations = {
         enabled = true;
 
@@ -99,15 +95,11 @@
         ];
       };
 
-      # See https://wiki.hyprland.org/Configuring/Dwindle-Layout/ for more
       dwindle = {
         pseudotile = "true"; # Master switch for pseudotiling. Enabling is bound to mainMod + P in the keybinds section below
         preserve_split = "true"; # You probably want this
       };
 
-      # See https://wiki.hyprland.org/Configuring/Master-Layout/ for more
-
-      # https://wiki.hyprland.org/Configuring/Variables/#misc
       misc = {
         force_default_wallpaper = "0";
         disable_hyprland_logo = "true";
