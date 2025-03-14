@@ -15,7 +15,7 @@ in
 
     dataDir = mkOption {
       type = types.path;
-      default = "/home/docker";
+      default = "${cfg.dataDir}";
       description = "Directory to store container data";
     };
 
@@ -33,13 +33,13 @@ in
 
     user = mkOption {
       type = types.str;
-      default = "docker";
+      default = "1001";
       description = "User to run containers as";
     };
 
     group = mkOption {
       type = types.str;
-      default = "docker";
+      default = "131";
       description = "Group to run containers as";
     };
   };
@@ -60,13 +60,13 @@ in
           "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
           "AUTHELIA_SESSION_SECRET_FILE" = "/secrets/SESSION_SECRET";
           "AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE" = "/secrets/STORAGE_ENCRYPTION_KEY";
-          "PGID" = "131";
-          "PUID" = "1001";
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "PGID" = cfg.group;
+          "PUID" = cfg.user;
+          "TZ" = cfg.timezone;
         };
         volumes = [
-          "/home/docker/authelia/config:/config:rw,Z"
-          "/home/docker/authelia/secrets:/secrets:rw,Z"
+          "${cfg.dataDir}/authelia/config:/config:rw,Z"
+          "${cfg.dataDir}/authelia/secrets:/secrets:rw,Z"
         ];
         dependsOn = [
           "valkey"
@@ -80,13 +80,13 @@ in
       "bazarr" = {
         image = "docker.io/linuxserver/bazarr:latest";
         environment = {
-          "PGID" = "131";
-          "PUID" = "1001";
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "PGID" = cfg.group;
+          "PUID" = cfg.user;
+          "TZ" = cfg.timezone;
         };
         volumes = [
-          "/home/docker/bazarr:/config:rw,Z"
-          "/home/docker/data:/data:rw,z"
+          "${cfg.dataDir}/bazarr:/config:rw,Z"
+          "${cfg.dataDir}/data:/data:rw,z"
         ];
         log-driver = "journald";
         extraOptions = [
@@ -97,7 +97,7 @@ in
       "broker" = {
         image = "docker.io/library/redis:7";
         volumes = [
-          "/home/docker/paper/redis:/data:rw,Z"
+          "${cfg.dataDir}/paper/redis:/data:rw,Z"
         ];
         log-driver = "journald";
         extraOptions = [
@@ -110,7 +110,7 @@ in
         environment = {
           "BASE_URL" = "https://repparw.me";
           "HIDE_REFERER" = "true";
-          "PGID" = "131";
+          "PGID" = cfg.group;
           "PLAYWRIGHT_DRIVER_URL" = "ws://playwright:3000";
           "PORT" = "5000";
           "PUID" = "1001";
@@ -131,12 +131,12 @@ in
       "ddclient" = {
         image = "docker.io/linuxserver/ddclient:latest";
         environment = {
-          "PGID" = "131";
-          "PUID" = "1001";
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "PGID" = cfg.group;
+          "PUID" = cfg.user;
+          "TZ" = cfg.timezone;
         };
         volumes = [
-          "/home/docker/ddclient:/config:rw,Z"
+          "${cfg.dataDir}/ddclient:/config:rw,Z"
         ];
         log-driver = "journald";
         extraOptions = [
@@ -155,7 +155,7 @@ in
           "DIUN_NOTIF_DISCORD_WEBHOOKURLFILE" = "/data/discord-webhook-url";
         };
         volumes = [
-          "/home/docker/diun:/data:rw,Z"
+          "${cfg.dataDir}/diun:/data:rw,Z"
           "/var/run/docker.sock:/var/run/docker.sock:ro"
         ];
         log-driver = "journald";
@@ -181,12 +181,12 @@ in
       "freshrss" = {
         image = "docker.io/linuxserver/freshrss:latest";
         environment = {
-          "PGID" = "131";
-          "PUID" = "1001";
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "PGID" = cfg.group;
+          "PUID" = cfg.user;
+          "TZ" = cfg.timezone;
         };
         volumes = [
-          "/home/docker/freshrss:/config:rw,Z"
+          "${cfg.dataDir}/freshrss:/config:rw,Z"
         ];
         log-driver = "journald";
         extraOptions = [
@@ -198,14 +198,14 @@ in
         image = "docker.io/linuxserver/jellyfin:latest";
         environment = {
           "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
-          "JELLYFIN_PublishedServerUrl" = "jellyfin.repparw.me";
-          "PGID" = "131";
-          "PUID" = "1001";
-          "TZ" = "America/Argentina/Buenos_Aires";
+          "JELLYFIN_PublishedServerUrl" = "jellyfin.${cfg.domain}";
+          "PGID" = cfg.group;
+          "PUID" = cfg.user;
+          "TZ" = cfg.timezone;
         };
         volumes = [
-          "/home/docker/data/media:/data/media:ro"
-          "/home/docker/jellyfin:/config:rw,Z"
+          "${cfg.dataDir}/data/media:/data/media:ro"
+          "${cfg.dataDir}/jellyfin:/config:rw,Z"
         ];
         ports = [
           "127.0.0.1:8920:8920/tcp"
@@ -234,7 +234,7 @@ in
           "POSTGRES_USER" = "paperless";
         };
         volumes = [
-          "/home/docker/paper/pg:/var/lib/postgresql/data:rw,Z"
+          "${cfg.dataDir}/paper/pg:/var/lib/postgresql/data:rw,Z"
         ];
         log-driver = "journald";
         extraOptions = [
@@ -249,18 +249,18 @@ in
           "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
           "PAPERLESS_ENABLE_HTTP_REMOTE_USER" = "true";
           "PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME" = "HTTP_REMOTE_USER";
-          "PAPERLESS_LOGOUT_REDIRECT_URL" = "https://auth.repparw.me/logout";
+          "PAPERLESS_LOGOUT_REDIRECT_URL" = "https://auth.${cfg.domain}/logout";
           "PAPERLESS_OCR_LANGUAGE" = "spa";
           "PAPERLESS_REDIS" = "redis://broker:6379";
           "PAPERLESS_TIME_ZONE" = "America/Argentina/Buenos_Aires";
-          "PAPERLESS_URL" = "https://paper.repparw.me";
+          "PAPERLESS_URL" = "https://paper.${cfg.domain}";
           "USERMAP_GID" = "131";
           "USERMAP_UID" = "1001";
         };
         volumes = [
-          "/home/docker/paper/data:/usr/src/paperless/data:rw,Z"
-          "/home/docker/paper/export:/usr/src/paperless/export:rw,Z"
-          "/home/docker/paper/media:/usr/src/paperless/media:rw,Z"
+          "${cfg.dataDir}/paper/data:/usr/src/paperless/data:rw,Z"
+          "${cfg.dataDir}/paper/export:/usr/src/paperless/export:rw,Z"
+          "${cfg.dataDir}/paper/media:/usr/src/paperless/media:rw,Z"
           "/home/repparw/Documents/consume:/usr/src/paperless/consume:rw,Z"
         ];
         dependsOn = [
@@ -307,7 +307,7 @@ in
           "TZ" = "America/Argentina/Buenos_Aires";
         };
         volumes = [
-          "/home/docker/prowlarr:/config:rw,Z"
+          "${cfg.dataDir}/prowlarr:/config:rw,Z"
         ];
         log-driver = "journald";
         extraOptions = [
@@ -323,8 +323,8 @@ in
           "TZ" = "America/Argentina/Buenos_Aires";
         };
         volumes = [
-          "/home/docker/data/torrents:/data/torrents:rw,z"
-          "/home/docker/qbittorrent:/config:rw,Z"
+          "${cfg.dataDir}/data/torrents:/data/torrents:rw,z"
+          "${cfg.dataDir}/qbittorrent:/config:rw,Z"
         ];
         ports = [
           "127.0.0.1:54536:54536/tcp"
@@ -343,8 +343,8 @@ in
           "TZ" = "America/Argentina/Buenos_Aires";
         };
         volumes = [
-          "/home/docker/data/:/data:rw,z"
-          "/home/docker/radarr:/config:rw,Z"
+          "${cfg.dataDir}/data/:/data:rw,z"
+          "${cfg.dataDir}/radarr:/config:rw,Z"
         ];
         dependsOn = [
           "qbittorrent"
@@ -364,8 +364,8 @@ in
         };
         volumes = [
           "/dev/rtc:/dev/rtc:ro"
-          "/home/docker/data:/data:rw,z"
-          "/home/docker/sonarr:/config:rw,Z"
+          "${cfg.dataDir}/data:/data:rw,z"
+          "${cfg.dataDir}/sonarr:/config:rw,Z"
         ];
         dependsOn = [
           "qbittorrent"
@@ -388,7 +388,7 @@ in
           "VALIDATION" = "dns";
         };
         volumes = [
-          "/home/docker/swag:/config:rw,Z"
+          "${cfg.dataDir}/swag:/config:rw,Z"
           "/home/repparw/git/homepage:/config/www:rw,Z"
         ];
         ports = [
@@ -411,7 +411,7 @@ in
           "TZ" = "America/Argentina/Buenos_Aires";
         };
         volumes = [
-          "/home/docker/authelia/valkey:/data:rw,Z"
+          "${cfg.dataDir}/authelia/valkey:/data:rw,Z"
         ];
         cmd = [
           "valkey-server"
