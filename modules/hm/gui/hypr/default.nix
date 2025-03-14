@@ -115,8 +115,6 @@
         key_press_enables_dpms = true; # mouse_move is false by default
       };
 
-      ## keybinds
-
       input = {
         kb_layout = "us";
         kb_variant = "altgr-intl";
