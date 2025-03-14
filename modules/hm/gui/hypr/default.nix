@@ -155,14 +155,11 @@
 
         "$mod, X, focusmonitor,+1 "
         "SHIFT $mod, X, movewindow,mon:+1"
-        "$mod, comma, movecurrentworkspacetomonitor,l" # rm if hyprsplit
-        "$mod, period, movecurrentworkspacetomonitor,r"
 
         # Scroll through monitor active workspaces with mainMod + scroll
         "$mod, C, workspace, m+1"
-        "$mod SHIFT, C, workspace, previous_per_monitor"
-
         ", mouse:276, workspace, m+1"
+        "$mod SHIFT, C, workspace, previous_per_monitor"
 
         "$mod, RETURN, exec, $terminal"
         "$mod, W, killactive,"
