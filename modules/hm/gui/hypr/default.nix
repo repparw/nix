@@ -163,7 +163,6 @@
         "$mod ALT, F, togglefloating"
         "$mod SHIFT, E, exec, $GUIfileManager"
         "$mod, SPACE, exec, $browser"
-        "$mod ALT, SPACE, exec, $socials"
         "$mod SHIFT, SPACE, exec, $browser2"
         "$mod, T, exec, $top"
         "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
@@ -226,6 +225,10 @@
         # Scroll through monitor active workspaces with mainMod + scroll
         "$mod, mouse_down, split:workspace, m+1"
         "$mod, mouse_up, split:workspace, m-1"
+      ];
+
+      workspace = [
+        "1, on-created-empty"
       ];
 
       windowrulev2 = [
