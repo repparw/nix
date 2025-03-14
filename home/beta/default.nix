@@ -1,8 +1,6 @@
 { pkgs, ... }:
 {
-  imports = [
-    ../../modules/hm/kanshi.nix # Dynamic display
-  ];
+  services.kanshi.enable = true;
 
   # Let Home Manager install and manage itself.
 
