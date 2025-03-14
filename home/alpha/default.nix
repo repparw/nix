@@ -15,10 +15,6 @@ let
     };
 in
 {
-  imports = [
-    ../../modules/hm/gaming.nix
-  ];
-
   services.spotifyd.enable = true;
 
   services.jellyfin-mpv-shim.enable = true;
