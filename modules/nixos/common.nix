@@ -10,6 +10,8 @@
 
   imports = [
     ./dlsuite.nix
+    ./hyprland.nix
+    ./autoUpgrade.nix
   ];
 
   boot.loader = {

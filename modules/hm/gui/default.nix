@@ -14,6 +14,7 @@
     ./zathura.nix
     ./jellyfin-mpv-shim.nix
     ./obs.nix
+    ./kanshi.nix
   ];
 
   home.packages =

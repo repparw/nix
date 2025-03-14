@@ -10,8 +10,9 @@
     ./hardware-configuration.nix
     ../../modules/nixos/timers.nix
     ../../modules/nixos/gaming.nix
-    ../../modules/nixos/obs.nix
   ];
+
+  programs.obs-studio.enable = true;
 
   services.dlsuite.enable = true;
 
