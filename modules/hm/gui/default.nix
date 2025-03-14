@@ -13,6 +13,7 @@
     ./spotifyd.nix
     ./zathura.nix
     ./jellyfin-mpv-shim.nix
+    ./obs.nix
   ];
 
   home.packages =
