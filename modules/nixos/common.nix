@@ -9,9 +9,11 @@
 {
 
   imports = [
-    ./dlsuite.nix
-    ./hyprland.nix
     ./autoUpgrade.nix
+    ./dlsuite.nix
+    ./gaming.nix
+    ./hyprland.nix
+    ./obs.nix
   ];
 
   boot.loader = {
