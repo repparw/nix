@@ -183,7 +183,7 @@
         "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy ## OCR"
         "$mod, Q, exec, wl-paste --type image/png | zbarimg --raw - | wl-copy ## OCR"
 
-        # Macropad churro
+        # Macropad churrosoft
         "CTRL ALT SHIFT, A, exec, hdrop steam"
         "CTRL ALT SHIFT, B, exec, obs-cmd recording toggle-pause"
         "CTRL ALT SHIFT, C, exec, obs_remux2wsp"
@@ -210,17 +210,6 @@
         "$mod SHIFT, J, movewindow, d"
         "$mod SHIFT, K, movewindow, u"
         "$mod SHIFT, L, movewindow, r"
-
-        "$mod, 1, split:workspace, 1"
-        "$mod, 2, split:workspace, 2"
-        "$mod, 3, split:workspace, 3"
-        "$mod, 4, split:workspace, 4"
-        "$mod, 5, split:workspace, 5"
-        "$mod, 6, split:workspace, 6"
-        "$mod, 7, split:workspace, 7"
-        "$mod, 8, split:workspace, 8"
-        "$mod, 9, split:workspace, 9"
-        "$mod, 0, split:workspace, 10"
 
         # Scroll through monitor active workspaces with mainMod + scroll
         "$mod, mouse_down, split:workspace, m+1"
