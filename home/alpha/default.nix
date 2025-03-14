@@ -17,7 +17,6 @@ in
 {
   imports = [
     ../../modules/hm/gaming.nix
-    ../../modules/hm/gui/obs.nix
   ];
 
   services.spotifyd.enable = true;
