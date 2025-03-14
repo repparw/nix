@@ -49,7 +49,7 @@
             owner = "jaclu";
             repo = "tmux-power-zoom";
             rev = "84b8e3d";
-            hash = "sha256-0rzv5na3w05a9byik68bi2vby8xhcbzfsvz0880gq09cwz0vgrzc";
+            hash = "sha256-IddpiE3ZLIRk14O90Ovpc+mbj+74nNtwMhYIci4FLSI=";
           };
         };
         extraConfig = ''
