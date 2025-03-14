@@ -7,6 +7,7 @@
 {
   imports = [
     ./firefox.nix
+    ./gaming.nix
     ./hypr
     ./mpv.nix
     ./spotify-player.nix
