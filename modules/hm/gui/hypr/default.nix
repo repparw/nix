@@ -218,6 +218,8 @@
 
       workspace = [
         "1, on-created-empty:$browser"
+        "w[tv1], gapsout:0, gapsin:0"
+        "f[1], gapsout:0, gapsin:0"
       ];
 
       windowrulev2 = [
@@ -232,6 +234,10 @@
         "nodim,class:^(org.mozilla.firefox)$"
 
         "noborder, onworkspace:w[t1]"
+        "bordersize 0, floating:0, onworkspace:w[tv1]"
+        "rounding 0, floating:0, onworkspace:w[tv1]"
+        "bordersize 0, floating:0, onworkspace:f[1]"
+        "rounding 0, floating:0, onworkspace:f[1]"
 
         "nodim, class:^(cs2)$"
         "noblur, class:^(cs2)$"
