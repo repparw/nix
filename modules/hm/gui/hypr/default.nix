@@ -239,6 +239,7 @@
         "bordersize 0, floating:0, onworkspace:f[1]"
         "rounding 0, floating:0, onworkspace:f[1]"
 
+        # TODO handle all games?
         "nodim, class:^(cs2)$"
         "noblur, class:^(cs2)$"
         "maximize, class:^(cs2)$"
