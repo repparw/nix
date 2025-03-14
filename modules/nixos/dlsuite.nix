@@ -108,12 +108,12 @@ in
       "changedetection" = {
         image = "docker.io/dgtlmoon/changedetection.io";
         environment = {
-          "BASE_URL" = "https://repparw.me";
+          "BASE_URL" = "https://${cfg.domain}";
           "HIDE_REFERER" = "true";
           "PGID" = cfg.group;
           "PLAYWRIGHT_DRIVER_URL" = "ws://playwright:3000";
           "PORT" = "5000";
-          "PUID" = "1001";
+          "PUID" = cfg.user;
           "WEBDRIVER_URL" = "http://playwright:3000/wd/hub";
         };
         volumes = [
@@ -254,8 +254,8 @@ in
           "PAPERLESS_REDIS" = "redis://broker:6379";
           "PAPERLESS_TIME_ZONE" = "America/Argentina/Buenos_Aires";
           "PAPERLESS_URL" = "https://paper.${cfg.domain}";
-          "USERMAP_GID" = "131";
-          "USERMAP_UID" = "1001";
+          "USERMAP_GID" = cfg.group;
+          "USERMAP_UID" = cfg.user;
         };
         volumes = [
           "${cfg.dataDir}/paper/data:/usr/src/paperless/data:rw,Z"
@@ -384,7 +384,7 @@ in
           "PUID" = "1001";
           "SUBDOMAINS" = "wildcard";
           "TZ" = "America/Argentina/Buenos_Aires";
-          "URL" = "repparw.me";
+          "URL" = cfg.domain;
           "VALIDATION" = "dns";
         };
         volumes = [
