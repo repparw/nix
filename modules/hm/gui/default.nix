@@ -22,7 +22,6 @@
     with pkgs;
     [
       vesktop
-      pwvucontrol
       scrcpy
 
       obsidian
