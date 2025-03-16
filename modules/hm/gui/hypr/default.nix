@@ -239,6 +239,9 @@
         "bordersize 0, floating:0, onworkspace:f[1]"
         "rounding 0, floating:0, onworkspace:f[1]"
 
+        "float, title:(video1 - mpv)"
+        "size 20% 20%, title:(video1 - mpv)"
+
         # TODO handle all games?
         "nodim, class:^(cs2)$"
         "noblur, class:^(cs2)$"
