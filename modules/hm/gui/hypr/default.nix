@@ -239,8 +239,13 @@
         "bordersize 0, floating:0, onworkspace:f[1]"
         "rounding 0, floating:0, onworkspace:f[1]"
 
+        # webcam
         "float, title:(video1 - mpv)"
+        "monitor 0, title:(video1 - mpv)"
+        "pin, title:(video1 - mpv)"
         "size 20% 20%, title:(video1 - mpv)"
+        "size 400 225, title:(video1 - mpv)"
+        "move 100%-w-25 100%-w-0, title:(video1 - mpv)"
 
         # TODO handle all games?
         "nodim, class:^(cs2)$"
