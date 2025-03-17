@@ -51,8 +51,8 @@ in
           }
           {
             on = [ "<C-p>" ];
-            run = "z";
-            desc = "zoxide";
+            run = "plugin zoxide";
+            desc = "Jump to a directory via zoxide";
           }
         ];
       };
