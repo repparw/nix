@@ -49,6 +49,11 @@ in
             run = "plugin jump-to-char";
             desc = "Jump to char";
           }
+          {
+            on = [ "<C-p>" ];
+            run = "z";
+            desc = "zoxide";
+          }
         ];
       };
     };
