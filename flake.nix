@@ -1,5 +1,13 @@
 {
   description = "repparw's flake";
+  inputs = {
+    nixvim.url = "github:nix-community/nixvim";
+    agenix.url = "github:ryantm/agenix";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    stable.url = "github:NixOS/nixpkgs/nixos-24.11";
+    home-manager.url = "github:nix-community/home-manager"; # Branches for stable, master follows unstable
+    nix-index-database.url = "github:nix-community/nix-index-database";
+  };
 
   outputs = {home-manager, ...} @ inputs: let
     system = "x86_64-linux";
@@ -8,6 +16,7 @@
     mkModules = hostname: [
       ./systems/common.nix
       ./systems/${hostname}
+      inputs.nix-index-database.nixosModules.nix-index
       inputs.agenix.nixosModules.default
       home-manager.nixosModules.home-manager
       {
@@ -62,24 +71,6 @@
           inherit inputs;
         };
       };
-    };
-  };
-
-  inputs = {
-    nixvim = {
-      url = "github:nix-community/nixvim";
-    };
-    agenix = {
-      url = "github:ryantm/agenix";
-    };
-    nixpkgs = {
-      url = "github:NixOS/nixpkgs/nixos-unstable";
-    };
-    stable = {
-      url = "github:NixOS/nixpkgs/nixos-24.11";
-    };
-    home-manager = {
-      url = "github:nix-community/home-manager"; # Branches for stable, master follows unstable
     };
   };
 }
