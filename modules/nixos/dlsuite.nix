@@ -109,8 +109,6 @@ in {
           "PGID" = cfg.group;
           "TZ" = cfg.timezone;
           "BASE_URL" = "https://${cfg.domain}";
-          "PLAYWRIGHT_DRIVER_URL" = "ws://127.0.0.1:3000";
-          "WEBDRIVER_URL" = "http://127.0.0.1:3000/wd/hub";
         };
         volumes = [
           "${cfg.dataDir}/changedetection:/config:rw,Z"
