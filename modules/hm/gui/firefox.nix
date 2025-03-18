@@ -22,46 +22,38 @@
       };
     };
 
-    profiles = {
-      default = {
-        id = 0;
-        userChrome = builtins.readFile ../../source/userChrome.css;
-        path = "default";
-        settings = {
-          "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-          "layers.acceleration.force-enabled" = true;
-          "gfx.webrender.all" = true;
-          "gfx.webrender.enabled" = true;
-          "layout.css.backdrop-filter.enabled" = true;
-          "svg.context-properties.content.enabled" = true;
-        };
+    profiles = let
+      commonSettings = {
+        "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+        "layers.acceleration.force-enabled" = true;
+        "gfx.webrender.all" = true;
+        "gfx.webrender.enabled" = true;
+        "layout.css.backdrop-filter.enabled" = true;
+        "svg.context-properties.content.enabled" = true;
       };
-      kiosk = {
-        id = 1;
+      commonProfile = {
         userChrome = builtins.readFile ../../source/userChrome.css;
-        path = "kiosk";
-        settings = {
-          "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-          "layers.acceleration.force-enabled" = true;
-          "gfx.webrender.all" = true;
-          "gfx.webrender.enabled" = true;
-          "layout.css.backdrop-filter.enabled" = true;
-          "svg.context-properties.content.enabled" = true;
-        };
+        settings = commonSettings;
       };
-      socials = {
-        id = 2;
-        path = "socials";
-        userChrome = builtins.readFile ../../source/userChrome.css;
-        settings = {
-          "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-          "layers.acceleration.force-enabled" = true;
-          "gfx.webrender.all" = true;
-          "gfx.webrender.enabled" = true;
-          "layout.css.backdrop-filter.enabled" = true;
-          "svg.context-properties.content.enabled" = true;
+    in {
+      default =
+        commonProfile
+        // {
+          id = 0;
+          path = "default";
         };
-      };
+      kiosk =
+        commonProfile
+        // {
+          id = 1;
+          path = "kiosk";
+        };
+      socials =
+        commonProfile
+        // {
+          id = 2;
+          path = "socials";
+        };
     };
   };
 }
