@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  ...
+}: {
   imports = [
     ./keymaps.nix
     ./lsp.nix
@@ -80,7 +84,11 @@
       conceallevel = 1;
     };
     plugins = {
-      java.enable = true;
+      nvim-jdtls = {
+        enable = true;
+        data = "${config.xdg.cacheHome}/jdtls/workspace";
+        configuration = "${config.xdg.cacheHome}/jdtls/config";
+      };
       which-key.enable = true;
       gitsigns.enable = true;
       colorizer.enable = true;
