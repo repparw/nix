@@ -92,7 +92,6 @@
 
       alpha = {
         enable = true;
-        theme = "dashboard";
         layout = [
           {
             type = "padding";
