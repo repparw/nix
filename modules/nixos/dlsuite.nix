@@ -109,7 +109,7 @@ in {
           "PGID" = cfg.group;
           "TZ" = cfg.timezone;
           "BASE_URL" = "https://${cfg.domain}";
-          "PLAYWRIGHT_DRIVER_URL" = "ws://127.0.0.1:3000";
+          "PLAYWRIGHT_DRIVER_URL" = "ws://changedetection:3000";
         };
         volumes = [
           "${cfg.dataDir}/changedetection:/config:rw,Z"
