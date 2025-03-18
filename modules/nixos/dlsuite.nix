@@ -103,18 +103,20 @@ in {
         ];
       };
       "changedetection" = {
-        image = "docker.io/dgtlmoon/changedetection.io";
+        image = "docker.io/dgtlmoon/changedetection.io:latest";
         environment = {
           "PUID" = cfg.user;
           "PGID" = cfg.group;
           "TZ" = cfg.timezone;
           "BASE_URL" = "https://${cfg.domain}";
           "HIDE_REFERER" = "true";
-          #"PLAYWRIGHT_DRIVER_URL" = "ws://playwright:3000";
-          #"WEBDRIVER_URL" = "http://playwright:3000/wd/hub";
+          "PLAYWRIGHT_DRIVER_URL" = "ws://sockpuppetbrowser:3000";
         };
         volumes = [
-          "/var/lib/changedetection-io:/datastore:rw,Z"
+          "${cfg.dataDir}/changedetection:/datastore:rw,Z"
+        ];
+        dependsOn = [
+          "sockpuppetbrowser"
         ];
         log-driver = "journald";
         extraOptions = [
@@ -267,32 +269,20 @@ in {
           "--network=dlsuite"
         ];
       };
-      # "playwright" = {
-      #   image = "docker.io/browserless/chrome:1.60-chrome-stable";
-      #   environment = {
-      #     "CHROME_REFRESH_TIME" = "600000";
-      #     "CONNECTION_TIMEOUT" = "300000";
-      #     "DEFAULT_BLOCK_ADS" = "true";
-      #     "DEFAULT_IGNORE_HTTPS_ERRORS" = "true";
-      #     "DEFAULT_STEALTH" = "true";
-      #     "ENABLE_DEBUGGER" = "false";
-      #     "MAX_CONCURRENT_SESSIONS" = "10";
-      #     "PREBOOT_CHROME" = "true";
-      #     "SCREEN_DEPTH" = "16";
-      #     "SCREEN_HEIGHT" = "1024";
-      #     "SCREEN_WIDTH" = "1920";
-      #   };
-      #   log-driver = "journald";
-      #   extraOptions = [
-      #     "--health-cmd=curl -f http://localhost:3000"
-      #     "--health-interval=30s"
-      #     "--health-retries=5"
-      #     "--health-start-period=10s"
-      #     "--health-timeout=10s"
-      #     "--network-alias=playwright"
-      #     "--network=dlsuite"
-      #   ];
-      # };
+      "sockpuppetbrowser" = {
+        image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";
+        environment = {
+          "SCREEN_WIDTH" = "1920";
+          "SCREEN_HEIGHT" = "1024";
+          "SCREEN_DEPTH" = "16";
+          "MAX_CONCURRENT_CHROME_PROCESSES" = "10";
+        };
+        log-driver = "journald";
+        extraOptions = [
+          "--network-alias=sockpuppetbrowser"
+          "--network=dlsuite"
+        ];
+      };
       "prowlarr" = {
         image = "docker.io/linuxserver/prowlarr:latest";
         environment = {
@@ -437,7 +427,7 @@ in {
         "mercury"
         "paperdb"
         "paperless"
-        "playwright"
+        "sockpuppetbrowser"
         "prowlarr"
         "qbittorrent"
         "radarr"
