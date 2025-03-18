@@ -1,5 +1,4 @@
-{ pkgs, ... }:
-{
+{pkgs, ...}: {
   imports = [
     ./keymaps.nix
     ./lsp.nix
@@ -26,10 +25,10 @@
     enable = true;
     defaultEditor = true;
 
-    extraPlugins = with pkgs.vimPlugins; [ telescope-zoxide ];
+    extraPlugins = with pkgs.vimPlugins; [telescope-zoxide];
 
     files = {
-      "ftplugin/lua.lua" = { };
+      "ftplugin/lua.lua" = {};
     };
 
     colorscheme = "gruvbox";
@@ -81,6 +80,7 @@
       conceallevel = 1;
     };
     plugins = {
+      java.enable = true;
       which-key.enable = true;
       gitsigns.enable = true;
       colorizer.enable = true;
@@ -125,17 +125,17 @@
                 }
               end'';
           formatters_by_ft = {
-            lua = [ "stylua" ];
-            nix = [ "alejandra" ];
+            lua = ["stylua"];
+            nix = ["alejandra"];
             #rb = [ "rufo" ];
-            sh = [ "beautysh" ];
+            sh = ["beautysh"];
             typescript = [
               "biome"
               "prettier"
             ];
-            json = [ "biome" ];
-            css = [ "prettier" ];
-            html = [ "prettier" ];
+            json = ["biome"];
+            css = ["prettier"];
+            html = ["prettier"];
           };
         };
       };
@@ -253,14 +253,12 @@
             "<C-f>" = "cmp.mapping.scroll_docs(4)";
             "<C-y>" = "cmp.mapping.confirm { select = true }";
             "<C-Space>" = "cmp.mapping.complete {}";
-            "<C-l>" =
-              "cmp.mapping(function()
+            "<C-l>" = "cmp.mapping(function()
       if luasnip.expand_or_locally_jumpable() then
         luasnip.expand_or_jump()
       end
     end, { 'i', 's' })";
-            "<C-h>" =
-              "cmp.mapping(function()
+            "<C-h>" = "cmp.mapping(function()
       if luasnip.locally_jumpable(-1) then
         luasnip.jump(-1)
       end
@@ -431,7 +429,7 @@
           fzf-native.enable = true;
         };
 
-        enabledExtensions = [ "zoxide" ];
+        enabledExtensions = ["zoxide"];
 
         settings = {
           defaults = {
