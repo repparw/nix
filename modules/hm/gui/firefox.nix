@@ -18,7 +18,6 @@
       OverridePostUpdatePage = "";
       Preferences = {
         "datareporting.policy.firstRunURL" = "";
-        "browser.display.use_document_fonts" = 0;
         "browser.translations.automaticallyPopup" = false;
       };
     };
