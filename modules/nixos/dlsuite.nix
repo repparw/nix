@@ -103,16 +103,18 @@ in {
         ];
       };
       "changedetection" = {
-        image = "docker.io/linuxserver/changedetection.io";
+        image = "docker.io/dgtlmoon/changedetection.io";
         environment = {
           "PUID" = cfg.user;
           "PGID" = cfg.group;
           "TZ" = cfg.timezone;
           "BASE_URL" = "https://${cfg.domain}";
-          "PLAYWRIGHT_DRIVER_URL" = "ws://changedetection:3000";
+          "HIDE_REFERER" = "true";
+          #"PLAYWRIGHT_DRIVER_URL" = "ws://playwright:3000";
+          #"WEBDRIVER_URL" = "http://playwright:3000/wd/hub";
         };
         volumes = [
-          "${cfg.dataDir}/changedetection:/config:rw,Z"
+          "/var/lib/changedetection-io:/datastore:rw,Z"
         ];
         log-driver = "journald";
         extraOptions = [
