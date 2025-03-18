@@ -165,7 +165,7 @@
         ", mouse:276, workspace, m+1"
         "$mod SHIFT, C, workspace, previous_per_monitor"
 
-        "$mod, comma, exec, [float; nofocus; size 400 225] $showlayout"
+        "$mod, comma, exec, [float; nofocus; size 400 225; center] $showlayout"
 
         "$mod, RETURN, exec, $terminal"
         "$mod, W, killactive,"
@@ -269,7 +269,7 @@
 
         "float, title:^(Picture-in-Picture|Picture in picture)$"
         "monitor 0, title:^(Picture-in-Picture|Picture in picture)$"
-        "move 100%-w-25 100%-w-0, title:^(Picture-in-Picture|Picture in picture)$"
+        "move 100%-w-25 100%-w-3, title:^(Picture-in-Picture|Picture in picture)$"
         "size 400 225, title:^(Picture-in-Picture|Picture in picture)$"
         "pin, title:^(Picture-in-Picture|Picture in picture)$"
       ];
