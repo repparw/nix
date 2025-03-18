@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-{
+{pkgs, ...}: {
   programs.tmux = {
     enable = true;
     shell = "${pkgs.zsh}/bin/zsh";
@@ -78,6 +74,6 @@
       		bind % split-window -h -c "#{pane_current_path}"
 
       		bind C-l send-keys 'C-l'
-      		'';
+    '';
   };
 }

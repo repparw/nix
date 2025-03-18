@@ -1,8 +1,5 @@
-{ pkgs, ... }:
-{
-
+{pkgs, ...}: {
   home.packages = with pkgs; [
-
     (stdenv.mkDerivation {
       pname = "odin4";
       version = "4";
@@ -12,7 +9,7 @@
         hash = "sha256-SoznK53UD/vblqeXBLRlkokaLJwhMZy7wqKufR0I8hI=";
       };
 
-      nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+      nativeBuildInputs = [pkgs.autoPatchelfHook];
 
       installPhase = ''
         runHook preInstall
@@ -22,7 +19,7 @@
 
     (writeShellApplication {
       name = "bttoggle";
-      runtimeInputs = [ bluez ];
+      runtimeInputs = [bluez];
       text = ''
         device=F8:4E:17:E6:22:D2
 
@@ -42,7 +39,7 @@
         nq
       ];
       text = ''
-        	  tmux new-session -d -s mpv; tmux send-keys -t mpv "  NQDIR=/tmp/nq/tmux nq -cq mpv --no-terminal $(wl-paste)" C-m
+        tmux new-session -d -s mpv; tmux send-keys -t mpv "  NQDIR=/tmp/nq/tmux nq -cq mpv --no-terminal $(wl-paste)" C-m
       '';
     })
 
@@ -55,7 +52,7 @@
 
     (writeShellApplication {
       name = "obs_remux2wsp";
-      runtimeInputs = [ ffmpeg ];
+      runtimeInputs = [ffmpeg];
       text = ''
         		cd /mnt/hdd/Videos/obs;
         		FILE=$(find '.' ./*.mkv -maxdepth 0 -type f -printf '%T@ %p
@@ -72,9 +69,8 @@
         nh
       ];
       text = ''
-        	 kitty --hold zsh -c " nh os switch -u"
-        	 '';
+        kitty --hold zsh -c " nh os switch -u"
+      '';
     })
-
   ];
 }

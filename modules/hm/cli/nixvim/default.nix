@@ -17,7 +17,7 @@
     marksman
 
     nixd
-    nixfmt-rfc-style
+    alejandra
 
     typescript-language-server
   ];
@@ -126,7 +126,7 @@
               end'';
           formatters_by_ft = {
             lua = [ "stylua" ];
-            nix = [ "nixfmt" ];
+            nix = [ "alejandra" ];
             #rb = [ "rufo" ];
             sh = [ "beautysh" ];
             typescript = [
@@ -242,9 +242,9 @@
         enable = true;
         settings = {
           snippet.expand = ''
-            		function(args)
-                  vim.snippet.expand(args.body)
-                end
+            function(args)
+                vim.snippet.expand(args.body)
+              end
           '';
           mapping = {
             "<C-n>" = "cmp.mapping.select_next_item()";
@@ -265,7 +265,6 @@
         luasnip.jump(-1)
       end
     end, { 'i', 's' })";
-
           };
           sources = [
             {
@@ -476,7 +475,6 @@
                 __raw = "require('telescope.themes').get_dropdown()";
               };
             };
-
           };
           pickers = {
             find_files = {
@@ -485,9 +483,7 @@
             };
           };
         };
-
       };
-
     };
   };
 }

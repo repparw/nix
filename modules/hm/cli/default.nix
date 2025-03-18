@@ -3,8 +3,7 @@
   stable,
   config,
   ...
-}:
-{
+}: {
   imports = [
     ./file-manager.nix
     ./nixvim
@@ -44,18 +43,18 @@
 
     gh = {
       enable = true;
-      extensions = [ pkgs.gh-copilot ];
+      extensions = [pkgs.gh-copilot];
       settings.git_protocol = "ssh";
     };
 
     zoxide = {
       enable = true;
-      options = [ "--cmd=cd" ];
+      options = ["--cmd=cd"];
     };
 
     eza = {
       enable = true;
-      extraOptions = [ "--icons" ];
+      extraOptions = ["--icons"];
     };
 
     git = {
@@ -85,11 +84,9 @@
         };
       };
     };
-
   };
 
-  home.packages =
-    with pkgs;
+  home.packages = with pkgs;
     [
       # essentials
       zsh
@@ -140,5 +137,5 @@
       texliveFull
     ]
     ++ (with stable; [
-    ]);
+      ]);
 }

@@ -1,15 +1,24 @@
-{ osConfig, ... }:
-{
+{osConfig, ...}: {
   programs.waybar = {
     enable = true;
     systemd.enable = true;
     settings = {
       mainBar = {
         position = "top";
-        ${if osConfig.networking.hostName == "alpha" then "output" else null} = [ "HDMI-A-1" ];
-        modules-left = [
-          "clock#time"
-        ] ++ (if osConfig.networking.hostName == "beta" then [ "hyprland/language" ] else [ ]);
+        ${
+          if osConfig.networking.hostName == "alpha"
+          then "output"
+          else null
+        } = ["HDMI-A-1"];
+        modules-left =
+          [
+            "clock#time"
+          ]
+          ++ (
+            if osConfig.networking.hostName == "beta"
+            then ["hyprland/language"]
+            else []
+          );
         modules-center = [
           "custom/arrow4"
           "mpris"
@@ -219,7 +228,6 @@
           on-click-right = "swaync-client -d -sw";
           escape = true;
         };
-
       };
     };
     style = ''

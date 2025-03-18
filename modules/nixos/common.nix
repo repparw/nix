@@ -4,10 +4,7 @@
   lib,
   config,
   ...
-}:
-
-{
-
+}: {
   imports = [
     ./autoUpgrade.nix
     ./dlsuite.nix
@@ -52,15 +49,15 @@
 
     # Set default font
     fontconfig.defaultFonts = {
-      "sansSerif" = [ "FiraCode Nerd Font" ];
-      "serif" = [ "FiraCode Nerd Font" ];
-      "monospace" = [ "FiraCode Nerd Font Mono" ];
+      "sansSerif" = ["FiraCode Nerd Font"];
+      "serif" = ["FiraCode Nerd Font"];
+      "monospace" = ["FiraCode Nerd Font Mono"];
     };
   };
 
   # List packages installed in system profile. To search, run:
   # $ nix search wget
-  environment.pathsToLink = [ "/share/zsh" ];
+  environment.pathsToLink = ["/share/zsh"];
 
   environment.systemPackages = with pkgs; [
     inputs.agenix.packages."${system}".default
@@ -78,7 +75,6 @@
   };
 
   services = {
-
     earlyoom.enable = true;
 
     blueman.enable = true;
@@ -96,7 +92,7 @@
 
     openssh = {
       enable = true;
-      ports = [ 10000 ];
+      ports = [10000];
       settings.PasswordAuthentication = false;
     };
 
@@ -127,7 +123,6 @@
         ];
       };
     };
-
   };
 
   security.rtkit.enable = true;
@@ -151,8 +146,8 @@
 
   systemd.services.logid = {
     startLimitIntervalSec = 0;
-    after = [ "graphical.target" ];
-    wantedBy = [ "graphical.target" ];
+    after = ["graphical.target"];
+    wantedBy = ["graphical.target"];
     serviceConfig = {
       Type = "simple";
       ExecStart = "${pkgs.logiops_0_2_3}/bin/logid";

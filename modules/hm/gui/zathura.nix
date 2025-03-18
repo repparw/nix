@@ -1,7 +1,4 @@
-{
-  ...
-}:
-{
+{...}: {
   programs.zathura = {
     enable = true;
     options = {
@@ -65,5 +62,4 @@
       i = "recolor";
     };
   };
-
 }

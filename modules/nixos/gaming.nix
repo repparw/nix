@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.modules.gaming;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.modules.gaming;
+in {
   options.modules.gaming = {
     enable = lib.mkEnableOption "gaming setup";
   };
@@ -11,10 +13,10 @@ in
     hardware.xpadneo.enable = true;
 
     boot = {
-      extraModulePackages = with config.boot.kernelPackages; [ xpadneo ];
+      extraModulePackages = with config.boot.kernelPackages; [xpadneo];
       extraModprobeConfig = ''
-        	  options bluetooth disable_ertm=Y
-        	'';
+        options bluetooth disable_ertm=Y
+      '';
     };
 
     programs = {

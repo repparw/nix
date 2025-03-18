@@ -1,6 +1,4 @@
-{ pkgs, ... }:
-{
-
+{pkgs, ...}: {
   systemd.services.buptohdd = {
     serviceConfig = {
       Type = "oneshot";
@@ -18,9 +16,9 @@
   };
 
   systemd.services.docker-cleanup = {
-    requires = [ "docker.service" ];
-    wantedBy = [ "multi-user.target" ];
-    after = [ "docker.service" ];
+    requires = ["docker.service"];
+    wantedBy = ["multi-user.target"];
+    after = ["docker.service"];
     serviceConfig = {
       Type = "oneshot";
       User = "repparw";
@@ -30,7 +28,7 @@
   };
 
   systemd.timers.buptohdd = {
-    wantedBy = [ "timers.target" ];
+    wantedBy = ["timers.target"];
     timerConfig = {
       OnCalendar = "03:00:00";
       Persistent = true;
@@ -38,7 +36,7 @@
   };
 
   systemd.timers.rclone-sync = {
-    wantedBy = [ "timers.target" ];
+    wantedBy = ["timers.target"];
     timerConfig = {
       OnCalendar = "*-*-7,14,21,28 00:00:00";
       Persistent = true;
@@ -46,11 +44,10 @@
   };
 
   systemd.timers.docker-cleanup = {
-    wantedBy = [ "timers.target" ];
+    wantedBy = ["timers.target"];
     timerConfig = {
       OnCalendar = "*-*-1,15 12:00:00";
       Persistent = true;
     };
   };
-
 }

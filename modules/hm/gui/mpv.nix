@@ -1,8 +1,4 @@
-{
-  pkgs,
-  ...
-}:
-{
+{pkgs, ...}: {
   programs.mpv = {
     enable = true;
     scripts = with pkgs.mpvScripts; [
@@ -57,7 +53,6 @@
       sub-border-size = 2; # Default 3
 
       profile = "gpu-vulkan-vaapi";
-
     };
   };
 }
