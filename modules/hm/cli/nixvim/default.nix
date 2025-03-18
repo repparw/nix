@@ -89,6 +89,11 @@
         data = "${config.xdg.cacheHome}/jdtls/workspace";
         configuration = "${config.xdg.cacheHome}/jdtls/config";
       };
+
+      alpha = {
+        enable = true;
+        theme = "dashboard";
+      };
       which-key.enable = true;
       gitsigns.enable = true;
       colorizer.enable = true;
