@@ -135,6 +135,7 @@
       tree
 
       manix
+      comma
 
       texliveFull
     ]
