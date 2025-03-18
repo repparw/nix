@@ -114,7 +114,7 @@ in {
           #"WEBDRIVER_URL" = "http://playwright:3000/wd/hub";
         };
         volumes = [
-          "/var/lib/changedetection-io:/datastore:rw,Z"
+          "${cfg.dataDir}/changedetection:/config:rw,Z"
         ];
         log-driver = "journald";
         extraOptions = [
