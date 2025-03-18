@@ -103,18 +103,16 @@ in {
         ];
       };
       "changedetection" = {
-        image = "docker.io/dgtlmoon/changedetection.io:latest";
+        image = "docker.io/linuxserver/changedetection.io";
         environment = {
           "PUID" = cfg.user;
           "PGID" = cfg.group;
           "TZ" = cfg.timezone;
           "BASE_URL" = "https://${cfg.domain}";
+          "PLAYWRIGHT_DRIVER_URL" = "ws://127.0.0.1:3000";
         };
         volumes = [
-          "${cfg.dataDir}/changedetection:/datastore:rw,Z"
-        ];
-        dependsOn = [
-          "sockpuppetbrowser"
+          "${cfg.dataDir}/changedetection:/config:rw,Z"
         ];
         log-driver = "journald";
         extraOptions = [
@@ -437,6 +435,7 @@ in {
         "mercury"
         "paperdb"
         "paperless"
+        "playwright"
         "prowlarr"
         "qbittorrent"
         "radarr"
