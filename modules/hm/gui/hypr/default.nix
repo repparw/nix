@@ -165,7 +165,7 @@
         ", mouse:276, workspace, m+1"
         "$mod SHIFT, C, workspace, previous_per_monitor"
 
-        "$mod, , exec, [float; nofocus; size 400 225] $showlayout"
+        "$mod, comma, exec, [float; nofocus; size 400 225] $showlayout"
 
         "$mod, RETURN, exec, $terminal"
         "$mod, W, killactive,"
