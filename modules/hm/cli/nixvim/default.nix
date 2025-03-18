@@ -128,6 +128,13 @@
                   shortcut = "e";
                 };
                 type = "button";
+                val = "  New file";
+              }
+              {
+                opts = {
+                  shortcut = "SPC f f";
+                };
+                type = "button";
                 val = "󰈞  Find file";
               }
               {
@@ -138,28 +145,24 @@
                 val = "󰊄 Find recent";
               }
               {
-                on_press = {
-                  __raw = "function() vim.cmd[[ene]] end";
-                };
                 opts = {
-                  shortcut = "e";
+                  shortcut = "SPC f g";
                 };
                 type = "button";
-                val = "  New file";
+                val = "󰈬 Find word";
+              }
+              {
+                opts = {
+                  shortcut = "SPC f k";
+                };
+                type = "button";
+                val = "󰈉 Find keymaps";
               }
             ];
           }
           {
             type = "padding";
             val = 2;
-          }
-          {
-            opts = {
-              hl = "Keyword";
-              position = "center";
-            };
-            type = "text";
-            val = "Inspiring quote here.";
           }
         ];
       };
