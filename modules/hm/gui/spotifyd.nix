@@ -1,9 +1,7 @@
-{ ... }:
-{
+{...}: {
   services.spotifyd = {
     settings = {
       global = {
-
         username = "REDACTED";
         use_mpris = true;
 

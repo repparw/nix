@@ -1,10 +1,7 @@
 # Edit this configuration file to define what should be installed on
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
-
-{ pkgs, ... }:
-
-{
+{pkgs, ...}: {
   imports = [
     ./hardware-configuration.nix
     ../../modules/nixos/timers.nix
@@ -36,7 +33,7 @@
     ];
   };
 
-  age.identityPaths = [ "/home/repparw/.ssh/id_ed25519" ];
+  age.identityPaths = ["/home/repparw/.ssh/id_ed25519"];
 
   #virtualisation.vmware.host.enable = true;
 

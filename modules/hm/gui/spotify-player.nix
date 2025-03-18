@@ -1,5 +1,4 @@
-{ ... }:
-{
+{...}: {
   programs.spotify-player = {
     enable = true;
     keymaps = [
@@ -115,7 +114,7 @@
       enable_notify = false;
       copy_command = {
         command = "wl-copy";
-        args = [ ];
+        args = [];
       };
       device = {
         name = "Terminal UI";

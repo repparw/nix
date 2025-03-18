@@ -1,5 +1,8 @@
-{ pkgs, config, ... }:
 {
+  pkgs,
+  config,
+  ...
+}: {
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
@@ -136,7 +139,6 @@
     antidote = {
       enable = true;
       plugins = [
-
         # OMZ completions requiring compinit
         "ohmyzsh/ohmyzsh path:plugins/docker/completions kind:fpath"
         "ohmyzsh/ohmyzsh path:plugins/docker-compose/completions kind:fpath"

@@ -1,13 +1,11 @@
-{ pkgs, ... }:
-let
+{pkgs, ...}: let
   plugins-repo = pkgs.fetchFromGitHub {
     owner = "yazi-rs";
     repo = "plugins";
     rev = "38418dd";
     hash = "sha256-cdPeIhtTzSYhJZ3v3Xlq8J3cOmR7ZiOGl5q48Qgthyk=";
   };
-in
-{
+in {
   programs = {
     yazi = {
       enable = true;
@@ -40,17 +38,17 @@ in
       keymap = {
         manager.prepend_keymap = [
           {
-            on = [ "l" ];
+            on = ["l"];
             run = "plugin smart-enter";
             desc = "Enter the child directory, or open the file";
           }
           {
-            on = [ "f" ];
+            on = ["f"];
             run = "plugin jump-to-char";
             desc = "Jump to char";
           }
           {
-            on = [ "<C-p>" ];
+            on = ["<C-p>"];
             run = "plugin zoxide";
             desc = "Jump to a directory via zoxide";
           }

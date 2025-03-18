@@ -1,6 +1,4 @@
-{ ... }:
-
-{
+{...}: {
   services.kanshi = {
     systemdTarget = "graphical-session.target";
     settings = [

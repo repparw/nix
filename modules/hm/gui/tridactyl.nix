@@ -1,6 +1,4 @@
-{ ... }:
-{
-
+{...}: {
   home.file.".config/tridactyl/tridactylrc".text = ''
       " General Settings
     set update.lastchecktime 1729971571332
@@ -60,7 +58,7 @@
     autocmd DocStart config.qmk.fm mode ignore
     autocmd DocLoad ^https://github.com/tridactyl/tridactyl/issues/new$ issue
     autocmd TriStart .* source_quiet
-    autocmd BeforeRequest undefined 
+    autocmd BeforeRequest undefined
 
     " For syntax highlighting see https://github.com/tridactyl/vim-tridactyl
     " vim: set filetype=tridactyl
