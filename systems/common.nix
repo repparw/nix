@@ -1,6 +1,8 @@
-{ config, inputs, ... }:
-
 {
+  config,
+  inputs,
+  ...
+}: {
   imports = [
     ../modules/nixos/common.nix
   ];
@@ -20,7 +22,7 @@
 
   programs.localsend.enable = true;
 
-  nix.nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
+  nix.nixPath = ["nixpkgs=${inputs.nixpkgs}"];
 
   age.secrets.github = {
     file = ../secrets/github.age;
@@ -40,7 +42,6 @@
     trusted-public-keys = [
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
     ];
-
   };
 
   nix.optimise.automatic = true;
@@ -48,5 +49,4 @@
   nixpkgs.config.allowUnfree = true;
 
   hardware.keyboard.qmk.enable = true;
-
 }

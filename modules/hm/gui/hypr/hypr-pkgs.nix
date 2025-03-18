@@ -1,8 +1,5 @@
-{ pkgs, ... }:
-
-{
-
-  imports = [ ./waybar.nix ];
+{pkgs, ...}: {
+  imports = [./waybar.nix];
 
   home.packages = with pkgs; [
     # Desktop
@@ -60,7 +57,6 @@
           }
         ];
       };
-
     };
 
     wlsunset = {

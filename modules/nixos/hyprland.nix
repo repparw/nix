@@ -1,7 +1,4 @@
-{ pkgs, ... }:
-
-{
-
+{pkgs, ...}: {
   programs.hyprland = {
     enable = true;
   };
@@ -21,5 +18,4 @@
       default_session = initial_session;
     };
   };
-
 }

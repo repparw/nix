@@ -1,6 +1,4 @@
-{ ... }:
-
-{
+{...}: {
   imports = [
     ../../modules/hm/cli
     ../../modules/hm/gui

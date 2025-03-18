@@ -3,8 +3,7 @@
   stable,
   config,
   ...
-}:
-{
+}: {
   imports = [
     ./firefox.nix
     ./gaming.nix
@@ -18,8 +17,7 @@
     ./kanshi.nix
   ];
 
-  home.packages =
-    with pkgs;
+  home.packages = with pkgs;
     [
       vesktop
       pwvucontrol
@@ -56,7 +54,7 @@
       "image/webp" = "feh.desktop";
     };
     associations.removed = {
-      "application/pdf" = [ "chromium-browser.desktop" ];
+      "application/pdf" = ["chromium-browser.desktop"];
     };
     defaultApplications = {
       "inode/directory" = "org.gnome.Nautilus.desktop";
@@ -114,7 +112,5 @@
         next_img = "period";
       };
     };
-
   };
-
 }

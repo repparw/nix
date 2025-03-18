@@ -1,75 +1,69 @@
 {
   description = "repparw's flake";
 
-  outputs =
-    {
-      home-manager,
-      ...
-    }@inputs:
-    let
-      system = "x86_64-linux";
+  outputs = {home-manager, ...} @ inputs: let
+    system = "x86_64-linux";
 
-      # Base modules configuration for all systems
-      mkModules = hostname: [
-        ./systems/common.nix
-        ./systems/${hostname}
-        inputs.agenix.nixosModules.default
-        home-manager.nixosModules.home-manager
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            backupFileExtension = "hm-backup";
-            extraSpecialArgs = {
-              inherit inputs;
-            };
-            users.repparw = {
-              imports = [
-                ./home/common
-                ./home/${hostname}
-                inputs.nixvim.homeManagerModules.nixvim
-              ];
-            };
-          };
-        }
-      ];
-
-    in
-    {
-      nixosConfigurations = {
-        alpha = inputs.nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = mkModules "alpha";
-          specialArgs = {
+    # Base modules configuration for all systems
+    mkModules = hostname: [
+      ./systems/common.nix
+      ./systems/${hostname}
+      inputs.agenix.nixosModules.default
+      home-manager.nixosModules.home-manager
+      {
+        home-manager = {
+          useGlobalPkgs = true;
+          useUserPackages = true;
+          backupFileExtension = "hm-backup";
+          extraSpecialArgs = {
             inherit inputs;
           };
-        };
-
-        beta = inputs.nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = mkModules "beta";
-          specialArgs = {
-            inherit inputs;
+          users.repparw = {
+            imports = [
+              ./home/common
+              ./home/${hostname}
+              inputs.nixvim.homeManagerModules.nixvim
+            ];
           };
         };
+      }
+    ];
+  in {
+    nixosConfigurations = {
+      alpha = inputs.nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = mkModules "alpha";
+        specialArgs = {
+          inherit inputs;
+        };
+      };
 
-        iso = inputs.nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
+      beta = inputs.nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = mkModules "beta";
+        specialArgs = {
+          inherit inputs;
+        };
+      };
+
+      iso = inputs.nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules =
+          [
             "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
             (
-              { ... }:
-              {
+              {...}: {
                 isoImage.squashfsCompression = "gzip -Xcompression-level 1";
               }
             )
-          ] ++ (mkModules "beta");
-          specialArgs = {
-            inherit inputs;
-          };
+          ]
+          ++ (mkModules "beta");
+        specialArgs = {
+          inherit inputs;
         };
       };
     };
+  };
 
   inputs = {
     nixvim = {
@@ -88,5 +82,4 @@
       url = "github:nix-community/home-manager"; # Branches for stable, master follows unstable
     };
   };
-
 }

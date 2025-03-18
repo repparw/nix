@@ -3,17 +3,15 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.services.jellyfin-mpv-shim;
-in
-{
-  meta.maintainers = [ lib.maintainers.Scrumplex ];
+in {
+  meta.maintainers = [lib.maintainers.Scrumplex];
 
   options.services.jellyfin-mpv-shim = {
     enable = lib.mkEnableOption "jellyfin-mpv-shim";
 
-    package = lib.mkPackageOption pkgs "jellyfin-mpv-shim" { };
+    package = lib.mkPackageOption pkgs "jellyfin-mpv-shim" {};
   };
 
   config = lib.mkIf cfg.enable {
@@ -29,7 +27,7 @@ in
         ExecStop = "${pkgs.coreutils}/bin/kill -s SIGINT $MAINPID";
         Restart = "unless-stopped";
       };
-      Install.WantedBy = [ "graphical-session.target" ];
+      Install.WantedBy = ["graphical-session.target"];
     };
     home.file.".config/jellyfin-mpv-shim/conf.json".text = ''
       {
@@ -149,6 +147,5 @@ in
       config.lib.file.mkOutOfStoreSymlink "/home/repparw/.config/mpv/mpv.conf";
     home.file.".config/jellyfin-mpv-shim/input.conf".source =
       config.lib.file.mkOutOfStoreSymlink "/home/repparw/.config/mpv/input.conf";
-
   };
 }

@@ -1,17 +1,27 @@
-{ osConfig, pkgs, ... }:
-
 {
-  imports = [ ./hypr-pkgs.nix ];
+  osConfig,
+  pkgs,
+  ...
+}: {
+  imports = [./hypr-pkgs.nix];
   wayland.windowManager.hyprland = {
     enable = true;
     plugins = with pkgs.hyprlandPlugins; [
       hyprsplit
     ];
 
-    systemd.variables = [ "--all" ];
-    ${if osConfig.networking.hostName == "alpha" then "extraConfig" else null} =
+    systemd.variables = ["--all"];
+    ${
+      if osConfig.networking.hostName == "alpha"
+      then "extraConfig"
+      else null
+    } =
       builtins.readFile ../../../source/hyprland-alpha.conf;
-    ${if osConfig.networking.hostName != "alpha" then "extraConfig" else null} =
+    ${
+      if osConfig.networking.hostName != "alpha"
+      then "extraConfig"
+      else null
+    } =
       builtins.readFile ../../../source/hyprland-not-alpha.conf;
     settings = {
       env = [
@@ -140,7 +150,7 @@
         "$mod CTRL, K, resizeactive, 0 -10"
         "$mod CTRL, L, resizeactive, 10 0"
       ];
-      bindl = [ "$mod ALT, L, exec, $lockscreen; $screenoff" ];
+      bindl = ["$mod ALT, L, exec, $lockscreen; $screenoff"];
       bind = [
         "$mod, d, exec, $desktopmenu"
         "$mod SHIFT, d, exec, $cmdmenu"
@@ -259,8 +269,6 @@
         "size 400 225, title:^(Picture-in-Picture|Picture in picture)$"
         "pin, title:^(Picture-in-Picture|Picture in picture)$"
       ];
-
     };
   };
-
 }

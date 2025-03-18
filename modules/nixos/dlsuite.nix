@@ -4,12 +4,9 @@
   config,
   ...
 }:
-with lib;
-
-let
+with lib; let
   cfg = config.services.dlsuite;
-in
-{
+in {
   options.services.dlsuite = {
     enable = mkEnableOption "dlsuite container stack";
 
@@ -429,53 +426,51 @@ in
       };
     };
     # Services
-    systemd.services =
-      let
-        containerSuffixes = [
-          "authelia"
-          "bazarr"
-          "broker"
-          "changedetection"
-          "ddclient"
-          "diun"
-          "flaresolverr"
-          "freshrss"
-          "jellyfin"
-          "mercury"
-          "paperdb"
-          "paperless"
-          "playwright"
-          "prowlarr"
-          "qbittorrent"
-          "radarr"
-          "sonarr"
-          "swag"
-          "valkey"
-        ];
+    systemd.services = let
+      containerSuffixes = [
+        "authelia"
+        "bazarr"
+        "broker"
+        "changedetection"
+        "ddclient"
+        "diun"
+        "flaresolverr"
+        "freshrss"
+        "jellyfin"
+        "mercury"
+        "paperdb"
+        "paperless"
+        "playwright"
+        "prowlarr"
+        "qbittorrent"
+        "radarr"
+        "sonarr"
+        "swag"
+        "valkey"
+      ];
 
-        mkSystemService = suffix: {
-          "docker-${suffix}" = {
-            serviceConfig = {
-              Restart = lib.mkOverride 500 "always";
-            };
-            after = [
-              "docker-network-dlsuite.service"
-            ];
-            requires = [
-              "docker-network-dlsuite.service"
-            ];
-            partOf = [
-              "dlsuite.target"
-            ];
-            wantedBy = [
-              "dlsuite.target"
-            ];
+      mkSystemService = suffix: {
+        "docker-${suffix}" = {
+          serviceConfig = {
+            Restart = lib.mkOverride 500 "always";
           };
+          after = [
+            "docker-network-dlsuite.service"
+          ];
+          requires = [
+            "docker-network-dlsuite.service"
+          ];
+          partOf = [
+            "dlsuite.target"
+          ];
+          wantedBy = [
+            "dlsuite.target"
+          ];
         };
+      };
 
-        systemdServices = builtins.foldl' lib.recursiveUpdate { } (map mkSystemService containerSuffixes);
-
-      in
+      systemdServices = builtins.foldl' lib.recursiveUpdate {} (map mkSystemService containerSuffixes);
+    in
       systemdServices
       // {
         # Networks
