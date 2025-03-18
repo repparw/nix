@@ -43,6 +43,8 @@
       "$desktopmenu" = "killall tofi-drun || tofi-drun";
       "$cmdmenu" = "killall tofi-run || tofi-run | xargs hyprctl dispatch exec --";
 
+      "$showlayout" = "hdrop -c fehlayout 'feh /home/repparw/git/kbd/layout.png'";
+
       "$lockscreen" = "loginctl lock-session";
 
       "$screenoff" = "sleep 3 && hyprctl dispatch dpms off";
@@ -162,6 +164,8 @@
         "$mod, C, workspace, m+1"
         ", mouse:276, workspace, m+1"
         "$mod SHIFT, C, workspace, previous_per_monitor"
+
+        "$mod, , exec, [float; nofocus; size 400 225] $showlayout"
 
         "$mod, RETURN, exec, $terminal"
         "$mod, W, killactive,"
