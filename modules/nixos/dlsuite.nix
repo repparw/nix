@@ -103,7 +103,7 @@ in {
         ];
       };
       "changedetection" = {
-        image = "docker.io/linuxserver/changedetection.io";
+        image = "docker.io/linuxserver/changedetection.io:latest";
         environment = {
           "PUID" = cfg.user;
           "PGID" = cfg.group;
