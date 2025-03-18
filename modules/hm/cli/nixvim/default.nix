@@ -93,6 +93,75 @@
       alpha = {
         enable = true;
         theme = "dashboard";
+        layout = [
+          {
+            type = "padding";
+            val = 2;
+          }
+          {
+            opts = {
+              hl = "Type";
+              position = "center";
+            };
+            type = "text";
+            val = [
+              "███╗   ██╗██╗██╗  ██╗██╗   ██╗██╗███╗   ███╗"
+              "████╗  ██║██║╚██╗██╔╝██║   ██║██║████╗ ████║"
+              "██╔██╗ ██║██║ ╚███╔╝ ██║   ██║██║██╔████╔██║"
+              "██║╚██╗██║██║ ██╔██╗ ╚██╗ ██╔╝██║██║╚██╔╝██║"
+              "██║ ╚████║██║██╔╝ ██╗ ╚████╔╝ ██║██║ ╚═╝ ██║"
+              "╚═╝  ╚═══╝╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚═╝     ╚═╝"
+            ];
+          }
+          {
+            type = "padding";
+            val = 2;
+          }
+          {
+            type = "group";
+            val = [
+              {
+                on_press = {
+                  __raw = "function() vim.cmd[[ene]] end";
+                };
+                opts = {
+                  shortcut = "e";
+                };
+                type = "button";
+                val = "󰈞  Find file";
+              }
+              {
+                opts = {
+                  shortcut = "SPC f .";
+                };
+                type = "button";
+                val = "󰊄 Find recent";
+              }
+              {
+                on_press = {
+                  __raw = "function() vim.cmd[[ene]] end";
+                };
+                opts = {
+                  shortcut = "e";
+                };
+                type = "button";
+                val = "  New file";
+              }
+            ];
+          }
+          {
+            type = "padding";
+            val = 2;
+          }
+          {
+            opts = {
+              hl = "Keyword";
+              position = "center";
+            };
+            type = "text";
+            val = "Inspiring quote here.";
+          }
+        ];
       };
       which-key.enable = true;
       gitsigns.enable = true;
