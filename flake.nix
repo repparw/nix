@@ -7,10 +7,7 @@
     stable.url = "github:NixOS/nixpkgs/nixos-24.11";
     home-manager.url = "github:nix-community/home-manager"; # Branches for stable, master follows unstable
     nix-index-database.url = "github:nix-community/nix-index-database";
-    firefox-addons = {
-      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nur.url = "github:nix-community/NUR";
   };
 
   outputs = {home-manager, ...} @ inputs: let
@@ -20,6 +17,7 @@
     mkModules = hostname: [
       ./systems/common.nix
       ./systems/${hostname}
+      inputs.nur.modules.nixos.default
       inputs.nix-index-database.nixosModules.nix-index
       inputs.agenix.nixosModules.default
       home-manager.nixosModules.home-manager
