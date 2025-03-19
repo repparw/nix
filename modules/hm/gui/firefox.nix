@@ -34,7 +34,7 @@
     profiles = let
       commonProfile = {
         userChrome = builtins.readFile ../../source/userChrome.css;
-        extensions = with inputs.packages.${pkgs.system}; [
+        extensions = with inputs.firefox-addons.packages.${pkgs.system}; [
           ublock-origin
           sidebery
           tridactyl
@@ -46,7 +46,7 @@
         // {
           id = 0;
           path = "default";
-          extensions = with inputs.${flake}.packages.${pkgs.system}; [
+          extensions = with inputs.firefox-addons.packages.${pkgs.system}; [
             darkreader
             bitwarden
           ];
@@ -56,7 +56,7 @@
         // {
           id = 1;
           path = "kiosk";
-          extensions = with pkgs.inputs.firefox-addons; [
+          extensions = with inputs.firefox-addons.packages.${pkgs.system}; [
             improved-tube
             sponsorblock
             dearrow
