@@ -52,6 +52,8 @@
           path = "kiosk";
           extensions.packages = with pkgs.inputs.firefox-addons; [
             improved-tube
+            sponsorblock
+            dearrow
           ];
         };
       socials =
