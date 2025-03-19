@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  inputs,
+  ...
+}: {
   imports = [
     ./tridactyl.nix
   ];
@@ -30,7 +34,7 @@
     profiles = let
       commonProfile = {
         userChrome = builtins.readFile ../../source/userChrome.css;
-        extensions = with pkgs.inputs.firefox-addons; [
+        extensions = with inputs.packages.${pkgs.system}; [
           ublock-origin
           sidebery
           tridactyl
@@ -42,7 +46,7 @@
         // {
           id = 0;
           path = "default";
-          extensions = with pkgs.inputs.firefox-addons; [
+          extensions = with inputs.${flake}.packages.${pkgs.system}; [
             darkreader
             bitwarden
           ];
