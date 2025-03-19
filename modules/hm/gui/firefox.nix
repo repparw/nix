@@ -16,6 +16,7 @@
       NoDefaultBookmarks = true;
       OverrideFirstRunPage = "";
       OverridePostUpdatePage = "";
+      CaptivePortal = false;
       Preferences = {
         "datareporting.policy.firstRunURL" = "";
         "browser.translations.automaticallyPopup" = false;
