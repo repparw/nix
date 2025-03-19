@@ -13,6 +13,7 @@
       DisableFirefoxStudies = true;
       DisablePocket = true;
       DisableProfileImport = true;
+      HardwareAcceleration = true;
       NoDefaultBookmarks = true;
       OverrideFirstRunPage = "";
       OverridePostUpdatePage = "";
@@ -20,22 +21,13 @@
       Preferences = {
         "datareporting.policy.firstRunURL" = "";
         "browser.translations.automaticallyPopup" = false;
+        "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
       };
     };
 
     profiles = let
-      commonSettings = {
-        "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
-        "layers.acceleration.force-enabled" = true;
-        "gfx.webrender.all" = true;
-        "gfx.webrender.enabled" = true;
-        "layout.css.backdrop-filter.enabled" = true;
-        "svg.context-properties.content.enabled" = true;
-        "network.captive-portal-service.enabled" = false;
-      };
       commonProfile = {
         userChrome = builtins.readFile ../../source/userChrome.css;
-        settings = commonSettings;
       };
     in {
       default =
