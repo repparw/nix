@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  system,
+  ...
+}: {
   imports = [
     ./tridactyl.nix
   ];
@@ -30,7 +34,7 @@
     profiles = let
       commonProfile = {
         userChrome = builtins.readFile ../../source/userChrome.css;
-        extensions = with pkgs.inputs.nur.repos.rycee.firefox-addons; [
+        extensions = with pkgs.inputs.firefox-addons.packages.${system}; [
           ublock-origin
           sidebery
           tridactyl
@@ -42,7 +46,7 @@
         // {
           id = 0;
           path = "default";
-          extensions = with pkgs.inputs.nur.repos.rycee.firefox-addons; [
+          extensions = with pkgs.inputs.firefox-addons.packages.${system}; [
             darkreader
             bitwarden
           ];
@@ -52,7 +56,7 @@
         // {
           id = 1;
           path = "kiosk";
-          extensions = with pkgs.inputs.nur.repos.rycee.firefox-addons; [
+          extensions = with pkgs.inputs.firefox-addons.packages.${system}; [
             improved-tube
             sponsorblock
             dearrow
