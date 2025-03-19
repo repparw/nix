@@ -30,6 +30,7 @@
         "gfx.webrender.enabled" = true;
         "layout.css.backdrop-filter.enabled" = true;
         "svg.context-properties.content.enabled" = true;
+        "network.captive-portal-service.enabled" = false;
       };
       commonProfile = {
         userChrome = builtins.readFile ../../source/userChrome.css;
