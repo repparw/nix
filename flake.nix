@@ -7,7 +7,7 @@
     stable.url = "github:NixOS/nixpkgs/nixos-24.11";
     home-manager.url = "github:nix-community/home-manager"; # Branches for stable, master follows unstable
     nix-index-database.url = "github:nix-community/nix-index-database";
-    firefox-addons.url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+    nur.url = "github:nix-community/NUR";
   };
 
   outputs = {home-manager, ...} @ inputs: let
@@ -15,6 +15,9 @@
 
     # Base modules configuration for all systems
     mkModules = hostname: [
+      # Adds the NUR overlay
+      inputs.nur.modules.nixos.default
+      # NUR modules to import
       ./systems/common.nix
       ./systems/${hostname}
       inputs.nix-index-database.nixosModules.nix-index
