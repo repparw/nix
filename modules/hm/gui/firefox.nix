@@ -1,6 +1,7 @@
 {
   pkgs,
-  system,
+  osConfig,
+  inputs,
   ...
 }: {
   imports = [
@@ -34,7 +35,7 @@
     profiles = let
       commonProfile = {
         userChrome = builtins.readFile ../../source/userChrome.css;
-        extensions = with pkgs.inputs.firefox-addons.packages.${system}; [
+        extensions = with inputs.firefox-addons.packages.${osConfig.system}.pkgs; [
           ublock-origin
           sidebery
           tridactyl
@@ -46,7 +47,7 @@
         // {
           id = 0;
           path = "default";
-          extensions = with pkgs.inputs.firefox-addons.packages.${system}; [
+          extensions = with inputs.firefox-addons.packages.${osConfig.system}.pkgs; [
             darkreader
             bitwarden
           ];
@@ -56,7 +57,7 @@
         // {
           id = 1;
           path = "kiosk";
-          extensions = with pkgs.inputs.firefox-addons.packages.${system}; [
+          extensions = with inputs.firefox-addons.packages.${osConfig.system}.pkgs; [
             improved-tube
             sponsorblock
             dearrow
