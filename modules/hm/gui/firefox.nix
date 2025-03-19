@@ -23,16 +23,17 @@
         "datareporting.policy.firstRunURL" = "";
         "browser.translations.automaticallyPopup" = false;
         "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+        "extensions.autoDisableScopes" = 0;
       };
     };
 
     profiles = let
       commonProfile = {
         userChrome = builtins.readFile ../../source/userChrome.css;
-        extensions.packages = with pkgs.inputs.firefox-addons; [
+        extensions = with pkgs.inputs.firefox-addons; [
           ublock-origin
-          tridactyl
           sidebery
+          tridactyl
         ];
       };
     in {
@@ -41,8 +42,9 @@
         // {
           id = 0;
           path = "default";
-          extensions.packages = with pkgs.inputs.firefox-addons; [
+          extensions = with pkgs.inputs.firefox-addons; [
             darkreader
+            bitwarden
           ];
         };
       kiosk =
@@ -50,10 +52,11 @@
         // {
           id = 1;
           path = "kiosk";
-          extensions.packages = with pkgs.inputs.firefox-addons; [
+          extensions = with pkgs.inputs.firefox-addons; [
             improved-tube
             sponsorblock
             dearrow
+            tampermonkey
           ];
         };
       socials =
