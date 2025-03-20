@@ -25,10 +25,11 @@
       OverrideFirstRunPage = "";
       OverridePostUpdatePage = "";
       Preferences = {
-        "datareporting.policy.firstRunURL" = "";
         "browser.translations.automaticallyPopup" = false;
-        "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+        "datareporting.policy.firstRunURL" = "";
         "extensions.autoDisableScopes" = 0;
+        "media.eme.enabled" = true;
+        "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
       };
     };
 
