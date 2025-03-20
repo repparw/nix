@@ -1,7 +1,7 @@
-{...}: {
+{inputs, ...}: {
   system.autoUpgrade = {
     enable = true;
-    flake = "github:repparw/nix";
+    flake = inputs.self.outPath;
     flags = [
       "--update-input"
       "nixpkgs"
