@@ -49,13 +49,6 @@ in {
       rootless.enable = true;
       rootless.setSocketVariable = true;
     };
-    virtualisation.podman = {
-      enable = true;
-      dockerCompat = true;
-      storageDriver = "btrfs";
-      rootless.enable = true;
-      rootless.setSocketVariable = true;
-    };
     virtualisation.oci-containers.backend = "docker";
     virtualisation.oci-containers.containers = {
       "authelia" = {
