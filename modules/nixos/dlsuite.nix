@@ -410,8 +410,8 @@ in {
 
       systemdServices = builtins.foldl' lib.recursiveUpdate {} (map mkSystemService containerSuffixes);
     in
-      #systemdServices //
-      {
+      systemdServices
+      // {
         # Networks
         "podman-network-dlsuite" = {
           path = [pkgs.podman];
