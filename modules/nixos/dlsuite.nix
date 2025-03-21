@@ -349,11 +349,11 @@ in {
 
     users.users.dlsuite = {
       isNormalUser = true;
-      uid = cfg.user;
-      group = cfg.group;
+      uid = lib.strings.toInt cfg.user;
+      group = "docker";
       home = "/home/docker";
       createHome = true;
-      shell = "/bin/bash";
+      shell = pkgs.bash;
     };
 
     # Services
