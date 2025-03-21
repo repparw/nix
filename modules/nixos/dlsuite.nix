@@ -395,6 +395,7 @@ in {
       mkSystemService = suffix: {
         "podman-${suffix}" = {
           serviceConfig = {
+            User = "dlsuite";
             Restart = lib.mkOverride 500 "always";
           };
           after = [
