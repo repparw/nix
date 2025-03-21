@@ -336,10 +336,10 @@ in {
 
   config = mkIf cfg.enable {
     virtualisation.docker = {
-      enable = true;
       autoPrune.enable = true;
       storageDriver = "btrfs";
     };
+
     virtualisation.oci-containers.backend = "docker";
     virtualisation.oci-containers.containers = containerDefinitions;
 
