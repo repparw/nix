@@ -7,46 +7,47 @@
 with lib; let
   cfg = config.services.dlsuite;
 
-  containerDefaults = {
-    log-driver = "journald"; # Common log driver
-    networks = [
-      "dlsuite"
-    ];
-  };
-
   mkContainer = name: attrs:
     mkMerge [
-      containerDefaults
-      attrs
+      {
+        log-driver = "journald";
+        networks = ["dlsuite"];
+      }
+      (attrs {inherit cfg;})
       {
         extraOptions =
-          (containerDefaults.extraOptions or [])
-          ++ (attrs.extraOptions or [])
-          ++ [
-            "--network-alias=${name}" # Add network alias
-          ];
+          (attrs.extraOptions or [])
+          ++ ["--network-alias=${name}"];
       }
     ];
 
-  containerDefinitions = mapAttrs (name: attrs: mkContainer name attrs) {
-    "authelia" = {
-      image = "docker.io/authelia/authelia:latest";
-      environment = {
-        "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
-        "AUTHELIA_SESSION_SECRET_FILE" = "/secrets/SESSION_SECRET";
-        "AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE" = "/secrets/STORAGE_ENCRYPTION_KEY";
-        "PGID" = cfg.group;
-        "PUID" = cfg.user;
-        "TZ" = cfg.timezone;
-      };
-      volumes = [
-        "${cfg.dataDir}/authelia/config:/config:rw,Z"
-        "${cfg.dataDir}/authelia/secrets:/secrets:rw,Z"
-      ];
-      dependsOn = [
-        "valkey"
-      ];
-    };
+  # List of container configurations
+  containersList = [
+    (import ./authelia.nix)
+    (import ./bazarr.nix)
+    (import ./broker.nix)
+    (import ./changedetection.nix)
+    (import ./ddclient.nix)
+    (import ./diun.nix)
+    (import ./flaresolverr.nix)
+    (import ./freshrss.nix)
+    (import ./jellyfin.nix)
+    (import ./mercury.nix)
+    (import ./paperdb.nix)
+    (import ./paperless.nix)
+    (import ./prowlarr.nix)
+    (import ./qbittorrent.nix)
+    (import ./radarr.nix)
+    (import ./sockpuppetbrowser.nix)
+    (import ./sonarr.nix)
+    (import ./swag.nix)
+    (import ./valkey.nix)
+  ];
+
+  # Merge all container definitions
+  containerDefinitions =
+    mapAttrs (name: attrs: mkContainer name attrs)
+    (foldl' (acc: def: acc // def) {} containersList);
     "bazarr" = {
       image = "docker.io/linuxserver/bazarr:latest";
       environment = {
