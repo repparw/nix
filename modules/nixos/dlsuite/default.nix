@@ -21,7 +21,6 @@ with lib; let
       }
     ];
 
-  # List of container configurations
   containersList = [
     (import ./authelia.nix)
     (import ./changedetection.nix)
@@ -33,7 +32,6 @@ with lib; let
     (import ./swag.nix)
   ];
 
-  # Merge all container definitions
   containerDefinitions =
     mapAttrs (name: attrs: mkContainer name attrs)
     (foldl' (acc: def: acc // (def {inherit cfg;})) {} containersList);
