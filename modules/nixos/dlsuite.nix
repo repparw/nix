@@ -90,7 +90,6 @@ in {
         enable = true;
         dockerCompat = true;
         autoPrune.enable = true;
-        defaultNetwork.dnsname.enable = true;
       };
       containers.storage.settings.storage.driver = "btrfs";
 
@@ -172,7 +171,7 @@ in {
           };
           volumes = [
             "${cfg.dataDir}/diun:/data:rw,Z"
-            "/run/podman/podman.sock:/var/run/docker.sock:ro"
+            "/var/run/podman/podman.sock:/var/run/docker.sock:ro"
           ];
         };
         flaresolverr = mkContainer "flaresolverr" {
