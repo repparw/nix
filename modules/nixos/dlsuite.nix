@@ -68,7 +68,7 @@ in {
       users.dlsuite = {
         isNormalUser = true;
         linger = true;
-        home = "/home/docker/";
+        home = "/home/docker";
         group = "dlsuite";
         uid = pkgs.lib.strings.toInt cfg.user;
       };
