@@ -56,10 +56,10 @@ in {
         isNormalUser = true;
         linger = true;
         group = "dlsuite";
-        uid = pkgs.lib.strings.toInt cfg.user;
+        uid = cfg.user;
       };
       groups.dlsuite = {
-        gid = pkgs.lib.strings.toInt cfg.group;
+        gid = cfg.group;
       };
     };
 
