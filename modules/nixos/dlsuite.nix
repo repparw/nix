@@ -395,7 +395,12 @@ in {
       mkSystemService = suffix: {
         "podman-${suffix}" = {
           serviceConfig = {
-            Restart = lib.mkOverride 90 "unless-stopped";
+            Restart = lib.mkOverride 90 "always";
+            RestartSec = lib.mkOverride 90 "5s";
+          };
+          startLimitBurst = 3;
+          unitConfig = {
+            StartLimitIntervalSec = lib.mkOverride 90 120;
           };
           after = [
             "podman-network-dlsuite.service"
