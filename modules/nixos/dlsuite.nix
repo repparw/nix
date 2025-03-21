@@ -51,7 +51,7 @@ in {
       "${matchAll}".allowedUDPPorts = [53];
     };
 
-    config.user.users.dlsuite.linger = true;
+    config.users.users.dlsuite.linger = true;
 
     virtualisation = {
       podman = {
@@ -94,6 +94,7 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/bazarr:/config:rw,Z"
             "${cfg.dataDir}/data:/data:rw,z"
@@ -106,6 +107,7 @@ in {
         };
         "broker" = {
           image = "docker.io/library/redis:7";
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/paper/redis:/data:rw,Z"
           ];
@@ -125,6 +127,7 @@ in {
             "HIDE_REFERER" = "true";
             "PLAYWRIGHT_DRIVER_URL" = "ws://sockpuppetbrowser:3000";
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/changedetection:/datastore:rw,Z"
           ];
@@ -144,6 +147,7 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/ddclient:/config:rw,Z"
           ];
@@ -163,6 +167,7 @@ in {
             "DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT" = "true";
             "DIUN_NOTIF_DISCORD_WEBHOOKURLFILE" = "/data/discord-webhook-url";
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/diun:/data:rw,Z"
             "/var/run/podman/podman.sock:/var/run/docker.sock:ro"
@@ -181,6 +186,7 @@ in {
             "LOG_LEVEL" = "info";
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           log-driver = "journald";
           extraOptions = [
             "--network-alias=flaresolverr"
@@ -194,6 +200,7 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/freshrss:/config:rw,Z"
           ];
@@ -212,6 +219,7 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/data/media:/data/media:ro"
             "${cfg.dataDir}/jellyfin:/config:rw,Z"
@@ -229,6 +237,7 @@ in {
         };
         "mercury" = {
           image = "docker.io/wangqiru/mercury-parser-api:latest";
+          podman.user = "dlsuite";
           log-driver = "journald";
           extraOptions = [
             "--network-alias=mercury"
@@ -242,6 +251,7 @@ in {
             "POSTGRES_PASSWORD" = "paperless";
             "POSTGRES_USER" = "paperless";
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/paper/pg:/var/lib/postgresql/data:rw,Z"
           ];
@@ -266,6 +276,7 @@ in {
             "USERMAP_GID" = cfg.group;
             "USERMAP_UID" = cfg.user;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/paper/data:/usr/src/paperless/data:rw,Z"
             "${cfg.dataDir}/paper/export:/usr/src/paperless/export:rw,Z"
@@ -290,6 +301,7 @@ in {
             "SCREEN_DEPTH" = "16";
             "MAX_CONCURRENT_CHROME_PROCESSES" = "10";
           };
+          podman.user = "dlsuite";
           log-driver = "journald";
           extraOptions = [
             "--network-alias=sockpuppetbrowser"
@@ -303,6 +315,7 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/prowlarr:/config:rw,Z"
           ];
@@ -319,6 +332,7 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/data/torrents:/data/torrents:rw,z"
             "${cfg.dataDir}/qbittorrent:/config:rw,Z"
@@ -339,6 +353,7 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/data/:/data:rw,z"
             "${cfg.dataDir}/radarr:/config:rw,Z"
@@ -359,6 +374,7 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "/dev/rtc:/dev/rtc:ro"
             "${cfg.dataDir}/data:/data:rw,z"
@@ -384,6 +400,7 @@ in {
             "URL" = cfg.domain;
             "VALIDATION" = "dns";
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/swag:/config:rw,Z"
             "/home/repparw/git/homepage:/config/www:rw,Z"
@@ -407,6 +424,7 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/authelia/valkey:/data:rw,Z"
           ];
