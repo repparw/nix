@@ -51,7 +51,12 @@ in {
       "${matchAll}".allowedUDPPorts = [53];
     };
 
-    config.users.users.dlsuite.linger = true;
+    users.users.dlsuite = {
+      isNormalUser = true;
+      linger = true;
+      description = "repparw";
+      users.users.dlsuite.group = "dlsuite";
+    };
 
     virtualisation = {
       podman = {
