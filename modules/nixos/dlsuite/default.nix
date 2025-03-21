@@ -13,7 +13,7 @@ with lib; let
         log-driver = "journald";
         networks = ["dlsuite"];
       }
-      (attrs {inherit cfg;})
+      attrs
       {
         extraOptions =
           (attrs.extraOptions or [])
@@ -24,7 +24,6 @@ with lib; let
   # List of container configurations
   containersList = [
     (import ./authelia.nix)
-    (import ./bazarr.nix)
     (import ./changedetection.nix)
     (import ./diun.nix)
     (import ./flaresolverr.nix)
@@ -40,7 +39,7 @@ with lib; let
   # Merge all container definitions
   containerDefinitions =
     mapAttrs (name: attrs: mkContainer name attrs)
-    (foldl' (acc: def: acc // def) {} containersList);
+    (foldl' (acc: def: acc // (def {inherit cfg;})) {} containersList);
 in {
   options.services.dlsuite = {
     enable = mkEnableOption "dlsuite container stack";
