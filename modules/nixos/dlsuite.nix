@@ -421,7 +421,8 @@ in {
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
-            ExecStart = "${pkgs.podman}/bin/podman network inspect dlsuite || ${pkgs.podman}/bin/podman network create dlsuite";
+            ExecStartPre = "${pkgs.podman}/bin/podman network inspect dlsuite || ${pkgs.podman}/bin/podman network create dlsuite";
+            ExecStart = "true";
             ExecStop = "${pkgs.podman}/bin/podman network rm -f dlsuite";
             User = "dlsuite";
           };
