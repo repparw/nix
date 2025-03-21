@@ -20,7 +20,7 @@ with lib; let
       attrs
       {
         extraOptions =
-          containerDefaults.extraOptions
+          (containerDefaults.extraOptions or [])
           ++ (attrs.extraOptions or [])
           ++ [
             "--network-alias=${name}" # Add network alias
