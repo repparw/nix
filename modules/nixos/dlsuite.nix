@@ -90,7 +90,7 @@ in {
         enable = true;
         dockerCompat = true;
         autoPrune.enable = true;
-        defaultNetwork.dnsname.enable = true;
+        defaultNetwork.settings.dns_enabled = true;
       };
       containers.storage.settings.storage.driver = "btrfs";
 
