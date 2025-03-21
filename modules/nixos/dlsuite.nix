@@ -42,16 +42,22 @@ in {
   };
 
   config = mkIf cfg.enable {
-    virtualisation = { podman = {
+    virtualisation.docker = {
       enable = true;
-      dockerCompat = true;
       autoPrune.enable = true;
       storageDriver = "btrfs";
+      rootless.enable = true;
+      rootless.setSocketVariable = true;
     };
-	containers.storage.settings = { storage = { driver = "btrfs";
-	};
-    oci-containers.backend = "docker";
-    oci-containers.containers = {
+    virtualisation.podman = {
+      enable = true;
+      dockerCompat = true;
+      storageDriver = "btrfs";
+      rootless.enable = true;
+      rootless.setSocketVariable = true;
+    };
+    virtualisation.oci-containers.backend = "docker";
+    virtualisation.oci-containers.containers = {
       "authelia" = {
         image = "docker.io/authelia/authelia:latest";
         environment = {
@@ -412,7 +418,6 @@ in {
           "--network=dlsuite"
         ];
       };
-    };
     };
     # Services
     systemd.services = let
