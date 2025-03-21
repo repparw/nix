@@ -6,28 +6,6 @@
 }:
 with lib; let
   cfg = config.services.dlsuite;
-
-  containerDefaults = {
-    podman.user = "dlsuite";
-    podman.sdnotify = "container"; # Enable sdnotify for all containers
-    log-driver = "journald";
-    extraOptions = [
-      "--network=dlsuite" #moved here
-    ];
-  };
-
-  mkContainer = name: attrs:
-    mkMerge [
-      containerDefaults
-      attrs
-      {
-        extraOptions =
-          (attrs.extraOptions or [])
-          ++ [
-            "--network-alias=${name}"
-          ];
-      }
-    ];
 in {
   options.services.dlsuite = {
     enable = mkEnableOption "dlsuite container stack";
@@ -95,7 +73,7 @@ in {
 
       oci-containers.backend = "podman";
       oci-containers.containers = {
-        authelia = mkContainer "authelia" {
+        "authelia" = {
           image = "docker.io/authelia/authelia:latest";
           environment = {
             "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
@@ -105,6 +83,7 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/authelia/config:/config:rw,Z"
             "${cfg.dataDir}/authelia/secrets:/secrets:rw,Z"
@@ -112,26 +91,43 @@ in {
           dependsOn = [
             "valkey"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=authelia"
+            "--network=dlsuite"
+          ];
         };
-        bazarr = mkContainer "bazarr" {
+        "bazarr" = {
           image = "docker.io/linuxserver/bazarr:latest";
           environment = {
             "PGID" = cfg.group;
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/bazarr:/config:rw,Z"
             "${cfg.dataDir}/data:/data:rw,z"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=bazarr"
+            "--network=dlsuite"
+          ];
         };
-        broker = mkContainer "broker" {
+        "broker" = {
           image = "docker.io/library/redis:7";
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/paper/redis:/data:rw,Z"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=broker"
+            "--network=dlsuite"
+          ];
         };
-        changedetection = mkContainer "changedetection" {
+        "changedetection" = {
           image = "docker.io/dgtlmoon/changedetection.io:latest";
           environment = {
             "PUID" = cfg.user;
@@ -141,25 +137,37 @@ in {
             "HIDE_REFERER" = "true";
             "PLAYWRIGHT_DRIVER_URL" = "ws://sockpuppetbrowser:3000";
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/changedetection:/datastore:rw,Z"
           ];
           dependsOn = [
             "sockpuppetbrowser"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=changedetection"
+            "--network=dlsuite"
+          ];
         };
-        ddclient = mkContainer "ddclient" {
+        "ddclient" = {
           image = "docker.io/linuxserver/ddclient:latest";
           environment = {
             "PGID" = cfg.group;
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/ddclient:/config:rw,Z"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=ddclient"
+            "--network=dlsuite"
+          ];
         };
-        diun = mkContainer "diun" {
+        "diun" = {
           image = "docker.io/crazymax/diun:latest";
           environment = {
             "TZ" = cfg.timezone;
@@ -169,12 +177,18 @@ in {
             "DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT" = "true";
             "DIUN_NOTIF_DISCORD_WEBHOOKURLFILE" = "/data/discord-webhook-url";
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/diun:/data:rw,Z"
             "/var/run/podman/podman.sock:/var/run/docker.sock:ro"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=diun"
+            "--network=dlsuite"
+          ];
         };
-        flaresolverr = mkContainer "flaresolverr" {
+        "flaresolverr" = {
           image = "docker.io/flaresolverr/flaresolverr:latest";
           environment = {
             "CAPTCHA_SOLVER" = "none";
@@ -182,19 +196,31 @@ in {
             "LOG_LEVEL" = "info";
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=flaresolverr"
+            "--network=dlsuite"
+          ];
         };
-        freshrss = mkContainer "freshrss" {
+        "freshrss" = {
           image = "docker.io/linuxserver/freshrss:latest";
           environment = {
             "PGID" = cfg.group;
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/freshrss:/config:rw,Z"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=freshrss"
+            "--network=dlsuite"
+          ];
         };
-        jellyfin = mkContainer "jellyfin" {
+        "jellyfin" = {
           image = "docker.io/linuxserver/jellyfin:latest";
           environment = {
             "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
@@ -203,6 +229,7 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/data/media:/data/media:ro"
             "${cfg.dataDir}/jellyfin:/config:rw,Z"
@@ -211,25 +238,40 @@ in {
             "127.0.0.1:8920:8920/tcp"
             "127.0.0.1:7359:7359/udp"
           ];
+          log-driver = "journald";
           extraOptions = [
             "--device=/dev/dri:/dev/dri:rwm"
+            "--network-alias=jellyfin"
+            "--network=dlsuite"
           ];
         };
-        mercury = mkContainer "mercury" {
+        "mercury" = {
           image = "docker.io/wangqiru/mercury-parser-api:latest";
+          podman.user = "dlsuite";
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=mercury"
+            "--network=dlsuite"
+          ];
         };
-        paperdb = mkContainer "paperdb" {
+        "paperdb" = {
           image = "docker.io/library/postgres:15";
           environment = {
             "POSTGRES_DB" = "paperless";
             "POSTGRES_PASSWORD" = "paperless";
             "POSTGRES_USER" = "paperless";
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/paper/pg:/var/lib/postgresql/data:rw,Z"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=paperdb"
+            "--network=dlsuite"
+          ];
         };
-        paperless = mkContainer "paperless" {
+        "paperless" = {
           image = "docker.io/paperlessngx/paperless-ngx:latest";
           environment = {
             "PAPERLESS_DBHOST" = "paperdb";
@@ -244,6 +286,7 @@ in {
             "USERMAP_GID" = cfg.group;
             "USERMAP_UID" = cfg.user;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/paper/data:/usr/src/paperless/data:rw,Z"
             "${cfg.dataDir}/paper/export:/usr/src/paperless/export:rw,Z"
@@ -254,8 +297,13 @@ in {
             "broker"
             "paperdb"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=paperless"
+            "--network=dlsuite"
+          ];
         };
-        sockpuppetbrowser = mkContainer "sockpuppetbrowser" {
+        "sockpuppetbrowser" = {
           image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";
           environment = {
             "SCREEN_WIDTH" = "1920";
@@ -263,25 +311,38 @@ in {
             "SCREEN_DEPTH" = "16";
             "MAX_CONCURRENT_CHROME_PROCESSES" = "10";
           };
+          podman.user = "dlsuite";
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=sockpuppetbrowser"
+            "--network=dlsuite"
+          ];
         };
-        prowlarr = mkContainer "prowlarr" {
+        "prowlarr" = {
           image = "docker.io/linuxserver/prowlarr:latest";
           environment = {
             "PGID" = cfg.group;
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/prowlarr:/config:rw,Z"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=prowlarr"
+            "--network=dlsuite"
+          ];
         };
-        qbittorrent = mkContainer "qbittorrent" {
+        "qbittorrent" = {
           image = "docker.io/hotio/qbittorrent:latest";
           environment = {
             "PGID" = cfg.group;
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/data/torrents:/data/torrents:rw,z"
             "${cfg.dataDir}/qbittorrent:/config:rw,Z"
@@ -289,14 +350,20 @@ in {
           ports = [
             "127.0.0.1:54536:54536/tcp"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=qbittorrent"
+            "--network=dlsuite"
+          ];
         };
-        radarr = mkContainer "radarr" {
+        "radarr" = {
           image = "docker.io/linuxserver/radarr:latest";
           environment = {
             "PGID" = cfg.group;
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/data/:/data:rw,z"
             "${cfg.dataDir}/radarr:/config:rw,Z"
@@ -304,14 +371,20 @@ in {
           dependsOn = [
             "qbittorrent"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=radarr"
+            "--network=dlsuite"
+          ];
         };
-        sonarr = mkContainer "sonarr" {
+        "sonarr" = {
           image = "docker.io/linuxserver/sonarr:latest";
           environment = {
             "PGID" = cfg.group;
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "/dev/rtc:/dev/rtc:ro"
             "${cfg.dataDir}/data:/data:rw,z"
@@ -320,8 +393,13 @@ in {
           dependsOn = [
             "qbittorrent"
           ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=sonarr"
+            "--network=dlsuite"
+          ];
         };
-        swag = mkContainer "swag" {
+        "swag" = {
           image = "docker.io/linuxserver/swag:latest";
           environment = {
             "DNSPLUGIN" = "cloudflare";
@@ -332,6 +410,7 @@ in {
             "URL" = cfg.domain;
             "VALIDATION" = "dns";
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/swag:/config:rw,Z"
             "/home/repparw/git/homepage:/config/www:rw,Z"
@@ -340,18 +419,22 @@ in {
             "443:443/tcp"
             "80:80/tcp"
           ];
+          log-driver = "journald";
           extraOptions = [
             "--add-host=host.docker.internal:host-gateway"
             "--cap-add=NET_ADMIN"
+            "--network-alias=swag"
+            "--network=dlsuite"
           ];
         };
-        valkey = mkContainer "valkey" {
+        "valkey" = {
           image = "docker.io/valkey/valkey:7.2-alpine";
           environment = {
             "PGID" = cfg.group;
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
+          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/authelia/valkey:/data:rw,Z"
           ];
@@ -362,6 +445,11 @@ in {
             "1"
             "--loglevel"
             "warning"
+          ];
+          log-driver = "journald";
+          extraOptions = [
+            "--network-alias=valkey"
+            "--network=dlsuite"
           ];
         };
       };
