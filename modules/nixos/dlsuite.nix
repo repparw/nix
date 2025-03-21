@@ -417,16 +417,13 @@ in {
       // {
         # Networks
         "podman-network-dlsuite" = {
-          path = [
-            pkgs.podman
-          ];
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
-            ExecStop = "podman network rm -f dlsuite";
+            ExecStop = "${pkgs.podman}/bin/podman network rm -f dlsuite";
           };
           script = ''
-            podman network inspect dlsuite || podman network create dlsuite
+            ${pkgs.podman}/bin/podman network inspect dlsuite || ${pkgs.podman}/bin/podman network create dlsuite
           '';
           partOf = [
             "dlsuite.target"
