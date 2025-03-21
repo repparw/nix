@@ -106,8 +106,6 @@
 
       qmk
 
-      podman-compose
-
       # CLI tools
       playerctl
       rclone
