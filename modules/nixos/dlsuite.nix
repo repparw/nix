@@ -422,13 +422,11 @@ in {
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
+            ExecStartPre = "podman network inspect dlsuite || podman network create dlsuite >> /tmp/podman-network.log 2>&1";
             ExecStart = "true";
             ExecStop = "podman network rm -f dlsuite";
             User = "dlsuite";
           };
-          script = ''
-            podman network inspect dlsuite || podman network create dlsuite
-          '';
           partOf = [
             "dlsuite.target"
           ];
