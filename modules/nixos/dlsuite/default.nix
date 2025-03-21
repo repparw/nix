@@ -25,7 +25,6 @@ with lib; let
   containersList = [
     (import ./authelia.nix)
     (import ./bazarr.nix)
-    (import ./broker.nix)
     (import ./changedetection.nix)
     (import ./ddclient.nix)
     (import ./diun.nix)
@@ -33,12 +32,10 @@ with lib; let
     (import ./freshrss.nix)
     (import ./jellyfin.nix)
     (import ./mercury.nix)
-    (import ./paperdb.nix)
     (import ./paperless.nix)
     (import ./prowlarr.nix)
     (import ./qbittorrent.nix)
     (import ./radarr.nix)
-    (import ./sockpuppetbrowser.nix)
     (import ./sonarr.nix)
     (import ./swag.nix)
     (import ./valkey.nix)
@@ -48,41 +45,7 @@ with lib; let
   containerDefinitions =
     mapAttrs (name: attrs: mkContainer name attrs)
     (foldl' (acc: def: acc // def) {} containersList);
-    "bazarr" = {
-      image = "docker.io/linuxserver/bazarr:latest";
-      environment = {
-        "PGID" = cfg.group;
-        "PUID" = cfg.user;
-        "TZ" = cfg.timezone;
-      };
-      volumes = [
-        "${cfg.dataDir}/bazarr:/config:rw,Z"
-        "${cfg.dataDir}/data:/data:rw,z"
-      ];
-    };
-    "broker" = {
-      image = "docker.io/library/redis:7";
-      volumes = [
-        "${cfg.dataDir}/paper/redis:/data:rw,Z"
-      ];
-    };
-    "changedetection" = {
-      image = "docker.io/dgtlmoon/changedetection.io:latest";
-      environment = {
-        "PUID" = cfg.user;
-        "PGID" = cfg.group;
-        "TZ" = cfg.timezone;
-        "BASE_URL" = "https://${cfg.domain}";
-        "HIDE_REFERER" = "true";
-        "PLAYWRIGHT_DRIVER_URL" = "ws://sockpuppetbrowser:3000";
-      };
-      volumes = [
-        "${cfg.dataDir}/changedetection:/datastore:rw,Z"
-      ];
-      dependsOn = [
-        "sockpuppetbrowser"
-      ];
-    };
+
     "ddclient" = {
       image = "docker.io/linuxserver/ddclient:latest";
       environment = {
@@ -152,52 +115,6 @@ with lib; let
     };
     "mercury" = {
       image = "docker.io/wangqiru/mercury-parser-api:latest";
-    };
-    "paperdb" = {
-      image = "docker.io/library/postgres:15";
-      environment = {
-        "POSTGRES_DB" = "paperless";
-        "POSTGRES_PASSWORD" = "paperless";
-        "POSTGRES_USER" = "paperless";
-      };
-      volumes = [
-        "${cfg.dataDir}/paper/pg:/var/lib/postgresql/data:rw,Z"
-      ];
-    };
-    "paperless" = {
-      image = "docker.io/paperlessngx/paperless-ngx:latest";
-      environment = {
-        "PAPERLESS_DBHOST" = "paperdb";
-        "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
-        "PAPERLESS_ENABLE_HTTP_REMOTE_USER" = "true";
-        "PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME" = "HTTP_REMOTE_USER";
-        "PAPERLESS_LOGOUT_REDIRECT_URL" = "https://auth.${cfg.domain}/logout";
-        "PAPERLESS_OCR_LANGUAGE" = "spa";
-        "PAPERLESS_REDIS" = "redis://broker:6379";
-        "PAPERLESS_TIME_ZONE" = cfg.timezone;
-        "PAPERLESS_URL" = "https://paper.${cfg.domain}";
-        "USERMAP_GID" = cfg.group;
-        "USERMAP_UID" = cfg.user;
-      };
-      volumes = [
-        "${cfg.dataDir}/paper/data:/usr/src/paperless/data:rw,Z"
-        "${cfg.dataDir}/paper/export:/usr/src/paperless/export:rw,Z"
-        "${cfg.dataDir}/paper/media:/usr/src/paperless/media:rw,Z"
-        "/home/repparw/Documents/consume:/usr/src/paperless/consume:rw,Z"
-      ];
-      dependsOn = [
-        "broker"
-        "paperdb"
-      ];
-    };
-    "sockpuppetbrowser" = {
-      image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";
-      environment = {
-        "SCREEN_WIDTH" = "1920";
-        "SCREEN_HEIGHT" = "1024";
-        "SCREEN_DEPTH" = "16";
-        "MAX_CONCURRENT_CHROME_PROCESSES" = "10";
-      };
     };
     "prowlarr" = {
       image = "docker.io/linuxserver/prowlarr:latest";
