@@ -16,7 +16,7 @@ with lib; let
     ];
   };
 
-  mkContainer = name: attrs:
+  mkContainer' = name: attrs:
     mkMerge [
       containerDefaults
       attrs
@@ -88,7 +88,7 @@ in {
 
       oci-containers.backend = "podman";
       oci-containers.containers = {
-        authelia = mkContainer "authelia" {
+        authelia = mkContainer {
           image = "docker.io/authelia/authelia:latest";
           environment = {
             "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
