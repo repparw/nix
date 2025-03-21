@@ -12,7 +12,7 @@ with lib; let
     podman.sdnotify = "container"; # Enable sdnotify for all containers
     log-driver = "journald";
     extraOptions = [
-      "--network=dlsuite"
+      "--network=dlsuite" #moved here
     ];
   };
 
@@ -22,8 +22,7 @@ with lib; let
       attrs
       {
         extraOptions =
-          containerDefaults.extraOptions
-          ++ (attrs.extraOptions or [])
+          (attrs.extraOptions or [])
           ++ [
             "--network-alias=${name}"
           ];
