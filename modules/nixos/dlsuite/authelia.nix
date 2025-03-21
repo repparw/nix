@@ -17,4 +17,23 @@
       "valkey"
     ];
   };
+  "valkey" = {
+    image = "docker.io/valkey/valkey:7.2-alpine";
+    environment = {
+      "PGID" = cfg.group;
+      "PUID" = cfg.user;
+      "TZ" = cfg.timezone;
+    };
+    volumes = [
+      "${cfg.dataDir}/authelia/valkey:/data:rw,Z"
+    ];
+    cmd = [
+      "valkey-server"
+      "--save"
+      "60"
+      "1"
+      "--loglevel"
+      "warning"
+    ];
+  };
 }
