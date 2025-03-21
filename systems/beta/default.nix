@@ -12,13 +12,6 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.xserver.libinput.enable = true;
 
-  virtualisation.docker = {
-    enable = true;
-    autoPrune.enable = true;
-    rootless.enable = true;
-    rootless.setSocketVariable = true;
-  };
-
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.repparw = {
     isNormalUser = true;
@@ -32,7 +25,6 @@
     extraGroups = [
       "networkmanager"
       "wheel"
-      "docker"
     ];
   };
 
