@@ -16,7 +16,7 @@ with lib; let
     ];
   };
 
-  mkContainer' = name: attrs:
+  mkContainer = name: attrs:
     mkMerge [
       containerDefaults
       attrs
@@ -28,66 +28,7 @@ with lib; let
           ];
       }
     ];
-in {
-  options.services.dlsuite = {
-    enable = mkEnableOption "dlsuite container stack";
-
-    dataDir = mkOption {
-      type = types.path;
-      default = "/home/docker";
-      description = "Directory to store container data";
-    };
-
-    timezone = mkOption {
-      type = types.str;
-      default = "America/Argentina/Buenos_Aires";
-      description = "Timezone for containers";
-    };
-
-    domain = mkOption {
-      type = types.str;
-      default = "repparw.me";
-      description = "Base domain for the services";
-    };
-
-    user = mkOption {
-      type = types.str;
-      default = "1001";
-      description = "User to run containers as";
-    };
-
-    group = mkOption {
-      type = types.str;
-      default = "131";
-      description = "Group to run containers as";
-    };
-  };
-
-  config = mkIf cfg.enable {
-    users = {
-      users.dlsuite = {
-        isNormalUser = true;
-        linger = true;
-        home = "/home/docker";
-        group = "dlsuite";
-        uid = pkgs.lib.strings.toInt cfg.user;
-      };
-      groups.dlsuite = {
-        gid = pkgs.lib.strings.toInt cfg.group;
-      };
-    };
-
-    virtualisation = {
-      podman = {
-        enable = true;
-        dockerCompat = true;
-        autoPrune.enable = true;
-        defaultNetwork.settings.dns_enabled = true;
-      };
-      containers.storage.settings.storage.driver = "btrfs";
-
-      oci-containers.backend = "podman";
-      oci-containers.containers = {
+	containerDefinitions = {
         authelia = mkContainer {
           image = "docker.io/authelia/authelia:latest";
           environment = {
@@ -338,7 +279,7 @@ in {
             "--cap-add=NET_ADMIN"
           ];
         };
-        valkey = mkContainer "valkey" {
+        valkey = {
           image = "docker.io/valkey/valkey:7.2-alpine";
           environment = {
             "PGID" = cfg.group;
@@ -358,7 +299,66 @@ in {
           ];
         };
       };
+in {
+  options.services.dlsuite = {
+    enable = mkEnableOption "dlsuite container stack";
+
+    dataDir = mkOption {
+      type = types.path;
+      default = "/home/docker";
+      description = "Directory to store container data";
     };
+
+    timezone = mkOption {
+      type = types.str;
+      default = "America/Argentina/Buenos_Aires";
+      description = "Timezone for containers";
+    };
+
+    domain = mkOption {
+      type = types.str;
+      default = "repparw.me";
+      description = "Base domain for the services";
+    };
+
+    user = mkOption {
+      type = types.str;
+      default = "1001";
+      description = "User to run containers as";
+    };
+
+    group = mkOption {
+      type = types.str;
+      default = "131";
+      description = "Group to run containers as";
+    };
+  };
+
+  config = mkIf cfg.enable {
+    users = {
+      users.dlsuite = {
+        isNormalUser = true;
+        linger = true;
+        home = "/home/docker";
+        group = "dlsuite";
+        uid = pkgs.lib.strings.toInt cfg.user;
+      };
+      groups.dlsuite = {
+        gid = pkgs.lib.strings.toInt cfg.group;
+      };
+    };
+
+    virtualisation = {
+      podman = {
+        enable = true;
+        dockerCompat = true;
+        autoPrune.enable = true;
+        defaultNetwork.settings.dns_enabled = true;
+      };
+      containers.storage.settings.storage.driver = "btrfs";
+
+      oci-containers.backend = "podman";
+      oci-containers.containers = {
 
     # Services
     systemd.services = let
