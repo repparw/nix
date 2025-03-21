@@ -29,6 +29,7 @@
       "adbusers"
       "networkmanager"
       "wheel"
+      "docker"
     ];
   };
 
