@@ -15,8 +15,8 @@
   virtualisation.docker = {
     enable = true;
     autoPrune.enable = true;
-    rootless.enable = true;
-    rootless.setSocketVariable = true;
+    #rootless.enable = true;
+    #rootless.setSocketVariable = true;
   };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
