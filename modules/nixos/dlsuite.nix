@@ -339,8 +339,10 @@ in {
       enable = true;
       autoPrune.enable = true;
       storageDriver = "btrfs";
-      rootless.enable = true;
-      rootless.setSocketVariable = true;
+      rootless = {
+        enable = true;
+        setSocketVariable = true;
+      };
     };
     virtualisation.oci-containers.backend = "docker";
     virtualisation.oci-containers.containers = containerDefinitions;
@@ -351,9 +353,9 @@ in {
 
       mkSystemService = suffix: {
         "docker-${suffix}" = {
-          serviceConfig = {
-            Restart = lib.mkOverride 500 "always";
-          };
+          #serviceConfig = {
+          #  Restart = lib.mkOverride 500 "always";
+          #};
           after = [
             "docker-network-dlsuite.service"
           ];
