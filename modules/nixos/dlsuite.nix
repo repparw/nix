@@ -422,6 +422,7 @@ in {
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
+            ExecStart = "true";
             ExecStop = "podman network rm -f dlsuite";
             User = "dlsuite";
           };
