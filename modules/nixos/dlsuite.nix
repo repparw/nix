@@ -27,6 +27,278 @@ with lib; let
           ];
       }
     ];
+
+  containerDefinitions = mapAttrs (name: attrs: mkContainer name attrs) {
+    "authelia" = {
+      image = "docker.io/authelia/authelia:latest";
+      environment = {
+        "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
+        "AUTHELIA_SESSION_SECRET_FILE" = "/secrets/SESSION_SECRET";
+        "AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE" = "/secrets/STORAGE_ENCRYPTION_KEY";
+        "PGID" = cfg.group;
+        "PUID" = cfg.user;
+        "TZ" = cfg.timezone;
+      };
+      volumes = [
+        "${cfg.dataDir}/authelia/config:/config:rw,Z"
+        "${cfg.dataDir}/authelia/secrets:/secrets:rw,Z"
+      ];
+      dependsOn = [
+        "valkey"
+      ];
+    };
+    "bazarr" = {
+      image = "docker.io/linuxserver/bazarr:latest";
+      environment = {
+        "PGID" = cfg.group;
+        "PUID" = cfg.user;
+        "TZ" = cfg.timezone;
+      };
+      volumes = [
+        "${cfg.dataDir}/bazarr:/config:rw,Z"
+        "${cfg.dataDir}/data:/data:rw,z"
+      ];
+    };
+    "broker" = {
+      image = "docker.io/library/redis:7";
+      volumes = [
+        "${cfg.dataDir}/paper/redis:/data:rw,Z"
+      ];
+    };
+    "changedetection" = {
+      image = "docker.io/dgtlmoon/changedetection.io:latest";
+      environment = {
+        "PUID" = cfg.user;
+        "PGID" = cfg.group;
+        "TZ" = cfg.timezone;
+        "BASE_URL" = "https://${cfg.domain}";
+        "HIDE_REFERER" = "true";
+        "PLAYWRIGHT_DRIVER_URL" = "ws://sockpuppetbrowser:3000";
+      };
+      volumes = [
+        "${cfg.dataDir}/changedetection:/datastore:rw,Z"
+      ];
+      dependsOn = [
+        "sockpuppetbrowser"
+      ];
+    };
+    "ddclient" = {
+      image = "docker.io/linuxserver/ddclient:latest";
+      environment = {
+        "PGID" = cfg.group;
+        "PUID" = cfg.user;
+        "TZ" = cfg.timezone;
+      };
+      volumes = [
+        "${cfg.dataDir}/ddclient:/config:rw,Z"
+      ];
+    };
+    "diun" = {
+      image = "docker.io/crazymax/diun:latest";
+      environment = {
+        "TZ" = cfg.timezone;
+        "DIUN_WATCH_WORKERS" = "20";
+        "DIUN_WATCH_SCHEDULE" = "@every 12h";
+        "DIUN_PROVIDERS_DOCKER" = "true";
+        "DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT" = "true";
+        "DIUN_NOTIF_DISCORD_WEBHOOKURLFILE" = "/data/discord-webhook-url";
+      };
+      volumes = [
+        "${cfg.dataDir}/diun:/data:rw,Z"
+        "/var/run/docker.sock:/var/run/docker.sock:ro"
+      ];
+    };
+    "flaresolverr" = {
+      image = "docker.io/flaresolverr/flaresolverr:latest";
+      environment = {
+        "CAPTCHA_SOLVER" = "none";
+        "LOG_HTML" = "false";
+        "LOG_LEVEL" = "info";
+        "TZ" = cfg.timezone;
+      };
+    };
+    "freshrss" = {
+      image = "docker.io/linuxserver/freshrss:latest";
+      environment = {
+        "PGID" = cfg.group;
+        "PUID" = cfg.user;
+        "TZ" = cfg.timezone;
+      };
+      volumes = [
+        "${cfg.dataDir}/freshrss:/config:rw,Z"
+      ];
+    };
+    "jellyfin" = {
+      image = "docker.io/linuxserver/jellyfin:latest";
+      environment = {
+        "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
+        "JELLYFIN_PublishedServerUrl" = "jellyfin.${cfg.domain}";
+        "PGID" = cfg.group;
+        "PUID" = cfg.user;
+        "TZ" = cfg.timezone;
+      };
+      volumes = [
+        "${cfg.dataDir}/data/media:/data/media:ro"
+        "${cfg.dataDir}/jellyfin:/config:rw,Z"
+      ];
+      ports = [
+        "127.0.0.1:8920:8920/tcp"
+        "127.0.0.1:7359:7359/udp"
+      ];
+      extraOptions = [
+        "--device=/dev/dri:/dev/dri:rwm"
+      ];
+    };
+    "mercury" = {
+      image = "docker.io/wangqiru/mercury-parser-api:latest";
+    };
+    "paperdb" = {
+      image = "docker.io/library/postgres:15";
+      environment = {
+        "POSTGRES_DB" = "paperless";
+        "POSTGRES_PASSWORD" = "paperless";
+        "POSTGRES_USER" = "paperless";
+      };
+      volumes = [
+        "${cfg.dataDir}/paper/pg:/var/lib/postgresql/data:rw,Z"
+      ];
+    };
+    "paperless" = {
+      image = "docker.io/paperlessngx/paperless-ngx:latest";
+      environment = {
+        "PAPERLESS_DBHOST" = "paperdb";
+        "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
+        "PAPERLESS_ENABLE_HTTP_REMOTE_USER" = "true";
+        "PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME" = "HTTP_REMOTE_USER";
+        "PAPERLESS_LOGOUT_REDIRECT_URL" = "https://auth.${cfg.domain}/logout";
+        "PAPERLESS_OCR_LANGUAGE" = "spa";
+        "PAPERLESS_REDIS" = "redis://broker:6379";
+        "PAPERLESS_TIME_ZONE" = cfg.timezone;
+        "PAPERLESS_URL" = "https://paper.${cfg.domain}";
+        "USERMAP_GID" = cfg.group;
+        "USERMAP_UID" = cfg.user;
+      };
+      volumes = [
+        "${cfg.dataDir}/paper/data:/usr/src/paperless/data:rw,Z"
+        "${cfg.dataDir}/paper/export:/usr/src/paperless/export:rw,Z"
+        "${cfg.dataDir}/paper/media:/usr/src/paperless/media:rw,Z"
+        "/home/repparw/Documents/consume:/usr/src/paperless/consume:rw,Z"
+      ];
+      dependsOn = [
+        "broker"
+        "paperdb"
+      ];
+    };
+    "sockpuppetbrowser" = {
+      image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";
+      environment = {
+        "SCREEN_WIDTH" = "1920";
+        "SCREEN_HEIGHT" = "1024";
+        "SCREEN_DEPTH" = "16";
+        "MAX_CONCURRENT_CHROME_PROCESSES" = "10";
+      };
+    };
+    "prowlarr" = {
+      image = "docker.io/linuxserver/prowlarr:latest";
+      environment = {
+        "PGID" = cfg.group;
+        "PUID" = cfg.user;
+        "TZ" = cfg.timezone;
+      };
+      volumes = [
+        "${cfg.dataDir}/prowlarr:/config:rw,Z"
+      ];
+    };
+    "qbittorrent" = {
+      image = "docker.io/hotio/qbittorrent:latest";
+      environment = {
+        "PGID" = cfg.group;
+        "PUID" = cfg.user;
+        "TZ" = cfg.timezone;
+      };
+      volumes = [
+        "${cfg.dataDir}/data/torrents:/data/torrents:rw,z"
+        "${cfg.dataDir}/qbittorrent:/config:rw,Z"
+      ];
+      ports = [
+        "127.0.0.1:54536:54536/tcp"
+      ];
+    };
+    "radarr" = {
+      image = "docker.io/linuxserver/radarr:latest";
+      environment = {
+        "PGID" = cfg.group;
+        "PUID" = cfg.user;
+        "TZ" = cfg.timezone;
+      };
+      volumes = [
+        "${cfg.dataDir}/data/:/data:rw,z"
+        "${cfg.dataDir}/radarr:/config:rw,Z"
+      ];
+      dependsOn = [
+        "qbittorrent"
+      ];
+    };
+    "sonarr" = {
+      image = "docker.io/linuxserver/sonarr:latest";
+      environment = {
+        "PGID" = cfg.group;
+        "PUID" = cfg.user;
+        "TZ" = cfg.timezone;
+      };
+      volumes = [
+        "/dev/rtc:/dev/rtc:ro"
+        "${cfg.dataDir}/data:/data:rw,z"
+        "${cfg.dataDir}/sonarr:/config:rw,Z"
+      ];
+      dependsOn = [
+        "qbittorrent"
+      ];
+    };
+    "swag" = {
+      image = "docker.io/linuxserver/swag:latest";
+      environment = {
+        "DNSPLUGIN" = "cloudflare";
+        "PGID" = cfg.group;
+        "PUID" = cfg.user;
+        "TZ" = cfg.timezone;
+        "SUBDOMAINS" = "wildcard";
+        "URL" = cfg.domain;
+        "VALIDATION" = "dns";
+      };
+      volumes = [
+        "${cfg.dataDir}/swag:/config:rw,Z"
+        "/home/repparw/git/homepage:/config/www:rw,Z"
+      ];
+      ports = [
+        "443:443/tcp"
+        "80:80/tcp"
+      ];
+      extraOptions = [
+        "--add-host=host.docker.internal:host-gateway"
+        "--cap-add=NET_ADMIN"
+      ];
+    };
+    "valkey" = {
+      image = "docker.io/valkey/valkey:7.2-alpine";
+      environment = {
+        "PGID" = cfg.group;
+        "PUID" = cfg.user;
+        "TZ" = cfg.timezone;
+      };
+      volumes = [
+        "${cfg.dataDir}/authelia/valkey:/data:rw,Z"
+      ];
+      cmd = [
+        "valkey-server"
+        "--save"
+        "60"
+        "1"
+        "--loglevel"
+        "warning"
+      ];
+    };
+  };
 in {
   options.services.dlsuite = {
     enable = mkEnableOption "dlsuite container stack";
@@ -71,280 +343,7 @@ in {
       rootless.setSocketVariable = true;
     };
     virtualisation.oci-containers.backend = "docker";
-    virtualisation.oci-containers.containers = let
-      containerDefinitions = mapAttrs (name: attrs: mkContainer name attrs) {
-        "authelia" = {
-          image = "docker.io/authelia/authelia:latest";
-          environment = {
-            "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
-            "AUTHELIA_SESSION_SECRET_FILE" = "/secrets/SESSION_SECRET";
-            "AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE" = "/secrets/STORAGE_ENCRYPTION_KEY";
-            "PGID" = cfg.group;
-            "PUID" = cfg.user;
-            "TZ" = cfg.timezone;
-          };
-          volumes = [
-            "${cfg.dataDir}/authelia/config:/config:rw,Z"
-            "${cfg.dataDir}/authelia/secrets:/secrets:rw,Z"
-          ];
-          dependsOn = [
-            "valkey"
-          ];
-        };
-        "bazarr" = {
-          image = "docker.io/linuxserver/bazarr:latest";
-          environment = {
-            "PGID" = cfg.group;
-            "PUID" = cfg.user;
-            "TZ" = cfg.timezone;
-          };
-          volumes = [
-            "${cfg.dataDir}/bazarr:/config:rw,Z"
-            "${cfg.dataDir}/data:/data:rw,z"
-          ];
-        };
-        "broker" = {
-          image = "docker.io/library/redis:7";
-          volumes = [
-            "${cfg.dataDir}/paper/redis:/data:rw,Z"
-          ];
-        };
-        "changedetection" = {
-          image = "docker.io/dgtlmoon/changedetection.io:latest";
-          environment = {
-            "PUID" = cfg.user;
-            "PGID" = cfg.group;
-            "TZ" = cfg.timezone;
-            "BASE_URL" = "https://${cfg.domain}";
-            "HIDE_REFERER" = "true";
-            "PLAYWRIGHT_DRIVER_URL" = "ws://sockpuppetbrowser:3000";
-          };
-          volumes = [
-            "${cfg.dataDir}/changedetection:/datastore:rw,Z"
-          ];
-          dependsOn = [
-            "sockpuppetbrowser"
-          ];
-        };
-        "ddclient" = {
-          image = "docker.io/linuxserver/ddclient:latest";
-          environment = {
-            "PGID" = cfg.group;
-            "PUID" = cfg.user;
-            "TZ" = cfg.timezone;
-          };
-          volumes = [
-            "${cfg.dataDir}/ddclient:/config:rw,Z"
-          ];
-        };
-        "diun" = {
-          image = "docker.io/crazymax/diun:latest";
-          environment = {
-            "TZ" = cfg.timezone;
-            "DIUN_WATCH_WORKERS" = "20";
-            "DIUN_WATCH_SCHEDULE" = "@every 12h";
-            "DIUN_PROVIDERS_DOCKER" = "true";
-            "DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT" = "true";
-            "DIUN_NOTIF_DISCORD_WEBHOOKURLFILE" = "/data/discord-webhook-url";
-          };
-          volumes = [
-            "${cfg.dataDir}/diun:/data:rw,Z"
-            "/var/run/docker.sock:/var/run/docker.sock:ro"
-          ];
-        };
-        "flaresolverr" = {
-          image = "docker.io/flaresolverr/flaresolverr:latest";
-          environment = {
-            "CAPTCHA_SOLVER" = "none";
-            "LOG_HTML" = "false";
-            "LOG_LEVEL" = "info";
-            "TZ" = cfg.timezone;
-          };
-        };
-        "freshrss" = {
-          image = "docker.io/linuxserver/freshrss:latest";
-          environment = {
-            "PGID" = cfg.group;
-            "PUID" = cfg.user;
-            "TZ" = cfg.timezone;
-          };
-          volumes = [
-            "${cfg.dataDir}/freshrss:/config:rw,Z"
-          ];
-        };
-        "jellyfin" = {
-          image = "docker.io/linuxserver/jellyfin:latest";
-          environment = {
-            "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
-            "JELLYFIN_PublishedServerUrl" = "jellyfin.${cfg.domain}";
-            "PGID" = cfg.group;
-            "PUID" = cfg.user;
-            "TZ" = cfg.timezone;
-          };
-          volumes = [
-            "${cfg.dataDir}/data/media:/data/media:ro"
-            "${cfg.dataDir}/jellyfin:/config:rw,Z"
-          ];
-          ports = [
-            "127.0.0.1:8920:8920/tcp"
-            "127.0.0.1:7359:7359/udp"
-          ];
-          extraOptions = [
-            "--device=/dev/dri:/dev/dri:rwm"
-          ];
-        };
-        "mercury" = {
-          image = "docker.io/wangqiru/mercury-parser-api:latest";
-        };
-        "paperdb" = {
-          image = "docker.io/library/postgres:15";
-          environment = {
-            "POSTGRES_DB" = "paperless";
-            "POSTGRES_PASSWORD" = "paperless";
-            "POSTGRES_USER" = "paperless";
-          };
-          volumes = [
-            "${cfg.dataDir}/paper/pg:/var/lib/postgresql/data:rw,Z"
-          ];
-        };
-        "paperless" = {
-          image = "docker.io/paperlessngx/paperless-ngx:latest";
-          environment = {
-            "PAPERLESS_DBHOST" = "paperdb";
-            "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
-            "PAPERLESS_ENABLE_HTTP_REMOTE_USER" = "true";
-            "PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME" = "HTTP_REMOTE_USER";
-            "PAPERLESS_LOGOUT_REDIRECT_URL" = "https://auth.${cfg.domain}/logout";
-            "PAPERLESS_OCR_LANGUAGE" = "spa";
-            "PAPERLESS_REDIS" = "redis://broker:6379";
-            "PAPERLESS_TIME_ZONE" = cfg.timezone;
-            "PAPERLESS_URL" = "https://paper.${cfg.domain}";
-            "USERMAP_GID" = cfg.group;
-            "USERMAP_UID" = cfg.user;
-          };
-          volumes = [
-            "${cfg.dataDir}/paper/data:/usr/src/paperless/data:rw,Z"
-            "${cfg.dataDir}/paper/export:/usr/src/paperless/export:rw,Z"
-            "${cfg.dataDir}/paper/media:/usr/src/paperless/media:rw,Z"
-            "/home/repparw/Documents/consume:/usr/src/paperless/consume:rw,Z"
-          ];
-          dependsOn = [
-            "broker"
-            "paperdb"
-          ];
-        };
-        "sockpuppetbrowser" = {
-          image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";
-          environment = {
-            "SCREEN_WIDTH" = "1920";
-            "SCREEN_HEIGHT" = "1024";
-            "SCREEN_DEPTH" = "16";
-            "MAX_CONCURRENT_CHROME_PROCESSES" = "10";
-          };
-        };
-        "prowlarr" = {
-          image = "docker.io/linuxserver/prowlarr:latest";
-          environment = {
-            "PGID" = cfg.group;
-            "PUID" = cfg.user;
-            "TZ" = cfg.timezone;
-          };
-          volumes = [
-            "${cfg.dataDir}/prowlarr:/config:rw,Z"
-          ];
-        };
-        "qbittorrent" = {
-          image = "docker.io/hotio/qbittorrent:latest";
-          environment = {
-            "PGID" = cfg.group;
-            "PUID" = cfg.user;
-            "TZ" = cfg.timezone;
-          };
-          volumes = [
-            "${cfg.dataDir}/data/torrents:/data/torrents:rw,z"
-            "${cfg.dataDir}/qbittorrent:/config:rw,Z"
-          ];
-          ports = [
-            "127.0.0.1:54536:54536/tcp"
-          ];
-        };
-        "radarr" = {
-          image = "docker.io/linuxserver/radarr:latest";
-          environment = {
-            "PGID" = cfg.group;
-            "PUID" = cfg.user;
-            "TZ" = cfg.timezone;
-          };
-          volumes = [
-            "${cfg.dataDir}/data/:/data:rw,z"
-            "${cfg.dataDir}/radarr:/config:rw,Z"
-          ];
-          dependsOn = [
-            "qbittorrent"
-          ];
-        };
-        "sonarr" = {
-          image = "docker.io/linuxserver/sonarr:latest";
-          environment = {
-            "PGID" = cfg.group;
-            "PUID" = cfg.user;
-            "TZ" = cfg.timezone;
-          };
-          volumes = [
-            "/dev/rtc:/dev/rtc:ro"
-            "${cfg.dataDir}/data:/data:rw,z"
-            "${cfg.dataDir}/sonarr:/config:rw,Z"
-          ];
-          dependsOn = [
-            "qbittorrent"
-          ];
-        };
-        "swag" = {
-          image = "docker.io/linuxserver/swag:latest";
-          environment = {
-            "DNSPLUGIN" = "cloudflare";
-            "PGID" = cfg.group;
-            "PUID" = cfg.user;
-            "TZ" = cfg.timezone;
-            "SUBDOMAINS" = "wildcard";
-            "URL" = cfg.domain;
-            "VALIDATION" = "dns";
-          };
-          volumes = [
-            "${cfg.dataDir}/swag:/config:rw,Z"
-            "/home/repparw/git/homepage:/config/www:rw,Z"
-          ];
-          ports = [
-            "443:443/tcp"
-            "80:80/tcp"
-          ];
-          extraOptions = [
-            "--add-host=host.docker.internal:host-gateway"
-            "--cap-add=NET_ADMIN"
-          ];
-        };
-        "valkey" = {
-          image = "docker.io/valkey/valkey:7.2-alpine";
-          environment = {
-            "PGID" = cfg.group;
-            "PUID" = cfg.user;
-            "TZ" = cfg.timezone;
-          };
-          volumes = [
-            "${cfg.dataDir}/authelia/valkey:/data:rw,Z"
-          ];
-          cmd = [
-            "valkey-server"
-            "--save"
-            "60"
-            "1"
-            "--loglevel"
-            "warning"
-          ];
-        };
-      };
-    in
-      containerDefinitions;
+    virtualisation.oci-containers.containers = containerDefinitions;
 
     # Services
     systemd.services = let
