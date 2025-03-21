@@ -420,9 +420,11 @@ in {
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
-            ExecStart = "${pkgs.podman}/bin/podman network inspect dlsuite || ${pkgs.podman}/bin/podman network create dlsuite";
             ExecStop = "${pkgs.podman}/bin/podman network rm -f dlsuite";
           };
+          script = ''
+            ${pkgs.podman}/bin/podman network inspect dlsuite || ${pkgs.podman}/bin/podman network create dlsuite
+          '';
           partOf = [
             "dlsuite.target"
           ];
