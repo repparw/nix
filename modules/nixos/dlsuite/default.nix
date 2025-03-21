@@ -26,14 +26,11 @@ with lib; let
     (import ./authelia.nix)
     (import ./changedetection.nix)
     (import ./diun.nix)
-    (import ./flaresolverr.nix)
     (import ./freshrss.nix)
     (import ./jellyfin.nix)
-    (import ./mercury.nix)
     (import ./paperless.nix)
     (import ./arr.nix)
     (import ./swag.nix)
-    (import ./valkey.nix)
   ];
 
   # Merge all container definitions
