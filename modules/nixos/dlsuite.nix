@@ -9,8 +9,8 @@ with lib; let
 
   containerDefaults = {
     log-driver = "journald"; # Common log driver
-    extraOptions = [
-      "--network=dlsuite" # Default network
+    networks = [
+      "dlsuite"
     ];
   };
 
