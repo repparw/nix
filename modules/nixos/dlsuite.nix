@@ -347,6 +347,15 @@ in {
     virtualisation.oci-containers.backend = "docker";
     virtualisation.oci-containers.containers = containerDefinitions;
 
+    users.users.dlsuite = {
+      isNormalUser = true;
+      uid = cfg.user;
+      group = cfg.group;
+      home = "/home/docker";
+      createHome = true;
+      shell = "/bin/bash";
+    };
+
     # Services
     systemd.services = let
       containerSuffixes = builtins.attrNames containerDefinitions;
