@@ -51,8 +51,6 @@ in {
       "${matchAll}".allowedUDPPorts = [53];
     };
 
-    config.user.users.dlsuite.linger = true;
-
     virtualisation = {
       podman = {
         enable = true;
@@ -73,7 +71,6 @@ in {
             "PUID" = cfg.user;
             "TZ" = cfg.timezone;
           };
-          podman.user = "dlsuite";
           volumes = [
             "${cfg.dataDir}/authelia/config:/config:rw,Z"
             "${cfg.dataDir}/authelia/secrets:/secrets:rw,Z"
