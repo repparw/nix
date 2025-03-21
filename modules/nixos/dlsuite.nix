@@ -47,6 +47,7 @@ in {
         enable = true;
         dockerCompat = true;
         autoPrune.enable = true;
+        storageDriver = "btrfs";
       };
       containers.storage.settings.storage.driver = "btrfs";
 
@@ -153,7 +154,7 @@ in {
           };
           volumes = [
             "${cfg.dataDir}/diun:/data:rw,Z"
-            "/var/run/podman/podman.sock:/var/run/docker.sock:ro"
+            "/var/run/docker.sock:/var/run/docker.sock:ro"
           ];
           log-driver = "journald";
           extraOptions = [
