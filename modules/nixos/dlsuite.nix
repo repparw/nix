@@ -51,16 +51,11 @@ in {
       "${matchAll}".allowedUDPPorts = [53];
     };
 
-    users = {
-      users.dlsuite = {
-        isNormalUser = true;
-        linger = true;
-        group = "dlsuite";
-        uid = cfg.user;
-      };
-      groups.dlsuite = {
-        gid = cfg.group;
-      };
+    users.users.dlsuite = {
+      isNormalUser = true;
+      linger = true;
+      description = "repparw";
+      users.users.dlsuite.group = "dlsuite";
     };
 
     virtualisation = {
