@@ -12,13 +12,6 @@ in {
   config = lib.mkIf cfg.enable {
     hardware.xpadneo.enable = true;
 
-    boot = {
-      extraModulePackages = with config.boot.kernelPackages; [xpadneo];
-      extraModprobeConfig = ''
-        options bluetooth disable_ertm=Y
-      '';
-    };
-
     programs = {
       steam = {
         enable = true;
