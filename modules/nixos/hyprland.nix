@@ -9,8 +9,9 @@
   ];
 
   services.displayManager = {
+    defaultSession = "";
     autoLogin = {
-      enable = true;
+      enable = false;
       user = "repparw";
     };
     sddm = {
