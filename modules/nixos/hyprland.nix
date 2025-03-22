@@ -11,12 +11,14 @@
   services.greetd = {
     enable = true;
     vt = 1;
-    settings = rec {
-      initial_session = {
+    settings = let
+      session = {
         command = "${pkgs.uwsm}/bin/uwsm start hyprland";
         user = "repparw";
       };
-      default_session = initial_session;
+    in {
+      initial_session = session;
+      default_session = session;
     };
   };
 }
