@@ -3,6 +3,8 @@
   pkgs,
   ...
 }: {
+config =
+ if osConfig.programs.hyprland.enable then {
   imports = [./hypr-pkgs.nix];
   wayland.windowManager.hyprland = {
     enable = true;
@@ -273,5 +275,6 @@
         "pin, title:^(Picture-in-Picture|Picture in picture)$"
       ];
     };
+  };
   };
 }
