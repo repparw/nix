@@ -84,6 +84,7 @@ in {
       uid = lib.strings.toInt cfg.user;
       group = "docker";
       home = "/home/docker";
+      homeMode = "755";
       createHome = true;
       shell = pkgs.bash;
     };
