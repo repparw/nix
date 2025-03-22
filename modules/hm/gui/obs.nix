@@ -10,6 +10,7 @@
         Unit = {
           StartLimitIntervalSec = 60;
           StartLimitBurst = 4;
+          After = ["graphical-session.target"];
         };
 
         Service = {
@@ -18,10 +19,6 @@
           ];
           Restart = ["on-failure"];
           RestartSec = 1;
-        };
-
-        Install = {
-          After = ["graphical-session.target"];
         };
       };
 
