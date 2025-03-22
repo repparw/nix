@@ -19,6 +19,7 @@ in {
       Unit = {
         Description = "Jellyfin MPV Shim";
         Documentation = "https://github.com/jellyfin/jellyfin-mpv-shim";
+        After = ["graphical-session.target"];
       };
       Service = {
         Type = "simple";
