@@ -60,6 +60,7 @@
       # Autostart
       exec-once = [
         "systemctl --user start hyprpolkitagent"
+        "[workspace 1] $browser"
       ];
 
       general = {
