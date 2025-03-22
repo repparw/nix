@@ -19,6 +19,8 @@
       hyprshot
       hyprpicker
       hyprpolkitagent
+
+      where-is-my-sddm-theme
     ];
 
     services = {
