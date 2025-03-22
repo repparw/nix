@@ -23,7 +23,6 @@ in {
       Type = "oneshot";
       ExecStart = ["${git-autocommit}/bin/git-autocommit"];
     };
-    Unit.After = ["graphical-session.target"];
   };
 
   systemd.user.timers.git-autocommit = {
