@@ -22,8 +22,8 @@ in {
     Service = {
       Type = "oneshot";
       ExecStart = ["${git-autocommit}/bin/git-autocommit"];
-      After = ["graphical-session.target"];
     };
+    Unit.After = ["graphical-session.target"];
   };
 
   systemd.user.timers.git-autocommit = {
