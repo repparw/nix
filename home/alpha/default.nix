@@ -22,13 +22,13 @@ in {
     Service = {
       Type = "oneshot";
       ExecStart = ["${git-autocommit}/bin/git-autocommit"];
+      After = ["graphical-session.target"];
     };
   };
 
   systemd.user.timers.git-autocommit = {
     Install = {
       WantedBy = ["timers.target"];
-      After = ["graphical-session.target"];
     };
     Timer = {
       OnCalendar = "*:0/4";
