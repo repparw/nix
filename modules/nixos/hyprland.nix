@@ -8,6 +8,11 @@
     nautilus
   ];
 
+  services.displayManager.autoLogin = {
+    enable = true;
+    user = "repparw";
+  };
+
   services.greetd = {
     enable = true;
     vt = 1;
