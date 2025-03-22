@@ -11,7 +11,7 @@
   services.displayManager = {
     defaultSession = "hyprland-uwsm";
     autoLogin = {
-      enable = false;
+      enable = true;
       user = "repparw";
     };
     sddm = {
