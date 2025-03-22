@@ -59,7 +59,7 @@
 
       # Autostart
       exec-once = [
-        "sleep 5s; [workspace 1] $browser"
+        "sleep 5s && $browser"
       ];
 
       general = {

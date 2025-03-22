@@ -15,7 +15,6 @@
   };
   sddm = {
   		enable = true;
-  		theme = "hyprland";
   };
 
   services.greetd = {
