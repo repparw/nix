@@ -10,7 +10,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    hardware.xpadneo.enable = false;
+    hardware.xpadneo.enable = true;
 
     programs = {
       steam = {
