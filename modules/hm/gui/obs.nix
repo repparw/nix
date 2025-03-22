@@ -21,7 +21,7 @@
         };
 
         Install = {
-          WantedBy = ["graphical-session.target"];
+          After = ["graphical-session.target"];
         };
       };
 
