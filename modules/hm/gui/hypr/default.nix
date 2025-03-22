@@ -43,7 +43,7 @@
       "$desktopmenu" = "killall tofi-drun || tofi-drun";
       "$cmdmenu" = "killall tofi-run || tofi-run | xargs hyprctl dispatch exec --";
 
-      "$showlayout" = "hdrop feh -g 776x277 /home/repparw/git/kbd/layout.png";
+      "$showlayout" = "hdrop feh -g 774x275 /home/repparw/git/kbd/layout.png";
 
       "$lockscreen" = "loginctl lock-session";
 
