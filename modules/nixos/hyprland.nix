@@ -8,9 +8,14 @@
     nautilus
   ];
 
-  services.displayManager.autoLogin = {
+  services.displayManager = {
+  autoLogin = {
     enable = true;
     user = "repparw";
+  };
+  sddm = {
+  		enable = true;
+  		theme = "hyprland";
   };
 
   services.greetd = {
