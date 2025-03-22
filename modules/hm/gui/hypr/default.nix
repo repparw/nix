@@ -59,7 +59,6 @@
 
       # Autostart
       exec-once = [
-        "systemctl --user start hyprpolkitagent"
         "sleep 5s; [workspace 1] $browser"
       ];
 
