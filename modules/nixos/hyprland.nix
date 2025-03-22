@@ -13,7 +13,7 @@
     vt = 1;
     settings = rec {
       initial_session = {
-        command = "${pkgs.hyprland}/bin/Hyprland";
+        command = "${pkgs.uwsm}/bin/uwsm start hyprland";
         user = "repparw";
       };
       default_session = initial_session;
