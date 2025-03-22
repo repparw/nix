@@ -16,8 +16,7 @@ in {
 
   services.jellyfin-mpv-shim.enable = true;
 
-  home.packages = with pkgs; [
-  ];
+  #home.packages = with pkgs; [ ];
 
   systemd.user.services.git-autocommit = {
     Service = {
@@ -29,6 +28,7 @@ in {
   systemd.user.timers.git-autocommit = {
     Install = {
       WantedBy = ["timers.target"];
+      After = ["graphical-session.target"];
     };
     Timer = {
       OnCalendar = "*:0/4";
