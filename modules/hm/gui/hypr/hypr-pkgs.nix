@@ -4,8 +4,6 @@
   lib,
   ...
 }: {
-  imports = [./waybar.nix];
-
   config = lib.mkIf osConfig.programs.hyprland.enable {
     home.packages = with pkgs; [
       # Desktop

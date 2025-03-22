@@ -4,7 +4,10 @@
   lib,
   ...
 }: {
-  imports = [./hypr-pkgs.nix];
+  imports = [
+    ./hypr-pkgs.nix
+    ./waybar.nix
+  ];
 
   config = lib.mkIf osConfig.programs.hyprland.enable {
     wayland.windowManager.hyprland = {
