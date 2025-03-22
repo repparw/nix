@@ -9,7 +9,7 @@
   ];
 
   services.displayManager = {
-    defaultSession = "";
+    defaultSession = "hyprland-uwsm";
     autoLogin = {
       enable = false;
       user = "repparw";
