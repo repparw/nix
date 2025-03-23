@@ -21,7 +21,6 @@
       DisableProfileImport = true;
       DisableTelemetry = true;
       HardwareAcceleration = true;
-      NoDefaultBookmarks = true;
       OverrideFirstRunPage = "";
       OverridePostUpdatePage = "";
       Preferences = {
