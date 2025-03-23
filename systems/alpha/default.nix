@@ -35,7 +35,11 @@
 
   age.identityPaths = ["/home/repparw/.ssh/id_ed25519"];
 
-  virtualisation.virtualbox.host.enable = true;
+  virtualisation.virtualbox.host = {
+    enable = true;
+    enableKvm = true;
+    addNetworkInterface = false;
+  };
   users.extraGroups.vboxusers.members = ["repparw"];
 
   programs.adb.enable = true;
