@@ -33,12 +33,6 @@
       } =
         builtins.readFile ../../../source/hyprland-not-alpha.conf;
       settings = {
-        env = [
-          "XCURSOR_SIZE,24"
-          "HYPRCURSOR_SIZE,24"
-          "XDG_SCREENSHOTS_DIR,$HOME/Pictures/ss"
-        ];
-
         # GUI
         "$browser" = "firefox";
         "$socials" = "$browser -P socials";
