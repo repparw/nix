@@ -28,8 +28,8 @@
         $monitor=DP-2
         $monitor2=HDMI-A-1
 
-        monitor=$monitor,highrr,1920x0,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
-        monitor=$monitor2,preferred,0x0,1
+        monitor=$monitor,highrr,0x0,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
+        monitor=$monitor2,preferred,-1920x0,1
 
         workspace = 5, on-created-empty:[silent] $socials
       '';
@@ -38,6 +38,12 @@
         then "extraConfig"
         else null
       } = ''
+        monitor = eDP-1,preferred,auto,1
+        monitor = ,preferred,auto,1
+
+        # backlight TODO
+        bind = ,XF86MonBrightnessDown, exec, brightnessctl s 5%-
+        bind = ,XF86MonBrightnessUp, exec, brightnessctl s 5%+
       '';
       settings = {
         # GUI
