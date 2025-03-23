@@ -34,12 +34,14 @@
         builtins.readFile ../../../source/hyprland-not-alpha.conf;
       settings = {
         # GUI
-        "$browser" = "firefox";
+        "$prefix" = "uwsm app --";
+
+        "$browser" = "$prefix firefox";
         "$socials" = "$browser -P socials";
         "$kiosk" = "$browser -P kiosk";
-        "$browser2" = "chromium-browser";
-        "$discord" = "vesktop";
-        "$GUIfileManager" = "nautilus";
+        "$browser2" = "$prefix chromium-browser";
+        "$discord" = "$prefix vesktop";
+        "$GUIfileManager" = "$prefix nautilus";
         #"$pomodoro" = "pomatez";
         "$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
         "$screenshot" = "hyprshot -o $XDG_SCREENSHOTS_DIR -m";
@@ -188,7 +190,7 @@
           "$mod, N, exec, $notes"
           "$mod SHIFT, N, exec, $notes2"
           "$mod, R, exec, $terminal zsh -ic rpi"
-          "$mod, B, exec, bttoggle"
+          "$mod, B, exec, $prefix bttoggle"
           "$mod, P, exec, scrcpy -e -S"
           #"$mod, P, exec, [monitor 1;workspace 2 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
 
