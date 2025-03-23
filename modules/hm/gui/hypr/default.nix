@@ -64,9 +64,8 @@
         "$notes2" = "hdrop -c obsidian 'obsidian'";
 
         # Autostart
-        exec-once = [
-          "sleep 5s && [monitor 0] $browser"
-        ];
+        # Almost everything should use systemd services instead (see uwsm for autostart)
+        # exec-once = [ ];
 
         general = {
           gaps_in = "1";

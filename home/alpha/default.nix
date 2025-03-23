@@ -2,7 +2,7 @@
   git-autocommit = with pkgs;
     writeShellApplication {
       name = "git-autocommit";
-      runtimeInputs = [git];
+      runtimeInputs = [gitMinimal];
       text = ''
         DIR=''${1:-/home/repparw/nix}
         git -C "$DIR" add -A
