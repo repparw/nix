@@ -24,14 +24,21 @@
         if osConfig.networking.hostName == "alpha"
         then "extraConfig"
         else null
-      } =
-        builtins.readFile ../../../source/hyprland-alpha.conf;
+      } = ''
+        $monitor=DP-2
+        $monitor2=HDMI-A-1
+
+        monitor=$monitor,highrr,1920x0,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
+        monitor=$monitor2,preferred,0x0,1
+
+        workspace = 5, on-created-empty:[silent] $socials
+      '';
       ${
         if osConfig.networking.hostName != "alpha"
         then "extraConfig"
         else null
-      } =
-        builtins.readFile ../../../source/hyprland-not-alpha.conf;
+      } = ''
+      '';
       settings = {
         # GUI
         "$prefix" = "uwsm app --";
@@ -250,8 +257,8 @@
                 i: let
                   ws = i + 1;
                 in [
-                  "$mod, code:1${toString i}, split:workspace, ${toString ws}"
-                  "$mod SHIFT, code:1${toString i}, split:movetoworkspace, ${toString ws}"
+                  "$mod, ${toString ws}, split:workspace, ${toString ws}"
+                  "$mod SHIFT, ${toString ws}, split:movetoworkspace, ${toString ws}"
                 ]
               )
               9)
