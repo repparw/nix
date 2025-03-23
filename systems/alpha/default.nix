@@ -35,6 +35,9 @@
 
   age.identityPaths = ["/home/repparw/.ssh/id_ed25519"];
 
+  virtualisation.virtualbox.host.enable = true;
+  users.extraGroups.vboxusers.members = ["repparw"];
+
   programs.adb.enable = true;
 
   #### FSTAB
