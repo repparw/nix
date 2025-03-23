@@ -105,19 +105,19 @@
       #jack.enable = true;
 
       wireplumber = {
-        configPackages = [
-          (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/11-disable-autoswitch.conf" ''
-            wireplumber.settings = {
-            bluetooth.autoswitch-to-headset-profile = false;
-            }
-          '')
-          (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/20-bt.conf" ''
-            monitor.bluez.properties = {
-            #bluez5.roles = [ a2dp_sink a2dp_source bap_sink bap_source ]
-            bluez5.enable-hw-volume = false
-            }
-          '')
-        ];
+        extraConfig = {
+          "11-disable-autoswitch.conf" = {
+            "wireplumber.settings" = {
+              "bluetooth.autoswitch-to-headset-profile" = false;
+            };
+          };
+          "20-bt.conf" = {
+            "monitor.bluez.properties" = {
+              #"bluez5.roles" = [ "a2dp_sink" "a2dp_source" "bap_sink" "bap_source" ];
+              "bluez5.enable-hw-volume" = false;
+            };
+          };
+        };
       };
     };
   };
