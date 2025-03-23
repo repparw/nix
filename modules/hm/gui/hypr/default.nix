@@ -181,7 +181,6 @@
             "$mod, d, exec, $desktopmenu"
             "$mod SHIFT, d, exec, $cmdmenu"
 
-            # Move active window to a workspace with mainMod + SHIFT + [0-9]
             "$mod, TAB, split:swapactiveworkspaces, current +1"
 
             "$mod, X, focusmonitor,+1 "
@@ -258,7 +257,6 @@
           ]
           ++ (
             # workspaces
-            # binds $mod + [shift +] {1..9} to [move to] workspace {1..9}
             builtins.concatLists (builtins.genList (
                 i: let
                   ws = i + 1;
@@ -271,6 +269,7 @@
           );
 
         workspace = [
+          "1, monitor:0, default:true"
           "w[tv1], gapsout:0, gapsin:0"
           "f[1], gapsout:0, gapsin:0"
         ];
