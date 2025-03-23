@@ -199,7 +199,6 @@
             "$mod SHIFT, M, exec, ytfzf -D"
             "$mod, E, exec, $fileManager"
             "$mod, F, fullscreen"
-            "$mod SHIFT, F, fullscreen, 2"
             "$mod ALT, F, togglefloating"
             "$mod SHIFT, E, exec, $GUIfileManager"
             "$mod, SPACE, exec, $browser"
