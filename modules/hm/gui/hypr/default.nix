@@ -65,7 +65,7 @@
 
         # Autostart
         exec-once = [
-          "[monitor 0] sleep 5s && $browser"
+          "sleep 5s && [monitor 0] $browser"
         ];
 
         general = {
