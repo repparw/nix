@@ -83,6 +83,12 @@
           layout = "dwindle";
         };
 
+        plugin = {
+          hyprsplit = {
+            num_workspaces = 9;
+          };
+        };
+
         decoration = {
           rounding = "14";
           dim_inactive = "true";
@@ -157,82 +163,99 @@
           "$mod CTRL, L, resizeactive, 10 0"
         ];
         bindl = ["$mod ALT, L, exec, $lockscreen; $screenoff"];
-        bind = [
-          "$mod, d, exec, $desktopmenu"
-          "$mod SHIFT, d, exec, $cmdmenu"
+        bind =
+          [
+            "$mod, d, exec, $desktopmenu"
+            "$mod SHIFT, d, exec, $cmdmenu"
 
-          "$mod, X, focusmonitor,+1 "
-          "SHIFT $mod, X, movewindow,mon:+1"
+            # Move active window to a workspace with mainMod + SHIFT + [0-9]
+            "$mod, TAB, split:swapactiveworkspaces, current +1"
 
-          # Scroll through monitor active workspaces with mainMod + scroll
-          "$mod, C, workspace, m+1"
-          ", mouse:276, workspace, m+1"
-          "$mod SHIFT, C, workspace, previous_per_monitor"
+            "$mod, X, focusmonitor,+1 "
+            "SHIFT $mod, X, movewindow,mon:+1"
 
-          "$mod, comma, exec, [float; noinitialfocus; noborder; center] $showlayout"
+            # Scroll through monitor active workspaces with mainMod + scroll
+            "$mod, C, workspace, m+1"
+            ", mouse:276, workspace, m+1"
+            "$mod SHIFT, C, workspace, previous_per_monitor"
 
-          "$mod, RETURN, exec, $terminal"
-          "$mod, W, killactive,"
-          "$mod, M, exec, hdrop $spotify"
-          "$mod SHIFT, M, exec, ytfzf -D"
-          "$mod, E, exec, $fileManager"
-          "$mod, F, fullscreen"
-          "$mod SHIFT, F, fullscreen, 2"
-          "$mod ALT, F, togglefloating"
-          "$mod SHIFT, E, exec, $GUIfileManager"
-          "$mod, SPACE, exec, $browser"
-          "$mod SHIFT, SPACE, exec, $browser2"
-          "$mod, T, exec, $top"
-          "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
-          "$mod, U, exec, update"
-          "$mod, V, exec, $kiosk jellyfin.repparw.me"
-          "$mod, Z, exec, mpvclip"
-          "$mod, N, exec, $notes"
-          "$mod SHIFT, N, exec, $notes2"
-          "$mod, R, exec, $terminal zsh -ic rpi"
-          "$mod, B, exec, $prefix bttoggle"
-          "$mod, P, exec, scrcpy -e -S"
-          #"$mod, P, exec, [monitor 1;workspace 2 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
+            "$mod, comma, exec, [float; noinitialfocus; noborder; center] $showlayout"
 
-          ", Print, exec, $screenshot active -m output ## Active monitor"
-          "$mod, Print, exec, $screenshot active -m window ## Active window"
-          "Shift $mod, Print, exec, $screenshot region -z ## Region"
+            "$mod, RETURN, exec, $terminal"
+            "$mod, W, killactive,"
+            "$mod, M, exec, hdrop $spotify"
+            "$mod SHIFT, M, exec, ytfzf -D"
+            "$mod, E, exec, $fileManager"
+            "$mod, F, fullscreen"
+            "$mod SHIFT, F, fullscreen, 2"
+            "$mod ALT, F, togglefloating"
+            "$mod SHIFT, E, exec, $GUIfileManager"
+            "$mod, SPACE, exec, $browser"
+            "$mod SHIFT, SPACE, exec, $browser2"
+            "$mod, T, exec, $top"
+            "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
+            "$mod, U, exec, update"
+            "$mod, V, exec, $kiosk jellyfin.repparw.me"
+            "$mod, Z, exec, mpvclip"
+            "$mod, N, exec, $notes"
+            "$mod SHIFT, N, exec, $notes2"
+            "$mod, R, exec, $terminal zsh -ic rpi"
+            "$mod, B, exec, $prefix bttoggle"
+            "$mod, P, exec, scrcpy -e -S"
+            #"$mod, P, exec, [monitor 1;workspace 2 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
 
-          "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy ## OCR"
-          "$mod, Q, exec, wl-paste --type image/png | zbarimg --raw - | wl-copy ## OCR"
+            ", Print, exec, $screenshot active -m output ## Active monitor"
+            "$mod, Print, exec, $screenshot active -m window ## Active window"
+            "Shift $mod, Print, exec, $screenshot region -z ## Region"
 
-          # Macropad churrosoft
-          "CTRL ALT SHIFT, A, exec, hdrop steam"
-          "CTRL ALT SHIFT, B, exec, obs-cmd recording toggle-pause"
-          "CTRL ALT SHIFT, C, exec, obs_remux2wsp"
-          "CTRL ALT SHIFT, D, exec, obs-cmd replay save"
-          "CTRL ALT SHIFT, E, exec, hdrop $discord"
-          "CTRL ALT SHIFT, F, exec, wpctl set-source-mute @DEFAULT_SOURCE@ toggle"
-          # CTRL ALT SHIFT, G, exec,
-          "CTRL ALT SHIFT, H, exec, hdrop $spotify"
+            "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy ## OCR"
+            "$mod, Q, exec, wl-paste --type image/png | zbarimg --raw - | wl-copy ## OCR"
 
-          # Media keys
-          ", XF86AudioPlay, exec, playerctl play-pause"
-          ", XF86AudioPause, exec, playerctl play-pause"
-          ", XF86AudioNext, exec, playerctl next"
-          ", XF86AudioPrev, exec, playerctl previous"
+            # Macropad churrosoft
+            "CTRL ALT SHIFT, A, exec, hdrop steam"
+            "CTRL ALT SHIFT, B, exec, obs-cmd recording toggle-pause"
+            "CTRL ALT SHIFT, C, exec, obs_remux2wsp"
+            "CTRL ALT SHIFT, D, exec, obs-cmd replay save"
+            "CTRL ALT SHIFT, E, exec, hdrop $discord"
+            "CTRL ALT SHIFT, F, exec, wpctl set-source-mute @DEFAULT_SOURCE@ toggle"
+            # CTRL ALT SHIFT, G, exec,
+            "CTRL ALT SHIFT, H, exec, hdrop $spotify"
 
-          # Move focus with mainMod + arrow keys
-          "$mod, H, movefocus, l"
-          "$mod, J, movefocus, d"
-          "$mod, K, movefocus, u"
-          "$mod, L, movefocus, r"
+            # Media keys
+            ", XF86AudioPlay, exec, playerctl play-pause"
+            ", XF86AudioPause, exec, playerctl play-pause"
+            ", XF86AudioNext, exec, playerctl next"
+            ", XF86AudioPrev, exec, playerctl previous"
 
-          # Move window
-          "$mod SHIFT, H, movewindow, l"
-          "$mod SHIFT, J, movewindow, d"
-          "$mod SHIFT, K, movewindow, u"
-          "$mod SHIFT, L, movewindow, r"
+            # Move focus with mainMod + arrow keys
+            "$mod, H, movefocus, l"
+            "$mod, J, movefocus, d"
+            "$mod, K, movefocus, u"
+            "$mod, L, movefocus, r"
 
-          # Scroll through monitor active workspaces with mainMod + scroll
-          "$mod, mouse_down, split:workspace, m+1"
-          "$mod, mouse_up, split:workspace, m-1"
-        ];
+            # Move window
+            "$mod SHIFT, H, movewindow, l"
+            "$mod SHIFT, J, movewindow, d"
+            "$mod SHIFT, K, movewindow, u"
+            "$mod SHIFT, L, movewindow, r"
+
+            # Scroll through monitor active workspaces with mainMod + scroll
+            "$mod, mouse_down, split:workspace, m+1"
+            "$mod, mouse_up, split:workspace, m-1"
+          ]
+          ++ (
+            # workspaces
+            # binds $mod + [shift +] {1..9} to [move to] workspace {1..9}
+            builtins.concatLists (builtins.genList (
+                i: let
+                  ws = i + 1;
+                in [
+                  "$mod, code:1${toString i}, split:workspace, ${toString ws}"
+                  "$mod SHIFT, code:1${toString i}, split:movetoworkspace, ${toString ws}"
+                ]
+              )
+              9)
+          );
 
         workspace = [
           "w[tv1], gapsout:0, gapsin:0"
