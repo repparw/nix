@@ -8,6 +8,7 @@
   imports = [
     ./autoUpgrade.nix
     ./dlsuite
+    ./vm.nix
     ./gaming.nix
     ./hyprland.nix
     ./obs.nix
