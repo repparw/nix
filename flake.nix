@@ -11,8 +11,6 @@
   };
 
   outputs = {home-manager, ...} @ inputs: let
-    system = "x86_64-linux";
-
     # Base modules configuration for all systems
     mkModules = hostname: [
       # Adds the NUR overlay
@@ -44,7 +42,7 @@
   in {
     nixosConfigurations = {
       alpha = inputs.nixpkgs.lib.nixosSystem {
-        inherit system;
+        system = "x86_64-linux";
         modules = mkModules "alpha";
         specialArgs = {
           inherit inputs;
@@ -52,7 +50,7 @@
       };
 
       beta = inputs.nixpkgs.lib.nixosSystem {
-        inherit system;
+        system = "x86_64-linux";
         modules = mkModules "beta";
         specialArgs = {
           inherit inputs;
@@ -60,7 +58,7 @@
       };
 
       iso = inputs.nixpkgs.lib.nixosSystem {
-        inherit system;
+        system = "x86_64-linux";
         modules =
           [
             "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
