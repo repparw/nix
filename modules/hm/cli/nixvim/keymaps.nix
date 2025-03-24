@@ -10,15 +10,6 @@
       };
     }
     {
-      action = "<cmd>lua require('CopilotChat').toggle()<CR>";
-      key = "<leader>aa";
-      mode = "n";
-      options = {
-        desc = "Toggle [a]i chat";
-        silent = true;
-      };
-    }
-    {
       action = "<cmd>bprevious<CR>";
       key = "[b";
       mode = "n";
