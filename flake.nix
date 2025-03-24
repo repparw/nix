@@ -16,8 +16,8 @@
       # Adds the NUR overlay
       inputs.nur.modules.nixos.default
       # NUR modules to import
-      ./systems/common.nix
       ./modules/nixos
+      ./systems/common.nix
       ./systems/${hostname}
       inputs.nix-index-database.nixosModules.nix-index
       inputs.agenix.nixosModules.default
@@ -32,6 +32,7 @@
           };
           users.repparw = {
             imports = [
+              ./modules/hm
               ./home/common
               ./home/${hostname}
               inputs.nixvim.homeManagerModules.nixvim
