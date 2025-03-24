@@ -212,7 +212,7 @@
             "$mod SHIFT, N, exec, $notes2"
             "$mod, R, exec, $terminal zsh -ic rpi"
             "$mod, B, exec, $prefix bttoggle"
-            "$mod, P, exec, scrcpy -e -S"
+            "$mod, P, exec, $prefix scrcpy -e -S"
             #"$mod, P, exec, [monitor 1;workspace 2 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
 
             ", Print, exec, $screenshot active -m output ## Active monitor"

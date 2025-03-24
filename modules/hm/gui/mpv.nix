@@ -7,12 +7,6 @@
   config = lib.mkIf config.modules.gui.enable {
     programs.mpv = {
       enable = true;
-      scripts = with pkgs.mpvScripts; [
-        mpv-webm
-        mpris
-        quality-menu
-        sponsorblock-minimal
-      ];
       bindings = {
         WHEEL_UP = "add volume 2";
         WHEEL_DOWN = "add volume -2";
