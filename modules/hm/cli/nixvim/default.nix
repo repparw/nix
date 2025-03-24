@@ -123,6 +123,7 @@
         settings = {
           background_colour = "#000000";
           timeout = 3000;
+          render = "compact";
         };
       };
 
@@ -444,6 +445,7 @@
           ui-select.enable = true;
           frecency.enable = true;
           fzf-native.enable = true;
+          manix.enable = true;
         };
 
         enabledExtensions = ["zoxide"];
