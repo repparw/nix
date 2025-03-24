@@ -39,6 +39,8 @@
 
   programs.adb.enable = true;
 
+  zramSwap.enable = true;
+
   #### FSTAB
 
   fileSystems."/mnt/hdd" = {
