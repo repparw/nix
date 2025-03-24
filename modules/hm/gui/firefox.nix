@@ -1,9 +1,4 @@
-{
-  pkgs,
-  osConfig,
-  inputs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     ./tridactyl.nix
   ];
