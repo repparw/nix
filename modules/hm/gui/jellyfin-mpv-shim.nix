@@ -4,11 +4,11 @@
   pkgs,
   ...
 }: let
-  cfg = config.services.jellyfin-mpv-shim && config.modules.gui;
+  cfg = config.modules.jellyfin-mpv-shim;
 in {
   meta.maintainers = [lib.maintainers.Scrumplex];
 
-  options.services.jellyfin-mpv-shim = {
+  options.modules.jellyfin-mpv-shim = {
     enable = lib.mkEnableOption "jellyfin-mpv-shim";
 
     package = lib.mkPackageOption pkgs "jellyfin-mpv-shim" {};
