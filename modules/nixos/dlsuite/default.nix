@@ -5,7 +5,7 @@
   ...
 }:
 with lib; let
-  cfg = config.services.dlsuite;
+  cfg = config.modules.dlsuite;
 
   mkContainer = name: attrs:
     mkMerge [
@@ -36,7 +36,7 @@ with lib; let
     mapAttrs (name: attrs: mkContainer name attrs)
     (foldl' (acc: def: acc // (def {inherit cfg;})) {} containersList);
 in {
-  options.services.dlsuite = {
+  options.modules.dlsuite = {
     enable = mkEnableOption "dlsuite container stack";
 
     dataDir = mkOption {
