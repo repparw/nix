@@ -3,7 +3,7 @@
   lib,
   ...
 }: let
-  cfg = config.modules.kanshi && config.modules.gui;
+  cfg = config.modules.kanshi;
 in {
   options.modules.kanshi = {
     enable = lib.mkEnableOption "Kanshi display management service";
