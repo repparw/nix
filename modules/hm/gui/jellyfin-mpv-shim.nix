@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  cfg = config.services.jellyfin-mpv-shim;
+  cfg = config.services.jellyfin-mpv-shim && config.modules.gui;
 in {
   meta.maintainers = [lib.maintainers.Scrumplex];
 
