@@ -7,6 +7,8 @@
 
   modules.gaming.enable = true;
 
+  modules.timers.enable = true;
+
   programs.obs-studio.enable = true;
 
   modules.dlsuite.enable = true;
