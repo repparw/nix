@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{...}: {
   imports = [
     ./hardware-configuration.nix
   ];
@@ -9,31 +9,13 @@
 
   programs.obs-studio.enable = true;
 
-  services.dlsuite.enable = true;
+  modules.dlsuite.enable = true;
 
   networking.hostName = "alpha"; # Define your hostname.
 
   networking.interfaces.enp42s0.wakeOnLan.enable = true;
 
-  users.users.repparw = {
-    isNormalUser = true;
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF3x0wWO/hQmfN3U8x0OxVqKJ7/nQDWcfg3GkyYKKOkf u0_a452@localhost #termux"
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN6UbXeSlW/2jkIU9mQIN5xWElnFbA9tw0BfT072WXgR t440"
-    ];
-    shell = pkgs.zsh;
-    description = "repparw";
-    extraGroups = [
-      "adbusers"
-      "networkmanager"
-      "wheel"
-      "docker"
-    ];
-  };
-
   age.identityPaths = ["/home/repparw/.ssh/id_ed25519"];
-
-  programs.adb.enable = true;
 
   zramSwap.enable = true;
 
