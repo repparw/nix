@@ -120,7 +120,10 @@
 
       notify = {
         enable = true;
-        settings.background_colour = "#000000";
+        settings = {
+          background_colour = "#000000";
+          timeout = 3000;
+        };
       };
 
       conform-nvim = {
