@@ -445,7 +445,6 @@
           ui-select.enable = true;
           frecency.enable = true;
           fzf-native.enable = true;
-          manix.enable = true;
         };
 
         enabledExtensions = ["zoxide"];
