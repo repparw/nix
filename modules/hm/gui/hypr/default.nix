@@ -207,7 +207,7 @@
             "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
             "$mod, U, exec, update"
             "$mod, V, exec, $kiosk jellyfin.repparw.me"
-            "$mod, Z, exec, mpvclip"
+            "$mod, Z, exec, $prefix mpvclip"
             "$mod, N, exec, $notes"
             "$mod SHIFT, N, exec, $notes2"
             "$mod, R, exec, $terminal zsh -ic rpi"
