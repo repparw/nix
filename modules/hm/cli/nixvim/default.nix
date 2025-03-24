@@ -107,11 +107,9 @@
       };
       copilot-cmp.enable = true;
 
-      copilot-chat = {
+      avante = {
         enable = true;
-        settings = {
-          model = "claude-3.5-sonnet";
-        };
+        settings.provider = "copilot";
       };
 
       notify = {
