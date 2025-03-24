@@ -109,7 +109,10 @@
 
       avante = {
         enable = true;
-        settings.provider = "copilot";
+        settings = {
+          provider = "copilot";
+          behaviour.auto_suggestions = false;
+        };
       };
 
       notify = {
