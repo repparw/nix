@@ -111,7 +111,10 @@
         enable = true;
         settings = {
           provider = "copilot";
-          behaviour.auto_suggestions = false;
+          behaviour = {
+            auto_suggestions = false;
+            enable_cursor_planning_mode = true;
+          };
           copilot = {
             model = "claude-3.5-sonnet";
           };
