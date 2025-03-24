@@ -10,71 +10,20 @@
     nur.url = "github:nix-community/NUR";
   };
 
-  outputs = {home-manager, ...} @ inputs: let
-    # Base modules configuration for all systems
-    mkModules = hostname: [
-      # Adds the NUR overlay
-      inputs.nur.modules.nixos.default
-      # NUR modules to import
-      ./modules/nixos
-      ./systems/common.nix
-      ./systems/${hostname}
-      inputs.nix-index-database.nixosModules.nix-index
-      inputs.agenix.nixosModules.default
-      home-manager.nixosModules.home-manager
-      {
-        home-manager = {
-          useGlobalPkgs = true;
-          useUserPackages = true;
-          backupFileExtension = "hm-backup";
-          extraSpecialArgs = {
+  outputs = {...} @ inputs: let
+    lib = import ./lib {inherit inputs;};
+  in {
+    nixosConfigurations =
+      lib.mkHost "alpha"
+      // lib.mkHost "beta"
+      // {
+        iso = inputs.nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [./systems/iso] ++ (lib.mkModules "beta");
+          specialArgs = {
             inherit inputs;
           };
-          users.repparw = {
-            imports = [
-              ./modules/hm
-              ./home/common
-              ./home/${hostname}
-              inputs.nixvim.homeManagerModules.nixvim
-            ];
-          };
-        };
-      }
-    ];
-  in {
-    nixosConfigurations = {
-      alpha = inputs.nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = mkModules "alpha";
-        specialArgs = {
-          inherit inputs;
         };
       };
-
-      beta = inputs.nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = mkModules "beta";
-        specialArgs = {
-          inherit inputs;
-        };
-      };
-
-      iso = inputs.nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules =
-          [
-            "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
-            (
-              {...}: {
-                isoImage.squashfsCompression = "gzip -Xcompression-level 1";
-              }
-            )
-          ]
-          ++ (mkModules "beta");
-        specialArgs = {
-          inherit inputs;
-        };
-      };
-    };
   };
 }
