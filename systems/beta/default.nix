@@ -3,7 +3,7 @@
     ./hardware-configuration.nix
   ];
 
-  networking.hostName = "beta"; # Define your hostname.
+  networking.hostName = "beta";
 
   virtualisation.docker = {
     enable = true;
@@ -12,7 +12,6 @@
 
   age.identityPaths = ["/home/repparw/.ssh/id_t440"];
 
-  # ignore lid close on AC power
   services.logind.lidSwitchExternalPower = "ignore";
 
   services.tlp.enable = true;

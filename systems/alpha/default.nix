@@ -13,7 +13,7 @@
 
   modules.dlsuite.enable = true;
 
-  networking.hostName = "alpha"; # Define your hostname.
+  networking.hostName = "alpha";
 
   networking.interfaces.enp42s0.wakeOnLan.enable = true;
 
