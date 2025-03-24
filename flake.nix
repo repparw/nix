@@ -17,6 +17,7 @@
       inputs.nur.modules.nixos.default
       # NUR modules to import
       ./systems/common.nix
+      ./modules/nixos
       ./systems/${hostname}
       inputs.nix-index-database.nixosModules.nix-index
       inputs.agenix.nixosModules.default

@@ -4,7 +4,6 @@
 {pkgs, ...}: {
   imports = [
     ./hardware-configuration.nix
-    ../../modules/nixos/timers.nix
   ];
 
   modules.vm.enable = true;
