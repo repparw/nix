@@ -1,10 +1,6 @@
 {...}: {
-  imports = [
-    ../../modules/hm/cli
-    ../../modules/hm/gui
-  ];
+  modules.gui.enable = true;
 
-  # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
 
   services.udiskie.enable = true;
