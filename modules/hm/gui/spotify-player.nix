@@ -75,6 +75,15 @@
           key_sequence = "Y";
         }
         {
+          action = "CopyLink";
+          key_sequence = "u";
+          target = "PlayingTrack";
+        }
+        {
+          action = "CopyLink";
+          key_sequence = "U";
+        }
+        {
           action = "GoToArtist";
           key_sequence = "g A";
           target = "PlayingTrack";
