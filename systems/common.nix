@@ -3,10 +3,6 @@
   inputs,
   ...
 }: {
-  imports = [
-    ../modules/nixos/common.nix
-  ];
-
   networking.networkmanager.enable = true;
 
   services.gvfs.enable = true;
