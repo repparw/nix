@@ -4,7 +4,6 @@ final: prev: {
       mpv-webm
       mpris
       quality-menu
-      sponsorblock-minimal
     ];
   };
 }
