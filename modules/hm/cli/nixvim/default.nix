@@ -112,6 +112,9 @@
         settings = {
           provider = "copilot";
           behaviour.auto_suggestions = false;
+          copilot = {
+            model = "claude-3.5-sonnet";
+          };
         };
       };
 
