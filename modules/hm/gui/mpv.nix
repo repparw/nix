@@ -18,6 +18,7 @@
         RIGHT = "frame-step";
         LEFT = "frame-back-step";
         "~" = "script-binding console/enable";
+        "F" = "script-binding quality_menu/video_formats_toggle";
         # Play in reverse toggle
         # <bind> set-cache yes ; cycle play-dir
       };
