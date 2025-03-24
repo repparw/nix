@@ -12,6 +12,7 @@
     ./gaming.nix
     ./hyprland.nix
     ./obs.nix
+    ./timers.nix
   ];
 
   boot.loader = {
