@@ -1,5 +1,5 @@
 {pkgs, ...}: {
-  services.kanshi.enable = true;
+  modules.kanshi.enable = true;
 
   # Let Home Manager install and manage itself.
 
