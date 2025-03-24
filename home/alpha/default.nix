@@ -14,7 +14,7 @@
 in {
   services.spotifyd.enable = true;
 
-  services.jellyfin-mpv-shim.enable = true;
+  modules.jellyfin-mpv-shim.enable = true;
 
   #home.packages = with pkgs; [ ];
 
