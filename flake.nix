@@ -4,7 +4,7 @@
     nixvim.url = "github:nix-community/nixvim";
     agenix.url = "github:ryantm/agenix";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    stable.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-24.11";
     home-manager.url = "github:nix-community/home-manager"; # Branches for stable, master follows unstable
     nix-index-database.url = "github:nix-community/nix-index-database";
     nur.url = "github:nix-community/NUR";
