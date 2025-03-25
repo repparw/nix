@@ -138,4 +138,6 @@
 
       texliveFull
     ]
+    ++ (with pkgs.stable; [
+      ]);
 }
