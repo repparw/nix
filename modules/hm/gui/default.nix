@@ -1,7 +1,6 @@
 {
   config,
   pkgs,
-  stable,
   lib,
   ...
 }: let
@@ -33,9 +32,6 @@ in {
 
         # find pomo app in nixpkgs
       ]
-      ++ (with stable; [
-        # Add here and uncomment
-      ]);
 
     services.kdeconnect = {
       enable = true;
