@@ -7,9 +7,6 @@
     ../modules/nixos
     ../systems/common.nix
     ../systems/${hostname}
-    {
-      nixpkgs.overlays = import ../overlays;
-    }
     inputs.nix-index-database.nixosModules.nix-index
     inputs.agenix.nixosModules.default
     inputs.home-manager.nixosModules.home-manager

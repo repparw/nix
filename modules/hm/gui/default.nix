@@ -32,6 +32,8 @@ in {
 
         # find pomo app in nixpkgs
       ]
+      ++ (with pkgs.stable; [
+        ]);
 
     services.kdeconnect = {
       enable = true;
