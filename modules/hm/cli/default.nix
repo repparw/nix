@@ -1,6 +1,5 @@
 {
   pkgs,
-  stable,
   config,
   ...
 }: {
@@ -139,6 +138,4 @@
 
       texliveFull
     ]
-    ++ (with stable; [
-      ]);
 }
