@@ -3,7 +3,7 @@
     ./hardware-configuration.nix
   ];
 
-  modules.vm.enable = true;
+  modules.vm.enable = false;
 
   modules.gaming.enable = true;
 
