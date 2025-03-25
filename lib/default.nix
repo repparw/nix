@@ -5,10 +5,10 @@
     inputs.nur.modules.nixos.default
     # Apply overlays
     {
-      nixpkgs.overlays = import ../overlays {
+      nixpkgs.overlays = builtins.attrValues (import ../overlays {
         inherit inputs;
         outputs = null;
-      };
+      });
     }
     # NUR modules to import
     ../modules/nixos
