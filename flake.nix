@@ -13,6 +13,7 @@
   outputs = {...} @ inputs: let
     lib = import ./lib {inherit inputs;};
   in {
+    overlays = import ./overlays;
     nixosConfigurations =
       lib.mkHost "alpha"
       // lib.mkHost "beta"
