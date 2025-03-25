@@ -1,4 +1,4 @@
-{...}: {
+{inputs, ...}: {
   modifications = final: prev: {
     mpv = prev.mpv.override {
       scripts = with final.mpvScripts; [
@@ -13,6 +13,4 @@
   stable = final: _: {
     stable = inputs.nixpkgs-stable.legacyPackages.${final.system};
   };
-
-  ## TODO stable packages overlay
 }
