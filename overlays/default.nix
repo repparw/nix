@@ -1,4 +1,8 @@
-{inputs, ...}: {
+{
+  inputs,
+  outputs,
+  ...
+}: {
   modifications = final: prev: {
     mpv = prev.mpv.override {
       scripts = with final.mpvScripts; [
