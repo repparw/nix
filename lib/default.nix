@@ -3,6 +3,7 @@
   mkModules = hostname: [
     # Adds the NUR overlay
     inputs.nur.modules.nixos.default
+	inputs.nixpkgs.overlays = ../overlays
     # NUR modules to import
     ../modules/nixos
     ../systems/common.nix
