@@ -72,6 +72,7 @@
         pull.rebase = true;
         maintenance.repo = "/home/repparw/nix";
       };
+      # TODO merge diff3, mergetool, more git config options, aliases?
     };
 
     ssh = {
