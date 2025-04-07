@@ -10,9 +10,14 @@ let
   systems = [
     alpha
   ];
-in
-{
+in {
   "github.age".publicKeys = [
+    repparw-alpha
+    repparw-beta
+    alpha
+  ];
+
+  "diun-ntfy.age".publicKeys = [
     repparw-alpha
     repparw-beta
     alpha
