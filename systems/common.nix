@@ -45,10 +45,6 @@
     github = {
       file = ../secrets/github.age;
     };
-    diun-ntfy = {
-      file = ../secrets/diun-ntfy.age;
-      path = "/home/docker/diun/diun-ntfy";
-    };
   };
 
   nix.settings = {
