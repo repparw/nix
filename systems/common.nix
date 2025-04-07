@@ -41,8 +41,13 @@
 
   nix.nixPath = ["nixpkgs=${inputs.nixpkgs}"];
 
-  age.secrets.github = {
-    file = ../secrets/github.age;
+  age.secrets = {
+    github = {
+      file = ../secrets/github.age;
+    };
+    diun-ntfy = {
+      file = ../secrets/diun-ntfy.age;
+    };
   };
 
   nix.settings = {
