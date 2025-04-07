@@ -1,7 +1,7 @@
 {cfg}: {
   "ntfy" = {
     image = "binwiederhier/ntfy";
-    command = "serve";
+    cmd = ["serve"];
     environment = {
       "TZ" = cfg.timezone;
     };
