@@ -1,5 +1,5 @@
 {cfg}: {
   "ntfy" = {
-    image = "binwiederhier/ntfy:latest";
+    image = "binwiederhier/ntfy";
   };
 }
