@@ -27,6 +27,7 @@ with lib; let
     (import ./diun.nix)
     (import ./freshrss.nix)
     (import ./jellyfin.nix)
+    (import ./ntfy.nix)
     (import ./paperless.nix)
     (import ./arr.nix)
     (import ./swag.nix)
