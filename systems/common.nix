@@ -47,7 +47,7 @@
     };
     diun-ntfy = {
       file = ../secrets/diun-ntfy.age;
-      path = "/home/docker/diun/data/diun-ntfy";
+      path = "/home/docker/diun/diun-ntfy";
     };
   };
 
