@@ -2,7 +2,7 @@
   "ntfy" = {
     image = "binwiederhier/ntfy";
     command = "serve";
-    env = {
+    environment = {
       "TZ" = cfg.timezone;
     };
     user = "${cfg.user}:${cfg.group}";
