@@ -13,8 +13,5 @@
       "NTFY_ENABLE_LOGIN" = true;
     };
     user = "${cfg.user}:${cfg.group}";
-    volumes = [
-      "${cfg.dataDir}/ntfy:/etc/ntfy:rw,Z"
-    ];
   };
 }
