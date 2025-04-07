@@ -12,6 +12,6 @@
       "NTFY_ATTACHMENT_CACHE_DIR" = "${cfg.dataDir}/ntfy/attachments";
       "NTFY_ENABLE_LOGIN" = "true";
     };
-    user = "${cfg.user}:${cfg.group}";
+    #user = "${cfg.user}:${cfg.group}";
   };
 }
