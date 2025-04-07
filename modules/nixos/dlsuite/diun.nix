@@ -1,7 +1,4 @@
-{
-  config,
-  cfg,
-}: {
+{cfg}: {
   "diun" = {
     image = "docker.io/crazymax/diun:latest";
     environment = {
