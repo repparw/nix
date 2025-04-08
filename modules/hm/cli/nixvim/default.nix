@@ -30,8 +30,6 @@
     enable = true;
     defaultEditor = true;
 
-    extraPlugins = with pkgs.vimPlugins; lib.mkIf config.programs.nixvim.plugins.telescope.enable [telescope-zoxide];
-
     files = {
       "ftplugin/lua.lua" = {};
     };
@@ -448,9 +446,8 @@
           ui-select.enable = true;
           frecency.enable = true;
           fzf-native.enable = true;
+          zoxide.enable = true;
         };
-
-        enabledExtensions = ["zoxide"];
 
         settings = {
           defaults = {
