@@ -52,6 +52,12 @@
       maplocalleader = " ";
     };
 
+    diagnostics = {
+      virtual_lines = {
+        current_line = true;
+      };
+    };
+
     opts = {
       splitright = true;
       splitbelow = true;
