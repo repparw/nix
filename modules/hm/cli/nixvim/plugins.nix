@@ -13,8 +13,6 @@
 
     nvim-surround.enable = true;
 
-    trouble.enable = true;
-
     copilot-lua = {
       enable = true;
       settings.suggestion.enabled = false;

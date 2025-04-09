@@ -23,10 +23,6 @@
           action = "declaration";
           desc = "Goto Declaration";
         };
-        gI = {
-          action = "implementation";
-          desc = "Goto Implementation";
-        };
         gT = {
           action = "type_definition";
           desc = "Type Definition";
