@@ -70,20 +70,20 @@
       };
     }
     {
-      action = "<cmd>cleft<CR>";
+      action = "<cmd>cprev<CR>";
       key = "[c";
       mode = "n";
       options = {
-        desc = "[c]ycle quickfix left";
+        desc = "[c]ycle quickfix prev";
         silent = true;
       };
     }
     {
-      action = "<cmd>cright<CR>";
+      action = "<cmd>cnext<CR>";
       key = "]c";
       mode = "n";
       options = {
-        desc = "[c]ycle quickfix right";
+        desc = "[c]ycle quickfix next";
         silent = true;
       };
     }
@@ -114,21 +114,25 @@
       };
     }
     {
-      action = "<cmd>lleft<CR>";
+      action = "<cmd>lprev<CR>";
       key = "[l";
       mode = "n";
       options = {
         silent = true;
-        desc = "cycle [l]oclist left";
+        "<leader>ca" = {
+          action = "code_action";
+          desc = "Code Action";
+        };
+        desc = "cycle [l]oclist prev";
       };
     }
     {
-      action = "<cmd>lright<CR>";
+      action = "<cmd>lnext<CR>";
       key = "]l";
       mode = "n";
       options = {
         silent = true;
-        desc = "cycle [l]oclist right";
+        desc = "cycle [l]oclist next";
       };
     }
     {
@@ -279,108 +283,5 @@
     }
   ];
 }
-/*
--- move between splits
-keymap.set('n', '<C-h>', '<C-w>h')
-keymap.set('n', '<C-j>', '<C-w>j')
-keymap.set('n', '<C-k>', '<C-w>k')
-keymap.set('n', '<C-l>', '<C-w>l')
-
--- Toggle the quickfix list (only opens if it is populated)
-local function toggle_qf_list()
-  local qf_exists = false
-  for _, win in pairs(fn.getwininfo() or {}) do
-    if win['quickfix'] == 1 then
-      qf_exists = true
-    end
-  end
-  if qf_exists == true then
-    vim.cmd.cclose()
-    return
-  end
-  if not vim.tbl_isempty(vim.fn.getqflist()) then
-    vim.cmd.copen()
-  end
-end
-
-local function try_fallback_notify(opts)
-  local success, _ = pcall(opts.try)
-  if success then
-    return
-  end
-  success, _ = pcall(opts.fallback)
-  if success then
-    return
-  end
-  vim.notify(opts.notify, vim.log.levels.INFO)
-end
-
-local function lleft()
-  try_fallback_notify {
-    try = vim.cmd.lprev,
-    fallback = vim.cmd.llast,
-    notify = 'Location list is empty!',
-  }
-end
-
-local function lright()
-  try_fallback_notify {
-    try = vim.cmd.lnext,
-    fallback = vim.cmd.lfirst,
-    notify = 'Location list is empty!',
-  }
-end
-
--- Shortcut for expanding to current buffer's directory in command mode
-keymap.set('c', '%%', function()
-  if fn.getcmdtype() == ':' then
-    return fn.expand('%:h') .. '/'
-  else
-    return '%%'
-  end
-end, { expr = true, desc = "expand to current buffer's directory" })
-
-local severity = diagnostic.severity
-
-keymap.set('n', '<space>e', function()
-  local _, winid = diagnostic.open_float(nil, { scope = 'line' })
-  if not winid then
-    vim.notify('no diagnostics found', vim.log.levels.INFO)
-    return
-  end
-  vim.api.nvim_win_set_config(winid or 0, { focusable = true })
-end, { noremap = true, silent = true, desc = 'diagnostics floating window' })
-keymap.set('n', '[d', diagnostic.goto_prev, { noremap = true, silent = true, desc = 'previous [d]iagnostic' })
-keymap.set('n', ']d', diagnostic.goto_next, { noremap = true, silent = true, desc = 'next [d]iagnostic' })
-keymap.set('n', '[e', function()
-  diagnostic.goto_prev {
-    severity = severity.ERROR,
-  }
-end, { noremap = true, silent = true, desc = 'previous [e]rror diagnostic' })
-keymap.set('n', ']e', function()
-  diagnostic.goto_next {
-    severity = severity.ERROR,
-  }
-end, { noremap = true, silent = true, desc = 'next [e]rror diagnostic' })
-keymap.set('n', '[w', function()
-  diagnostic.goto_prev {
-    severity = severity.WARN,
-  }
-end, { noremap = true, silent = true, desc = 'previous [w]arning diagnostic' })
-keymap.set('n', ']w', function()
-  diagnostic.goto_next {
-    severity = severity.WARN,
-  }
-end, { noremap = true, silent = true, desc = 'next [w]arning diagnostic' })
-keymap.set('n', '[h', function()
-  diagnostic.goto_prev {
-    severity = severity.HINT,
-  }
-end, { noremap = true, silent = true, desc = 'previous [h]int diagnostic' })
-keymap.set('n', ']h', function()
-  diagnostic.goto_next {
-    severity = severity.HINT,
-  }
-end, { noremap = true, silent = true, desc = 'next [h]int diagnostic' })
-*/
+/**/
 
