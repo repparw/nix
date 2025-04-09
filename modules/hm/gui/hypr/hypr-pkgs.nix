@@ -14,6 +14,8 @@
       tesseract # ocr
       zbar # qr
 
+      bemoji
+
       hdrop
 
       hyprshot
