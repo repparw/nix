@@ -141,7 +141,6 @@
 
       # CLI tools
       playerctl
-      rclone
       libqalculate
 
       fastfetch
