@@ -85,7 +85,7 @@
     plugins = {
       jdtls = {
         enable = true;
-        cmd = ["-data ${config.xdg.cacheHome}/jdtls/workspace" "-configuration ${config.xdg.cacheHome}/jdtls/config"];
+        settings.cmd = ["java" "-data" "${config.xdg.cacheHome}/jdtls/workspace" "-configuration" "${config.xdg.cacheHome}/jdtls/config"];
       };
 
       which-key.enable = true;
