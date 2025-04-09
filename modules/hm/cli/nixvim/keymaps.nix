@@ -1,30 +1,6 @@
 {...}: {
   programs.nixvim.keymaps = [
     {
-      action = "<cmd>Trouble diagnostics toggle<cr>";
-      key = "<leader>tt";
-      mode = "n";
-      options = {
-        desc = "[T]rouble [T]oggle";
-      };
-    }
-    {
-      action = "<cmd>Trouble diagnostics previous<CR>";
-      key = "[t";
-      mode = "n";
-      options = {
-        desc = "[T]rouble previous";
-      };
-    }
-    {
-      action = "<cmd>Trouble diagnostics next<CR>";
-      key = "]t";
-      mode = "n";
-      options = {
-        desc = "[T]rouble next";
-      };
-    }
-    {
       action = "<cmd>toggle_qf_list<CR>";
       key = "<C-c>";
       mode = "n";
