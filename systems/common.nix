@@ -48,7 +48,7 @@
   };
 
   nix.settings = {
-    access-tokens = "!include ${config.age.secrets.github.path}";
+    access-tokens = ''!include ${config.age.secrets.github.path}'';
     trusted-users = [
       "root"
       "repparw"
