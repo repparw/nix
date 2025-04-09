@@ -83,7 +83,7 @@
       conceallevel = 1;
     };
     plugins = {
-      nvim-jdtls = {
+      jdtls = {
         enable = true;
         cmd = ["-data ${config.xdg.cacheHome}/jdtls/workspace" "-configuration ${config.xdg.cacheHome}/jdtls/config"];
       };
