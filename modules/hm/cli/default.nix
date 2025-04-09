@@ -63,11 +63,14 @@
       enable = true;
       userEmail = "ubritos@gmail.com";
       userName = "repparw";
+
+      maintenance = {
+        enable = true;
+        repositories = ["/home/repparw/nix"];
+      };
+
       extraConfig = {
-        user = {
-          email = "ubritos@gmail.com";
-          name = "repparw";
-        };
+        # git maintainer standards until git3?
         column.ui = "auto";
         branch.sort = "-commiterdate";
         tag.sort = "version:refname";
@@ -79,22 +82,27 @@
           renames = true;
         };
         push = {
-          default = simple;
+          default = "simple";
           autoSetupRemote = true;
+          followTags = true;
         };
+        fetch = {
+          prune = true;
+          pruneTags = true;
+          all = true;
+        };
+        # why not?
         rerere = {
           enabled = true;
           autoupdate = true;
         };
         pull.rebase = true;
-        maintenance.repo = "/home/repparw/nix";
         rebase = {
           autoSquash = true;
           autoStash = true;
           updateRefs = true;
         };
       };
-      # TODO merge diff3, mergetool, more git config options, aliases?
     };
 
     ssh = {
