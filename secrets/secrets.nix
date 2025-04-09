@@ -6,7 +6,7 @@ let
     repparw-beta
   ];
 in {
-  "github.age".publicKeys = users;
+  "accessTokens.age".publicKeys = users;
 
   "diun-ntfy.age".publicKeys = users;
 }
