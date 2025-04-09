@@ -85,8 +85,7 @@
     plugins = {
       nvim-jdtls = {
         enable = true;
-        cmd = "-data ${config.xdg.cacheHome}/jdtls/workspace";
-        configuration = "${config.xdg.cacheHome}/jdtls/config";
+        cmd = "-data ${config.xdg.cacheHome}/jdtls/workspace -configuration ${config.xdg.cacheHome}/jdtls/config";
       };
 
       which-key.enable = true;
