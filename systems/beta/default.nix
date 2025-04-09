@@ -10,8 +10,6 @@
     autoPrune.enable = true;
   };
 
-  age.identityPaths = ["/home/repparw/.ssh/id_t440"];
-
   services.logind.lidSwitchExternalPower = "ignore";
 
   services.tlp.enable = true;
