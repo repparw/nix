@@ -59,7 +59,7 @@
         "$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
         "$screenshot" = "hyprshot -o $XDG_SCREENSHOTS_DIR -m";
         "$menu" = "killall tofi-drun || tofi-drun";
-        "$emojimenu" = "killall tofi || BEMOJI_PICKER_CMD='tofi' bemoji -n";
+        "$emojimenu" = "killall tofi || BEMOJI_PICKER_CMD=${lib.getExe pkgs.tofi} bemoji -n";
         "$cmdmenu" = "killall tofi-run || tofi-run | xargs hyprctl dispatch exec --";
 
         "$showlayout" = "hdrop feh -g 774x275 /home/repparw/git/kbd/layout.png";
@@ -116,8 +116,6 @@
 
         animations = {
           enabled = true;
-
-          # Default animations, see https://wiki.hyprland.org/Configuring/Animations/ for more
 
           bezier = "myBezier, 0.05, 0.9, 0.1, 1.05";
 
