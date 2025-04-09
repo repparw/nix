@@ -13,14 +13,11 @@
     keymaps = {
       silent = true;
       lspBuf = {
+        # using defaults from neovim 0.11
         # TODO toggle inlayHints?
         gd = {
           action = "definition";
           desc = "Goto Definition";
-        };
-        gr = {
-          action = "references";
-          desc = "Goto References";
         };
         gD = {
           action = "declaration";
@@ -41,14 +38,6 @@
         "<leader>cw" = {
           action = "workspace_symbol";
           desc = "Workspace Symbol";
-        };
-        "<leader>cr" = {
-          action = "rename";
-          desc = "Rename";
-        };
-        "<leader>ca" = {
-          action = "code_action";
-          desc = "Code Action";
         };
       };
       diagnostic = {
