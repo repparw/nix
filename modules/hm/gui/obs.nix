@@ -1,5 +1,6 @@
 {
   pkgs,
+  lib,
   osConfig,
   ...
 }: {
@@ -15,7 +16,7 @@
 
         Service = {
           ExecStart = [
-            "${pkgs.obs-studio}/bin/obs --disable-shutdown-check --startreplaybuffer --minimize-to-tray"
+            "${lib.getExe pkgs.obs-studio} --disable-shutdown-check --startreplaybuffer --minimize-to-tray"
           ];
           Restart = ["on-failure"];
           RestartSec = 1;
