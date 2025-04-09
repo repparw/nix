@@ -149,7 +149,7 @@
     wantedBy = ["graphical.target"];
     serviceConfig = {
       Type = "simple";
-      ExecStart = "${pkgs.logiops_0_2_3}/bin/logid";
+      ExecStart = "${lib.getExe pkgs.logiops_0_2_3}";
     };
   };
 
