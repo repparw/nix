@@ -17,8 +17,6 @@
 
   networking.interfaces.enp42s0.wakeOnLan.enable = true;
 
-  age.identityPaths = ["/home/repparw/.ssh/id_ed25519"];
-
   zramSwap.enable = true;
 
   #### FSTAB
