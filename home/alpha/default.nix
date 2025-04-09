@@ -1,4 +1,8 @@
-{pkgs, ...}: let
+{
+  pkgs,
+  lib,
+  ...
+}: let
   git-autocommit = with pkgs;
     writeShellApplication {
       name = "git-autocommit";
@@ -21,7 +25,7 @@ in {
   systemd.user.services.git-autocommit = {
     Service = {
       Type = "oneshot";
-      ExecStart = ["${git-autocommit}/bin/git-autocommit"];
+      ExecStart = ["${lib.getExe git-autocommit}"];
     };
   };
 
