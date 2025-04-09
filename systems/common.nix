@@ -43,7 +43,7 @@
 
   age.secrets = {
     accessTokens = {
-      file = ../secrets/accessTokens.age;
+      file = ../secrets/access-tokens.age;
     };
   };
 
