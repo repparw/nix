@@ -11,11 +11,13 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    systemd.services.buptohdd = {
-      serviceConfig = {
-        Type = "oneshot";
-        User = "repparw";
-        ExecStart = "${lib.getExe pkgs.rsync} -aq --delete /home/repparw/Pictures /home/repparw/Documents /home/repparw/.config --exclude='dlsuite' /mnt/hdd/backup";
+    systemd.services = {
+      buptohdd = {
+        serviceConfig = {
+          Type = "oneshot";
+          User = "repparw";
+          ExecStart = "${lib.getExe pkgs.rsync} -aq --delete /home/repparw/Pictures /home/repparw/Documents /home/repparw/.config --exclude='dlsuite' /mnt/hdd/backup";
+        };
       };
     };
 
