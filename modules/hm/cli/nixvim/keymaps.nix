@@ -1,51 +1,6 @@
 {...}: {
   programs.nixvim.keymaps = [
     {
-      action = "y$";
-      key = "Y";
-      mode = "n";
-      options = {
-        desc = "[Y]ank to end of line";
-        silent = true;
-      };
-    }
-    {
-      action = "<cmd>bprevious<CR>";
-      key = "[b";
-      mode = "n";
-      options = {
-        desc = "previous [b]uffer";
-        silent = true;
-      };
-    }
-    {
-      action = "<cmd>bnext<CR>";
-      key = "]b";
-      mode = "n";
-      options = {
-        desc = "next [b]uffer";
-        silent = true;
-      };
-    }
-    {
-      action = "<cmd>bfirst<CR>";
-      key = "[B";
-      mode = "n";
-      options = {
-        desc = "first [B]uffer";
-        silent = true;
-      };
-    }
-    {
-      action = "<cmd>blast<CR>";
-      key = "]B";
-      mode = "n";
-      options = {
-        desc = "last [B]uffer";
-        silent = true;
-      };
-    }
-    {
       action = "<cmd>Trouble diagnostics toggle<cr>";
       key = "<leader>tt";
       mode = "n";
@@ -54,7 +9,7 @@
       };
     }
     {
-      action = "<cmd>Trouble previous";
+      action = "<cmd>Trouble previous<CR>";
       key = "[t";
       mode = "n";
       options = {
@@ -62,47 +17,11 @@
       };
     }
     {
-      action = "<cmd>Trouble next";
+      action = "<cmd>Trouble next<CR>";
       key = "]t";
       mode = "n";
       options = {
         desc = "[T]rouble next";
-      };
-    }
-    {
-      action = "<cmd>cprev<CR>";
-      key = "[c";
-      mode = "n";
-      options = {
-        desc = "[c]ycle quickfix prev";
-        silent = true;
-      };
-    }
-    {
-      action = "<cmd>cnext<CR>";
-      key = "]c";
-      mode = "n";
-      options = {
-        desc = "[c]ycle quickfix next";
-        silent = true;
-      };
-    }
-    {
-      action = "<cmd>cfirst<CR>";
-      key = "[C";
-      mode = "n";
-      options = {
-        desc = "first quickfix entry";
-        silent = true;
-      };
-    }
-    {
-      action = "<cmd>clast<CR>";
-      key = "]C";
-      mode = "n";
-      options = {
-        desc = "last quickfix entry";
-        silent = true;
       };
     }
     {
@@ -111,46 +30,6 @@
       mode = "n";
       options = {
         desc = "toggle quickfix list";
-      };
-    }
-    {
-      action = "<cmd>lprev<CR>";
-      key = "[l";
-      mode = "n";
-      options = {
-        silent = true;
-        "<leader>ca" = {
-          action = "code_action";
-          desc = "Code Action";
-        };
-        desc = "cycle [l]oclist prev";
-      };
-    }
-    {
-      action = "<cmd>lnext<CR>";
-      key = "]l";
-      mode = "n";
-      options = {
-        silent = true;
-        desc = "cycle [l]oclist next";
-      };
-    }
-    {
-      action = "<cmd>lfirst<CR>";
-      key = "[L";
-      mode = "n";
-      options = {
-        silent = true;
-        desc = "first [L]oclist entry";
-      };
-    }
-    {
-      action = "<cmd>llast<CR>";
-      key = "]L";
-      mode = "n";
-      options = {
-        silent = true;
-        desc = "last [L]oclist entry";
       };
     }
     {
@@ -259,6 +138,15 @@
       mode = "n";
       options = {
         desc = "Yank lines to clipboard";
+      };
+    }
+    {
+      action = "y$";
+      key = "Y";
+      mode = "n";
+      options = {
+        desc = "[Y]ank to end of line";
+        silent = true;
       };
     }
     {
