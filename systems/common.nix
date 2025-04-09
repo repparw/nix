@@ -43,15 +43,16 @@
   nix.nixPath = ["nixpkgs=${inputs.nixpkgs}"];
 
   age.secrets = {
-    github = {
-      file = ../secrets/github.age;
+    accessTokens = {
+      file = ../secrets/accessTokens.age;
     };
   };
 
   age.identityPaths = ["/home/repparw/.ssh/id_ed25519"];
 
+  nix.extraOptions = ''!include ${config.age.secrets.accessTokens.path}'';
+
   nix.settings = {
-    extraOptions = ''access-tokens=!include ${config.age.secrets.github.path}'';
     trusted-users = [
       "root"
       "repparw"
