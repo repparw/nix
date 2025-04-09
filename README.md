@@ -13,7 +13,7 @@ My personal NixOS configuration files. This repository contains a complete NixOS
 ├── flake.nix         # Main flake configuration
 ├── lib/              # Helper functions and utilities
 ├── overlays/         # Custom package overlays
-├── secrets/          # Encrypted secrets (agenix)
+├── secrets/          # Encrypted secrets
 └── systems/          # System configurations
     └── common.nix    # Shared system configuration
 ```
