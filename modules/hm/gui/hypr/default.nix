@@ -58,7 +58,7 @@
         #"$pomodoro" = "pomatez";
         "$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
         "$screenshot" = "hyprshot -o $XDG_SCREENSHOTS_DIR -m";
-        "$desktopmenu" = "killall tofi-drun || tofi-drun";
+        "$menu" = "killall tofi-drun || tofi-drun";
         "$cmdmenu" = "killall tofi-run || tofi-run | xargs hyprctl dispatch exec --";
 
         "$showlayout" = "hdrop feh -g 774x275 /home/repparw/git/kbd/layout.png";
@@ -178,7 +178,7 @@
         bindl = ["$mod ALT, L, exec, $lockscreen; $screenoff"];
         bind =
           [
-            "$mod, d, exec, $desktopmenu"
+            "$mod, d, exec, $menu"
             "$mod SHIFT, d, exec, $cmdmenu"
 
             "$mod, TAB, split:swapactiveworkspaces, current +1"
