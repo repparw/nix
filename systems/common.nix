@@ -48,7 +48,7 @@
     };
   };
 
-  age.identityPath = "~/.ssh/id_ed25519";
+  age.identityPaths = ["/home/repparw/.ssh/id_ed25519"];
 
   nix.settings = {
     access-tokens = ''!include ${config.age.secrets.github.path}'';
