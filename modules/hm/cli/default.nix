@@ -81,6 +81,7 @@
           mnemonicPrefix = true;
           renames = true;
         };
+        merge.conflictdiff = "diff3";
         push = {
           default = "simple";
           autoSetupRemote = true;
