@@ -47,6 +47,8 @@
     };
   };
 
+  age.identityPath = "~/.ssh/id_ed25519";
+
   nix.settings = {
     access-tokens = ''!include ${config.age.secrets.github.path}'';
     trusted-users = [
