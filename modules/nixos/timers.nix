@@ -14,12 +14,13 @@ in {
     programs.rclone = {
       enable = true;
       remotes = {
-[drive]
+drive = { config = {
+
+secrets = { };
 type = drive
 client_id = 333265659347-c03ga8iml374j79nod16pb79kkfkel7f.apps.googleusercontent.com
-client_secret = 
+client_secret = config.age.
 scope = drive
-token = {"access_token":"ya29.a0AZYkNZjtJOkBQ154MTCmKfABtzzzi2V0POU8d0xQgyBoebu07Dx9wedpvlQVhJFZJGGvkKJk6AEGDaa0J1P_d4TDHQ2ZjW5OZxb57-TG5q7qSfm4IVKuM6EaNN0lWO3kewUUXWJRl5fhe-lEshdGPy48vi2CWLfrhI4xHVldsVUaCgYKAYoSARISFQHGX2MiIpf6Nr9HpNsseHrVjvhVaA0178","token_type":"Bearer","refresh_token":"1//0h3Uq0IBe-va7CgYIARAAGBESNwF-L9IrGs4NA664UoJ-aiccvanLL-2Y0aCha-gzJKlBYZIE_KR5p2sW40jic7gCKZBMuRf_2qc","expiry":"2025-04-07T01:00:16.289771212-03:00"}
 team_drive = 
 
 [crypt]
