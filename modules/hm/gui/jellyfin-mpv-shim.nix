@@ -23,9 +23,9 @@ in {
       };
       Service = {
         Type = "simple";
-        ExecStartPre = "${lib.getExe pkgs.coreutils "sleep"} 30";
+        ExecStartPre = "${lib.getExe' pkgs.coreutils "sleep"} 30";
         ExecStart = "${lib.getExe cfg.package}";
-        ExecStop = "${lib.getExe pkgs.coreutils "kill"} -s SIGINT $MAINPID";
+        ExecStop = "${lib.getExe' pkgs.coreutils "kill"} -s SIGINT $MAINPID";
         Restart = "unless-stopped";
       };
       Install.WantedBy = ["graphical-session.target"];
