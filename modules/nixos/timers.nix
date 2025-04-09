@@ -15,7 +15,7 @@ in {
       serviceConfig = {
         Type = "oneshot";
         User = "repparw";
-        ExecStart = "${pkgs.rsync}/bin/rsync -aq --delete /home/repparw/Pictures /home/repparw/Documents /home/repparw/.config --exclude='dlsuite' /mnt/hdd/backup";
+        ExecStart = "${lib.getExe pkgs.rsync} -aq --delete /home/repparw/Pictures /home/repparw/Documents /home/repparw/.config --exclude='dlsuite' /mnt/hdd/backup";
       };
     };
 
@@ -23,7 +23,7 @@ in {
       serviceConfig = {
         Type = "oneshot";
         User = "repparw";
-        ExecStart = "${pkgs.rclone}/bin/rclone -L sync --exclude \"authelia/valkey/\" --exclude \"authelia/config/notification.txt\" --exclude \"authelia/config/users_database.yml\" --exclude \"swag/keys/\" --exclude \"**/fail2ban/fail2ban.sqlite3\" --exclude \"**/letsencrypt/live/\" --exclude \"**/letsencrypt/archive/\" --exclude \"**/letsencrypt/accounts/\" --exclude \"swag/nginx/**/*.sample\" /home/repparw/.config/dlsuite crypt:dlsuite";
+        ExecStart = "${lib.getExe pkgs.rclone} -L sync --exclude \"authelia/valkey/\" --exclude \"authelia/config/notification.txt\" --exclude \"authelia/config/users_database.yml\" --exclude \"swag/keys/\" --exclude \"**/fail2ban/fail2ban.sqlite3\" --exclude \"**/letsencrypt/live/\" --exclude \"**/letsencrypt/archive/\" --exclude \"**/letsencrypt/accounts/\" --exclude \"swag/nginx/**/*.sample\" /home/repparw/.config/dlsuite crypt:dlsuite";
       };
     };
 
@@ -35,7 +35,7 @@ in {
         Type = "oneshot";
         User = "repparw";
         WorkingDirectory = "/tmp";
-        ExecStart = "${pkgs.docker}/bin/docker system prune -af";
+        ExecStart = "${lib.getExe pkgs.docker} system prune -af";
       };
     };
 
