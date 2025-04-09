@@ -31,10 +31,6 @@
           action = "hover";
           desc = "Hover";
         };
-        "<leader>cw" = {
-          action = "workspace_symbol";
-          desc = "Workspace Symbol";
-        };
       };
       diagnostic = {
         "<leader>cd" = {
