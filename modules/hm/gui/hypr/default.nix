@@ -20,31 +20,25 @@
       ];
 
       systemd.variables = ["--all"];
-      ${
+      extraConfig =
         if osConfig.networking.hostName == "alpha"
-        then "extraConfig"
-        else null
-      } = ''
-        $monitor=DP-2
-        $monitor2=HDMI-A-1
+        then ''
+          $monitor=DP-2
+          $monitor2=HDMI-A-1
 
-        monitor=$monitor,highrr,0x0,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
-        monitor=$monitor2,preferred,-1920x0,1
+          monitor=$monitor,highrr,0x0,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
+          monitor=$monitor2,preferred,-1920x0,1
 
-        workspace = 5, on-created-empty:[silent] $socials
-      '';
-      ${
-        if osConfig.networking.hostName != "alpha"
-        then "extraConfig"
-        else null
-      } = ''
-        monitor = eDP-1,preferred,auto,1
-        monitor = ,preferred,auto,1
+          workspace = 5, on-created-empty:[silent] $socials
+        ''
+        else ''
+          monitor = eDP-1,preferred,auto,1
+          monitor = ,preferred,auto,1
 
-        # backlight TODO
-        bind = ,XF86MonBrightnessDown, exec, brightnessctl s 5%-
-        bind = ,XF86MonBrightnessUp, exec, brightnessctl s 5%+
-      '';
+          # backlight TODO
+          bind = ,XF86MonBrightnessDown, exec, brightnessctl s 5%-
+          bind = ,XF86MonBrightnessUp, exec, brightnessctl s 5%+
+        '';
       settings = {
         # GUI
         "$prefix" = "uwsm app --";
@@ -58,7 +52,7 @@
         #"$pomodoro" = "pomatez";
         "$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
         "$screenshot" = "hyprshot -o $XDG_SCREENSHOTS_DIR -m";
-        "$menu" = "killall tofi-drun || tofi-drun";
+        "$desktopmenu" = "killall tofi-drun || tofi-drun";
         #"$emojimenu" = "killall tofi || BEMOJI_PICKER_CMD=${lib.getExe pkgs.tofi} bemoji -n";
         "$cmdmenu" = "killall tofi-run || tofi-run | xargs hyprctl dispatch exec --";
 
@@ -177,7 +171,7 @@
         bindl = ["$mod ALT, L, exec, $lockscreen; $screenoff"];
         bind =
           [
-            "$mod, d, exec, $menu"
+            "$mod, d, exec, $desktopmenu"
             "$mod SHIFT, d, exec, $cmdmenu"
 
             "$mod, TAB, split:swapactiveworkspaces, current +1"
