@@ -23,9 +23,9 @@ in {
       };
       Service = {
         Type = "simple";
-        ExecStartPre = "${pkgs.coreutils}/bin/sleep 30";
-        ExecStart = "${cfg.package}/bin/jellyfin-mpv-shim";
-        ExecStop = "${pkgs.coreutils}/bin/kill -s SIGINT $MAINPID";
+        ExecStartPre = "${lib.getExe pkgs.coreutils "sleep"} 30";
+        ExecStart = "${lib.getExe cfg.package}";
+        ExecStop = "${lib.getExe pkgs.coreutils "kill"} -s SIGINT $MAINPID";
         Restart = "unless-stopped";
       };
       Install.WantedBy = ["graphical-session.target"];
