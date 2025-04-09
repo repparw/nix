@@ -46,7 +46,7 @@
     gh = {
       enable = true;
       extensions = [pkgs.gh-copilot];
-      settings.git_protocol = "ssh";
+      settings.aliases = {cs = "copilot suggest";};
     };
 
     zoxide = {
