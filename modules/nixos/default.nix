@@ -20,10 +20,8 @@
     efi.canTouchEfiVariables = true;
   };
 
-  # Set your time zone.
   time.timeZone = "America/Argentina/Buenos_Aires";
 
-  # Select internationalisation properties.
   i18n = {
     defaultLocale = "en_US.UTF-8";
 
@@ -42,14 +40,12 @@
 
   # services.printing.enable = true; # CUPS printing
 
-  # Nerdfonts
   fonts = {
     packages = with pkgs; [
       fira-code
       nerd-fonts.fira-code
     ];
 
-    # Set default font
     fontconfig.defaultFonts = {
       "sansSerif" = ["FiraCode Nerd Font"];
       "serif" = ["FiraCode Nerd Font"];
@@ -57,8 +53,6 @@
     };
   };
 
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
   environment.pathsToLink = ["/share/zsh"];
 
   environment.systemPackages = with pkgs; [
@@ -103,8 +97,6 @@
     pipewire = {
       enable = true;
       pulse.enable = true;
-      # If you want to use JACK applications, uncomment this
-      #jack.enable = true;
 
       wireplumber = {
         extraConfig = {
