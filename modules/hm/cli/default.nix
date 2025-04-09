@@ -68,9 +68,31 @@
           email = "ubritos@gmail.com";
           name = "repparw";
         };
-        rerere.enabled = true;
+        column.ui = "auto";
+        branch.sort = "-commiterdate";
+        tag.sort = "version:refname";
+        init.defaultBranch = "main";
+        diff = {
+          algorithm = "histogram";
+          colorMoved = "plain";
+          mnemonicPrefix = true;
+          renames = true;
+        };
+        push = {
+          default = simple;
+          autoSetupRemote = true;
+        };
+        rerere = {
+          enabled = true;
+          autoupdate = true;
+        };
         pull.rebase = true;
         maintenance.repo = "/home/repparw/nix";
+        rebase = {
+          autoSquash = true;
+          autoStash = true;
+          updateRefs = true;
+        };
       };
       # TODO merge diff3, mergetool, more git config options, aliases?
     };
