@@ -9,7 +9,7 @@
       };
     }
     {
-      action = "<cmd>Trouble previous<CR>";
+      action = "<cmd>Trouble diagnostics previous<CR>";
       key = "[t";
       mode = "n";
       options = {
@@ -17,7 +17,7 @@
       };
     }
     {
-      action = "<cmd>Trouble next<CR>";
+      action = "<cmd>Trouble diagnostics next<CR>";
       key = "]t";
       mode = "n";
       options = {
