@@ -132,7 +132,6 @@
       ffmpeg
       imagemagick
       less
-      base16-schemes
       yt-dlp
       fzf
       ytfzf
@@ -142,11 +141,9 @@
       # CLI tools
       playerctl
       rclone
-      ueberzugpp
       libqalculate
 
       fastfetch
-      axel
       tlrc # tldr
       nq # Command queue
 
