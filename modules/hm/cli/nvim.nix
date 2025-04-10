@@ -19,6 +19,6 @@
 
     typescript-language-server
 
-    inputs.nixvim-config.packages.${system}.default
+    nvim
   ];
 }
