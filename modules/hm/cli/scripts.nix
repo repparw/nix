@@ -68,7 +68,6 @@
         nh
       ];
       text = ''
-        nh os switch -u
       '';
     })
   ];
