@@ -187,7 +187,6 @@
             "$mod, RETURN, exec, $terminal"
             "$mod, W, killactive,"
             "$mod, M, exec, hdrop $spotify"
-            "$mod SHIFT, M, exec, ytfzf -D"
             "$mod, E, exec, $fileManager"
             "$mod, F, fullscreen"
             "$mod ALT, F, togglefloating"

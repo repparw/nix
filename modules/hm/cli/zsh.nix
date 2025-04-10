@@ -122,10 +122,6 @@
 
       #yt
       yd = "yt-dlp";
-      y = "ytf";
-      ytf = "ytfzf";
-      ya = "ytf -a";
-      yh = "ytf -H";
     };
     shellGlobalAliases = {
       G = " | rg";
