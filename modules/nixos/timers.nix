@@ -16,23 +16,25 @@ in {
       remotes = {
 drive = { config = {
 type = "drive";
-secrets = { };
-
+scope = "drive";
 client_id = 333265659347-c03ga8iml374j79nod16pb79kkfkel7f.apps.googleusercontent.com
+};
+secrets = { 
 client_secret = config.age.secrets.rclone-drive.path;
-scope = drive
-team_drive = 
+};
 
-[crypt]
+crypt = {config ={
 type = crypt
 remote = drive:crypt
-password = 
-
-[dropbox]
-type = dropbox
-
+      };
+	  secrets = {
+password = config.age.secrets.rclone-crypt.path;
+      };
+      };
+dropbox = {config.type = "dropbox";
 
       };
+
     };
 
     systemd = {
