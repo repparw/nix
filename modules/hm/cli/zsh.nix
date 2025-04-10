@@ -111,7 +111,6 @@
       sys = "systemctl";
       syslist = "systemctl list-unit-files";
 
-      #yt
       yd = "yt-dlp";
     };
     shellGlobalAliases = {
