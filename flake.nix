@@ -2,7 +2,7 @@
   description = "repparw's flake";
   inputs = {
     nixvim.url = "github:nix-community/nixvim";
-    agenix.url = "github:ryantm/agenix";
+    agenix.url = "github:yaxitech/ragenix";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-24.11";
     home-manager.url = "github:nix-community/home-manager";
