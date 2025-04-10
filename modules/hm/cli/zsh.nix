@@ -102,8 +102,8 @@ in {
         df = "${lib.getExe pkgs.duf}";
         du = "${lib.getExe pkgs.dust}";
 
-        rpi = "${lib.getExe pkgs.mosh} -P 60001 --ssh 'ssh -p 2222' rpi";
-        pc = "${lib.getExe pkgs.mosh} -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
+        rpi = "${lib.getExe' pkgs.mosh "mosh"} -P 60001 --ssh 'ssh -p 2222' rpi";
+        pc = "${lib.getExe' pkgs.mosh "mosh"} -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
 
         nq = "NQDIR=/tmp/nq ${lib.getExe' pkgs.nq "nq"}";
         tq = "NQDIR=/tmp/nq ${lib.getExe' pkgs.nq "tq"}";
