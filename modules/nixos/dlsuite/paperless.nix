@@ -24,7 +24,6 @@
       "${cfg.dataDir}/paper/data:/usr/src/paperless/data:rw,Z"
       "${cfg.dataDir}/paper/export:/usr/src/paperless/export:rw,Z"
       "${cfg.dataDir}/paper/media:/usr/src/paperless/media:rw,Z"
-      "/home/repparw/Documents/consume:/usr/src/paperless/consume:rw,Z"
     ];
     dependsOn = [
       "broker"
