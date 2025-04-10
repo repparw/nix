@@ -23,7 +23,9 @@
   nix = {
     nixPath = ["nixpkgs=${inputs.nixpkgs}"];
 
-    #extraOptions = '' !include ${config.age.secrets.accessTokens.path} '';
+    extraOptions = ''
+      !include ${config.age.secrets.accessTokens.path}
+    '';
 
     settings = {
       trusted-users = [
