@@ -48,65 +48,67 @@ in {
       ## Leave this here because omz overwrites this after .zprofile
       zstyle ':completion:*' list-colors "di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
     '';
-    shellAliases = {
-      sudo = "sudo ";
+    shellAliases =
+      {
+        sudo = "sudo ";
 
-      # Asks your passwords, becomes root, opens a interactive non login shell
-      su = "sudo -s";
+        # Asks your passwords, becomes root, opens a interactive non login shell
+        su = "sudo -s";
 
-      v = "$EDITOR";
+        v = "$EDITOR";
 
-      obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; 1";
+        obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; 1";
 
-      # Nix
-      vn = "$EDITOR ~/nix/flake.nix";
+        # Nix
+        vn = "$EDITOR ~/nix/flake.nix";
 
-      nrs = "nh os switch";
-      nup = "nh os switch -u";
-      nupt = "nh os boot -u";
+        nrs = "nh os switch";
+        nup = "nh os switch -u";
+        nupt = "nh os boot -u";
 
-      x = "xdg-open";
-      trash = "mv --force -t ~/.local/share/Trash ";
+        x = "xdg-open";
+        trash = "mv --force -t ~/.local/share/Trash ";
 
-      ln = "ln -i";
-      mv = "mv -i";
-      rm = "rm -i";
+        ln = "ln -i";
+        mv = "mv -i";
+        rm = "rm -i";
 
-      chown = "chown --preserve-root";
-      chmod = "chmod --preserve-root";
-      chgrp = "chgrp --preserve-root";
+        chown = "chown --preserve-root";
+        chmod = "chmod --preserve-root";
+        chgrp = "chgrp --preserve-root";
 
-      mnt = "mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort";
+        mnt = "mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort";
 
-      ping = "ping -c 5";
+        ping = "ping -c 5";
 
-      meminfo = "free -h -l -t";
-      cpuinfo = "lscpu";
+        meminfo = "free -h -l -t";
+        cpuinfo = "lscpu";
 
-      mkdir = "mkdir -pv";
+        mkdir = "mkdir -pv";
 
-      btctl = "bluetoothctl";
+        btctl = "bluetoothctl";
 
-      sys = "systemctl";
-      syslist = "systemctl list-unit-files";
+        sys = "systemctl";
+        syslist = "systemctl list-unit-files";
 
-      yd = "yt-dlp";
+        yd = "yt-dlp";
+      }
+      // (with pkgs; {
+        feh = "${lib.getExe feh} -x -Z -. --image-bg black";
 
-      feh = "${lib.getExe feh} -x -Z -. --image-bg black";
+        top = "${lib.getExe pkgs.bottom} --theme gruvbox";
+        diff = "${lib.getExe pkgs.colordiff}";
+        cat = "${lib.getExe pkgs.bat}";
+        df = "${lib.getExe pkgs.duf}";
+        du = "${lib.getExe pkgs.dust}";
 
-      top = "${lib.getExe pkgs.bottom} --theme gruvbox";
-      diff = "${lib.getExe pkgs.colordiff}";
-      cat = "${lib.getExe pkgs.bat}";
-      df = "${lib.getExe pkgs.duf}";
-      du = "${lib.getExe pkgs.dust}";
+        rpi = "${lib.getExe pkgs.mosh} -P 60001 --ssh 'ssh -p 2222' rpi";
+        pc = "${lib.getExe pkgs.mosh} -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
 
-      rpi = "${lib.getExe pkgs.mosh} -P 60001 --ssh 'ssh -p 2222' rpi";
-      pc = "${lib.getExe pkgs.mosh} -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
-
-      nq = "NQDIR=/tmp/nq ${lib.getExe' pkgs.nq "nq"}";
-      tq = "NQDIR=/tmp/nq ${lib.getExe' pkgs.nq "tq"}";
-      fq = "NQDIR=/tmp/nq ${lib.getExe' pkgs.nq "fq"}";
-    };
+        nq = "NQDIR=/tmp/nq ${lib.getExe' pkgs.nq "nq"}";
+        tq = "NQDIR=/tmp/nq ${lib.getExe' pkgs.nq "tq"}";
+        fq = "NQDIR=/tmp/nq ${lib.getExe' pkgs.nq "fq"}";
+      });
 
     shellGlobalAliases = {
       G = " | rg";
