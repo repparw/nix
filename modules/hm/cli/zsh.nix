@@ -61,12 +61,6 @@ in {
       {
         sudo = "sudo ";
 
-        f = "fzf";
-
-        nq = "NQDIR=/tmp/nq nq";
-        tq = "NQDIR=/tmp/nq tq";
-        fq = "NQDIR=/tmp/nq fq";
-
         # Asks your passwords, becomes root, opens a interactive non login shell
         su = "sudo -s";
 
@@ -94,9 +88,6 @@ in {
 
         mnt = "mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort";
 
-        # replace default utils, add checks if installed
-        # add eza ls
-
         ping = "ping -c 5";
 
         meminfo = "free -h -l -t";
@@ -119,9 +110,15 @@ in {
       // mkCondAlias "dust" "du" "dust"
       // mkCondAlias "kitty" "ssh" "kitten ssh"
       // mkCondAliases "mosh" {
-        rpi = " mosh -P 60001 --ssh 'ssh -p 2222' rpi";
-        pc = " mosh -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
+        rpi = "mosh -P 60001 --ssh 'ssh -p 2222' rpi";
+        pc = "mosh -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
+      }
+      // mkCondAliases "nq" {
+        nq = "NQDIR=/tmp/nq nq";
+        tq = "NQDIR=/tmp/nq tq";
+        fq = "NQDIR=/tmp/nq fq";
       };
+
     shellGlobalAliases = {
       G = " | rg";
       L = " | less";
