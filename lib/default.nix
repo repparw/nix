@@ -30,7 +30,6 @@
             ../modules/hm
             ../home/common
             ../home/${hostname}
-            inputs.nixvim.homeManagerModules.nixvim
           ];
         };
       };
