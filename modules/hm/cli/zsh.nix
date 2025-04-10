@@ -4,18 +4,18 @@
   lib,
   ...
 }: let
-  hasPackage = pkgName: 
-    lib.lists.any (p: p.name == pkgName || p.pname == pkgName) 
-      (config.home.packages or []);
+  hasPackage = pkgName:
+    lib.lists.any (p: p.name == pkgName || p.pname == pkgName)
+    (config.home.packages or []);
 
   mkCondAlias = pkgName: aliasName: command:
-    lib.mkIf (hasPackage pkgName) { 
-      "${aliasName}" = command; 
+    lib.mkIf (hasPackage pkgName) {
+      "${aliasName}" = command;
     };
 
   mkCondAliases = pkgName: aliases:
     lib.mkIf (hasPackage pkgName) aliases;
-	in {
+in {
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
@@ -70,16 +70,12 @@
         # Asks your passwords, becomes root, opens a interactive non login shell
         su = "sudo -s";
 
-        # Make feh borderless and default to black image background color
-        feh = "feh -x -Z -. --image-bg black";
-
-        vim = "nvim";
-        v = "nvim";
+        v = "$EDITOR";
 
         obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; 1";
 
         # Nix
-        vn = "v ~/nix/flake.nix";
+        vn = "$EDITOR ~/nix/flake.nix";
 
         nrs = "nh os switch";
         nup = "nh os switch -u";
@@ -100,11 +96,6 @@
 
         # replace default utils, add checks if installed
         # add eza ls
-        df = "duf";
-        du = "dust";
-        cat = "bat";
-        diff = "colordiff";
-        top = "btm --theme gruvbox";
 
         ping = "ping -c 5";
 
@@ -120,10 +111,13 @@
 
         yd = "yt-dlp";
       }
-      // mkCondAliases "df" {
-      // mkCondAliases "kitty" {
-        ssh = "kitten ssh";
-      }
+      // mkCondAlias "feh" "feh" "feh -x -Z -. --image-bg black"
+      // mkCondAlias "bottom" "top" "btm --theme gruvbox"
+      // mkCondAlias "colordiff" "diff" "colordiff"
+      // mkCondAlias "bat" "cat" "bat"
+      // mkCondAlias "duf" "df" "duf"
+      // mkCondAlias "dust" "du" "dust"
+      // mkCondAlias "kitty" "ssh" "kitten ssh"
       // mkCondAliases "mosh" {
         rpi = " mosh -P 60001 --ssh 'ssh -p 2222' rpi";
         pc = " mosh -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
