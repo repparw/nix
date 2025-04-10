@@ -3,7 +3,7 @@
     owner = "yazi-rs";
     repo = "plugins";
     rev = "a1738e8";
-    hash = "";
+    hash = "sha256-eiLkIWviGzG9R0XP1Cik3Bg0s6lgk3nibN6bZvo8e9o=";
   };
 in {
   programs = {
