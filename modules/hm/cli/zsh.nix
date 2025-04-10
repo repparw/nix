@@ -2,7 +2,15 @@
   pkgs,
   config,
   ...
-}: {
+}: let
+  mkCondAliases = pkgName: aliases: let
+    # Check if the specified package is in home.packages
+    hasPkg =
+      lib.lists.any (p: p.name == pkgName || p.pname == pkgName)
+      (config.home.packages or []);
+  in
+    lib.mkIf hasPkg aliases;
+in {
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
@@ -46,8 +54,10 @@
     '';
     shellAliases = {
       sudo = "sudo ";
-      # check if kitty
+
+	  mkCondAliases "kitty" {
       ssh = "kitten ssh";
+	  };
 
       rpi = " mosh -P 60001 --ssh 'ssh -p 2222' rpi";
 
