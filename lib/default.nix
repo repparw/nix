@@ -16,6 +16,7 @@
     ../systems/${hostname}
     inputs.nix-index-database.nixosModules.nix-index
     inputs.agenix.nixosModules.default
+    ../secrets/nixos.nix
     inputs.home-manager.nixosModules.home-manager
     {
       home-manager = {
