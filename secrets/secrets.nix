@@ -12,4 +12,5 @@ in {
 
   "rclone-crypt.age".publicKeys = users;
   "rclone-drive.age".publicKeys = users;
+  "rclone-dropbox.age".publicKeys = users;
 }
