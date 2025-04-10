@@ -27,11 +27,6 @@
     initExtra = ''
       [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
 
-      # Add SSH key if on beta machine
-      if [[ $(hostname) == "beta" ]]; then
-        ssh-add ~/.ssh/id_t440 2>/dev/null
-      fi
-
       # zsh-autosuggestions accept to ctrl-y
       zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
 
@@ -85,19 +80,16 @@
 
       x = "xdg-open";
       trash = "mv --force -t ~/.local/share/Trash ";
+
       ln = "ln -i";
       mv = "mv -i";
       rm = "rm -i";
 
       chown = "chown --preserve-root";
-
       chmod = "chmod --preserve-root";
-
       chgrp = "chgrp --preserve-root";
 
       mnt = "mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort";
-
-      path = "echo -e \${PATH//:/\\n}";
 
       # replace default utils, add checks if installed
       # add eza ls
