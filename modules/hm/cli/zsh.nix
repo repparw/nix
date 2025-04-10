@@ -29,7 +29,7 @@ in {
     initExtra = ''
       [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
 
-
+      if command -v kitty &> /dev/null; then alias kt="kitty"
 
       # zsh-autosuggestions accept to ctrl-y
       zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
