@@ -1,8 +1,13 @@
 {
   lib,
   config,
+  inputs,
   ...
 }: {
+  imports = [
+    inputs.agenix.nixosModules.default
+  ];
+
   age.secrets =
     {
       accessTokens = {

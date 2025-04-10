@@ -13,7 +13,6 @@
     ./hyprland.nix
     ./obs.nix
     ./timers.nix
-    ../../secrets/nixos.nix
   ];
 
   boot.loader = {
