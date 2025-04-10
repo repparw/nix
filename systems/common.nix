@@ -49,7 +49,9 @@
 
   age.identityPaths = ["/home/repparw/.ssh/id_ed25519"];
 
-  nix.extraOptions = ''!include ${config.age.secrets.accessTokens.path}'';
+  nix.extraOptions = ''
+    !include ${config.age.secrets.accessTokens.path}
+  '';
 
   nix.settings = {
     trusted-users = [
