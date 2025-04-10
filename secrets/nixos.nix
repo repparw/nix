@@ -16,7 +16,7 @@
           owner = "repparw";
         };
       }
-      // (lib.mkIf config.modules.timers.enable {
+      // (lib.optionalAttrs config.modules.timers.enable {
         rcloneDrive = {
           file = ./rclone-drive.age;
           owner = "repparw";
