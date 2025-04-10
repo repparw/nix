@@ -1,6 +1,5 @@
 {
-  config,
-  lib,
+  osConfig,
   inputs,
   pkgs,
   ...
@@ -43,7 +42,7 @@
   nix.nixPath = ["nixpkgs=${inputs.nixpkgs}"];
 
   nix.extraOptions = ''
-    !include ${config.age.secrets.accessTokens.path}
+    !include ${osConfig.age.secrets.accessTokens.path}
   '';
 
   nix.settings = {
