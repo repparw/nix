@@ -1,16 +1,21 @@
 {
   pkgs,
   config,
+  lib,
   ...
 }: let
-  mkCondAliases = pkgName: aliases: let
-    # Check if the specified package is in home.packages
-    hasPkg =
-      lib.lists.any (p: p.name == pkgName || p.pname == pkgName)
+  hasPackage = pkgName: 
+    lib.lists.any (p: p.name == pkgName || p.pname == pkgName) 
       (config.home.packages or []);
-  in
-    lib.mkIf hasPkg aliases;
-in {
+
+  mkCondAlias = pkgName: aliasName: command:
+    lib.mkIf (hasPackage pkgName) { 
+      "${aliasName}" = command; 
+    };
+
+  mkCondAliases = pkgName: aliases:
+    lib.mkIf (hasPackage pkgName) aliases;
+	in {
   programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
@@ -52,77 +57,77 @@ in {
       ## Leave this here because omz overwrites this after .zprofile
       zstyle ':completion:*' list-colors "di=1;36:ln=35:so=32:pi=33:ex=31:bd=34;46:cd=34;43:su=30;41:sg=30;46:tw=30;42:ow=30;43"
     '';
-    shellAliases = {
-      sudo = "sudo ";
+    shellAliases =
+      {
+        sudo = "sudo ";
 
-	  mkCondAliases "kitty" {
-      ssh = "kitten ssh";
-	  };
+        f = "fzf";
 
-      rpi = " mosh -P 60001 --ssh 'ssh -p 2222' rpi";
+        nq = "NQDIR=/tmp/nq nq";
+        tq = "NQDIR=/tmp/nq tq";
+        fq = "NQDIR=/tmp/nq fq";
 
-      # check if not alpha?
-      pc = " mosh -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
+        # Asks your passwords, becomes root, opens a interactive non login shell
+        su = "sudo -s";
 
-      f = "fzf";
+        # Make feh borderless and default to black image background color
+        feh = "feh -x -Z -. --image-bg black";
 
-      nq = "NQDIR=/tmp/nq nq";
-      tq = "NQDIR=/tmp/nq tq";
-      fq = "NQDIR=/tmp/nq fq";
+        vim = "nvim";
+        v = "nvim";
 
-      # Asks your passwords, becomes root, opens a interactive non login shell
-      su = "sudo -s";
+        obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; 1";
 
-      # Make feh borderless and default to black image background color
-      feh = "feh -x -Z -. --image-bg black";
+        # Nix
+        vn = "v ~/nix/flake.nix";
 
-      vim = "nvim";
-      v = "nvim";
+        nrs = "nh os switch";
+        nup = "nh os switch -u";
+        nupt = "nh os boot -u";
 
-      obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; 1";
+        x = "xdg-open";
+        trash = "mv --force -t ~/.local/share/Trash ";
 
-      # Nix
-      vn = "v ~/nix/flake.nix";
+        ln = "ln -i";
+        mv = "mv -i";
+        rm = "rm -i";
 
-      nrs = "nh os switch";
-      nup = "nh os switch -u";
-      nupt = "nh os boot -u";
+        chown = "chown --preserve-root";
+        chmod = "chmod --preserve-root";
+        chgrp = "chgrp --preserve-root";
 
-      x = "xdg-open";
-      trash = "mv --force -t ~/.local/share/Trash ";
+        mnt = "mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort";
 
-      ln = "ln -i";
-      mv = "mv -i";
-      rm = "rm -i";
+        # replace default utils, add checks if installed
+        # add eza ls
+        df = "duf";
+        du = "dust";
+        cat = "bat";
+        diff = "colordiff";
+        top = "btm --theme gruvbox";
 
-      chown = "chown --preserve-root";
-      chmod = "chmod --preserve-root";
-      chgrp = "chgrp --preserve-root";
+        ping = "ping -c 5";
 
-      mnt = "mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort";
+        meminfo = "free -h -l -t";
+        cpuinfo = "lscpu";
 
-      # replace default utils, add checks if installed
-      # add eza ls
-      df = "duf";
-      du = "dust";
-      cat = "bat";
-      diff = "colordiff";
-      top = "btm --theme gruvbox";
+        mkdir = "mkdir -pv";
 
-      ping = "ping -c 5";
+        btctl = "bluetoothctl";
 
-      meminfo = "free -h -l -t";
-      cpuinfo = "lscpu";
+        sys = "systemctl";
+        syslist = "systemctl list-unit-files";
 
-      mkdir = "mkdir -pv";
-
-      btctl = "bluetoothctl";
-
-      sys = "systemctl";
-      syslist = "systemctl list-unit-files";
-
-      yd = "yt-dlp";
-    };
+        yd = "yt-dlp";
+      }
+      // mkCondAliases "df" {
+      // mkCondAliases "kitty" {
+        ssh = "kitten ssh";
+      }
+      // mkCondAliases "mosh" {
+        rpi = " mosh -P 60001 --ssh 'ssh -p 2222' rpi";
+        pc = " mosh -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
+      };
     shellGlobalAliases = {
       G = " | rg";
       L = " | less";
