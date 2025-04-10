@@ -11,6 +11,18 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    age.secrets = {
+      rcloneDrive = {
+        file = ../../secrets/rclone-drive.age;
+      };
+      rcloneCrypt = {
+        file = ../../secrets/rclone-crypt.age;
+      };
+      rcloneDropbox = {
+        file = ../../secrets/rclone-dropbox.age;
+      };
+    };
+
     systemd = {
       services = {
         buptohdd = {
