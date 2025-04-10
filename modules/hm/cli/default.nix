@@ -5,7 +5,7 @@
 }: {
   imports = [
     ./file-manager.nix
-    ./nixvim
+    ./nvim.nix
     ./rclone.nix
     ./scripts.nix
     ./tmux.nix
