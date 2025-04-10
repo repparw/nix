@@ -40,30 +40,6 @@
 
   programs.localsend.enable = true;
 
-  nix.nixPath = ["nixpkgs=${inputs.nixpkgs}"];
-
-  nix.extraOptions = ''
-    !include ${config.age.secrets.accessTokens.path}
-  '';
-
-  nix.settings = {
-    trusted-users = [
-      "root"
-      "repparw"
-    ];
-
-    substituters = [
-      "https://nix-community.cachix.org"
-    ];
-
-    trusted-public-keys = [
-      "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-    ];
-    experimental-features = "nix-command flakes";
-  };
-
-  nix.optimise.automatic = true;
-
   nixpkgs.config.allowUnfree = true;
 
   hardware.keyboard.qmk.enable = true;
