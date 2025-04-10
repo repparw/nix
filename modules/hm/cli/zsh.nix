@@ -74,9 +74,11 @@
       vim = "nvim";
       v = "nvim";
 
-      vo = "cd ~/Documents/obsidian/ && nvim 02-Areas/Facu/Finales/TALLER.md; 1";
+      obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; 1";
 
       # Nix
+      vn = "v ~/nix/flake.nix";
+
       nrs = "nh os switch";
       nup = "nh os switch -u";
       nupt = "nh os boot -u";
@@ -85,7 +87,6 @@
       trash = "mv --force -t ~/.local/share/Trash ";
       ln = "ln -i";
       mv = "mv -i";
-
       rm = "rm -i";
 
       chown = "chown --preserve-root";
