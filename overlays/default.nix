@@ -12,6 +12,7 @@
         sponsorblock-minimal
       ];
     };
+    neovim = inputs.nixvim-config.packages.${prev.system}.default;
   };
 
   # Keep the stable overlay as is
