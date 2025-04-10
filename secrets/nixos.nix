@@ -6,21 +6,21 @@
   age.secrets =
     {
       accessTokens = {
-        file = ../secrets/access-tokens.age;
+        file = ./access-tokens.age;
         owner = "repparw";
       };
     }
     // (lib.mkIf config.modules.timers.enable {
       rcloneDrive = {
-        file = ../../secrets/rclone-drive.age;
+        file = ./rclone-drive.age;
         owner = "repparw";
       };
       rcloneCrypt = {
-        file = ../../secrets/rclone-crypt.age;
+        file = ./rclone-crypt.age;
         owner = "repparw";
       };
       rcloneDropbox = {
-        file = ../../secrets/rclone-dropbox.age;
+        file = ./rclone-dropbox.age;
         owner = "repparw";
       };
     });
