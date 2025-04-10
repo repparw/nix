@@ -15,11 +15,11 @@ in {
       enable = true;
       remotes = {
 drive = { config = {
-
+type = "drive";
 secrets = { };
-type = drive
+
 client_id = 333265659347-c03ga8iml374j79nod16pb79kkfkel7f.apps.googleusercontent.com
-client_secret = config.age.
+client_secret = config.age.secrets.rclone-drive.path;
 scope = drive
 team_drive = 
 
