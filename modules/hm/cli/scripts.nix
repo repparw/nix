@@ -65,11 +65,10 @@
     (writeShellApplication {
       name = "update";
       runtimeInputs = [
-        kitty
         nh
       ];
       text = ''
-        kitty --hold zsh -c " nh os switch -u"
+        nh os switch -u
       '';
     })
   ];
