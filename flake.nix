@@ -1,7 +1,7 @@
 {
   description = "repparw's flake";
   inputs = {
-    nixvim.url = "github:nix-community/nixvim";
+    nixvim-config.url = "github:repparw/nixvim-config";
     agenix.url = "github:ryantm/agenix";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-24.11";
