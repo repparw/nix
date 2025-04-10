@@ -5,7 +5,7 @@
   ...
 }: let
   hasPackage = pkgName:
-    lib.lists.any (p: p.name == pkgName || p.pname == pkgName)
+    lib.lists.any (p: p.name == pkgName || p == pkgName)
     (config.home.packages or []);
 
   mkCondAlias = pkgName: aliasName: command:
