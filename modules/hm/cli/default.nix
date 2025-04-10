@@ -144,20 +144,11 @@
 
       fastfetch
       tlrc # tldr
-      nq # Command queue
 
       pdfgrep
       catdoc # provides catppt and xls2csv
 
-      tig
-
       # Modern replacements of basic tools
-      bottom
-      bat
-      colordiff
-      duf
-      du-dust
-      ripgrep
       tree
 
       manix
