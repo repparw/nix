@@ -46,13 +46,14 @@
   age.secrets = {
     accessTokens = {
       file = ../secrets/access-tokens.age;
+      owner = "repparw";
     };
   };
 
   age.identityPaths = ["/home/repparw/.ssh/id_ed25519"];
 
   nix.extraOptions = ''
-    !include ${config.age.secrets.accessTokens.path}
+    include ${config.age.secrets.accessTokens.path}
   '';
 
   nix.settings = {
