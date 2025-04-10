@@ -4,18 +4,6 @@
   ...
 }: {
   config = lib.mkIf osConfig.modules.timers.enable {
-    age.secrets = {
-      rcloneDrive = {
-        file = ../secrets/rclone-drive.age;
-      };
-      rcloneCrypt = {
-        file = ../secrets/rclone-crypt.age;
-      };
-      rcloneDropbox = {
-        file = ../secrets/rclone-dropbox.age;
-      };
-    };
-
     programs.rclone = {
       enable = true;
       remotes = {
