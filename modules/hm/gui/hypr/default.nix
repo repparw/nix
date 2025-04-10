@@ -195,7 +195,7 @@
             "$mod SHIFT, SPACE, exec, $browser2"
             "$mod, T, exec, $top"
             "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
-            "$mod, U, exec, $terminal --hold zsh -c nup"
+            "$mod, U, exec, $terminal --hold zsh -ic nup"
             "$mod, V, exec, $kiosk jellyfin.repparw.me"
             "$mod, Z, exec, $prefix mpvclip"
             "$mod, N, exec, $notes"
