@@ -44,13 +44,6 @@
     })
 
     (writeShellApplication {
-      name = "obsinvim";
-      text = ''
-        cd /home/repparw/Documents/obsidian; $EDITOR .
-      '';
-    })
-
-    (writeShellApplication {
       name = "obs_remux2wsp";
       runtimeInputs = [ffmpeg];
       text = ''
