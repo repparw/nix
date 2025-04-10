@@ -85,7 +85,6 @@
     inputs.agenix.packages."${system}".default
     vim
     zsh
-    wget
   ];
 
   programs = {
