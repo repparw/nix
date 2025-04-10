@@ -40,30 +40,30 @@ in {
           };
         };
       };
-    };
 
-    timers = {
-      buptohdd = {
-        wantedBy = ["timers.target"];
-        timerConfig = {
-          OnCalendar = "03:00:00";
-          Persistent = true;
+      timers = {
+        buptohdd = {
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnCalendar = "03:00:00";
+            Persistent = true;
+          };
         };
-      };
 
-      rclone-sync = {
-        wantedBy = ["timers.target"];
-        timerConfig = {
-          OnCalendar = "*-*-7,14,21,28 00:00:00";
-          Persistent = true;
+        rclone-sync = {
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnCalendar = "*-*-7,14,21,28 00:00:00";
+            Persistent = true;
+          };
         };
-      };
 
-      docker-cleanup = {
-        wantedBy = ["timers.target"];
-        timerConfig = {
-          OnCalendar = "*-*-1,15 12:00:00";
-          Persistent = true;
+        docker-cleanup = {
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnCalendar = "*-*-1,15 12:00:00";
+            Persistent = true;
+          };
         };
       };
     };

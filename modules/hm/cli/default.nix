@@ -6,6 +6,7 @@
   imports = [
     ./file-manager.nix
     ./nixvim
+    ./rclone.nix
     ./scripts.nix
     ./tmux.nix
     ./zsh.nix
