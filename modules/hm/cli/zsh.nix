@@ -75,8 +75,6 @@
       v = "nvim";
 
       vo = "cd ~/Documents/obsidian/ && nvim 02-Areas/Facu/Finales/TALLER.md; 1";
-      # Configs
-      vn = "v ~/.config/nvim/init.lua";
 
       # Nix
       nrs = "nh os switch";
