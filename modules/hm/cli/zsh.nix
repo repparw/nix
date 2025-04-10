@@ -4,17 +4,6 @@
   lib,
   ...
 }: let
-  hasPackage = pkgName:
-    lib.lists.any (p: p.name == pkgName || p.pname == pkgName || p == pkgName)
-    (config.home.packages);
-
-  mkCondAlias = pkgName: aliasName: command:
-    lib.mkIf (hasPackage pkgName) {
-      "${aliasName}" = command;
-    };
-
-  mkCondAliases = pkgName: aliases:
-    lib.mkIf (hasPackage pkgName) aliases;
 in {
   programs.zsh = {
     enable = true;
@@ -39,6 +28,8 @@ in {
     '';
     initExtra = ''
       [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
+
+
 
       # zsh-autosuggestions accept to ctrl-y
       zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
@@ -101,14 +92,15 @@ in {
         syslist = "systemctl list-unit-files";
 
         yd = "yt-dlp";
+
+        feh = "${lib.getExe feh} -x -Z -. --image-bg black";
+
+        top = "${lib.getExe pkgs.bottom} --theme gruvbox";
+        diff = "${lib.getExe pkgs.colordiff}";
+        cat = "${lib.getExe pkgs.bat}";
+        df = "${lib.getExe pkgs.duf}";
+        du = "${lib.getExe pkgs.dust}";
       }
-      // mkCondAlias "feh" "feh" "feh -x -Z -. --image-bg black"
-      // mkCondAlias "bottom" "top" "btm --theme gruvbox"
-      // mkCondAlias "colordiff" "diff" "colordiff"
-      // mkCondAlias "bat" "cat" "bat"
-      // mkCondAlias "duf" "df" "duf"
-      // mkCondAlias "dust" "du" "dust"
-      // mkCondAlias "kitty" "ssh" "kitten ssh"
       // mkCondAliases "mosh" {
         rpi = "mosh -P 60001 --ssh 'ssh -p 2222' rpi";
         pc = "mosh -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
