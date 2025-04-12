@@ -62,7 +62,7 @@
 
         # Terminal
         "$terminal" = "kitty";
-        "$top" = "$terminal btm --theme gruvbox";
+        "$top" = "$terminal zsh -ic top";
         "$fileManager" = "hdrop $terminal --class filemanager zsh -ic yazi";
         "$spotify" = "$terminal --class spotify spotify_player";
         "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim zsh -ic obsinvim'";
