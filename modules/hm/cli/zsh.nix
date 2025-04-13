@@ -60,7 +60,7 @@ in {
         obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; 1";
 
         # Nix
-        vn = "$EDITOR ~/nix/flake.nix";
+        vn = "cd ~/nix; $EDITOR flake.nix";
 
         nrs = "nh os switch";
         nup = "nh os switch -u";
