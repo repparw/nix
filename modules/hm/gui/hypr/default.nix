@@ -54,7 +54,7 @@
         #"$emojimenu" = "killall tofi || BEMOJI_PICKER_CMD=${lib.getExe pkgs.tofi} bemoji -n";
         "$cmdmenu" = "killall tofi-run || tofi-run | xargs hyprctl dispatch exec --";
 
-        "$showlayout" = "hdrop feh -g 774x275 /home/repparw/src/kbd/docs/layout.png";
+        "$showlayout" = "hdrop feh /home/repparw/src/kbd/docs/layout.png";
 
         "$lockscreen" = "loginctl lock-session";
 
