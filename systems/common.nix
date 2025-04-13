@@ -1,9 +1,4 @@
-{
-  config,
-  inputs,
-  pkgs,
-  ...
-}: {
+{pkgs, ...}: {
   networking.networkmanager.enable = true;
 
   services.gvfs.enable = true;
