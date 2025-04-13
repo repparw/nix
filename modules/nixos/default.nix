@@ -5,15 +5,19 @@
   config,
   ...
 }: {
-  imports = [
-    ./autoUpgrade.nix
-    ./dlsuite
-    ./vm.nix
-    ./gaming.nix
-    ./hyprland.nix
-    ./obs.nix
-    ./timers.nix
-  ];
+  imports = let
+    # Get all .nix files and directories in the current directory
+    importable = name: type:
+      (type == "regular" && lib.hasSuffix ".nix" name && name != "default.nix")
+      || (type == "directory");
+
+    # Convert path to import
+    pathToImport = name: type: ./. + "/${name}";
+
+    # Get the content of the current directory
+    contents = lib.filterAttrs importable (builtins.readDir ./.);
+  in
+    lib.mapAttrsToList pathToImport contents;
 
   users.users.repparw = {
     isNormalUser = true;
