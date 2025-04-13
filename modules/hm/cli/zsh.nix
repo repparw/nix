@@ -111,7 +111,7 @@ in {
       });
 
     shellGlobalAliases = {
-      G = " | rg";
+      G = " | ${lib.getExe pkgs.ripgrep}";
       L = " | less";
       W = " | wc -l";
       C = " | tr -d '\n' | wl-copy";
