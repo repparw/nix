@@ -135,7 +135,7 @@
 
         input = {
           kb_layout = "us";
-          #kb_variant = "altgr-intl";
+          kb_variant = "altgr-intl";
           repeat_rate = 50; # def 25
           repeat_delay = 300; # def 600
           follow_mouse = 1;
