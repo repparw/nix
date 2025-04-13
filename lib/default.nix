@@ -1,29 +1,17 @@
 {inputs, ...}: rec {
-  # Import modules from directory - assumes subdirs have default.nix
-  importAll = dir: {lib, ...}: {
-    imports =
-      (lib.filter
-        (path:
-          lib.strings.hasSuffix ".nix" (toString path)
-          && baseNameOf (toString path) != "default.nix")
-        (lib.filesystem.listFilesRecursive dir))
-      ++ (map
-        (name: dir + "/${name}")
-        (lib.attrNames (lib.filterAttrs
-          (name: type: type == "directory")
-          (builtins.readDir dir))));
-  };
-
   # Base modules configuration for all systems
   mkModules = hostname: [
+    # Adds the NUR overlay
     inputs.nur.modules.nixos.default
+    # Apply overlays
     {
       nixpkgs.overlays = builtins.attrValues (import ../overlays {
         inherit inputs;
         outputs = null;
       });
     }
-    (importAll ../modules/nixos)
+    # NUR modules to import
+    ../modules/nixos
     ../systems/${hostname}
     inputs.nix-index-database.nixosModules.nix-index
     ../secrets/nixos.nix
@@ -38,7 +26,7 @@
         };
         users.repparw = {
           imports = [
-            (importAll ../modules/hm)
+            ../modules/hm
             ../home/${hostname}.nix
           ];
         };
