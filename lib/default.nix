@@ -27,7 +27,7 @@
         users.repparw = {
           imports = [
             ../modules/hm
-            ../home/${hostname}
+            ../home/${hostname}.nix
           ];
         };
       };
