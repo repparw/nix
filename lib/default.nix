@@ -12,7 +12,6 @@
     }
     # NUR modules to import
     ../modules/nixos
-    ../systems/common.nix
     ../systems/${hostname}
     inputs.nix-index-database.nixosModules.nix-index
     ../secrets/nixos.nix
@@ -28,7 +27,6 @@
         users.repparw = {
           imports = [
             ../modules/hm
-            ../home/common
             ../home/${hostname}
           ];
         };
