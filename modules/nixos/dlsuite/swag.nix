@@ -12,7 +12,7 @@
     };
     volumes = [
       "${cfg.dataDir}/swag:/config:rw,Z"
-      "/home/repparw/git/homepage:/config/www:rw,Z"
+      "/home/repparw/src/homepage:/config/www:rw,Z"
     ];
     ports = [
       "443:443/tcp"
