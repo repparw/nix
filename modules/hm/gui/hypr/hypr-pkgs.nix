@@ -36,10 +36,10 @@
           ipc = "off";
           preload = [
             "/home/repparw/Pictures/gruvbox.jpg"
-            "/home/repparw/src/kbd/layout.svg"
+            "/home/repparw/src/kbd/docs/layout.svg"
           ];
           wallpaper = [
-            "HDMI-A-1,contain:/home/repparw/src/kbd/layout.svg"
+            "HDMI-A-1,contain:/home/repparw/src/kbd/docs/layout.svg"
             ",/home/repparw/Pictures/gruvbox.jpg"
           ];
         };
