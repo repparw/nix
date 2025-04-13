@@ -88,17 +88,32 @@
   ];
 
   programs = {
-    zsh.enable = true;
+    adb.enable = true;
+
+    localsend.enable = true;
 
     mosh.enable = true;
 
+    nh = {
+      enable = true;
+      flake = "/home/repparw/nix";
+      clean = {
+        enable = true;
+        extraArgs = "--keep 3 --keep-since 7d";
+      };
+    };
+
     ssh.startAgent = true;
+
+    zsh.enable = true;
   };
 
   services = {
     earlyoom.enable = true;
 
     blueman.enable = true;
+
+    gvfs.enable = true;
 
     keyd = {
       enable = lib.mkIf (config.networking.hostName != "alpha") true;
@@ -207,17 +222,6 @@
 
   networking.networkmanager.enable = true;
 
-  services.gvfs.enable = true;
-
-  programs.nh = {
-    enable = true;
-    flake = "/home/repparw/nix";
-    clean = {
-      enable = true;
-      extraArgs = "--keep 3 --keep-since 7d";
-    };
-  };
-
   users.users.repparw = {
     isNormalUser = true;
     openssh.authorizedKeys.keys = [
@@ -236,10 +240,6 @@
       "docker"
     ];
   };
-
-  programs.adb.enable = true;
-
-  programs.localsend.enable = true;
 
   nixpkgs.config.allowUnfree = true;
 
