@@ -11,7 +11,9 @@
       "${cfg.dataDir}/authelia/config:/config:rw,Z"
       "${cfg.dataDir}/authelia/secrets:/secrets:rw,Z"
     ];
-    requires = ["valkey"];
+    extraPodmanArgs = [
+      "--requires=valkey"
+    ];
   };
   "valkey" = {
     image = "docker.io/valkey/valkey:7.2-alpine";
