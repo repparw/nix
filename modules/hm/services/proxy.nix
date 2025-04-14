@@ -3,6 +3,7 @@
     image = "docker.io/linuxserver/swag:latest";
     environment = {
       "DNSPLUGIN" = "cloudflare";
+      "PUID" = "0";
       "TZ" = cfg.timezone;
       "SUBDOMAINS" = "wildcard";
       "URL" = cfg.domain;
