@@ -1,14 +1,20 @@
 {cfg}: {
-  "ddclient" = {
-    image = "docker.io/ddclient/ddclient:latest";
+  "nginx" = {
+    image = "docker.io/nginx/nginx:latest";
     environment = {
-      "DDCLIENT_CONFIG" = "/config/ddclient.conf";
-      "DDCLIENT_PID" = "/var/run/ddclient.pid";
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/ddclient/config:/config:rw,Z"
+      "${cfg.dataDir}/nginx:/config:rw,Z"
     ];
-    exec = "ddclient -foreground -daemon=0 -file /config/ddclient.conf";
+  };
+  "ddclient" = {
+    image = "docker.io/linuxserver/ddclient:latest";
+    environment = {
+      "TZ" = cfg.timezone;
+    };
+    volumes = [
+      "${cfg.dataDir}/ddclient:/config:rw,Z"
+    ];
   };
 }
