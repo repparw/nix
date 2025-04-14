@@ -1,5 +1,4 @@
 {
-  pkgs,
   lib,
   config,
   ...
@@ -60,7 +59,6 @@ in {
   };
 
   config = mkIf cfg.enable {
-    # Enable and configure podman service
     services.podman = {
       enable = true;
       containers = containerDefinitions;
