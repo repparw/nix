@@ -35,6 +35,14 @@ in {
         autoPrune.enable = true;
         defaultNetwork.settings.dns_enabled = true;
       };
+      containers = {
+        enable = true;
+        storage.settings = {
+          storage = {
+            driver = "btrfs";
+          };
+        };
+      };
 
       oci-containers = {
         backend = "podman";
