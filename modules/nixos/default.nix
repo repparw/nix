@@ -58,6 +58,9 @@
     settings = {
       trusted-users = [
         "root"
+      ];
+
+      allowed-users = [
         "repparw"
       ];
 
