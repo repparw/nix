@@ -42,21 +42,13 @@ in {
 
     networking.firewall = {
       interfaces."podman*".allowedTCPPorts = [8080 8443]; # Ensure your new ports are allowed for Nginx
-      extraForwardRules = {
-        enable = true;
-        rules = [
-          {
-            fromPort = 80;
-            toPort = 8080;
-            protocol = "tcp";
-          }
-          {
-            fromPort = 443;
-            toPort = 8443;
-            protocol = "tcp";
-          }
-        ];
-      };
+      extraForwardRules = ''
+        # Redirect HTTP (port 80) to Nginx on port 8080
+        tcp dport 80 counter dnat to :8080
+
+        # Redirect HTTPS (port 443) to Nginx on port 8443
+        tcp dport 443 counter dnat to :8443
+      '';
     };
   };
 }
