@@ -59,7 +59,6 @@ in {
   };
 
   config = mkIf cfg.enable {
-    osConfig.modules.podman.enable = true;
     services.podman = {
       enable = true;
       containers = containerDefinitions;
