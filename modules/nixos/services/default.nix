@@ -10,12 +10,11 @@ with lib; let
     mkMerge [
       {
         network = "net";
-        userNS = "keep-id";
       }
       attrs
       {
-        extraPodmanArgs =
-          (attrs.extraPodmanArgs or [])
+        extraOptions =
+          (attrs.extraOptions or [])
           ++ [
             "--network-alias=${name}"
           ];

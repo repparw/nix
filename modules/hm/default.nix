@@ -2,7 +2,6 @@
   imports = [
     ./cli
     ./gui
-    ./services
   ];
   modules.gui.enable = true;
 

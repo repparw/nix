@@ -23,7 +23,7 @@
       "${cfg.dataDir}/paper/export:/usr/src/paperless/export:rw"
       "${cfg.dataDir}/paper/media:/usr/src/paperless/media:rw"
     ];
-    #dependsOn = [ "broker" "paperdb" ];
+    dependsOn = ["broker" "paperdb"];
   };
   "paperdb" = {
     image = "docker.io/library/postgres:15";

@@ -20,8 +20,6 @@ in {
 
   modules.jellyfin-mpv-shim.enable = true;
 
-  modules.services.enable = true;
-
   #home.packages = with pkgs; [ ];
 
   systemd.user.services.git-autocommit = {

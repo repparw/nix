@@ -10,8 +10,8 @@
     volumes = [
       "${cfg.dataDir}/changedetection:/datastore:rw"
     ];
-    extraPodmanArgs = [
-      "--requires=sockpuppetbrowser"
+    dependsOn = [
+      "sockpuppetbrowser"
     ];
   };
   "sockpuppetbrowser" = {
