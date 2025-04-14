@@ -23,6 +23,7 @@ with lib; let
     ];
 
   containersList = [
+    (import ./arr.nix)
     (import ./authelia.nix)
     (import ./changedetection.nix)
     (import ./diun.nix)
@@ -30,7 +31,7 @@ with lib; let
     (import ./jellyfin.nix)
     (import ./ntfy.nix)
     (import ./paperless.nix)
-    (import ./arr.nix)
+    (import ./proxy.nix)
   ];
 
   containerDefinitions =
