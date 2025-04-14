@@ -10,6 +10,7 @@ with lib; let
     mkMerge [
       {
         network = "dlsuite";
+        userNS = "keep-id";
       }
       attrs
       {
