@@ -8,7 +8,7 @@
     };
     volumes = [
       "${cfg.dataDir}/data/media:/data/media:ro"
-      "${cfg.dataDir}/jellyfin:/config:rw,Z"
+      "${cfg.dataDir}/jellyfin:/config:rw"
     ];
     ports = [
       "127.0.0.1:8920:8920/tcp"
