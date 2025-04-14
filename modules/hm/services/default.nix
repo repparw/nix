@@ -9,7 +9,7 @@ with lib; let
   mkContainer = name: attrs:
     mkMerge [
       {
-        network = "dlsuite";
+        network = "podman";
         userNS = "keep-id";
       }
       attrs
