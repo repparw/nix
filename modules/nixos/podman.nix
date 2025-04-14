@@ -7,7 +7,7 @@ with lib; let
   cfg = config.modules.podman;
 in {
   options.modules.podman = {
-    enable = mkEnableOption "dlsuite container stack services";
+    enable = mkEnableOption "System-wide podman configuration";
 
     dataDir = mkOption {
       type = types.path;
