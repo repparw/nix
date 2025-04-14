@@ -4,7 +4,7 @@
   ...
 }:
 with lib; let
-  cfg = config.modules.dlsuite;
+  cfg = config.modules.services;
 
   mkContainer = name: attrs:
     mkMerge [
@@ -36,8 +36,8 @@ with lib; let
     mapAttrs (name: attrs: mkContainer name attrs)
     (foldl' (acc: def: acc // (def {inherit cfg;})) {} containersList);
 in {
-  options.modules.dlsuite = {
-    enable = mkEnableOption "dlsuite container stack services";
+  options.modules.services = {
+    enable = mkEnableOption "podman container services";
 
     dataDir = mkOption {
       type = types.path;

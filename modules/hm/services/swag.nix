@@ -20,7 +20,9 @@
     ];
     extraOptions = [
       "--add-host=host.docker.internal:host-gateway"
-      "--cap-add=NET_ADMIN"
+    ];
+    addCapabilities = [
+      "NET_ADMIN"
     ];
   };
   "ddclient" = {
