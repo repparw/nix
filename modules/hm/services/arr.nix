@@ -30,6 +30,8 @@
   "qbittorrent" = {
     image = "docker.io/hotio/qbittorrent:latest";
     environment = {
+      "PUID" = "1000";
+      "PGID" = "100";
       "TZ" = cfg.timezone;
     };
     volumes = [
