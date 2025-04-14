@@ -14,7 +14,6 @@
     ];
     ports = [
       "443:443/tcp"
-      "80:80/tcp"
     ];
     extraPodmanArgs = [
       "--add-host=host.docker.internal:host-gateway"
