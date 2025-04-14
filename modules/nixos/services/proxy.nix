@@ -14,8 +14,8 @@
       "${cfg.dataDir}/swag:/config:rw"
     ];
     ports = [
-      "8080:80/tcp"
-      "8443:443/tcp"
+      "80:80/tcp"
+      "443:443/tcp"
     ];
     capabilities = {
       NET_ADMIN = true;
