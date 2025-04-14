@@ -110,7 +110,7 @@ in {
       mkSystemService = suffix: {
         "podman-${suffix}" = {
           serviceConfig = {
-            User = cfg.user;
+            User = lib.mkForce cfg.user;
             Group = cfg.group;
           };
           after = [
