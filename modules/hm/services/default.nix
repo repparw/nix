@@ -64,7 +64,7 @@ in {
       enable = true;
       containers = containerDefinitions;
       settings = {
-        containers = {
+        storage = {
           storage = {
             driver = "btrfs";
           };
