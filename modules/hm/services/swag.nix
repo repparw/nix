@@ -21,6 +21,7 @@
     ];
     addCapabilities = [
       "NET_ADMIN"
+      "NET_BIND_SERVICE"
     ];
   };
   "ddclient" = {
