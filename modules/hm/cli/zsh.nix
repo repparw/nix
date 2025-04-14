@@ -124,7 +124,6 @@ in {
       plugins = [
         # OMZ completions requiring compinit
         "ohmyzsh/ohmyzsh path:plugins/podman/completions kind:fpath"
-        "ohmyzsh/ohmyzsh path:plugins/podman-compose/completions kind:fpath"
 
         # compinit
         "belak/zsh-utils path:completion"
@@ -132,16 +131,12 @@ in {
         # ohmyzsh plugins
         "ohmyzsh/ohmyzsh path:lib"
         "ohmyzsh/ohmyzsh path:plugins/git"
-        "ohmyzsh/ohmyzsh path:plugins/gh"
         "ohmyzsh/ohmyzsh path:plugins/rsync"
         "ohmyzsh/ohmyzsh path:plugins/podman"
-        "ohmyzsh/ohmyzsh path:plugins/podman-compose"
         "ohmyzsh/ohmyzsh path:plugins/tmux"
 
-        # powerlevel10k
         "romkatv/powerlevel10k"
 
-        # Alias tips
         "MichaelAquilina/zsh-you-should-use"
 
         # fish-like features
