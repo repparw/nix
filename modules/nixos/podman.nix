@@ -35,9 +35,6 @@ in {
         defaultNetwork.settings.dns_enabled = true;
         dockerCompat = true;
       };
-      containers = {
-        enable = true;
-      };
     };
 
     networking.firewall.trustedInterfaces = ["podman*"];
