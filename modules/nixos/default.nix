@@ -38,7 +38,15 @@
     efi.canTouchEfiVariables = true;
   };
 
-  networking.networkmanager.enable = true;
+  networking = {
+    networkmanager.enable = true;
+
+    firewall.trustedInterfaces = [
+      "enp0s25"
+      "enp42s0"
+      "wlp3s0"
+    ];
+  };
 
   nix = {
     nixPath = ["nixpkgs=${inputs.nixpkgs}"];
