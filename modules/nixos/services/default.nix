@@ -57,19 +57,37 @@ in {
       default = "repparw.me";
       description = "Base domain for the services";
     };
+
+    user = mkOption {
+      type = types.str;
+      default = "1000";
+      description = "User to run the containers";
+    };
+    group = mkOption {
+      type = types.str;
+      default = "100";
+      description = "Group to run the containers";
+    };
   };
 
   config = mkIf cfg.enable {
-    services.podman = {
-      enable = true;
-      containers = containerDefinitions;
-      settings = {
-        storage = {
+    containers = containerDefinitions;
+    virtualisation = {
+      podman = {
+        enable = true;
+        autoPrune.enable = true;
+        defaultNetwork.settings.dns_enabled = true;
+      };
+      containers = {
+        enable = true;
+        storage.settings = {
           storage = {
             driver = "btrfs";
           };
         };
       };
     };
+
+    networking.firewall.trustedInterfaces = ["podman*"];
   };
 }

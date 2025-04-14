@@ -2,6 +2,8 @@
   "bazarr" = {
     image = "docker.io/linuxserver/bazarr:latest";
     environment = {
+      "PUID" = cfg.user;
+      "PGID" = cfg.group;
       "TZ" = cfg.timezone;
     };
     volumes = [
@@ -21,6 +23,8 @@
   "prowlarr" = {
     image = "docker.io/linuxserver/prowlarr:latest";
     environment = {
+      "PUID" = cfg.user;
+      "PGID" = cfg.group;
       "TZ" = cfg.timezone;
     };
     volumes = [
@@ -45,6 +49,8 @@
   "radarr" = {
     image = "docker.io/linuxserver/radarr:latest";
     environment = {
+      "PUID" = cfg.user;
+      "PGID" = cfg.group;
       "TZ" = cfg.timezone;
     };
     volumes = [
@@ -58,6 +64,8 @@
   "sonarr" = {
     image = "docker.io/linuxserver/sonarr:latest";
     environment = {
+      "PUID" = cfg.user;
+      "PGID" = cfg.group;
       "TZ" = cfg.timezone;
     };
     volumes = [
