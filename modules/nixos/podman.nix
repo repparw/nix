@@ -41,7 +41,7 @@ in {
     boot.kernel.sysctl = {"net.ipv4.ip_unprivileged_port_start" = 80;};
 
     networking.firewall = {
-      interfaces."podman*".allowedTCPPorts = [8080 8443]; # Ensure your new ports are allowed for Nginx
+      allowedTCPPorts = [8080 8443]; # Ensure your new ports are allowed for Nginx
       extraForwardRules = ''
         # Redirect HTTP (port 80) to Nginx on port 8080
         tcp dport 80 counter dnat to :8080
