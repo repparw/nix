@@ -1,11 +1,20 @@
 {cfg}: {
-  "nginx" = {
-    image = "docker.io/nginx/nginx:latest";
+  "swag" = {
+    image = "docker.io/linuxserver/swag:latest";
     environment = {
+      "DNSPLUGIN" = "cloudflare";
       "TZ" = cfg.timezone;
+      "SUBDOMAINS" = "wildcard";
+      "URL" = cfg.domain;
+      "VALIDATION" = "dns";
     };
     volumes = [
-      "${cfg.dataDir}/nginx:/config:rw,Z"
+      "${cfg.dataDir}/swag:/config:rw,Z"
+      "/home/repparw/src/homepage:/config/www:rw,Z"
+    ];
+    ports = [
+      "80:80/tcp"
+      "443:443/tcp"
     ];
   };
   "ddclient" = {
