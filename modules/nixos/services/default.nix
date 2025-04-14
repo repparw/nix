@@ -60,13 +60,13 @@ in {
 
     user = mkOption {
       type = types.str;
-      default = "1000";
+      default = "repparw";
       description = "User to run containers as";
     };
 
     group = mkOption {
       type = types.str;
-      default = "100";
+      default = "users";
       description = "Group to run containers as";
     };
   };
@@ -114,6 +114,11 @@ in {
           #serviceConfig = {
           #  Restart = lib.mkOverride 500 "always";
           #};
+          path = ["/run/wrappers"];
+          serviceConfig = {
+            User = cfg.user;
+            Group = cfg.group;
+          };
           after = [
             "podman-network-dlsuite.service"
           ];
