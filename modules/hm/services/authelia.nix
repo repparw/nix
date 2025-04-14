@@ -8,8 +8,8 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/authelia/config:/config:rw,Z"
-      "${cfg.dataDir}/authelia/secrets:/secrets:rw,Z"
+      "${cfg.dataDir}/authelia/config:/config:rw"
+      "${cfg.dataDir}/authelia/secrets:/secrets:rw"
     ];
     extraPodmanArgs = [
       "--requires=valkey"
@@ -21,7 +21,7 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/authelia/valkey:/data:rw,Z"
+      "${cfg.dataDir}/authelia/valkey:/data:rw"
     ];
     exec = "valkey-server --save 60 1 --loglevel warning";
   };
