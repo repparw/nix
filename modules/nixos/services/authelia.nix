@@ -23,6 +23,6 @@
     volumes = [
       "${cfg.dataDir}/authelia/valkey:/data:rw"
     ];
-    cmd = "valkey-server --save 60 1 --loglevel warning";
+    cmd = ["valkey-server" "--save" "60" "1" "--loglevel" "warning"];
   };
 }
