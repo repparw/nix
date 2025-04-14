@@ -140,6 +140,7 @@ in {
             pkgs.podman
           ];
           serviceConfig = {
+            User = lib.mkForce cfg.user;
             Type = "oneshot";
             RemainAfterExit = true;
             ExecStop = "podman network rm -f dlsuite";
@@ -163,6 +164,7 @@ in {
       unitConfig = {
         Description = "Root target as alternative to compose";
       };
+
       wantedBy = [
         "multi-user.target"
       ];
