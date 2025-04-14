@@ -37,6 +37,15 @@ in {
       };
     };
 
-    networking.firewall.trustedInterfaces = ["podman*"];
+    networking.firewall = {
+      trustedInterfaces = ["podman*"];
+      extraForwardRules = ''
+        # Redirect HTTP (port 80) to Nginx on port 8080
+        tcp dport 80 counter dnat to :8080
+
+        # Redirect HTTPS (port 443) to Nginx on port 8443
+        tcp dport 443 counter dnat to :8443
+      '';
+    };
   };
 }
