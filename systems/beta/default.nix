@@ -5,11 +5,6 @@
 
   networking.hostName = "beta";
 
-  virtualisation.docker = {
-    enable = true;
-    autoPrune.enable = true;
-  };
-
   services.logind.lidSwitchExternalPower = "ignore";
 
   services.tlp.enable = true;

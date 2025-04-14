@@ -28,19 +28,6 @@ in {
           };
         };
 
-        docker-cleanup = {
-          requires = ["docker.service"];
-          wantedBy = ["multi-user.target"];
-          after = ["docker.service"];
-          serviceConfig = {
-            Type = "oneshot";
-            User = "repparw";
-            WorkingDirectory = "/tmp";
-            ExecStart = "${lib.getExe pkgs.docker} system prune -af";
-          };
-        };
-      };
-
       timers = {
         buptohdd = {
           wantedBy = ["timers.target"];
@@ -54,14 +41,6 @@ in {
           wantedBy = ["timers.target"];
           timerConfig = {
             OnCalendar = "*-*-7,14,21,28 00:00:00";
-            Persistent = true;
-          };
-        };
-
-        docker-cleanup = {
-          wantedBy = ["timers.target"];
-          timerConfig = {
-            OnCalendar = "*-*-1,15 12:00:00";
             Persistent = true;
           };
         };
