@@ -13,8 +13,8 @@
       "/home/repparw/src/homepage:/config/www:rw,Z"
     ];
     ports = [
-      "8080:8080/tcp"
-      "8443:8443/tcp"
+      "80:80/tcp"
+      "443:443/tcp"
     ];
   };
   "ddclient" = {
