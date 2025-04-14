@@ -11,8 +11,8 @@
       "${cfg.dataDir}/authelia/config:/config:rw"
       "${cfg.dataDir}/authelia/secrets:/secrets:rw"
     ];
-    extraPodmanArgs = [
-      "--requires=valkey"
+    dependsOn = [
+      "valkey"
     ];
   };
   "valkey" = {
