@@ -38,7 +38,7 @@ with lib; let
     (foldl' (acc: def: acc // (def {inherit cfg;})) {} containersList);
 in {
   options.modules.dlsuite = {
-    enable = mkEnableOption "dlsuite container stack";
+    enable = mkEnableOption "dlsuite container stack services";
 
     dataDir = mkOption {
       type = types.path;
@@ -75,14 +75,17 @@ in {
     virtualisation = {
       podman = {
         autoPrune.enable = true;
+        defaultNetwork.settings.dns_enabled = true;
         dockerCompat.enable = true;
       };
-
-      containers.storage.settings = {
-        storage = {
-          driver = "btrfs";
-          graphroot = "/var/lib/containers/storage";
-          runroot = "/run/containers/storage";
+      containers = {
+        enable = true;
+        storage.settings = {
+          storage = {
+            driver = "btrfs";
+            graphroot = "/var/lib/containers/storage";
+            runroot = "/run/containers/storage";
+          };
         };
         oci-containers.backend = "podman";
         oci-containers.containers = containerDefinitions;
@@ -104,15 +107,15 @@ in {
       containerSuffixes = builtins.attrNames containerDefinitions;
 
       mkSystemService = suffix: {
-        "docker-${suffix}" = {
+        "podman-${suffix}" = {
           #serviceConfig = {
           #  Restart = lib.mkOverride 500 "always";
           #};
           after = [
-            "docker-network-dlsuite.service"
+            "podman-network-dlsuite.service"
           ];
           requires = [
-            "docker-network-dlsuite.service"
+            "podman-network-dlsuite.service"
           ];
           partOf = [
             "dlsuite.target"
@@ -129,14 +132,14 @@ in {
       systemdServices
       // {
         # Networks
-        "docker-network-dlsuite" = {
+        "podman-network-dlsuite" = {
           path = [
             pkgs.podman
           ];
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
-            ExecStop = "docker network rm -f dlsuite";
+            ExecStop = "podman network rm -f dlsuite";
           };
           script = ''
             podman network inspect dlsuite || podman network create dlsuite
