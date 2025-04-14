@@ -11,7 +11,7 @@ with lib; let
     mkMerge [
       {
         log-driver = "journald";
-        networks = ["dlsuite"];
+        networkMode = "dlsuite";
       }
       attrs
       {
@@ -72,102 +72,56 @@ in {
   };
 
   config = mkIf cfg.enable {
-    virtualisation = {
-      podman = {
-        autoPrune.enable = true;
-        defaultNetwork.settings.dns_enabled = true;
-        dockerCompat = true;
-      };
-      containers = {
-        enable = true;
-        storage.settings = {
-          storage = {
-            driver = "btrfs";
-          };
-        };
-      };
-
-      oci-containers.backend = "podman";
-      oci-containers.containers = containerDefinitions;
+    # Enable and configure podman service
+    services.podman = {
+      enable = true;
+      autoPrune.enable = true;
+      defaultNetwork.settings.dns_enabled = true;
+      # Configure containers
+      containers = containerDefinitions;
     };
 
-    networking.firewall.trustedInterfaces = ["podman*"];
+    # Create systemd services for network and coordination
+    systemd.user.services = {
+      "podman-network-dlsuite" = {
+        Unit = {
+          Description = "Podman network for dlsuite services";
+          PartOf = ["dlsuite.target"];
+        };
+        Service = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${pkgs.podman}/bin/podman network inspect dlsuite || ${pkgs.podman}/bin/podman network create dlsuite";
+          ExecStop = "${pkgs.podman}/bin/podman network rm -f dlsuite";
+        };
+        Install.WantedBy = ["dlsuite.target"];
+      };
+    };
 
-    # users.users.dlsuite = {
-    #   isNormalUser = true;
-    #   uid = lib.strings.toInt cfg.user;
-    #   group = "docker";
-    #   home = "/home/docker";
-    #   homeMode = "755";
-    #   createHome = false;
-    #   shell = pkgs.bash;
-    # };
+    # Root target service
+    systemd.user.targets.dlsuite = {
+      Unit = {
+        Description = "DLSuite services target";
+        Requires = ["podman-network-dlsuite.service"];
+      };
+      Install.WantedBy = ["default.target"];
+    };
 
-    # Services
-    systemd.services = let
+    # Add container service dependencies
+    systemd.user.services = let
       containerSuffixes = builtins.attrNames containerDefinitions;
 
       mkSystemService = suffix: {
         "podman-${suffix}" = {
-          path = with pkgs; [podman podman-compose "/run/wrappers/"];
-          serviceConfig = {
-            User = lib.mkForce cfg.user;
-            Group = cfg.group;
+          Unit = {
+            After = ["podman-network-dlsuite.service"];
+            Requires = ["podman-network-dlsuite.service"];
+            PartOf = ["dlsuite.target"];
           };
-          after = [
-            "podman-network-dlsuite.service"
-          ];
-          requires = [
-            "podman-network-dlsuite.service"
-          ];
-          partOf = [
-            "dlsuite.target"
-          ];
-          wantedBy = [
-            "dlsuite.target"
-          ];
+          Install.WantedBy = ["dlsuite.target"];
         };
       };
-
-      systemdServices =
-        builtins.foldl' lib.recursiveUpdate {} (map mkSystemService containerSuffixes);
     in
-      systemdServices
-      // {
-        # Networks
-        "podman-network-dlsuite" = {
-          path = [
-            pkgs.podman
-          ];
-          serviceConfig = {
-            User = lib.mkForce cfg.user;
-            Type = "oneshot";
-            RemainAfterExit = true;
-            ExecStop = "podman network rm -f dlsuite";
-          };
-          script = ''
-            podman network inspect dlsuite || podman network create dlsuite
-          '';
-          partOf = [
-            "dlsuite.target"
-          ];
-          wantedBy = [
-            "dlsuite.target"
-          ];
-        };
-      };
-
-    # Root service
-    # When started, this will automatically create all resources and start
-    # the containers. When stopped, this will teardown all resources.
-    systemd.targets."dlsuite" = {
-      unitConfig = {
-        Description = "Root target as alternative to compose";
-      };
-
-      wantedBy = [
-        "multi-user.target"
-      ];
-    };
+      builtins.foldl' lib.recursiveUpdate {} (map mkSystemService containerSuffixes);
   };
 }
