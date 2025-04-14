@@ -20,7 +20,7 @@
       "--add-host=host.docker.internal:host-gateway"
     ];
     addCapabilities = [
-      "NET_BIND_SERVICE"
+      "CAP_NET_BIND_SERVICE"
     ];
   };
   "ddclient" = {
