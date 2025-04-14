@@ -60,7 +60,6 @@ in {
             };
             volumes = [
               "${cfg.dataDir}/swag:/config:rw,Z"
-              "/home/repparw/src/homepage:/config/www:rw,Z"
             ];
             ports = [
               "80:80/tcp"
