@@ -13,7 +13,7 @@
     };
     volumes = [
       "${cfg.dataDir}/diun:/data:rw,Z"
-      "/var/run/docker.sock:/var/run/docker.sock:ro"
+      "$XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock"
     ];
   };
 }
