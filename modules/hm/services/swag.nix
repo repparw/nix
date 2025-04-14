@@ -18,7 +18,7 @@
       "443:443/tcp"
       "80:80/tcp"
     ];
-    extraOptions = [
+    extraPodmanArgs = [
       "--add-host=host.docker.internal:host-gateway"
     ];
     addCapabilities = [

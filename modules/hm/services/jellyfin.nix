@@ -16,7 +16,7 @@
       "127.0.0.1:8920:8920/tcp"
       "127.0.0.1:7359:7359/udp"
     ];
-    extraOptions = [
+    extraPodmanArgs = [
       "--device=/dev/dri:/dev/dri:rwm"
     ];
   };
