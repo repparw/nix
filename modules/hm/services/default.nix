@@ -57,25 +57,12 @@ in {
       default = "repparw.me";
       description = "Base domain for the services";
     };
-
-    user = mkOption {
-      type = types.str;
-      default = "repparw";
-      description = "User to run containers as";
-    };
-
-    group = mkOption {
-      type = types.str;
-      default = "users";
-      description = "Group to run containers as";
-    };
   };
 
   config = mkIf cfg.enable {
     # Enable and configure podman service
     services.podman = {
       enable = true;
-
       containers = containerDefinitions;
       settings = {
         storage = {
@@ -83,48 +70,5 @@ in {
         };
       };
     };
-
-    # Create systemd services for network and coordination
-    systemd.user.services = {
-      "podman-network-dlsuite" = {
-        Unit = {
-          Description = "Podman network for dlsuite services";
-          PartOf = ["dlsuite.target"];
-        };
-        Service = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-          ExecStart = "${pkgs.podman}/bin/podman network inspect dlsuite || ${pkgs.podman}/bin/podman network create dlsuite";
-          ExecStop = "${pkgs.podman}/bin/podman network rm -f dlsuite";
-        };
-        Install.WantedBy = ["dlsuite.target"];
-      };
-    };
-
-    # Root target service
-    systemd.user.targets.dlsuite = {
-      Unit = {
-        Description = "DLSuite services target";
-        Requires = ["podman-network-dlsuite.service"];
-      };
-      Install.WantedBy = ["default.target"];
-    };
-
-    # Add container service dependencies
-    systemd.user.services = let
-      containerSuffixes = builtins.attrNames containerDefinitions;
-
-      mkSystemService = suffix: {
-        "podman-${suffix}" = {
-          Unit = {
-            After = ["podman-network-dlsuite.service"];
-            Requires = ["podman-network-dlsuite.service"];
-            PartOf = ["dlsuite.target"];
-          };
-          Install.WantedBy = ["dlsuite.target"];
-        };
-      };
-    in
-      builtins.foldl' lib.recursiveUpdate {} (map mkSystemService containerSuffixes);
   };
 }
