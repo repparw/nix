@@ -89,6 +89,7 @@ in {
         btctl = "bluetoothctl";
 
         sys = "systemctl";
+        sysu = "sys --user";
         syslist = "systemctl list-unit-files";
 
         yd = "yt-dlp";
