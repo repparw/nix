@@ -31,7 +31,6 @@ with lib; let
     (import ./ntfy.nix)
     (import ./paperless.nix)
     (import ./arr.nix)
-    (import ./swag.nix)
   ];
 
   containerDefinitions =
