@@ -56,18 +56,6 @@
     ];
   };
 
-  fileSystems."/home/repparw/.config/dlsuite/grocy" = {
-    depends = [
-      "/"
-      "/mnt/hdd"
-    ];
-    device = "/mnt/hdd/docker/grocy/data";
-    options = [
-      "bind"
-      "ro"
-    ];
-  };
-
   fileSystems."/home/repparw/.config/dlsuite/prowlarr" = {
     depends = [
       "/"
