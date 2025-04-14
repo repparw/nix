@@ -109,7 +109,7 @@ in {
 
       mkSystemService = suffix: {
         "podman-${suffix}" = {
-          path = ["/run/wrappers/"];
+          path = with pkgs; [podman podman-compose "/run/wrappers/"];
           serviceConfig = {
             User = lib.mkForce cfg.user;
             Group = cfg.group;
