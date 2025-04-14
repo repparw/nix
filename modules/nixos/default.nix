@@ -29,7 +29,6 @@
     description = "repparw";
     extraGroups = [
       "adbusers"
-      "networkmanager"
       "wheel"
       "docker"
     ];
@@ -41,7 +40,7 @@
   };
 
   networking = {
-    networkmanager.enable = true;
+    useNetworkd.enable = true;
 
     firewall.trustedInterfaces = [
       "enp0s25"
