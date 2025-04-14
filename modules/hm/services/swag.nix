@@ -3,8 +3,6 @@
     image = "docker.io/linuxserver/swag:latest";
     environment = {
       "DNSPLUGIN" = "cloudflare";
-      "PGID" = cfg.group;
-      "PUID" = cfg.user;
       "TZ" = cfg.timezone;
       "SUBDOMAINS" = "wildcard";
       "URL" = cfg.domain;
@@ -28,8 +26,6 @@
   "ddclient" = {
     image = "docker.io/linuxserver/ddclient:latest";
     environment = {
-      "PGID" = cfg.group;
-      "PUID" = cfg.user;
       "TZ" = cfg.timezone;
     };
     volumes = [
