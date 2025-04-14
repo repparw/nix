@@ -83,8 +83,6 @@ in {
         storage.settings = {
           storage = {
             driver = "btrfs";
-            graphroot = "/var/lib/containers/storage";
-            runroot = "/run/containers/storage";
           };
         };
       };
@@ -111,10 +109,6 @@ in {
 
       mkSystemService = suffix: {
         "podman-${suffix}" = {
-          #serviceConfig = {
-          #  Restart = lib.mkOverride 500 "always";
-          #};
-          path = ["/run/wrappers"];
           serviceConfig = {
             User = cfg.user;
             Group = cfg.group;
