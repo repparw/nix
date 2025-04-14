@@ -7,12 +7,12 @@
 }: {
   imports = [
     ./autoUpgrade.nix
-    ./services
-    ./vm.nix
     ./gaming.nix
     ./hyprland.nix
     ./obs.nix
+    ./podman.nix
     ./timers.nix
+    ./vm.nix
   ];
 
   users.users.repparw = {
