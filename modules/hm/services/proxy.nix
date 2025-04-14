@@ -9,7 +9,7 @@
       "VALIDATION" = "dns";
     };
     volumes = [
-      "${cfg.dataDir}/swag:/config:rw,Z"
+      "${cfg.dataDir}/swag:/config:rw"
     ];
     ports = [
       "8080:80/tcp"
@@ -22,7 +22,7 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/ddclient:/config:rw,Z"
+      "${cfg.dataDir}/ddclient:/config:rw"
     ];
   };
 }

@@ -5,8 +5,8 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/bazarr:/config:rw,Z"
-      "${cfg.dataDir}/data:/data:rw,z"
+      "${cfg.dataDir}/bazarr:/config:rw"
+      "${cfg.dataDir}/data:/data:rw"
     ];
   };
   "flaresolverr" = {
@@ -24,7 +24,7 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/prowlarr:/config:rw,Z"
+      "${cfg.dataDir}/prowlarr:/config:rw"
     ];
   };
   "qbittorrent" = {
@@ -35,8 +35,8 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/data/torrents:/data/torrents:rw,z"
-      "${cfg.dataDir}/qbittorrent:/config:rw,Z"
+      "${cfg.dataDir}/data/torrents:/data/torrents:rw"
+      "${cfg.dataDir}/qbittorrent:/config:rw"
     ];
     ports = [
       "127.0.0.1:54536:54536/tcp"
@@ -48,8 +48,8 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/data/:/data:rw,z"
-      "${cfg.dataDir}/radarr:/config:rw,Z"
+      "${cfg.dataDir}/data/:/data:rw"
+      "${cfg.dataDir}/radarr:/config:rw"
     ];
     extraPodmanArgs = [
       "--requires=qbittorrent"
@@ -62,8 +62,8 @@
     };
     volumes = [
       "/dev/rtc:/dev/rtc:ro"
-      "${cfg.dataDir}/data:/data:rw,z"
-      "${cfg.dataDir}/sonarr:/config:rw,Z"
+      "${cfg.dataDir}/data:/data:rw"
+      "${cfg.dataDir}/sonarr:/config:rw"
     ];
     extraPodmanArgs = [
       "--requires=qbittorrent"
