@@ -93,7 +93,7 @@ in {
       oci-containers.containers = containerDefinitions;
     };
 
-    networking.firewall.trustedInterfaces = ["podman0"];
+    networking.firewall.trustedInterfaces = ["podman*"];
 
     # users.users.dlsuite = {
     #   isNormalUser = true;
