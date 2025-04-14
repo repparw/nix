@@ -12,6 +12,9 @@
       NTFY_ATTACHMENT_CACHE_DIR = "/etc/ntfy/attachments";
       NTFY_ENABLE_LOGIN = "true";
     };
+    ports = [
+      "90:80/tcp"
+    ];
     volumes = [
       "${cfg.dataDir}/ntfy:/etc/ntfy:rw,Z"
     ];
