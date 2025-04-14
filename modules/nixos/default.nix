@@ -7,7 +7,7 @@
 }: {
   imports = [
     ./autoUpgrade.nix
-    ./dlsuite
+    ./services
     ./vm.nix
     ./gaming.nix
     ./hyprland.nix
