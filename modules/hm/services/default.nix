@@ -9,14 +9,16 @@ with lib; let
   mkContainer = name: attrs:
     mkMerge [
       {
-        log-driver = "journald";
         networkMode = "dlsuite";
       }
       attrs
       {
-        extraOptions =
-          (attrs.extraOptions or [])
-          ++ ["--network-alias=${name}"];
+        extraPodmanArgs =
+          (attrs.extraPodmanArgs or [])
+          ++ [
+            "log-driver = 'journald'"
+            "--network-alias=${name}"
+          ];
       }
     ];
 
