@@ -17,9 +17,9 @@
       "8080:80/tcp"
       "8443:443/tcp"
     ];
-    capabilities = [
-      "NET_ADMIN"
-    ];
+    capabilities = {
+      NET_ADMIN = true;
+    };
   };
   "ddclient" = {
     image = "docker.io/linuxserver/ddclient:latest";
