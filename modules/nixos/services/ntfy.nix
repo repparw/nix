@@ -11,11 +11,7 @@
       NTFY_BEHIND_PROXY = "true";
       NTFY_ATTACHMENT_CACHE_DIR = "/etc/ntfy/attachments";
       NTFY_ENABLE_LOGIN = "true";
-      NTFY_LISTEN_HTTP = ":2586";
     };
-    ports = [
-      "2586:2586/tcp"
-    ];
     volumes = [
       "${cfg.dataDir}/ntfy:/etc/ntfy:rw"
     ];
