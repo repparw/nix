@@ -29,7 +29,6 @@
     extraGroups = [
       "adbusers"
       "wheel"
-      "docker"
     ];
   };
 
