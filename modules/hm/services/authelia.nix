@@ -5,8 +5,6 @@
       "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
       "AUTHELIA_SESSION_SECRET_FILE" = "/secrets/SESSION_SECRET";
       "AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE" = "/secrets/STORAGE_ENCRYPTION_KEY";
-      "PGID" = cfg.group;
-      "PUID" = cfg.user;
       "TZ" = cfg.timezone;
     };
     volumes = [
@@ -18,8 +16,6 @@
   "valkey" = {
     image = "docker.io/valkey/valkey:7.2-alpine";
     environment = {
-      "PGID" = cfg.group;
-      "PUID" = cfg.user;
       "TZ" = cfg.timezone;
     };
     volumes = [

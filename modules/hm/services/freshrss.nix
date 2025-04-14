@@ -2,8 +2,6 @@
   "freshrss" = {
     image = "docker.io/linuxserver/freshrss:latest";
     environment = {
-      "PGID" = cfg.group;
-      "PUID" = cfg.user;
       "TZ" = cfg.timezone;
     };
     volumes = [
