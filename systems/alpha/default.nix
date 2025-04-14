@@ -5,7 +5,7 @@
 
   modules = {
     gaming.enable = true;
-    #podman.enable = true;
+    podman.enable = true;
     timers.enable = true;
     vm.enable = false;
   };
