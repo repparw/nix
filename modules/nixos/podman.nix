@@ -37,6 +37,9 @@ in {
       };
     };
 
+    # Allow rootless to bind to ports < 1024 (>= 80)
+    boot.kernel.sysctl = {"net.ipv4.ip_unprivileged_port_start" = 80;};
+
     networking.firewall.trustedInterfaces = ["podman*"];
   };
 }
