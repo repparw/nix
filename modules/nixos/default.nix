@@ -30,7 +30,6 @@
     extraGroups = [
       "adbusers"
       "wheel"
-      "docker"
     ];
   };
 
