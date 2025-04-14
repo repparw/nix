@@ -60,13 +60,13 @@ in {
 
     user = mkOption {
       type = types.str;
-      default = "1001";
+      default = "1000";
       description = "User to run containers as";
     };
 
     group = mkOption {
       type = types.str;
-      default = "131";
+      default = "100";
       description = "Group to run containers as";
     };
   };
@@ -95,15 +95,15 @@ in {
 
     networking.firewall.trustedInterfaces = ["podman0"];
 
-    users.users.dlsuite = {
-      isNormalUser = true;
-      uid = lib.strings.toInt cfg.user;
-      group = "docker";
-      home = "/home/docker";
-      homeMode = "755";
-      createHome = false;
-      shell = pkgs.bash;
-    };
+    # users.users.dlsuite = {
+    #   isNormalUser = true;
+    #   uid = lib.strings.toInt cfg.user;
+    #   group = "docker";
+    #   home = "/home/docker";
+    #   homeMode = "755";
+    #   createHome = false;
+    #   shell = pkgs.bash;
+    # };
 
     # Services
     systemd.services = let
