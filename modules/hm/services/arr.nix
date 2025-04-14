@@ -49,7 +49,9 @@
       "${cfg.dataDir}/data/:/data:rw,z"
       "${cfg.dataDir}/radarr:/config:rw,Z"
     ];
-    #dependsOn = [ "qbittorrent" ];
+    extraPodmanArgs = [
+      "--requires=qbittorrent"
+    ];
   };
   "sonarr" = {
     image = "docker.io/linuxserver/sonarr:latest";
@@ -61,6 +63,8 @@
       "${cfg.dataDir}/data:/data:rw,z"
       "${cfg.dataDir}/sonarr:/config:rw,Z"
     ];
-    #dependsOn = [ "qbittorrent" ];
+    extraPodmanArgs = [
+      "--requires=qbittorrent"
+    ];
   };
 }
