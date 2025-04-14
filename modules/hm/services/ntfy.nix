@@ -17,7 +17,7 @@
       "2586:2586/tcp"
     ];
     volumes = [
-      "${cfg.dataDir}/ntfy:/etc/ntfy:rw,Z"
+      "${cfg.dataDir}/ntfy:/etc/ntfy:rw"
     ];
   };
 }
