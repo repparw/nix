@@ -43,46 +43,10 @@ in {
           };
         };
       };
-
-      oci-containers = {
-        backend = "podman";
-        containers = {
-          "swag" = {
-            image = "docker.io/linuxserver/swag:latest";
-            environment = {
-              "DNSPLUGIN" = "cloudflare";
-              "PUID" = "1000";
-              "PGID" = "100";
-              "TZ" = cfg.timezone;
-              "SUBDOMAINS" = "wildcard";
-              "URL" = cfg.domain;
-              "VALIDATION" = "dns";
-            };
-            volumes = [
-              "${cfg.dataDir}/swag:/config:rw,Z"
-            ];
-            ports = [
-              "80:80/tcp"
-              "443:443/tcp"
-            ];
-          };
-
-          "ddclient" = {
-            image = "docker.io/linuxserver/ddclient:latest";
-            environment = {
-              "PUID" = "1000";
-              "PGID" = "100";
-              "TZ" = cfg.timezone;
-            };
-            volumes = [
-              "${cfg.dataDir}/ddclient:/config:rw,Z"
-            ];
-          };
-        };
-      };
     };
 
-    boot.kernel.sysctl = {"net.ipv4.ip_unprivileged_port_start" = 0;};
+    # allow ports under 1024
+    boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 80;
 
     networking.firewall.trustedInterfaces = ["podman*"];
   };
