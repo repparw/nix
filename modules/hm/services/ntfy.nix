@@ -14,7 +14,7 @@
       NTFY_LISTEN_HTTP = ":2586";
     };
     ports = [
-      "80:2586/tcp"
+      "2586:2586/tcp"
     ];
     volumes = [
       "${cfg.dataDir}/ntfy:/etc/ntfy:rw,Z"
