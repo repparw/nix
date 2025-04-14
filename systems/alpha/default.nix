@@ -11,7 +11,7 @@
 
   programs.obs-studio.enable = true;
 
-  modules.dlsuite.enable = true;
+  modules.dlsuite.enable = false;
 
   networking.hostName = "alpha";
 
