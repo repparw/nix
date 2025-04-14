@@ -93,6 +93,8 @@ in {
       };
     };
 
+    networking.firewall.trustedInterfaces = ["podman0"];
+
     users.users.dlsuite = {
       isNormalUser = true;
       uid = lib.strings.toInt cfg.user;
