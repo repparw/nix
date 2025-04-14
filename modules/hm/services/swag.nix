@@ -13,14 +13,13 @@
       "/home/repparw/src/homepage:/config/www:rw,Z"
     ];
     ports = [
-      "127.0.0.1:8080:80/tcp"
-      "127.0.0.1:8443:443/tcp"
+      "127.0.0.1:80:80/tcp"
+      "127.0.0.1:443:443/tcp"
     ];
     extraPodmanArgs = [
       "--add-host=host.docker.internal:host-gateway"
     ];
     addCapabilities = [
-      "NET_ADMIN"
       "NET_BIND_SERVICE"
     ];
   };
