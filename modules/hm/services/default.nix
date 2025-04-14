@@ -75,10 +75,13 @@ in {
     # Enable and configure podman service
     services.podman = {
       enable = true;
-      autoPrune.enable = true;
-      defaultNetwork.settings.dns_enabled = true;
-      # Configure containers
+
       containers = containerDefinitions;
+      settings = {
+        storage = {
+          driver = "btrfs";
+        };
+      };
     };
 
     # Create systemd services for network and coordination
