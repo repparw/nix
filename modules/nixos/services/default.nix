@@ -9,7 +9,7 @@ with lib; let
   mkContainer = name: attrs:
     mkMerge [
       {
-        network = "net";
+        networks = ["net"];
       }
       attrs
       {
@@ -71,13 +71,15 @@ in {
   };
 
   config = mkIf cfg.enable {
-    containers = containerDefinitions;
     virtualisation = {
       podman = {
         enable = true;
         autoPrune.enable = true;
         defaultNetwork.settings.dns_enabled = true;
       };
+
+      oci-containers.containers = containerDefinitions;
+
       containers = {
         enable = true;
         storage.settings = {

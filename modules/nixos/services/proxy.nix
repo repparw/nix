@@ -17,8 +17,8 @@
       "8080:80/tcp"
       "8443:443/tcp"
     ];
-    addCapabilities = [
-      "CAP_NET_ADMIN"
+    capabilities = [
+      "NET_ADMIN"
     ];
   };
   "ddclient" = {

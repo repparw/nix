@@ -10,7 +10,6 @@
     ./gaming.nix
     ./hyprland.nix
     ./obs.nix
-    ./podman.nix
     ./services
     ./timers.nix
     ./vm.nix
