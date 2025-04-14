@@ -72,13 +72,22 @@ in {
   };
 
   config = mkIf cfg.enable {
-    virtualisation.docker = {
-      autoPrune.enable = true;
-      storageDriver = "btrfs";
-    };
+    virtualisation = {
+      podman = {
+        autoPrune.enable = true;
+        dockerCompat.enable = true;
+      };
 
-    virtualisation.oci-containers.backend = "docker";
-    virtualisation.oci-containers.containers = containerDefinitions;
+      containers.storage.settings = {
+        storage = {
+          driver = "btrfs";
+          graphroot = "/var/lib/containers/storage";
+          runroot = "/run/containers/storage";
+        };
+        oci-containers.backend = "podman";
+        oci-containers.containers = containerDefinitions;
+      };
+    };
 
     users.users.dlsuite = {
       isNormalUser = true;
@@ -86,7 +95,7 @@ in {
       group = "docker";
       home = "/home/docker";
       homeMode = "755";
-      createHome = true;
+      createHome = false;
       shell = pkgs.bash;
     };
 
@@ -122,7 +131,7 @@ in {
         # Networks
         "docker-network-dlsuite" = {
           path = [
-            pkgs.docker
+            pkgs.podman
           ];
           serviceConfig = {
             Type = "oneshot";
@@ -130,7 +139,7 @@ in {
             ExecStop = "docker network rm -f dlsuite";
           };
           script = ''
-            docker network inspect dlsuite || docker network create dlsuite
+            podman network inspect dlsuite || podman network create dlsuite
           '';
           partOf = [
             "dlsuite.target"
