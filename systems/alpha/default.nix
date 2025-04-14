@@ -6,6 +6,7 @@
   modules = {
     gaming.enable = true;
     podman.enable = true;
+    services.enable = true;
     timers.enable = true;
     vm.enable = false;
   };

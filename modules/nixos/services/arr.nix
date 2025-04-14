@@ -51,8 +51,8 @@
       "${cfg.dataDir}/data/:/data:rw"
       "${cfg.dataDir}/radarr:/config:rw"
     ];
-    extraPodmanArgs = [
-      "--requires=qbittorrent"
+    dependsOn = [
+      "qbittorrent"
     ];
   };
   "sonarr" = {
@@ -65,8 +65,8 @@
       "${cfg.dataDir}/data:/data:rw"
       "${cfg.dataDir}/sonarr:/config:rw"
     ];
-    extraPodmanArgs = [
-      "--requires=qbittorrent"
+    dependsOn = [
+      "qbittorrent"
     ];
   };
 }
