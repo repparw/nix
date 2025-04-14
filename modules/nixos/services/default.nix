@@ -8,7 +8,7 @@ with lib; let
 
   mkContainer = name: attrs:
     mkMerge [
-      #{ networks = ["podman"]; }
+      #{ # can add common attrs, e.g networks = ["podman"]; not needed, its default neetwork }
       attrs
       {
         extraOptions =
