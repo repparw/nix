@@ -12,9 +12,7 @@
     volumes = [
       "${cfg.dataDir}/changedetection:/datastore:rw,Z"
     ];
-    dependsOn = [
-      "sockpuppetbrowser"
-    ];
+    #dependsOn = [ "sockpuppetbrowser" ];
   };
   "sockpuppetbrowser" = {
     image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";
