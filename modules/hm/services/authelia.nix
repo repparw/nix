@@ -23,6 +23,7 @@
     volumes = [
       "${cfg.dataDir}/authelia/valkey:/data:rw,Z"
     ];
+    userNS = "repparw";
     exec = "valkey-server --save 60 1 --loglevel warning";
   };
 }
