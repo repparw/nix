@@ -1,4 +1,4 @@
-{osConfig, cfg}: {
+{cfg}: {
   "diun" = {
     image = "docker.io/crazymax/diun:latest";
     environment = {
@@ -13,7 +13,7 @@
     };
     volumes = [
       "${cfg.dataDir}/diun:/data:rw,Z"
-      "${osConfig.xdg.}/podman/podman.sock:/var/run/docker.sock"
+      "/run/user/1000/podman/podman.sock:/var/run/docker.sock"
     ];
   };
 }
