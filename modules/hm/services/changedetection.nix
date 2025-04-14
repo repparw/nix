@@ -10,7 +10,9 @@
     volumes = [
       "${cfg.dataDir}/changedetection:/datastore:rw,Z"
     ];
-    #dependsOn = [ "sockpuppetbrowser" ];
+    extraPodmanArgs = [
+      "--requires=sockpuppetbrowser"
+    ];
   };
   "sockpuppetbrowser" = {
     image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";
