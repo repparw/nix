@@ -3,15 +3,14 @@
     ./hardware-configuration.nix
   ];
 
-  modules.vm.enable = false;
-
-  modules.gaming.enable = true;
-
-  modules.timers.enable = true;
+  modules = {
+    gaming.enable = true;
+    podman.enable = true;
+    timers.enable = true;
+    vm.enable = false;
+  };
 
   programs.obs-studio.enable = true;
-
-  modules.dlsuite.enable = false;
 
   networking.hostName = "alpha";
 
