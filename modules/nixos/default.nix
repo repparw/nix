@@ -39,8 +39,10 @@
     efi.canTouchEfiVariables = true;
   };
 
+  systemd.network.wait-online.enable = false;
+
   networking = {
-    useNetworkd.enable = true;
+    networkmanager.enable = true;
 
     firewall.trustedInterfaces = [
       "enp0s25"
