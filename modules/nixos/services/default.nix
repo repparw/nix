@@ -86,88 +86,8 @@ in {
           };
         };
       };
-
-      oci-containers.backend = "podman";
-      oci-containers.containers = containerDefinitions;
     };
 
     networking.firewall.trustedInterfaces = ["podman*"];
-
-    # users.users.dlsuite = {
-    #   isNormalUser = true;
-    #   uid = lib.strings.toInt cfg.user;
-    #   group = "docker";
-    #   home = "/home/docker";
-    #   homeMode = "755";
-    #   createHome = false;
-    #   shell = pkgs.bash;
-    # };
-
-    # Services
-    systemd.services = let
-      containerSuffixes = builtins.attrNames containerDefinitions;
-
-      mkSystemService = suffix: {
-        "podman-${suffix}" = {
-          path = with pkgs; [podman podman-compose "/run/wrappers/"];
-          serviceConfig = {
-            User = lib.mkForce cfg.user;
-            Group = cfg.group;
-          };
-          after = [
-            "podman-network-dlsuite.service"
-          ];
-          requires = [
-            "podman-network-dlsuite.service"
-          ];
-          partOf = [
-            "dlsuite.target"
-          ];
-          wantedBy = [
-            "dlsuite.target"
-          ];
-        };
-      };
-
-      systemdServices =
-        builtins.foldl' lib.recursiveUpdate {} (map mkSystemService containerSuffixes);
-    in
-      systemdServices
-      // {
-        # Networks
-        "podman-network-dlsuite" = {
-          path = [
-            pkgs.podman
-          ];
-          serviceConfig = {
-            User = lib.mkForce cfg.user;
-            Type = "oneshot";
-            RemainAfterExit = true;
-            ExecStop = "podman network rm -f dlsuite";
-          };
-          script = ''
-            podman network inspect dlsuite || podman network create dlsuite
-          '';
-          partOf = [
-            "dlsuite.target"
-          ];
-          wantedBy = [
-            "dlsuite.target"
-          ];
-        };
-      };
-
-    # Root service
-    # When started, this will automatically create all resources and start
-    # the containers. When stopped, this will teardown all resources.
-    systemd.targets."dlsuite" = {
-      unitConfig = {
-        Description = "Root target as alternative to compose";
-      };
-
-      wantedBy = [
-        "multi-user.target"
-      ];
-    };
   };
 }
