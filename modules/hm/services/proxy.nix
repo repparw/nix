@@ -12,8 +12,8 @@
       "${cfg.dataDir}/swag:/config:rw,Z"
     ];
     ports = [
-      "80:80/tcp"
-      "443:443/tcp"
+      "8080:80/tcp"
+      "8443:443/tcp"
     ];
   };
   "ddclient" = {
