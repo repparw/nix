@@ -43,6 +43,8 @@ in {
             image = "docker.io/linuxserver/swag:latest";
             environment = {
               "DNSPLUGIN" = "cloudflare";
+              "PUID" = "1000";
+              "PGID" = "100";
               "TZ" = cfg.timezone;
               "SUBDOMAINS" = "wildcard";
               "URL" = cfg.domain;
@@ -56,18 +58,18 @@ in {
               "80:80/tcp"
               "443:443/tcp"
             ];
-            autoStart = true;
           };
 
           "ddclient" = {
             image = "docker.io/linuxserver/ddclient:latest";
             environment = {
+              "PUID" = "1000";
+              "PGID" = "100";
               "TZ" = cfg.timezone;
             };
             volumes = [
               "${cfg.dataDir}/ddclient:/config:rw,Z"
             ];
-            autoStart = true;
           };
         };
       };
