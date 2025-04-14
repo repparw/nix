@@ -40,6 +40,23 @@ in {
     # Allow rootless to bind to ports < 1024 (>= 80)
     boot.kernel.sysctl = {"net.ipv4.ip_unprivileged_port_start" = 80;};
 
-    networking.firewall.trustedInterfaces = ["podman*"];
+    networking.firewall = {
+      interfaces."podman*".allowedTCPPorts = [8080 8443]; # Ensure your new ports are allowed for Nginx
+      extraForwardRules = {
+        enable = true;
+        rules = [
+          {
+            fromPort = 80;
+            toPort = 8080;
+            protocol = "tcp";
+          }
+          {
+            fromPort = 443;
+            toPort = 8443;
+            protocol = "tcp";
+          }
+        ];
+      };
+    };
   };
 }
