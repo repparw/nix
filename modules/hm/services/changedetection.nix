@@ -2,8 +2,6 @@
   "changedetection" = {
     image = "docker.io/dgtlmoon/changedetection.io:latest";
     environment = {
-      "PUID" = cfg.user;
-      "PGID" = cfg.group;
       "TZ" = cfg.timezone;
       "BASE_URL" = "https://${cfg.domain}";
       "HIDE_REFERER" = "true";

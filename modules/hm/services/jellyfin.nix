@@ -4,8 +4,6 @@
     environment = {
       "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
       "JELLYFIN_PublishedServerUrl" = "jellyfin.${cfg.domain}";
-      "PGID" = cfg.group;
-      "PUID" = cfg.user;
       "TZ" = cfg.timezone;
     };
     volumes = [
