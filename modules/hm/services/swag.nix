@@ -16,9 +16,6 @@
       "127.0.0.1:80:80/tcp"
       "127.0.0.1:443:443/tcp"
     ];
-    extraPodmanArgs = [
-      "--add-host=host.docker.internal:host-gateway"
-    ];
     addCapabilities = [
       "CAP_NET_BIND_SERVICE"
     ];
