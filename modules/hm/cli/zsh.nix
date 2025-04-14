@@ -123,8 +123,8 @@ in {
       enable = true;
       plugins = [
         # OMZ completions requiring compinit
-        "ohmyzsh/ohmyzsh path:plugins/docker/completions kind:fpath"
-        "ohmyzsh/ohmyzsh path:plugins/docker-compose/completions kind:fpath"
+        "ohmyzsh/ohmyzsh path:plugins/podman/completions kind:fpath"
+        "ohmyzsh/ohmyzsh path:plugins/podman-compose/completions kind:fpath"
 
         # compinit
         "belak/zsh-utils path:completion"
@@ -134,8 +134,8 @@ in {
         "ohmyzsh/ohmyzsh path:plugins/git"
         "ohmyzsh/ohmyzsh path:plugins/gh"
         "ohmyzsh/ohmyzsh path:plugins/rsync"
-        "ohmyzsh/ohmyzsh path:plugins/docker"
-        "ohmyzsh/ohmyzsh path:plugins/docker-compose"
+        "ohmyzsh/ohmyzsh path:plugins/podman"
+        "ohmyzsh/ohmyzsh path:plugins/podman-compose"
         "ohmyzsh/ohmyzsh path:plugins/tmux"
 
         # powerlevel10k

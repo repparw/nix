@@ -65,7 +65,9 @@ in {
       containers = containerDefinitions;
       settings = {
         storage = {
-          driver = "btrfs";
+          storage = {
+            driver = "btrfs";
+          };
         };
       };
     };
