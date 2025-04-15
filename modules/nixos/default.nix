@@ -181,7 +181,7 @@
               "bluez5.enable-hw-volume" = false;
             };
           };
-          "wh-1000xm4-ldac-hq" = {
+          "enable-xm4-ldac-hq" = {
             "monitor.bluez.rules" = [
               {
                 matches = [
