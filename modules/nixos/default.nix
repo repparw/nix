@@ -178,7 +178,6 @@
           };
           "disable-hw-volume" = {
             "monitor.bluez.properties" = {
-              #"bluez5.roles" = [ "a2dp_sink" "a2dp_source" "bap_sink" "bap_source" ];
               "bluez5.enable-hw-volume" = false;
             };
           };
