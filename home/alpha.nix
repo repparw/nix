@@ -1,41 +1,6 @@
-{
-  pkgs,
-  lib,
-  ...
-}: let
-  git-autocommit = with pkgs;
-    writeShellApplication {
-      name = "git-autocommit";
-      runtimeInputs = [gitMinimal];
-      text = ''
-        DIR=''${1:-/home/repparw/nix}
-        git -C "$DIR" add -A
-        git -C "$DIR" commit -m "Autocommit"
-        git -C "$DIR" pull --rebase
-        git -C "$DIR" push
-      '';
-    };
+{...}: let
 in {
   services.spotifyd.enable = true;
 
   modules.jellyfin-mpv-shim.enable = true;
-
-  #home.packages = with pkgs; [ ];
-
-  systemd.user.services.git-autocommit = {
-    Service = {
-      Type = "oneshot";
-      ExecStart = ["${lib.getExe git-autocommit}"];
-    };
-  };
-
-  systemd.user.timers.git-autocommit = {
-    Install = {
-      WantedBy = ["timers.target"];
-    };
-    Timer = {
-      OnCalendar = "*:0/4";
-      Persistent = true;
-    };
-  };
 }
