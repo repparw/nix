@@ -10,7 +10,7 @@
     nur.url = "github:nix-community/NUR";
   };
 
-  outputs = {...} @ inputs: let
+  outputs = inputs: let
     lib = import ./lib {inherit inputs;};
   in {
     nixosConfigurations =

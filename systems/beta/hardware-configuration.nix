@@ -11,24 +11,30 @@
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
-  boot.initrd.availableKernelModules = ["xhci_pci" "ehci_pci" "ahci" "usb_storage" "sd_mod" "rtsx_pci_sdmmc"];
-  boot.initrd.kernelModules = [];
-  boot.kernelModules = ["kvm-intel"];
-  #boot.extraModulePackages = [ ];
+  boot = {
+    initrd = {
+      availableKernelModules = ["xhci_pci" "ehci_pci" "ahci" "usb_storage" "sd_mod" "rtsx_pci_sdmmc"];
+      kernelModules = [];
+    };
+    kernelModules = ["kvm-intel"];
+    #boot.extraModulePackages = [ ];
 
-  boot.extraModprobeConfig = ''
-    options thinkpad_acpi force_load=1 fan_control=1
-  '';
-
-  fileSystems."/" = {
-    device = "/dev/disk/by-uuid/198b9a58-8838-440f-b2e7-1181826dda06";
-    fsType = "ext4";
+    extraModprobeConfig = ''
+      options thinkpad_acpi force_load=1 fan_control=1
+    '';
   };
 
-  fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/F868-A3C4";
-    fsType = "vfat";
-    options = ["fmask=0022" "dmask=0022"];
+  fileSystems = {
+    "/" = {
+      device = "/dev/disk/by-uuid/198b9a58-8838-440f-b2e7-1181826dda06";
+      fsType = "ext4";
+    };
+
+    "/boot" = {
+      device = "/dev/disk/by-uuid/F868-A3C4";
+      fsType = "vfat";
+      options = ["fmask=0022" "dmask=0022"];
+    };
   };
 
   swapDevices = [];

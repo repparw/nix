@@ -1,4 +1,4 @@
-{...}: {
+_: {
   home.file.".config/tridactyl/tridactylrc".text = ''
       " General Settings
     set update.lastchecktime 1729971571332
