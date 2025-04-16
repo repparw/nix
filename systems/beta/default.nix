@@ -1,15 +1,17 @@
-{...}: {
+_: {
   imports = [
     ./hardware-configuration.nix
   ];
 
   networking.hostName = "beta";
 
-  services.logind.lidSwitchExternalPower = "ignore";
+  services = {
+    logind.lidSwitchExternalPower = "ignore";
 
-  services.tlp.enable = true;
+    tlp.enable = true;
 
-  services.openssh.ports = [2222];
+    openssh.ports = [2222];
+  };
 
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];

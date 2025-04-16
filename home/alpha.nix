@@ -1,5 +1,4 @@
-{...}: let
-in {
+_: {
   services.spotifyd.enable = true;
 
   modules.jellyfin-mpv-shim.enable = true;

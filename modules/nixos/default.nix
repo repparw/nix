@@ -108,13 +108,49 @@
     };
   };
 
-  environment.pathsToLink = ["/share/zsh"];
+  environment = {
+    pathsToLink = ["/share/zsh"];
 
-  environment.systemPackages = with pkgs; [
-    inputs.agenix.packages."${system}".default
-    vim
-    zsh
-  ];
+    systemPackages = with pkgs; [
+      inputs.agenix.packages."${system}".default
+      vim
+      zsh
+    ];
+    etc = {
+      "logid.cfg" = {
+        text = ''
+          devices: (
+          {
+          	name: "MX Vertical Advanced Ergonomic Mouse";
+          	smartshift:
+          	{
+          		on: true;
+          		threshold: 30;
+          	};
+          	hiresscroll:
+          	{
+          		hires: true;
+          		invert: false;
+          		target: false;
+          	};
+          	dpi: 1600;
+
+          	buttons: (
+          		{
+          			cid: 0xfd;
+          			action =
+          			{
+          				type: "Keypress";
+          				keys: ["KEY_LEFTSHIFT", "KEY_LEFTMETA", "KEY_PRINT"];
+          			};
+          		}
+          	);
+          }
+          );
+        '';
+      };
+    };
+  };
 
   programs = {
     adb.enable = true;
@@ -181,26 +217,6 @@
               "bluez5.enable-hw-volume" = false;
             };
           };
-          "enable-xm4-ldac-hq" = {
-            "monitor.bluez.rules" = [
-              {
-                matches = [
-                  {
-                    # Match any bluetooth device with ids equal to that of a WH-1000XM4
-                    "device.name" = "~bluez_card.*";
-                    "device.product.id" = "0x0d58";
-                    "device.vendor.id" = "usb:054c";
-                  }
-                ];
-                actions = {
-                  update-props = {
-                    # Set quality to high quality instead of the default of auto
-                    "bluez5.a2dp.ldac.quality" = "hq";
-                  };
-                };
-              }
-            ];
-          };
         };
       };
     };
@@ -236,41 +252,6 @@
     serviceConfig = {
       Type = "simple";
       ExecStart = "${lib.getExe pkgs.logiops_0_2_3}";
-    };
-  };
-
-  environment.etc = {
-    "logid.cfg" = {
-      text = ''
-        devices: (
-        {
-        	name: "MX Vertical Advanced Ergonomic Mouse";
-        	smartshift:
-        	{
-        		on: true;
-        		threshold: 30;
-        	};
-        	hiresscroll:
-        	{
-        		hires: true;
-        		invert: false;
-        		target: false;
-        	};
-        	dpi: 1600;
-
-        	buttons: (
-        		{
-        			cid: 0xfd;
-        			action =
-        			{
-        				type: "Keypress";
-        				keys: ["KEY_LEFTSHIFT", "KEY_LEFTMETA", "KEY_PRINT"];
-        			};
-        		}
-        	);
-        }
-        );
-      '';
     };
   };
 
