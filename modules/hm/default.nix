@@ -1,4 +1,4 @@
-{...}: {
+_: {
   imports = [
     ./cli
     ./gui
@@ -15,8 +15,10 @@
     silent = true;
   };
 
-  home.username = "repparw";
-  home.homeDirectory = "/home/repparw";
+  home = {
+    username = "repparw";
+    homeDirectory = "/home/repparw";
 
-  home.stateVersion = "23.11";
+    stateVersion = "23.11";
+  };
 }

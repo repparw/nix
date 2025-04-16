@@ -35,14 +35,13 @@ in {
       ++ (with pkgs.stable; [
         ]);
 
-    services.kdeconnect = {
-      enable = true;
-      indicator = true;
-    };
-
     gtk = {
       enable = true;
       gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
+      theme = {
+        name = "Adwaita-dark";
+        package = pkgs.gnome-themes-extra;
+      };
     };
 
     xdg.mimeApps = {
