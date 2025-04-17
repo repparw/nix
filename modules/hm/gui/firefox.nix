@@ -36,7 +36,7 @@
 
       profiles = let
         commonProfile = {
-          userChrome = builtins.readFile ../../source/userChrome.css;
+          userChrome = ../../source/userChrome.css;
           extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
             ublock-origin
             sidebery
