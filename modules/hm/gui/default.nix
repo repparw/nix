@@ -37,27 +37,29 @@ in {
 
     gtk = {
       enable = true;
-      gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
       theme = {
-        name = "Adwaita-dark";
-        package = pkgs.gnome-themes-extra;
+        name = "Gruvbox-Dark";
+        package = pkgs.gruvbox-gtk-theme;
       };
+      iconTheme = {
+        name = "Gruvbox-Dark";
+        package = pkgs.gruvbox-gtk-theme;
+      };
+      gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
+    };
+
+    home.pointerCursor = {
+      name = "Capitaine Cursors (Gruvbox)";
+      package = pkgs.capitaine-cursors-themed;
+      size = 24;
+      gtk.enable = true;
     };
 
     xdg.mimeApps = {
       enable = true;
-      associations.added = {
-        "application/pdf" = [
-          "org.pwmt.zathura.desktop"
-          "firefox.desktop"
-        ];
-        "image/png" = "feh.desktop";
-        "image/jpeg" = "feh.desktop";
-        "image/gif" = "feh.desktop";
-        "image/webp" = "feh.desktop";
-      };
       associations.removed = {
         "application/pdf" = ["chromium-browser.desktop"];
+        "inode/directory" = ["firefox.desktop"];
       };
       defaultApplications = {
         "inode/directory" = "org.gnome.Nautilus.desktop";
@@ -75,13 +77,6 @@ in {
         "x-scheme-handler/about" = "firefox.desktop";
         "x-scheme-handler/unknown" = "firefox.desktop";
       };
-    };
-
-    home.pointerCursor = {
-      name = "Capitaine Cursors (Gruvbox)";
-      package = pkgs.capitaine-cursors-themed;
-      size = 24;
-      gtk.enable = true;
     };
 
     programs = {

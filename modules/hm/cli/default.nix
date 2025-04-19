@@ -15,6 +15,7 @@
   xdg.enable = true;
 
   home.sessionVariables = {
+    MANPAGER = "nvim +Man!";
     EDITOR = "nvim";
     VISUAL = "$EDITOR";
     ZSH_CACHE_DIR = "${config.xdg.cacheHome}/zsh";

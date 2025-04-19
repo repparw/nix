@@ -30,6 +30,8 @@
 
       if command -v kitty &> /dev/null; then alias ssh="kitten ssh"; fi
 
+      eval "$(gh copilot alias -- zsh)"
+
       # zsh-autosuggestions accept to ctrl-y
       zvm_after_init_commands+=('bindkey "^Y" autosuggest-accept')
 
