@@ -53,6 +53,7 @@ in {
       package = pkgs.capitaine-cursors-themed;
       size = 24;
       gtk.enable = true;
+      hyprcursor.enable = true;
     };
 
     xdg.mimeApps = {

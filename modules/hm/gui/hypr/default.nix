@@ -52,7 +52,7 @@
         "$screenshot" = "hyprshot -o $XDG_SCREENSHOTS_DIR -m";
         "$desktopmenu" = "killall tofi-drun || tofi-drun";
         #"$emojimenu" = "killall tofi || BEMOJI_PICKER_CMD=${lib.getExe pkgs.tofi} bemoji -n";
-        "$cmdmenu" = "killall tofi-run || tofi-run | xargs hyprctl dispatch exec --";
+        "$cmdmenu" = "killall tofi-run || tofi-run --require-match=false | xargs hyprctl dispatch exec --";
 
         "$showlayout" = "hdrop feh /home/repparw/src/kbd/docs/layout.png";
 

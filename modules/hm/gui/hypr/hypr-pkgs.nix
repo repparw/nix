@@ -22,8 +22,6 @@
       hyprpicker
       hyprpolkitagent
 
-      nautilus
-
       where-is-my-sddm-theme
     ];
 
