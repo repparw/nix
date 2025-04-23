@@ -38,10 +38,22 @@ in {
   options.modules.services = {
     enable = mkEnableOption "podman container services";
 
-    dataDir = mkOption {
+    rootDir = mkOption {
       type = types.path;
       default = "/home/docker";
+      description = "Root directory for the containers";
+    };
+
+    dataDir = mkOption {
+      type = types.path;
+      default = "${cfg.rootDir}/data";
       description = "Directory to store container data";
+    };
+
+    configDir = mkOption {
+      type = types.path;
+      default = "${cfg.rootDir}/config";
+      description = "Directory to store container config";
     };
 
     timezone = mkOption {
@@ -89,5 +101,103 @@ in {
     };
 
     networking.firewall.trustedInterfaces = ["podman*"];
+
+    fileSystems = {
+      "/home/repparw/.config/dlsuite/authelia" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/authelia";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/bazarr" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/bazarr/backup";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/prowlarr" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/prowlarr/Backups";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/qbittorrent" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/qbittorrent/config";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/radarr" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/radarr/Backups";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/sonarr" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/sonarr/Backups";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/swag" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/swag";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/paper" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/paper/export";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+    };
   };
 }

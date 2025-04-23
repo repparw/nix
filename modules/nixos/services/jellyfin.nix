@@ -9,8 +9,8 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/data/media:/data/media:ro"
-      "${cfg.dataDir}/jellyfin:/config:rw"
+      "${cfg.dataDir}/media:/data/media:ro"
+      "${cfg.configDir}/jellyfin:/config:rw"
     ];
     ports = [
       "127.0.0.1:8920:8920/tcp"

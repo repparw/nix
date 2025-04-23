@@ -8,7 +8,7 @@
       "PLAYWRIGHT_DRIVER_URL" = "ws://sockpuppetbrowser:3000";
     };
     volumes = [
-      "${cfg.dataDir}/changedetection:/datastore:rw"
+      "${cfg.configDir}/changedetection:/datastore:rw"
     ];
     dependsOn = [
       "sockpuppetbrowser"
