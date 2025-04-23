@@ -12,7 +12,7 @@
       "DIUN_NOTIF_NTFY_ENDPOINT" = "https://ntfy.${cfg.domain}";
     };
     volumes = [
-      "${cfg.dataDir}/diun:/data:rw"
+      "${cfg.configDir}/diun:/data:rw"
       "/run/user/1000/podman/podman.sock:/var/run/docker.sock"
     ];
   };

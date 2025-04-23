@@ -2,7 +2,7 @@
   "broker" = {
     image = "docker.io/library/redis:7";
     volumes = [
-      "${cfg.dataDir}/paper/redis:/data:rw"
+      "${cfg.configDir}/paper/redis:/data:rw"
     ];
   };
   "paperless" = {
@@ -19,9 +19,9 @@
       "PAPERLESS_URL" = "https://paper.${cfg.domain}";
     };
     volumes = [
-      "${cfg.dataDir}/paper/data:/usr/src/paperless/data:rw"
-      "${cfg.dataDir}/paper/export:/usr/src/paperless/export:rw"
-      "${cfg.dataDir}/paper/media:/usr/src/paperless/media:rw"
+      "${cfg.configDir}/paper/data:/usr/src/paperless/data:rw"
+      "${cfg.configDir}/paper/export:/usr/src/paperless/export:rw"
+      "${cfg.configDir}/paper/media:/usr/src/paperless/media:rw"
     ];
     dependsOn = ["broker" "paperdb"];
   };
@@ -33,7 +33,7 @@
       "POSTGRES_USER" = "paperless";
     };
     volumes = [
-      "${cfg.dataDir}/paper/pg:/var/lib/postgresql/data:rw"
+      "${cfg.configDir}/paper/pg:/var/lib/postgresql/data:rw"
     ];
   };
 }

@@ -8,8 +8,8 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/authelia/config:/config:rw"
-      "${cfg.dataDir}/authelia/secrets:/secrets:rw"
+      "${cfg.configDir}/authelia/config:/config:rw"
+      "${cfg.configDir}/authelia/secrets:/secrets:rw"
     ];
     dependsOn = [
       "valkey"
@@ -21,7 +21,7 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/authelia/valkey:/data:rw"
+      "${cfg.configDir}/authelia/valkey:/data:rw"
     ];
     cmd = ["valkey-server" "--save" "60" "1" "--loglevel" "warning"];
   };
