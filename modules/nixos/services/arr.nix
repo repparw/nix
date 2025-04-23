@@ -7,8 +7,8 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/bazarr:/config:rw"
-      "${cfg.dataDir}/data:/data:rw"
+      "${cfg.configDir}/bazarr:/config:rw"
+      "${cfg.dataDir}:/data:rw"
     ];
   };
   "flaresolverr" = {
@@ -28,7 +28,7 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/prowlarr:/config:rw"
+      "${cfg.configDir}/prowlarr:/config:rw"
     ];
   };
   "qbittorrent" = {
@@ -39,8 +39,8 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/data/torrents:/data/torrents:rw"
-      "${cfg.dataDir}/qbittorrent:/config:rw"
+      "${cfg.dataDir}/torrents:/data/torrents:rw"
+      "${cfg.configDir}/qbittorrent:/config:rw"
     ];
     ports = [
       "127.0.0.1:54536:54536/tcp"
@@ -54,8 +54,8 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/data/:/data:rw"
-      "${cfg.dataDir}/radarr:/config:rw"
+      "${cfg.dataDir}:/data:rw"
+      "${cfg.configDir}/radarr:/config:rw"
     ];
     dependsOn = [
       "qbittorrent"
@@ -70,8 +70,8 @@
     };
     volumes = [
       "/dev/rtc:/dev/rtc:ro"
-      "${cfg.dataDir}/data:/data:rw"
-      "${cfg.dataDir}/sonarr:/config:rw"
+      "${cfg.dataDir}:/data:rw"
+      "${cfg.configDir}/sonarr:/config:rw"
     ];
     dependsOn = [
       "qbittorrent"

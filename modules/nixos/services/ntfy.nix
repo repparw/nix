@@ -13,7 +13,7 @@
       NTFY_ENABLE_LOGIN = "true";
     };
     volumes = [
-      "${cfg.dataDir}/ntfy:/etc/ntfy:rw"
+      "${cfg.configDir}/ntfy:/etc/ntfy:rw"
     ];
   };
 }

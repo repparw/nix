@@ -7,7 +7,7 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/freshrss:/config:rw"
+      "${cfg.configDir}/freshrss:/config:rw"
     ];
   };
   "mercury" = {
