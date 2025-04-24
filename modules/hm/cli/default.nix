@@ -73,7 +73,7 @@
       extraConfig = {
         # git maintainer standards until git3?
         column.ui = "auto";
-        branch.sort = "-commiterdate";
+        branch.sort = "-committerdate";
         tag.sort = "version:refname";
         init.defaultBranch = "main";
         diff = {
