@@ -55,8 +55,28 @@ in {
         ];
       };
     };
-    zsh.initExtra = ''
-      zvm_after_init_commands+=("bindkey -s '^e' 'yazi\n'")
+    zsh.initContent = ''
+      function launch-yazi() {
+        if [ "$1" != "" ]; then
+      	if [ -d "$1" ]; then
+      	  yazi "$1"
+      	else
+      	  yazi "$(zoxide query $1)"
+      	fi
+        else
+      	yazi
+        fi
+        zle reset-prompt
+        return $?
+      }
+
+      # Create the widget from the function
+      zle -N launch-yazi
+
+      # Bind the widget after vi-mode initialization
+      zvm_after_init_commands+=('bindkey "^e" launch-yazi')
+
+      alias y='launch-yazi'
     '';
   };
 }
