@@ -52,6 +52,11 @@ in {
             run = "plugin zoxide";
             desc = "Jump to a directory via zoxide";
           }
+          {
+            on = ["!"];
+            run = "shell '$SHELL' --block";
+            desc = "Open shell";
+          }
         ];
       };
     };
