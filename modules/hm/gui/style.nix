@@ -37,8 +37,10 @@
 
     iconTheme = {
       enable = true;
-      dark = "Gruvbox-Dark";
-      package = pkgs.gruvbox-gtk-theme;
+      dark = "Gruvbox-Plus-Dark";
+      package = pkgs.gruvbox-plus-icons.override {
+        folder-color = "grey";
+      };
     };
 
     targets = {

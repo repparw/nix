@@ -8,7 +8,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixvim-config.url = "github:repparw/nixvim-config";
     nur.url = "github:nix-community/NUR";
-    stylix.url = "git+file:/home/repparw/src/stylix";
+    stylix.url = "github:danth/stylix";
   };
 
   outputs = inputs: let
