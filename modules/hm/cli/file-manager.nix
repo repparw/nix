@@ -10,17 +10,6 @@ in {
     yazi = {
       enable = true;
       enableZshIntegration = true;
-      theme = {
-        flavor = {
-          use = "gruvbox-dark";
-        };
-      };
-      flavors = {
-        gruvbox-dark = fetchTarball {
-          url = "https://github.com/bennyyip/gruvbox-dark.yazi/archive/refs/heads/main.zip";
-          sha256 = "0yyw1wsljl1vr2cdd5y9fjd3vwnf2h31y5jnjc4j0dq88gbjh5rl";
-        };
-      };
       plugins = {
         smart-enter = "${plugins-repo}/smart-enter.yazi";
         jump-to-char = "${plugins-repo}/jump-to-char.yazi";
