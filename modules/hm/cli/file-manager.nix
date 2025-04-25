@@ -62,17 +62,12 @@ in {
     };
     zsh.initContent = ''
       function launch-yazi() {
-        if [ "$1" != "" ]; then
-      	if [ -d "$1" ]; then
-      	  yazi "$1"
-      	else
-      	  yazi "$(zoxide query $1)"
-      	fi
-        else
-      	yazi
+        local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+        yazi "$@" --cwd-file="$tmp"
+        if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+          builtin cd -- "$cwd"
         fi
-        zle reset-prompt
-        return $?
+        rm -f -- "$tmp"
       }
 
       # Create the widget from the function
