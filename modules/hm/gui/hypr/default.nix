@@ -78,9 +78,6 @@
 
           border_size = "1";
 
-          "col.active_border" = "rgba(D4BE98FF)";
-          "col.inactive_border" = "rgba(ebdbb211)";
-
           # Set to true enable resizing windows by clicking and dragging on borders and gaps
           resize_on_border = "false";
 

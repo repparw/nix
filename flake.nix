@@ -1,13 +1,14 @@
 {
   description = "repparw's flake";
   inputs = {
-    nixvim-config.url = "github:repparw/nixvim-config";
     agenix.url = "github:ryantm/agenix";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-24.11";
     home-manager.url = "github:nix-community/home-manager";
     nix-index-database.url = "github:nix-community/nix-index-database";
+    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixvim-config.url = "github:repparw/nixvim-config";
     nur.url = "github:nix-community/NUR";
+    stylix.url = "git+file:/home/repparw/src/stylix";
   };
 
   outputs = inputs: let

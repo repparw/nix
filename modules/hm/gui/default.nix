@@ -15,6 +15,7 @@ in {
     ./mpv.nix
     ./spotify-player.nix
     ./spotifyd.nix
+    ./style.nix
     ./zathura.nix
     ./jellyfin-mpv-shim.nix
     ./obs.nix
@@ -37,23 +38,7 @@ in {
 
     gtk = {
       enable = true;
-      theme = {
-        name = "Gruvbox-Dark";
-        package = pkgs.gruvbox-gtk-theme;
-      };
-      iconTheme = {
-        name = "Gruvbox-Dark";
-        package = pkgs.gruvbox-gtk-theme;
-      };
       gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
-    };
-
-    home.pointerCursor = {
-      name = "Capitaine Cursors (Gruvbox)";
-      package = pkgs.capitaine-cursors-themed;
-      size = 24;
-      gtk.enable = true;
-      hyprcursor.enable = true;
     };
 
     xdg.mimeApps = {
@@ -84,18 +69,12 @@ in {
     programs = {
       kitty = {
         enable = true;
-        themeFile = "GruvboxMaterialDarkMedium";
-        font = {
-          name = "FiraCode Nerd Font Mono";
-          size = 12;
-        };
         settings = {
           disable_ligatures = "cursor";
           enable_audio_bell = "no";
           window_margin = "2 2 0";
           window_padding_width = "1 1 0";
           confirm_os_window_close = 0;
-          background_opacity = "0.9";
         };
       };
 
