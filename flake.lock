@@ -752,16 +752,17 @@
         "tinted-zed": "tinted-zed"
       },
       "locked": {
-        "dirtyRev": "245a167c75a221e5692c08b8a4aa15c76e32c041-dirty",
-        "dirtyShortRev": "245a167-dirty",
-        "lastModified": 1745584517,
-        "narHash": "sha256-k/AN8beJJ9HhX22vyjA4xYhmg3tNFF2GRioir0ajIPo=",
-        "type": "git",
-        "url": "file:/home/repparw/src/stylix"
+        "lastModified": 1745618823,
+        "narHash": "sha256-WGKSI0+CY3Ep2YnRASmBRU8oMIvTW4ngFyjA0dVcKgQ=",
+        "owner": "danth",
+        "repo": "stylix",
+        "rev": "11ceb2fde1901dc227421bbbef2d0800339f5126",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "file:/home/repparw/src/stylix"
+        "owner": "danth",
+        "repo": "stylix",
+        "type": "github"
       }
     },
     "systems": {
