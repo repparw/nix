@@ -9,9 +9,6 @@
       ];
     };
     neovim = inputs.nixvim-config.packages.${prev.system}.default;
-    gruvbox-gtk-theme = prev.gruvbox-gtk-theme.override {
-      iconVariants = ["Dark"];
-    };
   };
 
   # Keep the stable overlay as is

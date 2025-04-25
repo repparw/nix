@@ -95,19 +95,6 @@
     };
   };
 
-  fonts = {
-    packages = with pkgs; [
-      fira-code
-      nerd-fonts.fira-code
-    ];
-
-    fontconfig.defaultFonts = {
-      "sansSerif" = ["FiraCode Nerd Font"];
-      "serif" = ["FiraCode Nerd Font"];
-      "monospace" = ["FiraCode Nerd Font Mono"];
-    };
-  };
-
   environment = {
     pathsToLink = ["/share/zsh"];
 
