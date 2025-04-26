@@ -8,8 +8,6 @@ let
 in {
   "access-tokens.age".publicKeys = users;
 
-  "diun-ntfy.age".publicKeys = users;
-
   "rclone-crypt.age".publicKeys = users;
   "rclone-drive.age".publicKeys = users;
   "rclone-dropbox.age".publicKeys = users;
