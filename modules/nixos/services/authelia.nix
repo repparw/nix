@@ -14,7 +14,7 @@
     dependsOn = [
       "valkey"
     ];
-    extraOptions = ["health-cmd=curl -f http://localhost:9091/api/health || exit 1"];
+    extraOptions = ["--health-cmd=curl -f http://localhost:9091/api/health || exit 1"];
   };
   "valkey" = {
     image = "docker.io/valkey/valkey:7.2-alpine";
@@ -25,6 +25,6 @@
       "${cfg.configDir}/authelia/valkey:/data"
     ];
     cmd = ["valkey-server" "--save" "60" "1" "--loglevel" "warning"];
-    extraOptions = ["health-cmd=nc -z localhost 6379 || exit 1"];
+    extraOptions = ["--health-cmd=nc -z localhost 6379 || exit 1"];
   };
 }
