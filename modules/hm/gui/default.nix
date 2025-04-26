@@ -25,7 +25,6 @@ in {
   config = lib.mkIf cfg.enable {
     home.packages = with pkgs;
       [
-        vesktop
         pwvucontrol
         scrcpy
 
@@ -79,6 +78,17 @@ in {
       };
 
       chromium.enable = true;
+
+      vesktop = {
+        enable = true;
+        settings = {
+          discordBranch = "stable";
+          minimizeToTray = true;
+          arRPC = false;
+          splashColor = "rgb(221, 199, 161)";
+          splashBackground = "rgb(41, 40, 40)";
+        };
+      };
 
       feh = {
         enable = true;

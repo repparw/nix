@@ -102,18 +102,20 @@
       // (with pkgs; {
         feh = "${lib.getExe feh} -x -Z -. --image-bg black";
 
-        top = "${lib.getExe pkgs.bottom} --theme gruvbox";
-        diff = "${lib.getExe pkgs.colordiff}";
-        cat = "${lib.getExe pkgs.bat}";
-        df = "${lib.getExe pkgs.duf}";
-        du = "${lib.getExe pkgs.dust}";
+        top = "${lib.getExe bottom} --theme gruvbox";
+        diff = "${lib.getExe colordiff}";
+        cat = "${lib.getExe bat}";
+        df = "${lib.getExe duf}";
+        du = "${lib.getExe dust}";
 
-        rpi = "${lib.getExe' pkgs.mosh "mosh"} -P 60001 --ssh 'ssh -p 2222' rpi";
-        pc = "${lib.getExe' pkgs.mosh "mosh"} -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
+        rpi = "${lib.getExe' mosh "mosh"} -P 60001 --ssh 'ssh -p 2222' rpi";
+        pc = "${lib.getExe' mosh "mosh"} -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
 
-        nq = "NQDIR=/tmp/nq ${lib.getExe' pkgs.nq "nq"}";
-        tq = "NQDIR=/tmp/nq ${lib.getExe' pkgs.nq "tq"}";
-        fq = "NQDIR=/tmp/nq ${lib.getExe' pkgs.nq "fq"}";
+        nq = "NQDIR=/tmp/nq ${lib.getExe' nq "nq"}";
+        tq = "NQDIR=/tmp/nq ${lib.getExe' nq "tq"}";
+        fq = "NQDIR=/tmp/nq ${lib.getExe' nq "fq"}";
+
+        ns = "${lib.getExe nix-search-tv} print | fzf --preview '${lib.getExe nix-search-tv} preview {}' --scheme history";
       });
 
     shellGlobalAliases = {
