@@ -14,7 +14,6 @@
     dependsOn = [
       "valkey"
     ];
-    extraOptions = ["--health-cmd=curl -f http://localhost:9091/api/health || exit 1"];
   };
   "valkey" = {
     image = "docker.io/valkey/valkey:7.2-alpine";

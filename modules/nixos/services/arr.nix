@@ -37,7 +37,7 @@
       "${cfg.configDir}/prowlarr:/config"
     ];
     extraOptions = [
-      "--health-cmd=curl -f http://localhost:9696/api/v1/health || exit 1"
+      "--health-cmd=curl -f http://localhost:9696/ping || exit 1"
     ];
   };
   "qbittorrent" = {
@@ -73,7 +73,7 @@
       "qbittorrent"
     ];
     extraOptions = [
-      "--health-cmd=curl -f http://localhost:7878/api/v3/system/status || exit 1"
+      "--health-cmd=curl -f http://localhost:7878/ping || exit 1"
     ];
   };
   "sonarr" = {
@@ -92,7 +92,7 @@
       "qbittorrent"
     ];
     extraOptions = [
-      "--health-cmd=curl -f http://localhost:8989/api/v3/system/status || exit 1"
+      "--health-cmd=curl -f http://localhost:8989/ping || exit 1"
     ];
   };
 }

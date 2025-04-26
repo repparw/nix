@@ -15,6 +15,5 @@
   };
   "mercury" = {
     image = "docker.io/wangqiru/mercury-parser-api:latest";
-    extraOptions = ["--health-cmd=curl -f http://localhost:3000/api/v1/health || exit 1"];
   };
 }
