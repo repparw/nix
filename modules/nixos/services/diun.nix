@@ -15,8 +15,5 @@
       "${cfg.configDir}/diun:/data"
       "/run/podman/podman.sock:/var/run/docker.sock"
     ];
-    extraOptions = [
-      "--health-cmd=curl -f http://localhost:8080/ || exit 1"
-    ];
   };
 }
