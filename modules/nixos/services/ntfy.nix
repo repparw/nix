@@ -13,7 +13,10 @@
       NTFY_ENABLE_LOGIN = "true";
     };
     volumes = [
-      "${cfg.configDir}/ntfy:/etc/ntfy:rw"
+      "${cfg.configDir}/ntfy:/etc/ntfy"
+    ];
+    extraOptions = [
+      "--health-cmd=wget -q --tries=1 http://localhost:80/v1/health -O - | grep -Eo '\"healthy\"\\s*:\\s*true' || exit 1"
     ];
   };
 }

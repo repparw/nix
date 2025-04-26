@@ -2,7 +2,9 @@
   "broker" = {
     image = "docker.io/library/redis:7";
     volumes = [
-      "${cfg.configDir}/paper/redis:/data:rw"
+      "${cfg.configDir}/paper/redis:/data"
+    ];
+    extraOptions = [
     ];
   };
   "paperless" = {
@@ -19,11 +21,14 @@
       "PAPERLESS_URL" = "https://paper.${cfg.domain}";
     };
     volumes = [
-      "${cfg.configDir}/paper/data:/usr/src/paperless/data:rw"
-      "${cfg.configDir}/paper/export:/usr/src/paperless/export:rw"
-      "${cfg.configDir}/paper/media:/usr/src/paperless/media:rw"
+      "${cfg.configDir}/paper/data:/usr/src/paperless/data"
+      "${cfg.configDir}/paper/export:/usr/src/paperless/export"
+      "${cfg.configDir}/paper/media:/usr/src/paperless/media"
     ];
     dependsOn = ["broker" "paperdb"];
+    extraOptions = [
+      "--health-cmd=curl -f http://localhost:8000/api/ || exit 1"
+    ];
   };
   "paperdb" = {
     image = "docker.io/library/postgres:15";
@@ -33,7 +38,10 @@
       "POSTGRES_USER" = "paperless";
     };
     volumes = [
-      "${cfg.configDir}/paper/pg:/var/lib/postgresql/data:rw"
+      "${cfg.configDir}/paper/pg:/var/lib/postgresql/data"
+    ];
+    extraOptions = [
+      "--health-cmd=pg_isready -U paperless || exit 1"
     ];
   };
 }

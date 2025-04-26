@@ -11,7 +11,7 @@
       "VALIDATION" = "dns";
     };
     volumes = [
-      "${cfg.configDir}/swag:/config:rw"
+      "${cfg.configDir}/swag:/config"
     ];
     ports = [
       "80:80/tcp"
@@ -29,7 +29,10 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.configDir}/ddclient:/config:rw"
+      "${cfg.configDir}/ddclient:/config"
+    ];
+    extraOptions = [
+      "--health-cmd=pgrep ddclient || exit 1"
     ];
   };
 }

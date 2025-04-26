@@ -7,8 +7,11 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.configDir}/bazarr:/config:rw"
-      "${cfg.dataDir}:/data:rw"
+      "${cfg.configDir}/bazarr:/config"
+      "${cfg.dataDir}:/data"
+    ];
+    extraOptions = [
+      "--health-cmd=curl -f http://localhost:6767/bazarr/api/status || exit 1"
     ];
   };
   "flaresolverr" = {
@@ -19,6 +22,9 @@
       "LOG_LEVEL" = "info";
       "TZ" = cfg.timezone;
     };
+    extraOptions = [
+      "--health-cmd=curl -f http://localhost:8191/health || exit 1"
+    ];
   };
   "prowlarr" = {
     image = "docker.io/linuxserver/prowlarr:latest";
@@ -28,22 +34,28 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.configDir}/prowlarr:/config:rw"
+      "${cfg.configDir}/prowlarr:/config"
+    ];
+    extraOptions = [
+      "--health-cmd=curl -f http://localhost:9696/api/v1/health || exit 1"
     ];
   };
   "qbittorrent" = {
     image = "docker.io/hotio/qbittorrent:latest";
     environment = {
-      "PUID" = "1000";
-      "PGID" = "100";
+      "PUID" = cfg.user;
+      "PGID" = cfg.group;
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/torrents:/data/torrents:rw"
-      "${cfg.configDir}/qbittorrent:/config:rw"
+      "${cfg.dataDir}/torrents:/data/torrents"
+      "${cfg.configDir}/qbittorrent:/config"
     ];
     ports = [
       "127.0.0.1:54536:54536/tcp"
+    ];
+    extraOptions = [
+      "--health-cmd=curl -f http://localhost:8080/api/v2/app/version || exit 1"
     ];
   };
   "radarr" = {
@@ -54,11 +66,14 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}:/data:rw"
-      "${cfg.configDir}/radarr:/config:rw"
+      "${cfg.dataDir}:/data"
+      "${cfg.configDir}/radarr:/config"
     ];
     dependsOn = [
       "qbittorrent"
+    ];
+    extraOptions = [
+      "--health-cmd=curl -f http://localhost:7878/api/v3/system/status || exit 1"
     ];
   };
   "sonarr" = {
@@ -70,11 +85,14 @@
     };
     volumes = [
       "/dev/rtc:/dev/rtc:ro"
-      "${cfg.dataDir}:/data:rw"
-      "${cfg.configDir}/sonarr:/config:rw"
+      "${cfg.dataDir}:/data"
+      "${cfg.configDir}/sonarr:/config"
     ];
     dependsOn = [
       "qbittorrent"
+    ];
+    extraOptions = [
+      "--health-cmd=curl -f http://localhost:8989/api/v3/system/status || exit 1"
     ];
   };
 }

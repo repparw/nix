@@ -12,8 +12,11 @@
       "DIUN_NOTIF_NTFY_ENDPOINT" = "https://ntfy.${cfg.domain}";
     };
     volumes = [
-      "${cfg.configDir}/diun:/data:rw"
-      "/run/user/1000/podman/podman.sock:/var/run/docker.sock"
+      "${cfg.configDir}/diun:/data"
+      "$XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock"
+    ];
+    extraOptions = [
+      "--health-cmd=curl -f http://localhost:8080/health || exit 1"
     ];
   };
 }
