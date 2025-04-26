@@ -13,7 +13,6 @@
     dependsOn = [
       "sockpuppetbrowser"
     ];
-    extraOptions = ["curl -f http://localhost:5000/health || exit 1"];
   };
   "sockpuppetbrowser" = {
     image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";
@@ -23,6 +22,5 @@
       "SCREEN_DEPTH" = "16";
       "MAX_CONCURRENT_CHROME_PROCESSES" = "10";
     };
-    extraOptions = ["--health-cmd=curl -f http://localhost:3000 || exit 1"];
   };
 }

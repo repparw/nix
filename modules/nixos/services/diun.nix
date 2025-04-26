@@ -13,10 +13,10 @@
     };
     volumes = [
       "${cfg.configDir}/diun:/data"
-      "$XDG_RUNTIME_DIR/podman/podman.sock:/var/run/docker.sock"
+      "/run/podman/podman.sock:/var/run/docker.sock"
     ];
     extraOptions = [
-      "--health-cmd=curl -f http://localhost:8080/health || exit 1"
+      "--health-cmd=curl -f http://localhost:8080/ || exit 1"
     ];
   };
 }
