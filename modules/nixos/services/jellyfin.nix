@@ -10,7 +10,7 @@
     };
     volumes = [
       "${cfg.dataDir}/media:/data/media:ro"
-      "${cfg.configDir}/jellyfin:/config:rw"
+      "${cfg.configDir}/jellyfin:/config"
     ];
     ports = [
       "127.0.0.1:8920:8920/tcp"
@@ -18,6 +18,7 @@
     ];
     extraOptions = [
       "--device=/dev/dri:/dev/dri:rwm"
+      "--health-cmd=curl -f http://localhost:8096/health || exit 1"
     ];
   };
 }

@@ -8,12 +8,13 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.configDir}/authelia/config:/config:rw"
-      "${cfg.configDir}/authelia/secrets:/secrets:rw"
+      "${cfg.configDir}/authelia/config:/config"
+      "${cfg.configDir}/authelia/secrets:/secrets"
     ];
     dependsOn = [
       "valkey"
     ];
+    extraOptions = ["health-cmd=curl -f http://localhost:9091/api/health || exit 1"];
   };
   "valkey" = {
     image = "docker.io/valkey/valkey:7.2-alpine";
@@ -21,8 +22,9 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.configDir}/authelia/valkey:/data:rw"
+      "${cfg.configDir}/authelia/valkey:/data"
     ];
     cmd = ["valkey-server" "--save" "60" "1" "--loglevel" "warning"];
+    extraOptions = ["health-cmd=nc -z localhost 6379 || exit 1"];
   };
 }
