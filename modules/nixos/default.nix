@@ -11,6 +11,7 @@
     ./hyprland.nix
     ./obs.nix
     ./services
+    ./style.nix
     ./timers.nix
     ./vm.nix
   ];
