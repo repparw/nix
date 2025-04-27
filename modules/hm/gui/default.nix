@@ -15,7 +15,6 @@ in {
     ./mpv.nix
     ./spotify-player.nix
     ./spotifyd.nix
-    ./style.nix
     ./zathura.nix
     ./jellyfin-mpv-shim.nix
     ./obs.nix
