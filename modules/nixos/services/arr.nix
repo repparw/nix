@@ -13,6 +13,9 @@
     extraOptions = [
       "--health-cmd=curl -f http://localhost:6767/bazarr/api/status || exit 1"
     ];
+    labels = {
+      "glance.id" = "bazarr";
+    };
   };
   "flaresolverr" = {
     image = "docker.io/flaresolverr/flaresolverr:latest";
@@ -25,6 +28,9 @@
     extraOptions = [
       "--health-cmd=curl -f http://localhost:8191/health || exit 1"
     ];
+    labels = {
+      "glance.parent" = "bazarr";
+    };
   };
   "prowlarr" = {
     image = "docker.io/linuxserver/prowlarr:latest";
@@ -57,6 +63,9 @@
     extraOptions = [
       "--health-cmd=curl -f http://localhost:8080/api/v2/app/version || exit 1"
     ];
+    labels = {
+      "glance.url" = "https://qbit.${cfg.domain}";
+    };
   };
   "radarr" = {
     image = "docker.io/linuxserver/radarr:latest";

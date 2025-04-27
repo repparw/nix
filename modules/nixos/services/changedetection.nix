@@ -13,6 +13,9 @@
     dependsOn = [
       "sockpuppetbrowser"
     ];
+    labels = {
+      "glance.id" = "changedetection";
+    };
   };
   "sockpuppetbrowser" = {
     image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";
@@ -21,6 +24,9 @@
       "SCREEN_HEIGHT" = "1024";
       "SCREEN_DEPTH" = "16";
       "MAX_CONCURRENT_CHROME_PROCESSES" = "10";
+    };
+    labels = {
+      "glance.parent" = "changedetection";
     };
   };
 }

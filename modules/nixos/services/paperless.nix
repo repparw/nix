@@ -6,6 +6,9 @@
     ];
     extraOptions = [
     ];
+    labels = {
+      "glance.parent" = "paperless";
+    };
   };
   "paperless" = {
     image = "docker.io/paperlessngx/paperless-ngx:latest";
@@ -29,6 +32,10 @@
     extraOptions = [
       "--health-cmd=curl -f http://localhost:8000/api/ || exit 1"
     ];
+    labels = {
+      "glance.id" = "paperless";
+      "glance.url" = "https://paper.${cfg.domain}";
+    };
   };
   "paperdb" = {
     image = "docker.io/library/postgres:15";
@@ -43,5 +50,8 @@
     extraOptions = [
       "--health-cmd=pg_isready -U paperless || exit 1"
     ];
+    labels = {
+      "glance.parent" = "paperless";
+    };
   };
 }
