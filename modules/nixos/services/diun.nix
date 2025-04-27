@@ -15,5 +15,8 @@
       "${cfg.configDir}/diun:/data"
       "/run/podman/podman.sock:/var/run/docker.sock"
     ];
+    labels = {
+      "glance.hide" = "true";
+    };
   };
 }

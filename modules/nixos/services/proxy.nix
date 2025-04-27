@@ -20,6 +20,13 @@
     capabilities = {
       NET_ADMIN = true;
     };
+    dependsOn = [
+      "glance"
+    ];
+    labels = {
+      "glance.id" = "swag";
+      "glance.hide" = "true";
+    };
   };
   "ddclient" = {
     image = "docker.io/linuxserver/ddclient:latest";
@@ -34,5 +41,18 @@
     extraOptions = [
       "--health-cmd=pgrep ddclient || exit 1"
     ];
+    labels = {
+      "glance.parent" = "swag";
+    };
+  };
+  "glance" = {
+    image = "docker.io/glanceapp/glance:latest";
+    volumes = [
+      "${cfg.configDir}/glance:/app/config"
+      "/run/podman/podman.sock:/var/run/docker.sock"
+    ];
+    labels = {
+      "glance.parent" = "swag";
+    };
   };
 }
