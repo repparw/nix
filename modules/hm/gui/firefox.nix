@@ -52,6 +52,7 @@
             extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
               darkreader
               bitwarden
+              refined-github
             ];
           };
         kiosk =

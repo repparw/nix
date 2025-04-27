@@ -134,6 +134,102 @@ in {
         ];
       };
 
+      "/home/repparw/.config/dlsuite/changedetection" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/changedetection";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/ddclient" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/ddclient";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/diun" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/diun";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/freshrss" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/freshrss";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/glance" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/glance";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/jellyfin" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/jellyfin";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/ntfy" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/ntfy";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
+      "/home/repparw/.config/dlsuite/paper" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/paper/export";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
       "/home/repparw/.config/dlsuite/prowlarr" = {
         depends = [
           "/"
@@ -188,18 +284,6 @@ in {
           "/mnt/hdd"
         ];
         device = "${cfg.configDir}/swag";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/paper" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/paper/export";
         options = [
           "bind"
           "ro"
