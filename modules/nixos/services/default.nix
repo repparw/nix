@@ -8,7 +8,6 @@ with lib; let
 
   mkContainer = name: attrs:
     mkMerge [
-      #{ # can add common attrs, e.g networks = ["podman"]; not needed, its default neetwork }
       attrs
       {
         extraOptions =
@@ -16,6 +15,14 @@ with lib; let
           ++ [
             "--network-alias=${name}"
           ];
+        labels =
+          (attrs.labels or {})
+          // {
+            "glance.name" = name;
+            "glance.url" = lib.mkDefault "https://${name}.${cfg.domain}";
+            "glance.icon" = "di:${name}";
+            "glance.same-tab" = "true";
+          };
       }
     ];
 

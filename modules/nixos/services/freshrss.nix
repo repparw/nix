@@ -12,8 +12,15 @@
     extraOptions = [
       "--health-cmd=curl -f http://localhost:80/api/greader.php || exit 1"
     ];
+    labels = {
+      "glance.id" = "freshrss";
+      "glance.url" = "https://rss.${cfg.domain}";
+    };
   };
   "mercury" = {
     image = "docker.io/wangqiru/mercury-parser-api:latest";
+    labels = {
+      "glance.parent" = "freshrss";
+    };
   };
 }
