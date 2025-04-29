@@ -61,7 +61,7 @@
         "$screenoff" = "sleep 3 && hyprctl dispatch dpms off";
 
         # Terminal
-        "$terminal" = "kitty";
+        "$terminal" = "ghostty";
         "$top" = "$terminal zsh -ic top";
         "$fileManager" = "hdrop $terminal --class filemanager zsh -ic yazi";
         "$spotify" = "$terminal --class spotify spotify_player";
@@ -175,9 +175,9 @@
             "SHIFT $mod, X, movewindow,mon:+1"
 
             # Scroll through monitor active workspaces with mainMod + scroll
-            "$mod, C, workspace, m+1"
+            "ALT, TAB, workspace, m+1"
+            "ALT SHIFT, TAB, workspace, previous_per_monitor"
             ", mouse:276, workspace, m+1"
-            "$mod SHIFT, C, workspace, previous_per_monitor"
 
             "$mod, comma, exec, [float; noinitialfocus; noborder; center] $showlayout"
 
