@@ -97,7 +97,7 @@
             family = "ipv4";
             tooltip-format-wifi = "  {ifname} @ {essid}\nIP: {ipaddr}\nStrength: {signalStrength}%\nFreq: {frequency}MHz\n {bandwidthUpBits}  {bandwidthDownBits}";
             tooltip-format-ethernet = "󰈁 {ifname}\nIP: {ipaddr}\n {bandwidthUpBits}  {bandwidthDownBits}";
-            on-click = "kitty nmtui";
+            on-click = "ghostty nmtui";
           };
           "pulseaudio" = {
             scroll-step = 3; # %, can be a float
