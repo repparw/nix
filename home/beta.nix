@@ -2,6 +2,6 @@
   modules.kanshi.enable = true;
 
   home.packages = with pkgs; [
-    brightnessctl # backlight
-  ];
+    brightnessctl
+  ]; # TODO: fix brightness shortcuts / backlight
 }
