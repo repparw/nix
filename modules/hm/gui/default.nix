@@ -65,7 +65,16 @@ in {
     };
 
     programs = {
-      ghostty.enable = true;
+      kitty = {
+        enable = true;
+        settings = {
+          disable_ligatures = "cursor";
+          enable_audio_bell = "no";
+          window_margin = "2 2 0";
+          window_padding_width = "1 1 0";
+          confirm_os_window_close = 0;
+        };
+      };
 
       chromium.enable = true;
 

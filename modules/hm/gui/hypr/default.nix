@@ -61,7 +61,7 @@
         "$screenoff" = "sleep 3 && hyprctl dispatch dpms off";
 
         # Terminal
-        "$terminal" = "ghostty";
+        "$terminal" = "kitty";
         "$top" = "$terminal zsh -ic top";
         "$fileManager" = "hdrop $terminal --class filemanager zsh -ic yazi";
         "$spotify" = "$terminal --class spotify spotify_player";
