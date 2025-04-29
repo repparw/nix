@@ -39,7 +39,7 @@
         nq
       ];
       text = ''
-        tmux new-session -d -s mpv; tmux send-keys -t mpv "  NQDIR=/tmp/nq/tmux nq -cq mpv --no-terminal $(wl-paste)" C-m
+        notify-send -t 2000 'MPV' 'Loading video...'; mpv --no-terminal "$(wl-paste)"
       '';
     })
 
