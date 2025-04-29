@@ -69,6 +69,7 @@
             enableCenterBackColors = true;
             enableRightBackColors = true;
           };
+          kitty.variant256Colors = true;
         };
       };
     }
