@@ -29,6 +29,8 @@
       ''
         [[ ! -f $ZDOTDIR/.p10k.zsh ]] || source $ZDOTDIR/.p10k.zsh
 
+        if command -v kitty &> /dev/null; then alias ssh="kitten ssh"; fi
+
         eval "$(gh copilot alias -- zsh)"
 
         # zsh-autosuggestions accept to ctrl-y
