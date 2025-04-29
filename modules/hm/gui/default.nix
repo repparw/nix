@@ -73,6 +73,10 @@ in {
           window_margin = "2 2 0";
           window_padding_width = "1 1 0";
           confirm_os_window_close = 0;
+          input_delay = 0;
+          repaint_delay = 8;
+          sync_to_monitor = "no";
+          wayland_enable_ime = "no";
         };
       };
 
