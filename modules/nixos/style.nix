@@ -38,7 +38,7 @@
         transparentBackground = {
           main = true;
           signColumn = true;
-          #numberLine = true;
+          numberLine = true;
         };
       };
     };
