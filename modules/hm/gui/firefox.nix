@@ -72,17 +72,17 @@
           // {
             id = 2;
             path = "socials";
-            userContent = ''
-              @-moz-document domain("web.whatsapp.com") {
-                #app > div > div:last-child > div:first-child {
-                  max-width: initial !important;
-                  width: 100% !important;
-                  height: 100% !important;
-                  margin: 0 !important;
-                  position: unset !important;
-                }
-              }
-            '';
+            #userContent = ''
+            #  @-moz-document domain("web.whatsapp.com") {
+            #    #app > div > div:last-child > div:first-child {
+            #      max-width: initial !important;
+            #      width: 100% !important;
+            #      height: 100% !important;
+            #      margin: 0 !important;
+            #      position: unset !important;
+            #    }
+            #  }
+            #'';
           };
       };
     };
