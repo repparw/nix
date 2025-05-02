@@ -4,8 +4,8 @@
     agenix.url = "github:ryantm/agenix";
     home-manager.url = "github:nix-community/home-manager";
     nix-index-database.url = "github:nix-community/nix-index-database";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-24.11";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs-stable.url = "git+https://github.com/NixOS/nixpkgs?shallow=1&ref=nixos-24.11";
+    nixpkgs.url = "git+https://github.com/NixOS/nixpkgs?shallow=1&ref=nixos-unstable";
     nixvim-config.url = "github:repparw/nixvim-config";
     nur.url = "github:nix-community/NUR";
     stylix.url = "github:danth/stylix";
