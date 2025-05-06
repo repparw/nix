@@ -7,8 +7,8 @@
     enable = true;
     plugins = with pkgs.fishPlugins; [
       {
-        name = "hydro";
-        src = hydro.src;
+        name = "pure";
+        src = pure.src;
       }
       {
         name = "plugin-git";
