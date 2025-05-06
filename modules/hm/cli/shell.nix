@@ -12,7 +12,11 @@
       }
       {
         name = "plugin-git";
-        src = pkgs.fishPlugins.plugin-git.src;
+        src = plugin-git.src;
+      }
+      {
+        name = "done";
+        src = done.src;
       }
     ];
     interactiveShellInit = ''
@@ -21,6 +25,9 @@
       end
 
       set -g fish_key_bindings fish_vi_key_bindings
+
+      bind --preset --erase ctrl-y
+      bind ctrl-y accept-autosuggestion
 
       if type -q kitty
         alias ssh "kitten ssh"
