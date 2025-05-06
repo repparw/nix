@@ -20,7 +20,6 @@
 
       hyprshot
       hyprpicker
-      hyprpolkitagent
 
       nautilus
 
@@ -29,6 +28,8 @@
 
     services = {
       swaync.enable = true;
+
+      hyprpolkitagent.enable = true;
 
       hyprpaper = {
         enable = true;
