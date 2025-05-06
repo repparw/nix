@@ -60,8 +60,8 @@
         "$screenoff" = "sleep 3 && hyprctl dispatch dpms off";
 
         # Terminal
-        "$terminal" = "fish";
-        "$shell" = "";
+        "$terminal" = "kitty";
+        "$shell" = "fish";
         "$top" = "$terminal $shell -ic top";
         "$fileManager" = "hdrop $terminal --class filemanager $shell -ic yazi";
         "$spotify" = "$terminal --class spotify spotify_player";
