@@ -5,7 +5,7 @@
 }: {
   programs.tmux = {
     enable = true;
-    shell = "${lib.getExe pkgs.zsh}";
+    shell = "${lib.getExe pkgs.fish}";
     terminal = "xterm-kitty";
     historyLimit = 10000;
     prefix = "C-a";

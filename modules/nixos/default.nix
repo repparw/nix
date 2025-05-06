@@ -96,8 +96,6 @@
   };
 
   environment = {
-    pathsToLink = ["/share/zsh"];
-
     systemPackages = with pkgs; [
       inputs.agenix.packages."${system}".default
       vim

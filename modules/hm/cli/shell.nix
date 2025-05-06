@@ -1,16 +1,11 @@
 {
   pkgs,
-  config,
   lib,
   ...
 }: {
   programs.fish = {
     enable = true;
     plugins = with pkgs.fishPlugins; [
-      {
-        name = "z";
-        src = z.src;
-      }
       {
         name = "hydro";
         src = hydro.src;
@@ -33,41 +28,10 @@
     '';
     shellInit = ''
       set -U fish_greeting
+      function fish_mode_prompt; end # hides vi mode
     '';
   };
-  programs.zsh = {
-    dotDir = ".config/zsh";
-    history.path = "$ZDOTDIR/.history";
-    antidote = {
-      enable = true;
-      plugins = [
-        # OMZ completions requiring compinit
-        "ohmyzsh/ohmyzsh path:plugins/podman/completions kind:fpath"
-
-        # compinit
-        "belak/zsh-utils path:completion"
-
-        # ohmyzsh plugins
-        "ohmyzsh/ohmyzsh path:lib"
-        "ohmyzsh/ohmyzsh path:plugins/git"
-        "ohmyzsh/ohmyzsh path:plugins/rsync"
-        "ohmyzsh/ohmyzsh path:plugins/podman"
-        "ohmyzsh/ohmyzsh path:plugins/tmux"
-
-        "romkatv/powerlevel10k"
-
-        "MichaelAquilina/zsh-you-should-use"
-
-        # fish-like features
-        "zsh-users/zsh-syntax-highlighting"
-        "zsh-users/zsh-autosuggestions"
-        "zsh-users/zsh-history-substring-search"
-      ];
-    };
-  };
   home = {
-    file."${config.programs.zsh.dotDir}/.p10k.zsh".source = ../../source/p10k.zsh;
-
     shellAliases =
       {
         sudo = "sudo ";
