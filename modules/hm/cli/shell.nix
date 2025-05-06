@@ -29,6 +29,13 @@
       bind --preset --erase ctrl-y
       bind ctrl-y accept-autosuggestion
 
+      function t # t 12m or t 9m pizza
+        set label $argv[2]
+        test -z "$label"; and set label "▓▓▓"
+
+        fish -c "sleep $argv[1] && notify-send -u critical -t 0 $label" &> /dev/null
+      end
+
       if type -q kitty
         alias ssh "kitten ssh"
       end
