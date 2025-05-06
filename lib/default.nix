@@ -36,9 +36,10 @@
   ];
 
   # Helper function to create a NixOS system configuration
-  mkHost = hostname: {
+  mkHost = hostname: system: {
+    # Added 'system' parameter here
     ${hostname} = inputs.nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
+      inherit system; # Use the 'system' parameter
       modules = mkModules hostname;
       specialArgs = {
         inherit inputs;
