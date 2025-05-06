@@ -9,7 +9,7 @@
     ./rclone.nix
     ./scripts.nix
     ./tmux.nix
-    ./zsh.nix
+    ./shell.nix
   ];
 
   xdg.enable = true;
@@ -47,7 +47,6 @@
     gh = {
       enable = true;
       extensions = [pkgs.gh-copilot];
-      settings.aliases = {cs = "copilot suggest";};
     };
 
     zoxide = {
@@ -124,7 +123,6 @@
   home.packages = with pkgs;
     [
       # essentials
-      zsh
       curl
       wget
       unzip
@@ -135,7 +133,6 @@
       imagemagick
       less
       yt-dlp
-      fzf
 
       qmk
 
