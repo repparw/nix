@@ -18,7 +18,6 @@
     MANPAGER = "nvim +Man!";
     EDITOR = "nvim";
     VISUAL = "$EDITOR";
-    ZSH_CACHE_DIR = "${config.xdg.cacheHome}/zsh";
     XDG_SCREENSHOTS_DIR = "${config.xdg.userDirs.pictures}/ss";
     XCURSOR_SIZE = 24;
     HYPRCURSOR_SIZE = 24;

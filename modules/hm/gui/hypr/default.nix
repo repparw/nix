@@ -60,11 +60,12 @@
         "$screenoff" = "sleep 3 && hyprctl dispatch dpms off";
 
         # Terminal
-        "$terminal" = "kitty";
-        "$top" = "$terminal zsh -ic top";
-        "$fileManager" = "hdrop $terminal --class filemanager zsh -ic yazi";
+        "$terminal" = "fish";
+        "$shell" = "";
+        "$top" = "$terminal $shell -ic top";
+        "$fileManager" = "hdrop $terminal --class filemanager $shell -ic yazi";
         "$spotify" = "$terminal --class spotify spotify_player";
-        "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim zsh -ic obsinvim'";
+        "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim $shell -ic obsinvim'";
         "$notes2" = "hdrop -c obsidian 'obsidian'";
 
         # Autostart
@@ -191,12 +192,12 @@
             "$mod SHIFT, SPACE, exec, $browser2"
             "$mod, T, exec, $top"
             "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
-            "$mod, U, exec, $terminal --hold zsh -ic nup"
+            "$mod, U, exec, $terminal --hold $shell -ic nup"
             "$mod, V, exec, $kiosk jellyfin.repparw.me"
             "$mod, Z, exec, $prefix mpvclip"
             "$mod, N, exec, $notes"
             "$mod SHIFT, N, exec, $notes2"
-            "$mod, R, exec, $terminal zsh -ic rpi"
+            "$mod, R, exec, $terminal $shell -ic rpi"
             "$mod, B, exec, $prefix bttoggle"
             "$mod, P, exec, $prefix scrcpy -e -S"
             #"$mod, P, exec, [monitor 1;workspace 2 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"

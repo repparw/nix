@@ -9,7 +9,6 @@ in {
   programs = {
     yazi = {
       enable = true;
-      enableZshIntegration = true;
       plugins = {
         smart-enter = "${plugins-repo}/smart-enter.yazi";
         jump-to-char = "${plugins-repo}/jump-to-char.yazi";
@@ -49,23 +48,5 @@ in {
         ];
       };
     };
-    zsh.initContent = ''
-      function launch-yazi() {
-        local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-        yazi "$@" --cwd-file="$tmp"
-        if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-          builtin cd -- "$cwd"
-        fi
-        rm -f -- "$tmp"
-      }
-
-      # Create the widget from the function
-      zle -N launch-yazi
-
-      # Bind the widget after vi-mode initialization
-      zvm_after_init_commands+=('bindkey "^e" launch-yazi')
-
-      alias y='launch-yazi'
-    '';
   };
 }
