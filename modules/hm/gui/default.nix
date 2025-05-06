@@ -79,6 +79,9 @@ in {
           sync_to_monitor = "no";
           wayland_enable_ime = "no";
         };
+        keybindings = {
+          "ctrl+backspace" = "send_text all \\x17";
+        };
       };
 
       chromium.enable = true;
