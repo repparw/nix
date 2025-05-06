@@ -69,6 +69,7 @@ in {
         enable = true;
         settings = {
           disable_ligatures = "cursor";
+          text_fg_override_threshold = "4.5 ratio";
           enable_audio_bell = "no";
           window_margin = "2 2 0";
           window_padding_width = "1 1 0";
