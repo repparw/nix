@@ -15,8 +15,9 @@
     lib = import ./lib {inherit inputs;};
   in {
     nixosConfigurations =
-      lib.mkHost "alpha"
-      // lib.mkHost "beta"
+      lib.mkHost "alpha" "x86_64-linux"
+      // lib.mkHost "beta" "x86_64-linux"
+      // lib.mkHost "pi" "aarch64-linux"
       // {
         iso = inputs.nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
