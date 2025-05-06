@@ -22,6 +22,7 @@ with lib; let
             "glance.url" = lib.mkDefault "https://${name}.${cfg.domain}";
             "glance.icon" = "di:${name}";
             "glance.same-tab" = "true";
+            "io.containers.autoupdate" = "registry";
           };
       }
     ];
