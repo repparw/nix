@@ -25,7 +25,7 @@ in {
 
   system.autoUpgrade = {
     enable = true;
-    flake = "${flakePath}#${config.networking.hostName}";
+    flake = "${flakePath}";
     flags = [
       "-L"
     ];
