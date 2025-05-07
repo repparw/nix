@@ -1,4 +1,4 @@
-{inputs, config, lib, pkgs, ...}: {
+{pkgs, ...}: {
   system.autoUpgrade = {
     enable = true;
     flake = "github:repparw/nix";
@@ -7,10 +7,10 @@
 
   # Add Git-aware upgrade service
   systemd.services.nixos-upgrade = {
-    path = with pkgs; [ systemd libnotify git ];
-    
+    path = with pkgs; [systemd libnotify git];
+
     # Pre-upgrade hook to check Git state
-    preStart = pkgs.writeScript "pre-upgrade-check" ''
+    preStart = ''
       #!${pkgs.bash}/bin/bash
       set -e
 
@@ -28,7 +28,7 @@
     '';
 
     # Post-upgrade hook to handle Git state
-    postStart = pkgs.writeScript "post-upgrade-handler" ''
+    postStart = ''
       #!${pkgs.bash}/bin/bash
       set -e
 
@@ -47,7 +47,7 @@
       else
         # Stage all changes
         git add .
-        
+
         # Create a commit
         if git commit -m "$COMMIT_MSG"; then
           echo "Changes committed successfully"
@@ -68,8 +68,13 @@
         fi
       done
     '';
+  };
 
-    onFailure = pkgs.writeScript "upgrade-failure-notification" ''
+  # Create a separate service for failure notifications
+  systemd.services.nixos-upgrade-failure = {
+    description = "Notify on NixOS upgrade failure";
+    path = with pkgs; [systemd libnotify];
+    script = ''
       #!${pkgs.bash}/bin/bash
       set -e
 
@@ -85,4 +90,7 @@
       done
     '';
   };
+
+  # Link the failure notification service to the upgrade service
+  systemd.services.nixos-upgrade.onFailure = ["nixos-upgrade-failure.service"];
 }
