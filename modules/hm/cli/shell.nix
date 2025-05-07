@@ -26,11 +26,6 @@
 
       set -g fish_key_bindings fish_vi_key_bindings
 
-      bind ctrl-y accept-autosuggestion
-      bind ctrl-f accept-autosuggestion
-
-      bind ctrl-e yazi
-
       function t # t 12m or t 9m pizza
         set label $argv[2]
         test -z "$label"; and set label "▓▓▓"
@@ -47,6 +42,12 @@
       function fish_mode_prompt; end # hides vi mode
 
       set -U pure_enable_nixdevshell true
+    '';
+    shellInit = ''
+      function fish_user_key_bindings
+        bind -M insert ctrl-y accept-autosuggestion
+        bind -M insert ctrl-e yazi
+      end
     '';
   };
   home = {
@@ -95,6 +96,13 @@
         syslist = "systemctl list-unit-files";
 
         yd = "yt-dlp";
+
+        pcls = "podman container ls";
+        pils = "podman image ls";
+        prs = "podman restart";
+        pxcit = "podman exec -it";
+        ppu = "podman pull";
+        pps = "podman ps";
       }
       // (with pkgs; {
         feh = "${lib.getExe feh} -x -Z -. --image-bg black";

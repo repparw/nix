@@ -49,9 +49,9 @@
         #"$pomodoro" = "pomatez";
         "$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
         "$screenshot" = "hyprshot -o $XDG_SCREENSHOTS_DIR -m";
-        "$desktopmenu" = "killall tofi-drun || tofi-drun";
         #"$emojimenu" = "killall tofi || BEMOJI_PICKER_CMD=${lib.getExe pkgs.tofi} bemoji -n";
-        "$cmdmenu" = "killall tofi-run || tofi-run --require-match=false | xargs hyprctl dispatch exec --";
+        "$menu" = "tofi-run --require-match=false | xargs hyprctl dispatch exec --";
+        "$dmenu" = "uwsm app -- $(tofi-drun)";
 
         "$showlayout" = "hdrop feh /home/repparw/src/kbd/docs/layout.png";
 
@@ -166,8 +166,8 @@
         bindl = ["$mod ALT, L, exec, $lockscreen; $screenoff"];
         bind =
           [
-            "$mod, d, exec, $desktopmenu"
-            "$mod SHIFT, d, exec, $cmdmenu"
+            "$mod, d, exec, $dmenu"
+            "$mod SHIFT, d, exec, $menu"
 
             "$mod, TAB, split:swapactiveworkspaces, current +1"
 
