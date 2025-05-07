@@ -1,5 +1,6 @@
 {
   pkgs,
+  inputs,
   lib,
   ...
 }: {
@@ -63,10 +64,10 @@
         obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; 1";
 
         # Nix
-        vn = "cd ~/nix; $EDITOR flake.nix";
+        vn = "cd ${inputs.self.outPath}; $EDITOR flake.nix";
 
         nrs = "nh os switch";
-        nup = "nh os switch -u";
+        nup = "nix flake update --commit-lock-file --flake ${inputs.self.outPath}";
         nupt = "nh os boot -u";
 
         x = "xdg-open";
