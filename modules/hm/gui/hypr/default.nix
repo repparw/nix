@@ -47,7 +47,7 @@
         "$discord" = "$prefix vesktop";
         "$GUIfileManager" = "$prefix nautilus";
         #"$pomodoro" = "pomatez";
-        "$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
+        "$showkeys" = "pkill wshowkeys || $prefix wshowkeys -a bottom -m 108 -b 00000066";
         "$screenshot" = "hyprshot -o ${config.xdg.userDirs.pictures}/ss -m";
 
         #"$emojimenu" = "BEMOJI_PICKER_CMD=${lib.getExe pkgs.tofi} bemoji -n";
@@ -180,6 +180,7 @@
             ", mouse:276, workspace, m+1"
 
             "$mod, comma, exec, [float; noinitialfocus; noborder; center] $showlayout"
+            "$mod, period, exec, $showkeys"
 
             "$mod, RETURN, exec, $terminal"
             "$mod, W, killactive,"
@@ -203,7 +204,7 @@
 
             ", Print, exec, $screenshot active -m output ## Active monitor"
             "$mod, Print, exec, $screenshot active -m window ## Active window"
-            "Shift $mod, Print, exec, $screenshot region -z ## Region"
+            "Shift $mod, Print, exec, $screenshot region -zs ## Region"
 
             "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy" ## OCR
             "$mod, Q, exec, wl-paste --type image/png | zbarimg --raw - | wl-copy" ## QR

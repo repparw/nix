@@ -4,6 +4,7 @@ _: {
       enable = true;
       withUWSM = true;
     };
+    wshowkeys.enable = true;
   };
 
   services.displayManager = {

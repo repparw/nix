@@ -8,7 +8,6 @@
     home.packages = with pkgs; [
       # Desktop
       libdrm
-      wshowkeys
       wl-clipboard
 
       tesseract # ocr
@@ -160,9 +159,7 @@
         };
       };
 
-      hyprlock = {
-        enable = true;
-      };
+      hyprlock.enable = true;
     };
   };
 }
