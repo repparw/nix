@@ -1,4 +1,8 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  inputs,
+  ...
+}: {
   imports = [
     ./file-manager.nix
     ./nvim.nix
@@ -60,7 +64,7 @@
 
       maintenance = {
         enable = true;
-        repositories = ["/home/repparw/nix"];
+        repositories = [inputs.self.outPath];
       };
 
       extraConfig = {
