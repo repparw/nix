@@ -1,8 +1,4 @@
-{
-  pkgs,
-  inputs,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     ./file-manager.nix
     ./nvim.nix
@@ -64,10 +60,11 @@
 
       maintenance = {
         enable = true;
-        repositories = [inputs.self.outPath];
+        repositories = ["/home/repparw/nix"];
       };
 
       extraConfig = {
+        safe.directory = "/home/repparw/nix";
         # git maintainer standards until git3?
         column.ui = "auto";
         branch.sort = "-committerdate";

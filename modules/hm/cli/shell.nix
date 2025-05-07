@@ -64,10 +64,10 @@
         obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; 1";
 
         # Nix
-        vn = "cd ${inputs.self.outPath}; $EDITOR flake.nix";
+        vn = "cd ~/nix; $EDITOR flake.nix";
 
         nrs = "nh os switch";
-        nup = "nix flake update --commit-lock-file --flake ${inputs.self.outPath}";
+        nup = "nix flake update --commit-lock-file --flake ~/nix";
         nupt = "nh os boot -u";
 
         x = "xdg-open";
