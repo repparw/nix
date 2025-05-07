@@ -1,9 +1,10 @@
 {
   pkgs,
   config,
+  inputs,
   ...
 }: let
-  flakePath = "~/nix";
+  flakePath = inputs.self.outPath;
 in {
   ## Update flake inputs daily
   systemd.services = {
