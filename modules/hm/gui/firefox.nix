@@ -36,10 +36,8 @@
 
       profiles = let
         commonProfile = {
-          userChrome = ../../source/userChrome.css;
           extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
             ublock-origin
-            sidebery
             tridactyl
           ];
         };
@@ -49,7 +47,9 @@
           // {
             id = 0;
             path = "default";
+            userChrome = ../../source/userChrome.css;
             extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
+              sidebery
               darkreader
               bitwarden
               refined-github
@@ -72,17 +72,6 @@
           // {
             id = 2;
             path = "socials";
-            #userContent = ''
-            #  @-moz-document domain("web.whatsapp.com") {
-            #    #app > div > div:last-child > div:first-child {
-            #      max-width: initial !important;
-            #      width: 100% !important;
-            #      height: 100% !important;
-            #      margin: 0 !important;
-            #      position: unset !important;
-            #    }
-            #  }
-            #'';
           };
       };
     };
