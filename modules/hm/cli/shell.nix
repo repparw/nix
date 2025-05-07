@@ -61,13 +61,13 @@
 
         v = "$EDITOR";
 
-        obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; 1";
+        obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; prevd";
 
         # Nix
         vn = "cd ~/nix; $EDITOR flake.nix";
 
         nrs = "nh os switch";
-        nup = "nix flake update --commit-lock-file --flake ~/nix";
+        nup = "cd ~/nix; nix flake update --commit-lock-file; git push; prevd; nrs";
         nupt = "nh os boot -u";
 
         x = "xdg-open";
