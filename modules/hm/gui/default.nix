@@ -29,6 +29,8 @@ in {
 
         obsidian
 
+        code-cursor
+
         # find pomo app in nixpkgs
       ]
       ++ (with pkgs.stable; [
