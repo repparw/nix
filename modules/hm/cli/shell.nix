@@ -26,8 +26,10 @@
 
       set -g fish_key_bindings fish_vi_key_bindings
 
-      bind --preset --erase ctrl-y
       bind ctrl-y accept-autosuggestion
+      bind ctrl-f accept-autosuggestion
+
+      bind ctrl-e yazi
 
       function t # t 12m or t 9m pizza
         set label $argv[2]
@@ -40,9 +42,11 @@
         alias ssh "kitten ssh"
       end
     '';
-    shellInit = ''
+    loginShellInit = ''
       set -U fish_greeting
       function fish_mode_prompt; end # hides vi mode
+
+      set -U pure_enable_nixdevshell true
     '';
   };
   home = {
