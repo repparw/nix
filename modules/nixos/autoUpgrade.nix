@@ -4,7 +4,7 @@
   inputs,
   ...
 }: let
-  flakePath = inputs.self.outPath;
+  flakePath = "/home/repparw/nix"; # can't be outPath because flake update updates the wrong one
 in {
   ## Update flake inputs daily
   systemd.services = {
