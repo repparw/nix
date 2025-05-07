@@ -146,7 +146,7 @@
 
     nh = {
       enable = true;
-      flake = inputs.self.outPath;
+      flake = "/home/repparw/nix";
       clean = {
         enable = true;
         extraArgs = "--keep 3 --keep-since 7d";
