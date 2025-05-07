@@ -1,8 +1,4 @@
-{
-  pkgs,
-  config,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     ./file-manager.nix
     ./nvim.nix
@@ -18,7 +14,6 @@
     MANPAGER = "nvim +Man!";
     EDITOR = "nvim";
     VISUAL = "$EDITOR";
-    XDG_SCREENSHOTS_DIR = "${config.xdg.userDirs.pictures}/ss";
     XCURSOR_SIZE = 24;
     HYPRCURSOR_SIZE = 24;
   };

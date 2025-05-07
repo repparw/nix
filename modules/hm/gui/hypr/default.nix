@@ -1,5 +1,6 @@
 {
   osConfig,
+  config,
   pkgs,
   lib,
   ...
@@ -12,7 +13,7 @@
   config = lib.mkIf osConfig.programs.hyprland.enable {
     wayland.windowManager.hyprland = {
       enable = true;
-      systemd.enable = false;
+      systemd.enable = false; # handled by uwsm
       plugins = with pkgs.hyprlandPlugins; [
         hyprsplit
       ];
@@ -23,7 +24,6 @@
         then ''
           $monitor=DP-2
           $monitor2=HDMI-A-1
-
           monitor=$monitor,highrr,0x0,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
           monitor=$monitor2,preferred,-1920x0,1
 
@@ -48,10 +48,11 @@
         "$GUIfileManager" = "$prefix nautilus";
         #"$pomodoro" = "pomatez";
         "$showkeys" = "wshowkeys -a bottom -m 108 -b 00000066";
-        "$screenshot" = "hyprshot -o $XDG_SCREENSHOTS_DIR -m";
-        #"$emojimenu" = "killall tofi || BEMOJI_PICKER_CMD=${lib.getExe pkgs.tofi} bemoji -n";
+        "$screenshot" = "hyprshot -o ${config.xdg.userDirs.pictures}/ss -m";
+
+        #"$emojimenu" = "BEMOJI_PICKER_CMD=${lib.getExe pkgs.tofi} bemoji -n";
         "$menu" = "tofi-run --require-match=false | xargs hyprctl dispatch exec --";
-        "$dmenu" = "uwsm app -- $(tofi-drun)";
+        "$dmenu" = "$prefix $(tofi-drun)";
 
         "$showlayout" = "hdrop feh /home/repparw/src/kbd/docs/layout.png";
 
@@ -60,13 +61,13 @@
         "$screenoff" = "sleep 3 && hyprctl dispatch dpms off";
 
         # Terminal
-        "$terminal" = "kitty";
+        "$terminal" = "$prefix kitty";
         "$shell" = "fish";
         "$top" = "$terminal $shell -ic top";
         "$fileManager" = "hdrop $terminal --class filemanager $shell -ic yazi";
         "$spotify" = "$terminal --class spotify spotify_player";
         "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim $shell -ic obsinvim'";
-        "$notes2" = "hdrop -c obsidian 'obsidian'";
+        "$notes2" = "hdrop -c obsidian '$prefix obsidian'";
 
         # Autostart
         # Almost everything should use systemd services instead (see uwsm for autostart)
@@ -174,7 +175,6 @@
             "$mod, X, focusmonitor,+1 "
             "SHIFT $mod, X, movewindow,mon:+1"
 
-            # Scroll through monitor active workspaces with mainMod + scroll
             "ALT, TAB, workspace, m+1"
             "ALT SHIFT, TAB, workspace, previous_per_monitor"
             ", mouse:276, workspace, m+1"
@@ -200,17 +200,16 @@
             "$mod, R, exec, $terminal $shell -ic rpi"
             "$mod, B, exec, $prefix bttoggle"
             "$mod, P, exec, $prefix scrcpy -e -S"
-            #"$mod, P, exec, [monitor 1;workspace 2 silent;float;size 5% 3%;move 79% 2%] hdrop $pomodoro"
 
             ", Print, exec, $screenshot active -m output ## Active monitor"
             "$mod, Print, exec, $screenshot active -m window ## Active window"
             "Shift $mod, Print, exec, $screenshot region -z ## Region"
 
-            "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy ## OCR"
-            "$mod, Q, exec, wl-paste --type image/png | zbarimg --raw - | wl-copy ## OCR"
+            "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy" ## OCR
+            "$mod, Q, exec, wl-paste --type image/png | zbarimg --raw - | wl-copy" ## QR
 
             # Macropad churrosoft
-            "CTRL ALT SHIFT, A, exec, hdrop steam"
+            "CTRL ALT SHIFT, A, exec, hdrop $prefix steam"
             "CTRL ALT SHIFT, B, exec, obs-cmd recording toggle-pause"
             "CTRL ALT SHIFT, C, exec, obs_remux2wsp"
             "CTRL ALT SHIFT, D, exec, obs-cmd replay save"
@@ -236,10 +235,6 @@
             "$mod SHIFT, J, movewindow, d"
             "$mod SHIFT, K, movewindow, u"
             "$mod SHIFT, L, movewindow, r"
-
-            # Scroll through monitor active workspaces with mainMod + scroll
-            "$mod, mouse_down, split:workspace, m+1"
-            "$mod, mouse_up, split:workspace, m-1"
           ]
           ++ (
             # workspaces
