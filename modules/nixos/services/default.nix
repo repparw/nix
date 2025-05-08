@@ -89,7 +89,7 @@ in {
   };
 
   config = mkIf cfg.enable {
-    systemd.timers.podman-auto-start.wantedBy = ["multi-user.target"];
+    systemd.timers.podman-auto-update.wantedBy = ["multi-user.target"];
 
     virtualisation = {
       podman = {
