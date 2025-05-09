@@ -65,6 +65,15 @@
 
       extraConfig = {
         safe.directory = "/home/repparw/nix";
+        url = {
+          "git@github.com:repparw/" = {
+            insteadOf = "repparw:";
+          };
+          "git@github.com:" = {
+            insteadOf = "gh:";
+          };
+        };
+
         # git maintainer standards until git3?
         column.ui = "auto";
         branch.sort = "-committerdate";
