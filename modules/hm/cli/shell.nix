@@ -1,6 +1,5 @@
 {
   pkgs,
-  inputs,
   lib,
   ...
 }: {
@@ -31,7 +30,7 @@
         set label $argv[2]
         test -z "$label"; and set label "▓▓▓"
 
-        fish -c "sleep $argv[1] && notify-send -u critical -t 0 $label" &> /dev/null
+        fish -c "sleep $argv[1] && notify-send -i 'task-due' -u critical $label" &> /dev/null
       end
 
       if type -q kitty
@@ -65,7 +64,6 @@
 
         # Nix
         vn = "cd ~/nix; $EDITOR flake.nix";
-
         nrs = "nh os switch";
         nup = "cd ~/nix; nix flake update --commit-lock-file; git push; prevd; nrs";
         nupt = "nh os boot -u";
@@ -80,8 +78,6 @@
         chown = "chown --preserve-root";
         chmod = "chmod --preserve-root";
         chgrp = "chgrp --preserve-root";
-
-        mnt = "mount | awk -F' ' '{ printf \"%s\t%s\n\",\$1,\$3; }' | column -t | egrep ^/dev/ | sort";
 
         ping = "ping -c 5";
 
@@ -103,6 +99,7 @@
         prs = "podman restart";
         pxcit = "podman exec -it";
         ppu = "podman pull";
+        plo = "podman logs";
         pps = "podman ps";
       }
       // (with pkgs; {
@@ -111,7 +108,7 @@
         top = "${lib.getExe bottom} --theme gruvbox";
         diff = "${lib.getExe colordiff}";
         cat = "${lib.getExe bat}";
-        df = "${lib.getExe duf}";
+        df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\*";
         du = "${lib.getExe dust}";
 
         rpi = "${lib.getExe' mosh "mosh"} -P 60001 --ssh 'ssh -p 2222' rpi";

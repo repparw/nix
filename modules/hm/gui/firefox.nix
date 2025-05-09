@@ -60,6 +60,11 @@
           // {
             id = 1;
             path = "kiosk";
+            userChrome = ''
+              .tools-and-extensions.actions-list {
+                display: none !important;
+              }
+            '';
             extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
               improved-tube
               sponsorblock
@@ -72,6 +77,11 @@
           // {
             id = 2;
             path = "socials";
+            userChrome = ''
+              .tools-and-extensions.actions-list {
+                display: none !important;
+              }
+            '';
           };
       };
     };
