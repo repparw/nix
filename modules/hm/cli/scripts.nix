@@ -54,14 +54,5 @@
         		ffmpeg -sseof -60 -i "$FILE" -vcodec libx264 -ac 1 -acodec copy -pix_fmt yuv420p "''${FILE%.*}".mp4;
       '';
     })
-
-    (writeShellApplication {
-      name = "update";
-      runtimeInputs = [
-        nh
-      ];
-      text = ''
-      '';
-    })
   ];
 }
