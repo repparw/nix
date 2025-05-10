@@ -15,6 +15,13 @@
           file = ./access-tokens.age;
           owner = "repparw";
         };
+        tod0 = {
+          file = ./tod0.age;
+          owner = "repparw";
+          group = "users";
+          path = "${config.home-manager.users.repparw.xdg.configHome}/tod0/keys.yml";
+          mode = "600";
+        };
       }
       // (lib.optionalAttrs config.modules.timers.enable {
         rcloneDrive = {
