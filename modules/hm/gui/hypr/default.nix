@@ -51,7 +51,7 @@
         "$screenshot" = "hyprshot -o ${config.xdg.userDirs.pictures}/ss -m";
 
         #"$emojimenu" = "BEMOJI_PICKER_CMD=${lib.getExe pkgs.tofi} bemoji -n";
-        "$menu" = "tofi-run --require-match=false | xargs hyprctl dispatch exec --";
+        "$menu" = "tofi-run --require-match=false | fish -c 'eval (cat)'";
         "$dmenu" = "$prefix $(tofi-drun)";
 
         "$showlayout" = "hdrop feh /home/repparw/src/kbd/docs/layout.png";
