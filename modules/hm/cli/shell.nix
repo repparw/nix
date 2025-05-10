@@ -26,14 +26,29 @@
 
       set -g fish_key_bindings fish_vi_key_bindings
 
-      function timer # t 12m or t 9m pizza
+      if type -q kitty
+        alias ssh "kitten ssh"
+      end
+    '';
+    loginShellInit = ''
+      set -U fish_greeting
+      set -U pure_enable_nixdevshell true
+    '';
+    functions = {
+      fish_mode_prompt = ''''; # hides vi mode indicator
+      fish_user_key_bindings = ''
+        bind -M insert ctrl-y accept-autosuggestion
+        bind -M insert ctrl-e yazi
+      '';
+      timer = ''
+        # t 12m or t 9m pizza
         set label $argv[2]
         test -z "$label"; and set label "▓▓▓"
 
         fish -c "sleep $argv[1] && notify-send -i 'task-due' -u critical $label" &> /dev/null
-      end
-
-      function t
+      '';
+      # add task to ms to-do
+      t = ''
         if test (count $argv) -eq 0
           echo "Usage: t TASK [time]"
           echo "Time can be:"
@@ -74,28 +89,11 @@
           set task (string join " " $argv)
         end
 
-        set label "Task: $task for $time"
         if todocli new "$task" -r $time
-          notify-send -i 'task-new' "$label"
+          notify-send -i 'task-new' "$task @ $time"
         end
-      end
-
-      if type -q kitty
-        alias ssh "kitten ssh"
-      end
-    '';
-    loginShellInit = ''
-      set -U fish_greeting
-      function fish_mode_prompt; end # hides vi mode
-
-      set -U pure_enable_nixdevshell true
-    '';
-    shellInit = ''
-      function fish_user_key_bindings
-        bind -M insert ctrl-y accept-autosuggestion
-        bind -M insert ctrl-e yazi
-      end
-    '';
+      '';
+    };
   };
   home = {
     shellAliases =
