@@ -51,6 +51,8 @@
   };
   home-manager.sharedModules = [
     {
+      home.pointerCursor.dotIcons.enable = false;
+      xresources.path = ".config/Xresources";
       stylix = {
         iconTheme = {
           enable = true;
