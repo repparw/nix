@@ -14,8 +14,6 @@
     MANPAGER = "nvim +Man!";
     EDITOR = "nvim";
     VISUAL = "$EDITOR";
-    XCURSOR_SIZE = 24;
-    HYPRCURSOR_SIZE = 24;
   };
 
   programs = {
