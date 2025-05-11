@@ -8,9 +8,11 @@ let
 in {
   "access-tokens.age".publicKeys = users;
 
-  "rclone-crypt.age".publicKeys = users;
-  "rclone-drive.age".publicKeys = users;
-  "rclone-dropbox.age".publicKeys = users;
+  "rclone/crypt.age".publicKeys = users;
+  "rclone/drive-token.age".publicKeys = users;
+  "rclone/drive-secret.age".publicKeys = users;
+  "rclone/drive-id.age".publicKeys = users;
+  "rclone/dropbox.age".publicKeys = users;
 
   "tod0.age".publicKeys = users;
 }
