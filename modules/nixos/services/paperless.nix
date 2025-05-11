@@ -22,6 +22,8 @@
       "PAPERLESS_REDIS" = "redis://broker:6379";
       "PAPERLESS_TIME_ZONE" = cfg.timezone;
       "PAPERLESS_URL" = "https://paper.${cfg.domain}";
+      "USERMAP_UID" = cfg.user;
+      "USERMAP_GID" = cfg.group;
     };
     volumes = [
       "${cfg.configDir}/paper/data:/usr/src/paperless/data"
