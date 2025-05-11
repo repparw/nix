@@ -11,7 +11,6 @@
           config = {
             type = "drive";
             scope = "drive";
-            client_id = "333265659347-c03ga8iml374j79nod16pb79kkfkel7f.apps.googleusercontent.com";
           };
           secrets = {
             token = osConfig.age.secrets.rcloneDrive.path;
