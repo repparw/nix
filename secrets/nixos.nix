@@ -24,16 +24,24 @@
         };
       }
       // (lib.optionalAttrs config.modules.timers.enable {
-        rcloneDrive = {
-          file = ./rclone-drive.age;
+        rcloneDriveToken = {
+          file = ./rclone/drive-token.age;
+          owner = "repparw";
+        };
+        rcloneDriveId = {
+          file = ./rclone/drive-id.age;
+          owner = "repparw";
+        };
+        rcloneDriveSecret = {
+          file = ./rclone/drive-secret.age;
           owner = "repparw";
         };
         rcloneCrypt = {
-          file = ./rclone-crypt.age;
+          file = ./rclone/crypt.age;
           owner = "repparw";
         };
         rcloneDropbox = {
-          file = ./rclone-dropbox.age;
+          file = ./rclone/dropbox.age;
           owner = "repparw";
         };
       });
