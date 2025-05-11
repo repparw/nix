@@ -38,7 +38,7 @@
       fish_mode_prompt = ''''; # hides vi mode indicator
       fish_user_key_bindings = ''
         bind -M insert ctrl-y accept-autosuggestion
-        bind -M insert ctrl-e yazi
+        bind -M insert ctrl-e yy
       '';
       timer = ''
         # t 12m or t 9m pizza
@@ -89,22 +89,13 @@
           set task (string join " " $argv)
         end
 
-        if todocli new "$task" -r $time
-          notify-send -i 'task-new' "$task @ $time"
-        end
+        todocli new "$task" -r $time
+        and notify-send -i 'task-new' "$task @ $time"
       '';
     };
-  };
-  home = {
+    # using aliases for defaults, or things that look fugly on expand on abbrs
     shellAliases =
       {
-        sudo = "sudo ";
-
-        # Asks your passwords, becomes root, opens a interactive non login shell
-        su = "sudo -s";
-
-        v = "$EDITOR";
-
         obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; prevd";
 
         # Nix
@@ -115,7 +106,6 @@
 
         x = "xdg-open";
         trash = "mv --force -t ~/.local/share/Trash ";
-
         ln = "ln -i";
         mv = "mv -i";
         rm = "rm -i";
@@ -123,29 +113,6 @@
         chown = "chown --preserve-root";
         chmod = "chmod --preserve-root";
         chgrp = "chgrp --preserve-root";
-
-        ping = "ping -c 5";
-
-        meminfo = "free -h -l -t";
-        cpuinfo = "lscpu";
-
-        mkdir = "mkdir -pv";
-
-        btctl = "bluetoothctl";
-
-        sys = "systemctl";
-        sysu = "sys --user";
-        syslist = "systemctl list-unit-files";
-
-        yd = "yt-dlp";
-
-        pcls = "podman container ls";
-        pils = "podman image ls";
-        prs = "podman restart";
-        pxcit = "podman exec -it";
-        ppu = "podman pull";
-        plo = "podman logs";
-        pps = "podman ps";
       }
       // (with pkgs; {
         feh = "${lib.getExe feh} -x -Z -. --image-bg black";
@@ -167,5 +134,32 @@
 
         ghcs = "${lib.getExe gh} copilot suggest";
       });
+    preferAbbrs = true;
+    shellAbbrs = {
+      # Asks your passwords, becomes root, opens a interactive non login shell
+      su = "sudo -s";
+
+      v = "$EDITOR";
+
+      meminfo = "free -hlt";
+      cpuinfo = "lscpu";
+
+      md = "mkdir -pv";
+      rd = "rmdir -pv";
+
+      btctl = "bluetoothctl";
+
+      sys = "systemctl";
+      sysu = "sys --user";
+      syslist = "systemctl list-unit-files";
+
+      pcls = "sudo podman container ls";
+      pils = "sudo podman image ls";
+      prs = "sudo podman restart";
+      pxcit = "sudo podman exec -it";
+      ppu = "sudo podman pull";
+      plo = "sudo podman logs";
+      pps = "sudo podman ps";
+    };
   };
 }
