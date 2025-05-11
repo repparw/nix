@@ -13,7 +13,9 @@
             scope = "drive";
           };
           secrets = {
-            token = osConfig.age.secrets.rcloneDrive.path;
+            client_id = osConfig.age.secrets.rcloneDriveId.path;
+            client_secret = osConfig.age.secrets.rcloneDriveSecret.path;
+            token = osConfig.age.secrets.rcloneDriveToken.path;
           };
         };
 
