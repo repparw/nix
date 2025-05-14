@@ -1,6 +1,6 @@
 _: {
   imports = [
-    ./hardware-configuration.nix
+    #./hardware-configuration.nix TODO generate hw config
   ];
 
   networking.hostName = "pi";

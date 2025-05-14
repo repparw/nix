@@ -27,6 +27,8 @@ in {
         pwvucontrol
         scrcpy
 
+        rquickshare
+
         obsidian
 
         code-cursor
