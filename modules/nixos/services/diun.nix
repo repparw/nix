@@ -11,12 +11,10 @@
       "DIUN_NOTIF_NTFY_TOPIC" = "diun";
       "DIUN_NOTIF_NTFY_ENDPOINT" = "https://ntfy.${cfg.domain}";
       "DIUN_NOTIF_NTFY_TEMPLATETITLE" = ''
-        {{ .Entry.Image.Path }}:{{ .Entry.Image.Tag }} updated to {{ .Meta.Version }}
+        {{ .Entry.Image.Path }}:{{ .Entry.Image.Tag }} updated
       '';
       "DIUN_NOTIF_NTFY_TEMPLATEBODY" = ''
-
-        See changelog for more details:
-              {{ .Meta.URL }}/releases/tag/{{ .Meta.Version }}
+        {{ .Entry.Metadata }}
       '';
     };
     volumes = [
