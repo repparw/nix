@@ -153,8 +153,6 @@
 
       manix
       comma
-
-      texliveFull
     ]
     ++ (with pkgs.stable; [
       ]);
