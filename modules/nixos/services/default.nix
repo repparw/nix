@@ -197,17 +197,17 @@ in {
         ];
       };
 
-      "/home/repparw/.config/dlsuite/jellyfin" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/jellyfin";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
+      # "/home/repparw/.config/dlsuite/jellyfin" = {
+      #   depends = [
+      #     "/"
+      #     "/mnt/hdd"
+      #   ];
+      #   device = "${cfg.configDir}/jellyfin";
+      #   options = [
+      #     "bind"
+      #     "ro"
+      #   ];
+      # }; # TODO: change to backup dir for auto backup
 
       "/home/repparw/.config/dlsuite/ntfy" = {
         depends = [
