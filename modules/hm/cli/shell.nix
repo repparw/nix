@@ -41,7 +41,7 @@
         bind -M insert ctrl-e yy
       '';
       timer = ''
-        # t 12m or t 9m pizza
+        # timer 12m or t 9m pizza
         set label $argv[2]
         test -z "$label"; and set label "▓▓▓"
 
@@ -80,7 +80,7 @@
           set task (string join " " $argv)
         else if string match -qr $hour_pattern $last_arg; and test (count $argv) -gt 1; and string match -qr $date_pattern $argv[-2]
           # Handle case when date is followed by hour (e.g., "24.12 9" or "24.12 21")
-          set time "$argv[-2] $last_arg:00"
+          set time "$argv[-2]. $last_arg:00"
           set -e argv[-1] # Remove the hour
           set -e argv[-1] # Remove the date
           set task (string join " " $argv)
