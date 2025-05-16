@@ -41,7 +41,7 @@
         bind -M insert ctrl-e yy
       '';
       timer = ''
-        # timer 12m or t 9m pizza
+        # t 12m or t 9m pizza
         set label $argv[2]
         test -z "$label"; and set label "▓▓▓"
 
@@ -53,36 +53,43 @@
           echo "Usage: t TASK [time]"
           echo "Time can be:"
           echo "  - morning, evening, tomorrow"
-          echo "  - 1h, 12h, 1h30m (relative time)"
-          echo "  - 9 or 21 (for 9:00 or 21:00)"
-          echo "  - 24.12 12:00 (date and time)"
-          echo "  - 22.12.2023 (full date)"
+          echo "  - 1h, 12h, 1h30m"
+          echo "  - 9 (for 9:00), 21 (for 21:00)"
+          echo "  - 24.12 9 (for 24.12 09:00)"
+          echo "  - 24.12.2023 (full date)"
+          echo "  - 24.12 (partial date, defaults to 9am)"
           return 1
         end
 
-        # Check if last argument might be a time specification
+        # Check if last two arguments might form a date-hour combination
         set -l last_arg $argv[-1]
+        set -l second_last_arg $argv[-2]
         set -l valid_times morning evening tomorrow
 
         # Regex patterns for different time formats
         set -l time_delta_pattern '^\d+[dhms](\d+[dhms])*$'        # 1h, 12h30m, etc
         set -l hour_pattern '^([0-9]|1[0-9]|2[0-3])$'             # 9, 21, etc
-        set -l date_time_pattern '^\d{1,2}\.\d{1,2}\s*\d{1,2}:\d{2}$'  # 24.12 12:00
-        set -l date_pattern '^\d{1,2}\.\d{1,2}(\d{2,4})?$'      # 22.12.2023, 01.01.21, 24.12
+        set -l date_pattern '^\d{1,2}\.\d{1,2}(\.\d{2,4})?$'      # 22.12.2023 or 24.12
 
-        if contains $last_arg $valid_times; or \
-           string match -qr $time_delta_pattern $last_arg; or \
-           string match -qr $date_time_pattern $last_arg; or \
-           string match -qr $date_pattern $last_arg
-          # Last word is a valid time format, use it
-          set time $last_arg
-          set -e argv[-1] # Remove the time from argv
-          set task (string join " " $argv)
-        else if string match -qr $hour_pattern $last_arg; and test (count $argv) -gt 1; and string match -qr $date_pattern $argv[-2]
-          # Handle case when date is followed by hour (e.g., "24.12 9" or "24.12 21")
-          set time "$argv[-2]. $last_arg:00"
+        # First check if we have a date-hour combination
+        if test (count $argv) -gt 1; and string match -qr $date_pattern $second_last_arg; and string match -qr $hour_pattern $last_arg
+          # We have a date and hour format (e.g., "24.12 9")
+          set time (printf "%s. %02d:00" $second_last_arg $last_arg)
           set -e argv[-1] # Remove the hour
           set -e argv[-1] # Remove the date
+          set task (string join " " $argv)
+        else if contains $last_arg $valid_times; or \
+                string match -qr $time_delta_pattern $last_arg; or \
+                string match -qr $date_pattern $last_arg
+          # Last word is a valid time format
+          if string match -qr '^\d{1,2}\.\d{1,2}$' $last_arg
+            # Partial date (no year), append default time
+            set time "$last_arg. 09:00"
+          else
+            # Full date with year or other time format, use as is
+            set time $last_arg
+          end
+          set -e argv[-1] # Remove the time from argv
           set task (string join " " $argv)
         else if string match -qr $hour_pattern $last_arg
           # Convert hour-only input to HH:00 format
@@ -95,7 +102,7 @@
           set task (string join " " $argv)
         end
 
-        todocli new "$task" -r $time
+        todocli new "$task" -r "$time"
         and notify-send -i 'task-new' "$task @ $time"
       '';
     };
