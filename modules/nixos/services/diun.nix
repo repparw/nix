@@ -13,9 +13,6 @@
       "DIUN_NOTIF_NTFY_TEMPLATETITLE" = ''
         {{ .Entry.Image.Path }}:{{ .Entry.Image.Tag }} updated
       '';
-      "DIUN_NOTIF_NTFY_TEMPLATEBODY" = ''
-        {{ .Entry.Metadata }}
-      '';
     };
     volumes = [
       "${cfg.configDir}/diun:/data"
