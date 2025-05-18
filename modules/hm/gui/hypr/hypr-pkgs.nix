@@ -22,8 +22,6 @@
 
       nautilus
 
-      where-is-my-sddm-theme
-
       (
         pkgs.python3Packages.buildPythonPackage rec {
           pname = "tod0";
