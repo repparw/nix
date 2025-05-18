@@ -38,4 +38,13 @@ in {
     after = ["flake-update.service"];
     wants = ["flake-update.service"];
   };
+
+  # Write git config directly during system activation
+  system.activationScripts.rootGitConfig = ''
+    mkdir -p /root
+    cat > /root/.gitconfig << EOF
+    [safe]
+        directory = /home/repparw/nix
+    EOF
+  '';
 }

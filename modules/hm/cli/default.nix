@@ -62,7 +62,6 @@
       };
 
       extraConfig = {
-        safe.directory = "/home/repparw/nix";
         url = {
           "git@github.com:repparw/" = {
             insteadOf = "repparw:";
