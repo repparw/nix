@@ -163,7 +163,7 @@
       btctl = "bluetoothctl";
 
       sys = "systemctl";
-      sysu = "sys --user";
+      sysu = "systemctl --user";
       syslist = "systemctl list-unit-files";
 
       pcls = "sudo podman container ls";
