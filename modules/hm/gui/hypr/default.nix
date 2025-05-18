@@ -182,6 +182,7 @@
             "$mod, comma, exec, [float; noinitialfocus; noborder; center] $showlayout"
             "$mod, period, exec, $showkeys"
 
+            "$mod, a, exec, $prefix anki"
             "$mod, RETURN, exec, $terminal"
             "$mod, W, killactive,"
             "$mod, M, exec, hdrop $spotify"
