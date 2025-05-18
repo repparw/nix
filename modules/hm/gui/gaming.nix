@@ -1,18 +1,16 @@
 {
   pkgs,
+  lib,
   osConfig,
   ...
 }: {
-  config =
-    if osConfig.modules.gaming.enable
-    then {
-      home.packages = with pkgs; [
-        # Gaming
-        wineWowPackages.waylandFull
-        lutris
-        heroic
-        mangohud
-      ];
-    }
-    else {};
+  config = lib.mkIf osConfig.modules.gaming.enable {
+    home.packages = with pkgs; [
+      # Gaming
+      wineWowPackages.waylandFull
+      lutris
+      heroic
+      mangohud
+    ];
+  };
 }
