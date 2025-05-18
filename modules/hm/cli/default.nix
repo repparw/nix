@@ -151,7 +151,6 @@
       tree
 
       manix
-      comma
     ]
     ++ (with pkgs.stable; [
       ]);
