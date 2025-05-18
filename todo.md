@@ -1,0 +1,1 @@
+- [ ] onfailure autoupgrade notify
