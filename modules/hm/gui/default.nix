@@ -33,6 +33,8 @@ in {
 
         code-cursor
 
+        anki
+
         # find pomo app in nixpkgs
       ]
       ++ (with pkgs.stable; [
