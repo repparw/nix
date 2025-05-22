@@ -8,6 +8,7 @@
       "PLAYWRIGHT_DRIVER_URL" = "ws://sockpuppetbrowser:3000";
       "PUID" = cfg.user;
       "PGID" = cfg.group;
+      "LC_ALL" = "en_US.UTF-8";
     };
     volumes = [
       "${cfg.configDir}/changedetection:/config"
