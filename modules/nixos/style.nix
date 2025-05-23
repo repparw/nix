@@ -33,16 +33,6 @@
       size = 24;
     };
 
-    targets = {
-      nixvim = {
-        transparentBackground = {
-          main = true;
-          signColumn = true;
-          numberLine = true;
-        };
-      };
-    };
-
     opacity = {
       terminal = 0.9;
       desktop = 1.0;
