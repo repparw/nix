@@ -36,6 +36,7 @@
 
       profiles = let
         commonProfile = {
+          # TODO extensions.settings
           extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
             ublock-origin
             tridactyl
@@ -54,6 +55,35 @@
               bitwarden
               refined-github
             ];
+            search = {
+              engines = {
+                "Nix options" = {
+                  urls = [{template = "https://mynixos.com/search?q={searchTerms}";}];
+                  definedAliases = ["n"];
+                };
+                "Nixpkgs" = {
+                  urls = [{template = "https://search.nixos.org/packages?channel=unstable&query={searchTerms}";}];
+                  definedAliases = ["np"];
+                };
+                "IMDb" = {
+                  urls = [{template = "https://www.imdb.com/find?q={searchTerms}&s=all";}];
+                  definedAliases = ["imdb"];
+                };
+                "AI" = {
+                  urls = [{template = "https://www.t3.chat/new?q={searchTerms}";}];
+                  definedAliases = ["ai"];
+                };
+                "youtube" = {
+                  urls = [{template = "https://www.youtube.com/results?search_query={searchTerms}";}];
+                  definedAliases = ["y"];
+                };
+                "GitHub" = {
+                  urls = [{template = "https://github.com/search?q={searchTerms}";}];
+                  definedAliases = ["gh"];
+                };
+              };
+              default = "google";
+            };
           };
         kiosk =
           commonProfile
