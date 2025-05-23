@@ -734,15 +734,16 @@
         "tinted-zed": "tinted-zed"
       },
       "locked": {
-        "lastModified": 1748021019,
-        "narHash": "sha256-cYNWOQX0r4NX6/56eh9+yRO+a/mKL2NNVxwcDRVfKXY=",
-        "owner": "danth",
+        "lastModified": 1748025703,
+        "narHash": "sha256-09lAIAohPzOLLwBxKv7uwrK8Stozo8UeN27/tvnyjjk=",
+        "owner": "trueNAHO",
         "repo": "stylix",
-        "rev": "7ffb31da698511030f17ddc94c92c59be1a30b2c",
+        "rev": "259f49f28c4cac31f664630db616ef431855e500",
         "type": "github"
       },
       "original": {
-        "owner": "danth",
+        "owner": "trueNAHO",
+        "ref": "tofi-add-missing-lib-module-argument",
         "repo": "stylix",
         "type": "github"
       }
