@@ -112,6 +112,8 @@ in {
         keybindings = {
           prev_img = "comma";
           next_img = "period";
+          zoom_in = "K";
+          zoom_out = "J";
         };
       };
     };

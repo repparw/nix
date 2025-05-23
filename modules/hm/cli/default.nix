@@ -1,7 +1,10 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  ...
+}: {
   imports = [
     ./file-manager.nix
-    ./nvim.nix
     ./rclone.nix
     ./scripts.nix
     ./tmux.nix
@@ -121,37 +124,41 @@
     };
   };
 
-  home.packages = with pkgs;
-    [
-      # essentials
-      curl
-      wget
-      unzip
-      bluez
-      jq
-      tree
-      ffmpeg
-      imagemagick
-      less
-      yt-dlp
+  home.packages = let
+    nvim = pkgs.neovim.extend config.lib.stylix.nixvim.config;
+  in
+    with pkgs;
+      [
+        # essentials
+        nvim
+        curl
+        wget
+        unzip
+        bluez
+        jq
+        tree
+        ffmpeg
+        imagemagick
+        less
+        yt-dlp
 
-      qmk
+        qmk
 
-      # CLI tools
-      playerctl
-      libqalculate
+        # CLI tools
+        playerctl
+        libqalculate
 
-      fastfetch
-      tlrc # tldr
+        fastfetch
+        tlrc # tldr
 
-      pdfgrep
-      catdoc # provides catppt and xls2csv
+        pdfgrep
+        catdoc # provides catppt and xls2csv
 
-      # Modern replacements of basic tools
-      tree
+        # Modern replacements of basic tools
+        tree
 
-      manix
-    ]
-    ++ (with pkgs.stable; [
-      ]);
+        manix
+      ]
+      ++ (with pkgs.stable; [
+        ]);
 }
