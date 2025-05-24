@@ -8,8 +8,7 @@
     enable = true;
     autoEnable = true;
 
-    # INFO: Colorscheme change
-
+    # INFO Colorscheme change
     base16Scheme = "${pkgs.base16-schemes}/share/themes/tokyodark.yaml";
 
     # image = config.lib.stylix.pixel "base00";
