@@ -17,15 +17,6 @@
     nixosConfigurations =
       lib.mkHost "alpha" "x86_64-linux"
       // lib.mkHost "beta" "x86_64-linux"
-      // lib.mkHost "pi" "aarch64-linux"
-      // {
-        iso = inputs.nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          modules = [./systems/iso] ++ (lib.mkModules "beta");
-          specialArgs = {
-            inherit inputs;
-          };
-        };
-      };
+      // lib.mkHost "pi" "aarch64-linux";
   };
 }
