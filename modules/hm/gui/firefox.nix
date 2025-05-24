@@ -83,6 +83,7 @@
                 };
               };
               default = "google";
+              force = true;
             };
           };
         kiosk =

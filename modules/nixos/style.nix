@@ -96,11 +96,12 @@
             "kiosk"
             "socials"
           ];
+          hyprlock.useWallpaper = false;
+          kitty.variant256Colors = true;
           waybar = {
             enableCenterBackColors = true;
             enableRightBackColors = true;
           };
-          kitty.variant256Colors = true;
         };
       };
     }
