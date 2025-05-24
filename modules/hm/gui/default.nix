@@ -98,8 +98,6 @@ in {
           discordBranch = "stable";
           minimizeToTray = true;
           arRPC = false;
-          splashColor = "rgb(221, 199, 161)";
-          splashBackground = "rgb(41, 40, 40)";
         };
       };
 
