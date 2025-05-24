@@ -39,6 +39,10 @@
     efi.canTouchEfiVariables = true;
   };
 
+  image.modules.iso-installer = {
+    networking.wireless.enable = false;
+  };
+
   networking = {
     networkmanager.enable = true;
 
