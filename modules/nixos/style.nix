@@ -1,9 +1,18 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   stylix = {
     enable = true;
     autoEnable = true;
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/gruvbox-material-dark-hard.yaml";
-    polarity = "dark";
+
+    # INFO: Colorscheme change
+
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/tokyodark.yaml";
+
+    # image = config.lib.stylix.pixel "base00";
 
     image = let
       baseUrl = "https://codeberg.org/exorcist/wallpapers/raw/commit/8c61309c0afe5654d56de46a4b3e1b298e151598";
@@ -18,15 +27,25 @@
         terminal-redux = "sha256-1AbBA2Lufl2gxxfn6zzkQ3/yS6gXer0rOvYMP9EdHnE=";
       };
 
-      # Function to fetch the selected wallpaper
       fetchSelectedWallpaper = name:
         pkgs.fetchurl {
           url = "${baseUrl}/gruvbox/${name}.jpg";
           hash = wallpaperOptions.${name};
         };
-    in
-      fetchSelectedWallpaper "dead-robot";
 
+      selectedWallpaper = fetchSelectedWallpaper "terminal-redux";
+
+      # Brightness and contrast settings
+      brightness = -10;
+      contrast = 0;
+      fillColor = "black";
+
+      # Process the image with brightness/contrast adjustments
+      wallpaper = pkgs.runCommand "dimmed-wallpaper.jpg" {} ''
+        ${lib.getExe' pkgs.imagemagick "convert"} "${selectedWallpaper}" -brightness-contrast ${toString brightness},${toString contrast} -fill ${fillColor} $out
+      '';
+    in
+      wallpaper;
     fonts = {
       sansSerif = {
         name = "FiraCode Nerd Font";
@@ -57,7 +76,6 @@
 
     opacity = {
       terminal = 0.9;
-      desktop = 1.0;
       popups = 0.75;
     };
   };
