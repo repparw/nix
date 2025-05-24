@@ -617,11 +617,11 @@
         "nixvim": "nixvim"
       },
       "locked": {
-        "lastModified": 1748049787,
-        "narHash": "sha256-qneCyJD7nk/bYTjs7EZO6haHS+E57dt2SbnxhBcMrdE=",
+        "lastModified": 1748050993,
+        "narHash": "sha256-jpIWnAUbVtG5YHOaF3mHDGVmo6k2NRvMZcJFP4i3hIU=",
         "owner": "repparw",
         "repo": "nixvim-config",
-        "rev": "69c4b0bc0a0b372e8f3a9d1a6f37b4f56562f92b",
+        "rev": "6c15f909d347a13e3c47e08329e6704110b84f52",
         "type": "github"
       },
       "original": {
