@@ -48,7 +48,7 @@
           src = pkgs.fetchFromGitHub {
             owner = "jaclu";
             repo = "tmux-power-zoom";
-            rev = "5916f20";
+            rev = "latest";
             hash = "sha256-3RI/waUjmAoqRrihjenDSq777kf3sLXaWWYJMCRlEvQ=";
           };
         };

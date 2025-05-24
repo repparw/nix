@@ -1,17 +1,10 @@
-{pkgs, ...}: let
-  plugins-repo = pkgs.fetchFromGitHub {
-    owner = "yazi-rs";
-    repo = "plugins";
-    rev = "55bf699";
-    hash = "sha256-v/C+ZBrF1ghDt1SXpZcDELmHMVAqfr44iWxzUWynyRk=";
-  };
-in {
+{pkgs, ...}: {
   programs = {
     yazi = {
       enable = true;
       plugins = {
-        smart-enter = "${plugins-repo}/smart-enter.yazi";
-        jump-to-char = "${plugins-repo}/jump-to-char.yazi";
+        smart-enter = pkgs.yaziPlugins.smart-enter;
+        jump-to-char = pkgs.yaziPlugins.jump-to-char;
       };
       settings = {
         opener = {
