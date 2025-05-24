@@ -63,12 +63,7 @@
 
       hyprpolkitagent.enable = true;
 
-      hyprpaper = {
-        enable = true;
-        settings = {
-          ipc = "off";
-        };
-      };
+      swww.enable = true;
 
       hypridle = {
         enable = true;
