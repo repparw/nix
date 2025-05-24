@@ -34,9 +34,7 @@
     (writeShellApplication {
       name = "mpvclip";
       runtimeInputs = [
-        tmux
         mpv
-        nq
       ];
       text = ''
         notify-send -t 2000 'MPV' 'Loading video...'; mpv --no-terminal "$(wl-paste)"

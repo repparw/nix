@@ -5,7 +5,6 @@ My personal NixOS configuration files. This repository contains a complete NixOS
 ## Systems
 - `alpha`: Desktop configuration
 - `beta`: Laptop configuration
-- `iso`: Live ISO configuration
 
 ## Structure
 ```shell
