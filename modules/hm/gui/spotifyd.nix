@@ -22,8 +22,7 @@
 
           max_cache_size = 5000000000;
 
-          # NOTE: This variable's type will change in v0.4, to a number (instead of string)
-          initial_volume = "45";
+          initial_volume = 45;
 
           volume_normalisation = false;
 
