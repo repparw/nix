@@ -207,7 +207,7 @@ in {
       #     "bind"
       #     "ro"
       #   ];
-      # }; # TODO: change to backup dir for auto backup
+      # }; # TODO  change to backup dir for auto backup
 
       "/home/repparw/.config/dlsuite/ntfy" = {
         depends = [

@@ -3,5 +3,5 @@
 
   home.packages = with pkgs; [
     brightnessctl
-  ]; # TODO: fix brightness shortcuts / backlight
+  ]; # TODO fix brightness shortcuts / backlight
 }

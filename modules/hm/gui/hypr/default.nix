@@ -281,7 +281,7 @@
           "size 400 225, title:(video1 - mpv)"
           "move 100%-w-25 100%-w-0, title:(video1 - mpv)"
 
-          #TODO: handle all games?
+          # TODO handle all games?
           "nodim, class:^(cs2)$"
           "noblur, class:^(cs2)$"
           "maximize, class:^(cs2)$"

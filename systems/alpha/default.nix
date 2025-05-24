@@ -34,7 +34,7 @@
 
   services = {
     sunshine = {
-      enable = false; #TODO: use sunshine when moving pc to Moque
+      enable = false; # TODO use sunshine when moving pc to Moque
       capSysAdmin = true;
       settings = {
         output_name = 1;
