@@ -140,8 +140,8 @@
         pc = "${lib.getExe' mosh "mosh"} -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
 
         nq = "NQDIR=/tmp/nq ${lib.getExe' nq "nq"}";
-        tq = "NQDIR=/tmp/nq ${lib.getExe' nq "tq"}";
-        fq = "NQDIR=/tmp/nq ${lib.getExe' nq "fq"}";
+        nqterm = "NQDIR=/tmp/nq ${lib.getExe' nq "nqterm"}";
+        nqtail = "NQDIR=/tmp/nq ${lib.getExe' nq "nqtail"}";
 
         ns = "${lib.getExe nix-search-tv} print | fzf --preview '${lib.getExe nix-search-tv} preview {}' --scheme history";
 
