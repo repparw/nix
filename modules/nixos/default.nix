@@ -82,12 +82,6 @@
     };
 
     optimise.automatic = true;
-
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 30d";
-    };
   };
 
   time.timeZone = "America/Argentina/Buenos_Aires";
@@ -199,11 +193,6 @@
     };
 
     pipewire = {
-      enable = true;
-      alsa.enable = true;
-      alsa.support32Bit = true;
-      pulse.enable = true;
-
       wireplumber = {
         extraConfig = {
           "disable-autoswitch" = {
