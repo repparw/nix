@@ -104,6 +104,10 @@
           # the more passes, the more you can up the blur_size without noticing artifacts.
         };
 
+        ecosystem = {
+          no_donation_nag = "true";
+        };
+
         animations = {
           enabled = true;
 
