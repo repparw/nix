@@ -14,9 +14,10 @@
   outputs = inputs: let
     lib = import ./lib {inherit inputs;};
   in {
-    nixosConfigurations =
-      lib.mkHost "alpha" "x86_64-linux"
-      // lib.mkHost "beta" "x86_64-linux"
-      // lib.mkHost "pi" "aarch64-linux";
+    nixosConfigurations = lib.mkHost {
+      alpha = "x86_64-linux";
+      beta = "x86_64-linux";
+      pi = "aarch64-linux";
+    };
   };
 }

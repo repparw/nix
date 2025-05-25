@@ -36,14 +36,15 @@
     }
   ];
 
-  # Helper function to create a NixOS system configuration
-  mkHost = hostname: system: {
-    ${hostname} = inputs.nixpkgs.lib.nixosSystem {
-      inherit system;
-      modules = mkModules hostname;
-      specialArgs = {
-        inherit inputs;
-      };
-    };
-  };
+  # Helper function to create multiple NixOS system configurations
+  mkHost = hosts: 
+    builtins.mapAttrs (hostname: system: 
+      inputs.nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = mkModules hostname;
+        specialArgs = {
+          inherit inputs;
+        };
+      }
+    ) hosts;
 }
