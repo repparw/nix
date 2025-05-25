@@ -59,11 +59,6 @@
       userEmail = "ubritos@gmail.com";
       userName = "repparw";
 
-      maintenance = {
-        enable = true;
-        repositories = ["/home/repparw/nix"];
-      };
-
       extraConfig = {
         url = {
           "git@github.com:repparw/" = {

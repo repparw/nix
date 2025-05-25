@@ -23,7 +23,7 @@
         crypt = {
           config = {
             type = "crypt";
-            remote = "drive:crypt";
+            remote = "gdrive:crypt";
           };
           secrets = {
             password = osConfig.age.secrets.rcloneCrypt.path;
@@ -43,10 +43,8 @@
         baseConfig = {
           Unit = {
             Description = "Service that mounts ${name} remote";
-            After = ["graphical-session.target"];
-            Requires = ["graphical-session.target"];
           };
-          Install.WantedBy = ["default.target"];
+          Install.WantedBy = ["graphical-session.target"];
           Service = {
             Type = "simple";
             ExecStartPre = "/run/current-system/sw/bin/mkdir -p ${mountDir}";
