@@ -63,7 +63,7 @@
                 };
                 "Nixpkgs" = {
                   urls = [{template = "https://search.nixos.org/packages?channel=unstable&query={searchTerms}";}];
-                  definedAliases = ["np"];
+                  definedAliases = ["np" ","];
                 };
                 "IMDb" = {
                   urls = [{template = "https://www.imdb.com/find?q={searchTerms}&s=all";}];
