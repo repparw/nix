@@ -2,9 +2,11 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.modules.vm;
-in {
+in
+{
   options.modules.vm = {
     enable = lib.mkEnableOption "vm setup";
   };
@@ -12,7 +14,7 @@ in {
   config = lib.mkIf cfg.enable {
     programs.virt-manager.enable = true;
 
-    users.groups.libvirtd.members = ["repparw"];
+    users.groups.libvirtd.members = [ "repparw" ];
 
     virtualisation.libvirtd.enable = true;
 

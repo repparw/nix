@@ -6,7 +6,7 @@ _: {
   networking.hostName = "pi";
 
   services = {
-    openssh.ports = [2222];
+    openssh.ports = [ 2222 ];
   };
 
   # This value determines the NixOS release from which the default

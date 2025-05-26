@@ -1,4 +1,5 @@
-{cfg}: {
+{ cfg }:
+{
   "swag" = {
     image = "docker.io/linuxserver/swag:latest";
     environment = {

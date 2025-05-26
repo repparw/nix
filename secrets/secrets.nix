@@ -5,7 +5,8 @@ let
     repparw-alpha
     repparw-beta
   ];
-in {
+in
+{
   "access-tokens.age".publicKeys = users;
 
   "rclone/crypt.age".publicKeys = users;
