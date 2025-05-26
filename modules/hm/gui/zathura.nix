@@ -2,7 +2,8 @@
   lib,
   config,
   ...
-}: {
+}:
+{
   config = lib.mkIf config.modules.gui.enable {
     programs.zathura = {
       enable = true;

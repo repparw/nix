@@ -2,7 +2,8 @@
   lib,
   config,
   ...
-}: {
+}:
+{
   config = lib.mkIf config.modules.gui.enable {
     programs.spotify-player = {
       enable = true;
@@ -118,7 +119,7 @@
         enable_notify = false;
         copy_command = {
           command = "wl-copy";
-          args = [];
+          args = [ ];
         };
         device = {
           name = "Terminal UI";

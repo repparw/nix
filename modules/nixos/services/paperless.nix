@@ -1,4 +1,5 @@
-{cfg}: {
+{ cfg }:
+{
   "broker" = {
     image = "docker.io/library/redis:7";
     volumes = [
@@ -30,7 +31,10 @@
       "${cfg.configDir}/paper/export:/usr/src/paperless/export"
       "${cfg.configDir}/paper/media:/usr/src/paperless/media"
     ];
-    dependsOn = ["broker" "paperdb"];
+    dependsOn = [
+      "broker"
+      "paperdb"
+    ];
     extraOptions = [
       "--health-cmd=curl -f http://localhost:8000/api/ || exit 1"
     ];

@@ -3,14 +3,16 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   cfg = config.modules.jellyfin-mpv-shim;
-in {
+in
+{
   # Use upstream Home Manager jellyfin-mpv-shim service
   options.modules.jellyfin-mpv-shim = {
     enable = lib.mkEnableOption "jellyfin-mpv-shim";
 
-    package = lib.mkPackageOption pkgs "jellyfin-mpv-shim" {};
+    package = lib.mkPackageOption pkgs "jellyfin-mpv-shim" { };
   };
 
   config = lib.mkIf cfg.enable {

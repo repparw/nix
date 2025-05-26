@@ -3,9 +3,11 @@
   config,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.modules.timers;
-in {
+in
+{
   options.modules.timers = {
     enable = lib.mkEnableOption "Timer services";
   };
@@ -40,7 +42,7 @@ in {
 
       timers = {
         buptohdd = {
-          wantedBy = ["timers.target"];
+          wantedBy = [ "timers.target" ];
           timerConfig = {
             OnCalendar = "03:00:00";
             Persistent = true;
@@ -48,7 +50,7 @@ in {
         };
 
         paperless-export = {
-          wantedBy = ["timers.target"];
+          wantedBy = [ "timers.target" ];
           timerConfig = {
             OnCalendar = "*-*-7,14,21,28 03:45:00";
             Persistent = true;
@@ -56,7 +58,7 @@ in {
         };
 
         rclone-sync = {
-          wantedBy = ["timers.target"];
+          wantedBy = [ "timers.target" ];
           timerConfig = {
             OnCalendar = "*-*-7,14,21,28 04:00:00";
             Persistent = true;

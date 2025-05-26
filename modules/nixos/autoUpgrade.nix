@@ -3,9 +3,11 @@
   lib,
   inputs,
   ...
-}: let
+}:
+let
   flakePath = "/home/repparw/nix"; # can't be outPath because flake update updates the wrong one
-in {
+in
+{
   ## Update flake inputs daily
   systemd.services = {
     flake-update = {
@@ -35,8 +37,8 @@ in {
   };
 
   systemd.services.nixos-upgrade = {
-    after = ["flake-update.service"];
-    wants = ["flake-update.service"];
+    after = [ "flake-update.service" ];
+    wants = [ "flake-update.service" ];
   };
 
   # Write git config directly during system activation

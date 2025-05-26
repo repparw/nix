@@ -4,7 +4,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   imports = [
     ./hypr-pkgs.nix
     ./waybar.nix
@@ -18,24 +19,25 @@
         hyprsplit
       ];
 
-      systemd.variables = ["--all"];
+      systemd.variables = [ "--all" ];
       extraConfig =
-        if osConfig.networking.hostName == "alpha"
-        then ''
-          $monitor=DP-2
-          $monitor2=HDMI-A-1
-          monitor=$monitor,highrr,0x0,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
-          monitor=$monitor2,preferred,-1920x0,1
+        if osConfig.networking.hostName == "alpha" then
+          ''
+            $monitor=DP-2
+            $monitor2=HDMI-A-1
+            monitor=$monitor,highrr,0x0,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
+            monitor=$monitor2,preferred,-1920x0,1
 
-          workspace = 5, on-created-empty:[silent] $socials
-        ''
-        else ''
-          monitor = eDP-1,preferred,auto,1
-          monitor = ,preferred,auto,1
+            workspace = 5, on-created-empty:[silent] $socials
+          ''
+        else
+          ''
+            monitor = eDP-1,preferred,auto,1
+            monitor = ,preferred,auto,1
 
-          bind = ,XF86MonBrightnessDown, exec, brightnessctl s 5%-
-          bind = ,XF86MonBrightnessUp, exec, brightnessctl s 5%+
-        '';
+            bind = ,XF86MonBrightnessDown, exec, brightnessctl s 5%-
+            bind = ,XF86MonBrightnessUp, exec, brightnessctl s 5%+
+          '';
       settings = {
         # GUI
         "$prefix" = "uwsm app --";
@@ -167,7 +169,7 @@
           "$mod CTRL, K, resizeactive, 0 -10"
           "$mod CTRL, L, resizeactive, 10 0"
         ];
-        bindl = ["$mod ALT, L, exec, $lockscreen; $screenoff"];
+        bindl = [ "$mod ALT, L, exec, $lockscreen; $screenoff" ];
         bind = [
           "$mod, d, exec, $dmenu"
           "$mod SHIFT, d, exec, $menu"
@@ -209,8 +211,8 @@
           "$mod, Print, exec, $screenshot active -m window ## Active window"
           "Shift $mod, Print, exec, $screenshot region -zs ## Region"
 
-          "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy" ## OCR
-          "$mod, Q, exec, wl-paste --type image/png | zbarimg --raw - | wl-copy" ## QR
+          "$mod, O, exec, wl-paste | tesseract - stdout | wl-copy" # # OCR
+          "$mod, Q, exec, wl-paste --type image/png | zbarimg --raw - | wl-copy" # # QR
 
           # Macropad churrosoft
           "CTRL ALT SHIFT, A, exec, hdrop $prefix steam"

@@ -3,7 +3,8 @@
   lib,
   config,
   ...
-}: {
+}:
+{
   imports = [
     ./tridactyl.nix
   ];
@@ -12,7 +13,7 @@
     programs.firefox = {
       enable = true;
 
-      nativeMessagingHosts = [pkgs.tridactyl-native];
+      nativeMessagingHosts = [ pkgs.tridactyl-native ];
 
       policies = {
         CaptivePortal = false;
@@ -34,18 +35,18 @@
         };
       };
 
-      profiles = let
-        commonProfile = {
-          # TODO extensions.settings
-          extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
-            ublock-origin
-            tridactyl
-          ];
-        };
-      in {
-        default =
-          commonProfile
-          // {
+      profiles =
+        let
+          commonProfile = {
+            # TODO extensions.settings
+            extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
+              ublock-origin
+              tridactyl
+            ];
+          };
+        in
+        {
+          default = commonProfile // {
             id = 0;
             path = "default";
             userChrome = ../../source/userChrome.css;
@@ -58,37 +59,38 @@
             search = {
               engines = {
                 "Nix options" = {
-                  urls = [{template = "https://mynixos.com/search?q={searchTerms}";}];
-                  definedAliases = ["n"];
+                  urls = [ { template = "https://mynixos.com/search?q={searchTerms}"; } ];
+                  definedAliases = [ "n" ];
                 };
                 "Nixpkgs" = {
-                  urls = [{template = "https://search.nixos.org/packages?channel=unstable&query={searchTerms}";}];
-                  definedAliases = ["np" ","];
+                  urls = [ { template = "https://search.nixos.org/packages?channel=unstable&query={searchTerms}"; } ];
+                  definedAliases = [
+                    "np"
+                    ","
+                  ];
                 };
                 "IMDb" = {
-                  urls = [{template = "https://www.imdb.com/find?q={searchTerms}&s=all";}];
-                  definedAliases = ["imdb"];
+                  urls = [ { template = "https://www.imdb.com/find?q={searchTerms}&s=all"; } ];
+                  definedAliases = [ "imdb" ];
                 };
                 "AI" = {
-                  urls = [{template = "https://www.t3.chat/new?q={searchTerms}";}];
-                  definedAliases = ["ai"];
+                  urls = [ { template = "https://www.t3.chat/new?q={searchTerms}"; } ];
+                  definedAliases = [ "ai" ];
                 };
                 "youtube" = {
-                  urls = [{template = "https://www.youtube.com/results?search_query={searchTerms}";}];
-                  definedAliases = ["y"];
+                  urls = [ { template = "https://www.youtube.com/results?search_query={searchTerms}"; } ];
+                  definedAliases = [ "y" ];
                 };
                 "GitHub" = {
-                  urls = [{template = "https://github.com/search?q={searchTerms}";}];
-                  definedAliases = ["gh"];
+                  urls = [ { template = "https://github.com/search?q={searchTerms}"; } ];
+                  definedAliases = [ "gh" ];
                 };
               };
               default = "google";
               force = true;
             };
           };
-        kiosk =
-          commonProfile
-          // {
+          kiosk = commonProfile // {
             id = 1;
             path = "kiosk";
             userChrome = ''
@@ -103,9 +105,7 @@
               tampermonkey
             ];
           };
-        socials =
-          commonProfile
-          // {
+          socials = commonProfile // {
             id = 2;
             path = "socials";
             userChrome = ''
@@ -114,7 +114,7 @@
               }
             '';
           };
-      };
+        };
     };
   };
 }

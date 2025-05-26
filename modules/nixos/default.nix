@@ -4,7 +4,8 @@
   lib,
   config,
   ...
-}: {
+}:
+{
   imports = [
     ./autoUpgrade.nix
     ./gaming.nix
@@ -53,7 +54,7 @@
   };
 
   nix = {
-    nixPath = ["nixpkgs=${inputs.nixpkgs}"];
+    nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
 
     extraOptions = ''
       !include ${config.age.secrets.accessTokens.path}
@@ -187,11 +188,12 @@
 
     openssh = {
       enable = true;
-      ports = [10000];
+      ports = [ 10000 ];
       settings.PasswordAuthentication = false;
     };
 
     pipewire = {
+      enable = true;
       wireplumber = {
         extraConfig = {
           "disable-autoswitch" = {
@@ -234,8 +236,8 @@
 
   systemd.services.logid = {
     startLimitIntervalSec = 0;
-    after = ["graphical.target"];
-    wantedBy = ["graphical.target"];
+    after = [ "graphical.target" ];
+    wantedBy = [ "graphical.target" ];
     serviceConfig = {
       Type = "simple";
       ExecStart = "${lib.getExe pkgs.logiops_0_2_3}";

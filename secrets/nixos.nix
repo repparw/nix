@@ -3,7 +3,8 @@
   config,
   inputs,
   ...
-}: {
+}:
+{
   imports = [
     inputs.agenix.nixosModules.default
   ];
@@ -46,6 +47,6 @@
         };
       });
 
-    identityPaths = ["/home/repparw/.ssh/id_ed25519"];
+    identityPaths = [ "/home/repparw/.ssh/id_ed25519" ];
   };
 }

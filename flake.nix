@@ -2,7 +2,7 @@
   description = "repparw's flake";
   inputs = {
     agenix.url = "github:ryantm/agenix";
-    home-manager.url = "git+file:///home/repparw/src/home-manager";
+    home-manager.url = "github:nix-community/home-manager";
     nix-index-database.url = "github:nix-community/nix-index-database";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -11,13 +11,16 @@
     stylix.url = "github:danth/stylix";
   };
 
-  outputs = inputs: let
-    lib = import ./lib {inherit inputs;};
-  in {
-    nixosConfigurations = lib.mkHost {
-      alpha = "x86_64-linux";
-      beta = "x86_64-linux";
-      pi = "aarch64-linux";
+  outputs =
+    inputs:
+    let
+      lib = import ./lib { inherit inputs; };
+    in
+    {
+      nixosConfigurations = lib.mkHost {
+        alpha = "x86_64-linux";
+        beta = "x86_64-linux";
+        pi = "aarch64-linux";
+      };
     };
-  };
 }

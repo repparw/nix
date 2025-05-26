@@ -1,4 +1,5 @@
-{cfg}: {
+{ cfg }:
+{
   "bazarr" = {
     image = "docker.io/linuxserver/bazarr:latest";
     environment = {
