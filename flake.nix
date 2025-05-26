@@ -2,7 +2,7 @@
   description = "repparw's flake";
   inputs = {
     agenix.url = "github:ryantm/agenix";
-    home-manager.url = "github:nix-community/home-manager";
+    home-manager.url = "git+file:///home/repparw/src/home-manager";
     nix-index-database.url = "github:nix-community/nix-index-database";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
