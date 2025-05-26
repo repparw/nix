@@ -1,5 +1,4 @@
 _: {
   services.spotifyd.enable = true;
-
-  modules.jellyfin-mpv-shim.enable = true;
+  services.jellyfin-mpv-shim.enable = true;
 }
