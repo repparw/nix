@@ -1,20 +1,23 @@
-{inputs, ...}: rec {
+{ inputs, ... }:
+rec {
   # Base modules configuration for all systems
   mkModules = hostname: [
     # Adds the NUR overlay
     inputs.nur.modules.nixos.default
     # Apply overlays
     {
-      nixpkgs.overlays = builtins.attrValues (import ../overlays {
-        inherit inputs;
-        outputs = null;
-      });
+      nixpkgs.overlays = builtins.attrValues (
+        import ../overlays {
+          inherit inputs;
+          outputs = null;
+        }
+      );
     }
     # NUR modules to import
     ../modules/nixos
     ../systems/${hostname}
     inputs.nix-index-database.nixosModules.nix-index
-    {programs.nix-index-database.comma.enable = true;}
+    { programs.nix-index-database.comma.enable = true; }
     ../secrets/nixos.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.stylix.nixosModules.stylix
@@ -37,8 +40,10 @@
   ];
 
   # Helper function to create multiple NixOS system configurations
-  mkHost = hosts: 
-    builtins.mapAttrs (hostname: system: 
+  mkHost =
+    hosts:
+    builtins.mapAttrs (
+      hostname: system:
       inputs.nixpkgs.lib.nixosSystem {
         inherit system;
         modules = mkModules hostname;

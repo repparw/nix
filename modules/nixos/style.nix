@@ -3,7 +3,8 @@
   config,
   lib,
   ...
-}: {
+}:
+{
   stylix = {
     enable = true;
     autoEnable = true;
@@ -13,37 +14,39 @@
 
     # image = config.lib.stylix.pixel "base00";
 
-    image = let
-      baseUrl = "https://codeberg.org/exorcist/wallpapers/raw/commit/8c61309c0afe5654d56de46a4b3e1b298e151598";
+    image =
+      let
+        baseUrl = "https://codeberg.org/exorcist/wallpapers/raw/commit/8c61309c0afe5654d56de46a4b3e1b298e151598";
 
-      wallpaperOptions = {
-        dalek = "sha256-Rd30EHETeTS2+h2/8ii/+Gc29dpFHQgeYajIHqO3C9c=";
-        penguin = "sha256-rTE57xA9FD6AuUCRH3HKJhXDNwm5fu4WMBeW9ocUM+A=";
-        dead-robot = "sha256-WYWVgp6w4mQIzJOZXncacCSl4tm3sum3vJxvZ8gn+9I=";
-        forest-4 = "sha256-mqrwRvJmRLK3iyEiXmaw5UQPftEaqg33NhwzpZvyXws=";
-        houses = "sha256-p5Mo1xA4jBZh6PPP0HK2YsuEBkP/gA27YDvxtuUrPHE=";
-        solar-system-2 = "sha256-8aVsWogIUuu6rEvGtEJ1y0NojJhEkbeAU87yPFn0d1g=";
-        terminal-redux = "sha256-1AbBA2Lufl2gxxfn6zzkQ3/yS6gXer0rOvYMP9EdHnE=";
-      };
-
-      fetchSelectedWallpaper = name:
-        pkgs.fetchurl {
-          url = "${baseUrl}/gruvbox/${name}.jpg";
-          hash = wallpaperOptions.${name};
+        wallpaperOptions = {
+          dalek = "sha256-Rd30EHETeTS2+h2/8ii/+Gc29dpFHQgeYajIHqO3C9c=";
+          penguin = "sha256-rTE57xA9FD6AuUCRH3HKJhXDNwm5fu4WMBeW9ocUM+A=";
+          dead-robot = "sha256-WYWVgp6w4mQIzJOZXncacCSl4tm3sum3vJxvZ8gn+9I=";
+          forest-4 = "sha256-mqrwRvJmRLK3iyEiXmaw5UQPftEaqg33NhwzpZvyXws=";
+          houses = "sha256-p5Mo1xA4jBZh6PPP0HK2YsuEBkP/gA27YDvxtuUrPHE=";
+          solar-system-2 = "sha256-8aVsWogIUuu6rEvGtEJ1y0NojJhEkbeAU87yPFn0d1g=";
+          terminal-redux = "sha256-1AbBA2Lufl2gxxfn6zzkQ3/yS6gXer0rOvYMP9EdHnE=";
         };
 
-      selectedWallpaper = fetchSelectedWallpaper "terminal-redux";
+        fetchSelectedWallpaper =
+          name:
+          pkgs.fetchurl {
+            url = "${baseUrl}/gruvbox/${name}.jpg";
+            hash = wallpaperOptions.${name};
+          };
 
-      # Brightness and contrast settings
-      brightness = -10;
-      contrast = 0;
-      fillColor = "black";
+        selectedWallpaper = fetchSelectedWallpaper "terminal-redux";
 
-      # Process the image with brightness/contrast adjustments
-      wallpaper = pkgs.runCommand "dimmed-wallpaper.jpg" {} ''
-        ${lib.getExe' pkgs.imagemagick "convert"} "${selectedWallpaper}" -brightness-contrast ${toString brightness},${toString contrast} -fill ${fillColor} $out
-      '';
-    in
+        # Brightness and contrast settings
+        brightness = -10;
+        contrast = 0;
+        fillColor = "black";
+
+        # Process the image with brightness/contrast adjustments
+        wallpaper = pkgs.runCommand "dimmed-wallpaper.jpg" { } ''
+          ${lib.getExe' pkgs.imagemagick "convert"} "${selectedWallpaper}" -brightness-contrast ${toString brightness},${toString contrast} -fill ${fillColor} $out
+        '';
+      in
       wallpaper;
     fonts = {
       sansSerif = {

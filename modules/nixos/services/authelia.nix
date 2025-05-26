@@ -1,4 +1,5 @@
-{cfg}: {
+{ cfg }:
+{
   "authelia" = {
     image = "docker.io/authelia/authelia:latest";
     environment = {
@@ -27,8 +28,15 @@
     volumes = [
       "${cfg.configDir}/authelia/valkey:/data"
     ];
-    cmd = ["valkey-server" "--save" "60" "1" "--loglevel" "warning"];
-    extraOptions = ["--health-cmd=nc -z localhost 6379 || exit 1"];
+    cmd = [
+      "valkey-server"
+      "--save"
+      "60"
+      "1"
+      "--loglevel"
+      "warning"
+    ];
+    extraOptions = [ "--health-cmd=nc -z localhost 6379 || exit 1" ];
     labels = {
       "glance.parent" = "authelia";
     };

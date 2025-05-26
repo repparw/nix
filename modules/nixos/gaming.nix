@@ -2,9 +2,11 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   cfg = config.modules.gaming;
-in {
+in
+{
   options.modules.gaming = {
     enable = lib.mkEnableOption "gaming setup";
   };

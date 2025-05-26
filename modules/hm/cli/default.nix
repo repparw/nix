@@ -2,7 +2,8 @@
   pkgs,
   config,
   ...
-}: {
+}:
+{
   imports = [
     ./file-manager.nix
     ./rclone.nix
@@ -41,17 +42,17 @@
 
     gh = {
       enable = true;
-      extensions = [pkgs.gh-copilot];
+      extensions = [ pkgs.gh-copilot ];
     };
 
     zoxide = {
       enable = true;
-      options = ["--cmd=cd"];
+      options = [ "--cmd=cd" ];
     };
 
     eza = {
       enable = true;
-      extraOptions = ["--icons"];
+      extraOptions = [ "--icons" ];
     };
 
     git = {
@@ -119,41 +120,42 @@
     };
   };
 
-  home.packages = let
-    nvim = pkgs.neovim.extend config.lib.stylix.nixvim.config;
-  in
+  home.packages =
+    let
+      nvim = pkgs.neovim.extend config.lib.stylix.nixvim.config;
+    in
     with pkgs;
-      [
-        # essentials
-        nvim
-        curl
-        wget
-        unzip
-        bluez
-        jq
-        tree
-        ffmpeg
-        imagemagick
-        less
-        yt-dlp
+    [
+      # essentials
+      nvim
+      curl
+      wget
+      unzip
+      bluez
+      jq
+      tree
+      ffmpeg
+      imagemagick
+      less
+      yt-dlp
 
-        qmk
+      qmk
 
-        # CLI tools
-        playerctl
-        libqalculate
+      # CLI tools
+      playerctl
+      libqalculate
 
-        fastfetch
-        tlrc # tldr
+      fastfetch
+      tlrc # tldr
 
-        pdfgrep
-        catdoc # provides catppt and xls2csv
+      pdfgrep
+      catdoc # provides catppt and xls2csv
 
-        # Modern replacements of basic tools
-        tree
+      # Modern replacements of basic tools
+      tree
 
-        manix
-      ]
-      ++ (with pkgs.stable; [
-        ]);
+      manix
+    ]
+    ++ (with pkgs.stable; [
+    ]);
 }

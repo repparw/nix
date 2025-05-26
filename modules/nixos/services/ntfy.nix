@@ -1,7 +1,8 @@
-{cfg}: {
+{ cfg }:
+{
   "ntfy" = {
     image = "docker.io/binwiederhier/ntfy:latest";
-    cmd = ["serve"];
+    cmd = [ "serve" ];
     environment = {
       TZ = cfg.timezone;
       NTFY_BASE_URL = "https://ntfy.${cfg.domain}";

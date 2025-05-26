@@ -2,7 +2,8 @@
   lib,
   config,
   ...
-}: {
+}:
+{
   config = lib.mkIf config.modules.gui.enable {
     programs.mpv = {
       enable = true;
@@ -36,6 +37,9 @@
           gpu-context = "waylandvk";
         };
       };
+
+      defaultProfiles = [ "gpu-vulkan-vaapi" ];
+
       config = {
         volume = 30;
         slang = "eng";
@@ -51,8 +55,6 @@
 
         osd-border-size = 2; # Default 3
         sub-border-size = 2; # Default 3
-
-        profile = "gpu-vulkan-vaapi";
       };
     };
   };

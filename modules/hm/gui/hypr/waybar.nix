@@ -2,7 +2,8 @@
   osConfig,
   lib,
   ...
-}: {
+}:
+{
   config = lib.mkIf osConfig.programs.hyprland.enable {
     programs.waybar = {
       enable = true;
@@ -10,11 +11,7 @@
       settings = {
         mainBar = {
           position = "top";
-          ${
-            if osConfig.networking.hostName == "alpha"
-            then "output"
-            else null
-          } = ["HDMI-A-1"];
+          ${if osConfig.networking.hostName == "alpha" then "output" else null} = [ "HDMI-A-1" ];
           modules-left = [
             "clock#time"
           ];

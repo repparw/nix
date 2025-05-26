@@ -3,27 +3,25 @@
   config,
   ...
 }:
-with lib; let
+with lib;
+let
   cfg = config.modules.services;
 
-  mkContainer = name: attrs:
+  mkContainer =
+    name: attrs:
     mkMerge [
       attrs
       {
-        extraOptions =
-          (attrs.extraOptions or [])
-          ++ [
-            "--network-alias=${name}"
-          ];
-        labels =
-          (attrs.labels or {})
-          // {
-            "glance.name" = name;
-            "glance.url" = lib.mkDefault "https://${name}.${cfg.domain}";
-            "glance.icon" = "di:${name}";
-            "glance.same-tab" = "true";
-            "io.containers.autoupdate" = "registry";
-          };
+        extraOptions = (attrs.extraOptions or [ ]) ++ [
+          "--network-alias=${name}"
+        ];
+        labels = (attrs.labels or { }) // {
+          "glance.name" = name;
+          "glance.url" = lib.mkDefault "https://${name}.${cfg.domain}";
+          "glance.icon" = "di:${name}";
+          "glance.same-tab" = "true";
+          "io.containers.autoupdate" = "registry";
+        };
       }
     ];
 
@@ -39,10 +37,11 @@ with lib; let
     (import ./proxy.nix)
   ];
 
-  containerDefinitions =
-    mapAttrs (name: attrs: mkContainer name attrs)
-    (foldl' (acc: def: acc // (def {inherit cfg;})) {} containersList);
-in {
+  containerDefinitions = mapAttrs (name: attrs: mkContainer name attrs) (
+    foldl' (acc: def: acc // (def { inherit cfg; })) { } containersList
+  );
+in
+{
   options.modules.services = {
     enable = mkEnableOption "podman container services";
 
@@ -89,7 +88,7 @@ in {
   };
 
   config = mkIf cfg.enable {
-    systemd.timers.podman-auto-update.wantedBy = ["multi-user.target"];
+    systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
 
     virtualisation = {
       podman = {
@@ -110,7 +109,7 @@ in {
       };
     };
 
-    networking.firewall.trustedInterfaces = ["podman*"];
+    networking.firewall.trustedInterfaces = [ "podman*" ];
 
     fileSystems = {
       "/home/repparw/.config/dlsuite/authelia" = {

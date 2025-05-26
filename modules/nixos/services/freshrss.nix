@@ -1,4 +1,5 @@
-{cfg}: {
+{ cfg }:
+{
   "freshrss" = {
     image = "docker.io/linuxserver/freshrss:latest";
     environment = {
