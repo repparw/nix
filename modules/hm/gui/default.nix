@@ -3,11 +3,9 @@
   pkgs,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.modules.gui;
-in
-{
+in {
   options.modules.gui.enable = lib.mkEnableOption "gui";
 
   imports = [
@@ -24,8 +22,7 @@ in
   ];
 
   config = lib.mkIf cfg.enable {
-    home.packages =
-      with pkgs;
+    home.packages = with pkgs;
       [
         pwvucontrol
         scrcpy
@@ -41,7 +38,7 @@ in
         # find pomo app in nixpkgs
       ]
       ++ (with pkgs.stable; [
-      ]);
+        ]);
 
     gtk = {
       enable = true;
@@ -51,8 +48,8 @@ in
     xdg.mimeApps = {
       enable = true;
       associations.removed = {
-        "application/pdf" = [ "chromium-browser.desktop" ];
-        "inode/directory" = [ "firefox.desktop" ];
+        "application/pdf" = ["chromium-browser.desktop"];
+        "inode/directory" = ["firefox.desktop"];
       };
       defaultApplications = {
         "inode/directory" = "org.gnome.Nautilus.desktop";
