@@ -112,7 +112,10 @@
       write_logs = false;
     };
 
-    mpvConfig = config.programs.mpv.config;
+    mpvConfig =
+      config.programs.mpv.config
+      // config.programs.mpv.profiles.gpu-vulkan-vaapi;
+
     mpvBindings = config.programs.mpv.bindings;
   };
 }
