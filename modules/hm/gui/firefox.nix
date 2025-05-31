@@ -55,6 +55,7 @@
               darkreader
               bitwarden
               refined-github
+              reddit-enhancement-suite
             ];
             search = {
               engines = {
