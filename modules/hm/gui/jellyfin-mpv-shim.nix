@@ -1,4 +1,5 @@
-{config, ...}: {
+{ config, ... }:
+{
   services.jellyfin-mpv-shim = {
     settings = {
       allow_transcode_to_h265 = false;
@@ -112,9 +113,7 @@
       write_logs = false;
     };
 
-    mpvConfig =
-      config.programs.mpv.config
-      // config.programs.mpv.profiles.gpu-vulkan-vaapi;
+    mpvConfig = config.programs.mpv.config;
 
     mpvBindings = config.programs.mpv.bindings;
   };
