@@ -16,7 +16,7 @@ _: {
     set modeindicatormodes.hint true
     set modeindicatormodes.visual true
     set theme midnight
-    set editorcmd ghostty nvim
+    set editorcmd kitty nvim
     set smoothscroll true
 
     " Binds
