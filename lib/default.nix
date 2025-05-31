@@ -4,6 +4,7 @@ rec {
   mkModules = hostname: [
     # Adds the NUR overlay
     inputs.nur.modules.nixos.default
+    inputs.determinate.nixosModules.default
     # Apply overlays
     {
       nixpkgs.overlays = builtins.attrValues (
