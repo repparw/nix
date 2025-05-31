@@ -23,22 +23,6 @@
         # Play in reverse toggle
         # <bind> set-cache yes ; cycle play-dir
       };
-      profiles = {
-        gpu-vulkan = {
-          vo = "gpu-next";
-          gpu-api = "vulkan";
-          hwdec = "vulkan";
-          gpu-context = "waylandvk";
-        };
-        gpu-vulkan-vaapi = {
-          vo = "gpu-next";
-          gpu-api = "vulkan";
-          hwdec = "vaapi";
-          gpu-context = "waylandvk";
-        };
-      };
-
-      defaultProfiles = [ "gpu-vulkan-vaapi" ];
 
       config = {
         volume = 30;
@@ -48,6 +32,11 @@
         screen = 1;
         fs = "yes";
         fs-screen = 1;
+
+        hwdec = "vaapi";
+        vo = "gpu-next";
+        gpu-api = "vulkan";
+        gpu-context = "waylandvk";
 
         osc = "no";
         osd-font-size = 32; # Default 55
