@@ -3,8 +3,6 @@ _: {
     ./cli
     ./gui
   ];
-  modules.gui.enable = true;
-
   programs.home-manager.enable = true;
 
   services.udiskie.enable = true;

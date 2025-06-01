@@ -1,7 +1,7 @@
 {
   pkgs,
   lib,
-  config,
+  osConfig,
   ...
 }:
 {
@@ -9,7 +9,7 @@
     ./tridactyl.nix
   ];
 
-  config = lib.mkIf config.modules.gui.enable {
+  config = lib.mkIf osConfig.modules.gui.enable {
     programs.firefox = {
       enable = true;
 
