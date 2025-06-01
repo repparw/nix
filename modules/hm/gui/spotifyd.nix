@@ -1,10 +1,10 @@
 {
   lib,
-  config,
+  osConfig,
   ...
 }:
 {
-  config = lib.mkIf config.modules.gui.enable {
+  config = lib.mkIf osConfig.modules.gui.enable {
     services.spotifyd = {
       settings = {
         global = {

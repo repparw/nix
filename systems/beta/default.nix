@@ -3,6 +3,8 @@ _: {
     ./hardware-configuration.nix
   ];
 
+  modules.gui.enable = true;
+
   networking.hostName = "beta";
 
   services = {

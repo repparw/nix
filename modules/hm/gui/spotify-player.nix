@@ -1,10 +1,10 @@
 {
   lib,
-  config,
+  osConfig,
   ...
 }:
 {
-  config = lib.mkIf config.modules.gui.enable {
+  config = lib.mkIf osConfig.modules.gui.enable {
     programs.spotify-player = {
       enable = true;
       keymaps = [
