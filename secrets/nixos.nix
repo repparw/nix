@@ -46,6 +46,12 @@
           file = ./rclone/dropbox.age;
           owner = "repparw";
         };
+      })
+      // (lib.optionalAttrs config.services.archisteamfarm.enable {
+        steamPassword = {
+          file = ./steam-password.age;
+          owner = "archisteamfarm";
+        };
       });
 
     identityPaths = [ "/home/repparw/.ssh/id_ed25519" ];
