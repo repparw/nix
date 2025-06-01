@@ -5,6 +5,7 @@
   ];
 
   modules = {
+    gui.enable = true;
     gaming.enable = true;
     services.enable = true;
     timers.enable = true;

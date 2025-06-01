@@ -1,13 +1,14 @@
 {
   config,
+  osConfig,
   pkgs,
   lib,
   ...
-}: let
-  cfg = config.modules.gui;
-in {
-  options.modules.gui.enable = lib.mkEnableOption "gui";
-
+}:
+let
+  cfg = osConfig.modules.gui;
+in
+{
   imports = [
     ./firefox.nix
     ./gaming.nix
@@ -22,7 +23,8 @@ in {
   ];
 
   config = lib.mkIf cfg.enable {
-    home.packages = with pkgs;
+    home.packages =
+      with pkgs;
       [
         pwvucontrol
         scrcpy
@@ -38,7 +40,7 @@ in {
         # find pomo app in nixpkgs
       ]
       ++ (with pkgs.stable; [
-        ]);
+      ]);
 
     gtk = {
       enable = true;
@@ -48,8 +50,8 @@ in {
     xdg.mimeApps = {
       enable = true;
       associations.removed = {
-        "application/pdf" = ["chromium-browser.desktop"];
-        "inode/directory" = ["firefox.desktop"];
+        "application/pdf" = [ "chromium-browser.desktop" ];
+        "inode/directory" = [ "firefox.desktop" ];
       };
       defaultApplications = {
         "inode/directory" = "org.gnome.Nautilus.desktop";
