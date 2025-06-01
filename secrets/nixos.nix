@@ -14,6 +14,7 @@
       {
         accessTokens = {
           file = ./access-tokens.age;
+          mode = "0440";
           owner = "repparw";
         };
         tod0 = {
