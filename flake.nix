@@ -2,7 +2,6 @@
   description = "repparw's flake";
   inputs = {
     agenix.url = "github:ryantm/agenix";
-    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/*";
     home-manager.url = "github:nix-community/home-manager";
     nix-index-database.url = "github:nix-community/nix-index-database";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";

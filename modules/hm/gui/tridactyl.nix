@@ -51,7 +51,6 @@ _: {
 
     " Autocmds
     autocmd DocStart 127.0.0.1:8096 mode ignore
-    autocmd DocStart https://repparw.me mode ignore
     autocmd DocStart tradingview.com mode ignore
     autocmd DocStart inoreader.com mode ignore
     autocmd DocStart tldraw.com mode ignore
