@@ -11,7 +11,7 @@ in
     enable = lib.mkEnableOption "gaming setup";
   };
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg.enable && config.modules.gui.enable) {
     hardware.xpadneo.enable = true;
 
     programs = {
