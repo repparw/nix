@@ -1,6 +1,9 @@
 { pkgs, ... }:
 {
-  modules.kanshi.enable = true;
+  modules = {
+    gui.enable = true;
+    kanshi.enable = true;
+  };
 
   home.packages = with pkgs; [
     brightnessctl

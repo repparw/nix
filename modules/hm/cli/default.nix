@@ -153,8 +153,6 @@
 
       # Modern replacements of basic tools
       tree
-
-      manix
     ]
     ++ (with pkgs.stable; [
     ]);

@@ -1,17 +1,15 @@
 {
   pkgs,
   inputs,
-  lib,
   config,
   ...
 }:
 {
   imports = [
-    ./autoUpgrade.nix
-    ./gaming.nix
-    ./hyprland.nix
-    ./obs.nix
+    ./cli
+    ./gui
     ./services
+    ./autoUpgrade.nix
     ./style.nix
     ./timers.nix
     ./vm.nix
@@ -94,114 +92,9 @@
     };
   };
 
-  environment = {
-    systemPackages = with pkgs; [
-      inputs.agenix.packages."${system}".default
-      vim
-    ];
-    etc = {
-      "logid.cfg" = {
-        text = ''
-          devices: (
-          {
-          	name: "MX Vertical Advanced Ergonomic Mouse";
-          	smartshift:
-          	{
-          		on: true;
-          		threshold: 30;
-          	};
-          	hiresscroll:
-          	{
-          		hires: true;
-          		invert: false;
-          		target: false;
-          	};
-          	dpi: 1600;
-
-          	buttons: (
-          		{
-          			cid: 0xfd;
-          			action =
-          			{
-          				type: "Keypress";
-          				keys: ["KEY_LEFTSHIFT", "KEY_LEFTMETA", "KEY_PRINT"];
-          			};
-          		}
-          	);
-          }
-          );
-        '';
-      };
-    };
-  };
-
-  programs = {
-    adb.enable = true;
-
-    localsend.enable = true;
-
-    mosh.enable = true;
-
-    nh = {
-      enable = true;
-      flake = "/home/repparw/nix";
-      clean = {
-        enable = true;
-        extraArgs = "--keep 3 --keep-since 7d";
-      };
-    };
-
-    ssh.startAgent = true;
-
-    fish.enable = true;
-  };
-
-  services = {
-    blueman.enable = true;
-
-    earlyoom.enable = true;
-
-    fail2ban.enable = true;
-
-    gvfs.enable = true;
-
-    tailscale.enable = true;
-
-    keyd = {
-      enable = lib.mkIf (config.networking.hostName != "alpha") true;
-      keyboards = {
-        default.settings = {
-          main = {
-            capslock = "overload(control, esc)";
-          };
-        };
-      };
-    };
-
-    openssh = {
-      enable = true;
-      ports = [ 10000 ];
-      settings.PasswordAuthentication = false;
-    };
-
-    pipewire = {
-      enable = true;
-      wireplumber = {
-        extraConfig = {
-          "disable-autoswitch" = {
-            "wireplumber.settings" = {
-              "bluetooth.autoswitch-to-headset-profile" = false;
-            };
-          };
-          "disable-hw-volume" = {
-            "monitor.bluez.properties" = {
-              "bluez5.enable-hw-volume" = false;
-            };
-          };
-        };
-      };
-    };
-  };
+  environment.systemPackages = with pkgs; [
+    inputs.agenix.packages."${system}".default
+  ];
 
   security = {
     rtkit.enable = true;
@@ -224,16 +117,6 @@
     };
 
     keyboard.qmk.enable = true;
-  };
-
-  systemd.services.logid = {
-    startLimitIntervalSec = 0;
-    after = [ "graphical.target" ];
-    wantedBy = [ "graphical.target" ];
-    serviceConfig = {
-      Type = "simple";
-      ExecStart = "${lib.getExe pkgs.logiops_0_2_3}";
-    };
   };
 
   nixpkgs.config.allowUnfree = true;
