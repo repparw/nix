@@ -16,4 +16,6 @@ in
   "rclone/dropbox.age".publicKeys = users;
 
   "tod0.age".publicKeys = users;
+
+  "steam-password.age".publicKeys = users;
 }
