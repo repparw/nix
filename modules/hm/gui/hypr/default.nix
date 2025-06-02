@@ -101,9 +101,6 @@
           dim_strength = "0.1";
           active_opacity = "1";
           inactive_opacity = "1";
-          # Your blur "amount" is blur_size * blur_passes, but high blur_size (over around 5-ish) will produce artifacts.
-          # if you want heavy blur, you need to up the blur_passes.
-          # the more passes, the more you can up the blur_size without noticing artifacts.
         };
 
         ecosystem = {
@@ -268,16 +265,14 @@
           "f[1], gapsout:0, gapsin:0"
         ];
 
-        windowrulev2 = [
-          "monitor 1,class:^(mpv)$"
-          "noinitialfocus,class:^(mpv)$"
-          "noblur,class:^(mpv)$"
-          "nodim,class:^(mpv)$"
-          "fullscreen,class:^(mpv)$"
+        windowrule = [
+          "noinitialfocus, initialClass:^(mpv)$"
+          "noblur, initialClass:^(mpv)$"
+          "nodim, initialClass:^(mpv)$"
 
-          "noblur,class:^(org.mozilla.firefox)$"
-          "opaque,class:^(org.mozilla.firefox)$"
-          "nodim,class:^(org.mozilla.firefox)$"
+          "noblur, class:^(firefox)$"
+          "opaque, class:^(firefox)$"
+          "nodim, class:^(firefox)$"
 
           "noborder, onworkspace:w[t1]"
           "bordersize 0, floating:0, onworkspace:w[tv1]"
