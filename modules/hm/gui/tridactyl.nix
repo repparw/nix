@@ -32,6 +32,8 @@ _: {
     bind gwE winopen https://dash.cloudflare.com/237bb2f57e9ad90ee4545948d7466790/repparw.com.ar/dns/records
     bind ;x hint -F e => { const pos = tri.dom.getAbsoluteCentre(e); tri.excmds.exclaim_quiet("xdotool mousemove --sync " + window.devicePixelRatio * pos.x + " " + window.devicePixelRatio * pos.y + "; xdotool click 1")}
     bind ;X hint -F e => { const pos = tri.dom.getAbsoluteCentre(e); tri.excmds.exclaim_quiet("xdotool mousemove --sync " + window.devicePixelRatio * pos.x + " " + window.devicePixelRatio * pos.y + "; xdotool keydown ctrl+shift; xdotool click 1; xdotool keyup ctrl+shift")}
+    bind ;c hint -c [class*="expand"],[class*="togg"],[class="comment_folder"]
+
     unbind <F1>
     bind yy composite urlmodify_js -t www.youtube.com/watch?v= youtu.be/ | clipboard yank
     bind G scrollto 100

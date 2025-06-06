@@ -67,7 +67,7 @@
         "$shell" = "fish";
         "$top" = "$terminal $shell -ic top";
         "$fileManager" = "hdrop $terminal --class filemanager $shell -ic yazi";
-        "$spotify" = "$terminal --class spotify spotify_player";
+        "$spotify" = "hdrop -c spotify $terminal --class spotify spotify_player";
         "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim $shell -ic obsinvim'";
         "$notes2" = "hdrop -c obsidian '$prefix obsidian'";
 
@@ -186,7 +186,7 @@
           "$mod, a, exec, $prefix anki"
           "$mod, RETURN, exec, $terminal"
           "$mod, W, killactive,"
-          "$mod, M, exec, hdrop $spotify"
+          "$mod, M, exec, $spotify"
           "$mod, E, exec, $fileManager"
           "$mod, F, fullscreen"
           "$mod ALT, F, togglefloating"
