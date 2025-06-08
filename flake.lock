@@ -543,22 +543,6 @@
     },
     "nixpkgs_6": {
       "locked": {
-        "lastModified": 1748406211,
-        "narHash": "sha256-B3BsCRbc+x/d0WiG1f+qfSLUy+oiIfih54kalWBi+/M=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "3d1f29646e4b57ed468d60f9d286cde23a8d1707",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_7": {
-      "locked": {
         "lastModified": 1749285348,
         "narHash": "sha256-frdhQvPbmDYaScPFiCnfdh3B/Vh81Uuoo0w5TkWmmjU=",
         "owner": "nixos",
@@ -573,7 +557,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_8": {
+    "nixpkgs_7": {
       "locked": {
         "lastModified": 1748460289,
         "narHash": "sha256-7doLyJBzCllvqX4gszYtmZUToxKvMUrg45EUWaUYmBg=",
@@ -592,7 +576,10 @@
     "nixvim": {
       "inputs": {
         "flake-parts": "flake-parts_2",
-        "nixpkgs": "nixpkgs_6",
+        "nixpkgs": [
+          "nixvim-config",
+          "nixpkgs"
+        ],
         "nuschtosSearch": "nuschtosSearch",
         "systems": "systems_3"
       },
@@ -617,11 +604,11 @@
         "nixvim": "nixvim"
       },
       "locked": {
-        "lastModified": 1749406712,
-        "narHash": "sha256-HMqsBQstue1XPSp042bszWGEUGYyliXKJawyKGqsiew=",
+        "lastModified": 1749408540,
+        "narHash": "sha256-QUixGb33vUL5hkyfpcKPE15ikyncQ0UdNE92LPSPGgI=",
         "owner": "repparw",
         "repo": "nixvim-config",
-        "rev": "1d9035d42f2163c75ee54810f90c22f1652e2670",
+        "rev": "b6471924d6c98c5fc3ceaf982ac1ad6e91764347",
         "type": "github"
       },
       "original": {
@@ -633,7 +620,7 @@
     "nur": {
       "inputs": {
         "flake-parts": "flake-parts_3",
-        "nixpkgs": "nixpkgs_7",
+        "nixpkgs": "nixpkgs_6",
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
@@ -724,7 +711,7 @@
         "git-hooks": "git-hooks",
         "gnome-shell": "gnome-shell",
         "home-manager": "home-manager_3",
-        "nixpkgs": "nixpkgs_8",
+        "nixpkgs": "nixpkgs_7",
         "nur": "nur_2",
         "systems": "systems_4",
         "tinted-foot": "tinted-foot",
