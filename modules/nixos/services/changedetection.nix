@@ -1,4 +1,4 @@
-{ cfg }:
+{ cfg, config, ... }:
 {
   "changedetection" = {
     image = "docker.io/linuxserver/changedetection.io:latest";
