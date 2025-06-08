@@ -1,4 +1,4 @@
-{ cfg }:
+{ cfg, config, ... }:
 {
   "jellyfin" = {
     image = "docker.io/linuxserver/jellyfin:latest";
