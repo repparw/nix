@@ -1,4 +1,4 @@
-{ cfg }:
+{ cfg, config, ... }:
 {
   "ntfy" = {
     image = "docker.io/binwiederhier/ntfy:latest";

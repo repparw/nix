@@ -38,7 +38,7 @@ let
   ];
 
   containerDefinitions = mapAttrs (name: attrs: mkContainer name attrs) (
-    foldl' (acc: def: acc // (def { inherit cfg; })) { } containersList
+    foldl' (acc: def: acc // (def { inherit cfg config; })) { } containersList
   );
 in
 {

@@ -1,4 +1,4 @@
-{ cfg }:
+{ cfg, config, ... }:
 {
   "swag" = {
     image = "docker.io/linuxserver/swag:latest";

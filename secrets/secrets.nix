@@ -9,13 +9,15 @@ in
 {
   "access-tokens.age".publicKeys = users;
 
-  "rclone/crypt.age".publicKeys = users;
-  "rclone/drive-token.age".publicKeys = users;
-  "rclone/drive-secret.age".publicKeys = users;
-  "rclone/drive-id.age".publicKeys = users;
-  "rclone/dropbox.age".publicKeys = users;
+  "services/rclone/crypt.age".publicKeys = users;
+  "services/rclone/drive-token.age".publicKeys = users;
+  "services/rclone/drive-secret.age".publicKeys = users;
+  "services/rclone/drive-id.age".publicKeys = users;
+  "services/rclone/dropbox.age".publicKeys = users;
 
   "tod0.age".publicKeys = users;
+
+  "services/freshrss.age".publicKeys = users;
 
   "steam-password.age".publicKeys = users;
 }
