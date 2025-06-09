@@ -7,7 +7,7 @@
       "PGID" = cfg.group;
       "TZ" = cfg.timezone;
       "OIDC_ENABLED" = "1";
-      "OIDC_PROVIDER_METADATA_URL" = "https://auth.repparw.me/.well-known/openid-configuration";
+      "OIDC_PROVIDER_METADATA_URL" = "https://auth.${cfg.domain}/.well-known/openid-configuration";
       "OIDC_REMOTE_USER_CLAIM" = "preferred_username";
       "OIDC_SCOPES" = "openid groups email profile";
       "OIDC_X_FORWARDED_HEADERS" = "X-Forwarded-Host X-Forwarded-Port X-Forwarded-Proto";
@@ -22,12 +22,14 @@
     labels = {
       "glance.id" = "freshrss";
       "glance.url" = "https://rss.${cfg.domain}";
+      "traefik.http.routers.freshrss.rule" = "Host(`rss.${cfg.domain}`)";
     };
   };
   "mercury" = {
     image = "docker.io/wangqiru/mercury-parser-api:latest";
     labels = {
       "glance.parent" = "freshrss";
+      "traefik.enable" = "false";
     };
   };
 }

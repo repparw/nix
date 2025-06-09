@@ -54,9 +54,8 @@
         };
       })
       // (lib.optionalAttrs config.modules.services.enable {
-        freshrss = {
-          file = ./services/freshrss.age;
-        };
+        freshrss.file = ./services/freshrss.age;
+        cloudflare.file = ./services/proxy/cloudflare.age;
       });
 
     identityPaths = [ "/home/repparw/.ssh/id_ed25519" ];

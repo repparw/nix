@@ -1,32 +1,43 @@
 { cfg, config, ... }:
 {
-  "swag" = {
-    image = "docker.io/linuxserver/swag:latest";
+  "traefik" = {
+    image = "docker.io/library/traefik:latest";
     environment = {
-      "DNSPLUGIN" = "cloudflare";
       "PUID" = cfg.user;
       "PGID" = cfg.group;
       "TZ" = cfg.timezone;
-      "SUBDOMAINS" = "wildcard";
-      "URL" = cfg.domain;
-      "VALIDATION" = "dns";
     };
+    environmentFiles = [
+      config.age.secrets.cloudflare.path
+    ];
     volumes = [
-      "${cfg.configDir}/swag:/config"
+      "${cfg.configDir}/traefik:/config"
+      "/run/podman/podman.sock:/var/run/docker.sock"
+    ];
+    cmd = [
+      "--configFile=/config/traefik.yml"
     ];
     ports = [
-      "80:80/tcp"
+      # "8080:8080/tcp"
       "443:443/tcp"
     ];
-    capabilities = {
-      NET_ADMIN = true;
-    };
-    dependsOn = [
-      "glance"
-    ];
     labels = {
-      "glance.id" = "swag";
       "glance.hide" = "true";
+      "glance.id" = "traefik";
+      "traefik.tls.stores.default.defaultgeneratedcert.resolver" = "cloudflare";
+      "traefik.tls.stores.default.defaultgeneratedcert.domain.main" = "${cfg.domain}";
+      "traefik.tls.stores.default.defaultgeneratedcert.domain.sans" = "*.${cfg.domain}";
+      # api
+      "traefik.http.routers.api.rule" = "Host(`traefik.repparw.me`)";
+      "traefik.http.routers.api.tls" = "true";
+      "traefik.http.routers.api.service" = "api@internal";
+      # auth middleware
+      # defined here as authelia can start after traefik
+      "traefik.http.middlewares.authelia.forwardAuth.address" =
+        "http://authelia:9091/api/authz/forward-auth";
+      "traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader" = "true";
+      "traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders" =
+        "Remote-User,Remote-Groups,Remote-Email,Remote-Name";
     };
   };
   "ddclient" = {
@@ -43,7 +54,8 @@
       "--health-cmd=pgrep ddclient || exit 1"
     ];
     labels = {
-      "glance.parent" = "swag";
+      "glance.parent" = "traefik";
+      "traefik.enable" = "false";
     };
   };
   "glance" = {
@@ -53,7 +65,9 @@
       "/run/podman/podman.sock:/var/run/docker.sock"
     ];
     labels = {
-      "glance.parent" = "swag";
+      "glance.parent" = "traefik";
+      "traefik.http.routers.glance.rule" = "Host(`${cfg.domain}`)";
+      "traefik.http.routers.glance.tls.certResolver" = "cloudflare";
     };
   };
 }

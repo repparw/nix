@@ -21,6 +21,7 @@
     ];
     labels = {
       "glance.hide" = "true";
+      "traefik.enable" = "false";
     };
   };
 }
