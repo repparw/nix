@@ -604,11 +604,11 @@
         "nixvim": "nixvim"
       },
       "locked": {
-        "lastModified": 1749495677,
-        "narHash": "sha256-TXFwSK61nI8mLwkLJnacycPLRHJdUxwA0TgFnZpL1gs=",
+        "lastModified": 1749496206,
+        "narHash": "sha256-wegur32tf92cnUn/GSbKHioHfy1y2aroBc6BzeTfbdk=",
         "owner": "repparw",
         "repo": "nixvim-config",
-        "rev": "49364d22060569206982bba2d7966619433b7395",
+        "rev": "4ae8b0f5dfe2c26a3a497bbf373ae3744da3811d",
         "type": "github"
       },
       "original": {
