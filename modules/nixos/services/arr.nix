@@ -14,9 +14,6 @@
     extraOptions = [
       "--health-cmd=curl -f http://localhost:6767/bazarr/api/status || exit 1"
     ];
-    labels = {
-      "glance.id" = "bazarr";
-    };
   };
   "flaresolverr" = {
     image = "docker.io/flaresolverr/flaresolverr:latest";

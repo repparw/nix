@@ -23,7 +23,6 @@
     ];
     labels = {
       "glance.hide" = "true";
-      "glance.id" = "traefik";
       "traefik.tls.stores.default.defaultgeneratedcert.resolver" = "cloudflare";
       "traefik.tls.stores.default.defaultgeneratedcert.domain.main" = "${cfg.domain}";
       "traefik.tls.stores.default.defaultgeneratedcert.domain.sans" = "*.${cfg.domain}";
