@@ -16,11 +16,14 @@ let
           "--network-alias=${name}"
         ];
         labels = (attrs.labels or { }) // {
+          "io.containers.autoupdate" = "registry";
+
           "glance.name" = name;
           "glance.url" = lib.mkDefault "https://${name}.${cfg.domain}";
           "glance.icon" = "di:${name}";
           "glance.same-tab" = "true";
-          "io.containers.autoupdate" = "registry";
+
+          "traefik.http.routers.${name}.tls" = "true";
         };
       }
     ];

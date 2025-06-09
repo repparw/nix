@@ -9,6 +9,7 @@
     ];
     labels = {
       "glance.parent" = "paperless";
+      "traefik.enable" = "false";
     };
   };
   "paperless" = {
@@ -41,6 +42,7 @@
     labels = {
       "glance.id" = "paperless";
       "glance.url" = "https://paper.${cfg.domain}";
+      "traefik.http.routers.paperless.rule" = "Host(`paper.${cfg.domain}`)";
     };
   };
   "paperdb" = {
@@ -58,6 +60,7 @@
     ];
     labels = {
       "glance.parent" = "paperless";
+      "traefik.enable" = "false";
     };
   };
 }

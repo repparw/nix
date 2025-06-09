@@ -31,6 +31,7 @@
     ];
     labels = {
       "glance.parent" = "bazarr";
+      "traefik.enable" = "false";
     };
   };
   "prowlarr" = {
@@ -66,6 +67,7 @@
     ];
     labels = {
       "glance.url" = "https://qbit.${cfg.domain}";
+      "traefik.http.routers.qbittorrent.rule" = "Host(`qbit.${cfg.domain}`)";
     };
   };
   "radarr" = {

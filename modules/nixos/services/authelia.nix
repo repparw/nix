@@ -20,6 +20,7 @@
     labels = {
       "glance.id" = "authelia";
       "glance.url" = "https://auth.${cfg.domain}";
+      "traefik.http.routers.authelia.rule" = "Host(`auth.${cfg.domain}`)";
     };
   };
   "valkey" = {
@@ -41,6 +42,7 @@
     extraOptions = [ "--health-cmd=nc -z localhost 6379 || exit 1" ];
     labels = {
       "glance.parent" = "authelia";
+      "traefik.enable" = "false";
     };
   };
 }
