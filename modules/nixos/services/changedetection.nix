@@ -17,9 +17,6 @@
     dependsOn = [
       "sockpuppetbrowser"
     ];
-    labels = {
-      "glance.id" = "changedetection";
-    };
   };
   "sockpuppetbrowser" = {
     image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";
