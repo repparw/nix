@@ -17,6 +17,8 @@ in
 
   "tod0.age".publicKeys = users;
 
+  "services/proxy/cloudflare.age".publicKeys = users;
+
   "services/freshrss.age".publicKeys = users;
 
   "steam-password.age".publicKeys = users;

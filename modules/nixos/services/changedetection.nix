@@ -31,6 +31,7 @@
     };
     labels = {
       "glance.parent" = "changedetection";
+      "traefik.enable" = "false";
     };
   };
 }

@@ -5,6 +5,9 @@
     environment = {
       "TZ" = cfg.timezone;
     };
+    labels = {
+      "traefik.enable" = "false"; # TODO enable when combining with moque
+    };
     volumes = [
       "${cfg.configDir}/pihole/etc:/etc/pihole"
       "${cfg.configDir}/pihole/dnsmasq.d:/etc/dnsmasq.d"
