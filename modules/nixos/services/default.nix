@@ -283,12 +283,12 @@ in
         ];
       };
 
-      "/home/repparw/.config/dlsuite/swag" = {
+      "/home/repparw/.config/dlsuite/traefik" = {
         depends = [
           "/"
           "/mnt/hdd"
         ];
-        device = "${cfg.configDir}/swag";
+        device = "${cfg.configDir}/traefik";
         options = [
           "bind"
           "ro"
