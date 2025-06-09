@@ -40,7 +40,6 @@
       "--health-cmd=curl -f http://localhost:8000/api/ || exit 1"
     ];
     labels = {
-      "glance.id" = "paperless";
       "glance.url" = "https://paper.${cfg.domain}";
       "traefik.http.routers.paperless.rule" = "Host(`paper.${cfg.domain}`)";
     };
