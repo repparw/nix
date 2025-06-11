@@ -20,6 +20,14 @@ See the above repository for updates as well as full license text. */
   --uc-sidebar-width: 1px;
 }
 
+#TabsToolbar{
+  visibility: collapse !important
+}
+
+#sidebar-box[sidebarcommand="_3c078156-979c-498b-8990-85f7987dd929_-sidebar-action"] #sidebar-header {
+  display: none !important;
+}
+
 #sidebar-box[sidebarcommand="_3c078156-979c-498b-8990-85f7987dd929_-sidebar-action"]{
   --uc-autohide-sidebar-delay: 300ms; /* Wait 0.3s before hiding sidebar */
   --uc-autohide-transition-duration: 115ms;
@@ -44,19 +52,6 @@ See the above repository for updates as well as full license text. */
 #main-window[sizemode="fullscreen"] #browser{ --uc-sidebar-width: 1px; }
 
 #sidebar-splitter{ display: none }
-
-#sidebar-header{
-  overflow: hidden;
-  color: var(--chrome-color, inherit) !important;
-  padding-inline: 0 !important;
-}
-
-#sidebar-header::before,
-#sidebar-header::after{
-  content: "";
-  display: flex;
-  padding-left: 8px;
-}
 
 #sidebar-header,
 #sidebar{
