@@ -2,8 +2,7 @@
   pkgs,
   lib,
   ...
-}:
-{
+}: {
   programs.tmux = {
     enable = true;
     shell = "${lib.getExe pkgs.fish}";
@@ -41,22 +40,6 @@
       }
 
       pain-control
-
-      {
-        plugin = mkTmuxPlugin {
-          pluginName = "tmux-power-zoom";
-          name = "tmux-power-zoom";
-          src = pkgs.fetchFromGitHub {
-            owner = "jaclu";
-            repo = "tmux-power-zoom";
-            rev = "latest";
-            hash = "sha256-3RI/waUjmAoqRrihjenDSq777kf3sLXaWWYJMCRlEvQ=";
-          };
-        };
-        extraConfig = ''
-          set -g @power_zoom_trigger "z"
-        '';
-      }
 
       vim-tmux-navigator
       yank
