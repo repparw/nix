@@ -1,4 +1,4 @@
-{ cfg }:
+{ cfg, ... }:
 {
   "pihole" = {
     image = "docker.io/pihole/pihole:latest";

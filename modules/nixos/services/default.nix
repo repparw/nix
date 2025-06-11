@@ -28,18 +28,29 @@ let
       }
     ];
 
-  containersList = [
-    (import ./arr.nix)
-    (import ./authelia.nix)
-    (import ./changedetection.nix)
-    (import ./diun.nix)
-    (import ./freshrss.nix)
-    (import ./jellyfin.nix)
-    (import ./n8n.nix)
-    (import ./ntfy.nix)
-    (import ./paperless.nix)
-    (import ./proxy.nix)
-  ];
+  containersList =
+    if config.networking.hostName == "alpha" then
+      [
+        (import ./arr.nix)
+        (import ./authelia.nix)
+        (import ./changedetection.nix)
+        (import ./diun.nix)
+        (import ./freshrss.nix)
+        (import ./jellyfin.nix)
+        (import ./n8n.nix)
+        (import ./ntfy.nix)
+        (import ./paperless.nix)
+        (import ./proxy.nix)
+      ]
+    else if config.networking.hostName == "pi" then
+      [
+        (import ./homeassistant.nix)
+        (import ./hyperion.nix)
+        (import ./pihole.nix)
+        (import ./proxy.nix)
+      ]
+    else
+      [ ];
 
   containerDefinitions = mapAttrs (name: attrs: mkContainer name attrs) (
     foldl' (acc: def: acc // (def { inherit cfg config; })) { } containersList

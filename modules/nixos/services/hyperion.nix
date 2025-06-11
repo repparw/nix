@@ -1,4 +1,4 @@
-{ cfg }:
+{ cfg, ... }:
 {
   "hyperion" = {
     image = "docker.io/foorschtbar/hyperion:latest";
@@ -12,5 +12,8 @@
     #   "--device=/dev/dri:/dev/dri:rwm"
     #   "--health-cmd=curl -f http://localhost:8096/health || exit 1"
     # ];
+    labels = {
+      "traefik.enable" = "false";
+    };
   };
 }

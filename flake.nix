@@ -9,6 +9,7 @@
     nixvim-config.url = "github:repparw/nixvim-config";
     nur.url = "github:nix-community/NUR";
     stylix.url = "github:danth/stylix";
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
   };
 
   outputs =
