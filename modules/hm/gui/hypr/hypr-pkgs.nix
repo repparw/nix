@@ -3,8 +3,7 @@
   osConfig,
   lib,
   ...
-}:
-{
+}: {
   config = lib.mkIf osConfig.programs.hyprland.enable {
     home.packages = with pkgs; [
       # Desktop
@@ -29,7 +28,7 @@
         src = fetchFromGitHub {
           owner = "kiblee";
           repo = "tod0";
-          rev = "latest";
+          tag = "v${version}";
           hash = "sha256-QojJXu7fnl7StCq6jPYZcbjTQbqTrxAq6mUSQhJryes=";
         };
         propagatedBuildInputs = with python3.pkgs; [
