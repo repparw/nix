@@ -1,10 +1,17 @@
-{ config, ... }:
+{ config, lib, ... }:
 {
-  imports = [
-    #./hardware-configuration.nix TODO generate hw config
-  ];
-
   networking.hostName = "pi";
+
+  modules.services = {
+    enable = true;
+    domain = "home.repparw.me";
+    rootDir = "/home/repparw/services";
+  };
+
+  boot.loader = {
+    systemd-boot.enable = lib.mkForce false;
+    generic-extlinux-compatible.enable = lib.mkForce true;
+  };
 
   services = {
     openssh.ports = [ 2222 ];
