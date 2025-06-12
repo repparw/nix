@@ -1,5 +1,10 @@
 { config, lib, ... }:
 {
+  imports = [
+    inputs.disko.nixosModules.disko
+    ./disko-config.nix
+  ];
+
   networking.hostName = "pi";
 
   system.nixos.tags =
