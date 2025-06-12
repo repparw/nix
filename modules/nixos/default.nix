@@ -33,6 +33,8 @@
     ];
   };
 
+  users.users.root.openssh.authorizedKeys.keys =
+    config.users.users.repparw.openssh.authorizedKeys.keys;
   boot.loader = {
     systemd-boot.enable = true;
     efi.canTouchEfiVariables = true;
