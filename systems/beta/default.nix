@@ -3,8 +3,6 @@ _: {
     ./hardware-configuration.nix
   ];
 
-  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
-
   modules.gui.enable = true;
 
   networking.hostName = "beta";
