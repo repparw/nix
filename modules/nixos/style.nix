@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   ...
@@ -6,7 +7,7 @@
 {
   stylix = {
     enable = true;
-    autoEnable = true;
+    autoEnable = config.networking.hostName != "pi";
 
     # INFO Colorscheme change
     base16Scheme = "${pkgs.base16-schemes}/share/themes/tokyodark.yaml";
