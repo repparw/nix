@@ -2,16 +2,23 @@
 {
   networking.hostName = "pi";
 
+  system.nixos.tags =
+    let
+      cfg = config.boot.loader.raspberryPi;
+    in
+    [
+      "raspberry-pi-${cfg.variant}"
+      cfg.bootloader
+      config.boot.kernelPackages.kernel.version
+    ];
+
   modules.services = {
     enable = true;
     domain = "home.repparw.me";
     rootDir = "/home/repparw/services";
   };
 
-  boot.loader = {
-    systemd-boot.enable = lib.mkForce false;
-    generic-extlinux-compatible.enable = lib.mkForce true;
-  };
+  boot.loader.systemd-boot.enable = lib.mkForce false;
 
   services = {
     openssh.ports = [ 2222 ];
