@@ -45,7 +45,7 @@
   };
 
   networking = {
-    networkmanager.enable = true;
+    networkmanager.enable = config.networking.hostName != "pi";
 
     firewall.trustedInterfaces = [
       "enp0s25"
@@ -55,11 +55,14 @@
   };
 
   nix = {
-    extraOptions = ''
-      !include ${config.age.secrets.accessTokens.path}
-    '';
+    # extraOptions = ''
+    #   !include ${config.age.secrets.accessTokens.path}
+    # '';
 
     settings = {
+      extra-substituters = "https://cachix.cachix.org";
+      extra-trusted-public-keys = "cachix.cachix.org-1:eWNHQldwUO7G2VkjpnjDbWwy4KQ/HNxht7H4SSoMckM=";
+
       use-xdg-base-directories = true;
 
       trusted-users = [

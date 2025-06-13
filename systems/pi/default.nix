@@ -7,7 +7,15 @@
 
   networking.hostName = "pi";
 
-  networking.useNetworkd = lib.mkForce true;
+  system.nixos.tags =
+    let
+      cfg = config.boot.loader.raspberryPi;
+    in
+    [
+      "raspberry-pi-${cfg.variant}"
+      cfg.bootloader
+      config.boot.kernelPackages.kernel.version
+    ];
 
   nix.settings = {
     extra-substituters = [

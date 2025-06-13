@@ -18,7 +18,7 @@ rec {
     ../systems/${hostname}
     inputs.nix-index-database.nixosModules.nix-index
     { programs.nix-index-database.comma.enable = true; }
-    ../secrets/nixos.nix
+    # ../secrets/nixos.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.stylix.nixosModules.stylix
 
@@ -49,10 +49,13 @@ rec {
         inputs.nixos-raspberrypi.lib.nixosSystem {
           inherit system;
           modules = mkModules hostname ++ [
-            inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.base
-            inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.display-vc4
-            inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.bluetooth
-
+            {
+              imports = with inputs.nixos-raspberrypi.nixosModules; [
+                raspberry-pi-5.base
+                raspberry-pi-5.display-vc4
+                raspberry-pi-5.bluetooth
+              ];
+            }
             inputs.disko.nixosModules.disko
           ];
           specialArgs = {
