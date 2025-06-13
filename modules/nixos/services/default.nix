@@ -47,7 +47,7 @@ let
         (import ./homeassistant.nix)
         (import ./hyperion.nix)
         (import ./pihole.nix)
-        (import ./proxy.nix)
+        # (import ./proxy.nix)
       ]
     else
       [ ];

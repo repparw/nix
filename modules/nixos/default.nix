@@ -45,7 +45,7 @@
   };
 
   networking = {
-    networkmanager.enable = true;
+    networkmanager.enable = config.networking.hostName != "pi";
 
     firewall.trustedInterfaces = [
       "enp0s25"
@@ -55,19 +55,15 @@
   };
 
   nix = {
-    extraOptions = ''
-      !include ${config.age.secrets.accessTokens.path}
-    '';
+    # extraOptions = ''
+    #   !include ${config.age.secrets.accessTokens.path}
+    # '';
 
     settings = {
-      use-xdg-base-directories = true;
+      extra-substituters = [ "https://cachix.cachix.org" ];
+      extra-trusted-public-keys = [ "cachix.cachix.org-1:eWNHQldwUO7G2VkjpnjDbWwy4KQ/HNxht7H4SSoMckM=" ];
 
-      extra-substituters = [
-        "https://nixos-raspberrypi.cachix.org"
-      ];
-      extra-trusted-public-keys = [
-        "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
-      ];
+      use-xdg-base-directories = true;
 
       trusted-users = [
         "root"
