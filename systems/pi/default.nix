@@ -2,7 +2,7 @@
 {
   imports = [
     ./disko-config.nix
-    ./hardware-configuration.nix
+    # ./hardware-configuration.nix
   ];
 
   networking.hostName = "pi";
