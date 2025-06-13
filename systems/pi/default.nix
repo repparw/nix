@@ -7,7 +7,7 @@
 
   networking.hostName = "pi";
 
-  networking.useNetworkd = lib.mkForce false;
+  networking.useNetworkd = lib.mkForce true;
 
   nix.settings = {
     extra-substituters = [
