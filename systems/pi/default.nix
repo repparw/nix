@@ -7,6 +7,8 @@
 
   networking.hostName = "pi";
 
+  networking.useNetworkd = lib.mkForce false;
+
   nix.settings = {
     extra-substituters = [
       "https://nixos-raspberrypi.cachix.org"
