@@ -60,8 +60,8 @@
     # '';
 
     settings = {
-      extra-substituters = "https://cachix.cachix.org";
-      extra-trusted-public-keys = "cachix.cachix.org-1:eWNHQldwUO7G2VkjpnjDbWwy4KQ/HNxht7H4SSoMckM=";
+      extra-substituters = [ "https://cachix.cachix.org" ];
+      extra-trusted-public-keys = [ "cachix.cachix.org-1:eWNHQldwUO7G2VkjpnjDbWwy4KQ/HNxht7H4SSoMckM=" ];
 
       use-xdg-base-directories = true;
 
