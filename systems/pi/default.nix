@@ -1,8 +1,8 @@
 { config, lib, ... }:
 {
   imports = [
-    inputs.disko.nixosModules.disko
     ./disko-config.nix
+    # ./hardware-configuration.nix
   ];
 
   networking.hostName = "pi";
@@ -17,6 +17,15 @@
       config.boot.kernelPackages.kernel.version
     ];
 
+  nix.settings = {
+    extra-substituters = [
+      "https://nixos-raspberrypi.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+    ];
+  };
+
   modules.services = {
     enable = true;
     domain = "home.repparw.me";
@@ -26,6 +35,8 @@
   boot.loader.systemd-boot.enable = lib.mkForce false;
 
   services = {
+    getty.autologinUser = "repparw";
+
     openssh.ports = [ 2222 ];
 
     unbound = {
@@ -38,7 +49,7 @@
     };
 
     archisteamfarm = {
-      enable = true;
+      enable = false;
       settings.SteamOwnerID = "76561198101631906";
       bots.repparw = {
         settings.CustomGamePlayedWhileFarming = "Idling";
