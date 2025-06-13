@@ -49,10 +49,11 @@ rec {
         inputs.nixos-raspberrypi.lib.nixosSystem {
           inherit system;
           modules = mkModules hostname ++ [
-            inputs.nixos-hardware.nixosModules.raspberry-pi-5
             inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.base
             inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.display-vc4
             inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.bluetooth
+
+            inputs.disko.nixosModules.disko
           ];
           specialArgs = {
             inherit inputs;
