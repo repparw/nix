@@ -18,7 +18,7 @@ rec {
     ../systems/${hostname}
     inputs.nix-index-database.nixosModules.nix-index
     { programs.nix-index-database.comma.enable = true; }
-    # ../secrets/nixos.nix
+    ../secrets/nixos.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.stylix.nixosModules.stylix
 
