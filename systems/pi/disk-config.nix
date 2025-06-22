@@ -1,5 +1,3 @@
-# hosts/rpi5/disko-config.nix
-
 { ... }:
 {
   disko.devices = {
@@ -10,9 +8,14 @@
         content = {
           type = "gpt";
           partitions = {
+            BIOS = {
+              size = "1M";
+              type = "EF02";
+              priority = 1;
+            };
             ESP = {
-              type = "EF00";
               size = "512M";
+              type = "EF00";
               content = {
                 type = "filesystem";
                 format = "vfat";
