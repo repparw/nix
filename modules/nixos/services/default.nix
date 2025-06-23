@@ -20,7 +20,7 @@ let
 
           "glance.name" = name;
           "glance.url" = lib.mkDefault "https://${name}.${cfg.domain}";
-          "glance.icon" = "di:${name}";
+          "glance.icon" = lib.mkDefault "di:${name}";
           "glance.same-tab" = "true";
 
           "traefik.http.routers.${name}.tls" = "true";
@@ -128,6 +128,18 @@ in
     networking.firewall.trustedInterfaces = [ "podman*" ];
 
     fileSystems = {
+      "/home/repparw/.config/dlsuite/actual" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/actual";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+
       "/home/repparw/.config/dlsuite/authelia" = {
         depends = [
           "/"
