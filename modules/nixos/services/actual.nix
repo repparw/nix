@@ -13,7 +13,7 @@
       "--health-start-period=20s"
     ];
     labels = {
-      # "traefik.http.services.actual.loadbalancer.server.port" = "5006";
+      "glance.icon" = "di:actual-budget";
     };
   };
 }
