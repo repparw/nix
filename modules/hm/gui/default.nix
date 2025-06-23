@@ -4,9 +4,11 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   cfg = osConfig.modules.gui;
-in {
+in
+{
   imports = [
     ./firefox.nix
     ./gaming.nix
@@ -21,7 +23,8 @@ in {
   ];
 
   config = lib.mkIf cfg.enable {
-    home.packages = with pkgs;
+    home.packages =
+      with pkgs;
       [
         pwvucontrol
         scrcpy
@@ -35,7 +38,7 @@ in {
         # find pomo app in nixpkgs
       ]
       ++ (with pkgs.stable; [
-        ]);
+      ]);
 
     gtk = {
       enable = true;
@@ -45,8 +48,8 @@ in {
     xdg.mimeApps = {
       enable = true;
       associations.removed = {
-        "application/pdf" = ["chromium-browser.desktop"];
-        "inode/directory" = ["firefox.desktop"];
+        "application/pdf" = [ "chromium-browser.desktop" ];
+        "inode/directory" = [ "firefox.desktop" ];
       };
       defaultApplications = {
         "inode/directory" = "org.gnome.Nautilus.desktop";
@@ -84,6 +87,13 @@ in {
         };
         keybindings = {
           "ctrl+backspace" = "send_text all \\x17";
+        };
+      };
+
+      thunderbird = {
+        enable = true;
+        profiles.personal = {
+          isDefault = true;
         };
       };
 
