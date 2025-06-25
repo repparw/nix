@@ -46,21 +46,22 @@ rec {
     builtins.mapAttrs (
       hostname: system:
       if hostname == "pi" then
-        inputs.nixos-raspberrypi.lib.nixosSystem {
+        inputs.nixpkgs.lib.nixosSystem {
           inherit system;
           modules = mkModules hostname ++ [
-            {
-              imports = with inputs.nixos-raspberrypi.nixosModules; [
-                raspberry-pi-5.base
-                raspberry-pi-5.display-vc4
-                raspberry-pi-5.bluetooth
-              ];
-            }
+            # {
+            #   imports = with inputs.nixos-raspberrypi.nixosModules; [
+            #     raspberry-pi-5.base
+            #     raspberry-pi-5.display-vc4
+            #     raspberry-pi-5.bluetooth
+            #   ];
+            # }
             inputs.disko.nixosModules.disko
+            inputs.nixos-hardware.nixosModules.raspberry-pi-5
           ];
           specialArgs = {
             inherit inputs;
-            nixos-raspberrypi = inputs.nixos-raspberrypi;
+            # nixos-raspberrypi = inputs.nixos-raspberrypi;
           };
         }
       else
