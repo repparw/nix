@@ -36,7 +36,10 @@
   users.users.root.openssh.authorizedKeys.keys =
     config.users.users.repparw.openssh.authorizedKeys.keys;
   boot.loader = {
-    systemd-boot.enable = true;
+    systemd-boot = {
+      enable = true;
+      configurationLimit = 10;
+    };
     efi.canTouchEfiVariables = true;
   };
 
