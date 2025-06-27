@@ -27,7 +27,7 @@
       "traefik.tls.stores.default.defaultgeneratedcert.domain.main" = "${cfg.domain}";
       "traefik.tls.stores.default.defaultgeneratedcert.domain.sans" = "*.${cfg.domain}";
       # api
-      "traefik.http.routers.api.rule" = "Host(`traefik.repparw.me`)";
+      "traefik.http.routers.api.rule" = "Host(`traefik.${cfg.domain}`)";
       "traefik.http.routers.api.tls" = "true";
       "traefik.http.routers.api.service" = "api@internal";
       # auth middleware
