@@ -9,6 +9,7 @@
       "AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE" = "/secrets/OIDC_HMAC_SECRET";
       "X_AUTHELIA_CONFIG_FILTERS" = "template";
       "TZ" = cfg.timezone;
+      "DOMAIN" = cfg.domain;
     };
     volumes = [
       "${cfg.configDir}/authelia/config:/config"
