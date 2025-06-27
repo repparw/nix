@@ -44,7 +44,7 @@
 
         "$browser" = "$prefix firefox";
         "$socials" = "$browser -P socials";
-        "$kiosk" = "$browser -P kiosk";
+        "$kiosk" = "$browser -P kiosk --kiosk";
         "$browser2" = "$prefix chromium-browser";
         "$discord" = "$prefix vesktop";
         "$GUIfileManager" = "$prefix nautilus";
@@ -196,7 +196,7 @@
           "$mod, T, exec, $top"
           "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
           "$mod, U, exec, $terminal --hold $shell -ic nup"
-          "$mod, V, exec, $kiosk jellyfin.repparw.me"
+          "$mod, V, exec, $kiosk jellyfin.${osConfig.modules.services.domain}"
           "$mod, Z, exec, $prefix mpvclip"
           "$mod, N, exec, $notes"
           "$mod SHIFT, N, exec, $notes2"

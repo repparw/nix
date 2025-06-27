@@ -113,7 +113,7 @@
         cover_img_width = 5;
         cover_img_scale = 1.0;
         playback_window_width = 6;
-        enable_streaming = "Always";
+        enable_streaming = "DaemonOnly";
         enable_cover_image_cache = true;
         default_device = "spotifyd";
         enable_notify = false;
