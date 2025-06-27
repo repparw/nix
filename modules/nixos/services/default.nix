@@ -24,6 +24,7 @@ let
           "glance.same-tab" = "true";
 
           "traefik.http.routers.${name}.tls" = "true";
+          "traefik.http.routers.${name}.rule" = lib.mkDefault "Host(`${name}.${cfg.domain}`)";
         };
       }
     ];
