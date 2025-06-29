@@ -99,7 +99,6 @@
       powerOnBoot = true;
       settings = {
         General = {
-          experimental = true; # show battery
           Privacy = "device";
           JustWorksRepairing = "always";
           Class = "0x000100";
