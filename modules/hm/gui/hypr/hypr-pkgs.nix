@@ -55,11 +55,7 @@
     ];
 
     services = {
-      swaync.enable = true;
-
-      hyprpolkitagent.enable = true;
-
-      swww.enable = true;
+      clipse.enable = true;
 
       hypridle = {
         enable = true;
@@ -85,6 +81,12 @@
         };
       };
 
+      hyprpolkitagent.enable = true;
+
+      swaync.enable = true;
+
+      swww.enable = true;
+
       wlsunset = {
         enable = true;
         temperature.night = 2500;
@@ -94,6 +96,8 @@
     };
 
     programs = {
+      hyprlock.enable = true;
+
       tofi = {
         enable = true;
         settings = {
@@ -174,8 +178,6 @@
           ascii-input = false;
         };
       };
-
-      hyprlock.enable = true;
     };
   };
 }
