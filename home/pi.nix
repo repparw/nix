@@ -2,8 +2,6 @@
 {
   home.packages = with pkgs; [
   ];
-  ## TODO migrate pi to nixos
-
   # wake on lan, alias
 
   # portainer running:

@@ -6,7 +6,7 @@
       "TZ" = cfg.timezone;
     };
     labels = {
-      "traefik.enable" = "false"; # TODO enable when combining with moque
+      "traefik.enable" = "false"; # TODO remove when combining with moque
     };
     volumes = [
       "${cfg.configDir}/pihole/etc:/etc/pihole"
@@ -16,7 +16,7 @@
       "53:53/tcp"
       "53:53/udp"
     ];
-    # extraOptions = [ TODO healthcheck pihole
+    # extraOptions = [ TODO healthcheck
     #   "--device=/dev/dri:/dev/dri:rwm"
     #   "--health-cmd=curl -f http://localhost:8096/health || exit 1"
     # ];
