@@ -211,7 +211,7 @@
           # Macropad churrosoft
           "CTRL ALT SHIFT, A, exec, hdrop $prefix steam"
           "CTRL ALT SHIFT, B, exec, obs-cmd recording toggle-pause"
-          "CTRL ALT SHIFT, C, exec, obs_remux2wsp"
+          "CTRL ALT SHIFT, C, exec, obs-remux2wsp"
           "CTRL ALT SHIFT, D, exec, obs-cmd replay save"
           "CTRL ALT SHIFT, E, exec, hdrop $discord"
           "CTRL ALT SHIFT, F, exec, wpctl set-source-mute @DEFAULT_SOURCE@ toggle"

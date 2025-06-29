@@ -8,7 +8,7 @@
     volumes = [
       "${cfg.configDir}/hyperion:/root/.hyperion"
     ];
-    # extraOptions = [ TODO healthcheck pihole
+    # extraOptions = [ TODO healthcheck
     #   "--device=/dev/dri:/dev/dri:rwm"
     #   "--health-cmd=curl -f http://localhost:8096/health || exit 1"
     # ];

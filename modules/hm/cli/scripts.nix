@@ -3,7 +3,10 @@
   home.packages = with pkgs; [
     (writeShellApplication {
       name = "clip2text";
-      runtimeInputs = [ wl-clipboard tesseract ];
+      runtimeInputs = [
+        wl-clipboard
+        tesseract
+      ];
       text = ''
         wl-paste | tesseract - stdout | wl-copy
       '';
@@ -11,7 +14,10 @@
 
     (writeShellApplication {
       name = "clip2qr";
-      runtimeInputs = [ wl-clipboard zbar ];
+      runtimeInputs = [
+        wl-clipboard
+        zbar
+      ];
       text = ''
         wl-paste --type image/png | zbarimg --raw - | wl-copy
       '';
@@ -58,7 +64,7 @@
     })
 
     (writeShellApplication {
-      name = "obs_remux2wsp";
+      name = "obs-remux2wsp";
       runtimeInputs = [ ffmpeg ];
       text = ''
         		cd /mnt/hdd/Videos/obs;
