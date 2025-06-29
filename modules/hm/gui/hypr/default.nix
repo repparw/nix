@@ -52,7 +52,7 @@
         "$showkeys" = "pkill wshowkeys || $prefix wshowkeys -a bottom -m 108 -b 00000066";
         "$screenshot" = "hyprshot -o ${config.xdg.userDirs.pictures}/ss -m";
 
-        #"$emojimenu" = "BEMOJI_PICKER_CMD=${lib.getExe pkgs.tofi} bemoji -n";
+        #"$emojimenu" = "BEMOJI_PICKER_CMD=tofi bemoji -n";
         "$menu" = "tofi-run --require-match=false | fish -c 'eval (cat)'";
         "$dmenu" = "$prefix $(tofi-drun)";
 
@@ -196,7 +196,7 @@
           "$mod, T, exec, $top"
           "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
           "$mod, U, exec, $terminal --hold $shell -ic nup"
-          "$mod, V, exec, $kiosk jellyfin.${osConfig.modules.services.domain}"
+          "$mod, V, exec, [float; size 622 652; stayfocused; center] $terminal --class clipse clipse"
           "$mod, Z, exec, $prefix mpvclip"
           "$mod, N, exec, $notes"
           "$mod SHIFT, N, exec, $notes2"
