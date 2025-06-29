@@ -9,7 +9,6 @@
     ./cli
     ./gui
     ./services
-    ./autoUpgrade.nix
     ./style.nix
     ./timers.nix
     ./vm.nix
