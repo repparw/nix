@@ -16,6 +16,8 @@
       enable = true;
       systemd.enable = false; # handled by uwsm
       plugins = with pkgs.hyprlandPlugins; [
+        # change requires hyprland restart
+        hyprspace
         hyprsplit
       ];
 
@@ -82,50 +84,44 @@
           border_size = "1";
 
           # Set to true enable resizing windows by clicking and dragging on borders and gaps
-          resize_on_border = "false";
+          resize_on_border = false;
 
-          allow_tearing = "false";
+          allow_tearing = false;
 
-          layout = "dwindle";
+          layout = "master";
         };
 
         plugin = {
-          hyprsplit = {
-            num_workspaces = 9;
+          hyprsplit.num_workspaces = 9;
+          overview = {
+            switchOnDrop = true;
+            exitOnSwitch = true;
           };
         };
 
         decoration = {
+          # blur.enabled = false;
+          # shadow.enabled = false;
           rounding = "14";
-          dim_inactive = "true";
+          dim_inactive = true;
           dim_strength = "0.1";
           active_opacity = "1";
           inactive_opacity = "1";
         };
 
         ecosystem = {
-          no_donation_nag = "true";
+          no_donation_nag = true;
         };
 
         animations = {
           enabled = true;
-
-          bezier = "myBezier, 0.05, 0.9, 0.1, 1.05";
-
-          animation = [
-            "windows, 1, 7, myBezier"
-            "windowsOut, 1, 7, default, popin 80%"
-            "border, 1, 10, default"
-            "borderangle, 1, 8, default"
-            "fade, 1, 7, default"
-            "workspaces, 1, 10, default"
-          ];
         };
 
         dwindle = {
-          pseudotile = "true"; # Master switch for pseudotiling. Enabling is bound to mainMod + P in the keybinds section below
-          preserve_split = "true"; # You probably want this
+          pseudotile = true; # Master switch for pseudotiling
+          preserve_split = true; # You probably want this
         };
+        # master = { };
 
         misc = {
           force_default_wallpaper = "0";
@@ -178,7 +174,8 @@
 
           "ALT, TAB, workspace, m+1"
           "ALT SHIFT, TAB, workspace, previous_per_monitor"
-          ", mouse:276, workspace, m+1"
+
+          ", mouse:276, overview:toggle"
 
           "$mod, comma, exec, [float; noinitialfocus; noborder; center] $showlayout"
           "$mod, period, exec, $showkeys"
@@ -216,7 +213,7 @@
           "CTRL ALT SHIFT, E, exec, hdrop $discord"
           "CTRL ALT SHIFT, F, exec, wpctl set-source-mute @DEFAULT_SOURCE@ toggle"
           # CTRL ALT SHIFT, G, exec,
-          "CTRL ALT SHIFT, H, exec, hdrop $spotify"
+          "CTRL ALT SHIFT, H, exec, $spotify"
 
           # Media keys
           ", XF86AudioPlay, exec, playerctl play-pause"
@@ -237,22 +234,23 @@
           "$mod SHIFT, L, movewindow, r"
 
           "$mod, 1, split:workspace, 1"
-          "$mod SHIFT, 1, split:movetoworkspace, 1"
           "$mod, 2, split:workspace, 2"
-          "$mod SHIFT, 2, split:movetoworkspace, 2"
           "$mod, 3, split:workspace, 3"
-          "$mod SHIFT, 3, split:movetoworkspace, 3"
           "$mod, 4, split:workspace, 4"
-          "$mod SHIFT, 4, split:movetoworkspace, 4"
           "$mod, 5, split:workspace, 5"
-          "$mod SHIFT, 5, split:movetoworkspace, 5"
           "$mod, 6, split:workspace, 6"
-          "$mod SHIFT, 6, split:movetoworkspace, 6"
           "$mod, 7, split:workspace, 7"
-          "$mod SHIFT, 7, split:movetoworkspace, 7"
           "$mod, 8, split:workspace, 8"
-          "$mod SHIFT, 8, split:movetoworkspace, 8"
           "$mod, 9, split:workspace, 9"
+
+          "$mod SHIFT, 1, split:movetoworkspace, 1"
+          "$mod SHIFT, 2, split:movetoworkspace, 2"
+          "$mod SHIFT, 3, split:movetoworkspace, 3"
+          "$mod SHIFT, 4, split:movetoworkspace, 4"
+          "$mod SHIFT, 5, split:movetoworkspace, 5"
+          "$mod SHIFT, 6, split:movetoworkspace, 6"
+          "$mod SHIFT, 7, split:movetoworkspace, 7"
+          "$mod SHIFT, 8, split:movetoworkspace, 8"
           "$mod SHIFT, 9, split:movetoworkspace, 9"
         ];
 
