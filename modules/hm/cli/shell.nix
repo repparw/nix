@@ -1,4 +1,5 @@
 {
+  osConfig,
   pkgs,
   lib,
   ...
@@ -113,9 +114,9 @@
         obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; prevd";
 
         # Nix
-        vn = "cd ~/nix; $EDITOR flake.nix";
+        vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
         nrs = "nh os switch";
-        nup = "cd ~/nix; git pull; nix flake update --commit-lock-file; git push; prevd; nrs";
+        nup = "cd ${osConfig.programs.nh.flake}; git pull; nix flake update --commit-lock-file; git push; prevd; nrs";
         nupt = "nh os boot -u";
 
         x = "xdg-open";
