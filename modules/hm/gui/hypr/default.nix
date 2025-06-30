@@ -96,6 +96,7 @@
           overview = {
             switchOnDrop = true;
             exitOnSwitch = true;
+            showEmptyWorkspace = false;
           };
         };
 
