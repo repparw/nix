@@ -18,7 +18,7 @@
         };
       };
       keymap = {
-        manager.prepend_keymap = [
+        mgr.prepend_keymap = [
           {
             on = [ "l" ];
             run = "plugin smart-enter";

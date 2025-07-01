@@ -141,6 +141,8 @@
 
       qmk
 
+      opencode
+
       # CLI tools
       playerctl
       libqalculate
