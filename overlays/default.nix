@@ -10,6 +10,12 @@
       ];
     };
     neovim = inputs.nixvim-config.packages.${prev.system}.default;
+
+    hyprlandPlugins = prev.hyprlandPlugins // {
+      hyprspace = prev.hyprlandPlugins.hyprspace.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [ ./hyprspace.patch ];
+      });
+    };
   };
 
   # Keep the stable overlay as is
