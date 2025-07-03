@@ -8,7 +8,7 @@
 {
   imports = [
     ./hypr-pkgs.nix
-    ./waybar.nix
+    ./panel.nix
   ];
 
   config = lib.mkIf osConfig.programs.hyprland.enable {
