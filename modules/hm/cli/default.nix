@@ -106,6 +106,26 @@
       };
     };
 
+    jujutsu = {
+      enable = true;
+      settings = {
+        user = {
+          email = "ubritos@gmail.com";
+          name = "repparw";
+        };
+        ui = {
+          default-command = "log";
+          diff-editor = "nvim -d";
+        };
+        "--scope" = [
+          {
+            "--when"."commands" = [ "status" ];
+            ui.paginate = "never";
+          }
+        ];
+      };
+    };
+
     ssh = {
       enable = true;
       addKeysToAgent = "yes";
