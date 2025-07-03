@@ -162,7 +162,11 @@
           "$mod CTRL, K, resizeactive, 0 -10"
           "$mod CTRL, L, resizeactive, 10 0"
         ];
-        bindl = [ "$mod ALT, L, exec, $lockscreen; $screenoff" ];
+        bindl = [
+          "$mod ALT, L, exec, $lockscreen; $screenoff"
+          ", XF86AudioPlay, exec, playerctl play-pause"
+          ", XF86AudioPause, exec, playerctl play-pause"
+        ];
         bind = [
           "$mod, d, exec, $dmenu"
           "$mod SHIFT, d, exec, $menu"
@@ -216,8 +220,6 @@
           "CTRL ALT SHIFT, H, exec, $spotify"
 
           # Media keys
-          ", XF86AudioPlay, exec, playerctl play-pause"
-          ", XF86AudioPause, exec, playerctl play-pause"
           ", XF86AudioNext, exec, playerctl next"
           ", XF86AudioPrev, exec, playerctl previous"
 
