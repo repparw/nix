@@ -43,8 +43,8 @@
       name = "bttoggle";
       runtimeInputs = [ bluez ];
       text = ''
-        device=40:5E:F6:CD:0E:F0 # buds
-        # F8:4E:17:E6:22:D2 # xm4
+        # device=40:5E:F6:CD:0E:F0 # buds
+        device=F8:4E:17:E6:22:D2 # xm4
 
         if [ -n "$(bluetoothctl devices Connected)" ]; then
           bluetoothctl disconnect
