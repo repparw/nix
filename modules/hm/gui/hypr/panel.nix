@@ -62,6 +62,7 @@
           network.label = false;
           bluetooth.label = false;
           launcher.icon = "";
+          media.format = "{title: - }{artist}";
           layouts = {
             "0" = lib.mkIf (osConfig.networking.hostName == "alpha") { };
             "*" = {
