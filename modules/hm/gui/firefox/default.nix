@@ -78,6 +78,7 @@
             path = "default";
             userChrome = ./userChrome.css;
             extensions = {
+              force = true;
               settings = {
                 "addon@darkreader.org".settings = import ./darkreader.nix;
                 # "jid1-xUfzOsOFlzSOXg@jetpack".settings = { # RES }; check format
@@ -93,6 +94,7 @@
               ];
             };
             search = {
+              force = true;
               engines = {
                 "Nix options" = {
                   urls = [ { template = "https://mynixos.com/search?q={searchTerms}"; } ];
@@ -134,6 +136,7 @@
               }
             '';
             extensions = {
+              force = true;
               settings = {
                 "sponsorBlocker@ajay.app".settings = {
                   hideUploadButtonPlayerControls = true;
@@ -151,6 +154,7 @@
           socials = commonProfile // {
             id = 2;
             path = "socials";
+            extensions.force = true;
             userChrome = ''
               .tools-and-extensions.actions-list {
                 display: none !important;
