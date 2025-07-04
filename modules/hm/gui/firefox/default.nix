@@ -39,6 +39,7 @@
         let
           commonProfile = {
             extensions = with pkgs.nur.repos.rycee.firefox-addons; {
+              force = true;
               settings = {
                 "${ublock-origin.addonId}".settings = {
                   "selectedFilterLists" = [
@@ -149,7 +150,6 @@
           socials = commonProfile // {
             id = 2;
             path = "socials";
-            extensions.force = true;
             userChrome = ''
               .tools-and-extensions.actions-list {
                 display: none !important;
