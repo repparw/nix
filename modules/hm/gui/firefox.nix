@@ -38,7 +38,31 @@
       profiles =
         let
           commonProfile = {
-            # TODO extensions.settings
+            extensions.settings = {
+              "uBlock0@raymondhill.net".settings = {
+                "selectedFilterLists" = [
+                  "user-filters"
+                  "ublock-filters"
+                  "ublock-badware"
+                  "ublock-privacy"
+                  "ublock-quick-fixes"
+                  "ublock-unbreak"
+                  "easylist"
+                  "easyprivacy"
+                  "urlhaus-1"
+                  "plowe-0"
+                  "adguard-other-annoyances"
+                  "adguard-popup-overlays"
+                  "adguard-widgets"
+                ];
+                "whitelist" = [
+                  "chrome-extension-scheme"
+                  "meet.google.com"
+                  "moz-extension-scheme"
+                ];
+              };
+            };
+
             extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
               ublock-origin
               tridactyl
