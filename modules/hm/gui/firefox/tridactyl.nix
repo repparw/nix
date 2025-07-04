@@ -17,6 +17,8 @@ _: {
     set smoothscroll true
 
     " Binds
+    bind gc tab pocketcasts.com/podcasts
+
     bind , hint -W mpvsafe
     bind ;c hint -c [class*="expand"],[class*="togg"],[class="comment_folder"]
 
