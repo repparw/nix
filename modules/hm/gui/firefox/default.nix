@@ -82,7 +82,6 @@
               settings = {
                 "addon@darkreader.org".settings = import ./darkreader.nix;
                 # "jid1-xUfzOsOFlzSOXg@jetpack".settings = { # RES }; check format
-                "{3c078156-979c-498b-8990-85f7987dd929}".settings = import ./sidebery.nix;
                 "{3c6bf0cc-3ae2-42fb-9993-0d33104fdcaf}".settings = import ./improvedtube.nix;
               };
               packages = with pkgs.nur.repos.rycee.firefox-addons; [
