@@ -63,8 +63,6 @@
                   ];
                 };
               };
-              # "tridactyl.vim@cmcaine.co.uk".settings = import ./tridactyl.nix;
-
               packages = with pkgs.nur.repos.rycee.firefox-addons; [
                 ublock-origin
                 tridactyl
