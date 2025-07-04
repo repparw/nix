@@ -38,9 +38,9 @@
       profiles =
         let
           commonProfile = {
-            extensions = {
+            extensions = with pkgs.nur.repos.rycee.firefox-addons; {
               settings = {
-                "uBlock0@raymondhill.net".settings = {
+                "${ublock-origin.addonId}".settings = {
                   "selectedFilterLists" = [
                     "user-filters"
                     "ublock-filters"
@@ -63,7 +63,7 @@
                   ];
                 };
               };
-              packages = with pkgs.nur.repos.rycee.firefox-addons; [
+              packages = [
                 ublock-origin
                 tridactyl
               ];
@@ -75,19 +75,17 @@
             id = 0;
             path = "default";
             userChrome = ./userChrome.css;
-            extensions = {
+            extensions = with pkgs.nur.repos.rycee.firefox-addons; {
               force = true;
               settings = {
-                "addon@darkreader.org".settings = import ./darkreader.nix;
-                # "jid1-xUfzOsOFlzSOXg@jetpack".settings = { # RES }; check format
-                "{3c6bf0cc-3ae2-42fb-9993-0d33104fdcaf}".settings = import ./improvedtube.nix;
+                "${darkreader.addonId}".settings = import ./darkreader.nix;
+                "${improved-tube.addonId}".settings = import ./improvedtube.nix;
               };
-              packages = with pkgs.nur.repos.rycee.firefox-addons; [
+              packages = [
                 sidebery
                 darkreader
                 bitwarden
                 refined-github
-                reddit-enhancement-suite
               ];
             };
             search = {
@@ -132,15 +130,15 @@
                 display: none !important;
               }
             '';
-            extensions = {
+            extensions = with pkgs.nur.repos.rycee.firefox-addons; {
               force = true;
               settings = {
-                "sponsorBlocker@ajay.app".settings = {
+                "${sponsorblock.addonId}".settings = {
                   hideUploadButtonPlayerControls = true;
                 };
-                "{3c6bf0cc-3ae2-42fb-9993-0d33104fdcaf}".settings = import ./improvedtube.nix;
+                "${improved-tube.addonId}".settings = import ./improvedtube.nix;
               };
-              packages = with pkgs.nur.repos.rycee.firefox-addons; [
+              packages = [
                 improved-tube
                 sponsorblock
                 dearrow
