@@ -38,49 +38,60 @@
       profiles =
         let
           commonProfile = {
-            extensions.settings = {
-              "uBlock0@raymondhill.net".settings = {
-                "selectedFilterLists" = [
-                  "user-filters"
-                  "ublock-filters"
-                  "ublock-badware"
-                  "ublock-privacy"
-                  "ublock-quick-fixes"
-                  "ublock-unbreak"
-                  "easylist"
-                  "easyprivacy"
-                  "urlhaus-1"
-                  "plowe-0"
-                  "adguard-other-annoyances"
-                  "adguard-popup-overlays"
-                  "adguard-widgets"
-                ];
-                "whitelist" = [
-                  "chrome-extension-scheme"
-                  "meet.google.com"
-                  "moz-extension-scheme"
-                ];
+            extensions = {
+              settings = {
+                "uBlock0@raymondhill.net".settings = {
+                  "selectedFilterLists" = [
+                    "user-filters"
+                    "ublock-filters"
+                    "ublock-badware"
+                    "ublock-privacy"
+                    "ublock-quick-fixes"
+                    "ublock-unbreak"
+                    "easylist"
+                    "easyprivacy"
+                    "urlhaus-1"
+                    "plowe-0"
+                    "adguard-other-annoyances"
+                    "adguard-popup-overlays"
+                    "adguard-widgets"
+                  ];
+                  "whitelist" = [
+                    "chrome-extension-scheme"
+                    "meet.google.com"
+                    "moz-extension-scheme"
+                  ];
+                };
               };
-            };
+              # "tridactyl.vim@cmcaine.co.uk".settings = import ./tridactyl.nix;
 
-            extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
-              ublock-origin
-              tridactyl
-            ];
+              packages = with pkgs.nur.repos.rycee.firefox-addons; [
+                ublock-origin
+                tridactyl
+              ];
+            };
           };
         in
         {
           default = commonProfile // {
             id = 0;
             path = "default";
-            userChrome = ../../source/userChrome.css;
-            extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
-              sidebery
-              darkreader
-              bitwarden
-              refined-github
-              reddit-enhancement-suite
-            ];
+            userChrome = ./userChrome.css;
+            extensions = {
+              settings = {
+                "addon@darkreader.org".settings = import ./darkreader.nix;
+                # "jid1-xUfzOsOFlzSOXg@jetpack".settings = { # RES }; check format
+                "{3c078156-979c-498b-8990-85f7987dd929}".settings = import ./sidebery.nix;
+                "{3c6bf0cc-3ae2-42fb-9993-0d33104fdcaf}".settings = import ./improvedtube.nix;
+              };
+              packages = with pkgs.nur.repos.rycee.firefox-addons; [
+                sidebery
+                darkreader
+                bitwarden
+                refined-github
+                reddit-enhancement-suite
+              ];
+            };
             search = {
               engines = {
                 "Nix options" = {
@@ -112,7 +123,6 @@
                 };
               };
               default = "google";
-              force = true;
             };
           };
           kiosk = commonProfile // {
@@ -123,12 +133,20 @@
                 display: none !important;
               }
             '';
-            extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
-              improved-tube
-              sponsorblock
-              dearrow
-              tampermonkey
-            ];
+            extensions = {
+              settings = {
+                "sponsorBlocker@ajay.app".settings = {
+                  hideUploadButtonPlayerControls = true;
+                };
+                "{3c6bf0cc-3ae2-42fb-9993-0d33104fdcaf}".settings = import ./improvedtube.nix;
+              };
+              packages = with pkgs.nur.repos.rycee.firefox-addons; [
+                improved-tube
+                sponsorblock
+                dearrow
+                tampermonkey
+              ];
+            };
           };
           socials = commonProfile // {
             id = 2;

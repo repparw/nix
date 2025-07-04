@@ -10,7 +10,7 @@ let
 in
 {
   imports = [
-    ./firefox.nix
+    ./firefox
     ./gaming.nix
     ./hypr
     ./mpv.nix
