@@ -21,7 +21,7 @@
           };
         };
 
-        crypt = {
+        gcrypt = {
           config = {
             type = "crypt";
             remote = "gdrive:crypt";
@@ -34,11 +34,21 @@
         nextcloud = {
           config = {
             type = "webdav";
-            url = "https://leo.it.tab.digital/";
+            url = "https://leo.it.tab.digital/remote.php/dav/files/ubritos%40gmail.com";
             vendor = "nextcloud";
             user = "ubritos@gmail.com";
           };
           secrets.pass = osConfig.age.secrets.rcloneNextcloud.path;
+        };
+
+        ncrypt = {
+          config = {
+            type = "crypt";
+            remote = "nextcloud:crypt";
+          };
+          secrets = {
+            password = osConfig.age.secrets.rcloneCrypt.path;
+          };
         };
 
         dropbox = {
@@ -76,9 +86,9 @@
         rclone-mount-gdrive = mkRcloneMount "gdrive" {
           Service.ExecStart = "${pkgs.rclone}/bin/rclone mount --vfs-cache-mode full --exclude crypt/ gdrive: /home/repparw/.cloud/gdrive";
         };
-        rclone-mount-crypt = mkRcloneMount "crypt" { };
+        rclone-mount-crypt = mkRcloneMount "gcrypt" { };
         rclone-mount-dropbox = mkRcloneMount "dropbox" { };
-        rclone-mount-nextcloud = mkRcloneMount "nextcloud" { };
+        rclone-mount-ncrypt = mkRcloneMount "ncrypt" { };
       };
   };
 }
