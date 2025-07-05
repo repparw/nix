@@ -87,8 +87,8 @@
           Service.ExecStart = "${pkgs.rclone}/bin/rclone mount --vfs-cache-mode full --exclude crypt/ gdrive: /home/repparw/.cloud/gdrive";
         };
         rclone-mount-crypt = mkRcloneMount "gcrypt" { };
+        # rclone-mount-ncrypt = mkRcloneMount "ncrypt" { };
         rclone-mount-dropbox = mkRcloneMount "dropbox" { };
-        rclone-mount-ncrypt = mkRcloneMount "ncrypt" { };
       };
   };
 }
