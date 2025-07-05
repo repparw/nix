@@ -168,9 +168,6 @@
           ", XF86AudioPause, exec, playerctl play-pause"
         ];
         bind = [
-          "$mod, d, exec, $dmenu"
-          "$mod SHIFT, d, exec, $menu"
-
           "$mod, TAB, split:swapactiveworkspaces, current +1"
 
           "$mod, X, focusmonitor,+1 "
@@ -192,8 +189,8 @@
           "$mod, F, fullscreen"
           "$mod ALT, F, togglefloating"
           "$mod SHIFT, E, exec, $GUIfileManager"
-          "$mod, SPACE, exec, $browser"
-          "$mod SHIFT, SPACE, exec, $browser2"
+          "$mod, SPACE, exec, $dmenu"
+          "$mod SHIFT, SPACE, exec, $menu"
           "$mod, T, exec, $top"
           "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
           "$mod, U, exec, $terminal --hold $shell -ic nup"

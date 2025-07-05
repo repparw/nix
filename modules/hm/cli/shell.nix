@@ -43,7 +43,7 @@
         bind -M insert ctrl-e yy
       '';
       timer = ''
-        # t 12m or t 9m pizza
+        # timer 12m or t 9m pizza
         set label $argv[2]
         test -z "$label"; and set label "▓▓▓"
 
@@ -51,61 +51,87 @@
       '';
       # add task to ms to-do
       t = ''
-        if test (count $argv) -eq 0
-          echo "Usage: t TASK [time]"
-          echo "Time can be:"
-          echo "  - morning, evening, tomorrow"
-          echo "  - 1h, 12h, 1h30m"
-          echo "  - 9 (for 9:00), 21 (for 21:00)"
-          echo "  - 24.12 9 (for 24.12 09:00)"
-          echo "  - 24.12.2023 (full date)"
-          echo "  - 24.12 (partial date, defaults to 9am)"
-          return 1
-        end
-
-        # Check if last two arguments might form a date-hour combination
-        set -l last_arg $argv[-1]
-        set -l second_last_arg $argv[-2]
-        set -l valid_times morning evening tomorrow
-
-        # Regex patterns for different time formats
-        set -l time_delta_pattern '^\d+[dhms](\d+[dhms])*$'        # 1h, 12h30m, etc
-        set -l hour_pattern '^([0-9]|1[0-9]|2[0-3])$'             # 9, 21, etc
-        set -l date_pattern '^\d{1,2}\.\d{1,2}(\.\d{2,4})?$'      # 22.12.2023 or 24.12
-
-        # First check if we have a date-hour combination
-        if test (count $argv) -gt 1; and string match -qr $date_pattern $second_last_arg; and string match -qr $hour_pattern $last_arg
-          # We have a date and hour format (e.g., "24.12 9")
-          set time (printf "%s. %02d:00" $second_last_arg $last_arg)
-          set -e argv[-1] # Remove the hour
-          set -e argv[-1] # Remove the date
-          set task (string join " " $argv)
-        else if contains $last_arg $valid_times; or \
-                string match -qr $time_delta_pattern $last_arg; or \
-                string match -qr $date_pattern $last_arg
-          # Last word is a valid time format
-          if string match -qr '^\d{1,2}\.\d{1,2}$' $last_arg
-            # Partial date (no year), append default time
-            set time "$last_arg. 09:00"
-          else
-            # Full date with year or other time format, use as is
-            set time $last_arg
+          set nc_user "ubritos@gmail.com"
+          set caldav_url "https://leo.it.tab.digital/remote.php/dav/calendars/$nc_user/personal/"
+          if not test -f ${osConfig.age.secrets.nextcloud.path}
+              echo "Error: pass secret not found" >&2
+              exit 1
           end
-          set -e argv[-1] # Remove the time from argv
-          set task (string join " " $argv)
-        else if string match -qr $hour_pattern $last_arg
-          # Convert hour-only input to HH:00 format
-          set time (printf "%d:00" $last_arg)
-          set -e argv[-1]
-          set task (string join " " $argv)
-        else
-          # Last word is not a time, so use default time and all args are task
-          set time "morning"
-          set task (string join " " $argv)
-        end
+          set nc_app_pass (cat ${osConfig.age.secrets.nextcloud.path})
+            if test (count $argv) -eq 0
+                echo "Usage: t TASK DATETIME"
+                return 1
+            end
 
-        todocli new "$task" -r "$time"
-        and notify-send -i 'task-new' "$task @ $time"
+            # Get the last argument as the date/time
+            set datetime $argv[-1]
+            # Get all arguments except the last one as the task summary
+            set task_summary (string join " " $argv[1..-2])
+
+            # Convert the date/time string to proper format
+            # Check if date is valid first
+            if not date -d "$datetime" > /dev/null 2>&1
+                # If date parsing fails, use tomorrow 9am as default
+                set datetime "tomorrow 9am"
+            end
+
+            set is_midnight (date -d "$datetime" +%H%M)
+            if test $is_midnight = "0000"
+                # If time is midnight (no time specified), make it a day-only task
+                set due_time (date -d "$datetime" +%Y%m%dT000000)
+                set is_day_only true
+            else
+                set due_time (date -d "$datetime" +%Y%m%dT%H%M%S)
+                set is_day_only false
+            end
+
+            # Generate unique identifier
+            set UID (uuidgen 2>/dev/null; or date +%s%N)
+            set DTSTAMP (date +%Y%m%dT%H%M%S)
+            set FILE_NAME "$UID.ics"
+
+            # Construct iCalendar data
+            set ICAL_DATA "BEGIN:VCALENDAR
+        VERSION:2.0
+        PRODID:-//Nextcloud Calendar CLI//NONSGML v1.0//EN
+        BEGIN:VTODO
+        UID:$UID
+        DTSTAMP:$DTSTAMP
+        SUMMARY:$task_summary
+        DUE;TZID=America/Argentina/Buenos_Aires:$due_time
+        PRIORITY:9
+        PERCENT-COMPLETE:0
+        END:VTODO
+        END:VCALENDAR"
+
+            # Display task info with Argentina time
+            # Send request to Nextcloud
+            set response (curl -s -w "\n%{http_code}" \
+                -X PUT \
+                --user "$nc_user:$nc_app_pass" \
+                -H "Content-Type: text/calendar; charset=utf-8" \
+                --data-raw "$ICAL_DATA" \
+                "$caldav_url$FILE_NAME")
+
+            set http_code (echo $response | tail -n 1)
+            set body (echo $response | head -n -1)
+
+            if test $http_code -eq 201
+                if test $is_day_only = true
+                    set formatted_time (date -d "$datetime" "+%A %d/%m")
+                    notify-send -i 'task-new' "Task created: $task_summary" "Due: $formatted_time (all day)" 2>/dev/null
+                else
+                    set formatted_time (date -d "$datetime" "+%A %d/%m %H:%M")
+                    notify-send -i 'task-new' "Task created: $task_summary" "Due: $formatted_time" 2>/dev/null
+                end
+            else if test $http_code -ne 201
+                echo "Failed to create task (HTTP $http_code)." >&2
+                echo "Response Body:" >&2
+                echo $body >&2
+                echo "iCalendar Data Sent:" >&2
+                echo $ICAL_DATA >&2
+                notify-send -i 'dialog-error' "Failed to add task: $task_summary" 2>/dev/null
+            end
       '';
     };
     # using aliases for defaults, or things that look fugly on expand on abbrs
