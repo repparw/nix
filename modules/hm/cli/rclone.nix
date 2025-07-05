@@ -31,6 +31,16 @@
           };
         };
 
+        nextcloud = {
+          config = {
+            type = "webdav";
+            url = "https://leo.it.tab.digital/";
+            vendor = "nextcloud";
+            user = "ubritos@gmail.com";
+          };
+          secrets.pass = osConfig.age.secrets.rcloneNextcloud.path;
+        };
+
         dropbox = {
           config.type = "dropbox";
           secrets.token = osConfig.age.secrets.rcloneDropbox.path;
@@ -68,6 +78,7 @@
         };
         rclone-mount-crypt = mkRcloneMount "crypt" { };
         rclone-mount-dropbox = mkRcloneMount "dropbox" { };
+        rclone-mount-nextcloud = mkRcloneMount "nextcloud" { };
       };
   };
 }
