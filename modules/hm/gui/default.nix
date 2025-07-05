@@ -45,28 +45,30 @@ in
       gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
     };
 
-    xdg.mimeApps = {
-      enable = true;
-      associations.removed = {
-        "application/pdf" = [ "chromium-browser.desktop" ];
-        "inode/directory" = [ "firefox.desktop" ];
-      };
-      defaultApplications = {
-        "inode/directory" = "org.gnome.Nautilus.desktop";
-        "application/pdf" = [
-          "org.pwmt.zathura.desktop"
-          "firefox.desktop"
-        ];
-        "image/png" = "feh.desktop";
-        "image/jpeg" = "feh.desktop";
-        "image/gif" = "feh.desktop";
-        "image/webp" = "feh.desktop";
-        "text/html" = "firefox.desktop";
-        "x-scheme-handler/http" = "firefox.desktop";
-        "x-scheme-handler/https" = "firefox.desktop";
-        "x-scheme-handler/about" = "firefox.desktop";
-        "x-scheme-handler/unknown" = "firefox.desktop";
-        "x-scheme-handler/mailto" = "firefox.desktop";
+    xdg = {
+      mimeApps = {
+        enable = true;
+        associations.removed = {
+          "application/pdf" = [ "chromium-browser.desktop" ];
+          "inode/directory" = [ "firefox.desktop" ];
+        };
+        defaultApplications = {
+          "inode/directory" = "org.gnome.Nautilus.desktop";
+          "application/pdf" = [
+            "org.pwmt.zathura.desktop"
+            "firefox.desktop"
+          ];
+          "image/png" = "feh.desktop";
+          "image/jpeg" = "feh.desktop";
+          "image/gif" = "feh.desktop";
+          "image/webp" = "feh.desktop";
+          "text/html" = "firefox.desktop";
+          "x-scheme-handler/http" = "firefox.desktop";
+          "x-scheme-handler/https" = "firefox.desktop";
+          "x-scheme-handler/about" = "firefox.desktop";
+          "x-scheme-handler/unknown" = "firefox.desktop";
+          "x-scheme-handler/mailto" = "firefox.desktop";
+        };
       };
     };
 
