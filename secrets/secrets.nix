@@ -14,8 +14,9 @@ in
   "services/rclone/drive-secret.age".publicKeys = users;
   "services/rclone/drive-id.age".publicKeys = users;
   "services/rclone/dropbox.age".publicKeys = users;
+  "services/rclone/nextcloud.age".publicKeys = users;
 
-  "tod0.age".publicKeys = users;
+  "nextcloud.age".publicKeys = users;
 
   "services/proxy/cloudflare.age".publicKeys = users;
 
