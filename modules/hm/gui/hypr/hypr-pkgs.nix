@@ -19,39 +19,6 @@
       hyprpicker
 
       nautilus
-
-      (pkgs.python3Packages.buildPythonPackage rec {
-        pname = "tod0";
-        version = "0.8.0";
-        src = fetchFromGitHub {
-          owner = "kiblee";
-          repo = "tod0";
-          tag = "v${version}";
-          hash = "sha256-QojJXu7fnl7StCq6jPYZcbjTQbqTrxAq6mUSQhJryes=";
-        };
-        propagatedBuildInputs = with python3.pkgs; [
-          beautifulsoup4
-          certifi
-          charset-normalizer
-          idna
-          oauthlib
-          prompt-toolkit
-          pyyaml
-          requests
-          requests-oauthlib
-          soupsieve
-          termcolor
-          urllib3
-          wcwidth
-          yaspin
-        ];
-        doCheck = false;
-        meta = {
-          changelog = "https://github.com/kiblee/tod0/releases/tag/v${version}";
-          description = "A Terminal Client for Microsoft To-Do";
-          homepage = "https://github.com/kiblee/tod0";
-        };
-      })
     ];
 
     services = {
@@ -82,8 +49,6 @@
       };
 
       hyprpolkitagent.enable = true;
-
-      # swaync.enable = true;
 
       swww.enable = true;
 

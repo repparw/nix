@@ -17,12 +17,9 @@
           mode = "0440";
           owner = "repparw";
         };
-        tod0 = {
-          file = ./tod0.age;
+        nextcloud = {
+          file = ./nextcloud.age;
           owner = "repparw";
-          group = "users";
-          path = "${config.home-manager.users.repparw.xdg.configHome}/tod0/keys.yml";
-          mode = "600";
         };
       }
       // (lib.optionalAttrs config.modules.timers.enable {
@@ -44,6 +41,10 @@
         };
         rcloneDropbox = {
           file = ./services/rclone/dropbox.age;
+          owner = "repparw";
+        };
+        rcloneNextcloud = {
+          file = ./services/rclone/nextcloud.age;
           owner = "repparw";
         };
       })
