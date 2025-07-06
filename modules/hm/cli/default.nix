@@ -21,6 +21,11 @@
   };
 
   programs = {
+    eza = {
+      enable = true;
+      extraOptions = [ "--icons" ];
+    };
+
     fd = {
       enable = true;
       hidden = true;
@@ -43,16 +48,6 @@
     gh = {
       enable = true;
       extensions = [ pkgs.gh-copilot ];
-    };
-
-    zoxide = {
-      enable = true;
-      options = [ "--cmd=cd" ];
-    };
-
-    eza = {
-      enable = true;
-      extraOptions = [ "--icons" ];
     };
 
     git = {
@@ -106,6 +101,8 @@
       };
     };
 
+    opencode.enable = true;
+
     ssh = {
       enable = true;
       addKeysToAgent = "yes";
@@ -118,6 +115,12 @@
         };
       };
     };
+
+    zoxide = {
+      enable = true;
+      options = [ "--cmd=cd" ];
+    };
+
   };
 
   home.packages =
@@ -140,8 +143,6 @@
       yt-dlp
 
       qmk
-
-      opencode
 
       # CLI tools
       playerctl
