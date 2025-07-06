@@ -13,7 +13,7 @@
       "--health-start-period=20s"
     ];
     labels = {
-      "glance.icon" = "di:actual-budget";
+      "glance.icon" = "sh:actual-budget";
     };
   };
 }

@@ -21,6 +21,10 @@ in
         localNetworkGameTransfers.openFirewall = true;
       };
 
+      gamemode = {
+        enable = true;
+      };
+
       gamescope = {
         enable = true;
         capSysNice = true;
