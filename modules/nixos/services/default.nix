@@ -20,7 +20,7 @@ let
 
           "glance.name" = name;
           "glance.url" = lib.mkDefault "https://${name}.${cfg.domain}";
-          "glance.icon" = lib.mkDefault "di:${name}";
+          "glance.icon" = lib.mkDefault "sh:${name}";
           "glance.same-tab" = "true";
 
           "traefik.http.routers.${name}.tls" = "true";
