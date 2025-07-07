@@ -9,6 +9,7 @@
   imports = [
     ./hypr-pkgs.nix
     ./panel.nix
+    ./rofi.nix
   ];
 
   config = lib.mkIf osConfig.programs.hyprland.enable {
@@ -54,9 +55,8 @@
         "$showkeys" = "pkill wshowkeys || $prefix wshowkeys -a bottom -m 108 -b 00000066";
         "$screenshot" = "hyprshot -o ${config.xdg.userDirs.pictures}/ss -m";
 
-        #"$emojimenu" = "BEMOJI_PICKER_CMD=tofi bemoji -n";
-        "$menu" = "tofi-run --require-match=false | fish -c 'eval (cat)'";
-        "$dmenu" = "$prefix $(tofi-drun)";
+        #"$emojimenu" = "bemoji -n";
+        "$dmenu" = "rofi -show combi";
 
         "$showlayout" = "hdrop feh /home/repparw/src/kbd/docs/layout.png";
 
@@ -190,7 +190,6 @@
           "$mod ALT, F, togglefloating"
           "$mod SHIFT, E, exec, $GUIfileManager"
           "$mod, SPACE, exec, $dmenu"
-          "$mod SHIFT, SPACE, exec, $menu"
           "$mod, T, exec, $top"
           "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
           "$mod, U, exec, $terminal --hold $shell -ic nup"
