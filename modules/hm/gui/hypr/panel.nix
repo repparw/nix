@@ -39,7 +39,7 @@
                 tooltip = "Discord";
               };
               shortcut4 = {
-                command = "tofi-drun";
+                command = "rofi -show combi";
                 icon = "";
                 tooltip = "Search Apps";
               };
