@@ -190,6 +190,7 @@
           "$mod ALT, F, togglefloating"
           "$mod SHIFT, E, exec, $GUIfileManager"
           "$mod, SPACE, exec, $dmenu"
+          "$mod SHIFT, SPACE, exec, $browser"
           "$mod, T, exec, $top"
           "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
           "$mod, U, exec, $terminal --hold $shell -ic nup"
