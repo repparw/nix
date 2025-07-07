@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, osConfig, ... }:
 {
   home.packages = with pkgs; [
     (writeShellApplication {
@@ -50,6 +50,141 @@
           bluetoothctl disconnect
         else
           bluetoothctl connect "$device"
+        fi
+      '';
+    })
+
+    (writeShellApplication {
+      name = "t";
+      runtimeInputs = [
+        fish
+        curl
+      ];
+      text = ''
+        #!/usr/bin/env bash
+
+        # --- Configuration ---
+        # User and CalDAV URL for Nextcloud
+        nc_user="ubritos@gmail.com"
+        caldav_url="https://leo.it.tab.digital/remote.php/dav/calendars/$nc_user/personal/"
+
+        # Path to the secret file containing the Nextcloud app password.
+        # This path is expected to be substituted by the Nix build process.
+        secret_path="${osConfig.age.secrets.nextcloud.path}"
+
+        # --- Pre-flight Checks ---
+        # Check if the secret file exists
+        if [[ ! -f "$secret_path" ]]; then
+            echo "Error: Nextcloud secret file not found at $secret_path" >&2
+            exit 1
+        fi
+
+        # Read the app password from the secret file
+        nc_app_pass=$(cat "$secret_path")
+
+        # Check if any arguments were provided
+        if [ "$#" -eq 0 ]; then
+            echo "Usage: t \"TASK SUMMARY\" [DATETIME]"
+            echo "Example: t \"Buy milk\" \"tomorrow 9am\""
+            exit 1
+        fi
+
+        # --- Argument Parsing ---
+        # Get the last argument as the date/time string
+        datetime="''${!#}"
+        # Get all arguments except the last one as the task summary
+        task_summary="''${*:1:$#-1}"
+
+
+        # If only one argument is provided, it's the task summary, and we use a default date.
+        if [ "$#" -eq 1 ]; then
+            task_summary="$1"
+            datetime="tomorrow 9am"
+        fi
+
+
+        # --- Date & Time Processing ---
+        # Validate the provided date/time string. If it's invalid, default to "tomorrow 9am".
+        if ! date -d "$datetime" > /dev/null 2>&1; then
+            echo "Warning: Invalid date format '$datetime'. Defaulting to 'tomorrow 9am'." >&2
+            datetime="tomorrow 9am"
+        fi
+
+        # Check if the time is midnight (e.g., no time was specified with the date)
+        is_midnight=$(date -d "$datetime" +%H%M)
+        if [ "$is_midnight" == "0000" ]; then
+            # Format for an all-day event (VEVENT uses DATE, VTODO uses DATETIME)
+            due_time=$(date -d "$datetime" +%Y%m%dT000000)
+            is_day_only=true
+        else
+            # Format for a specific time, converting to UTC for the iCalendar standard
+            due_time=$(date -u -d "$datetime" +%Y%m%dT%H%M%SZ)
+            is_day_only=false
+        fi
+
+        # --- iCalendar Data Generation ---
+        # Generate a unique identifier for the task. Fallback to timestamp if uuidgen fails.
+        TASK_UID=$(uuidgen 2>/dev/null || date +%s%N)
+        DTSTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+        FILE_NAME="$TASK_UID.ics"
+
+        # Construct the iCalendar (ICS) data payload.
+        # Note: For timed events, we use a Z suffix to denote UTC.
+        # For all-day events, we specify the timezone in the DUE property.
+        if [ "$is_day_only" = true ]; then
+            DUE_LINE="DUE;VALUE=DATE:$(date -d "$datetime" +%Y%m%d)"
+        else
+            DUE_LINE="DUE:$due_time"
+        fi
+
+        ICAL_DATA=$(cat <<EOF
+        BEGIN:VCALENDAR
+        VERSION:2.0
+        PRODID:-//Bash Script//NONSGML v1.0//EN
+        BEGIN:VTODO
+        UID:$TASK_UID
+        DTSTAMP:$DTSTAMP
+        SUMMARY:$task_summary
+        $DUE_LINE
+        PRIORITY:9
+        PERCENT-COMPLETE:0
+        END:VTODO
+        END:VCALENDAR
+        EOF
+        )
+
+        # --- Send Request to Nextcloud ---
+        # Use curl to send the PUT request with the iCalendar data.
+        # The -w "%{http_code}" appends the HTTP status code to the output.
+        response=$(curl -s -w "\n%{http_code}" \
+            -X PUT \
+            --user "$nc_user:$nc_app_pass" \
+            -H "Content-Type: text/calendar; charset=utf-8" \
+            --data-raw "$ICAL_DATA" \
+            "$caldav_url$FILE_NAME")
+
+        # Extract the HTTP code and the response body
+        http_code=$(echo "$response" | tail -n 1)
+        body=$(echo "$response" | sed '$d')
+
+        # --- Handle Response ---
+        # Check the HTTP status code to confirm success or failure.
+        if [ "$http_code" -eq 201 ]; then
+            if [ "$is_day_only" = true ]; then
+                formatted_time=$(date -d "$datetime" "+%A %d/%m")
+                notify-send -i 'task-new' "Task created: $task_summary" "Due: $formatted_time (all day)" 2>/dev/null
+            else
+                # Display time in local timezone for the notification
+                formatted_time=$(date -d "$datetime" "+%A %d/%m %H:%M")
+                notify-send -i 'task-new' "Task created: $task_summary" "Due: $formatted_time" 2>/dev/null
+            fi
+        else
+            echo "Error: Failed to create task (HTTP status: $http_code)." >&2
+            echo "Response Body: $body" >&2
+            echo "--------------------" >&2
+            echo "iCalendar Data Sent:" >&2
+            echo "$ICAL_DATA" >&2
+            notify-send -i 'dialog-error' "Failed to add task: $task_summary" "HTTP: $http_code" 2>/dev/null
         fi
       '';
     })
