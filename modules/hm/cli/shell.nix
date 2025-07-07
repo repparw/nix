@@ -80,12 +80,8 @@
         df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\*";
         du = "${lib.getExe dust}";
 
-        rpi = "${lib.getExe' mosh "mosh"} -P 60001 --ssh 'ssh -p 2222' rpi";
-        pc = "${lib.getExe' mosh "mosh"} -P 60000 --ssh 'ssh -p 10000' repparw@repparw.me";
-
-        nq = "NQDIR=/tmp/nq ${lib.getExe' nq "nq"}";
-        nqterm = "NQDIR=/tmp/nq ${lib.getExe' nq "nqterm"}";
-        nqtail = "NQDIR=/tmp/nq ${lib.getExe' nq "nqtail"}";
+        rpi = "${lib.getExe' mosh "mosh"} -P 60001 rpi";
+        pc = "${lib.getExe' mosh "mosh"} -P 60000 pc";
 
         ns = "${lib.getExe nix-search-tv} print | fzf --preview '${lib.getExe nix-search-tv} preview {}' --scheme history";
 
