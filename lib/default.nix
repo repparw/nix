@@ -40,37 +40,32 @@ rec {
     }
   ];
 
+  # Helper function to create a NixOS system with additional modules based on hostname
+  mkSystem = hostname: system: extraModules:
+    inputs.nixpkgs.lib.nixosSystem {
+      inherit system;
+      modules = mkModules hostname ++ extraModules;
+      specialArgs = {
+        inherit inputs;
+      };
+    };
+
   # Helper function to create multiple NixOS system configurations
-  mkHost =
-    hosts:
+  mkHost = hosts:
+    let
+      # Define extra modules based on hostname patterns
+      getExtraModules = hostname:
+        if hostname == "pi" then [
+          inputs.disko.nixosModules.disko
+          inputs.nixos-hardware.nixosModules.raspberry-pi-5
+        ]
+        else if hostname == "delta" then [
+          inputs.jovian.nixosModules.default
+        ]
+        else [];
+    in
     builtins.mapAttrs (
       hostname: system:
-      if hostname == "pi" then
-        inputs.nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = mkModules hostname ++ [
-            # {
-            #   imports = with inputs.nixos-raspberrypi.nixosModules; [
-            #     raspberry-pi-5.base
-            #     raspberry-pi-5.display-vc4
-            #     raspberry-pi-5.bluetooth
-            #   ];
-            # }
-            inputs.disko.nixosModules.disko
-            inputs.nixos-hardware.nixosModules.raspberry-pi-5
-          ];
-          specialArgs = {
-            inherit inputs;
-            # nixos-raspberrypi = inputs.nixos-raspberrypi;
-          };
-        }
-      else
-        inputs.nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = mkModules hostname;
-          specialArgs = {
-            inherit inputs;
-          };
-        }
+      mkSystem hostname system (getExtraModules hostname)
     ) hosts;
 }
