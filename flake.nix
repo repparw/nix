@@ -32,13 +32,17 @@
     stylix = {
       url = "github:danth/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
     };
 
     nixos-hardware.url = "github:NixOS/nixos-hardware";
 
     disko = {
       url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    jovian = {
+      url = "github:jovian-experiments/jovian-nixos";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
