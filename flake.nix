@@ -52,7 +52,6 @@
     inputs:
     let
       commonModules = [
-        (import ./overlays { inherit inputs; })
         inputs.nur.modules.nixos.default
         ./modules/nixos
         inputs.nix-index-database.nixosModules.nix-index
@@ -60,6 +59,7 @@
         ./secrets/nixos.nix
         inputs.home-manager.nixosModules.home-manager
         inputs.stylix.nixosModules.stylix
+        (import ./overlays)
       ];
 
       mkHomeManager = hostname: {
