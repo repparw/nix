@@ -10,7 +10,6 @@ My personal NixOS configuration files. This repository contains a complete NixOS
 ```shell
 .
 ├── flake.nix         # Main flake configuration
-├── lib/              # Helper functions and utilities
 ├── overlays/         # Custom package overlays
 ├── secrets/          # Encrypted secrets
 └── systems/          # System configurations
