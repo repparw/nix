@@ -139,6 +139,7 @@
       curl
       wget
       unzip
+      rmtrash
       bluez
       jq
       tree
