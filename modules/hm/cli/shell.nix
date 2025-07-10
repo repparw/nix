@@ -62,10 +62,12 @@
         nupt = "nh os boot -u";
 
         x = "xdg-open";
-        trash = "mv --force -t ~/.local/share/Trash ";
         ln = "ln -i";
         mv = "mv -i";
-        rm = "rm -i";
+
+        rm = "rmtrash -I";
+        rmdir = "rmdirtrash";
+        rd = "rmdirtrash -pv";
 
         chown = "chown --preserve-root";
         chmod = "chmod --preserve-root";
@@ -98,7 +100,6 @@
       cpuinfo = "lscpu";
 
       md = "mkdir -pv";
-      rd = "rmdir -pv";
 
       btctl = "bluetoothctl";
 

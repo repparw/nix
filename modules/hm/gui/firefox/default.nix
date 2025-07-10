@@ -136,6 +136,7 @@
               settings = {
                 "${sponsorblock.addonId}".settings = {
                   hideUploadButtonPlayerControls = true;
+                  dontShowNotice = true;
                 };
                 "${improved-tube.addonId}".settings = import ./improvedtube.nix;
               };
