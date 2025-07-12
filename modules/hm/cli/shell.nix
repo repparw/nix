@@ -82,8 +82,8 @@
         df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\*";
         du = "${lib.getExe dust}";
 
-        rpi = "${lib.getExe' mosh "mosh"} -P 60001 rpi";
-        pc = "${lib.getExe' mosh "mosh"} -P 60000 pc";
+        rpi = "${lib.getExe' mosh "mosh"} -P 60001 pi";
+        pc = "${lib.getExe' mosh "mosh"} -P 60000 alpha";
 
         ns = "${lib.getExe nix-search-tv} print | fzf --preview '${lib.getExe nix-search-tv} preview {}' --scheme history";
 
