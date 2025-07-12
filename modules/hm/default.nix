@@ -17,8 +17,6 @@ _: {
     username = "repparw";
     homeDirectory = "/home/repparw";
 
-    language.time = "en_GB.UTF-8";
-
     stateVersion = "23.11";
   };
 }
