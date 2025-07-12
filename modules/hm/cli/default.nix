@@ -108,14 +108,19 @@
       addKeysToAgent = "yes";
 
       matchBlocks = {
-        rpi = {
-          hostname = "home.repparw.me";
-          port = 2222;
-          user = "dietpi";
-        };
-        pc = {
+        alpha = {
           hostname = "repparw.me";
           port = 10000;
+          user = "repparw";
+        };
+        beta = {
+          hostname = "home.repparw.me";
+          port = 10000;
+          user = "repparw";
+        };
+        pi = {
+          hostname = "home.repparw.me";
+          port = 22;
           user = "repparw";
         };
       };
