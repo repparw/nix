@@ -38,7 +38,7 @@
 
   services = {
     sunshine = {
-      enable = false;
+      enable = true;
       capSysAdmin = true;
       settings = {
         output_name = 1;
