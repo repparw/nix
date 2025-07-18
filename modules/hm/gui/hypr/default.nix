@@ -268,6 +268,9 @@
           "opaque, class:^(firefox)$"
           "nodim, class:^(firefox)$"
 
+          # Force chromium into a tile to deal with --app bug
+          "tile, class:^(Chromium)$"
+
           "noborder, onworkspace:w[t1]"
           "bordersize 0, floating:0, onworkspace:w[tv1]"
           "rounding 0, floating:0, onworkspace:w[tv1]"
