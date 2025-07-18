@@ -19,6 +19,8 @@
     fish.enable = true;
   };
 
+  powerManagement.powertop.enable = true;
+
   services = {
     blueman.enable = true;
 
