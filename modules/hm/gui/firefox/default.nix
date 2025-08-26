@@ -87,6 +87,7 @@
                 darkreader
                 bitwarden
                 refined-github
+                raindropio
               ];
             };
             search = {

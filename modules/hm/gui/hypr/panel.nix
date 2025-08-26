@@ -29,9 +29,9 @@
                 tooltip = "Firefox";
               };
               shortcut2 = {
-                command = "spotify-player";
-                icon = "";
-                tooltip = "Spotify";
+                command = "ncmpcpp";
+                icon = "";
+                tooltip = "Music";
               };
               shortcut3 = {
                 command = "vesktop";
@@ -70,18 +70,17 @@
                 "clock"
               ];
               middle = [ "media" ];
-              right =
-                [
-                  "network"
-                  "bluetooth"
-                  "volume"
-                ]
-                ++ lib.optional (osConfig.networking.hostName != "alpha") "battery"
-                ++ [
-                  "notifications"
-                  "systray"
-                  "dashboard"
-                ];
+              right = [
+                "network"
+                "bluetooth"
+                "volume"
+              ]
+              ++ lib.optional (osConfig.networking.hostName != "alpha") "battery"
+              ++ [
+                "notifications"
+                "systray"
+                "dashboard"
+              ];
             };
           };
         };
