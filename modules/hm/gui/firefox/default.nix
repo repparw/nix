@@ -75,7 +75,37 @@
           default = commonProfile // {
             id = 0;
             path = "default";
-            userChrome = ./userChrome.css;
+            userChrome =
+              let
+                baseCss = builtins.readFile (
+                  pkgs.fetchurl {
+                    url = "https://github.com/MrOtherGuy/firefox-csshacks/raw/master/chrome/autohide_sidebar.css";
+                    sha256 = "sha256-iKdI7zFASsUWbUiiMdlVHKL3hHc4/TRmGOg2iZomBgM=";
+                  }
+                );
+                patchedCss =
+                  builtins.replaceStrings
+                    [ "#sidebar-box" "40px" "210px" ]
+                    [
+                      "#sidebar-box[sidebarcommand=\"_3c078156-979c-498b-8990-85f7987dd929_-sidebar-action\"]"
+                      "34px"
+                      "230px"
+                    ]
+                    baseCss;
+              in
+              patchedCss
+              + ''
+
+                /* Hide tabs toolbar */
+                #TabsToolbar {
+                  visibility: collapse !important;
+                }
+
+                #sidebar-box
+                  #sidebar-header {
+                  display: none !important;
+                }
+              '';
             extensions = with pkgs.nur.repos.rycee.firefox-addons; {
               force = true;
               settings = {
