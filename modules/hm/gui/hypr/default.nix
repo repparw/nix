@@ -47,7 +47,7 @@
 
         "$browser" = "$prefix firefox";
         "$socials" = "$browser -P socials";
-        "$kiosk" = "$browser -P kiosk --kiosk";
+        "$kiosk" = "$browser -P kiosk";
         "$browser2" = "$prefix chromium-browser";
         "$discord" = "$prefix vesktop";
         "$GUIfileManager" = "$prefix nautilus";
@@ -69,7 +69,7 @@
         "$shell" = "fish";
         "$top" = "$terminal $shell -ic top";
         "$fileManager" = "hdrop $terminal --class filemanager $shell -ic yazi";
-        "$spotify" = "hdrop -c spotify $terminal --class spotify spotify_player";
+        "$music" = "hdrop -c music $terminal --class music ncmpcpp";
         "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim $shell -ic obsinvim'";
         "$notes2" = "hdrop -c obsidian '$prefix obsidian'";
 
@@ -184,7 +184,7 @@
           "$mod, a, exec, $prefix anki"
           "$mod, RETURN, exec, $terminal"
           "$mod, W, killactive,"
-          "$mod, M, exec, $spotify"
+          "$mod, M, exec, $music"
           "$mod, E, exec, $fileManager"
           "$mod, F, fullscreen"
           "$mod ALT, F, togglefloating"
@@ -214,7 +214,7 @@
           "CTRL ALT SHIFT, E, exec, hdrop $discord"
           "CTRL ALT SHIFT, F, exec, wpctl set-source-mute @DEFAULT_SOURCE@ toggle"
           # CTRL ALT SHIFT, G, exec,
-          "CTRL ALT SHIFT, H, exec, $spotify"
+          "CTRL ALT SHIFT, H, exec, $music"
 
           # Media keys
           ", XF86AudioNext, exec, playerctl next"
