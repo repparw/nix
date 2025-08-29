@@ -16,6 +16,13 @@
         patches = (old.patches or [ ]) ++ [ ./hyprspace.patch ];
       });
     };
+
+    jellyfin-mpv-shim = prev.jellyfin-mpv-shim.overrideAttrs (old: {
+      propagatedBuildInputs = builtins.filter (
+        pkg: (pkg.pname or "") != "pywebview"
+      ) old.propagatedBuildInputs;
+    });
+
   };
 
   # Keep the stable overlay as is

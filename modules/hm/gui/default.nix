@@ -32,6 +32,8 @@ in
         obsidian
 
         anki
+
+        beeper
         # find pomo app in nixpkgs
       ]
       ++ (with pkgs.stable; [
