@@ -179,15 +179,6 @@
               ];
             };
           };
-          socials = commonProfile // {
-            id = 2;
-            path = "socials";
-            userChrome = ''
-              .tools-and-extensions.actions-list {
-                display: none !important;
-              }
-            '';
-          };
         };
     };
   };

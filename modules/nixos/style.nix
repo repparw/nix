@@ -97,7 +97,6 @@
           firefox.profileNames = [
             "default"
             "kiosk"
-            "socials"
           ];
           hyprlock.useWallpaper = false;
           kitty.variant256Colors = true;
