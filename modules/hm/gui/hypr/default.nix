@@ -31,7 +31,7 @@
             monitor=$monitor,highrr,0x0,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
             monitor=$monitor2,preferred,-1920x0,1
 
-            workspace = 5, on-created-empty:[silent] $socials
+            workspace = 5, on-created-empty:[silent] $whatsapp
           ''
         else
           ''
@@ -46,7 +46,7 @@
         "$prefix" = "uwsm app --";
 
         "$browser" = "$prefix firefox";
-        "$socials" = "$browser -P socials";
+        "$whatsapp" = "hdrop -c whatsapp $browser2 --app=https://web.whatsapp.com";
         "$kiosk" = "$browser -P kiosk";
         "$browser2" = "$prefix chromium-browser";
         "$discord" = "$prefix vesktop";
@@ -181,7 +181,8 @@
           "$mod, comma, exec, [float; noinitialfocus; noborder; center] $showlayout"
           "$mod, period, exec, $showkeys"
 
-          "$mod, a, exec, $prefix anki"
+          "$mod, A, exec, $prefix anki"
+          "$mod, C, exec, $whatsapp"
           "$mod, RETURN, exec, $terminal"
           "$mod, W, killactive,"
           "$mod, M, exec, $music"
