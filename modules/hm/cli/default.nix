@@ -105,7 +105,6 @@
 
     ssh = {
       enable = true;
-      addKeysToAgent = "yes";
 
       matchBlocks = {
         alpha = {

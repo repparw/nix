@@ -10,7 +10,7 @@ _: {
   networking.hostName = "beta";
 
   services = {
-    logind.lidSwitchExternalPower = "ignore";
+    logind.settings.Login.HandleLidSwitchExternalPower = "ignore";
 
     tlp.enable = true;
   };
