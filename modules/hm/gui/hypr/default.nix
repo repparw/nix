@@ -46,9 +46,9 @@
         "$prefix" = "uwsm app --";
 
         "$browser" = "$prefix firefox";
-        "$whatsapp" = "hdrop -c whatsapp $browser2 --app=https://web.whatsapp.com";
-        "$kiosk" = "$browser -P kiosk";
         "$browser2" = "$prefix chromium-browser";
+        "$whatsapp" = "webapp https://web.whatsapp.com";
+        "$kiosk" = "$browser -P kiosk";
         "$discord" = "$prefix vesktop";
         "$GUIfileManager" = "$prefix nautilus";
         #"$pomodoro" = "pomatez";
@@ -169,9 +169,7 @@
         ];
         bind = [
           "$mod, TAB, split:swapactiveworkspaces, current +1"
-
-          "$mod, X, focusmonitor,+1 "
-          "SHIFT $mod, X, movewindow,mon:+1"
+          "$mod SHIFT, TAB, focusmonitor,+1 "
 
           "ALT, TAB, workspace, m+1"
           "ALT SHIFT, TAB, workspace, previous_per_monitor"
@@ -183,6 +181,7 @@
 
           "$mod, A, exec, $prefix anki"
           "$mod, C, exec, $whatsapp"
+          "$mod, X, exec, webapp https://x.com"
           "$mod, RETURN, exec, $terminal"
           "$mod, W, killactive,"
           "$mod, M, exec, $music"
@@ -265,12 +264,16 @@
           "noblur, initialClass:^(mpv)$"
           "nodim, initialClass:^(mpv)$"
 
-          "noblur, class:^(firefox)$"
-          "opaque, class:^(firefox)$"
-          "nodim, class:^(firefox)$"
+          # Browser types
+          "tag +chromium-based-browser, class:([cC]hrom(e|ium)|[bB]rave-browser|Microsoft-edge|Vivaldi-stable)"
+          "tag +firefox-based-browser, class:(Firefox|zen|librewolf)"
 
-          # Force chromium into a tile to deal with --app bug
-          "tile, class:^(Chromium)$"
+          "noblur, tag:firefox-based-browser"
+          "opaque, tag:firefox-based-browser"
+          "nodim, tag:firefox-based-browser"
+
+          # Force chromium-based-browsers into a tile to deal with --app bug
+          "tile, tag:chromium-based-browser"
 
           "noborder, onworkspace:w[t1]"
           "bordersize 0, floating:0, onworkspace:w[tv1]"
