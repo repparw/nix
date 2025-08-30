@@ -22,6 +22,16 @@
         wl-paste --type image/png | zbarimg --raw - | wl-copy
       '';
     })
+
+    (writeShellApplication {
+      name = "webapp";
+      runtimeInputs = [
+      ];
+      text = ''
+        exec uwsm app -- chromium --app="$1" "''${@:2}"
+      '';
+    })
+
     (stdenv.mkDerivation {
       pname = "odin4";
       version = "4";
