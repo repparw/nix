@@ -42,7 +42,7 @@
   "hide_download_button" = "hidden";
   "hide_footer" = false;
   "hide_gradient_bottom" = false;
-  "hide_more_button" = true;
+  "hide_more_button" = false;
   "hide_report_button" = true;
   "hide_save_button" = "icons_only";
   "hide_scroll_for_details" = false;
