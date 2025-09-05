@@ -265,8 +265,8 @@
           "nodim, initialClass:^(mpv)$"
 
           # Browser types
-          "tag +chromium-based-browser, class:([cC]hrom(e|ium)|[bB]rave-browser|Microsoft-edge|Vivaldi-stable)"
-          "tag +firefox-based-browser, class:(Firefox|zen|librewolf)"
+          "tag +chromium-based-browser, class:Chromium-browser"
+          "tag +firefox-based-browser, class:firefox"
 
           "noblur, tag:firefox-based-browser"
           "opaque, tag:firefox-based-browser"

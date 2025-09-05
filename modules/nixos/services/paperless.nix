@@ -41,6 +41,7 @@
     ];
     labels = {
       "glance.url" = "https://paper.${cfg.domain}";
+      "glance.icon" = "sh:paperless-ngx";
       "traefik.http.routers.paperless.rule" = "Host(`paper.${cfg.domain}`)";
     };
   };
