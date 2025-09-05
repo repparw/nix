@@ -17,7 +17,6 @@
           clock = {
             time = {
               military = true;
-              hideSeconds = true;
             };
             weather.enabled = false;
           };
@@ -59,6 +58,7 @@
           };
         };
         bar = {
+          clock.format = "%a %d %b %H:%M";
           network.label = false;
           bluetooth.label = false;
           launcher.icon = "";
