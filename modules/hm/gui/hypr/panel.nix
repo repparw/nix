@@ -1,6 +1,7 @@
 {
   osConfig,
   lib,
+  pkgs,
   ...
 }:
 {
@@ -9,8 +10,11 @@
       enable = true;
       settings = {
         theme = {
-          font.size = 16;
-          name = "tokyo_night";
+          base = pkgs.fetchurl {
+            url = "https://github.com/Jas-SinghFSU/HyprPanel/blob/master/themes/tokyo_night.json";
+            sha256 = "sha256-1XxBQQfyW1+d8MPEtLSfxYhRdnRc72LoD+wxd9MHYzQ=";
+          };
+          font.size = "16px";
         };
         notifications.showActionsOnHover = true;
         menus = {
