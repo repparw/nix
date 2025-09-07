@@ -18,7 +18,7 @@
       systemd.enable = false; # handled by uwsm
       plugins = with pkgs.hyprlandPlugins; [
         # change requires hyprland restart
-        hyprspace
+        hyprexpo
         hyprsplit
       ];
 
@@ -93,9 +93,8 @@
 
         plugin = {
           hyprsplit.num_workspaces = 9;
-          overview = {
-            switchOnDrop = true;
-            exitOnSwitch = true;
+          hyprexpo = {
+            workspace_method = "first 1";
           };
         };
 
@@ -169,12 +168,12 @@
         ];
         bind = [
           "$mod, TAB, split:swapactiveworkspaces, current +1"
-          "$mod SHIFT, TAB, focusmonitor,+1 "
+          "$mod SHIFT, TAB, focusmonitor,+1"
 
           "ALT, TAB, workspace, m+1"
           "ALT SHIFT, TAB, workspace, previous_per_monitor"
 
-          ", mouse:276, overview:toggle"
+          ", mouse:276, hyprexpo:expo, on"
 
           "$mod, comma, exec, [float; noinitialfocus; noborder; center] $showlayout"
           "$mod, period, exec, $showkeys"
