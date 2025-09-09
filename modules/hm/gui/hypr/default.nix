@@ -28,8 +28,9 @@
           ''
             $monitor=DP-2
             $monitor2=HDMI-A-1
-            monitor=$monitor,highrr,0x0,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
-            monitor=$monitor2,preferred,-1920x0,1
+            # monitor=name,resolution,position,scale(,vrr,type)
+            monitor=$monitor,preferred,auto,1,vrr,3 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
+            monitor=$monitor2,preferred,auto-left,1
 
             workspace = 5, on-created-empty:[silent] $whatsapp
           ''
@@ -51,7 +52,7 @@
         "$kiosk" = "$browser -P kiosk";
         "$discord" = "$prefix vesktop";
         "$GUIfileManager" = "$prefix nautilus";
-        #"$pomodoro" = "pomatez";
+        "$pomodoro" = "webapp https://noisekun.com/?theme=dark";
         "$showkeys" = "pkill wshowkeys || $prefix wshowkeys -a bottom -m 108 -b 00000066";
         "$screenshot" = "hyprshot -o ${config.xdg.userDirs.pictures}/ss -m";
 
@@ -191,7 +192,7 @@
           "$mod, SPACE, exec, $dmenu"
           "$mod SHIFT, SPACE, exec, $browser"
           "$mod, T, exec, $top"
-          "$mod, Y, exec, [monitor HDMI-A-1;noinitialfocus] $kiosk"
+          "$mod, Y, exec, [monitor $monitor2;noinitialfocus] $kiosk"
           "$mod, U, exec, $terminal --hold $shell -ic nup"
           "$mod, V, exec, [float; size 622 652; stayfocused; center] $terminal --class clipse clipse"
           "$mod, Z, exec, $prefix mpvclip"
@@ -199,7 +200,8 @@
           "$mod SHIFT, N, exec, $notes2"
           "$mod, R, exec, $terminal $shell -ic rpi"
           "$mod, B, exec, $prefix bttoggle"
-          "$mod, P, exec, $prefix scrcpy -e -S"
+          # "$mod, P, exec, $prefix scrcpy -e -S"
+          "$mod, P, exec, [monitor $monitor2;noinitialfocus] $pomodoro"
 
           ", Print, exec, $screenshot active -m output ## Active monitor"
           "$mod, Print, exec, $screenshot active -m window ## Active window"
