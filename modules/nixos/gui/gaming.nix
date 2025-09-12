@@ -17,12 +17,19 @@ in
     programs = {
       steam = {
         enable = true;
+        gamescopeSession = {
+          enable = true;
+          args = [
+            "--backend"
+            "sdl"
+            "-W"
+            "1920"
+            "-H"
+            "1080"
+          ];
+        };
         remotePlay.openFirewall = true;
         localNetworkGameTransfers.openFirewall = true;
-      };
-
-      gamemode = {
-        enable = true;
       };
 
       gamescope = {

@@ -30,7 +30,7 @@
 
     gvfs.enable = true;
 
-    tailscale.enable = true;
+    # tailscale.enable = true;
 
     keyd = {
       enable = lib.mkIf (config.networking.hostName != "alpha") true;
