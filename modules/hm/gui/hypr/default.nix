@@ -208,7 +208,7 @@
           "Shift $mod, Print, exec, $screenshot region -zs ## Region"
 
           # Macropad churrosoft
-          "CTRL ALT SHIFT, A, exec, hdrop $prefix steam"
+          "CTRL ALT SHIFT, A, exec, steam-gamescope"
           "CTRL ALT SHIFT, B, exec, obs-cmd recording toggle-pause"
           "CTRL ALT SHIFT, C, exec, obs-remux2wsp"
           "CTRL ALT SHIFT, D, exec, obs-cmd replay save"
