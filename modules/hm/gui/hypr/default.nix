@@ -290,11 +290,11 @@
           "size 400 225, title:(video1 - mpv)"
           "move 100%-w-25 100%-w-0, title:(video1 - mpv)"
 
-          # TODO handle all games?
-          "nodim, class:^(cs2)$"
-          "noblur, class:^(cs2)$"
-          "maximize, class:^(cs2)$"
-          "immediate, class:^(cs2)$"
+          "noblur, class:^(.gamescope-wrapped)$"
+          "nodim, class:^(.gamescope-wrapped)$"
+          "maximize, class:^(.gamescope-wrapped)$"
+          "immediate, class:^(.gamescope-wrapped)$"
+          "content game, class:^(.gamescope-wrapped)$"
 
           "float, title:^(Picture-in-Picture|Picture in picture)$"
           "monitor 0, title:^(Picture-in-Picture|Picture in picture)$"

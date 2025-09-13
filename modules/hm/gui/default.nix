@@ -89,13 +89,6 @@ in
         };
       };
 
-      thunderbird = {
-        enable = true;
-        profiles.personal = {
-          isDefault = true;
-        };
-      };
-
       chromium.enable = true;
 
       vesktop = {
