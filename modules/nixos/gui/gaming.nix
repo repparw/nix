@@ -22,10 +22,23 @@ in
           args = [
             "--backend"
             "sdl"
+            "--adaptive-sync"
+
+            # output resolution
             "-W"
             "1920"
             "-H"
             "1080"
+
+            # game resolution
+            # "-w"
+            # "1920"
+            # "-h"
+            # "1080"
+
+            # upscaling
+            # "-F"
+            # "fsr"
           ];
         };
         remotePlay.openFirewall = true;
