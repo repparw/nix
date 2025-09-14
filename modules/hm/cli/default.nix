@@ -140,12 +140,13 @@
     [
       # essentials
       nvim
+      devenv
       curl
       wget
+      jq
+
       unzip
       rmtrash
-      bluez
-      jq
       tree
       ffmpeg
       imagemagick
@@ -163,9 +164,6 @@
 
       pdfgrep
       catdoc # provides catppt and xls2csv
-
-      # Modern replacements of basic tools
-      tree
     ]
     ++ (with pkgs.stable; [
     ]);
