@@ -14,6 +14,8 @@ in
     ./gaming.nix
     ./hypr
     ./mpv.nix
+    ./spotify-player.nix
+    ./spotifyd.nix
     ./zathura.nix
     ./jellyfin-mpv-shim.nix
     ./obs.nix
@@ -32,6 +34,7 @@ in
         obsidian
 
         anki
+
         # find pomo app in nixpkgs
       ]
       ++ (with pkgs.stable; [
