@@ -65,7 +65,7 @@
     })
 
     (writeShellApplication {
-      name = "t";
+      name = "t"; # task quick add for nextcloud caldav
       runtimeInputs = [
         fish
         curl
@@ -100,25 +100,19 @@
         fi
 
         # --- Argument Parsing ---
-        # Get the last argument as the date/time string
-        datetime="''${!#}"
-        # Get all arguments except the last one as the task summary
-        task_summary="''${*:1:$#-1}"
+        # First assume all arguments are part of the task summary
+        task_summary="$*"
+        datetime="tomorrow 9am"
 
-
-        # If only one argument is provided, it's the task summary, and we use a default date.
-        if [ "$#" -eq 1 ]; then
-            task_summary="$1"
-            datetime="tomorrow 9am"
+        # Check if the last argument is a valid date/time
+        if date -d "''${!#}" > /dev/null 2>&1; then
+            # If it is, use it as datetime and remove it from task summary
+            datetime="''${!#}"
+            # Get all arguments except the last one as the task summary
+            task_summary="''${*:1:$#-1}"
         fi
-
 
         # --- Date & Time Processing ---
-        # Validate the provided date/time string. If it's invalid, default to "tomorrow 9am".
-        if ! date -d "$datetime" > /dev/null 2>&1; then
-            echo "Warning: Invalid date format '$datetime'. Defaulting to 'tomorrow 9am'." >&2
-            datetime="tomorrow 9am"
-        fi
 
         # Check if the time is midnight (e.g., no time was specified with the date)
         is_midnight=$(date -d "$datetime" +%H%M)
