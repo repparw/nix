@@ -70,7 +70,7 @@
         "$shell" = "fish";
         "$top" = "$terminal $shell -ic top";
         "$fileManager" = "hdrop $terminal --class filemanager $shell -ic yazi";
-        "$music" = "hdrop -c music $terminal --class music ncmpcpp";
+        "$spotify" = "hdrop -c spotify $terminal --class spotify spotify_player";
         "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim $shell -ic obsinvim'";
         "$notes2" = "hdrop -c obsidian '$prefix obsidian'";
 
@@ -184,7 +184,7 @@
           "$mod, X, exec, webapp https://x.com"
           "$mod, RETURN, exec, $terminal"
           "$mod, W, killactive,"
-          "$mod, M, exec, $music"
+          "$mod, M, exec, $spotify"
           "$mod, E, exec, $fileManager"
           "$mod, F, fullscreen"
           "$mod ALT, F, togglefloating"
@@ -215,7 +215,7 @@
           "CTRL ALT SHIFT, E, exec, hdrop $discord"
           "CTRL ALT SHIFT, F, exec, wpctl set-source-mute @DEFAULT_SOURCE@ toggle"
           # CTRL ALT SHIFT, G, exec,
-          "CTRL ALT SHIFT, H, exec, $music"
+          "CTRL ALT SHIFT, H, exec, $spotify"
 
           # Media keys
           ", XF86AudioNext, exec, playerctl next"
