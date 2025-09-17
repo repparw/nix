@@ -51,44 +51,41 @@
       '';
     };
     # using aliases for defaults, or things that look fugly on expand on abbrs
-    shellAliases =
-      {
-        obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; prevd";
+    shellAliases = {
+      obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; prevd";
 
-        # Nix
-        vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
-        nrs = "nh os switch";
-        nup = "cd ${osConfig.programs.nh.flake}; git pull; nix flake update --commit-lock-file; git push; prevd; nrs";
-        nupt = "nh os boot -u";
+      # Nix
+      vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
+      nrs = "nh os switch";
+      nup = "cd ${osConfig.programs.nh.flake}; git pull; nix flake update --commit-lock-file; git push; prevd; nrs";
+      nupt = "nh os boot -u";
 
-        x = "xdg-open";
-        ln = "ln -i";
-        mv = "mv -i";
+      x = "xdg-open";
+      ln = "ln -i";
+      mv = "mv -i";
 
-        rm = "rmtrash -I";
-        rmdir = "rmdirtrash";
-        rd = "rmdirtrash -pv";
+      rm = "rmtrash -I";
+      rmdir = "rmdirtrash";
+      rd = "rmdirtrash -pv";
 
-        chown = "chown --preserve-root";
-        chmod = "chmod --preserve-root";
-        chgrp = "chgrp --preserve-root";
-      }
-      // (with pkgs; {
-        feh = "${lib.getExe feh} -x -Z -. --image-bg black";
+      chown = "chown --preserve-root";
+      chmod = "chmod --preserve-root";
+      chgrp = "chgrp --preserve-root";
+    }
+    // (with pkgs; {
+      top = "${lib.getExe bottom} --theme gruvbox";
+      diff = "${lib.getExe colordiff}";
+      cat = "${lib.getExe bat}";
+      df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\*";
+      du = "${lib.getExe dust}";
 
-        top = "${lib.getExe bottom} --theme gruvbox";
-        diff = "${lib.getExe colordiff}";
-        cat = "${lib.getExe bat}";
-        df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\*";
-        du = "${lib.getExe dust}";
+      rpi = "${lib.getExe' mosh "mosh"} -P 60001 pi";
+      pc = "${lib.getExe' mosh "mosh"} -P 60000 alpha";
 
-        rpi = "${lib.getExe' mosh "mosh"} -P 60001 pi";
-        pc = "${lib.getExe' mosh "mosh"} -P 60000 alpha";
+      ns = "${lib.getExe nix-search-tv} print | fzf --preview '${lib.getExe nix-search-tv} preview {}' --scheme history";
 
-        ns = "${lib.getExe nix-search-tv} print | fzf --preview '${lib.getExe nix-search-tv} preview {}' --scheme history";
-
-        ghcs = "${lib.getExe gh} copilot suggest";
-      });
+      ghcs = "${lib.getExe gh} copilot suggest";
+    });
     preferAbbrs = true;
     shellAbbrs = {
       # Asks your passwords, becomes root, opens a interactive non login shell
