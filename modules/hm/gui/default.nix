@@ -58,10 +58,6 @@ in
             "org.pwmt.zathura.desktop"
             "firefox.desktop"
           ];
-          "image/png" = "feh.desktop";
-          "image/jpeg" = "feh.desktop";
-          "image/gif" = "feh.desktop";
-          "image/webp" = "feh.desktop";
           "text/html" = "firefox.desktop";
           "x-scheme-handler/http" = "firefox.desktop";
           "x-scheme-handler/https" = "firefox.desktop";
@@ -103,17 +99,11 @@ in
         };
       };
 
-      feh = {
+      imv = {
         enable = true;
-        buttons = {
-          zoom_in = 4;
-          zoom_out = 5;
-        };
-        keybindings = {
-          prev_img = "comma";
-          next_img = "period";
-          zoom_in = "K";
-          zoom_out = "J";
+        settings = {
+          binds."," = "prev";
+          binds."." = "next";
         };
       };
     };
