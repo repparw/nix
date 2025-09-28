@@ -102,8 +102,10 @@ in
       imv = {
         enable = true;
         settings = {
-          binds."," = "prev";
-          binds."." = "next";
+          binds = {
+            "," = "prev";
+            "." = "next";
+          };
         };
       };
     };
