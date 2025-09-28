@@ -37,6 +37,15 @@
   #### FSTAB
 
   services = {
+    archisteamfarm = {
+      enable = true;
+      settings.SteamOwnerID = "76561198101631906";
+      bots.repparw = {
+        settings.CustomGamePlayedWhileFarming = "Idling";
+        username = "ulisesbritos1";
+        passwordFile = config.age.secrets.steamPassword.path;
+      };
+    };
     sunshine = {
       enable = true;
       capSysAdmin = true;
