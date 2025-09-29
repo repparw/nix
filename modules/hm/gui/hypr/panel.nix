@@ -12,7 +12,7 @@
         theme = {
           base = pkgs.fetchurl {
             url = "https://github.com/Jas-SinghFSU/HyprPanel/blob/master/themes/tokyo_night.json";
-            sha256 = "sha256-1XxBQQfyW1+d8MPEtLSfxYhRdnRc72LoD+wxd9MHYzQ=";
+            sha256 = "sha256-GFSvGURh4YPh1QYhXWUl0EQPLLxDpVIEl7d1uq2mxLQ=";
           };
           font.size = "16px";
         };
@@ -74,18 +74,17 @@
                 "clock"
               ];
               middle = [ "media" ];
-              right =
-                [
-                  "network"
-                  "bluetooth"
-                  "volume"
-                ]
-                ++ lib.optional (osConfig.networking.hostName != "alpha") "battery"
-                ++ [
-                  "notifications"
-                  "systray"
-                  "dashboard"
-                ];
+              right = [
+                "network"
+                "bluetooth"
+                "volume"
+              ]
+              ++ lib.optional (osConfig.networking.hostName != "alpha") "battery"
+              ++ [
+                "notifications"
+                "systray"
+                "dashboard"
+              ];
             };
           };
         };
