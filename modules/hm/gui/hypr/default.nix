@@ -144,17 +144,17 @@
           };
         };
 
-        gestures = {
-          workspace_swipe = false;
-          workspace_swipe_forever = true;
-        };
-
         "$mod" = "SUPER";
+
+        gesture = [
+          "3, horizontal, workspace"
+        ];
 
         bindm = [
           "$mod, mouse:272, movewindow"
           "$mod, mouse:273, resizewindow"
         ];
+
         binde = [
           # Resize window
           "$mod CTRL, H, resizeactive, -10 0"
@@ -162,11 +162,13 @@
           "$mod CTRL, K, resizeactive, 0 -10"
           "$mod CTRL, L, resizeactive, 10 0"
         ];
+
         bindl = [
           "$mod ALT, L, exec, $lockscreen; $screenoff"
           ", XF86AudioPlay, exec, playerctl play-pause"
           ", XF86AudioPause, exec, playerctl play-pause"
         ];
+
         bind = [
           "$mod, TAB, split:swapactiveworkspaces, current +1"
           "$mod SHIFT, TAB, focusmonitor,+1"
