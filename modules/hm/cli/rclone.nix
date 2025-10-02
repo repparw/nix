@@ -21,16 +21,6 @@
           };
         };
 
-        gcrypt = {
-          config = {
-            type = "crypt";
-            remote = "gdrive:crypt";
-          };
-          secrets = {
-            password = osConfig.age.secrets.rcloneCrypt.path;
-          };
-        };
-
         nextcloud = {
           config = {
             type = "webdav";
@@ -41,10 +31,17 @@
           secrets.pass = osConfig.age.secrets.rcloneNextcloud.path;
         };
 
-        ncrypt = {
+        cryptunion = {
+          config = {
+            type = "union";
+            upstreams = "gdrive:crypt nextcloud:crypt";
+          };
+        };
+
+        crypt = {
           config = {
             type = "crypt";
-            remote = "nextcloud:crypt";
+            remote = "cryptunion:";
           };
           secrets = {
             password = osConfig.age.secrets.rcloneCrypt.path;
@@ -86,8 +83,7 @@
         rclone-mount-gdrive = mkRcloneMount "gdrive" {
           Service.ExecStart = "${pkgs.rclone}/bin/rclone mount --vfs-cache-mode full --exclude crypt/ gdrive: /home/repparw/.cloud/gdrive";
         };
-        rclone-mount-crypt = mkRcloneMount "gcrypt" { };
-        # rclone-mount-ncrypt = mkRcloneMount "ncrypt" { };
+        rclone-mount-crypt = mkRcloneMount "crypt" { };
         rclone-mount-dropbox = mkRcloneMount "dropbox" { };
       };
   };

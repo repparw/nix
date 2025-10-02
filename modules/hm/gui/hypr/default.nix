@@ -28,6 +28,7 @@
           ''
             $monitor=DP-2
             $monitor2=HDMI-A-1
+
             # monitor=name,resolution,position,scale(,vrr,type)
             monitor=$monitor,preferred,auto,1,vrr,3 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
             monitor=$monitor2,preferred,auto-left,1
