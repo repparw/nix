@@ -9,13 +9,6 @@
     programs.hyprpanel = {
       enable = true;
       settings = {
-        theme = {
-          base = pkgs.fetchurl {
-            url = "https://github.com/Jas-SinghFSU/HyprPanel/blob/master/themes/tokyo_night.json";
-            sha256 = "sha256-GFSvGURh4YPh1QYhXWUl0EQPLLxDpVIEl7d1uq2mxLQ=";
-          };
-          font.size = "16px";
-        };
         notifications.showActionsOnHover = true;
         menus = {
           clock = {
