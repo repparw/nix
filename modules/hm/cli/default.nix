@@ -134,7 +134,7 @@
 
   home.packages =
     let
-      nvim = pkgs.neovim.extend config.lib.stylix.nixvim.config;
+      nvim = pkgs.neovim.extend config.stylix.targets.nixvim.exportedModule;
     in
     with pkgs;
     [
