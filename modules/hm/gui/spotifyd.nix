@@ -13,9 +13,9 @@
 
           dbus_type = "session";
           backend = "pulseaudio";
-          audio_format = "S16";
+          audio_format = "S24";
 
-          device_name = "spotifyd";
+          device_name = "daemon";
 
           bitrate = 320;
 
@@ -26,12 +26,6 @@
           initial_volume = 45;
 
           volume_normalisation = false;
-
-          normalisation_pregain = 3;
-
-          autoplay = true;
-
-          zeroconf_port = 1234;
 
           device_type = "speaker";
         };

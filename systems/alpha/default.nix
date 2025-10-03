@@ -20,6 +20,10 @@
 
   networking.interfaces.enp42s0.wakeOnLan.enable = true;
 
+  networking.extraHosts = ''
+    0.0.0.0 apresolve.spotify.com
+  '';
+
   zramSwap.enable = true;
 
   #### FSTAB
