@@ -1,9 +1,11 @@
 {
   lib,
-  pkgs,
   osConfig,
   ...
 }:
+let
+  cloudDir = "/home/repparw/.cloud";
+in
 {
   config = lib.mkIf osConfig.modules.timers.enable {
     programs.rclone = {
@@ -18,6 +20,13 @@
             client_id = osConfig.age.secrets.rcloneDriveId.path;
             client_secret = osConfig.age.secrets.rcloneDriveSecret.path;
             token = osConfig.age.secrets.rcloneDriveToken.path;
+          };
+          mounts.gdrive = {
+            enable = true;
+            mountPoint = "${cloudDir}/gdrive";
+            options = {
+              exclude = "crypt/";
+            };
           };
         };
 
@@ -35,6 +44,11 @@
           config = {
             type = "union";
             upstreams = "gdrive:crypt nextcloud:crypt";
+            policy_read = "all";
+            action_policy = "all";
+            create_policy = "all";
+            search_policy = "all";
+            cache_policy = "newest";
           };
         };
 
@@ -46,45 +60,21 @@
           secrets = {
             password = osConfig.age.secrets.rcloneCrypt.path;
           };
+          mounts.crypt = {
+            enable = true;
+            mountPoint = "${cloudDir}/crypt";
+          };
         };
 
         dropbox = {
           config.type = "dropbox";
           secrets.token = osConfig.age.secrets.rcloneDropbox.path;
+          mounts.dropbox = {
+            enable = true;
+            mountPoint = "${cloudDir}/dropbox";
+          };
         };
       };
     };
-
-    systemd.user.services =
-      let
-        mkRcloneMount =
-          name: extraConfig:
-          let
-            mountDir = "/home/repparw/.cloud/${name}";
-            baseConfig = {
-              Unit = {
-                Description = "Service that mounts ${name} remote";
-              };
-              Install.WantedBy = [ "graphical-session.target" ];
-              Service = {
-                Type = "simple";
-                ExecStartPre = "/run/current-system/sw/bin/mkdir -p ${mountDir}";
-                ExecStart = "${pkgs.rclone}/bin/rclone mount --vfs-cache-mode full ${name}: ${mountDir}";
-                ExecStop = "/run/current-system/sw/bin/fusermount -u ${mountDir}";
-                Restart = "on-failure";
-                RestartSec = "10s";
-                Environment = [ "PATH=/run/wrappers/bin/:$PATH" ];
-              };
-            };
-          in
-          lib.recursiveUpdate baseConfig extraConfig;
-      in
-      {
-        rclone-mount-gdrive = mkRcloneMount "gdrive" {
-          Service.ExecStart = "${pkgs.rclone}/bin/rclone mount --vfs-cache-mode full --exclude crypt/ gdrive: /home/repparw/.cloud/gdrive";
-        };
-        rclone-mount-crypt = mkRcloneMount "crypt" { };
-        rclone-mount-dropbox = mkRcloneMount "dropbox" { };
-      };
   };
 }
