@@ -50,7 +50,7 @@
     // (lib.optionalAttrs config.services.archisteamfarm.enable {
       steamPassword = {
         file = ./steam-password.age;
-        owner = "repparw";
+        owner = "archisteamfarm";
       };
     })
     // (lib.optionalAttrs config.modules.services.enable {

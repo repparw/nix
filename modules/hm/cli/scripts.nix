@@ -56,8 +56,8 @@
         # device=40:5E:F6:CD:0E:F0 # buds
         device=F8:4E:17:E6:22:D2 # xm4
 
-        if [ -n "$(bluetoothctl devices Connected)" ]; then
-          bluetoothctl disconnect
+        if bluetoothctl info "$device" | grep -q "Connected: yes"; then
+          bluetoothctl disconnect "$device"
         else
           bluetoothctl connect "$device"
         fi

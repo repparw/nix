@@ -13,5 +13,9 @@
       heroic
       mangohud
     ];
+
+    home.file.".local/share/applications/steam.desktop".text =
+      lib.replaceStrings [ "Exec=steam" ] [ "Exec=steam-gamescope" ]
+        (lib.readFile "${pkgs.steam}/share/applications/steam.desktop");
   };
 }

@@ -11,6 +11,7 @@
         withUWSM = true;
       };
       wshowkeys.enable = true;
+      partition-manager.enable = true;
     };
 
     services.displayManager = {

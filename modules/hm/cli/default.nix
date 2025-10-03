@@ -76,9 +76,8 @@
           mnemonicPrefix = true;
           renames = true;
         };
-        merge.conflictdiff = "diff3";
+        merge.conflictstyle = "zdiff3";
         push = {
-          default = "simple";
           autoSetupRemote = true;
           followTags = true;
         };
@@ -87,6 +86,7 @@
           pruneTags = true;
           all = true;
         };
+
         # why not?
         rerere = {
           enabled = true;
@@ -105,6 +105,7 @@
 
     ssh = {
       enable = true;
+      enableDefaultConfig = false;
 
       matchBlocks = {
         alpha = {

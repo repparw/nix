@@ -299,6 +299,8 @@
           "immediate, class:^(.gamescope-wrapped)$"
           "content game, class:^(.gamescope-wrapped)$"
 
+          "content game, class:^(steam_app_.*)$"
+
           "float, title:^(Picture-in-Picture|Picture in picture)$"
           "monitor 0, title:^(Picture-in-Picture|Picture in picture)$"
           "move 100%-w-25 100%-w-3, title:^(Picture-in-Picture|Picture in picture)$"
