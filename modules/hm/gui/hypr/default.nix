@@ -60,7 +60,7 @@
         #"$emojimenu" = "bemoji -n";
         "$dmenu" = "rofi -show combi";
 
-        "$showlayout" = "hdrop feh /home/repparw/src/kbd/docs/layout.png";
+        "$showlayout" = "hdrop imv /home/repparw/src/kbd/docs/layout.png";
 
         "$lockscreen" = "loginctl lock-session";
 
