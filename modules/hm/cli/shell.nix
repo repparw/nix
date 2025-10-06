@@ -60,7 +60,6 @@
       nup = "cd ${osConfig.programs.nh.flake}; git pull; nix flake update --commit-lock-file; git push; prevd; nrs";
       nupt = "nh os boot -u";
 
-      x = "xdg-open";
       ln = "ln -i";
       mv = "mv -i";
 

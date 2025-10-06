@@ -58,6 +58,9 @@ in
             "org.pwmt.zathura.desktop"
             "firefox.desktop"
           ];
+          "image/jpeg" = "imv-dir.desktop";
+          "image/png" = "imv-dir.desktop";
+          "image/gif" = "imv-dir.desktop";
           "text/html" = "firefox.desktop";
           "x-scheme-handler/http" = "firefox.desktop";
           "x-scheme-handler/https" = "firefox.desktop";
@@ -103,8 +106,8 @@ in
         enable = true;
         settings = {
           binds = {
-            "," = "prev";
-            "." = "next";
+            "<comma>" = "prev";
+            "<period>" = "next";
           };
         };
       };
