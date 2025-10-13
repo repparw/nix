@@ -57,8 +57,9 @@
       # Nix
       vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
       nrs = "nh os switch";
-      nup = "cd ${osConfig.programs.nh.flake}; git pull; nix flake update --commit-lock-file; git push; prevd; nrs";
-      nupt = "nh os boot -u";
+      nrb = "nh os boot";
+      nrsu = "nrs -u";
+      nrbu = "nrb -u";
 
       ln = "ln -i";
       mv = "mv -i";
