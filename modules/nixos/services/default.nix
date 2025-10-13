@@ -39,7 +39,7 @@ let
         (import ./diun.nix)
         (import ./freshrss.nix)
         (import ./jellyfin.nix)
-        (import ./n8n.nix)
+        # (import ./n8n.nix)
         (import ./ntfy.nix)
         (import ./paperless.nix)
         (import ./proxy.nix)
