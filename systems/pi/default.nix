@@ -49,16 +49,6 @@
       };
     };
 
-    archisteamfarm = {
-      enable = false;
-      settings.SteamOwnerID = "76561198101631906";
-      bots.repparw = {
-        settings.CustomGamePlayedWhileFarming = "Idling";
-        username = "ulisesbritos1";
-        passwordFile = config.age.secrets.steamPassword.path;
-      };
-    };
-
     # "sudo tailscale up --auth-key=KEY" with the key generated at https://login.tailscale.com/admin/machines/new-linux .
     tailscale.useRoutingFeatures = "server";
     # see also https://github.com/tailscale/tailscale/issues/4432#issuecomment-1112819111

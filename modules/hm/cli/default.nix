@@ -154,8 +154,6 @@
       less
       yt-dlp
 
-      qmk
-
       # CLI tools
       playerctl
       libqalculate
