@@ -30,7 +30,6 @@
           "browser.translations.automaticallyPopup" = false;
           "datareporting.policy.firstRunURL" = "";
           "extensions.autoDisableScopes" = 0;
-          "media.eme.enabled" = true;
           "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
         };
       };
