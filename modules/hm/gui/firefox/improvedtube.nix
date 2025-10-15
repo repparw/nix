@@ -100,6 +100,7 @@
   "remove_black_bars" = false;
   "remove_history_shorts" = true;
   "remove_home_page_shorts" = true;
+  "remove_member_only" = true;
   "remove_shorts_reel_search_results" = true;
   "remove_subscriptions_shorts" = true;
   "remove_trending_shorts" = true;
