@@ -115,19 +115,37 @@
         playback_window_width = 6;
         enable_streaming = "DaemonOnly";
         enable_cover_image_cache = true;
-        default_device = "spotifyd";
+        default_device = osConfig.networking.hostName;
         enable_notify = false;
         copy_command = {
           command = "wl-copy";
           args = [ ];
         };
-        device = {
-          name = "Terminal UI";
-          device_type = "computer";
-          volume = 40;
+      };
+    };
+    services.spotifyd = {
+      settings = {
+        global = {
+          username = "2ksy00sfypgevoabx2128ia4g";
+          use_mpris = true;
+
+          dbus_type = "session";
+          backend = "pulseaudio";
+          audio_format = "S24";
+
+          device_name = osConfig.networking.hostName;
+
           bitrate = 320;
-          audio_cache = false;
-          normalization = false;
+
+          cache_path = "/home/repparw/.cache/spotifyd";
+
+          max_cache_size = 5000000000;
+
+          initial_volume = 45;
+
+          volume_normalisation = false;
+
+          device_type = "speaker";
         };
       };
     };
