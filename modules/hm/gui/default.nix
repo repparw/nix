@@ -14,8 +14,7 @@ in
     ./gaming.nix
     ./hypr
     ./mpv.nix
-    ./spotify-player.nix
-    ./spotifyd.nix
+    ./spotify.nix
     ./zathura.nix
     ./jellyfin-mpv-shim.nix
     ./obs.nix
