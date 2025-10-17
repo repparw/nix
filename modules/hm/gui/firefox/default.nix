@@ -32,17 +32,19 @@
           "extensions.autoDisableScopes" = 0;
           "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
           "sidebar.verticalTabs" = true;
+          "sidebar.visibility" = "expand-on-hover";
+          "sidebar.animation.expand-on-hover.duration-ms" = 200;
         };
       };
 
       profiles =
         let
           commonProfile = {
-            userChrome = ''
-              .tools-and-extensions.actions-list {
-                display: none !important;
-              }
-            '';
+            # userChrome = ''
+            #   .tools-and-extensions.actions-list {
+            #     display: none !important;
+            #   }
+            # '';
             extensions = with pkgs.nur.repos.rycee.firefox-addons; {
               force = true;
               settings = {
