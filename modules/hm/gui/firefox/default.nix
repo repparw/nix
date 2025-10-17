@@ -32,6 +32,8 @@
           "extensions.autoDisableScopes" = 0;
           "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
           "sidebar.verticalTabs" = true;
+          "sidebar.visibility" = "expand-on-hover";
+          "sidebar.animation.expand-on-hover.duration-ms" = 200;
         };
       };
 
@@ -39,7 +41,7 @@
         let
           commonProfile = {
             userChrome = ''
-              .tools-and-extensions.actions-list {
+              #sidebar-button {
                 display: none !important;
               }
             '';
