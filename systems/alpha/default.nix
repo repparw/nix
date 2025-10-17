@@ -24,6 +24,7 @@
     0.0.0.0 apresolve.spotify.com
   '';
 
+  # hibernation needs disk swap, not zram
   zramSwap.enable = true;
 
   #### FSTAB
