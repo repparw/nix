@@ -3,10 +3,11 @@
   "authelia" = {
     image = "docker.io/authelia/authelia:latest";
     environment = {
+      "AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE" = "/secrets/OIDC_HMAC_SECRET";
       "AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE" = "/secrets/JWT_SECRET";
+      "AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE" = "/secrets/SMTP_PASSWORD";
       "AUTHELIA_SESSION_SECRET_FILE" = "/secrets/SESSION_SECRET";
       "AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE" = "/secrets/STORAGE_ENCRYPTION_KEY";
-      "AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE" = "/secrets/OIDC_HMAC_SECRET";
       "X_AUTHELIA_CONFIG_FILTERS" = "template";
       "TZ" = cfg.timezone;
       "DOMAIN" = cfg.domain;
