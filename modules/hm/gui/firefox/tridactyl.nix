@@ -25,7 +25,10 @@ _: {
     unbind <F1>
     unbind <C-e>
 
-    bind yy composite urlmodify_js -t www.youtube.com/watch?v= youtu.be/ | clipboard yank
+    bindurl .*.youtube.com yy composite urlmodify_js -Q list | urlmodify_js -ru .*\.youtube\.com/watch\?v= https://youtu.be/ | clipboard yank
+
+    bindurl ^moz-extension:\/\/.*\/static\/reader\.html yy clipboard yankcanon
+
     bind G scrollto 100
     bind gg scrollto 0
     bind J tabnext

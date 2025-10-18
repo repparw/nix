@@ -40,11 +40,11 @@
       profiles =
         let
           commonProfile = {
-            # userChrome = ''
-            #   .tools-and-extensions.actions-list {
-            #     display: none !important;
-            #   }
-            # '';
+            userChrome = ''
+              #sidebar-button {
+                display: none !important;
+              }
+            '';
             extensions = with pkgs.nur.repos.rycee.firefox-addons; {
               force = true;
               settings = {
