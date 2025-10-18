@@ -1,6 +1,7 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }:
 let
@@ -12,18 +13,13 @@ in
   };
 
   config = lib.mkIf (cfg.enable && config.modules.gui.enable) {
-    # hardware.xpadneo.enable = true;
-
+    hardware.xpadneo.enable = true;
     programs = {
       steam = {
         enable = true;
         gamescopeSession = {
           enable = true;
           args = [
-            "--backend"
-            "sdl"
-            "--adaptive-sync"
-
             # output resolution
             "-W"
             "1920"
@@ -40,6 +36,10 @@ in
             # "-F"
             # "fsr"
           ];
+          # steamArgs = [
+          #   "-steamos3"
+          #   "-pipewire-dmabuf"
+          # ];
         };
         remotePlay.openFirewall = true;
         localNetworkGameTransfers.openFirewall = true;
