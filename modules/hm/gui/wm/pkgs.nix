@@ -5,9 +5,8 @@
   ...
 }:
 {
-  config = lib.mkIf osConfig.programs.niri.enable {
+  config = lib.mkIf (osConfig.programs.niri.enable || osConfig.programs.hyprland.enable) {
     home.packages = with pkgs; [
-      # Desktop
       libdrm
       wl-clipboard
 
