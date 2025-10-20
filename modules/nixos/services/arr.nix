@@ -46,7 +46,7 @@
     ];
   };
   "qbittorrent" = {
-    image = "docker.io/hotio/qbittorrent:latest";
+    image = "ghcr.io/hotio/qbittorrent:latest";
     environment = {
       "PUID" = cfg.user;
       "PGID" = cfg.group;
