@@ -109,7 +109,6 @@
 
       matchBlocks = {
         alpha = {
-          hostname = "repparw.me";
           port = 10000;
           user = "repparw";
         };
