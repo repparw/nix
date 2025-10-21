@@ -36,7 +36,6 @@ let
         (import ./arr.nix)
         (import ./authelia.nix)
         (import ./changedetection.nix)
-        (import ./diun.nix)
         (import ./freshrss.nix)
         (import ./jellyfin.nix)
         # (import ./n8n.nix)
