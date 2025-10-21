@@ -29,8 +29,8 @@ _: {
 
     bindurl ^moz-extension:\/\/.*\/static\/reader\.html yy clipboard yankcanon
 
-    bind G scrollto 100
-    bind gg scrollto 0
+    bind gd tabdetach
+
     bind J tabnext
     bind K tabprev
 
