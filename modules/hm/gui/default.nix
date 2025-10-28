@@ -84,6 +84,7 @@ in
           repaint_delay = 8;
           sync_to_monitor = "no";
           wayland_enable_ime = "no";
+          term = "kitty";
         };
         keybindings = {
           "ctrl+backspace" = "send_text all \\x17";
@@ -95,7 +96,6 @@ in
       vesktop = {
         enable = true;
         settings = {
-          discordBranch = "stable";
           minimizeToTray = true;
           arRPC = false;
         };
