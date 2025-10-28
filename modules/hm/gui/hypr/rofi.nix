@@ -20,7 +20,6 @@
       display-combi = "";
       display-drun = "";
       display-window = "";
-      terminal = "kitty";
       drun-display-format = "{name}";
       me-select-entry = "";
       me-accept-entry = "MousePrimary";
