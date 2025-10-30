@@ -27,7 +27,7 @@ in
             Type = "oneshot";
             User = "repparw";
             ExecStart = ''
-              ${lib.getExe pkgs.rclone} -L sync --exclude "qbittorrent/ipc-socket" --exclude "authelia/valkey/" --exclude "authelia/config/notification.txt" --exclude "authelia/config/users_database.yml" --exclude "traefik/certs/" --exclude "**/fail2ban/fail2ban.sqlite3" --exclude "**/letsencrypt/live/" --exclude "**/letsencrypt/archive/" --exclude "**/letsencrypt/accounts/" /home/repparw/.config/dlsuite crypt:dlsuite
+              ${lib.getExe pkgs.rclone} -L sync --exclude-from /home/repparw/.config/dlsuite/exclude-file.txt /home/repparw/.config/dlsuite crypt:dlsuite
             '';
           };
         };
