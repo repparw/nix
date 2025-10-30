@@ -52,10 +52,12 @@
 
     git = {
       enable = true;
-      userEmail = "ubritos@gmail.com";
-      userName = "repparw";
 
-      extraConfig = {
+      settings = {
+        user = {
+          email = "ubritos@gmail.com";
+          name = "repparw";
+        };
         url = {
           "git@github.com:repparw/" = {
             insteadOf = "repparw:";
