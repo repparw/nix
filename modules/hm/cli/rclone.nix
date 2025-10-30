@@ -40,7 +40,7 @@ in
           secrets.pass = osConfig.age.secrets.rcloneNextcloud.path;
         };
 
-        cryptunion = {
+        union = {
           config = {
             type = "union";
             upstreams = "gdrive:crypt nextcloud:crypt";
@@ -55,7 +55,7 @@ in
         crypt = {
           config = {
             type = "crypt";
-            remote = "cryptunion:";
+            remote = "union:";
           };
           secrets = {
             password = osConfig.age.secrets.rcloneCrypt.path;
