@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 let
@@ -20,6 +19,9 @@ in
         gamescopeSession = {
           enable = true;
           args = [
+            "--backend"
+            "sdl"
+
             # output resolution
             "-W"
             "1920"
