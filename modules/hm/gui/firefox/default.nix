@@ -70,10 +70,12 @@
                     "moz-extension-scheme"
                   ];
                 };
+                "${improved-tube.addonId}".settings = import ./improvedtube.nix;
               };
               packages = [
-                ublock-origin
+                improved-tube
                 tridactyl
+                ublock-origin
               ];
             };
           };
@@ -86,7 +88,6 @@
               force = true;
               settings = {
                 "${darkreader.addonId}".settings = import ./darkreader.nix;
-                "${improved-tube.addonId}".settings = import ./improvedtube.nix;
               };
               packages = [
                 darkreader
@@ -139,10 +140,8 @@
                   hideUploadButtonPlayerControls = true;
                   dontShowNotice = true;
                 };
-                "${improved-tube.addonId}".settings = import ./improvedtube.nix;
               };
               packages = [
-                improved-tube
                 sponsorblock
                 dearrow
                 tampermonkey
