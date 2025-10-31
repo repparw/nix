@@ -86,12 +86,10 @@
       home.pointerCursor.dotIcons.enable = false;
       xresources.path = ".config/Xresources";
       stylix = {
-        iconTheme = {
+        icons = {
           enable = true;
-          dark = "Gruvbox-Plus-Dark";
-          package = pkgs.gruvbox-plus-icons.override {
-            folder-color = "grey";
-          };
+          dark = "Papirus";
+          package = pkgs.papirus-icon-theme;
         };
         targets = {
           firefox.profileNames = [

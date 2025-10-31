@@ -73,7 +73,7 @@
       chgrp = "chgrp --preserve-root";
     }
     // (with pkgs; {
-      top = "${lib.getExe bottom} --theme gruvbox";
+      top = "${lib.getExe bottom}";
       diff = "${lib.getExe colordiff}";
       cat = "${lib.getExe bat}";
       df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\*";
