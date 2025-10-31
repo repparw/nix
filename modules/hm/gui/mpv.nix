@@ -25,7 +25,7 @@
       };
 
       config = {
-        volume = 30;
+        volume = 50;
         slang = "eng";
         ytdl-raw-options = "format=bestvideo[height<=?1080]+bestaudio/best,sub-format=en/es,write-srt=";
         sub-auto = "fuzzy";
