@@ -70,10 +70,8 @@
                     "moz-extension-scheme"
                   ];
                 };
-                "${improved-tube.addonId}".settings = import ./improvedtube.nix;
               };
               packages = [
-                improved-tube
                 tridactyl
                 ublock-origin
               ];
@@ -140,8 +138,10 @@
                   hideUploadButtonPlayerControls = true;
                   dontShowNotice = true;
                 };
+                "${improved-tube.addonId}".settings = import ./improvedtube.nix;
               };
               packages = [
+                improved-tube
                 sponsorblock
                 dearrow
                 tampermonkey
