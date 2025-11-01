@@ -32,7 +32,6 @@ let
   containersList =
     if config.networking.hostName == "alpha" then
       [
-        #(import ./actual.nix)
         (import ./arr.nix)
         (import ./authelia.nix)
         (import ./changedetection.nix)
@@ -128,18 +127,6 @@ in
     networking.firewall.trustedInterfaces = [ "podman*" ];
 
     fileSystems = {
-      "/home/repparw/.config/dlsuite/actual" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/actual";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
       "/home/repparw/.config/dlsuite/authelia" = {
         depends = [
           "/"
