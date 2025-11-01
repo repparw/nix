@@ -174,4 +174,3 @@
   notifyOfNews = false;
   readNews = [ ];
 }
-
