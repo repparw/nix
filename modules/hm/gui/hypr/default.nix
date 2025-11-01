@@ -204,7 +204,7 @@
           "$mod SHIFT, N, exec, $notes2"
           "$mod, R, exec, $terminal $shell -ic rpi"
           "$mod, B, exec, $prefix bttoggle"
-          # "$mod, P, exec, $prefix scrcpy -e -S"
+          "$mod, S, exec, $prefix scrcpy -e -S"
           "$mod, P, exec, [monitor $monitor2;noinitialfocus] $pomodoro"
 
           ", Print, exec, $screenshot active -m output ## Active monitor"
