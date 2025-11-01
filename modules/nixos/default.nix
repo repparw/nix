@@ -82,7 +82,7 @@
   time.timeZone = "America/Argentina/Buenos_Aires";
 
   environment.systemPackages = with pkgs; [
-    inputs.agenix.packages."${system}".default
+    inputs.agenix.packages."${stdenv.hostPlatform.system}".default
   ];
 
   security = {
