@@ -17,6 +17,6 @@ _: {
     username = "repparw";
     homeDirectory = "/home/repparw";
 
-    stateVersion = "23.11";
+    stateVersion = "25.11";
   };
 }
