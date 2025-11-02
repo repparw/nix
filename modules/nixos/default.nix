@@ -43,12 +43,8 @@
   };
 
   networking = {
-    networkmanager.enable = config.networking.hostName != "pi";
-
     firewall.trustedInterfaces = [
-      "enp0s25"
       "enp42s0"
-      "wlp3s0"
     ];
   };
 

@@ -20,10 +20,6 @@
 
   networking.interfaces.enp42s0.wakeOnLan.enable = true;
 
-  networking.extraHosts = ''
-    0.0.0.0 apresolve.spotify.com
-  '';
-
   # hibernation needs disk swap, not zram
   zramSwap.enable = true;
 
