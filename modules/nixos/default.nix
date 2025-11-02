@@ -41,7 +41,10 @@
     networking.wireless.enable = false;
   };
 
+  # systemd.network.enable = true; # TODO issues with wifi, wait-online
+
   networking = {
+    wireless.enable = true;
     firewall.trustedInterfaces = [
       "enp42s0"
     ];
