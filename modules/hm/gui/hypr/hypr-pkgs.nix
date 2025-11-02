@@ -18,7 +18,10 @@
     ];
 
     services = {
-      clipse.enable = true;
+      clipse = {
+        enable = true;
+        imageDisplay.type = "kitty";
+      };
 
       hypridle = {
         enable = true;
