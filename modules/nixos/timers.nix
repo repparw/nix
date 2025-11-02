@@ -13,15 +13,25 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    services.rsync = {
+      enable = true;
+      jobs.buptohdd = {
+        destination = "/mnt/hdd/backup";
+        sources = [
+          "/home/repparw/Pictures"
+          "/home/repparw/Documents"
+          "/home/repparw/.config"
+        ];
+        settings = {
+          archive = true;
+          delete = true;
+          exclude = "dlsuite";
+        };
+      };
+    };
+
     systemd = {
       services = {
-        buptohdd = {
-          serviceConfig = {
-            Type = "oneshot";
-            User = "repparw";
-            ExecStart = "${lib.getExe pkgs.rsync} -aq --delete /home/repparw/Pictures /home/repparw/Documents /home/repparw/.config --exclude='dlsuite' /mnt/hdd/backup";
-          };
-        };
         rclone-sync-crypt = {
           serviceConfig = {
             Type = "oneshot";
@@ -41,14 +51,6 @@ in
       };
 
       timers = {
-        buptohdd = {
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "03:00:00";
-            Persistent = true;
-          };
-        };
-
         paperless-export = {
           wantedBy = [ "timers.target" ];
           timerConfig = {
