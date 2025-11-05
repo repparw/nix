@@ -38,17 +38,6 @@
     tailscale.enable = true;
     tailscale.useRoutingFeatures = "both";
 
-    networkd-dispatcher = {
-      enable = true;
-      rules."50-tailscale" = {
-        onState = [ "routable" ];
-        script = ''
-          NETDEV="$(ip -o route get 8.8.8.8 | cut -f 5 -d " ")"
-          "${lib.getExe pkgs.ethtool}" -K "$NETDEV" rx-udp-gro-forwarding on rx-gro-list off
-        '';
-      };
-    };
-
     keyd = {
       enable = lib.mkIf (config.networking.hostName != "alpha") true;
       keyboards = {
