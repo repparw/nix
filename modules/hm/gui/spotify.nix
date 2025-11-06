@@ -123,30 +123,24 @@
         };
       };
     };
-    services.spotifyd = {
+
+    services.librespot = {
       settings = {
-        global = {
-          username = "2ksy00sfypgevoabx2128ia4g";
-          use_mpris = true;
+        username = "2ksy00sfypgevoabx2128ia4g";
+        disable-discovery = true;
+        enable-oauth = true;
 
-          dbus_type = "session";
-          backend = "pulseaudio";
-          audio_format = "S24";
+        backend = "pulseaudio";
+        format = "S24";
+        bitrate = 320;
 
-          device_name = osConfig.networking.hostName;
+        name = osConfig.networking.hostName;
 
-          bitrate = 320;
+        cache-size-limit = "5G";
 
-          cache_path = "/home/repparw/.cache/spotifyd";
+        initial-volume = 45;
 
-          max_cache_size = 5000000000;
-
-          initial_volume = 45;
-
-          volume_normalisation = false;
-
-          device_type = "speaker";
-        };
+        device-type = "computer";
       };
     };
   };
