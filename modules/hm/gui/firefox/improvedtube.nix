@@ -8,7 +8,6 @@
   "hide_shorts_remixing" = true;
   "hide_voice_search_button" = true;
   "join" = "hidden";
-  "livechat" = "collapsed";
   "only_one_player_instance_playing" = true;
   "player_autofullscreen" = true;
   "player_forced_playback_speed" = true;

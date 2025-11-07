@@ -58,12 +58,7 @@ rec {
       # Define extra modules based on hostname patterns
       getExtraModules =
         hostname:
-        if hostname == "pi" then
-          [
-            inputs.disko.nixosModules.disko
-            inputs.nixos-hardware.nixosModules.raspberry-pi-5
-          ]
-        else if hostname == "delta" then
+        if hostname == "delta" then
           [
             inputs.jovian.nixosModules.default
           ]
