@@ -17,17 +17,11 @@ _: {
     set smoothscroll true
 
     " Binds
-    bind gc tab pocketcasts.com/podcasts
-
     bind , hint -W mpvsafe
     bind ;c hint -c [class*="expand"],[class*="togg"],[class="comment_folder"]
 
     unbind <F1>
     unbind <C-e>
-
-    bindurl .*.youtube.com yy composite urlmodify_js -Q list | urlmodify_js -ru .*\.youtube\.com/watch\?v= https://youtu.be/ | clipboard yank
-
-    bindurl ^moz-extension:\/\/.*\/static\/reader\.html yy clipboard yankcanon
 
     bind gd tabdetach
 
@@ -36,8 +30,10 @@ _: {
 
     bind e reader
 
-    bindurl ^https://web.whatsapp.com e echo "e in wsp"
-    unbindurl ^https://web.whatsapp.com <A-k>
+    " Subconfig binds
+    bindurl .*.youtube.com yy composite urlmodify_js -Q list | urlmodify_js -ru .*\.youtube\.com/watch\?v= https://youtu.be/ | clipboard yank
+
+    bindurl ^moz-extension:\/\/.*\/static\/reader\.html yy clipboard yankcanon
 
     unbindurl ^https://x.com j
     unbindurl ^https://x.com k
@@ -48,8 +44,6 @@ _: {
 
     " Autocmds
     autocmd DocStart tradingview.com mode ignore
-    autocmd DocStart tldraw.com mode ignore
-    autocmd DocStart config.qmk.fm mode ignore
     autocmd TriStart .* source_quiet
     autocmd BeforeRequest undefined
   '';
