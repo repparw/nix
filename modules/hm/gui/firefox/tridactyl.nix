@@ -25,6 +25,8 @@ _: {
 
     bind gd tabdetach
 
+    bind yy clipboard yankshort
+
     bind J tabnext
     bind K tabprev
 
