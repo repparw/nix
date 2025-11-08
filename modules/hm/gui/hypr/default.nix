@@ -67,12 +67,12 @@
         "$screenoff" = "sleep 3 && hyprctl dispatch dpms off";
 
         # Terminal
-        "$terminal" = "$prefix kitty";
+        "$terminal" = "$prefix foot";
         "$shell" = "fish";
         "$top" = "$terminal $shell -ic top";
-        "$fileManager" = "hdrop $terminal --class filemanager $shell -ic yazi";
-        "$spotify" = "hdrop -c spotify $terminal --class spotify spotify_player";
-        "$notes" = "hdrop -c obsinvim '$terminal --class obsinvim $shell -ic obsinvim'";
+        "$fileManager" = "hdrop $terminal --app-id filemanager $shell -ic yazi";
+        "$spotify" = "hdrop -c spotify $terminal --app-id spotify spotify_player";
+        "$notes" = "hdrop -c obsinvim '$terminal --app-id obsinvim $shell -ic obsinvim'";
         "$notes2" = "hdrop -c obsidian '$prefix obsidian'";
 
         # Autostart
@@ -198,7 +198,7 @@
           "$mod, T, exec, $top"
           "$mod, Y, exec, [monitor $monitor2;noinitialfocus] $kiosk"
           "$mod, U, exec, $terminal --hold $shell -ic nrsu"
-          "$mod, V, exec, [float; size 622 652; stayfocused; center] $terminal --class clipse clipse"
+          "$mod, V, exec, [float; size 622 652; stayfocused; center] $terminal --app-id clipse clipse"
           "$mod, Z, exec, $prefix mpvclip"
           "$mod, N, exec, $notes"
           "$mod SHIFT, N, exec, $notes2"
