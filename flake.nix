@@ -3,6 +3,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -50,13 +51,55 @@
   outputs =
     inputs:
     let
-      lib = import ./lib { inherit inputs; };
+      commonModules = [
+        (import ./overlays { inherit inputs; })
+        inputs.nur.modules.nixos.default
+        ./modules/nixos
+        inputs.nix-index-database.nixosModules.nix-index
+        { programs.nix-index-database.comma.enable = true; }
+        ./secrets/nixos.nix
+        inputs.home-manager.nixosModules.home-manager
+        inputs.stylix.nixosModules.stylix
+      ];
+
+      mkHomeManager = hostname: {
+        home-manager = {
+          useGlobalPkgs = true;
+          useUserPackages = true;
+          backupFileExtension = "hm-backup";
+          extraSpecialArgs = {
+            inherit inputs;
+          };
+          users.repparw = {
+            imports = [
+              ./modules/hm
+              ./home/${hostname}.nix
+            ];
+          };
+        };
+      };
+
+      mkSystem =
+        hostname: extraModules:
+        inputs.nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules =
+            commonModules
+            ++ [
+              ./systems/${hostname}
+              (mkHomeManager hostname)
+            ]
+            ++ extraModules;
+          specialArgs = {
+            inherit inputs;
+          };
+        };
     in
     {
-      nixosConfigurations = lib.mkHost {
-        alpha = "x86_64-linux";
-        beta = "x86_64-linux";
-        pi = "aarch64-linux";
+      nixosConfigurations = {
+        alpha = mkSystem "alpha" [ ];
+        beta = mkSystem "beta" [ ];
+        # delta = mkSystem "delta" [ inputs.jovian.nixosModules.default ];
       };
     };
 }
