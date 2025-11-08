@@ -97,7 +97,6 @@
             "kiosk"
           ];
           hyprlock.useWallpaper = false;
-          kitty.variant256Colors = true;
           waybar = {
             enableCenterBackColors = true;
             enableRightBackColors = true;

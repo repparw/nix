@@ -1,4 +1,4 @@
-{ cfg, config, ... }:
+{ cfg, ... }:
 {
   "bazarr" = {
     image = "docker.io/linuxserver/bazarr:latest";
