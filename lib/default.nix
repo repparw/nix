@@ -9,7 +9,6 @@ rec {
       nixpkgs.overlays = builtins.attrValues (
         import ../overlays {
           inherit inputs;
-          outputs = null;
         }
       );
     }
