@@ -26,9 +26,7 @@
 
       config = {
         volume = 50;
-        slang = "eng";
         ytdl-raw-options = "format=bestvideo[height<=?1080]+bestaudio/best,sub-format=en/es,write-srt=";
-        sub-auto = "fuzzy";
         screen = 1;
         fs = "yes";
         fs-screen = 1;
@@ -40,10 +38,15 @@
 
         osc = "no";
         osd-font-size = 32; # Default 55
-        sub-font-size = 40; # Default 55
-
         osd-border-size = 2; # Default 3
-        sub-border-size = 2; # Default 3
+
+        sub-font-size = 36; # Default 55
+        sub-border-size = 0.5; # Default 3
+        sub-shadow-offset = 2;
+        sub-blur = 0.5;
+
+        slang = "eng";
+        sub-auto = "fuzzy";
       };
     };
   };
