@@ -175,18 +175,6 @@ in
         ];
       };
 
-      "/home/repparw/.config/dlsuite/diun" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/diun";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
       "/home/repparw/.config/dlsuite/freshrss" = {
         depends = [
           "/"
