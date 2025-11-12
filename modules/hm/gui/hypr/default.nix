@@ -70,9 +70,9 @@
         "$terminal" = "$prefix foot";
         "$shell" = "fish";
         "$top" = "$terminal $shell -ic top";
-        "$fileManager" = "hdrop $terminal --app-id filemanager $shell -ic yazi";
-        "$spotify" = "hdrop -c spotify $terminal --app-id spotify spotify_player";
-        "$notes" = "hdrop -c obsinvim '$terminal --app-id obsinvim $shell -ic obsinvim'";
+        "$fileManager" = "$terminal --app-id filemanager $shell -ic yazi";
+        "$spotify" = "$terminal --app-id spotify spotify_player";
+        "$notes" = "$terminal --app-id obsinvim $shell -ic obsinvim";
         "$notes2" = "hdrop -c obsidian '$prefix obsidian'";
 
         # Autostart

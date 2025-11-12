@@ -91,7 +91,7 @@
       # Asks your passwords, becomes root, opens a interactive non login shell
       su = "sudo -s";
 
-      v = "$EDITOR";
+      v = "nvim";
 
       meminfo = "free -hlt";
       cpuinfo = "lscpu";
