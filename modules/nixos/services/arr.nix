@@ -73,6 +73,8 @@
       "PUID" = cfg.user;
       "PGID" = cfg.group;
       "TZ" = cfg.timezone;
+      "DOCKER_MODS" = "linuxserver/mods:radarr-striptracks";
+      "STRIPTRACKS_ARGS" = "--audio :org:eng:und --subs :eng:spa";
     };
     volumes = [
       "${cfg.dataDir}:/data"
@@ -91,6 +93,8 @@
       "PUID" = cfg.user;
       "PGID" = cfg.group;
       "TZ" = cfg.timezone;
+      "DOCKER_MODS" = "linuxserver/mods:radarr-striptracks";
+      "STRIPTRACKS_ARGS" = "--audio :org:eng:und --subs :eng:spa";
     };
     volumes = [
       "/dev/rtc:/dev/rtc:ro"
