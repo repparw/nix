@@ -13,6 +13,7 @@
       # }
     ];
     extraConfig = {
+      run-command = "uwsm app -- {cmd}";
       combi-modes = "drun,window";
       show-icons = true;
       hover-select = true;
