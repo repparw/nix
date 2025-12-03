@@ -55,6 +55,22 @@ let
   containerDefinitions = mapAttrs (name: attrs: mkContainer name attrs) (
     foldl' (acc: def: acc // (def { inherit cfg config; })) { } containersList
   );
+
+  mkFileSystemMount =
+    service: subPath:
+    {
+      "/home/repparw/.config/dlsuite/${service}" = {
+        depends = [
+          "/"
+          "/mnt/hdd"
+        ];
+        device = "${cfg.configDir}/${subPath}";
+        options = [
+          "bind"
+          "ro"
+        ];
+      };
+    };
 in
 {
   options.modules.services = {
@@ -126,174 +142,23 @@ in
 
     networking.firewall.trustedInterfaces = [ "podman*" ];
 
-    fileSystems = {
-      "/home/repparw/.config/dlsuite/authelia" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/authelia";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/bazarr" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/bazarr/backup";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/changedetection" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/changedetection";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/ddclient" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/ddclient";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/freshrss" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/freshrss";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/glance" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/glance";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/jellyfin" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/jellyfin/data/data/backups";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/ntfy" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/ntfy";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/paper" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/paper/export";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/prowlarr" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/prowlarr/Backups";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/qbittorrent" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/qbittorrent/config";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/radarr" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/radarr/Backups";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/sonarr" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/sonarr/Backups";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-
-      "/home/repparw/.config/dlsuite/traefik" = {
-        depends = [
-          "/"
-          "/mnt/hdd"
-        ];
-        device = "${cfg.configDir}/traefik";
-        options = [
-          "bind"
-          "ro"
-        ];
-      };
-    };
+    fileSystems = mkMerge [
+      (mkFileSystemMount "authelia" "authelia")
+      (mkFileSystemMount "bazarr" "bazarr/backup")
+      (mkFileSystemMount "changedetection" "changedetection")
+      (mkFileSystemMount "ddclient" "ddclient")
+      (mkFileSystemMount "freshrss" "freshrss")
+      (mkFileSystemMount "glance" "glance")
+      (mkFileSystemMount "jellyfin" "jellyfin/data/data/backups")
+      (mkFileSystemMount "jellyfin-plugins" "jellyfin/data/plugins")
+      (mkFileSystemMount "ntfy" "ntfy")
+      (mkFileSystemMount "paper" "paper/export")
+      (mkFileSystemMount "profilarr" "profilarr/backups")
+      (mkFileSystemMount "prowlarr" "prowlarr/Backups")
+      (mkFileSystemMount "qbittorrent" "qbittorrent/config")
+      (mkFileSystemMount "radarr" "radarr/Backups")
+      (mkFileSystemMount "sonarr" "sonarr/Backups")
+      (mkFileSystemMount "traefik" "traefik")
+    ];
   };
 }
