@@ -15,22 +15,6 @@
       "--health-cmd=curl -f http://localhost:6767/bazarr/api/status || exit 1"
     ];
   };
-  "flaresolverr" = {
-    image = "docker.io/flaresolverr/flaresolverr:latest";
-    environment = {
-      "CAPTCHA_SOLVER" = "none";
-      "LOG_HTML" = "false";
-      "LOG_LEVEL" = "info";
-      "TZ" = cfg.timezone;
-    };
-    extraOptions = [
-      "--health-cmd=curl -f http://localhost:8191/health || exit 1"
-    ];
-    labels = {
-      "glance.parent" = "bazarr";
-      "traefik.enable" = "false";
-    };
-  };
   "profilarr" = {
     image = "docker.io/santiagosayshey/profilarr:latest";
     environment = {
