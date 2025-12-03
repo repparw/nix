@@ -31,6 +31,15 @@
       "traefik.enable" = "false";
     };
   };
+  "profilarr" = {
+    image = "docker.io/santiagosayshey/profilarr:latest";
+    environment = {
+      "TZ" = cfg.timezone;
+    };
+    volumes = [
+      "${cfg.configDir}/profilarr:/config"
+    ];
+  };
   "prowlarr" = {
     image = "docker.io/linuxserver/prowlarr:latest";
     environment = {
