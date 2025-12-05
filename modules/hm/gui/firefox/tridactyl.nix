@@ -6,12 +6,6 @@ _: {
     set newtab about:blank
     set markjumpnoisy false
     set modeindicatormodes.ignore false
-    set modeindicatormodes.normal true
-    set modeindicatormodes.insert true
-    set modeindicatormodes.input true
-    set modeindicatormodes.ex true
-    set modeindicatormodes.hint true
-    set modeindicatormodes.visual true
     set theme midnight
     set editorcmd foot nvim
     set smoothscroll true
@@ -37,16 +31,14 @@ _: {
 
     bindurl ^moz-extension:\/\/.*\/static\/reader\.html yy clipboard yankcanon
 
-    unbindurl ^https://x.com j
-    unbindurl ^https://x.com k
+    unbindurl x.com e
+    unbindurl x.com j
+    unbindurl x.com k
 
     " Subconfig Settings
-    seturl youtube.com modeindicatormodes.normal false
-    seturl https://jellyfin.repparw.me/ modeindicatormodes.normal false
+    seturl youtube.com modeindicator false
+    seturl jellyfin.repparw.me modeindicator false
 
-    " Autocmds
     autocmd DocStart tradingview.com mode ignore
-    autocmd TriStart .* source_quiet
-    autocmd BeforeRequest undefined
   '';
 }
