@@ -24,12 +24,12 @@ _: {
     bind J tabnext
     bind K tabprev
 
-    bind e reader
+    bind gr reader
 
     " Subconfig binds
     bindurl .*.youtube.com yy composite urlmodify_js -Q list | urlmodify_js -ru .*\.youtube\.com/watch\?v= https://youtu.be/ | clipboard yank
 
-    bindurl ^moz-extension:\/\/.*\/static\/reader\.html yy clipboard yankcanon
+    bindurl ^moz-extension:\/\/1310b077-591a-4d70-aebf-a058924c50ec\/static\/reader\.html yy clipboard yankcanon
 
     unbindurl x.com e
     unbindurl x.com j
