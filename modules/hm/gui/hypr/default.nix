@@ -26,11 +26,11 @@
       extraConfig =
         if osConfig.networking.hostName == "alpha" then
           ''
-            $monitor=DP-2
+            $monitor=DP-3
             $monitor2=HDMI-A-1
 
             # monitor=name,resolution,position,scale(,vrr,type)
-            monitor=$monitor,preferred,auto,1,vrr,3 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
+            monitor=$monitor,1920x1080@165,auto,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
             monitor=$monitor2,preferred,auto-left,1
 
             workspace = 5, on-created-empty:[silent] $whatsapp

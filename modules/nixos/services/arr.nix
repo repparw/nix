@@ -80,6 +80,15 @@
       "--health-cmd=curl -f http://localhost:7878/ping || exit 1"
     ];
   };
+  "seerr" = {
+    image = "docker.io/fallenbagel/jellyseerr:latest";
+    environment = {
+      "TZ" = cfg.timezone;
+    };
+    volumes = [
+      "${cfg.configDir}/seerr:/app/config"
+    ];
+  };
   "sonarr" = {
     image = "docker.io/linuxserver/sonarr:latest";
     environment = {
