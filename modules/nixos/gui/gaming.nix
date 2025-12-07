@@ -1,4 +1,5 @@
 {
+  pkgs,
   lib,
   config,
   ...
@@ -19,32 +20,28 @@ in
         gamescopeSession = {
           enable = true;
           args = [
-            "--backend"
-            "sdl"
-
             # output resolution
             "-W"
             "1920"
             "-H"
             "1080"
 
-            # game resolution
-            # "-w"
-            # "1920"
-            # "-h"
-            # "1080"
-
-            # upscaling
-            # "-F"
-            # "fsr"
+            # only works embedded, not nested
+            "--adaptive-sync"
           ];
-          # steamArgs = [
-          #   "-steamos3"
-          #   "-pipewire-dmabuf"
-          # ];
+          steamArgs = [
+            "-gamepadui"
+            "-steamos3"
+            "-steampal"
+            "-steamdeck"
+            "-pipewire-dmabuf"
+          ];
         };
         remotePlay.openFirewall = true;
         localNetworkGameTransfers.openFirewall = true;
+        extraCompatPackages = with pkgs; [
+          proton-ge-bin
+        ];
       };
 
       gamescope = {

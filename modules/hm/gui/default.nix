@@ -28,8 +28,6 @@ in
         pwvucontrol
         scrcpy
 
-        rquickshare
-
         obsidian
 
         anki
