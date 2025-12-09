@@ -36,6 +36,9 @@
         gpu-api = "vulkan";
         gpu-context = "waylandvk";
 
+        screenshot-template = "%F - %p %02n";
+        screenshot-dir = "~/Pictures/mpvss";
+
         osc = "no";
         osd-font-size = 32; # Default 55
         osd-border-size = 2; # Default 3

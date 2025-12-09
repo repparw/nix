@@ -20,9 +20,7 @@ in
         gamescopeSession = {
           enable = true;
           args = [
-            # output resolution
-            "-W"
-            "1920"
+            # output resolution, assumes 16:9 if no width
             "-H"
             "1080"
 
