@@ -26,7 +26,7 @@
       extraConfig =
         if osConfig.networking.hostName == "alpha" then
           ''
-            $monitor=DP-3
+            $monitor=DP-1
             $monitor2=HDMI-A-1
 
             # monitor=name,resolution,position,scale(,vrr,type)
