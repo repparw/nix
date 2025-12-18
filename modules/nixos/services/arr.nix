@@ -50,7 +50,7 @@
       "${cfg.configDir}/qbittorrent:/config"
     ];
     ports = [
-      "127.0.0.1:54536:54536/tcp"
+      "127.0.0.1:54535:54535/tcp"
     ];
     extraOptions = [
       "--health-cmd=curl -f http://localhost:8080/api/v2/app/version || exit 1"

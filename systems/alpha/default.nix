@@ -45,7 +45,7 @@
     archisteamfarm = {
       enable = true;
       bots.repparw = {
-        settings.CustomGamePlayedWhileFarming = "Idling";
+        settings.OnlineStatus = 0;
         username = "REDACTED";
         passwordFile = config.age.secrets.steamPassword.path;
       };
@@ -74,7 +74,7 @@
       enable = true;
       capSysAdmin = true;
       settings = {
-        output_name = 1;
+        output_name = 0;
       };
     };
   };
