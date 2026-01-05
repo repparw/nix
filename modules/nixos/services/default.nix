@@ -120,36 +120,6 @@ in
   config = mkIf cfg.enable {
     systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
 
-    services.dnsmasq = {
-      enable = true;
-      settings = {
-        # forward queries for non-local domains to upstream
-        server = [
-          "1.1.1.1"
-          "1.0.0.1"
-        ];
-
-        listen-address = [
-          "127.0.0.1"
-          "192.168.0.18"
-        ];
-        # do NOT bind to 0.0.0.0 and discard
-        bind-interfaces = true;
-
-        interface = "enp42s0";
-
-        # intercept your cf-proxied domain and point it to traefik
-        address = [
-          "/.${cfg.domain}/192.168.0.18"
-        ];
-
-        # don't forward simple names without dots
-        domain-needed = true;
-        # don't forward addresses in the non-routed address spaces
-        bogus-priv = true;
-      };
-    };
-
     virtualisation = {
       podman = {
         enable = true;
