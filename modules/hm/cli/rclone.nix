@@ -21,7 +21,7 @@ in
             client_secret = osConfig.age.secrets.rcloneDriveSecret.path;
             token = osConfig.age.secrets.rcloneDriveToken.path;
           };
-          mounts.gdrive = {
+          mounts."" = {
             enable = true;
             mountPoint = "${cloudDir}/gdrive";
             options = {
@@ -60,7 +60,7 @@ in
           secrets = {
             password = osConfig.age.secrets.rcloneCrypt.path;
           };
-          mounts.crypt = {
+          mounts."" = {
             enable = true;
             mountPoint = "${cloudDir}/crypt";
           };
@@ -69,7 +69,7 @@ in
         dropbox = {
           config.type = "dropbox";
           secrets.token = osConfig.age.secrets.rcloneDropbox.path;
-          mounts.dropbox = {
+          mounts."" = {
             enable = true;
             mountPoint = "${cloudDir}/dropbox";
           };
