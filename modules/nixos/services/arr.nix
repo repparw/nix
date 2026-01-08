@@ -88,6 +88,9 @@
     volumes = [
       "${cfg.configDir}/seerr:/app/config"
     ];
+    labels = {
+      "glance.icon" = "sh:jellyseerr";
+    };
   };
   "sonarr" = {
     image = "docker.io/linuxserver/sonarr:latest";
