@@ -19,7 +19,7 @@
       plugins = with pkgs.hyprlandPlugins; [
         # change requires hyprland restart
         hyprexpo
-        hyprsplit
+        # hyprsplit
       ];
 
       systemd.variables = [ "--all" ];
