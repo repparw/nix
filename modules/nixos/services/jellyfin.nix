@@ -19,6 +19,7 @@
     ];
     labels = {
       "traefik.http.services.jellyfin.loadbalancer.server.port" = "8096";
+      "traefik.http.routers.jellyfin.middlewares" = "";
     };
   };
 }

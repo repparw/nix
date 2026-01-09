@@ -90,6 +90,7 @@
     ];
     labels = {
       "glance.icon" = "sh:jellyseerr";
+      "traefik.http.routers.seerr.middlewares" = "";
     };
   };
   "sonarr" = {
