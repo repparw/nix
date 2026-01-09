@@ -49,13 +49,17 @@
 
       hyprpolkitagent.enable = true;
 
-      swww.enable = true;
-
       wlsunset = {
         enable = true;
         temperature.night = 2500;
         latitude = -34.9;
         longitude = -57.9;
+      };
+
+      hyprpaper = {
+        settings = {
+          splash = false;
+        };
       };
     };
 
