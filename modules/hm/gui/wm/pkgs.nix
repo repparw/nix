@@ -5,7 +5,7 @@
   ...
 }:
 {
-  config = lib.mkIf osConfig.programs.hyprland.enable {
+  config = lib.mkIf (osConfig.programs.niri.enable || osConfig.programs.hyprland.enable) {
     home.packages = with pkgs; [
       wl-clipboard
 
@@ -49,13 +49,17 @@
 
       hyprpolkitagent.enable = true;
 
-      swww.enable = true;
-
       wlsunset = {
         enable = true;
         temperature.night = 2500;
         latitude = -34.9;
         longitude = -57.9;
+      };
+
+      hyprpaper = {
+        settings = {
+          splash = false;
+        };
       };
     };
 
