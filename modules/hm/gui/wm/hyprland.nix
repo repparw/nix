@@ -6,12 +6,6 @@
   ...
 }:
 {
-  imports = [
-    ./hypr-pkgs.nix
-    ./panel.nix
-    ./rofi.nix
-  ];
-
   config = lib.mkIf osConfig.programs.hyprland.enable {
     wayland.windowManager.hyprland = {
       enable = true;
@@ -19,7 +13,6 @@
       plugins = with pkgs.hyprlandPlugins; [
         # change requires hyprland restart
         hyprexpo
-        # hyprsplit
       ];
 
       systemd.variables = [ "--all" ];
@@ -33,7 +26,6 @@
             monitor=$monitor,highrr,auto,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
             monitor=$monitor2,preferred,auto-left,1
 
-            workspace = 5, on-created-empty:[silent] $whatsapp
           ''
         else
           ''
@@ -94,7 +86,6 @@
         };
 
         plugin = {
-          hyprsplit.num_workspaces = 9;
           hyprexpo = {
             workspace_method = "first 1";
           };
@@ -171,7 +162,7 @@
         ];
 
         bind = [
-          "$mod, TAB, split:swapactiveworkspaces, current +1"
+          # "$mod, TAB, split:swapactiveworkspaces, current +1"
           "$mod SHIFT, TAB, focusmonitor,+1"
 
           "ALT, TAB, workspace, m+1"
@@ -237,76 +228,105 @@
           "$mod SHIFT, K, movewindow, u"
           "$mod SHIFT, L, movewindow, r"
 
-          "$mod, 1, split:workspace, 1"
-          "$mod, 2, split:workspace, 2"
-          "$mod, 3, split:workspace, 3"
-          "$mod, 4, split:workspace, 4"
-          "$mod, 5, split:workspace, 5"
-          "$mod, 6, split:workspace, 6"
-          "$mod, 7, split:workspace, 7"
-          "$mod, 8, split:workspace, 8"
-          "$mod, 9, split:workspace, 9"
+          "$mod, 1, workspace, 1"
+          "$mod, 2, workspace, 2"
+          "$mod, 3, workspace, 3"
+          "$mod, 4, workspace, 4"
+          "$mod, 5, workspace, 5"
+          "$mod, 6, workspace, 6"
+          "$mod, 7, workspace, 7"
+          "$mod, 8, workspace, 8"
+          "$mod, 9, workspace, 9"
 
-          "$mod SHIFT, 1, split:movetoworkspace, 1"
-          "$mod SHIFT, 2, split:movetoworkspace, 2"
-          "$mod SHIFT, 3, split:movetoworkspace, 3"
-          "$mod SHIFT, 4, split:movetoworkspace, 4"
-          "$mod SHIFT, 5, split:movetoworkspace, 5"
-          "$mod SHIFT, 6, split:movetoworkspace, 6"
-          "$mod SHIFT, 7, split:movetoworkspace, 7"
-          "$mod SHIFT, 8, split:movetoworkspace, 8"
-          "$mod SHIFT, 9, split:movetoworkspace, 9"
+          "$mod SHIFT, 1, movetoworkspace, 1"
+          "$mod SHIFT, 2, movetoworkspace, 2"
+          "$mod SHIFT, 3, movetoworkspace, 3"
+          "$mod SHIFT, 4, movetoworkspace, 4"
+          "$mod SHIFT, 5, movetoworkspace, 5"
+          "$mod SHIFT, 6, movetoworkspace, 6"
+          "$mod SHIFT, 7, movetoworkspace, 7"
+          "$mod SHIFT, 8, movetoworkspace, 8"
+          "$mod SHIFT, 9, movetoworkspace, 9"
         ];
 
         workspace = [
+
           "1, monitor:0, default:true"
+          "5, on-created-empty:[silent] $whatsapp"
           "w[tv1], gapsout:0, gapsin:0"
           "f[1], gapsout:0, gapsin:0"
         ];
 
         windowrule = [
-          "noinitialfocus, initialClass:^(mpv)$"
-          "noblur, initialClass:^(mpv)$"
-          "nodim, initialClass:^(mpv)$"
+          {
+            name = "mpv-initial";
+            "match:initial_class" = "^(mpv)$";
+            no_initial_focus = true;
+            no_blur = true;
+            no_dim = true;
+          }
 
           # Browser types
-          "tag +chromium-based-browser, class:Chromium-browser"
-          "tag +firefox-based-browser, class:firefox"
+          "match:class Chromium-browser, tag +chromium-based-browser"
+          "match:class firefox, tag +firefox-based-browser"
 
-          "noblur, tag:firefox-based-browser"
-          "opaque, tag:firefox-based-browser"
-          "nodim, tag:firefox-based-browser"
+          {
+            name = "firefox-based-browser";
+            "match:tag" = "firefox-based-browser";
+            no_blur = true;
+            opaque = true;
+            no_dim = true;
+          }
 
           # Force chromium-based-browsers into a tile to deal with --app bug
-          "tile, tag:chromium-based-browser"
+          "match:tag chromium-based-browser, tile on"
 
-          "noborder, onworkspace:w[t1]"
-          "bordersize 0, floating:0, onworkspace:w[tv1]"
-          "rounding 0, floating:0, onworkspace:w[tv1]"
-          "bordersize 0, floating:0, onworkspace:f[1]"
-          "rounding 0, floating:0, onworkspace:f[1]"
+          {
+            name = "tv-workspace-tiled";
+            "match:workspace" = "w[tv1]";
+            border_size = 0;
+            rounding = 0;
+          }
+
+          {
+            name = "fullscreen-workspace-tiled";
+            "match:workspace" = "f[1]";
+            border_size = 0;
+            rounding = 0;
+          }
 
           # webcam
-          "float, title:(video1 - mpv)"
-          "monitor 0, title:(video1 - mpv)"
-          "pin, title:(video1 - mpv)"
-          "size 20% 20%, title:(video1 - mpv)"
-          "size 400 225, title:(video1 - mpv)"
-          "move 100%-w-25 100%-w-0, title:(video1 - mpv)"
+          {
+            name = "webcam";
+            "match:title" = "(video1 - mpv)";
+            float = true;
+            monitor = 0;
+            pin = true;
+            size = "400 225";
+            move = "monitor_w-window_w monitor_h-window_h";
+          }
 
-          "noblur, class:^(.gamescope-wrapped)$"
-          "nodim, class:^(.gamescope-wrapped)$"
-          "maximize, class:^(.gamescope-wrapped)$"
-          "immediate, class:^(.gamescope-wrapped)$"
-          "content game, class:^(.gamescope-wrapped)$"
+          {
+            name = "gamescope";
+            "match:class" = "^(.gamescope-wrapped)$";
+            no_blur = true;
+            no_dim = true;
+            maximize = true;
+            immediate = true;
+            content = "game";
+          }
 
-          "content game, class:^(steam_app_.*)$"
+          "match:class ^(steam_app_.*)$, content game"
 
-          "float, title:^(Picture-in-Picture|Picture in picture)$"
-          "monitor 0, title:^(Picture-in-Picture|Picture in picture)$"
-          "move 100%-w-25 100%-w-3, title:^(Picture-in-Picture|Picture in picture)$"
-          "size 400 225, title:^(Picture-in-Picture|Picture in picture)$"
-          "pin, title:^(Picture-in-Picture|Picture in picture)$"
+          {
+            name = "picture-in-picture";
+            "match:title" = "^(Picture-in-Picture|Picture in picture)$";
+            float = true;
+            monitor = 0;
+            size = "400 225";
+            move = "monitor_w-window_w monitor_h-window_h";
+            pin = true;
+          }
         ];
       };
     };
