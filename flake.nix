@@ -41,11 +41,6 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    jovian = {
-      url = "github:jovian-experiments/jovian-nixos";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
@@ -99,7 +94,6 @@
       nixosConfigurations = {
         alpha = mkSystem "alpha" [ ];
         beta = mkSystem "beta" [ ];
-        # delta = mkSystem "delta" [ inputs.jovian.nixosModules.default ];
       };
     };
 }
