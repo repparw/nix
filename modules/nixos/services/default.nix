@@ -26,6 +26,7 @@ let
 
           "traefik.http.routers.${name}.tls" = "true";
           "traefik.http.routers.${name}.rule" = lib.mkDefault "Host(`${name}.${cfg.domain}`)";
+          "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@docker";
         };
       }
     ];
