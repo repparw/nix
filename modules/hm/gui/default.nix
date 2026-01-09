@@ -12,13 +12,13 @@ in
   imports = [
     ./firefox
     ./gaming.nix
-    ./hypr
-    ./mpv.nix
-    ./spotify.nix
-    ./zathura.nix
     ./jellyfin-mpv-shim.nix
-    ./obs.nix
     ./kanshi.nix
+    ./mpv.nix
+    ./obs.nix
+    ./spotify.nix
+    ./wm
+    ./zathura.nix
   ];
 
   config = lib.mkIf cfg.enable {

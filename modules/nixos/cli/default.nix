@@ -16,8 +16,6 @@
       };
     };
 
-    ssh.startAgent = true;
-
     fish.enable = true;
   };
 
