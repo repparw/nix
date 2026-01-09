@@ -250,8 +250,10 @@
         ];
 
         workspace = [
-
           "1, monitor:0, default:true"
+          "0, monitor:1"
+          "r[1-5], monitor:0"
+          "r[6-9], monitor:1"
           "5, on-created-empty:[silent] $whatsapp"
           "w[tv1], gapsout:0, gapsin:0"
           "f[1], gapsout:0, gapsin:0"

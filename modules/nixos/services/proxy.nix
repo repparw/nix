@@ -65,4 +65,13 @@
       "traefik.http.routers.glance.tls.certResolver" = "cloudflare";
     };
   };
+  # "whoami" = {
+  #   image = "docker.io/traefik/whoami:latest";
+  #   labels = {
+  #     "glance.hide" = "true";
+  #     "traefik.http.routers.whoami.rule" = "Host(`whoami.${cfg.domain}`)";
+  #     "traefik.http.routers.whoami.tls.certResolver" = "cloudflare";
+  #     "traefik.http.routers.whoami.middlewares" = "";
+  #   };
+  # };
 }
