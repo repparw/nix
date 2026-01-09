@@ -16,7 +16,7 @@
 
     image =
       let
-        baseUrl = "https://codeberg.org/exorcist/wallpapers/raw/commit/8c61309c0afe5654d56de46a4b3e1b298e151598";
+        baseUrl = "https://codeberg.org/exorcist/wallpapers/raw/commit/7b9a7511705ecd7f055fb007c467a2a66f612ca3";
 
         wallpaperOptions = {
           dalek = "sha256-Rd30EHETeTS2+h2/8ii/+Gc29dpFHQgeYajIHqO3C9c=";
