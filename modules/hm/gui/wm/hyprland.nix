@@ -9,6 +9,8 @@
   config = lib.mkIf osConfig.programs.hyprland.enable {
     wayland.windowManager.hyprland = {
       enable = true;
+      package = null;
+      portalPackage = null;
       systemd.enable = false; # handled by uwsm
       plugins = with pkgs.hyprlandPlugins; [
         # change requires hyprland restart
