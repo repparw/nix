@@ -42,10 +42,39 @@
     networking.wireless.enable = false;
   };
 
-  # systemd.network.enable = true; # TODO issues with wifi, wait-online
+  systemd.network = {
+    enable = true; # TODO issues with wifi, wait-online
+    wait-online.enable = false;
+    networks = {
+      "10-eth" = {
+        matchConfig.Name = "enp42s0";
+        address = [ "192.168.0.18/24" ];
+        routes = [ { Gateway = "192.168.0.1"; } ];
+        dns = [ "192.168.0.4" ];
+        linkConfig.RequiredForOnline = "routable";
+      };
+      "20-wifi" = {
+        matchConfig.Name = "wlan0";
+        networkConfig = {
+          DHCP = "yes";
+          Domains = "~."; # prevents dns leakage/conflicts
+        };
+        dhcpV4Config.RouteMetric = 3000; # significantly higher than ethernet
+      };
+
+    };
+  };
 
   networking = {
-    networkmanager.enable = true;
+    wireless.iwd = {
+      enable = true;
+      settings = {
+        General.AddressRandomization = "network";
+        Settings.AutoConnect = true;
+      };
+    };
+    useNetworkd = true;
+    useDHCP = false;
     firewall.trustedInterfaces = [
       "enp42s0"
     ];

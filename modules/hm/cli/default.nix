@@ -21,6 +21,10 @@
   };
 
   programs = {
+    delta = {
+      enable = true;
+      enableGitIntegration = true;
+    };
     eza = {
       enable = true;
       extraOptions = [ "--icons" ];
