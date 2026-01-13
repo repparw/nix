@@ -118,13 +118,8 @@
           port = 10000;
           user = "repparw";
         };
-        beta = {
-          hostname = "home.repparw.me";
-          port = 10000;
-          user = "repparw";
-        };
         pi = {
-          hostname = "home.repparw.me";
+          hostname = "192.168.0.4";
           port = 22;
           user = "repparw";
         };
