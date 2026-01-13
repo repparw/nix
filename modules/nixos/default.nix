@@ -50,7 +50,10 @@
         matchConfig.Name = "enp42s0";
         address = [ "192.168.0.18/24" ];
         routes = [ { Gateway = "192.168.0.1"; } ];
-        dns = [ "192.168.0.4" ];
+        dns = [
+          "1.1.1.1"
+          "1.0.0.1"
+        ];
         linkConfig.RequiredForOnline = "routable";
       };
       "20-wifi" = {
@@ -78,6 +81,28 @@
     firewall.trustedInterfaces = [
       "enp42s0"
     ];
+  };
+
+  services.dnsmasq = {
+    enable = true;
+    settings = {
+      port = 5300;
+      server = [
+        "1.1.1.1"
+        "1.0.0.1"
+      ];
+      address = "/repparw.me/127.0.0.1";
+      listen-address = "127.0.0.1";
+      bind-interfaces = true;
+    };
+  };
+
+  services.resolved = {
+    enable = true;
+    extraConfig = ''
+      DNS=127.0.0.1:5300
+      Domains=~repparw.me
+    '';
   };
 
   i18n.defaultLocale = "en_IE.UTF-8";

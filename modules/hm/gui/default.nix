@@ -28,8 +28,6 @@ in
         pwvucontrol
         scrcpy
 
-        obsidian
-
         anki
 
         planify
@@ -70,17 +68,9 @@ in
     };
 
     programs = {
-      foot.enable = true;
-
       chromium.enable = true;
 
-      vesktop = {
-        enable = true;
-        settings = {
-          minimizeToTray = true;
-          arRPC = false;
-        };
-      };
+      foot.enable = true;
 
       imv = {
         enable = true;
@@ -89,6 +79,125 @@ in
             "<comma>" = "prev";
             "<period>" = "next";
           };
+        };
+      };
+
+      obsidian = {
+        enable = true;
+        vaults.repparw = {
+          enable = true;
+          target = "Documents/obsidian";
+        };
+        defaultSettings = {
+          app = {
+            promptDelete = false;
+            alwaysUpdateLinks = true;
+            vimMode = true;
+            userIgnoreFilters = [ "Archive/" ];
+            showLineNumber = false;
+            showInlineTitle = true;
+            newFileLocation = "folder";
+            newFileFolderPath = "05 - Fleeting";
+            attachmentFolderPath = "attachments";
+            readableLineLength = true;
+          };
+          # appearance = lib.mkForce {
+          #   showViewHeader = true;
+          #   nativeMenus = false;
+          #   showRibbon = false;
+          # };
+          corePlugins = [
+            "backlink"
+            "canvas"
+            "command-palette"
+            "daily-notes"
+            "editor-status"
+            "file-explorer"
+            "file-recovery"
+            "global-search"
+            "graph"
+            "note-composer"
+            "outgoing-link"
+            "outline"
+            "switcher"
+            "tag-pane"
+            "word-count"
+          ];
+          # communityPlugins = [
+          #   "vimrc-support"
+          #   "remotely-save"
+          #   "obsidian-git"
+          # ];
+          hotkeys = {
+            "file-explorer:new-file-in-current-tab" = [
+              {
+                modifiers = [ "Mod" ];
+                key = "N";
+              }
+            ];
+            "workspace:split-vertical" = [
+              {
+                modifiers = [ "Mod" ];
+                key = "'";
+              }
+            ];
+            "workspace:split-horizontal" = [
+              {
+                modifiers = [ "Mod" ];
+                key = "5";
+              }
+            ];
+            "editor:insert-codeblock" = [
+              {
+                modifiers = [ "Mod" ];
+                key = "[";
+              }
+            ];
+            "daily-notes:goto-prev" = [
+              {
+                modifiers = [ "Mod" ];
+                key = "Z";
+              }
+            ];
+            "daily-notes:goto-next" = [
+              {
+                modifiers = [ "Mod" ];
+                key = "C";
+              }
+            ];
+            "command-palette:open" = [
+              {
+                modifiers = [
+                  "Mod"
+                  "Shift"
+                ];
+                key = "P";
+              }
+            ];
+            "editor:toggle-bullet-list" = [
+              {
+                modifiers = [
+                  "Mod"
+                  "Shift"
+                ];
+                key = "B";
+              }
+            ];
+            "switcher:open" = [
+              {
+                modifiers = [ "Mod" ];
+                key = "P";
+              }
+            ];
+          };
+        };
+      };
+
+      vesktop = {
+        enable = true;
+        settings = {
+          minimizeToTray = true;
+          arRPC = false;
         };
       };
     };
