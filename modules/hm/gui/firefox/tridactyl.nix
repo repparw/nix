@@ -1,4 +1,5 @@
-_: {
+{ osConfig, ... }:
+{
   # leaving as home.file instead of extensions.settings, to not overwrite temporary settings (quickmarks, marks, binds from cmdline)
   home.file.".config/tridactyl/tridactylrc".text = ''
     " General Settings
@@ -37,7 +38,7 @@ _: {
 
     " Subconfig Settings
     seturl youtube.com modeindicator false
-    seturl jellyfin.repparw.me modeindicator false
+    seturl jellyfin.${osConfig.modules.services.domain} modeindicator false
 
     autocmd DocStart tradingview.com mode ignore
   '';
