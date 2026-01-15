@@ -55,7 +55,7 @@
 
     programs = {
       wshowkeys.enable = true;
-      partition-manager.enable = true;
+      gnome-disks.enable = true;
     };
 
     services.displayManager = {
