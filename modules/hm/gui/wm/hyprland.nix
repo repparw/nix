@@ -164,7 +164,7 @@
         ];
 
         bind = [
-          # "$mod, TAB, split:swapactiveworkspaces, current +1"
+          "$mod, TAB, swapactiveworkspaces, current +1"
           "$mod SHIFT, TAB, focusmonitor,+1"
 
           "ALT, TAB, workspace, m+1"
@@ -197,7 +197,7 @@
           "$mod SHIFT, N, exec, $notes2"
           "$mod, R, exec, $terminal $shell -ic rpi"
           "$mod, B, exec, $prefix bttoggle"
-          "$mod, S, exec, $prefix scrcpy --tcpip=192.168.0.80 -S"
+          "$mod, S, exec, $prefix sh -c 'SDL_RENDER_DRIVER=opengl scrcpy --tcpip=192.168.0.32 -S'"
           "$mod, P, exec, [monitor $monitor2;noinitialfocus] $pomodoro"
 
           ", Print, exec, $screenshot active -m output ## Active monitor"
