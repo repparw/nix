@@ -38,6 +38,7 @@
   services = {
     archisteamfarm = {
       enable = true;
+      # web-ui.enable = true;
       bots.repparw = {
         settings.OnlineStatus = 0;
         username = "ulisesbritos1";

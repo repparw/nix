@@ -24,18 +24,25 @@
             $monitor=DP-1
             $monitor2=HDMI-A-1
 
-            # monitor=name,resolution,position,scale(,vrr,type)
-            monitor=$monitor,highrr,auto,1,vrr,2 # DP, 165hz, can enable VRR on fullscreen (,vrr,2)
-            monitor=$monitor2,preferred,auto-left,1
+            monitorv2 {
+              output=$monitor
+              mode=highrr
+              position=auto
+              scale=1
+              vrr=2 # on fullscreen
+            }
 
+            monitorv2 {
+              output=$monitor2
+              mode=preferred
+              position=auto-left
+              scale=1
+            }
           ''
         else
           ''
-            monitor = eDP-1,preferred,auto,1
-            monitor = ,preferred,auto,1
-
-            bind = ,XF86MonBrightnessDown, exec, brightnessctl s 5%-
-            bind = ,XF86MonBrightnessUp, exec, brightnessctl s 5%+
+            monitor=eDP-1,preferred,auto,1
+            monitor=,preferred,auto,1
           '';
       settings = {
         # GUI

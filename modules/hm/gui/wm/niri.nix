@@ -103,8 +103,8 @@ in
 
           // utilities
           Mod+Alt+L { spawn "loginctl" "lock-session"; }
-          XF86MonBrightnessDown { spawn "brightnessctl" "s" "5%-"; }
-          XF86MonBrightnessUp { spawn "brightnessctl" "s" "5%+"; }
+          // XF86MonBrightnessDown { spawn "brightnessctl" "s" "5%-"; }
+          // XF86MonBrightnessUp { spawn "brightnessctl" "s" "5%+"; }
 
           // media
           XF86AudioPlay { spawn "playerctl" "play-pause"; }

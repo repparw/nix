@@ -99,10 +99,10 @@
 
   services.resolved = {
     enable = true;
-    extraConfig = ''
-      DNS=127.0.0.1:5300
-      Domains=~repparw.me
-    '';
+    settings.Resolve = {
+      DNS = "127.0.0.1:5300";
+      Domains = "~repparw.me";
+    };
   };
 
   i18n.defaultLocale = "en_IE.UTF-8";

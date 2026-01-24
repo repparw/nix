@@ -28,6 +28,8 @@ in
         pwvucontrol
         scrcpy
 
+        godot
+
         anki
 
         planify
@@ -135,16 +137,10 @@ in
                 key = "N";
               }
             ];
-            "workspace:split-vertical" = [
+            "file-explorer:new-file" = [
               {
-                modifiers = [ "Mod" ];
-                key = "'";
-              }
-            ];
-            "workspace:split-horizontal" = [
-              {
-                modifiers = [ "Mod" ];
-                key = "5";
+                modifiers = [ ];
+                key = "";
               }
             ];
             "editor:insert-codeblock" = [
