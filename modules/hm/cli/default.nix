@@ -166,7 +166,5 @@
       catdoc # provides catppt and xls2csv
 
       gemini-cli
-    ]
-    ++ (with pkgs.stable; [
-    ]);
+    ];
 }

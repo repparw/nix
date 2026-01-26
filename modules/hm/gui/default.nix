@@ -22,21 +22,17 @@ in
   ];
 
   config = lib.mkIf cfg.enable {
-    home.packages =
-      with pkgs;
-      [
-        pwvucontrol
-        scrcpy
+    home.packages = with pkgs; [
+      pwvucontrol
+      scrcpy
 
-        godot
+      godot
 
-        anki
+      anki
 
-        planify
-        # find pomo app in nixpkgs
-      ]
-      ++ (with pkgs.stable; [
-      ]);
+      planify
+      # find pomo app in nixpkgs
+    ];
 
     gtk = {
       enable = true;

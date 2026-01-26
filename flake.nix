@@ -2,12 +2,16 @@
   description = "repparw's flake";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
 
     home-manager = {
       url = "github:nix-community/home-manager";
       # url = "git+file:///home/repparw/src/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    ndrop = {
+      url = "github:Schweber/ndrop";
+      flake = false;
     };
 
     agenix = {
@@ -36,8 +40,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixos-hardware.url = "github:NixOS/nixos-hardware";
-
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -48,6 +50,7 @@
     inputs:
     let
       commonModules = [
+        { nixpkgs.config.allowUnfree = true; }
         inputs.nur.modules.nixos.default
         ./modules/nixos
         inputs.nix-index-database.nixosModules.nix-index
