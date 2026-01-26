@@ -15,6 +15,12 @@
       plugins = with pkgs.hyprlandPlugins; [
         # change requires hyprland restart
         hyprexpo
+<<<<<<< HEAD:modules/hm/gui/wm/hyprland.nix
+||||||| 836bec591 (hypr: disable hyprsplit):modules/hm/gui/hypr/default.nix
+        # hyprsplit
+=======
+        hyprsplit
+>>>>>>> parent of 836bec591 (hypr: disable hyprsplit):modules/hm/gui/hypr/default.nix
       ];
 
       systemd.variables = [ "--all" ];

@@ -1,10 +1,13 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }:
 {
   programs = {
+    adb.enable = true;
+
     mosh.enable = true;
 
     nh = {
