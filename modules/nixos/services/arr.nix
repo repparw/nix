@@ -88,17 +88,10 @@
     volumes = [
       "${cfg.configDir}/seerr:/app/config"
     ];
-<<<<<<< HEAD
     labels = {
       "glance.icon" = "sh:jellyseerr";
       "traefik.http.routers.seerr.middlewares" = "";
     };
-||||||| 836bec591 (hypr: disable hyprsplit)
-    labels = {
-      "glance.icon" = "sh:jellyseerr";
-    };
-=======
->>>>>>> parent of 836bec591 (hypr: disable hyprsplit)
   };
   "sonarr" = {
     image = "docker.io/linuxserver/sonarr:latest";
