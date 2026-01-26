@@ -62,7 +62,7 @@
         #"$emojimenu" = "bemoji -n";
         "$dmenu" = "rofi -show combi";
 
-        "$showlayout" = "hdrop imv /home/repparw/src/totem/layout/totem.svg";
+        "$showlayout" = "hdrop imv /home/repparw/code/totem/layout/totem.svg";
 
         "$lockscreen" = "loginctl lock-session";
 
