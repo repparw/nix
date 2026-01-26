@@ -174,7 +174,7 @@ in
 
            Mod+U hotkey-overlay-title="Update System" { spawn " nrsu"; }
            Mod+R hotkey-overlay-title="Rebuild Config" { spawn " rpi"; }
-           Mod+Comma hotkey-overlay-title="Show Layout" { spawn "hdrop" "-c" "imv" "imv /home/repparw/src/totem/layout/totem.svg"; }
+           Mod+Comma hotkey-overlay-title="Show Layout" { spawn "hdrop" "-c" "imv" "imv /home/repparw/code/totem/layout/totem.svg"; }
            Mod+Period hotkey-overlay-title="Show Keys" { spawn "pkill wshowkeys || ${prefix} wshowkeys -a bottom -m 108 -b 00000066"; }
 
           Print hotkey-overlay-title="Screenshot Screen" { screenshot-screen; }
