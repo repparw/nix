@@ -1,4 +1,9 @@
-{ pkgs, osConfig, ... }:
+{
+  pkgs,
+  osConfig,
+  inputs,
+  ...
+}:
 {
   home.packages = with pkgs; [
     (writeShellApplication {
@@ -62,6 +67,19 @@
           bluetoothctl connect "$device"
         fi
       '';
+    })
+
+    (writeShellApplication {
+      name = "ndrop";
+      runtimeInputs = [
+        jq
+        libnotify
+        niri
+        util-linux
+        iputils
+        coreutils
+      ];
+      text = builtins.readFile "${inputs.ndrop}/ndrop";
     })
 
     (writeShellApplication {
