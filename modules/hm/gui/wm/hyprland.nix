@@ -306,17 +306,6 @@
             rounding = 0;
           }
 
-          # webcam
-          {
-            name = "webcam";
-            "match:title" = "(video1 - mpv)";
-            float = true;
-            monitor = 0;
-            pin = true;
-            size = "400 225";
-            move = "monitor_w-window_w monitor_h-window_h";
-          }
-
           {
             name = "gamescope";
             "match:class" = "^(.gamescope-wrapped)$";
@@ -331,7 +320,7 @@
 
           {
             name = "picture-in-picture";
-            "match:title" = "^(Picture-in-Picture|Picture in picture)$";
+            "match:title" = "^(Picture-in-Picture|Picture in picture|video1 - mpv)$";
             float = true;
             monitor = 0;
             size = "400 225";
