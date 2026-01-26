@@ -1,11 +1,10 @@
 {
   osConfig,
   lib,
-  pkgs,
   ...
 }:
 {
-  config = lib.mkIf (osConfig.programs.niri.enable || osConfig.programs.hyprland.enable) {
+  config = lib.mkIf osConfig.programs.hyprland.enable {
     programs.hyprpanel = {
       enable = true;
       settings = {
