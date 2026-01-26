@@ -146,6 +146,7 @@
       wget
       jq
 
+      android-tools
       unzip
       rmtrash
       tree

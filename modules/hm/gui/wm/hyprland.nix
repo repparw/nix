@@ -15,12 +15,7 @@
       plugins = with pkgs.hyprlandPlugins; [
         # change requires hyprland restart
         hyprexpo
-<<<<<<< HEAD:modules/hm/gui/wm/hyprland.nix
-||||||| 836bec591 (hypr: disable hyprsplit):modules/hm/gui/hypr/default.nix
-        # hyprsplit
-=======
         hyprsplit
->>>>>>> parent of 836bec591 (hypr: disable hyprsplit):modules/hm/gui/hypr/default.nix
       ];
 
       systemd.variables = [ "--all" ];
@@ -177,7 +172,7 @@
         ];
 
         bind = [
-          "$mod, TAB, swapactiveworkspaces, current +1"
+          "$mod, TAB, split:swapactiveworkspaces, current +1"
           "$mod SHIFT, TAB, focusmonitor,+1"
 
           "ALT, TAB, workspace, m+1"
@@ -243,25 +238,25 @@
           "$mod SHIFT, K, movewindow, u"
           "$mod SHIFT, L, movewindow, r"
 
-          "$mod, 1, workspace, 1"
-          "$mod, 2, workspace, 2"
-          "$mod, 3, workspace, 3"
-          "$mod, 4, workspace, 4"
-          "$mod, 5, workspace, 5"
-          "$mod, 6, workspace, 6"
-          "$mod, 7, workspace, 7"
-          "$mod, 8, workspace, 8"
-          "$mod, 9, workspace, 9"
+          "$mod, 1, split:workspace, 1"
+          "$mod, 2, split:workspace, 2"
+          "$mod, 3, split:workspace, 3"
+          "$mod, 4, split:workspace, 4"
+          "$mod, 5, split:workspace, 5"
+          "$mod, 6, split:workspace, 6"
+          "$mod, 7, split:workspace, 7"
+          "$mod, 8, split:workspace, 8"
+          "$mod, 9, split:workspace, 9"
 
-          "$mod SHIFT, 1, movetoworkspace, 1"
-          "$mod SHIFT, 2, movetoworkspace, 2"
-          "$mod SHIFT, 3, movetoworkspace, 3"
-          "$mod SHIFT, 4, movetoworkspace, 4"
-          "$mod SHIFT, 5, movetoworkspace, 5"
-          "$mod SHIFT, 6, movetoworkspace, 6"
-          "$mod SHIFT, 7, movetoworkspace, 7"
-          "$mod SHIFT, 8, movetoworkspace, 8"
-          "$mod SHIFT, 9, movetoworkspace, 9"
+          "$mod SHIFT, 1, split:movetoworkspace, 1"
+          "$mod SHIFT, 2, split:movetoworkspace, 2"
+          "$mod SHIFT, 3, split:movetoworkspace, 3"
+          "$mod SHIFT, 4, split:movetoworkspace, 4"
+          "$mod SHIFT, 5, split:movetoworkspace, 5"
+          "$mod SHIFT, 6, split:movetoworkspace, 6"
+          "$mod SHIFT, 7, split:movetoworkspace, 7"
+          "$mod SHIFT, 8, split:movetoworkspace, 8"
+          "$mod SHIFT, 9, split:movetoworkspace, 9"
         ];
 
         workspace = [
