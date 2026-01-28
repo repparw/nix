@@ -121,6 +121,20 @@ in
   config = mkIf cfg.enable {
     systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
 
+    services.rathole = {
+      enable = true;
+      role = "client";
+      settings = {
+        client = {
+          remote_addr = "144.22.62.232:2333";
+          services = {
+            http.local_addr = "127.0.0.1:80";
+            https.local_addr = "127.0.0.1:443";
+          };
+        };
+      };
+    };
+
     virtualisation = {
       podman = {
         enable = true;

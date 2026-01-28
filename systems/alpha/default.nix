@@ -45,6 +45,7 @@
         passwordFile = config.age.secrets.steamPassword.path;
       };
     };
+
     beesd.filesystems = {
       root = {
         spec = "LABEL=root";
