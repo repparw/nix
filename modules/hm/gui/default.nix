@@ -99,11 +99,13 @@ in
             attachmentFolderPath = "attachments";
             readableLineLength = true;
           };
-          # appearance = lib.mkForce {
-          #   showViewHeader = true;
-          #   nativeMenus = false;
-          #   showRibbon = false;
-          # };
+          appearance = {
+            baseFontSize = lib.mkForce 18;
+            theme = "obsidian";
+            showViewHeader = true;
+            nativeMenus = false;
+            showRibbon = false;
+          };
           corePlugins = [
             "backlink"
             "canvas"
@@ -121,11 +123,6 @@ in
             "tag-pane"
             "word-count"
           ];
-          # communityPlugins = [
-          #   "vimrc-support"
-          #   "remotely-save"
-          #   "obsidian-git"
-          # ];
           hotkeys = {
             "file-explorer:new-file-in-current-tab" = [
               {
@@ -133,12 +130,7 @@ in
                 key = "N";
               }
             ];
-            "file-explorer:new-file" = [
-              {
-                modifiers = [ ];
-                key = "";
-              }
-            ];
+            "file-explorer:new-file" = [ ];
             "editor:insert-codeblock" = [
               {
                 modifiers = [ "Mod" ];
