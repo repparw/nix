@@ -4,7 +4,7 @@
 - Build: `nixos-rebuild build --flake .#`
 - Test single host: `nixos-rebuild build --flake .#hostname`
 - Check config: `nix flake check`
-- Format code: `nixfmt **/*.nix`
+- Format code: `nix fmt`
 
 ## Code Style
 - Use 2-space indentation in .nix files

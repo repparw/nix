@@ -51,7 +51,6 @@
 
     gh = {
       enable = true;
-      extensions = [ pkgs.github-copilot-cli ];
     };
 
     git = {
@@ -107,7 +106,12 @@
       };
     };
 
-    opencode.enable = true;
+    opencode = {
+      enable = true;
+      settings = {
+        plugin = [ "opencode-gemini-auth@latest" ];
+      };
+    };
 
     ssh = {
       enable = true;
@@ -166,5 +170,6 @@
       catdoc # provides catppt and xls2csv
 
       gemini-cli
+      github-copilot-cli
     ];
 }
