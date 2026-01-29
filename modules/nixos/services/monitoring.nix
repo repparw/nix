@@ -3,8 +3,9 @@
   "grafana" = {
     image = "docker.io/grafana/grafana:latest";
     volumes = [
-      "${cfg.dataDir}/grafana:/var/lib/grafana"
+      "${cfg.configDir}/grafana:/var/lib/grafana"
     ];
+    user = "${cfg.user}:${cfg.group}";
   };
   "prometheus" = {
     image = "docker.io/prom/prometheus:latest";
@@ -12,17 +13,11 @@
       "${cfg.configDir}/prometheus:/etc/prometheus"
     ];
   };
-  "node-exporter" = {
-    image = "docker.io/prom/node-exporter:latest";
-    extraOptions = [
-      "--pid=host"
-    ];
-    cmd = [
-      "--path.rootfs=/host"
-    ];
-    volumes = [
-      "/:/host:ro,rslave"
-    ];
+  "podman-exporter" = {
+    image = "quay.io/navidys/prometheus-podman-exporter:latest";
+    environment = {
+      "CONTAINER_HOST" = "unix:///run/podman/podman.sock";
+    };
     labels = {
       "glance.hide" = "true";
       "traefik.enable" = "false";
