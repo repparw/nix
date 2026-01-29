@@ -40,7 +40,7 @@ let
         (import ./freshrss.nix)
         (import ./jellyfin.nix)
         # (import ./n8n.nix)
-        (import ./monitoring.nix)
+        # (import ./monitoring.nix)
         (import ./ntfy.nix)
         (import ./paperless.nix)
         (import ./proxy.nix)
@@ -80,7 +80,7 @@ in
 
     rootDir = mkOption {
       type = types.path;
-      default = "/home/docker";
+      default = "/home/dlsuite";
       description = "Root directory for the containers";
     };
 
@@ -151,11 +151,13 @@ in
       (mkFileSystemMount "ddclient" "ddclient")
       (mkFileSystemMount "freshrss" "freshrss")
       (mkFileSystemMount "glance" "glance")
+      (mkFileSystemMount "grafana" "grafana")
       (mkFileSystemMount "jellyfin" "jellyfin/data/data/backups")
       (mkFileSystemMount "jellyfin-plugins" "jellyfin/data/plugins")
       (mkFileSystemMount "ntfy" "ntfy")
       (mkFileSystemMount "paper" "paper/export")
       (mkFileSystemMount "profilarr" "profilarr/backups")
+      (mkFileSystemMount "prometheus" "prometheus")
       (mkFileSystemMount "prowlarr" "prowlarr/Backups")
       (mkFileSystemMount "qbittorrent" "qbittorrent/config")
       (mkFileSystemMount "radarr" "radarr/Backups")
