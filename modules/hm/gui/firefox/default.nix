@@ -2,6 +2,7 @@
   pkgs,
   lib,
   osConfig,
+  config,
   ...
 }:
 {
@@ -12,6 +13,8 @@
   config = lib.mkIf osConfig.modules.gui.enable {
     programs.firefox = {
       enable = true;
+
+      configPath = "${config.xdg.configHome}/mozilla/firefox"; # TODO https://github.com/nix-community/home-manager/pull/8672
 
       nativeMessagingHosts = [ pkgs.tridactyl-native ];
 

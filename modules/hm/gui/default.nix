@@ -99,7 +99,7 @@ in
             attachmentFolderPath = "attachments";
             readableLineLength = true;
           };
-          appearance = {
+          appearance = lib.mkForce {
             baseFontSize = lib.mkForce 18;
             theme = "obsidian";
             showViewHeader = true;
