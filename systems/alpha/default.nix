@@ -16,7 +16,7 @@
 
   networking.hostName = "alpha";
 
-  networking.interfaces.enp42s0.wakeOnLan.enable = true;
+  networking.interfaces.eth0.wakeOnLan.enable = true;
 
   # hibernation needs disk swap, not zram
   zramSwap.enable = true;
@@ -68,6 +68,7 @@
 
     sunshine = {
       enable = true;
+      openFirewall = true;
       capSysAdmin = true;
       settings = {
         output_name = 0;

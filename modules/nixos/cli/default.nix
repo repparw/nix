@@ -5,7 +5,10 @@
 }:
 {
   programs = {
-    mosh.enable = true;
+    mosh = {
+      enable = true;
+      openFirewall = true;
+    };
 
     nh = {
       enable = true;
@@ -30,8 +33,11 @@
 
     gvfs.enable = true;
 
-    tailscale.enable = true;
-    tailscale.useRoutingFeatures = "both";
+    tailscale = {
+      enable = true;
+      openFirewall = true;
+      useRoutingFeatures = "both";
+    };
 
     keyd = {
       enable = lib.mkIf (config.networking.hostName != "alpha") true;
@@ -46,6 +52,7 @@
 
     openssh = {
       enable = true;
+      openFirewall = true;
       settings.PasswordAuthentication = false;
     };
 
