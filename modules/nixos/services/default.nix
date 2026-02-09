@@ -104,7 +104,7 @@ in
 
     domain = mkOption {
       type = types.str;
-      default = "repparw.me";
+      default = "repparw.com";
       description = "Base domain for the services";
     };
 

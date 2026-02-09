@@ -91,7 +91,7 @@
         "1.1.1.1"
         "1.0.0.1"
       ];
-      address = "/repparw.me/127.0.0.1";
+      address = "/${config.modules.services.domain}/127.0.0.1";
       listen-address = "127.0.0.1";
       bind-interfaces = true;
     };
@@ -101,7 +101,7 @@
     enable = true;
     settings.Resolve = {
       DNS = "127.0.0.1:5300";
-      Domains = "~repparw.me";
+      Domains = "~${config.modules.services.domain}";
     };
   };
 
