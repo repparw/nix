@@ -13,6 +13,7 @@
   ];
 
   xdg.enable = true;
+  home.preferXdgDirectories = true;
 
   home.sessionVariables = {
     MANPAGER = "nvim +Man!";
@@ -118,13 +119,8 @@
       enableDefaultConfig = false;
 
       matchBlocks = {
-        alpha = {
-          port = 10000;
-          user = "repparw";
-        };
         pi = {
           hostname = "192.168.0.4";
-          port = 22;
           user = "repparw";
         };
       };

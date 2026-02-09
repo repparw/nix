@@ -46,7 +46,6 @@
 
     openssh = {
       enable = true;
-      ports = [ 10000 ];
       settings.PasswordAuthentication = false;
     };
 
