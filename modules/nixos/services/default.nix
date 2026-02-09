@@ -123,6 +123,8 @@ in
   config = mkIf cfg.enable {
     systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
 
+    networking.firewall.interfaces."podman*".allowedUDPPorts = [ 53 ];
+
     virtualisation = {
       podman = {
         enable = true;
@@ -141,8 +143,6 @@ in
         };
       };
     };
-
-    networking.firewall.trustedInterfaces = [ "podman*" ];
 
     fileSystems = mkMerge [
       (mkFileSystemMount "authelia" "authelia")

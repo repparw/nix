@@ -46,7 +46,7 @@
     wait-online.enable = false;
     networks = {
       "10-eth" = {
-        matchConfig.Name = "enp42s0";
+        matchConfig.Name = "eth0";
         address = [ "192.168.0.18/24" ];
         routes = [ { Gateway = "192.168.0.1"; } ];
         dns = [
@@ -77,9 +77,19 @@
     };
     useNetworkd = true;
     useDHCP = false;
-    firewall.trustedInterfaces = [
-      "enp42s0"
-    ];
+    nftables.enable = true;
+    usePredictableInterfaceNames = false;
+    firewall = {
+      interfaces.eth0 = {
+        allowedTCPPorts = [
+          80
+          443
+        ];
+        allowedUDPPorts = [
+          54535
+        ];
+      };
+    };
   };
 
   services.dnsmasq = {
