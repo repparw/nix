@@ -78,7 +78,7 @@
       top = "${lib.getExe bottom}";
       diff = "${lib.getExe colordiff}";
       cat = "${lib.getExe bat}";
-      df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\*";
+      df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\* -only local";
       du = "${lib.getExe dust}";
 
       rpi = "${lib.getExe' mosh "mosh"} -P 60001 pi";

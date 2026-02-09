@@ -18,7 +18,6 @@
       "--configFile=/config/traefik.yml"
     ];
     ports = [
-      # "8080:8080/tcp"
       "443:443/tcp"
     ];
     labels = {
