@@ -16,9 +16,6 @@
       "${cfg.configDir}/authelia/config:/config"
       "${cfg.configDir}/authelia/secrets:/secrets"
     ];
-    dependsOn = [
-      "valkey"
-    ];
     labels = {
       "glance.url" = "https://auth.${cfg.domain}";
       "traefik.http.routers.authelia.rule" = "Host(`auth.${cfg.domain}`)";

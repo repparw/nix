@@ -73,9 +73,6 @@
       "${cfg.dataDir}:/data"
       "${cfg.configDir}/radarr:/config"
     ];
-    dependsOn = [
-      "qbittorrent"
-    ];
     extraOptions = [
       "--health-cmd=curl -f http://localhost:7878/ping || exit 1"
     ];
@@ -106,9 +103,6 @@
       "/dev/rtc:/dev/rtc:ro"
       "${cfg.dataDir}:/data"
       "${cfg.configDir}/sonarr:/config"
-    ];
-    dependsOn = [
-      "qbittorrent"
     ];
     extraOptions = [
       "--health-cmd=curl -f http://localhost:8989/ping || exit 1"

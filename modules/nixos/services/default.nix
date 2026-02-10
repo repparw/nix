@@ -70,6 +70,10 @@ let
       options = [
         "bind"
         "ro"
+        "noauto"
+        "x-systemd.automount"
+        "x-systemd.idle-timeout=60"
+        "nofail"
       ];
     };
   };
@@ -124,6 +128,40 @@ in
     systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
 
     networking.firewall.interfaces."podman*".allowedUDPPorts = [ 53 ];
+
+    systemd.targets.lazy-containers = {
+      description = "non-essential container services";
+    };
+
+    systemd.timers.lazy-containers = {
+      wantedBy = [ "multi-user.target" ];
+      timerConfig = {
+        OnActiveSec = "10s";
+        Unit = "lazy-containers.target";
+      };
+    };
+
+    systemd.services =
+      let
+        allContainers = map (name: "podman-${name}") (lib.attrNames containerDefinitions);
+
+        # specific subset that needs the hdd to be ready before starting
+        hddDependent = [
+          "podman-bazarr"
+          "podman-jellyfin"
+          "podman-paperless"
+          "podman-qbittorrent"
+          "podman-radarr"
+          "podman-sonarr"
+        ];
+      in
+      lib.genAttrs allContainers (name: {
+        wantedBy = lib.mkForce [ "lazy-containers.target" ];
+        before = lib.mkForce [ ];
+
+        after = lib.optionals (lib.elem name hddDependent) [ "mnt-hdd.mount" ];
+        wants = lib.optionals (lib.elem name hddDependent) [ "mnt-hdd.mount" ];
+      });
 
     virtualisation = {
       podman = {
