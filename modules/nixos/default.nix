@@ -45,6 +45,10 @@
   systemd.network = {
     enable = true; # TODO issues with wifi, wait-online
     wait-online.enable = false;
+    links."40-eth0" = {
+      matchConfig.OriginalName = "eth0";
+      linkConfig.WakeOnLan = "magic";
+    };
     networks = {
       "10-eth" = {
         matchConfig.Name = "eth0";
@@ -54,10 +58,13 @@
           "1.1.1.1"
           "1.0.0.1"
         ];
-        linkConfig.RequiredForOnline = "routable";
+        linkConfig = {
+          RequiredForOnline = "routable";
+        };
       };
       "20-wifi" = {
         matchConfig.Name = "wlan0";
+        linkConfig.RequiredForOnline = "no";
         networkConfig = {
           DHCP = "yes";
           Domains = "~."; # prevents dns leakage/conflicts
