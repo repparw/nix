@@ -14,9 +14,6 @@
     volumes = [
       "${cfg.configDir}/changedetection:/config"
     ];
-    dependsOn = [
-      "sockpuppetbrowser"
-    ];
   };
   "sockpuppetbrowser" = {
     image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";

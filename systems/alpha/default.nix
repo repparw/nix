@@ -16,8 +16,6 @@
 
   networking.hostName = "alpha";
 
-  networking.interfaces.eth0.wakeOnLan.enable = true;
-
   # hibernation needs disk swap, not zram
   zramSwap.enable = true;
 
@@ -30,6 +28,11 @@
     options = [
       "noatime"
       "nodiratime"
+      "noauto"
+      "x-systemd.automount"
+      "x-systemd.idle-timeout=60"
+      "x-systemd.device-timeout=5s"
+      "nofail"
     ];
   };
 
