@@ -58,12 +58,12 @@
       enable = true;
       wireplumber = {
         extraConfig = {
-          "disable-autoswitch" = {
+          disableAutoswitch = {
             "wireplumber.settings" = {
               "bluetooth.autoswitch-to-headset-profile" = false;
             };
           };
-          "disable-hw-volume" = {
+          disableHwVolume = {
             "monitor.bluez.properties" = {
               "bluez5.enable-hw-volume" = false;
             };
