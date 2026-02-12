@@ -29,6 +29,7 @@
 
     " Subconfig binds
     bindurl .*.youtube.com yy composite urlmodify_js -Q list | urlmodify_js -ru .*\.youtube\.com/watch\?v= https://youtu.be/ | clipboard yank
+    bindurl www.youtube.com gm urlmodify -t www music
 
     bindurl ^moz-extension:\/\/1310b077-591a-4d70-aebf-a058924c50ec\/static\/reader\.html yy clipboard yankcanon
 
