@@ -157,7 +157,7 @@
   time.timeZone = "America/Argentina/Buenos_Aires";
 
   environment.systemPackages = with pkgs; [
-    inputs.sops-nix.packages.${system}.sops-import-keys-hook
+    inputs.sops-nix.packages.${pkgs.stdenv.hostPlatform.system}.sops-import-keys-hook
   ];
 
   security = {
