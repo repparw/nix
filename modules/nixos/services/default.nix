@@ -9,6 +9,10 @@ let
 
   mkContainer =
     name: attrs:
+    let
+      traefikRule = attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
+      hostname = lib.removeSuffix "`)" (lib.removePrefix "Host(`" traefikRule);
+    in
     mkMerge [
       attrs
       {
@@ -20,12 +24,12 @@ let
           "io.containers.autoupdate" = "registry";
 
           "glance.name" = name;
-          "glance.url" = lib.mkDefault "https://${name}.${cfg.domain}";
+          "glance.url" = lib.mkDefault "https://${hostname}";
           "glance.icon" = lib.mkDefault "sh:${name}"; # https://selfh.st/icons/
           "glance.same-tab" = "true";
 
           "traefik.http.routers.${name}.tls" = "true";
-          "traefik.http.routers.${name}.rule" = lib.mkDefault "Host(`${name}.${cfg.domain}`)";
+          "traefik.http.routers.${name}.rule" = lib.mkDefault traefikRule;
           "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@docker";
         };
       }

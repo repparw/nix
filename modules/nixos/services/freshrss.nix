@@ -20,7 +20,6 @@
       "--health-cmd=curl -f http://localhost:80/api/greader.php || exit 1"
     ];
     labels = {
-      "glance.url" = "https://rss.${cfg.domain}";
       "traefik.http.routers.freshrss.rule" = "Host(`rss.${cfg.domain}`)";
     };
   };
