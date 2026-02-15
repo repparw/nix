@@ -30,7 +30,6 @@ in
 
       anki
 
-      planify
       # find pomo app in nixpkgs
     ];
 

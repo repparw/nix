@@ -4,8 +4,8 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     home-manager = {
-      url = "github:nix-community/home-manager";
-      # url = "git+file:///home/repparw/code/home-manager";
+      # url = "github:nix-community/home-manager";
+      url = "git+file:///home/repparw/code/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
