@@ -99,6 +99,22 @@
         beta = mkSystem "beta" [ ];
       };
 
+      packages.x86_64-linux = {
+        vmAlpha = (mkSystem "alpha" [ ]).config.system.build.vm;
+        vmBeta = (mkSystem "beta" [ ]).config.system.build.vm;
+      };
+
+      apps.x86_64-linux = {
+        vmAlpha = {
+          program = "${(mkSystem "alpha" [ ]).config.system.build.vm}/bin/run-alpha-vm";
+          name = "Run alpha in VM";
+        };
+        vmBeta = {
+          program = "${(mkSystem "beta" [ ]).config.system.build.vm}/bin/run-beta-vm";
+          name = "Run beta in VM";
+        };
+      };
+
       formatter.x86_64-linux = inputs.nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
     };
 }
