@@ -40,7 +40,7 @@
       fish_mode_prompt = ""; # hides vi mode indicator
       fish_user_key_bindings = ''
         bind -M insert ctrl-y accept-autosuggestion
-        bind -M insert ctrl-e yy
+        bind -M insert ctrl-e y
         bind ctrl-backspace backward-kill-word
         bind -M insert ctrl-backspace backward-kill-word
       '';
