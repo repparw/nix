@@ -12,7 +12,6 @@
   * Document dependencies between options
 
 - Create central secrets management documentation
-  * Document agenix setup and usage
   * List all secret files and their purposes
   * Add instructions for rotating secrets
 
