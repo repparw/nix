@@ -115,10 +115,6 @@
       };
     };
 
-    aichat = {
-      enable = true;
-    };
-
     ssh = {
       enable = true;
       enableDefaultConfig = false;
