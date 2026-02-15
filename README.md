@@ -25,6 +25,6 @@ sudo nixos-rebuild switch --flake .#hostname
 
 ## Features
 - Home Manager integration
-- Agenix for secret management
+- Sops-nix for secret management
 - Custom overlays
 - Multiple system configurations
