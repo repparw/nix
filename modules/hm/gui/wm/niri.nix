@@ -118,7 +118,7 @@ in
           Mod+S hotkey-overlay-title="Scrcpy" { spawn "${prefix} sh -c 'SDL_RENDER_DRIVER=opengl scrcpy --tcpip=192.168.0.32 -S'"; }
           Mod+T hotkey-overlay-title="Top" { spawn "${term} ${shell} -ic  top"; }
           Mod+V hotkey-overlay-title="Clipboard" { spawn "${prefix} ${term} --app-id clipse clipse"; }
-          Mod+X hotkey-overlay-title="Planify" { spawn "${prefix} io.github.alainm23.planify"; }
+          Mod+X hotkey-overlay-title="cfait" { spawn "${prefix} cfait"; }
           Mod+Y hotkey-overlay-title="Kiosk Browser" { spawn "${prefix} firefox -P kiosk"; }
           Mod+Z hotkey-overlay-title="MPV Clipboard" { spawn "${prefix}" "mpvclip"; }
 
