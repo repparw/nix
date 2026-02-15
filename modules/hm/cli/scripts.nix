@@ -7,6 +7,18 @@
 {
   home.packages = with pkgs; [
     (writeShellApplication {
+      name = "media-play-pause";
+      runtimeInputs = [ playerctl ];
+      text = ''
+        if [ "$(playerctl status)" = "Playing" ]; then
+          playerctl pause
+        else
+          playerctl --player=spotifyd play
+        fi
+      '';
+    })
+
+    (writeShellApplication {
       name = "clip2text";
       runtimeInputs = [
         wl-clipboard

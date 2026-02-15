@@ -182,9 +182,9 @@ in
           Mod+Shift+Print hotkey-overlay-title="Screenshot Area" { screenshot; }
 
           // media
-          XF86AudioPlay hotkey-overlay-title="Play/Pause" { spawn "playerctl" "play-pause"; }
-          XF86AudioNext hotkey-overlay-title="Next Track" { spawn "playerctl" "next"; }
-          XF86AudioPrev hotkey-overlay-title="Previous Track" { spawn "playerctl" "previous"; }
+          XF86AudioPlay hotkey-overlay-title="Play/Pause" { spawn "media-play-pause"; }
+          XF86AudioNext hotkey-overlay-title="Next Track" { spawn "playerctl" "--player=spotifyd" "next"; }
+          XF86AudioPrev hotkey-overlay-title="Previous Track" { spawn "playerctl" "--player=spotifyd" "previous"; }
 
           MouseForward hotkey-overlay-title="Toggle Overview" { toggle-overview; }
       }
