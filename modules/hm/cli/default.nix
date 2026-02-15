@@ -119,17 +119,6 @@
       enable = true;
     };
 
-    cfait = {
-      enable = true;
-      settings = {
-        url = "https://leo.it.tab.digital/remote.php/dav/";
-        username = "ubritos@gmail.com";
-        password = osConfig.age.secrets.nextcloud.path;
-        default_calendar = "Personal";
-        disabled_calendars = [ "local://default" ];
-      };
-    };
-
     ssh = {
       enable = true;
       enableDefaultConfig = false;
@@ -183,5 +172,7 @@
 
       gemini-cli
       github-copilot-cli
+
+      cfait
     ];
 }

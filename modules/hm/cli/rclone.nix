@@ -17,9 +17,9 @@ in
             scope = "drive";
           };
           secrets = {
-            client_id = osConfig.age.secrets.rcloneDriveId.path;
-            client_secret = osConfig.age.secrets.rcloneDriveSecret.path;
-            token = osConfig.age.secrets.rcloneDriveToken.path;
+            client_id = osConfig.sops.secrets.rcloneDriveId.path;
+            client_secret = osConfig.sops.secrets.rcloneDriveSecret.path;
+            token = osConfig.sops.secrets.rcloneDriveToken.path;
           };
           mounts."" = {
             enable = true;
@@ -37,7 +37,7 @@ in
             vendor = "nextcloud";
             user = "ubritos@gmail.com";
           };
-          secrets.pass = osConfig.age.secrets.rcloneNextcloud.path;
+          secrets.pass = osConfig.sops.secrets.rcloneNextcloud.path;
         };
 
         union = {
@@ -58,7 +58,7 @@ in
             remote = "union:";
           };
           secrets = {
-            password = osConfig.age.secrets.rcloneCrypt.path;
+            password = osConfig.sops.secrets.rcloneCrypt.path;
           };
           mounts."" = {
             enable = true;
@@ -68,7 +68,7 @@ in
 
         dropbox = {
           config.type = "dropbox";
-          secrets.token = osConfig.age.secrets.rcloneDropbox.path;
+          secrets.token = osConfig.sops.secrets.rcloneDropbox.path;
           mounts."" = {
             enable = true;
             mountPoint = "${cloudDir}/dropbox";

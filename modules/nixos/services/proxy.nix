@@ -8,7 +8,7 @@
       "TZ" = cfg.timezone;
     };
     environmentFiles = [
-      config.age.secrets.cloudflare.path
+      config.sops.secrets.cloudflare.path
     ];
     volumes = [
       "${cfg.configDir}/traefik:/config"
