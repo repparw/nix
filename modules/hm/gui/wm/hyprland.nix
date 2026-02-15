@@ -167,8 +167,8 @@
 
         bindl = [
           "$mod ALT, L, exec, $lockscreen; $screenoff"
-          ", XF86AudioPlay, exec, playerctl play-pause"
-          ", XF86AudioPause, exec, playerctl play-pause"
+          ", XF86AudioPlay, exec, media-play-pause"
+          ", XF86AudioPause, exec, media-play-pause"
         ];
 
         bind = [
