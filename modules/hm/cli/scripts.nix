@@ -85,8 +85,9 @@
     (writeShellApplication {
       name = "t"; # task quick add for nextcloud caldav
       runtimeInputs = [
-        fish
         curl
+        libnotify
+        util-linux
       ];
       text = ''
         #!/usr/bin/env bash
@@ -214,7 +215,9 @@
     (writeShellApplication {
       name = "mpvclip";
       runtimeInputs = [
+        libnotify
         mpv
+        wl-clipboard
       ];
       text = ''
         notify-send -t 2000 'MPV' 'Loading video...'; mpv --no-terminal "$(wl-paste)"
