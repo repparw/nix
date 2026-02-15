@@ -171,6 +171,11 @@
         $DUE_LINE
         PRIORITY:9
         PERCENT-COMPLETE:0
+        BEGIN:VALARM
+        ACTION:DISPLAY
+        TRIGGER;VALUE=DATE-TIME:$due_time
+        DESCRIPTION:$task_summary
+        END:VALARM
         END:VTODO
         END:VCALENDAR
         EOF
