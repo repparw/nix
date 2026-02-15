@@ -56,7 +56,6 @@
       "--health-cmd=curl -f http://localhost:8080/api/v2/app/version || exit 1"
     ];
     labels = {
-      "glance.url" = "https://qbit.${cfg.domain}";
       "traefik.http.routers.qbittorrent.rule" = "Host(`qbit.${cfg.domain}`)";
     };
   };
