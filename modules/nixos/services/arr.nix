@@ -78,7 +78,7 @@
     ];
   };
   "seerr" = {
-    image = "docker.io/fallenbagel/jellyseerr:latest";
+    image = "docker.io/seerr/seerr:latest";
     environment = {
       "TZ" = cfg.timezone;
     };
@@ -86,9 +86,12 @@
       "${cfg.configDir}/seerr:/app/config"
     ];
     labels = {
-      "glance.icon" = "sh:jellyseerr";
       "traefik.http.routers.seerr.middlewares" = "";
     };
+    extraOptions = [
+      "--init"
+      "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1"
+    ];
   };
   "sonarr" = {
     image = "docker.io/linuxserver/sonarr:latest";
