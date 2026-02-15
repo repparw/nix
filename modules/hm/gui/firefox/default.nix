@@ -116,7 +116,7 @@
                   definedAliases = [ "imdb" ];
                 };
                 "AI" = {
-                  urls = [ { template = "https://www.t3.chat/new?q={searchTerms}"; } ];
+                  urls = [ { template = "https://chat.repparw.com/?q={searchTerms}"; } ];
                   definedAliases = [ "ai" ];
                 };
                 "youtube" = {
