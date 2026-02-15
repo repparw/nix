@@ -114,6 +114,10 @@
       };
     };
 
+    aichat = {
+      enable = true;
+    };
+
     ssh = {
       enable = true;
       enableDefaultConfig = false;
@@ -167,5 +171,7 @@
 
       gemini-cli
       github-copilot-cli
+
+      cfait
     ];
 }
