@@ -3,6 +3,7 @@
   programs = {
     yazi = {
       enable = true;
+      shellWrapperName = "y";
       plugins = {
         smart-enter = pkgs.yaziPlugins.smart-enter;
         jump-to-char = pkgs.yaziPlugins.jump-to-char;
