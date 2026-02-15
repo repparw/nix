@@ -35,4 +35,3 @@
 
 ## explore?
 - [ ] onfailure autoupgrade notify
-- [ ] no sound over DP/HDMI on both monitors
