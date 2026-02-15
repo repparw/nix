@@ -45,7 +45,7 @@
       bots.repparw = {
         settings.OnlineStatus = 0;
         username = "ulisesbritos1";
-        passwordFile = config.age.secrets.steamPassword.path;
+        passwordFile = config.sops.secrets.steamPassword.path;
       };
     };
 

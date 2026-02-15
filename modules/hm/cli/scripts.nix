@@ -99,7 +99,7 @@
 
         # Path to the secret file containing the Nextcloud app password.
         # This path is expected to be substituted by the Nix build process.
-        secret_path="${osConfig.age.secrets.nextcloud.path}"
+        secret_path="${osConfig.sops.secrets.nextcloud.path}"
 
         # --- Pre-flight Checks ---
         # Check if the secret file exists

@@ -1,0 +1,5 @@
+creation_rules:
+  - path_regex: secrets/secrets.yaml
+    # You can get your public key by running:
+    # nix-shell -p ssh-to-age --run "cat ~/.ssh/id_ed25519.pub | ssh-to-age"
+    age: age1jsdf5x72y30aq0ghpuwyn9nv6w7m2jgh3f309kpqaf0jw0d4mgrscefqfp
