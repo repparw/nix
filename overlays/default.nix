@@ -13,5 +13,6 @@ in
     (final: prev: {
       neovim = inputs.nixvim-config.packages.${prev.stdenv.hostPlatform.system}.default;
     })
-  ] ++ (map mkPkgOverlay pkgs);
+  ]
+  ++ (map mkPkgOverlay pkgs);
 }
