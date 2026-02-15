@@ -58,14 +58,16 @@ rustPlatform.buildRustPackage rec {
 
   postFixup = ''
     wrapProgram $out/bin/cfait-gui \
-      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [
-        libxkbcommon
-        wayland
-        libx11
-        libxcursor
-        libxrandr
-        libxi
-      ]}"
+      --prefix LD_LIBRARY_PATH : "${
+        lib.makeLibraryPath [
+          libxkbcommon
+          wayland
+          libx11
+          libxcursor
+          libxrandr
+          libxi
+        ]
+      }"
   '';
 
   doCheck = false;
