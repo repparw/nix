@@ -23,6 +23,20 @@ To rebuild the system:
 sudo nixos-rebuild switch --flake .#hostname
 ```
 
+### VM Testing
+
+Run any system in a VM for testing:
+```shell
+nix run .#vmAlpha
+nix run .#vmBeta
+```
+
+Or build the VM image:
+```shell
+nix build .#vmAlpha
+nix build .#vmBeta
+```
+
 ## Features
 - Home Manager integration
 - Sops-nix for secret management
