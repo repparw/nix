@@ -21,7 +21,7 @@ let
 
           "glance.name" = name;
           "glance.url" = lib.mkDefault "https://${name}.${cfg.domain}";
-          "glance.icon" = lib.mkDefault "sh:${name}";
+          "glance.icon" = lib.mkDefault "sh:${name}"; # https://selfh.st/icons/
           "glance.same-tab" = "true";
 
           "traefik.http.routers.${name}.tls" = "true";
@@ -42,6 +42,7 @@ let
         # (import ./n8n.nix)
         # (import ./monitoring.nix)
         (import ./ntfy.nix)
+        (import ./open-webui.nix)
         (import ./paperless.nix)
         (import ./proxy.nix)
 
@@ -193,6 +194,7 @@ in
       (mkFileSystemMount "jellyfin" "jellyfin/data/data/backups")
       (mkFileSystemMount "jellyfin-plugins" "jellyfin/data/plugins")
       (mkFileSystemMount "ntfy" "ntfy")
+      (mkFileSystemMount "open-webui" "open-webui")
       (mkFileSystemMount "paper" "paper/export")
       (mkFileSystemMount "profilarr" "profilarr/backups")
       (mkFileSystemMount "prometheus" "prometheus")
