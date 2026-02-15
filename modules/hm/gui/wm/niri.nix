@@ -110,7 +110,7 @@ in
           Mod+Shift+E hotkey-overlay-title="File Manager (GUI)" { spawn "${prefix}" "nautilus"; }
           Mod+F hotkey-overlay-title="Fullscreen" { maximize-window-to-edges; }
           Mod+Alt+F hotkey-overlay-title="Toggle Floating" { toggle-float; }
-          Mod+G hotkey-overlay-title="Gemini" { spawn "${prefix} webapp https://gemini.google.com/app"; }
+          Mod+G hotkey-overlay-title="AI Agent" { spawn "${prefix} ${term} --app-id opencode opencode"; }
           Mod+M hotkey-overlay-title="Spotify" { spawn "${prefix} ${term} --app-id spotify spotify_player"; }
           Mod+N hotkey-overlay-title="Notes (Terminal)" { spawn "${prefix} ${term} --app-id obsinvim ${shell} -ic obsinvim"; }
           Mod+Shift+N hotkey-overlay-title="Notes (Obsidian)" { spawn "ndrop" "-a obsidian ${prefix} obsidian"; }
