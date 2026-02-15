@@ -185,7 +185,7 @@
 
           "$mod, A, exec, $prefix anki"
           "$mod, C, exec, $whatsapp"
-          "$mod, X, exec, $prefix cfait"
+          "$mod, X, exec, $terminal cfait"
           "$mod, G, exec, webapp https://gemini.google.com/app"
           "$mod, RETURN, exec, $terminal"
           "$mod, W, killactive,"
