@@ -125,7 +125,7 @@
 
   nix = {
     # extraOptions = ''
-    #   !include ${config.age.secrets.accessTokens.path}
+    #   !include ${config.sops.secrets.accessTokens.path}
     # '';
 
     settings = {
@@ -157,7 +157,7 @@
   time.timeZone = "America/Argentina/Buenos_Aires";
 
   environment.systemPackages = with pkgs; [
-    inputs.agenix.packages."${stdenv.hostPlatform.system}".default
+    inputs.sops-nix.packages.${pkgs.stdenv.hostPlatform.system}.sops-import-keys-hook
   ];
 
   security = {

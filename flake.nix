@@ -14,10 +14,9 @@
       flake = false;
     };
 
-    agenix = {
-      url = "github:ryantm/agenix";
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
     };
 
     nixvim-config = {

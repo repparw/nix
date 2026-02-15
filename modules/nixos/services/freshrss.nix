@@ -15,7 +15,7 @@
     volumes = [
       "${cfg.configDir}/freshrss:/config"
     ];
-    environmentFiles = [ config.age.secrets.freshrss.path ];
+    environmentFiles = [ config.sops.secrets.freshrss.path ];
     extraOptions = [
       "--health-cmd=curl -f http://localhost:80/api/greader.php || exit 1"
     ];
