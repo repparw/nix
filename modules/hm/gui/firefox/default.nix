@@ -5,6 +5,16 @@
   config,
   ...
 }:
+let
+  # Override tridactyl to use beta builds
+  tridactyl-beta = pkgs.nur.repos.rycee.firefox-addons.tridactyl.overrideAttrs (old: {
+    version = "1.24.4pre7258";
+    src = pkgs.fetchurl {
+      url = "https://tridactyl.cmcaine.co.uk/betas/tridactyl2-1.24.4pre7258.xpi";
+      sha256 = "sha256-1h3mghbb4fi4rg30barr40bxj7008vw8jy8026bg2ryj57ljx01z";
+    };
+  });
+in
 {
   imports = [
     ./tridactyl.nix
@@ -75,7 +85,7 @@
                 };
               };
               packages = [
-                tridactyl
+                tridactyl-beta
                 ublock-origin
               ];
             };
