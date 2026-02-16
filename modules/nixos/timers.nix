@@ -15,17 +15,27 @@ in
   config = lib.mkIf cfg.enable {
     services.rsync = {
       enable = true;
-      jobs.buptohdd = {
-        destination = "/mnt/hdd/backup";
-        sources = [
-          "/home/repparw/Pictures"
-          "/home/repparw/Documents"
-          "/home/repparw/.config"
-        ];
-        settings = {
-          archive = true;
-          delete = true;
-          exclude = "dlsuite";
+      jobs = {
+        buptohdd = {
+          destination = "/mnt/hdd/backup";
+          sources = [
+            "/home/repparw/Pictures"
+            "/home/repparw/Documents"
+            "/home/repparw/.config"
+          ];
+          settings = {
+            archive = true;
+            delete = true;
+            exclude = "dlsuite";
+          };
+        };
+        buprpi = {
+          destination = "/home/repparw/.config/dlsuite/pi-services/";
+          sources = [ "pi:services/" ];
+          settings = {
+            archive = true;
+            delete = true;
+          };
         };
       };
     };
