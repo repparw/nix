@@ -110,6 +110,13 @@
 
     opencode = {
       enable = true;
+      commands = {
+        commit = ''
+          # Commit changes
+          Stage all changes
+          Split staged changes into commits
+        '';
+      };
       settings = {
         plugin = [ "opencode-gemini-auth@latest" ];
         permission = {
