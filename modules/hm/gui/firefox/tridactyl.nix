@@ -10,9 +10,9 @@
     set theme midnight
     set editorcmd foot nvim
     set smoothscroll true
+    set tabsort mru
 
     " Binds
-    bind , hint -W mpvsafe
     bind ;c hint -c [class*="expand"],[class*="togg"],[class="comment_folder"]
 
     unbind <F1>
@@ -33,7 +33,6 @@
 
     bindurl ^moz-extension:\/\/1310b077-591a-4d70-aebf-a058924c50ec\/static\/reader\.html yy clipboard yankcanon
 
-    unbindurl x.com e
     unbindurl x.com j
     unbindurl x.com k
 
