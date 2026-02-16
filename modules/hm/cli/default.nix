@@ -112,6 +112,13 @@
       enable = true;
       settings = {
         plugin = [ "opencode-gemini-auth@latest" ];
+        permission = {
+          "*" = {
+            "*" = "allow";
+            "rm *" = "deny";
+          };
+          "rm *" = "deny";
+        };
       };
     };
 
