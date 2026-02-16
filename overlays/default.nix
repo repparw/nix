@@ -13,6 +13,7 @@ in
     (final: prev: {
       neovim = inputs.nixvim-config.packages.${prev.stdenv.hostPlatform.system}.default;
     })
+    inputs.firefox-addons.overlays.default
   ]
   ++ (map mkPkgOverlay pkgs);
 }
