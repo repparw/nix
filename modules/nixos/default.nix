@@ -118,7 +118,7 @@
     enable = true;
     settings.Resolve = {
       DNS = "127.0.0.1:5300";
-      Domains = "~${config.modules.services.domain}";
+      Domains = "~${config.modules.services.domain}"; # matches wildcard for domain and forwards to dnsmasq
     };
   };
 
