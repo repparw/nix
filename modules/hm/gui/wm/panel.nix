@@ -80,6 +80,11 @@
             };
           };
         };
+        theme.osd = {
+          location = "top right";
+          orientation = "horizontal";
+          duration = 2000;
+        };
       };
     };
   };
