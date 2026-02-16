@@ -7,7 +7,7 @@
 }:
 let
   # Override tridactyl to use beta builds
-  tridactyl-beta = pkgs.nur.repos.rycee.firefox-addons.tridactyl.overrideAttrs (old: {
+  tridactyl-beta = pkgs.firefox-addons.tridactyl.overrideAttrs (old: {
     version = "1.24.4pre7258";
     src = pkgs.fetchurl {
       url = "https://tridactyl.cmcaine.co.uk/betas/tridactyl2-1.24.4pre7258.xpi";
@@ -58,7 +58,7 @@ in
                 display: none !important;
               }
             '';
-            extensions = with pkgs.nur.repos.rycee.firefox-addons; {
+            extensions = with pkgs.firefox-addons; {
               force = true;
               settings = {
                 "${ublock-origin.addonId}".settings = {
@@ -95,7 +95,7 @@ in
           default = commonProfile // {
             id = 0;
             path = "default";
-            extensions = with pkgs.nur.repos.rycee.firefox-addons; {
+            extensions = with pkgs.firefox-addons; {
               force = true;
               settings = {
                 "${darkreader.addonId}".settings = import ./darkreader.nix;
@@ -144,7 +144,7 @@ in
           kiosk = commonProfile // {
             id = 1;
             path = "kiosk";
-            extensions = with pkgs.nur.repos.rycee.firefox-addons; {
+            extensions = with pkgs.firefox-addons; {
               force = true;
               settings = {
                 "${sponsorblock.addonId}".settings = {
