@@ -29,8 +29,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nur = {
-      url = "github:nix-community/NUR";
+    firefox-addons = {
+      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -50,7 +50,6 @@
     let
       commonModules = [
         { nixpkgs.config.allowUnfree = true; }
-        inputs.nur.modules.nixos.default
         ./modules/nixos
         inputs.nix-index-database.nixosModules.nix-index
         { programs.nix-index-database.comma.enable = true; }
