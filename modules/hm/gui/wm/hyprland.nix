@@ -186,7 +186,7 @@
           "$mod, A, exec, $prefix anki"
           "$mod, C, exec, $whatsapp"
           "$mod, X, exec, $terminal cfait"
-          "$mod, G, exec, hdrop foot --app-id opencode opencode"
+          "$mod, G, exec, hdrop foot --app-id opencode opencode --agent chat"
           "$mod, RETURN, exec, $terminal"
           "$mod, W, killactive,"
           "$mod, M, exec, $spotify"
