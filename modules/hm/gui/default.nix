@@ -183,6 +183,11 @@ in
           arRPC = false;
         };
       };
+
+      element-desktop = {
+        enable = true;
+      };
     };
+
   };
 }
