@@ -9,6 +9,7 @@
     systemd.enable = true;
     settings = {
       bar = {
+        location.weatherEnabled = false;
         density = "compact";
         position = "top";
         monitors = [
@@ -27,9 +28,6 @@
             { id = "ControlCenter"; }
           ];
         };
-      };
-      colorSchemes = {
-        predefinedScheme = "Monochrome";
       };
     };
   };
