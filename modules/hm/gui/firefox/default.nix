@@ -7,7 +7,7 @@
 }:
 let
   # Override tridactyl to use beta builds
-  tridactyl-beta = pkgs.firefox-addons.tridactyl.overrideAttrs (old: {
+  tridactyl-beta = pkgs.firefox-addons.tridactyl.overrideAttrs (_old: {
     version = "1.24.4pre7258";
     src = pkgs.fetchurl {
       url = "https://tridactyl.cmcaine.co.uk/betas/tridactyl2-1.24.4pre7258.xpi";
