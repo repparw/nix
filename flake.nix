@@ -64,9 +64,6 @@
           useGlobalPkgs = true;
           useUserPackages = true;
           backupFileExtension = "hm-backup";
-          extraSpecialArgs = {
-            inherit inputs;
-          };
           users.repparw = {
             imports = [
               ./modules/hm
@@ -80,7 +77,6 @@
       mkSystem =
         hostname: extraModules:
         inputs.nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
           modules =
             commonModules
             ++ [
@@ -115,6 +111,31 @@
         };
       };
 
-      formatter.x86_64-linux = inputs.nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
+      formatter.x86_64-linux =
+        let
+          pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+        in
+        pkgs.treefmt.withConfig {
+          runtimeInputs = with pkgs; [
+            nixfmt
+            deadnix
+          ];
+          settings = {
+            on-unmatched = "info";
+            formatter.nixfmt = {
+              command = "nixfmt";
+              includes = [ "*.nix" ];
+            };
+            formatter.deadnix = {
+              command = "deadnix";
+              options = [
+                "--edit"
+                "--no-lambda-arg"
+                "--no-lambda-pattern-names"
+              ];
+              includes = [ "*.nix" ];
+            };
+          };
+        };
     };
 }
