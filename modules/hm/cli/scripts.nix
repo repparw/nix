@@ -82,19 +82,6 @@
     })
 
     (writeShellApplication {
-      name = "ndrop";
-      runtimeInputs = [
-        jq
-        libnotify
-        niri
-        util-linux
-        iputils
-        coreutils
-      ];
-      text = builtins.readFile "${inputs.ndrop}/ndrop";
-    })
-
-    (writeShellApplication {
       name = "t"; # task quick add for nextcloud caldav
       runtimeInputs = [
         curl

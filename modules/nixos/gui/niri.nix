@@ -5,6 +5,6 @@
 }:
 {
   config = lib.mkIf config.modules.gui.enable {
-    programs.niri.enable = true;
+    programs.niri.enable = lib.mkDefault true;
   };
 }
