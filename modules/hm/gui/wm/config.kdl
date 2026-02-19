@@ -1,0 +1,172 @@
+screenshot-path "$HOME/Pictures/ss/screenshot-%Y-%m-%d_%H-%M-%S.png"
+
+prefer-no-csd
+
+input {
+  keyboard {
+  xkb {
+    layout "us"
+    variant "altgr-intl"
+  }
+  repeat-delay 300
+    repeat-rate 50
+  }
+  mouse {
+  accel-speed 0.0
+    accel-profile "flat"
+  }
+  focus-follows-mouse
+}
+
+gestures {
+  hot-corners {
+    off
+  }
+}
+
+output "DP-1" {
+  mode "1920x1080"
+  variable-refresh-rate on-demand=true
+}
+
+layout {
+  center-focused-column "never"
+  empty-workspace-above-first
+
+  default-column-width {
+  proportion 0.5
+}
+
+  gaps 1
+  border {
+    off
+  }
+  focus-ring {
+    width 1
+  }
+}
+
+cursor {
+  xcursor-theme "Capitaine Cursors (Gruvbox)"
+  xcursor-size 24
+}
+
+overview {
+  backdrop-color "#141414"
+}
+
+hotkey-overlay {
+  skip-at-startup
+  hide-not-bound
+}
+
+window-rule {
+  match app-id="firefox"
+  opacity 1.0
+}
+window-rule {
+  match title="^(Picture-in-Picture|Picture in picture)$"
+  match title="(video1 - mpv)"
+  open-floating true
+  default-floating-position x=10 y=10 relative-to="bottom-right"
+  default-column-width { fixed 400; }
+  default-window-height { fixed 225; }
+}
+window-rule {
+  match app-id="clipse"
+  open-floating true
+  default-column-width { fixed 622; }
+  default-window-height { fixed 652; }
+}
+window-rule {
+  match app-id="^(gamescope)$"
+  match app-id="^(steam_app_.*)$"
+  open-fullscreen true
+  variable-refresh-rate true
+}
+
+binds {
+  Mod+Return hotkey-overlay-title="Terminal" {spawn "foot" ;}
+  Mod+W hotkey-overlay-title="Close Window" {close-window ;}
+  Mod+Space   hotkey-overlay-title="App Launcher" {spawn "rofi" "-show" "combi" ;}
+  Mod+Shift+Space hotkey-overlay-title="Browser" {spawn "firefox" ;}
+
+  Mod+A   hotkey-overlay-title="Anki" {spawn "anki" ;} 
+  Mod+B hotkey-overlay-title="Bluetooth Toggle" {spawn "bttoggle" ;}
+  Mod+C   hotkey-overlay-title="WhatsApp" {spawn "webapp" "https://web.whatsapp.com" ;}
+  Mod+E hotkey-overlay-title="File Manager (Terminal)" {spawn "foot" "--app-id" "filemanager" "fish" "-ic" "yazi" ;}
+  Mod+Shift+E   hotkey-overlay-title="File Manager (GUI)" {spawn "nautilus" ;}
+  Mod+F hotkey-overlay-title="Fullscreen" {maximize-window-to-edges ;}
+  Mod+Alt+F hotkey-overlay-title="Toggle Floating" { toggle-window-floating ;}
+  Mod+G hotkey-overlay-title="AI Agent" {spawn "foot" "--app-id" "opencode" "opencode" ;}
+  Mod+M   hotkey-overlay-title="Spotify" {spawn "foot" "--app-id" "spotify" "spotify_player" ;}
+  Mod+N hotkey-overlay-title="Notes (Terminal)" {spawn "foot" "--app-id" "obsinvim" "fish" "-ic" "obsinvim" ;}
+  Mod+Shift+N   hotkey-overlay-title="Notes (Obsidian)" {spawn "ndrop" "-c" "obsidian" "obsidian" ;}
+  Mod+P hotkey-overlay-title="Pomodoro" {spawn "webapp" "https://noisekun.com/?theme=dark" ;}
+  Mod+S   hotkey-overlay-title="Scrcpy" {spawn "sh" "-c" "SDL_RENDER_DRIVER=opengl scrcpy --tcpip=192.168.0.32 -S" ;}
+  Mod+T hotkey-overlay-title="Top" {spawn "foot" "fish" "-ic" "top" ;}
+  Mod+V   hotkey-overlay-title="Clipboard" {spawn "foot" "--app-id" "clipse" "clipse" ;}
+  Mod+X hotkey-overlay-title="cfait" {spawn "cfait" ;}
+  Mod+Y   hotkey-overlay-title="Kiosk Browser" {spawn "firefox" "-P" "kiosk" ;}
+  Mod+Z hotkey-overlay-title="MPV Clipboard" {spawn "mpvclip" ;}
+
+  Ctrl+Alt+Shift+A {spawn-sh "gamescope --steam -H 1080 -- steam -tenfoot -pipewire-dmabuf" ;}
+  Ctrl+Alt+Shift+B {spawn "obs-cmd" "recording" "toggle-pause" ;}
+  Ctrl+Alt+Shift+C {spawn "obs-remux2wsp" ;}
+  Ctrl+Alt+Shift+D {spawn "obs-cmd" "replay" "save" ;}
+  Ctrl+Alt+Shift+E {spawn "vesktop" ;}
+  Ctrl+Alt+Shift+F {spawn "wpctl" "set-source-mute" "@DEFAULT_SOURCE@" "toggle" ;}
+
+  Mod+H hotkey-overlay-title="Focus Left" {focus-column-or-monitor-left ;}
+  Mod+J hotkey-overlay-title="Focus Down" {focus-window-or-workspace-down ;}
+  Mod+K hotkey-overlay-title="Focus Up" {focus-window-or-workspace-up ;}
+  Mod+L hotkey-overlay-title="Focus Right" { focus-column-or-monitor-right ;}
+
+  Mod+Tab hotkey-overlay-title="Focus Next Monitor" { focus-monitor-next ;}
+
+  Mod+Shift+H { move-column-left-or-to-monitor-left ;}
+  Mod+Shift+J {move-window-down-or-to-workspace-down ;}
+  Mod+Shift+K {move-window-up-or-to-workspace-up ;}
+  Mod+Shift+L {move-column-right-or-to-monitor-right ;}
+
+  Mod+Ctrl+H {consume-or-expel-window-left ;}
+  Mod+Ctrl+L {consume-or-expel-window-right ;}
+
+  // Mod+1 {focus-workspace "2" ;}
+  // Mod+3 {focus-workspace "3" ;}
+  // Mod+4 {focus-workspace "4" ;}
+  // Mod+5 {focus-workspace "5" ;}
+  // Mod+6 {focus-workspace "6" ;}
+  // Mod+7 {focus-workspace "7" ;}
+  // Mod+8 {focus-workspace "8" ;}
+  // Mod+9 {focus-workspace "9" ;}
+  //
+  // Mod+Shift+1 {move-column-to-workspace "1" ;}
+  // Mod+Shift+2 {move-column-to-workspace "2" ;}
+  // Mod+Shift+3 {move-column-to-workspace "3" ;}
+  // Mod+Shift+4 {move-column-to-workspace "4" ;}
+  // Mod+Shift+5 {move-column-to-workspace "5" ;}
+  // Mod+Shift+6 {move-column-to-workspace "6" ;}
+  // Mod+Shift+7 {move-column-to-workspace "7" ;}
+  // Mod+Shift+8 {move-column-to-workspace "8" ;} 
+  // Mod+Shift+9 {move-column-to-workspace "9" ;}
+
+  Mod+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen and turn off monitors" { spawn "loginctl" "lock-session" "&&" "sleep" "3" "&&" "niri" "msg" "action" "power-off-monitors";}
+
+  Mod+U hotkey-overlay-title="Update System" {spawn "foot" "--hold" "fish" "-ic" "nrsu" ;}
+  Mod+R hotkey-overlay-title="Raspberry Pi" {spawn "foot" "fish" "-ic" "rpi" ;}
+  Mod+Comma hotkey-overlay-title="Show Layout" {spawn "ndrop" "-c" "imv" "imv" "/home/repparw/code/totem/layout/totem.svg" ;}
+  Mod+Period hotkey-overlay-title="Show Keys" {spawn "sh" "-c" "pkill wshowkeys || wshowkeys -a bottom -m 108 -b 00000066" ;}
+
+  Print hotkey-overlay-title="Screenshot Screen" {spawn "niri" "msg" "action" "screenshot-screen" ;}
+  Mod+Print hotkey-overlay-title="Screenshot Window" {spawn "niri" "msg" "action" "screenshot-window" ;}
+  Mod+Shift+Print hotkey-overlay-title="Screenshot Area" {spawn "niri" "msg" "action" "screenshot" ;}
+
+  XF86AudioPlay allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "media-play-pause";}
+  XF86AudioPause allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "media-play-pause" ;}
+  XF86AudioNext allow-when-locked=true hotkey-overlay-title="Next Track" {spawn "playerctl" "--player=spotifyd" "next" ;}
+  XF86AudioPrev allow-when-locked=true hotkey-overlay-title="Previous Track" {spawn "playerctl" "--player=spotifyd" "previous" ;}
+
+  MouseForward hotkey-overlay-title="Toggle Overview" {toggle-overview ;}
+  Mod+Shift+Slash hotkey-overlay-title="Show Hotkeys" {show-hotkey-overlay ;}
+}
