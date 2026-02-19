@@ -99,6 +99,8 @@
     };
   };
 
+  services.dbus.implementation = "broker";
+
   services.dnsmasq = {
     enable = true;
     settings = {
@@ -156,7 +158,7 @@
 
   time.timeZone = "America/Argentina/Buenos_Aires";
 
-  environment.systemPackages = with pkgs; [
+  environment.systemPackages = [
     inputs.sops-nix.packages.${pkgs.stdenv.hostPlatform.system}.sops-import-keys-hook
   ];
 
