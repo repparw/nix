@@ -100,9 +100,10 @@
             enableCenterBackColors = true;
             enableRightBackColors = true;
           };
-          niri = {
-            enable = true;
-          };
+          noctalia-shell.enable = true;
+          # niri = {
+          #   enable = true;
+          # };
         };
       };
     }
