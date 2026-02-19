@@ -6,188 +6,378 @@
   ...
 }:
 let
-  prefix = "uwsm app --";
-  term = "foot";
+  isAlpha = osConfig.networking.hostName == "alpha";
   shell = "fish";
-  browser = "${prefix} firefox";
-
-  monitorConfig =
-    if osConfig.networking.hostName == "alpha" then
-      ''
-        output "DP-1" {
-            mode "2560x1440@165"
-            variable-refresh-rate
-        }
-        output "HDMI-A-1" {
-            position x=-1920 y=0
-        }
-      ''
-    else
-      ''
-        output "eDP-1" {
-            mode "preferred"
-        }
-      '';
+  terminal = "foot";
 in
 {
   config = lib.mkIf osConfig.programs.niri.enable {
-    xdg.configFile."niri/config.kdl".text = ''
-      ${monitorConfig}
+    programs.niri = {
+      enable = true;
+      settings = {
+        screenshot-path = "${config.xdg.userDirs.pictures}/ss/screenshot-%Y-%m-%d_%H-%M-%S.png";
 
-      screenshot-path "${config.xdg.userDirs.pictures}/ss/screenshot-%Y-%m-%d_%H-%M-%S.png"
+        workspaces = {
+          "1" = { };
+          "2" = { };
+          "3" = { };
+          "4" = { };
+          "5" = { };
+          "6" = { };
+          "7" = { };
+          "8" = { };
+          "9" = { };
+        };
 
-      prefer-no-csd
+        prefer-no-csd = true;
 
-      input {
-          keyboard {
-              xkb {
-                  layout "us"
-                  variant "altgr-intl"
-              }
-              repeat-delay 300
-              repeat-rate 50
+        input = {
+          keyboard = {
+            xkb = {
+              layout = "us";
+              variant = "altgr-intl";
+            };
+            repeat-delay = 300;
+            repeat-rate = 50;
+          };
+          mouse = {
+            accel-speed = 0.0;
+            accel-profile = "flat";
+          };
+        };
+
+        layout = {
+          gaps = 1;
+          center-focused-column = "never";
+          default-column-width = {
+            proportion = 0.5;
+          };
+          border = {
+            width = 1;
+          };
+        };
+
+        window-rules = [
+          {
+            matches = [ { app-id = "firefox"; } ];
+            opacity = 1.0;
           }
-          mouse {
-              accel-speed 0.0
-              accel-profile "flat"
+          {
+            matches = [
+              { title = "^(Picture-in-Picture|Picture in picture)$"; }
+              { title = "(video1 - mpv)"; }
+            ];
+            open-floating = true;
+            default-floating-position = {
+              x = 10;
+              y = 10;
+              relative-to = "bottom-right";
+            };
+            default-column-width = {
+              fixed = 400;
+            };
+            default-window-height = {
+              fixed = 225;
+            };
           }
-      }
-
-      layout {
-          gaps 1
-          center-focused-column "never"
-          default-column-width { proportion 0.5; }
-
-          border {
-              width 1
+          {
+            matches = [ { app-id = "clipse"; } ];
+            open-floating = true;
+            default-column-width = {
+              fixed = 622;
+            };
+            default-window-height = {
+              fixed = 652;
+            };
           }
-      }
+          {
+            matches = [
+              { app-id = "^(.gamescope-wrapped)$"; }
+              { app-id = "^(steam_app_.*)$"; }
+            ];
+            open-fullscreen = true;
+          }
+        ];
 
-      window-rule {
-          match app-id="firefox"
-          opacity 1.0
-      }
+        binds = with config.lib.niri.actions; {
+          # basic ops
+          "Mod+Return" = {
+            action = spawn "${terminal}";
+            hotkey-overlay.title = "Terminal";
+          };
+          "Mod+W" = {
+            action = close-window;
+            hotkey-overlay.title = "Close Window";
+          };
+          "Mod+Space" = {
+            action = spawn "rofi" "-show" "combi";
+            hotkey-overlay.title = "App Launcher";
+          };
+          "Mod+Shift+Space" = {
+            action = spawn "firefox";
+            hotkey-overlay.title = "Browser";
+          };
 
-      window-rule {
-          match title="^(Picture-in-Picture|Picture in picture)$"
-          match title="(video1 - mpv)"
+          # apps from hyprland
+          "Mod+A" = {
+            action = spawn "anki";
+            hotkey-overlay.title = "Anki";
+          };
+          "Mod+B" = {
+            action = spawn "bttoggle";
+            hotkey-overlay.title = "Bluetooth Toggle";
+          };
+          "Mod+C" = {
+            action = spawn "webapp" "https://web.whatsapp.com";
+            hotkey-overlay.title = "WhatsApp";
+          };
+          "Mod+E" = {
+            action = spawn "${terminal}" "--app-id" "filemanager" "${shell}" "-ic" "yazi";
+            hotkey-overlay.title = "File Manager (Terminal)";
+          };
+          "Mod+Shift+E" = {
+            action = spawn "nautilus";
+            hotkey-overlay.title = "File Manager (GUI)";
+          };
+          "Mod+F" = {
+            action = maximize-column;
+            hotkey-overlay.title = "Fullscreen";
+          };
+          "Mod+Alt+F" = {
+            action = toggle-window-floating;
+            hotkey-overlay.title = "Toggle Floating";
+          };
+          "Mod+G" = {
+            action = spawn "${terminal}" "--app-id" "opencode" "opencode";
+            hotkey-overlay.title = "AI Agent";
+          };
+          "Mod+M" = {
+            action = spawn "${terminal}" "--app-id" "spotify" "spotify_player";
+            hotkey-overlay.title = "Spotify";
+          };
+          "Mod+N" = {
+            action = spawn "${terminal}" "--app-id" "obsinvim" "${shell}" "-ic" "obsinvim";
+            hotkey-overlay.title = "Notes (Terminal)";
+          };
+          "Mod+Shift+N" = {
+            action = spawn "ndrop" "-c" "obsidian" "obsidian";
+            hotkey-overlay.title = "Notes (Obsidian)";
+          };
+          "Mod+P" = {
+            action = spawn "webapp" "https://noisekun.com/?theme=dark";
+            hotkey-overlay.title = "Pomodoro";
+          };
+          "Mod+S" = {
+            action = spawn "sh" "-c" "SDL_RENDER_DRIVER=opengl scrcpy --tcpip=192.168.0.32 -S";
+            hotkey-overlay.title = "Scrcpy";
+          };
+          "Mod+T" = {
+            action = spawn "${terminal}" "${shell}" "-ic" "top";
+            hotkey-overlay.title = "Top";
+          };
+          "Mod+V" = {
+            action = spawn "${terminal}" "--app-id" "clipse" "clipse";
+            hotkey-overlay.title = "Clipboard";
+          };
+          "Mod+X" = {
+            action = spawn "cfait";
+            hotkey-overlay.title = "cfait";
+          };
+          "Mod+Y" = {
+            action = spawn "firefox" "-P" "kiosk";
+            hotkey-overlay.title = "Kiosk Browser";
+          };
+          "Mod+Z" = {
+            action = spawn "mpvclip";
+            hotkey-overlay.title = "MPV Clipboard";
+          };
 
-          open-floating true
-          default-floating-position x=10 y=10 relative-to="bottom-right"
-          default-column-width { fixed 400; }
-          default-window-height { fixed 225; }
-          // sticky/pinned true
-      }
+          # macropad
+          "Ctrl+Alt+Shift+A" = {
+            action = spawn "steam" "-bigpicture";
+          };
+          "Ctrl+Alt+Shift+B" = {
+            action = spawn "obs-cmd" "recording" "toggle-pause";
+          };
+          "Ctrl+Alt+Shift+C" = {
+            action = spawn "obs-remux2wsp";
+          };
+          "Ctrl+Alt+Shift+D" = {
+            action = spawn "obs-cmd" "replay" "save";
+          };
+          "Ctrl+Alt+Shift+E" = {
+            action = spawn "ndrop" "discord";
+          };
+          "Ctrl+Alt+Shift+F" = {
+            action = spawn "wpctl" "set-source-mute" "@DEFAULT_SOURCE@" "toggle";
+          };
 
-      window-rule {
-          match app-id="clipse"
+          # navigation
+          "Mod+H" = {
+            action = focus-column-or-monitor-left;
+            hotkey-overlay.title = "Focus Left";
+          };
+          "Mod+J" = {
+            action = focus-window-or-workspace-down;
+            hotkey-overlay.title = "Focus Down";
+          };
+          "Mod+K" = {
+            action = focus-window-or-workspace-up;
+            hotkey-overlay.title = "Focus Up";
+          };
+          "Mod+L" = {
+            action = focus-column-or-monitor-right;
+            hotkey-overlay.title = "Focus Right";
+          };
 
-          open-floating true
-          default-column-width { fixed 622; }
-          default-window-height { fixed 652; }
-      }
+          # workspace tab switching
+          "Mod+Tab" = {
+            action = spawn "niri-swap-workspaces";
+            hotkey-overlay.title = "Swap Workspace";
+          };
 
-      window-rule {
-          // gamescope / games
-          match app-id="^(.gamescope-wrapped)$"
-          match app-id="^(steam_app_.*)$"
+          "Mod+Shift+H" = {
+            action = move-column-left-or-to-monitor-left;
+          };
+          "Mod+Shift+J" = {
+            action = move-window-down-or-to-workspace-down;
+          };
+          "Mod+Shift+K" = {
+            action = move-window-up-or-to-workspace-up;
+          };
+          "Mod+Shift+L" = {
+            action = move-column-right-or-to-monitor-right;
+          };
 
-          open-fullscreen true
-      }
+          "Mod+Ctrl+H" = {
+            action = consume-or-expel-window-left;
+          };
+          "Mod+Ctrl+L" = {
+            action = consume-or-expel-window-right;
+          };
 
-      binds {
-          // basic ops
-          Mod+Return hotkey-overlay-title="Terminal" { spawn "${prefix}" "${term}"; }
-          Mod+W hotkey-overlay-title="Close Window" { close-window; }
-          Mod+Space hotkey-overlay-title="App Launcher" { spawn "rofi" "-show" "combi"; }
-          Mod+Shift+Space hotkey-overlay-title="Browser" { spawn "${browser}"; }
+          # workspaces
+          "Mod+1" = {
+            action = focus-workspace "1";
+          };
+          "Mod+2" = {
+            action = focus-workspace "2";
+          };
+          "Mod+3" = {
+            action = focus-workspace "3";
+          };
+          "Mod+4" = {
+            action = focus-workspace "4";
+          };
+          "Mod+5" = {
+            action = focus-workspace "5";
+          };
+          "Mod+6" = {
+            action = focus-workspace "6";
+          };
+          "Mod+7" = {
+            action = focus-workspace "7";
+          };
+          "Mod+8" = {
+            action = focus-workspace "8";
+          };
+          "Mod+9" = {
+            action = focus-workspace "9";
+          };
 
-          // apps from hyprland
-          Mod+A hotkey-overlay-title="Anki" { spawn "${prefix} anki"; }
-          Mod+B hotkey-overlay-title="Bluetooth Toggle" { spawn "${prefix} bttoggle"; }
-          Mod+C hotkey-overlay-title="WhatsApp" { spawn "${prefix} webapp https://web.whatsapp.com"; }
-          Mod+E hotkey-overlay-title="File Manager (Terminal)" { spawn "${prefix} ${term} --app-id filemanager ${shell} -ic yazi"; }
-          Mod+Shift+E hotkey-overlay-title="File Manager (GUI)" { spawn "${prefix}" "nautilus"; }
-          Mod+F hotkey-overlay-title="Fullscreen" { maximize-window-to-edges; }
-          Mod+Alt+F hotkey-overlay-title="Toggle Floating" { toggle-float; }
-          Mod+G hotkey-overlay-title="AI Agent" { spawn "${prefix} ${term} --app-id opencode opencode --agent chat"; }
-          Mod+M hotkey-overlay-title="Spotify" { spawn "${prefix} ${term} --app-id spotify spotify_player"; }
-          Mod+N hotkey-overlay-title="Notes (Terminal)" { spawn "${prefix} ${term} --app-id obsinvim ${shell} -ic obsinvim"; }
-          Mod+Shift+N hotkey-overlay-title="Notes (Obsidian)" { spawn "ndrop" "-a obsidian ${prefix} obsidian"; }
-          Mod+P hotkey-overlay-title="Pomodoro" { spawn "webapp" "https://noisekun.com/?theme=dark"; }
-          Mod+S hotkey-overlay-title="Scrcpy" { spawn "${prefix} sh -c 'SDL_RENDER_DRIVER=opengl scrcpy --tcpip=192.168.0.32 -S'"; }
-          Mod+T hotkey-overlay-title="Top" { spawn "${term} ${shell} -ic  top"; }
-          Mod+V hotkey-overlay-title="Clipboard" { spawn "${prefix} ${term} --app-id clipse clipse"; }
-          Mod+X hotkey-overlay-title="cfait" { spawn "${prefix} cfait"; }
-          Mod+Y hotkey-overlay-title="Kiosk Browser" { spawn "${prefix} firefox -P kiosk"; }
-          Mod+Z hotkey-overlay-title="MPV Clipboard" { spawn "${prefix}" "mpvclip"; }
+          "Mod+Shift+1" = {
+            action = spawn "niri" "msg" "action" "move-column-to-workspace" "\"1\"";
+          };
+          "Mod+Shift+2" = {
+            action = spawn "niri" "msg" "action" "move-column-to-workspace" "\"2\"";
+          };
+          "Mod+Shift+3" = {
+            action = spawn "niri" "msg" "action" "move-column-to-workspace" "\"3\"";
+          };
+          "Mod+Shift+4" = {
+            action = spawn "niri" "msg" "action" "move-column-to-workspace" "\"4\"";
+          };
+          "Mod+Shift+5" = {
+            action = spawn "niri" "msg" "action" "move-column-to-workspace" "\"5\"";
+          };
+          "Mod+Shift+6" = {
+            action = spawn "niri" "msg" "action" "move-column-to-workspace" "\"6\"";
+          };
+          "Mod+Shift+7" = {
+            action = spawn "niri" "msg" "action" "move-column-to-workspace" "\"7\"";
+          };
+          "Mod+Shift+8" = {
+            action = spawn "niri" "msg" "action" "move-column-to-workspace" "\"8\"";
+          };
+          "Mod+Shift+9" = {
+            action = spawn "niri" "msg" "action" "move-column-to-workspace" "\"9\"";
+          };
 
-          // macropad
-          Ctrl+Alt+Shift+A { spawn "${prefix} steam -bigpicture"; }
-          Ctrl+Alt+Shift+B { spawn "obs-cmd recording toggle-pause"; }
-          Ctrl+Alt+Shift+C { spawn "obs-remux2wsp"; }
-          Ctrl+Alt+Shift+D { spawn "obs-cmd replay save"; }
-          Ctrl+Alt+Shift+E { spawn "ndrop" "discord"; }
-          Ctrl+Alt+Shift+F { spawn "wpctl set-source-mute @DEFAULT_SOURCE@ toggle"; }
+          # utilities
+          "Mod+Alt+L" = {
+            allow-when-locked = true;
+            action = spawn "loginctl" "lock-session";
+            hotkey-overlay.title = "Lock Screen";
+          };
 
-           // navigation
-           Mod+H hotkey-overlay-title="Focus Left" { focus-column-left; }
-           Mod+J hotkey-overlay-title="Focus Down" { focus-window-down; }
-           Mod+K hotkey-overlay-title="Focus Up" { focus-window-up; }
-           Mod+L hotkey-overlay-title="Focus Right" { focus-column-right; }
+          "Mod+U" = {
+            action = spawn "${terminal}" "--hold" "${shell}" "-ic" "nrsu";
+            hotkey-overlay.title = "Update System";
+          };
+          "Mod+R" = {
+            action = spawn "${terminal}" "${shell}" "-ic" "rpi";
+            hotkey-overlay.title = "Rebuild Config";
+          };
+          "Mod+Comma" = {
+            action = spawn "ndrop" "-c" "imv" "imv" "/home/repparw/code/totem/layout/totem.svg";
+            hotkey-overlay.title = "Show Layout";
+          };
+          "Mod+Period" = {
+            action = spawn "sh" "-c" "pkill wshowkeys || wshowkeys -a bottom -m 108 -b 00000066";
+            hotkey-overlay.title = "Show Keys";
+          };
 
-           // workspace tab switching
-           Mod+Tab { focus-workspace-down; }
-           Mod+Shift+Tab { focus-workspace-up; }
+          "Print" = {
+            action = spawn "niri" "msg" "action" "screenshot-screen";
+            hotkey-overlay.title = "Screenshot Screen";
+          };
+          "Mod+Print" = {
+            action = spawn "niri" "msg" "action" "screenshot-window";
+            hotkey-overlay.title = "Screenshot Window";
+          };
+          "Mod+Shift+Print" = {
+            action = spawn "niri" "msg" "action" "screenshot";
+            hotkey-overlay.title = "Screenshot Area";
+          };
 
-          Mod+Shift+H { move-column-left-or-to-monitor-left; }
-          Mod+Shift+J { move-window-down; }
-          Mod+Shift+K { move-window-up; }
-          Mod+Shift+L { move-column-right-or-to-monitor-right; }
+          # media
+          "XF86AudioPlay" = {
+            allow-when-locked = true;
+            action = spawn "media-play-pause";
+            hotkey-overlay.title = "Play/Pause";
+          };
+          "XF86AudioNext" = {
+            allow-when-locked = true;
+            action = spawn "playerctl" "--player=spotifyd" "next";
+            hotkey-overlay.title = "Next Track";
+          };
+          "XF86AudioPrev" = {
+            allow-when-locked = true;
+            action = spawn "playerctl" "--player=spotifyd" "previous";
+            hotkey-overlay.title = "Previous Track";
+          };
 
-          Mod+Ctrl+H { consume-or-expel-window-left; }
-          Mod+Ctrl+L { consume-or-expel-window-right; }
-
-          // workspaces
-          Mod+1 { focus-workspace 1; }
-          Mod+2 { focus-workspace 2; }
-          Mod+3 { focus-workspace 3; }
-          Mod+4 { focus-workspace 4; }
-          Mod+5 { focus-workspace 5; }
-          Mod+6 { focus-workspace 6; }
-          Mod+7 { focus-workspace 7; }
-          Mod+8 { focus-workspace 8; }
-          Mod+9 { focus-workspace 9; }
-
-          Mod+Shift+1 { move-column-to-workspace 1; }
-          Mod+Shift+2 { move-column-to-workspace 2; }
-          Mod+Shift+3 { move-column-to-workspace 3; }
-          Mod+Shift+4 { move-column-to-workspace 4; }
-          Mod+Shift+5 { move-column-to-workspace 5; }
-          Mod+Shift+6 { move-column-to-workspace 6; }
-          Mod+Shift+7 { move-column-to-workspace 7; }
-          Mod+Shift+8 { move-column-to-workspace 8; }
-          Mod+Shift+9 { move-column-to-workspace 9; }
-
-           // utilities
-           Mod+Alt+L hotkey-overlay-title="Lock Screen" { spawn "loginctl" "lock-session"; }
-
-           Mod+U hotkey-overlay-title="Update System" { spawn " nrsu"; }
-           Mod+R hotkey-overlay-title="Rebuild Config" { spawn " rpi"; }
-           Mod+Comma hotkey-overlay-title="Show Layout" { spawn "hdrop" "-c" "imv" "imv /home/repparw/code/totem/layout/totem.svg"; }
-           Mod+Period hotkey-overlay-title="Show Keys" { spawn "pkill wshowkeys || ${prefix} wshowkeys -a bottom -m 108 -b 00000066"; }
-
-          Print hotkey-overlay-title="Screenshot Screen" { screenshot-screen; }
-          Mod+Print hotkey-overlay-title="Screenshot Window" { screenshot-window; }
-          Mod+Shift+Print hotkey-overlay-title="Screenshot Area" { screenshot; }
-
-          // media
-          XF86AudioPlay hotkey-overlay-title="Play/Pause" { spawn "media-play-pause"; }
-          XF86AudioNext hotkey-overlay-title="Next Track" { spawn "playerctl" "--player=spotifyd" "next"; }
-          XF86AudioPrev hotkey-overlay-title="Previous Track" { spawn "playerctl" "--player=spotifyd" "previous"; }
-
-          MouseForward hotkey-overlay-title="Toggle Overview" { toggle-overview; }
-      }
-    '';
+          # overview
+          "MouseForward" = {
+            action = toggle-overview;
+            hotkey-overlay.title = "Toggle Overview";
+          };
+          "Mod+Shift+Slash" = {
+            action = show-hotkey-overlay;
+            hotkey-overlay.title = "Show Hotkeys";
+          };
+        };
+      };
+    };
   };
 }
