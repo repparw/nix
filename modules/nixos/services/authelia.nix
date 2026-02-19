@@ -1,4 +1,4 @@
-{ cfg, config, ... }:
+{ cfg, ... }:
 {
   "authelia" = {
     image = "docker.io/authelia/authelia:latest";
