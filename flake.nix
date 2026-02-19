@@ -25,7 +25,7 @@
     };
 
     firefox-addons = {
-      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+      url = "github:petrkozorezov/firefox-addons-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -36,11 +36,6 @@
 
     disko = {
       url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    niri-flake = {
-      url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -76,8 +71,6 @@
             imports = [
               ./modules/hm
               ./home/${hostname}.nix
-              inputs.niri-flake.homeModules.niri
-              inputs.niri-flake.homeModules.stylix
               inputs.noctalia.homeModules.default
             ];
           };
