@@ -1,6 +1,4 @@
 {
-  lib,
-  inputs,
   ...
 }:
 {
@@ -22,7 +20,10 @@
           ];
           center = [ ];
           right = [
-            { id = "Tray"; }
+            {
+              id = "Tray";
+              "drawerEnabled" = false;
+            }
             { id = "Battery"; }
             { id = "Clock"; }
             { id = "ControlCenter"; }
