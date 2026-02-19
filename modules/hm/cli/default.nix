@@ -1,7 +1,6 @@
 {
   pkgs,
   config,
-  osConfig,
   ...
 }:
 {
@@ -176,6 +175,7 @@
       wget
       jq
       libnotify
+      nixd
 
       android-tools
       unzip

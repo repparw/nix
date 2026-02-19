@@ -1,7 +1,6 @@
 {
   pkgs,
   osConfig,
-  inputs,
   ...
 }:
 {
@@ -45,26 +44,26 @@
       runtimeInputs = [
       ];
       text = ''
-        exec uwsm app -- chromium --app="$1" "''${@:2}"
+        exec chromium --app="$1" "''${@:2}"
       '';
     })
 
-    (stdenv.mkDerivation {
-      pname = "odin4";
-      version = "4";
-
-      src = pkgs.fetchzip {
-        url = "https://github.com/Adrilaw/OdinV4/releases/download/v1.0/odin.zip";
-        hash = "sha256-SoznK53UD/vblqeXBLRlkokaLJwhMZy7wqKufR0I8hI=";
-      };
-
-      nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-
-      installPhase = ''
-        runHook preInstall
-        install -m755 -D odin4 $out/bin/odin4
-      '';
-    })
+    # (stdenv.mkDerivation {
+    #   pname = "odin4";
+    #   version = "4";
+    #
+    #   src = pkgs.fetchzip {
+    #     url = "https://github.com/Adrilaw/OdinV4/releases/download/v1.0/odin.zip";
+    #     hash = "sha256-SoznK53UD/vblqeXBLRlkokaLJwhMZy7wqKufR0I8hI=";
+    #   };
+    #
+    #   nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+    #
+    #   installPhase = ''
+    #     runHook preInstall
+    #     install -m755 -D odin4 $out/bin/odin4
+    #   '';
+    # })
 
     (writeShellApplication {
       name = "bttoggle";
@@ -237,6 +236,42 @@
         ' | sort -k 1nr | sed 's/^[^ ]* //' | head -n 1
         )
         		ffmpeg -sseof -60 -i "$FILE" -vcodec libx264 -ac 1 -acodec copy -pix_fmt yuv420p "''${FILE%.*}".mp4;
+      '';
+    })
+
+    (writeShellApplication {
+      name = "hotswap";
+      text = ''
+        if [ $# -eq 0 ]; then
+          echo "Usage: hotswap <file>"
+          exit 1
+        fi
+
+        file="$1"
+
+        if [ ! -e "$file" ]; then
+          echo "Error: File '$file' does not exist"
+          exit 1
+        fi
+
+        if [ ! -L "$file" ]; then
+          echo "File is not a symlink, nothing to do"
+          exit 1
+        fi
+
+        target="$(readlink -f "$file")"
+        temp="$(mktemp)"
+
+        cp "$target" "$temp"
+
+        if nvim "$temp"; then
+          rm "$file"
+          mv "$temp" "$file"
+          echo "Saved."
+        else
+          rm "$temp"
+          echo "Edit canceled."
+        fi
       '';
     })
   ];
