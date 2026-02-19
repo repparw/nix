@@ -83,7 +83,10 @@
           mnemonicPrefix = true;
           renames = true;
         };
-        merge.conflictstyle = "zdiff3";
+        merge = {
+          conflictstyle = "zdiff3";
+          tool = "nvimdiff";
+        };
         push = {
           autoSetupRemote = true;
           followTags = true;

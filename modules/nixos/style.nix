@@ -100,6 +100,9 @@
             enableCenterBackColors = true;
             enableRightBackColors = true;
           };
+          niri = {
+            enable = true;
+          };
         };
       };
     }

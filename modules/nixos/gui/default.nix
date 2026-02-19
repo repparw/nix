@@ -59,7 +59,7 @@
     };
 
     services.displayManager = {
-      defaultSession = "hyprland-uwsm";
+      defaultSession = "niri";
       autoLogin = {
         enable = true;
         user = "repparw";

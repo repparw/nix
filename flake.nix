@@ -9,11 +9,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    ndrop = {
-      url = "github:Schweber/ndrop";
-      flake = false;
-    };
-
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -41,6 +36,16 @@
 
     disko = {
       url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    niri-flake = {
+      url = "github:sodiboo/niri-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    noctalia = {
+      url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -71,6 +76,9 @@
             imports = [
               ./modules/hm
               ./home/${hostname}.nix
+              inputs.niri-flake.homeModules.niri
+              inputs.niri-flake.homeModules.stylix
+              inputs.noctalia.homeModules.default
             ];
           };
         };
