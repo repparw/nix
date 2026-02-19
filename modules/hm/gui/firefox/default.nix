@@ -98,12 +98,12 @@ in
             extensions = with pkgs.firefox-addons; {
               force = true;
               settings = {
-                "${darkreader.addonId}".settings = import ./darkreader.nix;
+                "addon@darkreader.org".settings = import ./darkreader.nix;
               };
               packages = [
                 darkreader
-                bitwarden
-                refined-github
+                bitwarden-password-manager
+                refined-github-
                 raindropio
               ];
             };
@@ -147,14 +147,14 @@ in
             extensions = with pkgs.firefox-addons; {
               force = true;
               settings = {
-                "${sponsorblock.addonId}".settings = {
+                "sponsorblock@ajay.app".settings = {
                   hideUploadButtonPlayerControls = true;
                   dontShowNotice = true;
                 };
-                "${improved-tube.addonId}".settings = import ./improvedtube.nix;
+                "{3c6bf0cc-3ae2-42fb-9993-0d33104fdcaf}".settings = import ./improvedtube.nix;
               };
               packages = [
-                improved-tube
+                youtube-addon
                 sponsorblock
                 dearrow
                 tampermonkey
