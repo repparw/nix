@@ -1,4 +1,4 @@
-{ cfg, config, ... }:
+{ cfg, ... }:
 {
   "broker" = {
     image = "docker.io/library/redis:7";
