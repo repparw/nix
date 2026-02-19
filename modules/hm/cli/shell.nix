@@ -58,8 +58,11 @@
 
       # Nix
       vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
+
       nrs = "nh os switch";
       nrb = "nh os boot";
+      nrt = "nh os test";
+
       nrsu = "nrs -u --commit-lock-file";
       nrbu = "nrb -u --commit-lock-file";
 
