@@ -66,6 +66,11 @@ hotkey-overlay {
   hide-not-bound
 }
 
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
+
+///////////////////////////////////////////////////////
 window-rule {
   match app-id="firefox"
   opacity 1.0
@@ -90,6 +95,8 @@ window-rule {
   open-fullscreen true
   variable-refresh-rate true
 }
+///////////////////////////////////////////////////////
+
 
 binds {
   Mod+Return hotkey-overlay-title="Terminal" {spawn "foot" ;}
