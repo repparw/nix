@@ -176,6 +176,7 @@
       wget
       jq
       libnotify
+      nodejs
 
       android-tools
       unzip
