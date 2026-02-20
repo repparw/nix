@@ -74,7 +74,7 @@
       openFirewall = true;
       capSysAdmin = true;
       settings = {
-        output_name = 0;
+        output_name = 1;
       };
     };
   };
