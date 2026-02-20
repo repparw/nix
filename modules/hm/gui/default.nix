@@ -10,7 +10,7 @@ let
 in
 {
   imports = [
-    ./firefox
+    ./browser
     ./gaming.nix
     ./jellyfin-mpv-shim.nix
     ./kanshi.nix
@@ -65,8 +65,6 @@ in
     };
 
     programs = {
-      chromium.enable = true;
-
       foot.enable = true;
 
       imv = {
