@@ -51,7 +51,7 @@
 
         "$browser" = "$prefix firefox";
         "$browser2" = "$prefix chromium-browser";
-        "$whatsapp" = "webapp https://web.whatsapp.com";
+        "$whatsapp" = "whatsapp-electron";
         "$kiosk" = "$browser -P kiosk";
         "$discord" = "$prefix vesktop";
         "$GUIfileManager" = "$prefix nautilus";

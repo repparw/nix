@@ -8,10 +8,10 @@
 let
   # Override tridactyl to use beta builds
   tridactyl-beta = pkgs.firefox-addons.tridactyl.overrideAttrs (_old: {
-    version = "1.24.4pre7258";
+    version = "1.24.4pre7305";
     src = pkgs.fetchurl {
-      url = "https://tridactyl.cmcaine.co.uk/betas/tridactyl2-1.24.4pre7258.xpi";
-      sha256 = "sha256-1h3mghbb4fi4rg30barr40bxj7008vw8jy8026bg2ryj57ljx01z";
+      url = "https://tridactyl.cmcaine.co.uk/betas/tridactyl2-1.24.4pre7305.xpi";
+      sha256 = "sha256-06ybj50nbv77jj7zp52k9wk6nl5lpbfhq1q4ddm6dxaj0a1qcnc6";
     };
   });
 in
