@@ -24,16 +24,19 @@ in
             "-H"
             "1080"
 
+            "-O"
+            "DP-1"
+
             # only works embedded, not nested
             "--adaptive-sync"
           ];
-          steamArgs = [
-            "-gamepadui"
-            "-steamos3"
-            "-steampal"
-            "-steamdeck"
-            "-pipewire-dmabuf"
-          ];
+          # steamArgs = [
+          #   "-gamepadui"
+          #   "-steamos3"
+          #   "-steampal"
+          #   "-steamdeck"
+          #   "-pipewire-dmabuf"
+          # ];
         };
         remotePlay.openFirewall = true;
         localNetworkGameTransfers.openFirewall = true;
