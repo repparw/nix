@@ -106,7 +106,7 @@ binds {
 
   Mod+A   hotkey-overlay-title="Anki" {spawn "anki" ;} 
   Mod+B hotkey-overlay-title="Bluetooth Toggle" {spawn "bttoggle" ;}
-  Mod+C   hotkey-overlay-title="WhatsApp" {spawn "webapp" "https://web.whatsapp.com" ;}
+  Mod+C   hotkey-overlay-title="WhatsApp" {spawn "whatsapp-electron";}
   Mod+E hotkey-overlay-title="File Manager (Terminal)" {spawn "foot" "--app-id" "filemanager" "fish" "-ic" "yazi" ;}
   Mod+Shift+E   hotkey-overlay-title="File Manager (GUI)" {spawn "nautilus" ;}
   Mod+F hotkey-overlay-title="Fullscreen" {maximize-window-to-edges ;}
@@ -114,15 +114,16 @@ binds {
   Mod+G hotkey-overlay-title="AI Agent" {spawn "foot" "--app-id" "opencode" "opencode" ;}
   Mod+M   hotkey-overlay-title="Spotify" {spawn "foot" "--app-id" "spotify" "spotify_player" ;}
   Mod+N hotkey-overlay-title="Notes (Terminal)" {spawn "foot" "--app-id" "obsinvim" "fish" "-ic" "obsinvim" ;}
-  Mod+Shift+N   hotkey-overlay-title="Notes (Obsidian)" {spawn "ndrop" "-c" "obsidian" "obsidian" ;}
+  Mod+Shift+N hotkey-overlay-title="Notes (Obsidian)" {spawn "obsidian" ;}
   Mod+P hotkey-overlay-title="Pomodoro" {spawn "webapp" "https://noisekun.com/?theme=dark" ;}
-  Mod+S   hotkey-overlay-title="Scrcpy" {spawn "sh" "-c" "SDL_RENDER_DRIVER=opengl scrcpy --tcpip=192.168.0.32 -S" ;}
+  Mod+S hotkey-overlay-title="Scrcpy" {spawn "sh" "-c" "SDL_RENDER_DRIVER=opengl scrcpy --tcpip=192.168.0.32 -S" ;}
   Mod+T hotkey-overlay-title="Top" {spawn "foot" "fish" "-ic" "top" ;}
-  Mod+V   hotkey-overlay-title="Clipboard" {spawn "foot" "--app-id" "clipse" "clipse" ;}
+  Mod+V hotkey-overlay-title="Clipboard" {spawn "foot" "--app-id" "clipse" "clipse" ;}
   Mod+X hotkey-overlay-title="cfait" {spawn "cfait" ;}
-  Mod+Y   hotkey-overlay-title="Kiosk Browser" {spawn "firefox" "-P" "kiosk" ;}
+  Mod+Y hotkey-overlay-title="Kiosk Browser" {spawn "firefox" "-P" "kiosk" ;}
   Mod+Z hotkey-overlay-title="MPV Clipboard" {spawn "mpvclip" ;}
 
+  // macropad
   Ctrl+Alt+Shift+A {spawn-sh "gamescope --steam -H 1080 -- steam -tenfoot -pipewire-dmabuf" ;}
   Ctrl+Alt+Shift+B {spawn "obs-cmd" "recording" "toggle-pause" ;}
   Ctrl+Alt+Shift+C {spawn "obs-remux2wsp" ;}

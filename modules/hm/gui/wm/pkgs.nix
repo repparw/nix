@@ -15,6 +15,8 @@
       hyprpicker
 
       nautilus
+
+      whatsapp-electron
     ];
 
     services = {
