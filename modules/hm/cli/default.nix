@@ -86,6 +86,7 @@
           conflictstyle = "zdiff3";
           tool = "nvimdiff";
         };
+        mergetool.keepBackup = false;
         push = {
           autoSetupRemote = true;
           followTags = true;
@@ -175,7 +176,6 @@
       wget
       jq
       libnotify
-      nixd
 
       android-tools
       unzip
