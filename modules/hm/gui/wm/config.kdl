@@ -15,7 +15,7 @@ input {
   accel-speed 0.0
     accel-profile "flat"
   }
-  focus-follows-mouse
+  focus-follows-mouse max-scroll-amount="10%"
 }
 
 gestures {
@@ -32,6 +32,12 @@ output "DP-1" {
 layout {
   center-focused-column "never"
   empty-workspace-above-first
+
+  default-column-display "tabbed"
+
+  tab-indicator {
+    hide-when-single-tab
+  }
 
   default-column-width {
   proportion 0.5
@@ -117,10 +123,10 @@ binds {
   Ctrl+Alt+Shift+E {spawn "vesktop" ;}
   Ctrl+Alt+Shift+F {spawn "wpctl" "set-source-mute" "@DEFAULT_SOURCE@" "toggle" ;}
 
-  Mod+H hotkey-overlay-title="Focus Left" {focus-column-or-monitor-left ;}
+  Mod+H hotkey-overlay-title="Focus Left" {focus-column-left ;}
   Mod+J hotkey-overlay-title="Focus Down" {focus-window-or-workspace-down ;}
   Mod+K hotkey-overlay-title="Focus Up" {focus-window-or-workspace-up ;}
-  Mod+L hotkey-overlay-title="Focus Right" { focus-column-or-monitor-right ;}
+  Mod+L hotkey-overlay-title="Focus Right" { focus-column-right ;}
 
   Mod+Tab hotkey-overlay-title="Focus Next Monitor" { focus-monitor-next ;}
 
