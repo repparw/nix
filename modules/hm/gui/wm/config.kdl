@@ -111,11 +111,12 @@ binds {
   Mod+Shift+E   hotkey-overlay-title="File Manager (GUI)" {spawn "nautilus" ;}
   Mod+F hotkey-overlay-title="Fullscreen" {maximize-window-to-edges ;}
   Mod+Alt+F hotkey-overlay-title="Toggle Floating" { toggle-window-floating ;}
+  Mod+Ctrl+F hotkey-overlay-title="Toggle Focus Floating" { switch-focus-between-floating-and-tiling ;}
   Mod+G hotkey-overlay-title="AI Agent" {spawn "foot" "--app-id" "opencode" "opencode" ;}
   Mod+M   hotkey-overlay-title="Spotify" {spawn "foot" "--app-id" "spotify" "spotify_player" ;}
   Mod+N hotkey-overlay-title="Notes (Terminal)" {spawn "foot" "--app-id" "obsinvim" "fish" "-ic" "obsinvim" ;}
   Mod+Shift+N hotkey-overlay-title="Notes (Obsidian)" {spawn "obsidian" ;}
-  Mod+P hotkey-overlay-title="Pomodoro" {spawn "webapp" "https://noisekun.com/?theme=dark" ;}
+  Mod+P hotkey-overlay-title="Pomodoro" {spawn "blanket" ;}
   Mod+S hotkey-overlay-title="Scrcpy" {spawn "sh" "-c" "SDL_RENDER_DRIVER=opengl scrcpy --tcpip=192.168.0.32 -S" ;}
   Mod+T hotkey-overlay-title="Top" {spawn "foot" "fish" "-ic" "top" ;}
   Mod+V hotkey-overlay-title="Clipboard" {spawn "foot" "--app-id" "clipse" "clipse" ;}
@@ -124,19 +125,20 @@ binds {
   Mod+Z hotkey-overlay-title="MPV Clipboard" {spawn "mpvclip" ;}
 
   // macropad
-  Ctrl+Alt+Shift+A {spawn-sh "gamescope --steam -H 1080 -- steam -tenfoot -pipewire-dmabuf" ;}
+  Ctrl+Alt+Shift+A {spawn-sh "steam-gamescope" ;}
   Ctrl+Alt+Shift+B {spawn "obs-cmd" "recording" "toggle-pause" ;}
   Ctrl+Alt+Shift+C {spawn "obs-remux2wsp" ;}
   Ctrl+Alt+Shift+D {spawn "obs-cmd" "replay" "save" ;}
   Ctrl+Alt+Shift+E {spawn "vesktop" ;}
   Ctrl+Alt+Shift+F {spawn "wpctl" "set-source-mute" "@DEFAULT_SOURCE@" "toggle" ;}
 
-  Mod+H hotkey-overlay-title="Focus Left" {focus-column-left ;}
+  Mod+H hotkey-overlay-title="Focus Left" {focus-column-or-monitor-left ;}
   Mod+J hotkey-overlay-title="Focus Down" {focus-window-or-workspace-down ;}
   Mod+K hotkey-overlay-title="Focus Up" {focus-window-or-workspace-up ;}
-  Mod+L hotkey-overlay-title="Focus Right" { focus-column-right ;}
+  Mod+L hotkey-overlay-title="Focus Right" { focus-column-or-monitor-right ;}
 
   Mod+Tab hotkey-overlay-title="Focus Next Monitor" { focus-monitor-next ;}
+  Mod+Shift+Tab hotkey-overlay-title="Move Window to Next Monitor" { move-window-to-monitor-next ;}
 
   Mod+Shift+H { move-column-left-or-to-monitor-left ;}
   Mod+Shift+J {move-window-down-or-to-workspace-down ;}
@@ -165,7 +167,7 @@ binds {
   // Mod+Shift+8 {move-column-to-workspace "8" ;} 
   // Mod+Shift+9 {move-column-to-workspace "9" ;}
 
-  Mod+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen and turn off monitors" { spawn "loginctl" "lock-session" "&&" "sleep" "3" "&&" "niri" "msg" "action" "power-off-monitors";}
+  Mod+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen and turn off monitors" { spawn-sh "loginctl lock-session && sleep 3 && niri msg action power-off-monitors";}
 
   Mod+U hotkey-overlay-title="Update System" {spawn "foot" "--hold" "fish" "-ic" "nrsu" ;}
   Mod+R hotkey-overlay-title="Raspberry Pi" {spawn "foot" "fish" "-ic" "rpi" ;}

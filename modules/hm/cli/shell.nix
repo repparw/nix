@@ -69,9 +69,7 @@
       ln = "ln -i";
       mv = "mv -i";
 
-      rm = "rmtrash -I";
-      rmdir = "rmdirtrash";
-      rd = "rmdirtrash -pv";
+      rm = "trash put";
 
       chown = "chown --preserve-root";
       chmod = "chmod --preserve-root";

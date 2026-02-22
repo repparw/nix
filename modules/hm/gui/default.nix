@@ -30,7 +30,7 @@ in
 
       anki
 
-      # find pomo app in nixpkgs
+      blanket
     ];
 
     gtk = {

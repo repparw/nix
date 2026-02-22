@@ -12,6 +12,9 @@
     set smoothscroll true
     set tabsort mru
 
+    set searchurls.n https://mynixos.com/search?q=%s
+    set searchurls., https://search.nixos.org/packages?channel=unstable&query=%s
+
     " Binds
     bind ;c hint -c [class*="expand"],[class*="togg"],[class="comment_folder"]
 

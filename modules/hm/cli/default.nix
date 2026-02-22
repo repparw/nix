@@ -180,7 +180,7 @@
 
       android-tools
       unzip
-      rmtrash
+      trashy
       tree
       ffmpeg
       imagemagick
