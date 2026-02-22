@@ -89,6 +89,11 @@
           package = pkgs.papirus-icon-theme;
         };
         targets = {
+          nixvim = {
+            transparentBackground.main = true;
+            transparentBackground.numberLine = true;
+            transparentBackground.signColumn = true;
+          };
           firefox.profileNames = [
             "default"
             "kiosk"

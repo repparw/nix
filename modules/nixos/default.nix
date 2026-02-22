@@ -98,29 +98,19 @@
         ];
       };
     };
+    nameservers = [
+      "1.1.1.1#cloudflare-dns.com"
+      "1.0.0.1#cloudflare-dns.com"
+    ];
   };
 
   services.dbus.implementation = "broker";
 
-  services.dnsmasq = {
-    enable = true;
-    settings = {
-      port = 5300;
-      server = [
-        "1.1.1.1"
-        "1.0.0.1"
-      ];
-      address = "/${config.modules.services.domain}/127.0.0.1";
-      listen-address = "127.0.0.1";
-      bind-interfaces = true;
-    };
-  };
-
   services.resolved = {
     enable = true;
     settings.Resolve = {
-      DNS = "127.0.0.1:5300";
-      Domains = "~${config.modules.services.domain}"; # matches wildcard for domain and forwards to dnsmasq
+      DNSSEC = true;
+      DNSOverTLS = true;
     };
   };
 

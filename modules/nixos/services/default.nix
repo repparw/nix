@@ -6,82 +6,6 @@
 with lib;
 let
   cfg = config.modules.services;
-
-  mkContainer =
-    name: attrs:
-    let
-      traefikRule = attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
-      hostname = lib.removeSuffix "`)" (lib.removePrefix "Host(`" traefikRule);
-    in
-    mkMerge [
-      attrs
-      {
-        extraOptions = (attrs.extraOptions or [ ]) ++ [
-          "--network-alias=${name}"
-          "--network=services"
-        ];
-        labels = (attrs.labels or { }) // {
-          "io.containers.autoupdate" = "registry";
-
-          "glance.name" = name;
-          "glance.url" = lib.mkDefault "https://${hostname}";
-          "glance.icon" = lib.mkDefault "sh:${name}"; # https://selfh.st/icons/
-          "glance.same-tab" = "true";
-
-          "traefik.http.routers.${name}.tls" = "true";
-          "traefik.http.routers.${name}.rule" = lib.mkDefault traefikRule;
-          "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@docker";
-        };
-      }
-    ];
-
-  containersList =
-    if config.networking.hostName == "alpha" then
-      [
-        (import ./arr.nix)
-        (import ./authelia.nix)
-        (import ./changedetection.nix)
-        (import ./freshrss.nix)
-        (import ./jellyfin.nix)
-        # (import ./n8n.nix)
-        # (import ./monitoring.nix)
-        (import ./ntfy.nix)
-        (import ./open-webui.nix)
-        (import ./paperless.nix)
-        (import ./proxy.nix)
-
-      ]
-    else if config.networking.hostName == "pi" then
-      [
-        (import ./homeassistant.nix)
-        (import ./hyperion.nix)
-        (import ./pihole.nix)
-        # (import ./proxy.nix)
-      ]
-    else
-      [ ];
-
-  containerDefinitions = mapAttrs (name: attrs: mkContainer name attrs) (
-    foldl' (acc: def: acc // (def { inherit cfg config; })) { } containersList
-  );
-
-  mkFileSystemMount = service: subPath: {
-    "/home/repparw/.config/dlsuite/${service}" = {
-      depends = [
-        "/"
-        "/mnt/hdd"
-      ];
-      device = "${cfg.configDir}/${subPath}";
-      options = [
-        "bind"
-        "ro"
-        "noauto"
-        "x-systemd.automount"
-        "x-systemd.idle-timeout=60"
-        "nofail"
-      ];
-    };
-  };
 in
 {
   options.modules.services = {
@@ -129,38 +53,128 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
-    systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
+  config = mkIf cfg.enable (
+    let
+      extractHostname = rule: lib.removeSuffix "`)" (lib.removePrefix "Host(`" rule);
 
-    networking.firewall.interfaces."podman*".allowedUDPPorts = [ 53 ];
+      getTraefikRule =
+        name: attrs: attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
 
-    systemd.targets.lazy-containers = {
-      description = "non-essential container services";
-    };
+      mkContainer =
+        name: attrs:
+        let
+          traefikRule = getTraefikRule name attrs;
+          hostname = extractHostname traefikRule;
+        in
+        mkMerge [
+          attrs
+          {
+            extraOptions = (attrs.extraOptions or [ ]) ++ [
+              "--network-alias=${name}"
+              "--network=services"
+            ];
+            labels = (attrs.labels or { }) // {
+              "io.containers.autoupdate" = "registry";
 
-    systemd.timers.lazy-containers = {
-      wantedBy = [ "multi-user.target" ];
-      timerConfig = {
-        OnActiveSec = "10s";
-        Unit = "lazy-containers.target";
-      };
-    };
+              "glance.name" = name;
+              "glance.url" = lib.mkDefault "https://${hostname}";
+              "glance.icon" = lib.mkDefault "sh:${name}";
+              "glance.same-tab" = "true";
 
-    systemd.services =
-      let
-        allContainers = map (name: "podman-${name}") (lib.attrNames containerDefinitions);
-
-        # specific subset that needs the hdd to be ready before starting
-        hddDependent = [
-          "podman-bazarr"
-          "podman-jellyfin"
-          "podman-paperless"
-          "podman-qbittorrent"
-          "podman-radarr"
-          "podman-sonarr"
+              "traefik.http.routers.${name}.tls" = "true";
+              "traefik.http.routers.${name}.rule" = lib.mkDefault traefikRule;
+              "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@docker";
+            };
+          }
         ];
-      in
-      lib.genAttrs allContainers (name: {
+
+      containersList =
+        if config.networking.hostName == "alpha" then
+          [
+            (import ./arr.nix)
+            (import ./authelia.nix)
+            (import ./changedetection.nix)
+            (import ./freshrss.nix)
+            (import ./jellyfin.nix)
+            # (import ./n8n.nix)
+            # (import ./monitoring.nix)
+            (import ./ntfy.nix)
+            # (import ./open-webui.nix)
+            (import ./paperless.nix)
+            (import ./proxy.nix)
+
+          ]
+        else if config.networking.hostName == "pi" then
+          [
+            (import ./homeassistant.nix)
+            (import ./hyperion.nix)
+            (import ./pihole.nix)
+            # (import ./proxy.nix)
+          ]
+        else
+          [ ];
+
+      rawContainers = foldl' (acc: def: acc // (def { inherit cfg config; })) { } containersList;
+
+      serviceHostnames = mapAttrs (
+        name: attrs:
+        let
+          rule = attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
+        in
+        extractHostname rule
+      ) rawContainers;
+
+      containerDefinitions = mapAttrs mkContainer rawContainers;
+
+      mkFileSystemMount = service: subPath: {
+        "/home/repparw/.config/dlsuite/${service}" = {
+          depends = [
+            "/"
+            "/mnt/hdd"
+          ];
+          device = "${cfg.configDir}/${subPath}";
+          options = [
+            "bind"
+            "ro"
+            "noauto"
+            "x-systemd.automount"
+            "x-systemd.idle-timeout=60"
+            "nofail"
+          ];
+        };
+      };
+
+      allContainers = map (name: "podman-${name}") (lib.attrNames containerDefinitions);
+
+      hddDependent = [
+        "podman-bazarr"
+        "podman-jellyfin"
+        "podman-paperless"
+        "podman-qbittorrent"
+        "podman-radarr"
+        "podman-sonarr"
+      ];
+    in
+    {
+      systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
+
+      networking.firewall.interfaces."podman*".allowedUDPPorts = [ 53 ];
+
+      networking.hosts."127.0.0.1" = lib.attrValues serviceHostnames ++ [ "repparw.com" ];
+
+      systemd.targets.lazy-containers = {
+        description = "non-essential container services";
+      };
+
+      systemd.timers.lazy-containers = {
+        wantedBy = [ "multi-user.target" ];
+        timerConfig = {
+          OnActiveSec = "10s";
+          Unit = "lazy-containers.target";
+        };
+      };
+
+      systemd.services = lib.genAttrs allContainers (name: {
         wantedBy = lib.mkForce [ "lazy-containers.target" ];
         before = lib.mkForce [ ];
 
@@ -168,45 +182,46 @@ in
         wants = lib.optionals (lib.elem name hddDependent) [ "mnt-hdd.mount" ];
       });
 
-    virtualisation = {
-      podman = {
-        enable = true;
-        autoPrune.enable = true;
-        defaultNetwork.settings.dns_enabled = true;
-      };
+      virtualisation = {
+        podman = {
+          enable = true;
+          autoPrune.enable = true;
+          defaultNetwork.settings.dns_enabled = true;
+        };
 
-      oci-containers.containers = containerDefinitions;
+        oci-containers.containers = containerDefinitions;
 
-      containers = {
-        enable = true;
-        storage.settings = {
-          storage = {
-            driver = "btrfs";
+        containers = {
+          enable = true;
+          storage.settings = {
+            storage = {
+              driver = "btrfs";
+            };
           };
         };
       };
-    };
 
-    fileSystems = mkMerge [
-      (mkFileSystemMount "authelia" "authelia")
-      (mkFileSystemMount "bazarr" "bazarr/backup")
-      (mkFileSystemMount "changedetection" "changedetection")
-      (mkFileSystemMount "ddclient" "ddclient")
-      (mkFileSystemMount "freshrss" "freshrss")
-      (mkFileSystemMount "glance" "glance")
-      (mkFileSystemMount "grafana" "grafana")
-      (mkFileSystemMount "jellyfin" "jellyfin/data/data/backups")
-      (mkFileSystemMount "jellyfin-plugins" "jellyfin/data/plugins")
-      (mkFileSystemMount "ntfy" "ntfy")
-      (mkFileSystemMount "open-webui" "open-webui")
-      (mkFileSystemMount "paper" "paper/export")
-      (mkFileSystemMount "profilarr" "profilarr/backups")
-      (mkFileSystemMount "prometheus" "prometheus")
-      (mkFileSystemMount "prowlarr" "prowlarr/Backups")
-      (mkFileSystemMount "qbittorrent" "qbittorrent/config")
-      (mkFileSystemMount "radarr" "radarr/Backups")
-      (mkFileSystemMount "sonarr" "sonarr/Backups")
-      (mkFileSystemMount "traefik" "traefik")
-    ];
-  };
+      fileSystems = mkMerge [
+        (mkFileSystemMount "authelia" "authelia")
+        (mkFileSystemMount "bazarr" "bazarr/backup")
+        (mkFileSystemMount "changedetection" "changedetection")
+        (mkFileSystemMount "ddclient" "ddclient")
+        (mkFileSystemMount "freshrss" "freshrss")
+        (mkFileSystemMount "glance" "glance")
+        (mkFileSystemMount "grafana" "grafana")
+        (mkFileSystemMount "jellyfin" "jellyfin/data/data/backups")
+        (mkFileSystemMount "jellyfin-plugins" "jellyfin/data/plugins")
+        (mkFileSystemMount "ntfy" "ntfy")
+        (mkFileSystemMount "open-webui" "open-webui")
+        (mkFileSystemMount "paper" "paper/export")
+        (mkFileSystemMount "profilarr" "profilarr/backups")
+        (mkFileSystemMount "prometheus" "prometheus")
+        (mkFileSystemMount "prowlarr" "prowlarr/Backups")
+        (mkFileSystemMount "qbittorrent" "qbittorrent/config")
+        (mkFileSystemMount "radarr" "radarr/Backups")
+        (mkFileSystemMount "sonarr" "sonarr/Backups")
+        (mkFileSystemMount "traefik" "traefik")
+      ];
+    }
+  );
 }

@@ -55,7 +55,7 @@
         "$kiosk" = "$browser -P kiosk";
         "$discord" = "$prefix vesktop";
         "$GUIfileManager" = "$prefix nautilus";
-        "$pomodoro" = "webapp https://noisekun.com/?theme=dark";
+        "$pomodoro" = "blanket";
         "$showkeys" = "pkill wshowkeys || wshowkeys -n 20 -F 36 -a right -a bottom -m 54 -b 000000BB";
         "$screenshot" = "hyprshot -o ${config.xdg.userDirs.pictures}/ss -m";
 

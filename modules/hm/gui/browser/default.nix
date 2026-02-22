@@ -44,6 +44,7 @@ in
             "browser.translations.automaticallyPopup" = false;
             "datareporting.policy.firstRunURL" = "";
             "extensions.autoDisableScopes" = 0;
+            "network.trr.mode" = 5;
             "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
             "sidebar.verticalTabs" = true;
             "sidebar.visibility" = "expand-on-hover";
@@ -167,10 +168,10 @@ in
       chromium = {
         enable = true;
         extensions = [
-          { id = "lmeddoobegbaiopohmpmmobpnpjifpii"; } # open in firefox
+          # { id = "lmeddoobegbaiopohmpmmobpnpjifpii"; } # open in firefox
           { id = "ddkjiahejlhfcafbddmgiahcphecmpfh"; } # ublock
         ];
-        nativeMessagingHosts = [ pkgs.native-client ];
+        # nativeMessagingHosts = [ pkgs.native-client ];
       };
 
     };
