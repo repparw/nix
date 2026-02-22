@@ -7,7 +7,7 @@
     enable = true;
 
     # INFO Colorscheme change
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/tokyodark.yaml";
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/tokyodark-terminal.yaml";
 
     # image = config.lib.stylix.pixel "base00";
 
