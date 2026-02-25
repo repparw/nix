@@ -10,7 +10,7 @@
       runtimeInputs = [ playerctl ];
       text = ''
         if [ "$(playerctl status)" = "Playing" ]; then
-          playerctl pause
+          playerctl -a pause
         else
           playerctl --player=spotifyd play
         fi

@@ -29,6 +29,17 @@ in
             exclude = "dlsuite";
           };
         };
+        buptocrypt = {
+          destination = "/home/repparw/.cloud/crypt/bup";
+          sources = [
+            "/home/repparw/Pictures"
+            "/home/repparw/Documents"
+          ];
+          settings = {
+            archive = true;
+            delete = true;
+          };
+        };
         buprpi = {
           destination = "/home/repparw/.config/dlsuite/pi-services/";
           sources = [ "pi:services/" ];

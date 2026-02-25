@@ -10,28 +10,10 @@ This repository contains repparw's personal NixOS system configurations using th
 
 ---
 
-## Build Commands
-
-### Rebuild System
-```bash
-sudo nixos-rebuild switch --flake .#alpha
-sudo nixos-rebuild switch --flake .#beta
-```
-
-### Build-only (no switch)
-```bash
-sudo nixos-rebuild build --flake .#alpha
-```
-
 ### Eval Configuration
 ```bash
 # Check configuration evaluates without building
 nix eval .#nixosConfigurations.alpha.config.system.build.toplevel.outPath
-```
-
-### Update Flake Inputs
-```bash
-nix flake update
 ```
 
 ---
@@ -43,17 +25,6 @@ nix flake update
 nix fmt
 ```
 This uses `nixfmt-tree` as defined in `flake.nix:117`.
-
-### Check Nix Evaluation
-```bash
-nix eval .#nixosConfigurations.alpha.pkgs.system --impure
-```
-
-### Check for Updates
-```bash
-nix flake info
-nix flake metadata
-```
 
 ---
 

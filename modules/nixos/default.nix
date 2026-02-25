@@ -142,9 +142,19 @@
       ];
 
       experimental-features = "nix-command flakes";
+
+      commit-lock-file-summary = "flake.lock: Update";
     };
 
     optimise.automatic = true;
+  };
+
+  system = {
+    configurationRevision =
+      let
+        self = inputs.self;
+      in
+      self.shortRev or self.dirtyShortRev or self.lastModified or "unknown";
   };
 
   time.timeZone = "America/Argentina/Buenos_Aires";
