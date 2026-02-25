@@ -5,8 +5,10 @@ _: {
   ];
   programs.home-manager.enable = true;
 
-  services.udiskie.enable = true;
-
+  services.udiskie = {
+    enable = true;
+    tray = "never";
+  };
   programs.direnv = {
     enable = true;
     nix-direnv.enable = true;

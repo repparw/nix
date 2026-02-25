@@ -97,6 +97,7 @@
       v = "nvim";
 
       oc = "opencode";
+      occ = "opencode -c";
 
       meminfo = "free -hlt";
       cpuinfo = "lscpu";
