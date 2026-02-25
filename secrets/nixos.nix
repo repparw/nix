@@ -51,6 +51,7 @@
   // (lib.optionalAttrs config.modules.services.enable {
     freshrss = { };
     cloudflare = { };
+    karakeep = { };
   });
 
   sops.templates."cfait-config.toml" = {

@@ -96,6 +96,7 @@ in
             (import ./changedetection.nix)
             (import ./freshrss.nix)
             (import ./jellyfin.nix)
+            (import ./karakeep.nix)
             # (import ./n8n.nix)
             # (import ./monitoring.nix)
             (import ./ntfy.nix)
@@ -160,7 +161,10 @@ in
 
       networking.firewall.interfaces."podman*".allowedUDPPorts = [ 53 ];
 
-      networking.hosts."127.0.0.1" = lib.attrValues serviceHostnames ++ [ "repparw.com" ];
+      networking.hosts."127.0.0.1" = lib.attrValues serviceHostnames ++ [
+        cfg.domain
+        "home.${cfg.domain}"
+      ];
 
       systemd.targets.lazy-containers = {
         description = "non-essential container services";
@@ -211,6 +215,7 @@ in
         (mkFileSystemMount "grafana" "grafana")
         (mkFileSystemMount "jellyfin" "jellyfin/data/data/backups")
         (mkFileSystemMount "jellyfin-plugins" "jellyfin/data/plugins")
+        (mkFileSystemMount "karakeep" "karakeep")
         (mkFileSystemMount "ntfy" "ntfy")
         (mkFileSystemMount "open-webui" "open-webui")
         (mkFileSystemMount "paper" "paper/export")
