@@ -1,4 +1,4 @@
-screenshot-path "$HOME/Pictures/ss/screenshot-%Y-%m-%d_%H-%M-%S.png"
+screenshot-path "/home/repparw/Pictures/ss/screenshot-%Y-%m-%d_%H-%M-%S.png"
 
 prefer-no-csd
 
@@ -53,7 +53,7 @@ layout {
 }
 
 cursor {
-  xcursor-theme "Capitaine Cursors (Gruvbox)"
+  xcursor-theme "BreezeX-RosePine-Linux"
   xcursor-size 24
 }
 
