@@ -29,6 +29,10 @@ output "DP-1" {
   variable-refresh-rate on-demand=true
 }
 
+output "DP-2" {
+  position x=6000 y=0
+}
+
 layout {
   center-focused-column "never"
   empty-workspace-above-first
