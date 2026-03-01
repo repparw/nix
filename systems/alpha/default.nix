@@ -10,6 +10,7 @@
     services.enable = true;
     timers.enable = true;
     vm.enable = false;
+    virtualDisplay.enable = true;
   };
 
   programs.obs-studio.enable = true;
@@ -73,9 +74,6 @@
       enable = true;
       openFirewall = true;
       capSysAdmin = true;
-      settings = {
-        output_name = 1;
-      };
     };
   };
 
