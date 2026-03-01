@@ -43,6 +43,8 @@
         bind -M insert ctrl-e y
         bind ctrl-backspace backward-kill-word
         bind -M insert ctrl-backspace backward-kill-word
+        bind Y fish_clipboard_copy
+        bind yy fish_clipboard_copy
       '';
       timer = ''
         # timer 12m or timer 9m pizza
@@ -69,7 +71,7 @@
       ln = "ln -i";
       mv = "mv -i";
 
-      rm = "trash put";
+      rt = "trash put";
 
       chown = "chown --preserve-root";
       chmod = "chmod --preserve-root";
