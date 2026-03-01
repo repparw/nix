@@ -53,8 +53,8 @@
       wlsunset = {
         enable = true;
         temperature.night = 2500;
-        latitude = -34.9;
-        longitude = -57.9;
+        latitude = -35.1;
+        longitude = -59.8;
       };
 
       hyprpaper = {
@@ -66,6 +66,17 @@
 
     programs = {
       hyprlock.enable = true;
+    };
+
+    # Fix wlsunset not starting on boot/rebuild
+    systemd.user.services.wlsunset = {
+      Unit = {
+        ConditionEnvironment = "WAYLAND_DISPLAY";
+      };
+      Service = {
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
     };
   };
 }
