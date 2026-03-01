@@ -13,6 +13,7 @@
     ./style.nix
     ./timers.nix
     ./vm.nix
+    ./virtual-display.nix
   ];
 
   users.users.repparw = {
