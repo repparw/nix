@@ -117,7 +117,8 @@
         commit = ''
           # Commit changes
           Stage all changes
-          Split staged changes into commits
+          Split related staged changes into commits
+          Ask for confirmation
         '';
       };
       settings = {
