@@ -36,7 +36,7 @@
     };
   };
   "meilisearch" = {
-    image = "getmeili/meilisearch:v1.13.3";
+    image = "docker.io/getmeili/meilisearch:v1.13.3";
     environment = {
       "MEILI_NO_ANALYTICS" = "true";
     };
