@@ -39,10 +39,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    noctalia = {
-      url = "github:noctalia-dev/noctalia-shell";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
@@ -68,7 +64,6 @@
             imports = [
               ./modules/hm
               ./home/${hostname}.nix
-              inputs.noctalia.homeModules.default
             ];
           };
         };

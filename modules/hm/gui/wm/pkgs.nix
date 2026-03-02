@@ -66,6 +66,23 @@
 
     programs = {
       hyprlock.enable = true;
+      ashell = {
+        enable = true;
+        systemd.enable = true;
+        settings = {
+          outputs = {
+            Targets = [ "HDMI-A-1" ];
+          };
+          modules = {
+            left = [ "Clock" ];
+            center = [ "MediaPlayer" ];
+            right = [
+              "Tray"
+              "Settings"
+            ];
+          };
+        };
+      };
     };
 
     # Fix wlsunset not starting on boot/rebuild
