@@ -74,6 +74,26 @@
       enable = true;
       openFirewall = true;
       capSysAdmin = true;
+      settings = {
+        output_name = 2;
+      };
+      applications.apps = [
+        {
+          name = "Steam Big Picture";
+          prep-cmd = [
+            {
+              do = "niri msg action focus-monitor DP-2";
+              undo = "niri msg action focus-monitor DP-1";
+            }
+            {
+              do = "";
+              undo = "setsid steam steam://close/bigpicture";
+            }
+          ];
+          detached-commands = [ "setsid steam steam://open/bigpicture" ];
+          auto-detach = "true";
+        }
+      ];
     };
   };
 
