@@ -96,7 +96,7 @@ in
             (import ./changedetection.nix)
             (import ./freshrss.nix)
             (import ./jellyfin.nix)
-            (import ./karakeep.nix)
+            # (import ./karakeep.nix)
             # (import ./n8n.nix)
             # (import ./monitoring.nix)
             (import ./ntfy.nix)

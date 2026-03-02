@@ -8,6 +8,8 @@
       "MEILI_ADDR" = "http://meilisearch:7700";
       "BROWSER_WEB_URL" = "http://chrome:9222";
       "NEXTAUTH_URL" = "https://karakeep.${cfg.domain}";
+      "DISABLE_PASSWORD_AUTH" = true;
+      "OAUTH_AUTO_REDIRECT" = true;
     };
     environmentFiles = [
       config.sops.secrets.karakeep.path
@@ -22,7 +24,7 @@
   };
   "chrome" = {
     image = "gcr.io/zenika-hub/alpine-chrome:124";
-    extraOptions = [
+    cmd = [
       "--no-sandbox"
       "--disable-gpu"
       "--disable-dev-shm-usage"
