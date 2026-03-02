@@ -113,14 +113,6 @@
             ];
           };
           hyprlock.useWallpaper = false;
-          waybar = {
-            enableCenterBackColors = true;
-            enableRightBackColors = true;
-          };
-          noctalia-shell.enable = true;
-          # niri = {
-          #   enable = true;
-          # };
         };
       };
     }
