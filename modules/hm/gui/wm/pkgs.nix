@@ -62,6 +62,7 @@
           splash = false;
         };
       };
+      swaync.enable = true;
     };
 
     programs = {
@@ -79,8 +80,18 @@
             right = [
               "Tray"
               "Settings"
+              "CustomNotifications"
             ];
           };
+          CustomModule = [
+            {
+              name = "CustomNotifications";
+              icon = "";
+              command = "swaync-client -t -sw";
+              listen_cmd = "swaync-client -swb";
+              alert = ".*notification";
+            }
+          ];
         };
       };
     };
