@@ -15,6 +15,7 @@
       hyprpicker
 
       nautilus
+      baobab
 
       whatsapp-electron
     ];
