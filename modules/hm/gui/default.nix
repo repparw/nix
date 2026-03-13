@@ -11,7 +11,6 @@ in
 {
   imports = [
     ./browser
-    ./gaming.nix
     ./jellyfin-mpv-shim.nix
     ./kanshi.nix
     ./mpv.nix
@@ -29,8 +28,6 @@ in
       godot
 
       anki
-
-      blanket
     ];
 
     gtk = {
