@@ -17,11 +17,16 @@
       default = "3840x2160";
       description = "Resolution for virtual display";
     };
+    refreshRate = lib.mkOption {
+      type = lib.types.int;
+      default = 120;
+      description = "Refresh rate for virtual display";
+    };
   };
 
   config = lib.mkIf config.modules.virtualDisplay.enable {
     boot.kernelParams = [
-      "video=${config.modules.virtualDisplay.port}:${config.modules.virtualDisplay.resolution}e"
+      "video=${config.modules.virtualDisplay.port}:${config.modules.virtualDisplay.resolution}@${toString config.modules.virtualDisplay.refreshRate}e"
     ];
   };
 }
