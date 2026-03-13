@@ -207,6 +207,7 @@ in
 
       fileSystems = mkMerge [
         (mkFileSystemMount "authelia" "authelia")
+        (mkFileSystemMount "listenarr" "listenarr")
         (mkFileSystemMount "bazarr" "bazarr/backup")
         (mkFileSystemMount "changedetection" "changedetection")
         (mkFileSystemMount "ddclient" "ddclient")
