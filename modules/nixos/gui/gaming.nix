@@ -47,8 +47,18 @@ in
 
       gamescope = {
         enable = true;
-        capSysNice = true;
+        # capSysNice = true; # trouble with using gamescope with umu-run in heroic? capability gets stripped and game doesn't boot
       };
+      gamemode.enable = true;
     };
+    environment.systemPackages = with pkgs; [
+      (heroic.override {
+        extraPkgs =
+          pkgs': with pkgs'; [
+            gamescope
+            gamemode
+          ];
+      })
+    ];
   };
 }
