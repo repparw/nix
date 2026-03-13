@@ -3,6 +3,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    nixpkgs-pr = {
+      url = "github:GeoffreyFrogeye/nixpkgs/cfait";
+    };
+
     home-manager = {
       url = "github:nix-community/home-manager";
       # url = "git+file:///home/repparw/code/home-manager";
