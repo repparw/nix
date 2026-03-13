@@ -120,11 +120,11 @@ binds {
   Mod+M   hotkey-overlay-title="Spotify" {spawn "foot" "--app-id" "spotify" "spotify_player" ;}
   Mod+N hotkey-overlay-title="Notes (Terminal)" {spawn "foot" "--app-id" "obsinvim" "fish" "-ic" "obsinvim" ;}
   Mod+Shift+N hotkey-overlay-title="Notes (Obsidian)" {spawn "obsidian" ;}
-  Mod+P hotkey-overlay-title="Pomodoro" {spawn "blanket" ;}
+  Mod+P hotkey-overlay-title="Pomodoro" {spawn "webapp" "https://app.solidtime.io" ;}
   Mod+S hotkey-overlay-title="Scrcpy" {spawn "sh" "-c" "SDL_RENDER_DRIVER=opengl scrcpy --tcpip=192.168.0.32 -S" ;}
   Mod+T hotkey-overlay-title="Top" {spawn "foot" "fish" "-ic" "top" ;}
   Mod+V hotkey-overlay-title="Clipboard" {spawn "foot" "--app-id" "clipse" "clipse" ;}
-  Mod+X hotkey-overlay-title="cfait" {spawn "cfait" ;}
+  Mod+X hotkey-overlay-title="cfait" {spawn "foot" "cfait" ;}
   Mod+Y hotkey-overlay-title="Kiosk Browser" {spawn "firefox" "-P" "kiosk" ;}
   Mod+Z hotkey-overlay-title="MPV Clipboard" {spawn "mpvclip" ;}
 
@@ -176,7 +176,7 @@ binds {
   Mod+U hotkey-overlay-title="Update System" {spawn "foot" "--hold" "fish" "-ic" "nrsu" ;}
   Mod+R hotkey-overlay-title="Raspberry Pi" {spawn "foot" "fish" "-ic" "rpi" ;}
   Mod+Comma hotkey-overlay-title="Show Layout" {spawn "ndrop" "-c" "imv" "imv" "/home/repparw/code/totem/layout/totem.svg" ;}
-  Mod+Period hotkey-overlay-title="Show Keys" {spawn "sh" "-c" "pkill wshowkeys || wshowkeys -a bottom -m 108 -b 00000066" ;}
+  Mod+Period hotkey-overlay-title="Show Keys" {spawn "sh" "-c" "pkill wshowkeys || wshowkeys -a bottom -m 108 -b 000000BB" ;}
 
   Print hotkey-overlay-title="Screenshot Screen" {spawn "niri" "msg" "action" "screenshot-screen" ;}
   Mod+Print hotkey-overlay-title="Screenshot Window" {spawn "niri" "msg" "action" "screenshot-window" ;}
