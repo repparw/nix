@@ -6,6 +6,10 @@ let
   mkPkgOverlay = name: final: prev: {
     ${name} = final.callPackage (pkgsDir + "/${name}") { };
   };
+  excludedPackages = [ "cfait" ]; # use nixpkgs-pr version for testing
+  cfaitOverlay = final: prev: {
+    cfait = inputs.nixpkgs-pr.legacyPackages.${prev.stdenv.hostPlatform.system}.cfait;
+  };
 in
 {
   nixpkgs.overlays = [
@@ -22,6 +26,7 @@ in
       });
     })
     inputs.firefox-addons.overlays.default
+    cfaitOverlay
   ]
-  ++ (map mkPkgOverlay pkgs);
+  ++ (map mkPkgOverlay (builtins.filter (p: !builtins.elem p excludedPackages) pkgs));
 }
