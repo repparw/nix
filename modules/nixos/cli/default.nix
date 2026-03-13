@@ -29,6 +29,8 @@
 
     fail2ban.enable = true;
 
+    # fwupd.enable = true;
+
     gvfs.enable = true;
 
     tailscale = {
