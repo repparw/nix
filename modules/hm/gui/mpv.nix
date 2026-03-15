@@ -27,9 +27,8 @@
       config = {
         volume = 50;
         ytdl-raw-options = "format=bestvideo[height<=?1080]+bestaudio/best,sub-format=en/es,write-srt=";
-        screen = 1;
+        screen-name = "DP-1";
         fs = "yes";
-        fs-screen = 1;
 
         hwdec = "vaapi";
         vo = "gpu-next";
