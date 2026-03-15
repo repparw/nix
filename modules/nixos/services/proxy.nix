@@ -20,6 +20,10 @@
     extraOptions = [
       "--dns=1.1.1.1"
       "--dns=1.0.0.1"
+      "--health-cmd=traefik healthcheck"
+      "--health-interval=30s"
+      "--health-timeout=5s"
+      "--health-retries=3"
     ];
     ports = [
       "443:443/tcp"
