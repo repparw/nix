@@ -83,7 +83,7 @@ in
 
               "traefik.http.routers.${name}.tls" = "true";
               "traefik.http.routers.${name}.rule" = lib.mkDefault traefikRule;
-              "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@docker";
+              "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@file";
             };
           }
         ];
