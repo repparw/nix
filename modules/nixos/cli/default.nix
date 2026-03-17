@@ -33,12 +33,6 @@
 
     gvfs.enable = true;
 
-    tailscale = {
-      enable = true;
-      openFirewall = true;
-      useRoutingFeatures = "both";
-    };
-
     keyd = {
       enable = lib.mkIf (config.networking.hostName != "alpha") true;
       keyboards = {
