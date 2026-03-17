@@ -30,7 +30,8 @@ output "DP-1" {
 }
 
 output "DP-2" {
-  position x=6000 y=0
+  position x=-16000 y=-16000 // move it non-adjacent to stop cursor going there
+  // used as virtual-display for sunshine/moonlight
 }
 
 layout {
