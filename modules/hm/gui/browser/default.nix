@@ -77,7 +77,7 @@
                   };
                 };
                 packages = [
-                  tridactyl
+                  tridactyl-vim
                   ublock-origin
                 ];
               };
