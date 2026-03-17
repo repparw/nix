@@ -20,7 +20,7 @@
     extraOptions = [
       "--dns=1.1.1.1"
       "--dns=1.0.0.1"
-      "--health-cmd=traefik healthcheck"
+      "--health-cmd=traefik healthcheck --ping"
       "--health-interval=30s"
       "--health-timeout=5s"
       "--health-retries=3"
@@ -28,6 +28,7 @@
     ports = [
       "443:443/tcp"
     ];
+    dependsOn = [ "authelia" ];
     labels = {
       "glance.hide" = "true";
       "traefik.tls.stores.default.defaultgeneratedcert.resolver" = "cloudflare";
@@ -35,11 +36,6 @@
       "traefik.tls.stores.default.defaultgeneratedcert.domain.sans" = "*.${cfg.domain}";
       # auth middleware
       # defined here as authelia can start after traefik
-      "traefik.http.middlewares.authelia.forwardAuth.address" =
-        "http://authelia:9091/api/authz/forward-auth";
-      "traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader" = "true";
-      "traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders" =
-        "Remote-User,Remote-Groups,Remote-Email,Remote-Name";
     };
   };
   "ddclient" = {
