@@ -136,6 +136,7 @@
           };
           "rm *" = "deny";
         };
+        formatter = false;
         agent = {
           chat = {
             description = "General purpose chat agent";

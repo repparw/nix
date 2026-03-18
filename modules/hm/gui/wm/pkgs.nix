@@ -26,26 +26,21 @@
         imageDisplay.type = "sixel";
       };
 
-      hypridle = {
+      swayidle = {
         enable = true;
-        settings = {
-          general = {
-            lock_cmd = "pidof hyprlock || hyprlock";
-            before_sleep_cmd = "loginctl lock-session";
-            after_sleep_cmd = "hyprctl dispatch dpms on || niri msg action power-on-monitors";
-          };
-
-          listener = [
-            {
-              timeout = 600;
-              on-timeout = "hyprctl dispatch dpms off || niri msg action power-off-monitors";
-              on-resume = "hyprctl dispatch dpms on || niri msg action power-on-monitors";
-            }
-            {
-              timeout = 610;
-              on-timeout = "loginctl lock-session";
-            }
-          ];
+        timeouts = [
+          {
+            timeout = 600;
+            command = "niri msg action power-off-monitors";
+            resumeCommand = "niri msg action power-on-monitors";
+          }
+          {
+            timeout = 610;
+            command = "loginctl lock-session";
+          }
+        ];
+        events = {
+          before-sleep = "pidof swaylock || swaylock";
         };
       };
 
@@ -67,7 +62,7 @@
     };
 
     programs = {
-      hyprlock.enable = true;
+      swaylock.enable = true;
       ashell = {
         enable = true;
         systemd.enable = true;

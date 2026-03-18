@@ -112,7 +112,7 @@
               "kiosk"
             ];
           };
-          hyprlock.useWallpaper = false;
+          swaylock.image.enable = false;
         };
       };
     }
