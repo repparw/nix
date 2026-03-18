@@ -30,17 +30,17 @@
         enable = true;
         timeouts = [
           {
-            timeout = 600;
+            timeout = 300;
             command = "niri msg action power-off-monitors";
-            resumeCommand = "niri msg action power-on-monitors";
           }
           {
-            timeout = 610;
+            timeout = 315;
             command = "loginctl lock-session";
           }
         ];
         events = {
-          before-sleep = "pidof swaylock || swaylock";
+          before-sleep = "${lib.getExe pkgs.swaylock} -f";
+          lock = "${lib.getExe pkgs.swaylock} -f";
         };
       };
 
