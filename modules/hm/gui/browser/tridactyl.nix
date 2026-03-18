@@ -25,8 +25,8 @@
 
     bind yy clipboard yankshort
 
-    bind J tabnext
-    bind K tabprev
+    bind J tabnext --nowrap
+    bind K tabprev --nowrap
 
     bind gr reader
 
