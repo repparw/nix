@@ -1,0 +1,72 @@
+{
+  lib,
+  config,
+  ...
+}:
+{
+  programs = {
+    mosh = {
+      enable = true;
+      openFirewall = true;
+    };
+
+    nh = {
+      enable = true;
+      flake = "/home/repparw/code/nix";
+      clean = {
+        enable = true;
+        extraArgs = "--keep 3 --keep-since 7d";
+      };
+    };
+
+    fish.enable = true;
+  };
+
+  services = {
+    blueman.enable = true;
+
+    earlyoom.enable = true;
+
+    fail2ban.enable = true;
+
+    # fwupd.enable = true;
+
+    gvfs.enable = true;
+
+    keyd = {
+      enable = lib.mkIf (config.networking.hostName != "alpha") true;
+      keyboards = {
+        default.settings = {
+          main = {
+            capslock = "overload(control, esc)";
+          };
+        };
+      };
+    };
+
+    openssh = {
+      enable = true;
+      openFirewall = true;
+      settings.PasswordAuthentication = false;
+    };
+
+    pipewire = {
+      enable = true;
+      wireplumber = {
+        extraConfig = {
+          disableAutoswitch = {
+            "wireplumber.settings" = {
+              "bluetooth.autoswitch-to-headset-profile" = false;
+            };
+          };
+          disableHwVolume = {
+            "monitor.bluez.properties" = {
+              "bluez5.enable-hw-volume" = false;
+            };
+          };
+        };
+      };
+    };
+  };
+
+}
