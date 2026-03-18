@@ -1,5 +1,6 @@
 {
   description = "repparw's flake";
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -9,7 +10,6 @@
 
     home-manager = {
       url = "github:nix-community/home-manager";
-      # url = "git+file:///home/repparw/code/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -43,98 +43,65 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    den = {
+      url = "github:vic/den";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    import-tree = {
+      url = "github:vic/import-tree";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    flake-aspects = {
+      url = "github:vic/flake-aspects";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs =
-    inputs:
+  outputs = inputs:
     let
-      commonModules = [
-        { nixpkgs.config.allowUnfree = true; }
-        ./modules/nixos
-        inputs.nix-index-database.nixosModules.nix-index
-        { programs.nix-index-database.comma.enable = true; }
-        ./secrets/nixos.nix
-        inputs.home-manager.nixosModules.home-manager
-        inputs.stylix.nixosModules.stylix
-        (import ./overlays)
-      ];
-
-      mkHomeManager = hostname: {
-        home-manager = {
-          useGlobalPkgs = true;
-          useUserPackages = true;
-          backupFileExtension = "hm-backup";
-          users.repparw = {
-            imports = [
-              ./modules/hm
-              ./home/${hostname}.nix
-            ];
-          };
+      eval = inputs.nixpkgs.lib.evalModules {
+        modules = [
+          (inputs.import-tree ./modules)
+        ];
+        specialArgs = {
+          inherit inputs;
         };
       };
-
-      mkSystem =
-        hostname: extraModules:
-        inputs.nixpkgs.lib.nixosSystem {
-          modules =
-            commonModules
-            ++ [
-              ./systems/${hostname}
-              (mkHomeManager hostname)
-            ]
-            ++ extraModules;
-          specialArgs = {
-            inherit inputs;
-          };
-        };
+      den = eval.config.den;
     in
     {
-      nixosConfigurations = {
-        alpha = mkSystem "alpha" [ ];
-        beta = mkSystem "beta" [ ];
-      };
+      nixosConfigurations = eval.config.flake.nixosConfigurations or {};
 
-      packages.x86_64-linux = {
-        vmAlpha = (mkSystem "alpha" [ ]).config.system.build.vm;
-        vmBeta = (mkSystem "beta" [ ]).config.system.build.vm;
-      };
-
-      apps.x86_64-linux = {
-        vmAlpha = {
-          program = "${(mkSystem "alpha" [ ]).config.system.build.vm}/bin/run-alpha-vm";
-          name = "Run alpha in VM";
-        };
-        vmBeta = {
-          program = "${(mkSystem "beta" [ ]).config.system.build.vm}/bin/run-beta-vm";
-          name = "Run beta in VM";
-        };
-      };
-
-      formatter.x86_64-linux =
+      packages.x86_64-linux =
         let
-          pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+          alpha = eval.config.flake.nixosConfigurations.alpha.config.system.build;
+          beta = eval.config.flake.nixosConfigurations.beta.config.system.build;
         in
-        pkgs.treefmt.withConfig {
-          runtimeInputs = with pkgs; [
-            nixfmt
-            deadnix
-          ];
-          settings = {
-            on-unmatched = "info";
-            formatter.nixfmt = {
-              command = "nixfmt";
-              includes = [ "*.nix" ];
-            };
-            formatter.deadnix = {
-              command = "deadnix";
-              options = [
-                "--edit"
-                "--no-lambda-arg"
-                "--no-lambda-pattern-names"
-              ];
-              includes = [ "*.nix" ];
-            };
+        {
+          vmAlpha = alpha.vm or null;
+          vmBeta = beta.vm or null;
+        }
+        // (eval.config.flake.packages or {});
+
+      apps.x86_64-linux =
+        let
+          alpha = eval.config.flake.nixosConfigurations.alpha.config.system.build;
+          beta = eval.config.flake.nixosConfigurations.beta.config.system.build;
+        in
+        {
+          vmAlpha = {
+            program = "${alpha.vm}/bin/run-alpha-vm";
+            name = "Run alpha in VM";
           };
-        };
+          vmBeta = {
+            program = "${beta.vm}/bin/run-beta-vm";
+            name = "Run beta in VM";
+          };
+        }
+        // (eval.config.flake.apps or {});
+
+      formatter = eval.config.flake.formatter or {};
     };
 }
