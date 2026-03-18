@@ -4,9 +4,10 @@ This repository contains repparw's personal NixOS system configurations using th
 
 ## Project Overview
 
-- **Type**: NixOS flake configuration with Home Manager
+- **Type**: NixOS flake configuration with Home Manager (Dendritic pattern)
 - **Systems**: `alpha` (desktop), `beta` (laptop)
-- **Structure**: `flake.nix` → `systems/`, `modules/`, `overlays/`, `home/`, `secrets/`
+- **Pattern**: Uses `vic/den` dendritic pattern with `import-tree`
+- **Structure**: `flake.nix` → `modules/`, `lib/`, `secrets/`
 
 ---
 
@@ -47,10 +48,10 @@ sops secrets/service-name.yaml
 ## Code Style Guidelines
 
 ### File Organization
-- **Systems**: `systems/<hostname>/default.nix` - host-specific config
-- **Modules**: `modules/nixos/` and `modules/hm/` - reusable modules
-- **Overlays**: `overlays/default.nix` - package overlays
-- **Home**: `home/<hostname>.nix` - Home Manager user config
+- **Aspects**: `modules/aspects/<name>.nix` - feature-centric aspects
+- **Hosts**: Defined in `modules/den.nix`
+- **Library**: `lib/nixos-modules/` and `lib/hm-modules/` - reusable modules
+- **Secrets**: `secrets/` - SOPS encrypted secrets
 
 ### Nix Language Conventions
 
@@ -150,30 +151,27 @@ mkPkgOverlay = name: final: prev: {
 
 | File | Purpose |
 |------|---------|
-| `flake.nix` | Main flake entry, defines outputs, packages, VMs |
-| `systems/alpha/default.nix` | Desktop system config |
-| `systems/beta/default.nix` | Laptop system config |
-| `modules/nixos/default.nix` | Shared NixOS configuration |
-| `modules/hm/default.nix` | Shared Home Manager config |
-| `overlays/default.nix` | Package overlays |
-| `secrets/nixos.nix` | SOPS secrets integration |
+| `flake.nix` | Main flake entry with import-tree + vic/den |
+| `modules/den.nix` | Host/user definitions, aspect includes |
+| `modules/aspects/*.nix` | Feature-centric aspects |
+| `lib/nixos-modules/` | Reusable NixOS modules |
+| `lib/hm-modules/` | Reusable Home Manager modules |
+| `secrets/` | SOPS encrypted secrets |
 
 ---
 
 ## Common Tasks
 
 ### Add New System Package
-1. Add to `modules/nixos/default.nix` in `environment.systemPackages` OR
-2. Add to `modules/nixos/cli/default.nix` or `modules/nixos/gui/default.nix`
+1. Create new aspect or add to existing in `modules/aspects/`
 
 ### Add New Home Manager Package
-1. Add to appropriate `modules/hm/cli/` or `modules/hm/gui/` module
+1. Add to `modules/aspects/user-repparw.nix`
 
-### Add New Service (Podman containers)
-1. Create `modules/nixos/services/<service>.nix`
-2. Import in `modules/nixos/services/default.nix`
-3. Enable in system config
+### Add New Service
+1. Create aspect in `modules/aspects/<name>.nix`
+2. Include in host aspect in `modules/den.nix`
 
 ### Add User Program
-1. Create module in `modules/hm/cli/` or `modules/hm/gui/`
+1. Add to `modules/aspects/user-repparw.nix`
 2. Import in appropriate `modules/hm/cli/default.nix` or `modules/hm/gui/default.nix`

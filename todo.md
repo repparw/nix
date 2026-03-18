@@ -1,36 +1,42 @@
 # Todo
 
-## High Priority
-- Add type checking for NixOS module options
-  * Add explicit types for all module options using lib.types
-  * Ensure type safety for complex nested configurations
-  * Validate enum values and numeric ranges
+## Dendritic Port (COMPLETED)
 
-- Document configuration options in each module
-  * Add description field to each mkOption
-  * Include example values and use cases
-  * Document dependencies between options
+Ported to den/dendritic pattern using vic/den and import-tree.
 
-- Create central secrets management documentation
-  * List all secret files and their purposes
-  * Add instructions for rotating secrets
+### Current Structure
+```
+flake.nix              # Minimal flake with import-tree + vic/den
+modules/
+  den.nix              # Host/user definitions + aspect includes
+  aspects/            # Feature-centric aspects
+    nixos-base.nix   # Base NixOS config
+    cli.nix          # CLI tools
+    gui.nix          # GUI config
+    gaming.nix       # Gaming
+    hyprland.nix     # Hyprland WM
+    niri.nix         # Niri WM
+    secrets.nix       # Sops-nix
+    shell-fish.nix   # Fish shell
+    user-repparw.nix # User HM config
+    vms.nix          # VM config
+lib/
+  nixos-modules/     # Original modules (for import)
+  hm-modules/        # Original HM modules
+```
 
-- Add input validation for service configurations
-  * Validate URLs and ports
-  * Check file paths exist
-  * Ensure required services are enabled
+## Pending Tasks
 
-## Medium Priority
-- Consolidate duplicate code across similar services
-- Add health checks for critical services
-- Create backup configuration module
-- Add update notifications for services
+### High Priority
+- [ ] Fix podman container services (need secrets)
+- [ ] Add health checks for services
+- [ ] Document configuration options
 
-## Low Priority
-- Add development container configuration
-- Create module unit tests
-- Add system configuration diagrams
-- Document network topology
+### Medium Priority
+- [ ] Create backup configuration
+- [ ] Add more service aspects
+- [ ] Create aspect documentation
 
-## explore?
-- [ ] onfailure autoupgrade notify
+### Low Priority
+- [ ] Add development container configuration
+- [ ] Create module tests
