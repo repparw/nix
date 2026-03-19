@@ -15,6 +15,7 @@ in
     ./kanshi.nix
     ./mpv.nix
     ./obs.nix
+    ./rquickshare.nix
     ./spotify.nix
     ./wm
     ./zathura.nix
@@ -63,6 +64,8 @@ in
 
     programs = {
       foot.enable = true;
+
+      rquickshare.enable = true;
 
       imv = {
         enable = true;
