@@ -11,33 +11,46 @@ modules/
   den.nix                # Host/user definitions + aspect includes
   aspects/               # Feature-centric aspects
     auto-upgrade.nix     # Automatic flake updates
-    cli.nix              # CLI tools
-    gaming.nix           # Gaming
-    gui.nix              # GUI config
+    cli/
+      core.nix           # NixOS CLI services (mosh, nh, fish, pipewire, etc.)
+      editors.nix        # HM: neovim, opencode, ssh, packages
+      file-manager.nix   # HM: yazi
+      git.nix            # HM: git, delta, eza, fd, fzf, gh, zoxide
+      rclone.nix         # HM: cloud storage
+      scripts.nix        # HM: custom scripts
+      shell.nix          # HM: fish shell, direnv
+      tmux.nix           # HM: tmux
+    gui/
+      apps.nix           # HM: foot, imv, obsidian, vesktop, element, anki, godot, etc.
+      browser.nix        # HM: firefox, chromium
+      core.nix           # NixOS: modules.gui, logid, sddm
+      jellyfin-mpv-shim.nix
+      kanshi.nix         # HM: display profiles (beta only)
+      mpv.nix            # HM: media player
+      obs.nix            # NixOS+HM: OBS studio
+      spotify.nix        # HM: spotify, spotifyd
+      wm.nix             # HM: wayland pkgs, swayidle, wlsunset, rofi
+      zathura.nix        # HM: PDF viewer
+    gaming.nix           # Steam/gamescope
     hyprland.nix         # Hyprland WM
     niri.nix             # Niri WM
-    nixos-base.nix       # Base NixOS config (includes overlays, home-manager config)
+    nixos-base.nix       # Base config, overlays, networking, home-manager
     secrets.nix          # Sops-nix
     services.nix         # Podman container services
-    shell-fish.nix       # Fish shell
     style.nix            # Stylix theming
     timers.nix           # Backup/rsync timers
-    user-repparw.nix     # User HM config
-    virtual-display.nix  # Sunshine/Moonlight virtual display
-    vm.nix               # VM setup
+    virtual-display.nix  # Sunshine/Moonlight
+    vm.nix               # VM/libvirt
 lib/
   service-definitions/   # Container definitions (imported by services.nix)
 pkgs/
-  cfait/                 # cfait package (from nixpkgs-pr)
-  native-client/         # native-client package
+  cfait/                 # Custom package
+  native-client/         # Custom package
 ```
 
 ## Pending Tasks
 
 ### High Priority
-- [x] Fix podman container services (need secrets)
-- [x] Add health checks for services
-- [x] Achieve feature parity with main
 - [ ] Document configuration options
 
 ### Medium Priority
@@ -48,4 +61,4 @@ pkgs/
 ### Low Priority
 - [ ] Add development container configuration
 - [ ] Create module tests
-- [ ] Inline lib/ modules into aspects (if desired)
+- [ ] Inline lib/service-definitions into services.nix (if desired)
