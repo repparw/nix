@@ -70,11 +70,11 @@
     },
     "den": {
       "locked": {
-        "lastModified": 1773802746,
-        "narHash": "sha256-iJUVWJJszikRf+eqm0oj3g1SUIRBJNWdiDgFucMUTUU=",
+        "lastModified": 1773954747,
+        "narHash": "sha256-RkLexhEGGF2CQDnQBRpxps3sc+MzcO9rCunW0SVXuos=",
         "owner": "vic",
         "repo": "den",
-        "rev": "91bf41d5a40c043a8a1492455125597f6b3dbba2",
+        "rev": "66fba2024976e8824daf4e978c2259aabc22e360",
         "type": "github"
       },
       "original": {
@@ -275,11 +275,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773935367,
-        "narHash": "sha256-+RjULqqbCYmOJG+99pNqEGRJV7bX8DYPbxKUhKWFKsI=",
+        "lastModified": 1773952365,
+        "narHash": "sha256-temgIjfdoniHw2vvUGM/BgVgIUig0quH2ClRfSnNk94=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "a7ec5440474cdcc9939cc67c320f01aea0a2f195",
+        "rev": "9bc3ca1230d96119bdf61b9c3ec0c66a2b6eafdc",
         "type": "github"
       },
       "original": {

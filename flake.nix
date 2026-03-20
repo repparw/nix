@@ -45,21 +45,19 @@
 
     den = {
       url = "github:vic/den";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     import-tree = {
       url = "github:vic/import-tree";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     flake-aspects = {
       url = "github:vic/flake-aspects";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = inputs:
+  outputs =
+    inputs:
     let
       eval = inputs.nixpkgs.lib.evalModules {
         modules = [
@@ -72,7 +70,7 @@
       den = eval.config.den;
     in
     {
-      nixosConfigurations = eval.config.flake.nixosConfigurations or {};
+      nixosConfigurations = eval.config.flake.nixosConfigurations or { };
 
       packages.x86_64-linux =
         let
@@ -83,7 +81,7 @@
           vmAlpha = alpha.vm or null;
           vmBeta = beta.vm or null;
         }
-        // (eval.config.flake.packages or {});
+        // (eval.config.flake.packages or { });
 
       apps.x86_64-linux =
         let
@@ -100,8 +98,8 @@
             name = "Run beta in VM";
           };
         }
-        // (eval.config.flake.apps or {});
+        // (eval.config.flake.apps or { });
 
-      formatter = eval.config.flake.formatter or {};
+      formatter = eval.config.flake.formatter or { };
     };
 }
