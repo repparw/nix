@@ -25,7 +25,7 @@ nix eval .#nixosConfigurations.alpha.config.system.build.toplevel.outPath
 ```bash
 nix fmt
 ```
-This uses `nixfmt-tree` as defined in `flake.nix:117`.
+This uses `nixfmt-tree` as defined in `flake.nix`.
 
 ---
 
@@ -48,9 +48,9 @@ sops secrets/service-name.yaml
 ## Code Style Guidelines
 
 ### File Organization
-- **Aspects**: `modules/aspects/<name>.nix` - feature-centric aspects
+- **Aspects**: `modules/aspects/<name>.nix` or `modules/aspects/<category>/<name>.nix` - feature-centric aspects
 - **Hosts**: Defined in `modules/den.nix`
-- **Library**: `lib/nixos-modules/` and `lib/hm-modules/` - reusable modules
+- **Library**: `lib/service-definitions/` - container definitions (imported by services aspect)
 - **Secrets**: `secrets/` - SOPS encrypted secrets
 
 ### Nix Language Conventions
@@ -133,7 +133,7 @@ sops secrets/service-name.yaml
 
 ### Package Overlays
 
-Add custom packages in `pkgs/<name>/default.nix`, then reference in `overlays/default.nix`:
+Custom packages go in `pkgs/<name>/default.nix`, overlays are defined inline in `modules/aspects/nixos-base.nix`:
 ```nix
 mkPkgOverlay = name: final: prev: {
   ${name} = final.callPackage (pkgsDir + "/${name}") { };
@@ -154,8 +154,7 @@ mkPkgOverlay = name: final: prev: {
 | `flake.nix` | Main flake entry with import-tree + vic/den |
 | `modules/den.nix` | Host/user definitions, aspect includes |
 | `modules/aspects/*.nix` | Feature-centric aspects |
-| `lib/nixos-modules/` | Reusable NixOS modules |
-| `lib/hm-modules/` | Reusable Home Manager modules |
+| `lib/service-definitions/` | Container definitions (imported by services aspect) |
 | `secrets/` | SOPS encrypted secrets |
 
 ---
@@ -166,12 +165,11 @@ mkPkgOverlay = name: final: prev: {
 1. Create new aspect or add to existing in `modules/aspects/`
 
 ### Add New Home Manager Package
-1. Add to `modules/aspects/user-repparw.nix`
+1. Add to appropriate aspect in `modules/aspects/` (cli/ or gui/)
 
 ### Add New Service
 1. Create aspect in `modules/aspects/<name>.nix`
 2. Include in host aspect in `modules/den.nix`
 
 ### Add User Program
-1. Add to `modules/aspects/user-repparw.nix`
-2. Import in appropriate `modules/hm/cli/default.nix` or `modules/hm/gui/default.nix`
+1. Add to appropriate aspect in `modules/aspects/cli/` or `modules/aspects/gui/`
