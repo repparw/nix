@@ -17,8 +17,6 @@
         };
       };
 
-    homeManager =
-      { ... }:
-      { };
+    homeManager = { ... }: { };
   };
 }
