@@ -65,7 +65,7 @@
               paperless-export = {
                 serviceConfig = {
                   Type = "oneshot";
-                  ExecStart = "${lib.getExe pkgs.podman} exec paperless document_exporter ../export";
+                  ExecStart = "${lib.getExe pkgs.podman} exec paperless document_exporter --delete --no-archive --no-thumbnail ../export";
                 };
               };
             };
