@@ -216,9 +216,7 @@
         system.stateVersion = "25.11";
       };
 
-    homeManager =
-      { ... }:
-      { };
+    homeManager = { ... }: { };
   };
 
   den.aspects.beta = {

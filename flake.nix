@@ -67,7 +67,6 @@
           inherit inputs;
         };
       };
-      den = eval.config.den;
     in
     {
       nixosConfigurations = eval.config.flake.nixosConfigurations or { };
