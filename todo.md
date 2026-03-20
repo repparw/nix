@@ -23,7 +23,7 @@ modules/
     gui/
       apps.nix           # HM: foot, imv, obsidian, vesktop, element, anki, godot, etc.
       browser.nix        # HM: firefox, chromium
-      core.nix           # NixOS: modules.gui, logid, sddm
+      core.nix           # NixOS: logid, sddm, wshowkeys
       jellyfin-mpv-shim.nix
       kanshi.nix         # HM: display profiles (beta only)
       mpv.nix            # HM: media player
@@ -43,9 +43,6 @@ modules/
     vm.nix               # VM/libvirt
 lib/
   service-definitions/   # Container definitions (imported by services.nix)
-pkgs/
-  cfait/                 # Custom package
-  native-client/         # Custom package
 ```
 
 ## Pending Tasks
