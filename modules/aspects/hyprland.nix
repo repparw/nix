@@ -1,21 +1,31 @@
 {
   den,
+  lib,
   ...
 }:
 {
   den.aspects.hyprland = {
     includes = [ ];
 
-    nixos = { ... }: {
-      imports = [
-        ../../lib/nixos-modules/gui/hyprland.nix
-      ];
-    };
+    nixos =
+      { config, ... }:
+      {
+        config = lib.mkIf config.modules.gui.enable {
+          programs.hyprland = {
+            enable = false;
+            withUWSM = true;
+          };
+        };
+      };
 
-    homeManager = { pkgs, ... }: {
-      imports = [
-        ../../lib/hm-modules/gui/wm/hyprland.nix
-      ];
-    };
+    homeManager =
+      { osConfig, ... }:
+      {
+        config = lib.mkIf osConfig.programs.hyprland.enable {
+          wayland.windowManager.hyprland = {
+            enable = true;
+          };
+        };
+      };
   };
 }

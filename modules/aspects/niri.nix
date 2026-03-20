@@ -1,21 +1,24 @@
 {
   den,
+  lib,
   ...
 }:
 {
   den.aspects.niri = {
     includes = [ ];
 
-    nixos = { ... }: {
-      imports = [
-        ../../lib/nixos-modules/gui/niri.nix
-      ];
-    };
+    nixos =
+      { config, pkgs, ... }:
+      {
+        config = lib.mkIf config.modules.gui.enable {
+          programs.niri.enable = lib.mkDefault true;
 
-    homeManager = { pkgs, ... }: {
-      imports = [
-        ../../lib/hm-modules/gui/wm/niri.nix
-      ];
-    };
+          environment.systemPackages = [ pkgs.xwayland-satellite ];
+        };
+      };
+
+    homeManager =
+      { ... }:
+      { };
   };
 }
