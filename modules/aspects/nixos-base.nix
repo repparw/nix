@@ -23,11 +23,11 @@
         nixpkgs.overlays =
           let
             pkgsDir = ../../pkgs;
-            allPkgs = builtins.attrNames (builtins.readDir pkgsDir);
+            allPkgs =
+              if builtins.pathExists pkgsDir then builtins.attrNames (builtins.readDir pkgsDir) else [ ];
             mkPkgOverlay = name: final: prev: {
               ${name} = final.callPackage (pkgsDir + "/${name}") { };
             };
-            excludedPackages = [ "cfait" ];
             cfaitOverlay = final: prev: {
               cfait = inputs.nixpkgs-pr.legacyPackages.${prev.stdenv.hostPlatform.system}.cfait;
             };
@@ -47,7 +47,7 @@
             inputs.firefox-addons.overlays.default
             cfaitOverlay
           ]
-          ++ (map mkPkgOverlay (builtins.filter (p: !builtins.elem p excludedPackages) allPkgs));
+          ++ (map mkPkgOverlay allPkgs);
 
         nixpkgs.config.allowUnfree = true;
 
