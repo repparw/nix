@@ -8,20 +8,18 @@
     includes = [ ];
 
     nixos =
-      { config, ... }:
+      { ... }:
       {
-        config = lib.mkIf config.modules.gui.enable {
-          programs.hyprland = {
-            enable = false;
-            withUWSM = true;
-          };
+        programs.hyprland = {
+          enable = false;
+          withUWSM = true;
         };
       };
 
     homeManager =
       { osConfig, ... }:
       {
-        config = lib.mkIf osConfig.programs.hyprland.enable {
+        config = lib.mkIf (osConfig.programs.hyprland.enable or false) {
           wayland.windowManager.hyprland = {
             enable = true;
           };

@@ -14,7 +14,7 @@
           enable = lib.mkEnableOption "gaming setup";
         };
 
-        config = lib.mkIf (config.modules.gaming.enable && config.modules.gui.enable) {
+        config = lib.mkIf config.modules.gaming.enable {
           hardware.xpadneo.enable = true;
           programs = {
             steam = {
