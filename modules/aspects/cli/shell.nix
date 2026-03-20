@@ -24,117 +24,117 @@
           };
 
           fish = {
-          enable = true;
-          plugins = with pkgs.fishPlugins; [
-            {
-              name = "pure";
-              src = pure.src;
-            }
-            {
-              name = "plugin-git";
-              src = plugin-git.src;
-            }
-            {
-              name = "done";
-              src = done.src;
-            }
-          ];
-          interactiveShellInit = ''
-            if not set -q TMUX; and set -q SSH_TTY
-              tmux new-session -A -s ssh
-            end
+            enable = true;
+            plugins = with pkgs.fishPlugins; [
+              {
+                name = "pure";
+                src = pure.src;
+              }
+              {
+                name = "plugin-git";
+                src = plugin-git.src;
+              }
+              {
+                name = "done";
+                src = done.src;
+              }
+            ];
+            interactiveShellInit = ''
+              if not set -q TMUX; and set -q SSH_TTY
+                tmux new-session -A -s ssh
+              end
 
-            set -g fish_key_bindings fish_vi_key_bindings
+              set -g fish_key_bindings fish_vi_key_bindings
 
-            if type -q kitty
-              alias ssh "kitten ssh"
-            end
-          '';
-          loginShellInit = ''
-            set -U fish_greeting
-            set -U pure_enable_nixdevshell true
-          '';
-          functions = {
-            fish_mode_prompt = "";
-            fish_user_key_bindings = ''
-              bind -M insert ctrl-y accept-autosuggestion
-              bind -M insert ctrl-e y
-              bind ctrl-backspace backward-kill-word
-              bind -M insert ctrl-backspace backward-kill-word
-              bind Y fish_clipboard_copy
-              bind yy fish_clipboard_copy
+              if type -q kitty
+                alias ssh "kitten ssh"
+              end
             '';
-            timer = ''
-              set label $argv[2]
-              test -z "$label"; and set label "▓▓▓"
-
-              fish -c "sleep $argv[1] && notify-send -i 'task-due' -u critical $label" &> /dev/null
+            loginShellInit = ''
+              set -U fish_greeting
+              set -U pure_enable_nixdevshell true
             '';
+            functions = {
+              fish_mode_prompt = "";
+              fish_user_key_bindings = ''
+                bind -M insert ctrl-y accept-autosuggestion
+                bind -M insert ctrl-e y
+                bind ctrl-backspace backward-kill-word
+                bind -M insert ctrl-backspace backward-kill-word
+                bind Y fish_clipboard_copy
+                bind yy fish_clipboard_copy
+              '';
+              timer = ''
+                set label $argv[2]
+                test -z "$label"; and set label "▓▓▓"
+
+                fish -c "sleep $argv[1] && notify-send -i 'task-due' -u critical $label" &> /dev/null
+              '';
+            };
+            shellAliases = {
+              obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; prevd";
+
+              vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
+
+              nrs = "nh os switch";
+              nrb = "nh os boot";
+              nrt = "nh os test";
+
+              nrsu = "nrs -u --commit-lock-file";
+              nrbu = "nrb -u --commit-lock-file";
+
+              ln = "ln -i";
+              mv = "mv -i";
+
+              rt = "trash put";
+
+              chown = "chown --preserve-root";
+              chmod = "chmod --preserve-root";
+              chgrp = "chgrp --preserve-root";
+            }
+            // (with pkgs; {
+              top = "${lib.getExe bottom}";
+              diff = "${lib.getExe colordiff}";
+              cat = "${lib.getExe bat}";
+              df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\* -only local";
+              du = "${lib.getExe dust}";
+
+              rpi = "${lib.getExe' mosh "mosh"} -P 60001 pi";
+              pc = "${lib.getExe' mosh "mosh"} -P 60000 alpha";
+
+              ns = "${lib.getExe nix-search-tv} print | fzf --preview '${lib.getExe nix-search-tv} preview {}' --scheme history";
+
+              ghcs = "${lib.getExe gh} copilot suggest";
+            });
+            preferAbbrs = true;
+            shellAbbrs = {
+              su = "sudo -s";
+
+              v = "nvim";
+
+              oc = "opencode";
+              occ = "opencode -c";
+
+              meminfo = "free -hlt";
+              cpuinfo = "lscpu";
+
+              md = "mkdir -pv";
+
+              btctl = "bluetoothctl";
+
+              sys = "systemctl";
+              sysu = "systemctl --user";
+              syslist = "systemctl list-unit-files";
+
+              pcls = "sudo podman container ls";
+              pils = "sudo podman image ls";
+              prs = "sudo podman restart";
+              pxcit = "sudo podman exec -it";
+              ppu = "sudo podman pull";
+              plo = "sudo podman logs";
+              pps = "sudo podman ps";
+            };
           };
-          shellAliases = {
-            obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; prevd";
-
-            vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
-
-            nrs = "nh os switch";
-            nrb = "nh os boot";
-            nrt = "nh os test";
-
-            nrsu = "nrs -u --commit-lock-file";
-            nrbu = "nrb -u --commit-lock-file";
-
-            ln = "ln -i";
-            mv = "mv -i";
-
-            rt = "trash put";
-
-            chown = "chown --preserve-root";
-            chmod = "chmod --preserve-root";
-            chgrp = "chgrp --preserve-root";
-          }
-          // (with pkgs; {
-            top = "${lib.getExe bottom}";
-            diff = "${lib.getExe colordiff}";
-            cat = "${lib.getExe bat}";
-            df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\* -only local";
-            du = "${lib.getExe dust}";
-
-            rpi = "${lib.getExe' mosh "mosh"} -P 60001 pi";
-            pc = "${lib.getExe' mosh "mosh"} -P 60000 alpha";
-
-            ns = "${lib.getExe nix-search-tv} print | fzf --preview '${lib.getExe nix-search-tv} preview {}' --scheme history";
-
-            ghcs = "${lib.getExe gh} copilot suggest";
-          });
-          preferAbbrs = true;
-          shellAbbrs = {
-            su = "sudo -s";
-
-            v = "nvim";
-
-            oc = "opencode";
-            occ = "opencode -c";
-
-            meminfo = "free -hlt";
-            cpuinfo = "lscpu";
-
-            md = "mkdir -pv";
-
-            btctl = "bluetoothctl";
-
-            sys = "systemctl";
-            sysu = "systemctl --user";
-            syslist = "systemctl list-unit-files";
-
-            pcls = "sudo podman container ls";
-            pils = "sudo podman image ls";
-            prs = "sudo podman restart";
-            pxcit = "sudo podman exec -it";
-            ppu = "sudo podman pull";
-            plo = "sudo podman logs";
-            pps = "sudo podman ps";
-          };
-        };
         };
       };
   };

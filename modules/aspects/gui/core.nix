@@ -80,7 +80,7 @@
               ExecStart = "${lib.getExe pkgs.logiops_0_2_3}";
             };
           };
-          };
+        };
       };
   };
 }
