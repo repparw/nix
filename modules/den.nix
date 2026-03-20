@@ -25,15 +25,9 @@
       den.aspects.file-manager
       den.aspects.scripts
       den.aspects.rclone
-      den.aspects.browser
+      den.aspects.gui-core
       den.aspects.jellyfin-mpv-shim
       den.aspects.kanshi
-      den.aspects.mpv
-      den.aspects.obs
-      den.aspects.spotify
-      den.aspects.wm
-      den.aspects.zathura
-      den.aspects.gui-apps
     ];
 
     homeManager =
@@ -59,8 +53,6 @@
       den.aspects.vm
       den.aspects.cli-core
       den.aspects.gui-core
-      den.aspects.niri
-      den.aspects.hyprland
       den.aspects.gaming
       den.aspects.nixos-services
       den.aspects.style
@@ -143,7 +135,6 @@
         hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
         modules = {
-          gui.enable = true;
           gaming.enable = true;
           services.enable = true;
           timers.enable = true;
@@ -227,7 +218,6 @@
       den.aspects.vm
       den.aspects.cli-core
       den.aspects.gui-core
-      den.aspects.niri
       den.aspects.style
       den.aspects.auto-upgrade
     ];
@@ -288,8 +278,6 @@
 
         nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
         hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-
-        modules.gui.enable = true;
 
         networking.hostName = "beta";
 

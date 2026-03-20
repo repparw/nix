@@ -9,7 +9,6 @@
       { pkgs, ... }:
       {
         imports = [
-          inputs.sops-nix.nixosModules.sops
           inputs.nix-index-database.nixosModules.nix-index
           inputs.home-manager.nixosModules.home-manager
           inputs.stylix.nixosModules.stylix
@@ -76,10 +75,6 @@
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN6UbXeSlW/2jkIU9mQIN5xWElnFbA9tw0BfT072WXgR t440"
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPFzKXBKbNZ+jr06UNKj0MHIzYw54CMP6suD8iTd7CxH ubritos@gmail.com #alpha"
         ];
-
-        image.modules.iso-installer = {
-          networking.wireless.enable = false;
-        };
 
         systemd.network = {
           enable = true;
