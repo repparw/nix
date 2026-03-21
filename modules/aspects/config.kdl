@@ -26,7 +26,12 @@ gestures {
 
 output "DP-1" {
   mode "1920x1080"
+  position x=0 y=0
   variable-refresh-rate on-demand=true
+}
+
+output "HDMI-A-1" {
+  position x=-1920 y=0
 }
 
 output "DP-2" {
@@ -172,7 +177,7 @@ binds {
   // Mod+Shift+8 {move-column-to-workspace "8" ;} 
   // Mod+Shift+9 {move-column-to-workspace "9" ;}
 
-  Mod+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen and turn off monitors" { spawn-sh "loginctl lock-session && niri msg action power-off-monitors";}
+  Mod+Alt+L allow-when-locked=true hotkey-overlay-title="Lock screen and turn off monitors" { spawn-sh "loginctl lock-session && sleep 3 && niri msg action power-off-monitors";}
 
   Mod+U hotkey-overlay-title="Update System" {spawn "foot" "--hold" "fish" "-ic" "nrsu" ;}
   Mod+R hotkey-overlay-title="Raspberry Pi" {spawn "foot" "fish" "-ic" "rpi" ;}
@@ -181,7 +186,7 @@ binds {
 
   Print hotkey-overlay-title="Screenshot Screen" {spawn "niri" "msg" "action" "screenshot-screen" ;}
   Mod+Print hotkey-overlay-title="Screenshot Window" {spawn "niri" "msg" "action" "screenshot-window" ;}
-  Mod+Shift+Print hotkey-overlay-title="Screenshot Area" {spawn "niri" "msg" "action" "screenshot" "-p" "false" ;}
+  Mod+Shift+Print hotkey-overlay-title="Screenshot Area" {spawn "niri" "msg" "action" "screenshot" ;}
 
   XF86AudioPlay allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "media-play-pause";}
   XF86AudioPause allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "media-play-pause" ;}

@@ -19,8 +19,6 @@
         niriEnabled = osConfig.programs.niri.enable or false;
       in
       {
-        services.wpaperd.enable = lib.mkIf niriEnabled true;
-
         home.packages = with pkgs; [
           pwvucontrol
           scrcpy

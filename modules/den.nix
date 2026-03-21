@@ -35,7 +35,7 @@
       {
         home.username = "repparw";
         home.homeDirectory = "/home/repparw";
-        home.stateVersion = "25.05";
+        home.stateVersion = "25.11";
         xdg.enable = true;
         home.preferXdgDirectories = true;
         services.udiskie = {
@@ -56,6 +56,7 @@
       den.aspects.gaming
       den.aspects.nixos-services
       den.aspects.style
+      den.aspects.logid
       den.aspects.auto-upgrade
       den.aspects.timers
       den.aspects.virtual-display
@@ -177,31 +178,7 @@
             };
           };
 
-          sunshine = {
-            enable = true;
-            openFirewall = true;
-            capSysAdmin = true;
-            settings = {
-              output_name = 2;
-            };
-            applications.apps = [
-              {
-                name = "Steam Big Picture";
-                prep-cmd = [
-                  {
-                    do = "niri msg action focus-monitor DP-2";
-                    undo = "niri msg action focus-monitor DP-1";
-                  }
-                  {
-                    do = "";
-                    undo = "setsid steam steam://close/bigpicture";
-                  }
-                ];
-                detached-commands = [ "setsid steam steam://open/bigpicture" ];
-                auto-detach = "true";
-              }
-            ];
-          };
+
         };
 
         system.stateVersion = "25.11";

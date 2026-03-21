@@ -122,9 +122,12 @@
               allowedTCPPorts = [
                 80
                 443
+                32100 # rquickshare
               ];
               allowedUDPPorts = [
                 54535
+                5353 # rquickshare mDNS
+                32100 # rquickshare
               ];
             };
           };
