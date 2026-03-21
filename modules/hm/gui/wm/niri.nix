@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   osConfig,
   ...
@@ -9,7 +10,7 @@
 
     # use hm module when merged https://github.com/nix-community/home-manager/pull/8700
 
-    # xdg.configFile."niri/config.kdl".source = config.lib.file.mkOutOfStoreSymlink ./config.kdl;
+    xdg.configFile."niri/config.kdl".source = config.lib.file.mkOutOfStoreSymlink ./config.kdl;
 
     services.wpaperd.enable = true;
   };
