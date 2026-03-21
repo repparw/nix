@@ -3,9 +3,7 @@
   ...
 }:
 {
-  den.aspects.mpv = {
-    includes = [ ];
-
+  den.aspects.gui.provides.mpv = {
     homeManager =
       { ... }:
       {

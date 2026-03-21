@@ -4,9 +4,7 @@
   ...
 }:
 {
-  den.aspects.hyprland = {
-    includes = [ ];
-
+  den.aspects.gui.provides.hyprland = {
     nixos =
       { ... }:
       {

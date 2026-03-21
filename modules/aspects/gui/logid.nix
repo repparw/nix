@@ -32,7 +32,7 @@
 
                 buttons: (
                   {
-                    cid = 0xfd;
+                    cid: 0xfd;
                     action =
                     {
                       type = "Keypress";

@@ -4,9 +4,7 @@
   ...
 }:
 {
-  den.aspects.gui-apps = {
-    includes = [ ];
-
+  den.aspects.gui.provides.guiApps = {
     homeManager =
       {
         config,
@@ -15,9 +13,6 @@
         lib,
         ...
       }:
-      let
-        niriEnabled = osConfig.programs.niri.enable or false;
-      in
       {
         home.packages = with pkgs; [
           pwvucontrol
