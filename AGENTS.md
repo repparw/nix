@@ -12,6 +12,13 @@ The key idea is:
 - route host/user mutual providers through `den.ctx.user.includes`
 - use `includes` to compose aspects
 
+Common patterns in this repo after the dendritic refactor:
+
+- repo-wide base behavior comes from `den.default.includes`
+- concern-specific flake inputs live next to the aspect or module that uses them
+- host aspects stay focused on machine-specific hardware, filesystems, and flags
+- user aspects stay focused on shared user composition and user-owned crossovers
+
 ## Upstream-oriented layout
 
 ### `flake.nix`
@@ -26,63 +33,45 @@ configuration.
 
 ### `modules/dendritic.nix`
 
-This is the upstream-style flake wiring file.
+This is the upstream-style core flake wiring file.
 
 It imports the dendritic modules from:
 
 - `flake-file`
 - `den`
 
-and keeps flake-file metadata close to the module tree instead of embedding
-all flake wiring logic in `flake.nix`.
+and keeps the base dendritic wiring out of `flake.nix`.
 
-### `modules/hosts.nix`
+Use this file for repo-global flake wiring, such as:
 
-This is the canonical place for Den inventory:
+- importing upstream dendritic flake modules
+- declaring base inputs like `nixpkgs`, `den`, `flake-file`, `import-tree`
 
-- `den.hosts.<system>.<host>.users.<user> = { };`
-- `den.schema.user.classes = [ "homeManager" ];`
+Do not treat `modules/dendritic.nix` as the required home for every
+`flake-file.inputs.*` declaration.
 
-In this repo:
+In this repo, concern-specific flake inputs should be declared next to the
+module or aspect that owns them. For example:
 
-```nix
-{ lib, ... }:
-{
-  den.schema.user.classes = lib.mkDefault [ "homeManager" ];
-
-  den.hosts.x86_64-linux = {
-    alpha.users.repparw = { };
-    beta.users.repparw = { };
-  };
-}
-```
-
-If you add a new machine or a new user, start here.
+- `repparw.nix` owns the `home-manager` input it imports
+- `nix-index.nix` owns the `nix-index-database` input it imports
+- `nixvim.nix` owns the `nixvim-config` input it overlays
 
 ### `modules/defaults.nix`
 
 Use `den.default` for repo-wide defaults that should apply everywhere unless
-overridden, and `den.ctx.user.includes` for upstream mutual host/user
-routing.
+overridden.
 
-In this repo, `modules/defaults.nix` also enables Den's upstream
-mutual-provider through `den.ctx.user.includes`, matching the upstream
-pattern.
+In this repo, `modules/defaults.nix` also carries repo-wide shared includes
+through `den.default.includes`, in addition to shared state versions.
 
-`den.default` is therefore the place for:
+Today that includes the baseline aspects that should apply on every host:
 
-- shared `stateVersion`
-- repo-wide baseline defaults
-
-Example:
-
-```nix
-{
-  den.ctx.user.includes = [ den._."mutual-provider" ];
-  den.default.nixos.system.stateVersion = "25.11";
-  den.default.homeManager.home.stateVersion = "25.11";
-}
-```
+- `nix-index`
+- `nixvim`
+- `nixpkgs`
+- `nix`
+- `system`
 
 This is upstream-preferred over repeating the same values in every host or
 user aspect, or wiring host/user mutual routing ad hoc.
@@ -98,20 +87,29 @@ In this repo it defines `perSystem.packages.vmAlpha` /
 This keeps VM execution out of `flake.nix` and out of the
 `virtualisation` aspect.
 
-### `modules/aspects/<host>.nix`
+### `modules/hosts/<host>.nix`
 
 Host aspects configure host-specific behavior for Den-created host aspects.
 
 Examples:
 
-- `modules/aspects/alpha.nix`
-- `modules/aspects/beta.nix`
+- `modules/hosts/alpha.nix`
+- `modules/hosts/beta.nix`
 
 These files should contain:
 
 - `includes` for shared aspects/providers
 - host-specific `nixos` configuration
 - optionally host-specific `homeManager` configuration
+
+In this repo, host aspects usually include a small shared host stack such as:
+
+- `den.provides.hostname`
+- `den.aspects.cli`
+- `den.aspects.networking`
+- `den.aspects.overlays`
+- `den.aspects.secrets`
+- `den.aspects.style`
 
 These files are the right place for:
 
@@ -135,8 +133,17 @@ layer. It includes:
 
 It also owns:
 
-- `users.users.repparw` in `nixos`
-- `home.username` and `home.homeDirectory` in `homeManager`
+- shared user composition and user-local settings
+- the `home-manager` NixOS module import and bridge settings
+
+Identity fields such as:
+
+- `users.users.repparw`
+- `home.username`
+- `home.homeDirectory`
+
+are provided in this repo through `den.provides.define-user`, which is
+included from the user aspect.
 
 It may also provide host-facing config through:
 
@@ -186,6 +193,7 @@ Use `den.default` for:
 
 - shared `stateVersion`
 - repo-wide baseline options
+- repo-wide shared `includes`
 - truly global defaults that should apply across contexts
 
 Do not repeat identical values in every host/user aspect when a default is
@@ -229,38 +237,43 @@ Use `imports` inside `nixos` or `homeManager` modules for things like:
 
 That is module-system composition, not Den aspect composition.
 
+### 7. Co-locate flake inputs with their owning concern
+
+Declare `flake-file.inputs.*` in the module or aspect that actually uses the
+input when that dependency is concern-specific.
+
+Examples in this repo:
+
+- `repparw.nix` declares `flake-file.inputs.home-manager`
+- `nix-index.nix` declares `flake-file.inputs.nix-index-database`
+- `nixvim.nix` declares `flake-file.inputs.nixvim-config`
+- `style.nix` declares `flake-file.inputs.stylix`
+- `secrets.nix` declares `flake-file.inputs.sops-nix`
+- `gui/browser.nix` declares `flake-file.inputs.firefox-addons`
+
+Prefer this over centralizing every input in `modules/dendritic.nix`.
+Keep `modules/dendritic.nix` for base repo wiring and universally shared
+inputs.
+
+### 8. Prefer named composition aspects for shared stacks
+
+If several aspects naturally form one reusable stack, expose a named
+composition aspect instead of repeating the full list everywhere.
+
+In this repo:
+
+- `den.aspects.cli` is the composed system CLI baseline
+- `den.aspects.gui` is the composed GUI/session stack
+
+Prefer these names over legacy placeholders such as `cli-core` or `gui-core`.
+
 ## Recommended workflow for common changes
-
-### Add a new host
-
-1. Declare it in `modules/hosts.nix`.
-2. Create `modules/aspects/<host>.nix`.
-3. Define `den.aspects.<host>`.
-4. Add shared dependencies in `includes`.
-5. Put machine-specific settings in that host aspect.
-
-### Add a new user
-
-1. Declare the user under the relevant host in `modules/hosts.nix`.
-2. Create or extend `modules/aspects/<user>.nix`.
-3. Define `den.aspects.<user>`.
-4. Include `den.provides.define-user` and
-   `den.provides.primary-user` if this is the main login user.
 
 ### Add a reusable system feature
 
 1. Create `modules/aspects/<feature>.nix`.
 2. Define `den.aspects.<feature>`.
-3. Add `options.modules.<feature>.*` if it exposes toggles.
-4. Enable it from host aspects through `includes` and host config.
-
-### Add a reusable Home Manager feature
-
-1. Create `modules/aspects/cli/<feature>.nix` or
-   `modules/aspects/gui/<feature>.nix`.
-2. Define `den.aspects.<feature>`.
-3. Keep the behavior in `homeManager = { ... }: { ... };`
-4. Include it from the user aspect if it is shared across machines.
+3. Enable it from host aspects through `includes` and host config.
 
 ## Guardrails
 
@@ -268,6 +281,7 @@ That is module-system composition, not Den aspect composition.
 - Keep aspect names aligned with the concern they represent.
 - Keep host declarations centralized in `modules/hosts.nix`.
 - Keep global defaults in `den.default`.
+- Keep concern-local flake inputs next to the concern that uses them.
 - Keep host specifics in host aspects.
 - Keep user specifics in user aspects.
 - Keep reusable features in dedicated feature aspects.

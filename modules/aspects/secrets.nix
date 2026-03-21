@@ -22,7 +22,7 @@
         ];
 
         sops = {
-          defaultSopsFile = ../../secrets/secrets.yaml;
+          defaultSopsFile = ../../secrets.yaml;
           defaultSopsFormat = "yaml";
         };
 
