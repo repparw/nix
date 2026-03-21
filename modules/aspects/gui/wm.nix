@@ -8,7 +8,7 @@
     includes = [ ];
 
     homeManager =
-      { pkgs, ... }:
+      { config, pkgs, ... }:
       {
         home.packages = with pkgs; [
           wl-clipboard
@@ -30,16 +30,18 @@
             enable = true;
             timeouts = [
               {
-                timeout = 600;
+                timeout = 300;
                 command = "niri msg action power-off-monitors";
-                resumeCommand = "niri msg action power-on-monitors";
               }
               {
-                timeout = 610;
+                timeout = 315;
                 command = "loginctl lock-session";
               }
             ];
-            events.before-sleep = "pidof swaylock || swaylock";
+            events = {
+              before-sleep = "${lib.getExe pkgs.swaylock} -f";
+              lock = "${lib.getExe pkgs.swaylock} -f";
+            };
           };
 
           hyprpolkitagent.enable = true;
@@ -82,28 +84,106 @@
                   alert = ".*notification";
                 }
               ];
+              appearance = {
+                style = "Islands";
+                opacity = 1.0;
+                menu = {
+                  opacity = lib.mkForce 0.95;
+                  backdrop = 0.3;
+                };
+              };
             };
           };
 
-          rofi = {
-            enable = true;
-            modes = [
-              "drun"
-              "run"
-              "window"
-              "combi"
-            ];
-          };
+          rofi =
+            let
+              inherit (config.lib.formats.rasi) mkLiteral;
+            in
+            {
+              enable = true;
+              modes = [
+                "drun"
+                "run"
+                "window"
+                "combi"
+              ];
+              extraConfig = {
+                combi-modes = "drun,window";
+                show-icons = true;
+                hover-select = true;
+                bw = 0;
+                display-combi = "";
+                display-drun = "";
+                display-window = "";
+                drun-display-format = "{name}";
+                me-select-entry = "";
+                me-accept-entry = "MousePrimary";
+                kb-cancel = "Escape,MouseMiddle";
+              };
+              theme = {
+                "*" = {
+                  margin = mkLiteral "0px";
+                  padding = mkLiteral "0px";
+                  spacing = mkLiteral "0px";
+                };
+
+                "window" = {
+                  location = mkLiteral "north";
+                  y-offset = mkLiteral "calc(50% - 176px)";
+                  width = mkLiteral "480px";
+                  border-radius = mkLiteral "24px";
+                };
+
+                "mainbox" = {
+                  padding = mkLiteral "12px";
+                };
+
+                "inputbar" = {
+                  border = mkLiteral "2px";
+                  border-radius = mkLiteral "16px";
+                  padding = mkLiteral "8px 16px";
+                  spacing = mkLiteral "8px";
+                  children = map mkLiteral [
+                    "prompt"
+                    "entry"
+                  ];
+                };
+
+                "entry" = {
+                  placeholder = "Search";
+                };
+
+                "message" = {
+                  margin = mkLiteral "12px 0 0";
+                  border-radius = mkLiteral "16px";
+                };
+
+                "textbox" = {
+                  padding = mkLiteral "8px 24px";
+                };
+
+                "listview" = {
+                  margin = mkLiteral "12px 0 0";
+                  lines = mkLiteral "8";
+                  columns = mkLiteral "1";
+                  fixed-height = mkLiteral "false";
+                };
+
+                "element" = {
+                  border-radius = mkLiteral "16px";
+                };
+
+                "element-icon" = {
+                  size = mkLiteral "1em";
+                  vertical-align = mkLiteral "0.5";
+                };
+              };
+            };
         };
 
-        systemd.user.services.wlsunset = {
-          Unit = {
-            ConditionEnvironment = "WAYLAND_DISPLAY";
-          };
-          Service = {
-            Restart = "on-failure";
-            RestartSec = 5;
-          };
+        systemd.user.services.wlsunset.Service = {
+          Restart = "on-failure";
+          RestartSec = 5;
         };
       };
   };

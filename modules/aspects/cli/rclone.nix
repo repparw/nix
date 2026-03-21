@@ -48,8 +48,10 @@
                   type = "union";
                   upstreams = "gdrive:crypt nextcloud:crypt";
                   policy_read = "all";
+                  action_policy = "all";
                   create_policy = "all";
                   search_policy = "all";
+                  cache_policy = "newest";
                 };
               };
 
