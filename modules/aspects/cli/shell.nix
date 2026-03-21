@@ -24,7 +24,6 @@
           };
 
           fish = {
-            enable = true;
             plugins = with pkgs.fishPlugins; [
               {
                 name = "pure";

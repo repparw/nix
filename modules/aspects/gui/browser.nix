@@ -1,13 +1,17 @@
 {
   den,
+  inputs,
   pkgs,
   lib,
   ...
 }:
 {
-  den.aspects.browser = {
-    includes = [ ];
+  flake-file.inputs.firefox-addons = {
+    url = "github:petrkozorezov/firefox-addons-nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
 
+  den.aspects.gui.provides.browser = {
     homeManager =
       {
         pkgs,

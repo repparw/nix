@@ -1,12 +1,20 @@
 {
+  inputs,
   lib,
   ...
 }:
 {
+  flake-file.inputs.stylix = {
+    url = "github:nix-community/stylix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   den.aspects.style = {
     nixos =
       { pkgs, config, ... }:
       {
+        imports = [ inputs.stylix.nixosModules.stylix ];
+
         stylix =
           let
             theme = "${pkgs.base16-schemes}/share/themes/tokyodark-terminal.yaml";

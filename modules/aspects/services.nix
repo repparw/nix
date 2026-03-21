@@ -102,7 +102,7 @@
                 }
               ];
 
-            containersList = if config.networking.hostName == "alpha" then lib.attrValues serviceFiles else [ ];
+            containersList = lib.attrValues serviceFiles;
 
             rawContainers = lib.foldl' (acc: def: acc // (def { inherit cfg config; })) { } containersList;
 

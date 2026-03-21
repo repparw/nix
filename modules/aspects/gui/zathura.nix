@@ -3,9 +3,7 @@
   ...
 }:
 {
-  den.aspects.zathura = {
-    includes = [ ];
-
+  den.aspects.gui.provides.zathura = {
     homeManager =
       { ... }:
       {

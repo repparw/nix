@@ -5,9 +5,7 @@
   ...
 }:
 {
-  den.aspects.niri = {
-    includes = [ ];
-
+  den.aspects.gui.provides.niri = {
     nixos =
       { pkgs, ... }:
       {

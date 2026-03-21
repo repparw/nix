@@ -24,6 +24,9 @@
             };
             applications.apps = [
               {
+                name = "Desktop";
+              }
+              {
                 name = "Steam Big Picture";
                 cmd = "";
                 prep-cmd = [

@@ -1,25 +1,23 @@
+{ den, ... }:
 {
-  den,
-  pkgs,
-  lib,
-  ...
-}:
-{
-  den.aspects.gui-core = {
+  den.aspects.gui = {
     includes = [
-      den.aspects.niri
-      den.aspects.hyprland
-      den.aspects.obs
-      den.aspects.browser
-      den.aspects.mpv
-      den.aspects.spotify
-      den.aspects.wm
-      den.aspects.zathura
-      den.aspects.gui-apps
+      den.aspects.gui._.session
+      den.aspects.gui._.niri
+      den.aspects.gui._.hyprland
+      den.aspects.gui._.obs
+      den.aspects.gui._.browser
+      den.aspects.gui._.mpv
+      den.aspects.gui._.spotify
+      den.aspects.gui._.wm
+      den.aspects.gui._.zathura
+      den.aspects.gui._.guiApps
     ];
+  };
 
+  den.aspects.gui.provides.session = {
     nixos =
-      { pkgs, ... }:
+      { ... }:
       {
         programs = {
           wshowkeys.enable = true;
@@ -38,6 +36,5 @@
           };
         };
       };
-
   };
 }
