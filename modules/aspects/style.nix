@@ -6,7 +6,9 @@
 {
   flake-file.inputs.stylix = {
     url = "github:nix-community/stylix";
+    inputs.flake-parts.follows = "flake-parts";
     inputs.nixpkgs.follows = "nixpkgs";
+    inputs.systems.follows = "systems";
   };
 
   den.aspects.style = {
