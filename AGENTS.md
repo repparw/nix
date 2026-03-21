@@ -1,175 +1,285 @@
-# AGENTS.md - NixOS Configuration Repository
+# AGENTS.md
 
-This repository contains repparw's personal NixOS system configurations using the Nix Flake system.
+This repository follows the upstream `vic/den` default-template structure
+and usage model.
 
-## Project Overview
+The key idea is:
 
-- **Type**: NixOS flake configuration with Home Manager (Dendritic pattern)
-- **Systems**: `alpha` (desktop), `beta` (laptop)
-- **Pattern**: Uses `vic/den` dendritic pattern with `import-tree`
-- **Structure**: `flake.nix` → `modules/`, `lib/`, `secrets/`
+- declare hosts and users centrally in `modules/hosts.nix`
+- let Den create the parametric host/user aspects from those declarations
+- keep cross-cutting configuration in `den.aspects.*`
+- keep repo-wide defaults in `modules/defaults.nix` via `den.default`
+- route host/user mutual providers through `den.ctx.user.includes`
+- use `includes` to compose aspects
 
----
+## Upstream-oriented layout
 
-### Eval Configuration
-```bash
-# Check configuration evaluates without building
-nix eval .#nixosConfigurations.alpha.config.system.build.toplevel.outPath
-```
+### `flake.nix`
 
----
+Responsibilities:
 
-## Lint/Format Commands
+- bootstrap `flake-parts`
+- import the local module tree with `import-tree`
 
-### Format Code
-```bash
-nix fmt
-```
-This uses `nixfmt-tree` as defined in `flake.nix`.
+It should not be the main place for host declarations or day-to-day aspect
+configuration.
 
----
+### `modules/dendritic.nix`
 
-## Secrets Management
+This is the upstream-style flake wiring file.
 
-Secrets are managed via **sops-nix** and stored in `secrets/`.
+It imports the dendritic modules from:
 
-- DO NOT commit raw secret values
-- Use `sops` to edit encrypted secrets
-- The secrets directory contains `.sops.yaml` and age keys
+- `flake-file`
+- `den`
 
-Example workflow for adding a new secret:
-```bash
-# Edit secrets (requires proper age key)
-sops secrets/service-name.yaml
-```
+and keeps flake-file metadata close to the module tree instead of embedding
+all flake wiring logic in `flake.nix`.
 
----
+### `modules/hosts.nix`
 
-## Code Style Guidelines
+This is the canonical place for Den inventory:
 
-### File Organization
-- **Aspects**: `modules/aspects/<name>.nix` or `modules/aspects/<category>/<name>.nix` - feature-centric aspects
-- **Hosts**: Defined in `modules/den.nix`
-- **Library**: `lib/service-definitions/` - container definitions (imported by services aspect)
-- **Secrets**: `secrets/` - SOPS encrypted secrets
+- `den.hosts.<system>.<host>.users.<user> = { };`
+- `den.schema.user.classes = [ "homeManager" ];`
 
-### Nix Language Conventions
-
-1. **Attribute Sets**: Use curly braces for multi-line attribute sets
-   ```nix
-   config = {
-     option1 = true;
-     option2 = "value";
-   };
-   ```
-
-2. **Lists**: Use inline syntax for short lists, multi-line for long ones
-   ```nix
-   shortList = [ a b c ];
-
-   longList = [
-     "first"
-     "second"
-     "third"
-   ];
-   ```
-
-3. **Let Bindings**: Use `let ... in` for local definitions
-   ```nix
-   let
-     pkgsDir = ../pkgs;
-     mkPkg = name: final: prev: { ${name} = final.callPackage ...; };
-   in
-   { ... }
-   ```
-
-4. **Imports**: Always use relative paths with `./` or `../`
-   ```nix
-   imports = [ ./default.nix ];
-   ```
-
-5. **Function Arguments**: Use `{ ... }:` pattern for module arguments
-   ```nix
-   { config, pkgs, inputs, ... }:
-   ```
-
-6. **Trailing Commas**: Always use trailing commas (Nix is tolerant but this is idiomatic)
-
-### Naming Conventions
-
-- **Files**: `kebab-case.nix` (e.g., `auto-upgrade.nix`, not `autoUpgrade.nix`)
-- **Options**: Follow NixOS option naming (e.g., `services.foo.enable`)
-- **Variables**: `camelCase` for local variables, `kebab-case` for attribute names
-- **Modules**: Use descriptive names (e.g., `services/nginx.nix`)
-
-### Formatting Rules
-
-- **Indentation**: 2 spaces (Nix standard)
-- **Line Length**: Prefer lines under 80 chars when practical
-- **Spacing**: Space after `=` in bindings, no space before `=` in attributes
-- **Comments**: Use `#` for comments; avoid unnecessary comments
-
-### Imports Pattern
+In this repo:
 
 ```nix
-# At top of file for module imports
-{ config, pkgs, lib, inputs, ... }:
-
+{ lib, ... }:
 {
-  imports = [
-    ./hardware-configuration.nix
-    ../../modules/nixos/services
-  ];
-  
-  # ... configuration
+  den.schema.user.classes = lib.mkDefault [ "homeManager" ];
+
+  den.hosts.x86_64-linux = {
+    alpha.users.repparw = { };
+    beta.users.repparw = { };
+  };
 }
 ```
 
-### Error Handling
+If you add a new machine or a new user, start here.
 
-- Use `lib.mkIf` for conditional options (not `if then else` in attribute sets)
-- Use `lib.mkMerge` for merging lists/attrs across modules
-- Validate paths exist with `lib.pathExists` or `builtins.pathExists`
+### `modules/defaults.nix`
 
-### Package Overlays
+Use `den.default` for repo-wide defaults that should apply everywhere unless
+overridden, and `den.ctx.user.includes` for upstream mutual host/user
+routing.
 
-Custom packages go in `pkgs/<name>/default.nix`, overlays are defined inline in `modules/aspects/nixos-base.nix`:
+In this repo, `modules/defaults.nix` also enables Den's upstream
+mutual-provider through `den.ctx.user.includes`, matching the upstream
+pattern.
+
+`den.default` is therefore the place for:
+
+- shared `stateVersion`
+- repo-wide baseline defaults
+
+Example:
+
 ```nix
-mkPkgOverlay = name: final: prev: {
-  ${name} = final.callPackage (pkgsDir + "/${name}") { };
-};
+{
+  den.ctx.user.includes = [ den._."mutual-provider" ];
+  den.default.nixos.system.stateVersion = "25.11";
+  den.default.homeManager.home.stateVersion = "25.11";
+}
 ```
 
-### Testing Changes
+This is upstream-preferred over repeating the same values in every host or
+user aspect, or wiring host/user mutual routing ad hoc.
 
-1. **Quick eval check**: `nix eval .#nixosConfigurations.alpha.pkgs.system --impure`
-2. **Dry build**: `sudo nixos-rebuild build --flake .#alpha`
+### `modules/vm.nix`
 
----
+This is the template-style place for VM launchers.
 
-## Important Files
+In this repo it defines `perSystem.packages.vmAlpha` /
+`perSystem.packages.vmBeta` and matching apps, using the built
+`nixosConfigurations.<host>.config.system.build.vm` outputs.
 
-| File | Purpose |
-|------|---------|
-| `flake.nix` | Main flake entry with import-tree + vic/den |
-| `modules/den.nix` | Host/user definitions, aspect includes |
-| `modules/aspects/*.nix` | Feature-centric aspects |
-| `lib/service-definitions/` | Container definitions (imported by services aspect) |
-| `secrets/` | SOPS encrypted secrets |
+This keeps VM execution out of `flake.nix` and out of the
+`virtualisation` aspect.
 
----
+### `modules/aspects/<host>.nix`
 
-## Common Tasks
+Host aspects configure host-specific behavior for Den-created host aspects.
 
-### Add New System Package
-1. Create new aspect or add to existing in `modules/aspects/`
+Examples:
 
-### Add New Home Manager Package
-1. Add to appropriate aspect in `modules/aspects/` (cli/ or gui/)
+- `modules/aspects/alpha.nix`
+- `modules/aspects/beta.nix`
 
-### Add New Service
-1. Create aspect in `modules/aspects/<name>.nix`
-2. Include in host aspect in `modules/den.nix`
+These files should contain:
 
-### Add User Program
-1. Add to appropriate aspect in `modules/aspects/cli/` or `modules/aspects/gui/`
+- `includes` for shared aspects/providers
+- host-specific `nixos` configuration
+- optionally host-specific `homeManager` configuration
+
+These files are the right place for:
+
+- boot and initrd
+- filesystems and swap
+- hardware quirks
+- host-local services
+- feature flags such as `modules.gaming.enable = true;`
+- host-to-user mutual providers like `provides.repparw = { ... };`
+
+### `modules/aspects/<user>.nix`
+
+User aspects configure Den-created user aspects.
+
+In this repo, `modules/aspects/repparw.nix` is the shared user composition
+layer. It includes:
+
+- `den.provides.define-user`
+- `den.provides.primary-user`
+- reusable CLI/GUI aspects
+
+It also owns:
+
+- `users.users.repparw` in `nixos`
+- `home.username` and `home.homeDirectory` in `homeManager`
+
+It may also provide host-facing config through:
+
+- `provides.alpha`
+- `provides.beta`
+
+### `modules/aspects/cli/*.nix` and `modules/aspects/gui/*.nix`
+
+Keep reusable user-facing features here.
+
+Examples:
+
+- `shell`, `tmux`, `git`, `ssh`
+- `browser`, `mpv`, `spotify`, `obs`
+
+These should generally be small composable aspects that are included from the
+user aspect, not from `flake.nix`.
+
+## Proper Den usage in this repo
+
+### 1. Declare inventory first
+
+When adding a host or user:
+
+1. edit `modules/hosts.nix`
+2. declare the host/user under `den.hosts`
+3. let Den synthesize the corresponding host/user aspects
+
+Do not scatter `den.hosts.*` declarations across unrelated aspect files.
+
+### 2. Configure the generated host/user aspects
+
+Once a host or user is declared, configure it through:
+
+- `den.aspects.<host>`
+- `den.aspects.<user>`
+
+That means:
+
+- `den.aspects.alpha` configures the `alpha` host
+- `den.aspects.beta` configures the `beta` host
+- `den.aspects.repparw` configures the `repparw` user
+
+### 3. Put shared defaults in `den.default`
+
+Use `den.default` for:
+
+- shared `stateVersion`
+- repo-wide baseline options
+- truly global defaults that should apply across contexts
+
+Do not repeat identical values in every host/user aspect when a default is
+semantically correct.
+
+### 4. Use mutual providers for host/user crossovers
+
+Follow the upstream pattern for cross-context config:
+
+- `${user}.provides.${host}` for config that conceptually belongs to the
+  user but must land on the host NixOS side
+- `${host}.provides.${user}` for config that conceptually belongs to the
+  host but must land on the user's Home Manager side
+
+In this repo:
+
+- `repparw.provides.alpha` and `repparw.provides.beta` provide `gui`
+  to the host side
+- `beta.provides.repparw` provides laptop-specific Home Manager additions
+  such as `kanshi` and `brightnessctl`
+
+### 5. Use `includes` for aspect composition
+
+Use:
+
+- `den.aspects.foo`
+- `den.provides.primary-user`
+- `den.aspects.bar.provides.baz`
+
+inside `includes`.
+
+Do not wire local aspects together with raw file imports.
+
+### 6. Use `imports` only for real module imports
+
+Use `imports` inside `nixos` or `homeManager` modules for things like:
+
+- `inputs.home-manager.nixosModules.home-manager`
+- `inputs.stylix.nixosModules.stylix`
+- `(modulesPath + "/installer/scan/not-detected.nix")`
+
+That is module-system composition, not Den aspect composition.
+
+## Recommended workflow for common changes
+
+### Add a new host
+
+1. Declare it in `modules/hosts.nix`.
+2. Create `modules/aspects/<host>.nix`.
+3. Define `den.aspects.<host>`.
+4. Add shared dependencies in `includes`.
+5. Put machine-specific settings in that host aspect.
+
+### Add a new user
+
+1. Declare the user under the relevant host in `modules/hosts.nix`.
+2. Create or extend `modules/aspects/<user>.nix`.
+3. Define `den.aspects.<user>`.
+4. Include `den.provides.define-user` and
+   `den.provides.primary-user` if this is the main login user.
+
+### Add a reusable system feature
+
+1. Create `modules/aspects/<feature>.nix`.
+2. Define `den.aspects.<feature>`.
+3. Add `options.modules.<feature>.*` if it exposes toggles.
+4. Enable it from host aspects through `includes` and host config.
+
+### Add a reusable Home Manager feature
+
+1. Create `modules/aspects/cli/<feature>.nix` or
+   `modules/aspects/gui/<feature>.nix`.
+2. Define `den.aspects.<feature>`.
+3. Keep the behavior in `homeManager = { ... }: { ... };`
+4. Include it from the user aspect if it is shared across machines.
+
+## Guardrails
+
+- Prefer one aspect per file.
+- Keep aspect names aligned with the concern they represent.
+- Keep host declarations centralized in `modules/hosts.nix`.
+- Keep global defaults in `den.default`.
+- Keep host specifics in host aspects.
+- Keep user specifics in user aspects.
+- Keep reusable features in dedicated feature aspects.
+- Use `lib.mkIf` and `lib.mkMerge` for conditional config.
+- Do not put plaintext secrets in the repo; use `sops-nix`.
+
+## Validation
+
+Useful checks after structural Den changes:
+
+```bash
+nix fmt
+nix eval .#nixosConfigurations.alpha.config.system.build.toplevel.outPath
+nix eval .#nixosConfigurations.beta.config.system.build.toplevel.outPath
+```
