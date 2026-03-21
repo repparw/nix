@@ -128,7 +128,7 @@
             };
           };
         };
-        services.spotifyd = {
+        services.spotifyd = lib.mkIf (osConfig.networking.hostName == "alpha") {
           enable = true;
           settings = {
             global = {

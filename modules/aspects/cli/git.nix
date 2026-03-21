@@ -102,6 +102,41 @@
             enable = true;
             options = [ "--cmd=cd" ];
           };
+
+          opencode = {
+            enable = true;
+            commands = {
+              commit = ''
+                # Commit changes
+                Stage all changes
+                Split related staged changes into commits
+                Ask for confirmation
+              '';
+            };
+            settings = {
+              plugin = [
+                "opencode-gemini-auth@latest"
+                "@mohak34/opencode-notifier@latest"
+              ];
+              keybinds = {
+                leader = "ctrl+x";
+              };
+              permission = {
+                "*" = {
+                  "*" = "allow";
+                  "rm *" = "deny";
+                };
+                "rm *" = "deny";
+              };
+              formatter = false;
+              agent = {
+                chat = {
+                  description = "General purpose chat agent";
+                  prompt = "You are a helpful coding assistant. Answer questions, explain code, and help with general programming tasks. Use the available tools to read files, search code, and run commands when needed.";
+                };
+              };
+            };
+          };
         };
       };
   };
