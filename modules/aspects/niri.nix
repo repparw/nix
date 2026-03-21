@@ -19,7 +19,7 @@
     homeManager =
       { config, ... }:
       {
-        xdg.configFile."niri/config.kdl".source = config.lib.file.mkOutOfStoreSymlink ./gui/config.kdl;
+        xdg.configFile."niri/config.kdl".source = config.lib.file.mkOutOfStoreSymlink ./config.kdl;
 
         services.wpaperd.enable = true;
       };
