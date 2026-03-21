@@ -69,6 +69,16 @@
                     "bluez5.enable-hw-volume" = false;
                   };
                 };
+                disableHdmi = {
+                  "monitor.alsa.rules" = [
+                    {
+                      matches = [ { "device.name" = "alsa_card.pci-0000_2d_00.1"; } ];
+                      actions.update-props = {
+                        "device.disabled" = true;
+                      };
+                    }
+                  ];
+                };
               };
             };
           };
