@@ -5,9 +5,7 @@
   ...
 }:
 {
-  den.aspects.obs = {
-    includes = [ ];
-
+  den.aspects.gui.provides.obs = {
     nixos =
       { pkgs, ... }:
       {

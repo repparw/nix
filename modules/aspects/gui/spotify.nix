@@ -1,12 +1,9 @@
 {
   den,
-  lib,
   ...
 }:
 {
-  den.aspects.spotify = {
-    includes = [ ];
-
+  den.aspects.gui.provides.spotify = {
     homeManager =
       { osConfig, ... }:
       {
@@ -125,19 +122,6 @@
             copy_command = {
               command = "wl-copy";
               args = [ ];
-            };
-          };
-        };
-        services.spotifyd = lib.mkIf (osConfig.networking.hostName == "alpha") {
-          enable = true;
-          settings = {
-            global = {
-              username = "2ksy00sfypgevoabx2128ia4g";
-              device_name = osConfig.networking.hostName;
-              bitrate = 320;
-              max_cache_size = 5000000000;
-              initial_volume = 70;
-              volume_normalisation = false;
             };
           };
         };

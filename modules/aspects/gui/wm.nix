@@ -4,9 +4,7 @@
   ...
 }:
 {
-  den.aspects.wm = {
-    includes = [ ];
-
+  den.aspects.gui.provides.wm = {
     homeManager =
       { config, pkgs, ... }:
       {
