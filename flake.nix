@@ -38,6 +38,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
+
     den = {
       url = "github:vic/den";
     };
@@ -54,71 +59,57 @@
   outputs =
     inputs:
     let
-      eval = inputs.nixpkgs.lib.evalModules {
-        modules = [
+      flake = inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+        systems = [ "x86_64-linux" ];
+        imports = [
           (inputs.import-tree ./modules)
         ];
-        specialArgs = {
-          inherit inputs;
+      };
+
+      pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
+      nixosConfigurations = flake.nixosConfigurations or { };
+      alpha = nixosConfigurations.alpha.config.system.build;
+      beta = nixosConfigurations.beta.config.system.build;
+    in
+    flake
+    // {
+      formatter.x86_64-linux = pkgs.treefmt.withConfig {
+        runtimeInputs = with pkgs; [
+          nixfmt
+          deadnix
+        ];
+        settings = {
+          on-unmatched = "info";
+          formatter.nixfmt = {
+            command = "nixfmt";
+            includes = [ "*.nix" ];
+          };
+          formatter.deadnix = {
+            command = "deadnix";
+            options = [
+              "--edit"
+              "--no-lambda-arg"
+              "--no-lambda-pattern-names"
+            ];
+            includes = [ "*.nix" ];
+          };
         };
       };
-    in
-    {
-      nixosConfigurations = eval.config.flake.nixosConfigurations or { };
 
-      packages.x86_64-linux =
-        let
-          alpha = eval.config.flake.nixosConfigurations.alpha.config.system.build;
-          beta = eval.config.flake.nixosConfigurations.beta.config.system.build;
-        in
-        {
-          vmAlpha = alpha.vm or null;
-          vmBeta = beta.vm or null;
-        }
-        // (eval.config.flake.packages or { });
+      packages.x86_64-linux = {
+        vmAlpha = alpha.vm or null;
+        vmBeta = beta.vm or null;
+      };
 
-      apps.x86_64-linux =
-        let
-          alpha = eval.config.flake.nixosConfigurations.alpha.config.system.build;
-          beta = eval.config.flake.nixosConfigurations.beta.config.system.build;
-        in
-        {
-          vmAlpha = {
-            program = "${alpha.vm}/bin/run-alpha-vm";
-            name = "Run alpha in VM";
-          };
-          vmBeta = {
-            program = "${beta.vm}/bin/run-beta-vm";
-            name = "Run beta in VM";
-          };
-        }
-        // (eval.config.flake.apps or { });
-
-      formatter.x86_64-linux =
-        let
-          pkgs = inputs.nixpkgs.legacyPackages.x86_64-linux;
-        in
-        pkgs.treefmt.withConfig {
-          runtimeInputs = with pkgs; [
-            nixfmt
-            deadnix
-          ];
-          settings = {
-            on-unmatched = "info";
-            formatter.nixfmt = {
-              command = "nixfmt";
-              includes = [ "*.nix" ];
-            };
-            formatter.deadnix = {
-              command = "deadnix";
-              options = [
-                "--edit"
-                "--no-lambda-arg"
-                "--no-lambda-pattern-names"
-              ];
-              includes = [ "*.nix" ];
-            };
-          };
+      apps.x86_64-linux = {
+        vmAlpha = {
+          type = "app";
+          program = "${alpha.vm}/bin/run-alpha-vm";
         };
+        vmBeta = {
+          type = "app";
+          program = "${beta.vm}/bin/run-beta-vm";
+        };
+      };
     };
 }
