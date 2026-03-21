@@ -70,11 +70,11 @@
     },
     "den": {
       "locked": {
-        "lastModified": 1773954747,
-        "narHash": "sha256-RkLexhEGGF2CQDnQBRpxps3sc+MzcO9rCunW0SVXuos=",
+        "lastModified": 1774080010,
+        "narHash": "sha256-btsWuIIGsUYk2vFUxJs7Q1Krt6qdt6audWwzpuUbIdA=",
         "owner": "vic",
         "repo": "den",
-        "rev": "66fba2024976e8824daf4e978c2259aabc22e360",
+        "rev": "0057a271e5311be5f2edcf7f20d4846ccf987d54",
         "type": "github"
       },
       "original": {
@@ -137,6 +137,26 @@
     },
     "flake-parts": {
       "inputs": {
+        "nixpkgs-lib": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1772408722,
+        "narHash": "sha256-rHuJtdcOjK7rAHpHphUb1iCvgkU3GpfvicLMwwnfMT0=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "f20dc5d9b8027381c474144ecabc9034d6a839a3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
+    "flake-parts_2": {
+      "inputs": {
         "nixpkgs-lib": "nixpkgs-lib"
       },
       "locked": {
@@ -153,7 +173,7 @@
         "type": "github"
       }
     },
-    "flake-parts_2": {
+    "flake-parts_3": {
       "inputs": {
         "nixpkgs-lib": [
           "nixvim-config",
@@ -175,7 +195,7 @@
         "type": "github"
       }
     },
-    "flake-parts_3": {
+    "flake-parts_4": {
       "inputs": {
         "nixpkgs-lib": [
           "stylix",
@@ -352,7 +372,7 @@
     },
     "nixvim": {
       "inputs": {
-        "flake-parts": "flake-parts_2",
+        "flake-parts": "flake-parts_3",
         "nixpkgs": [
           "nixvim-config",
           "nixpkgs"
@@ -375,7 +395,7 @@
     },
     "nixvim-config": {
       "inputs": {
-        "flake-parts": "flake-parts",
+        "flake-parts": "flake-parts_2",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -425,6 +445,7 @@
         "den": "den",
         "firefox-addons": "firefox-addons",
         "flake-aspects": "flake-aspects",
+        "flake-parts": "flake-parts",
         "home-manager": "home-manager",
         "import-tree": "import-tree",
         "nix-index-database": "nix-index-database",
@@ -462,7 +483,7 @@
         "base16-helix": "base16-helix",
         "base16-vim": "base16-vim",
         "firefox-gnome-theme": "firefox-gnome-theme",
-        "flake-parts": "flake-parts_3",
+        "flake-parts": "flake-parts_4",
         "gnome-shell": "gnome-shell",
         "nixpkgs": [
           "nixpkgs"
