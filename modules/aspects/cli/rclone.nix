@@ -9,8 +9,11 @@
 
     homeManager =
       { osConfig, ... }:
+      let
+        timersEnabled = lib.attrByPath [ "modules" "timers" "enable" ] false osConfig;
+      in
       {
-        config = lib.mkIf (osConfig.modules.timers.enable or false) {
+        config = lib.mkIf timersEnabled {
           programs.rclone = {
             enable = true;
             remotes = {

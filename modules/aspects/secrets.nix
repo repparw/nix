@@ -12,6 +12,10 @@
   den.aspects.secrets = {
     nixos =
       { config, pkgs, ... }:
+      let
+        timersEnabled = lib.attrByPath [ "modules" "timers" "enable" ] false config;
+        servicesEnabled = lib.attrByPath [ "modules" "services" "enable" ] false config;
+      in
       {
         imports = [
           inputs.sops-nix.nixosModules.sops
@@ -37,7 +41,7 @@
             owner = "repparw";
           };
         }
-        // (lib.optionalAttrs (config.modules.timers.enable or false) {
+        // (lib.optionalAttrs timersEnabled {
           rcloneDriveToken = {
             owner = "repparw";
           };
@@ -62,7 +66,7 @@
             owner = "archisteamfarm";
           };
         })
-        // (lib.optionalAttrs (config.modules.services.enable or false) {
+        // (lib.optionalAttrs servicesEnabled {
           freshrss = { };
           cloudflare = { };
           karakeep = { };

@@ -1,5 +1,6 @@
 {
   den,
+  lib,
   ...
 }:
 {
@@ -10,7 +11,7 @@
       { config, ... }:
       {
         services.jellyfin-mpv-shim = {
-          enable = false;
+          enable = lib.mkDefault false;
           settings = {
             player_name = "alpha";
             screenshot_dir = "/home/repparw/Pictures/mpvss";

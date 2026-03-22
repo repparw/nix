@@ -26,7 +26,7 @@
             After = [ "graphical-session.target" ];
           };
           Service = {
-            ExecStart = "obs --disable-shutdown-check --startreplaybuffer --minimize-to-tray";
+            ExecStart = "${lib.getExe pkgs.obs-studio} --disable-shutdown-check --startreplaybuffer --minimize-to-tray";
             Restart = "on-failure";
           };
           Install = {

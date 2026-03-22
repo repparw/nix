@@ -59,14 +59,14 @@
         config = lib.mkIf cfg.enable (
           let
             serviceFiles = {
-              arr = import ../../lib/service-definitions/arr.nix;
-              authelia = import ../../lib/service-definitions/authelia.nix;
-              changedetection = import ../../lib/service-definitions/changedetection.nix;
-              freshrss = import ../../lib/service-definitions/freshrss.nix;
-              jellyfin = import ../../lib/service-definitions/jellyfin.nix;
-              ntfy = import ../../lib/service-definitions/ntfy.nix;
-              paperless = import ../../lib/service-definitions/paperless.nix;
-              proxy = import ../../lib/service-definitions/proxy.nix;
+              arr = import ../_services/arr.nix;
+              authelia = import ../_services/authelia.nix;
+              changedetection = import ../_services/changedetection.nix;
+              freshrss = import ../_services/freshrss.nix;
+              jellyfin = import ../_services/jellyfin.nix;
+              ntfy = import ../_services/ntfy.nix;
+              paperless = import ../_services/paperless.nix;
+              proxy = import ../_services/proxy.nix;
             };
 
             extractHostname = rule: lib.removeSuffix "`)" (lib.removePrefix "Host(`" rule);
@@ -79,6 +79,13 @@
               let
                 traefikRule = getTraefikRule name attrs;
                 hostname = extractHostname traefikRule;
+                defaultTraefikLabels = {
+                  "traefik.http.routers.${name}.tls" = "true";
+                  "traefik.http.routers.${name}.rule" = lib.mkDefault traefikRule;
+                }
+                // lib.optionalAttrs (name != "authelia") {
+                  "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@file";
+                };
               in
               lib.mkMerge [
                 attrs
@@ -87,18 +94,17 @@
                     "--network-alias=${name}"
                     "--network=services"
                   ];
-                  labels = (attrs.labels or { }) // {
-                    "io.containers.autoupdate" = "registry";
+                  labels =
+                    (attrs.labels or { })
+                    // {
+                      "io.containers.autoupdate" = "registry";
 
-                    "glance.name" = name;
-                    "glance.url" = lib.mkDefault "https://${hostname}";
-                    "glance.icon" = lib.mkDefault "sh:${name}";
-                    "glance.same-tab" = "true";
-
-                    "traefik.http.routers.${name}.tls" = "true";
-                    "traefik.http.routers.${name}.rule" = lib.mkDefault traefikRule;
-                    "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@file";
-                  };
+                      "glance.name" = name;
+                      "glance.url" = lib.mkDefault "https://${hostname}";
+                      "glance.icon" = lib.mkDefault "sh:${name}";
+                      "glance.same-tab" = "true";
+                    }
+                    // defaultTraefikLabels;
                 }
               ];
 
