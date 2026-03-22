@@ -45,7 +45,6 @@
       { ... }:
       {
         linger = true;
-        initialHashedPassword = "$y$j9T$WPuWlgd7OQOePD8XKqNVv0$Pe9XhFT2hKh1YnyDVHxEwOe.IYTMr8K4JUtxBVjEza/";
         description = "repparw";
         extraGroups = [
           "adbusers"
