@@ -1,179 +1,295 @@
-# AGENTS.md - NixOS Configuration Repository
+# AGENTS.md
 
-This repository contains repparw's personal NixOS system configurations using the Nix Flake system.
+This repository follows the upstream `vic/den` default-template structure
+and usage model.
 
-## Project Overview
+The key idea is:
 
-- **Type**: NixOS flake configuration with Home Manager
-- **Systems**: `alpha` (desktop), `beta` (laptop)
-- **Structure**: `flake.nix` → `systems/`, `modules/`, `overlays/`, `home/`, `secrets/`
+- declare hosts and users centrally in `modules/hosts.nix`
+- let Den create the parametric host/user aspects from those declarations
+- keep cross-cutting configuration in `den.aspects.*`
+- keep repo-wide defaults in `modules/defaults.nix` via `den.default`
+- route host/user mutual providers through `den.ctx.user.includes`
+- use `includes` to compose aspects
 
----
+Common patterns in this repo after the dendritic refactor:
 
-### Eval Configuration
-```bash
-# Check configuration evaluates without building
-nix eval .#nixosConfigurations.alpha.config.system.build.toplevel.outPath
-```
+- repo-wide base behavior comes from `den.default.includes`
+- concern-specific flake inputs live next to the aspect or module that uses them
+- host aspects stay focused on machine-specific hardware, filesystems, and flags
+- user aspects stay focused on shared user composition and user-owned crossovers
 
----
+## Upstream-oriented layout
 
-## Lint/Format Commands
+### `flake.nix`
 
-### Format Code
+Responsibilities:
+
+- bootstrap `flake-parts`
+- import the local module tree with `import-tree`
+
+It should not be the main place for host declarations or day-to-day aspect
+configuration.
+
+### `modules/dendritic.nix`
+
+This is the upstream-style core flake wiring file.
+
+It imports the dendritic modules from:
+
+- `flake-file`
+- `den`
+
+and keeps the base dendritic wiring out of `flake.nix`.
+
+Use this file for repo-global flake wiring, such as:
+
+- importing upstream dendritic flake modules
+- declaring base inputs like `nixpkgs`, `den`, `flake-file`, `import-tree`
+
+Do not treat `modules/dendritic.nix` as the required home for every
+`flake-file.inputs.*` declaration.
+
+In this repo, concern-specific flake inputs should be declared next to the
+module or aspect that owns them. For example:
+
+- `repparw.nix` owns the `home-manager` input it imports
+- `nix-index.nix` owns the `nix-index-database` input it imports
+- `nixvim.nix` owns the `nixvim-config` input it overlays
+
+### `modules/defaults.nix`
+
+Use `den.default` for repo-wide defaults that should apply everywhere unless
+overridden.
+
+In this repo, `modules/defaults.nix` also carries repo-wide shared includes
+through `den.default.includes`, in addition to shared state versions.
+
+Today that includes the baseline aspects that should apply on every host:
+
+- `nix-index`
+- `nixvim`
+- `nixpkgs`
+- `nix`
+- `system`
+
+This is upstream-preferred over repeating the same values in every host or
+user aspect, or wiring host/user mutual routing ad hoc.
+
+### `modules/vm.nix`
+
+This is the template-style place for VM launchers.
+
+In this repo it defines `perSystem.packages.vmAlpha` /
+`perSystem.packages.vmBeta` and matching apps, using the built
+`nixosConfigurations.<host>.config.system.build.vm` outputs.
+
+This keeps VM execution out of `flake.nix` and out of the
+`virtualisation` aspect.
+
+### `modules/hosts/<host>.nix`
+
+Host aspects configure host-specific behavior for Den-created host aspects.
+
+Examples:
+
+- `modules/hosts/alpha.nix`
+- `modules/hosts/beta.nix`
+
+These files should contain:
+
+- `includes` for shared aspects/providers
+- host-specific `nixos` configuration
+- optionally host-specific `homeManager` configuration
+
+In this repo, host aspects usually include a small shared host stack such as:
+
+- `den.provides.hostname`
+- `den.aspects.cli`
+- `den.aspects.networking`
+- `den.aspects.overlays`
+- `den.aspects.secrets`
+- `den.aspects.style`
+
+These files are the right place for:
+
+- boot and initrd
+- filesystems and swap
+- hardware quirks
+- host-local services
+- feature flags such as `modules.gaming.enable = true;`
+- host-to-user mutual providers like `provides.repparw = { ... };`
+
+### `modules/aspects/<user>.nix`
+
+User aspects configure Den-created user aspects.
+
+In this repo, `modules/aspects/repparw.nix` is the shared user composition
+layer. It includes:
+
+- `den.provides.define-user`
+- `den.provides.primary-user`
+- reusable CLI/GUI aspects
+
+It also owns:
+
+- shared user composition and user-local settings
+- the `home-manager` NixOS module import and bridge settings
+
+Identity fields such as:
+
+- `users.users.repparw`
+- `home.username`
+- `home.homeDirectory`
+
+are provided in this repo through `den.provides.define-user`, which is
+included from the user aspect.
+
+It may also provide host-facing config through:
+
+- `provides.alpha`
+- `provides.beta`
+
+### `modules/aspects/cli/*.nix` and `modules/aspects/gui/*.nix`
+
+Keep reusable user-facing features here.
+
+Examples:
+
+- `shell`, `tmux`, `git`, `ssh`
+- `browser`, `mpv`, `spotify`, `obs`
+
+These should generally be small composable aspects that are included from the
+user aspect, not from `flake.nix`.
+
+## Proper Den usage in this repo
+
+### 1. Declare inventory first
+
+When adding a host or user:
+
+1. edit `modules/hosts.nix`
+2. declare the host/user under `den.hosts`
+3. let Den synthesize the corresponding host/user aspects
+
+Do not scatter `den.hosts.*` declarations across unrelated aspect files.
+
+### 2. Configure the generated host/user aspects
+
+Once a host or user is declared, configure it through:
+
+- `den.aspects.<host>`
+- `den.aspects.<user>`
+
+That means:
+
+- `den.aspects.alpha` configures the `alpha` host
+- `den.aspects.beta` configures the `beta` host
+- `den.aspects.repparw` configures the `repparw` user
+
+### 3. Put shared defaults in `den.default`
+
+Use `den.default` for:
+
+- shared `stateVersion`
+- repo-wide baseline options
+- repo-wide shared `includes`
+- truly global defaults that should apply across contexts
+
+Do not repeat identical values in every host/user aspect when a default is
+semantically correct.
+
+### 4. Use mutual providers for host/user crossovers
+
+Follow the upstream pattern for cross-context config:
+
+- `${user}.provides.${host}` for config that conceptually belongs to the
+  user but must land on the host NixOS side
+- `${host}.provides.${user}` for config that conceptually belongs to the
+  host but must land on the user's Home Manager side
+
+In this repo:
+
+- `repparw.provides.alpha` and `repparw.provides.beta` provide `gui`
+  to the host side
+- `beta.provides.repparw` provides laptop-specific Home Manager additions
+  such as `kanshi` and `brightnessctl`
+
+### 5. Use `includes` for aspect composition
+
+Use:
+
+- `den.aspects.foo`
+- `den.provides.primary-user`
+- `den.aspects.bar.provides.baz`
+
+inside `includes`.
+
+Do not wire local aspects together with raw file imports.
+
+### 6. Use `imports` only for real module imports
+
+Use `imports` inside `nixos` or `homeManager` modules for things like:
+
+- `inputs.home-manager.nixosModules.home-manager`
+- `inputs.stylix.nixosModules.stylix`
+- `(modulesPath + "/installer/scan/not-detected.nix")`
+
+That is module-system composition, not Den aspect composition.
+
+### 7. Co-locate flake inputs with their owning concern
+
+Declare `flake-file.inputs.*` in the module or aspect that actually uses the
+input when that dependency is concern-specific.
+
+Examples in this repo:
+
+- `style.nix` declares `flake-file.inputs.stylix`
+- `secrets.nix` declares `flake-file.inputs.sops-nix`
+
+Prefer this over centralizing every input in `modules/dendritic.nix`.
+Keep `modules/dendritic.nix` for base repo wiring and universally shared
+inputs.
+
+### 8. Prefer named composition aspects for shared stacks
+
+If several aspects naturally form one reusable stack, expose a named
+composition aspect instead of repeating the full list everywhere.
+
+In this repo:
+
+- `den.aspects.cli` is the composed system CLI baseline
+- `den.aspects.gui` is the composed GUI/session stack
+
+Prefer these names over legacy placeholders such as `cli-core` or `gui-core`.
+
+## Recommended workflow for common changes
+
+### Add a reusable system feature
+
+1. Create `modules/aspects/<feature>.nix`.
+2. Define `den.aspects.<feature>`.
+3. Enable it from host aspects through `includes` and host config.
+
+## Guardrails
+
+- Prefer one aspect per file.
+- Keep aspect names aligned with the concern they represent.
+- Keep host declarations centralized in `modules/hosts.nix`.
+- Keep global defaults in `den.default`.
+- Keep concern-local flake inputs next to the concern that uses them.
+- Keep host specifics in host aspects.
+- Keep user specifics in user aspects.
+- Keep reusable features in dedicated feature aspects.
+- Use `lib.mkIf` and `lib.mkMerge` for conditional config.
+- Do not put plaintext secrets in the repo; use `sops-nix`.
+
+## Validation
+
+Useful checks after structural Den changes:
+
 ```bash
 nix fmt
+nix eval .#nixosConfigurations.alpha.config.system.build.toplevel.outPath
+nix eval .#nixosConfigurations.beta.config.system.build.toplevel.outPath
 ```
-This uses `nixfmt-tree` as defined in `flake.nix:117`.
-
----
-
-## Secrets Management
-
-Secrets are managed via **sops-nix** and stored in `secrets/`.
-
-- DO NOT commit raw secret values
-- Use `sops` to edit encrypted secrets
-- The secrets directory contains `.sops.yaml` and age keys
-
-Example workflow for adding a new secret:
-```bash
-# Edit secrets (requires proper age key)
-sops secrets/service-name.yaml
-```
-
----
-
-## Code Style Guidelines
-
-### File Organization
-- **Systems**: `systems/<hostname>/default.nix` - host-specific config
-- **Modules**: `modules/nixos/` and `modules/hm/` - reusable modules
-- **Overlays**: `overlays/default.nix` - package overlays
-- **Home**: `home/<hostname>.nix` - Home Manager user config
-
-### Nix Language Conventions
-
-1. **Attribute Sets**: Use curly braces for multi-line attribute sets
-   ```nix
-   config = {
-     option1 = true;
-     option2 = "value";
-   };
-   ```
-
-2. **Lists**: Use inline syntax for short lists, multi-line for long ones
-   ```nix
-   shortList = [ a b c ];
-
-   longList = [
-     "first"
-     "second"
-     "third"
-   ];
-   ```
-
-3. **Let Bindings**: Use `let ... in` for local definitions
-   ```nix
-   let
-     pkgsDir = ../pkgs;
-     mkPkg = name: final: prev: { ${name} = final.callPackage ...; };
-   in
-   { ... }
-   ```
-
-4. **Imports**: Always use relative paths with `./` or `../`
-   ```nix
-   imports = [ ./default.nix ];
-   ```
-
-5. **Function Arguments**: Use `{ ... }:` pattern for module arguments
-   ```nix
-   { config, pkgs, inputs, ... }:
-   ```
-
-6. **Trailing Commas**: Always use trailing commas (Nix is tolerant but this is idiomatic)
-
-### Naming Conventions
-
-- **Files**: `kebab-case.nix` (e.g., `auto-upgrade.nix`, not `autoUpgrade.nix`)
-- **Options**: Follow NixOS option naming (e.g., `services.foo.enable`)
-- **Variables**: `camelCase` for local variables, `kebab-case` for attribute names
-- **Modules**: Use descriptive names (e.g., `services/nginx.nix`)
-
-### Formatting Rules
-
-- **Indentation**: 2 spaces (Nix standard)
-- **Line Length**: Prefer lines under 80 chars when practical
-- **Spacing**: Space after `=` in bindings, no space before `=` in attributes
-- **Comments**: Use `#` for comments; avoid unnecessary comments
-
-### Imports Pattern
-
-```nix
-# At top of file for module imports
-{ config, pkgs, lib, inputs, ... }:
-
-{
-  imports = [
-    ./hardware-configuration.nix
-    ../../modules/nixos/services
-  ];
-  
-  # ... configuration
-}
-```
-
-### Error Handling
-
-- Use `lib.mkIf` for conditional options (not `if then else` in attribute sets)
-- Use `lib.mkMerge` for merging lists/attrs across modules
-- Validate paths exist with `lib.pathExists` or `builtins.pathExists`
-
-### Package Overlays
-
-Add custom packages in `pkgs/<name>/default.nix`, then reference in `overlays/default.nix`:
-```nix
-mkPkgOverlay = name: final: prev: {
-  ${name} = final.callPackage (pkgsDir + "/${name}") { };
-};
-```
-
-### Testing Changes
-
-1. **Quick eval check**: `nix eval .#nixosConfigurations.alpha.pkgs.system --impure`
-2. **Dry build**: `sudo nixos-rebuild build --flake .#alpha`
-
----
-
-## Important Files
-
-| File | Purpose |
-|------|---------|
-| `flake.nix` | Main flake entry, defines outputs, packages, VMs |
-| `systems/alpha/default.nix` | Desktop system config |
-| `systems/beta/default.nix` | Laptop system config |
-| `modules/nixos/default.nix` | Shared NixOS configuration |
-| `modules/hm/default.nix` | Shared Home Manager config |
-| `overlays/default.nix` | Package overlays |
-| `secrets/nixos.nix` | SOPS secrets integration |
-
----
-
-## Common Tasks
-
-### Add New System Package
-1. Add to `modules/nixos/default.nix` in `environment.systemPackages` OR
-2. Add to `modules/nixos/cli/default.nix` or `modules/nixos/gui/default.nix`
-
-### Add New Home Manager Package
-1. Add to appropriate `modules/hm/cli/` or `modules/hm/gui/` module
-
-### Add New Service (Podman containers)
-1. Create `modules/nixos/services/<service>.nix`
-2. Import in `modules/nixos/services/default.nix`
-3. Enable in system config
-
-### Add User Program
-1. Create module in `modules/hm/cli/` or `modules/hm/gui/`
-2. Import in appropriate `modules/hm/cli/default.nix` or `modules/hm/gui/default.nix`
