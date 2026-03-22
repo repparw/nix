@@ -244,12 +244,8 @@ input when that dependency is concern-specific.
 
 Examples in this repo:
 
-- `repparw.nix` declares `flake-file.inputs.home-manager`
-- `nix-index.nix` declares `flake-file.inputs.nix-index-database`
-- `nixvim.nix` declares `flake-file.inputs.nixvim-config`
 - `style.nix` declares `flake-file.inputs.stylix`
 - `secrets.nix` declares `flake-file.inputs.sops-nix`
-- `gui/browser.nix` declares `flake-file.inputs.firefox-addons`
 
 Prefer this over centralizing every input in `modules/dendritic.nix`.
 Keep `modules/dendritic.nix` for base repo wiring and universally shared
