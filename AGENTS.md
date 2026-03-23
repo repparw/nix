@@ -147,8 +147,10 @@ included from the user aspect.
 
 It may also provide host-facing config through:
 
-- `provides.alpha`
-- `provides.beta`
+- `provides.to-hosts`
+Or:
+    - `provides.alpha`
+    - `provides.beta`
 
 ### `modules/aspects/cli/*.nix` and `modules/aspects/gui/*.nix`
 
