@@ -17,23 +17,52 @@
       {
         pkgs,
         config,
+        osConfig,
         ...
       }:
       {
         home.file.".config/tridactyl/tridactylrc".text = ''
+          " General Settings
           set configversion 2.0
           set newtab about:blank
+          set markjumpnoisy false
+          set modeindicatormodes.ignore false
           set theme midnight
           set editorcmd foot nvim
           set smoothscroll true
           set tabsort mru
-          bind ;c hint -c [class*="expand"],[class*="togg"],[class="comment_folder"]
-          bind gd tabdetach
-          bind J tabprev
-          bind K tabnext
-          bind gr reader
-        '';
 
+          set searchurls.n https://mynixos.com/search?q=%s
+          set searchurls., https://search.nixos.org/packages?channel=unstable&query=%s
+
+          " Binds
+          bind ;c hint -c [class*="expand"],[class*="togg"],[class="comment_folder"]
+
+          unbind <F1>
+          unbind <C-e>
+
+          bind gd tabdetach
+
+          bind yy clipboard yankshort
+
+          bind J tabnext --nowrap
+          bind K tabprev --nowrap
+
+          bind gr reader
+
+          " Subconfig binds
+          bindurl .*.youtube.com yy composite urlmodify_js -Q list | urlmodify_js -ru .*\.youtube\.com/watch\?v= https://youtu.be/ | clipboard yank
+          bindurl www.youtube.com gm urlmodify -t www music
+
+          unbindurl x.com j
+          unbindurl x.com k
+
+          " Subconfig Settings
+          seturl youtube.com modeindicator false
+          seturl jellyfin.${osConfig.modules.services.domain} modeindicator false
+
+          autocmd DocStart tradingview.com mode ignore
+        '';
         programs = {
           firefox = {
             enable = true;
