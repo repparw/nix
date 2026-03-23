@@ -11,6 +11,7 @@
     };
     volumes = [
       "${cfg.dataDir}/media:/data/media:ro"
+      "${cfg.externalDataDir}:/data/seagate:ro"
       "${cfg.configDir}/jellyfin:/config"
     ];
     extraOptions = [
