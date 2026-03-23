@@ -92,6 +92,7 @@
     };
     volumes = [
       "${cfg.dataDir}:/data"
+      "${cfg.externalDataDir}:/data/seagate:ro"
       "${cfg.configDir}/radarr:/config"
     ];
     extraOptions = [
@@ -126,6 +127,7 @@
     volumes = [
       "/dev/rtc:/dev/rtc:ro"
       "${cfg.dataDir}:/data"
+      "${cfg.externalDataDir}:/data/seagate:ro"
       "${cfg.configDir}/sonarr:/config"
     ];
     extraOptions = [

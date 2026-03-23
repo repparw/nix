@@ -25,6 +25,12 @@
             description = "Directory to store container data";
           };
 
+          externalDataDir = lib.mkOption {
+            type = lib.types.path;
+            default = "/mnt/seagate";
+            description = "Directory where external library is";
+          };
+
           configDir = lib.mkOption {
             type = lib.types.path;
             default = "${cfg.rootDir}/config";
