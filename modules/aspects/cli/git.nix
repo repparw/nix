@@ -103,6 +103,8 @@
             options = [ "--cmd=cd" ];
           };
 
+          codex.enable = true;
+
           opencode = {
             enable = true;
             commands = {
