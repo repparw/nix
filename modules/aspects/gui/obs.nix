@@ -20,19 +20,19 @@
     homeManager =
       { pkgs, ... }:
       {
-        systemd.user.services.obs = {
-          Unit = {
-            Description = "OBS Studio";
-            After = [ "graphical-session.target" ];
-          };
-          Service = {
-            ExecStart = "${lib.getExe pkgs.obs-studio} --disable-shutdown-check --startreplaybuffer --minimize-to-tray";
-            Restart = "on-failure";
-          };
-          Install = {
-            WantedBy = [ "graphical-session.target" ];
-          };
-        };
+        # systemd.user.services.obs = {
+        #   Unit = {
+        #     Description = "OBS Studio";
+        #     After = [ "graphical-session.target" ];
+        #   };
+        #   Service = {
+        #     ExecStart = "${lib.getExe pkgs.obs-studio} --disable-shutdown-check --startreplaybuffer --minimize-to-tray";
+        #     Restart = "on-failure";
+        #   };
+        #   Install = {
+        #     WantedBy = [ "graphical-session.target" ];
+        #   };
+        # };
 
         home.packages = [ pkgs.obs-cmd ];
       };
