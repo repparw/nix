@@ -26,20 +26,21 @@
       den.aspects.jellyfin-mpv-shim
     ];
 
-    provides.alpha.includes = [ den.aspects.gui ];
-    provides.beta.includes = [ den.aspects.gui ];
+    provides.to-hosts = {
+      includes = [ den.aspects.gui ];
 
-    nixos =
-      { ... }:
-      {
-        imports = [ inputs.home-manager.nixosModules.home-manager ];
+      nixos =
+        { ... }:
+        {
+          imports = [ inputs.home-manager.nixosModules.home-manager ];
 
-        home-manager = {
-          useGlobalPkgs = true;
-          useUserPackages = true;
-          backupFileExtension = "hm-backup";
+          home-manager = {
+            useGlobalPkgs = true;
+            useUserPackages = true;
+            backupFileExtension = "hm-backup";
+          };
         };
-      };
+    };
 
     user =
       { ... }:
