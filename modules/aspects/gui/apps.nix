@@ -8,7 +8,6 @@
     homeManager =
       {
         config,
-        osConfig,
         pkgs,
         lib,
         ...
@@ -18,7 +17,6 @@
           pwvucontrol
           scrcpy
           godot
-          anki
           rquickshare
         ];
 
@@ -183,23 +181,6 @@
             port = 32100;
           };
           force = true;
-        };
-
-        systemd.user.services.rquickshare = {
-          Unit = {
-            Description = "RQuickShare - Quick Share for Linux";
-            After = [ "graphical-session.target" ];
-            Wants = [ "graphical-session.target" ];
-          };
-          Service = {
-            Type = "simple";
-            ExecStart = "${pkgs.rquickshare}/bin/rquickshare";
-            Restart = "on-failure";
-            RestartSec = 5;
-          };
-          Install = {
-            WantedBy = [ "default.target" ];
-          };
         };
       };
   };

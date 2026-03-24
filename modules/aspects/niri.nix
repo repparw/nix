@@ -12,6 +12,8 @@
         programs.niri.enable = lib.mkDefault true;
 
         environment.systemPackages = [ pkgs.xwayland-satellite ];
+
+        systemd.user.services.niri.unitConfig.Wants = [ "graphical-session.target" ];
       };
 
     homeManager =
