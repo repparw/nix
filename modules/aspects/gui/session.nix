@@ -4,7 +4,6 @@
     includes = [
       den.aspects.gui._.session
       den.aspects.gui._.niri
-      den.aspects.gui._.hyprland
       den.aspects.gui._.obs
       den.aspects.gui._.browser
       den.aspects.gui._.mpv
@@ -26,10 +25,7 @@
 
         services.displayManager = {
           defaultSession = "niri";
-          autoLogin = {
-            enable = true;
-            user = "repparw";
-          };
+          autoLogin.user = "repparw";
           sddm = {
             enable = true;
             wayland.enable = true;

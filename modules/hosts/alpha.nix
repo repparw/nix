@@ -36,6 +36,7 @@
 
         boot = {
           initrd = {
+            systemd.enable = true;
             availableKernelModules = [
               "nvme"
               "xhci_pci"

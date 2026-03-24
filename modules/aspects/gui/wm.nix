@@ -10,9 +10,6 @@
       {
         home.packages = with pkgs; [
           wl-clipboard
-          hdrop
-          hyprshot
-          hyprpicker
           nautilus
           baobab
           whatsapp-electron
@@ -177,11 +174,6 @@
                 };
               };
             };
-        };
-
-        systemd.user.services.wlsunset.Service = {
-          Restart = "on-failure";
-          RestartSec = 5;
         };
       };
   };

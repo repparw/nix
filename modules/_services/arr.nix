@@ -15,25 +15,25 @@
       "--health-cmd=curl -f http://localhost:6767/bazarr/api/status || exit 1"
     ];
   };
-  "listenarr" = {
-    image = "ghcr.io/listenarrs/listenarr:canary";
-    environment = {
-      "PUID" = cfg.user;
-      "PGID" = cfg.group;
-      "TZ" = cfg.timezone;
-    };
-    volumes = [
-      "${cfg.configDir}/listenarr:/app/config"
-      "${cfg.dataDir}/media/audiobooks:/audiobooks"
-      "${cfg.dataDir}/torrents:/downloads"
-    ];
-    extraOptions = [
-      "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:4545/health || exit 1"
-    ];
-    labels = {
-      "traefik.http.services.listenarr.loadbalancer.server.port" = "4545";
-    };
-  };
+  # "listenarr" = {
+  #   image = "ghcr.io/listenarrs/listenarr:canary";
+  #   environment = {
+  #     "PUID" = cfg.user;
+  #     "PGID" = cfg.group;
+  #     "TZ" = cfg.timezone;
+  #   };
+  #   volumes = [
+  #     "${cfg.configDir}/listenarr:/app/config"
+  #     "${cfg.dataDir}/media/audiobooks:/audiobooks"
+  #     "${cfg.dataDir}/torrents:/downloads"
+  #   ];
+  #   extraOptions = [
+  #     "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:4545/health || exit 1"
+  #   ];
+  #   labels = {
+  #     "traefik.http.services.listenarr.loadbalancer.server.port" = "4545";
+  #   };
+  # };
   "profilarr" = {
     image = "docker.io/santiagosayshey/profilarr:latest";
     environment = {
@@ -99,22 +99,22 @@
       "--health-cmd=curl -f http://localhost:7878/ping || exit 1"
     ];
   };
-  "seerr" = {
-    image = "docker.io/seerr/seerr:latest";
-    environment = {
-      "TZ" = cfg.timezone;
-    };
-    volumes = [
-      "${cfg.configDir}/seerr:/app/config"
-    ];
-    labels = {
-      "traefik.http.routers.seerr.middlewares" = "";
-    };
-    extraOptions = [
-      "--init"
-      "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1"
-    ];
-  };
+  # "seerr" = {
+  #   image = "docker.io/seerr/seerr:latest";
+  #   environment = {
+  #     "TZ" = cfg.timezone;
+  #   };
+  #   volumes = [
+  #     "${cfg.configDir}/seerr:/app/config"
+  #   ];
+  #   labels = {
+  #     "traefik.http.routers.seerr.middlewares" = "";
+  #   };
+  #   extraOptions = [
+  #     "--init"
+  #     "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1"
+  #   ];
+  # };
   "sonarr" = {
     image = "docker.io/linuxserver/sonarr:latest";
     environment = {
