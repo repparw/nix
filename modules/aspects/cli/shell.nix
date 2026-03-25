@@ -71,7 +71,7 @@
               '';
             };
             shellAliases = {
-              obsinvim = "cd ~/Documents/obsidian/ && $EDITOR .; prevd";
+              vo = "cd ~/Documents/obsidian/ && $EDITOR .; prevd";
 
               vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
 
