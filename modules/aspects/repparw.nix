@@ -61,7 +61,14 @@
         services.udiskie = {
           enable = true;
           tray = "never";
+          settings.device_config = [
+            {
+              id_label = "seagate";
+              ignore = true;
+            }
+          ];
         };
+
       };
   };
 }
