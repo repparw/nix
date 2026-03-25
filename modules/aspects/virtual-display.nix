@@ -5,7 +5,7 @@
 {
   den.aspects.virtual-display = {
     nixos =
-      { config, ... }:
+      { config, pkgs, ... }:
       {
         options.modules.virtualDisplay = {
           enable = lib.mkEnableOption "Virtual display for Sunshine/Moonlight";
@@ -27,7 +27,9 @@
         };
 
         config = lib.mkIf config.modules.virtualDisplay.enable {
+          hardware.firmware = [ pkgs.edid-generator ];
           boot.kernelParams = [
+            "drm.edid_firmware=${config.modules.virtualDisplay.port}:edid/${config.modules.virtualDisplay.resolution}.bin"
             "video=${config.modules.virtualDisplay.port}:${config.modules.virtualDisplay.resolution}@${toString config.modules.virtualDisplay.refreshRate}e"
           ];
         };
