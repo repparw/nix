@@ -117,7 +117,7 @@
             };
             settings = {
               plugin = [
-                "opencode-gemini-auth@latest"
+                "opencode-antigravity-auth@latest"
                 "@mohak34/opencode-notifier@latest"
               ];
               keybinds = {
