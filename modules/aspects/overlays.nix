@@ -31,6 +31,7 @@
                   hash = "sha256-BkmB+/oG0tsAbvAjkoEAJxObjvg+mCENhM4EHDDXQAI=";
                 };
               });
+
             })
             inputs.firefox-addons.overlays.default
             cfaitOverlay
