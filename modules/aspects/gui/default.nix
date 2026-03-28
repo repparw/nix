@@ -18,11 +18,6 @@
     nixos =
       { ... }:
       {
-        programs = {
-          wshowkeys.enable = true;
-          gnome-disks.enable = true;
-        };
-
         services.displayManager = {
           defaultSession = "niri";
           autoLogin.user = "repparw";
