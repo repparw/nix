@@ -23,7 +23,6 @@
       den.aspects.file-manager
       den.aspects.scripts
       den.aspects.rclone
-      den.aspects.jellyfin-mpv-shim
     ];
 
     provides.to-hosts = {
@@ -49,6 +48,7 @@
         description = "repparw";
         extraGroups = [
           "adbusers"
+          "video"
           "wheel"
         ];
       };
