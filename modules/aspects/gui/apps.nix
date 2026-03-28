@@ -5,6 +5,22 @@
 }:
 {
   den.aspects.gui.provides.guiApps = {
+    nixos = {
+      programs = {
+        gnome-disks.enable = true;
+        wshowkeys.enable = true;
+      };
+      networking.firewall.interfaces.eth0 = {
+        # rquickshare
+        allowedTCPPorts = [
+          32100
+        ];
+        allowedUDPPorts = [
+          5353 # mDNS
+          32100
+        ];
+      };
+    };
     homeManager =
       {
         config,
@@ -23,6 +39,7 @@
         gtk = {
           enable = true;
           gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
+          gtk4.theme = null;
         };
 
         xdg.mimeApps = {
@@ -183,5 +200,6 @@
           force = true;
         };
       };
+
   };
 }
