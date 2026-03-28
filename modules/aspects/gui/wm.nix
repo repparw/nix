@@ -34,7 +34,7 @@
               }
             ];
             events = {
-              before-sleep = "${lib.getExe pkgs.swaylock} -f";
+              before-sleep = "loginctl lock-session";
               lock = "${lib.getExe pkgs.swaylock} -f";
             };
           };

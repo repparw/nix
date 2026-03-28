@@ -35,8 +35,7 @@ output "HDMI-A-1" {
 }
 
 output "DP-2" {
-  position x=-16000 y=-16000 // move it non-adjacent to stop cursor going there
-  // used as virtual-display for sunshine/moonlight
+  off
 }
 
 layout {
@@ -134,7 +133,7 @@ binds {
   Mod+Z hotkey-overlay-title="MPV Clipboard" {spawn "mpvclip" ;}
 
   // macropad
-  Ctrl+Alt+Shift+A {spawn-sh "steam-gamescope" ;}
+  Ctrl+Alt+Shift+A {spawn-sh "gamescope --steam -H 1080 -O DP-1 --adaptive-sync -- steam -tenfoot -pipewire-dmabuf" ;}
   Ctrl+Alt+Shift+B {spawn "obs-cmd" "recording" "toggle-pause" ;}
   Ctrl+Alt+Shift+C {spawn "obs-remux2wsp" ;}
   Ctrl+Alt+Shift+D {spawn "obs-cmd" "replay" "save" ;}
@@ -185,7 +184,7 @@ binds {
 
   Print hotkey-overlay-title="Screenshot Screen" {spawn "niri" "msg" "action" "screenshot-screen" ;}
   Mod+Print hotkey-overlay-title="Screenshot Window" {spawn "niri" "msg" "action" "screenshot-window" ;}
-  Mod+Shift+Print hotkey-overlay-title="Screenshot Area" {spawn "niri" "msg" "action" "screenshot" ;}
+  Mod+Shift+Print hotkey-overlay-title="Screenshot Area" {spawn "niri" "msg" "action" "screenshot" "-p" "false" ;}
 
   XF86AudioPlay allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "media-play-pause";}
   XF86AudioPause allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "media-play-pause" ;}
