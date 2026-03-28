@@ -39,7 +39,7 @@
                     undo = "setsid steam steam://close/bigpicture";
                   }
                 ];
-                detached = [ "setsid steam steam://open/bigpicture" ];
+                detached = [ "capsh --drop=all -- steam steam://open/bigpicture" ];
                 auto-detach = "true";
               }
             ];
@@ -48,7 +48,6 @@
           programs = {
             steam = {
               enable = true;
-              protontricks.enable = true;
               gamescopeSession = {
                 enable = true;
                 args = [
