@@ -8,78 +8,43 @@
     includes = [ ];
 
     nixos =
-      { pkgs, config, ... }:
+      { pkgs, ... }:
       {
-        options.modules.gaming = {
-          enable = lib.mkEnableOption "gaming setup";
-        };
-
-        config = lib.mkIf config.modules.gaming.enable {
-          services.sunshine = {
+        hardware.xpadneo.enable = true;
+        programs = {
+          steam = {
             enable = true;
-            openFirewall = true;
-            capSysAdmin = true;
-            settings = {
-              output_name = 2;
-            };
-            applications.apps = [
-              {
-                name = "Desktop";
-              }
-              {
-                name = "Steam Big Picture";
-                cmd = "";
-                prep-cmd = [
-                  {
-                    do = "niri msg action focus-monitor DP-2";
-                    undo = "niri msg action focus-monitor DP-1";
-                  }
-                  {
-                    do = "";
-                    undo = "setsid steam steam://close/bigpicture";
-                  }
-                ];
-                detached = [ "capsh --drop=all -- steam steam://open/bigpicture" ];
-                auto-detach = "true";
-              }
-            ];
-          };
-          hardware.xpadneo.enable = true;
-          programs = {
-            steam = {
+            gamescopeSession = {
               enable = true;
-              gamescopeSession = {
-                enable = true;
-                args = [
-                  "-H"
-                  "1080"
-                  "-O"
-                  "DP-1"
-                  "--adaptive-sync"
-                ];
-              };
-              remotePlay.openFirewall = true;
-              localNetworkGameTransfers.openFirewall = true;
-              extraCompatPackages = with pkgs; [
-                proton-ge-bin
+              args = [
+                "-H"
+                "1080"
+                "-O"
+                "DP-1"
+                "--adaptive-sync"
               ];
             };
-
-            gamescope = {
-              enable = true;
-            };
-            gamemode.enable = true;
+            remotePlay.openFirewall = true;
+            localNetworkGameTransfers.openFirewall = true;
+            extraCompatPackages = with pkgs; [
+              proton-ge-bin
+            ];
           };
-          environment.systemPackages = with pkgs; [
-            (heroic.override {
-              extraPkgs =
-                pkgs': with pkgs'; [
-                  gamescope
-                  gamemode
-                ];
-            })
-          ];
+
+          gamescope = {
+            enable = true;
+          };
+          gamemode.enable = true;
         };
+        environment.systemPackages = with pkgs; [
+          (heroic.override {
+            extraPkgs =
+              pkgs': with pkgs'; [
+                gamescope
+                gamemode
+              ];
+          })
+        ];
       };
   };
 }

@@ -8,7 +8,6 @@
       { config, pkgs, ... }:
       {
         options.modules.virtualDisplay = {
-          enable = lib.mkEnableOption "Virtual display for Sunshine/Moonlight";
           port = lib.mkOption {
             type = lib.types.str;
             default = "DP-2";
@@ -26,7 +25,7 @@
           };
         };
 
-        config = lib.mkIf config.modules.virtualDisplay.enable {
+        config = {
           hardware.firmware = [ pkgs.edid-generator ];
           boot.kernelParams = [
             "drm.edid_firmware=${config.modules.virtualDisplay.port}:edid/${config.modules.virtualDisplay.resolution}.bin"

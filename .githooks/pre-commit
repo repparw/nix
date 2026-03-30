@@ -10,7 +10,7 @@ if [[ ${#staged_nix_files[@]} -eq 0 ]]; then
 fi
 
 for path in "${staged_nix_files[@]}"; do
-  if git diff --cached --unified=0 -- "$path" | rg -q '^[+-].*flake-file\.inputs'; then
+  if git diff --cached --unified=0 -- "$path" | grep -qE '^[+-].*flake-file\.inputs'; then
     echo "pre-commit: regenerating flake.nix from flake-file inputs"
     nix run .#write-flake
     git add flake.nix
