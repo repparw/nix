@@ -17,6 +17,7 @@
       den.aspects.repparw
       den.aspects.secrets
       den.aspects.style
+      den.aspects.streaming
       den.aspects.timers
       den.aspects.virtual-display
     ];
@@ -112,13 +113,6 @@
 
         nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
         hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-
-        modules = {
-          gaming.enable = true;
-          services.enable = true;
-          timers.enable = true;
-          virtualDisplay.enable = true;
-        };
 
         programs.obs-studio.enable = true;
 

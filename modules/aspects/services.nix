@@ -11,8 +11,6 @@
       in
       {
         options.modules.services = {
-          enable = lib.mkEnableOption "podman container services";
-
           rootDir = lib.mkOption {
             type = lib.types.path;
             default = "/home/dlsuite";
@@ -62,7 +60,7 @@
           };
         };
 
-        config = lib.mkIf cfg.enable (
+        config = (
           let
             serviceFiles = {
               arr = import ../_services/arr.nix;

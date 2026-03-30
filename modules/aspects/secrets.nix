@@ -12,10 +12,6 @@
   den.aspects.secrets = {
     nixos =
       { config, pkgs, ... }:
-      let
-        timersEnabled = lib.attrByPath [ "modules" "timers" "enable" ] false config;
-        servicesEnabled = lib.attrByPath [ "modules" "services" "enable" ] false config;
-      in
       {
         imports = [
           inputs.sops-nix.nixosModules.sops
@@ -40,8 +36,6 @@
           nextcloud = {
             owner = "repparw";
           };
-        }
-        // (lib.optionalAttrs timersEnabled {
           rcloneDriveToken = {
             owner = "repparw";
           };
@@ -60,16 +54,14 @@
           rcloneNextcloud = {
             owner = "repparw";
           };
-        })
+          freshrss = { };
+          cloudflare = { };
+          karakeep = { };
+        }
         // (lib.optionalAttrs (config.services.archisteamfarm.enable or false) {
           steamPassword = {
             owner = "archisteamfarm";
           };
-        })
-        // (lib.optionalAttrs servicesEnabled {
-          freshrss = { };
-          cloudflare = { };
-          karakeep = { };
         });
 
         sops.templates."cfait-config.toml" = {
