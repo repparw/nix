@@ -1,228 +1,125 @@
 {
   lib,
+  config,
+  pkgs,
   ...
 }:
 {
   den.aspects.streaming = {
     nixos =
-      { config, pkgs, ... }:
+      { pkgs, ... }:
       let
-        cfg = config.modules.streaming;
-
-        loadNiriEnv = ''
-          while IFS= read -r line; do
-            export "$line"
-          done < <(
-            systemctl --user show-environment | ${lib.getExe pkgs.ripgrep} '^(DISPLAY|NIRI_SOCKET|WAYLAND_DISPLAY|XDG_RUNTIME_DIR|XDG_SESSION_TYPE)='
-          )
+        niri-output-on = pkgs.writeShellScriptBin "niri-output-on" ''
+          #!/usr/bin/env bash
+          # Load Niri environment from user session
+          export $(systemctl --user show-environment | grep '^NIRI_SOCKET=')
+          ${pkgs.niri}/bin/niri msg output DP-2 on
+          ${pkgs.niri}/bin/niri msg output DP-2 mode 2560x1440@119.986
         '';
-
-        outputOnScript = pkgs.writeShellScriptBin "stream-output-on" ''
-          set -eu
-
-          ${loadNiriEnv}
-
-          ${lib.getExe pkgs.niri} msg output ${cfg.output} on
-          ${lib.getExe pkgs.niri} msg output ${cfg.output} mode ${cfg.width}x${cfg.height}@${cfg.refreshRate}
-          ${lib.getExe pkgs.niri} msg output ${cfg.output} position set ${toString cfg.positionX} ${toString cfg.positionY}
-          ${lib.getExe pkgs.niri} msg output ${cfg.output} vrr on --on-demand
+        niri-output-off = pkgs.writeShellScriptBin "niri-output-off" ''
+          #!/usr/bin/env bash
+          export $(systemctl --user show-environment | grep '^NIRI_SOCKET=')
+          ${pkgs.niri}/bin/niri msg output DP-2 off
         '';
-
-        outputOffScript = pkgs.writeShellScriptBin "stream-output-off" ''
-          set -eu
-
-          ${loadNiriEnv}
-
-          ${lib.getExe pkgs.niri} msg output ${cfg.output} off
-        '';
-
-        gamescopeSessionScript = pkgs.writeShellScriptBin "gamescope-stream-session" ''
-          set -eu
-
-          exec >"/tmp/gamescope-stream-session.log" 2>&1
+        steam-sunshine = pkgs.writeShellScriptBin "steam-sunshine" ''
+          #!/usr/bin/env bash
           set -x
+          exec >> /tmp/steam-sunshine.log 2>&1
 
-          ${loadNiriEnv}
-          ${outputOnScript}/bin/stream-output-on
+          echo "=== Starting Steam on DP-2 at $(date) ==="
 
-          ${lib.getExe pkgs.niri} msg action focus-monitor ${cfg.output} || true
+          # Kill any existing Steam (exact match to avoid killing this script)
+          pgrep -x steam >/dev/null 2>&1 && pkill -9 -x steam
+          sleep 2
 
-          cleanup() {
-            ${lib.getExe pkgs.niri} msg action focus-monitor ${cfg.desktopOutput} || true
-          }
+          # WORKAROUND: Force Steam to use XWayland to avoid 25-min lag bug
+          # See: https://github.com/ValveSoftware/steam-for-linux/issues/11446
+          export SDL_VIDEODRIVER=x11
 
-          trap cleanup EXIT INT TERM
+          steam -tenfoot -pipewire-dmabuf &
+          STEAM_PID=$!
+          echo "Steam PID: $STEAM_PID"
 
-          export DXVK_HDR=1
-          export ENABLE_GAMESCOPE_WSI=1
-          export STEAM_GAMESCOPE_HDR_SUPPORTED=1
+          # Wait for window and move to DP-2
+          for i in {1..30}; do
+            sleep 0.5
 
-          ${lib.getExe pkgs.gamescope} \
-            --backend wayland \
-            --fullscreen \
-            --borderless \
-            --steam \
-            --force-windows-fullscreen \
-            -W ${cfg.width} \
-            -H ${cfg.height} \
-            -w ${cfg.width} \
-            -h ${cfg.height} \
-            -r ${cfg.refreshRate} \
-            --adaptive-sync${lib.optionalString cfg.hdr " --hdr-enabled"} \
-            -- ${lib.getExe pkgs.steam} -tenfoot -pipewire-dmabuf &
-          gamescope_pid=$!
+            # Check if Steam died
+            if ! kill -0 $STEAM_PID 2>/dev/null; then
+              echo "Steam process not found, checking for window anyway"
+              break
+            fi
 
-          ${lib.getExe' pkgs.coreutils "sleep"} 2
-          ${lib.getExe pkgs.niri} msg action focus-monitor ${cfg.desktopOutput} || true
+            # Find Steam window - check both app_id and title for XWayland
+            WINDOW_ID=$(${pkgs.niri}/bin/niri msg --json windows | ${pkgs.jq}/bin/jq -r '.[] | select((.app_id // "" | ascii_downcase | contains("steam")) or (.title // "" | ascii_downcase | contains("steam"))) | .id' | head -1)
 
-          wait "$gamescope_pid"
-        '';
+            if [ -n "$WINDOW_ID" ] && [ "$WINDOW_ID" != "null" ]; then
+              echo "Found window $WINDOW_ID, moving to DP-2"
+              ${pkgs.niri}/bin/niri msg action focus-window --id "$WINDOW_ID"
+              sleep 0.5
+              ${pkgs.niri}/bin/niri msg action move-window-to-monitor DP-2
+              sleep 0.5
+              # Toggle fullscreen to fix resolution after moving to 1440p
+              ${pkgs.niri}/bin/niri msg action fullscreen-window --id "$WINDOW_ID"
+              echo "Moved Steam to DP-2 and toggled fullscreen"
+              break
+            fi
+          done
 
-        remoteStartScript = pkgs.writeShellScriptBin "stream-session-start" ''
-          set -eu
-
-          systemctl --machine=repparw@.host --user start sunshine.service
-
-          if systemctl --machine=repparw@.host --user restart gamescope-stream-session.service; then
-            exec systemctl --machine=repparw@.host --user status gamescope-stream-session.service
+          # Kill screenshare popup if it appears (xdg-desktop-portal dialog)
+          sleep 1
+          SCREENSHARE_ID=$(${pkgs.niri}/bin/niri msg --json windows | ${pkgs.jq}/bin/jq -r '.[] | select(.app_id == "xdg-desktop-portal-gnome") | .id' | head -1)
+          if [ -n "$SCREENSHARE_ID" ] && [ "$SCREENSHARE_ID" != "null" ]; then
+            echo "Closing screenshare popup $SCREENSHARE_ID"
+            ${pkgs.niri}/bin/niri msg action close-window --id "$SCREENSHARE_ID"
           fi
 
-          systemctl --machine=repparw@.host --user status gamescope-stream-session.service || true
-          echo
-          echo "--- /tmp/gamescope-stream-session.log ---"
-          tail -n 200 /tmp/gamescope-stream-session.log || true
-          exit 1
+          # Wait for Steam to exit
+          wait $STEAM_PID 2>/dev/null || true
+          echo "Steam exited"
         '';
-
-        remoteStopScript = pkgs.writeShellScriptBin "stream-session-stop" ''
-          set -eu
-          exec systemctl --machine=repparw@.host --user stop gamescope-stream-session.service
-        '';
-
-        remoteStatusScript = pkgs.writeShellScriptBin "stream-session-status" ''
-          set -eu
-          exec systemctl --machine=repparw@.host --user status gamescope-stream-session.service
-        '';
-
-        localRunScript = pkgs.writeShellScriptBin "stream-session-run-user" ''
-          set -eu
-
-          cleanup() {
-            systemctl --user stop gamescope-stream-session.service >/dev/null 2>&1 || true
-          }
-
-          trap cleanup EXIT INT TERM
-
-          systemctl --user restart gamescope-stream-session.service
-
-          while systemctl --user is-active --quiet gamescope-stream-session.service; do
-            ${lib.getExe' pkgs.coreutils "sleep"} 2
-          done
-        '';
-
-        sunshineApps = {
-          env = {
-            PATH = "$(PATH):/run/current-system/sw/bin";
-          };
-          apps = [
-            {
-              name = "Desktop";
-            }
-            {
-              name = "Steam Big Picture (DP-2)";
-              cmd = "${localRunScript}/bin/stream-session-run-user";
-            }
-          ];
-        };
       in
       {
-        options.modules.streaming = {
-          output = lib.mkOption {
-            type = lib.types.str;
-            default = "DP-2";
-            description = "Output used for the dedicated streaming workspace";
+        services.sunshine = {
+          enable = true;
+          openFirewall = true;
+          capSysAdmin = false; # Disabled per NixOS issue #463989
+
+          settings = {
+            output_name = 2;
+            min_log_level = "info";
           };
 
-          desktopOutput = lib.mkOption {
-            type = lib.types.str;
-            default = "DP-1";
-            description = "Desktop output to refocus after launching the streaming session";
-          };
-
-          width = lib.mkOption {
-            type = lib.types.str;
-            default = "3840";
-            description = "Streaming width";
-          };
-
-          height = lib.mkOption {
-            type = lib.types.str;
-            default = "2160";
-            description = "Streaming height";
-          };
-
-          refreshRate = lib.mkOption {
-            type = lib.types.str;
-            default = "120";
-            description = "Streaming refresh rate";
-          };
-
-          positionX = lib.mkOption {
-            type = lib.types.int;
-            default = 10000;
-            description = "X position for the virtual streaming output inside Niri";
-          };
-
-          positionY = lib.mkOption {
-            type = lib.types.int;
-            default = 10000;
-            description = "Y position for the virtual streaming output inside Niri";
-          };
-
-          hdr = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Enable HDR flags for the nested gamescope session";
-          };
-
-          sunshineOutput = lib.mkOption {
-            type = lib.types.nullOr lib.types.int;
-            default = 2;
-            description = "Sunshine output index for the dedicated streaming output";
+          applications = {
+            env = {
+              PATH = "/run/current-system/sw/bin:/home/repparw/.local/bin";
+            };
+            apps = [
+              {
+                name = "Desktop";
+                image-path = "desktop.png";
+              }
+              {
+                name = "Steam Big Picture";
+                cmd = "${steam-sunshine}/bin/steam-sunshine";
+                image-path = "steam.png";
+                prep-cmd = [
+                  {
+                    do = "${niri-output-on}/bin/niri-output-on";
+                    undo = "${niri-output-off}/bin/niri-output-off";
+                  }
+                ];
+              }
+            ];
           };
         };
 
-        config = {
-          services.sunshine = {
-            enable = true;
-            autoStart = true;
-            openFirewall = true;
-            capSysAdmin = true;
-            applications = sunshineApps;
-            settings = lib.optionalAttrs (cfg.sunshineOutput != null) {
-              output_name = cfg.sunshineOutput;
-            };
-          };
-
-          environment.systemPackages = [
-            remoteStartScript
-            remoteStatusScript
-            remoteStopScript
-          ];
-
-          systemd.user.services.gamescope-stream-session = {
-            description = "Dedicated nested gamescope stream session";
-            after = [ "graphical-session.target" ];
-            partOf = [ "graphical-session.target" ];
-
-            serviceConfig = {
-              ExecStart = "${gamescopeSessionScript}/bin/gamescope-stream-session";
-              ExecStopPost = "${outputOffScript}/bin/stream-output-off";
-              Restart = "on-failure";
-              RestartSec = "2s";
-            };
-          };
-        };
+        # Install helper scripts for Steam Big Picture
+        environment.systemPackages = [
+          niri-output-on
+          niri-output-off
+          steam-sunshine
+        ];
       };
   };
 }
