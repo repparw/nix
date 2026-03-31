@@ -67,12 +67,16 @@
           done
 
           # Kill screenshare popup if it appears (xdg-desktop-portal dialog)
-          sleep 1
-          SCREENSHARE_ID=$(${pkgs.niri}/bin/niri msg --json windows | ${pkgs.jq}/bin/jq -r '.[] | select(.app_id == "xdg-desktop-portal-gnome") | .id' | head -1)
-          if [ -n "$SCREENSHARE_ID" ] && [ "$SCREENSHARE_ID" != "null" ]; then
-            echo "Closing screenshare popup $SCREENSHARE_ID"
-            ${pkgs.niri}/bin/niri msg action close-window --id "$SCREENSHARE_ID"
-          fi
+          # Poll for up to 5 seconds since it can take a while to appear
+          for i in {1..10}; do
+            sleep 0.5
+            SCREENSHARE_ID=$(${pkgs.niri}/bin/niri msg --json windows | ${pkgs.jq}/bin/jq -r '.[] | select(.app_id == "xdg-desktop-portal-gnome") | .id' | head -1)
+            if [ -n "$SCREENSHARE_ID" ] && [ "$SCREENSHARE_ID" != "null" ]; then
+              echo "Closing screenshare popup $SCREENSHARE_ID"
+              ${pkgs.niri}/bin/niri msg action close-window --id "$SCREENSHARE_ID"
+              break
+            fi
+          done
 
           # Wait for Steam to exit
           wait $STEAM_PID 2>/dev/null || true
