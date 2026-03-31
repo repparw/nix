@@ -21,6 +21,7 @@
     ];
     labels = {
       "traefik.http.routers.authelia.rule" = "Host(`auth.${cfg.domain}`)";
+      "traefik.http.routers.authelia.middlewares" = "";
     };
   };
   "valkey" = {

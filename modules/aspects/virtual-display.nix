@@ -15,7 +15,7 @@
           };
           resolution = lib.mkOption {
             type = lib.types.str;
-            default = "3840x2160";
+            default = "2560x1440";
             description = "Resolution for virtual display";
           };
           refreshRate = lib.mkOption {

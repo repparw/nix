@@ -31,10 +31,8 @@
             ];
           };
 
-          gamescope = {
-            enable = true;
-          };
           gamemode.enable = true;
+          gamescope.enable = true;
         };
         environment.systemPackages = with pkgs; [
           (heroic.override {

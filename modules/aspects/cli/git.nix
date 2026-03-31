@@ -103,7 +103,14 @@
             options = [ "--cmd=cd" ];
           };
 
-          codex.enable = true;
+          codex = {
+            enable = true;
+            settings = {
+              approval_policy = "on-request";
+              sandbox_mode = "workspace-write";
+            };
+
+          };
 
           opencode = {
             enable = true;

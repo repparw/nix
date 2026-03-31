@@ -84,10 +84,9 @@
                 traefikRule = getTraefikRule name attrs;
                 hostname = extractHostname traefikRule;
                 defaultTraefikLabels = {
+                  "traefik.enable" = lib.mkDefault "true";
                   "traefik.http.routers.${name}.tls" = "true";
                   "traefik.http.routers.${name}.rule" = lib.mkDefault traefikRule;
-                }
-                // lib.optionalAttrs (name != "authelia") {
                   "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@file";
                 };
               in

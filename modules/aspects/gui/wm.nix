@@ -26,15 +26,15 @@
             timeouts = [
               {
                 timeout = 300;
-                command = "niri msg action power-off-monitors";
+                command = "${lib.getExe pkgs.niri} msg action power-off-monitors";
               }
               {
                 timeout = 315;
-                command = "loginctl lock-session";
+                command = "${lib.getExe' pkgs.systemd "loginctl"} lock-session";
               }
             ];
             events = {
-              before-sleep = "loginctl lock-session";
+              before-sleep = "${lib.getExe' pkgs.systemd "loginctl"} lock-session";
               lock = "${lib.getExe pkgs.swaylock} -f";
             };
           };

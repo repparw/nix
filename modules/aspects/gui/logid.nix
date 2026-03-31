@@ -56,7 +56,7 @@
           serviceConfig = {
             Type = "simple";
             ExecStart = "${lib.getExe pkgs.logiops_0_2_3}";
-            ExecStartPre = "${pkgs.coreutils}/bin/sleep 2";
+            ExecStartPre = "${lib.getExe' pkgs.coreutils "sleep"} 2";
           };
         };
       };
