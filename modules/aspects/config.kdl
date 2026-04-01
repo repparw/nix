@@ -36,7 +36,7 @@ output "HDMI-A-1" {
 
 output "DP-2" {
   mode "2560x1440@119.986"
-  position x=1920 y=0
+  position x=10000 y=10000
   off
 }
 
