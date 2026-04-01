@@ -62,16 +62,13 @@
 
         config = (
           let
-            serviceFiles = {
-              arr = import ../_services/arr.nix;
-              authelia = import ../_services/authelia.nix;
-              changedetection = import ../_services/changedetection.nix;
-              freshrss = import ../_services/freshrss.nix;
-              jellyfin = import ../_services/jellyfin.nix;
-              ntfy = import ../_services/ntfy.nix;
-              paperless = import ../_services/paperless.nix;
-              proxy = import ../_services/proxy.nix;
-            };
+            serviceFiles = lib.mapAttrs'
+              (name: _: lib.nameValuePair (lib.removeSuffix ".nix" name) (import (../_services + "/${name}")))
+              (lib.filterAttrs (name: type:
+                type == "regular" &&
+                lib.hasSuffix ".nix" name &&
+                !(lib.hasPrefix "_" name))
+                (builtins.readDir ../_services));
 
             extractHostname = rule: lib.removeSuffix "`)" (lib.removePrefix "Host(`" rule);
 
