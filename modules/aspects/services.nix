@@ -180,7 +180,8 @@
               wantedBy = lib.mkForce [ "lazy-containers.target" ];
               before = lib.mkForce [ ];
 
-              after = lib.optionals (lib.elem name hddDependent) [ "mnt-hdd.mount" ];
+              after = lib.optionals (lib.elem name hddDependent) [ "mnt-hdd.mount" ]
+                ++ lib.optionals (!(lib.elem name [ "podman-traefik" "podman-authelia" ])) [ "podman-traefik.service" ];
               wants = lib.optionals (lib.elem name hddDependent) [ "mnt-hdd.mount" ];
             });
 

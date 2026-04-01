@@ -15,7 +15,7 @@
       "${cfg.configDir}/changedetection:/config"
     ];
     extraOptions = [
-      "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:5000/ || exit 1"
+      "--health-cmd=curl -f http://localhost:5000/ || exit 1"
     ];
   };
   "sockpuppetbrowser" = {
