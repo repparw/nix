@@ -14,7 +14,9 @@
           # Load Niri environment from user session
           export $(systemctl --user show-environment | grep '^NIRI_SOCKET=')
           ${lib.getExe pkgs.niri} msg output DP-2 on
-          ${lib.getExe pkgs.niri} msg output DP-2 mode 2560x1440@119.986
+          sleep 0.5
+          ${lib.getExe pkgs.niri} msg output DP-2 mode "2560x1440@119.986"
+          ${lib.getExe pkgs.niri} msg output DP-2
         '';
         niri-output-off = pkgs.writeShellScriptBin "niri-output-off" ''
           #!/usr/bin/env bash
