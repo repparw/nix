@@ -26,9 +26,6 @@
             };
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
-            extraCompatPackages = with pkgs; [
-              proton-ge-bin
-            ];
           };
 
           gamemode.enable = true;
@@ -40,9 +37,20 @@
               pkgs': with pkgs'; [
                 gamescope
                 gamemode
+                mangohud
               ];
           })
         ];
+      };
+    homeManager =
+      { ... }:
+      {
+        programs.mangohud = {
+          enable = true;
+          settings = {
+            preset = 2;
+          };
+        };
       };
   };
 }
