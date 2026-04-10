@@ -10,6 +10,7 @@
     volumes = [
       "${cfg.configDir}/bazarr:/config"
       "${cfg.dataDir}:/data"
+      "${cfg.externalDataDir}:/data/seagate"
     ];
     extraOptions = [
       "--health-cmd=curl -f http://localhost:6767/bazarr/api/status || exit 1"
@@ -61,24 +62,28 @@
     ];
   };
   "qbittorrent" = {
-    image = "ghcr.io/hotio/qbittorrent:latest";
+    image = "docker.io/linuxserver/qbittorrent:latest";
     environment = {
       "PUID" = cfg.user;
       "PGID" = cfg.group;
       "TZ" = cfg.timezone;
+      "DOCKER_MODS" = "ghcr.io/vuetorrent/vuetorrent-lsio-mod:latest";
+      "TORRENTING_PORT" = "54535";
     };
     volumes = [
       "${cfg.dataDir}/torrents:/data/torrents"
-      "${cfg.configDir}/qbittorrent:/config"
+      "${cfg.configDir}/qbittorrent:/config/qBittorrent"
     ];
     ports = [
-      "127.0.0.1:54535:54535/tcp"
+      "54535:54535/tcp"
+      "54535:54535/udp"
     ];
     extraOptions = [
       "--health-cmd=curl -f http://localhost:8080/api/v2/app/version || exit 1"
     ];
     labels = {
       "traefik.http.routers.qbittorrent.rule" = "Host(`qbit.${cfg.domain}`)";
+      "traefik.http.services.qbittorrent.loadbalancer.server.port" = "8080";
     };
   };
   "radarr" = {
@@ -92,7 +97,7 @@
     };
     volumes = [
       "${cfg.dataDir}:/data"
-      "${cfg.externalDataDir}:/data/seagate:ro"
+      "${cfg.externalDataDir}:/data/seagate"
       "${cfg.configDir}/radarr:/config"
     ];
     extraOptions = [
@@ -127,7 +132,7 @@
     volumes = [
       "/dev/rtc:/dev/rtc:ro"
       "${cfg.dataDir}:/data"
-      "${cfg.externalDataDir}:/data/seagate:ro"
+      "${cfg.externalDataDir}:/data/seagate"
       "${cfg.configDir}/sonarr:/config"
     ];
     extraOptions = [

@@ -55,6 +55,7 @@
               allowedTCPPorts = [
                 80
                 443
+                54535
               ];
               allowedUDPPorts = [
                 54535
