@@ -25,11 +25,11 @@
             enable = true;
             timeouts = [
               {
-                timeout = 300;
+                timeout = 900;
                 command = "${lib.getExe pkgs.niri} msg action power-off-monitors";
               }
               {
-                timeout = 315;
+                timeout = 915;
                 command = "${lib.getExe' pkgs.systemd "loginctl"} lock-session";
               }
             ];
