@@ -77,11 +77,7 @@
 
           # Wait for Steam to exit
           wait $STEAM_PID 2>/dev/null || true
-          echo "Steam exited, restoring monitors"
-
-          # Power on all monitors
-          ${lib.getExe pkgs.niri} msg action power-on-monitors
-          echo "Powered on monitors"
+          echo "Steam exited"
         '';
       in
       {
