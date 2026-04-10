@@ -127,7 +127,7 @@
                 "opencode-antigravity-auth@latest"
                 "@mohak34/opencode-notifier@latest"
               ];
-              keybinds = {
+              tui.keybinds = {
                 leader = "ctrl+x";
               };
               permission = {
