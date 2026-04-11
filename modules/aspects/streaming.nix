@@ -114,13 +114,6 @@
             ];
           };
         };
-
-        # Install helper scripts and tools for Steam Big Picture
-        environment.systemPackages = [
-          niri-output-on
-          niri-output-off
-          steam-sunshine
-        ];
       };
   };
 }
