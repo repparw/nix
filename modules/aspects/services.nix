@@ -62,13 +62,14 @@
 
         config = (
           let
-            serviceFiles = lib.mapAttrs'
-              (name: _: lib.nameValuePair (lib.removeSuffix ".nix" name) (import (../_services + "/${name}")))
-              (lib.filterAttrs (name: type:
-                type == "regular" &&
-                lib.hasSuffix ".nix" name &&
-                !(lib.hasPrefix "_" name))
-                (builtins.readDir ../_services));
+            serviceFiles =
+              lib.mapAttrs'
+                (name: _: lib.nameValuePair (lib.removeSuffix ".nix" name) (import (../_services + "/${name}")))
+                (
+                  lib.filterAttrs (
+                    name: type: type == "regular" && lib.hasSuffix ".nix" name && !(lib.hasPrefix "_" name)
+                  ) (builtins.readDir ../_services)
+                );
 
             extractHostname = rule: lib.removeSuffix "`)" (lib.removePrefix "Host(`" rule);
 
@@ -129,8 +130,8 @@
                   "/mnt/hdd"
                 ];
                 device = "${cfg.configDir}/${subPath}";
+                fsType = "bind";
                 options = [
-                  "bind"
                   "ro"
                   "noauto"
                   "x-systemd.automount"
@@ -177,8 +178,14 @@
               wantedBy = lib.mkForce [ "lazy-containers.target" ];
               before = lib.mkForce [ ];
 
-              after = lib.optionals (lib.elem name hddDependent) [ "mnt-hdd.mount" ]
-                ++ lib.optionals (!(lib.elem name [ "podman-traefik" "podman-authelia" ])) [ "podman-traefik.service" ];
+              after =
+                lib.optionals (lib.elem name hddDependent) [ "mnt-hdd.mount" ]
+                ++ lib.optionals (
+                  !(lib.elem name [
+                    "podman-traefik"
+                    "podman-authelia"
+                  ])
+                ) [ "podman-traefik.service" ];
               wants = lib.optionals (lib.elem name hddDependent) [ "mnt-hdd.mount" ];
             });
 
