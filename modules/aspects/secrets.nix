@@ -54,9 +54,15 @@
           rcloneNextcloud = {
             owner = "repparw";
           };
-          freshrss = { };
-          cloudflare = { };
-          karakeep = { };
+          freshrss = {
+            owner = "repparw";
+          };
+          cloudflare = {
+            owner = "repparw";
+          };
+          karakeep = {
+            owner = "repparw";
+          };
         }
         // (lib.optionalAttrs (config.services.archisteamfarm.enable or false) {
           steamPassword = {
