@@ -37,7 +37,6 @@
           # Gamescope handles game window management internally
           ${lib.getExe pkgs.gamescope} \
             -W 2560 -H 1440 -r 120 \
-            -e \
             --steam \
             --force-grab-cursor \
             --adaptive-sync \

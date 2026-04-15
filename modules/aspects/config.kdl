@@ -135,7 +135,7 @@ binds {
   Mod+Z hotkey-overlay-title="MPV Clipboard" {spawn "mpvclip" ;}
 
   // macropad
-  Ctrl+Alt+Shift+A {spawn-sh "gamescope --steam -H 1080 -O DP-1 --adaptive-sync -- steam -tenfoot -pipewire-dmabuf" ;}
+  Ctrl+Alt+Shift+A {spawn-sh "gamescope --steam -H 1080 --adaptive-sync -- steam -tenfoot -pipewire-dmabuf" ;}
   Ctrl+Alt+Shift+B {spawn "obs-cmd" "recording" "toggle-pause" ;}
   Ctrl+Alt+Shift+C {spawn "obs-remux2wsp" ;}
   Ctrl+Alt+Shift+D {spawn "obs-cmd" "replay" "save" ;}
