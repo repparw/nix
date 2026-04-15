@@ -13,6 +13,8 @@
           nautilus
           baobab
           whatsapp-electron
+
+          shipwright
         ];
 
         services = {

@@ -124,7 +124,6 @@
             };
             settings = {
               plugin = [
-                "opencode-antigravity-auth@latest"
                 "@mohak34/opencode-notifier@latest"
               ];
               tui.keybinds = {
