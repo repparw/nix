@@ -10,6 +10,8 @@
     homeManager =
       { osConfig, ... }:
       {
+        # Fix: rclone-config service must remain active after exit for mount dependencies
+        systemd.user.services.rclone-config.Service.RemainAfterExit = "yes";
         programs.rclone = {
           enable = true;
           remotes = {
@@ -69,7 +71,7 @@
             dropbox = {
               config.type = "dropbox";
               secrets.token = osConfig.sops.secrets.rcloneDropbox.path;
-              mounts."" = {
+              mounts."apps/koreader-local/" = {
                 enable = true;
                 mountPoint = "/home/repparw/.cloud/dropbox";
               };
