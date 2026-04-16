@@ -17,6 +17,8 @@
       }:
       {
         programs = {
+          btop.enable = true;
+
           direnv = {
             enable = true;
             nix-direnv.enable = true;
@@ -90,9 +92,9 @@
               chown = "chown --preserve-root";
               chmod = "chmod --preserve-root";
               chgrp = "chgrp --preserve-root";
+              top = "btop";
             }
             // (with pkgs; {
-              top = "${lib.getExe bottom}";
               diff = "${lib.getExe colordiff}";
               cat = "${lib.getExe bat}";
               df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\* -only local";
