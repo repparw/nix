@@ -183,6 +183,7 @@
     homeManager =
       {
         osConfig,
+        config,
         lib,
         pkgs,
         ...
