@@ -49,13 +49,13 @@
 
           user = lib.mkOption {
             type = lib.types.str;
-            default = "1000";
+            default = "0";
             description = "User to run the containers";
           };
 
           group = lib.mkOption {
             type = lib.types.str;
-            default = "100";
+            default = "0";
             description = "Group to run the containers";
           };
         };
@@ -73,42 +73,6 @@
 
             extractHostname = rule: lib.removeSuffix "`)" (lib.removePrefix "Host(`" rule);
 
-            getTraefikRule =
-              name: attrs: attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
-
-            mkContainer =
-              name: attrs:
-              let
-                traefikRule = getTraefikRule name attrs;
-                hostname = extractHostname traefikRule;
-                defaultTraefikLabels = {
-                  "traefik.enable" = lib.mkDefault "true";
-                  "traefik.http.routers.${name}.tls" = "true";
-                  "traefik.http.routers.${name}.rule" = lib.mkDefault traefikRule;
-                  "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@file";
-                };
-              in
-              lib.mkMerge [
-                attrs
-                {
-                  extraOptions = (attrs.extraOptions or [ ]) ++ [
-                    "--network-alias=${name}"
-                    "--network=services"
-                  ];
-                  labels =
-                    (attrs.labels or { })
-                    // {
-                      "io.containers.autoupdate" = "registry";
-
-                      "glance.name" = name;
-                      "glance.url" = lib.mkDefault "https://${hostname}";
-                      "glance.icon" = lib.mkDefault "sh:${name}";
-                      "glance.same-tab" = "true";
-                    }
-                    // defaultTraefikLabels;
-                }
-              ];
-
             containersList = lib.attrValues serviceFiles;
 
             rawContainers = lib.foldl' (acc: def: acc // (def { inherit cfg config; })) { } containersList;
@@ -120,8 +84,6 @@
               in
               extractHostname rule
             ) rawContainers;
-
-            containerDefinitions = lib.mapAttrs mkContainer rawContainers;
 
             mkFileSystemMount = service: subPath: {
               "/home/repparw/.config/dlsuite/${service}" = {
@@ -141,17 +103,6 @@
                 ];
               };
             };
-
-            allContainers = map (name: "podman-${name}") (lib.attrNames containerDefinitions);
-
-            hddDependent = [
-              "podman-bazarr"
-              "podman-jellyfin"
-              "podman-paperless"
-              "podman-qbittorrent"
-              "podman-radarr"
-              "podman-sonarr"
-            ];
           in
           {
             systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
@@ -175,14 +126,12 @@
               };
             };
 
-
             virtualisation = {
               podman = {
                 enable = true;
                 autoPrune.enable = true;
                 defaultNetwork.settings.dns_enabled = true;
               };
-
 
               containers = {
                 enable = true;
@@ -219,6 +168,129 @@
             ];
           }
         );
+      };
+
+    provides.repparw.homeManager =
+      {
+        osConfig,
+        lib,
+        pkgs,
+        ...
+      }:
+      let
+        cfg = osConfig.modules.services;
+        serviceDir = ../_services;
+
+        serviceFiles =
+          lib.mapAttrs'
+            (name: _: lib.nameValuePair (lib.removeSuffix ".nix" name) (import (serviceDir + "/${name}")))
+            (
+              lib.filterAttrs (
+                name: type: type == "regular" && lib.hasSuffix ".nix" name && !(lib.hasPrefix "_" name)
+              ) (builtins.readDir serviceDir)
+            );
+
+        extractHostname = rule: lib.removeSuffix "`)" (lib.removePrefix "Host(`" rule);
+
+        getTraefikRule =
+          name: attrs: attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
+
+        mkContainer =
+          name: attrs:
+          let
+            traefikRule = getTraefikRule name attrs;
+            hostname = extractHostname traefikRule;
+            defaultTraefikLabels = {
+              "traefik.enable" = "true";
+              "traefik.http.routers.${name}.tls" = "true";
+              "traefik.http.routers.${name}.rule" = traefikRule;
+              "traefik.http.routers.${name}.middlewares" = "authelia@file";
+            };
+
+            extraOpts = attrs.extraOptions or [ ];
+            healthCmdOpt = lib.findFirst (opt: lib.hasPrefix "--health-cmd=" opt) null extraOpts;
+            healthIntervalOpt = lib.findFirst (opt: lib.hasPrefix "--health-interval=" opt) null extraOpts;
+            healthTimeoutOpt = lib.findFirst (opt: lib.hasPrefix "--health-timeout=" opt) null extraOpts;
+            healthRetriesOpt = lib.findFirst (opt: lib.hasPrefix "--health-retries=" opt) null extraOpts;
+
+            rawHealthCmd = if healthCmdOpt != null then lib.removePrefix "--health-cmd=" healthCmdOpt else null;
+            healthCmd =
+              if rawHealthCmd != null then
+                lib.trim (lib.removeSuffix " || exit 1" (lib.removeSuffix "|| exit 1" rawHealthCmd))
+              else
+                null;
+            healthInterval =
+              if healthIntervalOpt != null then lib.removePrefix "--health-interval=" healthIntervalOpt else null;
+            healthTimeout =
+              if healthTimeoutOpt != null then lib.removePrefix "--health-timeout=" healthTimeoutOpt else null;
+            healthRetries =
+              if healthRetriesOpt != null then lib.removePrefix "--health-retries=" healthRetriesOpt else null;
+
+            nonHealthOpts = lib.filter (
+              opt:
+              !(
+                lib.hasPrefix "--health-cmd=" opt
+                || lib.hasPrefix "--health-interval=" opt
+                || lib.hasPrefix "--health-timeout=" opt
+                || lib.hasPrefix "--health-retries=" opt
+              )
+            ) extraOpts;
+
+            quadletContainerConfig = lib.filterAttrs (n: v: v != null) {
+              HealthCmd = healthCmd;
+              HealthInterval = healthInterval;
+              HealthTimeout = healthTimeout;
+              HealthRetries = healthRetries;
+            };
+          in
+          {
+            image = attrs.image;
+            addCapabilities = attrs.addCapabilities or [ ];
+            environment = attrs.environment or { };
+            environmentFile = attrs.environmentFiles or [ ];
+            volumes = attrs.volumes or [ ];
+            ports = attrs.ports or [ ];
+            labels =
+              defaultTraefikLabels
+              // {
+                "io.containers.autoupdate" = "registry";
+                "glance.name" = name;
+                "glance.url" = "https://${hostname}";
+                "glance.icon" = "sh:${name}";
+                "glance.same-tab" = "true";
+              }
+              // (attrs.labels or { });
+            extraPodmanArgs = nonHealthOpts;
+            network = [ "services" ];
+            networkAlias = [ name ];
+            autoStart = true;
+            autoUpdate = "registry";
+            exec = if attrs ? cmd then lib.concatStringsSep " " attrs.cmd else null;
+            extraConfig =
+              if quadletContainerConfig != { } then { Container = quadletContainerConfig; } else { };
+          };
+
+        containersList = lib.attrValues serviceFiles;
+
+        rawContainers = lib.foldl' (
+          acc: def:
+          acc
+          // (def {
+            inherit cfg;
+            config = osConfig;
+          })
+        ) { } containersList;
+
+        containers = lib.mapAttrs mkContainer rawContainers;
+      in
+      {
+        services.podman = {
+          enable = true;
+          inherit containers;
+          networks.services = {
+            driver = "bridge";
+          };
+        };
       };
   };
 }
