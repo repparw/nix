@@ -130,8 +130,9 @@
                   "/mnt/hdd"
                 ];
                 device = "${cfg.configDir}/${subPath}";
-                fsType = "bind";
+                fsType = "none";
                 options = [
+                  "bind"
                   "ro"
                   "noauto"
                   "x-systemd.automount"
