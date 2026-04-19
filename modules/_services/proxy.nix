@@ -7,23 +7,25 @@
       "PGID" = cfg.group;
       "TZ" = cfg.timezone;
     };
+    addCapabilities = [ "CAP_NET_BIND_SERVICE" ];
     environmentFiles = [
       config.sops.secrets.cloudflare.path
     ];
     volumes = [
       "${cfg.configDir}/traefik:/config"
-      "/run/podman/podman.sock:/var/run/docker.sock"
+      "/run/user/1000/podman/podman.sock:/var/run/docker.sock"
     ];
     cmd = [
       "--configFile=/config/traefik.yml"
     ];
+    healthCmd = "traefik healthcheck --ping";
+    healthInterval = "30s";
+    healthTimeout = "5s";
+    healthRetries = "3";
     extraOptions = [
       "--dns=1.1.1.1"
       "--dns=1.0.0.1"
-      "--health-cmd=traefik healthcheck --ping"
-      "--health-interval=30s"
-      "--health-timeout=5s"
-      "--health-retries=3"
+    
     ];
     ports = [
       "443:443/tcp"
@@ -48,9 +50,7 @@
     volumes = [
       "${cfg.configDir}/ddclient:/config"
     ];
-    extraOptions = [
-      "--health-cmd=pgrep ddclient || exit 1"
-    ];
+    healthCmd = "pgrep ddclient";
     labels = {
       "glance.parent" = "traefik";
       "traefik.enable" = "false";
@@ -60,11 +60,9 @@
     image = "docker.io/glanceapp/glance:latest";
     volumes = [
       "${cfg.configDir}/glance:/app/config"
-      "/run/podman/podman.sock:/var/run/docker.sock"
+      "/run/user/1000/podman/podman.sock:/var/run/docker.sock"
     ];
-    extraOptions = [
-      "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1"
-    ];
+    healthCmd = "wget --no-verbose --tries=1 --spider http://localhost:8080/";
     labels = {
       "glance.parent" = "traefik";
       "traefik.http.routers.glance.rule" = "Host(`${cfg.domain}`)";

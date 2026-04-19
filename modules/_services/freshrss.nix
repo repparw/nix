@@ -16,9 +16,7 @@
       "${cfg.configDir}/freshrss:/config"
     ];
     environmentFiles = [ config.sops.secrets.freshrss.path ];
-    extraOptions = [
-      "--health-cmd=curl -f http://localhost:80/api/greader.php || exit 1"
-    ];
+    healthCmd = "curl -f http://localhost:80/api/greader.php";
     labels = {
       "traefik.http.routers.freshrss.rule" = "Host(`rss.${cfg.domain}`)";
     };

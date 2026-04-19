@@ -14,9 +14,10 @@
       "${cfg.externalDataDir}:/data/seagate:ro"
       "${cfg.configDir}/jellyfin:/config"
     ];
+    healthCmd = "curl -f http://localhost:8096/health";
     extraOptions = [
       "--device=/dev/dri:/dev/dri:rwm"
-      "--health-cmd=curl -f http://localhost:8096/health || exit 1"
+    
     ];
     labels = {
       "traefik.http.services.jellyfin.loadbalancer.server.port" = "8096";

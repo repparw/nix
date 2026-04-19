@@ -12,9 +12,7 @@
       "${cfg.dataDir}:/data"
       "${cfg.externalDataDir}:/data/seagate"
     ];
-    extraOptions = [
-      "--health-cmd=curl -f http://localhost:6767/bazarr/api/status || exit 1"
-    ];
+    healthCmd = "curl -f http://localhost:6767/bazarr/api/status";
   };
   # "listenarr" = {
   #   image = "ghcr.io/listenarrs/listenarr:canary";
@@ -28,9 +26,7 @@
   #     "${cfg.dataDir}/media/audiobooks:/audiobooks"
   #     "${cfg.dataDir}/torrents:/downloads"
   #   ];
-  #   extraOptions = [
-  #     "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:4545/health || exit 1"
-  #   ];
+  #   healthCmd = "wget --no-verbose --tries=1 --spider http://localhost:4545/health";
   #   labels = {
   #     "traefik.http.services.listenarr.loadbalancer.server.port" = "4545";
   #   };
@@ -43,9 +39,7 @@
     volumes = [
       "${cfg.configDir}/profilarr:/config"
     ];
-    extraOptions = [
-      "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:6868/health || exit 1"
-    ];
+    healthCmd = "wget --no-verbose --tries=1 --spider http://localhost:6868/health";
   };
   "prowlarr" = {
     image = "docker.io/linuxserver/prowlarr:latest";
@@ -57,9 +51,7 @@
     volumes = [
       "${cfg.configDir}/prowlarr:/config"
     ];
-    extraOptions = [
-      "--health-cmd=curl -f http://localhost:9696/ping || exit 1"
-    ];
+    healthCmd = "curl -f http://localhost:9696/ping";
   };
   "qbittorrent" = {
     image = "docker.io/linuxserver/qbittorrent:latest";
@@ -78,9 +70,7 @@
       "54535:54535/tcp"
       "54535:54535/udp"
     ];
-    extraOptions = [
-      "--health-cmd=curl -f http://localhost:8080/api/v2/app/version || exit 1"
-    ];
+    healthCmd = "curl -f http://localhost:8080/api/v2/app/version";
     labels = {
       "traefik.http.routers.qbittorrent.rule" = "Host(`qbit.${cfg.domain}`)";
       "traefik.http.services.qbittorrent.loadbalancer.server.port" = "8080";
@@ -100,9 +90,7 @@
       "${cfg.externalDataDir}:/data/seagate"
       "${cfg.configDir}/radarr:/config"
     ];
-    extraOptions = [
-      "--health-cmd=curl -f http://localhost:7878/ping || exit 1"
-    ];
+    healthCmd = "curl -f http://localhost:7878/ping";
   };
   # "seerr" = {
   #   image = "docker.io/seerr/seerr:latest";
@@ -115,10 +103,7 @@
   #   labels = {
   #     "traefik.http.routers.seerr.middlewares" = "";
   #   };
-  #   extraOptions = [
-  #     "--init"
-  #     "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1"
-  #   ];
+  #   healthCmd = "wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status";
   # };
   "sonarr" = {
     image = "docker.io/linuxserver/sonarr:latest";
@@ -135,8 +120,6 @@
       "${cfg.externalDataDir}:/data/seagate"
       "${cfg.configDir}/sonarr:/config"
     ];
-    extraOptions = [
-      "--health-cmd=curl -f http://localhost:8989/ping || exit 1"
-    ];
+    healthCmd = "curl -f http://localhost:8989/ping";
   };
 }

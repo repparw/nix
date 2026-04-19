@@ -25,6 +25,8 @@
       den.aspects.rclone
     ];
 
+    provides.alpha.includes = [ den.aspects.nixos-services ];
+
     provides.to-hosts = {
       includes = [ den.aspects.gui ];
 

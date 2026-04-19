@@ -62,7 +62,6 @@
               ${lib.getExe pkgs.niri} msg action move-window-to-monitor DP-2 --id "$WINDOW_ID"
               sleep 0.5
               ${lib.getExe pkgs.niri} msg action focus-window --id "$WINDOW_ID"
-              ${lib.getExe pkgs.niri} msg action raise-window --id "$WINDOW_ID"
               echo "Moved Gamescope to DP-2 and focused"
 
               # Power off all monitors via DPMS (doesn't affect output indices)
