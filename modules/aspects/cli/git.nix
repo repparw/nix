@@ -129,11 +129,11 @@
                 description: Add and commit changes using conventional commits
                 ---
 
-                Create a git commit for the current changes using the Conventional Commits standard.
+                Create git commits for the current changes using the Conventional Commits standard.
 
                 ## Context
 
-                Based on the conversation, determine what context is relevant for the commit message. If the user provided specific guidance about what to commit or the commit message, use that. Otherwise, analyze the changes to determine an appropriate commit message.
+                Based on the conversation, determine what context is relevant for the commit message. If the user provided specific guidance about what to commit or the commit message, use that. Otherwise, analyze the changes to determine an appropriate commit message. If changes to commit are not related, you can split it into multiple commits
 
                 ## Process
 

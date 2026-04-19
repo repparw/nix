@@ -127,13 +127,13 @@
               sysu = "systemctl --user";
               syslist = "systemctl list-unit-files";
 
-              pcls = "sudo podman container ls";
-              pils = "sudo podman image ls";
-              prs = "sudo podman restart";
-              pxcit = "sudo podman exec -it";
-              ppu = "sudo podman pull";
-              plo = "sudo podman logs";
-              pps = "sudo podman ps";
+              pcls = "podman container ls";
+              pils = "podman image ls";
+              prs = "podman restart";
+              pxcit = "podman exec -it";
+              ppu = "podman pull";
+              plo = "podman logs";
+              pps = "podman ps";
             };
           };
         };
