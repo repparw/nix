@@ -133,7 +133,7 @@
 
                 ## Context
 
-                Based on the conversation, determine what context is relevant for the commit message. If the user provided specific guidance about what to commit or the commit message, use that. Otherwise, analyze the changes to determine an appropriate commit message. If changes to commit are not related, you can split it into multiple commits
+                Based on the conversation, determine what context is relevant for the commit message. If the user provided specific guidance about what to commit or the commit message, use that. Otherwise, analyze the changes to determine an appropriate commit message. If the changes to commit are not related, you can split them into multiple commits.
 
                 ## Process
 

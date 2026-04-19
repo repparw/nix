@@ -16,9 +16,7 @@
       "${cfg.configDir}/authelia/config:/config"
       "${cfg.configDir}/authelia/secrets:/secrets"
     ];
-    extraOptions = [
-      "--health-cmd=wget --no-verbose --tries=1 --spider http://localhost:9091/api/health || exit 1"
-    ];
+    healthCmd = "wget --no-verbose --tries=1 --spider http://localhost:9091/api/health";
     labels = {
       "traefik.http.routers.authelia.rule" = "Host(`auth.${cfg.domain}`)";
       "traefik.http.routers.authelia.middlewares" = "";
@@ -40,7 +38,7 @@
       "--loglevel"
       "warning"
     ];
-    extraOptions = [ "--health-cmd=nc -z localhost 6379 || exit 1" ];
+    healthCmd = "nc -z localhost 6379";
     labels = {
       "glance.parent" = "authelia";
       "traefik.enable" = "false";

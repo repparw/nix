@@ -14,9 +14,7 @@
     volumes = [
       "${cfg.configDir}/changedetection:/config"
     ];
-    extraOptions = [
-      "--health-cmd=curl -f http://localhost:5000/ || exit 1"
-    ];
+    healthCmd = "curl -f http://localhost:5000/";
   };
   "sockpuppetbrowser" = {
     image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";

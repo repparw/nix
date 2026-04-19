@@ -50,13 +50,19 @@
           user = lib.mkOption {
             type = lib.types.str;
             default = "0";
-            description = "User to run the containers";
+            description = "UID to map to inside the container namespace. Defaults to 0 (root).";
           };
 
           group = lib.mkOption {
             type = lib.types.str;
             default = "0";
-            description = "Group to run the containers";
+            description = "GID to map to inside the container namespace. Defaults to 0 (root).";
+          };
+
+          podmanSocket = lib.mkOption {
+            type = lib.types.str;
+            default = "/run/podman/podman.sock";
+            description = "Path to the podman socket to mount in containers";
           };
         };
 
@@ -105,6 +111,10 @@
             };
           in
           {
+            boot.kernel.sysctl = {
+              "net.ipv4.ip_unprivileged_port_start" = 80;
+            };
+
             systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
 
             networking.firewall.interfaces."podman*".allowedUDPPorts = [ 53 ];
@@ -195,52 +205,26 @@
         getTraefikRule =
           name: attrs: attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
 
+        podmanSocket = "/run/user/${toString osConfig.users.users.${config.home.username}.uid}/podman/podman.sock";
+
         mkContainer =
           name: attrs:
           let
             traefikRule = getTraefikRule name attrs;
             hostname = extractHostname traefikRule;
             defaultTraefikLabels = {
-              "traefik.enable" = "true";
+              "traefik.enable" = lib.mkDefault "true";
               "traefik.http.routers.${name}.tls" = "true";
-              "traefik.http.routers.${name}.rule" = traefikRule;
-              "traefik.http.routers.${name}.middlewares" = "authelia@file";
+              "traefik.http.routers.${name}.rule" = lib.mkDefault traefikRule;
+              "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@file";
             };
 
             extraOpts = attrs.extraOptions or [ ];
-            healthCmdOpt = lib.findFirst (opt: lib.hasPrefix "--health-cmd=" opt) null extraOpts;
-            healthIntervalOpt = lib.findFirst (opt: lib.hasPrefix "--health-interval=" opt) null extraOpts;
-            healthTimeoutOpt = lib.findFirst (opt: lib.hasPrefix "--health-timeout=" opt) null extraOpts;
-            healthRetriesOpt = lib.findFirst (opt: lib.hasPrefix "--health-retries=" opt) null extraOpts;
-
-            rawHealthCmd = if healthCmdOpt != null then lib.removePrefix "--health-cmd=" healthCmdOpt else null;
-            healthCmd =
-              if rawHealthCmd != null then
-                lib.trim (lib.removeSuffix " || exit 1" (lib.removeSuffix "|| exit 1" rawHealthCmd))
-              else
-                null;
-            healthInterval =
-              if healthIntervalOpt != null then lib.removePrefix "--health-interval=" healthIntervalOpt else null;
-            healthTimeout =
-              if healthTimeoutOpt != null then lib.removePrefix "--health-timeout=" healthTimeoutOpt else null;
-            healthRetries =
-              if healthRetriesOpt != null then lib.removePrefix "--health-retries=" healthRetriesOpt else null;
-
-            nonHealthOpts = lib.filter (
-              opt:
-              !(
-                lib.hasPrefix "--health-cmd=" opt
-                || lib.hasPrefix "--health-interval=" opt
-                || lib.hasPrefix "--health-timeout=" opt
-                || lib.hasPrefix "--health-retries=" opt
-              )
-            ) extraOpts;
-
             quadletContainerConfig = lib.filterAttrs (n: v: v != null) {
-              HealthCmd = healthCmd;
-              HealthInterval = healthInterval;
-              HealthTimeout = healthTimeout;
-              HealthRetries = healthRetries;
+              HealthCmd = attrs.healthCmd or null;
+              HealthInterval = attrs.healthInterval or null;
+              HealthTimeout = attrs.healthTimeout or null;
+              HealthRetries = attrs.healthRetries or null;
             };
           in
           {
@@ -260,7 +244,7 @@
                 "glance.same-tab" = "true";
               }
               // (attrs.labels or { });
-            extraPodmanArgs = nonHealthOpts;
+            extraPodmanArgs = extraOpts;
             network = [ "services" ];
             networkAlias = [ name ];
             autoStart = true;
@@ -278,6 +262,7 @@
           // (def {
             inherit cfg;
             config = osConfig;
+            inherit podmanSocket;
           })
         ) { } containersList;
 
