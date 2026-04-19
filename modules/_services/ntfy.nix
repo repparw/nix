@@ -16,8 +16,6 @@
     volumes = [
       "${cfg.configDir}/ntfy:/etc/ntfy"
     ];
-    extraOptions = [
-      "--health-cmd=wget -q --tries=1 http://localhost:80/v1/health -O - | grep -Eo '\"healthy\"\\s*:\\s*true' || exit 1"
-    ];
+    healthCmd = "wget -q --tries=1 http://localhost:80/v1/health -O - | grep -Eo '\\\"healthy\\\"\\\\s*:\\\\s*true'";
   };
 }

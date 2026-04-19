@@ -49,14 +49,20 @@
 
           user = lib.mkOption {
             type = lib.types.str;
-            default = "1000";
-            description = "User to run the containers";
+            default = "0";
+            description = "UID to map to inside the container namespace. Defaults to 0 (root).";
           };
 
           group = lib.mkOption {
             type = lib.types.str;
-            default = "100";
-            description = "Group to run the containers";
+            default = "0";
+            description = "GID to map to inside the container namespace. Defaults to 0 (root).";
+          };
+
+          podmanSocket = lib.mkOption {
+            type = lib.types.str;
+            default = "/run/podman/podman.sock";
+            description = "Path to the podman socket to mount in containers";
           };
         };
 
@@ -73,42 +79,6 @@
 
             extractHostname = rule: lib.removeSuffix "`)" (lib.removePrefix "Host(`" rule);
 
-            getTraefikRule =
-              name: attrs: attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
-
-            mkContainer =
-              name: attrs:
-              let
-                traefikRule = getTraefikRule name attrs;
-                hostname = extractHostname traefikRule;
-                defaultTraefikLabels = {
-                  "traefik.enable" = lib.mkDefault "true";
-                  "traefik.http.routers.${name}.tls" = "true";
-                  "traefik.http.routers.${name}.rule" = lib.mkDefault traefikRule;
-                  "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@file";
-                };
-              in
-              lib.mkMerge [
-                attrs
-                {
-                  extraOptions = (attrs.extraOptions or [ ]) ++ [
-                    "--network-alias=${name}"
-                    "--network=services"
-                  ];
-                  labels =
-                    (attrs.labels or { })
-                    // {
-                      "io.containers.autoupdate" = "registry";
-
-                      "glance.name" = name;
-                      "glance.url" = lib.mkDefault "https://${hostname}";
-                      "glance.icon" = lib.mkDefault "sh:${name}";
-                      "glance.same-tab" = "true";
-                    }
-                    // defaultTraefikLabels;
-                }
-              ];
-
             containersList = lib.attrValues serviceFiles;
 
             rawContainers = lib.foldl' (acc: def: acc // (def { inherit cfg config; })) { } containersList;
@@ -120,8 +90,6 @@
               in
               extractHostname rule
             ) rawContainers;
-
-            containerDefinitions = lib.mapAttrs mkContainer rawContainers;
 
             mkFileSystemMount = service: subPath: {
               "/home/repparw/.config/dlsuite/${service}" = {
@@ -141,19 +109,12 @@
                 ];
               };
             };
-
-            allContainers = map (name: "podman-${name}") (lib.attrNames containerDefinitions);
-
-            hddDependent = [
-              "podman-bazarr"
-              "podman-jellyfin"
-              "podman-paperless"
-              "podman-qbittorrent"
-              "podman-radarr"
-              "podman-sonarr"
-            ];
           in
           {
+            boot.kernel.sysctl = {
+              "net.ipv4.ip_unprivileged_port_start" = 80;
+            };
+
             systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
 
             networking.firewall.interfaces."podman*".allowedUDPPorts = [ 53 ];
@@ -175,29 +136,12 @@
               };
             };
 
-            systemd.services = lib.genAttrs allContainers (name: {
-              wantedBy = lib.mkForce [ "lazy-containers.target" ];
-              before = lib.mkForce [ ];
-
-              after =
-                lib.optionals (lib.elem name hddDependent) [ "mnt-hdd.mount" ]
-                ++ lib.optionals (
-                  !(lib.elem name [
-                    "podman-traefik"
-                    "podman-authelia"
-                  ])
-                ) [ "podman-traefik.service" ];
-              wants = lib.optionals (lib.elem name hddDependent) [ "mnt-hdd.mount" ];
-            });
-
             virtualisation = {
               podman = {
                 enable = true;
                 autoPrune.enable = true;
                 defaultNetwork.settings.dns_enabled = true;
               };
-
-              oci-containers.containers = containerDefinitions;
 
               containers = {
                 enable = true;
@@ -234,6 +178,105 @@
             ];
           }
         );
+      };
+
+    homeManager =
+      {
+        osConfig,
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
+      let
+        cfg = osConfig.modules.services;
+        serviceDir = ../_services;
+
+        serviceFiles =
+          lib.mapAttrs'
+            (name: _: lib.nameValuePair (lib.removeSuffix ".nix" name) (import (serviceDir + "/${name}")))
+            (
+              lib.filterAttrs (
+                name: type: type == "regular" && lib.hasSuffix ".nix" name && !(lib.hasPrefix "_" name)
+              ) (builtins.readDir serviceDir)
+            );
+
+        extractHostname = rule: lib.removeSuffix "`)" (lib.removePrefix "Host(`" rule);
+
+        getTraefikRule =
+          name: attrs: attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
+
+        podmanSocket = "/run/user/${toString osConfig.users.users.${config.home.username}.uid}/podman/podman.sock";
+
+        mkContainer =
+          name: attrs:
+          let
+            traefikRule = getTraefikRule name attrs;
+            hostname = extractHostname traefikRule;
+            defaultTraefikLabels = {
+              "traefik.enable" = lib.mkDefault "true";
+              "traefik.http.routers.${name}.tls" = "true";
+              "traefik.http.routers.${name}.rule" = lib.mkDefault traefikRule;
+              "traefik.http.routers.${name}.middlewares" = lib.mkDefault "authelia@file";
+            };
+
+            extraOpts = attrs.extraOptions or [ ];
+            quadletContainerConfig = lib.filterAttrs (n: v: v != null) {
+              HealthCmd = attrs.healthCmd or null;
+              HealthInterval = attrs.healthInterval or null;
+              HealthTimeout = attrs.healthTimeout or null;
+              HealthRetries = attrs.healthRetries or null;
+            };
+          in
+          {
+            image = attrs.image;
+            addCapabilities = attrs.addCapabilities or [ ];
+            environment = attrs.environment or { };
+            environmentFile = attrs.environmentFiles or [ ];
+            volumes = attrs.volumes or [ ];
+            ports = attrs.ports or [ ];
+            labels =
+              defaultTraefikLabels
+              // {
+                "io.containers.autoupdate" = "registry";
+                "glance.name" = name;
+                "glance.url" = "https://${hostname}";
+                "glance.icon" = "sh:${name}";
+                "glance.same-tab" = "true";
+              }
+              // (attrs.labels or { });
+            extraPodmanArgs = extraOpts;
+            network = [ "services" ];
+            networkAlias = [ name ];
+            autoStart = true;
+            autoUpdate = "registry";
+            exec = if attrs ? cmd then lib.concatStringsSep " " attrs.cmd else null;
+            extraConfig =
+              if quadletContainerConfig != { } then { Container = quadletContainerConfig; } else { };
+          };
+
+        containersList = lib.attrValues serviceFiles;
+
+        rawContainers = lib.foldl' (
+          acc: def:
+          acc
+          // (def {
+            inherit cfg;
+            config = osConfig;
+            inherit podmanSocket;
+          })
+        ) { } containersList;
+
+        containers = lib.mapAttrs mkContainer rawContainers;
+      in
+      {
+        services.podman = {
+          enable = true;
+          inherit containers;
+          networks.services = {
+            driver = "bridge";
+          };
+        };
       };
   };
 }

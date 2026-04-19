@@ -12,7 +12,6 @@
       den.aspects.gaming
       den.aspects.logid
       den.aspects.networking
-      den.aspects.nixos-services
       den.aspects.overlays
       den.aspects.repparw
       den.aspects.secrets
@@ -151,15 +150,17 @@
         };
       };
 
-    provides.repparw.homeManager.services.spotifyd = {
-      enable = true;
-      settings.global = {
-        username = "2ksy00sfypgevoabx2128ia4g";
-        device_name = "alpha";
-        bitrate = 320;
-        max_cache_size = 5000000000;
-        initial_volume = 70;
-        volume_normalisation = false;
+    provides.repparw.homeManager = {
+      services.spotifyd = {
+        enable = true;
+        settings.global = {
+          username = "2ksy00sfypgevoabx2128ia4g";
+          device_name = "alpha";
+          bitrate = 320;
+          max_cache_size = 5000000000;
+          initial_volume = 70;
+          volume_normalisation = false;
+        };
       };
     };
   };

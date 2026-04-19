@@ -5,9 +5,7 @@
     volumes = [
       "${cfg.configDir}/paper/redis:/data"
     ];
-    extraOptions = [
-      "--health-cmd=redis-cli ping || exit 1"
-    ];
+    healthCmd = "redis-cli ping";
     labels = {
       "glance.parent" = "paperless";
       "traefik.enable" = "false";
@@ -33,9 +31,7 @@
       "${cfg.dataDir}/paper/media:/usr/src/paperless/media"
       "${cfg.configDir}/paper/export:/usr/src/paperless/export"
     ];
-    extraOptions = [
-      "--health-cmd=curl -f http://localhost:8000/api/ || exit 1"
-    ];
+    healthCmd = "curl -f http://localhost:8000/api/";
     labels = {
       "glance.icon" = "sh:paperless-ngx";
       "traefik.http.routers.paperless.rule" = "Host(`paper.${cfg.domain}`)";
@@ -51,9 +47,7 @@
     volumes = [
       "${cfg.configDir}/paper/pg:/var/lib/postgresql/data"
     ];
-    extraOptions = [
-      "--health-cmd=pg_isready -U paperless || exit 1"
-    ];
+    healthCmd = "pg_isready -U paperless";
     labels = {
       "glance.parent" = "paperless";
       "traefik.enable" = "false";
