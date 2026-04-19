@@ -12,7 +12,6 @@
       den.aspects.gaming
       den.aspects.logid
       den.aspects.networking
-      den.aspects.nixos-services
       den.aspects.overlays
       den.aspects.repparw
       den.aspects.secrets

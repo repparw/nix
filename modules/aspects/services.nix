@@ -170,7 +170,7 @@
         );
       };
 
-    provides.repparw.homeManager =
+    homeManager =
       {
         osConfig,
         lib,
