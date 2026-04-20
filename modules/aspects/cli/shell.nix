@@ -8,6 +8,10 @@
   den.aspects.shell = {
     includes = [ ];
 
+    nixos = {
+      programs.fish.useBabelfish = true;
+    };
+
     homeManager =
       {
         osConfig,

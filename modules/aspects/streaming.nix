@@ -64,8 +64,12 @@
               ${lib.getExe pkgs.niri} msg action focus-window --id "$WINDOW_ID"
               echo "Moved Gamescope to DP-2 and focused"
 
+              # Wait for Steam to fully initialize before powering off monitors
+              # Steam needs time to load the UI, otherwise it may exit
+              echo "Waiting for Steam to initialize..."
+              sleep 8
+
               # Power off all monitors via DPMS (doesn't affect output indices)
-              sleep 0.5
               ${lib.getExe pkgs.niri} msg action power-off-monitors
               echo "Powered off monitors"
 
@@ -85,7 +89,7 @@
           capSysAdmin = false; # Disabled per NixOS issue #463989
 
           settings = {
-            output_name = 2;
+            output_name = 1;  # DP-2 where gamescope/Steam runs
             min_log_level = "info";
           };
 
