@@ -25,7 +25,7 @@
     extraOptions = [
       "--dns=1.1.1.1"
       "--dns=1.0.0.1"
-    
+
     ];
     ports = [
       "443:443/tcp"

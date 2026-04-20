@@ -17,7 +17,7 @@
     healthCmd = "curl -f http://localhost:8096/health";
     extraOptions = [
       "--device=/dev/dri:/dev/dri:rwm"
-    
+
     ];
     labels = {
       "traefik.http.services.jellyfin.loadbalancer.server.port" = "8096";

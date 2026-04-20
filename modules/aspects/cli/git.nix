@@ -119,6 +119,8 @@
               extraArgs = [
                 "--port"
                 "4096"
+                "--hostname"
+                "0.0.0.0"
               ];
             };
             # package = pkgs.opencode-desktop;
@@ -219,9 +221,7 @@
               permission = {
                 "*" = {
                   "*" = "allow";
-                  "rm *" = "deny";
                 };
-                "rm *" = "deny";
               };
               formatter = false;
               agent = {

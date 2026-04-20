@@ -136,23 +136,6 @@
               };
             };
 
-            virtualisation = {
-              podman = {
-                enable = true;
-                autoPrune.enable = true;
-                defaultNetwork.settings.dns_enabled = true;
-              };
-
-              containers = {
-                enable = true;
-                storage.settings = {
-                  storage = {
-                    driver = "btrfs";
-                  };
-                };
-              };
-            };
-
             fileSystems = lib.mkMerge [
               (mkFileSystemMount "authelia" "authelia")
               (mkFileSystemMount "listenarr" "listenarr")
@@ -206,7 +189,9 @@
         getTraefikRule =
           name: attrs: attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
 
-        podmanSocket = "/run/user/${toString osConfig.users.users.${config.home.username}.uid}/podman/podman.sock";
+        podmanSocket = "/run/user/${
+          toString osConfig.users.users.${config.home.username}.uid
+        }/podman/podman.sock";
 
         mkContainer =
           name: attrs:
@@ -270,8 +255,27 @@
         containers = lib.mapAttrs mkContainer rawContainers;
       in
       {
+        systemd.user.sockets.podman = {
+          Unit = {
+            Description = "Podman API Socket";
+            Documentation = "man:podman-system-service(1)";
+          };
+          Socket = {
+            ListenStream = "%t/podman/podman.sock";
+            SocketMode = "0660";
+          };
+          Install = {
+            WantedBy = [ "sockets.target" ];
+          };
+        };
+
         services.podman = {
           enable = true;
+          settings.storage = {
+            storage = {
+              driver = "btrfs";
+            };
+          };
           inherit containers;
           networks.services = {
             driver = "bridge";

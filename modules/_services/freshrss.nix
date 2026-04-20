@@ -3,8 +3,8 @@
   "freshrss" = {
     image = "docker.io/linuxserver/freshrss:latest";
     environment = {
-      "PUID" = cfg.user;
-      "PGID" = cfg.group;
+      "PUID" = "1000";
+      "PGID" = "1000";
       "TZ" = cfg.timezone;
       "OIDC_ENABLED" = "1";
       "OIDC_PROVIDER_METADATA_URL" = "https://auth.${cfg.domain}/.well-known/openid-configuration";
