@@ -43,7 +43,7 @@
 
           buildPhase = ''
             make -C ${config.boot.kernelPackages.kernel.dev}/lib/modules/${modDirVersion}/build \
-              M=$(PWD)/drivers/bluetooth modules
+              M=$PWD/drivers/bluetooth modules
           '';
 
           installPhase = ''
