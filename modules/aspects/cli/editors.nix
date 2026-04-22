@@ -53,7 +53,6 @@
             pdfgrep
             catdoc
 
-            gemini-cli
             github-copilot-cli
 
             cfait
