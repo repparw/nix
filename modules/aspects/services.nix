@@ -5,7 +5,7 @@
 {
   den.aspects.nixos-services = {
     nixos =
-      { config, ... }:
+      { config, pkgs, ... }:
       let
         cfg = config.modules.services;
       in
@@ -114,6 +114,8 @@
             boot.kernel.sysctl = {
               "net.ipv4.ip_unprivileged_port_start" = 80;
             };
+
+            environment.systemPackages = with pkgs; [ slirp4netns ];
 
             systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
 
@@ -271,6 +273,11 @@
 
         services.podman = {
           enable = true;
+          settings.containers = {
+            network = {
+              default_rootless_network_cmd = "slirp4netns";
+            };
+          };
           settings.storage = {
             storage = {
               driver = "btrfs";
