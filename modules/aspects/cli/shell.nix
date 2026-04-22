@@ -108,8 +108,6 @@
               pc = "${lib.getExe' mosh "mosh"} -P 60000 alpha";
 
               ns = "${lib.getExe nix-search-tv} print | fzf --preview '${lib.getExe nix-search-tv} preview {}' --scheme history";
-
-              ghcs = "${lib.getExe gh} copilot suggest";
             });
             preferAbbrs = true;
             shellAbbrs = {
@@ -117,8 +115,8 @@
 
               v = "nvim";
 
-              oc = "opencode";
-              occ = "opencode -c";
+              oc = "opencode attach http://localhost:4096";
+              occ = "oc -c";
 
               meminfo = "free -hlt";
               cpuinfo = "lscpu";
