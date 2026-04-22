@@ -2,7 +2,12 @@
 {
   den.aspects.mercusys-ma530 = {
     nixos =
-      { config, pkgs, ... }:
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
       let
         modDirVersion = config.boot.kernelPackages.kernel.modDirVersion;
         btusb-mercusys-ma530 = pkgs.stdenv.mkDerivation {
@@ -11,7 +16,20 @@
 
           src = config.boot.kernelPackages.kernel.src;
 
-          patches = [ ./mercusys-ma530-btusb.patch ];
+          patches = [
+            (pkgs.writeText "mercusys-ma530.patch" ''
+              --- a/drivers/bluetooth/btusb.c
+              +++ b/drivers/bluetooth/btusb.c
+              @@ -812,6 +812,8 @@ static const struct usb_device_id quirks_table[] = {
+              	{ USB_DEVICE(0x2ff8, 0xb011), .driver_info = BTUSB_REALTEK },
+              
+              	/* Additional Realtek 8761BUV Bluetooth devices */
+              +	{ USB_DEVICE(0x2c4e, 0x0115), .driver_info = BTUSB_REALTEK |
+              +					     BTUSB_WIDEBAND_SPEECH },
+              	{ USB_DEVICE(0x2357, 0x0604), .driver_info = BTUSB_REALTEK |
+              					     BTUSB_WIDEBAND_SPEECH },
+            '')
+          ];
 
           nativeBuildInputs = config.boot.kernelPackages.kernel.moduleBuildDependencies;
 
@@ -38,10 +56,10 @@
             Type = "oneshot";
             RemainAfterExit = true;
             ExecStart = pkgs.writeShellScript "load-patched-btusb" ''
-              if ${pkgs.kmod}/bin/lsmod | ${pkgs.gnugrep}/bin/grep -q '^btusb'; then
-                ${pkgs.kmod}/bin/rmmod btusb
+              if ${lib.getExe' pkgs.kmod "lsmod"} | ${lib.getExe pkgs.gnugrep} -q '^btusb'; then
+                ${lib.getExe' pkgs.kmod "rmmod"} btusb
               fi
-              ${pkgs.kmod}/bin/insmod ${btusb-mercusys-ma530}/lib/modules/${modDirVersion}/extra/btusb-mercusys.ko
+              ${lib.getExe' pkgs.kmod "insmod"} ${btusb-mercusys-ma530}/lib/modules/${modDirVersion}/extra/btusb-mercusys.ko
             '';
           };
         };
