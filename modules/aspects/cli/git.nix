@@ -1,5 +1,7 @@
 {
   den,
+  pkgs,
+  lib,
   ...
 }:
 {
@@ -7,7 +9,12 @@
     includes = [ ];
 
     homeManager =
-      { pkgs, ... }:
+      {
+        pkgs,
+        lib,
+        config,
+        ...
+      }:
       {
         programs = {
           delta = {
@@ -117,13 +124,12 @@
             web = {
               enable = true;
               extraArgs = [
-                "--port"
-                "4096"
                 "--hostname"
                 "0.0.0.0"
+                "--port"
+                "4096"
               ];
             };
-            # package = pkgs.opencode-desktop;
             skills = {
               commit = ''
                 ---
@@ -224,6 +230,41 @@
                 };
               };
               formatter = false;
+              provider = {
+                oc-galo = {
+                  npm = "@ai-sdk/openai-compatible";
+                  name = "oc-galo";
+                  options = {
+                    baseURL = "https://opencode.ai/zen/go/v1/chat/completions";
+                  };
+                  models = {
+                    glm-5-1 = {
+                      name = "GLM-5.1";
+                    };
+                    glm-5 = {
+                      name = "GLM-5";
+                    };
+                    kimi-k2-5 = {
+                      name = "Kimi K2.5";
+                    };
+                    kimi-k2-6 = {
+                      name = "Kimi K2.6";
+                    };
+                    mimo-v2-pro = {
+                      name = "MiMo-V2-Pro";
+                    };
+                    mimo-v2-omni = {
+                      name = "MiMo-V2-Omni";
+                    };
+                    mimo-v2-5-pro = {
+                      name = "MiMo-V2.5-Pro";
+                    };
+                    mimo-v2-5 = {
+                      name = "MiMo-V2.5";
+                    };
+                  };
+                };
+              };
               agent = {
                 chat = {
                   description = "General purpose chat agent";
@@ -232,6 +273,17 @@
               };
             };
           };
+        };
+
+        systemd.user.services.opencode-web.serviceConfig = {
+          ExecStart = pkgs.writeShellScript "opencode-web-wrapper" ''
+            export PATH="${config.home.profileDirectory}/bin''${PATH:+:$PATH}"
+            . "${config.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh"
+            exec ${pkgs.opencode}/bin/opencode serve --hostname 0.0.0.0 --port 4096
+          '';
+          Environment = [
+            "SHELL=${lib.getExe pkgs.bash}"
+          ];
         };
       };
   };
