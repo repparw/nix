@@ -56,6 +56,7 @@
           in
           {
             enable = true;
+            polarity = "dark";
 
             base16Scheme = theme;
             image = wallpaper;
