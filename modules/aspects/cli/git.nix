@@ -277,12 +277,10 @@
 
         systemd.user.services.opencode-web.serviceConfig = {
           ExecStart = pkgs.writeShellScript "opencode-web-wrapper" ''
-            export PATH="${config.home.profileDirectory}/bin''${PATH:+:$PATH}"
-            . "${config.home.sessionVariablesPackage}/etc/profile.d/hm-session-vars.sh"
             exec ${pkgs.opencode}/bin/opencode serve --hostname 0.0.0.0 --port 4096
           '';
           Environment = [
-            "SHELL=${lib.getExe pkgs.bash}"
+            "PATH=${config.home.profileDirectory}/bin"
           ];
         };
       };
