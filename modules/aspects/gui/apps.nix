@@ -93,14 +93,11 @@
                 userIgnoreFilters = [ "Archive/" ];
                 showLineNumber = false;
                 showInlineTitle = true;
-                newFileLocation = "folder";
-                newFileFolderPath = "05 - Fleeting";
                 attachmentFolderPath = "attachments";
                 readableLineLength = true;
               };
-              appearance = lib.mkForce {
+              appearance = {
                 baseFontSize = lib.mkForce 18;
-                theme = "obsidian";
                 showViewHeader = true;
                 nativeMenus = false;
                 showRibbon = false;
