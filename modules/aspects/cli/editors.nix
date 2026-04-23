@@ -53,8 +53,6 @@
             pdfgrep
             catdoc
 
-            github-copilot-cli
-
             cfait
           ];
       };
