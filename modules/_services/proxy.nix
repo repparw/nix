@@ -14,6 +14,7 @@
     volumes = [
       "${cfg.configDir}/traefik:/config"
       "/run/user/1000/podman/podman.sock:/var/run/docker.sock"
+      "${cfg.configDir}/traefik/plugins-local:/plugins-local"
     ];
     cmd = [
       "--configFile=/config/traefik.yml"
