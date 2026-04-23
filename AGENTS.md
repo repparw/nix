@@ -41,9 +41,33 @@ Repo follows upstream `vic/den` default-template structure.
 
 ## Validation
 
+### nh os repl
+
+Load a NixOS system configuration in an interactive REPL:
+```
+nh os repl
+```
+
+With no argument it loads my nix config at ~/code/nix
+
+Then you can check e.g:
+```nix
+nix-repl> config.services.tailscale
+{
+  authKeyParameters = { ... };
+  derper = { ... };
+  enable = true;
+  extraDaemonFlags = [ ... ];
+  package = «derivation /nix/store/...-tailscale-1.94.2.drv»;
+  ...
+}
+```
+
 Useful after structural changes:
 
 ```bash
 nix fmt
 nix eval .#nixosConfigurations.alpha.config.system.build.toplevel.outPath
 ```
+
+When adding new files or directories, stage them with `git add` before evaluating. Nix flakes only see tracked files, so untracked changes will not be picked up and may cause attribute-missing errors.
