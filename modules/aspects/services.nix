@@ -121,7 +121,7 @@
 
             networking.firewall.interfaces."podman*".allowedUDPPorts = [ 53 ];
 
-            networking.hosts."127.0.0.1" = lib.attrValues serviceHostnames ++ [
+            networking.hosts."192.168.0.18" = lib.attrValues serviceHostnames ++ [
               cfg.domain
               "home.${cfg.domain}"
             ];
