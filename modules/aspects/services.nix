@@ -13,7 +13,7 @@
         options.modules.services = {
           rootDir = lib.mkOption {
             type = lib.types.path;
-            default = "/home/dlsuite";
+            default = "/home/containers";
             description = "Root directory for the containers";
           };
 
