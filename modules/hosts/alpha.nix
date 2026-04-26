@@ -126,27 +126,6 @@
               passwordFile = config.sops.secrets.steamPassword.path;
             };
           };
-
-          beesd.filesystems = {
-            root = {
-              spec = "LABEL=root";
-              hashTableSizeMB = 4096;
-              verbosity = "crit";
-              extraOptions = [
-                "--loadavg-target"
-                "5.0"
-              ];
-            };
-            hdd = {
-              spec = "LABEL=HDD";
-              verbosity = "crit";
-              extraOptions = [
-                "--loadavg-target"
-                "5.0"
-              ];
-            };
-          };
-
         };
       };
 
