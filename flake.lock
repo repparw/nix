@@ -155,7 +155,7 @@
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": [
-          "nixpkgs-lib"
+          "nixpkgs"
         ]
       },
       "locked": {
@@ -401,9 +401,6 @@
         "import-tree": "import-tree",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-lib": [
-          "nixpkgs"
-        ],
         "nixpkgs-pr": "nixpkgs-pr",
         "nixvim": "nixvim",
         "nixvim-config": "nixvim-config",
