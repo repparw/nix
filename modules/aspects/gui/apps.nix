@@ -46,7 +46,6 @@
           enable = true;
           associations.removed = {
             "application/pdf" = [ "chromium-browser.desktop" ];
-            "inode/directory" = [ "firefox.desktop" ];
           };
           defaultApplications = {
             "inode/directory" = "org.gnome.Nautilus.desktop";

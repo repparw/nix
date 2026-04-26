@@ -51,7 +51,7 @@
           bind gr reader
 
           " Subconfig binds
-          bindurl .*.youtube.com yy composite urlmodify_js -Q list | urlmodify_js -ru .*\.youtube\.com/watch\?v= https://youtu.be/ | clipboard yank
+          bindurl .*.youtube.com/watch yy composite urlmodify_js -Q list | urlmodify_js -Qu index | urlmodify_js -ru .*\.youtube\.com/watch\?v= https://youtu.be/ | clipboard yank
           bindurl www.youtube.com gm urlmodify -t www music
 
           unbindurl x.com j
@@ -68,7 +68,6 @@
         programs = {
           firefox = {
             enable = true;
-            configPath = "${config.xdg.configHome}/mozilla/firefox";
             nativeMessagingHosts = [ pkgs.tridactyl-native ];
 
             policies = {
@@ -90,7 +89,8 @@
                 "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
                 "sidebar.verticalTabs" = true;
                 "sidebar.visibility" = "expand-on-hover";
-                "sidebar.animation.expand-on-hover.duration-ms" = 200;
+                "sidebar.animation.expand-on-hover.delay-duration-ms" = 0;
+                "sidebar.animation.expand-on-hover.duration-ms" = 0;
               };
             };
 
