@@ -15,8 +15,8 @@
             enable = true;
             shellWrapperName = "y";
             plugins = {
-              smart-enter = pkgs.yaziPlugins.smart-enter;
-              jump-to-char = pkgs.yaziPlugins.jump-to-char;
+              inherit (pkgs.yaziPlugins) smart-enter;
+              inherit (pkgs.yaziPlugins) jump-to-char;
             };
             settings = {
               opener = {

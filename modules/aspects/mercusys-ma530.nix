@@ -1,4 +1,4 @@
-{ ... }:
+_:
 {
   den.aspects.mercusys-ma530 = {
     nixos =
@@ -9,12 +9,12 @@
         ...
       }:
       let
-        modDirVersion = config.boot.kernelPackages.kernel.modDirVersion;
+        inherit (config.boot.kernelPackages.kernel) modDirVersion;
         btusb-mercusys-ma530 = pkgs.stdenv.mkDerivation {
           pname = "btusb-mercusys-ma530";
-          version = config.boot.kernelPackages.kernel.version;
+          inherit (config.boot.kernelPackages.kernel) version;
 
-          src = config.boot.kernelPackages.kernel.src;
+          inherit (config.boot.kernelPackages.kernel) src;
 
           patches = [
             (pkgs.writeText "mercusys-ma530.patch" ''

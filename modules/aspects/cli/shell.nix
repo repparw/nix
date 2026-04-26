@@ -33,15 +33,15 @@
             plugins = with pkgs.fishPlugins; [
               {
                 name = "pure";
-                src = pure.src;
+                inherit (pure) src;
               }
               {
                 name = "plugin-git";
-                src = plugin-git.src;
+                inherit (plugin-git) src;
               }
               {
                 name = "done";
-                src = done.src;
+                inherit (done) src;
               }
             ];
             interactiveShellInit = ''

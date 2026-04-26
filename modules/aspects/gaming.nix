@@ -43,7 +43,7 @@
         ];
       };
     homeManager =
-      { ... }:
+      _:
       {
         programs.mangohud = {
           enable = true;

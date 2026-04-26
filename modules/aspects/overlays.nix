@@ -18,7 +18,7 @@
               ${name} = final.callPackage (pkgsDir + "/${name}") { };
             };
             cfaitOverlay = final: prev: {
-              cfait = inputs.nixpkgs-pr.legacyPackages.${prev.stdenv.hostPlatform.system}.cfait;
+              inherit (inputs.nixpkgs-pr.legacyPackages.${prev.stdenv.hostPlatform.system}) cfait;
             };
           in
           [

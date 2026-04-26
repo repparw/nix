@@ -5,7 +5,7 @@
 {
   den.aspects.gui.provides.mpv = {
     homeManager =
-      { ... }:
+      _:
       {
         programs.mpv = {
           enable = true;

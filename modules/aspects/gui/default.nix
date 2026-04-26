@@ -1,31 +1,29 @@
 { den, ... }:
 {
   den.aspects.gui = {
-    includes = [
-      den.aspects.gui._.session
-      den.aspects.gui._.niri
-      den.aspects.gui._.obs
-      den.aspects.gui._.browser
-      den.aspects.gui._.mpv
-      den.aspects.gui._.spotify
-      den.aspects.gui._.wm
-      den.aspects.gui._.zathura
-      den.aspects.gui._.guiApps
+    includes = with den.aspects.gui._; [
+      session
+      niri
+      obs
+      browser
+      mpv
+      spotify
+      wm
+      zathura
+      guiApps
     ];
   };
 
   den.aspects.gui.provides.session = {
-    nixos =
-      { ... }:
-      {
-        services.displayManager = {
-          defaultSession = "niri";
-          autoLogin.user = "repparw";
-          sddm = {
-            enable = true;
-            wayland.enable = true;
-          };
+    nixos = _: {
+      services.displayManager = {
+        defaultSession = "niri";
+        autoLogin.user = "repparw";
+        sddm = {
+          enable = true;
+          wayland.enable = true;
         };
       };
+    };
   };
 }

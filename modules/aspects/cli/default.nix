@@ -1,9 +1,8 @@
 { den, ... }:
 {
-  den.aspects.cliBasePrograms = {
-    nixos =
-      { ... }:
-      {
+  den.aspects = {
+    cliBasePrograms = {
+      nixos = _: {
         programs = {
           mosh = {
             enable = true;
@@ -22,12 +21,10 @@
           fish.enable = true;
         };
       };
-  };
+    };
 
-  den.aspects.cliSystemServices = {
-    nixos =
-      { ... }:
-      {
+    cliSystemServices = {
+      nixos = _: {
         services = {
           blueman.enable = true;
           earlyoom.enable = true;
@@ -35,24 +32,20 @@
           gvfs.enable = true;
         };
       };
-  };
+    };
 
-  den.aspects.cliOpenSsh = {
-    nixos =
-      { ... }:
-      {
+    cliOpenSsh = {
+      nixos = _: {
         services.openssh = {
           enable = true;
           openFirewall = true;
           settings.PasswordAuthentication = false;
         };
       };
-  };
+    };
 
-  den.aspects.cliAudio = {
-    nixos =
-      { ... }:
-      {
+    cliAudio = {
+      nixos = _: {
         services.pipewire = {
           enable = true;
           wireplumber.extraConfig = {
@@ -81,14 +74,15 @@
           };
         };
       };
-  };
+    };
 
-  den.aspects.cli = {
-    includes = [
-      den.aspects.cliBasePrograms
-      den.aspects.cliSystemServices
-      den.aspects.cliOpenSsh
-      den.aspects.cliAudio
-    ];
+    cli = {
+      includes = [
+        den.aspects.cliBasePrograms
+        den.aspects.cliSystemServices
+        den.aspects.cliOpenSsh
+        den.aspects.cliAudio
+      ];
+    };
   };
 }

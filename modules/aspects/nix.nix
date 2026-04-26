@@ -1,8 +1,8 @@
-{ ... }:
+_:
 {
   den.aspects.nix = {
     nixos =
-      { ... }:
+      _:
       {
         nix = {
           settings = {
