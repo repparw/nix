@@ -3,10 +3,17 @@ exec >> /tmp/steam-sunshine.log 2>&1
 
 echo "=== Starting Steam in Gamescope on DP-2 at $(date) ==="
 
+# Ensure niri msg can find the socket
+NIRI_SOCKET="$(systemctl --user show-environment | grep '^NIRI_SOCKET=' | cut -d= -f2-)"
+export NIRI_SOCKET
+if [ -z "$NIRI_SOCKET" ]; then
+  echo "WARNING: NIRI_SOCKET not found in systemd user environment"
+fi
+
 # Kill any existing Steam or gamescope
 pgrep -x steam >/dev/null 2>&1 && pkill -9 -x steam
 pgrep -x gamescope >/dev/null 2>&1 && pkill -9 -x gamescope
-sleep 2
+sleep 4
 
 # Start gamescope with Steam inside it on DP-2
 # Gamescope handles game window management internally
@@ -20,11 +27,11 @@ STEAM_PID=$!
 echo "Steam/Gamescope PID: $STEAM_PID"
 
 # Wait for gamescope window and move to DP-2
-for i in {1..30}; do
+for _ in $(seq 1 90); do
   sleep 0.5
 
   # Check if Steam died
-  if ! kill -0 $STEAM_PID 2>/dev/null; then
+  if ! kill -0 "$STEAM_PID" 2>/dev/null; then
     echo "Steam process not found, checking for window anyway"
     break
   fi
@@ -39,19 +46,19 @@ for i in {1..30}; do
     niri msg action focus-window --id "$WINDOW_ID"
     echo "Moved Gamescope to DP-2 and focused"
 
-    # Wait for Steam to fully initialize before powering off monitors
-    # Steam needs time to load the UI, otherwise it may exit
+    # Give Steam time to fully initialize its UI before we consider setup done
     echo "Waiting for Steam to initialize..."
     sleep 8
-
-    # Power off all monitors via DPMS (doesn't affect output indices)
-    niri msg action power-off-monitors
-    echo "Powered off monitors"
 
     break
   fi
 done
 
+if [ -z "$WINDOW_ID" ] || [ "$WINDOW_ID" = "null" ]; then
+  echo "WARNING: No gamescope window found after timeout. Current windows:"
+  niri msg --json windows | jq -c '.[] | {id, app_id, title}'
+fi
+
 # Wait for Steam to exit
-wait $STEAM_PID 2>/dev/null || true
+wait "$STEAM_PID" 2>/dev/null || true
 echo "Steam exited"

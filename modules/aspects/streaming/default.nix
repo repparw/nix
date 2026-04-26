@@ -13,7 +13,11 @@
         niri-output-off = pkgs.writeShellScriptBin "niri-output-off" (
           builtins.readFile ./niri-output-off.sh
         );
-        steam-sunshine = pkgs.writeShellScriptBin "steam-sunshine" (builtins.readFile ./steam-sunshine.sh);
+        steam-sunshine = pkgs.writeShellApplication {
+          name = "steam-sunshine";
+          runtimeInputs = [ pkgs.jq ];
+          text = builtins.readFile ./steam-sunshine.sh;
+        };
       in
       {
         services.sunshine = {
