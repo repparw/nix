@@ -141,6 +141,11 @@
           volume_normalisation = false;
         };
       };
+
+      systemd.user.services.spotifyd = {
+        Unit.After = [ "network-online.target" ];
+        Service.RuntimeMaxSec = "6h";
+      };
     };
   };
 }
