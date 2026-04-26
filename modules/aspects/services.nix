@@ -66,7 +66,7 @@
           };
         };
 
-        config = (
+        config =
           let
             serviceFiles =
               lib.mapAttrs'
@@ -95,7 +95,6 @@
               "/home/repparw/.config/dlsuite/${service}" = {
                 depends = [
                   "/"
-                  "/mnt/hdd"
                 ];
                 device = "${cfg.configDir}/${subPath}";
                 fsType = "none";
@@ -117,8 +116,6 @@
 
             environment.systemPackages = with pkgs; [ slirp4netns ];
 
-            systemd.timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
-
             networking.firewall.interfaces."podman*".allowedUDPPorts = [ 53 ];
 
             networking.hosts."192.168.0.18" = lib.attrValues serviceHostnames ++ [
@@ -126,15 +123,19 @@
               "home.${cfg.domain}"
             ];
 
-            systemd.targets.lazy-containers = {
-              description = "non-essential container services";
-            };
+            systemd = {
+              timers.podman-auto-update.wantedBy = [ "multi-user.target" ];
 
-            systemd.timers.lazy-containers = {
-              wantedBy = [ "multi-user.target" ];
-              timerConfig = {
-                OnActiveSec = "10s";
-                Unit = "lazy-containers.target";
+              targets.lazy-containers = {
+                description = "non-essential container services";
+              };
+
+              timers.lazy-containers = {
+                wantedBy = [ "multi-user.target" ];
+                timerConfig = {
+                  OnActiveSec = "10s";
+                  Unit = "lazy-containers.target";
+                };
               };
             };
 
@@ -161,8 +162,7 @@
               (mkFileSystemMount "sonarr" "sonarr/Backups")
               (mkFileSystemMount "traefik" "traefik")
             ];
-          }
-        );
+          };
       };
 
     homeManager =
@@ -216,7 +216,7 @@
             };
           in
           {
-            image = attrs.image;
+            inherit (attrs) image;
             addCapabilities = attrs.addCapabilities or [ ];
             environment = attrs.environment or { };
             environmentFile = attrs.environmentFiles or [ ];
