@@ -17,9 +17,8 @@
     };
     systems.url = "github:nix-systems/default";
 
-    den.url = "github:vic/den";
+    den.url = "github:denful/den";
     flake-file.url = "github:vic/flake-file";
     import-tree.url = "github:vic/import-tree";
-    flake-aspects.url = "github:vic/flake-aspects";
   };
 }

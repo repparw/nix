@@ -13,6 +13,7 @@
       den.aspects.logid
       den.aspects.mercusys-ma530
       den.aspects.networking
+      den.aspects.nixos-services
       den.aspects.overlays
       den.aspects.repparw
       den.aspects.secrets
