@@ -6,18 +6,11 @@
 {
   den.aspects.alpha = {
     includes = [
-      den.provides.hostname
-      den.aspects.auto-upgrade
-      den.aspects.cli
+      den.aspects.host-common
       den.aspects.gaming
       den.aspects.logid
       den.aspects.mercusys-ma530
-      den.aspects.networking
       den.aspects.nixos-services
-      den.aspects.overlays
-      den.aspects.repparw
-      den.aspects.secrets
-      den.aspects.style
       den.aspects.streaming
       den.aspects.timers
       den.aspects.virtual-display

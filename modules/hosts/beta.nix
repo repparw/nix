@@ -6,14 +6,7 @@
 {
   den.aspects.beta = {
     includes = [
-      den.provides.hostname
-      den.aspects.auto-upgrade
-      den.aspects.cli
-      den.aspects.networking
-      den.aspects.overlays
-      den.aspects.repparw
-      den.aspects.secrets
-      den.aspects.style
+      den.aspects.host-common
     ];
 
     nixos =

@@ -5,6 +5,18 @@
 
     schema.user.classes = lib.mkDefault [ "homeManager" ];
 
+    aspects.host-common = {
+      includes = [
+        den.provides.hostname
+        den.aspects.auto-upgrade
+        den.aspects.cli
+        den.aspects.networking
+        den.aspects.overlays
+        den.aspects.secrets
+        den.aspects.style
+      ];
+    };
+
     default = {
       includes = with den.aspects; [
         nix-index
