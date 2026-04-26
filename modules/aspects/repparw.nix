@@ -15,6 +15,7 @@
       den.provides.define-user
       den.provides.primary-user
       (den.provides.user-shell "fish")
+      den._.host-aspects
       den.aspects.shell
       den.aspects.tmux
       den.aspects.git
@@ -24,8 +25,6 @@
       den.aspects.scripts
       den.aspects.rclone
     ];
-
-    provides.alpha.includes = [ den.aspects.nixos-services ];
 
     provides.to-hosts = {
       includes = [ den.aspects.gui ];
