@@ -7,7 +7,7 @@
     includes = [ ];
 
     homeManager =
-      { ... }:
+      _:
       {
         services.kanshi = {
           enable = true;

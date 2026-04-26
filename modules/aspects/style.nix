@@ -6,9 +6,11 @@
 {
   flake-file.inputs.stylix = {
     url = "github:nix-community/stylix";
-    inputs.flake-parts.follows = "flake-parts";
-    inputs.nixpkgs.follows = "nixpkgs";
-    inputs.systems.follows = "systems";
+    inputs = {
+      flake-parts.follows = "flake-parts";
+      nixpkgs.follows = "nixpkgs";
+      systems.follows = "systems";
+    };
   };
 
   den.aspects.style = {
@@ -107,9 +109,11 @@
               };
               targets = {
                 nixvim = {
-                  transparentBackground.main = true;
-                  transparentBackground.numberLine = true;
-                  transparentBackground.signColumn = true;
+                  transparentBackground = {
+                    main = true;
+                    numberLine = true;
+                    signColumn = true;
+                  };
                 };
                 firefox = {
                   colorTheme.enable = true;

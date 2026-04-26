@@ -44,7 +44,7 @@
     };
 
     user =
-      { ... }:
+      _:
       {
         linger = true;
         description = "repparw";
@@ -56,7 +56,7 @@
       };
 
     homeManager =
-      { ... }:
+      _:
       {
         xdg.enable = true;
         home.preferXdgDirectories = true;

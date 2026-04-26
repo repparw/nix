@@ -15,7 +15,7 @@
     };
 
     homeManager =
-      { ... }:
+      _:
       {
         programs.ssh = {
           enable = true;

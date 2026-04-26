@@ -1,8 +1,8 @@
-{ ... }:
+_:
 {
   den.aspects.virtualisation = {
     nixos =
-      { ... }:
+      _:
       {
         programs.virt-manager.enable = true;
 

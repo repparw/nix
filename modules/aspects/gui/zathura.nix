@@ -5,7 +5,7 @@
 {
   den.aspects.gui.provides.zathura = {
     homeManager =
-      { ... }:
+      _:
       {
         programs.zathura = {
           enable = true;
