@@ -275,14 +275,11 @@
           };
         };
 
-        systemd.user.services.opencode-web.serviceConfig = {
-          ExecStart = pkgs.writeShellScript "opencode-web-wrapper" ''
-            exec ${pkgs.opencode}/bin/opencode serve --hostname 0.0.0.0 --port 4096
-          '';
-          Environment = [
-            "PATH=${config.home.profileDirectory}/bin"
-          ];
-        };
+
+      };
+
+      systemd.user.services.opencode-web.serviceConfig = {
+        PassEnvironment = [ "PATH" ];
       };
   };
 }
