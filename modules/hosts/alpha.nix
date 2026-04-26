@@ -16,6 +16,25 @@
       den.aspects.virtual-display
     ];
 
+    homeManager = {
+      services.spotifyd = {
+        enable = true;
+        settings.global = {
+          username = "REDACTED";
+          device_name = "alpha";
+          bitrate = 320;
+          max_cache_size = 5000000000;
+          initial_volume = 70;
+          volume_normalisation = false;
+        };
+      };
+
+      systemd.user.services.spotifyd = {
+        Unit.After = [ "network-online.target" ];
+        Service.RuntimeMaxSec = "6h";
+      };
+    };
+
     nixos =
       {
         config,
