@@ -1,19 +1,21 @@
 { den, lib, ... }:
 {
-  den.ctx.user.includes = [ den.provides."mutual-provider" ];
+  den = {
+    ctx.user.includes = [ den.provides."mutual-provider" ];
 
-  den.schema.user.classes = lib.mkDefault [ "homeManager" ];
+    schema.user.classes = lib.mkDefault [ "homeManager" ];
 
-  den.default = {
-    includes = [
-      den.aspects.nix-index
-      den.aspects.nixvim
-      den.aspects.nixpkgs
-      den.aspects.nix
-      den.aspects.system
-    ];
+    default = {
+      includes = with den.aspects; [
+        nix-index
+        nixvim
+        nixpkgs
+        nix
+        system
+      ];
 
-    nixos.system.stateVersion = "25.11";
-    homeManager.home.stateVersion = "25.11";
+      nixos.system.stateVersion = "26.05";
+      homeManager.home.stateVersion = "26.05";
+    };
   };
 }
