@@ -119,7 +119,6 @@
                   colorTheme.enable = true;
                   profileNames = [
                     "default"
-                    "kiosk"
                   ];
                 };
                 swaylock.image.enable = false;
