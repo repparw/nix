@@ -131,7 +131,8 @@ binds {
   Mod+T hotkey-overlay-title="Top" {spawn "foot" "fish" "-ic" "top" ;}
   Mod+V hotkey-overlay-title="Clipboard" {spawn "foot" "--app-id" "clipse" "clipse" ;}
   Mod+X hotkey-overlay-title="cfait" {spawn "foot" "cfait" ;}
-  Mod+Y hotkey-overlay-title="Kiosk Browser" {spawn "firefox" "-P" "kiosk" ;}
+  Mod+Y hotkey-overlay-title="Kiosk Browser (Firefox)" {spawn "firefox" "-P" "kiosk" ;}
+  Mod+Shift+Y hotkey-overlay-title="Kiosk Browser (Chromium)" {spawn "webapp" "https://www.youtube.com/feed/subscriptions" "--start-fullscreen" ;}
   Mod+Z hotkey-overlay-title="MPV Clipboard" {spawn "mpvclip" ;}
 
   // macropad

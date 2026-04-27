@@ -274,6 +274,10 @@
             enable = true;
             extensions = [
               { id = "ddkjiahejlhfcafbddmgiahcphecmpfh"; }
+              { id = "mnjggcdmjocbbbhaepdhchncahnbgone"; }
+              { id = "enamippconapkdmgfgjchkhakpfinmaj"; }
+              { id = "bnomihfieiccainjcjblhegjgglakjdd"; }
+              { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; }
             ];
           };
         };
