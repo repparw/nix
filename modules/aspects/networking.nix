@@ -85,6 +85,7 @@ _:
           nftables.enable = true;
           usePredictableInterfaceNames = false;
           firewall = {
+            checkReversePath = false;
             interfaces.eth0 = {
               allowedTCPPorts = [
                 80
@@ -109,6 +110,10 @@ _:
             DNSOverTLS = true;
           };
         };
+
+        # Defer iwd since ethernet is primary; wifi is backup only.
+        # Remove it from multi-user.target so it does not block boot.
+        systemd.services.iwd.wantedBy = lib.mkForce [ ];
       };
   };
 }
