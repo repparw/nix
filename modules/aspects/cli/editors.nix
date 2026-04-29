@@ -42,7 +42,7 @@
             ffmpeg
             imagemagick
             less
-            yt-dlp
+            # yt-dlp
 
             playerctl
             libqalculate

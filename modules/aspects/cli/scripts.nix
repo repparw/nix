@@ -11,17 +11,6 @@
       { pkgs, osConfig, ... }:
       {
         home.packages = with pkgs; [
-          (writeShellApplication {
-            name = "media-play-pause";
-            runtimeInputs = [ playerctl ];
-            text = ''
-              if [ "$(playerctl status)" = "Playing" ]; then
-                playerctl -a pause
-              else
-                playerctl --player=spotifyd play
-              fi
-            '';
-          })
 
           (writeShellApplication {
             name = "clip2text";
@@ -70,7 +59,6 @@
             name = "mpvclip";
             runtimeInputs = [
               libnotify
-              mpv
               wl-clipboard
             ];
             text = ''

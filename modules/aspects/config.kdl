@@ -188,10 +188,10 @@ binds {
   Mod+Print hotkey-overlay-title="Screenshot Window" {spawn "niri" "msg" "action" "screenshot-window" ;}
   Mod+Shift+Print hotkey-overlay-title="Screenshot Area" {spawn "niri" "msg" "action" "screenshot" "-p" "false" ;}
 
-  XF86AudioPlay allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "media-play-pause";}
-  XF86AudioPause allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "media-play-pause" ;}
-  XF86AudioNext allow-when-locked=true hotkey-overlay-title="Next Track" {spawn "playerctl" "--player=spotifyd" "next" ;}
-  XF86AudioPrev allow-when-locked=true hotkey-overlay-title="Previous Track" {spawn "playerctl" "--player=spotifyd" "previous" ;}
+  XF86AudioPlay allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "playerctl play-pause" ;}
+  XF86AudioPause allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "playerctl play-pause" ;}
+  XF86AudioNext allow-when-locked=true hotkey-overlay-title="Next Track" {spawn "playerctl" "next" ;}
+  XF86AudioPrev allow-when-locked=true hotkey-overlay-title="Previous Track" {spawn "playerctl" "previous" ;}
 
   MouseForward hotkey-overlay-title="Toggle Overview" {toggle-overview ;}
   Mod+Shift+Slash hotkey-overlay-title="Show Hotkeys" {show-hotkey-overlay ;}
