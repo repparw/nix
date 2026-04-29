@@ -4,11 +4,25 @@
   pkgs,
   ...
 }:
+
+# TODO: HDR over Sunshine is currently blocked by multiple missing pieces:
+#   1. Niri doesn't support HDR output even with an HDR EDID.
+#   2. capSysAdmin = false forces wlroots screencopy capture instead of KMS;
+#      HDR on Linux generally needs KMS.
+#   3. Dummy/virtual DRM driver lacks color-management props.
+# The virtual display now uses an LG CX EDID with HDR10 + BT2020 metadata,
+# so the kernel at least reports an HDR-capable connector.
+# To enable HDR we would need: a compositor with HDR support (KWin or Gamescope),
+# KMS capture, and HEVC/AV1 10-bit.
 {
   den.aspects.streaming = {
     nixos =
-      { pkgs, ... }:
+      { config, pkgs, lib, ... }:
       let
+        virtualDisplay = config.modules.virtualDisplay or { };
+        height = lib.last (lib.splitString "x" (virtualDisplay.resolution or "3840x2160"));
+        refreshRate = toString (virtualDisplay.refreshRate or 120);
+
         niri-output-on = pkgs.writeShellScriptBin "niri-output-on" (builtins.readFile ./niri-output-on.sh);
         niri-output-off = pkgs.writeShellScriptBin "niri-output-off" (
           builtins.readFile ./niri-output-off.sh
@@ -16,7 +30,10 @@
         steam-sunshine = pkgs.writeShellApplication {
           name = "steam-sunshine";
           runtimeInputs = [ pkgs.jq ];
-          text = builtins.readFile ./steam-sunshine.sh;
+          text = ''
+            export GAMESCOPE_HEIGHT=${height}
+            export GAMESCOPE_REFRESH=${refreshRate}
+          '' + builtins.readFile ./steam-sunshine.sh;
         };
       in
       {

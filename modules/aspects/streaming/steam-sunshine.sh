@@ -18,7 +18,7 @@ sleep 4
 # Start gamescope with Steam inside it on DP-2
 # Gamescope handles game window management internally
 gamescope \
-  -W 2560 -H 1440 -r 120 \
+  -H "$GAMESCOPE_HEIGHT" -r "$GAMESCOPE_REFRESH" \
   --steam \
   --force-grab-cursor \
   --adaptive-sync \
