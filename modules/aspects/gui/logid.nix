@@ -46,17 +46,13 @@
           };
         };
 
-        systemd.services.logid = {
+        systemd.user.services.logid = {
           startLimitIntervalSec = 0;
-          after = [
-            "graphical.target"
-            "systemd-udev-settle.service"
-          ];
-          wantedBy = [ "graphical.target" ];
+          after = [ "graphical-session.target" ];
+          wantedBy = [ "graphical-session.target" ];
           serviceConfig = {
             Type = "simple";
             ExecStart = "${lib.getExe pkgs.logiops_0_2_3}";
-            ExecStartPre = "${lib.getExe' pkgs.coreutils "sleep"} 2";
           };
         };
       };
