@@ -275,11 +275,11 @@
           };
         };
 
-
-      };
-
-      systemd.user.services.opencode-web.serviceConfig = {
-        PassEnvironment = [ "PATH" ];
+        systemd.user.services.opencode-web.serviceConfig = {
+          Environment = [
+            "PATH=/run/wrappers/bin:${config.home.homeDirectory}/.nix-profile/bin:/nix/profile/bin:${config.home.homeDirectory}/.local/state/nix/profile/bin:/etc/profiles/per-user/${config.home.username}/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
+          ];
+        };
       };
   };
 }
