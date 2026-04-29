@@ -4,53 +4,51 @@
 }:
 {
   den.aspects.gui.provides.mpv = {
-    homeManager =
-      _:
-      {
-        programs.mpv = {
-          enable = true;
-          bindings = {
-            WHEEL_UP = "add volume 2";
-            WHEEL_DOWN = "add volume -2";
-            WHEEL_LEFT = "add volume 2";
-            WHEEL_RIGHT = "add volume -2";
-            "." = "seek 5";
-            "," = "seek -5";
-            ">" = "no-osd seek 1 exact";
-            "<" = "no-osd seek -1 exact";
-            RIGHT = "frame-step";
-            LEFT = "frame-back-step";
-            "~" = "script-binding console/enable";
-            "F" = "script-binding quality_menu/video_formats_toggle";
-          };
+    homeManager = _: {
+      programs.mpv = {
+        enable = false;
+        bindings = {
+          WHEEL_UP = "add volume 2";
+          WHEEL_DOWN = "add volume -2";
+          WHEEL_LEFT = "add volume 2";
+          WHEEL_RIGHT = "add volume -2";
+          "." = "seek 5";
+          "," = "seek -5";
+          ">" = "no-osd seek 1 exact";
+          "<" = "no-osd seek -1 exact";
+          RIGHT = "frame-step";
+          LEFT = "frame-back-step";
+          "~" = "script-binding console/enable";
+          "F" = "script-binding quality_menu/video_formats_toggle";
+        };
 
-          config = {
-            volume = 50;
-            ytdl-raw-options = "format=bestvideo[height<=?1080]+bestaudio/best,sub-format=en/es,write-srt=";
-            screen-name = "DP-1";
-            fs = "yes";
+        config = {
+          volume = 50;
+          ytdl-raw-options = "format=bestvideo[height<=?1080]+bestaudio/best,sub-format=en/es,write-srt=";
+          screen-name = "DP-1";
+          fs = "yes";
 
-            hwdec = "vaapi";
-            vo = "gpu-next";
-            gpu-api = "vulkan";
-            gpu-context = "waylandvk";
+          hwdec = "vaapi";
+          vo = "gpu-next";
+          gpu-api = "vulkan";
+          gpu-context = "waylandvk";
 
-            screenshot-template = "%F - %p %02n";
-            screenshot-dir = "~/Pictures/mpvss";
+          screenshot-template = "%F - %p %02n";
+          screenshot-dir = "~/Pictures/mpvss";
 
-            osc = "no";
-            osd-font-size = 32;
-            osd-border-size = 2;
+          osc = "no";
+          osd-font-size = 32;
+          osd-border-size = 2;
 
-            sub-font-size = 36;
-            sub-border-size = 0.5;
-            sub-shadow-offset = 2;
-            sub-blur = 0.5;
+          sub-font-size = 36;
+          sub-border-size = 0.5;
+          sub-shadow-offset = 2;
+          sub-blur = 0.5;
 
-            slang = "eng";
-            sub-auto = "fuzzy";
-          };
+          slang = "eng";
+          sub-auto = "fuzzy";
         };
       };
+    };
   };
 }
