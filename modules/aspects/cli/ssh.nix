@@ -14,20 +14,18 @@
       ];
     };
 
-    homeManager =
-      _:
-      {
-        programs.ssh = {
-          enable = true;
-          enableDefaultConfig = false;
+    homeManager = _: {
+      programs.ssh = {
+        enable = true;
+        enableDefaultConfig = false;
 
-          matchBlocks = {
-            pi = {
-              hostname = "192.168.0.4";
-              user = "repparw";
-            };
+        matchBlocks = {
+          pi = {
+            hostname = "192.168.0.4";
+            user = "repparw";
           };
         };
       };
+    };
   };
 }

@@ -1,5 +1,4 @@
-_:
-{
+_: {
   den.aspects.mercusys-ma530 = {
     nixos =
       {

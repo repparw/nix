@@ -1,16 +1,13 @@
-_:
-{
+_: {
   den.aspects.virtualisation = {
-    nixos =
-      _:
-      {
-        programs.virt-manager.enable = true;
+    nixos = _: {
+      programs.virt-manager.enable = true;
 
-        users.groups.libvirtd.members = [ "repparw" ];
+      users.groups.libvirtd.members = [ "repparw" ];
 
-        virtualisation.libvirtd.enable = true;
-        virtualisation.spiceUSBRedirection.enable = true;
-      };
+      virtualisation.libvirtd.enable = true;
+      virtualisation.spiceUSBRedirection.enable = true;
+    };
   };
 
 }

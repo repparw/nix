@@ -42,34 +42,30 @@
         };
     };
 
-    user =
-      _:
-      {
-        linger = true;
-        description = "repparw";
-        extraGroups = [
-          "adbusers"
-          "video"
-          "wheel"
+    user = _: {
+      linger = true;
+      description = "repparw";
+      extraGroups = [
+        "adbusers"
+        "video"
+        "wheel"
+      ];
+    };
+
+    homeManager = _: {
+      xdg.enable = true;
+      home.preferXdgDirectories = true;
+      services.udiskie = {
+        enable = true;
+        tray = "never";
+        settings.device_config = [
+          {
+            id_label = "seagate";
+            ignore = true;
+          }
         ];
       };
 
-    homeManager =
-      _:
-      {
-        xdg.enable = true;
-        home.preferXdgDirectories = true;
-        services.udiskie = {
-          enable = true;
-          tray = "never";
-          settings.device_config = [
-            {
-              id_label = "seagate";
-              ignore = true;
-            }
-          ];
-        };
-
-      };
+    };
   };
 }
