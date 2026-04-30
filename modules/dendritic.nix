@@ -8,8 +8,6 @@
   flake-file.inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    nixpkgs-pr.url = "github:GeoffreyFrogeye/nixpkgs/cfait";
-
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-utils = {
       url = "github:numtide/flake-utils";

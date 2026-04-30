@@ -36,27 +36,24 @@
             write-flake = {
               enable = true;
               name = "write-flake";
-              entry = "${pkgs.writeShellScript "write-flake-hook" ''
-                set -euo pipefail
-                cd "$(git rev-parse --show-toplevel)"
-
-                mapfile -t staged_nix_files < <(git diff --cached --name-only --diff-filter=ACMR -- '*.nix')
-
-                if [[ ''${#staged_nix_files[@]} -eq 0 ]]; then
-                  exit 0
-                fi
-
-                for path in "''${staged_nix_files[@]}"; do
-                  if git diff --cached --unified=0 -- "$path" | grep -qE '^[+-].*flake-file\.inputs'; then
-                    echo "pre-commit: regenerating flake.nix from flake-file inputs"
-                    nix run .#write-flake
-                    git add flake.nix
-                    exit 0
-                  fi
-                done
-
-                exit 0
-              ''}";
+              entry = "${pkgs.lib.getExe (
+                pkgs.writeShellApplication {
+                  name = "write-flake-hook";
+                  runtimeInputs = [
+                    pkgs.nix
+                    pkgs.git
+                  ];
+                  text = ''
+                    set -euo pipefail
+                    cd "$(git rev-parse --show-toplevel)"
+                    if nix --extra-experimental-features 'nix-command flakes' run .#write-flake 2>/dev/null; then
+                      git add flake.nix
+                    else
+                      echo "write-flake: failed to run nix (offline sandbox?). Skipping flake.nix regeneration."
+                    fi
+                  '';
+                }
+              )}";
               language = "system";
               pass_filenames = false;
               files = "\\.nix$";

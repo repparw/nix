@@ -35,7 +35,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-pr.url = "github:GeoffreyFrogeye/nixpkgs/cfait";
     nixvim = {
       url = "github:nix-community/nixvim";
       inputs = {
