@@ -17,9 +17,6 @@
             mkPkgOverlay = name: final: prev: {
               ${name} = final.callPackage (pkgsDir + "/${name}") { };
             };
-            cfaitOverlay = final: prev: {
-              inherit (inputs.nixpkgs-pr.legacyPackages.${prev.stdenv.hostPlatform.system}) cfait;
-            };
           in
           [
             (final: prev: {
@@ -44,7 +41,6 @@
                 })
               ) prev.firefox-addons;
             })
-            cfaitOverlay
           ]
           ++ (map mkPkgOverlay allPkgs);
       };

@@ -8,7 +8,15 @@
     includes = [ ];
 
     homeManager =
-      { osConfig, ... }:
+      {
+        osConfig,
+        config,
+        lib,
+        ...
+      }:
+      let
+        nc = config.accounts.calendar.accounts.nextcloud.remote;
+      in
       {
         # Fix: rclone-config service must remain active after exit for mount dependencies
         systemd.user.services.rclone-config.Service.RemainAfterExit = "yes";
@@ -37,9 +45,11 @@
             nextcloud = {
               config = {
                 type = "webdav";
-                url = "https://leo.it.tab.digital/remote.php/dav/files/ubritos%40gmail.com";
+                url = "${lib.removeSuffix "/" (lib.removeSuffix "calendars/${nc.userName}/" nc.url)}files/${
+                  lib.replaceStrings [ "@" ] [ "%40" ] nc.userName
+                }";
                 vendor = "nextcloud";
-                user = "ubritos@gmail.com";
+                user = nc.userName;
               };
               secrets.pass = osConfig.sops.secrets.rcloneNextcloud.path;
             };

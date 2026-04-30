@@ -8,7 +8,12 @@
     includes = [ ];
 
     homeManager =
-      { pkgs, osConfig, ... }:
+      {
+        pkgs,
+        osConfig,
+        config,
+        ...
+      }:
       {
         home.packages = with pkgs; [
 
@@ -109,99 +114,103 @@
               libnotify
               util-linux
             ];
-            text = ''
-              nc_user="ubritos@gmail.com"
-              caldav_url="https://leo.it.tab.digital/remote.php/dav/calendars/$nc_user/personal/"
-              secret_path="${osConfig.sops.secrets.nextcloud.path}"
+            text =
+              let
+                ncAccount = config.accounts.calendar.accounts.nextcloud;
+              in
+              ''
+                  nc_user="${ncAccount.remote.userName}"
+                  caldav_url="${ncAccount.remote.url}calendars/$nc_user/personal/"
+                  secret_path="${osConfig.sops.secrets.nextcloud.path}"
 
-              if [[ ! -f "$secret_path" ]]; then
-                  echo "Error: Nextcloud secret file not found at $secret_path" >&2
-                  exit 1
-              fi
+                if [[ ! -f "$secret_path" ]]; then
+                    echo "Error: Nextcloud secret file not found at $secret_path" >&2
+                    exit 1
+                fi
 
-              nc_app_pass=$(cat "$secret_path")
+                nc_app_pass=$(cat "$secret_path")
 
-              if [ "$#" -eq 0 ]; then
-                  echo "Usage: t \"TASK SUMMARY\" [DATETIME]"
-                  echo "Example: t \"Buy milk\" \"tomorrow 9am\""
-                  exit 1
-              fi
+                if [ "$#" -eq 0 ]; then
+                    echo "Usage: t \"TASK SUMMARY\" [DATETIME]"
+                    echo "Example: t \"Buy milk\" \"tomorrow 9am\""
+                    exit 1
+                fi
 
-              task_summary="$*"
-              datetime="tomorrow 9am"
+                task_summary="$*"
+                datetime="tomorrow 9am"
 
-              if date -d "''${!#}" > /dev/null 2>&1; then
-                  datetime="''${!#}"
-                  task_summary="''${*:1:$#-1}"
-              fi
+                if date -d "''${!#}" > /dev/null 2>&1; then
+                    datetime="''${!#}"
+                    task_summary="''${*:1:$#-1}"
+                fi
 
-              is_midnight=$(date -d "$datetime" +%H%M)
-              if [ "$is_midnight" == "0000" ]; then
-                  due_time=$(date -d "$datetime" +%Y%m%dT000000)
-                  is_day_only=true
-              else
-                  due_time=$(date -u -d "$datetime" +%Y%m%dT%H%M%SZ)
-                  is_day_only=false
-              fi
+                is_midnight=$(date -d "$datetime" +%H%M)
+                if [ "$is_midnight" == "0000" ]; then
+                    due_time=$(date -d "$datetime" +%Y%m%dT000000)
+                    is_day_only=true
+                else
+                    due_time=$(date -u -d "$datetime" +%Y%m%dT%H%M%SZ)
+                    is_day_only=false
+                fi
 
-              TASK_UID=$(uuidgen 2>/dev/null || date +%s%N)
-              DTSTAMP=$(date -u +%Y%m%dT%H%M%SZ)
-              FILE_NAME="$TASK_UID.ics"
+                TASK_UID=$(uuidgen 2>/dev/null || date +%s%N)
+                DTSTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+                FILE_NAME="$TASK_UID.ics"
 
-              if [ "$is_day_only" = true ]; then
-                  DUE_LINE="DUE;VALUE=DATE:$(date -d "$datetime" +%Y%m%d)"
-              else
-                  DUE_LINE="DUE:$due_time"
-              fi
+                if [ "$is_day_only" = true ]; then
+                    DUE_LINE="DUE;VALUE=DATE:$(date -d "$datetime" +%Y%m%d)"
+                else
+                    DUE_LINE="DUE:$due_time"
+                fi
 
-              ICAL_DATA=$(cat <<EOF
-              BEGIN:VCALENDAR
-              VERSION:2.0
-              PRODID:-//Bash Script//NONSGML v1.0//EN
-              BEGIN:VTODO
-              UID:$TASK_UID
-              DTSTAMP:$DTSTAMP
-              SUMMARY:$task_summary
-              $DUE_LINE
-              PRIORITY:9
-              PERCENT-COMPLETE:0
-              BEGIN:VALARM
-              ACTION:DISPLAY
-              TRIGGER;VALUE=DATE-TIME:$due_time
-              DESCRIPTION:$task_summary
-              END:VALARM
-              END:VTODO
-              END:VCALENDAR
-              EOF
-              )
+                ICAL_DATA=$(cat <<EOF
+                BEGIN:VCALENDAR
+                VERSION:2.0
+                PRODID:-//Bash Script//NONSGML v1.0//EN
+                BEGIN:VTODO
+                UID:$TASK_UID
+                DTSTAMP:$DTSTAMP
+                SUMMARY:$task_summary
+                $DUE_LINE
+                PRIORITY:9
+                PERCENT-COMPLETE:0
+                BEGIN:VALARM
+                ACTION:DISPLAY
+                TRIGGER;VALUE=DATE-TIME:$due_time
+                DESCRIPTION:$task_summary
+                END:VALARM
+                END:VTODO
+                END:VCALENDAR
+                EOF
+                )
 
-              response=$(curl -s -w "\n%{http_code}" \
-                  -X PUT \
-                  --user "$nc_user:$nc_app_pass" \
-                  -H "Content-Type: text/calendar; charset=utf-8" \
-                  --data-raw "$ICAL_DATA" \
-                  "$caldav_url$FILE_NAME")
+                response=$(curl -s -w "\n%{http_code}" \
+                    -X PUT \
+                    --user "$nc_user:$nc_app_pass" \
+                    -H "Content-Type: text/calendar; charset=utf-8" \
+                    --data-raw "$ICAL_DATA" \
+                    "$caldav_url$FILE_NAME")
 
-              http_code=$(echo "$response" | tail -n 1)
-              body=$(echo "$response" | sed '$d')
+                http_code=$(echo "$response" | tail -n 1)
+                body=$(echo "$response" | sed '$d')
 
-              if [ "$http_code" -eq 201 ]; then
-                  if [ "$is_day_only" = true ]; then
-                      formatted_time=$(date -d "$datetime" "+%A %d/%m")
-                      notify-send -i 'task-new' "Task created: $task_summary" "Due: $formatted_time (all day)" 2>/dev/null
-                  else
-                      formatted_time=$(date -d "$datetime" "+%A %d/%m %H:%M")
-                      notify-send -i 'task-new' "Task created: $task_summary" "Due: $formatted_time" 2>/dev/null
-                  fi
-              else
-                  echo "Error: Failed to create task (HTTP status: $http_code)." >&2
-                  echo "Response Body: $body" >&2
-                  echo "--------------------" >&2
-                  echo "iCalendar Data Sent:" >&2
-                  echo "$ICAL_DATA" >&2
-                  notify-send -i 'dialog-error' "Failed to add task: $task_summary" "HTTP: $http_code" 2>/dev/null
-              fi
-            '';
+                if [ "$http_code" -eq 201 ]; then
+                    if [ "$is_day_only" = true ]; then
+                        formatted_time=$(date -d "$datetime" "+%A %d/%m")
+                        notify-send -i 'task-new' "Task created: $task_summary" "Due: $formatted_time (all day)" 2>/dev/null
+                    else
+                        formatted_time=$(date -d "$datetime" "+%A %d/%m %H:%M")
+                        notify-send -i 'task-new' "Task created: $task_summary" "Due: $formatted_time" 2>/dev/null
+                    fi
+                else
+                    echo "Error: Failed to create task (HTTP status: $http_code)." >&2
+                    echo "Response Body: $body" >&2
+                    echo "--------------------" >&2
+                    echo "iCalendar Data Sent:" >&2
+                    echo "$ICAL_DATA" >&2
+                    notify-send -i 'dialog-error' "Failed to add task: $task_summary" "HTTP: $http_code" 2>/dev/null
+                fi
+              '';
           })
 
           (writeShellApplication {
