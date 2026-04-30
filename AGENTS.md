@@ -67,7 +67,13 @@ Useful after structural changes:
 
 ```bash
 nix fmt
-nix eval .#nixosConfigurations.alpha.config.system.build.toplevel.outPath
+nix flake check
 ```
 
 When adding new files or directories, stage them with `git add` before evaluating. Nix flakes only see tracked files, so untracked changes will not be picked up and may cause attribute-missing errors.
+
+To verify a specific host builds to a derivation:
+
+```bash
+nix eval .#nixosConfigurations.alpha.config.system.build.toplevel.outPath
+```
