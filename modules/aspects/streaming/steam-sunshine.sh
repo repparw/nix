@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -x
 exec >> /tmp/steam-sunshine.log 2>&1
 
