@@ -130,7 +130,7 @@ binds {
   Mod+S hotkey-overlay-title="Scrcpy" {spawn "sh" "-c" "SDL_RENDER_DRIVER=opengl scrcpy --tcpip=192.168.0.32 -S" ;}
   Mod+T hotkey-overlay-title="Top" {spawn "foot" "fish" "-ic" "top" ;}
   Mod+V hotkey-overlay-title="Clipboard" {spawn "foot" "--app-id" "clipse" "clipse" ;}
-  Mod+X hotkey-overlay-title="cfait" {spawn "foot" "cfait" ;}
+  Mod+X hotkey-overlay-title="todoman" {spawn "foot" "todo" ;}
   Mod+Y hotkey-overlay-title="Kiosk Browser" {spawn "webapp" "https://www.youtube.com/feed/subscriptions" ;}
   Mod+Z hotkey-overlay-title="MPV Clipboard" {spawn "mpvclip" ;}
 

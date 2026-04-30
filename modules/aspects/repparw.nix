@@ -24,6 +24,7 @@
       den.aspects.file-manager
       den.aspects.scripts
       den.aspects.rclone
+      den.aspects.tasks
     ];
 
     provides.to-hosts = {

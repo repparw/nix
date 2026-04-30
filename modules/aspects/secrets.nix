@@ -70,17 +70,6 @@
           };
         });
 
-        sops.templates."cfait-config.toml" = {
-          content = ''
-            url = "https://leo.it.tab.digital/remote.php/dav/"
-            username = "ubritos@gmail.com"
-            password = "${config.sops.placeholder.nextcloud}"
-            default_calendar = "Personal"
-            disabled_calendars = ["local://default"]
-          '';
-          owner = "repparw";
-          path = "/home/repparw/.config/cfait/config.toml";
-        };
       };
   };
 }

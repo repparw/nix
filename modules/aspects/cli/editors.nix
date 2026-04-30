@@ -52,8 +52,6 @@
 
             pdfgrep
             catdoc
-
-            cfait
           ];
       };
   };
