@@ -42,15 +42,13 @@
           })
         ];
       };
-    homeManager =
-      _:
-      {
-        programs.mangohud = {
-          enable = true;
-          settings = {
-            preset = 2;
-          };
+    homeManager = _: {
+      programs.mangohud = {
+        enable = true;
+        settings = {
+          preset = 2;
         };
       };
+    };
   };
 }

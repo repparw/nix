@@ -17,7 +17,12 @@
 {
   den.aspects.streaming = {
     nixos =
-      { config, pkgs, lib, ... }:
+      {
+        config,
+        pkgs,
+        lib,
+        ...
+      }:
       let
         virtualDisplay = config.modules.virtualDisplay or { };
         height = lib.last (lib.splitString "x" (virtualDisplay.resolution or "3840x2160"));
@@ -33,7 +38,8 @@
           text = ''
             export GAMESCOPE_HEIGHT=${height}
             export GAMESCOPE_REFRESH=${refreshRate}
-          '' + builtins.readFile ./steam-sunshine.sh;
+          ''
+          + builtins.readFile ./steam-sunshine.sh;
         };
       in
       {

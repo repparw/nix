@@ -35,9 +35,12 @@
             })
             inputs.firefox-addons.overlays.default
             (final: prev: {
-              firefox-addons = final.lib.mapAttrs (name: pkg:
+              firefox-addons = final.lib.mapAttrs (
+                name: pkg:
                 pkg.overrideAttrs (old: {
-                  meta = old.meta // { license = final.lib.licenses.unfree; };
+                  meta = old.meta // {
+                    license = final.lib.licenses.unfree;
+                  };
                 })
               ) prev.firefox-addons;
             })
