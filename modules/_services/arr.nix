@@ -63,6 +63,7 @@
       "TORRENTING_PORT" = "54535";
     };
     volumes = [
+      "${cfg.configDir}/downloading:/downloading"
       "${cfg.dataDir}/torrents:/data/torrents"
       "${cfg.configDir}/qbittorrent:/config/qBittorrent"
     ];
