@@ -340,22 +340,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-pr": {
-      "locked": {
-        "lastModified": 1772993755,
-        "narHash": "sha256-HnSEJnKL9q6F7DLBjuGOPLXwVde1uf8cdyd7EsiqdEI=",
-        "owner": "GeoffreyFrogeye",
-        "repo": "nixpkgs",
-        "rev": "15330a1b20ff785acc8da1dc1b716fa689bd0db2",
-        "type": "github"
-      },
-      "original": {
-        "owner": "GeoffreyFrogeye",
-        "ref": "cfait",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixvim": {
       "inputs": {
         "flake-parts": [
@@ -445,7 +429,6 @@
         "import-tree": "import-tree",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-pr": "nixpkgs-pr",
         "nixvim": "nixvim",
         "nixvim-config": "nixvim-config",
         "sops-nix": "sops-nix",
