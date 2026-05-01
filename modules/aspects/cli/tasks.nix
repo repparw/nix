@@ -37,7 +37,7 @@
           glob = "*/*";
           extraConfig = ''
             default_list = "Personal"
-            default_due = 48
+            default_due = 24
           '';
         };
       };

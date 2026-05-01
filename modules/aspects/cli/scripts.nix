@@ -120,7 +120,7 @@
               in
               ''
                   nc_user="${ncAccount.remote.userName}"
-                  caldav_url="${ncAccount.remote.url}calendars/$nc_user/personal/"
+                  caldav_url="${ncAccount.remote.url}personal/"
                   secret_path="${osConfig.sops.secrets.nextcloud.path}"
 
                 if [[ ! -f "$secret_path" ]]; then
