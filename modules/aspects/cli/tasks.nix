@@ -81,19 +81,9 @@
           glob = "*/*";
           extraConfig = ''
             default_list = "Personal"
-            default_due = 24
+            default_command = "list --due 48"
           '';
         };
-
-        programs.fish.functions.todo = ''
-          if test (count $argv) -eq 0
-            command todo list --due 999999
-          else if test "$argv[1]" = "list"
-            command todo list --due 999999 $argv[2..]
-          else
-            command todo $argv
-          end
-        '';
       };
   };
 }
