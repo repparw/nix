@@ -53,6 +53,7 @@
             timeout = 1;
             efi.canTouchEfiVariables = true;
           };
+          tmpOnTmpfs = true;
         };
 
         fileSystems = {
