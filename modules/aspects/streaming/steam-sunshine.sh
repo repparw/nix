@@ -51,6 +51,10 @@ for _ in $(seq 1 90); do
     echo "Waiting for Steam to initialize..."
     sleep 8
 
+    # Power off all physical monitors via DPMS (doesn't affect output indices)
+    niri msg action power-off-monitors
+    echo "Powered off monitors"
+
     break
   fi
 done
