@@ -90,6 +90,7 @@ window-rule {
   match title="^(Picture-in-Picture|Picture in picture)$"
   match title="(video1 - mpv)"
   open-floating true
+  open-focused false
   default-floating-position x=10 y=10 relative-to="bottom-right"
   default-column-width { fixed 400; }
   default-window-height { fixed 225; }
