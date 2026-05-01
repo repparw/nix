@@ -93,11 +93,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777427743,
-        "narHash": "sha256-mKWKbxbE3jzzuaRiKLx4fUdgGnLIpGR+8a+Nt6J+d4Q=",
+        "lastModified": 1777600620,
+        "narHash": "sha256-flZdJJ8OA1yeHOsLdXgNIuvimodieSVBfglbq013ulg=",
         "owner": "petrkozorezov",
         "repo": "firefox-addons-nix",
-        "rev": "c7700303a91883ce4c6e2f584b4839050f0424dc",
+        "rev": "dd23644517b9ba0c063acbcae623916f731b91f8",
         "type": "github"
       },
       "original": {
@@ -276,11 +276,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777498633,
-        "narHash": "sha256-+3xXjfFz7y1gNG/9tQgjdxFKsQZYcDUxz1RbzmdgXj8=",
+        "lastModified": 1777659959,
+        "narHash": "sha256-ax3229dUvNuwTQwo2o68kOQ24dvOlJ/BrVYY4miD1bI=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "503480e51357c7beca8c19bde560af1491a372d0",
+        "rev": "5c1b74905c7261e8280dcda3623dbe677a1bc158",
         "type": "github"
       },
       "original": {
@@ -480,11 +480,11 @@
         "tinted-zed": "tinted-zed"
       },
       "locked": {
-        "lastModified": 1777501441,
-        "narHash": "sha256-+QWZ2/LvtEfbI4a5OiJmfv8aypBdm0u4Ui9t6LNHkRc=",
+        "lastModified": 1777580129,
+        "narHash": "sha256-6buSTzDtHYCJP1JNAIZCmgNcOs76oN03j+21CxdijVo=",
         "owner": "nix-community",
         "repo": "stylix",
-        "rev": "0bd266569c03b74234b8a2ae73d05055fb02a35f",
+        "rev": "20ff51f523e2dd67e5f31a321719d30708c1b771",
         "type": "github"
       },
       "original": {
