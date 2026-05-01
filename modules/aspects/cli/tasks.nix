@@ -35,7 +35,7 @@
                   is_day_only=false
               fi
 
-              if todo new --due "$datetime" "$task_summary"; then
+              if todo new --priority low --due "$datetime" "$task_summary"; then
                   if [ "$is_day_only" = true ]; then
                       formatted_time=$(date -d "$datetime" "+%A %d/%m")
                       notify-send -i 'task-new' "Task created: $task_summary" "Due: $formatted_time (all day)" 2>/dev/null
