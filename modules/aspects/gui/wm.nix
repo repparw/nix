@@ -38,6 +38,7 @@
             events = {
               before-sleep = "${lib.getExe' pkgs.systemd "loginctl"} lock-session";
               lock = "${lib.getExe pkgs.swaylock} -f";
+              unlock = "${lib.getExe' pkgs.procps "pkill"} -USR1 swaylock";
             };
           };
 
