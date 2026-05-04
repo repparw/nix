@@ -29,9 +29,6 @@
         refreshRate = toString (virtualDisplay.refreshRate or 120);
 
         niri-output-on = pkgs.writeShellScriptBin "niri-output-on" (builtins.readFile ./niri-output-on.sh);
-        niri-output-off = pkgs.writeShellScriptBin "niri-output-off" (
-          builtins.readFile ./niri-output-off.sh
-        );
         steam-sunshine = pkgs.writeShellApplication {
           name = "steam-sunshine";
           runtimeInputs = [ pkgs.jq ];
@@ -40,6 +37,15 @@
             export GAMESCOPE_REFRESH=${refreshRate}
           ''
           + builtins.readFile ./steam-sunshine.sh;
+        };
+        steam-sunshine-cleanup = pkgs.writeShellApplication {
+          name = "steam-sunshine-cleanup";
+          text = ''
+            eval "$(systemctl --user show-environment | grep '^NIRI_SOCKET=')"
+            niri msg output DP-2 off
+            pkill -9 gamescope || true
+            pkill -9 steam || true
+          '';
         };
       in
       {
@@ -64,12 +70,12 @@
               }
               {
                 name = "Steam Big Picture";
-                cmd = "${steam-sunshine}/bin/steam-sunshine";
+                detached = [ "${steam-sunshine}/bin/steam-sunshine" ];
                 image-path = "steam.png";
                 prep-cmd = [
                   {
                     do = "${niri-output-on}/bin/niri-output-on";
-                    undo = "${niri-output-off}/bin/niri-output-off";
+                    undo = "${steam-sunshine-cleanup}/bin/steam-sunshine-cleanup";
                   }
                 ];
               }
