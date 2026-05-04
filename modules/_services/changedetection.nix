@@ -1,7 +1,7 @@
 { cfg, ... }:
 {
   "changedetection" = {
-    image = "docker.io/linuxserver/changedetection.io:latest";
+    image = "lscr.io/linuxserver/changedetection.io:latest";
     environment = {
       "TZ" = cfg.timezone;
       "BASE_URL" = "https://${cfg.domain}";

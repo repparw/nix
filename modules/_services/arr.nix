@@ -1,7 +1,7 @@
 { cfg, ... }:
 {
   "bazarr" = {
-    image = "docker.io/linuxserver/bazarr:latest";
+    image = "lscr.io/linuxserver/bazarr:latest";
     environment = {
       "PUID" = cfg.user;
       "PGID" = cfg.group;
@@ -42,7 +42,7 @@
     healthCmd = "wget --no-verbose --tries=1 --spider http://localhost:6868/health";
   };
   "prowlarr" = {
-    image = "docker.io/linuxserver/prowlarr:latest";
+    image = "lscr.io/linuxserver/prowlarr:latest";
     environment = {
       "PUID" = cfg.user;
       "PGID" = cfg.group;
@@ -54,7 +54,7 @@
     healthCmd = "curl -f http://localhost:9696/ping";
   };
   "qbittorrent" = {
-    image = "docker.io/linuxserver/qbittorrent:latest";
+    image = "lscr.io/linuxserver/qbittorrent:latest";
     environment = {
       "PUID" = cfg.user;
       "PGID" = cfg.group;
@@ -78,7 +78,7 @@
     };
   };
   "radarr" = {
-    image = "docker.io/linuxserver/radarr:latest";
+    image = "lscr.io/linuxserver/radarr:latest";
     environment = {
       "PUID" = cfg.user;
       "PGID" = cfg.group;
@@ -107,7 +107,7 @@
   #   healthCmd = "wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status";
   # };
   "sonarr" = {
-    image = "docker.io/linuxserver/sonarr:latest";
+    image = "lscr.io/linuxserver/sonarr:latest";
     environment = {
       "PUID" = cfg.user;
       "PGID" = cfg.group;

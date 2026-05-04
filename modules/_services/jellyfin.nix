@@ -1,7 +1,7 @@
 { cfg, ... }:
 {
   "jellyfin" = {
-    image = "docker.io/linuxserver/jellyfin:latest";
+    image = "lscr.io/linuxserver/jellyfin:latest";
     environment = {
       "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
       "JELLYFIN_PublishedServerUrl" = "jellyfin.${cfg.domain}";
