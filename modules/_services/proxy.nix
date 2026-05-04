@@ -42,7 +42,7 @@
     };
   };
   "ddclient" = {
-    image = "docker.io/linuxserver/ddclient:latest";
+    image = "lscr.io/linuxserver/ddclient:latest";
     environment = {
       "PUID" = cfg.user;
       "PGID" = cfg.group;

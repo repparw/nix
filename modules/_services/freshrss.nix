@@ -1,7 +1,7 @@
 { cfg, config, ... }:
 {
   "freshrss" = {
-    image = "docker.io/linuxserver/freshrss:latest";
+    image = "lscr.io/linuxserver/freshrss:latest";
     environment = {
       "PUID" = "1000";
       "PGID" = "1000";
