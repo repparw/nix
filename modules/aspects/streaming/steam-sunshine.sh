@@ -2,11 +2,20 @@
 set -x
 exec >> /tmp/steam-sunshine.log 2>&1
 
-# Ensure niri msg can find the socket
-NIRI_SOCKET="$(systemctl --user show-environment | grep '^NIRI_SOCKET=' | cut -d= -f2-)"
-export NIRI_SOCKET
+# Pull session env from systemd so gamescope runs nested on Wayland
+while IFS='=' read -r key value; do
+    case "$key" in
+        NIRI_SOCKET|WAYLAND_DISPLAY|DISPLAY|XDG_RUNTIME_DIR)
+            export "$key=$value"
+            ;;
+    esac
+done < <(systemctl --user show-environment)
+
 if [ -z "$NIRI_SOCKET" ]; then
     echo "WARNING: NIRI_SOCKET not found in systemd user environment"
+fi
+if [ -z "$WAYLAND_DISPLAY" ]; then
+    echo "WARNING: WAYLAND_DISPLAY not set, gamescope may fail"
 fi
 
 GRAPHICAL_SESSION="$(loginctl --json=short 2>/dev/null | jq -r '[.[] | select(.seat != null and .seat != "-")] | first | .session' || true)"
