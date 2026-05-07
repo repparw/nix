@@ -73,8 +73,8 @@
     ];
     healthCmd = "curl -f http://localhost:8080/api/v2/app/version";
     labels = {
-      "traefik.http.routers.qbittorrent.rule" = "Host(`qbit.${cfg.domain}`)";
-      "traefik.http.services.qbittorrent.loadbalancer.server.port" = "8080";
+      "traefik.enable" = "false";
+      "glance.url" = "https://qbit.${cfg.domain}";
     };
   };
   "radarr" = {
