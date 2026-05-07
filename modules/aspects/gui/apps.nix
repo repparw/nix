@@ -66,7 +66,12 @@
         };
 
         programs = {
-          foot.enable = true;
+          foot = {
+            enable = true;
+            settings = {
+              colors-dark.blur = true;
+            };
+          };
 
           imv = {
             enable = true;
