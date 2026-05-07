@@ -5,28 +5,6 @@ _: {
     nixos =
       { pkgs, lib, ... }:
       {
-        networking.nftables.tables.qos = {
-          family = "inet";
-          content = ''
-            chain postrouting {
-              type filter hook postrouting priority mangle; policy accept;
-
-              # Deprioritize qBittorrent traffic (low priority - Background)
-              # Incoming connections to listening port
-              tcp dport 54535 ip dscp set cs1
-              udp dport 54535 ip dscp set cs1
-            }
-
-            chain output {
-              type filter hook output priority mangle; policy accept;
-
-              # Deprioritize outgoing traffic from qBittorrent container (UID 1000)
-              # This catches outgoing connections initiated by the container
-              meta skuid 1000 ip dscp set cs1
-            }
-          '';
-        };
-
         systemd.network = {
           enable = true;
           wait-online.enable = false;
