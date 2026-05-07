@@ -59,16 +59,25 @@
               set -U fish_greeting
               set -U pure_enable_nixdevshell true
             '';
+            binds = {
+              "ctrl-y" = {
+                mode = "insert";
+                command = "accept-autosuggestion";
+              };
+              "ctrl-e" = {
+                mode = "insert";
+                command = "y";
+              };
+              "ctrl-backspace".command = "backward-kill-word";
+              "ctrl-backspace-ins" = {
+                name = "ctrl-backspace";
+                mode = "insert";
+                command = "backward-kill-word";
+              };
+              "yy".command = "fish_clipboard_copy";
+            };
             functions = {
               fish_mode_prompt = "";
-              fish_user_key_bindings = ''
-                bind -M insert ctrl-y accept-autosuggestion
-                bind -M insert ctrl-e y
-                bind ctrl-backspace backward-kill-word
-                bind -M insert ctrl-backspace backward-kill-word
-                bind Y fish_clipboard_copy
-                bind yy fish_clipboard_copy
-              '';
               timer = ''
                 set label $argv[2]
                 test -z "$label"; and set label "▓▓▓"
