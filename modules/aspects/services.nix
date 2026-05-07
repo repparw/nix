@@ -1,7 +1,11 @@
-{
-  lib,
-  ...
-}:
+{ lib, ... }:
+let
+  extractHostname = rule: lib.removeSuffix "`)" (lib.removePrefix "Host(`" rule);
+
+  getTraefikRule =
+    cfg: name: attrs:
+    attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
+in
 {
   den.aspects.nixos-services = {
     nixos =
@@ -77,18 +81,12 @@
                   ) (builtins.readDir ../_services)
                 );
 
-            extractHostname = rule: lib.removeSuffix "`)" (lib.removePrefix "Host(`" rule);
-
             containersList = lib.attrValues serviceFiles;
 
             rawContainers = lib.foldl' (acc: def: acc // (def { inherit cfg config; })) { } containersList;
 
             serviceHostnames = lib.mapAttrs (
-              name: attrs:
-              let
-                rule = attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
-              in
-              extractHostname rule
+              name: attrs: extractHostname (getTraefikRule cfg name attrs)
             ) rawContainers;
 
             mkFileSystemMount = service: subPath: {
@@ -186,11 +184,6 @@
               ) (builtins.readDir serviceDir)
             );
 
-        extractHostname = rule: lib.removeSuffix "`)" (lib.removePrefix "Host(`" rule);
-
-        getTraefikRule =
-          name: attrs: attrs.labels."traefik.http.routers.${name}.rule" or "Host(`${name}.${cfg.domain}`)";
-
         podmanSocket = "/run/user/${
           toString osConfig.users.users.${config.home.username}.uid
         }/podman/podman.sock";
@@ -198,7 +191,7 @@
         mkContainer =
           name: attrs:
           let
-            traefikRule = getTraefikRule name attrs;
+            traefikRule = getTraefikRule cfg name attrs;
             hostname = extractHostname traefikRule;
             defaultTraefikLabels = {
               "traefik.enable" = lib.mkDefault "true";
