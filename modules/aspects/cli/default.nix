@@ -2,25 +2,27 @@
 {
   den.aspects = {
     cliBasePrograms = {
-      nixos = _: {
-        programs = {
-          mosh = {
-            enable = true;
-            openFirewall = true;
-          };
-
-          nh = {
-            enable = true;
-            flake = "/home/repparw/code/nix";
-            clean = {
+      nixos =
+        { config, ... }:
+        {
+          programs = {
+            mosh = {
               enable = true;
-              extraArgs = "--keep 3 --keep-since 7d";
+              openFirewall = true;
             };
-          };
 
-          fish.enable = true;
+            nh = {
+              enable = true;
+              flake = "${config.home-manager.users.repparw.xdg.userDirs.projects}/nix";
+              clean = {
+                enable = true;
+                extraArgs = "--keep 3 --keep-since 7d";
+              };
+            };
+
+            fish.enable = true;
+          };
         };
-      };
     };
 
     cliSystemServices = {
