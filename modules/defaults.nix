@@ -13,7 +13,6 @@
         den.aspects.auto-upgrade
         den.aspects.cli
         den.aspects.networking
-        den.aspects.overlays
         den.aspects.secrets
         den.aspects.style
       ];
