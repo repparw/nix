@@ -1,11 +1,38 @@
 {
   den,
+  inputs,
   lib,
   ...
 }:
 {
+  flake-file.inputs.nixpkgs-discord-krisp.url = "github:FlameFlag/nixpkgs/flameflag/push-vmswpuqmvzpt";
+  # https://github.com/NixOS/nixpkgs/pull/506089
+
   den.aspects.gui.provides.guiApps = {
     nixos = {
+      nixpkgs.overlays = [
+        (final: prev: {
+          discord =
+            (import inputs.nixpkgs-discord-krisp {
+              system = prev.system;
+              config.allowUnfree = true;
+            }).discord.override
+              {
+                withKrisp = true;
+              };
+        })
+        (final: prev: {
+          wshowkeys = prev.wshowkeys.overrideAttrs (old: {
+            src = prev.fetchFromGitHub {
+              owner = "repparw";
+              repo = "wshowkeys";
+              rev = "52d1191cc250d3a24b83f77ce23f23d498c23bb3";
+              hash = "sha256-BkmB+/oG0tsAbvAjkoEAJxObjvg+mCENhM4EHDDXQAI=";
+            };
+          });
+        })
+      ];
+
       programs = {
         gnome-disks.enable = true;
         wshowkeys.enable = true;
