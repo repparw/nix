@@ -177,7 +177,7 @@
             };
           };
 
-          vesktop = {
+          discord = {
             enable = true;
             settings = {
               minimizeToTray = true;
