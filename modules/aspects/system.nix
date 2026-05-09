@@ -19,7 +19,10 @@
         };
 
         environment.systemPackages = with pkgs; [ openssh-askpass ];
-        environment.variables.SUDO_ASKPASS = "${pkgs.openssh-askpass}/libexec/gtk-ssh-askpass";
+        environment.variables = {
+          SUDO_ASKPASS = "${pkgs.openssh-askpass}/libexec/gtk-ssh-askpass";
+          NIXOS_OZONE_WL = "1";
+        };
 
         hardware.bluetooth.enable = true;
       };

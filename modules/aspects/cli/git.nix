@@ -240,29 +240,11 @@
                     baseURL = "https://opencode.ai/zen/go/v1/chat/completions";
                   };
                   models = {
-                    glm-5-1 = {
-                      name = "GLM-5.1";
-                    };
-                    glm-5 = {
-                      name = "GLM-5";
-                    };
-                    kimi-k2-5 = {
-                      name = "Kimi K2.5";
+                    deepseek-v4-pro = {
+                      name = "DeepSeek V4 Pro";
                     };
                     kimi-k2-6 = {
                       name = "Kimi K2.6";
-                    };
-                    mimo-v2-pro = {
-                      name = "MiMo-V2-Pro";
-                    };
-                    mimo-v2-omni = {
-                      name = "MiMo-V2-Omni";
-                    };
-                    mimo-v2-5-pro = {
-                      name = "MiMo-V2.5-Pro";
-                    };
-                    mimo-v2-5 = {
-                      name = "MiMo-V2.5";
                     };
                   };
                 };

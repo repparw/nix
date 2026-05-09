@@ -40,10 +40,8 @@
               "uas"
               "sd_mod"
             ];
-            kernelModules = [ ];
           };
           kernelModules = [ "kvm-amd" ];
-          extraModulePackages = [ ];
           loader = {
             systemd-boot = {
               enable = true;
@@ -53,7 +51,7 @@
             timeout = 1;
             efi.canTouchEfiVariables = true;
           };
-          tmpOnTmpfs = true;
+          tmp.useTmpfs = true;
         };
 
         fileSystems = {
@@ -102,8 +100,6 @@
             ];
           };
         };
-
-        swapDevices = [ ];
 
         nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
         hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;

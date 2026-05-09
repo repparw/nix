@@ -1,9 +1,11 @@
 { den, lib, ... }:
 {
   den = {
-    ctx.user.includes = [ den.provides."mutual-provider" ];
+    schema.user = {
+      includes = [ den.provides."mutual-provider" ];
 
-    schema.user.classes = lib.mkDefault [ "homeManager" ];
+      classes = lib.mkDefault [ "homeManager" ];
+    };
 
     aspects.host-common = {
       includes = [

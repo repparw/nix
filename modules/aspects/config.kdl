@@ -113,14 +113,15 @@ window-rule {
 binds {
   Mod+Return hotkey-overlay-title="Terminal" {spawn "foot" ;}
   Mod+W hotkey-overlay-title="Close Window" {close-window ;}
-  Mod+Space   hotkey-overlay-title="App Launcher" {spawn "rofi" "-show" "combi" ;}
+  Mod+Space hotkey-overlay-title="App Launcher" {spawn "rofi" "-show" "combi" ;}
   Mod+Shift+Space hotkey-overlay-title="Browser" {spawn "firefox" ;}
 
-  Mod+A   hotkey-overlay-title="Anki" {spawn "anki" ;} 
+  Mod+A hotkey-overlay-title="Anki" {spawn "anki" ;} 
   Mod+B hotkey-overlay-title="Bluetooth Toggle" {spawn "bttoggle" ;}
-  Mod+C   hotkey-overlay-title="WhatsApp" {spawn "whatsapp-electron";}
+  Mod+C hotkey-overlay-title="WhatsApp" {spawn "whatsapp-electron";}
+  Mod+D hotkey-overlay-title="Dictate" {spawn "dictate" ;}
   Mod+E hotkey-overlay-title="File Manager (Terminal)" {spawn "foot" "--app-id" "filemanager" "fish" "-ic" "yazi" ;}
-  Mod+Shift+E   hotkey-overlay-title="File Manager (GUI)" {spawn "nautilus" ;}
+  Mod+Shift+E hotkey-overlay-title="File Manager (GUI)" {spawn "nautilus" ;}
   Mod+F hotkey-overlay-title="Fullscreen" {maximize-window-to-edges ;}
   Mod+Alt+F hotkey-overlay-title="Toggle Floating" { toggle-window-floating ;}
   Mod+Ctrl+F hotkey-overlay-title="Toggle Focus Floating" { switch-focus-between-floating-and-tiling ;}
@@ -182,7 +183,7 @@ binds {
 
   Mod+U hotkey-overlay-title="Update System" {spawn "foot" "--hold" "fish" "-ic" "nrsu" ;}
   Mod+R hotkey-overlay-title="Raspberry Pi" {spawn "foot" "fish" "-ic" "rpi" ;}
-  Mod+Comma hotkey-overlay-title="Show Layout" {spawn "ndrop" "-c" "imv" "imv" "/home/repparw/code/totem/layout/totem.svg" ;}
+  Mod+Comma hotkey-overlay-title="Show Layout" {spawn "ndrop" "-c" "imv" "imv" "/home/repparw/Projects/totem/layout/totem.svg" ;}
   Mod+Period hotkey-overlay-title="Show Keys" {spawn "sh" "-c" "pkill wshowkeys || wshowkeys -a bottom -m 108 -b 000000BB" ;}
 
   Print hotkey-overlay-title="Screenshot Screen" {spawn "niri" "msg" "action" "screenshot-screen" ;}
