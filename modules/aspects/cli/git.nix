@@ -237,13 +237,16 @@
                   npm = "@ai-sdk/openai-compatible";
                   name = "oc-galo";
                   options = {
-                    baseURL = "https://opencode.ai/zen/go/v1/chat/completions";
+                    baseURL = "https://opencode.ai/zen/go/v1";
                   };
                   models = {
+                    deepseek-v4-flash = {
+                      name = "DeepSeek V4 Flash";
+                    };
                     deepseek-v4-pro = {
                       name = "DeepSeek V4 Pro";
                     };
-                    kimi-k2-6 = {
+                    "kimi-k2.6" = {
                       name = "Kimi K2.6";
                     };
                   };
