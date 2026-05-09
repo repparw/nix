@@ -340,6 +340,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-discord-krisp": {
+      "locked": {
+        "lastModified": 1778289552,
+        "narHash": "sha256-J2hFBFYVB6fyzHDHxGmgEBRZOV0GLj8Ccc58GGrsmgo=",
+        "owner": "FlameFlag",
+        "repo": "nixpkgs",
+        "rev": "3327261e53f551e4b4393ef3d6ac660976c19a1d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "FlameFlag",
+        "ref": "flameflag/push-vmswpuqmvzpt",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixvim": {
       "inputs": {
         "flake-parts": [
@@ -429,6 +445,7 @@
         "import-tree": "import-tree",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-discord-krisp": "nixpkgs-discord-krisp",
         "nixvim": "nixvim",
         "nixvim-config": "nixvim-config",
         "sops-nix": "sops-nix",
