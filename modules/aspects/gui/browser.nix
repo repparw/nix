@@ -13,6 +13,22 @@
   };
 
   den.aspects.gui.provides.browser = {
+    nixos = {
+      nixpkgs.overlays = [
+        inputs.firefox-addons.overlays.default
+        (final: prev: {
+          firefox-addons = final.lib.mapAttrs (
+            name: pkg:
+            pkg.overrideAttrs (old: {
+              meta = old.meta // {
+                license = final.lib.licenses.unfree;
+              };
+            })
+          ) prev.firefox-addons;
+        })
+      ];
+    };
+
     homeManager =
       {
         pkgs,
