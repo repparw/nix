@@ -9,4 +9,15 @@ if [ -n "$GRAPHICAL_SESSION" ] && [ "$GRAPHICAL_SESSION" != "null" ]; then
   loginctl unlock-session "$GRAPHICAL_SESSION"
 fi
 
+# Inhibit idle via logind so swayidle doesn't lock the session during stream.
+# swayidle checks logind's BlockInhibited property, not Wayland idle inhibitors.
+rm -f /tmp/sunshine-inhibit.pid
+systemd-inhibit \
+  --what=idle \
+  --who="Sunshine" \
+  --why="Game streaming active" \
+  --mode=block \
+  sh -c 'echo $$ > /tmp/sunshine-inhibit.pid; exec sleep infinity' &
+disown
+
 niri msg output DP-2 on
