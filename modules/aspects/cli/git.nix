@@ -107,6 +107,8 @@
 
           lazygit.enable = true;
 
+          ripgrep-all.enable = true;
+
           zoxide = {
             enable = true;
             options = [ "--cmd=cd" ];

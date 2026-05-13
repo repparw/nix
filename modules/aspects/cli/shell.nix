@@ -100,6 +100,7 @@
               ln = "ln -i";
               mv = "mv -i";
 
+              rg = "rga";
               rt = "trash put";
 
               chown = "chown --preserve-root";
