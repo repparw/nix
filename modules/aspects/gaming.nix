@@ -14,6 +14,7 @@
         programs = {
           steam = {
             enable = true;
+            extraCompatPackages = with pkgs; [ proton-ge-bin ];
             gamescopeSession = {
               enable = true;
               args = [
@@ -32,12 +33,14 @@
           gamescope.enable = true;
         };
         environment.systemPackages = with pkgs; [
+          shipwright
           (heroic.override {
             extraPkgs =
               pkgs': with pkgs'; [
                 gamescope
                 gamemode
                 mangohud
+                proton-ge-bin
               ];
           })
         ];
