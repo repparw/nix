@@ -11,13 +11,13 @@ fi
 
 # Inhibit idle via logind so swayidle doesn't lock the session during stream.
 # swayidle checks logind's BlockInhibited property, not Wayland idle inhibitors.
-rm -f /tmp/sunshine-inhibit.pid
+pkill -f "systemd-inhibit.*--who=Sunshine" 2>/dev/null || true
 systemd-inhibit \
   --what=idle \
-  --who="Sunshine" \
+  --who=Sunshine \
   --why="Game streaming active" \
   --mode=block \
-  sh -c 'echo $$ > /tmp/sunshine-inhibit.pid; exec sleep infinity' &
+  sleep infinity &
 disown
 
 niri msg output DP-2 on
