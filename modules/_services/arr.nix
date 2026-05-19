@@ -73,7 +73,12 @@
     ];
     healthCmd = "curl -f http://localhost:8080/api/v2/app/version";
     labels = {
-      "traefik.enable" = "false";
+      "traefik.http.routers.qbittorrent.rule" = "Host(`qbit.${cfg.domain}`) && !PathPrefix(`/api`)";
+      "traefik.http.routers.qbittorrent.middlewares" = "qbit-auth@file";
+      "traefik.http.routers.qbittorrent-api.rule" = "Host(`qbit.${cfg.domain}`) && PathPrefix(`/api`)";
+      "traefik.http.routers.qbittorrent-api.tls" = "true";
+      "traefik.http.routers.qbittorrent-api.service" = "qbittorrent";
+      "traefik.http.services.qbittorrent.loadbalancer.server.port" = "8080";
       "glance.url" = "https://qbit.${cfg.domain}";
     };
   };
