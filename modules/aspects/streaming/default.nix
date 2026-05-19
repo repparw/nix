@@ -45,10 +45,7 @@
             niri msg output DP-2 off
             pkill -9 gamescope || true
             pkill -9 steam || true
-            if [ -f /tmp/sunshine-inhibit.pid ]; then
-              kill "$(cat /tmp/sunshine-inhibit.pid)" 2>/dev/null || true
-              rm -f /tmp/sunshine-inhibit.pid
-            fi
+            pkill -f "systemd-inhibit.*--who=Sunshine" 2>/dev/null || true
           '';
         };
       in
