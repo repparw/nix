@@ -141,7 +141,7 @@ binds {
   Ctrl+Alt+Shift+B {spawn "obs-cmd" "recording" "toggle-pause" ;}
   Ctrl+Alt+Shift+C {spawn "obs-remux2wsp" ;}
   Ctrl+Alt+Shift+D {spawn "obs-cmd" "replay" "save" ;}
-  Ctrl+Alt+Shift+E {spawn "vesktop" ;}
+  Ctrl+Alt+Shift+E {spawn "Discord" ;}
   Ctrl+Alt+Shift+F {spawn "wpctl" "set-source-mute" "@DEFAULT_SOURCE@" "toggle" ;}
 
   Mod+H hotkey-overlay-title="Focus Left" {focus-column-or-monitor-left ;}

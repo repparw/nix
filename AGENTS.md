@@ -44,7 +44,7 @@ Repo follows upstream `vic/den` default-template structure.
 ### nh os repl
 
 Load a NixOS system configuration in an interactive REPL:
-```
+```shell
 nh os repl
 ```
 
@@ -65,7 +65,7 @@ nix-repl> config.services.tailscale
 
 Useful after structural changes:
 
-```bash
+```shell
 nix fmt
 nix flake check
 ```
@@ -74,6 +74,6 @@ When adding new files or directories, stage them with `git add` before evaluatin
 
 To verify a specific host builds to a derivation:
 
-```bash
+```shell
 nix eval .#nixosConfigurations.alpha.config.system.build.toplevel.outPath
 ```
