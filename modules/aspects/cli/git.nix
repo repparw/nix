@@ -105,7 +105,16 @@
             };
           };
 
-          lazygit.enable = true;
+          lazygit = {
+            enable = true;
+            settings = {
+              git.pagers = [
+                {
+                  pager = "delta --dark --paging=never";
+                }
+              ];
+            };
+          };
 
           ripgrep-all.enable = true;
 
@@ -225,9 +234,6 @@
               '';
             };
             settings = {
-              tui.keybinds = {
-                leader = "ctrl+x";
-              };
               permission = {
                 "*" = {
                   "*" = "allow";
