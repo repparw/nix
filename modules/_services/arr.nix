@@ -59,7 +59,6 @@
       "PUID" = cfg.user;
       "PGID" = cfg.group;
       "TZ" = cfg.timezone;
-      "DOCKER_MODS" = "ghcr.io/vuetorrent/vuetorrent-lsio-mod:latest";
       "TORRENTING_PORT" = "54535";
     };
     volumes = [
