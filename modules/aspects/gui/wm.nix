@@ -13,6 +13,7 @@
           nautilus
           baobab
           whatsapp-electron
+          playerctl
 
           opencode-desktop
         ];
@@ -52,6 +53,7 @@
           };
 
           swaync.enable = true;
+          playerctld.enable = true;
         };
 
         programs = {

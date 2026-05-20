@@ -44,7 +44,6 @@
             less
             # yt-dlp
 
-            playerctl
             libqalculate
 
             fastfetch
