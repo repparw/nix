@@ -10,8 +10,8 @@
       "TZ" = cfg.timezone;
     };
     volumes = [
-      "${cfg.dataDir}/media:/data/media:ro"
-      "${cfg.externalDataDir}:/data/seagate:ro"
+      "${cfg.dataDir}/media:/data/media"
+      "${cfg.externalDataDir}:/data/seagate"
       "${cfg.configDir}/jellyfin:/config"
     ];
     healthCmd = "curl -f http://localhost:8096/health";
