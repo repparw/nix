@@ -47,6 +47,14 @@
           })
 
           (writeShellApplication {
+            name = "youtube";
+            runtimeInputs = [ chromium ];
+            text = ''
+              exec chromium --profile-directory=Default --app-id=agimnkijcaahngcdmfeangaknmldooml
+            '';
+          })
+
+          (writeShellApplication {
             name = "bttoggle";
             runtimeInputs = [ bluez ];
             text = ''
@@ -112,10 +120,29 @@
             runtimeInputs = [ ffmpeg ];
             text = ''
               cd /mnt/hdd/Videos/obs;
-              FILE=$(find '.' ./*.mkv -maxdepth 0 -type f -printf '%T@ %p
-              ' | sort -k 1nr | sed 's/^[^ ]* //' | head -n 1
+              FILE=$(find '.' ./*.mkv -maxdepth 0 -type f -printf '%T@ %p\n              ' | sort -k 1nr | sed 's/^[^ ]* //' | head -n 1
               )
               ffmpeg -sseof -60 -i "$FILE" -vcodec libx264 -ac 1 -acodec copy -pix_fmt yuv420p "''${FILE%.*}".mp4;
+            '';
+          })
+
+          (stdenvNoCC.mkDerivation {
+            name = "ndrop";
+            src = fetchurl {
+              url = "https://raw.githubusercontent.com/Schweber/ndrop/main/ndrop";
+              hash = "sha256-tzEUaq11x6oVFFIqjZccSkuqMIXRhqYi9Zpx172GiWg=";
+            };
+            dontUnpack = true;
+            nativeBuildInputs = [ makeWrapper ];
+            installPhase = ''
+              install -Dm755 $src $out/bin/ndrop
+              wrapProgram $out/bin/ndrop --prefix PATH : ${
+                lib.makeBinPath [
+                  niri
+                  jq
+                  libnotify
+                ]
+              }
             '';
           })
         ];

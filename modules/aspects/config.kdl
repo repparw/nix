@@ -107,6 +107,11 @@ window-rule {
   open-fullscreen true
   variable-refresh-rate true
 }
+window-rule {
+  match app-id="chrome-agimnkijcaahngcdmfeangaknmldooml-Default"
+  open-on-output "HDMI-A-1"
+  default-column-width { proportion 1.0; }
+}
 ///////////////////////////////////////////////////////
 
 
@@ -125,7 +130,7 @@ binds {
   Mod+F hotkey-overlay-title="Fullscreen" {maximize-window-to-edges ;}
   Mod+Alt+F hotkey-overlay-title="Toggle Floating" { toggle-window-floating ;}
   Mod+Ctrl+F hotkey-overlay-title="Toggle Focus Floating" { switch-focus-between-floating-and-tiling ;}
-  Mod+G hotkey-overlay-title="AI Agent" {spawn-sh "OpenCode";} 
+  Mod+G hotkey-overlay-title="AI Agent" {spawn-sh "opencode-desktop";} 
   Mod+M hotkey-overlay-title="Spotify" {spawn "foot" "--app-id" "spotify" "spotify_player" ;}
   Mod+N hotkey-overlay-title="Notes (Obsidian)" {spawn "obsidian" ;}
   Mod+P hotkey-overlay-title="Pomodoro" {spawn "webapp" "https://app.solidtime.io" ;}
@@ -133,7 +138,7 @@ binds {
   Mod+T hotkey-overlay-title="Top" {spawn "foot" "fish" "-ic" "top" ;}
   Mod+V hotkey-overlay-title="Clipboard" {spawn "foot" "--app-id" "clipse" "clipse" ;}
   Mod+X hotkey-overlay-title="todoman" {spawn "foot" "fish" "-ic" "todo" ;}
-  Mod+Y hotkey-overlay-title="Kiosk Browser" {spawn "webapp" "https://www.youtube.com/feed/subscriptions" ;}
+  Mod+Y hotkey-overlay-title="YouTube" {spawn "youtube" ;}
   Mod+Z hotkey-overlay-title="MPV Clipboard" {spawn "mpvclip" ;}
 
   // macropad
@@ -190,8 +195,8 @@ binds {
   Mod+Print hotkey-overlay-title="Screenshot Window" {spawn "niri" "msg" "action" "screenshot-window" ;}
   Mod+Shift+Print hotkey-overlay-title="Screenshot Area" {spawn "niri" "msg" "action" "screenshot" "-p" "false" ;}
 
-  XF86AudioPlay allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "playerctl play-pause" ;}
-  XF86AudioPause allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "playerctl play-pause" ;}
+  XF86AudioPlay allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "playerctl" "play-pause" ;}
+  XF86AudioPause allow-when-locked=true hotkey-overlay-title="Play/Pause" {spawn "playerctl" "play-pause" ;}
   XF86AudioNext allow-when-locked=true hotkey-overlay-title="Next Track" {spawn "playerctl" "next" ;}
   XF86AudioPrev allow-when-locked=true hotkey-overlay-title="Previous Track" {spawn "playerctl" "previous" ;}
 
