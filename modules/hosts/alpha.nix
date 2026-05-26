@@ -9,7 +9,6 @@
       den.aspects.host-common
       den.aspects.gaming
       den.aspects.logid
-      den.aspects.mercusys-ma530
       den.aspects.nixos-services
       den.aspects.streaming
       den.aspects.timers
@@ -117,6 +116,11 @@
               passwordFile = config.sops.secrets.steamPassword.path;
             };
           };
+
+          udev.extraRules = ''
+            # Disable USB autosuspend for Intel AX210 Bluetooth to fix sleep/wake
+            ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0032", ATTR{power/control}="on"
+          '';
         };
       };
 
