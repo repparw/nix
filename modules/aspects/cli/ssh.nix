@@ -19,10 +19,10 @@
         enable = true;
         enableDefaultConfig = false;
 
-        matchBlocks = {
+        settings = {
           pi = {
-            hostname = "192.168.0.4";
-            user = "repparw";
+            HostName = "192.168.0.4";
+            User = "repparw";
           };
         };
       };
