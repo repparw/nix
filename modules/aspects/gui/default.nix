@@ -16,6 +16,11 @@
 
   den.aspects.gui.provides.session = {
     nixos = _: {
+      programs.nautilus-open-any-terminal = {
+        enable = true;
+        terminal = "foot";
+      };
+
       services.displayManager = {
         defaultSession = "niri";
         autoLogin.user = "repparw";
