@@ -149,7 +149,7 @@
                 *)      echo "Usage: record {screen|area}" >&2; exit 1 ;;
               esac
 
-              notify-send -t 500 "Recording starting in 0.5s" "$1"
+              notify-send -t 1000 "Recording starting in 1s" "$1"
               sleep 1
               wl-screenrec -g "$geom" --audio --audio-device "@DEFAULT_MONITOR@" --low-power=off -f "$output" &
               echo "$! $output" > "$state"
