@@ -1,5 +1,6 @@
 {
   den,
+  lib,
   pkgs,
   ...
 }:
@@ -116,13 +117,42 @@
           })
 
           (writeShellApplication {
-            name = "obs-remux2wsp";
-            runtimeInputs = [ ffmpeg ];
+            name = "record";
+            runtimeInputs = [
+              wl-screenrec
+              slurp
+              niri
+              jq
+              libnotify
+              wl-clipboard
+            ];
             text = ''
-              cd /mnt/hdd/Videos/obs;
-              FILE=$(find '.' ./*.mkv -maxdepth 0 -type f -printf '%T@ %p\n              ' | sort -k 1nr | sed 's/^[^ ]* //' | head -n 1
-              )
-              ffmpeg -sseof -60 -i "$FILE" -vcodec libx264 -ac 1 -acodec copy -pix_fmt yuv420p "''${FILE%.*}".mp4;
+              state=/tmp/wl-screenrec.state
+
+              if [ -f "$state" ]; then
+                read -r pid output < "$state"
+                kill -INT "$pid" 2>/dev/null || true
+                while kill -0 "$pid" 2>/dev/null; do sleep 0.1; done
+                rm -f "$state"
+                sleep 0.5
+                [ -f "$output" ] && [ -s "$output" ] && echo "file://$output" | wl-copy --type text/uri-list
+                notify-send "Recording stopped" "$output"
+                exit 0
+              fi
+
+              mkdir -p ~/Videos/ss
+              output="$HOME/Videos/ss/recording-$(date +%Y-%m-%d_%H-%M-%S).mp4"
+
+              case "$1" in
+                screen) geom=$(niri msg --json focused-output | jq -r '.logical | "\(.x),\(.y) \(.width)x\(.height)"') ;;
+                area)   geom=$(slurp -b "#ff000040" -c "#ff0000ff" -w 2) || exit 0 ;;
+                *)      echo "Usage: record {screen|area}" >&2; exit 1 ;;
+              esac
+
+              notify-send -t 500 "Recording starting in 0.5s" "$1"
+              sleep 1
+              wl-screenrec -g "$geom" --audio --audio-device "@DEFAULT_MONITOR@" --low-power=off -f "$output" &
+              echo "$! $output" > "$state"
             '';
           })
 
