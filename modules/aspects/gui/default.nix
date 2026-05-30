@@ -4,7 +4,6 @@
     includes = with den.aspects.gui._; [
       session
       niri
-      obs
       browser
       mpv
       spotify
