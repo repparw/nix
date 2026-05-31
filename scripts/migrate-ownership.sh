@@ -68,6 +68,8 @@ migrate ntfy-sh ntfy-sh \
 
 echo ""
 echo "--- Paperless ---"
+# Create consume directory if it doesn't exist
+mkdir -p /home/containers/data/paper/consume
 migrate paperless paperless \
     /home/containers/data/paper \
     /home/containers/config/paper
