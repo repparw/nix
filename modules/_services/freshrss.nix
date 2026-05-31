@@ -1,31 +1,48 @@
-{ cfg, config, ... }:
 {
-  "freshrss" = {
-    image = "lscr.io/linuxserver/freshrss:latest";
-    environment = {
-      "PUID" = "1000";
-      "PGID" = "1000";
-      "TZ" = cfg.timezone;
-      "OIDC_ENABLED" = "1";
-      "OIDC_PROVIDER_METADATA_URL" = "https://auth.${cfg.domain}/.well-known/openid-configuration";
-      "OIDC_REMOTE_USER_CLAIM" = "preferred_username";
-      "OIDC_SCOPES" = "openid groups email profile";
-      "OIDC_X_FORWARDED_HEADERS" = "X-Forwarded-Host X-Forwarded-Port X-Forwarded-Proto";
+  cfg,
+  config,
+  lib,
+  ...
+}:
+{
+  containers.freshrss = {
+    autoStart = true;
+    privateNetwork = true;
+    privateUsers = "pick";
+    hostAddress = "10.231.136.1";
+    localAddress = "10.231.136.9";
+    bindMounts = {
+      "/config" = {
+        hostPath = "${cfg.configDir}/freshrss";
+        isReadOnly = false;
+      };
     };
-    volumes = [
-      "${cfg.configDir}/freshrss:/config"
-    ];
-    environmentFiles = [ config.sops.secrets.freshrss.path ];
-    healthCmd = "curl -f http://localhost:80/api/greader.php";
-    labels = {
-      "traefik.http.routers.freshrss.rule" = "Host(`rss.${cfg.domain}`)";
-    };
+    config =
+      { ... }:
+      {
+        services.freshrss = {
+          enable = true;
+          baseUrl = "https://rss.${cfg.domain}";
+          dataDir = "/config";
+          defaultUser = "admin";
+          authType = "none";
+          webserver = "nginx";
+          virtualHost = "rss.${cfg.domain}";
+        };
+
+        services.nginx.virtualHosts."rss.${cfg.domain}".listen = [
+          {
+            addr = "0.0.0.0";
+            port = 8082;
+          }
+        ];
+
+        system.stateVersion = "26.05";
+      };
   };
-  "mercury" = {
-    image = "docker.io/wangqiru/mercury-parser-api:latest";
-    labels = {
-      "glance.parent" = "freshrss";
-      "traefik.enable" = "false";
-    };
-  };
+
+  systemd.services."container@freshrss".serviceConfig.EnvironmentFile = lib.mkForce [
+    "-/etc/nixos-containers/freshrss.conf"
+    config.sops.secrets.freshrss.path
+  ];
 }

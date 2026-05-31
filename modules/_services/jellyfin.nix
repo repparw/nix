@@ -1,27 +1,63 @@
-{ cfg, ... }:
 {
-  "jellyfin" = {
-    image = "lscr.io/linuxserver/jellyfin:latest";
-    environment = {
-      "DOCKER_MODS" = "linuxserver/mods:jellyfin-amd";
-      "JELLYFIN_PublishedServerUrl" = "jellyfin.${cfg.domain}";
-      "PUID" = cfg.user;
-      "PGID" = cfg.group;
-      "TZ" = cfg.timezone;
+  cfg,
+  lib,
+  pkgs,
+  ...
+}:
+{
+  containers.jellyfin = {
+    autoStart = true;
+    privateNetwork = true;
+    privateUsers = "pick";
+    hostAddress = "10.231.136.1";
+    localAddress = "10.231.136.10";
+    bindMounts = {
+      "/config" = {
+        hostPath = "${cfg.configDir}/jellyfin";
+        isReadOnly = false;
+      };
+      "/data/media" = {
+        hostPath = "${cfg.dataDir}/media";
+        isReadOnly = false;
+      };
+      "/data/seagate" = {
+        hostPath = cfg.externalDataDir;
+        isReadOnly = false;
+      };
     };
-    volumes = [
-      "${cfg.dataDir}/media:/data/media"
-      "${cfg.externalDataDir}:/data/seagate"
-      "${cfg.configDir}/jellyfin:/config"
+    allowedDevices = [
+      {
+        node = "/dev/dri/renderD128";
+        modifier = "rwm";
+      }
+      {
+        node = "/dev/dri/card0";
+        modifier = "rwm";
+      }
     ];
-    healthCmd = "curl -f http://localhost:8096/health";
-    extraOptions = [
-      "--device=/dev/dri:/dev/dri:rwm"
+    config =
+      { ... }:
+      {
+        services.jellyfin = {
+          enable = true;
+          openFirewall = true;
+        };
 
-    ];
-    labels = {
-      "traefik.http.services.jellyfin.loadbalancer.server.port" = "8096";
-      "traefik.http.routers.jellyfin.middlewares" = "";
-    };
+        hardware.graphics = {
+          enable = true;
+          extraPackages = with pkgs; [
+            libva-vdpau-driver
+            libvdpau-va-gl
+            mesa.drivers
+          ];
+        };
+
+        users.users.jellyfin.extraGroups = [
+          "video"
+          "render"
+        ];
+
+        system.stateVersion = "26.05";
+      };
   };
 }

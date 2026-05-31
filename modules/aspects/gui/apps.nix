@@ -14,7 +14,7 @@
         (final: prev: {
           discord =
             (import inputs.nixpkgs-discord-krisp {
-              system = prev.system;
+              system = prev.stdenv.hostPlatform.system;
               config.allowUnfree = true;
             }).discord.override
               {

@@ -4,8 +4,6 @@
     nixos =
       { pkgs, ... }:
       {
-        services.dbus.implementation = "broker";
-
         i18n.defaultLocale = "en_IE.UTF-8";
 
         time.timeZone = "America/Argentina/Buenos_Aires";
