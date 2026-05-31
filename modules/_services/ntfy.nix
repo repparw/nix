@@ -1,21 +1,34 @@
-{ cfg, ... }:
+{ cfg, lib, ... }:
 {
-  "ntfy" = {
-    image = "docker.io/binwiederhier/ntfy:latest";
-    cmd = [ "serve" ];
-    environment = {
-      TZ = cfg.timezone;
-      NTFY_BASE_URL = "https://ntfy.${cfg.domain}";
-      NTFY_CACHE_FILE = "/etc/ntfy/cache.db";
-      NTFY_AUTH_FILE = "/etc/ntfy/auth.db";
-      NTFY_AUTH_DEFAULT_ACCESS = "deny-all";
-      NTFY_BEHIND_PROXY = "true";
-      NTFY_ATTACHMENT_CACHE_DIR = "/etc/ntfy/attachments";
-      NTFY_ENABLE_LOGIN = "true";
+  containers.ntfy = {
+    autoStart = true;
+    privateNetwork = true;
+    privateUsers = "pick";
+    hostAddress = "10.231.136.1";
+    localAddress = "10.231.136.11";
+    bindMounts = {
+      "/etc/ntfy" = {
+        hostPath = "${cfg.configDir}/ntfy";
+        isReadOnly = false;
+      };
     };
-    volumes = [
-      "${cfg.configDir}/ntfy:/etc/ntfy"
-    ];
-    healthCmd = "wget -q --tries=1 http://localhost:80/v1/health -O - | grep -q '\"healthy\":true' || exit 1";
+    config =
+      { ... }:
+      {
+        services.ntfy-sh = {
+          enable = true;
+          settings = {
+            base-url = "https://ntfy.${cfg.domain}";
+            listen-http = ":8090";
+            cache-file = "/etc/ntfy/cache.db";
+            auth-file = "/etc/ntfy/auth.db";
+            auth-default-access = "deny-all";
+            behind-proxy = true;
+            attachment-cache-dir = "/etc/ntfy/attachments";
+            enable-login = true;
+          };
+        };
+        system.stateVersion = "26.05";
+      };
   };
 }

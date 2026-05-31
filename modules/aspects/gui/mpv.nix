@@ -6,7 +6,7 @@
   den.aspects.gui.provides.mpv = {
     homeManager = _: {
       programs.mpv = {
-        enable = false;
+        enable = true;
         bindings = {
           WHEEL_UP = "add volume 2";
           WHEEL_DOWN = "add volume -2";

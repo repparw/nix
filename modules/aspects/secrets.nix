@@ -63,6 +63,10 @@
           karakeep = {
             owner = "repparw";
           };
+          qbittorrentAuth = {
+            owner = "repparw";
+            mode = "0400";
+          };
         }
         // (lib.optionalAttrs (config.services.archisteamfarm.enable or false) {
           steamPassword = {

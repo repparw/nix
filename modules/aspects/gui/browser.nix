@@ -244,6 +244,7 @@
 
           chromium = {
             enable = true;
+            commandLineArgs = [ "--password-store=basic" ];
             extensions = [
               { id = "ddkjiahejlhfcafbddmgiahcphecmpfh"; }
               { id = "mnjggcdmjocbbbhaepdhchncahnbgone"; }

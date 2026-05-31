@@ -1,32 +1,31 @@
-{ cfg, ... }:
+{ cfg, lib, ... }:
 {
-  "changedetection" = {
-    image = "lscr.io/linuxserver/changedetection.io:latest";
-    environment = {
-      "TZ" = cfg.timezone;
-      "BASE_URL" = "https://${cfg.domain}";
-      "HIDE_REFERER" = "true";
-      "PLAYWRIGHT_DRIVER_URL" = "ws://sockpuppetbrowser:3000";
-      "PUID" = cfg.user;
-      "PGID" = cfg.group;
-      "LC_ALL" = "en_US.UTF-8";
+  containers.changedetection = {
+    autoStart = true;
+    privateNetwork = true;
+    privateUsers = "pick";
+    hostAddress = "10.231.136.1";
+    localAddress = "10.231.136.8";
+    bindMounts = {
+      "/config" = {
+        hostPath = "${cfg.configDir}/changedetection";
+        isReadOnly = false;
+      };
     };
-    volumes = [
-      "${cfg.configDir}/changedetection:/config"
-    ];
-    healthCmd = "curl -f http://localhost:5000/";
-  };
-  "sockpuppetbrowser" = {
-    image = "docker.io/dgtlmoon/sockpuppetbrowser:latest";
-    environment = {
-      "SCREEN_WIDTH" = "1920";
-      "SCREEN_HEIGHT" = "1024";
-      "SCREEN_DEPTH" = "16";
-      "MAX_CONCURRENT_CHROME_PROCESSES" = "10";
-    };
-    labels = {
-      "glance.parent" = "changedetection";
-      "traefik.enable" = "false";
-    };
+    config =
+      { ... }:
+      {
+        nixpkgs.config.allowUnfree = true;
+
+        services.changedetection-io = {
+          enable = true;
+          playwrightSupport = true;
+          port = 5000;
+          baseURL = "https://changedetection.${cfg.domain}";
+          behindProxy = true;
+          datastorePath = "/config";
+        };
+        system.stateVersion = "26.05";
+      };
   };
 }

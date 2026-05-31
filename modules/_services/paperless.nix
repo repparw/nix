@@ -1,56 +1,45 @@
-{ cfg, ... }:
+{ cfg, lib, ... }:
 {
-  "broker" = {
-    image = "docker.io/library/redis:7";
-    volumes = [
-      "${cfg.configDir}/paper/redis:/data"
-    ];
-    healthCmd = "redis-cli ping";
-    labels = {
-      "glance.parent" = "paperless";
-      "traefik.enable" = "false";
+  containers.paperless = {
+    autoStart = true;
+    privateNetwork = true;
+    privateUsers = "pick";
+    hostAddress = "10.231.136.1";
+    localAddress = "10.231.136.12";
+    bindMounts = {
+      "/data" = {
+        hostPath = "${cfg.dataDir}/paper/data";
+        isReadOnly = false;
+      };
+      "/media" = {
+        hostPath = "${cfg.dataDir}/paper/media";
+        isReadOnly = false;
+      };
+      "/consume" = {
+        hostPath = "${cfg.dataDir}/paper/consume";
+        isReadOnly = false;
+      };
     };
-  };
-  "paperless" = {
-    image = "docker.io/paperlessngx/paperless-ngx:latest";
-    environment = {
-      "PAPERLESS_DBHOST" = "paperdb";
-      "PAPERLESS_DISABLE_REGULAR_LOGIN" = "1";
-      "PAPERLESS_ENABLE_HTTP_REMOTE_USER" = "true";
-      "PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME" = "HTTP_REMOTE_USER";
-      "PAPERLESS_LOGOUT_REDIRECT_URL" = "https://auth.${cfg.domain}/logout";
-      "PAPERLESS_OCR_LANGUAGE" = "spa";
-      "PAPERLESS_REDIS" = "redis://broker:6379";
-      "PAPERLESS_TIME_ZONE" = cfg.timezone;
-      "PAPERLESS_URL" = "https://paper.${cfg.domain}";
-      "USERMAP_UID" = cfg.user;
-      "USERMAP_GID" = cfg.group;
-    };
-    volumes = [
-      "${cfg.dataDir}/paper/data:/usr/src/paperless/data"
-      "${cfg.dataDir}/paper/media:/usr/src/paperless/media"
-      "${cfg.configDir}/paper/export:/usr/src/paperless/export"
-    ];
-    healthCmd = "curl -f http://localhost:8000/api/";
-    labels = {
-      "glance.icon" = "sh:paperless-ngx";
-      "traefik.http.routers.paperless.rule" = "Host(`paper.${cfg.domain}`)";
-    };
-  };
-  "paperdb" = {
-    image = "docker.io/library/postgres:15";
-    environment = {
-      "POSTGRES_DB" = "paperless";
-      "POSTGRES_PASSWORD" = "paperless";
-      "POSTGRES_USER" = "paperless";
-    };
-    volumes = [
-      "${cfg.configDir}/paper/pg:/var/lib/postgresql/data"
-    ];
-    healthCmd = "pg_isready -U paperless";
-    labels = {
-      "glance.parent" = "paperless";
-      "traefik.enable" = "false";
-    };
+    config =
+      { ... }:
+      {
+        services.paperless = {
+          enable = true;
+          dataDir = "/data";
+          mediaDir = "/media";
+          consumptionDir = "/consume";
+          port = 8000;
+          address = "0.0.0.0";
+          settings = {
+            PAPERLESS_OCR_LANGUAGE = "spa";
+            PAPERLESS_ENABLE_HTTP_REMOTE_USER = "true";
+            PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME = "HTTP_REMOTE_USER";
+            PAPERLESS_LOGOUT_REDIRECT_URL = "https://auth.${cfg.domain}/logout";
+            PAPERLESS_URL = "https://paper.${cfg.domain}";
+            PAPERLESS_DISABLE_REGULAR_LOGIN = "1";
+          };
+        };
+        system.stateVersion = "26.05";
+      };
   };
 }
