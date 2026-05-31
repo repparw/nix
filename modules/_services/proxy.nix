@@ -206,6 +206,29 @@ in
     };
   };
 
+  systemd.services.traefik-qbit-auth = {
+    description = "Generate traefik qbit-auth middleware config";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "traefik.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      mkdir -p /run/traefik
+      cat > /run/traefik/qbit-auth.yml <<EOF
+      http:
+        middlewares:
+          qbit-basic-auth:
+            headers:
+              customRequestHeaders:
+                Authorization: "Basic $(cat ${config.sops.secrets.qbittorrentAuth.path})"
+      EOF
+    '';
+  };
+
+  services.traefik.staticConfigOptions.providers.file.directory = "/run/traefik";
+
   services.ddclient = {
     enable = true;
     configFile = "${cfg.configDir}/ddclient/ddclient.conf";
