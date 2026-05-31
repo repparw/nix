@@ -64,7 +64,7 @@
             owner = "repparw";
           };
           qbittorrentAuth = {
-            owner = "traefik";
+            owner = "repparw";
             mode = "0400";
           };
         }

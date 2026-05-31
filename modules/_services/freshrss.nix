@@ -41,6 +41,8 @@
       };
   };
 
-  systemd.services."container@freshrss".serviceConfig.EnvironmentFile =
-    config.sops.secrets.freshrss.path;
+  systemd.services."container@freshrss".serviceConfig.EnvironmentFile = lib.mkForce [
+    "-/etc/nixos-containers/freshrss.conf"
+    config.sops.secrets.freshrss.path
+  ];
 }

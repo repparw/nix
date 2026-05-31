@@ -15,6 +15,8 @@
     config =
       { ... }:
       {
+        nixpkgs.config.allowUnfree = true;
+
         services.changedetection-io = {
           enable = true;
           playwrightSupport = true;
