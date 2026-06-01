@@ -1,5 +1,6 @@
 {
   cfg,
+  lib,
   pkgs,
   ...
 }:
@@ -10,17 +11,13 @@
     privateUsers = "pick";
     hostAddress = "10.231.136.1";
     localAddress = "10.231.136.10";
+    extraFlags = [
+      "--bind=${cfg.dataDir}/media:/data/media"
+      "--bind=${cfg.externalDataDir}:/seagate"
+    ];
     bindMounts = {
       "/config" = {
         hostPath = "${cfg.configDir}/jellyfin";
-        isReadOnly = false;
-      };
-      "/data/media" = {
-        hostPath = "${cfg.dataDir}/media";
-        isReadOnly = false;
-      };
-      "/data/seagate" = {
-        hostPath = cfg.externalDataDir;
         isReadOnly = false;
       };
     };
@@ -37,6 +34,9 @@
     config =
       { ... }:
       {
+        networking.useHostResolvConf = false;
+        networking.nameservers = [ "10.231.136.1" ];
+
         services.jellyfin = {
           enable = true;
           openFirewall = true;

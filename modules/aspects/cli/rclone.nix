@@ -45,7 +45,7 @@
             nextcloud = {
               config = {
                 type = "webdav";
-                url = "${lib.removeSuffix "/" (lib.removeSuffix "calendars/${nc.userName}/" nc.url)}files/${
+                url = "${lib.removeSuffix "/" (lib.removeSuffix "calendars/${nc.userName}/" nc.url)}/files/${
                   lib.replaceStrings [ "@" ] [ "%40" ] nc.userName
                 }";
                 vendor = "nextcloud";

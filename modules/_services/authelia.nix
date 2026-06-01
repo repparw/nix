@@ -12,19 +12,25 @@
         isReadOnly = false;
       };
       "/secrets" = {
-        hostPath = "${cfg.configDir}/authelia/secrets";
+        hostPath = "/home/containers/config/authelia/secrets";
         isReadOnly = true;
       };
     };
     config =
       { ... }:
       {
+        networking.firewall.allowedTCPPorts = [ 9091 ];
+        networking.useHostResolvConf = false;
+        networking.nameservers = [ "10.231.136.1" ];
+
         services.authelia.instances.main = {
           enable = true;
           secrets = {
             jwtSecretFile = "/secrets/JWT_SECRET";
             storageEncryptionKeyFile = "/secrets/STORAGE_ENCRYPTION_KEY";
+            sessionSecretFile = "/secrets/SESSION_SECRET";
             oidcIssuerPrivateKeyFile = "/secrets/OIDC_JWKS_KEY";
+            oidcHmacSecretFile = "/secrets/OIDC_HMAC_SECRET";
           };
           settings = {
             theme = "dark";
@@ -58,7 +64,6 @@
                 {
                   domain = [
                     "auth.${cfg.domain}"
-                    cfg.domain
                   ];
                   policy = "bypass";
                 }
@@ -207,6 +212,7 @@
               smtp = {
                 address = "submission://smtp.gmail.com:587";
                 username = "ubritos@gmail.com";
+                password = "_file:/secrets/SMTP_PASSWORD";
                 sender = "repparw <ubritos@gmail.com>";
               };
             };
