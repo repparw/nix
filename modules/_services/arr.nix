@@ -1,17 +1,19 @@
-{ cfg, lib, ... }:
+{ cfg, pkgs, ... }:
 let
   mkArrContainer =
     {
-      port,
+      ipOctet,
       serviceConfig,
       extraBindMounts ? { },
+      extraOptions ? { },
+      extraConfig ? { },
     }:
     {
       autoStart = true;
       privateNetwork = true;
       privateUsers = "pick";
       hostAddress = "10.231.136.1";
-      localAddress = "10.231.136.${toString port}";
+      localAddress = "10.231.136.${toString ipOctet}";
       bindMounts = {
         "/data" = {
           hostPath = cfg.dataDir;
@@ -28,12 +30,14 @@ let
         {
           services = serviceConfig;
           system.stateVersion = "26.05";
-        };
-    };
+        }
+        // extraConfig;
+    }
+    // extraOptions;
 in
 {
   containers.bazarr = mkArrContainer {
-    port = 2;
+    ipOctet = 2;
     serviceConfig.bazarr = {
       enable = true;
       openFirewall = true;
@@ -47,7 +51,7 @@ in
   };
 
   containers.prowlarr = mkArrContainer {
-    port = 3;
+    ipOctet = 3;
     serviceConfig.prowlarr = {
       enable = true;
       openFirewall = true;
@@ -61,12 +65,24 @@ in
   };
 
   containers.qbittorrent = mkArrContainer {
-    port = 4;
+    ipOctet = 4;
     serviceConfig.qbittorrent = {
       enable = true;
       openFirewall = true;
       torrentingPort = 54535;
     };
+    extraOptions.forwardPorts = [
+      {
+        protocol = "tcp";
+        hostPort = 54535;
+        containerPort = 54535;
+      }
+      {
+        protocol = "udp";
+        hostPort = 54535;
+        containerPort = 54535;
+      }
+    ];
     extraBindMounts = {
       "/var/lib/qbittorrent" = {
         hostPath = "${cfg.configDir}/qbittorrent";
@@ -80,11 +96,12 @@ in
   };
 
   containers.radarr = mkArrContainer {
-    port = 5;
+    ipOctet = 5;
     serviceConfig.radarr = {
       enable = true;
       openFirewall = true;
     };
+    extraConfig.environment.systemPackages = [ pkgs.striptracks ];
     extraBindMounts = {
       "/var/lib/radarr" = {
         hostPath = "${cfg.configDir}/radarr";
@@ -94,11 +111,12 @@ in
   };
 
   containers.sonarr = mkArrContainer {
-    port = 6;
+    ipOctet = 6;
     serviceConfig.sonarr = {
       enable = true;
       openFirewall = true;
     };
+    extraConfig.environment.systemPackages = [ pkgs.striptracks ];
     extraBindMounts = {
       "/var/lib/sonarr" = {
         hostPath = "${cfg.configDir}/sonarr";

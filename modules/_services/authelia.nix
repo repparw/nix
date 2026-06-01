@@ -1,4 +1,4 @@
-{ cfg, lib, ... }:
+{ cfg, ... }:
 {
   containers.authelia = {
     autoStart = true;

@@ -10,6 +10,7 @@ in
 {
   services.traefik = {
     enable = true;
+    dataDir = "${cfg.configDir}/traefik";
     environmentFiles = [ config.sops.secrets.cloudflare.path ];
     staticConfigOptions = {
       entryPoints = {
@@ -49,9 +50,9 @@ in
           ];
         };
       };
-      experimental.localPlugins.cf-real-ip = {
-        moduleName = "github.com/repparw/cf-real-ip";
-        version = "v1.0.0";
+      experimental.plugins.traefik-real-ip = {
+        moduleName = "github.com/zekihan/traefik-real-ip";
+        version = "v0.1.20";
       };
       ping = { };
       api = {
@@ -72,7 +73,7 @@ in
             rule = "Host(`home.${domain}`)";
             service = "hass";
             entryPoints = [ "websecure" ];
-            middlewares = [ "cf-real-ip" ];
+            middlewares = [ "real-ip" ];
             tls.certResolver = "cloudflare";
           };
           oc-router = {
@@ -160,9 +161,9 @@ in
 
         };
         middlewares = {
-          cf-real-ip.plugin.cf-real-ip = { };
+          real-ip.plugin.traefik-real-ip = { };
           authelia.forwardAuth = {
-            address = "http://10.231.136.7:9091/api/authz/forward-auth";
+            address = "http://${config.containers.authelia.localAddress}:9091/api/authz/forward-auth";
             trustForwardHeader = true;
             authResponseHeaders = [
               "Remote-User"
@@ -179,18 +180,32 @@ in
         services = {
           hass.loadBalancer.servers = [ { url = "http://192.168.0.4"; } ];
           opencode.loadBalancer.servers = [ { url = "http://localhost:4096"; } ];
-          authelia.loadBalancer.servers = [ { url = "http://10.231.136.7:9091"; } ];
-          bazarr.loadBalancer.servers = [ { url = "http://10.231.136.2:6767"; } ];
-          prowlarr.loadBalancer.servers = [ { url = "http://10.231.136.3:9696"; } ];
-          radarr.loadBalancer.servers = [ { url = "http://10.231.136.5:7878"; } ];
-          sonarr.loadBalancer.servers = [ { url = "http://10.231.136.6:8989"; } ];
-          qbittorrent.loadBalancer.servers = [ { url = "http://10.231.136.4:8080"; } ];
-          changedetection.loadBalancer.servers = [ { url = "http://10.231.136.8:5000"; } ];
-          freshrss.loadBalancer.servers = [ { url = "http://10.231.136.9:8082"; } ];
-          jellyfin.loadBalancer.servers = [ { url = "http://10.231.136.10:8096"; } ];
-          ntfy.loadBalancer.servers = [ { url = "http://10.231.136.11:8090"; } ];
-          paperless.loadBalancer.servers = [ { url = "http://10.231.136.12:8000"; } ];
-          glance.loadBalancer.servers = [ { url = "http://10.231.136.15:8080"; } ];
+          authelia.loadBalancer.servers = [
+            { url = "http://${config.containers.authelia.localAddress}:9091"; }
+          ];
+          bazarr.loadBalancer.servers = [ { url = "http://${config.containers.bazarr.localAddress}:6767"; } ];
+          prowlarr.loadBalancer.servers = [
+            { url = "http://${config.containers.prowlarr.localAddress}:9696"; }
+          ];
+          radarr.loadBalancer.servers = [ { url = "http://${config.containers.radarr.localAddress}:7878"; } ];
+          sonarr.loadBalancer.servers = [ { url = "http://${config.containers.sonarr.localAddress}:8989"; } ];
+          qbittorrent.loadBalancer.servers = [
+            { url = "http://${config.containers.qbittorrent.localAddress}:8080"; }
+          ];
+          changedetection.loadBalancer.servers = [
+            { url = "http://${config.containers.changedetection.localAddress}:5000"; }
+          ];
+          freshrss.loadBalancer.servers = [
+            { url = "http://${config.containers.freshrss.localAddress}:8082"; }
+          ];
+          jellyfin.loadBalancer.servers = [
+            { url = "http://${config.containers.jellyfin.localAddress}:8096"; }
+          ];
+          ntfy.loadBalancer.servers = [ { url = "http://${config.containers.ntfy.localAddress}:8090"; } ];
+          paperless.loadBalancer.servers = [
+            { url = "http://${config.containers.paperless.localAddress}:8000"; }
+          ];
+          glance.loadBalancer.servers = [ { url = "http://${config.containers.glance.localAddress}:8080"; } ];
 
         };
       };
@@ -219,11 +234,6 @@ in
   };
 
   services.traefik.staticConfigOptions.providers.file.directory = "/run/traefik";
-
-  services.ddclient = {
-    enable = true;
-    configFile = "${cfg.configDir}/ddclient/ddclient.conf";
-  };
 
   containers.glance = {
     autoStart = true;
@@ -302,35 +312,35 @@ in
                         sites = [
                           {
                             title = "Bazarr";
-                            url = "http://10.231.136.2:6767";
+                            url = "http://${config.containers.bazarr.localAddress}:6767";
                           }
                           {
                             title = "Prowlarr";
-                            url = "http://10.231.136.3:9696";
+                            url = "http://${config.containers.prowlarr.localAddress}:9696";
                           }
                           {
                             title = "Radarr";
-                            url = "http://10.231.136.5:7878";
+                            url = "http://${config.containers.radarr.localAddress}:7878";
                           }
                           {
                             title = "Sonarr";
-                            url = "http://10.231.136.6:8989";
+                            url = "http://${config.containers.sonarr.localAddress}:8989";
                           }
                           {
                             title = "Jellyfin";
-                            url = "http://10.231.136.10:8096";
+                            url = "http://${config.containers.jellyfin.localAddress}:8096";
                           }
                           {
                             title = "Paperless";
-                            url = "http://10.231.136.12:8000";
+                            url = "http://${config.containers.paperless.localAddress}:8000";
                           }
                           {
                             title = "FreshRSS";
-                            url = "http://10.231.136.9:8082";
+                            url = "http://${config.containers.freshrss.localAddress}:8082";
                           }
                           {
                             title = "ntfy";
-                            url = "http://10.231.136.11:8090";
+                            url = "http://${config.containers.ntfy.localAddress}:8090";
                           }
                         ];
                       }
@@ -421,4 +431,10 @@ in
         system.stateVersion = "26.05";
       };
   };
+
+  systemd.tmpfiles.rules = [
+    "Z ${cfg.configDir}/traefik 0755 traefik traefik -"
+    "d ${cfg.configDir}/traefik/certs 0755 traefik traefik -"
+    "z ${cfg.configDir}/traefik/certs/acme.json 0600 traefik traefik -"
+  ];
 }

@@ -2,6 +2,7 @@
   cfg,
   config,
   lib,
+  pkgs,
   ...
 }:
 {
@@ -36,6 +37,19 @@
             port = 8082;
           }
         ];
+
+        systemd.services.mercury-parser-api = {
+          description = "Mercury Parser API";
+          wantedBy = [ "multi-user.target" ];
+          after = [ "network.target" ];
+          serviceConfig = {
+            ExecStart = "${pkgs.mercury-parser-api}/bin/mercury-parser-api";
+            Restart = "on-failure";
+            Type = "simple";
+          };
+        };
+
+        environment.systemPackages = [ pkgs.mercury-parser-api ];
 
         system.stateVersion = "26.05";
       };
