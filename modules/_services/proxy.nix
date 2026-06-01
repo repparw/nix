@@ -49,7 +49,10 @@ in
           ];
         };
       };
-      experimental.localPlugins.cf-real-ip.moduleName = "github.com/repparw/cf-real-ip";
+      experimental.localPlugins.cf-real-ip = {
+        moduleName = "github.com/repparw/cf-real-ip";
+        version = "v1.0.0";
+      };
       ping = { };
       api = {
         dashboard = true;
@@ -198,7 +201,7 @@ in
           jellyfin.loadBalancer.servers = [ { url = "http://10.231.136.10:8096"; } ];
           ntfy.loadBalancer.servers = [ { url = "http://10.231.136.11:8090"; } ];
           paperless.loadBalancer.servers = [ { url = "http://10.231.136.12:8000"; } ];
-          glance.loadBalancer.servers = [ { url = "http://localhost:8080"; } ];
+          glance.loadBalancer.servers = [ { url = "http://10.231.136.15:8080"; } ];
           grafana.loadBalancer.servers = [ { url = "http://10.231.136.13:3000"; } ];
           prometheus.loadBalancer.servers = [ { url = "http://10.231.136.14:9090"; } ];
         };
@@ -234,182 +237,200 @@ in
     configFile = "${cfg.configDir}/ddclient/ddclient.conf";
   };
 
-  services.glance = {
-    enable = true;
-    settings = {
-      server.assets-path = "${cfg.configDir}/glance/assets";
-      theme = {
-        background-color = lib.mkForce "50 1 6";
-        primary-color = lib.mkForce "24 97 58";
-        negative-color = lib.mkForce "209 88 54";
+  containers.glance = {
+    autoStart = true;
+    privateNetwork = true;
+    privateUsers = "pick";
+    hostAddress = "10.231.136.1";
+    localAddress = "10.231.136.15";
+    bindMounts = {
+      "/config" = {
+        hostPath = "${cfg.configDir}/glance";
+        isReadOnly = false;
       };
-      branding = {
-        hide-footer = true;
-        custom-footer = ''<p>Powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>'';
-        logo-text = "R";
-        favicon-url = "/assets/favicon.png";
-      };
-      pages = [
-        {
-          name = "Home";
-          hide-desktop-navigation = true;
-          columns = [
-            {
-              size = "small";
-              widgets = [
-                {
-                  type = "clock";
-                  hide-header = true;
-                  hour-format = "24h";
-                }
-                {
-                  type = "weather";
-                  hide-header = true;
-                  location = "Moquehua, Buenos Aires, Argentina";
-                  units = "metric";
-                  hour-format = "24h";
-                }
-                {
-                  type = "server-stats";
-                  hide-header = true;
-                  servers = [
-                    {
-                      type = "local";
-                      name = "Host";
-                      mountpoints = {
-                        "/" = {
-                          name = "SSD";
-                        };
-                      };
-                    }
-                  ];
-                }
-              ];
-            }
-            {
-              size = "full";
-              widgets = [
-                {
-                  type = "monitor";
-                  hide-header = true;
-                  title = "Services";
-                  sites = [
-                    {
-                      title = "Bazarr";
-                      url = "http://10.231.136.2:6767";
-                    }
-                    {
-                      title = "Prowlarr";
-                      url = "http://10.231.136.3:9696";
-                    }
-                    {
-                      title = "Radarr";
-                      url = "http://10.231.136.5:7878";
-                    }
-                    {
-                      title = "Sonarr";
-                      url = "http://10.231.136.6:8989";
-                    }
-                    {
-                      title = "Jellyfin";
-                      url = "http://10.231.136.10:8096";
-                    }
-                    {
-                      title = "Paperless";
-                      url = "http://10.231.136.12:8000";
-                    }
-                    {
-                      title = "FreshRSS";
-                      url = "http://10.231.136.9:8082";
-                    }
-                    {
-                      title = "ntfy";
-                      url = "http://10.231.136.11:8090";
-                    }
-                  ];
-                }
-                {
-                  type = "split-column";
-                  widgets = [
-                    {
-                      type = "group";
-                      widgets = [
-                        { type = "hacker-news"; }
-                        { type = "lobsters"; }
-                      ];
-                    }
-                    {
-                      type = "group";
-                      widgets = [
-                        {
-                          type = "reddit";
-                          subreddit = "selfhosted";
-                        }
-                        {
-                          type = "reddit";
-                          subreddit = "homelab";
-                        }
-                      ];
-                    }
-                  ];
-                }
-              ];
-            }
-            {
-              size = "small";
-              widgets = [
-                {
-                  type = "bookmarks";
-                  hide-header = true;
-                  groups = [
-                    {
-                      title = "Contact";
-                      color = "200 50 50";
-                      links = [
-                        {
-                          title = "Mail";
-                          url = "mailto:me@repparw.com";
-                        }
-                        {
-                          title = "Github";
-                          url = "https://github.com/repparw";
-                        }
-                      ];
-                    }
-                  ];
-                }
-                {
-                  type = "markets";
-                  hide-header = true;
-                  chart-link-template = "https://www.tradingview.com/chart/?symbol={SYMBOL}";
-                  markets = [
-                    {
-                      symbol = "SPY";
-                      name = "S&P 500";
-                    }
-                    {
-                      symbol = "BTC-USD";
-                      name = "Bitcoin";
-                    }
-                    {
-                      symbol = "NVDA";
-                      name = "NVIDIA";
-                    }
-                    {
-                      symbol = "AAPL";
-                      name = "Apple";
-                    }
-                    {
-                      symbol = "MSFT";
-                      name = "Microsoft";
-                    }
-                  ];
-                }
-              ];
-            }
-          ];
-        }
-      ];
     };
+    config =
+      { ... }:
+      {
+        services.glance = {
+          enable = true;
+          settings = {
+            server.assets-path = "/config/assets";
+            theme = {
+              background-color = lib.mkForce "50 1 6";
+              primary-color = lib.mkForce "24 97 58";
+              negative-color = lib.mkForce "209 88 54";
+            };
+            branding = {
+              hide-footer = true;
+              custom-footer = ''<p>Powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>'';
+              logo-text = "R";
+              favicon-url = "/assets/favicon.png";
+            };
+            pages = [
+              {
+                name = "Home";
+                hide-desktop-navigation = true;
+                columns = [
+                  {
+                    size = "small";
+                    widgets = [
+                      {
+                        type = "clock";
+                        hide-header = true;
+                        hour-format = "24h";
+                      }
+                      {
+                        type = "weather";
+                        hide-header = true;
+                        location = "Moquehua, Buenos Aires, Argentina";
+                        units = "metric";
+                        hour-format = "24h";
+                      }
+                      {
+                        type = "server-stats";
+                        hide-header = true;
+                        servers = [
+                          {
+                            type = "local";
+                            name = "Host";
+                            mountpoints = {
+                              "/" = {
+                                name = "SSD";
+                              };
+                            };
+                          }
+                        ];
+                      }
+                    ];
+                  }
+                  {
+                    size = "full";
+                    widgets = [
+                      {
+                        type = "monitor";
+                        hide-header = true;
+                        title = "Services";
+                        sites = [
+                          {
+                            title = "Bazarr";
+                            url = "http://10.231.136.2:6767";
+                          }
+                          {
+                            title = "Prowlarr";
+                            url = "http://10.231.136.3:9696";
+                          }
+                          {
+                            title = "Radarr";
+                            url = "http://10.231.136.5:7878";
+                          }
+                          {
+                            title = "Sonarr";
+                            url = "http://10.231.136.6:8989";
+                          }
+                          {
+                            title = "Jellyfin";
+                            url = "http://10.231.136.10:8096";
+                          }
+                          {
+                            title = "Paperless";
+                            url = "http://10.231.136.12:8000";
+                          }
+                          {
+                            title = "FreshRSS";
+                            url = "http://10.231.136.9:8082";
+                          }
+                          {
+                            title = "ntfy";
+                            url = "http://10.231.136.11:8090";
+                          }
+                        ];
+                      }
+                      {
+                        type = "split-column";
+                        widgets = [
+                          {
+                            type = "group";
+                            widgets = [
+                              { type = "hacker-news"; }
+                              { type = "lobsters"; }
+                            ];
+                          }
+                          {
+                            type = "group";
+                            widgets = [
+                              {
+                                type = "reddit";
+                                subreddit = "selfhosted";
+                              }
+                              {
+                                type = "reddit";
+                                subreddit = "homelab";
+                              }
+                            ];
+                          }
+                        ];
+                      }
+                    ];
+                  }
+                  {
+                    size = "small";
+                    widgets = [
+                      {
+                        type = "bookmarks";
+                        hide-header = true;
+                        groups = [
+                          {
+                            title = "Contact";
+                            color = "200 50 50";
+                            links = [
+                              {
+                                title = "Mail";
+                                url = "mailto:me@repparw.com";
+                              }
+                              {
+                                title = "Github";
+                                url = "https://github.com/repparw";
+                              }
+                            ];
+                          }
+                        ];
+                      }
+                      {
+                        type = "markets";
+                        hide-header = true;
+                        chart-link-template = "https://www.tradingview.com/chart/?symbol={SYMBOL}";
+                        markets = [
+                          {
+                            symbol = "SPY";
+                            name = "S&P 500";
+                          }
+                          {
+                            symbol = "BTC-USD";
+                            name = "Bitcoin";
+                          }
+                          {
+                            symbol = "NVDA";
+                            name = "NVIDIA";
+                          }
+                          {
+                            symbol = "AAPL";
+                            name = "Apple";
+                          }
+                          {
+                            symbol = "MSFT";
+                            name = "Microsoft";
+                          }
+                        ];
+                      }
+                    ];
+                  }
+                ];
+              }
+            ];
+          };
+        };
+        system.stateVersion = "26.05";
+      };
   };
 }
