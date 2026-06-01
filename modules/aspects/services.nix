@@ -69,6 +69,14 @@
               pkgs
               ;
           })
+          (import ../_services/ddclient.nix {
+            inherit
+              cfg
+              config
+              lib
+              pkgs
+              ;
+          })
           (import ../_services/proxy.nix {
             inherit
               cfg
@@ -112,6 +120,13 @@
         };
 
         config = {
+          nixpkgs.overlays = [
+            (final: prev: {
+              striptracks = final.callPackage ../_packages/striptracks.nix { };
+              mercury-parser-api = final.callPackage ../_packages/mercury-parser.nix { };
+            })
+          ];
+
           networking.hosts."192.168.0.18" = [
             cfg.domain
             "auth.${cfg.domain}"
@@ -120,7 +135,6 @@
             "glance.${cfg.domain}"
             "home.${cfg.domain}"
             "jellyfin.${cfg.domain}"
-            "logs.${cfg.domain}"
             "ntfy.${cfg.domain}"
             "paper.${cfg.domain}"
             "prowlarr.${cfg.domain}"

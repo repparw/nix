@@ -1,4 +1,4 @@
-{ cfg, lib, ... }:
+{ cfg, ... }:
 {
   containers.ntfy = {
     autoStart = true;

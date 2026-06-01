@@ -31,6 +31,21 @@ chmod_data() {
     done
 }
 
+# Host-native services: user exists on host, use chown
+chown_host() {
+    local user="$1"
+    local group="$2"
+    shift 2
+    for path in "$@"; do
+        if [ -e "$path" ]; then
+            echo "  $path -> $user:$group"
+            chown -R "$user:$group" "$path"
+        else
+            echo "  SKIP (not found): $path"
+        fi
+    done
+}
+
 echo ""
 echo "--- Arr services ---"
 chmod_config \
@@ -84,7 +99,7 @@ chmod_config \
 
 echo ""
 echo "--- Traefik ---"
-chmod_config \
+chown_host traefik traefik \
     /home/containers/config/traefik
 
 # acme.json must be 600 for traefik

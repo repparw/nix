@@ -1,6 +1,5 @@
 {
   cfg,
-  lib,
   pkgs,
   ...
 }:
@@ -48,7 +47,7 @@
           extraPackages = with pkgs; [
             libva-vdpau-driver
             libvdpau-va-gl
-            mesa.drivers
+            intel-media-driver
           ];
         };
 
