@@ -21,11 +21,15 @@
     config =
       { ... }:
       {
+        networking.firewall.allowedTCPPorts = [ 8082 ];
+        networking.useHostResolvConf = false;
+        networking.nameservers = [ "10.231.136.1" ];
+
         services.freshrss = {
           enable = true;
           baseUrl = "https://rss.${cfg.domain}";
           dataDir = "/config";
-          defaultUser = "admin";
+          defaultUser = "repparw";
           authType = "none";
           webserver = "nginx";
           virtualHost = "rss.${cfg.domain}";

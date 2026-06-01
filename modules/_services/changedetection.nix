@@ -17,9 +17,12 @@
       {
         nixpkgs.config.allowUnfree = true;
 
+        networking.firewall.allowedTCPPorts = [ 5000 ];
+
         services.changedetection-io = {
           enable = true;
           playwrightSupport = true;
+          listenAddress = "0.0.0.0";
           port = 5000;
           baseURL = "https://changedetection.${cfg.domain}";
           behindProxy = true;

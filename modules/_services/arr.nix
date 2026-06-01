@@ -1,4 +1,9 @@
-{ cfg, pkgs, ... }:
+{
+  cfg,
+  lib,
+  pkgs,
+  ...
+}:
 let
   mkArrContainer =
     {
@@ -7,6 +12,10 @@ let
       extraBindMounts ? { },
       extraOptions ? { },
       extraConfig ? { },
+      extraFlags ? [
+        "--bind=${cfg.dataDir}:/data"
+        "--bind=${cfg.externalDataDir}:/seagate"
+      ],
     }:
     {
       autoStart = true;
@@ -14,17 +23,8 @@ let
       privateUsers = "pick";
       hostAddress = "10.231.136.1";
       localAddress = "10.231.136.${toString ipOctet}";
-      bindMounts = {
-        "/data" = {
-          hostPath = cfg.dataDir;
-          isReadOnly = false;
-        };
-        "/data/seagate" = {
-          hostPath = cfg.externalDataDir;
-          isReadOnly = false;
-        };
-      }
-      // extraBindMounts;
+      inherit extraFlags;
+      bindMounts = extraBindMounts;
       config =
         { ... }:
         {
@@ -38,12 +38,15 @@ in
 {
   containers.bazarr = mkArrContainer {
     ipOctet = 2;
+    extraOptions.privateUsers = 30000;
     serviceConfig.bazarr = {
       enable = true;
       openFirewall = true;
+      dataDir = "/config";
     };
+    extraConfig.systemd.tmpfiles.rules = [ ];
     extraBindMounts = {
-      "/var/lib/bazarr" = {
+      "/config" = {
         hostPath = "${cfg.configDir}/bazarr";
         isReadOnly = false;
       };
@@ -52,12 +55,28 @@ in
 
   containers.prowlarr = mkArrContainer {
     ipOctet = 3;
+    extraOptions.privateUsers = 31000;
     serviceConfig.prowlarr = {
       enable = true;
       openFirewall = true;
+      settings.server.bindAddress = "*";
+      dataDir = "/config";
+    };
+    extraConfig = {
+      systemd.services.prowlarr.serviceConfig = {
+        DynamicUser = lib.mkForce false;
+        StateDirectory = lib.mkForce "";
+        User = "prowlarr";
+      };
+      users.users.prowlarr = {
+        isSystemUser = true;
+        group = "prowlarr";
+      };
+      users.groups.prowlarr = { };
+      systemd.tmpfiles.rules = [ ];
     };
     extraBindMounts = {
-      "/var/lib/prowlarr" = {
+      "/config" = {
         hostPath = "${cfg.configDir}/prowlarr";
         isReadOnly = false;
       };
@@ -71,6 +90,7 @@ in
       openFirewall = true;
       torrentingPort = 54535;
     };
+    extraFlags = [ "--bind=${cfg.dataDir}:/data" ];
     extraOptions.forwardPorts = [
       {
         protocol = "tcp";
@@ -97,13 +117,19 @@ in
 
   containers.radarr = mkArrContainer {
     ipOctet = 5;
+    extraOptions.privateUsers = 32000;
     serviceConfig.radarr = {
       enable = true;
       openFirewall = true;
+      settings.server.bindAddress = "*";
+      dataDir = "/config";
     };
-    extraConfig.environment.systemPackages = [ pkgs.striptracks ];
+    extraConfig = {
+      environment.systemPackages = [ pkgs.striptracks ];
+      systemd.tmpfiles.rules = [ ];
+    };
     extraBindMounts = {
-      "/var/lib/radarr" = {
+      "/config" = {
         hostPath = "${cfg.configDir}/radarr";
         isReadOnly = false;
       };
@@ -112,16 +138,29 @@ in
 
   containers.sonarr = mkArrContainer {
     ipOctet = 6;
+    extraOptions.privateUsers = 33000;
     serviceConfig.sonarr = {
       enable = true;
       openFirewall = true;
+      settings.server.bindAddress = "*";
+      dataDir = "/config";
     };
-    extraConfig.environment.systemPackages = [ pkgs.striptracks ];
+    extraConfig = {
+      environment.systemPackages = [ pkgs.striptracks ];
+      systemd.tmpfiles.rules = [ ];
+    };
     extraBindMounts = {
-      "/var/lib/sonarr" = {
+      "/config" = {
         hostPath = "${cfg.configDir}/sonarr";
         isReadOnly = false;
       };
     };
+  };
+
+  systemd.services = {
+    "container@bazarr".preStart = "chown -R 30999:30999 ${cfg.configDir}/bazarr";
+    "container@prowlarr".preStart = "chown -R 31997:31995 ${cfg.configDir}/prowlarr";
+    "container@radarr".preStart = "chown -R 32275:32275 ${cfg.configDir}/radarr";
+    "container@sonarr".preStart = "chown -R 33274:33274 ${cfg.configDir}/sonarr";
   };
 }

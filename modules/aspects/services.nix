@@ -85,6 +85,14 @@
               pkgs
               ;
           })
+          (import ../_services/glance.nix {
+            inherit
+              cfg
+              config
+              lib
+              pkgs
+              ;
+          })
         ];
 
         options.modules.services = {
@@ -120,6 +128,20 @@
         };
 
         config = {
+          networking = {
+            nat = {
+              enable = true;
+              internalInterfaces = [ "ve-*" ];
+            };
+            firewall.extraInputRules = ''
+              iifname "ve-*" ip daddr 10.231.136.1 tcp dport 53 accept
+              iifname "ve-*" ip daddr 10.231.136.1 udp dport 53 accept
+              iifname "ve-*" accept comment "trust container interfaces"
+            '';
+          };
+
+          services.resolved.settings.Resolve.DNSStubListenerExtra = "0.0.0.0";
+
           nixpkgs.overlays = [
             (final: prev: {
               striptracks = final.callPackage ../_packages/striptracks.nix { };

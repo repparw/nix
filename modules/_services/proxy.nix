@@ -10,8 +10,10 @@ in
 {
   services.traefik = {
     enable = true;
-    dataDir = "${cfg.configDir}/traefik";
-    environmentFiles = [ config.sops.secrets.cloudflare.path ];
+    environmentFiles = [
+      config.sops.secrets.cloudflare.path
+      config.sops.secrets.qbittorrentAuth.path
+    ];
     staticConfigOptions = {
       entryPoints = {
         web = {
@@ -24,6 +26,7 @@ in
         websecure = {
           address = ":443";
           asDefault = true;
+          http.tls.certResolver = "cloudflare";
           forwardedHeaders.trustedIPs = [
             "173.245.48.0/20"
             "103.21.244.0/22"
@@ -61,8 +64,14 @@ in
       };
       certificatesResolvers.cloudflare.acme = {
         email = "ubritos@gmail.com";
-        storage = "${cfg.configDir}/traefik/certs/acme.json";
-        dnsChallenge.provider = "cloudflare";
+        storage = "/var/lib/traefik/certs/acme.json";
+        dnsChallenge = {
+          provider = "cloudflare";
+          resolvers = [
+            "1.1.1.1:53"
+            "1.0.0.1:53"
+          ];
+        };
       };
     };
     dynamicConfigOptions = {
@@ -72,91 +81,73 @@ in
           home-router = {
             rule = "Host(`home.${domain}`)";
             service = "hass";
-            entryPoints = [ "websecure" ];
             middlewares = [ "real-ip" ];
-            tls.certResolver = "cloudflare";
           };
           oc-router = {
             rule = "Host(`opencode.${domain}`)";
             service = "opencode";
-            entryPoints = [ "websecure" ];
             middlewares = [ "authelia" ];
-            tls.certResolver = "cloudflare";
           };
           authelia = {
             rule = "Host(`auth.${domain}`)";
             service = "authelia";
-            tls = true;
           };
           bazarr = {
             rule = "Host(`bazarr.${domain}`)";
             service = "bazarr";
             middlewares = [ "authelia" ];
-            tls = true;
           };
           prowlarr = {
             rule = "Host(`prowlarr.${domain}`)";
             service = "prowlarr";
             middlewares = [ "authelia" ];
-            tls = true;
           };
           radarr = {
             rule = "Host(`radarr.${domain}`)";
             service = "radarr";
             middlewares = [ "authelia" ];
-            tls = true;
           };
           sonarr = {
             rule = "Host(`sonarr.${domain}`)";
             service = "sonarr";
             middlewares = [ "authelia" ];
-            tls = true;
           };
           qbittorrent = {
             rule = "Host(`qbit.${domain}`) && !PathPrefix(`/api`)";
             service = "qbittorrent";
             middlewares = [ "qbit-auth" ];
-            tls = true;
           };
           qbittorrent-api = {
             rule = "Host(`qbit.${domain}`) && PathPrefix(`/api`)";
             service = "qbittorrent";
-            tls = true;
           };
           changedetection = {
             rule = "Host(`changedetection.${domain}`)";
             service = "changedetection";
             middlewares = [ "authelia" ];
-            tls = true;
           };
           freshrss = {
             rule = "Host(`rss.${domain}`)";
             service = "freshrss";
             middlewares = [ "authelia" ];
-            tls = true;
           };
           jellyfin = {
             rule = "Host(`jellyfin.${domain}`)";
             service = "jellyfin";
-            tls = true;
           };
           ntfy = {
             rule = "Host(`ntfy.${domain}`)";
             service = "ntfy";
             middlewares = [ "authelia" ];
-            tls = true;
           };
           paperless = {
             rule = "Host(`paper.${domain}`)";
             service = "paperless";
             middlewares = [ "authelia" ];
-            tls = true;
           };
           glance = {
             rule = "Host(`${domain}`)";
             service = "glance";
-            tls.certResolver = "cloudflare";
-            middlewares = [ "authelia" ];
           };
 
         };
@@ -176,6 +167,7 @@ in
             "authelia"
             "qbit-basic-auth"
           ];
+          qbit-basic-auth.headers.customRequestHeaders.Authorization = "\${QBIT_AUTH}";
         };
         services = {
           hass.loadBalancer.servers = [ { url = "http://192.168.0.4"; } ];
@@ -212,229 +204,7 @@ in
     };
   };
 
-  systemd.services.traefik-qbit-auth = {
-    description = "Generate traefik qbit-auth middleware config";
-    wantedBy = [ "multi-user.target" ];
-    before = [ "traefik.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-    script = ''
-      mkdir -p /run/traefik
-      cat > /run/traefik/qbit-auth.yml <<EOF
-      http:
-        middlewares:
-          qbit-basic-auth:
-            headers:
-              customRequestHeaders:
-                Authorization: "Basic $(cat ${config.sops.secrets.qbittorrentAuth.path})"
-      EOF
-    '';
-  };
-
-  services.traefik.staticConfigOptions.providers.file.directory = "/run/traefik";
-
-  containers.glance = {
-    autoStart = true;
-    privateNetwork = true;
-    privateUsers = "pick";
-    hostAddress = "10.231.136.1";
-    localAddress = "10.231.136.15";
-    bindMounts = {
-      "/config" = {
-        hostPath = "${cfg.configDir}/glance";
-        isReadOnly = false;
-      };
-    };
-    config =
-      { ... }:
-      {
-        services.glance = {
-          enable = true;
-          settings = {
-            server.assets-path = "/config/assets";
-            theme = {
-              background-color = lib.mkForce "50 1 6";
-              primary-color = lib.mkForce "24 97 58";
-              negative-color = lib.mkForce "209 88 54";
-            };
-            branding = {
-              hide-footer = true;
-              custom-footer = ''<p>Powered by <a href="https://github.com/glanceapp/glance">Glance</a></p>'';
-              logo-text = "R";
-              favicon-url = "/assets/favicon.png";
-            };
-            pages = [
-              {
-                name = "Home";
-                hide-desktop-navigation = true;
-                columns = [
-                  {
-                    size = "small";
-                    widgets = [
-                      {
-                        type = "clock";
-                        hide-header = true;
-                        hour-format = "24h";
-                      }
-                      {
-                        type = "weather";
-                        hide-header = true;
-                        location = "Moquehua, Buenos Aires, Argentina";
-                        units = "metric";
-                        hour-format = "24h";
-                      }
-                      {
-                        type = "server-stats";
-                        hide-header = true;
-                        servers = [
-                          {
-                            type = "local";
-                            name = "Host";
-                            mountpoints = {
-                              "/" = {
-                                name = "SSD";
-                              };
-                            };
-                          }
-                        ];
-                      }
-                    ];
-                  }
-                  {
-                    size = "full";
-                    widgets = [
-                      {
-                        type = "monitor";
-                        hide-header = true;
-                        title = "Services";
-                        sites = [
-                          {
-                            title = "Bazarr";
-                            url = "http://${config.containers.bazarr.localAddress}:6767";
-                          }
-                          {
-                            title = "Prowlarr";
-                            url = "http://${config.containers.prowlarr.localAddress}:9696";
-                          }
-                          {
-                            title = "Radarr";
-                            url = "http://${config.containers.radarr.localAddress}:7878";
-                          }
-                          {
-                            title = "Sonarr";
-                            url = "http://${config.containers.sonarr.localAddress}:8989";
-                          }
-                          {
-                            title = "Jellyfin";
-                            url = "http://${config.containers.jellyfin.localAddress}:8096";
-                          }
-                          {
-                            title = "Paperless";
-                            url = "http://${config.containers.paperless.localAddress}:8000";
-                          }
-                          {
-                            title = "FreshRSS";
-                            url = "http://${config.containers.freshrss.localAddress}:8082";
-                          }
-                          {
-                            title = "ntfy";
-                            url = "http://${config.containers.ntfy.localAddress}:8090";
-                          }
-                        ];
-                      }
-                      {
-                        type = "split-column";
-                        widgets = [
-                          {
-                            type = "group";
-                            widgets = [
-                              { type = "hacker-news"; }
-                              { type = "lobsters"; }
-                            ];
-                          }
-                          {
-                            type = "group";
-                            widgets = [
-                              {
-                                type = "reddit";
-                                subreddit = "selfhosted";
-                              }
-                              {
-                                type = "reddit";
-                                subreddit = "homelab";
-                              }
-                            ];
-                          }
-                        ];
-                      }
-                    ];
-                  }
-                  {
-                    size = "small";
-                    widgets = [
-                      {
-                        type = "bookmarks";
-                        hide-header = true;
-                        groups = [
-                          {
-                            title = "Contact";
-                            color = "200 50 50";
-                            links = [
-                              {
-                                title = "Mail";
-                                url = "mailto:me@repparw.com";
-                              }
-                              {
-                                title = "Github";
-                                url = "https://github.com/repparw";
-                              }
-                            ];
-                          }
-                        ];
-                      }
-                      {
-                        type = "markets";
-                        hide-header = true;
-                        chart-link-template = "https://www.tradingview.com/chart/?symbol={SYMBOL}";
-                        markets = [
-                          {
-                            symbol = "SPY";
-                            name = "S&P 500";
-                          }
-                          {
-                            symbol = "BTC-USD";
-                            name = "Bitcoin";
-                          }
-                          {
-                            symbol = "NVDA";
-                            name = "NVIDIA";
-                          }
-                          {
-                            symbol = "AAPL";
-                            name = "Apple";
-                          }
-                          {
-                            symbol = "MSFT";
-                            name = "Microsoft";
-                          }
-                        ];
-                      }
-                    ];
-                  }
-                ];
-              }
-            ];
-          };
-        };
-        system.stateVersion = "26.05";
-      };
-  };
-
   systemd.tmpfiles.rules = [
-    "Z ${cfg.configDir}/traefik 0755 traefik traefik -"
-    "d ${cfg.configDir}/traefik/certs 0755 traefik traefik -"
-    "z ${cfg.configDir}/traefik/certs/acme.json 0600 traefik traefik -"
+    "d /var/lib/traefik/certs 0755 traefik traefik -"
   ];
 }

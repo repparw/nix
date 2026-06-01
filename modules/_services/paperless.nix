@@ -6,23 +6,19 @@
     privateUsers = "pick";
     hostAddress = "10.231.136.1";
     localAddress = "10.231.136.12";
-    bindMounts = {
-      "/data" = {
-        hostPath = "${cfg.dataDir}/paper/data";
-        isReadOnly = false;
-      };
-      "/media" = {
-        hostPath = "${cfg.dataDir}/paper/media";
-        isReadOnly = false;
-      };
-      "/consume" = {
-        hostPath = "${cfg.dataDir}/paper/consume";
-        isReadOnly = false;
-      };
-    };
+    extraFlags = [
+      "--bind=${cfg.dataDir}/paper/data:/data"
+      "--bind=${cfg.dataDir}/paper/media:/media"
+      "--bind=${cfg.dataDir}/paper/consume:/consume"
+    ];
+    bindMounts = { };
     config =
       { ... }:
       {
+        networking.firewall.allowedTCPPorts = [ 8000 ];
+        networking.useHostResolvConf = false;
+        networking.nameservers = [ "10.231.136.1" ];
+
         services.paperless = {
           enable = true;
           dataDir = "/data";
