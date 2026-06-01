@@ -1,20 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Migration script for file ownership from root (PUID=0) to native service users
+# Migration script for file permissions when using containers with privateUsers=pick.
+# Container service users don't exist on the host, so we use broad permissions.
 # Run as root: sudo -A bash migrate-ownership.sh
 
-echo "=== Migrating file ownership from root to service users ==="
+echo "=== Setting file permissions for native containers ==="
 
-# Helper function
-migrate() {
-    local user="$1"
-    local group="$2"
-    shift 2
+# Config dirs: containers need read access
+chmod_config() {
     for path in "$@"; do
         if [ -e "$path" ]; then
-            echo "  $path -> $user:$group"
-            chown -R "$user:$group" "$path"
+            echo "  $path -> a+rX"
+            chmod -R a+rX "$path"
+        else
+            echo "  SKIP (not found): $path"
+        fi
+    done
+}
+
+# Data dirs: containers need read+write access
+chmod_data() {
+    for path in "$@"; do
+        if [ -e "$path" ]; then
+            echo "  $path -> a+rwX"
+            chmod -R a+rwX "$path"
         else
             echo "  SKIP (not found): $path"
         fi
@@ -23,81 +33,74 @@ migrate() {
 
 echo ""
 echo "--- Arr services ---"
-migrate bazarr bazarr \
-    /home/containers/config/bazarr
-
-migrate prowlarr prowlarr \
-    /home/containers/config/prowlarr
-
-migrate qbittorrent qbittorrent \
+chmod_config \
+    /home/containers/config/bazarr \
+    /home/containers/config/prowlarr \
     /home/containers/config/qbittorrent \
+    /home/containers/config/radarr \
+    /home/containers/config/sonarr
+
+chmod_data \
     /home/containers/config/downloading \
     /home/containers/data/torrents
 
-migrate radarr radarr \
-    /home/containers/config/radarr
-
-migrate sonarr sonarr \
-    /home/containers/config/sonarr
-
 echo ""
 echo "--- Authelia ---"
-migrate authelia-main authelia-main \
+chmod_config \
     /home/containers/config/authelia/config \
     /home/containers/config/authelia/secrets
 
 echo ""
 echo "--- Changedetection ---"
-migrate changedetection changedetection \
+chmod_data \
     /home/containers/config/changedetection
 
 echo ""
 echo "--- FreshRSS ---"
-migrate freshrss freshrss \
+chmod_data \
     /home/containers/config/freshrss
 
 echo ""
 echo "--- Jellyfin ---"
-migrate jellyfin jellyfin \
+chmod_data \
     /home/containers/config/jellyfin
 
 echo ""
 echo "--- ntfy ---"
-migrate ntfy-sh ntfy-sh \
+chmod_data \
     /home/containers/config/ntfy
 
 echo ""
 echo "--- Paperless ---"
-# Create consume directory if it doesn't exist
 mkdir -p /home/containers/data/paper/consume
-migrate paperless paperless \
+chmod_data \
     /home/containers/data/paper \
     /home/containers/config/paper
 
 echo ""
+echo "--- Glance ---"
+chmod_config \
+    /home/containers/config/glance
+
+echo ""
 echo "--- Traefik ---"
-migrate traefik traefik \
-    /home/containers/config/traefik/certs
+chmod_config \
+    /home/containers/config/traefik
+
+# acme.json must be 600 for traefik
+if [ -f /home/containers/config/traefik/certs/acme.json ]; then
+    echo "  Setting acme.json to 600"
+    chmod 600 /home/containers/config/traefik/certs/acme.json
+fi
 
 echo ""
 echo "--- Shared data directories ---"
-# These are accessed by multiple services, set to a shared group or keep as-is
-# radarr, sonarr, bazarr all need /data and /data/seagate
-if [ -d /home/containers/data ]; then
-    echo "  Setting /home/containers/data permissions (shared by arr services)"
-    chgrp -R media /home/containers/data
-    chmod -R g+rwX /home/containers/data
-fi
-if [ -d /mnt/seagate ]; then
-    echo "  Setting /mnt/seagate permissions (shared by arr services)"
-    chgrp -R media /mnt/seagate
-    chmod -R g+rwX /mnt/seagate
-fi
+chmod_data /home/containers/data
+chmod_data /mnt/seagate
 
 echo ""
-echo "=== Migration complete ==="
+echo "=== Permission setup complete ==="
 echo ""
 echo "Next steps:"
-echo "  1. Stop podman containers: systemctl --user stop podman.service"
-echo "  2. Rebuild system: nh os switch"
-echo "  3. Verify services start correctly"
+echo "  1. Rebuild system: nh os switch"
+echo "  2. Verify services start correctly"

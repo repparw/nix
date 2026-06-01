@@ -45,14 +45,6 @@
               pkgs
               ;
           })
-          (import ../_services/grafana.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              ;
-          })
           (import ../_services/jellyfin.nix {
             inherit
               cfg
@@ -70,14 +62,6 @@
               ;
           })
           (import ../_services/paperless.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              ;
-          })
-          (import ../_services/prometheus.nix {
             inherit
               cfg
               config
@@ -134,14 +118,12 @@
             "bazarr.${cfg.domain}"
             "changedetection.${cfg.domain}"
             "glance.${cfg.domain}"
-            "grafana.${cfg.domain}"
             "home.${cfg.domain}"
             "jellyfin.${cfg.domain}"
             "logs.${cfg.domain}"
             "ntfy.${cfg.domain}"
             "paper.${cfg.domain}"
             "prowlarr.${cfg.domain}"
-            "prometheus.${cfg.domain}"
             "qbit.${cfg.domain}"
             "radarr.${cfg.domain}"
             "rss.${cfg.domain}"

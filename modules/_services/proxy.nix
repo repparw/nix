@@ -157,18 +157,7 @@ in
             tls.certResolver = "cloudflare";
             middlewares = [ "authelia" ];
           };
-          grafana = {
-            rule = "Host(`grafana.${domain}`)";
-            service = "grafana";
-            middlewares = [ "authelia" ];
-            tls = true;
-          };
-          prometheus = {
-            rule = "Host(`prometheus.${domain}`)";
-            service = "prometheus";
-            middlewares = [ "authelia" ];
-            tls = true;
-          };
+
         };
         middlewares = {
           cf-real-ip.plugin.cf-real-ip = { };
@@ -202,8 +191,7 @@ in
           ntfy.loadBalancer.servers = [ { url = "http://10.231.136.11:8090"; } ];
           paperless.loadBalancer.servers = [ { url = "http://10.231.136.12:8000"; } ];
           glance.loadBalancer.servers = [ { url = "http://10.231.136.15:8080"; } ];
-          grafana.loadBalancer.servers = [ { url = "http://10.231.136.13:3000"; } ];
-          prometheus.loadBalancer.servers = [ { url = "http://10.231.136.14:9090"; } ];
+
         };
       };
     };
