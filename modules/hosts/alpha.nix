@@ -84,10 +84,11 @@
             device = "/dev/disk/by-uuid/979db05c-0fa9-4557-bd92-51f1d10eec3f";
             fsType = "ext4";
             options = [
+              "noatime"
+              "nodiratime"
               "nofail"
               "nosuid"
               "nodev"
-              "relatime"
               "errors=remount-ro"
             ];
           };
