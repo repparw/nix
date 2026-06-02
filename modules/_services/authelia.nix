@@ -116,7 +116,10 @@
                     "rss.${cfg.domain}"
                     "sonarr.${cfg.domain}"
                   ];
-                  resources = [ "^/api([/?].*)?$" ];
+                  resources = [
+                    "^/api([/?].*)?$"
+                    "^/v1/([/?].*)?$"
+                  ];
                   policy = "bypass";
                 }
                 {
@@ -136,12 +139,15 @@
             identity_providers.oidc = {
               clients = [
                 {
-                  client_id = "M2JmYTQ2YjktMmJmOS00NjA4LTk1ZGItODY5YzJhM2UzMTE1Cg";
-                  client_name = "FreshRSS";
-                  client_secret = "$pbkdf2-sha512$310000$$dE5yYckldrlA2ZVoCad2qpLFWgkrgOFgyHdgYFpdsfPh0VgX8LX5XGRhuMoYOspfV7JF6yhFHnId1ync6hMjgw";
+                  client_id = "PLACEHOLDER_REPLACE_WITH_CLIENT_ID";
+                  client_name = "Miniflux";
+                  # TODO: replace with PBKDF2 hash of the same secret used in
+                  # modules/_services/miniflux.nix sops template.
+                  # Generate with: authelia crypto hash generate pbkdf2 --variant sha512
+                  client_secret = "PLACEHOLDER_REPLACE_WITH_PBKDF2_HASH";
                   public = false;
                   authorization_policy = "one_factor";
-                  redirect_uris = [ "https://rss.${cfg.domain}:443/i/oidc/" ];
+                  redirect_uris = [ "https://rss.${cfg.domain}/oauth2/callback" ];
                   scopes = [
                     "openid"
                     "groups"

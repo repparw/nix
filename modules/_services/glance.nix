@@ -149,7 +149,7 @@ in
                             url = "https://paper.${cfg.domain}";
                           }
                           {
-                            title = "freshrss";
+                            title = "miniflux";
                             url = "https://rss.${cfg.domain}";
                           }
                           {
