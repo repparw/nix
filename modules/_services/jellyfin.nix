@@ -39,6 +39,10 @@
 
         services.jellyfin = {
           enable = true;
+          dataDir = "/config/data";
+          configDir = "/config";
+          cacheDir = "/config/cache";
+          logDir = "/config/log";
           openFirewall = true;
         };
 
