@@ -7,6 +7,7 @@
   den.aspects.alpha = {
     includes = [
       den.aspects.host-common
+      den.aspects.backup
       den.aspects.gaming
       den.aspects.logid
       den.aspects.nixos-services
@@ -75,10 +76,6 @@
             options = [
               "noatime"
               "nodiratime"
-              "noauto"
-              "x-systemd.automount"
-              "x-systemd.idle-timeout=60"
-              "x-systemd.device-timeout=5s"
               "nofail"
             ];
           };
@@ -87,10 +84,6 @@
             device = "/dev/disk/by-uuid/979db05c-0fa9-4557-bd92-51f1d10eec3f";
             fsType = "ext4";
             options = [
-              "noauto"
-              "x-systemd.automount"
-              "x-systemd.idle-timeout=60"
-              "x-systemd.device-timeout=5s"
               "nofail"
               "nosuid"
               "nodev"

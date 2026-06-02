@@ -116,6 +116,11 @@
             default = "${cfg.rootDir}/config";
           };
 
+          backupDir = lib.mkOption {
+            type = lib.types.path;
+            default = "${cfg.rootDir}/backup";
+          };
+
           timezone = lib.mkOption {
             type = lib.types.str;
             default = "America/Argentina/Buenos_Aires";
@@ -168,7 +173,7 @@
 
           fileSystems = lib.mkMerge [
             {
-              "/home/repparw/.config/dlsuite/bazarr" = {
+              "${cfg.backupDir}/bazarr" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/bazarr/backup";
                 fsType = "none";
@@ -181,7 +186,7 @@
                   "nofail"
                 ];
               };
-              "/home/repparw/.config/dlsuite/authelia" = {
+              "${cfg.backupDir}/authelia" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/authelia";
                 fsType = "none";
@@ -194,7 +199,7 @@
                   "nofail"
                 ];
               };
-              "/home/repparw/.config/dlsuite/changedetection" = {
+              "${cfg.backupDir}/changedetection" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/changedetection";
                 fsType = "none";
@@ -207,7 +212,7 @@
                   "nofail"
                 ];
               };
-              "/home/repparw/.config/dlsuite/freshrss" = {
+              "${cfg.backupDir}/freshrss" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/freshrss";
                 fsType = "none";
@@ -220,20 +225,7 @@
                   "nofail"
                 ];
               };
-              "/home/repparw/.config/dlsuite/glance" = {
-                depends = [ "/" ];
-                device = "${cfg.configDir}/glance";
-                fsType = "none";
-                options = [
-                  "bind"
-                  "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
-                  "nofail"
-                ];
-              };
-              "/home/repparw/.config/dlsuite/jellyfin" = {
+              "${cfg.backupDir}/jellyfin" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/jellyfin/data/data/backups";
                 fsType = "none";
@@ -246,7 +238,7 @@
                   "nofail"
                 ];
               };
-              "/home/repparw/.config/dlsuite/ntfy" = {
+              "${cfg.backupDir}/ntfy" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/ntfy";
                 fsType = "none";
@@ -259,7 +251,7 @@
                   "nofail"
                 ];
               };
-              "/home/repparw/.config/dlsuite/paper" = {
+              "${cfg.backupDir}/paper" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/paper/export";
                 fsType = "none";
@@ -272,7 +264,7 @@
                   "nofail"
                 ];
               };
-              "/home/repparw/.config/dlsuite/prowlarr" = {
+              "${cfg.backupDir}/prowlarr" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/prowlarr/Backups";
                 fsType = "none";
@@ -285,7 +277,7 @@
                   "nofail"
                 ];
               };
-              "/home/repparw/.config/dlsuite/qbittorrent" = {
+              "${cfg.backupDir}/qbittorrent" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/qbittorrent";
                 fsType = "none";
@@ -298,7 +290,7 @@
                   "nofail"
                 ];
               };
-              "/home/repparw/.config/dlsuite/radarr" = {
+              "${cfg.backupDir}/radarr" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/radarr/Backups";
                 fsType = "none";
@@ -311,7 +303,7 @@
                   "nofail"
                 ];
               };
-              "/home/repparw/.config/dlsuite/sonarr" = {
+              "${cfg.backupDir}/sonarr" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/sonarr/Backups";
                 fsType = "none";
@@ -324,7 +316,7 @@
                   "nofail"
                 ];
               };
-              "/home/repparw/.config/dlsuite/traefik" = {
+              "${cfg.backupDir}/traefik" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/traefik";
                 fsType = "none";
