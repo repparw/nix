@@ -20,7 +20,6 @@ let
     {
       autoStart = true;
       privateNetwork = true;
-      privateUsers = "pick";
       hostAddress = "10.231.136.1";
       localAddress = "10.231.136.${toString ipOctet}";
       inherit extraFlags;
@@ -30,6 +29,8 @@ let
         {
           services = serviceConfig;
           system.stateVersion = "26.05";
+          networking.useHostResolvConf = false;
+          networking.nameservers = [ "10.231.136.1" ];
         }
         // extraConfig;
     }
@@ -38,7 +39,7 @@ in
 {
   containers.bazarr = mkArrContainer {
     ipOctet = 2;
-    extraOptions.privateUsers = 30000;
+    extraOptions.privateUsers = "identity";
     serviceConfig.bazarr = {
       enable = true;
       openFirewall = true;
@@ -55,29 +56,14 @@ in
 
   containers.prowlarr = mkArrContainer {
     ipOctet = 3;
-    extraOptions.privateUsers = 31000;
+    extraOptions.privateUsers = "identity";
     serviceConfig.prowlarr = {
       enable = true;
       openFirewall = true;
-      settings.server.bindAddress = "*";
-      dataDir = "/config";
-    };
-    extraConfig = {
-      systemd.services.prowlarr.serviceConfig = {
-        DynamicUser = lib.mkForce false;
-        StateDirectory = lib.mkForce "";
-        User = "prowlarr";
-      };
-      users.users.prowlarr = {
-        isSystemUser = true;
-        group = "prowlarr";
-      };
-      users.groups.prowlarr = { };
-      systemd.tmpfiles.rules = [ ];
     };
     extraBindMounts = {
-      "/config" = {
-        hostPath = "${cfg.configDir}/prowlarr";
+      "/var/lib/private/prowlarr/Backups" = {
+        hostPath = "${cfg.configDir}/prowlarr/Backups";
         isReadOnly = false;
       };
     };
@@ -85,10 +71,12 @@ in
 
   containers.qbittorrent = mkArrContainer {
     ipOctet = 4;
+    extraOptions.privateUsers = "identity";
     serviceConfig.qbittorrent = {
       enable = true;
       openFirewall = true;
       torrentingPort = 54535;
+      profileDir = "/var/lib/qbittorrent";
     };
     extraFlags = [ "--bind=${cfg.dataDir}:/data" ];
     extraOptions.forwardPorts = [
@@ -104,11 +92,11 @@ in
       }
     ];
     extraBindMounts = {
-      "/var/lib/qbittorrent" = {
+      "/var/lib/qbittorrent/qBittorrent" = {
         hostPath = "${cfg.configDir}/qbittorrent";
         isReadOnly = false;
       };
-      "/var/lib/qbittorrent/downloading" = {
+      "/downloading" = {
         hostPath = "${cfg.configDir}/downloading";
         isReadOnly = false;
       };
@@ -117,7 +105,7 @@ in
 
   containers.radarr = mkArrContainer {
     ipOctet = 5;
-    extraOptions.privateUsers = 32000;
+    extraOptions.privateUsers = "identity";
     serviceConfig.radarr = {
       enable = true;
       openFirewall = true;
@@ -138,7 +126,7 @@ in
 
   containers.sonarr = mkArrContainer {
     ipOctet = 6;
-    extraOptions.privateUsers = 33000;
+    extraOptions.privateUsers = "identity";
     serviceConfig.sonarr = {
       enable = true;
       openFirewall = true;
@@ -155,12 +143,5 @@ in
         isReadOnly = false;
       };
     };
-  };
-
-  systemd.services = {
-    "container@bazarr".preStart = "chown -R 30999:30999 ${cfg.configDir}/bazarr";
-    "container@prowlarr".preStart = "chown -R 31997:31995 ${cfg.configDir}/prowlarr";
-    "container@radarr".preStart = "chown -R 32275:32275 ${cfg.configDir}/radarr";
-    "container@sonarr".preStart = "chown -R 33274:33274 ${cfg.configDir}/sonarr";
   };
 }
