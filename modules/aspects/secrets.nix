@@ -54,8 +54,12 @@
           rcloneNextcloud = {
             owner = "repparw";
           };
-          freshrss = {
-            owner = "repparw";
+          # OIDC client secret for Miniflux. Plaintext is consumed by the
+          # sops-nix template in modules/_services/miniflux.nix.
+          # TODO: add matching key to secrets.yaml and encrypt with sops.
+          minifluxOidcSecret = {
+            owner = "root";
+            mode = "0400";
           };
           cloudflare = {
             owner = "repparw";

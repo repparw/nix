@@ -37,7 +37,7 @@
               pkgs
               ;
           })
-          (import ../_services/freshrss.nix {
+          (import ../_services/miniflux.nix {
             inherit
               cfg
               config
@@ -212,9 +212,9 @@
                   "nofail"
                 ];
               };
-              "${cfg.backupDir}/freshrss" = {
+              "${cfg.backupDir}/miniflux" = {
                 depends = [ "/" ];
-                device = "${cfg.configDir}/freshrss";
+                device = "${cfg.configDir}/miniflux";
                 fsType = "none";
                 options = [
                   "bind"
