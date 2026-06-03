@@ -103,7 +103,7 @@
 
           dataDir = lib.mkOption {
             type = lib.types.path;
-            default = "${cfg.rootDir}/data";
+            default = "/mnt/hdd/containers/data";
           };
 
           externalDataDir = lib.mkOption {
@@ -180,9 +180,6 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
@@ -193,9 +190,6 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
@@ -206,9 +200,6 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
@@ -219,9 +210,6 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
@@ -232,9 +220,6 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
@@ -245,9 +230,6 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
@@ -258,9 +240,6 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
@@ -271,9 +250,6 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
@@ -284,9 +260,6 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
@@ -297,9 +270,6 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
@@ -310,25 +280,10 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
-              "${cfg.backupDir}/traefik" = {
-                depends = [ "/" ];
-                device = "${cfg.configDir}/traefik";
-                fsType = "none";
-                options = [
-                  "bind"
-                  "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
-                  "nofail"
-                ];
-              };
+
             }
           ];
         };
