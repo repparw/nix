@@ -3,7 +3,7 @@
   containers.authelia = {
     autoStart = true;
     privateNetwork = true;
-    privateUsers = "pick";
+    privateUsers = "identity";
     hostAddress = "10.231.136.1";
     localAddress = "10.231.136.7";
     bindMounts = {
@@ -12,12 +12,12 @@
         isReadOnly = false;
       };
       "/secrets" = {
-        hostPath = "/home/containers/config/authelia/secrets";
+        hostPath = "${cfg.configDir}/authelia/secrets";
         isReadOnly = true;
       };
     };
     config =
-      { ... }:
+      { lib, ... }:
       {
         networking.firewall.allowedTCPPorts = [ 9091 ];
         networking.useHostResolvConf = false;
@@ -235,6 +235,8 @@
             };
           };
         };
+
+        systemd.services.authelia-main.serviceConfig.ProtectSystem = lib.mkForce "full";
 
         services.redis.servers.authelia = {
           enable = true;
