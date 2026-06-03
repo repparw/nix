@@ -139,12 +139,10 @@
             identity_providers.oidc = {
               clients = [
                 {
-                  client_id = "PLACEHOLDER_REPLACE_WITH_CLIENT_ID";
+                  client_id = "4c06b7fb-8078-eb7f-67b4-713dcf3479e5";
                   client_name = "Miniflux";
-                  # TODO: replace with PBKDF2 hash of the same secret used in
-                  # modules/_services/miniflux.nix sops template.
-                  # Generate with: authelia crypto hash generate pbkdf2 --variant sha512
-                  client_secret = "PLACEHOLDER_REPLACE_WITH_PBKDF2_HASH";
+                  # PBKDF2-SHA512 hash of minifluxOidcSecret plaintext
+                  client_secret = "$pbkdf2-sha512$310000$YA9moMJnULbN7tBa4rGglA$9Kt1uznIN.aOECEXkmHD5I.GCJNKvjhGgJIor6u4O6b9xlCQHhFTUUjTHDe7b26Uje9YxmYObjFYpVahr35MHw";
                   public = false;
                   authorization_policy = "one_factor";
                   redirect_uris = [ "https://rss.${cfg.domain}/oauth2/callback" ];

@@ -9,12 +9,11 @@
   # bind-mounted read-only into the container, and loaded as EnvironmentFile
   # by the miniflux systemd unit. Keeps OIDC_CLIENT_SECRET out of the Nix store.
   #
-  # TODO: replace PLACEHOLDER values before first deploy:
-  #   1. Generate a client secret:  openssl rand -base64 32
-  #   2. Encrypt it under sops:     sops secrets.yaml  (add minifluxOidcSecret key)
-  #   3. Put the same plaintext OIDC_CLIENT_ID here
-  #   4. Use the same client_id in modules/_services/authelia.nix and PBKDF2-hash
-  #      the same secret with:  authelia crypto hash generate pbkdf2 --variant sha512
+  # TODO before first deploy:
+  #   Add minifluxOidcSecret to secrets.yaml with plaintext value:
+  #     evep2ip3jvsMZCitukKs+rgQYp1tspWljFIpnEpq2Mg=
+  #   Encrypt with: sops secrets.yaml
+  #   The PBKDF2 hash in authelia.nix was generated from this value.
   sops.templates."miniflux-env" = {
     path = "/run/secrets/miniflux-env";
     owner = "root";
@@ -24,7 +23,7 @@
     # so this only widens access for processes already inside the container.
     mode = "0444";
     content = ''
-      OIDC_CLIENT_ID=PLACEHOLDER_REPLACE_WITH_CLIENT_ID
+      OIDC_CLIENT_ID=4c06b7fb-8078-eb7f-67b4-713dcf3479e5
       OIDC_CLIENT_SECRET=${config.sops.placeholder.minifluxOidcSecret}
       OIDC_REDIRECT_URL=https://rss.${cfg.domain}/oauth2/callback
       OIDC_PROVIDER=https://auth.${cfg.domain}
