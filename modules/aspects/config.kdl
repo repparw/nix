@@ -130,8 +130,7 @@ binds {
   Mod+F hotkey-overlay-title="Fullscreen" {maximize-window-to-edges ;}
   Mod+Alt+F hotkey-overlay-title="Toggle Floating" { toggle-window-floating ;}
   Mod+Ctrl+F hotkey-overlay-title="Toggle Focus Floating" { switch-focus-between-floating-and-tiling ;}
-  Mod+G hotkey-overlay-title="AI Agent" {spawn-sh "opencode-desktop";} 
-  Mod+Shift+G hotkey-overlay-title="Codex Desktop" {spawn "codex-desktop" ;}
+  Mod+G hotkey-overlay-title="AI Agent" {spawn-sh "codex-desktop";} 
   Mod+M hotkey-overlay-title="Spotify" {spawn "foot" "--app-id" "spotify" "spotify_player" ;}
   Mod+N hotkey-overlay-title="Notes (Obsidian)" {spawn "obsidian" ;}
   Mod+P hotkey-overlay-title="Pomodoro" {spawn "webapp" "https://app.solidtime.io" ;}
