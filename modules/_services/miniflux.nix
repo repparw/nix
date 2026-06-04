@@ -85,5 +85,5 @@
   };
 
   systemd.services."container@miniflux".preStart =
-    "mkdir -p ${cfg.configDir}/miniflux && chmod 0700 ${cfg.configDir}/miniflux";
+    "mkdir -p ${cfg.configDir}/miniflux && chmod 0777 ${cfg.configDir}/miniflux";
 }
