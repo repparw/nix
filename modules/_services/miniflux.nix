@@ -48,11 +48,25 @@
       };
     };
     config =
-      { ... }:
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
       {
         networking.useHostResolvConf = false;
         networking.nameservers = [ "10.231.136.1" ];
         networking.firewall.allowedTCPPorts = [ 8080 ];
+
+        # PostgreSQL StateDirectory creation fails in user namespace (privateUsers).
+        # Pre-create the data dir and disable systemd's StateDirectory management.
+        systemd.services.postgresql.serviceConfig.StateDirectory = lib.mkForce "";
+        systemd.services.postgresql.serviceConfig.ExecStartPre = [
+          (lib.mkBefore "${pkgs.coreutils}/bin/install -d -m 0700 /var/lib/postgresql")
+        ];
+
+        services.postgresql.settings.unix_socket_directories = [ "/run/postgresql" ];
 
         services.miniflux = {
           enable = true;
