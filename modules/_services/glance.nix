@@ -30,12 +30,6 @@ in
         networking.useHostResolvConf = false;
         networking.nameservers = [ "10.231.136.1" ];
 
-        environment.etc."hosts".text = lib.mkForce ''
-          127.0.0.1 localhost
-          ::1 localhost
-          10.231.136.1 bazarr.${cfg.domain} prowlarr.${cfg.domain} radarr.${cfg.domain} sonarr.${cfg.domain} jellyfin.${cfg.domain} paper.${cfg.domain} rss.${cfg.domain} ntfy.${cfg.domain} changedetection.${cfg.domain} auth.${cfg.domain} qbit.${cfg.domain}
-        '';
-
         services.glance = {
           enable = true;
           openFirewall = true;
@@ -127,46 +121,57 @@ in
                           {
                             title = "bazarr";
                             url = "https://bazarr.${cfg.domain}";
+                            check-url = "http://${config.containers.bazarr.localAddress}:6767";
                           }
                           {
                             title = "prowlarr";
                             url = "https://prowlarr.${cfg.domain}";
+                            check-url = "http://${config.containers.prowlarr.localAddress}:9696";
                           }
                           {
                             title = "radarr";
                             url = "https://radarr.${cfg.domain}";
+                            check-url = "http://${config.containers.radarr.localAddress}:7878";
                           }
                           {
                             title = "sonarr";
                             url = "https://sonarr.${cfg.domain}";
+                            check-url = "http://${config.containers.sonarr.localAddress}:8989";
                           }
                           {
                             title = "jellyfin";
                             url = "https://jellyfin.${cfg.domain}";
+                            check-url = "http://${config.containers.jellyfin.localAddress}:8096";
                           }
                           {
                             title = "paperless";
                             url = "https://paper.${cfg.domain}";
+                            check-url = "http://${config.containers.paperless.localAddress}:8000";
                           }
                           {
                             title = "miniflux";
                             url = "https://rss.${cfg.domain}";
+                            check-url = "http://10.231.136.1:8081";
                           }
                           {
                             title = "ntfy";
                             url = "https://ntfy.${cfg.domain}";
+                            check-url = "http://${config.containers.ntfy.localAddress}:8090";
                           }
                           {
                             title = "changedetection";
                             url = "https://changedetection.${cfg.domain}";
+                            check-url = "http://${config.containers.changedetection.localAddress}:5000";
                           }
                           {
                             title = "authelia";
                             url = "https://auth.${cfg.domain}";
+                            check-url = "http://${config.containers.authelia.localAddress}:9091";
                           }
                           {
                             title = "qbit";
                             url = "https://qbit.${cfg.domain}";
+                            check-url = "http://${config.containers.qbittorrent.localAddress}:8080";
                           }
                         ];
                       }

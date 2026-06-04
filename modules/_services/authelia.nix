@@ -68,20 +68,7 @@
                   policy = "bypass";
                 }
                 {
-                  domain = [
-                    "auth.${cfg.domain}"
-                    "bazarr.${cfg.domain}"
-                    "changedetection.${cfg.domain}"
-                    "jellyfin.${cfg.domain}"
-                    "ntfy.${cfg.domain}"
-                    "paper.${cfg.domain}"
-                    "qbit.${cfg.domain}"
-                    "prowlarr.${cfg.domain}"
-                    "radarr.${cfg.domain}"
-                    "rss.${cfg.domain}"
-                    "sonarr.${cfg.domain}"
-                  ];
-                  networks = [ "10.231.136.15/32" ];
+                  domain = [ "auth.${cfg.domain}" ];
                   policy = "bypass";
                 }
                 {
