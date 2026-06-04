@@ -37,7 +37,7 @@
               pkgs
               ;
           })
-          (import ../_services/freshrss.nix {
+          (import ../_services/miniflux.nix {
             inherit
               cfg
               config
@@ -203,9 +203,9 @@
                   "nofail"
                 ];
               };
-              "${cfg.backupDir}/freshrss" = {
+              "${cfg.backupDir}/miniflux" = {
                 depends = [ "/" ];
-                device = "${cfg.configDir}/freshrss";
+                device = "${cfg.configDir}/miniflux";
                 fsType = "none";
                 options = [
                   "bind"
@@ -215,7 +215,7 @@
               };
               "${cfg.backupDir}/jellyfin" = {
                 depends = [ "/" ];
-                device = "${cfg.configDir}/jellyfin/data/data/backups";
+                device = "${cfg.configDir}/jellyfin/data/backups";
                 fsType = "none";
                 options = [
                   "bind"
@@ -280,10 +280,12 @@
                 options = [
                   "bind"
                   "ro"
+                  "noauto"
+                  "x-systemd.automount"
+                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
-
             }
           ];
         };

@@ -54,17 +54,15 @@
           rcloneNextcloud = {
             owner = "repparw";
           };
-          freshrss = {
-            owner = "repparw";
-          };
           cloudflare = {
-            owner = "repparw";
-          };
-          karakeep = {
             owner = "repparw";
           };
           qbittorrentAuth = {
             owner = "repparw";
+            mode = "0400";
+          };
+          jellyfinBackupKey = {
+            owner = "root";
             mode = "0400";
           };
           ddclientPassword = {

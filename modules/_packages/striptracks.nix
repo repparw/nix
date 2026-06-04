@@ -5,6 +5,11 @@
   makeWrapper,
   mkvtoolnix,
   bash,
+  jq,
+  curl,
+  gnused,
+  gawk,
+  coreutils,
   nix-update-script,
 }:
 
@@ -26,13 +31,30 @@ stdenv.mkDerivation rec {
 
   installPhase = ''
     mkdir -p $out/bin
+
+    cp root/usr/local/bin/striptracks.sh $out/bin/striptracks.sh
+    chmod +x $out/bin/striptracks.sh
+
     cp root/usr/local/bin/striptracks-eng.sh $out/bin/striptracks
     chmod +x $out/bin/striptracks
 
-    wrapProgram $out/bin/striptracks \
+    substituteInPlace $out/bin/striptracks.sh \
+      --replace '/usr/bin/mkvmerge' '${mkvtoolnix}/bin/mkvmerge' \
+      --replace '/usr/bin/mkvpropedit' '${mkvtoolnix}/bin/mkvpropedit' \
+      --replace '/usr/bin/jq' '${jq}/bin/jq'
+
+    substituteInPlace $out/bin/striptracks \
+      --replace '/usr/local/bin/striptracks.sh' "$out/bin/striptracks.sh"
+
+    wrapProgram $out/bin/striptracks.sh \
       --prefix PATH : ${
         lib.makeBinPath [
           mkvtoolnix
+          jq
+          curl
+          gnused
+          gawk
+          coreutils
           bash
         ]
       }

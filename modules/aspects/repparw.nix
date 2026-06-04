@@ -19,6 +19,7 @@
       den.aspects.shell
       den.aspects.tmux
       den.aspects.git
+      den.aspects.ai
       den.aspects.ssh
       den.aspects.editors
       den.aspects.file-manager

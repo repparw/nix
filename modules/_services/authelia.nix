@@ -68,20 +68,7 @@
                   policy = "bypass";
                 }
                 {
-                  domain = [
-                    "auth.${cfg.domain}"
-                    "bazarr.${cfg.domain}"
-                    "changedetection.${cfg.domain}"
-                    "jellyfin.${cfg.domain}"
-                    "ntfy.${cfg.domain}"
-                    "paper.${cfg.domain}"
-                    "qbit.${cfg.domain}"
-                    "prowlarr.${cfg.domain}"
-                    "radarr.${cfg.domain}"
-                    "rss.${cfg.domain}"
-                    "sonarr.${cfg.domain}"
-                  ];
-                  networks = [ "10.231.136.15/32" ];
+                  domain = [ "auth.${cfg.domain}" ];
                   policy = "bypass";
                 }
                 {
@@ -116,7 +103,10 @@
                     "rss.${cfg.domain}"
                     "sonarr.${cfg.domain}"
                   ];
-                  resources = [ "^/api([/?].*)?$" ];
+                  resources = [
+                    "^/api([/?].*)?$"
+                    "^/v1([/?].*)?$"
+                  ];
                   policy = "bypass";
                 }
                 {
@@ -136,12 +126,13 @@
             identity_providers.oidc = {
               clients = [
                 {
-                  client_id = "M2JmYTQ2YjktMmJmOS00NjA4LTk1ZGItODY5YzJhM2UzMTE1Cg";
-                  client_name = "FreshRSS";
-                  client_secret = "$pbkdf2-sha512$310000$$dE5yYckldrlA2ZVoCad2qpLFWgkrgOFgyHdgYFpdsfPh0VgX8LX5XGRhuMoYOspfV7JF6yhFHnId1ync6hMjgw";
+                  client_id = "4c06b7fb-8078-eb7f-67b4-713dcf3479e5";
+                  client_name = "Miniflux";
+                  # PBKDF2-SHA512 hash of minifluxOidcSecret plaintext
+                  client_secret = "$pbkdf2-sha512$310000$YA9moMJnULbN7tBa4rGglA$9Kt1uznIN.aOECEXkmHD5I.GCJNKvjhGgJIor6u4O6b9xlCQHhFTUUjTHDe7b26Uje9YxmYObjFYpVahr35MHw";
                   public = false;
                   authorization_policy = "one_factor";
-                  redirect_uris = [ "https://rss.${cfg.domain}:443/i/oidc/" ];
+                  redirect_uris = [ "https://rss.${cfg.domain}/oauth2/callback" ];
                   scopes = [
                     "openid"
                     "groups"
