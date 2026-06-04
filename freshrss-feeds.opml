@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml xmlns:frss="https://freshrss.org/opml" version="2.0">
+  <head>
+    <title>FreshRSS</title>
+    <dateCreated>Wed, 03 Jun 2026 03:36:26 +0000</dateCreated>
+  </head>
+  <body>
+    <outline text="Economy"/>
+    <outline text="News"/>
+    <outline text="Politics"/>
+    <outline text="Tech">
+      <outline text="Ars Technica - All content" type="rss" xmlUrl="https://feeds.arstechnica.com/arstechnica/index" htmlUrl="https://arstechnica.com/" description="All Ars Technica stories"/>
+      <outline text="Bloomberg - Technology" type="rss" xmlUrl="https://feeds.bloomberg.com/technology/news.rss" htmlUrl="https://www.bloomberg.com/feeds/technology/sitemap_news.xml" description="Bloomberg - Technology - Powered by RSSHub" frss:unicityCriteria="sha1:link_published"/>
+      <outline text="Changelog News" type="rss" xmlUrl="https://changelog.com/news/feed" htmlUrl="https://changelog.com/news" description="Developer news worth your attention. Brief, entertaining &amp; always on point. The software world moves fast. Keep up the easy way with Changelog News. Every Monday, Jerod Santo brings you the software news you absolutely need to know about, without the fluff."/>
+      <outline text="LOW←TECH MAGAZINE English" type="rss" xmlUrl="https://solar.lowtechmagazine.com/posts/index.xml" htmlUrl="https://solar.lowtechmagazine.com/posts/" description="This is a solar-powered website, which means it sometimes goes offline"/>
+      <outline text="NO TECH MAGAZINE" type="rss" xmlUrl="https://feeds2.feedburner.com/NoTechMagazine" htmlUrl="https://www.notechmagazine.com/" description="Technology for Luddites"/>
+      <outline text="selfh.st" type="rss" xmlUrl="https://selfh.st/rss/" htmlUrl="https://selfh.st/" description="Self-hosted news, content, updates, and more."/>
+      <outline text="The Verge - Tech Posts" type="rss" xmlUrl="https://www.theverge.com/rss/tech/index.xml" htmlUrl="https://www.theverge.com/tech" description="The Verge is about technology and how it makes us feel. Founded in 2011, we offer our audience everything from breaking news to reviews to award-winning features and investigations, on our site, in video, and in podcasts."/>
+      <outline text="TLDR" type="rss" xmlUrl="https://tldr.tech/api/rss/tech" htmlUrl="https://tldr.tech/" description="TLDR RSS Feed"/>
+      <outline text="VentureBeat" type="rss" xmlUrl="https://venturebeat.com/feed" htmlUrl="http://venturebeat.com/" description="Transformative tech coverage that matters"/>
+    </outline>
+    <outline text="Uncategorized"/>
+  </body>
+</opml>
