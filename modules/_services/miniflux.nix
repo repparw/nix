@@ -57,10 +57,14 @@
         networking.nameservers = [ "10.231.136.1" ];
         networking.firewall.allowedTCPPorts = [ 8080 ];
 
-        # StateDirectory=/var/lib/postgresql fails in user namespace (privateUsers).
-        # Set a custom dataDir on the bind-mounted /var/lib/miniflux instead.
+        # StateDirectory=/var/lib/postgresql and ProtectSystem=strict both
+        # fail in user namespace (privateUsers). Set custom dataDir on the
+        # bind-mounted /var/lib/miniflux, disable the systemd hardening that
+        # requires mount namespace operations.
         services.postgresql.dataDir = "/var/lib/miniflux/db";
         systemd.services.postgresql.serviceConfig.StateDirectory = lib.mkForce "";
+        systemd.services.postgresql.serviceConfig.ProtectSystem = lib.mkForce "false";
+        systemd.services.postgresql.serviceConfig.PrivateMounts = lib.mkForce false;
 
         services.miniflux = {
           enable = true;
