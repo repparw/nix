@@ -12,31 +12,17 @@
     hostAddress = "10.231.136.1";
     localAddress = "10.231.136.9";
     bindMounts = {
-      "/var/lib/miniflux" = {
-        hostPath = "${cfg.configDir}/miniflux";
-        isReadOnly = false;
-      };
-      "/run/secrets/minifluxOidcSecret" = {
+      "run/secrets/minifluxOidcSecret" = {
         hostPath = config.sops.secrets.minifluxOidcSecret.path;
         isReadOnly = true;
       };
     };
     config =
-      {
-        lib,
-        ...
-      }:
+      { ... }:
       {
         networking.useHostResolvConf = false;
         networking.nameservers = [ "10.231.136.1" ];
         networking.firewall.allowedTCPPorts = [ 8080 ];
-
-        # StateDirectory and ProtectSystem/ReadWritePaths fail in userns.
-        services.postgresql.dataDir = "/var/lib/miniflux/db";
-        systemd.services.postgresql.serviceConfig.StateDirectory = lib.mkForce "";
-        systemd.services.postgresql.serviceConfig.ProtectSystem = lib.mkForce "false";
-        systemd.services.postgresql.serviceConfig.PrivateMounts = lib.mkForce false;
-        systemd.services.postgresql.serviceConfig.ReadWritePaths = lib.mkForce [ ];
 
         services.miniflux = {
           enable = true;
@@ -57,7 +43,4 @@
         system.stateVersion = "26.05";
       };
   };
-
-  systemd.services."container@miniflux".preStart =
-    "mkdir -p ${cfg.configDir}/miniflux && chmod -R 0777 ${cfg.configDir}/miniflux";
 }
