@@ -11,10 +11,8 @@
     privateUsers = "pick";
     hostAddress = "10.231.136.1";
     localAddress = "10.231.136.9";
-    # Bind mount via extraFlags so we can add :idmap, required for the
-    # container userns root to read files owned by host root.
     extraFlags = [
-      "--bind-ro=${config.sops.secrets.minifluxOidcSecret.path}:/run/secrets/minifluxOidcSecret:idmap"
+      "--bind-ro=/run/secrets/miniflux:/run/secrets/miniflux:idmap"
     ];
     bindMounts = { };
     config =
@@ -33,7 +31,7 @@
             RUN_MIGRATIONS = 1;
             CLEANUP_FREQUENCY_HOURS = 24;
             OIDC_CLIENT_ID = "4c06b7fb-8078-eb7f-67b4-713dcf3479e5";
-            OIDC_CLIENT_SECRET_FILE = "/run/secrets/minifluxOidcSecret";
+            OIDC_CLIENT_SECRET_FILE = "/run/secrets/miniflux/minifluxOidcSecret";
             OIDC_REDIRECT_URL = "https://rss.${cfg.domain}/oauth2/callback";
             OIDC_PROVIDER = "https://auth.${cfg.domain}";
             OIDC_PROVIDER_NAME = "Authelia";
@@ -43,4 +41,7 @@
         system.stateVersion = "26.05";
       };
   };
+
+  systemd.services."container@miniflux".preStart =
+    "mkdir -p /run/secrets/miniflux && cp -L ${config.sops.secrets.minifluxOidcSecret.path} /run/secrets/miniflux/ && chmod 0400 /run/secrets/miniflux/minifluxOidcSecret";
 }
