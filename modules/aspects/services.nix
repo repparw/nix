@@ -316,19 +316,6 @@
                   "nofail"
                 ];
               };
-              "${cfg.backupDir}/traefik" = {
-                depends = [ "/" ];
-                device = "${cfg.configDir}/traefik";
-                fsType = "none";
-                options = [
-                  "bind"
-                  "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
-                  "nofail"
-                ];
-              };
             }
           ];
         };
