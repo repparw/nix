@@ -16,7 +16,7 @@
       "--bind=${cfg.externalDataDir}:/seagate"
     ];
     bindMounts = {
-      "/config" = {
+      "/var/lib/jellyfin" = {
         hostPath = "${cfg.configDir}/jellyfin";
         isReadOnly = false;
       };
