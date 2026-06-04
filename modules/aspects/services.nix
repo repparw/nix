@@ -227,7 +227,7 @@
               };
               "${cfg.backupDir}/jellyfin" = {
                 depends = [ "/" ];
-                device = "${cfg.configDir}/jellyfin/data/data/backups";
+                device = "${cfg.configDir}/jellyfin/data/backups";
                 fsType = "none";
                 options = [
                   "bind"
