@@ -321,7 +321,7 @@ in
             { url = "http://${config.containers.changedetection.localAddress}:5000"; }
           ];
           miniflux.loadBalancer.servers = [
-            { url = "http://${config.containers.miniflux.localAddress}:8080"; }
+            { url = "http://127.0.0.1:8080"; }
           ];
           jellyfin.loadBalancer.servers = [
             { url = "http://${config.containers.jellyfin.localAddress}:8096"; }
