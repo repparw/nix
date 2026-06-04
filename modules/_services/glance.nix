@@ -257,4 +257,6 @@ in
         system.stateVersion = "26.05";
       };
   };
+
+  systemd.services."container@glance".preStart = "mkdir -p ${cfg.configDir}/glance/assets";
 }
