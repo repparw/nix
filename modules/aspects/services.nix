@@ -103,7 +103,7 @@
 
           dataDir = lib.mkOption {
             type = lib.types.path;
-            default = "${cfg.rootDir}/data";
+            default = "/mnt/hdd/containers/data";
           };
 
           externalDataDir = lib.mkOption {
