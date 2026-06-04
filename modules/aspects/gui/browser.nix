@@ -34,6 +34,7 @@
         pkgs,
         config,
         osConfig,
+        lib,
         ...
       }:
       {

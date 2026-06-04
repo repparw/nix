@@ -43,7 +43,7 @@
           (writeShellApplication {
             name = "webapp";
             text = ''
-              exec chromium --app="$1" "''${@:2}"
+              exec chromium --password-store=basic --app="$1" "''${@:2}"
             '';
           })
 
@@ -51,7 +51,7 @@
             name = "youtube";
             runtimeInputs = [ chromium ];
             text = ''
-              exec chromium --profile-directory=Default --app-id=agimnkijcaahngcdmfeangaknmldooml
+              exec chromium --password-store=basic --profile-directory=Default --app-id=agimnkijcaahngcdmfeangaknmldooml
             '';
           })
 
