@@ -12,7 +12,7 @@
     hostAddress = "10.231.136.1";
     localAddress = "10.231.136.9";
     bindMounts = {
-      "run/secrets/minifluxOidcSecret" = {
+      "/run/secrets/minifluxOidcSecret" = {
         hostPath = config.sops.secrets.minifluxOidcSecret.path;
         isReadOnly = true;
       };

@@ -54,12 +54,11 @@
           rcloneNextcloud = {
             owner = "repparw";
           };
-          # OIDC client secret for Miniflux. Plaintext is consumed by the
-          # sops-nix template in modules/_services/miniflux.nix.
-          # TODO: add matching key to secrets.yaml and encrypt with sops.
+          # OIDC client secret for Miniflux. Bind-mounted read-only into the
+          # container, so world-readable (0444) for userns privateUsers.
           minifluxOidcSecret = {
             owner = "root";
-            mode = "0400";
+            mode = "0444";
           };
           cloudflare = {
             owner = "repparw";
