@@ -68,6 +68,29 @@
         "type": "github"
       }
     },
+    "codex-desktop-linux": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780552140,
+        "narHash": "sha256-8IRa+p8+RDYfbKufmK5h0MQ9Ul23wFLY5BCT/A8p/+Y=",
+        "owner": "ilysenko",
+        "repo": "codex-desktop-linux",
+        "rev": "946adef45e88c16f146d79391e5b6c47bd32ad26",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ilysenko",
+        "repo": "codex-desktop-linux",
+        "type": "github"
+      }
+    },
     "den": {
       "locked": {
         "lastModified": 1780270913,
@@ -435,6 +458,7 @@
     },
     "root": {
       "inputs": {
+        "codex-desktop-linux": "codex-desktop-linux",
         "den": "den",
         "firefox-addons": "firefox-addons",
         "flake-file": "flake-file",
