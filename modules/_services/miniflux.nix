@@ -38,8 +38,8 @@
     hostAddress = "10.231.136.1";
     localAddress = "10.231.136.9";
     bindMounts = {
-      "/var/lib/postgresql" = {
-        hostPath = "${cfg.configDir}/miniflux/db";
+      "/var/lib/miniflux" = {
+        hostPath = "${cfg.configDir}/miniflux";
         isReadOnly = false;
       };
       "/run/secrets/miniflux-env" = {
@@ -49,9 +49,7 @@
     };
     config =
       {
-        config,
         lib,
-        pkgs,
         ...
       }:
       {
@@ -59,14 +57,10 @@
         networking.nameservers = [ "10.231.136.1" ];
         networking.firewall.allowedTCPPorts = [ 8080 ];
 
-        # PostgreSQL StateDirectory creation fails in user namespace (privateUsers).
-        # Pre-create the data dir and disable systemd's StateDirectory management.
+        # StateDirectory=/var/lib/postgresql fails in user namespace (privateUsers).
+        # Set a custom dataDir on the bind-mounted /var/lib/miniflux instead.
+        services.postgresql.dataDir = "/var/lib/miniflux/db";
         systemd.services.postgresql.serviceConfig.StateDirectory = lib.mkForce "";
-        systemd.services.postgresql.serviceConfig.ExecStartPre = [
-          (lib.mkBefore "${pkgs.coreutils}/bin/install -d -m 0700 /var/lib/postgresql")
-        ];
-
-        services.postgresql.settings.unix_socket_directories = [ "/run/postgresql" ];
 
         services.miniflux = {
           enable = true;
@@ -86,5 +80,5 @@
   };
 
   systemd.services."container@miniflux".preStart =
-    "mkdir -p ${cfg.configDir}/miniflux/db && chmod 0700 ${cfg.configDir}/miniflux/db";
+    "mkdir -p ${cfg.configDir}/miniflux && chmod 0700 ${cfg.configDir}/miniflux";
 }
