@@ -38,8 +38,8 @@
     hostAddress = "10.231.136.1";
     localAddress = "10.231.136.9";
     bindMounts = {
-      "/var/lib/miniflux" = {
-        hostPath = "${cfg.configDir}/miniflux";
+      "/var/lib/postgresql" = {
+        hostPath = "${cfg.configDir}/miniflux/db";
         isReadOnly = false;
       };
       "/run/secrets/miniflux-env" = {
@@ -59,7 +59,6 @@
           config = {
             BASE_URL = "https://rss.${cfg.domain}";
             LISTEN_ADDR = "0.0.0.0:8080";
-            DATABASE_URL = "file:///var/lib/miniflux/miniflux.db?cache=shared&_journal_mode=WAL";
             CREATE_ADMIN = 0;
             RUN_MIGRATIONS = 1;
             CLEANUP_FREQUENCY_HOURS = 24;
@@ -72,5 +71,6 @@
       };
   };
 
-  systemd.services."container@miniflux".preStart = "chmod 0777 ${cfg.configDir}/miniflux";
+  systemd.services."container@miniflux".preStart =
+    "mkdir -p ${cfg.configDir}/miniflux/db && chmod 0700 ${cfg.configDir}/miniflux/db";
 }

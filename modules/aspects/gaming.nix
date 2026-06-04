@@ -51,18 +51,21 @@
           ATTRS{idVendor}=="2dc8", ATTRS{idProduct}=="310a", RUN+="${pkgs.linuxConsoleTools}/bin/evdev-joystick --evdev /dev/input/%k --deadzone 0 --fuzz 0"
         '';
       };
-    homeManager = _: {
-      programs.sm64ex = {
-        enable = true;
-        region = "us";
-        baserom = "/home/repparw/Games/sm64/Super Mario 64 (USA).z64";
-      };
-      programs.mangohud = {
-        enable = true;
-        settings = {
-          preset = 2;
+    homeManager =
+      { pkgs, ... }:
+      {
+        home.packages = with pkgs; [ shadps4 ];
+        programs.sm64ex = {
+          enable = true;
+          region = "us";
+          baserom = "/home/repparw/Games/sm64/Super Mario 64 (USA).z64";
+        };
+        programs.mangohud = {
+          enable = true;
+          settings = {
+            preset = 2;
+          };
         };
       };
-    };
   };
 }
