@@ -17,10 +17,10 @@
   sops.templates."miniflux-env" = {
     path = "/run/secrets/miniflux-env";
     owner = "root";
-    # World-readable: bind-mounted into a userns container (privateUsers),
-    # so the container's mapped root (host uid 36000) cannot read a 0400
-    # file owned by host root. The /run/secrets directory itself is 0700,
-    # so this only widens access for processes already inside the container.
+    # World-readable: bind-mounted into a userns container (privateUsers=pick),
+    # so the container's mapped root cannot read a 0400 file owned by host root.
+    # The /run/secrets directory itself is 0700, so this only widens access
+    # for processes already inside the container.
     mode = "0444";
     content = ''
       OIDC_CLIENT_ID=4c06b7fb-8078-eb7f-67b4-713dcf3479e5
@@ -34,7 +34,7 @@
   containers.miniflux = {
     autoStart = true;
     privateNetwork = true;
-    privateUsers = 36000;
+    privateUsers = "pick";
     hostAddress = "10.231.136.1";
     localAddress = "10.231.136.9";
     bindMounts = {
@@ -72,5 +72,5 @@
       };
   };
 
-  systemd.services."container@miniflux".preStart = "chown -R 36000:36000 ${cfg.configDir}/miniflux";
+  systemd.services."container@miniflux".preStart = "chmod 0777 ${cfg.configDir}/miniflux";
 }
