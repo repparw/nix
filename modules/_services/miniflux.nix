@@ -11,12 +11,12 @@
     privateUsers = "pick";
     hostAddress = "10.231.136.1";
     localAddress = "10.231.136.9";
-    bindMounts = {
-      "/run/secrets/minifluxOidcSecret" = {
-        hostPath = config.sops.secrets.minifluxOidcSecret.path;
-        isReadOnly = true;
-      };
-    };
+    # Bind mount via extraFlags so we can add :idmap, required for the
+    # container userns root to read files owned by host root.
+    extraFlags = [
+      "--bind-ro=${config.sops.secrets.minifluxOidcSecret.path}:/run/secrets/minifluxOidcSecret:idmap"
+    ];
+    bindMounts = { };
     config =
       { ... }:
       {

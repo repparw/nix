@@ -54,11 +54,11 @@
           rcloneNextcloud = {
             owner = "repparw";
           };
-          # OIDC client secret for Miniflux. Bind-mounted read-only into the
-          # container, so world-readable (0444) for userns privateUsers.
+          # OIDC client secret for Miniflux. Bind-mounted into the container
+          # with :idmap so the userns root can read it.
           minifluxOidcSecret = {
             owner = "root";
-            mode = "0444";
+            mode = "0400";
           };
           cloudflare = {
             owner = "repparw";
