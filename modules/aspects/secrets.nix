@@ -54,20 +54,15 @@
           rcloneNextcloud = {
             owner = "repparw";
           };
-          # OIDC client secret for Miniflux. Bind-mounted into the container
-          # with :idmap so the userns root can read it.
-          minifluxOidcSecret = {
-            owner = "root";
-            mode = "0400";
-          };
           cloudflare = {
-            owner = "repparw";
-          };
-          karakeep = {
             owner = "repparw";
           };
           qbittorrentAuth = {
             owner = "repparw";
+            mode = "0400";
+          };
+          jellyfinBackupKey = {
+            owner = "root";
             mode = "0400";
           };
           ddclientPassword = {
