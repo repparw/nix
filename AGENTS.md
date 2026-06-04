@@ -10,11 +10,3 @@ Repo follows upstream `vic/den` default-template structure.
 - Put reusable features in dedicated aspect files.
 
 - Do not put plaintext secrets in repo; use `sops-nix`.
-
-Useful after structural changes:
-```shell
-nix fmt
-nix flake check
-```
-
-When adding new files or directories, stage them before evaluating. Nix flakes only see tracked files
