@@ -72,13 +72,23 @@ in
   containers.qbittorrent = mkArrContainer {
     ipOctet = 4;
     extraOptions.privateUsers = "identity";
+    extraConfig.nixpkgs.overlays = [
+      (final: prev: {
+        qbittorrent-nox = prev.qbittorrent-nox.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            (prev.fetchpatch {
+              url = "https://patch-diff.githubusercontent.com/raw/qbittorrent/qBittorrent/pull/24055.patch";
+              hash = "sha256-rhnnxa6pmXSs3rt94FrAObbtH+vYOb+kFvOTcwmbHl8=";
+            })
+          ];
+        });
+      })
+    ];
     serviceConfig.qbittorrent = {
       enable = true;
       openFirewall = true;
       torrentingPort = 54535;
-      profileDir = "/var/lib/qbittorrent";
     };
-    extraFlags = [ "--bind=${cfg.dataDir}:/data" ];
     extraOptions.forwardPorts = [
       {
         protocol = "tcp";
@@ -92,12 +102,12 @@ in
       }
     ];
     extraBindMounts = {
-      "/var/lib/qbittorrent/qBittorrent" = {
+      "/var/lib/qBittorrent/qBittorrent" = {
         hostPath = "${cfg.configDir}/qbittorrent";
         isReadOnly = false;
       };
-      "/downloading" = {
-        hostPath = "${cfg.configDir}/downloading";
+      "/data/torrents" = {
+        hostPath = "${cfg.rootDir}/torrents";
         isReadOnly = false;
       };
     };
