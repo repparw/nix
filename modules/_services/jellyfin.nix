@@ -6,24 +6,8 @@
   ...
 }:
 let
+  backupJob = import ./backup-job.nix { inherit lib pkgs; };
   jellyfinBackupKeyFile = config.sops.secrets.jellyfinBackupKey.path;
-  pruneBackups = pkgs.writeShellApplication {
-    name = "jellyfin-prune-backups";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.findutils
-    ];
-    text = ''
-      set -euo pipefail
-      cd "${cfg.configDir}/jellyfin/data/backups"
-      # keep newest 7, delete the rest
-      find . -maxdepth 1 -type f -name 'jellyfin-backup-*.zip' -printf '%T@ %p\0' \
-        | sort -z -rn \
-        | tail -z -n +8 \
-        | cut -z -d ' ' -f 2- \
-        | xargs -0 -r rm -v
-    '';
-  };
   createBackup = pkgs.writeShellApplication {
     name = "jellyfin-create-backup";
     runtimeInputs = [ pkgs.curl ];
@@ -104,23 +88,11 @@ in
         system.stateVersion = "26.05";
       };
   };
-
-  systemd.services.jellyfin-backup = {
-    description = "Create jellyfin backup via native API";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = lib.getExe createBackup;
-      ExecStartPost = lib.getExe pruneBackups;
-    };
-    wantedBy = [ ];
-  };
-  systemd.timers.jellyfin-backup = {
-    description = "Run jellyfin backup daily";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "daily";
-      Persistent = true;
-      RandomizedDelaySec = "30min";
-    };
-  };
 }
+// (backupJob {
+  name = "jellyfin";
+  description = "jellyfin backup via native API";
+  backupDir = "${cfg.configDir}/jellyfin/data/backups";
+  inherit createBackup;
+  filePattern = "jellyfin-backup-*.zip";
+})
