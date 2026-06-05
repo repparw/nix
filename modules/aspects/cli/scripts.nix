@@ -56,6 +56,45 @@
           })
 
           (writeShellApplication {
+            name = "codex-desktop-focus";
+            runtimeInputs = [
+              coreutils
+              jq
+              niri
+            ];
+            text = ''
+              window_id="$(
+                niri msg --json windows \
+                  | jq -r '[.[] | select(.app_id == "codex-desktop")] | max_by(.focus_timestamp.secs).id // empty'
+              )"
+
+              if [ -n "$window_id" ]; then
+                niri msg action focus-window --id "$window_id"
+              else
+                for proc in /proc/[0-9]*/cmdline; do
+                  [ -r "$proc" ] || continue
+                  cmdline="$(tr '\0' ' ' < "$proc" 2>/dev/null || true)"
+                  case "$cmdline" in
+                    *"/opt/codex-desktop/electron "*)
+                      case "$cmdline" in
+                        *" --type="*) ;;
+                        *)
+                          pid="''${proc#/proc/}"
+                          pid="''${pid%/cmdline}"
+                          kill "$pid" 2>/dev/null || true
+                          ;;
+                      esac
+                      ;;
+                  esac
+                done
+                sleep 0.2
+
+                exec codex-desktop
+              fi
+            '';
+          })
+
+          (writeShellApplication {
             name = "bttoggle";
             runtimeInputs = [ bluez ];
             text = ''
