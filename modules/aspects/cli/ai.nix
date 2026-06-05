@@ -1,6 +1,7 @@
 {
   den,
   inputs,
+  lib,
   pkgs,
   ...
 }:
@@ -125,6 +126,8 @@
             };
           };
         };
+
+        systemd.user.services.codex-remote-control.Service.Restart = lib.mkForce "always";
 
         # systemd.user.services.opencode-web = {
         #   Unit = {

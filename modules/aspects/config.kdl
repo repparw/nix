@@ -118,7 +118,8 @@ window-rule {
 binds {
   Mod+Return hotkey-overlay-title="Terminal" {spawn "foot" ;}
   Mod+W hotkey-overlay-title="Close Window" {close-window ;}
-  Mod+Space hotkey-overlay-title="App Launcher" {spawn "rofi" "-show" "combi" ;}
+  Mod+Space hotkey-overlay-title="App Launcher" {spawn "vicinae" "toggle" ;}
+  Mod+Alt+Space hotkey-overlay-title="Rofi Launcher" {spawn "rofi" "-show" "combi" ;}
   Mod+Shift+Space hotkey-overlay-title="Browser" {spawn "firefox" ;}
 
   Mod+A hotkey-overlay-title="Anki" {spawn "anki" ;} 

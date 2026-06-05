@@ -13,10 +13,9 @@
       nixpkgs.overlays = [
         (final: prev: {
           discord =
-            (import inputs.nixpkgs-discord-krisp {
-              system = prev.stdenv.hostPlatform.system;
-              config.allowUnfree = true;
-            }).discord.override
+            (final.callPackage (
+              inputs.nixpkgs-discord-krisp + "/pkgs/applications/networking/instant-messengers/discord"
+            ) { }).discord.override
               {
                 withKrisp = true;
               };
@@ -63,11 +62,7 @@
           rquickshare
         ];
 
-        gtk = {
-          enable = true;
-          gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
-          gtk4.theme = null;
-        };
+        gtk.enable = true;
 
         xdg.mimeApps = {
           enable = true;

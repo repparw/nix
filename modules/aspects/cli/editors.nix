@@ -23,7 +23,7 @@
 
         home.packages =
           let
-            nvim = pkgs.neovim.extend config.stylix.targets.nixvim.exportedModule;
+            nvim = pkgs.repparw-neovim.extend config.stylix.targets.nixvim.exportedModule;
           in
           with pkgs;
           [
