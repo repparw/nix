@@ -14,7 +14,7 @@
           sudo.extraConfig = ''
             Defaults env_keep += "SUDO_ASKPASS"
             Defaults timestamp_timeout=60
-            Defaults timestamp_type=global
+            Defaults timestamp_type=ppid
           '';
         };
 
