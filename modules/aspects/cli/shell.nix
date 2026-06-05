@@ -111,7 +111,7 @@
             // (with pkgs; {
               diff = "${lib.getExe colordiff}";
               cat = "${lib.getExe bat}";
-              df = "${lib.getExe duf} -hide-mp $XDG_CONFIG_HOME\\* -only local";
+              df = "${lib.getExe duf} -hide-mp /home/containers/\\* -only local";
               du = "${lib.getExe dust}";
 
               rpi = "${lib.getExe' mosh "mosh"} -P 60001 pi";
@@ -125,7 +125,7 @@
 
               v = "nvim";
 
-              oc = "opencode attach http://localhost:4096";
+              oc = "opencode";
               occ = "oc -c";
 
               meminfo = "free -hlt";
