@@ -9,12 +9,19 @@ let
   jellyfinBackupKeyFile = config.sops.secrets.jellyfinBackupKey.path;
   pruneBackups = pkgs.writeShellApplication {
     name = "jellyfin-prune-backups";
-    runtimeInputs = [ pkgs.coreutils ];
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.findutils
+    ];
     text = ''
       set -euo pipefail
       cd "${cfg.configDir}/jellyfin/data/backups"
       # keep newest 7, delete the rest
-      ls -1t jellyfin-backup-*.zip 2>/dev/null | tail -n +8 | xargs -r rm -v
+      find . -maxdepth 1 -type f -name 'jellyfin-backup-*.zip' -printf '%T@ %p\0' \
+        | sort -z -rn \
+        | tail -z -n +8 \
+        | cut -z -d ' ' -f 2- \
+        | xargs -0 -r rm -v
     '';
   };
   createBackup = pkgs.writeShellApplication {
