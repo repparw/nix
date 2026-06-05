@@ -58,7 +58,8 @@
             owner = "repparw";
           };
           qbittorrentAuth = {
-            owner = "repparw";
+            owner = "traefik";
+            group = "traefik";
             mode = "0400";
           };
           jellyfinBackupKey = {

@@ -58,11 +58,11 @@ in
             service = "hass";
             middlewares = [ "real-ip" ];
           };
-          oc-router = {
-            rule = "Host(`opencode.${domain}`)";
-            service = "opencode";
-            middlewares = [ "authelia" ];
-          };
+          # oc-router = {
+          #   rule = "Host(`opencode.${domain}`)";
+          #   service = "opencode";
+          #   middlewares = [ "authelia" ];
+          # };
           authelia = {
             rule = "Host(`auth.${domain}`)";
             service = "authelia";
@@ -142,7 +142,7 @@ in
             "authelia"
             "qbit-basic-auth"
           ];
-          qbit-basic-auth.headers.customRequestHeaders.Authorization = "\${QBIT_AUTH}";
+          qbit-basic-auth.headers.customRequestHeaders.Authorization = "{{ env `QBIT_AUTH` }}";
         };
         services = {
           hass.loadBalancer.servers = [ { url = "http://192.168.0.4"; } ];
