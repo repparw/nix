@@ -280,14 +280,25 @@
                 options = [
                   "bind"
                   "ro"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=60"
                   "nofail"
                 ];
               };
             }
           ];
+
+          systemd.services = {
+            "container@bazarr".after = [ "home-containers-backup-bazarr.mount" ];
+            "container@authelia".after = [ "home-containers-backup-authelia.mount" ];
+            "container@changedetection".after = [ "home-containers-backup-changedetection.mount" ];
+            miniflux.after = [ "home-containers-backup-miniflux.mount" ];
+            "container@jellyfin".after = [ "home-containers-backup-jellyfin.mount" ];
+            "container@ntfy".after = [ "home-containers-backup-ntfy.mount" ];
+            "container@paperless".after = [ "home-containers-backup-paper.mount" ];
+            "container@prowlarr".after = [ "home-containers-backup-prowlarr.mount" ];
+            "container@qbittorrent".after = [ "home-containers-backup-qbittorrent.mount" ];
+            "container@radarr".after = [ "home-containers-backup-radarr.mount" ];
+            "container@sonarr".after = [ "home-containers-backup-sonarr.mount" ];
+          };
         };
       };
   };

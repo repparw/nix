@@ -115,6 +115,7 @@ in
     extraConfig = {
       environment.systemPackages = [ pkgs.striptracks ];
       systemd.tmpfiles.rules = [ ];
+      systemd.services.radarr.serviceConfig.PrivateUsers = lib.mkForce false;
     };
     extraBindMounts = {
       "/config" = {
@@ -136,6 +137,7 @@ in
     extraConfig = {
       environment.systemPackages = [ pkgs.striptracks ];
       systemd.tmpfiles.rules = [ ];
+      systemd.services.sonarr.serviceConfig.PrivateUsers = lib.mkForce false;
     };
     extraBindMounts = {
       "/config" = {
