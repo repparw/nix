@@ -59,6 +59,11 @@
         programs = {
           swaylock.enable = true;
 
+          vicinae = {
+            enable = true;
+            systemd.enable = true;
+          };
+
           ashell = {
             enable = true;
             systemd.enable = true;

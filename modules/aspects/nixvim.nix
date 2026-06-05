@@ -24,7 +24,7 @@
     nixos = _: {
       nixpkgs.overlays = [
         (final: prev: {
-          neovim = inputs.nixvim-config.packages.${prev.stdenv.hostPlatform.system}.default;
+          repparw-neovim = inputs.nixvim-config.packages.${prev.stdenv.hostPlatform.system}.default;
         })
       ];
     };
