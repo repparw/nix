@@ -5,6 +5,7 @@
       { pkgs, ... }:
       {
         i18n.defaultLocale = "en_IE.UTF-8";
+        i18n.extraLocaleSettings.LC_MONETARY = "es_AR.UTF-8";
 
         time.timeZone = "America/Argentina/Buenos_Aires";
 
