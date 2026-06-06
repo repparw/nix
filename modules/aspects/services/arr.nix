@@ -13,6 +13,7 @@
           {
             ipOctet,
             serviceConfig,
+            mediaBind ? true,
             extraBindMounts ? { },
             extraOptions ? { },
             extraConfig ? { },
@@ -24,13 +25,14 @@
             hostAddress = "10.231.136.1";
             localAddress = "10.231.136.${toString ipOctet}";
             inherit extraFlags;
-            bindMounts = {
-              "/data" = {
-                hostPath = cfg.mediaPortalDir;
-                isReadOnly = false;
-              };
-            }
-            // extraBindMounts;
+            bindMounts =
+              lib.optionalAttrs mediaBind {
+                "/data" = {
+                  hostPath = cfg.mediaPortalDir;
+                  isReadOnly = false;
+                };
+              }
+              // extraBindMounts;
             config =
               { ... }:
               lib.mkMerge [
@@ -65,6 +67,7 @@
 
         containers.prowlarr = mkArrContainer {
           ipOctet = 3;
+          mediaBind = false;
           extraOptions.privateUsers = "identity";
           serviceConfig.prowlarr = {
             enable = true;
