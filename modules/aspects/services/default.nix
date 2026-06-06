@@ -1,6 +1,11 @@
-{ lib, ... }:
+{ den, lib, ... }:
 {
   den.aspects.nixos-services = {
+    includes = with den.aspects.nixos-services._; [
+      arr
+      jellyfin
+    ];
+
     nixos =
       {
         config,
@@ -13,7 +18,7 @@
       in
       {
         imports = [
-          (import ../_services/arr.nix {
+          (import ../../_services/authelia.nix {
             inherit
               cfg
               config
@@ -21,7 +26,7 @@
               pkgs
               ;
           })
-          (import ../_services/authelia.nix {
+          (import ../../_services/changedetection.nix {
             inherit
               cfg
               config
@@ -29,7 +34,7 @@
               pkgs
               ;
           })
-          (import ../_services/changedetection.nix {
+          (import ../../_services/miniflux.nix {
             inherit
               cfg
               config
@@ -37,7 +42,7 @@
               pkgs
               ;
           })
-          (import ../_services/miniflux.nix {
+          (import ../../_services/ntfy.nix {
             inherit
               cfg
               config
@@ -45,7 +50,7 @@
               pkgs
               ;
           })
-          (import ../_services/jellyfin.nix {
+          (import ../../_services/paperless.nix {
             inherit
               cfg
               config
@@ -53,7 +58,7 @@
               pkgs
               ;
           })
-          (import ../_services/ntfy.nix {
+          (import ../../_services/ddclient.nix {
             inherit
               cfg
               config
@@ -61,7 +66,7 @@
               pkgs
               ;
           })
-          (import ../_services/paperless.nix {
+          (import ../../_services/proxy.nix {
             inherit
               cfg
               config
@@ -69,23 +74,7 @@
               pkgs
               ;
           })
-          (import ../_services/ddclient.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              ;
-          })
-          (import ../_services/proxy.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              ;
-          })
-          (import ../_services/glance.nix {
+          (import ../../_services/glance.nix {
             inherit
               cfg
               config
@@ -103,12 +92,17 @@
 
           dataDir = lib.mkOption {
             type = lib.types.path;
-            default = "/mnt/hdd/containers/data";
+            default = "/mnt/hdd/media";
           };
 
           externalDataDir = lib.mkOption {
             type = lib.types.path;
             default = "/mnt/seagate";
+          };
+
+          mediaPortalDir = lib.mkOption {
+            type = lib.types.path;
+            default = "${cfg.rootDir}/media";
           };
 
           configDir = lib.mkOption {
@@ -149,8 +143,8 @@
 
           nixpkgs.overlays = [
             (final: prev: {
-              striptracks = final.callPackage ../_packages/striptracks.nix { };
-              mercury-parser-api = final.callPackage ../_packages/mercury-parser.nix { };
+              striptracks = final.callPackage ../../_packages/striptracks.nix { };
+              mercury-parser-api = final.callPackage ../../_packages/mercury-parser.nix { };
             })
           ];
 
@@ -173,6 +167,30 @@
 
           fileSystems = lib.mkMerge [
             {
+              "${cfg.mediaPortalDir}/hdd" = {
+                depends = [ "/" ];
+                device = cfg.dataDir;
+                fsType = "none";
+                options = [
+                  "bind"
+                  "nofail"
+                  "noauto"
+                  "x-systemd.automount"
+                  "x-systemd.idle-timeout=10min"
+                ];
+              };
+              "${cfg.mediaPortalDir}/seagate" = {
+                depends = [ "/" ];
+                device = cfg.externalDataDir;
+                fsType = "none";
+                options = [
+                  "bind"
+                  "nofail"
+                  "noauto"
+                  "x-systemd.automount"
+                  "x-systemd.idle-timeout=10min"
+                ];
+              };
               "${cfg.backupDir}/bazarr" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/bazarr/backup";
@@ -284,6 +302,12 @@
                 ];
               };
             }
+          ];
+
+          systemd.tmpfiles.rules = [
+            "d ${cfg.mediaPortalDir} 0755 root root - -"
+            "d ${cfg.mediaPortalDir}/hdd 0755 root root - -"
+            "d ${cfg.mediaPortalDir}/seagate 0755 root root - -"
           ];
 
           systemd.services = {
