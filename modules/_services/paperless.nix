@@ -6,12 +6,12 @@
     privateUsers = "pick";
     hostAddress = "10.231.136.1";
     localAddress = "10.231.136.12";
-    extraFlags = [
-      "--bind=${cfg.dataDir}/paper/data:/data"
-      "--bind=${cfg.dataDir}/paper/media:/media"
-      "--bind=${cfg.dataDir}/paper/consume:/consume"
-    ];
-    bindMounts = { };
+    bindMounts = {
+      "/var/lib/paperless" = {
+        hostPath = "${cfg.configDir}/paper";
+        isReadOnly = false;
+      };
+    };
     config =
       { ... }:
       {
@@ -21,9 +21,6 @@
 
         services.paperless = {
           enable = true;
-          dataDir = "/data";
-          mediaDir = "/media";
-          consumptionDir = "/consume";
           port = 8000;
           address = "0.0.0.0";
           settings = {
