@@ -41,12 +41,8 @@ in
         hostPath = "${cfg.configDir}/jellyfin";
         isReadOnly = false;
       };
-      "/data/media" = {
-        hostPath = "${cfg.dataDir}/media";
-        isReadOnly = false;
-      };
-      "/seagate" = {
-        hostPath = cfg.externalDataDir;
+      "/data" = {
+        hostPath = "/mnt";
         isReadOnly = false;
       };
     };

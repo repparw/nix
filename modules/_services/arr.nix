@@ -12,10 +12,7 @@ let
       extraBindMounts ? { },
       extraOptions ? { },
       extraConfig ? { },
-      extraFlags ? [
-        "--bind=${cfg.dataDir}:/data"
-        "--bind=${cfg.externalDataDir}:/seagate"
-      ],
+      extraFlags ? [ ],
     }:
     {
       autoStart = true;
@@ -23,16 +20,24 @@ let
       hostAddress = "10.231.136.1";
       localAddress = "10.231.136.${toString ipOctet}";
       inherit extraFlags;
-      bindMounts = extraBindMounts;
+      bindMounts = {
+        "/data" = {
+          hostPath = "/mnt";
+          isReadOnly = false;
+        };
+      }
+      // extraBindMounts;
       config =
         { ... }:
-        {
-          services = serviceConfig;
-          system.stateVersion = "26.05";
-          networking.useHostResolvConf = false;
-          networking.nameservers = [ "10.231.136.1" ];
-        }
-        // extraConfig;
+        lib.mkMerge [
+          {
+            services = serviceConfig;
+            system.stateVersion = "26.05";
+            networking.useHostResolvConf = false;
+            networking.nameservers = [ "10.231.136.1" ];
+          }
+          extraConfig
+        ];
     }
     // extraOptions;
 in

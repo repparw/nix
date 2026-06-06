@@ -77,6 +77,9 @@
               "noatime"
               "nodiratime"
               "nofail"
+              "noauto"
+              "x-systemd.automount"
+              "x-systemd.idle-timeout=10min"
             ];
           };
 
@@ -87,9 +90,12 @@
               "noatime"
               "nodiratime"
               "nofail"
+              "noauto"
               "nosuid"
               "nodev"
               "errors=remount-ro"
+              "x-systemd.automount"
+              "x-systemd.idle-timeout=10min"
             ];
           };
         };
