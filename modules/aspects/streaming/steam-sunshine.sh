@@ -35,6 +35,10 @@ gamescope \
     --steam \
     --force-grab-cursor \
     --adaptive-sync \
-    -- steam -tenfoot -pipewire-dmabuf &
+    -- bwrap \
+        --dev-bind / / \
+        --tmpfs /mnt/seagate \
+        --tmpfs /home/containers/media/seagate \
+        -- steam -tenfoot -pipewire-dmabuf &
 
 niri msg action power-off-monitors

@@ -31,7 +31,10 @@
         niri-output-on = pkgs.writeShellScriptBin "niri-output-on" (builtins.readFile ./niri-output-on.sh);
         steam-sunshine = pkgs.writeShellApplication {
           name = "steam-sunshine";
-          runtimeInputs = [ pkgs.jq ];
+          runtimeInputs = [
+            pkgs.bubblewrap
+            pkgs.jq
+          ];
           text = ''
             export GAMESCOPE_HEIGHT=${height}
             export GAMESCOPE_REFRESH=${refreshRate}
