@@ -44,8 +44,6 @@
             less
             # yt-dlp
 
-            libqalculate
-
             fastfetch
             tlrc
 

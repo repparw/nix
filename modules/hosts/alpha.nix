@@ -12,7 +12,6 @@
       den.aspects.logid
       den.aspects.nixos-services
       den.aspects.streaming
-      den.aspects.timers
       den.aspects.virtual-display
     ];
 

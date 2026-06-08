@@ -1,4 +1,7 @@
-{ cfg, ... }:
+{
+  cfg,
+  ...
+}:
 {
   containers.paperless = {
     autoStart = true;
@@ -23,6 +26,14 @@
           enable = true;
           port = 8000;
           address = "0.0.0.0";
+          exporter = {
+            enable = true;
+            onCalendar = "*-*-7,14,21,28 03:45:00";
+            settings = {
+              "no-archive" = true;
+              "no-thumbnail" = true;
+            };
+          };
           settings = {
             PAPERLESS_OCR_LANGUAGE = "spa";
             PAPERLESS_ENABLE_HTTP_REMOTE_USER = "true";

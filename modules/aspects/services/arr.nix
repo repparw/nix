@@ -83,6 +83,7 @@
 
         containers.qbittorrent = mkArrContainer {
           ipOctet = 4;
+          mediaBind = false;
           extraOptions.privateUsers = "identity";
           extraConfig.nixpkgs.overlays = [
             (final: prev: {

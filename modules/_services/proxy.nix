@@ -96,11 +96,6 @@ in
             rule = "Host(`qbit.${domain}`) && PathPrefix(`/api`)";
             service = "qbittorrent";
           };
-          changedetection = {
-            rule = "Host(`changedetection.${domain}`)";
-            service = "changedetection";
-            middlewares = [ "authelia" ];
-          };
           miniflux = {
             rule = "Host(`rss.${domain}`)";
             service = "miniflux";
@@ -109,11 +104,6 @@ in
           jellyfin = {
             rule = "Host(`jellyfin.${domain}`)";
             service = "jellyfin";
-          };
-          ntfy = {
-            rule = "Host(`ntfy.${domain}`)";
-            service = "ntfy";
-            middlewares = [ "authelia" ];
           };
           paperless = {
             rule = "Host(`paper.${domain}`)";
@@ -159,16 +149,12 @@ in
           qbittorrent.loadBalancer.servers = [
             { url = "http://${config.containers.qbittorrent.localAddress}:8080"; }
           ];
-          changedetection.loadBalancer.servers = [
-            { url = "http://${config.containers.changedetection.localAddress}:5000"; }
-          ];
           miniflux.loadBalancer.servers = [
             { url = "http://127.0.0.1:8081"; }
           ];
           jellyfin.loadBalancer.servers = [
             { url = "http://${config.containers.jellyfin.localAddress}:8096"; }
           ];
-          ntfy.loadBalancer.servers = [ { url = "http://${config.containers.ntfy.localAddress}:8090"; } ];
           paperless.loadBalancer.servers = [
             { url = "http://${config.containers.paperless.localAddress}:8000"; }
           ];
