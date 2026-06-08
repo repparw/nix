@@ -54,6 +54,9 @@
           rcloneNextcloud = {
             owner = "repparw";
           };
+          resticPassword = {
+            owner = "repparw";
+          };
           cloudflare = {
             owner = "repparw";
           };

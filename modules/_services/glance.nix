@@ -154,16 +154,6 @@ in
                             check-url = "http://10.231.136.1:8081";
                           }
                           {
-                            title = "ntfy";
-                            url = "https://ntfy.${cfg.domain}";
-                            check-url = "http://${config.containers.ntfy.localAddress}:8090";
-                          }
-                          {
-                            title = "changedetection";
-                            url = "https://changedetection.${cfg.domain}";
-                            check-url = "http://${config.containers.changedetection.localAddress}:5000";
-                          }
-                          {
                             title = "authelia";
                             url = "https://auth.${cfg.domain}";
                             check-url = "http://${config.containers.authelia.localAddress}:9091";

@@ -4,16 +4,54 @@
 }:
 {
   den.aspects.backup = {
+
     nixos =
       {
         config,
         pkgs,
+        lib,
         ...
       }:
       let
         cfg = config.modules.services;
       in
       {
+        services.restic =
+          let
+            backupDir = config.modules.services.backupDir;
+          in
+          {
+            backups.crypt = {
+              repository = "rclone:crypt:restic/alpha";
+              passwordFile = config.sops.secrets.resticPassword.path;
+              initialize = true;
+              inhibitsSleep = true;
+              paths = [
+                backupDir
+                "/home/repparw/Pictures"
+                "/home/repparw/Documents"
+                "/home/repparw/.config"
+              ];
+              exclude = [
+                "${backupDir}/.rclone-exclude"
+              ];
+              rcloneConfigFile = "/home/repparw/.config/rclone/rclone.conf";
+              extraOptions = [
+                "rclone.program=${lib.getExe pkgs.rclone}"
+              ];
+              pruneOpts = [
+                "--keep-daily 7"
+                "--keep-weekly 4"
+                "--keep-monthly 12"
+              ];
+              checkOpts = [ "--read-data-subset=5%" ];
+              timerConfig = {
+                OnCalendar = "*-*-7,14,21,28 04:00:00";
+                Persistent = true;
+              };
+            };
+          };
+
         services.rsync = {
           enable = true;
           jobs = {
@@ -23,17 +61,6 @@
                 "/home/repparw/Pictures"
                 "/home/repparw/Documents"
                 "/home/repparw/.config"
-              ];
-              settings = {
-                archive = true;
-                delete = true;
-              };
-            };
-            buptocrypt = {
-              destination = "/home/repparw/.cloud/crypt/bup";
-              sources = [
-                "/home/repparw/Pictures"
-                "/home/repparw/Documents"
               ];
               settings = {
                 archive = true;
@@ -51,25 +78,6 @@
           };
         };
 
-        systemd = {
-          services.rclone-sync-crypt = {
-            serviceConfig = {
-              Type = "oneshot";
-              User = "repparw";
-              ExecStart = ''
-                ${lib.getExe pkgs.rclone} -L sync --exclude-from ${cfg.backupDir}/.rclone-exclude ${cfg.backupDir} crypt:dlsuite
-              '';
-            };
-          };
-
-          timers.rclone-sync-crypt = {
-            wantedBy = [ "timers.target" ];
-            timerConfig = {
-              OnCalendar = "*-*-7,14,21,28 04:00:00";
-              Persistent = true;
-            };
-          };
-        };
       };
   };
 }

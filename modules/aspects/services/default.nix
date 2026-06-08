@@ -26,23 +26,7 @@
               pkgs
               ;
           })
-          (import ../../_services/changedetection.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              ;
-          })
           (import ../../_services/miniflux.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              ;
-          })
-          (import ../../_services/ntfy.nix {
             inherit
               cfg
               config
@@ -152,11 +136,9 @@
             cfg.domain
             "auth.${cfg.domain}"
             "bazarr.${cfg.domain}"
-            "changedetection.${cfg.domain}"
             "glance.${cfg.domain}"
             "home.${cfg.domain}"
             "jellyfin.${cfg.domain}"
-            "ntfy.${cfg.domain}"
             "paper.${cfg.domain}"
             "prowlarr.${cfg.domain}"
             "qbit.${cfg.domain}"
@@ -211,16 +193,6 @@
                   "nofail"
                 ];
               };
-              "${cfg.backupDir}/changedetection" = {
-                depends = [ "/" ];
-                device = "${cfg.configDir}/changedetection";
-                fsType = "none";
-                options = [
-                  "bind"
-                  "ro"
-                  "nofail"
-                ];
-              };
               "${cfg.backupDir}/miniflux" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/miniflux";
@@ -234,16 +206,6 @@
               "${cfg.backupDir}/jellyfin" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/jellyfin/data/backups";
-                fsType = "none";
-                options = [
-                  "bind"
-                  "ro"
-                  "nofail"
-                ];
-              };
-              "${cfg.backupDir}/ntfy" = {
-                depends = [ "/" ];
-                device = "${cfg.configDir}/ntfy";
                 fsType = "none";
                 options = [
                   "bind"
@@ -313,10 +275,8 @@
           systemd.services = {
             "container@bazarr".after = [ "home-containers-backup-bazarr.mount" ];
             "container@authelia".after = [ "home-containers-backup-authelia.mount" ];
-            "container@changedetection".after = [ "home-containers-backup-changedetection.mount" ];
             miniflux.after = [ "home-containers-backup-miniflux.mount" ];
             "container@jellyfin".after = [ "home-containers-backup-jellyfin.mount" ];
-            "container@ntfy".after = [ "home-containers-backup-ntfy.mount" ];
             "container@paperless".after = [ "home-containers-backup-paper.mount" ];
             "container@prowlarr".after = [ "home-containers-backup-prowlarr.mount" ];
             "container@qbittorrent".after = [ "home-containers-backup-qbittorrent.mount" ];

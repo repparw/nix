@@ -77,26 +77,8 @@
                   policy = "bypass";
                 }
                 {
-                  domain = [ "ntfy.${cfg.domain}" ];
-                  methods = [
-                    "GET"
-                    "POST"
-                    "PUT"
-                  ];
-                  resources = [
-                    "^/((seerr|changedetection)|((diun|changedetection),(diun|changedetection)))([/?].*)?$"
-                  ];
-                  policy = "bypass";
-                }
-                {
-                  domain = [ "ntfy.${cfg.domain}" ];
-                  methods = [ "POST" ];
-                  policy = "bypass";
-                }
-                {
                   domain = [
                     "bazarr.${cfg.domain}"
-                    "changedetection.${cfg.domain}"
                     "paper.${cfg.domain}"
                     "qbit.${cfg.domain}"
                     "radarr.${cfg.domain}"

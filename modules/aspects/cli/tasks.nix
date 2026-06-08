@@ -23,24 +23,39 @@
               task_summary="$*"
               datetime="tomorrow 9am"
 
-              if date -d "''${!#}" > /dev/null 2>&1; then
-                  datetime="''${!#}"
+              raw_datetime="''${!#}"
+              if date -d "$raw_datetime" > /dev/null 2>&1; then
+                  datetime="$raw_datetime"
                   task_summary="''${*:1:$#-1}"
+              fi
+
+              parsed_datetime=$(date -d "$datetime" "+%F %H:%M")
+              parsed_date=$(date -d "$datetime" "+%F")
+              today=$(date "+%F")
+
+              has_explicit_year=false
+              if [[ "$datetime" =~ [0-9]{4} ]]; then
+                  has_explicit_year=true
               fi
 
               is_midnight=$(date -d "$datetime" +%H%M)
               if [ "$is_midnight" == "0000" ]; then
                   is_day_only=true
+                  if [ "$has_explicit_year" = false ] && [[ "$datetime" =~ [[:alpha:]] ]] && [[ "$parsed_date" < "$today" ]]; then
+                      parsed_datetime=$(date -d "$datetime next year" "+%F")
+                  else
+                      parsed_datetime="$parsed_date"
+                  fi
               else
                   is_day_only=false
               fi
 
-              if todo new --priority low --due "$datetime" "$task_summary"; then
+              if todo new --priority low --due "$parsed_datetime" "$task_summary"; then
                   if [ "$is_day_only" = true ]; then
-                      formatted_time=$(date -d "$datetime" "+%A %d/%m")
+                      formatted_time=$(date -d "$parsed_datetime" "+%A %d/%m")
                       notify-send -i 'task-new' "Task created: $task_summary" "Due: $formatted_time (all day)" 2>/dev/null
                   else
-                      formatted_time=$(date -d "$datetime" "+%A %d/%m %H:%M")
+                      formatted_time=$(date -d "$parsed_datetime" "+%A %d/%m %H:%M")
                       notify-send -i 'task-new' "Task created: $task_summary" "Due: $formatted_time" 2>/dev/null
                   fi
               else

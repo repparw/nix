@@ -125,6 +125,24 @@
               };
             };
           };
+
+          t3code = {
+            enable = true;
+            userSettings = {
+              enableAssistantStreaming = true;
+            };
+            clientSettings = {
+              settings = {
+                favorites = [
+                  {
+                    provider = "codex";
+                    model = "gpt-5.5";
+                  }
+                ];
+                sidebarProjectGroupingMode = "repository";
+              };
+            };
+          };
         };
 
         systemd.user.services.codex-remote-control.Service.Restart = lib.mkForce "always";
