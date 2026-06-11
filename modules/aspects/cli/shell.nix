@@ -139,13 +139,14 @@
               sysu = "systemctl --user";
               syslist = "systemctl list-unit-files";
 
-              pcls = "podman container ls";
-              pils = "podman image ls";
-              prs = "podman restart";
-              pxcit = "podman exec -it";
-              ppu = "podman pull";
-              plo = "podman logs";
-              pps = "podman ps";
+              cl = "sudo nixos-container list";
+              crs = "sudo nixos-container restart";
+              crsh = "sudo nixos-container root-shell";
+              crun = "sudo nixos-container run";
+              clo = "journalctl -fu container@";
+              cps = "systemctl list-units 'container@*'";
+              cst = "sudo systemctl start container@";
+              csp = "sudo systemctl stop container@";
             };
           };
         };
