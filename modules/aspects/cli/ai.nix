@@ -147,6 +147,21 @@
 
         systemd.user.services.codex-remote-control.Service.Restart = lib.mkForce "always";
 
+        systemd.user.services.t3code-web = {
+          Unit = {
+            Description = "T3 Code Web Service";
+            After = [ "network.target" ];
+          };
+          Service = {
+            ExecStart = "${pkgs.t3code}/bin/t3code serve --host 0.0.0.0 --port 4097 --mode web";
+            Restart = "always";
+            RestartSec = 5;
+          };
+          Install = {
+            WantedBy = [ "default.target" ];
+          };
+        };
+
         # systemd.user.services.opencode-web = {
         #   Unit = {
         #     After = [ "graphical-session.target" ];
