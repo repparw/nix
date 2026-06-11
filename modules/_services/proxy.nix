@@ -58,11 +58,11 @@ in
             service = "hass";
             middlewares = [ "real-ip" ];
           };
-          # oc-router = {
-          #   rule = "Host(`opencode.${domain}`)";
-          #   service = "opencode";
-          #   middlewares = [ "authelia" ];
-          # };
+          t3code = {
+            rule = "Host(`code.${domain}`)";
+            service = "t3code";
+            middlewares = [ "authelia" ];
+          };
           authelia = {
             rule = "Host(`auth.${domain}`)";
             service = "authelia";
@@ -159,6 +159,7 @@ in
             { url = "http://${config.containers.paperless.localAddress}:8000"; }
           ];
           glance.loadBalancer.servers = [ { url = "http://${config.containers.glance.localAddress}:8080"; } ];
+          t3code.loadBalancer.servers = [ { url = "http://localhost:4097"; } ];
 
         };
       };
