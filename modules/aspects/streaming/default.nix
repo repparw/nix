@@ -41,6 +41,15 @@
           ''
           + builtins.readFile ./steam-sunshine.sh;
         };
+        heroic-sunshine = pkgs.writeShellApplication {
+          name = "heroic-sunshine";
+          runtimeInputs = [ pkgs.jq ];
+          text = ''
+            export GAMESCOPE_HEIGHT=${height}
+            export GAMESCOPE_REFRESH=${refreshRate}
+          ''
+          + builtins.readFile ./heroic-sunshine.sh;
+        };
         steam-sunshine-cleanup = pkgs.writeShellApplication {
           name = "steam-sunshine-cleanup";
           text = ''
@@ -48,6 +57,7 @@
             niri msg output DP-2 off
             pkill -9 gamescope || true
             pkill -9 steam || true
+            pkill -9 heroic || true
             pkill -f "systemd-inhibit.*--who=Sunshine" 2>/dev/null || true
           '';
         };
@@ -76,6 +86,17 @@
                 name = "Steam Big Picture";
                 detached = [ "${steam-sunshine}/bin/steam-sunshine" ];
                 image-path = "steam.png";
+                prep-cmd = [
+                  {
+                    do = "${niri-output-on}/bin/niri-output-on";
+                    undo = "${steam-sunshine-cleanup}/bin/steam-sunshine-cleanup";
+                  }
+                ];
+              }
+              {
+                name = "Heroic Games Launcher";
+                detached = [ "${heroic-sunshine}/bin/heroic-sunshine" ];
+                image-path = "heroic.png";
                 prep-cmd = [
                   {
                     do = "${niri-output-on}/bin/niri-output-on";
