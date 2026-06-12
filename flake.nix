@@ -39,7 +39,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-discord-krisp.url = "github:FlameFlag/nixpkgs/flameflag/push-vmswpuqmvzpt";
     nixvim = {
       url = "github:nix-community/nixvim";
       inputs = {

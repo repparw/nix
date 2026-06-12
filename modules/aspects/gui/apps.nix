@@ -4,17 +4,28 @@
   lib,
   ...
 }:
+let
+  discordKrispNixpkgs =
+    pkgs:
+    pkgs.applyPatches {
+      name = "nixpkgs-discord-krisp-patched";
+      src = inputs.nixpkgs;
+      patches = [
+        (pkgs.fetchpatch {
+          url = "https://github.com/NixOS/nixpkgs/pull/506089.patch";
+          hash = "sha256-2aIrsnN9u/fXSgagAqKtzWHR4R+DeWrQ9vCC5bM3ndI=";
+        })
+      ];
+    };
+in
 {
-  flake-file.inputs.nixpkgs-discord-krisp.url = "github:FlameFlag/nixpkgs/flameflag/push-vmswpuqmvzpt";
-  # https://github.com/NixOS/nixpkgs/pull/506089
-
   den.aspects.gui.provides.guiApps = {
     nixos = {
       nixpkgs.overlays = [
         (final: prev: {
           discord =
             (final.callPackage (
-              inputs.nixpkgs-discord-krisp + "/pkgs/applications/networking/instant-messengers/discord"
+              discordKrispNixpkgs final + "/pkgs/applications/networking/instant-messengers/discord"
             ) { }).discord.override
               {
                 withKrisp = true;
