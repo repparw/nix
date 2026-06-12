@@ -85,18 +85,22 @@
           ipOctet = 4;
           mediaBind = false;
           extraOptions.privateUsers = "identity";
-          extraConfig.nixpkgs.overlays = [
-            (final: prev: {
-              qbittorrent-nox = prev.qbittorrent-nox.overrideAttrs (old: {
-                patches = (old.patches or [ ]) ++ [
-                  (prev.fetchpatch {
-                    url = "https://patch-diff.githubusercontent.com/raw/qbittorrent/qBittorrent/pull/24055.patch";
-                    hash = "sha256-rhnnxa6pmXSs3rt94FrAObbtH+vYOb+kFvOTcwmbHl8=";
-                  })
-                ];
-              });
-            })
-          ];
+          extraConfig = {
+            nixpkgs.overlays = [
+              (final: prev: {
+                qbittorrent-nox = prev.qbittorrent-nox.overrideAttrs (old: {
+                  patches = (old.patches or [ ]) ++ [
+                    (prev.fetchpatch {
+                      url = "https://patch-diff.githubusercontent.com/raw/qbittorrent/qBittorrent/pull/24055.patch";
+                      hash = "sha256-rhnnxa6pmXSs3rt94FrAObbtH+vYOb+kFvOTcwmbHl8=";
+                    })
+                  ];
+                });
+              })
+            ];
+            services.qbittorrent.group = "media";
+            users.groups.media.gid = 900;
+          };
           serviceConfig.qbittorrent = {
             enable = true;
             openFirewall = true;
@@ -137,12 +141,16 @@
           };
           extraConfig = {
             environment.systemPackages = [ pkgs.striptracks ];
-            systemd.tmpfiles.rules = [ ];
-            systemd.services.radarr.serviceConfig.PrivateUsers = lib.mkForce false;
+            services.radarr.group = "media";
+            users.groups.media.gid = 900;
           };
           extraBindMounts = {
             "/config" = {
               hostPath = "${cfg.configDir}/radarr";
+              isReadOnly = false;
+            };
+            "/data/torrents" = {
+              hostPath = "${cfg.rootDir}/torrents";
               isReadOnly = false;
             };
           };
@@ -159,12 +167,16 @@
           };
           extraConfig = {
             environment.systemPackages = [ pkgs.striptracks ];
-            systemd.tmpfiles.rules = [ ];
-            systemd.services.sonarr.serviceConfig.PrivateUsers = lib.mkForce false;
+            services.sonarr.group = "media";
+            users.groups.media.gid = 900;
           };
           extraBindMounts = {
             "/config" = {
               hostPath = "${cfg.configDir}/sonarr";
+              isReadOnly = false;
+            };
+            "/data/torrents" = {
+              hostPath = "${cfg.rootDir}/torrents";
               isReadOnly = false;
             };
           };
