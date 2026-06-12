@@ -6,6 +6,11 @@
   ...
 }:
 {
+  flake-file.inputs.mattpocock-skills = {
+    url = "github:mattpocock/skills";
+    flake = false;
+  };
+
   den.aspects.ai = {
     includes = [ ];
 
@@ -15,26 +20,31 @@
         pkgs,
         ...
       }:
-      {
-        imports = [ inputs.codex-desktop-linux.homeManagerModules.default ];
+      let
+        skillFiles = lib.filter (
+          path:
+          let
+            pathString = toString path;
+          in
+          baseNameOf pathString == "SKILL.md"
+          && !(lib.hasInfix "/deprecated/" pathString)
+          && !(lib.hasInfix "/node_modules/" pathString)
+        ) (lib.filesystem.listFilesRecursive (inputs.mattpocock-skills + "/skills"));
 
+        mattPocockSkills = lib.listToAttrs (
+          map (skillFile: {
+            name = builtins.unsafeDiscardStringContext (baseNameOf (dirOf (toString skillFile)));
+            value.source = dirOf (toString skillFile);
+          }) skillFiles
+        );
+      in
+      {
         home = {
           packages = [ pkgs.codex ];
           sessionVariables.CODEX_CLI_PATH = "${pkgs.codex}/bin/codex";
         };
 
         programs = {
-          codexDesktopLinux = {
-            enable = true;
-            computerUseUi.enable = true;
-            remoteMobileControl.enable = true;
-            remoteControl = {
-              enable = true;
-              codexHome = "${config.xdg.configHome}/codex";
-              package = pkgs.codex;
-            };
-          };
-
           codex = {
             enable = true;
             settings = {
@@ -130,6 +140,7 @@
             enable = true;
             userSettings = {
               enableAssistantStreaming = true;
+              providers.opencode.serverUrl = "https://code.repparw.com";
             };
             clientSettings = {
               settings = {
@@ -145,7 +156,10 @@
           };
         };
 
-        systemd.user.services.codex-remote-control.Service.Restart = lib.mkForce "always";
+        xdg.configFile = lib.mapAttrs' (name: value: {
+          name = "codex/skills/${name}";
+          inherit value;
+        }) mattPocockSkills;
 
         systemd.user.services.t3code-web = {
           Unit = {

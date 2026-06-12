@@ -117,14 +117,14 @@ binds {
 
   Mod+A hotkey-overlay-title="Anki" {spawn "anki" ;} 
   Mod+B hotkey-overlay-title="Bluetooth Toggle" {spawn "bttoggle" ;}
-  Mod+C hotkey-overlay-title="WhatsApp" {spawn "whatsapp-electron";}
+  Mod+C hotkey-overlay-title="WhatsApp" {spawn "ndrop" "-F" "-c" "chrome-hnpfjngllnobngcgfapefoaidbinmjnm-Default" "chromium" "--password-store=basic" "--profile-directory=Default" "--app-id=hnpfjngllnobngcgfapefoaidbinmjnm";}
   Mod+D hotkey-overlay-title="Dictate" {spawn "dictate" ;}
   Mod+E hotkey-overlay-title="File Manager (Terminal)" {spawn "foot" "--app-id" "filemanager" "fish" "-ic" "yazi" ;}
   Mod+Shift+E hotkey-overlay-title="File Manager (GUI)" {spawn "nautilus" ;}
   Mod+F hotkey-overlay-title="Fullscreen" {maximize-window-to-edges ;}
   Mod+Alt+F hotkey-overlay-title="Toggle Floating" { toggle-window-floating ;}
   Mod+Ctrl+F hotkey-overlay-title="Toggle Focus Floating" { switch-focus-between-floating-and-tiling ;}
-  Mod+G hotkey-overlay-title="AI Agent" {spawn "codex-desktop-focus";} 
+  Mod+G hotkey-overlay-title="T3 Code" {spawn "ndrop" "-F" "-c" "t3code" "t3code-desktop";}
   Mod+M hotkey-overlay-title="Spotify" {spawn "foot" "--app-id" "spotify" "spotify_player" ;}
   Mod+N hotkey-overlay-title="Notes (Obsidian)" {spawn "obsidian" ;}
   Mod+P hotkey-overlay-title="Pomodoro" {spawn "webapp" "https://app.solidtime.io" ;}
@@ -132,7 +132,7 @@ binds {
   Mod+T hotkey-overlay-title="Top" {spawn "foot" "fish" "-ic" "top" ;}
   Mod+V hotkey-overlay-title="Clipboard" {spawn "vicinae" "vicinae://launch/clipboard/history" ;}
   Mod+X hotkey-overlay-title="todoman" {spawn "foot" "fish" "-ic" "todo" ;}
-  Mod+Y hotkey-overlay-title="YouTube" {spawn "youtube" ;}
+  Mod+Y hotkey-overlay-title="YouTube" {spawn "ndrop" "-F" "-c" "chrome-agimnkijcaahngcdmfeangaknmldooml-Default" "chromium" "--password-store=basic" "--profile-directory=Default" "--app-id=agimnkijcaahngcdmfeangaknmldooml" ;}
   Mod+Z hotkey-overlay-title="MPV Clipboard" {spawn "mpvclip" ;}
 
   // macropad

@@ -12,7 +12,6 @@
           wl-clipboard
           nautilus
           baobab
-          whatsapp-electron
           playerctl
 
           opencode-desktop
