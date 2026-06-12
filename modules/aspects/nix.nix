@@ -1,6 +1,6 @@
 _: {
   den.aspects.nix = {
-    nixos = _: {
+    nixos = { config, ... }: {
       nix = {
         settings = {
           extra-substituters = [
@@ -19,6 +19,10 @@ _: {
           experimental-features = "nix-command flakes";
           commit-lock-file-summary = "flake.lock: Update";
         };
+
+        extraOptions = ''
+          !include ${config.sops.secrets.accessTokens.path}
+        '';
 
         optimise.automatic = true;
       };
