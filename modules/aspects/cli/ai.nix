@@ -48,8 +48,6 @@
           codex = {
             enable = true;
             settings = {
-              model = "gpt-5.5";
-              model_reasoning_effort = "low";
               sandbox_mode = "danger-full-access";
               approval_policy = "never";
               personality = "pragmatic";
