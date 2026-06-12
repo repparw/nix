@@ -5,6 +5,9 @@
   lib,
   ...
 }:
+let
+  openInFirefoxExtensionId = "lmeddoobegbaiopohmpmmobpnpjifpii";
+in
 {
   flake-file.inputs.firefox-addons = {
     url = "github:petrkozorezov/firefox-addons-nix";
@@ -14,6 +17,20 @@
 
   den.aspects.gui.provides.browser = {
     nixos = {
+      environment.etc."chromium/policies/managed/open-in-firefox.json".text = builtins.toJSON {
+        "3rdparty".extensions.${openInFirefoxExtensionId} = {
+          faqs = false;
+          hosts = [
+            "app.solidtime.io"
+            "music.youtube.com"
+            "web.whatsapp.com"
+            "www.youtube.com"
+            "youtube.com"
+          ];
+          reverse = true;
+        };
+      };
+
       nixpkgs.overlays = [
         inputs.firefox-addons.overlays.default
         (final: prev: {
@@ -37,6 +54,66 @@
         lib,
         ...
       }:
+      let
+        chromiumWithoutMimeApps =
+          chromium:
+          (pkgs.symlinkJoin {
+            name = "${chromium.name}-without-mimeapps";
+            paths = [ chromium ];
+            postBuild = ''
+              rm -rf "$out/share/applications"
+              install -Dm644 ${chromium}/share/applications/chromium-browser.desktop \
+                "$out/share/applications/chromium-browser.desktop"
+              sed -i '/^MimeType=/d' "$out/share/applications/chromium-browser.desktop"
+            '';
+            inherit (chromium) meta;
+          })
+          // {
+            override = args: chromiumWithoutMimeApps (chromium.override args);
+          };
+
+        openInFirefoxNativeClient = pkgs.stdenvNoCC.mkDerivation {
+          pname = "open-in-firefox-native-client";
+          version = "1.0.8";
+
+          src = pkgs.fetchFromGitHub {
+            owner = "andy-portmen";
+            repo = "native-client";
+            rev = "ddcf08fd892319bb5013f46929669273234685ef";
+            hash = "sha256-/Zr5FSfZ5Sh1kE/x0wF0Uljg0mnE0QkO6etgopaIXmo=";
+          };
+
+          dontBuild = true;
+
+          installPhase = ''
+            runHook preInstall
+
+            install -Dm644 host.js "$out/lib/com.add0n.node/host.js"
+            install -Dm644 messaging.js "$out/lib/com.add0n.node/messaging.js"
+
+            mkdir -p "$out/bin" "$out/etc/chromium/native-messaging-hosts"
+            cat > "$out/bin/com.add0n.node" <<EOF
+            #!${pkgs.runtimeShell}
+            exec ${lib.getExe pkgs.nodejs} "$out/lib/com.add0n.node/host.js"
+            EOF
+            chmod +x "$out/bin/com.add0n.node"
+
+            cat > "$out/etc/chromium/native-messaging-hosts/com.add0n.node.json" <<EOF
+            {
+              "name": "com.add0n.node",
+              "description": "Node Host for Native Messaging",
+              "path": "$out/bin/com.add0n.node",
+              "type": "stdio",
+              "allowed_origins": [
+                "chrome-extension://${openInFirefoxExtensionId}/"
+              ]
+            }
+            EOF
+
+            runHook postInstall
+          '';
+        };
+      in
       {
         home.file.".config/tridactyl/tridactylrc".text = ''
           " General Settings
@@ -245,8 +322,11 @@
 
           chromium = {
             enable = true;
+            package = chromiumWithoutMimeApps pkgs.chromium;
             commandLineArgs = [ "--password-store=basic" ];
+            nativeMessagingHosts = [ openInFirefoxNativeClient ];
             extensions = [
+              { id = openInFirefoxExtensionId; }
               { id = "ddkjiahejlhfcafbddmgiahcphecmpfh"; }
               { id = "mnjggcdmjocbbbhaepdhchncahnbgone"; }
               { id = "enamippconapkdmgfgjchkhakpfinmaj"; }

@@ -75,28 +75,7 @@ in
 
         gtk.enable = true;
 
-        xdg.mimeApps = {
-          enable = true;
-          associations.removed = {
-            "application/pdf" = [ "chromium-browser.desktop" ];
-          };
-          defaultApplications = {
-            "inode/directory" = "org.gnome.Nautilus.desktop";
-            "application/pdf" = [
-              "org.pwmt.zathura.desktop"
-              "firefox.desktop"
-            ];
-            "image/jpeg" = "imv-dir.desktop";
-            "image/png" = "imv-dir.desktop";
-            "image/gif" = "imv-dir.desktop";
-            "text/html" = "firefox.desktop";
-            "x-scheme-handler/http" = "firefox.desktop";
-            "x-scheme-handler/https" = "firefox.desktop";
-            "x-scheme-handler/about" = "firefox.desktop";
-            "x-scheme-handler/unknown" = "firefox.desktop";
-            "x-scheme-handler/mailto" = "firefox.desktop";
-          };
-        };
+        xdg.mimeApps.enable = true;
 
         programs = {
           foot = {
