@@ -123,6 +123,8 @@
             '';
           };
 
+          users.groups.media.gid = 900;
+
           services.resolved.settings.Resolve.DNSStubListenerExtra = "0.0.0.0";
 
           nixpkgs.overlays = [
@@ -136,6 +138,7 @@
             cfg.domain
             "auth.${cfg.domain}"
             "bazarr.${cfg.domain}"
+            "code.${cfg.domain}"
             "glance.${cfg.domain}"
             "home.${cfg.domain}"
             "jellyfin.${cfg.domain}"
@@ -270,6 +273,7 @@
             "d ${cfg.mediaPortalDir} 0755 root root - -"
             "d ${cfg.mediaPortalDir}/hdd 0755 root root - -"
             "d ${cfg.mediaPortalDir}/seagate 0755 root root - -"
+            "d ${cfg.rootDir}/torrents 2770 root media - -"
           ];
 
           systemd.services = {
