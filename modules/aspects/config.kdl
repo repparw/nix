@@ -41,6 +41,7 @@ output "DP-2" {
 }
 
 layout {
+  always-center-single-column
   center-focused-column "never"
   empty-workspace-above-first
 
