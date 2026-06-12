@@ -68,29 +68,6 @@
         "type": "github"
       }
     },
-    "codex-desktop-linux": {
-      "inputs": {
-        "flake-utils": [
-          "flake-utils"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1780723772,
-        "narHash": "sha256-m6vbDdgEUUkENUIGsH5AG61RuMys5OVVFxd0Pi90AuQ=",
-        "owner": "ilysenko",
-        "repo": "codex-desktop-linux",
-        "rev": "44798b3400f68a0080deaad2eb81288140617ae2",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ilysenko",
-        "repo": "codex-desktop-linux",
-        "type": "github"
-      }
-    },
     "den": {
       "locked": {
         "lastModified": 1780689157,
@@ -327,6 +304,22 @@
         "type": "github"
       }
     },
+    "mattpocock-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781103704,
+        "narHash": "sha256-NGRKdnHSBKoR48zGotmJ3zGXnQ58ogudv8T4Va/2DSY=",
+        "owner": "mattpocock",
+        "repo": "skills",
+        "rev": "694fa30311e02c2639942308513555e61ee84a6f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mattpocock",
+        "repo": "skills",
+        "type": "github"
+      }
+    },
     "nix-index-database": {
       "inputs": {
         "nixpkgs": [
@@ -458,7 +451,6 @@
     },
     "root": {
       "inputs": {
-        "codex-desktop-linux": "codex-desktop-linux",
         "den": "den",
         "firefox-addons": "firefox-addons",
         "flake-file": "flake-file",
@@ -467,6 +459,7 @@
         "git-hooks": "git-hooks",
         "home-manager": "home-manager",
         "import-tree": "import-tree",
+        "mattpocock-skills": "mattpocock-skills",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs",
         "nixpkgs-discord-krisp": "nixpkgs-discord-krisp",

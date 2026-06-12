@@ -1,12 +1,20 @@
 {
   den,
-  lib,
-  pkgs,
   ...
 }:
 {
   den.aspects.scripts = {
     includes = [ ];
+
+    nixos =
+      { ... }:
+      {
+        nixpkgs.overlays = [
+          (final: prev: {
+            ndrop = final.callPackage ../../_packages/ndrop.nix { };
+          })
+        ];
+      };
 
     homeManager =
       {
@@ -54,13 +62,7 @@
             '';
           })
 
-          (writeShellApplication {
-            name = "youtube";
-            runtimeInputs = [ chromium ];
-            text = ''
-              exec chromium --password-store=basic --profile-directory=Default --app-id=agimnkijcaahngcdmfeangaknmldooml
-            '';
-          })
+          ndrop
 
           (writeShellApplication {
             name = "dictate";
@@ -165,45 +167,6 @@
           })
 
           (writeShellApplication {
-            name = "codex-desktop-focus";
-            runtimeInputs = [
-              coreutils
-              jq
-              niri
-            ];
-            text = ''
-              window_id="$(
-                niri msg --json windows \
-                  | jq -r '[.[] | select(.app_id == "codex-desktop")] | max_by(.focus_timestamp.secs).id // empty'
-              )"
-
-              if [ -n "$window_id" ]; then
-                niri msg action focus-window --id "$window_id"
-              else
-                for proc in /proc/[0-9]*/cmdline; do
-                  [ -r "$proc" ] || continue
-                  cmdline="$(tr '\0' ' ' < "$proc" 2>/dev/null || true)"
-                  case "$cmdline" in
-                    *"/opt/codex-desktop/electron "*)
-                      case "$cmdline" in
-                        *" --type="*) ;;
-                        *)
-                          pid="''${proc#/proc/}"
-                          pid="''${pid%/cmdline}"
-                          kill "$pid" 2>/dev/null || true
-                          ;;
-                      esac
-                      ;;
-                  esac
-                done
-                sleep 0.2
-
-                exec codex-desktop
-              fi
-            '';
-          })
-
-          (writeShellApplication {
             name = "bttoggle";
             runtimeInputs = [ bluez ];
             text = ''
@@ -304,25 +267,6 @@
             '';
           })
 
-          (stdenvNoCC.mkDerivation {
-            name = "ndrop";
-            src = fetchurl {
-              url = "https://raw.githubusercontent.com/Schweber/ndrop/main/ndrop";
-              hash = "sha256-tzEUaq11x6oVFFIqjZccSkuqMIXRhqYi9Zpx172GiWg=";
-            };
-            dontUnpack = true;
-            nativeBuildInputs = [ makeWrapper ];
-            installPhase = ''
-              install -Dm755 $src $out/bin/ndrop
-              wrapProgram $out/bin/ndrop --prefix PATH : ${
-                lib.makeBinPath [
-                  niri
-                  jq
-                  libnotify
-                ]
-              }
-            '';
-          })
         ];
       };
   };
