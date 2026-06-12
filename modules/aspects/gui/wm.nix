@@ -7,6 +7,103 @@
   den.aspects.gui.provides.wm = {
     homeManager =
       { config, pkgs, ... }:
+      let
+        todoExtension = pkgs.runCommandLocal "vicinae-todo-extension" { } ''
+          mkdir -p "$out"
+          cp ${
+            pkgs.writeText "vicinae-todo-package.json" (
+              builtins.toJSON {
+                "$schema" =
+                  "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json";
+                name = "todo";
+                title = "Todo";
+                description = "Create tasks with the local t wrapper";
+                categories = [ "Productivity" ];
+                license = "MIT";
+                author = "repparw";
+                dependencies."@vicinae/api" = "0.16.8";
+                commands = [
+                  {
+                    name = "add";
+                    title = "Add Todo";
+                    description = "Create a todo item";
+                    mode = "no-view";
+                    arguments = [
+                      {
+                        name = "task";
+                        placeholder = "Task";
+                        type = "text";
+                        required = true;
+                      }
+                      {
+                        name = "due";
+                        placeholder = "Due, e.g. tomorrow 9am";
+                        type = "text";
+                        required = false;
+                      }
+                    ];
+                  }
+                ];
+              }
+            )
+          } "$out/package.json"
+          cp ${pkgs.writeText "vicinae-todo-add.js" ''
+            "use strict";
+
+            const { closeMainWindow, showToast, Toast } = require("@vicinae/api");
+            const { execFile } = require("node:child_process");
+            const { promisify } = require("node:util");
+
+            const execFileAsync = promisify(execFile);
+            const todo = "${config.home.profileDirectory}/bin/t";
+
+            function getArguments(props) {
+              const args = props?.arguments ?? {};
+              return {
+                task: String(args.task ?? "").trim(),
+                due: String(args.due ?? "").trim(),
+              };
+            }
+
+            async function main(props) {
+              const { task, due } = getArguments(props);
+
+              if (!task) {
+                await showToast({
+                  style: Toast.Style.Failure,
+                  title: "Task required",
+                  message: "Enter a task to create.",
+                });
+                return;
+              }
+
+              try {
+                await execFileAsync(todo, due ? [task, due] : [task]);
+                await showToast({
+                  style: Toast.Style.Success,
+                  title: "Task created",
+                  message: due ? task + " - " + due : task,
+                });
+                await closeMainWindow();
+              } catch (error) {
+                const message =
+                  error?.stderr?.trim() ||
+                  error?.stdout?.trim() ||
+                  error?.message ||
+                  String(error);
+
+                await showToast({
+                  style: Toast.Style.Failure,
+                  title: "Failed to create task",
+                  message,
+                });
+              }
+            }
+
+            module.exports = { default: main };
+          ''} "$out/add.js"
+        '';
+      in
       {
         home.packages = with pkgs; [
           wl-clipboard
@@ -56,6 +153,7 @@
           vicinae = {
             enable = true;
             systemd.enable = true;
+            extensions = [ todoExtension ];
           };
 
           ashell = {
@@ -94,6 +192,8 @@
             };
           };
         };
+
+        xdg.configFile."vicinae/settings.json".enable = lib.mkForce false;
       };
   };
 }
