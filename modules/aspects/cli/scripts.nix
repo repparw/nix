@@ -15,6 +15,13 @@
         config,
         ...
       }:
+      let
+        whisperSmallModel = pkgs.fetchurl {
+          name = "ggml-small.bin";
+          url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
+          sha256 = "0ywqxbziyp2bv72riyjpw4brk9v46d4cfbjfwqvvjrrq0srakqqv";
+        };
+      in
       {
         home.packages = with pkgs; [
 
@@ -52,6 +59,108 @@
             runtimeInputs = [ chromium ];
             text = ''
               exec chromium --password-store=basic --profile-directory=Default --app-id=agimnkijcaahngcdmfeangaknmldooml
+            '';
+          })
+
+          (writeShellApplication {
+            name = "dictate";
+            runtimeInputs = [
+              coreutils
+              gnugrep
+              gnused
+              libnotify
+              pipewire
+              whisper-cpp
+              wl-clipboard
+              wtype
+            ];
+            text = ''
+              set -euo pipefail
+
+              runtime_dir="''${XDG_RUNTIME_DIR:-/tmp}"
+              state_dir="$runtime_dir/dictate"
+              state_file="$state_dir/state"
+              audio_file="$state_dir/input.wav"
+              transcript_base="$state_dir/transcript"
+              transcript_file="$transcript_base.txt"
+              model="${whisperSmallModel}"
+
+              mkdir -p "$state_dir"
+
+              cleanup_state() {
+                rm -f "$state_file"
+              }
+
+              normalize_text() {
+                tr '\n' ' ' \
+                  | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//'
+              }
+
+              if [ -f "$state_file" ]; then
+                read -r recorder_pid < "$state_file"
+
+                if kill -0 "$recorder_pid" 2>/dev/null; then
+                  notify-send -t 1200 "Dictation" "Transcribing..."
+                  kill -INT "$recorder_pid" 2>/dev/null || true
+
+                  for _ in $(seq 1 50); do
+                    kill -0 "$recorder_pid" 2>/dev/null || break
+                    sleep 0.1
+                  done
+
+                  if kill -0 "$recorder_pid" 2>/dev/null; then
+                    kill "$recorder_pid" 2>/dev/null || true
+                  fi
+                fi
+
+                cleanup_state
+
+                if [ ! -s "$audio_file" ]; then
+                  notify-send -u critical "Dictation" "No audio captured"
+                  exit 1
+                fi
+
+                rm -f "$transcript_file"
+                whisper-cli \
+                  --model "$model" \
+                  --file "$audio_file" \
+                  --language auto \
+                  --no-timestamps \
+                  --output-txt \
+                  --output-file "$transcript_base" \
+                  --no-prints
+
+                if [ ! -s "$transcript_file" ]; then
+                  notify-send -u critical "Dictation" "No speech detected"
+                  exit 1
+                fi
+
+                text="$(normalize_text < "$transcript_file")"
+
+                if [ -z "$text" ]; then
+                  notify-send -u critical "Dictation" "No speech detected"
+                  exit 1
+                fi
+
+                printf '%s' "$text" | wl-copy
+                wtype "$text"
+                notify-send -t 1200 "Dictation" "Inserted text"
+                exit 0
+              fi
+
+              rm -f "$audio_file" "$transcript_file"
+              notify-send -t 1200 "Dictation" "Recording..."
+
+              pw-cat \
+                --record \
+                --media-role Communication \
+                --rate 16000 \
+                --channels 1 \
+                --format s16 \
+                --container wav \
+                "$audio_file" &
+
+              echo "$!" > "$state_file"
             '';
           })
 
