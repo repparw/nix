@@ -1,15 +1,9 @@
 {
   den,
-  inputs,
   lib,
   ...
 }:
 {
-  flake-file.inputs.hermes-agent = {
-    url = "github:NousResearch/hermes-agent";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-
   den.aspects.nixos-services = {
     includes = with den.aspects.nixos-services._; [
       archisteamfarm
@@ -29,15 +23,6 @@
       in
       {
         imports = [
-          # (import ../../_services/hermes.nix {
-          #   inherit
-          #     cfg
-          #     config
-          #     inputs
-          #     lib
-          #     pkgs
-          #     ;
-          # })
           (import ../../_services/authelia.nix {
             inherit
               cfg
