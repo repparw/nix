@@ -135,8 +135,14 @@ in
           qbit-basic-auth.headers.customRequestHeaders.Authorization = "{{ env `QBIT_AUTH` }}";
         };
         services = {
-          hass.loadBalancer.servers = [ { url = "http://192.168.0.4"; } ];
-          opencode.loadBalancer.servers = [ { url = "http://localhost:4096"; } ];
+          hass.loadBalancer = {
+            servers = [ { url = "http://192.168.0.4"; } ];
+            healthCheck = {
+              path = "/";
+              interval = "10s";
+              timeout = "3s";
+            };
+          };
           authelia.loadBalancer.servers = [
             { url = "http://${config.containers.authelia.localAddress}:9091"; }
           ];

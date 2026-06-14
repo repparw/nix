@@ -74,12 +74,35 @@
             group = "ddclient";
             mode = "0400";
           };
-        }
-        // (lib.optionalAttrs (config.services.archisteamfarm.enable or false) {
-          steamPassword = {
-            owner = "archisteamfarm";
+          "authelia/jwtSecret" = {
+            owner = "root";
+            mode = "0400";
           };
-        });
+          "authelia/oidcHmacSecret" = {
+            owner = "root";
+            mode = "0400";
+          };
+          "authelia/oidcJwksKey" = {
+            owner = "root";
+            mode = "0400";
+          };
+          "authelia/sessionSecret" = {
+            owner = "root";
+            mode = "0400";
+          };
+          "authelia/smtpPassword" = {
+            owner = "root";
+            mode = "0400";
+          };
+          "authelia/storageEncryptionKey" = {
+            owner = "root";
+            mode = "0400";
+          };
+          steamPassword = {
+            owner = "root";
+            mode = "0400";
+          };
+        };
 
       };
   };
