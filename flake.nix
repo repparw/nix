@@ -3,6 +3,13 @@
 {
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules);
 
+  nixConfig = {
+    extra-substituters = [ "https://helium-nix.cachix.org" ];
+    extra-trusted-public-keys = [
+      "helium-nix.cachix.org-1:a8YPjt9O4GPyX0u3gjg/aWpb14teU9aRiSG/MOaSFgw="
+    ];
+  };
+
   inputs = {
     den.url = "github:denful/den";
     firefox-addons = {
@@ -23,6 +30,10 @@
     };
     git-hooks = {
       url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    helium-nix = {
+      url = "github:penal-colony/helium-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
