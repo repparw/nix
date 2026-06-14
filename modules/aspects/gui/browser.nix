@@ -15,9 +15,25 @@ in
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
+  flake-file.inputs.helium-nix = {
+    url = "github:penal-colony/helium-nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
+  flake-file.nixConfig = {
+    extra-substituters = [ "https://helium-nix.cachix.org" ];
+    extra-trusted-public-keys = [
+      "helium-nix.cachix.org-1:a8YPjt9O4GPyX0u3gjg/aWpb14teU9aRiSG/MOaSFgw="
+    ];
+  };
+
   den.aspects.gui.provides.browser = {
     nixos = {
+      imports = [ inputs.helium-nix.nixosModules.helium ];
+
       environment.etc."chromium/policies/managed/open-in-firefox.json".text = builtins.toJSON {
+        PasswordManagerEnabled = false;
+
         "3rdparty".extensions.${openInFirefoxExtensionId} = {
           faqs = false;
           hosts = [
@@ -115,6 +131,8 @@ in
         };
       in
       {
+        imports = [ inputs.helium-nix.homeManagerModules.helium ];
+
         home.file.".config/tridactyl/tridactylrc".text = ''
           " General Settings
           set configversion 2.0
@@ -175,6 +193,9 @@ in
               NoDefaultBookmarks = true;
               OverrideFirstRunPage = "";
               OverridePostUpdatePage = "";
+              PasswordManagerEnabled = false;
+              OfferToSaveLogins = false;
+              OfferToSaveLoginsDefault = false;
               Preferences = {
                 "browser.translations.automaticallyPopup" = false;
                 "datareporting.policy.firstRunURL" = "";
@@ -323,7 +344,6 @@ in
           chromium = {
             enable = true;
             package = chromiumWithoutMimeApps pkgs.chromium;
-            commandLineArgs = [ "--password-store=basic" ];
             nativeMessagingHosts = [ openInFirefoxNativeClient ];
             extensions = [
               { id = openInFirefoxExtensionId; }
@@ -333,6 +353,15 @@ in
               { id = "bnomihfieiccainjcjblhegjgglakjdd"; }
               { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; }
             ];
+          };
+
+          helium = {
+            enable = true;
+            defaultBrowser = false;
+            extraPolicies = {
+              BrowserSignin = 0;
+              PasswordManagerEnabled = false;
+            };
           };
         };
       };

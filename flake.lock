@@ -269,6 +269,26 @@
         "type": "github"
       }
     },
+    "helium-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781347090,
+        "narHash": "sha256-5XcPT6Fx5vKALX2yeCND3hb7M1IwsjGBbRNuLBb+8mo=",
+        "owner": "penal-colony",
+        "repo": "helium-nix",
+        "rev": "32e486390ffd255ab1130d8bcab55a0705a11c1f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "penal-colony",
+        "repo": "helium-nix",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -441,6 +461,7 @@
         "flake-parts": "flake-parts",
         "flake-utils": "flake-utils",
         "git-hooks": "git-hooks",
+        "helium-nix": "helium-nix",
         "home-manager": "home-manager",
         "import-tree": "import-tree",
         "mattpocock-skills": "mattpocock-skills",
