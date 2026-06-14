@@ -48,6 +48,75 @@
           // extraOptions;
       in
       {
+        networking.hosts."192.168.0.18" = [
+          "bazarr.${cfg.domain}"
+          "prowlarr.${cfg.domain}"
+          "qbit.${cfg.domain}"
+          "radarr.${cfg.domain}"
+          "sonarr.${cfg.domain}"
+        ];
+
+        fileSystems = {
+          "${cfg.backupDir}/bazarr" = {
+            depends = [ "/" ];
+            device = "${cfg.configDir}/bazarr/backup";
+            fsType = "none";
+            options = [
+              "bind"
+              "ro"
+              "nofail"
+            ];
+          };
+          "${cfg.backupDir}/prowlarr" = {
+            depends = [ "/" ];
+            device = "${cfg.configDir}/prowlarr/Backups";
+            fsType = "none";
+            options = [
+              "bind"
+              "ro"
+              "nofail"
+            ];
+          };
+          "${cfg.backupDir}/qbittorrent" = {
+            depends = [ "/" ];
+            device = "${cfg.configDir}/qbittorrent";
+            fsType = "none";
+            options = [
+              "bind"
+              "ro"
+              "nofail"
+            ];
+          };
+          "${cfg.backupDir}/radarr" = {
+            depends = [ "/" ];
+            device = "${cfg.configDir}/radarr/Backups";
+            fsType = "none";
+            options = [
+              "bind"
+              "ro"
+              "nofail"
+            ];
+          };
+          "${cfg.backupDir}/sonarr" = {
+            depends = [ "/" ];
+            device = "${cfg.configDir}/sonarr/Backups";
+            fsType = "none";
+            options = [
+              "bind"
+              "ro"
+              "nofail"
+            ];
+          };
+        };
+
+        systemd.services = {
+          "container@bazarr".after = [ "home-containers-backup-bazarr.mount" ];
+          "container@prowlarr".after = [ "home-containers-backup-prowlarr.mount" ];
+          "container@qbittorrent".after = [ "home-containers-backup-qbittorrent.mount" ];
+          "container@radarr".after = [ "home-containers-backup-radarr.mount" ];
+          "container@sonarr".after = [ "home-containers-backup-sonarr.mount" ];
+        };
+
         containers.bazarr = mkArrContainer {
           ipOctet = 2;
           extraOptions.privateUsers = "identity";

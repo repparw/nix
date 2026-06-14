@@ -25,6 +25,23 @@ let
   };
 in
 {
+  networking.hosts."192.168.0.18" = [
+    "rss.${cfg.domain}"
+  ];
+
+  fileSystems."${cfg.backupDir}/miniflux" = {
+    depends = [ "/" ];
+    device = "${cfg.configDir}/miniflux";
+    fsType = "none";
+    options = [
+      "bind"
+      "ro"
+      "nofail"
+    ];
+  };
+
+  systemd.services.miniflux.after = [ "home-containers-backup-miniflux.mount" ];
+
   services.miniflux = {
     enable = true;
     config = {

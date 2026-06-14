@@ -30,19 +30,6 @@ in
           enable = true;
           package = hermesPackage;
           addToSystemPackages = true;
-
-          settings = {
-            model.default = "anthropic/claude-sonnet-4";
-            toolsets = [ "all" ];
-            memory = {
-              memory_enabled = true;
-              user_profile_enabled = true;
-            };
-            terminal = {
-              backend = "local";
-              timeout = 180;
-            };
-          };
         };
 
         networking.useHostResolvConf = false;

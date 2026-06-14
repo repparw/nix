@@ -45,65 +45,10 @@
         };
 
         programs = {
-          codex = {
-            enable = true;
-            settings = {
-              sandbox_mode = "danger-full-access";
-              approval_policy = "never";
-              personality = "pragmatic";
-
-              plugins = {
-                "browser@openai-bundled".enabled = true;
-                "computer-use@openai-bundled".enabled = true;
-                "github@openai-curated".enabled = true;
-              };
-
-              desktop = {
-                keepRemoteControlAwakeWhilePluggedIn = false;
-                "codex-linux-system-tray-enabled" = false;
-                "codex-linux-warm-start-enabled" = false;
-                appearanceDarkCodeThemeId = "tokyo-night";
-                sansFontSize = 15;
-                codeFontSize = 13;
-                appearanceDarkChromeTheme = {
-                  accent = "#3d59a1";
-                  contrast = 60;
-                  ink = "#a9b1d6";
-                  opaqueWindows = true;
-                  surface = "#1a1b26";
-                  semanticColors = {
-                    diffAdded = "#449dab";
-                    diffRemoved = "#914c54";
-                    skill = "#9d7cd8";
-                  };
-                };
-              };
-
-              features = {
-                js_repl = false;
-                memories = true;
-              };
-
-              memories = {
-                generate_memories = true;
-                use_memories = true;
-              };
-
-              projects."/home/repparw/Projects/nix".trust_level = "trusted";
-            };
-          };
+          codex.enable = true;
 
           opencode = {
             enable = true;
-            web = {
-              enable = true;
-              extraArgs = [
-                "--hostname"
-                "0.0.0.0"
-                "--port"
-                "4096"
-              ];
-            };
             settings = {
               permission = {
                 "*" = {
@@ -134,24 +79,7 @@
             };
           };
 
-          t3code = {
-            enable = true;
-            userSettings = {
-              enableAssistantStreaming = true;
-              providers.opencode.serverUrl = "https://code.repparw.com";
-            };
-            clientSettings = {
-              settings = {
-                favorites = [
-                  {
-                    provider = "codex";
-                    model = "gpt-5.5";
-                  }
-                ];
-                sidebarProjectGroupingMode = "repository";
-              };
-            };
-          };
+          t3code.enable = true;
         };
 
         xdg.configFile = lib.mapAttrs' (name: value: {

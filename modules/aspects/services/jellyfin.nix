@@ -33,6 +33,23 @@
         };
       in
       ({
+        networking.hosts."192.168.0.18" = [
+          "jellyfin.${cfg.domain}"
+        ];
+
+        fileSystems."${cfg.backupDir}/jellyfin" = {
+          depends = [ "/" ];
+          device = "${cfg.configDir}/jellyfin/data/backups";
+          fsType = "none";
+          options = [
+            "bind"
+            "ro"
+            "nofail"
+          ];
+        };
+
+        systemd.services."container@jellyfin".after = [ "home-containers-backup-jellyfin.mount" ];
+
         containers.jellyfin = {
           autoStart = true;
           privateNetwork = true;
