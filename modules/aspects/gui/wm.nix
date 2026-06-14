@@ -110,8 +110,6 @@
           nautilus
           baobab
           playerctl
-
-          opencode-desktop
         ];
 
         services = {
@@ -143,7 +141,12 @@
             longitude = -59.8;
           };
 
-          swaync.enable = true;
+          swaync = {
+            enable = true;
+            settings = {
+              timeout-critical = 20000;
+            };
+          };
           playerctld.enable = true;
         };
 
