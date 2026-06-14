@@ -3,6 +3,23 @@
   ...
 }:
 {
+  networking.hosts."192.168.0.18" = [
+    "paper.${cfg.domain}"
+  ];
+
+  fileSystems."${cfg.backupDir}/paper" = {
+    depends = [ "/" ];
+    device = "${cfg.configDir}/paper/export";
+    fsType = "none";
+    options = [
+      "bind"
+      "ro"
+      "nofail"
+    ];
+  };
+
+  systemd.services."container@paperless".after = [ "home-containers-backup-paper.mount" ];
+
   containers.paperless = {
     autoStart = true;
     privateNetwork = true;

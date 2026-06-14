@@ -14,6 +14,25 @@
         credentialPasswordPath = "/run/credentials/archisteamfarm.service/steamPassword";
       in
       {
+        fileSystems."${cfg.backupDir}/archisteamfarm" = {
+          depends = [ "/" ];
+          device = "${cfg.configDir}/archisteamfarm";
+          fsType = "none";
+          options = [
+            "bind"
+            "ro"
+            "nofail"
+          ];
+        };
+
+        systemd.tmpfiles.rules = [
+          "d ${cfg.configDir}/archisteamfarm 0755 root root - -"
+        ];
+
+        systemd.services."container@archisteamfarm".after = [
+          "home-containers-backup-archisteamfarm.mount"
+        ];
+
         containers.archisteamfarm = {
           autoStart = true;
           privateNetwork = true;

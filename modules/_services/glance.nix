@@ -12,6 +12,11 @@ let
   '';
 in
 {
+  networking.hosts."192.168.0.18" = [
+    cfg.domain
+    "glance.${cfg.domain}"
+  ];
+
   containers.glance = {
     autoStart = true;
     privateNetwork = true;

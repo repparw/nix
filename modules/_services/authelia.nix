@@ -3,6 +3,23 @@ let
   credentialsDir = "/run/credentials/authelia-main.service";
 in
 {
+  networking.hosts."192.168.0.18" = [
+    "auth.${cfg.domain}"
+  ];
+
+  fileSystems."${cfg.backupDir}/authelia" = {
+    depends = [ "/" ];
+    device = "${cfg.configDir}/authelia";
+    fsType = "none";
+    options = [
+      "bind"
+      "ro"
+      "nofail"
+    ];
+  };
+
+  systemd.services."container@authelia".after = [ "home-containers-backup-authelia.mount" ];
+
   containers.authelia = {
     autoStart = true;
     privateNetwork = true;
