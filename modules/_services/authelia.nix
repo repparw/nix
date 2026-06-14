@@ -1,4 +1,7 @@
-{ cfg, ... }:
+{ cfg, config, ... }:
+let
+  credentialsDir = "/run/credentials/authelia-main.service";
+in
 {
   containers.authelia = {
     autoStart = true;
@@ -15,6 +18,30 @@
         hostPath = "${cfg.configDir}/authelia/secrets";
         isReadOnly = true;
       };
+      "/run/secrets/authelia/JWT_SECRET" = {
+        hostPath = config.sops.secrets."authelia/jwtSecret".path;
+        isReadOnly = true;
+      };
+      "/run/secrets/authelia/OIDC_HMAC_SECRET" = {
+        hostPath = config.sops.secrets."authelia/oidcHmacSecret".path;
+        isReadOnly = true;
+      };
+      "/run/secrets/authelia/OIDC_JWKS_KEY" = {
+        hostPath = config.sops.secrets."authelia/oidcJwksKey".path;
+        isReadOnly = true;
+      };
+      "/run/secrets/authelia/SESSION_SECRET" = {
+        hostPath = config.sops.secrets."authelia/sessionSecret".path;
+        isReadOnly = true;
+      };
+      "/run/secrets/authelia/SMTP_PASSWORD" = {
+        hostPath = config.sops.secrets."authelia/smtpPassword".path;
+        isReadOnly = true;
+      };
+      "/run/secrets/authelia/STORAGE_ENCRYPTION_KEY" = {
+        hostPath = config.sops.secrets."authelia/storageEncryptionKey".path;
+        isReadOnly = true;
+      };
     };
     config =
       { lib, ... }:
@@ -26,11 +53,11 @@
         services.authelia.instances.main = {
           enable = true;
           secrets = {
-            jwtSecretFile = "/secrets/JWT_SECRET";
-            storageEncryptionKeyFile = "/secrets/STORAGE_ENCRYPTION_KEY";
-            sessionSecretFile = "/secrets/SESSION_SECRET";
-            oidcIssuerPrivateKeyFile = "/secrets/OIDC_JWKS_KEY";
-            oidcHmacSecretFile = "/secrets/OIDC_HMAC_SECRET";
+            jwtSecretFile = "${credentialsDir}/JWT_SECRET";
+            storageEncryptionKeyFile = "${credentialsDir}/STORAGE_ENCRYPTION_KEY";
+            sessionSecretFile = "${credentialsDir}/SESSION_SECRET";
+            oidcIssuerPrivateKeyFile = "${credentialsDir}/OIDC_JWKS_KEY";
+            oidcHmacSecretFile = "${credentialsDir}/OIDC_HMAC_SECRET";
           };
           settings = {
             theme = "dark";
@@ -202,14 +229,24 @@
               smtp = {
                 address = "submission://smtp.gmail.com:587";
                 username = "ubritos@gmail.com";
-                password = "_file:/secrets/SMTP_PASSWORD";
+                password = "_file:${credentialsDir}/SMTP_PASSWORD";
                 sender = "repparw <ubritos@gmail.com>";
               };
             };
           };
         };
 
-        systemd.services.authelia-main.serviceConfig.ProtectSystem = lib.mkForce "full";
+        systemd.services.authelia-main.serviceConfig = {
+          LoadCredential = [
+            "JWT_SECRET:/run/secrets/authelia/JWT_SECRET"
+            "OIDC_HMAC_SECRET:/run/secrets/authelia/OIDC_HMAC_SECRET"
+            "OIDC_JWKS_KEY:/run/secrets/authelia/OIDC_JWKS_KEY"
+            "SESSION_SECRET:/run/secrets/authelia/SESSION_SECRET"
+            "SMTP_PASSWORD:/run/secrets/authelia/SMTP_PASSWORD"
+            "STORAGE_ENCRYPTION_KEY:/run/secrets/authelia/STORAGE_ENCRYPTION_KEY"
+          ];
+          ProtectSystem = lib.mkForce "full";
+        };
 
         services.redis.servers.authelia = {
           enable = true;
