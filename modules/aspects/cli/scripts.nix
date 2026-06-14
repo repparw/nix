@@ -70,7 +70,6 @@
               coreutils
               gnugrep
               gnused
-              libnotify
               pipewire
               whisper-cpp
               wl-clipboard
@@ -86,6 +85,7 @@
               transcript_base="$state_dir/transcript"
               transcript_file="$transcript_base.txt"
               model="${whisperSmallModel}"
+              threads="$(nproc)"
 
               mkdir -p "$state_dir"
 
@@ -102,7 +102,6 @@
                 read -r recorder_pid < "$state_file"
 
                 if kill -0 "$recorder_pid" 2>/dev/null; then
-                  notify-send -t 1200 "Dictation" "Transcribing..."
                   kill -INT "$recorder_pid" 2>/dev/null || true
 
                   for _ in $(seq 1 50); do
@@ -118,7 +117,6 @@
                 cleanup_state
 
                 if [ ! -s "$audio_file" ]; then
-                  notify-send -u critical "Dictation" "No audio captured"
                   exit 1
                 fi
 
@@ -126,6 +124,7 @@
                 whisper-cli \
                   --model "$model" \
                   --file "$audio_file" \
+                  --threads "$threads" \
                   --language auto \
                   --no-timestamps \
                   --output-txt \
@@ -133,25 +132,21 @@
                   --no-prints
 
                 if [ ! -s "$transcript_file" ]; then
-                  notify-send -u critical "Dictation" "No speech detected"
                   exit 1
                 fi
 
                 text="$(normalize_text < "$transcript_file")"
 
                 if [ -z "$text" ]; then
-                  notify-send -u critical "Dictation" "No speech detected"
                   exit 1
                 fi
 
                 printf '%s' "$text" | wl-copy
                 wtype "$text"
-                notify-send -t 1200 "Dictation" "Inserted text"
                 exit 0
               fi
 
               rm -f "$audio_file" "$transcript_file"
-              notify-send -t 1200 "Dictation" "Recording..."
 
               pw-cat \
                 --record \

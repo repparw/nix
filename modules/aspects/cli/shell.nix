@@ -125,9 +125,6 @@
 
               v = "nvim";
 
-              oc = "opencode";
-              occ = "oc -c";
-
               meminfo = "free -hlt";
               cpuinfo = "lscpu";
 
@@ -141,9 +138,9 @@
 
               cl = "sudo nixos-container list";
               crs = "sudo nixos-container restart";
-              crsh = "sudo nixos-container root-shell";
+              csh = "sudo nixos-container root-login";
               crun = "sudo nixos-container run";
-              clo = "journalctl -fu container@";
+              clo = "journalctl -xeu 'container@*'";
               cps = "systemctl list-units 'container@*'";
               cst = "sudo systemctl start container@";
               csp = "sudo systemctl stop container@";
