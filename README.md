@@ -127,21 +127,8 @@ with `DNSStubListenerExtra = "0.0.0.0"`.
 
 ## Operational Backlog
 
-### High Priority
-
-- Keep service migrations data-first. When converting a container or service,
-  inspect the live config/data tree first and preserve the path mapping in Nix.
-
 ### Medium Priority
 
-- Add service smoke checks for the media stack: render Traefik routers, Glance
-  monitor URLs, and container addresses from one shared service inventory so
-  names cannot drift independently across `_services/proxy.nix`,
-  `_services/glance.nix`, and `modules/aspects/services.nix`.
 - Make host-specific hardware and behavior easier to scan by extracting repeated
   bootloader, filesystem, CPU microcode, and user profile patterns only where
   the abstraction removes actual duplication.
-
-### Low Priority
-
-- Add descriptions to flake apps so `nix flake show` is more self-documenting.
