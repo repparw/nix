@@ -105,15 +105,6 @@
         zramSwap.enable = true;
 
         services = {
-          archisteamfarm = {
-            enable = true;
-            bots.repparw = {
-              settings.OnlineStatus = 0;
-              username = "ulisesbritos1";
-              passwordFile = config.sops.secrets.steamPassword.path;
-            };
-          };
-
           udev.extraRules = ''
             # Disable USB autosuspend for Intel AX210 Bluetooth to fix sleep/wake
             ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0032", ATTR{power/control}="on"

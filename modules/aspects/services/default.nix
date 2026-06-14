@@ -1,7 +1,18 @@
-{ den, lib, ... }:
 {
+  den,
+  inputs,
+  lib,
+  ...
+}:
+{
+  flake-file.inputs.hermes-agent = {
+    url = "github:NousResearch/hermes-agent";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   den.aspects.nixos-services = {
     includes = with den.aspects.nixos-services._; [
+      archisteamfarm
       arr
       jellyfin
     ];
@@ -18,6 +29,15 @@
       in
       {
         imports = [
+          (import ../../_services/hermes.nix {
+            inherit
+              cfg
+              config
+              inputs
+              lib
+              pkgs
+              ;
+          })
           (import ../../_services/authelia.nix {
             inherit
               cfg
@@ -196,6 +216,16 @@
                   "nofail"
                 ];
               };
+              "${cfg.backupDir}/archisteamfarm" = {
+                depends = [ "/" ];
+                device = "${cfg.configDir}/archisteamfarm";
+                fsType = "none";
+                options = [
+                  "bind"
+                  "ro"
+                  "nofail"
+                ];
+              };
               "${cfg.backupDir}/miniflux" = {
                 depends = [ "/" ];
                 device = "${cfg.configDir}/miniflux";
@@ -273,12 +303,14 @@
             "d ${cfg.mediaPortalDir} 0755 root root - -"
             "d ${cfg.mediaPortalDir}/hdd 0755 root root - -"
             "d ${cfg.mediaPortalDir}/seagate 0755 root root - -"
+            "d ${cfg.configDir}/archisteamfarm 0755 root root - -"
             "d ${cfg.rootDir}/torrents 2770 root media - -"
           ];
 
           systemd.services = {
             "container@bazarr".after = [ "home-containers-backup-bazarr.mount" ];
             "container@authelia".after = [ "home-containers-backup-authelia.mount" ];
+            "container@archisteamfarm".after = [ "home-containers-backup-archisteamfarm.mount" ];
             miniflux.after = [ "home-containers-backup-miniflux.mount" ];
             "container@jellyfin".after = [ "home-containers-backup-jellyfin.mount" ];
             "container@paperless".after = [ "home-containers-backup-paper.mount" ];
