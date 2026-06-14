@@ -17,11 +17,28 @@ let
         })
       ];
     };
+  tasksOrgNixpkgs =
+    pkgs:
+    pkgs.applyPatches {
+      name = "nixpkgs-tasks-org-patched";
+      src = inputs.nixpkgs;
+      patches = [
+        (pkgs.fetchpatch {
+          url = "https://github.com/repparw/nixpkgs/commit/e028238040c0f51d375b78cee86c41897c2c4a9c.patch";
+          hash = "sha256-T/X0DyDN5RpXXhVl2Av4MTghGCUyxdlUKcyFLm6HlVc=";
+        })
+      ];
+    };
 in
 {
   den.aspects.gui.provides.guiApps = {
     nixos = {
       nixpkgs.overlays = [
+        (final: prev: {
+          tasks-org = final.callPackage (
+            tasksOrgNixpkgs final + "/pkgs/by-name/ta/tasks-org/package.nix"
+          ) { };
+        })
         (final: prev: {
           discord =
             (final.callPackage (
@@ -71,6 +88,7 @@ in
           scrcpy
           godot
           rquickshare
+          tasks-org
         ];
 
         gtk.enable = true;
