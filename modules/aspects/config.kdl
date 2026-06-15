@@ -82,6 +82,8 @@ debug {
     honor-xdg-activation-with-invalid-serial
 }
 
+spawn-sh-at-startup "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP NIRI_SOCKET"
+
 ///////////////////////////////////////////////////////
 window-rule {
   match app-id="firefox"

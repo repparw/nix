@@ -27,6 +27,13 @@
         virtualDisplay = config.modules.virtualDisplay or { };
         height = lib.last (lib.splitString "x" (virtualDisplay.resolution or "3840x2160"));
         refreshRate = toString (virtualDisplay.refreshRate or 120);
+        sunshineBasePort = 47989;
+        sunshineTcpPorts = map (offset: sunshineBasePort + offset) [
+          (-5)
+          0
+          1
+          21
+        ];
 
         niri-output-on = pkgs.writeShellScriptBin "niri-output-on" (builtins.readFile ./niri-output-on.sh);
         steam-sunshine = pkgs.writeShellApplication {
@@ -50,16 +57,86 @@
           ''
           + builtins.readFile ./heroic-sunshine.sh;
         };
-        steam-sunshine-cleanup = pkgs.writeShellApplication {
-          name = "steam-sunshine-cleanup";
+        sunshine-stream-reset = pkgs.writeShellApplication {
+          name = "sunshine-stream-reset";
+          runtimeInputs = [
+            pkgs.niri
+            pkgs.procps
+            pkgs.systemd
+          ];
           text = ''
-            eval "$(systemctl --user show-environment | grep '^NIRI_SOCKET=')"
+            if [ -z "''${NIRI_SOCKET:-}" ]; then
+              eval "$(systemctl --user show-environment | grep '^NIRI_SOCKET=' || true)"
+              export NIRI_SOCKET
+            fi
             niri msg output DP-2 off
             pkill -9 gamescope || true
             pkill -9 steam || true
             pkill -9 heroic || true
             pkill -f "systemd-inhibit.*--who=Sunshine" 2>/dev/null || true
           '';
+        };
+        sunshine-stream-cleanup = pkgs.writeShellApplication {
+          name = "sunshine-stream-cleanup";
+          runtimeInputs = [
+            pkgs.curl
+            pkgs.coreutils
+          ];
+          text = ''
+            state_dir="''${XDG_RUNTIME_DIR:-/tmp}/sunshine-stream"
+            close_marker="$state_dir/api-close-in-progress"
+            mkdir -p "$state_dir"
+
+            close_via_sunshine() {
+              if [ -e "$close_marker" ]; then
+                return 1
+              fi
+
+              touch "$close_marker"
+
+              curl_args=(
+                --insecure
+                --silent
+                --show-error
+                --output /dev/null
+                --write-out "%{http_code}"
+                --request POST
+                "https://localhost:47990/api/apps/close"
+              )
+
+              if [ -n "''${SUNSHINE_API_USERNAME:-}" ] && [ -n "''${SUNSHINE_API_PASSWORD:-}" ]; then
+                curl_args=(--user "''${SUNSHINE_API_USERNAME}:''${SUNSHINE_API_PASSWORD}" "''${curl_args[@]}")
+              fi
+
+              status="$(curl "''${curl_args[@]}" 2>/dev/null || true)"
+              case "$status" in
+                2*) return 0 ;;
+                *) return 1 ;;
+              esac
+            }
+
+            if close_via_sunshine; then
+              sleep 20
+            fi
+
+            ${sunshine-stream-reset}/bin/sunshine-stream-reset
+            rm -f "$close_marker"
+          '';
+        };
+        sunshine-idle-watchdog = pkgs.writeShellApplication {
+          name = "sunshine-idle-watchdog";
+          runtimeInputs = [
+            pkgs.coreutils
+            pkgs.gawk
+            pkgs.iproute2
+            pkgs.systemd
+          ];
+          text = ''
+            export SUNSHINE_IDLE_TIMEOUT_SECONDS=600
+            export SUNSHINE_WATCH_PORTS="${lib.concatMapStringsSep " " toString sunshineTcpPorts}"
+            export SUNSHINE_CLEANUP_COMMAND="${sunshine-stream-cleanup}/bin/sunshine-stream-cleanup"
+          ''
+          + builtins.readFile ./sunshine-idle-watchdog.sh;
         };
       in
       {
@@ -89,7 +166,7 @@
                 prep-cmd = [
                   {
                     do = "${niri-output-on}/bin/niri-output-on";
-                    undo = "${steam-sunshine-cleanup}/bin/steam-sunshine-cleanup";
+                    undo = "${sunshine-stream-reset}/bin/sunshine-stream-reset";
                   }
                 ];
               }
@@ -100,11 +177,30 @@
                 prep-cmd = [
                   {
                     do = "${niri-output-on}/bin/niri-output-on";
-                    undo = "${steam-sunshine-cleanup}/bin/steam-sunshine-cleanup";
+                    undo = "${sunshine-stream-reset}/bin/sunshine-stream-reset";
                   }
                 ];
               }
             ];
+          };
+        };
+
+        systemd.user.services.sunshine-idle-watchdog = {
+          description = "Clean up Sunshine streaming apps after client disconnect idle timeout";
+          wantedBy = [
+            "graphical-session.target"
+            "sunshine.service"
+          ];
+          partOf = [
+            "graphical-session.target"
+            "sunshine.service"
+          ];
+          after = [ "sunshine.service" ];
+          wants = [ "sunshine.service" ];
+          serviceConfig = {
+            ExecStart = "${sunshine-idle-watchdog}/bin/sunshine-idle-watchdog";
+            Restart = "always";
+            RestartSec = "5s";
           };
         };
       };
