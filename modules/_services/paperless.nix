@@ -9,7 +9,7 @@
     containerAddress = "10.231.136.12";
     port = 8000;
     auth = "one_factor";
-    backup.path = "${cfg.configDir}/paper/export";
+    backup.path = "${cfg.configDir}/paperless/export";
     monitor = true;
   };
 

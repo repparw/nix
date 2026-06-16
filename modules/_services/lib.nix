@@ -28,7 +28,7 @@ in
     cfg:
     lib.mapAttrsToList
       (name: service: {
-        title = if service.title != null then service.title else name;
+        title = name;
         url = "https://${service.hostname}.${cfg.domain}";
         check-url = serviceUrl cfg name;
       })

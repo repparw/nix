@@ -11,10 +11,6 @@ in
             type = types.nullOr types.str;
             default = null;
           };
-          title = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-          };
           containerAddress = mkOption {
             type = types.nullOr types.str;
             default = null;
