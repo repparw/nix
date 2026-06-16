@@ -11,8 +11,8 @@
         cfg = config.modules.services;
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         mkArrContainer =
+          name:
           {
-            serviceName,
             serviceConfig,
             mediaBind ? true,
             extraBindMounts ? { },
@@ -23,12 +23,15 @@
           servicesLib.mkContainer {
             inherit
               cfg
-              serviceConfig
               extraConfig
               extraFlags
               extraOptions
               ;
-            name = serviceName;
+            name = name;
+            privateUsers = "identity";
+            serviceConfig = {
+              ${name} = serviceConfig;
+            };
             bindMounts =
               lib.optionalAttrs mediaBind {
                 "/data" = {
@@ -59,7 +62,6 @@
           };
           qbittorrent = {
             hostname = "qbit";
-            title = "qbit";
             containerAddress = "10.231.136.4";
             port = 8080;
             auth = "external";
@@ -84,139 +86,131 @@
           };
         };
 
-        containers.bazarr = mkArrContainer {
-          serviceName = "bazarr";
-          extraOptions.privateUsers = "identity";
-          serviceConfig.bazarr = {
-            enable = true;
-            openFirewall = true;
-            dataDir = "/config";
-          };
-          extraConfig.systemd.tmpfiles.rules = [ ];
-          extraBindMounts = {
-            "/config" = {
-              hostPath = "${cfg.configDir}/bazarr";
-              isReadOnly = false;
+        containers = lib.mapAttrs mkArrContainer {
+          bazarr = {
+            serviceConfig = {
+              enable = true;
+              openFirewall = true;
+              dataDir = "/config";
+            };
+            extraConfig.systemd.tmpfiles.rules = [ ];
+            extraBindMounts = {
+              "/config" = {
+                hostPath = "${cfg.configDir}/bazarr";
+                isReadOnly = false;
+              };
             };
           };
-        };
 
-        containers.prowlarr = mkArrContainer {
-          serviceName = "prowlarr";
-          mediaBind = false;
-          extraOptions.privateUsers = "identity";
-          serviceConfig.prowlarr = {
-            enable = true;
-            openFirewall = true;
-          };
-          extraBindMounts = {
-            "/var/lib/private/prowlarr/Backups" = {
-              hostPath = "${cfg.configDir}/prowlarr/Backups";
-              isReadOnly = false;
+          prowlarr = {
+            mediaBind = false;
+            serviceConfig = {
+              enable = true;
+              openFirewall = true;
+            };
+            extraBindMounts = {
+              "/var/lib/private/prowlarr/Backups" = {
+                hostPath = "${cfg.configDir}/prowlarr/Backups";
+                isReadOnly = false;
+              };
             };
           };
-        };
 
-        containers.qbittorrent = mkArrContainer {
-          serviceName = "qbittorrent";
-          mediaBind = false;
-          extraOptions.privateUsers = "identity";
-          extraConfig = {
-            nixpkgs.overlays = [
-              (final: prev: {
-                qbittorrent-nox = prev.qbittorrent-nox.overrideAttrs (old: {
-                  patches = (old.patches or [ ]) ++ [
-                    (prev.fetchpatch {
-                      url = "https://patch-diff.githubusercontent.com/raw/qbittorrent/qBittorrent/pull/24055.patch";
-                      hash = "sha256-rhnnxa6pmXSs3rt94FrAObbtH+vYOb+kFvOTcwmbHl8=";
-                    })
-                  ];
-                });
-              })
+          qbittorrent = {
+            mediaBind = false;
+            extraConfig = {
+              nixpkgs.overlays = [
+                (final: prev: {
+                  qbittorrent-nox = prev.qbittorrent-nox.overrideAttrs (old: {
+                    patches = (old.patches or [ ]) ++ [
+                      (prev.fetchpatch {
+                        url = "https://patch-diff.githubusercontent.com/raw/qbittorrent/qBittorrent/pull/24055.patch";
+                        hash = "sha256-rhnnxa6pmXSs3rt94FrAObbtH+vYOb+kFvOTcwmbHl8=";
+                      })
+                    ];
+                  });
+                })
+              ];
+              services.qbittorrent.group = "media";
+              users.groups.media.gid = 900;
+              systemd.services.qbittorrent.serviceConfig.UMask = lib.mkForce "0002";
+            };
+            serviceConfig = {
+              enable = true;
+              openFirewall = true;
+              torrentingPort = 54535;
+            };
+            extraOptions.forwardPorts = [
+              {
+                protocol = "tcp";
+                hostPort = 54535;
+                containerPort = 54535;
+              }
+              {
+                protocol = "udp";
+                hostPort = 54535;
+                containerPort = 54535;
+              }
             ];
-            services.qbittorrent.group = "media";
-            users.groups.media.gid = 900;
-            systemd.services.qbittorrent.serviceConfig.UMask = lib.mkForce "0002";
-          };
-          serviceConfig.qbittorrent = {
-            enable = true;
-            openFirewall = true;
-            torrentingPort = 54535;
-          };
-          extraOptions.forwardPorts = [
-            {
-              protocol = "tcp";
-              hostPort = 54535;
-              containerPort = 54535;
-            }
-            {
-              protocol = "udp";
-              hostPort = 54535;
-              containerPort = 54535;
-            }
-          ];
-          extraBindMounts = {
-            "/var/lib/qBittorrent/qBittorrent" = {
-              hostPath = "${cfg.configDir}/qbittorrent";
-              isReadOnly = false;
-            };
-            "/data/torrents" = {
-              hostPath = "${cfg.rootDir}/torrents";
-              isReadOnly = false;
+            extraBindMounts = {
+              "/var/lib/qBittorrent/qBittorrent" = {
+                hostPath = "${cfg.configDir}/qbittorrent";
+                isReadOnly = false;
+              };
+              "/data/torrents" = {
+                hostPath = "${cfg.rootDir}/torrents";
+                isReadOnly = false;
+              };
             };
           };
-        };
 
-        containers.radarr = mkArrContainer {
-          serviceName = "radarr";
-          extraOptions.privateUsers = "identity";
-          serviceConfig.radarr = {
-            enable = true;
-            openFirewall = true;
-            settings.server.bindAddress = "*";
-            dataDir = "/config";
-          };
-          extraConfig = {
-            environment.systemPackages = [ pkgs.striptracks ];
-            services.radarr.group = "media";
-            users.groups.media.gid = 900;
-            systemd.services.radarr.serviceConfig.UMask = lib.mkForce "0002";
-          };
-          extraBindMounts = {
-            "/config" = {
-              hostPath = "${cfg.configDir}/radarr";
-              isReadOnly = false;
+          radarr = {
+            serviceConfig = {
+              enable = true;
+              openFirewall = true;
+              settings.server.bindAddress = "*";
+              dataDir = "/config";
             };
-            "/data/torrents" = {
-              hostPath = "${cfg.rootDir}/torrents";
-              isReadOnly = false;
+            extraConfig = {
+              environment.systemPackages = [ pkgs.striptracks ];
+              services.radarr.group = "media";
+              users.groups.media.gid = 900;
+              systemd.services.radarr.serviceConfig.UMask = lib.mkForce "0002";
+            };
+            extraBindMounts = {
+              "/config" = {
+                hostPath = "${cfg.configDir}/radarr";
+                isReadOnly = false;
+              };
+              "/data/torrents" = {
+                hostPath = "${cfg.rootDir}/torrents";
+                isReadOnly = false;
+              };
             };
           };
-        };
 
-        containers.sonarr = mkArrContainer {
-          serviceName = "sonarr";
-          extraOptions.privateUsers = "identity";
-          serviceConfig.sonarr = {
-            enable = true;
-            openFirewall = true;
-            settings.server.bindAddress = "*";
-            dataDir = "/config";
-          };
-          extraConfig = {
-            environment.systemPackages = [ pkgs.striptracks ];
-            services.sonarr.group = "media";
-            users.groups.media.gid = 900;
-            systemd.services.sonarr.serviceConfig.UMask = lib.mkForce "0002";
-          };
-          extraBindMounts = {
-            "/config" = {
-              hostPath = "${cfg.configDir}/sonarr";
-              isReadOnly = false;
+          sonarr = {
+            serviceConfig = {
+              enable = true;
+              openFirewall = true;
+              settings.server.bindAddress = "*";
+              dataDir = "/config";
             };
-            "/data/torrents" = {
-              hostPath = "${cfg.rootDir}/torrents";
-              isReadOnly = false;
+            extraConfig = {
+              environment.systemPackages = [ pkgs.striptracks ];
+              services.sonarr.group = "media";
+              users.groups.media.gid = 900;
+              systemd.services.sonarr.serviceConfig.UMask = lib.mkForce "0002";
+            };
+            extraBindMounts = {
+              "/config" = {
+                hostPath = "${cfg.configDir}/sonarr";
+                isReadOnly = false;
+              };
+              "/data/torrents" = {
+                hostPath = "${cfg.rootDir}/torrents";
+                isReadOnly = false;
+              };
             };
           };
         };
