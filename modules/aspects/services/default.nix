@@ -20,6 +20,7 @@
       }:
       let
         cfg = config.modules.services;
+        servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
       in
       {
         imports = [
@@ -29,6 +30,7 @@
               config
               lib
               pkgs
+              servicesLib
               ;
           })
           (import ../../_services/miniflux.nix {
@@ -37,6 +39,7 @@
               config
               lib
               pkgs
+              servicesLib
               ;
           })
           (import ../../_services/paperless.nix {
@@ -45,6 +48,7 @@
               config
               lib
               pkgs
+              servicesLib
               ;
           })
           (import ../../_services/ddclient.nix {
@@ -53,6 +57,7 @@
               config
               lib
               pkgs
+              servicesLib
               ;
           })
           (import ../../_services/proxy.nix {
@@ -61,6 +66,7 @@
               config
               lib
               pkgs
+              servicesLib
               ;
           })
           (import ../../_services/glance.nix {
@@ -69,8 +75,10 @@
               config
               lib
               pkgs
+              servicesLib
               ;
           })
+          ../../service-inventory.nix
         ];
 
         options.modules.services = {
@@ -139,34 +147,39 @@
             })
           ];
 
-          networking.hosts."192.168.0.18" = [
+          networking.hosts."192.168.0.18" = servicesLib.inventoryHosts cfg ++ [
+            cfg.domain
             "code.${cfg.domain}"
             "home.${cfg.domain}"
           ];
 
-          fileSystems."${cfg.mediaPortalDir}/hdd" = {
-            depends = [ "/" ];
-            device = cfg.dataDir;
-            fsType = "none";
-            options = [
-              "bind"
-              "nofail"
-              "noauto"
-              "x-systemd.automount"
-              "x-systemd.idle-timeout=10min"
-            ];
-          };
-          fileSystems."${cfg.mediaPortalDir}/seagate" = {
-            depends = [ "/" ];
-            device = cfg.externalDataDir;
-            fsType = "none";
-            options = [
-              "bind"
-              "nofail"
-              "noauto"
-              "x-systemd.automount"
-              "x-systemd.idle-timeout=10min"
-            ];
+          systemd.services = servicesLib.containerBackupAfters cfg;
+
+          fileSystems = servicesLib.backupMounts cfg // {
+            "${cfg.mediaPortalDir}/hdd" = {
+              depends = [ "/" ];
+              device = cfg.dataDir;
+              fsType = "none";
+              options = [
+                "bind"
+                "nofail"
+                "noauto"
+                "x-systemd.automount"
+                "x-systemd.idle-timeout=10min"
+              ];
+            };
+            "${cfg.mediaPortalDir}/seagate" = {
+              depends = [ "/" ];
+              device = cfg.externalDataDir;
+              fsType = "none";
+              options = [
+                "bind"
+                "nofail"
+                "noauto"
+                "x-systemd.automount"
+                "x-systemd.idle-timeout=10min"
+              ];
+            };
           };
 
           systemd.tmpfiles.rules = [

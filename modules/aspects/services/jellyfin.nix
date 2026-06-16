@@ -9,7 +9,7 @@
       { config, pkgs, ... }:
       let
         cfg = config.modules.services;
-        backupJob = import ../../_services/backup-job.nix { inherit lib pkgs; };
+        servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         jellyfinBackupKeyFile = config.sops.secrets.jellyfinBackupKey.path;
         createBackup = pkgs.writeShellApplication {
           name = "jellyfin-create-backup";
@@ -21,7 +21,7 @@
               -H "X-Emby-Token: $key" \
               -H "Content-Type: application/json" \
               -d '{}' \
-              http://10.231.136.10:8096/Backup/Create)
+              http://${cfg.inventory.jellyfin.containerAddress}:${toString cfg.inventory.jellyfin.port}/Backup/Create)
             echo "$response"
             path=$(echo "$response" | sed -n 's/.*"Path":"\([^"]*\)".*/\1/p')
             if [ -n "$path" ]; then
@@ -33,29 +33,19 @@
         };
       in
       ({
-        networking.hosts."192.168.0.18" = [
-          "jellyfin.${cfg.domain}"
-        ];
-
-        fileSystems."${cfg.backupDir}/jellyfin" = {
-          depends = [ "/" ];
-          device = "${cfg.configDir}/jellyfin/data/backups";
-          fsType = "none";
-          options = [
-            "bind"
-            "ro"
-            "nofail"
-          ];
+        modules.services.inventory.jellyfin = {
+          hostname = "jellyfin";
+          containerAddress = "10.231.136.10";
+          port = 8096;
+          auth = "bypass";
+          backup.path = "${cfg.configDir}/jellyfin/data/backups";
+          monitor = true;
         };
 
-        systemd.services."container@jellyfin".after = [ "home-containers-backup-jellyfin.mount" ];
-
-        containers.jellyfin = {
-          autoStart = true;
-          privateNetwork = true;
+        containers.jellyfin = servicesLib.mkContainer {
+          inherit cfg;
+          name = "jellyfin";
           privateUsers = "pick";
-          hostAddress = "10.231.136.1";
-          localAddress = "10.231.136.10";
           bindMounts = {
             "/var/lib/jellyfin" = {
               hostPath = "${cfg.configDir}/jellyfin";
@@ -76,36 +66,29 @@
               modifier = "rwm";
             }
           ];
-          config =
-            { ... }:
-            {
-              networking.useHostResolvConf = false;
-              networking.nameservers = [ "10.231.136.1" ];
-
-              services.jellyfin = {
-                enable = true;
-                openFirewall = true;
-              };
-
-              hardware.graphics = {
-                enable = true;
-                extraPackages = with pkgs; [
-                  libva-vdpau-driver
-                  libvdpau-va-gl
-                  intel-media-driver
-                ];
-              };
-
-              users.users.jellyfin.extraGroups = [
-                "video"
-                "render"
-              ];
-
-              system.stateVersion = "26.05";
+          extraConfig = {
+            services.jellyfin = {
+              enable = true;
+              openFirewall = true;
             };
+
+            hardware.graphics = {
+              enable = true;
+              extraPackages = with pkgs; [
+                libva-vdpau-driver
+                libvdpau-va-gl
+                intel-media-driver
+              ];
+            };
+
+            users.users.jellyfin.extraGroups = [
+              "video"
+              "render"
+            ];
+          };
         };
       })
-      // (backupJob {
+      // (servicesLib.mkBackupJob {
         name = "jellyfin";
         description = "jellyfin backup via native API";
         backupDir = "${cfg.configDir}/jellyfin/data/backups";

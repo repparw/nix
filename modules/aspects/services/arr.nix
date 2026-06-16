@@ -9,9 +9,10 @@
       { config, pkgs, ... }:
       let
         cfg = config.modules.services;
+        servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         mkArrContainer =
           {
-            ipOctet,
+            serviceName,
             serviceConfig,
             mediaBind ? true,
             extraBindMounts ? { },
@@ -19,12 +20,15 @@
             extraConfig ? { },
             extraFlags ? [ ],
           }:
-          {
-            autoStart = true;
-            privateNetwork = true;
-            hostAddress = "10.231.136.1";
-            localAddress = "10.231.136.${toString ipOctet}";
-            inherit extraFlags;
+          servicesLib.mkContainer {
+            inherit
+              cfg
+              serviceConfig
+              extraConfig
+              extraFlags
+              extraOptions
+              ;
+            name = serviceName;
             bindMounts =
               lib.optionalAttrs mediaBind {
                 "/data" = {
@@ -33,92 +37,55 @@
                 };
               }
               // extraBindMounts;
-            config =
-              { ... }:
-              lib.mkMerge [
-                {
-                  services = serviceConfig;
-                  system.stateVersion = "26.05";
-                  networking.useHostResolvConf = false;
-                  networking.nameservers = [ "10.231.136.1" ];
-                }
-                extraConfig
-              ];
-          }
-          // extraOptions;
+          };
       in
       {
-        networking.hosts."192.168.0.18" = [
-          "bazarr.${cfg.domain}"
-          "prowlarr.${cfg.domain}"
-          "qbit.${cfg.domain}"
-          "radarr.${cfg.domain}"
-          "sonarr.${cfg.domain}"
-        ];
-
-        fileSystems = {
-          "${cfg.backupDir}/bazarr" = {
-            depends = [ "/" ];
-            device = "${cfg.configDir}/bazarr/backup";
-            fsType = "none";
-            options = [
-              "bind"
-              "ro"
-              "nofail"
-            ];
+        modules.services.inventory = {
+          bazarr = {
+            hostname = "bazarr";
+            containerAddress = "10.231.136.2";
+            port = 6767;
+            auth = "one_factor";
+            backup.path = "${cfg.configDir}/bazarr/backup";
+            monitor = true;
           };
-          "${cfg.backupDir}/prowlarr" = {
-            depends = [ "/" ];
-            device = "${cfg.configDir}/prowlarr/Backups";
-            fsType = "none";
-            options = [
-              "bind"
-              "ro"
-              "nofail"
-            ];
+          prowlarr = {
+            hostname = "prowlarr";
+            containerAddress = "10.231.136.3";
+            port = 9696;
+            auth = "one_factor";
+            backup.path = "${cfg.configDir}/prowlarr/Backups";
+            monitor = true;
           };
-          "${cfg.backupDir}/qbittorrent" = {
-            depends = [ "/" ];
-            device = "${cfg.configDir}/qbittorrent";
-            fsType = "none";
-            options = [
-              "bind"
-              "ro"
-              "nofail"
-            ];
+          qbittorrent = {
+            hostname = "qbit";
+            title = "qbit";
+            containerAddress = "10.231.136.4";
+            port = 8080;
+            auth = "external";
+            backup.path = "${cfg.configDir}/qbittorrent";
+            monitor = true;
           };
-          "${cfg.backupDir}/radarr" = {
-            depends = [ "/" ];
-            device = "${cfg.configDir}/radarr/Backups";
-            fsType = "none";
-            options = [
-              "bind"
-              "ro"
-              "nofail"
-            ];
+          radarr = {
+            hostname = "radarr";
+            containerAddress = "10.231.136.5";
+            port = 7878;
+            auth = "one_factor";
+            backup.path = "${cfg.configDir}/radarr/Backups";
+            monitor = true;
           };
-          "${cfg.backupDir}/sonarr" = {
-            depends = [ "/" ];
-            device = "${cfg.configDir}/sonarr/Backups";
-            fsType = "none";
-            options = [
-              "bind"
-              "ro"
-              "nofail"
-            ];
+          sonarr = {
+            hostname = "sonarr";
+            containerAddress = "10.231.136.6";
+            port = 8989;
+            auth = "one_factor";
+            backup.path = "${cfg.configDir}/sonarr/Backups";
+            monitor = true;
           };
-        };
-
-        systemd.services = {
-          "container@bazarr".after = [ "home-containers-backup-bazarr.mount" ];
-          "container@prowlarr".after = [ "home-containers-backup-prowlarr.mount" ];
-          "container@qbittorrent".after = [ "home-containers-backup-qbittorrent.mount" ];
-          "container@radarr".after = [ "home-containers-backup-radarr.mount" ];
-          "container@sonarr".after = [ "home-containers-backup-sonarr.mount" ];
         };
 
         containers.bazarr = mkArrContainer {
-          ipOctet = 2;
+          serviceName = "bazarr";
           extraOptions.privateUsers = "identity";
           serviceConfig.bazarr = {
             enable = true;
@@ -135,7 +102,7 @@
         };
 
         containers.prowlarr = mkArrContainer {
-          ipOctet = 3;
+          serviceName = "prowlarr";
           mediaBind = false;
           extraOptions.privateUsers = "identity";
           serviceConfig.prowlarr = {
@@ -151,7 +118,7 @@
         };
 
         containers.qbittorrent = mkArrContainer {
-          ipOctet = 4;
+          serviceName = "qbittorrent";
           mediaBind = false;
           extraOptions.privateUsers = "identity";
           extraConfig = {
@@ -169,6 +136,7 @@
             ];
             services.qbittorrent.group = "media";
             users.groups.media.gid = 900;
+            systemd.services.qbittorrent.serviceConfig.UMask = lib.mkForce "0002";
           };
           serviceConfig.qbittorrent = {
             enable = true;
@@ -200,7 +168,7 @@
         };
 
         containers.radarr = mkArrContainer {
-          ipOctet = 5;
+          serviceName = "radarr";
           extraOptions.privateUsers = "identity";
           serviceConfig.radarr = {
             enable = true;
@@ -212,6 +180,7 @@
             environment.systemPackages = [ pkgs.striptracks ];
             services.radarr.group = "media";
             users.groups.media.gid = 900;
+            systemd.services.radarr.serviceConfig.UMask = lib.mkForce "0002";
           };
           extraBindMounts = {
             "/config" = {
@@ -226,7 +195,7 @@
         };
 
         containers.sonarr = mkArrContainer {
-          ipOctet = 6;
+          serviceName = "sonarr";
           extraOptions.privateUsers = "identity";
           serviceConfig.sonarr = {
             enable = true;
@@ -238,6 +207,7 @@
             environment.systemPackages = [ pkgs.striptracks ];
             services.sonarr.group = "media";
             users.groups.media.gid = 900;
+            systemd.services.sonarr.serviceConfig.UMask = lib.mkForce "0002";
           };
           extraBindMounts = {
             "/config" = {

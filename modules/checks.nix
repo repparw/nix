@@ -63,6 +63,32 @@
                 ${generatedShellPackageLinks}
                 touch $out
               '';
+
+          service-inventory =
+            let
+              results = builtins.map (
+                host:
+                let
+                  inventory = lib.attrValues (
+                    inputs.self.nixosConfigurations.${host}.config.modules.services.inventory or { }
+                  );
+                  ips = lib.filter (x: x != null) (lib.catAttrs "containerAddress" inventory);
+                  dups = lib.filter (ip: (builtins.length (builtins.filter (x: x == ip) ips)) > 1) (lib.unique ips);
+                in
+                if builtins.length dups > 0 then
+                  builtins.throw "${host}: duplicate container IPs: ${builtins.concatStringsSep ", " dups}"
+                else
+                  "${host}: OK"
+              ) hosts;
+            in
+            builtins.seq results (
+              pkgs.runCommand "check-service-inventory" { } ''
+                {
+                  ${lib.concatMapStringsSep "\n" (result: "echo ${lib.escapeShellArg result}") results}
+                  echo "service inventory: no duplicate IPs"
+                } > $out
+              ''
+            );
         }
         // lib.genAttrs hosts evalHost;
     };
