@@ -27,14 +27,6 @@
         virtualDisplay = config.modules.virtualDisplay or { };
         height = lib.last (lib.splitString "x" (virtualDisplay.resolution or "3840x2160"));
         refreshRate = toString (virtualDisplay.refreshRate or 120);
-        sunshineBasePort = 47989;
-        sunshineTcpPorts = map (offset: sunshineBasePort + offset) [
-          (-5)
-          0
-          1
-          21
-        ];
-
         niri-output-on = pkgs.writeShellScriptBin "niri-output-on" (builtins.readFile ./niri-output-on.sh);
         steam-sunshine = pkgs.writeShellApplication {
           name = "steam-sunshine";
@@ -109,6 +101,7 @@
               fi
 
               status="$(curl "''${curl_args[@]}" 2>/dev/null || true)"
+              echo "Sunshine close API returned HTTP status: ''${status:-none}"
               case "$status" in
                 2*) return 0 ;;
                 *) return 1 ;;
@@ -127,13 +120,10 @@
           name = "sunshine-idle-watchdog";
           runtimeInputs = [
             pkgs.coreutils
-            pkgs.gawk
-            pkgs.iproute2
             pkgs.systemd
           ];
           text = ''
             export SUNSHINE_IDLE_TIMEOUT_SECONDS=600
-            export SUNSHINE_WATCH_PORTS="${lib.concatMapStringsSep " " toString sunshineTcpPorts}"
             export SUNSHINE_CLEANUP_COMMAND="${sunshine-stream-cleanup}/bin/sunshine-stream-cleanup"
           ''
           + builtins.readFile ./sunshine-idle-watchdog.sh;
