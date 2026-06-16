@@ -2,10 +2,32 @@
   cfg,
   config,
   lib,
+  servicesLib,
   ...
 }:
 let
   domain = cfg.domain;
+  inventory = cfg.inventory;
+  proxyableInventory = lib.filterAttrs (_: service: service.port != null) inventory;
+  routableInventory = lib.filterAttrs (
+    name: service:
+    service.hostname != null
+    && !(builtins.elem name [
+      "qbittorrent"
+    ])
+  ) inventory;
+  mkService = name: {
+    loadBalancer.servers = [ { url = servicesLib.serviceUrl cfg name; } ];
+  };
+  mkRouter =
+    name: service:
+    {
+      rule = "Host(`${service.hostname}.${domain}`)";
+      service = name;
+    }
+    // lib.optionalAttrs (service.auth == "one_factor") {
+      middlewares = [ "authelia" ];
+    };
 in
 {
   services.traefik = {
@@ -52,7 +74,7 @@ in
     dynamicConfigOptions = {
       tls.options.default.sniStrict = true;
       http = {
-        routers = {
+        routers = lib.mapAttrs mkRouter routableInventory // {
           home-router = {
             rule = "Host(`home.${domain}`)";
             service = "hass";
@@ -61,30 +83,6 @@ in
           t3code = {
             rule = "Host(`code.${domain}`)";
             service = "t3code";
-            middlewares = [ "authelia" ];
-          };
-          authelia = {
-            rule = "Host(`auth.${domain}`)";
-            service = "authelia";
-          };
-          bazarr = {
-            rule = "Host(`bazarr.${domain}`)";
-            service = "bazarr";
-            middlewares = [ "authelia" ];
-          };
-          prowlarr = {
-            rule = "Host(`prowlarr.${domain}`)";
-            service = "prowlarr";
-            middlewares = [ "authelia" ];
-          };
-          radarr = {
-            rule = "Host(`radarr.${domain}`)";
-            service = "radarr";
-            middlewares = [ "authelia" ];
-          };
-          sonarr = {
-            rule = "Host(`sonarr.${domain}`)";
-            service = "sonarr";
             middlewares = [ "authelia" ];
           };
           qbittorrent = {
@@ -96,20 +94,6 @@ in
             rule = "Host(`qbit.${domain}`) && PathPrefix(`/api`)";
             service = "qbittorrent";
           };
-          miniflux = {
-            rule = "Host(`rss.${domain}`)";
-            service = "miniflux";
-            middlewares = [ "authelia" ];
-          };
-          jellyfin = {
-            rule = "Host(`jellyfin.${domain}`)";
-            service = "jellyfin";
-          };
-          paperless = {
-            rule = "Host(`paper.${domain}`)";
-            service = "paperless";
-            middlewares = [ "authelia" ];
-          };
           glance = {
             rule = "Host(`${domain}`)";
             service = "glance";
@@ -119,7 +103,7 @@ in
         middlewares = {
           real-ip.plugin.traefik-real-ip = { };
           authelia.forwardAuth = {
-            address = "http://${config.containers.authelia.localAddress}:9091/api/authz/forward-auth";
+            address = "${servicesLib.serviceUrl cfg "authelia"}/api/authz/forward-auth";
             trustForwardHeader = true;
             authResponseHeaders = [
               "Remote-User"
@@ -134,7 +118,7 @@ in
           ];
           qbit-basic-auth.headers.customRequestHeaders.Authorization = "{{ env `QBIT_AUTH` }}";
         };
-        services = {
+        services = lib.mapAttrs (name: _: mkService name) proxyableInventory // {
           hass.loadBalancer = {
             servers = [ { url = "http://192.168.0.4"; } ];
             healthCheck = {
@@ -143,30 +127,7 @@ in
               timeout = "3s";
             };
           };
-          authelia.loadBalancer.servers = [
-            { url = "http://${config.containers.authelia.localAddress}:9091"; }
-          ];
-          bazarr.loadBalancer.servers = [ { url = "http://${config.containers.bazarr.localAddress}:6767"; } ];
-          prowlarr.loadBalancer.servers = [
-            { url = "http://${config.containers.prowlarr.localAddress}:9696"; }
-          ];
-          radarr.loadBalancer.servers = [ { url = "http://${config.containers.radarr.localAddress}:7878"; } ];
-          sonarr.loadBalancer.servers = [ { url = "http://${config.containers.sonarr.localAddress}:8989"; } ];
-          qbittorrent.loadBalancer.servers = [
-            { url = "http://${config.containers.qbittorrent.localAddress}:8080"; }
-          ];
-          miniflux.loadBalancer.servers = [
-            { url = "http://127.0.0.1:8081"; }
-          ];
-          jellyfin.loadBalancer.servers = [
-            { url = "http://${config.containers.jellyfin.localAddress}:8096"; }
-          ];
-          paperless.loadBalancer.servers = [
-            { url = "http://${config.containers.paperless.localAddress}:8000"; }
-          ];
-          glance.loadBalancer.servers = [ { url = "http://${config.containers.glance.localAddress}:8080"; } ];
           t3code.loadBalancer.servers = [ { url = "http://localhost:4097"; } ];
-
         };
       };
     };

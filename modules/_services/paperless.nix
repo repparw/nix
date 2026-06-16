@@ -1,66 +1,52 @@
 {
   cfg,
+  servicesLib,
   ...
 }:
 {
-  networking.hosts."192.168.0.18" = [
-    "paper.${cfg.domain}"
-  ];
-
-  fileSystems."${cfg.backupDir}/paper" = {
-    depends = [ "/" ];
-    device = "${cfg.configDir}/paper/export";
-    fsType = "none";
-    options = [
-      "bind"
-      "ro"
-      "nofail"
-    ];
+  modules.services.inventory.paperless = {
+    hostname = "paper";
+    containerAddress = "10.231.136.12";
+    port = 8000;
+    auth = "one_factor";
+    backup.path = "${cfg.configDir}/paper/export";
+    monitor = true;
   };
 
-  systemd.services."container@paperless".after = [ "home-containers-backup-paper.mount" ];
-
-  containers.paperless = {
-    autoStart = true;
-    privateNetwork = true;
+  containers.paperless = servicesLib.mkContainer {
+    inherit cfg;
+    name = "paperless";
     privateUsers = "pick";
-    hostAddress = "10.231.136.1";
-    localAddress = "10.231.136.12";
     bindMounts = {
       "/var/lib/paperless" = {
         hostPath = "${cfg.configDir}/paper";
         isReadOnly = false;
       };
     };
-    config =
-      { ... }:
-      {
-        networking.firewall.allowedTCPPorts = [ 8000 ];
-        networking.useHostResolvConf = false;
-        networking.nameservers = [ "10.231.136.1" ];
+    extraConfig = {
+      networking.firewall.allowedTCPPorts = [ 8000 ];
 
-        services.paperless = {
+      services.paperless = {
+        enable = true;
+        port = 8000;
+        address = "0.0.0.0";
+        exporter = {
           enable = true;
-          port = 8000;
-          address = "0.0.0.0";
-          exporter = {
-            enable = true;
-            onCalendar = "*-*-7,14,21,28 03:45:00";
-            settings = {
-              "no-archive" = true;
-              "no-thumbnail" = true;
-            };
-          };
+          onCalendar = "*-*-7,14,21,28 03:45:00";
           settings = {
-            PAPERLESS_OCR_LANGUAGE = "spa";
-            PAPERLESS_ENABLE_HTTP_REMOTE_USER = "true";
-            PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME = "HTTP_REMOTE_USER";
-            PAPERLESS_LOGOUT_REDIRECT_URL = "https://auth.${cfg.domain}/logout";
-            PAPERLESS_URL = "https://paper.${cfg.domain}";
-            PAPERLESS_DISABLE_REGULAR_LOGIN = "1";
+            "no-archive" = true;
+            "no-thumbnail" = true;
           };
         };
-        system.stateVersion = "26.05";
+        settings = {
+          PAPERLESS_OCR_LANGUAGE = "spa";
+          PAPERLESS_ENABLE_HTTP_REMOTE_USER = "true";
+          PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME = "HTTP_REMOTE_USER";
+          PAPERLESS_LOGOUT_REDIRECT_URL = "https://auth.${cfg.domain}/logout";
+          PAPERLESS_URL = "https://paper.${cfg.domain}";
+          PAPERLESS_DISABLE_REGULAR_LOGIN = "1";
+        };
       };
+    };
   };
 }

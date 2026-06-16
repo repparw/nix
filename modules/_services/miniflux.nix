@@ -3,10 +3,10 @@
   config,
   lib,
   pkgs,
+  servicesLib,
   ...
 }:
 let
-  backupJob = import ./backup-job.nix { inherit lib pkgs; };
   backupDir = "${cfg.configDir}/miniflux";
   createBackup = pkgs.writeShellApplication {
     name = "miniflux-create-backup";
@@ -25,22 +25,15 @@ let
   };
 in
 {
-  networking.hosts."192.168.0.18" = [
-    "rss.${cfg.domain}"
-  ];
+  systemd.services.miniflux.after = servicesLib.backupAfter [ "miniflux" ];
 
-  fileSystems."${cfg.backupDir}/miniflux" = {
-    depends = [ "/" ];
-    device = "${cfg.configDir}/miniflux";
-    fsType = "none";
-    options = [
-      "bind"
-      "ro"
-      "nofail"
-    ];
+  modules.services.inventory.miniflux = {
+    hostname = "rss";
+    port = 8081;
+    auth = "one_factor";
+    backup.path = "${cfg.configDir}/miniflux";
+    monitor = true;
   };
-
-  systemd.services.miniflux.after = [ "home-containers-backup-miniflux.mount" ];
 
   services.miniflux = {
     enable = true;
@@ -53,7 +46,7 @@ in
     };
   };
 }
-// (backupJob {
+// (servicesLib.mkBackupJob {
   name = "miniflux";
   description = "miniflux PostgreSQL";
   inherit backupDir createBackup;
