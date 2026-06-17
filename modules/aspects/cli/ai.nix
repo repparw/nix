@@ -110,6 +110,9 @@
             ExecStart = "${pkgs.t3code}/bin/t3code serve --host 0.0.0.0 --port 4097 --mode web";
             Restart = "always";
             RestartSec = 5;
+            Environment = [
+              "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
+            ];
           };
           Install = {
             WantedBy = [ "default.target" ];
