@@ -40,18 +40,33 @@
       in
       {
         home = {
-          packages = [ pkgs.codex ];
+          packages = [
+            pkgs.codex
+            pkgs.mcp-nixos
+          ];
           sessionVariables.CODEX_CLI_PATH = "${pkgs.codex}/bin/codex";
         };
 
         programs = {
+          mcp = {
+            enable = true;
+            servers = {
+              nixos = {
+                command = "${lib.getExe pkgs.mcp-nixos}";
+                args = [ ];
+              };
+            };
+          };
+
           codex = {
             enable = true;
+            enableMcpIntegration = true;
             skills = mattPocockSkills;
           };
 
           opencode = {
             enable = true;
+            enableMcpIntegration = true;
             skills = mattPocockSkills;
             settings = {
               permission = {
