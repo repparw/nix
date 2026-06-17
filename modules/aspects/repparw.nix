@@ -40,6 +40,10 @@
             useGlobalPkgs = true;
             useUserPackages = true;
             backupFileExtension = "hm-backup";
+
+            sharedModules = [
+              inputs.nixcord.homeModules.default
+            ];
           };
         };
     };
