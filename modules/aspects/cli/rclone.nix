@@ -86,6 +86,20 @@
                 mountPoint = "/home/repparw/.cloud/dropbox";
               };
             };
+
+            clarodrive = {
+              config = {
+                type = "webdav";
+                url = "https://i0001.clarodrive.com/remote.php/webdav";
+                vendor = "nextcloud";
+                user = builtins.readFile osConfig.sops.secrets.rcloneClarodriveUser.path;
+              };
+              secrets.pass = osConfig.sops.secrets.rcloneClarodrive.path;
+              mounts."" = {
+                enable = true;
+                mountPoint = "/home/repparw/.cloud/claro";
+              };
+            };
           };
         };
       };
