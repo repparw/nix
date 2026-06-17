@@ -42,7 +42,23 @@
             services.archisteamfarm = {
               enable = true;
               bots.repparw = {
-                settings.OnlineStatus = 0;
+                settings = {
+                  OnlineStatus = 0;
+                  EnableFreePackages = true;
+                  PauseFreePackagesWhilePlaying = true;
+                  FreePackagesFilters = [
+                    {
+                      NoCostOnly = true;
+                    }
+                    {
+                      Categories = [ 29 ];
+                    }
+                    {
+                      Types = [ "DLC" ];
+                      IgnoredTypes = [ "Game" "Application" ];
+                    }
+                  ];
+                };
                 username = "ulisesbritos1";
                 passwordFile = credentialPasswordPath;
               };
