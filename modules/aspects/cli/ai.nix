@@ -34,7 +34,7 @@
         mattPocockSkills = lib.listToAttrs (
           map (skillFile: {
             name = builtins.unsafeDiscardStringContext (baseNameOf (dirOf (toString skillFile)));
-            value.source = dirOf (toString skillFile);
+            value = dirOf (toString skillFile);
           }) skillFiles
         );
       in
@@ -45,10 +45,14 @@
         };
 
         programs = {
-          codex.enable = true;
+          codex = {
+            enable = true;
+            skills = mattPocockSkills;
+          };
 
           opencode = {
             enable = true;
+            skills = mattPocockSkills;
             settings = {
               permission = {
                 "*" = {
@@ -81,11 +85,6 @@
 
           t3code.enable = true;
         };
-
-        xdg.configFile = lib.mapAttrs' (name: value: {
-          name = "codex/skills/${name}";
-          inherit value;
-        }) mattPocockSkills;
 
         systemd.user.services.t3code-web = {
           Unit = {
