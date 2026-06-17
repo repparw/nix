@@ -54,6 +54,12 @@
           rcloneNextcloud = {
             owner = "repparw";
           };
+          rcloneClarodrive = {
+            owner = "repparw";
+          };
+          rcloneClarodriveUser = {
+            owner = "repparw";
+          };
           resticPassword = {
             owner = "repparw";
           };
