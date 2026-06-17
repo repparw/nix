@@ -92,7 +92,7 @@
                 type = "webdav";
                 url = "https://i0001.clarodrive.com/remote.php/webdav";
                 vendor = "nextcloud";
-                user = builtins.readFile osConfig.sops.secrets.rcloneClarodriveUser.path;
+                user = "f8ff72993b43109297c1f4e7";
               };
               secrets.pass = osConfig.sops.secrets.rcloneClarodrive.path;
               mounts."" = {

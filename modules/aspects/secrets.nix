@@ -57,9 +57,6 @@
           rcloneClarodrive = {
             owner = "repparw";
           };
-          rcloneClarodriveUser = {
-            owner = "repparw";
-          };
           resticPassword = {
             owner = "repparw";
           };
