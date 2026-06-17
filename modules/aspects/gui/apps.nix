@@ -5,18 +5,6 @@
   ...
 }:
 let
-  discordKrispNixpkgs =
-    pkgs:
-    pkgs.applyPatches {
-      name = "nixpkgs-discord-krisp-patched";
-      src = inputs.nixpkgs;
-      patches = [
-        (pkgs.fetchpatch {
-          url = "https://github.com/NixOS/nixpkgs/pull/506089.patch";
-          hash = "sha256-2aIrsnN9u/fXSgagAqKtzWHR4R+DeWrQ9vCC5bM3ndI=";
-        })
-      ];
-    };
   tasksOrgNixpkgs =
     pkgs:
     pkgs.applyPatches {
@@ -31,6 +19,10 @@ let
     };
 in
 {
+  flake-file.inputs.nixcord = {
+    url = "github:FlameFlag/nixcord";
+  };
+
   den.aspects.gui.provides.guiApps = {
     nixos = {
       nixpkgs.overlays = [
@@ -38,15 +30,6 @@ in
           tasks-org = final.callPackage (
             tasksOrgNixpkgs final + "/pkgs/by-name/ta/tasks-org/package.nix"
           ) { };
-        })
-        (final: prev: {
-          discord =
-            (final.callPackage (
-              discordKrispNixpkgs final + "/pkgs/applications/networking/instant-messengers/discord"
-            ) { }).discord.override
-              {
-                withKrisp = true;
-              };
         })
         (final: prev: {
           wshowkeys = prev.wshowkeys.overrideAttrs (old: {
@@ -207,11 +190,16 @@ in
             };
           };
 
-          discord = {
+          nixcord = {
             enable = true;
-            settings = {
-              minimizeToTray = true;
-              arRPC = false;
+            discord = {
+              enable = true;
+              openASAR.enable = true;
+              krisp.enable = true;
+              settings = {
+                minimizeToTray = true;
+                arRPC = false;
+              };
             };
           };
 
