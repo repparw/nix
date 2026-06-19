@@ -7,7 +7,9 @@
 
   den.hosts.x86_64-linux = {
     alpha.users.repparw = { };
-    beta.users.repparw = { };
+    # Disabled while there is no laptop using this host config. Re-enable when
+    # beta has hardware again so it participates in flake evals.
+    # beta.users.repparw = { };
   };
 
   den.aspects.repparw = {
