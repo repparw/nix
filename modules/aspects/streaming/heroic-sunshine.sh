@@ -27,7 +27,7 @@ sleep 2
 
 niri msg action focus-monitor DP-2
 
-gamescope \
+gamemoderun gamescope \
     -H "$GAMESCOPE_HEIGHT" -r "$GAMESCOPE_REFRESH" \
     --force-grab-cursor \
     --adaptive-sync \

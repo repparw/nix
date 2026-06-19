@@ -55,6 +55,8 @@
       description = "repparw";
       extraGroups = [
         "adbusers"
+        "gamemode"
+        "render"
         "video"
         "wheel"
       ];

@@ -30,15 +30,15 @@ sleep 4
 
 niri msg action focus-monitor DP-2
 
-gamescope \
+gamemoderun gamescope \
     -H "$GAMESCOPE_HEIGHT" -r "$GAMESCOPE_REFRESH" \
     --steam \
     --force-grab-cursor \
     --adaptive-sync \
     -- bwrap \
-        --dev-bind / / \
-        --tmpfs /mnt/seagate \
-        --tmpfs /home/containers/media/seagate \
-        -- steam -tenfoot -pipewire-dmabuf &
+    --dev-bind / / \
+    --tmpfs /mnt/seagate \
+    --tmpfs /home/containers/media/seagate \
+    -- steam -tenfoot -pipewire-dmabuf &
 
 niri msg action power-off-monitors
