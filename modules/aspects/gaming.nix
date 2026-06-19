@@ -10,21 +10,12 @@
     nixos =
       { pkgs, ... }:
       {
+        boot.kernelModules = [ "ntsync" ];
         hardware.xpadneo.enable = true;
         programs = {
           steam = {
             enable = true;
             extraCompatPackages = with pkgs; [ proton-ge-bin ];
-            gamescopeSession = {
-              enable = true;
-              args = [
-                "-H"
-                "1080"
-                "-O"
-                "DP-1"
-                "--adaptive-sync"
-              ];
-            };
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
           };

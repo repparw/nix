@@ -32,6 +32,7 @@
           name = "steam-sunshine";
           runtimeInputs = [
             pkgs.bubblewrap
+            pkgs.gamemode
             pkgs.jq
           ];
           text = ''
@@ -42,7 +43,10 @@
         };
         heroic-sunshine = pkgs.writeShellApplication {
           name = "heroic-sunshine";
-          runtimeInputs = [ pkgs.jq ];
+          runtimeInputs = [
+            pkgs.gamemode
+            pkgs.jq
+          ];
           text = ''
             export GAMESCOPE_HEIGHT=${height}
             export GAMESCOPE_REFRESH=${refreshRate}
