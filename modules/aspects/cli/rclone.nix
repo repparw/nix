@@ -16,6 +16,7 @@
       }:
       let
         nc = config.accounts.calendar.accounts.nextcloud.remote;
+        clarodriveUser = "f8ff72993b43109297c1f4e7";
       in
       {
         # Fix: rclone-config service must remain active after exit for mount dependencies
@@ -57,7 +58,7 @@
             union = {
               config = {
                 type = "union";
-                upstreams = "gdrive:crypt nextcloud:crypt";
+                upstreams = "gdrive:crypt nextcloud:crypt claro:crypt";
                 policy_read = "all";
                 action_policy = "all";
                 create_policy = "all";
@@ -87,12 +88,12 @@
               };
             };
 
-            clarodrive = {
+            claro = {
               config = {
                 type = "webdav";
-                url = "https://i0001.clarodrive.com/remote.php/webdav";
+                url = "https://i0001.clarodrive.com/remote.php/dav/files/${clarodriveUser}";
                 vendor = "nextcloud";
-                user = "f8ff72993b43109297c1f4e7";
+                user = clarodriveUser;
               };
               secrets.pass = osConfig.sops.secrets.rcloneClarodrive.path;
               mounts."" = {
