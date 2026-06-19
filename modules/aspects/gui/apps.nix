@@ -193,13 +193,7 @@ in
           nixcord = {
             enable = true;
             discord = {
-              enable = true;
-              openASAR.enable = true;
               krisp.enable = true;
-              settings = {
-                minimizeToTray = true;
-                arRPC = false;
-              };
             };
           };
 
