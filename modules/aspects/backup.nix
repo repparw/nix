@@ -72,6 +72,7 @@
               sources = [ "pi:services/" ];
               settings = {
                 archive = true;
+                "copy-links" = true;
                 delete = true;
               };
             };
