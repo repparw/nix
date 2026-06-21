@@ -19,6 +19,7 @@
       {
         config,
         lib,
+        pkgs,
         modulesPath,
         ...
       }:
@@ -41,6 +42,7 @@
             ];
           };
           kernelModules = [ "kvm-amd" ];
+          kernelPackages = pkgs.linuxPackages_latest;
           loader = {
             systemd-boot = {
               enable = true;
@@ -103,6 +105,7 @@
 
         nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
         hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+        powerManagement.cpuFreqGovernor = "performance";
 
         swapDevices = [
           {

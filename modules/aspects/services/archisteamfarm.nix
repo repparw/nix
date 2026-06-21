@@ -51,11 +51,11 @@
                       NoCostOnly = true;
                     }
                     {
-                      Categories = [ 29 ];
-                    }
-                    {
                       Types = [ "DLC" ];
-                      IgnoredTypes = [ "Game" "Application" ];
+                      IgnoredTypes = [
+                        "Game"
+                        "Application"
+                      ];
                     }
                   ];
                 };

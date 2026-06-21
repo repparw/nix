@@ -35,7 +35,7 @@ gamemoderun gamescope \
     --steam \
     --force-grab-cursor \
     --adaptive-sync \
-    -- bwrap \
+    -- env -u LD_PRELOAD bwrap \
     --dev-bind / / \
     --tmpfs /mnt/seagate \
     --tmpfs /home/containers/media/seagate \
