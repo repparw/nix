@@ -122,6 +122,15 @@ in
             rule = "Host(`${domain}`)";
             service = "glance";
           };
+          n8n-webhook =
+            let
+              service = inventory.n8n;
+            in
+            {
+              rule = "Host(`${service.hostname}.${domain}`) && (Path(`/webhook`) || PathPrefix(`/webhook/`))";
+              service = "n8n";
+              priority = 100;
+            };
 
         };
         middlewares = {

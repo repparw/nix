@@ -77,6 +77,10 @@
             group = "ddclient";
             mode = "0400";
           };
+          discordWebhook = {
+            owner = "root";
+            mode = "0400";
+          };
           "authelia/jwtSecret" = {
             owner = "root";
             mode = "0400";
