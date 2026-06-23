@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+connector_name="${SUNSHINE_CONNECTOR_NAME:-DP-2}"
+
 NIRI_SOCKET="${NIRI_SOCKET:-$(systemctl --user show-environment | sed -n 's/^NIRI_SOCKET=//p' | head -n 1)}"
 export NIRI_SOCKET
 
@@ -20,4 +22,4 @@ systemd-inhibit \
   sleep infinity &
 disown
 
-niri msg output DP-2 on
+niri msg output "$connector_name" on

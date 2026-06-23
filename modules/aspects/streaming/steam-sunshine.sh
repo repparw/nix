@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -x
 exec >> /tmp/steam-sunshine.log 2>&1
+connector_name="${SUNSHINE_CONNECTOR_NAME:-DP-2}"
 
 # Pull session env from systemd so gamescope runs nested on Wayland
 while IFS='=' read -r key value; do
@@ -28,7 +29,7 @@ pgrep -x steam >/dev/null 2>&1 && pkill -9 -x steam
 pgrep -x gamescope >/dev/null 2>&1 && pkill -9 -x gamescope
 sleep 4
 
-niri msg action focus-monitor DP-2
+niri msg action focus-monitor "$connector_name"
 
 gamemoderun gamescope \
     -H "$GAMESCOPE_HEIGHT" -r "$GAMESCOPE_REFRESH" \

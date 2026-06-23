@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -x
 exec >> /tmp/heroic-sunshine.log 2>&1
+connector_name="${SUNSHINE_CONNECTOR_NAME:-DP-2}"
 
 while IFS='=' read -r key value; do
     case "$key" in
@@ -25,7 +26,7 @@ fi
 pgrep -x gamescope >/dev/null 2>&1 && pkill -9 -x gamescope
 sleep 2
 
-niri msg action focus-monitor DP-2
+niri msg action focus-monitor "$connector_name"
 
 gamemoderun gamescope \
     -H "$GAMESCOPE_HEIGHT" -r "$GAMESCOPE_REFRESH" \
