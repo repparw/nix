@@ -9,6 +9,7 @@
       archisteamfarm
       arr
       jellyfin
+      n8n
     ];
 
     nixos =
