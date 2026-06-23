@@ -20,6 +20,8 @@ Personal NixOS and Home Manager configuration built on the upstream
 - `modules/_packages/`: local package definitions and service-only packages.
 - `modules/checks.nix`: flake checks.
 - `modules/git-hooks.nix`: development shell and pre-commit hooks.
+- `knowledge/`: OKF-style knowledge bundle for repo architecture, hosts,
+  services, decisions, and runbooks.
 - `secrets.yaml`: encrypted `sops-nix` secrets.
 
 ## Rules
@@ -40,90 +42,17 @@ nix flake check
 nh os switch
 ```
 
-## Recovery Runbook
+## Knowledge
 
-### Failed Auto-Upgrade Rollback
+Repo knowledge lives in [knowledge/index.md](knowledge/index.md). It uses
+markdown files with YAML frontmatter so the docs stay useful for both humans
+and agents.
 
-Auto-upgrade is enabled through `den.aspects.auto-upgrade` and updates every
-flake input with `--commit-lock-file`.
+Start with these runbooks:
 
-1. Inspect the failed run:
-
-   ```sh
-   systemctl status nixos-upgrade.service
-   journalctl -u nixos-upgrade.service -b
-   git status
-   git log --oneline -5
-   ```
-
-2. Boot or switch back to the previous working generation:
-
-   ```sh
-   sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
-   sudo /nix/var/nix/profiles/system-<generation>-link/bin/switch-to-configuration switch
-   ```
-
-3. If auto-upgrade committed a bad lock update, revert that commit or restore
-   the previous `flake.lock`, then verify before switching again:
-
-   ```sh
-   nix flake check
-   nh os switch
-   ```
-
-### Restore Service Backups
-
-Service backup exports are gathered under `modules.services.backupDir`, which
-defaults to `/home/containers/backup`. Most service backup paths are read-only
-bind mounts from `/home/containers/config`.
-
-1. Find the backup source and stop the affected service:
-
-   ```sh
-   ls -lah /home/containers/backup
-   systemctl stop container@<service>.service
-   ```
-
-   For native host services, use the service unit directly, for example
-   `systemctl stop miniflux.service`.
-
-2. Restore into the live config path under `/home/containers/config/<service>`.
-   Preserve owners, modes, and existing path layout. For database dumps such as
-   Miniflux, restore through the database tooling instead of copying the dump
-   over the live data directory.
-
-3. Start the service and inspect logs:
-
-   ```sh
-   systemctl start container@<service>.service
-   journalctl -u container@<service>.service -b
-   ```
-
-### Check Native Container DNS
-
-Private containers use `networking.useHostResolvConf = false` and resolve
-through the host bridge at `10.231.136.1`. The host exposes `systemd-resolved`
-with `DNSStubListenerExtra = "0.0.0.0"`.
-
-1. Check host-side DNS first:
-
-   ```sh
-   resolvectl status
-   ss -lunpt | rg ':53'
-   systemctl status systemd-resolved.service
-   ```
-
-2. Check the container resolver and a known lookup:
-
-   ```sh
-   sudo nixos-container run <service> -- cat /etc/resolv.conf
-   sudo nixos-container run <service> -- getent hosts cache.nixos.org
-   sudo nixos-container run <service> -- resolvectl query cache.nixos.org
-   ```
-
-3. If lookup fails, verify the container still points at `10.231.136.1`, the
-   host firewall accepts `ve-*` DNS traffic, and
-   `services.resolved.settings.Resolve.DNSStubListenerExtra` is still enabled.
+- [Failed auto-upgrade rollback](knowledge/runbooks/failed-auto-upgrade-rollback.md)
+- [Restore service backups](knowledge/runbooks/restore-service-backups.md)
+- [Check native container DNS](knowledge/runbooks/check-native-container-dns.md)
 
 ## Operational Backlog
 
