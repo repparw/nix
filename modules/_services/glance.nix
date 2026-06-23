@@ -133,18 +133,12 @@ in
                           type = "group";
                           widgets = [
                             {
-                              type = "rss";
-                              title = "Reddit";
-                              feeds = [
-                                {
-                                  url = "https://www.reddit.com/r/selfhosted/.rss";
-                                  title = "r/selfhosted";
-                                }
-                                {
-                                  url = "https://www.reddit.com/r/homelab/.rss";
-                                  title = "r/homelab";
-                                }
-                              ];
+                              type = "reddit";
+                              subreddit = "selfhosted";
+                            }
+                            {
+                              type = "reddit";
+                              subreddit = "homelab";
                             }
                           ];
                         }
