@@ -20,6 +20,14 @@
             default = "DP-2";
             description = "GPU port to use for virtual display";
           };
+          sunshineOutputName = lib.mkOption {
+            type = lib.types.oneOf [
+              lib.types.int
+              lib.types.str
+            ];
+            default = 2;
+            description = "Sunshine display device_id/output_name for the virtual display";
+          };
           resolution = lib.mkOption {
             type = lib.types.str;
             default = "3840x2160";

@@ -25,9 +25,25 @@
       }:
       let
         virtualDisplay = config.modules.virtualDisplay or { };
+        outputName = virtualDisplay.sunshineOutputName or 2;
+        connectorName = virtualDisplay.port or "DP-2";
         height = lib.last (lib.splitString "x" (virtualDisplay.resolution or "3840x2160"));
         refreshRate = toString (virtualDisplay.refreshRate or 120);
-        niri-output-on = pkgs.writeShellScriptBin "niri-output-on" (builtins.readFile ./niri-output-on.sh);
+        niri-output-on = pkgs.writeShellApplication {
+          name = "niri-output-on";
+          runtimeInputs = [
+            pkgs.coreutils
+            pkgs.gnused
+            pkgs.jq
+            pkgs.niri
+            pkgs.procps
+            pkgs.systemd
+          ];
+          text = ''
+            export SUNSHINE_CONNECTOR_NAME=${lib.escapeShellArg connectorName}
+          ''
+          + builtins.readFile ./niri-output-on.sh;
+        };
         steam-sunshine = pkgs.writeShellApplication {
           name = "steam-sunshine";
           runtimeInputs = [
@@ -38,6 +54,7 @@
           text = ''
             export GAMESCOPE_HEIGHT=${height}
             export GAMESCOPE_REFRESH=${refreshRate}
+            export SUNSHINE_CONNECTOR_NAME=${lib.escapeShellArg connectorName}
           ''
           + builtins.readFile ./steam-sunshine.sh;
         };
@@ -50,6 +67,7 @@
           text = ''
             export GAMESCOPE_HEIGHT=${height}
             export GAMESCOPE_REFRESH=${refreshRate}
+            export SUNSHINE_CONNECTOR_NAME=${lib.escapeShellArg connectorName}
           ''
           + builtins.readFile ./heroic-sunshine.sh;
         };
@@ -61,11 +79,13 @@
             pkgs.systemd
           ];
           text = ''
+            connector_name=${lib.escapeShellArg connectorName}
+
             if [ -z "''${NIRI_SOCKET:-}" ]; then
               eval "$(systemctl --user show-environment | grep '^NIRI_SOCKET=' || true)"
               export NIRI_SOCKET
             fi
-            niri msg output DP-2 off
+            niri msg output "$connector_name" off
             pkill -9 gamescope || true
             pkill -9 steam || true
             pkill -9 heroic || true
@@ -140,8 +160,12 @@
           capSysAdmin = false; # Disabled per https://github.com/NixOS/nixpkgs/issues/463989
 
           settings = {
-            output_name = 2; # DP-2 where gamescope/Steam runs
+            output_name = outputName;
             min_log_level = "info";
+            # Keep AMD hardware encoding and allow HEVC Main, but do not advertise Main10.
+            encoder = "vaapi";
+            hevc_mode = 2;
+            av1_mode = 1;
           };
 
           applications = {
@@ -181,16 +205,9 @@
 
         systemd.user.services.sunshine-idle-watchdog = {
           description = "Clean up Sunshine streaming apps after client disconnect idle timeout";
-          wantedBy = [
-            "graphical-session.target"
-            "sunshine.service"
-          ];
-          partOf = [
-            "graphical-session.target"
-            "sunshine.service"
-          ];
+          wantedBy = [ "sunshine.service" ];
+          partOf = [ "sunshine.service" ];
           after = [ "sunshine.service" ];
-          wants = [ "sunshine.service" ];
           serviceConfig = {
             ExecStart = "${sunshine-idle-watchdog}/bin/sunshine-idle-watchdog";
             Restart = "always";
