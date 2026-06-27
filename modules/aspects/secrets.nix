@@ -81,6 +81,14 @@
             owner = "root";
             mode = "0400";
           };
+          sunshineApiUsername = {
+            owner = "repparw";
+            mode = "0400";
+          };
+          sunshineApiPassword = {
+            owner = "repparw";
+            mode = "0400";
+          };
           "authelia/jwtSecret" = {
             owner = "root";
             mode = "0400";

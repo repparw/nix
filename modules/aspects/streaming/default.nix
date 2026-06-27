@@ -25,10 +25,24 @@
       }:
       let
         virtualDisplay = config.modules.virtualDisplay or { };
-        outputName = virtualDisplay.sunshineOutputName or 2;
         connectorName = virtualDisplay.port or "DP-2";
         height = lib.last (lib.splitString "x" (virtualDisplay.resolution or "3840x2160"));
         refreshRate = toString (virtualDisplay.refreshRate or 120);
+        sopsSecretPath =
+          name:
+          lib.attrByPath [
+            "sops"
+            "secrets"
+            name
+            "path"
+          ] null config;
+        sunshineApiEnvironment =
+          lib.optional (
+            sopsSecretPath "sunshineApiUsername" != null
+          ) "SUNSHINE_API_USERNAME_FILE=${sopsSecretPath "sunshineApiUsername"}"
+          ++ lib.optional (
+            sopsSecretPath "sunshineApiPassword" != null
+          ) "SUNSHINE_API_PASSWORD_FILE=${sopsSecretPath "sunshineApiPassword"}";
         niri-output-on = pkgs.writeShellApplication {
           name = "niri-output-on";
           runtimeInputs = [
@@ -110,6 +124,21 @@
 
               touch "$close_marker"
 
+              read_secret_file() {
+                secret_file="$1"
+                if [ -r "$secret_file" ]; then
+                  tr -d '\r\n' < "$secret_file"
+                fi
+              }
+
+              if [ -z "''${SUNSHINE_API_USERNAME:-}" ] && [ -n "''${SUNSHINE_API_USERNAME_FILE:-}" ]; then
+                SUNSHINE_API_USERNAME="$(read_secret_file "$SUNSHINE_API_USERNAME_FILE")"
+              fi
+
+              if [ -z "''${SUNSHINE_API_PASSWORD:-}" ] && [ -n "''${SUNSHINE_API_PASSWORD_FILE:-}" ]; then
+                SUNSHINE_API_PASSWORD="$(read_secret_file "$SUNSHINE_API_PASSWORD_FILE")"
+              fi
+
               curl_args=(
                 --insecure
                 --silent
@@ -137,7 +166,7 @@
             fi
 
             ${sunshine-stream-reset}/bin/sunshine-stream-reset
-            rm -f "$close_marker"
+            rm -f "$close_marker" "$state_dir/managed-app-started"
           '';
         };
         sunshine-idle-watchdog = pkgs.writeShellApplication {
@@ -160,7 +189,7 @@
           capSysAdmin = false; # Disabled per https://github.com/NixOS/nixpkgs/issues/463989
 
           settings = {
-            output_name = outputName;
+            output_name = connectorName;
             min_log_level = "info";
             # Keep AMD hardware encoding and allow HEVC Main, but do not advertise Main10.
             encoder = "vaapi";
@@ -210,6 +239,7 @@
           after = [ "sunshine.service" ];
           serviceConfig = {
             ExecStart = "${sunshine-idle-watchdog}/bin/sunshine-idle-watchdog";
+            Environment = sunshineApiEnvironment;
             Restart = "always";
             RestartSec = "5s";
           };
