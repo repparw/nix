@@ -17,7 +17,6 @@ in
 
   flake-file.inputs.helium-nix = {
     url = "github:penal-colony/helium-nix";
-    inputs.nixpkgs.follows = "nixpkgs";
   };
 
   flake-file.nixConfig = {
@@ -30,22 +29,6 @@ in
   den.aspects.gui.provides.browser = {
     nixos = {
       imports = [ inputs.helium-nix.nixosModules.helium ];
-
-      environment.etc."chromium/policies/managed/open-in-firefox.json".text = builtins.toJSON {
-        PasswordManagerEnabled = false;
-
-        "3rdparty".extensions.${openInFirefoxExtensionId} = {
-          faqs = false;
-          hosts = [
-            "app.solidtime.io"
-            "music.youtube.com"
-            "web.whatsapp.com"
-            "www.youtube.com"
-            "youtube.com"
-          ];
-          reverse = true;
-        };
-      };
 
       nixpkgs.overlays = [
         inputs.firefox-addons.overlays.default
@@ -71,64 +54,26 @@ in
         ...
       }:
       let
-        chromiumWithoutMimeApps =
-          chromium:
+        browserWithoutMimeApps =
+          desktopFile: browser:
           (pkgs.symlinkJoin {
-            name = "${chromium.name}-without-mimeapps";
-            paths = [ chromium ];
+            name = "${browser.name}-without-mimeapps";
+            paths = [ browser ];
             postBuild = ''
               rm -rf "$out/share/applications"
-              install -Dm644 ${chromium}/share/applications/chromium-browser.desktop \
-                "$out/share/applications/chromium-browser.desktop"
-              sed -i '/^MimeType=/d' "$out/share/applications/chromium-browser.desktop"
+              install -Dm644 ${browser}/share/applications/${desktopFile} \
+                "$out/share/applications/${desktopFile}"
+              sed -i '/^MimeType=/d' "$out/share/applications/${desktopFile}"
             '';
-            inherit (chromium) meta;
+            inherit (browser) meta;
           })
           // {
-            override = args: chromiumWithoutMimeApps (chromium.override args);
+            override = args: browserWithoutMimeApps desktopFile (browser.override args);
           };
 
-        openInFirefoxNativeClient = pkgs.stdenvNoCC.mkDerivation {
-          pname = "open-in-firefox-native-client";
-          version = "1.0.8";
-
-          src = pkgs.fetchFromGitHub {
-            owner = "andy-portmen";
-            repo = "native-client";
-            rev = "ddcf08fd892319bb5013f46929669273234685ef";
-            hash = "sha256-/Zr5FSfZ5Sh1kE/x0wF0Uljg0mnE0QkO6etgopaIXmo=";
-          };
-
-          dontBuild = true;
-
-          installPhase = ''
-            runHook preInstall
-
-            install -Dm644 host.js "$out/lib/com.add0n.node/host.js"
-            install -Dm644 messaging.js "$out/lib/com.add0n.node/messaging.js"
-
-            mkdir -p "$out/bin" "$out/etc/chromium/native-messaging-hosts"
-            cat > "$out/bin/com.add0n.node" <<EOF
-            #!${pkgs.runtimeShell}
-            exec ${lib.getExe pkgs.nodejs} "$out/lib/com.add0n.node/host.js"
-            EOF
-            chmod +x "$out/bin/com.add0n.node"
-
-            cat > "$out/etc/chromium/native-messaging-hosts/com.add0n.node.json" <<EOF
-            {
-              "name": "com.add0n.node",
-              "description": "Node Host for Native Messaging",
-              "path": "$out/bin/com.add0n.node",
-              "type": "stdio",
-              "allowed_origins": [
-                "chrome-extension://${openInFirefoxExtensionId}/"
-              ]
-            }
-            EOF
-
-            runHook postInstall
-          '';
-        };
+        chromiumWithoutMimeApps = browserWithoutMimeApps "chromium-browser.desktop";
+        heliumWithoutMimeApps = browserWithoutMimeApps "helium.desktop";
+        helium = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
       in
       {
         imports = [ inputs.helium-nix.homeManagerModules.helium ];
@@ -344,7 +289,6 @@ in
           chromium = {
             enable = true;
             package = chromiumWithoutMimeApps pkgs.chromium;
-            nativeMessagingHosts = [ openInFirefoxNativeClient ];
             extensions = [
               { id = openInFirefoxExtensionId; }
               { id = "ddkjiahejlhfcafbddmgiahcphecmpfh"; }
@@ -357,6 +301,7 @@ in
 
           helium = {
             enable = true;
+            package = heliumWithoutMimeApps helium;
             defaultBrowser = false;
             extraPolicies = {
               BrowserSignin = 0;

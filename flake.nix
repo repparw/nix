@@ -32,10 +32,7 @@
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    helium-nix = {
-      url = "github:penal-colony/helium-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    helium-nix.url = "github:penal-colony/helium-nix";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
