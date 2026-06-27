@@ -17,7 +17,8 @@
       in
       {
         systemd.tmpfiles.rules = [
-          "d ${cfg.configDir}/${serviceName} 0750 root root - -"
+          "d ${cfg.configDir}/${serviceName} 0750 64383 64383 - -"
+          "d ${cfg.configDir}/${serviceName}/workflows 0750 64383 64383 - -"
         ];
 
         modules.services.inventory.${serviceName} = {
@@ -34,7 +35,7 @@
           name = serviceName;
           privateUsers = "identity";
           bindMounts = {
-            "/var/lib/private/n8n" = {
+            "/config" = {
               hostPath = "${cfg.configDir}/${serviceName}";
               isReadOnly = false;
             };
@@ -66,7 +67,14 @@
               };
             };
 
-            systemd.services.n8n.path = [ pkgs.nodejs ];
+            systemd.services.n8n = {
+              path = [ pkgs.nodejs ];
+              environment = {
+                HOME = lib.mkForce "/config";
+                N8N_USER_FOLDER = lib.mkForce "/config";
+              };
+              serviceConfig.ReadWritePaths = [ "/config" ];
+            };
           };
         };
       };
