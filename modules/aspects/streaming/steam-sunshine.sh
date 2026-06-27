@@ -19,6 +19,10 @@ if [ -z "$WAYLAND_DISPLAY" ]; then
     echo "WARNING: WAYLAND_DISPLAY not set, gamescope may fail"
 fi
 
+state_dir="${XDG_RUNTIME_DIR:-/tmp}/sunshine-stream"
+mkdir -p "$state_dir"
+date +%s > "$state_dir/managed-app-started"
+
 GRAPHICAL_SESSION="$(loginctl --json=short 2>/dev/null | jq -r '[.[] | select(.seat != null and .seat != "-")] | first | .session' || true)"
 if [ -n "$GRAPHICAL_SESSION" ] && [ "$GRAPHICAL_SESSION" != "null" ]; then
     loginctl unlock-session "$GRAPHICAL_SESSION"
