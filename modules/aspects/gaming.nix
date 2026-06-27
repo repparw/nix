@@ -49,7 +49,7 @@
         programs.sm64ex = {
           enable = true;
           region = "us";
-          baserom = "/home/repparw/Games/sm64/Super Mario 64 (USA).z64";
+          baserom = "/home/repparw/Games/sm64/rom.z64";
         };
         programs.mangohud = {
           enable = true;
