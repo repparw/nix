@@ -2,6 +2,7 @@
   den,
   inputs,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -47,6 +48,7 @@ in
         gnome-disks.enable = true;
         wshowkeys.enable = true;
       };
+      environment.systemPackages = [ pkgs.qalculate-gtk ];
       networking.firewall.interfaces.eth0 = {
         # rquickshare
         allowedTCPPorts = [
