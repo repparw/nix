@@ -10,6 +10,7 @@
   gnused,
   gawk,
   coreutils,
+  util-linux,
   nix-update-script,
 }:
 
@@ -55,6 +56,7 @@ stdenv.mkDerivation rec {
           gnused
           gawk
           coreutils
+          util-linux
           bash
         ]
       }
