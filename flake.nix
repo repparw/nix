@@ -77,5 +77,12 @@
       };
     };
     systems.url = "github:nix-systems/default";
+    voxtype = {
+      url = "github:peteonrails/voxtype/v0.7.5";
+      inputs = {
+        flake-utils.follows = "flake-utils";
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
   };
 }
