@@ -14,228 +14,46 @@
     homeManager =
       {
         pkgs,
-        lib,
         ...
       }:
       let
         system = pkgs.stdenv.hostPlatform.system;
         voxtypeSource = inputs.voxtype;
-        voxtypeUnwrapped = voxtypeSource.packages.${system}.voxtype-onnx-unwrapped.overrideAttrs (old: {
-          buildFeatures = (old.buildFeatures or [ ]) ++ [ "cohere" ];
-          cargoBuildFeatures = (old.cargoBuildFeatures or old.buildFeatures or [ ]) ++ [ "cohere" ];
-          cargoCheckFeatures = (old.cargoCheckFeatures or old.buildFeatures or [ ]) ++ [ "cohere" ];
-          doCheck = false;
-        });
-        voxtypePackage = pkgs.symlinkJoin {
-          name = "voxtype-onnx-cohere-wrapped-${voxtypeUnwrapped.version}";
-          paths = [ voxtypeUnwrapped ];
-          buildInputs = [ pkgs.makeWrapper ];
-          postBuild = ''
-            wrapProgram $out/bin/voxtype \
-              --prefix PATH : "$out/bin" \
-              --prefix PATH : ${
-                pkgs.lib.makeBinPath (
-                  with pkgs;
-                  [
-                    dotool
-                    libnotify
-                    pciutils
-                    quickshell
-                    wl-clipboard
-                    xclip
-                    xdotool
-                    xdg-user-dirs
-                    xdg-utils
-                    ydotool
-                  ]
-                )
-              } \
-              --set ORT_DYLIB_PATH "${pkgs.onnxruntime}/lib/libonnxruntime.so" \
-              --prefix LD_LIBRARY_PATH : "${pkgs.onnxruntime}/lib"
-          '';
-        };
+        voxtypePackage = voxtypeSource.packages.${system}.vulkan;
+        voxtypeQuickshell = pkgs.runCommand "voxtype-quickshell-themed" { } ''
+          cp -R ${voxtypeSource}/quickshell $out
+          chmod -R u+w $out
 
-        voxtypeIndicator = pkgs.writeShellApplication {
-          name = "voxtype-indicator";
-          runtimeInputs = [
-            (pkgs.python3.withPackages (
-              pythonPkgs: with pythonPkgs; [
-                pycairo
-                pygobject3
-              ]
-            ))
-          ];
-          text = ''
-            export GI_TYPELIB_PATH="${pkgs.gdk-pixbuf}/lib/girepository-1.0:${pkgs.gobject-introspection}/lib/girepository-1.0:${pkgs.graphene}/lib/girepository-1.0:${pkgs.gtk4}/lib/girepository-1.0:${pkgs.gtk4-layer-shell}/lib/girepository-1.0:${pkgs.harfbuzz}/lib/girepository-1.0:${pkgs.pango.out}/lib/girepository-1.0:''${GI_TYPELIB_PATH:-}"
-            export LD_LIBRARY_PATH="${
-              lib.makeLibraryPath [
-                pkgs.cairo
-                pkgs.gdk-pixbuf
-                pkgs.glib
-                pkgs.gobject-introspection
-                pkgs.graphene
-                pkgs.gtk4
-                pkgs.gtk4-layer-shell
-                pkgs.harfbuzz
-                pkgs.pango.out
-              ]
-            }:''${LD_LIBRARY_PATH:-}"
-            export LD_PRELOAD="${pkgs.gtk4-layer-shell}/lib/libgtk4-layer-shell.so''${LD_PRELOAD:+:$LD_PRELOAD}"
-            exec python3 ${pkgs.writeText "voxtype-indicator.py" ''
-              import math
-              import os
-              from pathlib import Path
+          substituteInPlace $out/voxtype-shared/Theme.qml \
+            --replace-fail 'property color bgColor: Qt.rgba(0.10, 0.10, 0.12, 0.85)' 'property color bgColor: Qt.rgba(0.07, 0.07, 0.09, 0.86)' \
+            --replace-fail 'property color accentColor: Qt.rgba(0.40, 0.78, 1.00, 1.0)' 'property color accentColor: Qt.rgba(1.00, 1.00, 1.00, 0.92)' \
+            --replace-fail 'property color recordingColor: "#e06c75"' 'property color recordingColor: "#ff3b5c"' \
+            --replace-fail 'property color streamingColor: "#61afef"' 'property color streamingColor: "#68b6ff"' \
+            --replace-fail 'property color transcribingColor: "#e5c07b"' 'property color transcribingColor: "#f0c96b"' \
+            --replace-fail 'property color textColor: "#dcdfe4"' 'property color textColor: "#f2f4f8"' \
+            --replace-fail 'property int cornerRadius: 12' 'property int cornerRadius: 999' \
+            --replace-fail 'property int padding: 14' 'property int padding: 15' \
+            --replace-fail 'property int defaultWidthPx: 400' 'property int defaultWidthPx: 118' \
+            --replace-fail 'property int defaultHeightPx: 48' 'property int defaultHeightPx: 46' \
+            --replace-fail 'property real defaultOpacity: 0.95' 'property real defaultOpacity: 0.86' \
+            --replace-fail 'property real waveformGain: 10.0' 'property real waveformGain: 8.0'
 
-              import gi
-
-              gi.require_version("Gtk", "4.0")
-              gi.require_version("Gdk", "4.0")
-              gi.require_version("Gtk4LayerShell", "1.0")
-
-              from gi.repository import Gdk, GLib, Gtk
-              from gi.repository import Gtk4LayerShell as LayerShell
-
-
-              class Wave(Gtk.DrawingArea):
-                  def __init__(self):
-                      super().__init__()
-                      self.phase = 0.0
-                      self.set_content_width(58)
-                      self.set_content_height(26)
-                      self.set_draw_func(self.draw)
-                      GLib.timeout_add(80, self.tick)
-
-                  def tick(self):
-                      self.phase += 0.42
-                      self.queue_draw()
-                      return GLib.SOURCE_CONTINUE
-
-                  def draw(self, _area, cr, width, height):
-                      cr.set_source_rgba(1.0, 1.0, 1.0, 0.92)
-                      bar_width = 5
-                      gap = 5
-                      bars = 6
-                      total = bars * bar_width + (bars - 1) * gap
-                      x = (width - total) / 2
-
-                      for index in range(bars):
-                          wave = (math.sin(self.phase + index * 0.78) + 1) / 2
-                          bar_height = 7 + wave * 15
-                          y = (height - bar_height) / 2
-                          self.rounded_rectangle(cr, x, y, bar_width, bar_height, 2.5)
-                          cr.fill()
-                          x += bar_width + gap
-
-                  def rounded_rectangle(self, cr, x, y, width, height, radius):
-                      degrees = math.pi / 180
-                      cr.new_sub_path()
-                      cr.arc(x + width - radius, y + radius, radius, -90 * degrees, 0)
-                      cr.arc(x + width - radius, y + height - radius, radius, 0, 90 * degrees)
-                      cr.arc(x + radius, y + height - radius, radius, 90 * degrees, 180 * degrees)
-                      cr.arc(x + radius, y + radius, radius, 180 * degrees, 270 * degrees)
-                      cr.close_path()
-
-
-              class Indicator(Gtk.Application):
-                  def __init__(self):
-                      super().__init__(application_id="dev.repparw.VoxTypeIndicator")
-                      runtime_dir = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
-                      self.state_path = Path(runtime_dir) / "voxtype" / "state"
-                      self.window = None
-                      self.dot = None
-                      self.current_state = None
-
-                  def do_activate(self):
-                      self.window = Gtk.ApplicationWindow(application=self)
-                      self.window.set_decorated(False)
-                      self.window.set_resizable(False)
-                      self.window.set_focusable(False)
-
-                      LayerShell.init_for_window(self.window)
-                      LayerShell.set_layer(self.window, LayerShell.Layer.OVERLAY)
-                      LayerShell.set_anchor(self.window, LayerShell.Edge.LEFT, True)
-                      LayerShell.set_anchor(self.window, LayerShell.Edge.RIGHT, True)
-                      LayerShell.set_anchor(self.window, LayerShell.Edge.BOTTOM, True)
-                      LayerShell.set_margin(self.window, LayerShell.Edge.BOTTOM, 60)
-                      LayerShell.set_keyboard_mode(self.window, LayerShell.KeyboardMode.NONE)
-
-                      css = Gtk.CssProvider()
-                      css.load_from_data(b"""
-                      window {
-                        background: transparent;
-                      }
-
-                      .bubble {
-                        background: rgba(18, 18, 22, 0.86);
-                        border: 1px solid rgba(255, 255, 255, 0.18);
-                        border-radius: 999px;
-                        padding: 10px 15px;
-                        box-shadow: 0 10px 34px rgba(0, 0, 0, 0.35);
-                      }
-
-                      .dot {
-                        border-radius: 999px;
-                        min-width: 10px;
-                        min-height: 10px;
-                      }
-
-                      .dot.recording { background: #ff3b5c; }
-                      .dot.transcribing { background: #f0c96b; }
-                      .dot.streaming { background: #68b6ff; }
-                      """)
-                      Gtk.StyleContext.add_provider_for_display(
-                          Gdk.Display.get_default(),
-                          css,
-                          Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-                      )
-
-                      outer = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-                      outer.set_halign(Gtk.Align.CENTER)
-
-                      bubble = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-                      bubble.add_css_class("bubble")
-                      bubble.set_valign(Gtk.Align.CENTER)
-
-                      self.dot = Gtk.Box()
-                      self.dot.add_css_class("dot")
-                      self.dot.set_valign(Gtk.Align.CENTER)
-
-                      bubble.append(self.dot)
-                      bubble.append(Wave())
-                      outer.append(bubble)
-                      self.window.set_child(outer)
-                      self.window.present()
-                      self.window.set_visible(False)
-
-                      GLib.timeout_add(120, self.poll_state)
-
-                  def read_state(self):
-                      try:
-                          return self.state_path.read_text(encoding="utf-8").strip()
-                      except OSError:
-                          return "idle"
-
-                  def poll_state(self):
-                      state = self.read_state()
-                      if state == self.current_state:
-                          return GLib.SOURCE_CONTINUE
-
-                      self.current_state = state
-                      if state not in {"recording", "streaming", "transcribing"}:
-                          self.window.set_visible(False)
-                          return GLib.SOURCE_CONTINUE
-
-                      for name in ("recording", "streaming", "transcribing"):
-                          self.dot.remove_css_class(name)
-                      self.dot.add_css_class(state)
-                      self.window.set_visible(True)
-                      return GLib.SOURCE_CONTINUE
-
-
-              raise SystemExit(Indicator().run([]))
-            ''}
-          '';
-        };
+          substituteInPlace $out/OsdSurface.qml \
+            --replace-fail 'height: 72' 'height: VT.Theme.defaultHeightPx' \
+            --replace-fail 'anchors.bottomMargin: 72' 'anchors.bottomMargin: 60' \
+            --replace-fail 'border.width: 2' 'border.width: 1' \
+            --replace-fail 'width: 28' 'width: 10' \
+            --replace-fail 'text: panel.daemonState === "recording"    ? "󰍬"' 'text: panel.daemonState === "recording"    ? "●"' \
+            --replace-fail ': panel.daemonState === "streaming"     ? "󰜟"' ': panel.daemonState === "streaming"     ? "●"' \
+            --replace-fail ': panel.daemonState === "transcribing"  ? "󰔟"' ': panel.daemonState === "transcribing"  ? "●"' \
+            --replace-fail ':                                          "󰍬"' ':                                          "●"' \
+            --replace-fail 'font.pixelSize: 26' 'font.pixelSize: 10' \
+            --replace-fail 'width: card.width - 28 - 2 * VT.Theme.padding - 10' 'width: card.width - 10 - 2 * VT.Theme.padding - 10' \
+            --replace-fail 'spacing: 4' 'spacing: 0' \
+            --replace-fail 'height: 36' 'height: 26' \
+            --replace-fail 'height: 6' 'height: 0
+                    visible: false'
+        '';
 
         voxtypeToggle = pkgs.writeShellApplication {
           name = "voxtype-toggle";
@@ -244,7 +62,6 @@
             gnugrep
             playerctl
             voxtypePackage
-            voxtypeIndicator
           ];
           text = ''
             set -euo pipefail
@@ -312,7 +129,6 @@
         home.packages = [
           pkgs.quickshell
           voxtypePackage
-          voxtypeIndicator
           voxtypeToggle
 
           (pkgs.writeShellApplication {
@@ -379,20 +195,20 @@
           })
         ];
 
-        home.file.".local/bin/voxtype-toggle".source = "${voxtypeToggle}/bin/voxtype-toggle";
-        home.file.".local/bin/voxtype-audio-bridge".source = "${voxtypePackage}/bin/voxtype-audio-bridge";
-        xdg.dataFile."voxtype/quickshell".source = "${voxtypeSource}/quickshell";
-
         programs.voxtype = {
           enable = true;
           package = voxtypePackage;
           engine = "whisper";
           service.enable = true;
           settings = {
-            engine = "cohere";
-            cohere = {
-              model = "cohere-transcribe-q4f16";
-              language = "en";
+            engine = "whisper";
+            whisper = {
+              model = "base";
+              language = [
+                "en"
+                "es"
+              ];
+              translate = false;
             };
             audio.feedback.enabled = true;
             output.notification.on_transcription = false;
@@ -403,7 +219,10 @@
           };
         };
 
-        systemd.user.services.voxtype.Service.Environment = [ "VOXTYPE_OSD_FRONTEND=quickshell" ];
+        systemd.user.services.voxtype.Service.Environment = [
+          "VOXTYPE_OSD_FRONTEND=quickshell"
+          "VOXTYPE_OSD_QML_PATH=${voxtypeQuickshell}"
+        ];
       };
   };
 }
