@@ -1,9 +1,9 @@
-{ inputs, ... }:
+{ den, inputs, ... }:
 {
   perSystem =
     { config, pkgs, ... }:
     {
-      packages = {
+      packages = den.lib.nh.denPackages { fromFlake = true; } pkgs // {
         vmAlpha = pkgs.writeShellApplication {
           name = "vm-alpha";
           text =
@@ -32,6 +32,7 @@
         vmAlpha = {
           type = "app";
           program = "${config.packages.vmAlpha}/bin/vm-alpha";
+          meta.description = "Run the alpha NixOS VM";
         };
 
         # Disabled while there is no laptop using the beta host config.
