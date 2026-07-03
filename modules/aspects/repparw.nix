@@ -14,10 +14,10 @@
 
   den.aspects.repparw = {
     includes = [
-      den.provides.define-user
-      den.provides.primary-user
-      (den.provides.user-shell "fish")
-      den._.host-aspects
+      den.batteries.define-user
+      den.batteries.primary-user
+      (den.batteries.user-shell "fish")
+      den.batteries.host-aspects
       den.aspects.shell
       den.aspects.tmux
       den.aspects.git
@@ -37,8 +37,6 @@
       nixos =
         { ... }:
         {
-          imports = [ inputs.home-manager.nixosModules.home-manager ];
-
           home-manager = {
             useGlobalPkgs = true;
             useUserPackages = true;

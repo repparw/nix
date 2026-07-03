@@ -1,15 +1,11 @@
 { den, lib, ... }:
 {
   den = {
-    schema.user = {
-      includes = [ den.provides."mutual-provider" ];
-
-      classes = lib.mkDefault [ "homeManager" ];
-    };
+    schema.user.classes = lib.mkDefault [ "homeManager" ];
 
     aspects.host-common = {
       includes = [
-        den.provides.hostname
+        den.batteries.hostname
         den.aspects.auto-upgrade
         den.aspects.cli
         den.aspects.networking
