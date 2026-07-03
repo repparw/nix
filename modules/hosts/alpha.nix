@@ -8,6 +8,7 @@
     includes = [
       den.aspects.host-common
       den.aspects.backup
+      den.aspects.btrfs-maintenance
       den.aspects.gaming
       den.aspects.logid
       den.aspects.nixos-services
@@ -57,11 +58,12 @@
           zswap.enable = true;
         };
 
+        virtualisation.vmVariant.boot.zswap.enable = lib.mkForce false;
+
         fileSystems = {
           "/" = {
             device = "/dev/disk/by-uuid/51c5e80b-e22e-4d62-a3e2-ebb531deb05b";
             fsType = "btrfs";
-            options = [ "subvol=@" ];
           };
 
           "/boot" = {
@@ -119,6 +121,45 @@
             # Disable USB autosuspend for Intel AX210 Bluetooth to fix sleep/wake
             ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0032", ATTR{power/control}="on"
           '';
+        };
+
+        systemd.network = {
+          links."40-eth0" = {
+            matchConfig.OriginalName = "eth0";
+            linkConfig.WakeOnLan = "magic";
+          };
+          networks = {
+            "10-eth" = {
+              matchConfig.Name = "eth0";
+              address = [ "192.168.0.18/24" ];
+              routes = [ { Gateway = "192.168.0.1"; } ];
+              dns = [
+                "1.1.1.1"
+                "1.0.0.1"
+              ];
+              linkConfig.RequiredForOnline = "routable";
+            };
+            "20-wifi" = {
+              matchConfig.Name = "wlan0";
+              linkConfig.RequiredForOnline = "no";
+              networkConfig = {
+                DHCP = "yes";
+                Domains = "~.";
+              };
+              dhcpV4Config.RouteMetric = 3000;
+            };
+          };
+        };
+
+        networking.firewall.interfaces.eth0 = {
+          allowedTCPPorts = [
+            80
+            443
+            54535
+          ];
+          allowedUDPPorts = [
+            54535
+          ];
         };
       };
 
