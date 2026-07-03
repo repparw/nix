@@ -135,6 +135,11 @@ in
                 policy = "bypass";
               }
               {
+                domain = [ "plane.${cfg.domain}" ];
+                subject = [ "group:users" ];
+                policy = "one_factor";
+              }
+              {
                 domain = [ "*.${cfg.domain}" ];
                 subject = [ "group:admins" ];
                 policy = "one_factor";
@@ -176,6 +181,22 @@ in
                 ];
                 id_token_signed_response_alg = "RS256";
                 token_endpoint_auth_method = "client_secret_post";
+              }
+              {
+                client_id = "plane";
+                client_name = "Plane";
+                client_secret = "$pbkdf2-sha512$310000$2mWPCZscd4AK0Z5P0KiF1A$woQ0cXloLKnU2pjAaNAb0CX9uXjVDCQHTdU.FKuzQYIaynXWKqcyXE29FtJFSRUCW4yt38usrteznq4AgoLj2w";
+                public = false;
+                authorization_policy = "one_factor";
+                redirect_uris = [ "https://plane.${cfg.domain}/auth/oidc/callback/" ];
+                response_types = [ "code" ];
+                scopes = [
+                  "openid"
+                  "profile"
+                  "email"
+                ];
+                userinfo_signed_response_alg = "none";
+                token_endpoint_auth_method = "client_secret_basic";
               }
               {
                 client_id = "karakeep";

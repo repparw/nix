@@ -1,9 +1,25 @@
 {
   den,
+  inputs,
   lib,
   ...
 }:
 {
+  flake-file.inputs.plane-nix = {
+    url = "github:jakehamilton/plane.nix";
+  };
+  flake-file.inputs.nixpkgs-24-05 = {
+    url = "github:NixOS/nixpkgs/nixos-24.05";
+  };
+  flake-file.inputs.torbenraab-plane-oidc = {
+    url = "github:torbenraab/plane/v0.22-oidc";
+    flake = false;
+  };
+  flake-file.inputs.poetry2nix = {
+    url = "github:nix-community/poetry2nix";
+    inputs.nixpkgs.follows = "nixpkgs-24-05";
+  };
+
   den.aspects.nixos-services = {
     includes = with den.aspects.nixos-services._; [
       archisteamfarm
@@ -79,50 +95,18 @@
               servicesLib
               ;
           })
+          (import ../../_services/plane.nix {
+            inherit
+              cfg
+              config
+              inputs
+              lib
+              pkgs
+              servicesLib
+              ;
+          })
           ../../service-inventory.nix
         ];
-
-        options.modules.services = {
-          rootDir = lib.mkOption {
-            type = lib.types.path;
-            default = "/home/containers";
-          };
-
-          dataDir = lib.mkOption {
-            type = lib.types.path;
-            default = "/mnt/hdd/media";
-          };
-
-          externalDataDir = lib.mkOption {
-            type = lib.types.path;
-            default = "/mnt/seagate";
-          };
-
-          mediaPortalDir = lib.mkOption {
-            type = lib.types.path;
-            default = "${cfg.rootDir}/media";
-          };
-
-          configDir = lib.mkOption {
-            type = lib.types.path;
-            default = "${cfg.rootDir}/config";
-          };
-
-          backupDir = lib.mkOption {
-            type = lib.types.path;
-            default = "${cfg.rootDir}/backup";
-          };
-
-          timezone = lib.mkOption {
-            type = lib.types.str;
-            default = "America/Argentina/Buenos_Aires";
-          };
-
-          domain = lib.mkOption {
-            type = lib.types.str;
-            default = "repparw.com";
-          };
-        };
 
         config = {
           networking = {
