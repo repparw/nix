@@ -1,8 +1,6 @@
 {
   den,
   inputs,
-  lib,
-  pkgs,
   ...
 }:
 let
@@ -25,41 +23,44 @@ in
   };
 
   den.aspects.gui.provides.guiApps = {
-    nixos = {
-      nixpkgs.overlays = [
-        (final: prev: {
-          tasks-org = final.callPackage (
-            tasksOrgNixpkgs final + "/pkgs/by-name/ta/tasks-org/package.nix"
-          ) { };
-        })
-        (final: prev: {
-          wshowkeys = prev.wshowkeys.overrideAttrs (old: {
-            src = prev.fetchFromGitHub {
-              owner = "repparw";
-              repo = "wshowkeys";
-              rev = "52d1191cc250d3a24b83f77ce23f23d498c23bb3";
-              hash = "sha256-BkmB+/oG0tsAbvAjkoEAJxObjvg+mCENhM4EHDDXQAI=";
-            };
-          });
-        })
-      ];
+    nixos =
+      { pkgs, ... }:
+      {
+        nixpkgs.overlays = [
+          (final: prev: {
+            tasks-org = final.callPackage (
+              tasksOrgNixpkgs final + "/pkgs/by-name/ta/tasks-org/package.nix"
+            ) { };
+          })
+          (final: prev: {
+            wshowkeys = prev.wshowkeys.overrideAttrs (old: {
+              src = prev.fetchFromGitHub {
+                owner = "repparw";
+                repo = "wshowkeys";
+                rev = "52d1191cc250d3a24b83f77ce23f23d498c23bb3";
+                hash = "sha256-BkmB+/oG0tsAbvAjkoEAJxObjvg+mCENhM4EHDDXQAI=";
+              };
+            });
+          })
+        ];
 
-      programs = {
-        gnome-disks.enable = true;
-        wshowkeys.enable = true;
+        programs = {
+          gnome-disks.enable = true;
+          wshowkeys.enable = true;
+        };
+        environment.systemPackages = [ pkgs.qalculate-gtk ];
+        networking.firewall.interfaces.eth0 = {
+          # rquickshare
+          allowedTCPPorts = [
+            32100
+          ];
+          allowedUDPPorts = [
+            5353 # mDNS
+            32100
+          ];
+        };
       };
-      environment.systemPackages = [ pkgs.qalculate-gtk ];
-      networking.firewall.interfaces.eth0 = {
-        # rquickshare
-        allowedTCPPorts = [
-          32100
-        ];
-        allowedUDPPorts = [
-          5353 # mDNS
-          32100
-        ];
-      };
-    };
+
     homeManager =
       {
         config,

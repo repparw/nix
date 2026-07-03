@@ -3,6 +3,9 @@
   lib,
   ...
 }:
+let
+  sm64Baserom = /home/repparw/Games/sm64/rom.z64;
+in
 {
   den.aspects.gaming = {
     includes = [ ];
@@ -46,10 +49,10 @@
       { pkgs, ... }:
       {
         home.packages = with pkgs; [ shadps4 ];
-        programs.sm64ex = {
+        programs.sm64ex = lib.mkIf (builtins.pathExists sm64Baserom) {
           enable = true;
           region = "us";
-          baserom = "/home/repparw/Games/sm64/rom.z64";
+          baserom = toString sm64Baserom;
         };
         programs.mangohud = {
           enable = true;
