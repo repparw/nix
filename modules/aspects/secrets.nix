@@ -117,6 +117,26 @@
             owner = "root";
             mode = "0400";
           };
+          "plane/secretKey" = {
+            owner = "plane";
+            group = "plane";
+            mode = "0400";
+          };
+          "plane/databasePassword" = {
+            owner = "plane";
+            group = "plane";
+            mode = "0400";
+          };
+          "plane/minioCredentials" = {
+            owner = "plane";
+            group = "plane";
+            mode = "0400";
+          };
+          "plane/oidcClientSecret" = {
+            owner = "plane";
+            group = "plane";
+            mode = "0400";
+          };
         };
 
       };
