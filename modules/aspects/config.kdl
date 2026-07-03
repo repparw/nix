@@ -125,7 +125,7 @@ binds {
   Mod+A hotkey-overlay-title="Anki" {spawn "anki" ;} 
   Mod+B hotkey-overlay-title="Bluetooth Toggle" {spawn "bttoggle" ;}
   Mod+C hotkey-overlay-title="WhatsApp" {spawn "ndrop" "-F" "-c" "chrome-hnpfjngllnobngcgfapefoaidbinmjnm-Default" "chromium" "--password-store=basic" "--profile-directory=Default" "--app-id=hnpfjngllnobngcgfapefoaidbinmjnm";}
-  Mod+D repeat=false hotkey-overlay-title="Dictate" {spawn "/home/repparw/.local/bin/voxtype-toggle" ;}
+  Mod+D repeat=false hotkey-overlay-title="Dictate" {spawn "voxtype-toggle" ;}
   Mod+Shift+D repeat=false hotkey-overlay-title="Translate Selection" {spawn "translate-selection" ;}
   Mod+E hotkey-overlay-title="File Manager (Terminal)" {spawn "foot" "--app-id" "filemanager" "fish" "-ic" "yazi" ;}
   Mod+Shift+E hotkey-overlay-title="File Manager (GUI)" {spawn "nautilus" ;}
@@ -156,6 +156,7 @@ binds {
 
   Mod+Tab hotkey-overlay-title="Focus Next Monitor" { focus-monitor-next ;}
   Mod+Shift+Tab hotkey-overlay-title="Move Window to Next Monitor" { move-window-to-monitor-next ;}
+  Mod+Alt+Tab hotkey-overlay-title="Swap Active Monitor Windows" { spawn "niri-swap-active-monitor-windows" ;}
 
   Mod+Shift+H { move-column-left-or-to-monitor-left ;}
   Mod+Shift+J {move-window-down-or-to-workspace-down ;}
