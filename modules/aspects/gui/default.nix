@@ -7,7 +7,6 @@
       browser
       mpv
       spotify
-      vicinaeLatest
       wm
       zathura
       guiApps
