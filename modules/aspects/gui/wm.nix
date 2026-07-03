@@ -167,13 +167,17 @@
                 Targets = [ "HDMI-A-1" ];
               };
               modules = {
-                left = [ "Clock" ];
+                left = [ "Tempo" ];
                 center = [ "MediaPlayer" ];
                 right = [
                   "Tray"
                   "Settings"
                   "CustomNotifications"
                 ];
+              };
+              tempo = {
+                clock_format = "%a %d %b %R";
+                weather_indicator = "None";
               };
               CustomModule = [
                 {
