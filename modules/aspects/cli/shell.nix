@@ -46,7 +46,7 @@
             ];
             interactiveShellInit = ''
               if not set -q ZELLIJ; and set -q SSH_TTY
-                zellij attach ssh --create
+                zellij attach --create ssh
               end
 
               set -g fish_key_bindings fish_vi_key_bindings
