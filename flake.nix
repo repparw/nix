@@ -48,7 +48,6 @@
     };
     nixcord.url = "github:FlameFlag/nixcord";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-24-05.url = "github:NixOS/nixpkgs/nixos-24.05";
     nixvim = {
       url = "github:nix-community/nixvim";
       inputs = {
@@ -65,11 +64,6 @@
         nixvim.follows = "nixvim";
       };
     };
-    plane-nix.url = "github:jakehamilton/plane.nix";
-    poetry2nix = {
-      url = "github:nix-community/poetry2nix";
-      inputs.nixpkgs.follows = "nixpkgs-24-05";
-    };
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -83,10 +77,6 @@
       };
     };
     systems.url = "github:nix-systems/default";
-    torbenraab-plane-oidc = {
-      url = "github:torbenraab/plane/v0.22-oidc";
-      flake = false;
-    };
     voxtype = {
       url = "github:peteonrails/voxtype/v0.7.5";
       inputs = {
