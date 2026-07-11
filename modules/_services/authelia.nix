@@ -7,6 +7,21 @@
 }:
 let
   credentialsDir = "/run/credentials/authelia-main.service";
+  secretNames = {
+    JWT_SECRET = "jwtSecret";
+    OIDC_HMAC_SECRET = "oidcHmacSecret";
+    OIDC_JWKS_KEY = "oidcJwksKey";
+    SESSION_SECRET = "sessionSecret";
+    SMTP_PASSWORD = "smtpPassword";
+    STORAGE_ENCRYPTION_KEY = "storageEncryptionKey";
+  };
+  secretBindMounts = lib.mapAttrs' (
+    credential: secret:
+    lib.nameValuePair "/run/secrets/authelia/${credential}" {
+      hostPath = config.sops.secrets."authelia/${secret}".path;
+      isReadOnly = true;
+    }
+  ) secretNames;
 in
 {
   modules.services.inventory.authelia = {
@@ -31,31 +46,8 @@ in
         hostPath = "${cfg.configDir}/authelia/secrets";
         isReadOnly = true;
       };
-      "/run/secrets/authelia/JWT_SECRET" = {
-        hostPath = config.sops.secrets."authelia/jwtSecret".path;
-        isReadOnly = true;
-      };
-      "/run/secrets/authelia/OIDC_HMAC_SECRET" = {
-        hostPath = config.sops.secrets."authelia/oidcHmacSecret".path;
-        isReadOnly = true;
-      };
-      "/run/secrets/authelia/OIDC_JWKS_KEY" = {
-        hostPath = config.sops.secrets."authelia/oidcJwksKey".path;
-        isReadOnly = true;
-      };
-      "/run/secrets/authelia/SESSION_SECRET" = {
-        hostPath = config.sops.secrets."authelia/sessionSecret".path;
-        isReadOnly = true;
-      };
-      "/run/secrets/authelia/SMTP_PASSWORD" = {
-        hostPath = config.sops.secrets."authelia/smtpPassword".path;
-        isReadOnly = true;
-      };
-      "/run/secrets/authelia/STORAGE_ENCRYPTION_KEY" = {
-        hostPath = config.sops.secrets."authelia/storageEncryptionKey".path;
-        isReadOnly = true;
-      };
-    };
+    }
+    // secretBindMounts;
     extraConfig = {
       networking.firewall.allowedTCPPorts = [ 9091 ];
 
@@ -101,10 +93,6 @@ in
                 domain = [
                   "auth.${cfg.domain}"
                 ];
-                policy = "bypass";
-              }
-              {
-                domain = [ "auth.${cfg.domain}" ];
                 policy = "bypass";
               }
               {
@@ -246,14 +234,9 @@ in
       };
 
       systemd.services.authelia-main.serviceConfig = {
-        LoadCredential = [
-          "JWT_SECRET:/run/secrets/authelia/JWT_SECRET"
-          "OIDC_HMAC_SECRET:/run/secrets/authelia/OIDC_HMAC_SECRET"
-          "OIDC_JWKS_KEY:/run/secrets/authelia/OIDC_JWKS_KEY"
-          "SESSION_SECRET:/run/secrets/authelia/SESSION_SECRET"
-          "SMTP_PASSWORD:/run/secrets/authelia/SMTP_PASSWORD"
-          "STORAGE_ENCRYPTION_KEY:/run/secrets/authelia/STORAGE_ENCRYPTION_KEY"
-        ];
+        LoadCredential = lib.mapAttrsToList (
+          credential: _: "${credential}:/run/secrets/authelia/${credential}"
+        ) secretNames;
         ProtectSystem = lib.mkForce "full";
       };
 

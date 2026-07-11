@@ -20,8 +20,6 @@
   };
 
   den.aspects.ai = {
-    includes = [ ];
-
     nixos =
       { ... }:
       {

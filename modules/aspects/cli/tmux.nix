@@ -6,8 +6,6 @@
 }:
 {
   den.aspects.tmux = {
-    includes = [ ];
-
     homeManager =
       { pkgs, lib, ... }:
       {

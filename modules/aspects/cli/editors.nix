@@ -6,8 +6,6 @@
 }:
 {
   den.aspects.editors = {
-    includes = [ ];
-
     homeManager =
       {
         pkgs,

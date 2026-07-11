@@ -41,6 +41,30 @@
               }
               // extraBindMounts;
           };
+        mkServarrContainer = name: {
+          serviceConfig = {
+            enable = true;
+            openFirewall = true;
+            settings.server.bindAddress = "*";
+            dataDir = "/config";
+          };
+          extraConfig = {
+            environment.systemPackages = [ pkgs.striptracks ];
+            services.${name}.group = "media";
+            users.groups.media.gid = 900;
+            systemd.services.${name}.serviceConfig.UMask = lib.mkForce "0002";
+          };
+          extraBindMounts = {
+            "/config" = {
+              hostPath = "${cfg.configDir}/${name}";
+              isReadOnly = false;
+            };
+            "/data/torrents" = {
+              hostPath = "${cfg.rootDir}/torrents";
+              isReadOnly = false;
+            };
+          };
+        };
       in
       {
         modules.services.inventory = {
@@ -164,55 +188,8 @@
             };
           };
 
-          radarr = {
-            serviceConfig = {
-              enable = true;
-              openFirewall = true;
-              settings.server.bindAddress = "*";
-              dataDir = "/config";
-            };
-            extraConfig = {
-              environment.systemPackages = [ pkgs.striptracks ];
-              services.radarr.group = "media";
-              users.groups.media.gid = 900;
-              systemd.services.radarr.serviceConfig.UMask = lib.mkForce "0002";
-            };
-            extraBindMounts = {
-              "/config" = {
-                hostPath = "${cfg.configDir}/radarr";
-                isReadOnly = false;
-              };
-              "/data/torrents" = {
-                hostPath = "${cfg.rootDir}/torrents";
-                isReadOnly = false;
-              };
-            };
-          };
-
-          sonarr = {
-            serviceConfig = {
-              enable = true;
-              openFirewall = true;
-              settings.server.bindAddress = "*";
-              dataDir = "/config";
-            };
-            extraConfig = {
-              environment.systemPackages = [ pkgs.striptracks ];
-              services.sonarr.group = "media";
-              users.groups.media.gid = 900;
-              systemd.services.sonarr.serviceConfig.UMask = lib.mkForce "0002";
-            };
-            extraBindMounts = {
-              "/config" = {
-                hostPath = "${cfg.configDir}/sonarr";
-                isReadOnly = false;
-              };
-              "/data/torrents" = {
-                hostPath = "${cfg.rootDir}/torrents";
-                isReadOnly = false;
-              };
-            };
-          };
+          radarr = mkServarrContainer "radarr";
+          sonarr = mkServarrContainer "sonarr";
         };
       };
   };

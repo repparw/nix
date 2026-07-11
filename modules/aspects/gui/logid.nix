@@ -4,8 +4,6 @@
 }:
 {
   den.aspects.logid = {
-    includes = [ ];
-
     nixos = {
       services.logiops = {
         enable = true;

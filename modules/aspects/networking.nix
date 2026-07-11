@@ -1,7 +1,5 @@
 _: {
   den.aspects.networking = {
-    includes = [ ];
-
     nixos =
       { lib, ... }:
       {

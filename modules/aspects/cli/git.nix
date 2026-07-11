@@ -1,8 +1,6 @@
 { den, ... }:
 {
   den.aspects.git = {
-    includes = [ ];
-
     homeManager =
       { ... }:
       {

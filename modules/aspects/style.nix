@@ -99,7 +99,10 @@
 
         home-manager.sharedModules = [
           {
-            home.pointerCursor.dotIcons.enable = false;
+            home.pointerCursor = {
+              enable = true;
+              dotIcons.enable = false;
+            };
             xresources.path = ".config/Xresources";
             stylix = {
               icons = {

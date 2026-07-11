@@ -1,31 +1,7 @@
 #!/usr/bin/env bash
 set -x
-exec >> /tmp/heroic-sunshine.log 2>&1
 connector_name="${SUNSHINE_CONNECTOR_NAME:-DP-2}"
-
-while IFS='=' read -r key value; do
-    case "$key" in
-        NIRI_SOCKET|WAYLAND_DISPLAY|DISPLAY|XDG_RUNTIME_DIR)
-            export "$key=$value"
-            ;;
-    esac
-done < <(systemctl --user show-environment)
-
-if [ -z "$NIRI_SOCKET" ]; then
-    echo "WARNING: NIRI_SOCKET not found in systemd user environment"
-fi
-if [ -z "$WAYLAND_DISPLAY" ]; then
-    echo "WARNING: WAYLAND_DISPLAY not set, gamescope may fail"
-fi
-
-state_dir="${XDG_RUNTIME_DIR:-/tmp}/sunshine-stream"
-mkdir -p "$state_dir"
-date +%s > "$state_dir/managed-app-started"
-
-GRAPHICAL_SESSION="$(loginctl --json=short 2>/dev/null | jq -r '[.[] | select(.seat != null and .seat != "-")] | first | .session' || true)"
-if [ -n "$GRAPHICAL_SESSION" ] && [ "$GRAPHICAL_SESSION" != "null" ]; then
-    loginctl unlock-session "$GRAPHICAL_SESSION"
-fi
+sunshine_prepare_launch heroic
 
 pgrep -x gamescope >/dev/null 2>&1 && pkill -9 -x gamescope
 sleep 2

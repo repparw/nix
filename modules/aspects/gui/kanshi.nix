@@ -4,8 +4,6 @@
 }:
 {
   den.aspects.kanshi = {
-    includes = [ ];
-
     homeManager = _: {
       services.kanshi = {
         enable = true;
