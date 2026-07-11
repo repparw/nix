@@ -5,27 +5,12 @@
   ...
 }:
 {
-  flake-file.inputs.plane-nix = {
-    url = "github:jakehamilton/plane.nix";
-  };
-  flake-file.inputs.nixpkgs-24-05 = {
-    url = "github:NixOS/nixpkgs/nixos-24.05";
-  };
-  flake-file.inputs.torbenraab-plane-oidc = {
-    url = "github:torbenraab/plane/v0.22-oidc";
-    flake = false;
-  };
-  flake-file.inputs.poetry2nix = {
-    url = "github:nix-community/poetry2nix";
-    inputs.nixpkgs.follows = "nixpkgs-24-05";
-  };
-
   den.aspects.nixos-services = {
     includes = with den.aspects.nixos-services._; [
       archisteamfarm
       arr
+      automations
       jellyfin
-      n8n
     ];
 
     nixos =
@@ -90,16 +75,6 @@
             inherit
               cfg
               config
-              lib
-              pkgs
-              servicesLib
-              ;
-          })
-          (import ../../_services/plane.nix {
-            inherit
-              cfg
-              config
-              inputs
               lib
               pkgs
               servicesLib

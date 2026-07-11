@@ -12,6 +12,11 @@
   den.aspects.secrets = {
     nixos =
       { config, pkgs, ... }:
+      let
+        user = config.users.users.repparw;
+        userName = user.name;
+        userHome = user.home;
+      in
       {
         imports = [
           inputs.sops-nix.nixosModules.sops
@@ -26,42 +31,42 @@
           defaultSopsFormat = "yaml";
         };
 
-        sops.age.sshKeyPaths = [ "/home/repparw/.ssh/id_ed25519" ];
+        sops.age.sshKeyPaths = [ "${userHome}/.ssh/id_ed25519" ];
 
         sops.secrets = {
           accessTokens = {
             mode = "0440";
-            owner = "repparw";
+            owner = userName;
           };
           nextcloud = {
-            owner = "repparw";
+            owner = userName;
           };
           rcloneDriveToken = {
-            owner = "repparw";
+            owner = userName;
           };
           rcloneDriveId = {
-            owner = "repparw";
+            owner = userName;
           };
           rcloneDriveSecret = {
-            owner = "repparw";
+            owner = userName;
           };
           rcloneCrypt = {
-            owner = "repparw";
+            owner = userName;
           };
           rcloneDropbox = {
-            owner = "repparw";
+            owner = userName;
           };
           rcloneNextcloud = {
-            owner = "repparw";
+            owner = userName;
           };
           rcloneClarodrive = {
-            owner = "repparw";
+            owner = userName;
           };
           resticPassword = {
-            owner = "repparw";
+            owner = userName;
           };
           cloudflare = {
-            owner = "repparw";
+            owner = userName;
           };
           qbittorrentAuth = {
             owner = "traefik";
@@ -82,11 +87,11 @@
             mode = "0400";
           };
           sunshineApiUsername = {
-            owner = "repparw";
+            owner = userName;
             mode = "0400";
           };
           sunshineApiPassword = {
-            owner = "repparw";
+            owner = userName;
             mode = "0400";
           };
           "authelia/jwtSecret" = {
@@ -115,26 +120,6 @@
           };
           steamPassword = {
             owner = "root";
-            mode = "0400";
-          };
-          "plane/secretKey" = {
-            owner = "plane";
-            group = "plane";
-            mode = "0400";
-          };
-          "plane/databasePassword" = {
-            owner = "plane";
-            group = "plane";
-            mode = "0400";
-          };
-          "plane/minioCredentials" = {
-            owner = "plane";
-            group = "plane";
-            mode = "0400";
-          };
-          "plane/oidcClientSecret" = {
-            owner = "plane";
-            group = "plane";
             mode = "0400";
           };
         };
