@@ -28,7 +28,6 @@
       den.aspects.scripts
       den.aspects.dictation
       den.aspects.rclone
-      den.aspects.tasks
     ];
 
     provides.to-hosts = {

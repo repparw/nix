@@ -11,8 +11,8 @@ let
       src = inputs.nixpkgs;
       patches = [
         (pkgs.fetchpatch {
-          url = "https://github.com/repparw/nixpkgs/commit/e028238040c0f51d375b78cee86c41897c2c4a9c.patch";
-          hash = "sha256-riDWftnTjjeJTmCKfo6LzwlwfDWr8tUKusWuveBOrJw=";
+          url = "https://github.com/NixOS/nixpkgs/pull/518221.patch";
+          hash = "sha256-Z7M5Hmdslp39DBQkkJo11Ol/6TFU/LNezXPTe5Ic83o=";
         })
       ];
     };
@@ -28,9 +28,17 @@ in
       {
         nixpkgs.overlays = [
           (final: prev: {
-            tasks-org = final.callPackage (
-              tasksOrgNixpkgs final + "/pkgs/by-name/ta/tasks-org/package.nix"
-            ) { };
+            tasks-org =
+              (final.callPackage (tasksOrgNixpkgs final + "/pkgs/by-name/ta/tasks-org/package.nix") { })
+              .overrideAttrs
+                (_: {
+                  postFixup = ''
+                    wrapProgram $out/bin/tasks-org \
+                      --prefix LD_LIBRARY_PATH : "$out/lib/runtime/lib:$out/lib/runtime/lib/server:${
+                        final.lib.makeLibraryPath [ final.dbus ]
+                      }"
+                  '';
+                });
           })
           (final: prev: {
             wshowkeys = prev.wshowkeys.overrideAttrs (old: {
