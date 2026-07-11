@@ -16,7 +16,7 @@
               flake = "${config.home-manager.users.repparw.xdg.userDirs.projects}/nix";
               clean = {
                 enable = true;
-                extraArgs = "--keep 3 --keep-since 7d";
+                extraArgs = "--keep 3 --keep-since 7d --keep-one";
               };
             };
 
