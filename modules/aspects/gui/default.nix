@@ -14,7 +14,7 @@
   };
 
   den.aspects.gui.provides.session = {
-    nixos = _: {
+    nixos = { config, ... }: {
       programs.nautilus-open-any-terminal = {
         enable = true;
         terminal = "foot";
@@ -22,7 +22,7 @@
 
       services.displayManager = {
         defaultSession = "niri";
-        autoLogin.user = "repparw";
+        autoLogin.user = config.users.users.repparw.name;
         sddm = {
           enable = true;
           wayland.enable = true;

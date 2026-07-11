@@ -14,6 +14,8 @@
       }:
       let
         cfg = config.modules.services;
+        user = config.users.users.repparw;
+        userHome = user.home;
       in
       {
         services.restic =
@@ -28,14 +30,14 @@
               inhibitsSleep = true;
               paths = [
                 backupDir
-                "/home/repparw/Pictures"
-                "/home/repparw/Documents"
-                "/home/repparw/.config"
+                "${userHome}/Pictures"
+                "${userHome}/Documents"
+                "${userHome}/.config"
               ];
               exclude = [
                 "${backupDir}/.rclone-exclude"
               ];
-              rcloneConfigFile = "/home/repparw/.config/rclone/rclone.conf";
+              rcloneConfigFile = "${userHome}/.config/rclone/rclone.conf";
               extraOptions = [
                 "rclone.program=${lib.getExe pkgs.rclone}"
               ];
@@ -58,9 +60,9 @@
             buptohdd = {
               destination = "/mnt/hdd/backup";
               sources = [
-                "/home/repparw/Pictures"
-                "/home/repparw/Documents"
-                "/home/repparw/.config"
+                "${userHome}/Pictures"
+                "${userHome}/Documents"
+                "${userHome}/.config"
               ];
               settings = {
                 archive = true;

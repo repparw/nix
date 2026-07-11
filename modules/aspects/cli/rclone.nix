@@ -15,8 +15,8 @@
         ...
       }:
       let
-        nc = config.accounts.calendar.accounts.nextcloud.remote;
         clarodriveUser = "f8ff72993b43109297c1f4e7";
+        cloudDir = "${config.home.homeDirectory}/.cloud";
       in
       {
         # Fix: rclone-config service must remain active after exit for mount dependencies
@@ -36,7 +36,7 @@
               };
               mounts."" = {
                 enable = true;
-                mountPoint = "/home/repparw/.cloud/gdrive";
+                mountPoint = "${cloudDir}/gdrive";
                 options = {
                   exclude = "crypt/";
                 };
@@ -46,11 +46,9 @@
             nextcloud = {
               config = {
                 type = "webdav";
-                url = "${lib.removeSuffix "/" (lib.removeSuffix "calendars/${nc.userName}/" nc.url)}/files/${
-                  lib.replaceStrings [ "@" ] [ "%40" ] nc.userName
-                }";
+                url = "https://leo.it.tab.digital/remote.php/dav/files/ubritos%40gmail.com";
                 vendor = "nextcloud";
-                user = nc.userName;
+                user = "ubritos@gmail.com";
               };
               secrets.pass = osConfig.sops.secrets.rcloneNextcloud.path;
             };
@@ -75,7 +73,7 @@
               secrets.password = osConfig.sops.secrets.rcloneCrypt.path;
               mounts."" = {
                 enable = true;
-                mountPoint = "/home/repparw/.cloud/crypt";
+                mountPoint = "${cloudDir}/crypt";
               };
             };
 
@@ -84,7 +82,7 @@
               secrets.token = osConfig.sops.secrets.rcloneDropbox.path;
               mounts."apps/koreader-local/" = {
                 enable = true;
-                mountPoint = "/home/repparw/.cloud/dropbox";
+                mountPoint = "${cloudDir}/dropbox";
               };
             };
 
@@ -98,7 +96,7 @@
               secrets.pass = osConfig.sops.secrets.rcloneClarodrive.path;
               mounts."" = {
                 enable = true;
-                mountPoint = "/home/repparw/.cloud/claro";
+                mountPoint = "${cloudDir}/claro";
               };
             };
           };
