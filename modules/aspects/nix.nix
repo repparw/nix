@@ -17,7 +17,7 @@ _: {
           ];
           use-xdg-base-directories = true;
           trusted-users = [ "root" ];
-          allowed-users = [ "repparw" ];
+          allowed-users = [ config.users.users.repparw.name ];
           experimental-features = "nix-command flakes";
           commit-lock-file-summary = "flake.lock: Update";
         };

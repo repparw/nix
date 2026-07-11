@@ -14,7 +14,7 @@
       ];
     };
 
-    homeManager = _: {
+    homeManager = { config, ... }: {
       programs.ssh = {
         enable = true;
         enableDefaultConfig = false;
@@ -22,7 +22,7 @@
         settings = {
           pi = {
             HostName = "192.168.0.4";
-            User = "repparw";
+            User = config.home.username;
           };
         };
       };

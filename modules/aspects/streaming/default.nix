@@ -199,7 +199,7 @@
 
           applications = {
             env = {
-              PATH = "/run/current-system/sw/bin:/home/repparw/.local/bin";
+              PATH = "/run/current-system/sw/bin:${config.users.users.repparw.home}/.local/bin";
             };
             apps = [
               {
