@@ -65,6 +65,11 @@
               node = "/dev/dri/card0";
               modifier = "rwm";
             }
+            {
+              # DRM card numbering can shift across boots/kernel updates.
+              node = "/dev/dri/card1";
+              modifier = "rwm";
+            }
           ];
           extraConfig = {
             services.jellyfin = {
@@ -86,6 +91,12 @@
               "render"
             ];
           };
+        };
+
+        systemd.services."container@jellyfin".serviceConfig = {
+          CPUQuota = "300%";
+          IOWeight = 50;
+          Nice = 10;
         };
       })
       // (servicesLib.mkBackupJob {
