@@ -11,6 +11,13 @@
   };
 
   inputs = {
+    codex-desktop-linux = {
+      url = "github:ilysenko/codex-desktop-linux";
+      inputs = {
+        flake-utils.follows = "flake-utils";
+        nixpkgs.follows = "nixpkgs";
+      };
+    };
     den.url = "github:denful/den";
     firefox-addons = {
       url = "github:petrkozorezov/firefox-addons-nix";
