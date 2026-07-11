@@ -203,9 +203,8 @@ in
 
           nixcord = {
             enable = true;
-            discord = {
-              krisp.enable = true;
-            };
+            discord.enable = false;
+            vesktop.enable = true;
           };
 
           element-desktop = {

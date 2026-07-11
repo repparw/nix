@@ -62,27 +62,35 @@
           name = "steam-sunshine";
           runtimeInputs = [
             pkgs.bubblewrap
+            pkgs.coreutils
             pkgs.gamemode
             pkgs.jq
+            pkgs.procps
+            pkgs.systemd
           ];
           text = ''
             export GAMESCOPE_HEIGHT=${height}
             export GAMESCOPE_REFRESH=${refreshRate}
             export SUNSHINE_CONNECTOR_NAME=${lib.escapeShellArg connectorName}
           ''
+          + builtins.readFile ./sunshine-launch-common.sh
           + builtins.readFile ./steam-sunshine.sh;
         };
         heroic-sunshine = pkgs.writeShellApplication {
           name = "heroic-sunshine";
           runtimeInputs = [
+            pkgs.coreutils
             pkgs.gamemode
             pkgs.jq
+            pkgs.procps
+            pkgs.systemd
           ];
           text = ''
             export GAMESCOPE_HEIGHT=${height}
             export GAMESCOPE_REFRESH=${refreshRate}
             export SUNSHINE_CONNECTOR_NAME=${lib.escapeShellArg connectorName}
           ''
+          + builtins.readFile ./sunshine-launch-common.sh
           + builtins.readFile ./heroic-sunshine.sh;
         };
         sunshine-stream-reset = pkgs.writeShellApplication {

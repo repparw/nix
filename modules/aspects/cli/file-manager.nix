@@ -5,8 +5,6 @@
 }:
 {
   den.aspects.file-manager = {
-    includes = [ ];
-
     homeManager =
       { pkgs, ... }:
       {

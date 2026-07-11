@@ -5,8 +5,6 @@
 }:
 {
   den.aspects.gaming = {
-    includes = [ ];
-
     nixos =
       { pkgs, ... }:
       {
