@@ -73,7 +73,26 @@
         ...
       }:
       let
-        codexDesktop = inputs.codex-desktop-linux.packages.${pkgs.stdenv.hostPlatform.system}.codex-desktop;
+        codexDesktop =
+          inputs.codex-desktop-linux.packages.${pkgs.stdenv.hostPlatform.system}.codex-desktop-remote-mobile-control;
+        codexDesktopLauncher = pkgs.writeShellScriptBin "codex-desktop" ''
+          exec ${pkgs.systemd}/bin/systemctl --user start codex-desktop.service
+        '';
+        singletonCodexDesktop = pkgs.symlinkJoin {
+          name = "${codexDesktop.name}-single-instance";
+          paths = [ codexDesktop ];
+          postBuild = ''
+            rm -f "$out/bin/codex-desktop"
+            ln -s ${codexDesktopLauncher}/bin/codex-desktop "$out/bin/codex-desktop"
+
+            desktopFile="$out/share/applications/codex-desktop.desktop"
+            desktopTarget="$(readlink -f "$desktopFile")"
+            rm -f "$desktopFile"
+            substitute "$desktopTarget" "$desktopFile" \
+              --replace-fail "${codexDesktop}/bin/codex-desktop" "$out/bin/codex-desktop"
+          '';
+          meta = codexDesktop.meta;
+        };
 
         skillFiles = lib.filter (
           path:
@@ -93,13 +112,13 @@
         );
       in
       {
+        imports = [ inputs.codex-desktop-linux.homeManagerModules.default ];
+
         home = {
           packages = [
             pkgs.codex
-            codexDesktop
             pkgs.mcp-nixos
           ];
-          sessionVariables.CODEX_CLI_PATH = "${pkgs.codex}/bin/codex";
           file.".codex/ds4-flash-free.config.toml".text = ''
             model = "deepseek-v4-flash-free"
             model_provider = "opencode"
@@ -108,6 +127,13 @@
         };
 
         programs = {
+          codexDesktopLinux = {
+            enable = true;
+            package = singletonCodexDesktop;
+            cliPackage = pkgs.codex;
+            remoteControl.enable = true;
+          };
+
           mcp = {
             enable = true;
             servers = {
@@ -225,6 +251,21 @@
           Install = {
             WantedBy = [ "default.target" ];
           };
+        };
+
+        systemd.user.services.codex-desktop = {
+          Unit = {
+            Description = "Codex Desktop (single instance)";
+            After = [ "graphical-session.target" ];
+            PartOf = [ "graphical-session.target" ];
+          };
+          Service = {
+            Environment = [ "CODEX_CLI_PATH=${lib.getExe pkgs.codex}" ];
+            ExecStart = lib.getExe codexDesktop;
+            Restart = "on-failure";
+            RestartSec = 5;
+          };
+          Install.WantedBy = [ "graphical-session.target" ];
         };
 
         # systemd.user.services.opencode-web = {
