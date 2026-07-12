@@ -7,13 +7,14 @@
   ...
 }:
 let
+  service = cfg.definitions.glance;
   glanceAssets = pkgs.runCommand "glance-assets" { } ''
     mkdir -p $out
     cp ${./glance-favicon.svg} $out/favicon.svg
   '';
 in
 {
-  modules.services.inventory.glance = {
+  modules.services.definitions.glance = {
     containerAddress = "10.231.136.15";
     port = 8080;
     auth = "bypass";
@@ -36,6 +37,7 @@ in
         settings = {
           server = {
             host = "0.0.0.0";
+            port = service.port;
             assets-path = "/assets";
           };
           theme = {
