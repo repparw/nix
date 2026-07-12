@@ -5,6 +5,25 @@
 }:
 {
   den.aspects.rclone = {
+    nixos = { config, ... }: {
+      sops.secrets = builtins.listToAttrs (
+        map
+          (name: {
+            inherit name;
+            value.owner = config.users.users.repparw.name;
+          })
+          [
+            "rcloneDriveToken"
+            "rcloneDriveId"
+            "rcloneDriveSecret"
+            "rcloneCrypt"
+            "rcloneDropbox"
+            "rcloneNextcloud"
+            "rcloneClarodrive"
+          ]
+      );
+    };
+
     homeManager =
       {
         osConfig,

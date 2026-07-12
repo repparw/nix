@@ -15,6 +15,11 @@
         credentialPasswordPath = "/run/credentials/archisteamfarm.service/steamPassword";
       in
       {
+        sops.secrets.steamPassword = {
+          owner = "root";
+          mode = "0400";
+        };
+
         systemd.tmpfiles.rules = [
           "d ${cfg.configDir}/archisteamfarm 0755 root root - -"
         ];

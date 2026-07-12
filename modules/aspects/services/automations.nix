@@ -25,6 +25,11 @@
         };
       in
       {
+        sops.secrets.discordWebhook = {
+          owner = "root";
+          mode = "0400";
+        };
+
         systemd.tmpfiles.rules = [
           "d ${stateDir} 0750 root root - -"
         ];

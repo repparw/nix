@@ -18,6 +18,8 @@
         userHome = user.home;
       in
       {
+        sops.secrets.resticPassword.owner = user.name;
+
         services.restic =
           let
             backupDir = config.modules.services.backupDir;

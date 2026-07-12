@@ -33,6 +33,11 @@
         };
       in
       ({
+        sops.secrets.jellyfinBackupKey = {
+          owner = "root";
+          mode = "0400";
+        };
+
         modules.services.inventory.jellyfin = {
           hostname = "jellyfin";
           containerAddress = "10.231.136.10";

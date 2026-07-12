@@ -55,6 +55,15 @@ let
   ];
 in
 {
+  sops.secrets = {
+    cloudflare.owner = config.users.users.repparw.name;
+    qbittorrentAuth = {
+      owner = "traefik";
+      group = "traefik";
+      mode = "0400";
+    };
+  };
+
   services.traefik = {
     enable = true;
     environmentFiles = [
