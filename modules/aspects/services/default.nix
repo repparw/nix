@@ -103,7 +103,6 @@
           nixpkgs.overlays = [
             (final: prev: {
               striptracks = final.callPackage ../../_packages/striptracks.nix { };
-              mercury-parser-api = final.callPackage ../../_packages/mercury-parser.nix { };
             })
           ];
 
