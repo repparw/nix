@@ -95,6 +95,8 @@
               cfg = alpha.modules.services;
               miniflux = cfg.definitions.miniflux;
               paperless = cfg.definitions.paperless;
+              authelia = cfg.definitions.authelia;
+              glance = cfg.definitions.glance;
               http = alpha.services.traefik.dynamicConfigOptions.http;
               monitorSites = lib.findFirst (
                 page: page.name == "Home"
@@ -242,6 +244,35 @@
                 &&
                   builtins.elem "home-containers-backup-paperless.mount"
                     alpha.systemd.services."container@paperless".after
+                && authelia.hostname == "auth"
+                && authelia.containerAddress == "10.231.136.7"
+                && authelia.port == 9091
+                && authelia.auth == "bypass"
+                && authelia.monitor
+                && authelia.backup.path == "${cfg.configDir}/authelia"
+                && !(cfg.inventory ? authelia)
+                && alpha.containers.authelia.localAddress == authelia.containerAddress
+                && builtins.elem authelia.port alpha.containers.authelia.config.networking.firewall.allowedTCPPorts
+                &&
+                  alpha.containers.authelia.config.services.authelia.instances.main.settings.server.address
+                  == "tcp://:${toString authelia.port}"
+                && http.routers.authelia.rule == "Host(`auth.${cfg.domain}`)"
+                && !(http.routers.authelia ? middlewares)
+                && http.services.authelia.loadBalancer.servers == [ { url = "http://10.231.136.7:9091"; } ]
+                &&
+                  http.middlewares.authelia.forwardAuth.address == "http://10.231.136.7:9091/api/authz/forward-auth"
+                && hasMonitorSite "authelia" "auth" "http://10.231.136.7:9091"
+                && alpha.fileSystems."${cfg.backupDir}/authelia".device == authelia.backup.path
+                && glance.containerAddress == "10.231.136.15"
+                && glance.port == 8080
+                && glance.auth == "bypass"
+                && !(cfg.inventory ? glance)
+                && alpha.containers.glance.localAddress == glance.containerAddress
+                && alpha.containers.glance.config.services.glance.settings.server.host == "0.0.0.0"
+                && alpha.containers.glance.config.services.glance.settings.server.port == glance.port
+                && http.routers.glance.rule == "Host(`${cfg.domain}`)"
+                && http.services.glance.loadBalancer.servers == [ { url = "http://10.231.136.15:8080"; } ]
+                && alpha.containers.glance.config.services.glance.settings.branding.logo-text == "R"
                 && mediaDefinitionsMatch
                 && http.routers.bazarr.middlewares == [ "authelia" ]
                 && http.routers.prowlarr.middlewares == [ "authelia" ]

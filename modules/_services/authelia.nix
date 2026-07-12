@@ -6,6 +6,8 @@
   ...
 }:
 let
+  service = cfg.definitions.authelia;
+  authUrl = "https://${service.hostname}.${cfg.domain}";
   credentialsDir = "/run/credentials/authelia-main.service";
   secretNames = {
     JWT_SECRET = "jwtSecret";
@@ -33,7 +35,7 @@ in
     }
   ) secretNames;
 
-  modules.services.inventory.authelia = {
+  modules.services.definitions.authelia = {
     hostname = "auth";
     containerAddress = "10.231.136.7";
     port = 9091;
@@ -58,7 +60,7 @@ in
     }
     // secretBindMounts;
     extraConfig = {
-      networking.firewall.allowedTCPPorts = [ 9091 ];
+      networking.firewall.allowedTCPPorts = [ service.port ];
 
       services.authelia.instances.main = {
         enable = true;
@@ -72,7 +74,7 @@ in
         settings = {
           theme = "dark";
           server = {
-            address = "tcp://:9091";
+            address = "tcp://:${toString service.port}";
             endpoints.authz = {
               auth-request.implementation = "AuthRequest";
               forward-auth = {
@@ -100,7 +102,7 @@ in
             rules = [
               {
                 domain = [
-                  "auth.${cfg.domain}"
+                  "${service.hostname}.${cfg.domain}"
                 ];
                 policy = "bypass";
               }
@@ -215,7 +217,7 @@ in
             cookies = [
               {
                 domain = cfg.domain;
-                authelia_url = "https://auth.${cfg.domain}";
+                authelia_url = authUrl;
                 default_redirection_url = "https://${cfg.domain}";
               }
             ];
