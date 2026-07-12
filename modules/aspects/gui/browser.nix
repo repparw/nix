@@ -290,7 +290,10 @@ in
           chromium = {
             enable = true;
             package = chromiumWithoutMimeApps pkgs.chromium;
-            commandLineArgs = [ "--force-renderer-accessibility" ];
+            commandLineArgs = [
+              "--force-renderer-accessibility"
+              "--silent-debugger-extension-api"
+            ];
             extensions = [
               { id = chatGptChromeExtensionId; }
               { id = openInFirefoxExtensionId; }
