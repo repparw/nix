@@ -14,9 +14,14 @@ modules.
 - `modules/aspects/services/default.nix` composes the service aspect.
 - `modules/_services/` contains NixOS service modules imported by the service
   aspect.
-- `modules/service-inventory.nix` defines the service inventory option shape.
+- `modules/service-inventory.nix` defines the validated service-definition shape.
 - `modules/_services/proxy.nix` owns proxy routing.
 - `modules/_services/glance.nix` owns dashboard and monitoring presentation.
+
+Shared reachability, routing, monitoring, and backup facts belong in
+`modules.services.definitions`. Consumers derive their configuration from that
+definition. The legacy `modules.services.inventory` option remains only while
+existing services migrate to the new seam.
 
 Private containers use the host bridge at `10.231.136.1`. Service backup
 exports are gathered under `modules.services.backupDir`, which defaults to

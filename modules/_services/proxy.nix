@@ -7,15 +7,15 @@
 }:
 let
   domain = cfg.domain;
-  inventory = cfg.inventory;
-  proxyableInventory = lib.filterAttrs (_: service: service.port != null) inventory;
-  routableInventory = lib.filterAttrs (
+  serviceDefinitions = servicesLib.serviceDefinitions cfg;
+  proxyableDefinitions = lib.filterAttrs (_: service: service.port != null) serviceDefinitions;
+  routableDefinitions = lib.filterAttrs (
     name: service:
     service.hostname != null
     && !(builtins.elem name [
       "qbittorrent"
     ])
-  ) inventory;
+  ) serviceDefinitions;
   mkService = name: {
     loadBalancer.servers = [ { url = servicesLib.serviceUrl cfg name; } ];
   };
@@ -112,7 +112,7 @@ in
     dynamicConfigOptions = {
       tls.options.default.sniStrict = true;
       http = {
-        routers = lib.mapAttrs mkRouter routableInventory // {
+        routers = lib.mapAttrs mkRouter routableDefinitions // {
           home-router = {
             rule = "Host(`home.${domain}`)";
             service = "hass";
@@ -153,7 +153,7 @@ in
           ];
           qbit-basic-auth.headers.customRequestHeaders.Authorization = "{{ env `QBIT_AUTH` }}";
         };
-        services = lib.mapAttrs (name: _: mkService name) proxyableInventory // {
+        services = lib.mapAttrs (name: _: mkService name) proxyableDefinitions // {
           hass.loadBalancer = {
             servers = [ { url = "http://192.168.0.4"; } ];
             healthCheck = {

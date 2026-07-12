@@ -2,6 +2,58 @@
 let
   inherit (lib) types mkOption;
   cfg = config.modules.services;
+  serviceType = types.submodule {
+    options = {
+      hostname = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+      };
+      containerAddress = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+      };
+      port = mkOption {
+        type = types.nullOr types.port;
+        default = null;
+      };
+      auth = mkOption {
+        type = types.enum [
+          "bypass"
+          "one_factor"
+          "two_factor"
+          "external"
+        ];
+        default = "one_factor";
+      };
+      backup = mkOption {
+        type = types.nullOr (
+          types.submodule {
+            options = {
+              path = mkOption { type = types.str; };
+            };
+          }
+        );
+        default = null;
+      };
+      monitor = mkOption {
+        type = types.bool;
+        default = false;
+      };
+    };
+  };
+  validateDefinitions =
+    definitions:
+    let
+      invalid = lib.filterAttrs (
+        _: service:
+        (service.hostname != null && service.port == null)
+        || (service.monitor && (service.hostname == null || service.port == null))
+      ) definitions;
+    in
+    if invalid == { } then
+      definitions
+    else
+      throw "invalid service definitions: ${lib.concatStringsSep ", " (lib.attrNames invalid)}; routed and monitored services require both hostname and port";
 in
 {
   options.modules.services = {
@@ -45,49 +97,17 @@ in
       default = "repparw.com";
     };
 
-    inventory = mkOption {
-      type = types.attrsOf (
-        types.submodule {
-          options = {
-            hostname = mkOption {
-              type = types.nullOr types.str;
-              default = null;
-            };
-            containerAddress = mkOption {
-              type = types.nullOr types.str;
-              default = null;
-            };
-            port = mkOption {
-              type = types.nullOr types.port;
-              default = null;
-            };
-            auth = mkOption {
-              type = types.enum [
-                "bypass"
-                "one_factor"
-                "two_factor"
-                "external"
-              ];
-              default = "one_factor";
-            };
-            backup = mkOption {
-              type = types.nullOr (
-                types.submodule {
-                  options = {
-                    path = mkOption { type = types.str; };
-                  };
-                }
-              );
-              default = null;
-            };
-            monitor = mkOption {
-              type = types.bool;
-              default = false;
-            };
-          };
-        }
-      );
+    definitions = mkOption {
+      type = types.attrsOf serviceType;
       default = { };
+      apply = validateDefinitions;
+      description = "Shared service facts used to derive reachability, routing, monitoring, and backups.";
+    };
+
+    inventory = mkOption {
+      type = types.attrsOf serviceType;
+      default = { };
+      description = "Legacy service declarations awaiting migration to definitions.";
     };
   };
 }
