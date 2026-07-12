@@ -25,7 +25,7 @@
           "d ${cfg.configDir}/archisteamfarm 0755 root root - -"
         ];
 
-        modules.services.inventory.archisteamfarm = {
+        modules.services.definitions.archisteamfarm = {
           containerAddress = "10.231.136.13";
           auth = "bypass";
           backup.path = "${cfg.configDir}/archisteamfarm";

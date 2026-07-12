@@ -97,6 +97,8 @@
               paperless = cfg.definitions.paperless;
               authelia = cfg.definitions.authelia;
               glance = cfg.definitions.glance;
+              archisteamfarm = cfg.definitions.archisteamfarm;
+              automations = cfg.definitions.automations;
               http = alpha.services.traefik.dynamicConfigOptions.http;
               monitorSites = lib.findFirst (
                 page: page.name == "Home"
@@ -273,6 +275,35 @@
                 && http.routers.glance.rule == "Host(`${cfg.domain}`)"
                 && http.services.glance.loadBalancer.servers == [ { url = "http://10.231.136.15:8080"; } ]
                 && alpha.containers.glance.config.services.glance.settings.branding.logo-text == "R"
+                && archisteamfarm.containerAddress == "10.231.136.13"
+                && archisteamfarm.hostname == null
+                && archisteamfarm.port == null
+                && archisteamfarm.auth == "bypass"
+                && !archisteamfarm.monitor
+                && archisteamfarm.backup.path == "${cfg.configDir}/archisteamfarm"
+                && !(cfg.inventory ? archisteamfarm)
+                && alpha.containers.archisteamfarm.localAddress == archisteamfarm.containerAddress
+                &&
+                  alpha.containers.archisteamfarm.bindMounts."/var/lib/archisteamfarm".hostPath
+                  == archisteamfarm.backup.path
+                &&
+                  alpha.containers.archisteamfarm.config.systemd.services.archisteamfarm.serviceConfig.LoadCredential
+                  == "steamPassword:/run/secrets/steamPassword"
+                && alpha.fileSystems."${cfg.backupDir}/archisteamfarm".device == archisteamfarm.backup.path
+                &&
+                  builtins.elem "home-containers-backup-archisteamfarm.mount"
+                    alpha.systemd.services."container@archisteamfarm".after
+                && automations.hostname == null
+                && automations.containerAddress == null
+                && automations.port == null
+                && automations.auth == "bypass"
+                && !automations.monitor
+                && automations.backup.path == "${cfg.configDir}/automations"
+                && !(cfg.inventory ? automations)
+                && alpha.fileSystems."${cfg.backupDir}/automations".device == automations.backup.path
+                && !(builtins.hasAttr "container@automations" alpha.systemd.services)
+                && alpha.systemd.timers.change-detection.timerConfig.OnCalendar == "*-*-* 00/6:13:00"
+                && alpha.systemd.timers.change-detection.timerConfig.RandomizedDelaySec == "5min"
                 && mediaDefinitionsMatch
                 && http.routers.bazarr.middlewares == [ "authelia" ]
                 && http.routers.prowlarr.middlewares == [ "authelia" ]
