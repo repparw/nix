@@ -43,7 +43,7 @@
         codexDesktop =
           inputs.codex-desktop-linux.packages.${pkgs.stdenv.hostPlatform.system}.codex-desktop-computer-use-ui-remote-mobile-control;
         codexDesktopLauncher = pkgs.writeShellScriptBin "codex-desktop" ''
-          exec ${pkgs.systemd}/bin/systemctl --user start codex-desktop.service
+          exec ${pkgs.systemd}/bin/systemctl --user restart codex-desktop.service
         '';
         singletonCodexDesktop = pkgs.symlinkJoin {
           name = "${codexDesktop.name}-single-instance";
