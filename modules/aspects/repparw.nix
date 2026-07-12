@@ -26,6 +26,7 @@
       den.aspects.editors
       den.aspects.file-manager
       den.aspects.scripts
+      den.aspects.speech
       den.aspects.dictation
       den.aspects.rclone
     ];
