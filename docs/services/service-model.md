@@ -16,6 +16,8 @@ modules.
   aspect.
 - `modules/service-definitions.nix` defines the validated service-definition shape.
 - `modules/_services/proxy.nix` owns proxy routing.
+- `modules/_services/ingress-policy.nix` generates Traefik and Authelia policy
+  from service definitions.
 - `modules/_services/glance.nix` owns dashboard and monitoring presentation.
 
 Shared reachability, routing, monitoring, and backup facts belong in
@@ -42,6 +44,7 @@ exports are gathered under `modules.services.backupDir`, which defaults to
 
 ## Related
 
+- [Ingress policy](../architecture/ingress-policy.md)
 - [Restore service backups](../runbooks/restore-service-backups.md)
 - [Check native container DNS](../runbooks/check-native-container-dns.md)
 - [Alpha](../hosts/alpha.md)

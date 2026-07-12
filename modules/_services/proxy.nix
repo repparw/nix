@@ -7,27 +7,11 @@
 }:
 let
   domain = cfg.domain;
-  serviceDefinitions = cfg.definitions;
-  proxyableDefinitions = lib.filterAttrs (_: service: service.port != null) serviceDefinitions;
-  routableDefinitions = lib.filterAttrs (
-    name: service:
-    service.hostname != null
-    && !(builtins.elem name [
-      "qbittorrent"
-    ])
-  ) serviceDefinitions;
-  mkService = name: {
-    loadBalancer.servers = [ { url = servicesLib.serviceUrl cfg name; } ];
+  ingressPolicy = import ./ingress-policy.nix { inherit lib; } {
+    definitions = cfg.definitions;
+    inherit domain;
+    serviceUrl = servicesLib.serviceUrl cfg;
   };
-  mkRouter =
-    name: service:
-    {
-      rule = "Host(`${service.hostname}.${domain}`)";
-      service = name;
-    }
-    // lib.optionalAttrs (service.auth == "one_factor") {
-      middlewares = [ "authelia" ];
-    };
   # Cloudflare proxy IP ranges — https://www.cloudflare.com/ips-v4 / ips-v6
   cfIpRanges = [
     "173.245.48.0/20"
@@ -112,58 +96,7 @@ in
     dynamicConfigOptions = {
       tls.options.default.sniStrict = true;
       http = {
-        routers = lib.mapAttrs mkRouter routableDefinitions // {
-          home-router = {
-            rule = "Host(`home.${domain}`)";
-            service = "hass";
-          };
-          t3code = {
-            rule = "Host(`code.${domain}`)";
-            service = "t3code";
-            middlewares = [ "authelia" ];
-          };
-          qbittorrent = {
-            rule = "Host(`qbit.${domain}`) && !PathPrefix(`/api`)";
-            service = "qbittorrent";
-            middlewares = [ "qbit-auth" ];
-          };
-          qbittorrent-api = {
-            rule = "Host(`qbit.${domain}`) && PathPrefix(`/api`)";
-            service = "qbittorrent";
-          };
-          glance = {
-            rule = "Host(`${domain}`)";
-            service = "glance";
-          };
-        };
-        middlewares = {
-          authelia.forwardAuth = {
-            address = "${servicesLib.serviceUrl cfg "authelia"}/api/authz/forward-auth";
-            trustForwardHeader = true;
-            authResponseHeaders = [
-              "Remote-User"
-              "Remote-Groups"
-              "Remote-Email"
-              "Remote-Name"
-            ];
-          };
-          qbit-auth.chain.middlewares = [
-            "authelia"
-            "qbit-basic-auth"
-          ];
-          qbit-basic-auth.headers.customRequestHeaders.Authorization = "{{ env `QBIT_AUTH` }}";
-        };
-        services = lib.mapAttrs (name: _: mkService name) proxyableDefinitions // {
-          hass.loadBalancer = {
-            servers = [ { url = "http://192.168.0.4"; } ];
-            healthCheck = {
-              path = "/";
-              interval = "10s";
-              timeout = "3s";
-            };
-          };
-          t3code.loadBalancer.servers = [ { url = "http://localhost:4097"; } ];
-        };
+        inherit (ingressPolicy.traefik) routers middlewares services;
       };
     };
   };

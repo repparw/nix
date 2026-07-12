@@ -8,6 +8,11 @@
 let
   service = cfg.definitions.authelia;
   authUrl = "https://${service.hostname}.${cfg.domain}";
+  ingressPolicy = import ./ingress-policy.nix { inherit lib; } {
+    definitions = cfg.definitions;
+    domain = cfg.domain;
+    serviceUrl = servicesLib.serviceUrl cfg;
+  };
   credentialsDir = "/run/credentials/authelia-main.service";
   secretNames = {
     JWT_SECRET = "jwtSecret";
@@ -97,49 +102,7 @@ in
             display_name = "repparw";
           };
           authentication_backend.file.path = "/config/users_database.yml";
-          access_control = {
-            default_policy = "deny";
-            rules = [
-              {
-                domain = [
-                  "${service.hostname}.${cfg.domain}"
-                ];
-                policy = "bypass";
-              }
-              {
-                domain = [ "paper.${cfg.domain}" ];
-                resources = [ "^/share/.*$" ];
-                policy = "bypass";
-              }
-              {
-                domain = [
-                  "bazarr.${cfg.domain}"
-                  "paper.${cfg.domain}"
-                  "qbit.${cfg.domain}"
-                  "radarr.${cfg.domain}"
-                  "rss.${cfg.domain}"
-                  "sonarr.${cfg.domain}"
-                ];
-                resources = [
-                  "^/api([/?].*)?$"
-                  "^/v1([/?].*)?$"
-                ];
-                policy = "bypass";
-              }
-              {
-                domain = [
-                  "jellyfin.${cfg.domain}"
-                  "home.${cfg.domain}"
-                ];
-                policy = "bypass";
-              }
-              {
-                domain = [ "*.${cfg.domain}" ];
-                subject = [ "group:admins" ];
-                policy = "one_factor";
-              }
-            ];
-          };
+          access_control = ingressPolicy.authelia;
           identity_providers.oidc = {
             clients = [
               {
