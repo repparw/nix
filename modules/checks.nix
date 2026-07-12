@@ -94,6 +94,7 @@
               alpha = inputs.self.nixosConfigurations.alpha.config;
               cfg = alpha.modules.services;
               miniflux = cfg.definitions.miniflux;
+              paperless = cfg.definitions.paperless;
               http = alpha.services.traefik.dynamicConfigOptions.http;
               monitorSites = lib.findFirst (
                 page: page.name == "Home"
@@ -121,6 +122,16 @@
                   monitor = true;
                 }
               ];
+              hasMonitorSite =
+                name: hostname: checkUrl:
+                builtins.any (
+                  widget:
+                  widget.type or null == "monitor"
+                  && builtins.any (
+                    site:
+                    site.title == name && site.url == "https://${hostname}.${cfg.domain}" && site.check-url == checkUrl
+                  ) widget.sites
+                ) (lib.concatMap (column: column.widgets) monitorSites.columns);
               expected =
                 miniflux.hostname == "rss"
                 && miniflux.port == 8081
@@ -130,18 +141,28 @@
                 && http.routers.miniflux.rule == "Host(`rss.${cfg.domain}`)"
                 && http.routers.miniflux.middlewares == [ "authelia" ]
                 && http.services.miniflux.loadBalancer.servers == [ { url = "http://127.0.0.1:8081"; } ]
-                && builtins.any (
-                  widget:
-                  widget.type or null == "monitor"
-                  && builtins.any (
-                    site:
-                    site.title == "miniflux"
-                    && site.url == "https://rss.${cfg.domain}"
-                    && site.check-url == "http://127.0.0.1:8081"
-                  ) widget.sites
-                ) (lib.concatMap (column: column.widgets) monitorSites.columns)
+                && hasMonitorSite "miniflux" "rss" "http://127.0.0.1:8081"
                 && alpha.fileSystems."${cfg.backupDir}/miniflux".device == "${cfg.configDir}/miniflux"
                 && builtins.elem "home-containers-backup-miniflux.mount" alpha.systemd.services.miniflux.after
+                && paperless.hostname == "paper"
+                && paperless.containerAddress == "10.231.136.12"
+                && paperless.port == 8000
+                && paperless.auth == "one_factor"
+                && paperless.monitor
+                && paperless.backup.path == "${cfg.configDir}/paperless/export"
+                && alpha.containers.paperless.localAddress == paperless.containerAddress
+                && alpha.containers.paperless.bindMounts."/var/lib/paperless".hostPath == "${cfg.configDir}/paper"
+                && builtins.elem paperless.port alpha.containers.paperless.config.networking.firewall.allowedTCPPorts
+                && alpha.containers.paperless.config.services.paperless.address == "0.0.0.0"
+                && alpha.containers.paperless.config.services.paperless.port == paperless.port
+                && http.routers.paperless.rule == "Host(`paper.${cfg.domain}`)"
+                && http.routers.paperless.middlewares == [ "authelia" ]
+                && http.services.paperless.loadBalancer.servers == [ { url = "http://10.231.136.12:8000"; } ]
+                && hasMonitorSite "paperless" "paper" "http://10.231.136.12:8000"
+                && alpha.fileSystems."${cfg.backupDir}/paperless".device == paperless.backup.path
+                &&
+                  builtins.elem "home-containers-backup-paperless.mount"
+                    alpha.systemd.services."container@paperless".after
                 && builtins.all (result: !result.success) invalidDefinitions;
             in
             assert expected;

@@ -3,8 +3,11 @@
   servicesLib,
   ...
 }:
+let
+  service = cfg.definitions.paperless;
+in
 {
-  modules.services.inventory.paperless = {
+  modules.services.definitions.paperless = {
     hostname = "paper";
     containerAddress = "10.231.136.12";
     port = 8000;
@@ -24,11 +27,11 @@
       };
     };
     extraConfig = {
-      networking.firewall.allowedTCPPorts = [ 8000 ];
+      networking.firewall.allowedTCPPorts = [ service.port ];
 
       services.paperless = {
         enable = true;
-        port = 8000;
+        port = service.port;
         address = "0.0.0.0";
         exporter = {
           enable = true;
@@ -43,7 +46,7 @@
           PAPERLESS_ENABLE_HTTP_REMOTE_USER = "true";
           PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME = "HTTP_REMOTE_USER";
           PAPERLESS_LOGOUT_REDIRECT_URL = "https://auth.${cfg.domain}/logout";
-          PAPERLESS_URL = "https://paper.${cfg.domain}";
+          PAPERLESS_URL = "https://${service.hostname}.${cfg.domain}";
           PAPERLESS_DISABLE_REGULAR_LOGIN = "1";
         };
       };
