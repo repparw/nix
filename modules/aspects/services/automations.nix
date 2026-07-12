@@ -35,7 +35,7 @@
           "d ${stateDir} 0750 root root - -"
         ];
 
-        modules.services.inventory.${serviceName} = {
+        modules.services.definitions.${serviceName} = {
           auth = "bypass";
           backup.path = stateDir;
         };
