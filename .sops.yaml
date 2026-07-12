@@ -1,5 +1,7 @@
 creation_rules:
-  - path_regex: secrets/.*\.yaml
-    age: age1jsdf5x72y30aq0ghpuwyn9nv6w7m2jgh3f309kpqaf0jw0d4mgrscefqfp
-  - path_regex: secrets\.yaml
+  - path_regex: secrets/(archisteamfarm|authelia|automations|backup|ddclient|jellyfin|nix|proxy|rclone|streaming)\.yaml
+    age: >-
+      age19wxpznth9v4qc46lzzvall6xmazexykkz59ax6w0n4nrgpkcrassld7n3v,
+      age1jsdf5x72y30aq0ghpuwyn9nv6w7m2jgh3f309kpqaf0jw0d4mgrscefqfp
+  - path_regex: secrets/legacy\.yaml
     age: age1jsdf5x72y30aq0ghpuwyn9nv6w7m2jgh3f309kpqaf0jw0d4mgrscefqfp

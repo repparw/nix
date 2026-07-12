@@ -34,6 +34,7 @@
       in
       ({
         sops.secrets.jellyfinBackupKey = {
+          sopsFile = ../../../secrets/jellyfin.yaml;
           owner = "root";
           mode = "0400";
         };

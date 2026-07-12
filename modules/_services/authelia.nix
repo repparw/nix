@@ -27,6 +27,7 @@ in
   sops.secrets = lib.mapAttrs' (
     _: secret:
     lib.nameValuePair "authelia/${secret}" {
+      sopsFile = ../../secrets/authelia.yaml;
       owner = "root";
       mode = "0400";
     }

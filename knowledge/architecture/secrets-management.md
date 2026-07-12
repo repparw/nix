@@ -1,7 +1,7 @@
 ---
 type: Architecture Concept
 title: Secrets Management
-description: Repo convention for encrypted secrets and secret references.
+description: Repo convention for encrypted, host-deployable secrets and secret references.
 resource: modules/aspects/secrets.nix
 tags: [security, secrets, sops-nix]
 ---
@@ -9,15 +9,22 @@ tags: [security, secrets, sops-nix]
 # Secrets Management
 
 Do not put plaintext secrets in this repository. Secret material belongs in
-`secrets.yaml` and is managed through `sops-nix`.
+consumer-scoped files under `secrets/` and is managed through `sops-nix`.
+
+Each service or aspect declares its own `sopsFile`. This limits the ciphertext
+and recipient blast radius and makes secret ownership visible next to the
+consumer. NixOS decrypts with the machine SSH host key at
+`/etc/ssh/ssh_host_ed25519_key`; the personal Age recipient in `.sops.yaml` is
+recovery access and is not used during activation.
 
 Docs, plans, commits, and knowledge files should refer to SOPS secret names or
-source modules only. They should not copy secret values out of `secrets.yaml`.
+source modules only. They should not copy secret values out of `secrets/`.
 
 ## Source
 
 - `modules/aspects/secrets.nix`
-- `secrets.yaml`
+- `secrets/`
+- [Secret inventory](secret-inventory.md)
 
 ## Related
 

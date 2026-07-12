@@ -10,7 +10,10 @@
         map
           (name: {
             inherit name;
-            value.owner = config.users.users.repparw.name;
+            value = {
+              sopsFile = ../../../secrets/rclone.yaml;
+              owner = config.users.users.repparw.name;
+            };
           })
           [
             "rcloneDriveToken"
