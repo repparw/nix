@@ -75,6 +75,8 @@
               archisteamfarm = cfg.definitions.archisteamfarm;
               automations = cfg.definitions.automations;
               http = alpha.services.traefik.dynamicConfigOptions.http;
+              accessControl =
+                alpha.containers.authelia.config.services.authelia.instances.main.settings.access_control;
               monitorSites = lib.findFirst (
                 page: page.name == "Home"
               ) { } alpha.containers.glance.config.services.glance.settings.pages;
@@ -114,6 +116,48 @@
                   ];
                 }).config.modules.services.definitions
               );
+              mkIngressPolicy = import ./_services/ingress-policy.nix { inherit lib; };
+              matrixPolicy = mkIngressPolicy {
+                domain = "example.test";
+                serviceUrl = name: "http://${name}";
+                definitions = {
+                  bypass = {
+                    hostname = "bypass";
+                    port = 1000;
+                    auth = "bypass";
+                  };
+                  one = {
+                    hostname = "one";
+                    port = 1001;
+                    auth = "one_factor";
+                  };
+                  two = {
+                    hostname = "two";
+                    port = 1002;
+                    auth = "two_factor";
+                  };
+                };
+              };
+              unsupportedExternal = builtins.tryEval (
+                (mkIngressPolicy {
+                  domain = "example.test";
+                  serviceUrl = name: "http://${name}";
+                  definitions.unsupported = {
+                    hostname = "unsupported";
+                    port = 1003;
+                    auth = "external";
+                  };
+                }).traefik
+              );
+              sparsePolicy = mkIngressPolicy {
+                domain = "example.test";
+                serviceUrl = name: "http://${name}";
+                definitions.paperless = {
+                  hostname = null;
+                  port = null;
+                  auth = "bypass";
+                };
+              };
               expectedMediaDefinitions = {
                 bazarr = {
                   hostname = "bazarr";
@@ -335,12 +379,59 @@
                 && alpha.systemd.services."container@jellyfin".serviceConfig.Nice == 10;
               validationMatches =
                 builtins.all (result: !result.success) invalidDefinitions && !duplicateMediaAddresses.success;
+              hasAccessPolicy =
+                rules: host: policy:
+                builtins.any (rule: builtins.elem host rule.domain && rule.policy == policy) rules;
+              ingressPolicyMatches =
+                let
+                  shareRule = builtins.elemAt accessControl.rules 0;
+                  apiRule = builtins.elemAt accessControl.rules 1;
+                in
+                !(matrixPolicy.traefik.routers.bypass ? middlewares)
+                && matrixPolicy.traefik.routers.one.middlewares == [ "authelia" ]
+                && matrixPolicy.traefik.routers.two.middlewares == [ "authelia" ]
+                && hasAccessPolicy matrixPolicy.authelia.rules "bypass.example.test" "bypass"
+                && hasAccessPolicy matrixPolicy.authelia.rules "one.example.test" "one_factor"
+                && hasAccessPolicy matrixPolicy.authelia.rules "two.example.test" "two_factor"
+                && !unsupportedExternal.success
+                && !(builtins.any (rule: builtins.elem "null.example.test" rule.domain) sparsePolicy.authelia.rules)
+                && http.services.hass.loadBalancer.servers == [ { url = "http://192.168.0.4"; } ]
+                && http.services.hass.loadBalancer.healthCheck.path == "/"
+                && http.services.t3code.loadBalancer.servers == [ { url = "http://localhost:4097"; } ]
+                &&
+                  http.routers.home-router == {
+                    rule = "Host(`home.${cfg.domain}`)";
+                    service = "hass";
+                  }
+                && http.routers.t3code.middlewares == [ "authelia" ]
+                && http.routers.t3code.service == "t3code"
+                && http.routers.glance.rule == "Host(`${cfg.domain}`)"
+                && http.routers.qbittorrent.rule == "Host(`qbit.${cfg.domain}`) && !PathPrefix(`/api`)"
+                && http.routers.qbittorrent-api.rule == "Host(`qbit.${cfg.domain}`) && PathPrefix(`/api`)"
+                &&
+                  http.middlewares.qbit-auth.chain.middlewares == [
+                    "authelia"
+                    "qbit-basic-auth"
+                  ]
+                && shareRule.domain == [ "paper.${cfg.domain}" ]
+                && shareRule.resources == [ "^/share/.*$" ]
+                && shareRule.policy == "bypass"
+                && builtins.elem "qbit.${cfg.domain}" apiRule.domain
+                &&
+                  apiRule.resources == [
+                    "^/api([/?].*)?$"
+                    "^/v1([/?].*)?$"
+                  ]
+                && apiRule.policy == "bypass"
+                && (lib.last accessControl.rules).domain == [ "*.${cfg.domain}" ]
+                && accessControl.default_policy == "deny";
               expected = builtins.all (value: value) [
                 nativeServicesMatch
                 authenticationPresentationMatch
                 backgroundServicesMatch
                 mediaSpecializationMatch
                 validationMatches
+                ingressPolicyMatches
               ];
             in
             assert expected;
