@@ -191,6 +191,17 @@
         };
       in
       {
+        sops.secrets = {
+          sunshineApiUsername = {
+            owner = config.users.users.repparw.name;
+            mode = "0400";
+          };
+          sunshineApiPassword = {
+            owner = config.users.users.repparw.name;
+            mode = "0400";
+          };
+        };
+
         services.sunshine = {
           enable = true;
           openFirewall = true;

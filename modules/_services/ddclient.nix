@@ -4,6 +4,12 @@
   ...
 }:
 {
+  sops.secrets.ddclientPassword = {
+    owner = "ddclient";
+    group = "ddclient";
+    mode = "0400";
+  };
+
   users.users.ddclient = {
     isSystemUser = true;
     group = "ddclient";

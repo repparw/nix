@@ -24,6 +24,14 @@ let
   ) secretNames;
 in
 {
+  sops.secrets = lib.mapAttrs' (
+    _: secret:
+    lib.nameValuePair "authelia/${secret}" {
+      owner = "root";
+      mode = "0400";
+    }
+  ) secretNames;
+
   modules.services.inventory.authelia = {
     hostname = "auth";
     containerAddress = "10.231.136.7";

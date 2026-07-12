@@ -1,6 +1,11 @@
 _: {
   den.aspects.nix = {
     nixos = { config, ... }: {
+      sops.secrets.accessTokens = {
+        mode = "0440";
+        owner = config.users.users.repparw.name;
+      };
+
       nix = {
         settings = {
           extra-substituters = [
