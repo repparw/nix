@@ -20,8 +20,8 @@ Personal NixOS and Home Manager configuration built on the upstream
 - `modules/_packages/`: local package definitions and service-only packages.
 - `modules/checks.nix`: flake checks.
 - `modules/git-hooks.nix`: development shell and pre-commit hooks.
-- `knowledge/`: OKF-style knowledge bundle for repo architecture, hosts,
-  services, decisions, and runbooks.
+- `docs/`: repository documentation for architecture, hosts,
+  services, ADRs, and runbooks.
 - `secrets/`: consumer-scoped encrypted `sops-nix` secrets.
 
 ## Rules
@@ -44,15 +44,15 @@ nh os switch
 
 ## Knowledge
 
-Repo knowledge lives in [knowledge/index.md](knowledge/index.md). It uses
+Repo knowledge lives in [docs/index.md](docs/index.md). It uses
 markdown files with YAML frontmatter so the docs stay useful for both humans
 and agents.
 
 Start with these runbooks:
 
-- [Failed auto-upgrade rollback](knowledge/runbooks/failed-auto-upgrade-rollback.md)
-- [Restore service backups](knowledge/runbooks/restore-service-backups.md)
-- [Check native container DNS](knowledge/runbooks/check-native-container-dns.md)
+- [Failed auto-upgrade rollback](docs/runbooks/failed-auto-upgrade-rollback.md)
+- [Restore service backups](docs/runbooks/restore-service-backups.md)
+- [Check native container DNS](docs/runbooks/check-native-container-dns.md)
 
 ## Operational Backlog
 

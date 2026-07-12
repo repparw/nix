@@ -21,7 +21,8 @@ This repository follows the upstream `vic/den` default-template structure.
   packages.
 - `modules/checks.nix` defines flake checks.
 - `modules/git-hooks.nix` defines the development shell and pre-commit hooks.
-- `knowledge/` contains this OKF-style knowledge bundle.
+- `docs/` contains repository architecture, host, service, ADR, runbook,
+  and agent-workflow documentation.
 
 ## Related
 

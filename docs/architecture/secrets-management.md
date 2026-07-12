@@ -17,8 +17,8 @@ consumer. NixOS decrypts with the machine SSH host key at
 `/etc/ssh/ssh_host_ed25519_key`; the personal Age recipient in `.sops.yaml` is
 recovery access and is not used during activation.
 
-Docs, plans, commits, and knowledge files should refer to SOPS secret names or
-source modules only. They should not copy secret values out of `secrets/`.
+Docs, plans, and commits should refer to SOPS secret names or source modules
+only. They should not copy secret values out of `secrets/`.
 
 ## Source
 
