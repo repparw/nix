@@ -5,6 +5,7 @@
 }:
 {
   sops.secrets.ddclientPassword = {
+    sopsFile = ../../secrets/ddclient.yaml;
     owner = "ddclient";
     group = "ddclient";
     mode = "0400";

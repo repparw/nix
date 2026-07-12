@@ -56,8 +56,12 @@ let
 in
 {
   sops.secrets = {
-    cloudflare.owner = config.users.users.repparw.name;
+    cloudflare = {
+      sopsFile = ../../secrets/proxy.yaml;
+      owner = config.users.users.repparw.name;
+    };
     qbittorrentAuth = {
+      sopsFile = ../../secrets/proxy.yaml;
       owner = "traefik";
       group = "traefik";
       mode = "0400";

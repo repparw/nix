@@ -18,7 +18,10 @@
         userHome = user.home;
       in
       {
-        sops.secrets.resticPassword.owner = user.name;
+        sops.secrets.resticPassword = {
+          sopsFile = ../../secrets/backup.yaml;
+          owner = user.name;
+        };
 
         services.restic =
           let

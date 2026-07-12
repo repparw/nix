@@ -11,11 +11,7 @@
 
   den.aspects.secrets = {
     nixos =
-      { config, pkgs, ... }:
-      let
-        user = config.users.users.repparw;
-        userHome = user.home;
-      in
+      { pkgs, ... }:
       {
         imports = [
           inputs.sops-nix.nixosModules.sops
@@ -25,13 +21,8 @@
           inputs.sops-nix.packages.${pkgs.stdenv.hostPlatform.system}.sops-import-keys-hook
         ];
 
-        sops = {
-          defaultSopsFile = ../../secrets.yaml;
-          defaultSopsFormat = "yaml";
-        };
-
-        sops.age.sshKeyPaths = [ "${userHome}/.ssh/id_ed25519" ];
-
+        sops.defaultSopsFormat = "yaml";
+        sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
       };
   };
 }

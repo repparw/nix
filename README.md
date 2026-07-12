@@ -22,7 +22,7 @@ Personal NixOS and Home Manager configuration built on the upstream
 - `modules/git-hooks.nix`: development shell and pre-commit hooks.
 - `knowledge/`: OKF-style knowledge bundle for repo architecture, hosts,
   services, decisions, and runbooks.
-- `secrets.yaml`: encrypted `sops-nix` secrets.
+- `secrets/`: consumer-scoped encrypted `sops-nix` secrets.
 
 ## Rules
 
