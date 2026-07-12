@@ -34,7 +34,3 @@ module contents.
 - [Failed auto-upgrade rollback](runbooks/failed-auto-upgrade-rollback.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
-
-## Architecture decisions
-
-- [Keep knowledge in this repo](adr/keep-knowledge-in-repo.md)

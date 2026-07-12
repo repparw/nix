@@ -45,7 +45,10 @@
               user = {
                 email = "ubritos@gmail.com";
                 name = "repparw";
+                signingKey = "~/.ssh/id_ed25519.pub";
               };
+              gpg.format = "ssh";
+              commit.gpgSign = true;
               url = {
                 "git@github.com:repparw/" = {
                   insteadOf = "repparw:";
