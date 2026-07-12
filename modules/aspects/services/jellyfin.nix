@@ -10,6 +10,7 @@
       let
         cfg = config.modules.services;
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
+        service = cfg.definitions.jellyfin;
         jellyfinBackupKeyFile = config.sops.secrets.jellyfinBackupKey.path;
         createBackup = pkgs.writeShellApplication {
           name = "jellyfin-create-backup";
@@ -21,7 +22,7 @@
               -H "X-Emby-Token: $key" \
               -H "Content-Type: application/json" \
               -d '{}' \
-              http://${cfg.inventory.jellyfin.containerAddress}:${toString cfg.inventory.jellyfin.port}/Backup/Create)
+              ${servicesLib.serviceUrl cfg "jellyfin"}/Backup/Create)
             echo "$response"
             path=$(echo "$response" | sed -n 's/.*"Path":"\([^"]*\)".*/\1/p')
             if [ -n "$path" ]; then
@@ -32,85 +33,89 @@
           '';
         };
       in
-      ({
-        sops.secrets.jellyfinBackupKey = {
-          sopsFile = ../../../secrets/jellyfin.yaml;
-          owner = "root";
-          mode = "0400";
-        };
-
-        modules.services.inventory.jellyfin = {
-          hostname = "jellyfin";
-          containerAddress = "10.231.136.10";
-          port = 8096;
-          auth = "bypass";
-          backup.path = "${cfg.configDir}/jellyfin/data/backups";
-          monitor = true;
-        };
-
-        containers.jellyfin = servicesLib.mkContainer {
-          inherit cfg;
-          name = "jellyfin";
-          privateUsers = "pick";
-          bindMounts = {
-            "/var/lib/jellyfin" = {
-              hostPath = "${cfg.configDir}/jellyfin";
-              isReadOnly = false;
-            };
-            "/data" = {
-              hostPath = cfg.mediaPortalDir;
-              isReadOnly = false;
-            };
-          };
-          allowedDevices = [
-            {
-              node = "/dev/dri/renderD128";
-              modifier = "rwm";
-            }
-            {
-              node = "/dev/dri/card0";
-              modifier = "rwm";
-            }
-            {
-              # DRM card numbering can shift across boots/kernel updates.
-              node = "/dev/dri/card1";
-              modifier = "rwm";
-            }
-          ];
-          extraConfig = {
-            services.jellyfin = {
-              enable = true;
-              openFirewall = true;
+      {
+        config = lib.mkMerge [
+          {
+            sops.secrets.jellyfinBackupKey = {
+              sopsFile = ../../../secrets/jellyfin.yaml;
+              owner = "root";
+              mode = "0400";
             };
 
-            hardware.graphics = {
-              enable = true;
-              extraPackages = with pkgs; [
-                libva-vdpau-driver
-                libvdpau-va-gl
-                intel-media-driver
+            modules.services.definitions.jellyfin = {
+              hostname = "jellyfin";
+              containerAddress = "10.231.136.10";
+              port = 8096;
+              auth = "bypass";
+              backup.path = "${cfg.configDir}/jellyfin/data/backups";
+              monitor = true;
+            };
+
+            containers.jellyfin = servicesLib.mkContainer {
+              inherit cfg;
+              name = "jellyfin";
+              privateUsers = "pick";
+              bindMounts = {
+                "/var/lib/jellyfin" = {
+                  hostPath = "${cfg.configDir}/jellyfin";
+                  isReadOnly = false;
+                };
+                "/data" = {
+                  hostPath = cfg.mediaPortalDir;
+                  isReadOnly = false;
+                };
+              };
+              allowedDevices = [
+                {
+                  node = "/dev/dri/renderD128";
+                  modifier = "rwm";
+                }
+                {
+                  node = "/dev/dri/card0";
+                  modifier = "rwm";
+                }
+                {
+                  # DRM card numbering can shift across boots/kernel updates.
+                  node = "/dev/dri/card1";
+                  modifier = "rwm";
+                }
               ];
+              extraConfig = {
+                services.jellyfin = {
+                  enable = true;
+                  openFirewall = true;
+                };
+
+                hardware.graphics = {
+                  enable = true;
+                  extraPackages = with pkgs; [
+                    libva-vdpau-driver
+                    libvdpau-va-gl
+                    intel-media-driver
+                  ];
+                };
+
+                users.users.jellyfin.extraGroups = [
+                  "video"
+                  "render"
+                ];
+              };
             };
 
-            users.users.jellyfin.extraGroups = [
-              "video"
-              "render"
-            ];
-          };
-        };
-
-        systemd.services."container@jellyfin".serviceConfig = {
-          CPUQuota = "300%";
-          IOWeight = 50;
-          Nice = 10;
-        };
-      })
-      // (servicesLib.mkBackupJob {
-        name = "jellyfin";
-        description = "jellyfin backup via native API";
-        backupDir = "${cfg.configDir}/jellyfin/data/backups";
-        inherit createBackup;
-        filePattern = "jellyfin-backup-*.zip";
-      });
+            systemd.services."container@jellyfin".serviceConfig = {
+              CPUQuota = "300%";
+              IOWeight = 50;
+              Nice = 10;
+            };
+          }
+          (servicesLib.mkBackupJob {
+            name = "jellyfin";
+            description = "jellyfin backup via native API";
+            backupDir = service.backup.path;
+            inherit createBackup;
+            filePattern = "jellyfin-backup-*.zip";
+          })
+        ];
+      };
   };
 }

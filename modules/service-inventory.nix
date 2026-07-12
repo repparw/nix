@@ -49,11 +49,19 @@ let
         (service.hostname != null && service.port == null)
         || (service.monitor && (service.hostname == null || service.port == null))
       ) definitions;
+      addresses = lib.filter (address: address != null) (
+        lib.catAttrs "containerAddress" (lib.attrValues definitions)
+      );
+      duplicateAddresses = lib.filter (
+        address: builtins.length (lib.filter (candidate: candidate == address) addresses) > 1
+      ) (lib.unique addresses);
     in
-    if invalid == { } then
-      definitions
+    if invalid != { } then
+      throw "invalid service definitions: ${lib.concatStringsSep ", " (lib.attrNames invalid)}; routed and monitored services require both hostname and port"
+    else if duplicateAddresses != [ ] then
+      throw "duplicate service definition container addresses: ${lib.concatStringsSep ", " duplicateAddresses}"
     else
-      throw "invalid service definitions: ${lib.concatStringsSep ", " (lib.attrNames invalid)}; routed and monitored services require both hostname and port";
+      definitions;
 in
 {
   options.modules.services = {

@@ -122,6 +122,63 @@
                   monitor = true;
                 }
               ];
+              duplicateMediaAddresses = builtins.tryEval (
+                (lib.evalModules {
+                  modules = [
+                    ./service-inventory.nix
+                    {
+                      modules.services.definitions = {
+                        first.containerAddress = "10.231.136.99";
+                        second.containerAddress = "10.231.136.99";
+                      };
+                    }
+                  ];
+                }).config.modules.services.definitions
+              );
+              expectedMediaDefinitions = {
+                bazarr = {
+                  hostname = "bazarr";
+                  containerAddress = "10.231.136.2";
+                  port = 6767;
+                  auth = "one_factor";
+                  backupPath = "${cfg.configDir}/bazarr/backup";
+                };
+                prowlarr = {
+                  hostname = "prowlarr";
+                  containerAddress = "10.231.136.3";
+                  port = 9696;
+                  auth = "one_factor";
+                  backupPath = "${cfg.configDir}/prowlarr/Backups";
+                };
+                qbittorrent = {
+                  hostname = "qbit";
+                  containerAddress = "10.231.136.4";
+                  port = 8080;
+                  auth = "external";
+                  backupPath = "${cfg.configDir}/qbittorrent";
+                };
+                radarr = {
+                  hostname = "radarr";
+                  containerAddress = "10.231.136.5";
+                  port = 7878;
+                  auth = "one_factor";
+                  backupPath = "${cfg.configDir}/radarr/Backups";
+                };
+                sonarr = {
+                  hostname = "sonarr";
+                  containerAddress = "10.231.136.6";
+                  port = 8989;
+                  auth = "one_factor";
+                  backupPath = "${cfg.configDir}/sonarr/Backups";
+                };
+                jellyfin = {
+                  hostname = "jellyfin";
+                  containerAddress = "10.231.136.10";
+                  port = 8096;
+                  auth = "bypass";
+                  backupPath = "${cfg.configDir}/jellyfin/data/backups";
+                };
+              };
               hasMonitorSite =
                 name: hostname: checkUrl:
                 builtins.any (
@@ -132,6 +189,28 @@
                     site.title == name && site.url == "https://${hostname}.${cfg.domain}" && site.check-url == checkUrl
                   ) widget.sites
                 ) (lib.concatMap (column: column.widgets) monitorSites.columns);
+              mediaDefinitionsMatch = lib.all (
+                name:
+                let
+                  expectedService = expectedMediaDefinitions.${name};
+                  service = cfg.definitions.${name};
+                  endpoint = "http://${expectedService.containerAddress}:${toString expectedService.port}";
+                in
+                service.hostname == expectedService.hostname
+                && service.containerAddress == expectedService.containerAddress
+                && service.port == expectedService.port
+                && service.auth == expectedService.auth
+                && service.monitor
+                && service.backup.path == expectedService.backupPath
+                && !(builtins.hasAttr name cfg.inventory)
+                && alpha.containers.${name}.localAddress == service.containerAddress
+                && http.services.${name}.loadBalancer.servers == [ { url = endpoint; } ]
+                && hasMonitorSite name expectedService.hostname endpoint
+                && alpha.fileSystems."${cfg.backupDir}/${name}".device == expectedService.backupPath
+                &&
+                  builtins.elem "home-containers-backup-${name}.mount"
+                    alpha.systemd.services."container@${name}".after
+              ) (lib.attrNames expectedMediaDefinitions);
               expected =
                 miniflux.hostname == "rss"
                 && miniflux.port == 8081
@@ -163,7 +242,63 @@
                 &&
                   builtins.elem "home-containers-backup-paperless.mount"
                     alpha.systemd.services."container@paperless".after
-                && builtins.all (result: !result.success) invalidDefinitions;
+                && mediaDefinitionsMatch
+                && http.routers.bazarr.middlewares == [ "authelia" ]
+                && http.routers.prowlarr.middlewares == [ "authelia" ]
+                && http.routers.radarr.middlewares == [ "authelia" ]
+                && http.routers.sonarr.middlewares == [ "authelia" ]
+                && !(http.routers.jellyfin ? middlewares)
+                && http.routers.qbittorrent.rule == "Host(`qbit.${cfg.domain}`) && !PathPrefix(`/api`)"
+                && http.routers.qbittorrent-api.rule == "Host(`qbit.${cfg.domain}`) && PathPrefix(`/api`)"
+                &&
+                  alpha.containers.qbittorrent.forwardPorts == [
+                    {
+                      protocol = "tcp";
+                      hostPort = 54535;
+                      containerPort = 54535;
+                    }
+                    {
+                      protocol = "udp";
+                      hostPort = 54535;
+                      containerPort = 54535;
+                    }
+                  ]
+                && lib.all (name: alpha.containers.${name}.privateUsers == "identity") [
+                  "bazarr"
+                  "prowlarr"
+                  "qbittorrent"
+                  "radarr"
+                  "sonarr"
+                ]
+                && alpha.containers.jellyfin.privateUsers == "pick"
+                && alpha.containers.radarr.bindMounts."/data".hostPath == cfg.mediaPortalDir
+                && alpha.containers.radarr.bindMounts."/config".hostPath == "${cfg.configDir}/radarr"
+                && alpha.containers.radarr.bindMounts."/data/torrents".hostPath == "${cfg.rootDir}/torrents"
+                && alpha.containers.sonarr.bindMounts."/data".hostPath == cfg.mediaPortalDir
+                && alpha.containers.sonarr.bindMounts."/config".hostPath == "${cfg.configDir}/sonarr"
+                &&
+                  alpha.containers.prowlarr.bindMounts."/var/lib/private/prowlarr/Backups".hostPath
+                  == "${cfg.configDir}/prowlarr/Backups"
+                &&
+                  alpha.containers.qbittorrent.bindMounts."/var/lib/qBittorrent/qBittorrent".hostPath
+                  == "${cfg.configDir}/qbittorrent"
+                && alpha.containers.qbittorrent.bindMounts."/data/torrents".hostPath == "${cfg.rootDir}/torrents"
+                && alpha.containers.qbittorrent.config.services.qbittorrent.torrentingPort == 54535
+                && alpha.containers.radarr.config.services.radarr.settings.server.bindAddress == "*"
+                && alpha.containers.radarr.config.services.radarr.dataDir == "/config"
+                && alpha.containers.jellyfin.bindMounts."/var/lib/jellyfin".hostPath == "${cfg.configDir}/jellyfin"
+                && alpha.containers.jellyfin.bindMounts."/data".hostPath == cfg.mediaPortalDir
+                &&
+                  map (device: device.node) alpha.containers.jellyfin.allowedDevices == [
+                    "/dev/dri/renderD128"
+                    "/dev/dri/card0"
+                    "/dev/dri/card1"
+                  ]
+                && alpha.systemd.services."container@jellyfin".serviceConfig.CPUQuota == "300%"
+                && alpha.systemd.services."container@jellyfin".serviceConfig.IOWeight == 50
+                && alpha.systemd.services."container@jellyfin".serviceConfig.Nice == 10
+                && builtins.all (result: !result.success) invalidDefinitions
+                && !duplicateMediaAddresses.success;
             in
             assert expected;
             pkgs.runCommand "check-service-definitions" { } ''
