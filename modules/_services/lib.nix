@@ -3,35 +3,25 @@
   pkgs,
 }:
 let
-  serviceDefinitions =
-    cfg:
-    let
-      overlap = lib.intersectAttrs cfg.inventory cfg.definitions;
-    in
-    if overlap == { } then
-      cfg.inventory // cfg.definitions
-    else
-      throw "services declared in both inventory and definitions: ${lib.concatStringsSep ", " (lib.attrNames overlap)}";
-
   serviceUrl =
     cfg: name:
     let
-      service = (serviceDefinitions cfg).${name};
+      service = cfg.definitions.${name};
       address = if service.containerAddress != null then service.containerAddress else "127.0.0.1";
     in
     "http://${address}:${toString service.port}";
 
-  backupServices = cfg: lib.filterAttrs (_: service: service.backup != null) (serviceDefinitions cfg);
+  backupServices = cfg: lib.filterAttrs (_: service: service.backup != null) cfg.definitions;
 
   backupMountUnit = name: "home-containers-backup-${name}.mount";
 in
 {
-  inherit serviceDefinitions serviceUrl backupMountUnit;
+  inherit serviceUrl backupMountUnit;
 
-  inventoryHosts =
+  serviceHosts =
     cfg:
     lib.mapAttrsToList (_: service: "${service.hostname}.${cfg.domain}") (
-      lib.filterAttrs (_: service: service.hostname != null) (serviceDefinitions cfg)
+      lib.filterAttrs (_: service: service.hostname != null) cfg.definitions
     );
 
   monitorSites =
@@ -43,9 +33,9 @@ in
         check-url = serviceUrl cfg name;
       })
       (
-        lib.filterAttrs (_: service: service.monitor && service.hostname != null && service.port != null) (
-          serviceDefinitions cfg
-        )
+        lib.filterAttrs (
+          _: service: service.monitor && service.hostname != null && service.port != null
+        ) cfg.definitions
       );
 
   backupMounts =
@@ -92,7 +82,7 @@ in
       autoStart = true;
       privateNetwork = true;
       hostAddress = "10.231.136.1";
-      localAddress = (serviceDefinitions cfg).${name}.containerAddress;
+      localAddress = cfg.definitions.${name}.containerAddress;
       inherit extraFlags;
       config =
         { ... }:

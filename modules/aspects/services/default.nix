@@ -80,7 +80,7 @@
               servicesLib
               ;
           })
-          ../../service-inventory.nix
+          ../../service-definitions.nix
         ];
 
         config = {
@@ -106,7 +106,7 @@
             })
           ];
 
-          networking.hosts."192.168.0.18" = servicesLib.inventoryHosts cfg ++ [
+          networking.hosts."192.168.0.18" = servicesLib.serviceHosts cfg ++ [
             cfg.domain
             "code.${cfg.domain}"
             "home.${cfg.domain}"

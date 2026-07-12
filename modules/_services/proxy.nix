@@ -7,7 +7,7 @@
 }:
 let
   domain = cfg.domain;
-  serviceDefinitions = servicesLib.serviceDefinitions cfg;
+  serviceDefinitions = cfg.definitions;
   proxyableDefinitions = lib.filterAttrs (_: service: service.port != null) serviceDefinitions;
   routableDefinitions = lib.filterAttrs (
     name: service:

@@ -112,10 +112,5 @@ in
       description = "Shared service facts used to derive reachability, routing, monitoring, and backups.";
     };
 
-    inventory = mkOption {
-      type = types.attrsOf serviceType;
-      default = { };
-      description = "Legacy service declarations awaiting migration to definitions.";
-    };
   };
 }
