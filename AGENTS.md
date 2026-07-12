@@ -11,6 +11,10 @@ Repo follows upstream `vic/den` default-template structure.
 
 - Do not put plaintext secrets in repo; use `sops-nix`.
 
+## Spoken Communication
+
+Agents can speak to the user via TTS with `say "message"`.
+
 ## Nix Research
 
 Use `mcp-nixos` before guessing package attributes, option paths, Nix functions, package versions, or documentation. It covers NixOS packages and options, Home Manager, nix-darwin, Nixvim, Noogle, FlakeHub, NixOS Wiki, `nix.dev`, package history, binary-cache status, and pinned flake inputs.
