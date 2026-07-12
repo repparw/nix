@@ -160,6 +160,14 @@
               selection="$(wl-paste --no-newline 2>/dev/null | trim || true)"
 
               if [ "$selection" = "$sentinel" ] || [ -z "$selection" ]; then
+                wtype -M ctrl -k a -m ctrl
+                sleep 0.15
+                wtype -M ctrl -k c -m ctrl
+                sleep 0.15
+                selection="$(wl-paste --no-newline 2>/dev/null | trim || true)"
+              fi
+
+              if [ "$selection" = "$sentinel" ] || [ -z "$selection" ]; then
                 printf '%s' "$previous" | wl-copy
                 notify "No selected text found"
                 exit 0
