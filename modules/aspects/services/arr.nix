@@ -67,7 +67,7 @@
         };
       in
       {
-        modules.services.inventory = {
+        modules.services.definitions = {
           bazarr = {
             hostname = "bazarr";
             containerAddress = "10.231.136.2";
