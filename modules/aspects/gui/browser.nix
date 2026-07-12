@@ -6,6 +6,7 @@
   ...
 }:
 let
+  chatGptChromeExtensionId = "hehggadaopoacecdllhhajmbjkdcmajg";
   openInFirefoxExtensionId = "lmeddoobegbaiopohmpmmobpnpjifpii";
 in
 {
@@ -289,7 +290,9 @@ in
           chromium = {
             enable = true;
             package = chromiumWithoutMimeApps pkgs.chromium;
+            commandLineArgs = [ "--force-renderer-accessibility" ];
             extensions = [
+              { id = chatGptChromeExtensionId; }
               { id = openInFirefoxExtensionId; }
               { id = "ddkjiahejlhfcafbddmgiahcphecmpfh"; }
               { id = "mnjggcdmjocbbbhaepdhchncahnbgone"; }

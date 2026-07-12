@@ -21,49 +21,16 @@
 
   den.aspects.ai = {
     nixos =
-      { ... }:
+      { config, ... }:
       {
-        nixpkgs.overlays = [
-          (final: prev: {
-            codex = prev.codex.overrideAttrs (
-              finalAttrs: _oldAttrs: {
-                version = "0.144.1";
+        hardware.uinput.enable = true;
 
-                src = final.fetchFromGitHub {
-                  owner = "openai";
-                  repo = "codex";
-                  tag = "rust-v${finalAttrs.version}";
-                  hash = "sha256-KHgrqIZyAmLhTZSRYbb7huBO8neOib/B1Vx/oPW2nEU=";
-                };
+        programs.ydotool = {
+          enable = true;
+          group = "uinput";
+        };
 
-                sourceRoot = "${finalAttrs.src.name}/codex-rs";
-                cargoHash = "sha256-S4dsZXfmKvJItL2XYKyxfhqdCMATEG6oPjrtVRwkuYc=";
-                cargoDeps = final.rustPlatform.fetchCargoVendor {
-                  inherit (finalAttrs)
-                    pname
-                    version
-                    src
-                    sourceRoot
-                    ;
-                  hash = finalAttrs.cargoHash;
-                };
-
-                cargoBuildFlags = [
-                  "--package"
-                  "codex-cli"
-                  "--package"
-                  "codex-code-mode-host"
-                ];
-                cargoCheckFlags = [
-                  "--package"
-                  "codex-cli"
-                  "--package"
-                  "codex-code-mode-host"
-                ];
-              }
-            );
-          })
-        ];
+        users.groups.uinput.members = [ config.users.users.repparw.name ];
       };
 
     homeManager =
@@ -74,7 +41,7 @@
       }:
       let
         codexDesktop =
-          inputs.codex-desktop-linux.packages.${pkgs.stdenv.hostPlatform.system}.codex-desktop-remote-mobile-control;
+          inputs.codex-desktop-linux.packages.${pkgs.stdenv.hostPlatform.system}.codex-desktop-computer-use-ui-remote-mobile-control;
         codexDesktopLauncher = pkgs.writeShellScriptBin "codex-desktop" ''
           exec ${pkgs.systemd}/bin/systemctl --user start codex-desktop.service
         '';
@@ -114,10 +81,13 @@
       {
         imports = [ inputs.codex-desktop-linux.homeManagerModules.default ];
 
+        # TODO: Add custom OpenCode models to the desktop picker once upstream stops
+        # filtering model_catalog_json entries: https://github.com/openai/codex/issues/19694
         home = {
           packages = [
             pkgs.codex
             pkgs.mcp-nixos
+            pkgs.nh
           ];
           file.".codex/ds4-flash-free.config.toml".text = ''
             model = "deepseek-v4-flash-free"
@@ -131,7 +101,10 @@
             enable = true;
             package = singletonCodexDesktop;
             cliPackage = pkgs.codex;
-            remoteControl.enable = true;
+            remoteControl = {
+              enable = true;
+              codexHome = "${config.xdg.configHome}/codex";
+            };
           };
 
           mcp = {
@@ -186,55 +159,6 @@
           t3code.enable = true;
         };
 
-        home.activation.codexOpenCodeModels = config.lib.dag.entryAfter [ "writeBoundary" ] ''
-          opencode_config="${config.xdg.configHome}/opencode/opencode.json"
-          opencode_auth="${config.home.homeDirectory}/.local/share/opencode/auth.json"
-          codex_config="${config.home.homeDirectory}/.codex/config.toml"
-
-          mkdir -p "$(dirname "$codex_config")"
-          printf '%s\n' \
-            'model_auto_compact_token_limit = 250000' \
-            > "$codex_config"
-
-          if [ -e "$opencode_auth" ] && ${lib.getExe pkgs.jq} -e 'has("opencode")' "$opencode_auth" >/dev/null; then
-            printf '%s\n' \
-              '[model_providers.opencode]' \
-              'name = "OpenCode Zen"' \
-              'base_url = "https://opencode.ai/zen/v1"' \
-              'wire_api = "responses"' \
-              '[model_providers.opencode.auth]' \
-              "command = \"${lib.getExe pkgs.jq}\"" \
-              "args = [\"-r\", \".opencode.key\", \"$opencode_auth\"]" >> "$codex_config"
-          fi
-
-          if [ -e "$opencode_auth" ] && ${lib.getExe pkgs.jq} -e 'has("opencode-go")' "$opencode_auth" >/dev/null; then
-            printf '%s\n' \
-              '[model_providers.opencode-go]' \
-              'name = "OpenCode Go"' \
-              'base_url = "https://opencode.ai/zen/go/v1"' \
-              'wire_api = "responses"' \
-              '[model_providers.opencode-go.auth]' \
-              "command = \"${lib.getExe pkgs.jq}\"" \
-              "args = [\"-r\", \".\\\"opencode-go\\\".key\", \"$opencode_auth\"]" >> "$codex_config"
-          fi
-
-          if [ -e "$opencode_config" ]; then
-            ${lib.getExe pkgs.jq} -r --arg auth "$opencode_auth" '
-              .provider
-              | to_entries[]
-              | select(.value.options.baseURL)
-              | select(.key != "opencode" and .key != "opencode-go")
-              | "[model_providers.\(.key)]\n"
-                + "name = \"\(.value.name // .key)\"\n"
-                + "base_url = \"\(.value.options.baseURL)\"\n"
-                + "wire_api = \"responses\"\n"
-                + "[model_providers.\(.key).auth]\n"
-                + "command = \"${lib.getExe pkgs.jq}\"\n"
-                + "args = " + (["-r", ".\"\(.key)\".key", $auth] | @json) + "\n"
-            ' "$opencode_config" >> "$codex_config"
-          fi
-        '';
-
         systemd.user.services.t3code-web = {
           Unit = {
             Description = "T3 Code Web Service";
@@ -260,7 +184,10 @@
             PartOf = [ "graphical-session.target" ];
           };
           Service = {
-            Environment = [ "CODEX_CLI_PATH=${lib.getExe pkgs.codex}" ];
+            Environment = [
+              "CODEX_CLI_PATH=${lib.getExe pkgs.codex}"
+              "CODEX_HOME=${config.xdg.configHome}/codex"
+            ];
             ExecStart = lib.getExe codexDesktop;
             Restart = "on-failure";
             RestartSec = 5;
