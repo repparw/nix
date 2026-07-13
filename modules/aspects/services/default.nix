@@ -96,7 +96,10 @@
             '';
           };
 
-          users.groups.media.gid = 900;
+          users.groups.media = {
+            gid = 900;
+            members = [ config.users.users.repparw.name ];
+          };
 
           services.resolved.settings.Resolve.DNSStubListenerExtra = "0.0.0.0";
 
