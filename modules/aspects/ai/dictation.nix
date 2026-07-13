@@ -8,9 +8,7 @@
     };
   };
 
-  den.aspects.dictation = {
-    includes = [ den.aspects.mpris-playback ];
-
+  den.aspects.ai.provides.dictation = {
     homeManager =
       {
         mprisPlayback,
