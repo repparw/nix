@@ -9,8 +9,11 @@
   };
 
   den.aspects.dictation = {
+    includes = [ den.aspects.mpris-playback ];
+
     homeManager =
       {
+        mprisPlayback,
         pkgs,
         ...
       }:
@@ -58,7 +61,7 @@
           runtimeInputs = with pkgs; [
             coreutils
             gnugrep
-            playerctl
+            mprisPlayback
             voxtypePackage
           ];
           text = ''
@@ -72,36 +75,12 @@
               cat "$state_file" 2>/dev/null || printf 'idle'
             }
 
-            pause_playing() {
-              mkdir -p "$(dirname "$resume_file")"
-              : > "$resume_file"
-
-              while IFS= read -r player; do
-                [ -n "$player" ] || continue
-                if [ "$(playerctl --player "$player" status 2>/dev/null || true)" = "Playing" ]; then
-                  printf '%s\n' "$player" >> "$resume_file"
-                  playerctl --player "$player" pause 2>/dev/null || true
-                fi
-              done < <(playerctl -l 2>/dev/null || true)
-            }
-
-            resume_paused() {
-              [ -f "$resume_file" ] || return 0
-
-              while IFS= read -r player; do
-                [ -n "$player" ] || continue
-                playerctl --player "$player" play 2>/dev/null || true
-              done < "$resume_file"
-
-              rm -f "$resume_file"
-            }
-
             wait_for_idle_then_resume() {
               for _ in $(seq 1 600); do
                 [ "$(read_state)" = "idle" ] && break
                 sleep 0.1
               done
-              resume_paused
+              mpris-playback resume "$resume_file"
             }
 
             case "$(read_state)" in
@@ -114,7 +93,7 @@
                 wait_for_idle_then_resume &
                 ;;
               *)
-                pause_playing
+                mpris-playback pause "$resume_file"
                 voxtype record start
                 ;;
             esac
