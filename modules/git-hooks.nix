@@ -14,6 +14,26 @@
       pre-commit = {
         settings = {
           hooks = {
+            convco = {
+              enable = true;
+              entry = pkgs.lib.getExe (
+                pkgs.writeShellApplication {
+                  name = "convco-hook";
+                  text = ''
+                    message_file="$1"
+                    IFS= read -r subject < "$message_file" || true
+
+                    case "$subject" in
+                      fixup\!\ * | squash\!\ * | amend\!\ * | Merge\ * | Revert\ \"*)
+                        exit 0
+                        ;;
+                    esac
+
+                    ${pkgs.lib.getExe pkgs.convco} check --from-stdin < "$message_file"
+                  '';
+                }
+              );
+            };
             nixfmt = {
               enable = true;
               package = pkgs.nixfmt;
