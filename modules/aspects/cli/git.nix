@@ -99,6 +99,7 @@
           lazygit = {
             enable = true;
             settings = {
+              git.overrideGpg = true;
               git.pagers = [
                 {
                   pager = "delta --dark --paging=never";
