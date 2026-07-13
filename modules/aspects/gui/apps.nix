@@ -12,7 +12,7 @@ let
       patches = [
         (pkgs.fetchpatch {
           url = "https://github.com/NixOS/nixpkgs/pull/518221.patch";
-          hash = "sha256-Z7M5Hmdslp39DBQkkJo11Ol/6TFU/LNezXPTe5Ic83o=";
+          hash = "sha256-VM4zx9pcyHgRFZiM6ga9uen3txKCFJAJ0lNISQswcI8=";
         })
       ];
     };
