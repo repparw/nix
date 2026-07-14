@@ -192,9 +192,20 @@
                 "es"
               ];
               translate = false;
+              initial_prompt = "NixOS, Nixpkgs, Home Manager, flakes, FlakeHub, sops-nix, dendritic, den, Niri, Quickshell, Voxtype, Wayland.";
             };
             audio.feedback.enabled = true;
             output.notification.on_transcription = false;
+            text = {
+              filter_filler_words = true;
+              replacements = { };
+              smart_auto_submit = false;
+              spoken_punctuation = true;
+            };
+            vad = {
+              enabled = true;
+              backend = "energy";
+            };
             osd = {
               enabled = true;
               frontend = "quickshell";
