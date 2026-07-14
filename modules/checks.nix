@@ -64,6 +64,23 @@
                 touch $out
               '';
 
+          sops-files = pkgs.runCommand "check-sops-files" { } ''
+            invalid_names=$(find ${inputs.self}/secrets -maxdepth 1 -type f -name '*.yaml' ! -name '*.sops.yaml' -print)
+            missing_metadata=$(find ${inputs.self}/secrets -maxdepth 1 -type f -name '*.sops.yaml' ! -exec grep -q '^sops:$' {} \; -print)
+
+            if [ -n "$invalid_names" ]; then
+              printf 'SOPS YAML files must use the .sops.yaml suffix:\n%s\n' "$invalid_names" >&2
+              exit 1
+            fi
+
+            if [ -n "$missing_metadata" ]; then
+              printf 'Files with the .sops.yaml suffix must contain SOPS metadata:\n%s\n' "$missing_metadata" >&2
+              exit 1
+            fi
+
+            touch $out
+          '';
+
           service-definitions =
             let
               alpha = inputs.self.nixosConfigurations.alpha.config;

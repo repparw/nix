@@ -19,7 +19,7 @@
       in
       {
         sops.secrets.resticPassword = {
-          sopsFile = ../../secrets/backup.yaml;
+          sopsFile = ../../secrets/backup.sops.yaml;
           owner = user.name;
         };
 

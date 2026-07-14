@@ -41,11 +41,11 @@ in
 {
   sops.secrets = {
     cloudflare = {
-      sopsFile = ../../secrets/proxy.yaml;
+      sopsFile = ../../secrets/proxy.sops.yaml;
       owner = config.users.users.repparw.name;
     };
     qbittorrentAuth = {
-      sopsFile = ../../secrets/proxy.yaml;
+      sopsFile = ../../secrets/proxy.sops.yaml;
       owner = "traefik";
       group = "traefik";
       mode = "0400";

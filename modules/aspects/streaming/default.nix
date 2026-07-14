@@ -193,12 +193,12 @@
       {
         sops.secrets = {
           sunshineApiUsername = {
-            sopsFile = ../../../secrets/streaming.yaml;
+            sopsFile = ../../../secrets/streaming.sops.yaml;
             owner = config.users.users.repparw.name;
             mode = "0400";
           };
           sunshineApiPassword = {
-            sopsFile = ../../../secrets/streaming.yaml;
+            sopsFile = ../../../secrets/streaming.sops.yaml;
             owner = config.users.users.repparw.name;
             mode = "0400";
           };

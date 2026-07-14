@@ -37,7 +37,7 @@
         config = lib.mkMerge [
           {
             sops.secrets.jellyfinBackupKey = {
-              sopsFile = ../../../secrets/jellyfin.yaml;
+              sopsFile = ../../../secrets/jellyfin.sops.yaml;
               owner = "root";
               mode = "0400";
             };

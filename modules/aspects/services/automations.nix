@@ -26,7 +26,7 @@
       in
       {
         sops.secrets.discordWebhook = {
-          sopsFile = ../../../secrets/automations.yaml;
+          sopsFile = ../../../secrets/automations.sops.yaml;
           owner = "root";
           mode = "0400";
         };
