@@ -106,23 +106,6 @@ in
           identity_providers.oidc = {
             clients = [
               {
-                client_id = "4c06b7fb-8078-eb7f-67b4-713dcf3479e5";
-                client_name = "Miniflux";
-                # PBKDF2-SHA512 hash of minifluxOidcSecret plaintext
-                client_secret = "$pbkdf2-sha512$310000$YA9moMJnULbN7tBa4rGglA$9Kt1uznIN.aOECEXkmHD5I.GCJNKvjhGgJIor6u4O6b9xlCQHhFTUUjTHDe7b26Uje9YxmYObjFYpVahr35MHw";
-                public = false;
-                authorization_policy = "one_factor";
-                redirect_uris = [ "https://rss.${cfg.domain}/oauth2/callback" ];
-                scopes = [
-                  "openid"
-                  "groups"
-                  "email"
-                  "profile"
-                ];
-                userinfo_signed_response_alg = "none";
-                token_endpoint_auth_method = "client_secret_basic";
-              }
-              {
                 client_id = "home-assistant";
                 client_name = "Home Assistant";
                 client_secret = "$pbkdf2-sha512$310000$WJc9q4Smq9U639kDDrzuiA$Lk6O1.q7W3xKvUQw68o22eTxtasU3aN0MeRnSZ1pXludOzzF1b0CNDqG4XoH8sP8.25vVP3xq0MGfhihBWj33A";
