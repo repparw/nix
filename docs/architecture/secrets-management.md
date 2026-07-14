@@ -10,6 +10,8 @@ tags: [security, secrets, sops-nix]
 
 Do not put plaintext secrets in this repository. Secret material belongs in
 consumer-scoped files under `secrets/` and is managed through `sops-nix`.
+Encrypted YAML files use the `*.sops.yaml` suffix so their encrypted status is
+explicit and secret scanners can recognize them as SOPS output.
 
 Each service or aspect declares its own `sopsFile`. This limits the ciphertext
 and recipient blast radius and makes secret ownership visible next to the

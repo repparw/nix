@@ -2,7 +2,7 @@ _: {
   den.aspects.nix = {
     nixos = { config, ... }: {
       sops.secrets.accessTokens = {
-        sopsFile = ../../secrets/nix.yaml;
+        sopsFile = ../../secrets/nix.sops.yaml;
         mode = "0440";
         owner = config.users.users.repparw.name;
       };

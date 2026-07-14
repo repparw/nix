@@ -16,7 +16,7 @@
       in
       {
         sops.secrets.steamPassword = {
-          sopsFile = ../../../secrets/archisteamfarm.yaml;
+          sopsFile = ../../../secrets/archisteamfarm.sops.yaml;
           owner = "root";
           mode = "0400";
         };

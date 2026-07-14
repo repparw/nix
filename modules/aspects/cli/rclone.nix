@@ -11,7 +11,7 @@
           (name: {
             inherit name;
             value = {
-              sopsFile = ../../../secrets/rclone.yaml;
+              sopsFile = ../../../secrets/rclone.sops.yaml;
               owner = config.users.users.repparw.name;
             };
           })
