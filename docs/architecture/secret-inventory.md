@@ -35,8 +35,6 @@ This file contains names and deployment metadata only. Never add secret values.
 | `secrets/automations.yaml` | `discordWebhook` | Deliver automation notifications to Discord | Automation services | `alpha` |
 | `secrets/streaming.yaml` | `sunshineApiUsername` | Authenticate Sunshine API health checks | Sunshine watchdog | `alpha` |
 | `secrets/streaming.yaml` | `sunshineApiPassword` | Authenticate Sunshine API health checks | Sunshine watchdog | `alpha` |
-| `secrets/legacy.yaml` | `minifluxOidcSecret` | Retained client secret for restoring native Miniflux OIDC | No active Miniflux consumer; matching hash remains in Authelia | none |
-
 The creation rule grants `alpha` only its SSH host-key recipient plus the
 recovery recipient. Add a host recipient to only the files that host consumes,
 then run `sops updatekeys` on those files.
