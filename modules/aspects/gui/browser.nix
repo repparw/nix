@@ -1,13 +1,33 @@
 {
   den,
   inputs,
-  pkgs,
   lib,
   ...
 }:
 let
   chatGptChromeExtensionId = "hehggadaopoacecdllhhajmbjkdcmajg";
   openInFirefoxExtensionId = "lmeddoobegbaiopohmpmmobpnpjifpii";
+  allOpenInExtensionIds = [
+    "lmeddoobegbaiopohmpmmobpnpjifpii" # Open in Firefox
+    "mjoebkkejejidnkfdekpbooceogbapnf" # Open in Edge
+    "amojccmdnkdlcjcplmkijeenigbhfbpd" # Open in Opera
+    "looohpideggedchhpphemdmppnmdkgfd" # Open in IE
+    "bhfenhhfpcpkknkahnlogooiodcofkjl" # Open in Chromium
+    "mgmnomlncpmfgelhofilonnecmbdaoia" # Open in Brave
+    "bifmfjgpgndemajpeeoiopbeilbaifdo" # External Application Button
+    "ihpiinojhnfhpdmmacgmpoonphhimkaj" # Open in VLC
+    "jgpghknlbaljigdhcjimjnkkjniiipmm" # Open in GIMP
+    "cehiomcamjpnfmemkmpjadaclohoibgo" # Open in PDF viewer
+    "balknnpjeohaolphkfhghbaapifbokik" # Open in Onion Browser
+    "nfpgfobeckckemhmggkdfjkjaiikadnd" # Open in Yandex
+    "kjoabfljeghcinlpjhdbdfbcflapkccm" # Tor Control
+    "gkmonffckeeffppchajngpdakfppalfo" # Auto Shutdown
+    "eaicplkoeceoelookkiaeekhodehdhde" # Easy Video Downloader
+    "lhplfipknbnglagbgbfogdaihdcekfga" # Open in Foxit Reader
+    "bffjckjhidlcnenenacdahhpbacpgapo" # Country Flags
+    "oofmnabdpcibefadlibdpnnbglcehfpj" # Email Client for Notmuch
+    "ocnfecjfebnllnapjjoncgjnnkfmobjc" # Media Converter
+  ];
 in
 {
   flake-file.inputs.firefox-addons = {
@@ -55,6 +75,7 @@ in
         ...
       }:
       let
+        openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
         browserWithoutMimeApps =
           desktopFile: browser:
           (pkgs.symlinkJoin {
@@ -79,50 +100,60 @@ in
       {
         imports = [ inputs.helium-nix.homeManagerModules.helium ];
 
-        home.file.".config/tridactyl/tridactylrc".text = ''
-          " General Settings
-          set configversion 2.0
-          set newtab about:blank
-          set markjumpnoisy false
-          set modeindicatormodes.ignore false
-          set theme midnight
-          set editorcmd foot nvim
-          set smoothscroll true
-          set tabsort mru
+        home.file = {
+          ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
+          ".config/chromium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
+            name = "com.add0n.node";
+            description = "Node Host for Native Messaging";
+            path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
+            type = "stdio";
+            allowed_origins = map (id: "chrome-extension://${id}/") allOpenInExtensionIds;
+          };
+          ".config/tridactyl/tridactylrc".text = ''
+            " General Settings
+            set configversion 2.0
+            set newtab about:blank
+            set markjumpnoisy false
+            set modeindicatormodes.ignore false
+            set theme midnight
+            set editorcmd foot nvim
+            set smoothscroll true
+            set tabsort mru
 
-          set searchurls.n https://mynixos.com/search?q=%s
-          set searchurls., https://search.nixos.org/packages?channel=unstable&query=%s
+            set searchurls.n https://mynixos.com/search?q=%s
+            set searchurls., https://search.nixos.org/packages?channel=unstable&query=%s
 
-          " Binds
-          bind ;c hint -c [class*="expand"],[class*="togg"],[class="comment_folder"]
+            " Binds
+            bind ;c hint -c [class*="expand"],[class*="togg"],[class="comment_folder"]
 
-          unbind <F1>
-          unbind <C-e>
+            unbind <F1>
+            unbind <C-e>
 
-          bind gd tabdetach
+            bind gd tabdetach
 
-          bind yy clipboard yankshort
+            bind yy clipboard yankshort
 
-          bind J tabnext --nowrap
-          bind K tabprev --nowrap
+            bind J tabnext --nowrap
+            bind K tabprev --nowrap
 
-          bind gr reader
+            bind gr reader
 
-          " Subconfig binds
-          bindurl .*.youtube.com/watch yy composite urlmodify_js -Q list | urlmodify_js -Qu index | urlmodify_js -ru .*\.youtube\.com/watch\?v= https://youtu.be/ | clipboard yank
-          bindurl www.youtube.com gm urlmodify -t www music
+            " Subconfig binds
+            bindurl .*.youtube.com/watch yy composite urlmodify_js -Q list | urlmodify_js -Qu index | urlmodify_js -ru .*\.youtube\.com/watch\?v= https://youtu.be/ | clipboard yank
+            bindurl www.youtube.com gm urlmodify -t www music
 
-          unbindurl x.com j
-          unbindurl x.com k
+            unbindurl x.com j
+            unbindurl x.com k
 
-          " Subconfig Settings
-          seturl youtube.com modeindicator false
-          ${lib.optionalString (
-            osConfig.modules.services.domain or null != null
-          ) "seturl jellyfin.${osConfig.modules.services.domain} modeindicator false"}
+            " Subconfig Settings
+            seturl youtube.com modeindicator false
+            ${lib.optionalString (
+              osConfig.modules.services.domain or null != null
+            ) "seturl jellyfin.${osConfig.modules.services.domain} modeindicator false"}
 
-          autocmd DocStart tradingview.com mode ignore
-        '';
+            autocmd DocStart tradingview.com mode ignore
+          '';
+        };
         programs = {
           firefox = {
             enable = true;
