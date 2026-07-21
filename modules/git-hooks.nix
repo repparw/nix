@@ -24,7 +24,7 @@
                     IFS= read -r subject < "$message_file" || true
 
                     case "$subject" in
-                      fixup\!\ * | squash\!\ * | amend\!\ * | Merge\ * | Revert\ \"*)
+                      flake.lock:\ Update | fixup\!\ * | squash\!\ * | amend\!\ * | Merge\ * | Revert\ \"*)
                         exit 0
                         ;;
                     esac
