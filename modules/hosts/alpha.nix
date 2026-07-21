@@ -145,14 +145,14 @@
                 DefaultClass=20
 
                 [HierarchyTokenBucketClass]
-                Parent=1:
+                Parent=1:0
                 ClassId=1:10
                 Rate=6500K
                 CeilRate=6500K
                 QuantumBytes=1514
 
                 [HierarchyTokenBucketClass]
-                Parent=1:
+                Parent=1:0
                 ClassId=1:20
                 Rate=1G
                 CeilRate=1G
