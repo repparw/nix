@@ -181,6 +181,8 @@
           name = "sunshine-idle-watchdog";
           runtimeInputs = [
             pkgs.coreutils
+            pkgs.gnugrep
+            pkgs.gnused
             pkgs.systemd
           ];
           text = ''

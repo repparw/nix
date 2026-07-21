@@ -9,10 +9,13 @@
           hostConfigs = map (host: inputs.self.nixosConfigurations.${host}.config) hosts;
           evalHost =
             host:
-            pkgs.runCommand "check-nixos-${host}-eval" { } ''
-              printf '%s\n' '${
+            let
+              evaluatedDrvPath = builtins.unsafeDiscardStringContext (
                 inputs.self.nixosConfigurations.${host}.config.system.build.toplevel.drvPath
-              }' > $out
+              );
+            in
+            pkgs.runCommand "check-nixos-${host}-eval" { } ''
+              printf '%s\n' ${lib.escapeShellArg evaluatedDrvPath} > $out
             '';
           isGeneratedShellPackage =
             package: lib.isDerivation package && package ? text && package ? checkPhase;
@@ -81,6 +84,31 @@
             touch $out
           '';
 
+          change-detection =
+            pkgs.runCommand "check-change-detection"
+              {
+                nativeBuildInputs = [ pkgs.nodejs ];
+              }
+              ''
+                node ${./aspects/services/automations}/change-detection.test.mjs
+                touch $out
+              '';
+
+          streaming-watchdog =
+            pkgs.runCommand "check-streaming-watchdog"
+              {
+                nativeBuildInputs = [
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.gnugrep
+                  pkgs.gnused
+                ];
+              }
+              ''
+                bash ${./aspects/streaming/sunshine-idle-watchdog.test.sh} ${./aspects/streaming/sunshine-idle-watchdog.sh}
+                touch $out
+              '';
+
           service-definitions =
             let
               alpha = inputs.self.nixosConfigurations.alpha.config;
@@ -119,7 +147,34 @@
                   hostname = "monitored";
                   monitor = true;
                 }
+                {
+                  hostname = "";
+                  port = 8080;
+                }
+                {
+                  hostname = "invalid.example";
+                  port = 8080;
+                }
               ];
+              duplicateHostnames = builtins.tryEval (
+                (lib.evalModules {
+                  modules = [
+                    ./service-definitions.nix
+                    {
+                      modules.services.definitions = {
+                        first = {
+                          hostname = "same";
+                          port = 8080;
+                        };
+                        second = {
+                          hostname = "same";
+                          port = 8081;
+                        };
+                      };
+                    }
+                  ];
+                }).config.modules.services.definitions
+              );
               duplicateMediaAddresses = builtins.tryEval (
                 (lib.evalModules {
                   modules = [
@@ -395,7 +450,9 @@
                 && alpha.systemd.services."container@jellyfin".serviceConfig.IOWeight == 50
                 && alpha.systemd.services."container@jellyfin".serviceConfig.Nice == 10;
               validationMatches =
-                builtins.all (result: !result.success) invalidDefinitions && !duplicateMediaAddresses.success;
+                builtins.all (result: !result.success) invalidDefinitions
+                && !duplicateHostnames.success
+                && !duplicateMediaAddresses.success;
               hasAccessPolicy =
                 rules: host: policy:
                 builtins.any (rule: builtins.elem host rule.domain && rule.policy == policy) rules;
