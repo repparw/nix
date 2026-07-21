@@ -1,9 +1,12 @@
 {
-  cfg,
-  servicesLib,
+  config,
+  lib,
+  pkgs,
   ...
 }:
 let
+  cfg = config.modules.services;
+  servicesLib = import ./lib.nix { inherit lib pkgs; };
   service = cfg.definitions.paperless;
 in
 {

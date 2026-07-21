@@ -1,9 +1,4 @@
-{
-  den,
-  inputs,
-  lib,
-  ...
-}:
+{ den, ... }:
 {
   den.aspects.nixos-services = {
     includes = with den.aspects.nixos-services._; [
@@ -26,60 +21,12 @@
       in
       {
         imports = [
-          (import ../../_services/authelia.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              servicesLib
-              ;
-          })
-          (import ../../_services/miniflux.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              servicesLib
-              ;
-          })
-          (import ../../_services/paperless.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              servicesLib
-              ;
-          })
-          (import ../../_services/ddclient.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              servicesLib
-              ;
-          })
-          (import ../../_services/proxy.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              servicesLib
-              ;
-          })
-          (import ../../_services/glance.nix {
-            inherit
-              cfg
-              config
-              lib
-              pkgs
-              servicesLib
-              ;
-          })
+          ../../_services/authelia.nix
+          ../../_services/miniflux.nix
+          ../../_services/paperless.nix
+          ../../_services/ddclient.nix
+          ../../_services/proxy.nix
+          ../../_services/glance.nix
           ../../service-definitions.nix
         ];
 

@@ -16,7 +16,7 @@ let
   backupMountUnit = name: "home-containers-backup-${name}.mount";
 in
 {
-  inherit serviceUrl backupMountUnit;
+  inherit serviceUrl;
 
   serviceHosts =
     cfg:

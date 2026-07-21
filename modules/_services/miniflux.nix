@@ -1,12 +1,12 @@
 {
-  cfg,
   config,
   lib,
   pkgs,
-  servicesLib,
   ...
 }:
 let
+  cfg = config.modules.services;
+  servicesLib = import ./lib.nix { inherit lib pkgs; };
   service = cfg.definitions.miniflux;
   backupDir = service.backup.path;
   createBackup = pkgs.writeShellApplication {
