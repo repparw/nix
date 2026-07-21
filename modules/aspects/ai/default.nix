@@ -14,11 +14,6 @@
     };
   };
 
-  flake-file.inputs.mattpocock-skills = {
-    url = "github:mattpocock/skills";
-    flake = false;
-  };
-
   den.aspects.ai = {
     includes = with den.aspects.ai._; [
       dictation
@@ -67,22 +62,6 @@
           meta = codexDesktop.meta;
         };
 
-        skillFiles = lib.filter (
-          path:
-          let
-            pathString = toString path;
-          in
-          baseNameOf pathString == "SKILL.md"
-          && !(lib.hasInfix "/deprecated/" pathString)
-          && !(lib.hasInfix "/node_modules/" pathString)
-        ) (lib.filesystem.listFilesRecursive (inputs.mattpocock-skills + "/skills"));
-
-        mattPocockSkills = lib.listToAttrs (
-          map (skillFile: {
-            name = builtins.unsafeDiscardStringContext (baseNameOf (dirOf (toString skillFile)));
-            value = dirOf (toString skillFile);
-          }) skillFiles
-        );
       in
       {
         _module.args = { inherit mprisPlayback; };
@@ -127,13 +106,13 @@
 
           codex = {
             enable = true;
-            skills = mattPocockSkills;
+            skills = { };
           };
 
           opencode = {
             enable = true;
             enableMcpIntegration = true;
-            skills = mattPocockSkills;
+            skills = { };
             settings = {
               permission = {
                 "*" = {
@@ -197,6 +176,9 @@
               "CODEX_HOME=${config.xdg.configHome}/codex"
             ];
             ExecStart = lib.getExe codexDesktop;
+            # Electron moves itself into a transient scope; stop it explicitly
+            # so a service restart cannot reuse a stale singleton process.
+            ExecStop = "-${pkgs.systemd}/bin/systemctl --user stop app-codex-desktop-*.scope";
             Restart = "on-failure";
             RestartSec = 5;
           };
