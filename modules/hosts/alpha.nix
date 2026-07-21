@@ -138,6 +138,36 @@
                 "1.0.0.1"
               ];
               linkConfig.RequiredForOnline = "routable";
+              extraConfig = ''
+                [HierarchyTokenBucket]
+                Parent=root
+                Handle=1
+                DefaultClass=20
+
+                [HierarchyTokenBucketClass]
+                Parent=1:
+                ClassId=1:10
+                Rate=6500K
+                CeilRate=6500K
+                QuantumBytes=1514
+
+                [HierarchyTokenBucketClass]
+                Parent=1:
+                ClassId=1:20
+                Rate=1G
+                CeilRate=1G
+                QuantumBytes=1514
+
+                [CAKE]
+                Parent=1:10
+                Handle=10
+                Bandwidth=6500K
+                PriorityQueueingPreset=diffserv4
+
+                [FairQueueingControlledDelay]
+                Parent=1:20
+                Handle=20
+              '';
             };
             "20-wifi" = {
               matchConfig.Name = "wlan0";
@@ -160,6 +190,22 @@
           allowedUDPPorts = [
             54535
           ];
+        };
+
+        networking.nftables.tables.qos = {
+          family = "inet";
+          content = ''
+            chain classify_output {
+              type route hook output priority mangle; policy accept;
+              oifname "eth0" rt ip nexthop 192.168.0.1 meta priority set 1:10
+            }
+
+            chain classify_forward {
+              type filter hook forward priority mangle; policy accept;
+              oifname "eth0" rt ip nexthop 192.168.0.1 meta priority set 1:10
+              iifname "ve-qbittorrent" oifname "eth0" rt ip nexthop 192.168.0.1 ip dscp set cs1 comment "Classify qBittorrent as CAKE bulk traffic"
+            }
+          '';
         };
       };
 
