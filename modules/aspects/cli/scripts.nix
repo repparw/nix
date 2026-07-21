@@ -54,7 +54,8 @@
             name = "bttoggle";
             runtimeInputs = [ bluez ];
             text = ''
-              device=F8:4E:17:E6:22:D2 # xm4
+              # device=F8:4E:17:E6:22:D2 # xm4
+              device=40:5E:F6:CD:0E:F0 # buds
 
               if bluetoothctl info "$device" | grep -q "Connected: yes"; then
                 bluetoothctl disconnect "$device"

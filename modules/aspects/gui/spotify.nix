@@ -94,7 +94,6 @@
             }
           ];
           settings = {
-            client_id = "2728200c381a418983c3de5b30bc77a9";
             client_port = 8080;
             playback_format = ''
               {track} • {artists}
