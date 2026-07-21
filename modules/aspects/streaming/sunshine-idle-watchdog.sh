@@ -4,19 +4,25 @@ set -euo pipefail
 timeout_seconds="${SUNSHINE_IDLE_TIMEOUT_SECONDS:-600}"
 check_interval_seconds="${SUNSHINE_IDLE_CHECK_INTERVAL_SECONDS:-15}"
 cleanup_command="${SUNSHINE_CLEANUP_COMMAND:?SUNSHINE_CLEANUP_COMMAND is required}"
+max_checks="${SUNSHINE_IDLE_MAX_CHECKS:-0}"
 state_dir="${XDG_RUNTIME_DIR:-/tmp}/sunshine-stream"
 managed_app_marker="$state_dir/managed-app-started"
+
+case "$timeout_seconds:$max_checks" in
+  *[!0-9:]*)
+    echo "SUNSHINE_IDLE_TIMEOUT_SECONDS and SUNSHINE_IDLE_MAX_CHECKS must be non-negative integers" >&2
+    exit 2
+    ;;
+esac
 
 last_active="$(date +%s)"
 seen_client=0
 was_active=0
-last_journal_check="$last_active"
+checks=0
 
-recent_startup_event="$(
-  journalctl --user -u sunshine.service --since "-24 hours" --no-pager 2>/dev/null |
-    grep -E 'CLIENT CONNECTED|CLIENT DISCONNECTED' |
-    tail -n 1 || true
-)"
+startup_journal="$(journalctl --user -u sunshine.service --since "-24 hours" --no-pager --show-cursor 2>/dev/null || true)"
+journal_cursor="$(printf '%s\n' "$startup_journal" | sed -n 's/^-- cursor: //p' | tail -n 1)"
+recent_startup_event="$(printf '%s\n' "$startup_journal" | grep -E 'CLIENT CONNECTED|CLIENT DISCONNECTED' | tail -n 1 || true)"
 
 if printf '%s\n' "$recent_startup_event" | grep -q 'CLIENT CONNECTED'; then
   echo "Sunshine watchdog started while the latest recent client event is connected."
@@ -29,11 +35,16 @@ fi
 
 while true; do
   now="$(date +%s)"
-  recent_events="$(
-    journalctl --user -u sunshine.service --since "@$last_journal_check" --no-pager 2>/dev/null |
-      grep -E 'CLIENT CONNECTED|CLIENT DISCONNECTED' || true
-  )"
-  last_journal_check="$now"
+  if [ -n "$journal_cursor" ]; then
+    journal_output="$(journalctl --user -u sunshine.service --after-cursor="$journal_cursor" --no-pager --show-cursor 2>/dev/null || true)"
+  else
+    journal_output="$(journalctl --user -u sunshine.service --since "@$now" --no-pager --show-cursor 2>/dev/null || true)"
+  fi
+  next_cursor="$(printf '%s\n' "$journal_output" | sed -n 's/^-- cursor: //p' | tail -n 1)"
+  if [ -n "$next_cursor" ]; then
+    journal_cursor="$next_cursor"
+  fi
+  recent_events="$(printf '%s\n' "$journal_output" | grep -E 'CLIENT CONNECTED|CLIENT DISCONNECTED' || true)"
   latest_event="$(printf '%s\n' "$recent_events" | tail -n 1)"
 
   if printf '%s\n' "$latest_event" | grep -q 'CLIENT CONNECTED'; then
@@ -71,6 +82,11 @@ while true; do
       seen_client=0
       rm -f "$managed_app_marker"
     fi
+  fi
+
+  checks=$((checks + 1))
+  if [ "$max_checks" -gt 0 ] && [ "$checks" -ge "$max_checks" ]; then
+    break
   fi
 
   sleep "$check_interval_seconds"

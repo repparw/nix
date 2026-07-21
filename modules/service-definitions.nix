@@ -44,11 +44,27 @@ let
   validateDefinitions =
     definitions:
     let
+      hasValidHostname =
+        hostname:
+        hostname == null
+        || (
+          builtins.stringLength hostname <= 63
+          && builtins.match "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$" hostname != null
+        );
       invalid = lib.filterAttrs (
         _: service:
         (service.hostname != null && service.port == null)
         || (service.monitor && (service.hostname == null || service.port == null))
       ) definitions;
+      invalidHostnames = lib.attrNames (
+        lib.filterAttrs (_: service: !hasValidHostname service.hostname) definitions
+      );
+      hostnames = lib.filter (hostname: hostname != null) (
+        lib.catAttrs "hostname" (lib.attrValues definitions)
+      );
+      duplicateHostnames = lib.filter (
+        hostname: builtins.length (lib.filter (candidate: candidate == hostname) hostnames) > 1
+      ) (lib.unique hostnames);
       addresses = lib.filter (address: address != null) (
         lib.catAttrs "containerAddress" (lib.attrValues definitions)
       );
@@ -58,6 +74,10 @@ let
     in
     if invalid != { } then
       throw "invalid service definitions: ${lib.concatStringsSep ", " (lib.attrNames invalid)}; routed and monitored services require both hostname and port"
+    else if invalidHostnames != [ ] then
+      throw "invalid service definition hostnames: ${lib.concatStringsSep ", " invalidHostnames}; hostnames must be lowercase DNS labels"
+    else if duplicateHostnames != [ ] then
+      throw "duplicate service definition hostnames: ${lib.concatStringsSep ", " duplicateHostnames}"
     else if duplicateAddresses != [ ] then
       throw "duplicate service definition container addresses: ${lib.concatStringsSep ", " duplicateAddresses}"
     else
