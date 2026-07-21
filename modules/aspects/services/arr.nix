@@ -19,6 +19,7 @@
             extraOptions ? { },
             extraConfig ? { },
             extraFlags ? [ ],
+            forwardPorts ? [ ],
           }:
           servicesLib.mkContainer {
             inherit
@@ -26,6 +27,7 @@
               extraConfig
               extraFlags
               extraOptions
+              forwardPorts
               ;
             name = name;
             privateUsers = "identity";
@@ -157,6 +159,9 @@
               ];
               services.qbittorrent.group = "media";
               users.groups.media.gid = 900;
+              systemd.services.qbittorrent.preStart = lib.mkBefore ''
+                rm -f /var/lib/qBittorrent/qBittorrent/config/lockfile
+              '';
               systemd.services.qbittorrent.serviceConfig.UMask = lib.mkForce "0002";
             };
             serviceConfig = {
@@ -164,7 +169,7 @@
               openFirewall = true;
               torrentingPort = 54535;
             };
-            extraOptions.forwardPorts = [
+            forwardPorts = [
               {
                 protocol = "tcp";
                 hostPort = 54535;
