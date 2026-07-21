@@ -6,12 +6,29 @@
       pkgs,
       ...
     }:
+    let
+      detectSpeechLanguage =
+        pkgs.writers.writePython3Bin "detect-speech-language"
+          {
+            libraries = [ pkgs.python3Packages.lexilang ];
+          }
+          ''
+            from sys import argv
+
+            from lexilang.detector import detect
+
+
+            language, _confidence = detect(argv[1], languages=["en", "es"])
+            print({"en": "english", "es": "spanish"}[language])
+          '';
+    in
     {
       home.packages = [
         (pkgs.writeShellApplication {
           name = "say";
           runtimeInputs = [
             pkgs.coreutils
+            detectSpeechLanguage
             mprisPlayback
             pkgs.pocket-tts
             pkgs.pipewire
@@ -46,8 +63,9 @@
             trap 'exit 130' INT
             trap 'exit 143' TERM
 
+            language="$(detect-speech-language "$text")"
+            pocket-tts generate --quiet --language "$language" --voice eve --text "$text" --output-path "$audio"
             mpris-playback pause "$resume_file"
-            pocket-tts generate --quiet --voice eve --text "$text" --output-path "$audio"
             pw-play --volume 0.95 "$audio"
           '';
         })
