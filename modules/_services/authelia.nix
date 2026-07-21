@@ -1,11 +1,12 @@
 {
-  cfg,
   config,
   lib,
-  servicesLib,
+  pkgs,
   ...
 }:
 let
+  cfg = config.modules.services;
+  servicesLib = import ./lib.nix { inherit lib pkgs; };
   service = cfg.definitions.authelia;
   authUrl = "https://${service.hostname}.${cfg.domain}";
   ingressPolicy = import ./ingress-policy.nix { inherit lib; } {
@@ -70,11 +71,11 @@ in
       services.authelia.instances.main = {
         enable = true;
         secrets = {
-          jwtSecretFile = "${credentialsDir}/JWT_SECRET";
-          storageEncryptionKeyFile = "${credentialsDir}/STORAGE_ENCRYPTION_KEY";
-          sessionSecretFile = "${credentialsDir}/SESSION_SECRET";
-          oidcIssuerPrivateKeyFile = "${credentialsDir}/OIDC_JWKS_KEY";
-          oidcHmacSecretFile = "${credentialsDir}/OIDC_HMAC_SECRET";
+          jwtSecretFile = "/run/secrets/authelia/JWT_SECRET";
+          storageEncryptionKeyFile = "/run/secrets/authelia/STORAGE_ENCRYPTION_KEY";
+          sessionSecretFile = "/run/secrets/authelia/SESSION_SECRET";
+          oidcIssuerPrivateKeyFile = "/run/secrets/authelia/OIDC_JWKS_KEY";
+          oidcHmacSecretFile = "/run/secrets/authelia/OIDC_HMAC_SECRET";
         };
         settings = {
           theme = "dark";
@@ -191,9 +192,7 @@ in
       };
 
       systemd.services.authelia-main.serviceConfig = {
-        LoadCredential = lib.mapAttrsToList (
-          credential: _: "${credential}:/run/secrets/authelia/${credential}"
-        ) secretNames;
+        LoadCredential = [ "SMTP_PASSWORD:/run/secrets/authelia/SMTP_PASSWORD" ];
         ProtectSystem = lib.mkForce "full";
       };
 

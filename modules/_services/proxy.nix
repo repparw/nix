@@ -1,11 +1,12 @@
 {
-  cfg,
   config,
   lib,
-  servicesLib,
+  pkgs,
   ...
 }:
 let
+  cfg = config.modules.services;
+  servicesLib = import ./lib.nix { inherit lib pkgs; };
   domain = cfg.domain;
   ingressPolicy = import ./ingress-policy.nix { inherit lib; } {
     definitions = cfg.definitions;
