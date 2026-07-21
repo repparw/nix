@@ -43,8 +43,8 @@
               }
             ];
             interactiveShellInit = ''
-              if not set -q TMUX; and set -q SSH_TTY
-                tmux new-session -A -s ssh
+              if not set -q ZELLIJ; and set -q SSH_TTY
+                zellij attach --create ssh
               end
 
               set -g fish_key_bindings fish_vi_key_bindings

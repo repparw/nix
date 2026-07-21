@@ -19,7 +19,7 @@
       (den.batteries.user-shell "fish")
       den.batteries.host-aspects
       den.aspects.shell
-      den.aspects.tmux
+      den.aspects.zellij
       den.aspects.git
       den.aspects.ai
       den.aspects.ssh
