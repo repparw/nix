@@ -23,41 +23,37 @@
           owner = user.name;
         };
 
-        services.restic =
-          let
-            backupDir = config.modules.services.backupDir;
-          in
-          {
-            backups.crypt = {
-              repository = "rclone:crypt:restic/alpha";
-              passwordFile = config.sops.secrets.resticPassword.path;
-              initialize = true;
-              inhibitsSleep = true;
-              paths = [
-                backupDir
-                "${userHome}/Pictures"
-                "${userHome}/Documents"
-                "${userHome}/.config"
-              ];
-              exclude = [
-                "${backupDir}/.rclone-exclude"
-              ];
-              rcloneConfigFile = "${userHome}/.config/rclone/rclone.conf";
-              extraOptions = [
-                "rclone.program=${lib.getExe pkgs.rclone}"
-              ];
-              pruneOpts = [
-                "--keep-daily 7"
-                "--keep-weekly 4"
-                "--keep-monthly 12"
-              ];
-              checkOpts = [ "--read-data-subset=5%" ];
-              timerConfig = {
-                OnCalendar = "*-*-7,14,21,28 04:00:00";
-                Persistent = true;
-              };
+        services.restic = {
+          backups.crypt = {
+            repository = "rclone:crypt:restic/alpha";
+            passwordFile = config.sops.secrets.resticPassword.path;
+            initialize = true;
+            inhibitsSleep = true;
+            paths = [
+              cfg.backupDir
+              "${userHome}/Pictures"
+              "${userHome}/Documents"
+              "${userHome}/.config"
+            ];
+            exclude = [
+              "${cfg.backupDir}/.rclone-exclude"
+            ];
+            rcloneConfigFile = "${userHome}/.config/rclone/rclone.conf";
+            extraOptions = [
+              "rclone.program=${lib.getExe pkgs.rclone}"
+            ];
+            pruneOpts = [
+              "--keep-daily 7"
+              "--keep-weekly 4"
+              "--keep-monthly 12"
+            ];
+            checkOpts = [ "--read-data-subset=5%" ];
+            timerConfig = {
+              OnCalendar = "*-*-7,14,21,28 04:00:00";
+              Persistent = true;
             };
           };
+        };
 
         services.rsync = {
           enable = true;
