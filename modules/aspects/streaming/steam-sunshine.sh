@@ -19,6 +19,7 @@ gamemoderun gamescope \
     --dev-bind / / \
     --tmpfs /mnt/seagate \
     --tmpfs /home/containers/media/seagate \
-    -- steam -tenfoot -pipewire-dmabuf &
+    -- env PROTON_USE_XALIA=0 \
+    steam -tenfoot -pipewire-dmabuf &
 
 niri msg action power-off-monitors

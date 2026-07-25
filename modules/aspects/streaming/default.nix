@@ -26,7 +26,8 @@
       let
         virtualDisplay = config.modules.virtualDisplay or { };
         connectorName = virtualDisplay.port or "DP-2";
-        height = lib.last (lib.splitString "x" (virtualDisplay.resolution or "3840x2160"));
+        resolution = virtualDisplay.resolution or "3840x2160";
+        height = lib.last (lib.splitString "x" resolution);
         refreshRate = toString (virtualDisplay.refreshRate or 120);
         sopsSecretPath =
           name:
@@ -55,6 +56,7 @@
           ];
           text = ''
             export SUNSHINE_CONNECTOR_NAME=${lib.escapeShellArg connectorName}
+            export SUNSHINE_OUTPUT_MODE=${lib.escapeShellArg "${resolution}@${refreshRate}"}
           ''
           + builtins.readFile ./niri-output-on.sh;
         };
@@ -96,22 +98,54 @@
         sunshine-stream-reset = pkgs.writeShellApplication {
           name = "sunshine-stream-reset";
           runtimeInputs = [
+            pkgs.coreutils
+            pkgs.gnugrep
             pkgs.niri
             pkgs.procps
             pkgs.systemd
           ];
           text = ''
-            connector_name=${lib.escapeShellArg connectorName}
+            export SUNSHINE_CONNECTOR_NAME=${lib.escapeShellArg connectorName}
+          ''
+          + builtins.readFile ./niri-output-off.sh;
+        };
+        sunshine-latest-client-event = pkgs.writeShellApplication {
+          name = "sunshine-latest-client-event";
+          runtimeInputs = [
+            pkgs.coreutils
+            pkgs.curl
+            pkgs.gnugrep
+          ];
+          text = ''
+            read_secret_file() {
+              secret_file="$1"
+              if [ -r "$secret_file" ]; then
+                tr -d '\r\n' < "$secret_file"
+              fi
+            }
 
-            if [ -z "''${NIRI_SOCKET:-}" ]; then
-              eval "$(systemctl --user show-environment | grep '^NIRI_SOCKET=' || true)"
-              export NIRI_SOCKET
+            if [ -z "''${SUNSHINE_API_USERNAME:-}" ] && [ -n "''${SUNSHINE_API_USERNAME_FILE:-}" ]; then
+              SUNSHINE_API_USERNAME="$(read_secret_file "$SUNSHINE_API_USERNAME_FILE")"
             fi
-            niri msg output "$connector_name" off
-            pkill -9 gamescope || true
-            pkill -9 steam || true
-            pkill -9 heroic || true
-            pkill -f "systemd-inhibit.*--who=Sunshine" 2>/dev/null || true
+
+            if [ -z "''${SUNSHINE_API_PASSWORD:-}" ] && [ -n "''${SUNSHINE_API_PASSWORD_FILE:-}" ]; then
+              SUNSHINE_API_PASSWORD="$(read_secret_file "$SUNSHINE_API_PASSWORD_FILE")"
+            fi
+
+            curl_args=(
+              --fail
+              --insecure
+              --silent
+              --show-error
+              "https://localhost:47990/api/logs"
+            )
+
+            if [ -n "''${SUNSHINE_API_USERNAME:-}" ] && [ -n "''${SUNSHINE_API_PASSWORD:-}" ]; then
+              curl_args=(--user "''${SUNSHINE_API_USERNAME}:''${SUNSHINE_API_PASSWORD}" "''${curl_args[@]}")
+            fi
+
+            logs="$(curl "''${curl_args[@]}")"
+            printf '%s\n' "$logs" | grep -E 'CLIENT CONNECTED|CLIENT DISCONNECTED' | tail -n 1 || true
           '';
         };
         sunshine-stream-cleanup = pkgs.writeShellApplication {
@@ -182,89 +216,112 @@
           runtimeInputs = [
             pkgs.coreutils
             pkgs.gnugrep
-            pkgs.gnused
-            pkgs.systemd
           ];
           text = ''
             export SUNSHINE_IDLE_TIMEOUT_SECONDS=600
             export SUNSHINE_CLEANUP_COMMAND="${sunshine-stream-cleanup}/bin/sunshine-stream-cleanup"
+            export SUNSHINE_CLIENT_EVENT_COMMAND="${sunshine-latest-client-event}/bin/sunshine-latest-client-event"
           ''
           + builtins.readFile ./sunshine-idle-watchdog.sh;
         };
       in
       {
-        sops.secrets = {
-          sunshineApiUsername = {
-            sopsFile = ../../../secrets/streaming.sops.yaml;
-            owner = config.users.users.repparw.name;
-            mode = "0400";
-          };
-          sunshineApiPassword = {
-            sopsFile = ../../../secrets/streaming.sops.yaml;
-            owner = config.users.users.repparw.name;
-            mode = "0400";
-          };
+        options.modules.streaming.shellApplications = lib.mkOption {
+          type = lib.types.attrsOf lib.types.package;
+          readOnly = true;
+          internal = true;
+          description = "Repository-authored Sunshine shell applications available to lightweight checks.";
         };
 
-        services.sunshine = {
-          enable = true;
-          openFirewall = true;
-          capSysAdmin = false; # Disabled per https://github.com/NixOS/nixpkgs/issues/463989
-
-          settings = {
-            output_name = connectorName;
-            min_log_level = "info";
-            # Keep AMD hardware encoding and allow HEVC Main, but do not advertise Main10.
-            encoder = "vaapi";
-            hevc_mode = 2;
-            av1_mode = 1;
+        config = {
+          modules.streaming.shellApplications = {
+            inherit
+              heroic-sunshine
+              niri-output-on
+              steam-sunshine
+              sunshine-idle-watchdog
+              sunshine-latest-client-event
+              sunshine-stream-cleanup
+              sunshine-stream-reset
+              ;
           };
 
-          applications = {
-            env = {
-              PATH = "/run/current-system/sw/bin:${config.users.users.repparw.home}/.local/bin";
+          sops.secrets = {
+            sunshineApiUsername = {
+              sopsFile = ../../../secrets/streaming.sops.yaml;
+              owner = config.users.users.repparw.name;
+              mode = "0400";
             };
-            apps = [
-              {
-                name = "Desktop";
-                image-path = "desktop.png";
-              }
-              {
-                name = "Steam Big Picture";
-                detached = [ "${steam-sunshine}/bin/steam-sunshine" ];
-                image-path = "steam.png";
-                prep-cmd = [
-                  {
-                    do = "${niri-output-on}/bin/niri-output-on";
-                    undo = "${sunshine-stream-reset}/bin/sunshine-stream-reset";
-                  }
-                ];
-              }
-              {
-                name = "Heroic Games Launcher";
-                detached = [ "${heroic-sunshine}/bin/heroic-sunshine" ];
-                image-path = "heroic.png";
-                prep-cmd = [
-                  {
-                    do = "${niri-output-on}/bin/niri-output-on";
-                    undo = "${sunshine-stream-reset}/bin/sunshine-stream-reset";
-                  }
-                ];
-              }
-            ];
+            sunshineApiPassword = {
+              sopsFile = ../../../secrets/streaming.sops.yaml;
+              owner = config.users.users.repparw.name;
+              mode = "0400";
+            };
           };
-        };
 
-        systemd.user.services.sunshine-idle-watchdog = {
-          description = "Clean up Sunshine streaming apps after client disconnect idle timeout";
-          wantedBy = [ "sunshine.service" ];
-          partOf = [ "sunshine.service" ];
-          after = [ "sunshine.service" ];
-          serviceConfig = {
-            ExecStart = "${sunshine-idle-watchdog}/bin/sunshine-idle-watchdog";
-            Environment = sunshineApiEnvironment;
-            Restart = "always";
-            RestartSec = "5s";
+          services.sunshine = {
+            enable = true;
+            openFirewall = true;
+            capSysAdmin = false; # Disabled per https://github.com/NixOS/nixpkgs/issues/463989
+
+            settings = {
+              output_name = connectorName;
+              min_log_level = "info";
+              # Keep AMD hardware encoding and allow HEVC Main, but do not advertise Main10.
+              encoder = "vaapi";
+              hevc_mode = 2;
+              av1_mode = 1;
+              # Bound AMD VA-API frame bursts during scene/output changes. This
+              # trades some motion quality for a steadier VCN encoder workload.
+              vaapi_strict_rc_buffer = "enabled";
+            };
+
+            applications = {
+              env = {
+                PATH = "/run/current-system/sw/bin:${config.users.users.repparw.home}/.local/bin";
+              };
+              apps = [
+                {
+                  name = "Desktop";
+                  image-path = "desktop.png";
+                }
+                {
+                  name = "Steam Big Picture";
+                  detached = [ "${steam-sunshine}/bin/steam-sunshine" ];
+                  image-path = "steam.png";
+                  prep-cmd = [
+                    {
+                      do = "${niri-output-on}/bin/niri-output-on";
+                      undo = "${sunshine-stream-reset}/bin/sunshine-stream-reset";
+                    }
+                  ];
+                }
+                {
+                  name = "Heroic Games Launcher";
+                  detached = [ "${heroic-sunshine}/bin/heroic-sunshine" ];
+                  image-path = "heroic.png";
+                  prep-cmd = [
+                    {
+                      do = "${niri-output-on}/bin/niri-output-on";
+                      undo = "${sunshine-stream-reset}/bin/sunshine-stream-reset";
+                    }
+                  ];
+                }
+              ];
+            };
+          };
+
+          systemd.user.services.sunshine-idle-watchdog = {
+            description = "Clean up Sunshine streaming apps after client disconnect idle timeout";
+            wantedBy = [ "sunshine.service" ];
+            partOf = [ "sunshine.service" ];
+            after = [ "sunshine.service" ];
+            serviceConfig = {
+              ExecStart = "${sunshine-idle-watchdog}/bin/sunshine-idle-watchdog";
+              Environment = sunshineApiEnvironment;
+              Restart = "always";
+              RestartSec = "5s";
+            };
           };
         };
       };
