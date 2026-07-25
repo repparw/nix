@@ -35,7 +35,7 @@ output "HDMI-A-1" {
 }
 
 output "DP-2" {
-  mode "2560x1440@119.986"
+  mode "3840x2160@120.000"
   position x=10000 y=10000
   off
 }
@@ -124,7 +124,7 @@ binds {
 
   Mod+A hotkey-overlay-title="Anki" {spawn "anki" ;} 
   Mod+B hotkey-overlay-title="Bluetooth Toggle" {spawn "bttoggle" ;}
-  Mod+C hotkey-overlay-title="WhatsApp" {spawn "ndrop" "-F" "-c" "chrome-hnpfjngllnobngcgfapefoaidbinmjnm-Default" "chromium" "--password-store=basic" "--profile-directory=Default" "--app-id=hnpfjngllnobngcgfapefoaidbinmjnm";}
+  Mod+C hotkey-overlay-title="WhatsApp" {spawn "ndrop" "-F" "-c" "zapzap" "zapzap";}
   Mod+D repeat=false hotkey-overlay-title="Dictate" {spawn "voxtype-toggle" ;}
   Mod+Shift+D repeat=false hotkey-overlay-title="Translate Selection" {spawn "translate-selection" ;}
   Mod+E hotkey-overlay-title="File Manager (Terminal)" {spawn "foot" "--app-id" "filemanager" "fish" "-ic" "yazi" ;}
