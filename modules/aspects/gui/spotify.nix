@@ -5,7 +5,7 @@
 {
   den.aspects.gui.provides.spotify = {
     homeManager =
-      { osConfig, ... }:
+      { osConfig, pkgs, ... }:
       {
         programs.spotify-player = {
           enable = true;
