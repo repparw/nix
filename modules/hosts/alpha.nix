@@ -30,6 +30,9 @@
         ];
 
         boot = {
+          extraModprobeConfig = ''
+            options netconsole netconsole=6665@192.168.0.18/eth0,6666@192.168.0.4/2c:cf:67:00:4f:47
+          '';
           initrd = {
             systemd.enable = true;
             availableKernelModules = [
@@ -42,7 +45,11 @@
               "sd_mod"
             ];
           };
+          kernel.sysctl."kernel.sysrq" = 1;
           kernelModules = [ "kvm-amd" ];
+          # Temporarily reproduce the intermittent shutdown hang with
+          # persistent netconsole and SysRq diagnostics enabled. The previous
+          # boot generation retains the known-good Linux 6.18 kernel.
           kernelPackages = pkgs.linuxPackages_latest;
           loader = {
             systemd-boot = {
@@ -56,6 +63,19 @@
           tmp.useTmpfs = true;
 
           zswap.enable = true;
+        };
+
+        # The interface is not available when boot.kernelModules is processed,
+        # so load netconsole only after networkd has created and configured it.
+        systemd.services.netconsole-shutdown-diagnostics = {
+          description = "Load netconsole for shutdown diagnostics";
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig.Type = "oneshot";
+          script = ''
+            ${pkgs.kmod}/bin/modprobe netconsole
+          '';
         };
 
         virtualisation.vmVariant.boot.zswap.enable = lib.mkForce false;
