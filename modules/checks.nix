@@ -6,7 +6,6 @@
       checks =
         let
           hosts = lib.attrNames inputs.self.nixosConfigurations;
-          hostConfigs = map (host: inputs.self.nixosConfigurations.${host}.config) hosts;
           evalHost =
             host:
             let
@@ -18,25 +17,72 @@
               printf '%s\n' ${lib.escapeShellArg evaluatedDrvPath} > $out
             '';
           isGeneratedShellPackage =
-            package: lib.isDerivation package && package ? text && package ? checkPhase;
-          homePackages = lib.concatMap (
-            hostConfig:
-            lib.flatten (
-              lib.mapAttrsToList (_: userConfig: userConfig.home.packages or [ ]) (
-                hostConfig.home-manager.users or { }
-              )
-            )
-          ) hostConfigs;
-          generatedShellPackages = lib.filter isGeneratedShellPackage homePackages;
-          generatedShellPackageLinks = lib.concatMapStringsSep "\n" (
             package:
+            lib.isDerivation package && package ? text && package ? checkPhase && package.executable or false;
+          packageRecord = source: package: {
+            label = "${source}:${package.meta.mainProgram or package.name}";
+            script = pkgs.writeText "${package.meta.mainProgram or package.name}-generated.sh" ''
+              #!${pkgs.runtimeShell}
+              ${builtins.unsafeDiscardStringContext package.text}
+            '';
+          };
+          homePackageRecords = lib.concatMap (
+            host:
+            lib.concatLists (
+              lib.mapAttrsToList (
+                user: userConfig:
+                map (packageRecord "home:${host}:${user}") (
+                  lib.filter isGeneratedShellPackage (lib.flatten (userConfig.home.packages or [ ]))
+                )
+              ) (inputs.self.nixosConfigurations.${host}.config.home-manager.users or { })
+            )
+          ) hosts;
+          flakePackageRecords = lib.mapAttrsToList (name: package: packageRecord "flake:${name}" package) (
+            lib.filterAttrs (_: isGeneratedShellPackage) config.packages
+          );
+          servicePackageRecords = lib.concatMap (
+            host:
             let
-              name = builtins.baseNameOf (toString package);
+              hostConfig = inputs.self.nixosConfigurations.${host}.config;
             in
-            ''
-              ln -sfn ${package} generated-packages/${lib.escapeShellArg name}
-            ''
-          ) generatedShellPackages;
+            lib.mapAttrsToList (name: package: packageRecord "service:${host}:${name}" package) (
+              hostConfig.modules.streaming.shellApplications or { }
+            )
+          ) hosts;
+          generatedShellRecords = homePackageRecords ++ flakePackageRecords ++ servicePackageRecords;
+          generatedShellsByScript = lib.foldl' (
+            scripts: record:
+            let
+              key = builtins.unsafeDiscardStringContext record.script;
+              previous =
+                scripts.${key} or {
+                  inherit (record) script;
+                  labels = [ ];
+                };
+            in
+            scripts
+            // {
+              ${key} = previous // {
+                labels = previous.labels ++ [ record.label ];
+              };
+            }
+          ) { } generatedShellRecords;
+          generatedShellChecks = lib.concatStringsSep "\n" (
+            lib.mapAttrsToList (
+              _: entry:
+              let
+                description = lib.concatStringsSep ", " (lib.sort builtins.lessThan (lib.unique entry.labels));
+              in
+              ''
+                printf 'ShellCheck generated application: %s\n' ${lib.escapeShellArg description}
+                if ! shellcheck ${lib.escapeShellArg entry.script}; then
+                  printf 'ShellCheck failed for generated application: %s (%s)\n' \
+                    ${lib.escapeShellArg description} ${lib.escapeShellArg entry.script} >&2
+                  exit 1
+                fi
+              ''
+            ) generatedShellsByScript
+          );
         in
         {
           formatting =
@@ -61,9 +107,7 @@
               ''
                 cd ${inputs.self}
                 find . \( -name '*.sh' -o -name '.envrc' \) -type f -exec shellcheck {} +
-                mkdir -p "$TMPDIR/generated-packages"
-                cd "$TMPDIR"
-                ${generatedShellPackageLinks}
+                ${generatedShellChecks}
                 touch $out
               '';
 
@@ -106,6 +150,23 @@
               }
               ''
                 bash ${./aspects/streaming/sunshine-idle-watchdog.test.sh} ${./aspects/streaming/sunshine-idle-watchdog.sh}
+                touch $out
+              '';
+
+          streaming-output-lifecycle =
+            pkgs.runCommand "check-streaming-output-lifecycle"
+              {
+                nativeBuildInputs = [
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.gnugrep
+                  pkgs.jq
+                ];
+              }
+              ''
+                bash ${./aspects/streaming/sunshine-output-lifecycle.test.sh} \
+                  ${./aspects/streaming/niri-output-on.sh} \
+                  ${./aspects/streaming/niri-output-off.sh}
                 touch $out
               '';
 
