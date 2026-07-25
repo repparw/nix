@@ -40,7 +40,6 @@
         ...
       }:
       let
-        mprisPlayback = pkgs.callPackage ../../_packages/mpris-playback.nix { };
         codexDesktop =
           inputs.codex-desktop-linux.packages.${pkgs.stdenv.hostPlatform.system}.codex-desktop-computer-use-ui-remote-mobile-control;
         codexDesktopLauncher = pkgs.writeShellScriptBin "codex-desktop" ''
@@ -64,8 +63,6 @@
 
       in
       {
-        _module.args = { inherit mprisPlayback; };
-
         imports = [ inputs.codex-desktop-linux.homeManagerModules.default ];
 
         # TODO: Add custom OpenCode models to the desktop picker once upstream stops
@@ -106,6 +103,7 @@
 
           codex = {
             enable = true;
+            enableMcpIntegration = true;
             skills = { };
           };
 

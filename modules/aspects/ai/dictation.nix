@@ -11,7 +11,6 @@
   den.aspects.ai.provides.dictation = {
     homeManager =
       {
-        mprisPlayback,
         pkgs,
         ...
       }:
@@ -59,7 +58,7 @@
           runtimeInputs = with pkgs; [
             coreutils
             gnugrep
-            mprisPlayback
+            pipewire
             voxtypePackage
           ];
           text = ''
@@ -67,10 +66,13 @@
 
             runtime_dir="''${XDG_RUNTIME_DIR:-/tmp}"
             state_file="$runtime_dir/voxtype/state"
-            resume_file="$runtime_dir/voxtype/paused-players"
 
             read_state() {
               cat "$state_file" 2>/dev/null || printf 'idle'
+            }
+
+            set_playback_suspended() {
+              pw-metadata -n default 0 suspend.playback "$1" Spa:Int >/dev/null
             }
 
             wait_for_idle_then_resume() {
@@ -78,7 +80,7 @@
                 [ "$(read_state)" = "idle" ] && break
                 sleep 0.1
               done
-              mpris-playback resume "$resume_file"
+              set_playback_suspended 0
             }
 
             case "$(read_state)" in
@@ -91,8 +93,11 @@
                 wait_for_idle_then_resume &
                 ;;
               *)
-                mpris-playback pause "$resume_file"
-                voxtype record start
+                set_playback_suspended 1
+                if ! voxtype record start; then
+                  set_playback_suspended 0
+                  exit 1
+                fi
                 ;;
             esac
           '';
