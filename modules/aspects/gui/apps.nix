@@ -76,14 +76,33 @@ in
         lib,
         ...
       }:
+      let
+        zapzapSpeechLauncher = pkgs.writeShellApplication {
+          name = "zapzap";
+          runtimeInputs = [ pkgs.coreutils ];
+          text = ''
+            exec env 'PULSE_PROP_media.role=Speech' ${lib.getExe pkgs.zapzap} "$@"
+          '';
+        };
+        zapzapSpeech = pkgs.symlinkJoin {
+          name = "zapzap-speech-${pkgs.zapzap.version}";
+          paths = [ pkgs.zapzap ];
+          postBuild = ''
+            ln -sfn ${zapzapSpeechLauncher}/bin/zapzap "$out/bin/zapzap"
+          '';
+          inherit (pkgs.zapzap) meta;
+        };
+      in
       {
-        home.packages = with pkgs; [
-          pwvucontrol
-          scrcpy
-          godot
-          rquickshare
-          tasks-org
-        ];
+        home.packages =
+          (with pkgs; [
+            pwvucontrol
+            scrcpy
+            godot
+            rquickshare
+            tasks-org
+          ])
+          ++ [ zapzapSpeech ];
 
         gtk.enable = true;
 
