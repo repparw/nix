@@ -103,7 +103,6 @@
 
           codex = {
             enable = true;
-            enableMcpIntegration = true;
             skills = { };
           };
 
