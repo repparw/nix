@@ -5,7 +5,7 @@
 {
   den.aspects.gui.provides.spotify = {
     homeManager =
-      { osConfig, pkgs, ... }:
+      { ... }:
       {
         programs.spotify-player = {
           enable = true;
@@ -31,16 +31,8 @@
               key_sequence = "m";
             }
             {
-              command = "NextTrack";
-              key_sequence = "n";
-            }
-            {
               command = "PreviousTrack";
               key_sequence = "b";
-            }
-            {
-              command = "PreviousTrack";
-              key_sequence = "p";
             }
             {
               command = "PreviousPage";
@@ -94,29 +86,13 @@
             }
           ];
           settings = {
-            client_port = 8080;
             playback_format = ''
               {track} • {artists}
               {album}
               {metadata}
             '';
-            tracks_playback_limit = 50;
-            app_refresh_duration_in_ms = 32;
-            playback_refresh_duration_in_ms = 0;
-            page_size_in_rows = 20;
-            play_icon = "▶";
-            pause_icon = "▌▌";
-            liked_icon = "♥";
-            border_type = "Plain";
-            progress_bar_type = "Rectangle";
-            playback_window_position = "Top";
             cover_img_length = 9;
-            cover_img_width = 5;
-            cover_img_scale = 1.0;
-            playback_window_width = 6;
             enable_streaming = "Never";
-            enable_cover_image_cache = true;
-            default_device = osConfig.networking.hostName;
             enable_notify = false;
             copy_command = {
               command = "wl-copy";
