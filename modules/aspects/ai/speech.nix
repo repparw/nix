@@ -1,85 +1,78 @@
 { den, ... }:
 {
   den.aspects.ai.provides.speech = {
-    nixos =
-      { pkgs, ... }:
-      {
-        services.pipewire.wireplumber.configPackages = [
-          (pkgs.writeTextDir "share/wireplumber/wireplumber.conf.d/50-speech-ducking.conf" ''
-            wireplumber.profiles = {
-              main = {
-                policy.linking.role-based.speech = required
-              }
+    nixos = {
+      services.pipewire = {
+        extraConfig.pipewire."50-speech-loopback" = {
+          "context.modules" = [
+            {
+              name = "libpipewire-module-loopback";
+              args = {
+                "node.name" = "loopback.sink.role.multimedia";
+                "node.description" = "Multimedia";
+                "capture.props" = {
+                  "node.name" = "loopback.sink.role.multimedia";
+                  "media.class" = "Audio/Sink";
+                  "audio.position" = [
+                    "FL"
+                    "FR"
+                  ];
+                  "device.intended-roles" = [
+                    "Music"
+                    "Movie"
+                    "Game"
+                    "Multimedia"
+                  ];
+                  "policy.role-based.target" = true;
+                  "policy.role-based.priority" = 10;
+                  "policy.role-based.action.same-priority" = "mix";
+                  "policy.role-based.action.lower-priority" = "mix";
+                };
+                "playback.props" = {
+                  "node.name" = "loopback.src.role.multimedia";
+                  "media.role" = "Loopback";
+                  "node.passive" = true;
+                };
+              };
             }
-
-            wireplumber.settings = {
-              node.stream.default-media-role = "Multimedia"
-              linking.role-based.duck-level = 0.25
+            {
+              name = "libpipewire-module-loopback";
+              args = {
+                "node.name" = "loopback.sink.role.speech";
+                "node.description" = "Speech";
+                "capture.props" = {
+                  "node.name" = "loopback.sink.role.speech";
+                  "media.class" = "Audio/Sink";
+                  "audio.position" = [
+                    "FL"
+                    "FR"
+                  ];
+                  "device.intended-roles" = [ "Speech" ];
+                  "policy.role-based.target" = true;
+                  "policy.role-based.priority" = 20;
+                  "policy.role-based.action.same-priority" = "mix";
+                  "policy.role-based.action.lower-priority" = "duck";
+                  "session.suspend-timeout-seconds" = 1;
+                };
+                "playback.props" = {
+                  "node.name" = "loopback.src.role.speech";
+                  "media.role" = "Loopback";
+                  "node.passive" = true;
+                };
+              };
             }
+          ];
+        };
 
-            wireplumber.components.rules = [
-              {
-                matches = [ { provides = "~loopback.sink.role.*" } ]
-                actions = {
-                  merge = {
-                    arguments = {
-                      capture.props = {
-                        policy.role-based.target = true
-                        audio.position = [ FL, FR ]
-                        media.class = Audio/Sink
-                      }
-                      playback.props = {
-                        node.passive = true
-                        media.role = "Loopback"
-                      }
-                    }
-                    requires = [ support.export-core, pw.node-factory.adapter ]
-                  }
-                }
-              }
-            ]
-
-            wireplumber.components = [
-              {
-                type = virtual
-                provides = policy.linking.role-based.speech
-                requires = [ loopback.sink.role.multimedia, loopback.sink.role.speech ]
-              }
-              {
-                name = libpipewire-module-loopback
-                type = pw-module
-                provides = loopback.sink.role.multimedia
-                arguments = {
-                  node.name = "loopback.sink.role.multimedia"
-                  node.description = "Multimedia"
-                  capture.props = {
-                    device.intended-roles = [ "Music", "Movie", "Game", "Multimedia" ]
-                    policy.role-based.priority = 10
-                    policy.role-based.action.same-priority = "mix"
-                    policy.role-based.action.lower-priority = "mix"
-                  }
-                }
-              }
-              {
-                name = libpipewire-module-loopback
-                type = pw-module
-                provides = loopback.sink.role.speech
-                arguments = {
-                  node.name = "loopback.sink.role.speech"
-                  node.description = "Speech"
-                  session.suspend-timeout-seconds = 1
-                  capture.props = {
-                    device.intended-roles = [ "Speech" ]
-                    policy.role-based.priority = 20
-                    policy.role-based.action.same-priority = "mix"
-                    policy.role-based.action.lower-priority = "duck"
-                  }
-                }
-              }
-            ]
-          '')
-        ];
+        wireplumber.extraConfig."99-speech-ducking" = {
+          "wireplumber.settings" = {
+            "node.stream.default-media-role" = "Multimedia";
+            "linking.role-based.duck-level" = 0.25;
+            "node.restore-default-targets" = false;
+          };
+        };
       };
+    };
 
     homeManager =
       {
