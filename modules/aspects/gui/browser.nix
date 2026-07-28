@@ -37,20 +37,12 @@ in
   };
 
   flake-file.inputs.helium-nix = {
-    url = "github:penal-colony/helium-nix";
-  };
-
-  flake-file.nixConfig = {
-    extra-substituters = [ "https://helium-nix.cachix.org" ];
-    extra-trusted-public-keys = [
-      "helium-nix.cachix.org-1:a8YPjt9O4GPyX0u3gjg/aWpb14teU9aRiSG/MOaSFgw="
-    ];
+    url = "github:oxcl/nix-flake-helium-browser";
+    inputs.nixpkgs.follows = "nixpkgs";
   };
 
   den.aspects.gui.provides.browser = {
     nixos = {
-      imports = [ inputs.helium-nix.nixosModules.helium ];
-
       nixpkgs.overlays = [
         inputs.firefox-addons.overlays.default
         (final: prev: {
@@ -64,6 +56,17 @@ in
           ) prev.firefox-addons;
         })
       ];
+
+      environment.etc = {
+        "chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
+          BrowserSignin = 0;
+          PasswordManagerEnabled = false;
+        };
+        "helium/policies/managed/helium-nixos.json".text = builtins.toJSON {
+          BrowserSignin = 0;
+          PasswordManagerEnabled = false;
+        };
+      };
     };
 
     homeManager =
@@ -98,7 +101,7 @@ in
         helium = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
       in
       {
-        imports = [ inputs.helium-nix.homeManagerModules.helium ];
+        imports = [ inputs.helium-nix.homeModules.default ];
 
         home.file = {
           ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
@@ -339,11 +342,6 @@ in
           helium = {
             enable = true;
             package = heliumWithoutMimeApps helium;
-            defaultBrowser = false;
-            extraPolicies = {
-              BrowserSignin = 0;
-              PasswordManagerEnabled = false;
-            };
           };
         };
       };
