@@ -33,8 +33,6 @@ This file contains names and deployment metadata only. Never add secret values.
 | `secrets/archisteamfarm.sops.yaml` | `steamPassword` | Authenticate the managed Steam account | ArchiSteamFarm | `alpha` |
 | `secrets/jellyfin.sops.yaml` | `jellyfinBackupKey` | Authorize Jellyfin backup creation | Jellyfin backup tooling | `alpha` |
 | `secrets/automations.sops.yaml` | `discordWebhook` | Deliver automation notifications to Discord | Automation services | `alpha` |
-| `secrets/streaming.sops.yaml` | `sunshineApiUsername` | Authenticate Sunshine API health checks | Sunshine watchdog | `alpha` |
-| `secrets/streaming.sops.yaml` | `sunshineApiPassword` | Authenticate Sunshine API health checks | Sunshine watchdog | `alpha` |
 The creation rule grants `alpha` only its SSH host-key recipient plus the
 recovery recipient. Add a host recipient to only the files that host consumes,
 then run `sops updatekeys` on those files.
