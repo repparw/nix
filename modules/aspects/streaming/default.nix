@@ -4,6 +4,9 @@
   ...
 }:
 {
+  # TODO: Replace the upstream package after the Nixpkgs update reaches the
+  # currently used 0.14.1 and lands in our pin:
+  # https://github.com/NixOS/nixpkgs/pull/546531
   flake-file.inputs.moonshine = {
     url = "github:hgaiser/moonshine";
     inputs.nixpkgs.follows = "nixpkgs";
@@ -86,6 +89,8 @@
       };
     in
     {
+      # TODO: Drop this flake import and use the Nixpkgs module once the draft
+      # PR lands in our pin: https://github.com/NixOS/nixpkgs/pull/544393
       imports = [ inputs.moonshine.nixosModules.default ];
 
       services.moonshine = {
