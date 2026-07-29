@@ -13,7 +13,6 @@
       den.aspects.logid
       den.aspects.nixos-services
       den.aspects.streaming
-      den.aspects.virtual-display
     ];
 
     nixos =

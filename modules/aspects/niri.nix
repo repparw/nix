@@ -9,6 +9,16 @@
     nixos =
       { pkgs, ... }:
       {
+        # niri 26.04's libdisplay-info-sys dependency rejects libdisplay-info
+        # 0.4, which is now the default in nixpkgs.
+        nixpkgs.overlays = [
+          (_final: prev: {
+            niri = prev.niri.override {
+              libdisplay-info = prev.libdisplay-info_0_2;
+            };
+          })
+        ];
+
         programs.niri.enable = lib.mkDefault true;
 
         environment.systemPackages = [ pkgs.xwayland-satellite ];

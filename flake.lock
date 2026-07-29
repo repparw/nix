@@ -359,6 +359,26 @@
         "type": "github"
       }
     },
+    "moonshine": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785275288,
+        "narHash": "sha256-H6YMcZiofkycLUty0cMrdGkWs5Gm3RpEseSqNVZNkAc=",
+        "owner": "hgaiser",
+        "repo": "moonshine",
+        "rev": "cf4194ee356487f5900c8247a1794c93343ed0ac",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hgaiser",
+        "repo": "moonshine",
+        "type": "github"
+      }
+    },
     "nix-index-database": {
       "inputs": {
         "nixpkgs": [
@@ -552,6 +572,7 @@
         "helium-nix": "helium-nix",
         "home-manager": "home-manager",
         "import-tree": "import-tree",
+        "moonshine": "moonshine",
         "nix-index-database": "nix-index-database",
         "nixcord": "nixcord",
         "nixpkgs": "nixpkgs_2",

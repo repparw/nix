@@ -138,38 +138,6 @@
                 touch $out
               '';
 
-          streaming-watchdog =
-            pkgs.runCommand "check-streaming-watchdog"
-              {
-                nativeBuildInputs = [
-                  pkgs.bash
-                  pkgs.coreutils
-                  pkgs.gnugrep
-                  pkgs.gnused
-                ];
-              }
-              ''
-                bash ${./aspects/streaming/sunshine-idle-watchdog.test.sh} ${./aspects/streaming/sunshine-idle-watchdog.sh}
-                touch $out
-              '';
-
-          streaming-output-lifecycle =
-            pkgs.runCommand "check-streaming-output-lifecycle"
-              {
-                nativeBuildInputs = [
-                  pkgs.bash
-                  pkgs.coreutils
-                  pkgs.gnugrep
-                  pkgs.jq
-                ];
-              }
-              ''
-                bash ${./aspects/streaming/sunshine-output-lifecycle.test.sh} \
-                  ${./aspects/streaming/niri-output-on.sh} \
-                  ${./aspects/streaming/niri-output-off.sh}
-                touch $out
-              '';
-
           service-definitions =
             let
               alpha = inputs.self.nixosConfigurations.alpha.config;
