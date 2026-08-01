@@ -145,18 +145,6 @@
           qbittorrent = {
             mediaBind = false;
             extraConfig = {
-              nixpkgs.overlays = [
-                (final: prev: {
-                  qbittorrent-nox = prev.qbittorrent-nox.overrideAttrs (old: {
-                    patches = (old.patches or [ ]) ++ [
-                      (prev.fetchpatch {
-                        url = "https://patch-diff.githubusercontent.com/raw/qbittorrent/qBittorrent/pull/24055.patch";
-                        hash = "sha256-XW4ZnyaxBuIb3kny12+T/uTQOFIOVnBRV9qc1AWy6MY=";
-                      })
-                    ];
-                  });
-                })
-              ];
               services.qbittorrent.group = "media";
               users.groups.media.gid = 900;
               systemd.services.qbittorrent.preStart = lib.mkBefore ''
