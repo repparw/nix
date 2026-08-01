@@ -1,22 +1,7 @@
 {
   den,
-  inputs,
   ...
 }:
-let
-  tasksOrgNixpkgs =
-    pkgs:
-    pkgs.applyPatches {
-      name = "nixpkgs-tasks-org-patched";
-      src = inputs.nixpkgs;
-      patches = [
-        (pkgs.fetchpatch {
-          url = "https://github.com/NixOS/nixpkgs/pull/518221.patch";
-          hash = "sha256-VM4zx9pcyHgRFZiM6ga9uen3txKCFJAJ0lNISQswcI8=";
-        })
-      ];
-    };
-in
 {
   flake-file.inputs.nixcord = {
     url = "github:FlameFlag/nixcord";
@@ -27,19 +12,6 @@ in
       { pkgs, ... }:
       {
         nixpkgs.overlays = [
-          (final: prev: {
-            tasks-org =
-              (final.callPackage (tasksOrgNixpkgs final + "/pkgs/by-name/ta/tasks-org/package.nix") { })
-              .overrideAttrs
-                (_: {
-                  postFixup = ''
-                    wrapProgram $out/bin/tasks-org \
-                      --prefix LD_LIBRARY_PATH : "$out/lib/runtime/lib:$out/lib/runtime/lib/server:${
-                        final.lib.makeLibraryPath [ final.dbus ]
-                      }"
-                  '';
-                });
-          })
           (final: prev: {
             wshowkeys = prev.wshowkeys.overrideAttrs (old: {
               src = prev.fetchFromGitHub {
