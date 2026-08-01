@@ -1,6 +1,7 @@
 {
   den,
   inputs,
+  lib,
   ...
 }:
 {
@@ -93,41 +94,53 @@
       # PR lands in our pin: https://github.com/NixOS/nixpkgs/pull/544393
       imports = [ inputs.moonshine.nixosModules.default ];
 
-      services.moonshine = {
-        enable = true;
-        inherit user;
-        uid = 1000;
-        openFirewall = true;
-
-        settings = {
-          name = config.networking.hostName;
-          application = [
-            {
-              title = "Desktop";
-              boxart = "${moonshine-boxart}/desktop.png";
-              command = [ "${moonshine-desktop}/bin/moonshine-desktop" ];
-              stdout = "journal";
-              stderr = "journal";
-            }
-            {
-              title = "Steam Big Picture";
-              boxart = "${moonshine-boxart}/steam.png";
-              command = [ "${moonshine-steam}/bin/moonshine-steam" ];
-              stdout = "journal";
-              stderr = "journal";
-            }
-            {
-              title = "Heroic Games Launcher";
-              boxart = "${moonshine-boxart}/heroic.png";
-              command = [ "${moonshine-heroic}/bin/moonshine-heroic" ];
-              stdout = "journal";
-              stderr = "journal";
-            }
-          ];
-        };
+      options.modules.streaming.shellApplications = lib.mkOption {
+        type = lib.types.attrsOf lib.types.package;
+        default = { };
+        description = "Shell applications generated for the streaming service.";
       };
 
-      # Required by Moonshine's sleep-inhibitor polkit rule.
-      users.groups.moonshine.members = [ user ];
+      config = {
+        modules.streaming.shellApplications = {
+          inherit moonshine-desktop moonshine-steam moonshine-heroic;
+        };
+
+        services.moonshine = {
+          enable = true;
+          inherit user;
+          uid = 1000;
+          openFirewall = true;
+
+          settings = {
+            name = config.networking.hostName;
+            application = [
+              {
+                title = "Desktop";
+                boxart = "${moonshine-boxart}/desktop.png";
+                command = [ "${moonshine-desktop}/bin/moonshine-desktop" ];
+                stdout = "journal";
+                stderr = "journal";
+              }
+              {
+                title = "Steam Big Picture";
+                boxart = "${moonshine-boxart}/steam.png";
+                command = [ "${moonshine-steam}/bin/moonshine-steam" ];
+                stdout = "journal";
+                stderr = "journal";
+              }
+              {
+                title = "Heroic Games Launcher";
+                boxart = "${moonshine-boxart}/heroic.png";
+                command = [ "${moonshine-heroic}/bin/moonshine-heroic" ];
+                stdout = "journal";
+                stderr = "journal";
+              }
+            ];
+          };
+        };
+
+        # Required by Moonshine's sleep-inhibitor polkit rule.
+        users.groups.moonshine.members = [ user ];
+      };
     };
 }
