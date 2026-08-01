@@ -4,6 +4,8 @@
   ...
 }:
 let
+  # TODO: Remove this patch and use pkgs.tasks-org once
+  # https://github.com/NixOS/nixpkgs/pull/518221 lands in our pin.
   tasksOrgNixpkgs =
     pkgs:
     pkgs.applyPatches {

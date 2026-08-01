@@ -143,6 +143,9 @@
           t3code.enable = true;
         };
 
+        # TODO: Replace this hand-rolled service with programs.t3code.server
+        # once https://github.com/nix-community/home-manager/pull/9695 merges
+        # and reaches our pinned input.
         systemd.user.services.t3code-web = {
           Unit = {
             Description = "T3 Code Web Service";
