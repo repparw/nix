@@ -143,22 +143,19 @@
           t3code.enable = true;
         };
 
-        systemd.user.services.t3code-web = {
-          Unit = {
-            Description = "T3 Code Web Service";
-            After = [ "network.target" ];
-          };
-          Service = {
-            ExecStart = "${pkgs.t3code}/bin/t3 serve --host 0.0.0.0 --port 4097 --mode web";
-            Restart = "always";
-            RestartSec = 5;
-            Environment = [
-              "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
-            ];
-          };
-          Install = {
-            WantedBy = [ "default.target" ];
-          };
+        programs.t3code.server = {
+          enable = true;
+          extraArgs = [
+            "--host"
+            "0.0.0.0"
+            "--port"
+            "4097"
+            "--mode"
+            "web"
+          ];
+          environmentFile = pkgs.writeText "t3code-server-environment" ''
+            T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1
+          '';
         };
 
         systemd.user.services.codex-desktop = {
