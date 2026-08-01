@@ -148,6 +148,8 @@
               nixpkgs.overlays = [
                 (final: prev: {
                   qbittorrent-nox = prev.qbittorrent-nox.overrideAttrs (old: {
+                    # TODO: Remove this patch once qBittorrent PR #24055 lands
+                    # in a release covered by Nixpkgs.
                     patches = (old.patches or [ ]) ++ [
                       (prev.fetchpatch {
                         url = "https://patch-diff.githubusercontent.com/raw/qbittorrent/qBittorrent/pull/24055.patch";

@@ -15,9 +15,10 @@
         ...
       }:
       let
-        system = pkgs.stdenv.hostPlatform.system;
         voxtypeSource = inputs.voxtype;
-        voxtypePackage = voxtypeSource.packages.${system}.vulkan;
+        # The external input remains for its HM module and QML source. The
+        # package is already available upstream at the same v0.7.5 version.
+        voxtypePackage = pkgs.voxtype-vulkan;
         voxtypeQuickshell = pkgs.runCommand "voxtype-quickshell-themed" { } ''
           cp -R ${voxtypeSource}/quickshell $out
           chmod -R u+w $out
@@ -104,6 +105,8 @@
         };
       in
       {
+        # TODO: Upstream this Home Manager module. No open Voxtype PR exists
+        # in nix-community/home-manager yet.
         imports = [ inputs.voxtype.homeManagerModules.default ];
 
         home.packages = [

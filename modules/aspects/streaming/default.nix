@@ -5,9 +5,8 @@
   ...
 }:
 {
-  # TODO: Replace the upstream package after the Nixpkgs update reaches the
-  # currently used 0.14.1 and lands in our pin:
-  # https://github.com/NixOS/nixpkgs/pull/546531
+  # Nixpkgs now provides Moonshine 0.13.5. Keep this input for the external
+  # NixOS module until https://github.com/NixOS/nixpkgs/pull/544393 lands.
   flake-file.inputs.moonshine = {
     url = "github:hgaiser/moonshine";
     inputs.nixpkgs.follows = "nixpkgs";
@@ -90,8 +89,9 @@
       };
     in
     {
-      # TODO: Drop this flake import and use the Nixpkgs module once the draft
-      # PR lands in our pin: https://github.com/NixOS/nixpkgs/pull/544393
+      # The upstream module uses `firewallInterfaces` instead of
+      # `openFirewall` and does not expose `uid`; adapt this service block when
+      # https://github.com/NixOS/nixpkgs/pull/544393 lands in our pin.
       imports = [ inputs.moonshine.nixosModules.default ];
 
       options.modules.streaming.shellApplications = lib.mkOption {
@@ -110,6 +110,7 @@
           inherit user;
           uid = 1000;
           openFirewall = true;
+          package = pkgs.moonshine;
 
           settings = {
             name = config.networking.hostName;
