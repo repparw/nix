@@ -123,26 +123,6 @@ in
                 id_token_signed_response_alg = "RS256";
                 token_endpoint_auth_method = "client_secret_post";
               }
-              {
-                client_id = "karakeep";
-                client_name = "karakeep";
-                client_secret = "$pbkdf2-sha512$310000$2iDyBWk9POMtd9zWN3UeYw$XN9N5Uhbj4MiLP4wGk98a2jy/A4P6nz5VfMPs73rgZZwn0NVjBMRJcfDXnuwhyNdMAWn/ihj2JLRuk.49EsHJg";
-                public = false;
-                authorization_policy = "two_factor";
-                require_pkce = false;
-                pkce_challenge_method = "";
-                redirect_uris = [ "https://karakeep.${cfg.domain}/api/auth/callback/custom" ];
-                scopes = [
-                  "openid"
-                  "profile"
-                  "email"
-                ];
-                response_types = [ "code" ];
-                grant_types = [ "authorization_code" ];
-                access_token_signed_response_alg = "none";
-                userinfo_signed_response_alg = "none";
-                token_endpoint_auth_method = "client_secret_basic";
-              }
             ];
             cors = {
               endpoints = [
