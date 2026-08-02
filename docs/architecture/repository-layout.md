@@ -2,27 +2,27 @@
 type: Architecture Concept
 title: Repository Layout
 description: Stable map of the repository's main source directories.
+when: Read when locating repository code or deciding where a new file belongs.
 resource: README.md
 tags: [architecture, layout]
 ---
 
 # Repository Layout
 
-This repository follows the upstream `vic/den` default-template structure.
+The repository follows the upstream `vic/den` default-template structure.
 
-- `flake.nix` is generated through `flake-file`. Do not edit it directly.
-- `modules/defaults.nix` defines repo-wide `den.default` behavior and shared
-  host composition.
-- `modules/hosts/` contains host aspects.
-- `modules/aspects/` contains reusable den aspects.
-- `modules/_services/` contains NixOS service modules imported by the service
-  aspect.
-- `modules/_packages/` contains local package definitions and service-only
-  packages.
-- `modules/checks.nix` defines flake checks.
-- `modules/git-hooks.nix` defines the development shell and pre-commit hooks.
-- `docs/` contains repository architecture, host, service, ADR, runbook,
-  and agent-workflow documentation.
+| Path | Purpose |
+| --- | --- |
+| `flake.nix` | Generated flake; regenerate with `nix run .#write-flake`. |
+| `modules/defaults.nix` | Repo-wide `den.default` and shared host composition. |
+| `modules/hosts/` | Host aspects. |
+| `modules/aspects/` | Reusable den aspects. |
+| `modules/_services/` | NixOS service modules imported by service aspects. |
+| `modules/_packages/` | Local and service-only packages. |
+| `modules/checks.nix` | Flake checks. |
+| `modules/git-hooks.nix` | Development shell and pre-commit hooks. |
+| `docs/` | Architecture, host, service, runbook, research, and agent docs. |
+| `secrets/` | Consumer-scoped encrypted `sops-nix` secrets. |
 
 ## Related
 

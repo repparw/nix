@@ -2,6 +2,7 @@
 type: Runbook
 title: Failed Auto-Upgrade Rollback
 description: Recover from a failed automatic NixOS upgrade.
+when: Read when an automatic upgrade fails or produces a bad flake lock update.
 resource: modules/aspects/auto-upgrade.nix
 tags: [runbook, recovery, auto-upgrade]
 ---

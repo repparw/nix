@@ -1,3 +1,11 @@
+---
+type: Agent Guide
+title: Triage Labels
+description: Canonical GitHub issue triage labels and their meanings.
+when: Read when triaging or labeling GitHub Issues.
+tags: [agents, github, triage]
+---
+
 # Triage Labels
 
 | Canonical role    | Tracker label     | Meaning                                |

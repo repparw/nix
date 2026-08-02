@@ -2,6 +2,7 @@
 type: Host
 title: Beta
 description: Laptop host profile with shared baseline and laptop-specific input, power, and display handling.
+when: Read when changing beta-specific hardware, input, power, or display behavior.
 resource: modules/hosts/beta.nix
 tags: [host, laptop]
 ---

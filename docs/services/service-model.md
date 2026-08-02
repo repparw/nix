@@ -2,6 +2,7 @@
 type: Service Architecture
 title: Service Model
 description: How service definitions, containers, proxying, monitoring, and backups fit together.
+when: Read when adding services or changing shared service routing, monitoring, or backups.
 resource: modules/aspects/services/default.nix
 tags: [services, containers, proxy, backup]
 ---

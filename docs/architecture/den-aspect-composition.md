@@ -2,6 +2,7 @@
 type: Architecture Concept
 title: Den Aspect Composition
 description: Rules for composing repo behavior with den aspects.
+when: Read when changing den aspects, defaults, includes, or module composition.
 resource: modules/defaults.nix
 tags: [architecture, den, aspects]
 ---
