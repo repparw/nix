@@ -23,6 +23,7 @@
         };
         environment.systemPackages = with pkgs; [
           shipwright
+          hydralauncher
           (heroic.override {
             extraPkgs =
               pkgs': with pkgs'; [
