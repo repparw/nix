@@ -52,7 +52,9 @@
                   "policy.role-based.priority" = 20;
                   "policy.role-based.action.same-priority" = "mix";
                   "policy.role-based.action.lower-priority" = "duck";
-                  "session.suspend-timeout-seconds" = 1;
+                  # Shorten the loopback's idle-to-suspend delay. Zero disables
+                  # suspension, so it would keep the role links around.
+                  "session.suspend-timeout-seconds" = 0.25;
                 };
                 "playback.props" = {
                   "node.name" = "loopback.src.role.speech";
@@ -70,6 +72,40 @@
             "linking.role-based.duck-level" = 0.25;
             "node.restore-default-targets" = false;
           };
+        };
+
+        extraConfig.pipewire-pulse."99-zapzap-media-role" = {
+          # ZapZap is a QtWebEngine wrapper, so tagging the process with
+          # PULSE_PROP_media.role also tags its notification sounds. Let the
+          # browser classify media streams and only promote actual music/video
+          # streams to Speech; Notification streams stay out of ducking.
+          "stream.rules" = [
+            {
+              matches = [
+                {
+                  "application.name" = "ZapZap";
+                  "media.role" = "Movie";
+                }
+                {
+                  "application.name" = "ZapZap";
+                  "media.role" = "Music";
+                }
+                {
+                  "application.name" = "ZapZap";
+                  "media.role" = "video";
+                }
+                {
+                  "application.name" = "ZapZap";
+                  "media.role" = "music";
+                }
+              ];
+              actions = {
+                "update-props" = {
+                  "media.role" = "Speech";
+                };
+              };
+            }
+          ];
         };
       };
     };
