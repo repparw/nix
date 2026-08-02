@@ -1,7 +1,9 @@
+import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 
 const MAX_WATCHERS_FILE_BYTES = 1024 * 1024;
 const MAX_STATE_FILE_BYTES = 8 * 1024 * 1024;
@@ -9,6 +11,10 @@ const MAX_WEBHOOK_FILE_BYTES = 16 * 1024;
 const DEFAULT_MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 const MAX_RESPONSE_BYTES = 16 * 1024 * 1024;
 const MAX_WATCHERS = 1000;
+const DEFAULT_USER_AGENT = "change-monitor/1.0";
+const DEFAULT_ACCEPT =
+  "text/html,application/xhtml+xml,application/json,text/plain";
+const execFileAsync = promisify(execFile);
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -48,6 +54,28 @@ function parseJsonFile(file, maxBytes, label) {
   }
 }
 
+function readWatchersFile(file, label) {
+  return validateWatchers(
+    parseJsonFile(file, MAX_WATCHERS_FILE_BYTES, label),
+  );
+}
+
+function loadWatchers(watchersPath, defaultWatchersPath) {
+  const groups = [];
+  if (defaultWatchersPath !== undefined) {
+    groups.push(
+      readWatchersFile(defaultWatchersPath, "default watchers config"),
+    );
+  }
+  groups.push(readWatchersFile(watchersPath, "watchers config"));
+
+  const bySlug = new Map();
+  for (const group of groups) {
+    for (const watcher of group) bySlug.set(watcher.slug, watcher);
+  }
+  return validateWatchers([...bySlug.values()]);
+}
+
 function validateHttpUrl(value, label) {
   if (typeof value !== "string" || value.length === 0) {
     throw new Error(`${label} must be a non-empty HTTP(S) URL`);
@@ -62,6 +90,18 @@ function validateHttpUrl(value, label) {
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(`${label} must use HTTP or HTTPS`);
   }
+}
+
+function requestHeaders(watcher) {
+  return {
+    "User-Agent": DEFAULT_USER_AGENT,
+    Accept: DEFAULT_ACCEPT,
+    ...(watcher.headers ?? {}),
+  };
+}
+
+function targetUrl(watcher) {
+  return watcher.fetchUrl ?? watcher.url;
 }
 
 export function validateWatchers(watchers) {
@@ -131,6 +171,7 @@ export function validateWatchers(watchers) {
       }
     }
     for (const field of [
+      "fetcher",
       "method",
       "flags",
       "label",
@@ -143,6 +184,13 @@ export function validateWatchers(watchers) {
     }
     if (watcher.method === "") {
       throw new Error(`${label}.method must not be empty`);
+    }
+    if (
+      watcher.fetcher !== undefined &&
+      watcher.fetcher !== "node" &&
+      watcher.fetcher !== "curl"
+    ) {
+      throw new Error(`${label}.fetcher must be either node or curl`);
     }
 
     if (watcher.mode === "regex") {
@@ -324,16 +372,56 @@ async function readBoundedResponse(response, maxBytes, slug) {
 }
 
 async function fetchText(watcher, fetchImpl) {
+  if (watcher.fetcher === "curl") {
+    const maxBytes = watcher.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
+    const timeoutMs = watcher.timeoutMs ?? 30000;
+    const headers = requestHeaders(watcher);
+    const userAgent = headers["User-Agent"];
+    delete headers["User-Agent"];
+    try {
+      const { stdout } = await execFileAsync(
+        "curl",
+        [
+          "--fail",
+          "--silent",
+          "--show-error",
+          "--location",
+          "--max-time",
+          String(Math.ceil(timeoutMs / 1000)),
+          "--user-agent",
+          userAgent,
+          ...Object.entries(headers).flatMap(([name, value]) => [
+            "--header",
+            `${name}: ${value}`,
+          ]),
+          targetUrl(watcher),
+        ],
+        {
+          encoding: "utf8",
+          maxBuffer: maxBytes + 1,
+          timeout: timeoutMs + 5000,
+        },
+      );
+      return stdout;
+    } catch (error) {
+      if (
+        error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" ||
+        /maxBuffer/i.test(error.message ?? "")
+      ) {
+        throw new Error(`${watcher.slug} response exceeds ${maxBytes} bytes`, {
+          cause: error,
+        });
+      }
+      throw new Error(`${watcher.slug} curl request failed`, { cause: error });
+    }
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), watcher.timeoutMs ?? 30000);
   try {
-    const response = await fetchImpl(watcher.fetchUrl ?? watcher.url, {
+    const response = await fetchImpl(targetUrl(watcher), {
       method: watcher.method ?? "GET",
-      headers: {
-        "User-Agent": "change-monitor/1.0",
-        Accept: "text/html,application/xhtml+xml,application/json,text/plain",
-        ...(watcher.headers ?? {}),
-      },
+      headers: requestHeaders(watcher),
       signal: controller.signal,
     });
     if (!response.ok) {
@@ -393,6 +481,7 @@ async function notifyDiscord(webhookPath, content, fetchImpl) {
 
 export async function runChangeDetection({
   watchersPath,
+  defaultWatchersPath,
   statePath,
   discordWebhookPath,
   fetchImpl = globalThis.fetch,
@@ -400,9 +489,7 @@ export async function runChangeDetection({
   log = console.log,
   handleSignals = false,
 }) {
-  const watchers = validateWatchers(
-    parseJsonFile(watchersPath, MAX_WATCHERS_FILE_BYTES, "watchers config"),
-  );
+  const watchers = loadWatchers(watchersPath, defaultWatchersPath);
   const releaseLock = acquireStateLock(statePath);
   const signalHandlers = new Map();
   if (handleSignals) {
@@ -478,14 +565,15 @@ export async function runChangeDetection({
 }
 
 export async function main(args = process.argv.slice(2)) {
-  const [watchersPath, statePath, discordWebhookPath] = args;
+  const [watchersPath, statePath, discordWebhookPath, defaultWatchersPath] = args;
   if (!watchersPath || !statePath || !discordWebhookPath) {
     throw new Error(
-      "usage: change-detection <watchers.json> <state.json> <discord-webhook-file>",
+      "usage: change-detection <watchers.json> <state.json> <discord-webhook-file> [default-watchers.json]",
     );
   }
   return runChangeDetection({
     watchersPath,
+    defaultWatchersPath,
     statePath,
     discordWebhookPath,
     handleSignals: true,
