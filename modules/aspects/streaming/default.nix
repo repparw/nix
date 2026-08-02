@@ -1,18 +1,9 @@
 {
   den,
-  inputs,
   lib,
   ...
 }:
 {
-  # TODO: Replace the upstream package after the Nixpkgs update reaches the
-  # currently used 0.14.1 and lands in our pin:
-  # https://github.com/NixOS/nixpkgs/pull/546531
-  flake-file.inputs.moonshine = {
-    url = "github:hgaiser/moonshine";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
-
   den.aspects.streaming.nixos =
     {
       config,
@@ -21,6 +12,15 @@
     }:
     let
       user = "repparw";
+
+      # Temporary import of the NixOS module from nixpkgs PR #544393. Keep the
+      # fixed hash so PR updates fail loudly instead of changing the module
+      # implicitly.
+      moonshine-module = pkgs.fetchurl {
+        name = "moonshine.nix";
+        url = "https://raw.githubusercontent.com/NixOS/nixpkgs/refs/pull/544393/head/nixos/modules/services/networking/moonshine.nix";
+        hash = "sha256-YEKjwB8/JxFQ3cFXTOCxMGp8Vg+KNk6JiwLqN3iOFbk=";
+      };
 
       moonshine-boxart = pkgs.runCommand "moonshine-boxart" { nativeBuildInputs = [ pkgs.librsvg ]; } ''
         mkdir -p $out
@@ -90,9 +90,7 @@
       };
     in
     {
-      # TODO: Drop this flake import and use the Nixpkgs module once the draft
-      # PR lands in our pin: https://github.com/NixOS/nixpkgs/pull/544393
-      imports = [ inputs.moonshine.nixosModules.default ];
+      imports = [ moonshine-module ];
 
       options.modules.streaming.shellApplications = lib.mkOption {
         type = lib.types.attrsOf lib.types.package;
@@ -108,8 +106,7 @@
         services.moonshine = {
           enable = true;
           inherit user;
-          uid = 1000;
-          openFirewall = true;
+          firewallInterfaces = [ "eth0" ];
 
           settings = {
             name = config.networking.hostName;
