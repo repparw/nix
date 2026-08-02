@@ -345,26 +345,6 @@
         "type": "github"
       }
     },
-    "moonshine": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1785592024,
-        "narHash": "sha256-ViD2Qagjx+UKeITp+KbqVvsTegLWZ7VNXFyY809VjBs=",
-        "owner": "hgaiser",
-        "repo": "moonshine",
-        "rev": "422d56bb8a261ddfd443ea9fadcdaf7429e56aa2",
-        "type": "github"
-      },
-      "original": {
-        "owner": "hgaiser",
-        "repo": "moonshine",
-        "type": "github"
-      }
-    },
     "nix-index-database": {
       "inputs": {
         "nixpkgs": [
@@ -455,11 +435,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1785454630,
-        "narHash": "sha256-LQy14TZp77TwbQf40gg1V3jo8FwJG0jGDkAH+zRHqg8=",
+        "lastModified": 1785571196,
+        "narHash": "sha256-KoTsyMQqnXQZq8deCEnu4QkyldkwH/bpMMhUcfMdGIw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1559d3daa3ecc813a650b79375ea61b6741b8746",
+        "rev": "148bab9c1c3c53136ecb44a6ea356a0ed5b39b06",
         "type": "github"
       },
       "original": {
@@ -558,7 +538,6 @@
         "helium-nix": "helium-nix",
         "home-manager": "home-manager",
         "import-tree": "import-tree",
-        "moonshine": "moonshine",
         "nix-index-database": "nix-index-database",
         "nixcord": "nixcord",
         "nixpkgs": "nixpkgs_2",
@@ -566,8 +545,7 @@
         "nixvim-config": "nixvim-config",
         "sops-nix": "sops-nix",
         "stylix": "stylix",
-        "systems": "systems",
-        "voxtype": "voxtype"
+        "systems": "systems"
       }
     },
     "sops-nix": {
@@ -724,30 +702,6 @@
       "original": {
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "type": "github"
-      }
-    },
-    "voxtype": {
-      "inputs": {
-        "flake-utils": [
-          "flake-utils"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1780004034,
-        "narHash": "sha256-zsOG1mBTXN4gdsTb1pUPKXATfhV5ZjgEsIUk07asaGo=",
-        "owner": "peteonrails",
-        "repo": "voxtype",
-        "rev": "8d49248baa53f29cb33007c9625a37281c72e799",
-        "type": "github"
-      },
-      "original": {
-        "owner": "peteonrails",
-        "ref": "v0.7.5",
-        "repo": "voxtype",
         "type": "github"
       }
     }
