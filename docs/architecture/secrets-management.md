@@ -2,6 +2,7 @@
 type: Architecture Concept
 title: Secrets Management
 description: Repo convention for encrypted, host-deployable secrets and secret references.
+when: Read when adding or changing SOPS-managed secret consumers.
 resource: modules/aspects/secrets.nix
 tags: [security, secrets, sops-nix]
 ---

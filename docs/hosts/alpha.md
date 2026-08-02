@@ -2,6 +2,7 @@
 type: Host
 title: Alpha
 description: Desktop workstation host with media services, gaming, streaming, and backup jobs.
+when: Read when changing alpha-specific hardware, workloads, or services.
 resource: modules/hosts/alpha.nix
 tags: [host, desktop, services]
 ---

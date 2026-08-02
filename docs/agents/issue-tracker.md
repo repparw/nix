@@ -1,3 +1,11 @@
+---
+type: Agent Guide
+title: Issue Tracker: GitHub
+description: Conventions for GitHub Issues, PRDs, and work tickets.
+when: Read when creating, fetching, claiming, or resolving repository work tickets.
+tags: [agents, github, issues]
+---
+
 # Issue tracker: GitHub
 
 Issues, PRDs, and work tickets live in GitHub Issues for `repparw/nix`. Use the `gh` CLI and infer the repository from the GitHub `origin` remote.

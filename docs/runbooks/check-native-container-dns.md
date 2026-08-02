@@ -2,6 +2,7 @@
 type: Runbook
 title: Check Native Container DNS
 description: Diagnose DNS resolution for private NixOS containers.
+when: Read when diagnosing DNS failures in native NixOS containers.
 resource: modules/aspects/services/default.nix
 tags: [runbook, dns, containers, services]
 ---

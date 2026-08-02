@@ -2,6 +2,7 @@
 type: Research Note
 title: Wispr Flow Features Worth Bringing to Voxtype
 description: Source-backed comparison of current Wispr Flow features with the repository's local Voxtype setup.
+when: Read when evaluating or planning Voxtype dictation improvements.
 resource: modules/aspects/dictation.nix
 tags: [dictation, voxtype, wispr-flow, speech]
 ---

@@ -1,3 +1,11 @@
+---
+type: Agent Guide
+title: Domain Docs
+description: How agents should find and use repository domain context.
+when: Read when modeling domain concepts, naming changes, or evaluating decisions.
+tags: [agents, domain, context]
+---
+
 # Domain Docs
 
 This repository uses a single-context domain-doc layout.

@@ -41,3 +41,10 @@ The tracker uses the five default triage labels. See `docs/agents/triage-labels.
 ### Domain docs
 
 This repository uses a single-context domain-doc layout. See `docs/agents/domain.md`.
+
+### Documentation routing
+
+For task-specific context, start at `docs/index.md`. Inspect each candidate
+page's YAML frontmatter and use its `when`, `type`, `tags`, and `resource` fields
+to select relevant documentation before reading full pages. Do not read every
+doc by default; follow matching pages' source and related links as needed.

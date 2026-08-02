@@ -2,6 +2,7 @@
 type: Architecture Concept
 title: Ingress Policy
 description: How one ingress-policy seam generates Traefik and Authelia configuration.
+when: Read when changing service routing, proxy authentication, or ingress exceptions.
 resource: modules/_services/ingress-policy.nix
 tags: [architecture, services, proxy, authentication]
 ---

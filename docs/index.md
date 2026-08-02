@@ -2,16 +2,15 @@
 type: Documentation Index
 title: Nix Repository Documentation
 description: Entry point for the repository's architecture, operations, and decision documentation.
+when: Start here when selecting repository documentation for a task.
 resource: README.md
 tags: [nix, nixos, home-manager, den]
 ---
 
 # Nix Repository Documentation
 
-These docs record stable knowledge about the NixOS and Home Manager
-configuration in this repository. They stay intentionally close to the codebase:
-concept files explain intent and link back to source files instead of copying
-module contents.
+These pages record stable knowledge about the configuration and link to source
+files instead of copying module contents.
 
 ## Architecture
 
@@ -31,6 +30,18 @@ module contents.
 
 ## Runbooks
 
+- [Add and maintain change-detection watchers](runbooks/change-detection-watchers.md)
 - [Failed auto-upgrade rollback](runbooks/failed-auto-upgrade-rollback.md)
+- [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
+
+## Research
+
+- [Wispr Flow features for Voxtype](research/wispr-flow-features-for-voxtype.md)
+
+## Agent guidance
+
+- [Domain docs](agents/domain.md)
+- [GitHub issue tracker](agents/issue-tracker.md)
+- [Triage labels](agents/triage-labels.md)

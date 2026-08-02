@@ -2,6 +2,7 @@
 type: Runbook
 title: Restore Service Backups
 description: Restore service data from exported backup paths.
+when: Read when restoring service data from an exported backup.
 resource: modules/aspects/backup.nix
 tags: [runbook, recovery, services, backups]
 ---
