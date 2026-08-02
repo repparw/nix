@@ -4,6 +4,8 @@
   ...
 }:
 let
+  # TODO: Remove this patch and use pkgs.tasks-org once
+  # https://github.com/NixOS/nixpkgs/pull/518221 lands in our pin.
   tasksOrgNixpkgs =
     pkgs:
     pkgs.applyPatches {
@@ -11,8 +13,8 @@ let
       src = inputs.nixpkgs;
       patches = [
         (pkgs.fetchpatch {
-          url = "https://github.com/NixOS/nixpkgs/pull/518221.patch";
-          hash = "sha256-VM4zx9pcyHgRFZiM6ga9uen3txKCFJAJ0lNISQswcI8=";
+          url = "https://github.com/NixOS/nixpkgs/pull/518221.diff";
+          hash = "sha256-QURHYohiLherL4P4qp9WbZQ34EiilCEsxR+qQMNiGU8=";
         })
       ];
     };
