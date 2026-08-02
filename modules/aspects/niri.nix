@@ -149,7 +149,14 @@
                 "spotify"
                 "spotify_player"
               ];
-              "Mod+N" = titledSpawn "Notes (Obsidian)" [ "obsidian" ];
+              "Mod+N" = titledSpawn "Notes (Neovim)" [
+                "foot"
+                "--app-id"
+                "notes"
+                "sh"
+                "-c"
+                "cd \"$HOME/Documents/obsidian\" && note=\"$(find . -type f -name '*.md' -not -path './.git/*' -not -path './.obsidian/*' -not -path './.trash/*' -printf '%T@ %p\\n' | sort -nr | head -n1 | cut -d' ' -f2-)\" && exec nvim -- \"$note\""
+              ];
               "Mod+P" = titledSpawn "Pomodoro" [
                 "webapp"
                 "https://app.solidtime.io"

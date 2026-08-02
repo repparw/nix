@@ -26,7 +26,7 @@
       den.aspects.editors
       den.aspects.file-manager
       den.aspects.scripts
-      den.aspects.rclone
+      den.aspects.obsidian
     ];
 
     provides.to-hosts = {
