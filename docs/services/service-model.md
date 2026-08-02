@@ -48,4 +48,4 @@ exports are gathered under `modules.services.backupDir`, which defaults to
 - [Ingress policy](../architecture/ingress-policy.md)
 - [Restore service backups](../runbooks/restore-service-backups.md)
 - [Check native container DNS](../runbooks/check-native-container-dns.md)
-- [Alpha](../hosts/alpha.md)
+- [Host profiles](../hosts.md)

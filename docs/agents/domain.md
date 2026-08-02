@@ -8,41 +8,27 @@ tags: [agents, domain, context]
 
 # Domain Docs
 
-This repository uses a single-context domain-doc layout.
+Use `docs/` as the repository's single-context domain knowledge.
 
 ## Before exploring
 
-Read these when they exist:
+Read the relevant context first:
 
-- `CONTEXT.md` at the repository root.
-- Relevant ADRs under `docs/adr/`.
+- `CONTEXT.md` at the repository root, if present.
+- Relevant architecture docs and ADRs under `docs/`, if present.
+- The [documentation index](../index.md) to find related pages.
 
-If either is absent, proceed silently. Domain-modeling workflows create them lazily when terminology or decisions crystallize.
-
-The broader architecture and operational documentation lives under `docs/`.
-Read the relevant sections there as additional project context.
-
-## Expected structure
-
-```text
-/
-├── CONTEXT.md
-└── docs/
-    ├── adr/
-    ├── agents/
-    ├── architecture/
-    ├── decisions/
-    ├── hosts/
-    ├── runbooks/
-    └── services/
-```
+If a page or directory is absent, continue with the available documentation.
 
 ## Domain vocabulary
 
-Use terminology defined in `CONTEXT.md` when naming concepts in issues, proposals, hypotheses, and tests. Avoid drifting to synonyms that the glossary rejects.
+Use terminology defined in `CONTEXT.md` when naming concepts in issues,
+proposals, hypotheses, and tests. Avoid introducing synonyms for established
+terms.
 
 A missing term may indicate either unsuitable invented language or a genuine gap to address through domain modeling.
 
-## ADR conflicts
+## Decisions
 
-If proposed work contradicts an existing ADR, identify the conflict explicitly rather than silently overriding the decision.
+If proposed work contradicts an existing ADR, identify the conflict explicitly
+instead of silently overriding the decision.

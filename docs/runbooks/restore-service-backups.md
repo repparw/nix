@@ -38,4 +38,4 @@ bind mounts from `/home/containers/config`.
 ## Related
 
 - [Service model](../services/service-model.md)
-- [Alpha](../hosts/alpha.md)
+- [Host profiles](../hosts.md)
