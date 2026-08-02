@@ -55,7 +55,7 @@
             runtimeInputs = [ bluez ];
             text = ''
               # device=F8:4E:17:E6:22:D2 # xm4
-              device=40:5E:F6:CD:0E:F0 # buds
+              device=00:1D:43:A0:14:D8 # avantree
 
               if bluetoothctl info "$device" | grep -q "Connected: yes"; then
                 bluetoothctl disconnect "$device"
