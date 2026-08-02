@@ -500,14 +500,13 @@
                 && !(builtins.any (rule: builtins.elem "null.example.test" rule.domain) sparsePolicy.authelia.rules)
                 && http.services.hass.loadBalancer.servers == [ { url = "http://192.168.0.4"; } ]
                 && http.services.hass.loadBalancer.healthCheck.path == "/"
-                && http.services.t3code.loadBalancer.servers == [ { url = "http://localhost:4097"; } ]
+                && !(http.services ? t3code)
                 &&
                   http.routers.home-router == {
                     rule = "Host(`home.${cfg.domain}`)";
                     service = "hass";
                   }
-                && http.routers.t3code.middlewares == [ "authelia" ]
-                && http.routers.t3code.service == "t3code"
+                && !(http.routers ? t3code)
                 && http.routers.glance.rule == "Host(`${cfg.domain}`)"
                 && http.routers.qbittorrent.rule == "Host(`qbit.${cfg.domain}`) && !PathPrefix(`/api`)"
                 && http.routers.qbittorrent-api.rule == "Host(`qbit.${cfg.domain}`) && PathPrefix(`/api`)"
