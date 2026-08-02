@@ -1,15 +1,19 @@
 ---
 type: Architecture Concept
-title: Secret Inventory
-description: Non-secret inventory of encrypted values, consumers, and deployment scope.
 when: Read when adding, consuming, rotating, or documenting SOPS secrets.
+title: Secret Inventory and Management
+description: Inventory and operating rules for encrypted values, consumers, and deployment scope.
 resource: secrets
 tags: [security, secrets, sops-nix]
 ---
 
-# Secret Inventory
+# Secret Inventory and Management
 
 This file contains names and deployment metadata only. Never add secret values.
+
+Secret material belongs in consumer-scoped `*.sops.yaml` files under `secrets/`
+and is managed through `sops-nix`. Each service or aspect declares its own
+`sopsFile`, limiting the ciphertext and recipient blast radius.
 
 | SOPS file | Secret | Purpose | Consumer | Hosts |
 | --- | --- | --- | --- | --- |
@@ -41,3 +45,17 @@ This file contains names and deployment metadata only. Never add secret values.
 The creation rule grants `alpha` only its SSH host-key recipient plus the
 recovery recipient. Add a host recipient to only the files that host consumes,
 then run `sops updatekeys` on those files.
+
+NixOS decrypts with the machine SSH host key at
+`/etc/ssh/ssh_host_ed25519_key`; the personal Age recipient in `.sops.yaml` is
+recovery access and is not used during activation. Docs, plans, and commits
+should refer to SOPS secret names or source modules, never secret values.
+
+## Source
+
+- `modules/aspects/secrets.nix`
+- `secrets/`
+
+## Related
+
+- [Repository layout](repository-layout.md)

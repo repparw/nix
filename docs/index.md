@@ -16,13 +16,11 @@ files instead of copying module contents.
 
 - [Den aspect composition](architecture/den-aspect-composition.md)
 - [Repository layout](architecture/repository-layout.md)
-- [Secret inventory](architecture/secret-inventory.md)
-- [Secrets management](architecture/secrets-management.md)
+- [Secret inventory and management](architecture/secret-inventory.md)
 
 ## Hosts
 
-- [Alpha](hosts/alpha.md)
-- [Beta](hosts/beta.md)
+- [Host profiles](hosts.md)
 
 ## Services
 
