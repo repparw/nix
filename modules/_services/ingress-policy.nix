@@ -89,11 +89,6 @@ else
             rule = "Host(`home.${domain}`)";
             service = "hass";
           };
-          t3code = {
-            rule = "Host(`code.${domain}`)";
-            service = "t3code";
-            middlewares = [ "authelia" ];
-          };
           glance = {
             rule = "Host(`${domain}`)";
             service = "glance";
@@ -136,7 +131,6 @@ else
             timeout = "3s";
           };
         };
-        t3code.loadBalancer.servers = [ { url = "http://localhost:4097"; } ];
       };
     };
 
