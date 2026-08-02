@@ -124,6 +124,9 @@
                 };
                 spawn = [ "translate-selection" ];
               };
+              "Mod+Shift+V" = titledSpawn "Send Clipboard to Android" [
+                "kdeconnect-send-clipboard"
+              ];
               "Mod+E" = titledSpawn "File Manager (Terminal)" [
                 "foot"
                 "--app-id"

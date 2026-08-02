@@ -62,9 +62,21 @@ in
           allowedTCPPorts = [
             32100
           ];
+          allowedTCPPortRanges = [
+            {
+              from = 1714;
+              to = 1764;
+            }
+          ];
           allowedUDPPorts = [
             5353 # mDNS
             32100
+          ];
+          allowedUDPPortRanges = [
+            {
+              from = 1714;
+              to = 1764;
+            }
           ];
         };
       };
@@ -76,15 +88,50 @@ in
         lib,
         ...
       }:
+      let
+        kdeconnect = pkgs.kdePackages.kdeconnect-kde;
+        sendClipboard = pkgs.writeShellScriptBin "kdeconnect-send-clipboard" ''
+          set -eu
+
+          device="$(${kdeconnect}/bin/kdeconnect-cli --list-available --id-only | head -n1)"
+          if [ -z "$device" ]; then
+            ${lib.getExe' pkgs.libnotify "notify-send"} \
+              --urgency=critical \
+              "KDE Connect" \
+              "No paired Android device is available"
+            exit 1
+          fi
+
+          exec ${kdeconnect}/bin/kdeconnect-cli \
+            --device "$device" \
+            --send-clipboard
+        '';
+      in
       {
         home.packages = with pkgs; [
           pwvucontrol
           scrcpy
           godot
           rquickshare
+          kdeconnect
+          sendClipboard
           tasks-org
           zapzap
         ];
+
+        systemd.user.services.kdeconnect = {
+          Unit = {
+            Description = "KDE Connect daemon";
+            After = [ "graphical-session.target" ];
+            PartOf = [ "graphical-session.target" ];
+          };
+          Service = {
+            ExecStart = "${kdeconnect}/bin/kdeconnectd --replace";
+            Restart = "on-failure";
+            RestartSec = 3;
+          };
+          Install.WantedBy = [ "graphical-session.target" ];
+        };
 
         gtk.enable = true;
 
