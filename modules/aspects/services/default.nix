@@ -6,6 +6,7 @@
       arr
       automations
       jellyfin
+      matrizApi
     ];
 
     nixos =
