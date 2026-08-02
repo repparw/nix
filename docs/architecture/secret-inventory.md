@@ -2,6 +2,7 @@
 type: Architecture Concept
 title: Secret Inventory
 description: Non-secret inventory of encrypted values, consumers, and deployment scope.
+when: Read when adding, consuming, rotating, or documenting SOPS secrets.
 resource: secrets
 tags: [security, secrets, sops-nix]
 ---
@@ -18,6 +19,7 @@ This file contains names and deployment metadata only. Never add secret values.
 | `secrets/rclone.sops.yaml` | `rcloneDriveToken` | Authorize Google Drive access | rclone Home Manager services | `alpha` |
 | `secrets/rclone.sops.yaml` | `rcloneDriveSecret` | Authenticate the Google Drive OAuth client | rclone Home Manager services | `alpha` |
 | `secrets/rclone.sops.yaml` | `rcloneCrypt` | Unlock the encrypted rclone remote | rclone Home Manager services | `alpha` |
+| `secrets/rclone.sops.yaml` | `rcloneObsidianCrypt` | Unlock the Remotely Save-compatible Obsidian crypt remote | Obsidian bisync service | `alpha` |
 | `secrets/rclone.sops.yaml` | `rcloneClarodrive` | Authenticate the Claro Drive remote | rclone Home Manager services | `alpha` |
 | `secrets/rclone.sops.yaml` | `rcloneDropbox` | Authorize Dropbox access | rclone Home Manager services | `alpha` |
 | `secrets/rclone.sops.yaml` | `rcloneNextcloud` | Authenticate the Nextcloud remote | rclone Home Manager services | `alpha` |
@@ -33,6 +35,9 @@ This file contains names and deployment metadata only. Never add secret values.
 | `secrets/archisteamfarm.sops.yaml` | `steamPassword` | Authenticate the managed Steam account | ArchiSteamFarm | `alpha` |
 | `secrets/jellyfin.sops.yaml` | `jellyfinBackupKey` | Authorize Jellyfin backup creation | Jellyfin backup tooling | `alpha` |
 | `secrets/automations.sops.yaml` | `discordWebhook` | Deliver automation notifications to Discord | Automation services | `alpha` |
+| `secrets/matriz.sops.yaml` | `matrizApiUsername` | Identify the EcoValores Matriz API user without publishing its CUIT | Matriz account snapshot service | `alpha` |
+| `secrets/matriz.sops.yaml` | `matrizApiPassword` | Authenticate the local EcoValores Matriz adapter | Matriz account snapshot service | `alpha` |
+| `secrets/matriz.sops.yaml` | `matrizApiAccount` | Select the EcoValores Matriz account without publishing its identifier | Matriz account snapshot service | `alpha` |
 The creation rule grants `alpha` only its SSH host-key recipient plus the
 recovery recipient. Add a host recipient to only the files that host consumes,
 then run `sops updatekeys` on those files.
