@@ -146,6 +146,7 @@
               paperless = cfg.definitions.paperless;
               authelia = cfg.definitions.authelia;
               glance = cfg.definitions.glance;
+              finance = cfg.definitions.finance;
               archisteamfarm = cfg.definitions.archisteamfarm;
               automations = cfg.definitions.automations;
               http = alpha.services.traefik.dynamicConfigOptions.http;
@@ -393,7 +394,14 @@
                 && alpha.containers.glance.config.services.glance.settings.server.port == glance.port
                 && http.routers.glance.rule == "Host(`${cfg.domain}`)"
                 && http.services.glance.loadBalancer.servers == [ { url = "http://10.231.136.15:8080"; } ]
-                && alpha.containers.glance.config.services.glance.settings.branding.logo-text == "R";
+                && alpha.containers.glance.config.services.glance.settings.branding.logo-text == "R"
+                && finance.hostname == "finance"
+                && finance.port == 3000
+                && finance.auth == "one_factor"
+                && http.routers.finance.rule == "Host(`finance.${cfg.domain}`)"
+                && http.routers.finance.middlewares == [ "authelia" ]
+                && hasAccessPolicy accessControl.rules "finance.${cfg.domain}" "one_factor"
+                && http.services.finance.loadBalancer.servers == [ { url = "http://127.0.0.1:3000"; } ];
               backgroundServicesMatch =
                 archisteamfarm.containerAddress == "10.231.136.13"
                 && archisteamfarm.hostname == null

@@ -31,6 +31,14 @@
         ];
 
         config = {
+          # The finance dashboard is managed outside this Nix configuration.
+          # This only wires an optional host-local listener into the proxy.
+          modules.services.definitions.finance = {
+            hostname = "finance";
+            port = 3000;
+            auth = "one_factor";
+          };
+
           networking = {
             nat = {
               enable = true;
