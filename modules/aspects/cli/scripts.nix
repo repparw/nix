@@ -4,16 +4,6 @@
 }:
 {
   den.aspects.scripts = {
-    nixos =
-      { ... }:
-      {
-        nixpkgs.overlays = [
-          (final: prev: {
-            ndrop = final.callPackage ../../_packages/ndrop.nix { };
-          })
-        ];
-      };
-
     homeManager =
       { pkgs, ... }:
       {
@@ -38,41 +28,6 @@
             ];
             text = ''
               wl-paste --type image/png | zbarimg --raw - | wl-copy
-            '';
-          })
-
-          (writeShellApplication {
-            name = "webapp";
-            text = ''
-              exec chromium --password-store=basic --app="$1" "''${@:2}"
-            '';
-          })
-
-          ndrop
-
-          (writeShellApplication {
-            name = "bttoggle";
-            runtimeInputs = [ bluez ];
-            text = ''
-              # device=F8:4E:17:E6:22:D2 # xm4
-              device=00:1D:43:A0:14:D8 # avantree
-
-              if bluetoothctl info "$device" | grep -q "Connected: yes"; then
-                bluetoothctl disconnect "$device"
-              else
-                bluetoothctl connect "$device"
-              fi
-            '';
-          })
-
-          (writeShellApplication {
-            name = "mpvclip";
-            runtimeInputs = [
-              libnotify
-              wl-clipboard
-            ];
-            text = ''
-              notify-send -t 2000 'MPV' 'Loading video...'; mpv --no-terminal "$(wl-paste)"
             '';
           })
 
@@ -110,29 +65,6 @@
                 echo "Edit canceled."
               fi
             '';
-          })
-
-          (writeShellApplication {
-            name = "record";
-            runtimeInputs = [
-              wl-screenrec
-              slurp
-              niri
-              jq
-              libnotify
-              wl-clipboard
-            ];
-            text = builtins.readFile ./record.sh;
-          })
-
-          (writeShellApplication {
-            name = "niri-swap-active-monitor-windows";
-            runtimeInputs = [
-              niri
-              jq
-              libnotify
-            ];
-            text = builtins.readFile ./niri-swap-active-monitor-windows.sh;
           })
 
         ];

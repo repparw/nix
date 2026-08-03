@@ -9,7 +9,22 @@
     nixos =
       { pkgs, ... }:
       {
+        nixpkgs.overlays = [
+          (final: prev: {
+            ndrop = final.callPackage ../_packages/ndrop.nix { };
+            wshowkeys = prev.wshowkeys.overrideAttrs (old: {
+              src = prev.fetchFromGitHub {
+                owner = "repparw";
+                repo = "wshowkeys";
+                rev = "52d1191cc250d3a24b83f77ce23f23d498c23bb3";
+                hash = "sha256-BkmB+/oG0tsAbvAjkoEAJxObjvg+mCENhM4EHDDXQAI=";
+              };
+            });
+          })
+        ];
+
         programs.niri.enable = lib.mkDefault true;
+        programs.wshowkeys.enable = true;
 
         environment.systemPackages = [ pkgs.xwayland-satellite ];
       };
@@ -28,6 +43,33 @@
         spawn = command: { spawn = command; };
       in
       {
+        home.packages = with pkgs; [
+          ndrop
+
+          (writeShellApplication {
+            name = "record";
+            runtimeInputs = [
+              wl-screenrec
+              slurp
+              niri
+              jq
+              libnotify
+              wl-clipboard
+            ];
+            text = builtins.readFile ./niri-record.sh;
+          })
+
+          (writeShellApplication {
+            name = "niri-swap-active-monitor-windows";
+            runtimeInputs = [
+              niri
+              jq
+              libnotify
+            ];
+            text = builtins.readFile ./niri-swap-active-monitor-windows.sh;
+          })
+        ];
+
         wayland.windowManager.niri = {
           enable = true;
           package = pkgs.niri;
@@ -114,7 +156,7 @@
                 };
                 spawn = [ "translate-selection" ];
               };
-              "Mod+Shift+V" = titledSpawn "Send Clipboard to Android" [
+              "Mod+Shift+V" = titledSpawn "Send Clipboard or Files to Phone" [
                 "kdeconnect-send-clipboard"
               ];
               "Mod+E" = titledSpawn "File Manager (Terminal)" [

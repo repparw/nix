@@ -7,7 +7,7 @@
       includes = [
         den.batteries.hostname
         den.aspects.auto-upgrade
-        den.aspects.cli
+        den.aspects.audio
         den.aspects.networking
         den.aspects.secrets
         den.aspects.style

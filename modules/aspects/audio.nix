@@ -1,36 +1,13 @@
-_: {
-  den.aspects.cli = {
+{ den, ... }:
+{
+  den.aspects.audio = {
     nixos =
-      { config, ... }:
+      { ... }:
       {
-        programs = {
-          mosh = {
-            enable = true;
-            openFirewall = true;
-          };
-
-          nh = {
-            enable = true;
-            flake = "${config.home-manager.users.repparw.xdg.userDirs.projects}/nix";
-            clean = {
-              enable = true;
-              extraArgs = "--keep 3 --keep-since 7d --keep-one";
-            };
-          };
-
-          fish.enable = true;
-        };
+        hardware.bluetooth.enable = true;
 
         services = {
           blueman.enable = true;
-          earlyoom.enable = true;
-          fail2ban.enable = true;
-          gvfs.enable = true;
-          openssh = {
-            enable = true;
-            openFirewall = true;
-            settings.PasswordAuthentication = false;
-          };
           pipewire = {
             enable = true;
             wireplumber.extraConfig = {
@@ -79,6 +56,29 @@ _: {
             };
           };
         };
+      };
+
+    homeManager =
+      { pkgs, ... }:
+      {
+        home.packages = with pkgs; [
+          pwvucontrol
+
+          (writeShellApplication {
+            name = "bttoggle";
+            runtimeInputs = [ bluez ];
+            text = ''
+              # device=F8:4E:17:E6:22:D2 # xm4
+              device=00:1D:43:A0:14:D8 # avantree
+
+              if bluetoothctl info "$device" | grep -q "Connected: yes"; then
+                bluetoothctl disconnect "$device"
+              else
+                bluetoothctl connect "$device"
+              fi
+            '';
+          })
+        ];
       };
   };
 }

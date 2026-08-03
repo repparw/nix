@@ -23,6 +23,7 @@
       den.aspects.git
       den.aspects.ai
       den.aspects.ssh
+      den.aspects.phone
       den.aspects.editors
       den.aspects.file-manager
       den.aspects.scripts
@@ -62,17 +63,6 @@
     homeManager = _: {
       xdg.enable = true;
       home.preferXdgDirectories = true;
-      services.udiskie = {
-        enable = true;
-        tray = "never";
-        settings.device_config = [
-          {
-            id_label = "seagate";
-            ignore = true;
-          }
-        ];
-      };
-
     };
   };
 }

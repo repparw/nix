@@ -4,51 +4,68 @@
 }:
 {
   den.aspects.gui.provides.mpv = {
-    homeManager = _: {
-      programs.mpv = {
-        enable = true;
-        bindings = {
-          WHEEL_UP = "add volume 2";
-          WHEEL_DOWN = "add volume -2";
-          WHEEL_LEFT = "add volume 2";
-          WHEEL_RIGHT = "add volume -2";
-          "." = "seek 5";
-          "," = "seek -5";
-          ">" = "no-osd seek 1 exact";
-          "<" = "no-osd seek -1 exact";
-          RIGHT = "frame-step";
-          LEFT = "frame-back-step";
-          "~" = "script-binding console/enable";
-          "F" = "script-binding quality_menu/video_formats_toggle";
-        };
+    homeManager =
+      { pkgs, ... }:
+      {
+        home.packages = [
+          (pkgs.writeShellApplication {
+            name = "mpvclip";
+            runtimeInputs = with pkgs; [
+              libnotify
+              mpv
+              wl-clipboard
+            ];
+            text = ''
+              notify-send -t 2000 'MPV' 'Loading video...'
+              exec mpv --no-terminal "$(wl-paste)"
+            '';
+          })
+        ];
 
-        config = {
-          volume = 50;
-          ytdl-raw-options = "format=bestvideo[height<=?1080]+bestaudio/best,sub-format=en/es,write-srt=";
-          screen-name = "DP-1";
-          fs = "yes";
+        programs.mpv = {
+          enable = true;
+          bindings = {
+            WHEEL_UP = "add volume 2";
+            WHEEL_DOWN = "add volume -2";
+            WHEEL_LEFT = "add volume 2";
+            WHEEL_RIGHT = "add volume -2";
+            "." = "seek 5";
+            "," = "seek -5";
+            ">" = "no-osd seek 1 exact";
+            "<" = "no-osd seek -1 exact";
+            RIGHT = "frame-step";
+            LEFT = "frame-back-step";
+            "~" = "script-binding console/enable";
+            "F" = "script-binding quality_menu/video_formats_toggle";
+          };
 
-          hwdec = "vaapi";
-          vo = "gpu-next";
-          gpu-api = "vulkan";
-          gpu-context = "waylandvk";
+          config = {
+            volume = 50;
+            ytdl-raw-options = "format=bestvideo[height<=?1080]+bestaudio/best,sub-format=en/es,write-srt=";
+            screen-name = "DP-1";
+            fs = "yes";
 
-          screenshot-template = "%F - %p %02n";
-          screenshot-dir = "~/Pictures/mpvss";
+            hwdec = "vaapi";
+            vo = "gpu-next";
+            gpu-api = "vulkan";
+            gpu-context = "waylandvk";
 
-          osc = "no";
-          osd-font-size = 32;
-          osd-border-size = 2;
+            screenshot-template = "%F - %p %02n";
+            screenshot-dir = "~/Pictures/mpvss";
 
-          sub-font-size = 36;
-          sub-border-size = 0.5;
-          sub-shadow-offset = 2;
-          sub-blur = 0.5;
+            osc = "no";
+            osd-font-size = 32;
+            osd-border-size = 2;
 
-          slang = "eng";
-          sub-auto = "fuzzy";
+            sub-font-size = 36;
+            sub-border-size = 0.5;
+            sub-shadow-offset = 2;
+            sub-blur = 0.5;
+
+            slang = "eng";
+            sub-auto = "fuzzy";
+          };
         };
       };
-    };
   };
 }
