@@ -1,6 +1,15 @@
 _: {
   den.aspects.nix = {
     nixos = { config, ... }: {
+      programs.nh = {
+        enable = true;
+        flake = "${config.home-manager.users.repparw.xdg.userDirs.projects}/nix";
+        clean = {
+          enable = true;
+          extraArgs = "--keep 3 --keep-since 7d --keep-one";
+        };
+      };
+
       sops.secrets.accessTokens = {
         sopsFile = ../../secrets/nix.sops.yaml;
         mode = "0440";

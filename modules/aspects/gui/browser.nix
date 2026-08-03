@@ -103,6 +103,16 @@ in
       {
         imports = [ inputs.helium-nix.homeModules.default ];
 
+        home.packages = [
+          (pkgs.writeShellApplication {
+            name = "webapp";
+            runtimeInputs = [ (chromiumWithoutMimeApps pkgs.chromium) ];
+            text = ''
+              exec chromium --password-store=basic --app="$1" "''${@:2}"
+            '';
+          })
+        ];
+
         home.file = {
           ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
           ".config/chromium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {

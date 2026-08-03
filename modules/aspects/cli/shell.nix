@@ -7,7 +7,10 @@
 {
   den.aspects.shell = {
     nixos = {
-      programs.fish.useBabelfish = true;
+      programs.fish = {
+        enable = true;
+        useBabelfish = true;
+      };
     };
 
     homeManager =

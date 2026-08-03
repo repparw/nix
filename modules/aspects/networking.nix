@@ -3,6 +3,20 @@ _: {
     nixos =
       { lib, ... }:
       {
+        programs.mosh = {
+          enable = true;
+          openFirewall = true;
+        };
+
+        services = {
+          fail2ban.enable = true;
+          openssh = {
+            enable = true;
+            openFirewall = true;
+            settings.PasswordAuthentication = false;
+          };
+        };
+
         systemd.network = {
           enable = true;
           wait-online.enable = false;
