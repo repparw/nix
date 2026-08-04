@@ -6,7 +6,6 @@
 {
   den.aspects.ai = {
     includes = with den.aspects.ai._; [
-      codex
       dictation
       mcp
       opencode
