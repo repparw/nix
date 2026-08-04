@@ -171,12 +171,19 @@
               "Mod+F" = titledAction "Fullscreen" "maximize-window-to-edges";
               "Mod+Alt+F" = titledAction "Toggle Floating" "toggle-window-floating";
               "Mod+Ctrl+F" = titledAction "Toggle Focus Floating" "switch-focus-between-floating-and-tiling";
-              "Mod+Shift+G" = titledSpawn "T3 Code" [
+              "Mod+G" = titledSpawn "T3 Code" [
                 "ndrop"
                 "-F"
                 "-c"
                 "t3code"
                 "t3code-desktop"
+              ];
+              "Mod+Shift+G" = titledSpawn "OpenCode" [
+                "ndrop"
+                "-F"
+                "-c"
+                "opencode-desktop"
+                "ai.opencode.desktop"
               ];
               "Mod+M" = titledSpawn "Spotify" [
                 "foot"
