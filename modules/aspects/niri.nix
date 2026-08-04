@@ -178,13 +178,6 @@
                 "t3code"
                 "t3code-desktop"
               ];
-              "Mod+G" = titledSpawn "Codex" [
-                "ndrop"
-                "-F"
-                "-c"
-                "codex-desktop"
-                "codex-desktop"
-              ];
               "Mod+M" = titledSpawn "Spotify" [
                 "foot"
                 "--app-id"
