@@ -1,5 +1,6 @@
 {
   den,
+  inputs,
   lib,
   ...
 }:
@@ -10,6 +11,12 @@ let
   };
 in
 {
+  # Latest upstream build (nixpkgs ships 0.13.5, upstream is 0.15.0). Declared
+  # here so write-flake keeps it in flake.nix inputs.
+  flake-file.inputs.moonshine = {
+    url = "github:hgaiser/moonshine";
+  };
+
   den.aspects.streaming.nixos =
     {
       config,
@@ -78,6 +85,63 @@ in
         '';
       };
 
+      # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
+      # to gamescope; nixpkgs disables it by default.
+      gamescopeHdr = pkgs.gamescope.override { enableWsi = true; };
+
+      moonshine-steam-gamescope-hdr = pkgs.writeShellApplication {
+        name = "moonshine-steam-gamescope-hdr";
+        runtimeInputs = [
+          gamescopeHdr
+          pkgs.procps
+          # Use the NixOS-configured wrapper so extraCompatPackages (GE-Proton)
+          # is exported to Steam inside Moonshine's transient session too.
+          config.programs.steam.package
+        ];
+        text = ''
+          # Steam is single-instance per user. Stop the desktop instance so it
+          # cannot steal Big Picture from Moonshine's private compositor.
+          if pgrep -x steam >/dev/null; then
+            steam -shutdown >/dev/null 2>&1 || true
+            for _ in $(seq 1 30); do
+              pgrep -x steam >/dev/null || break
+              sleep 1
+            done
+          fi
+
+          # Moonshine's upstream health check assumes /usr/share. On NixOS the
+          # implicit Vulkan layer lives in the package output, so make it
+          # discoverable to Steam, Proton, and their Vulkan loaders. The
+          # gamescope share is needed for the gamescope-wsi layer manifest.
+          export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${gamescopeHdr}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+          # Test workaround for hgaiser/moonshine#93 (HDR/DX11 black screen):
+          # wrap Steam in Gamescope at the client's resolution. Gamescope owns
+          # the surface Moonshine's compositor sees, so games present to
+          # Gamescope instead of creating their own (HDR 1x1) WSI swapchain.
+          w=''${MOONSHINE_CLIENT_WIDTH:-1920}
+          h=''${MOONSHINE_CLIENT_HEIGHT:-1080}
+          rate=''${MOONSHINE_CLIENT_FRAMERATE:-60}
+
+          # The moonshine-wsi Vulkan layer breaks gamescope (a compositor, not
+          # a game): it redirects swapchains into Moonshine's WSI path. Games
+          # inside gamescope present to gamescope's own compositor, and
+          # gamescope presents to Moonshine as a plain Wayland client, so the
+          # layer is not needed here. Disable it for the whole gamescope session
+          # (DISABLE_* takes precedence over the ENABLE_MOONSHINE_WSI=1 that
+          # Moonshine sets on the environment).
+          export DISABLE_MOONSHINE_WSI=1
+          unset ENABLE_MOONSHINE_WSI
+
+          # No bwrap here: gamescope spawns its own Xwayland, and inside
+          # bwrap's user namespace the root-owned /tmp/.X11-unix appears owned
+          # by "nobody", which wlroots rejects. Without the sandbox the check
+          # passes (the directory is root-owned).
+          gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
+          exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- steam -tenfoot
+        '';
+      };
+
       moonshine-heroic = pkgs.writeShellApplication {
         name = "moonshine-heroic";
         runtimeInputs = [ pkgs.heroic ];
@@ -97,13 +161,20 @@ in
 
       config = {
         modules.streaming.shellApplications = {
-          inherit moonshine-desktop moonshine-steam moonshine-heroic;
+          inherit
+            moonshine-desktop
+            moonshine-steam
+            moonshine-steam-gamescope-hdr
+            moonshine-heroic
+            ;
         };
 
         services.moonshine = {
           enable = true;
           inherit user;
           firewallInterfaces = [ "eth0" ];
+          # Latest upstream git build (nixpkgs ships 0.13.5, upstream is 0.15.0).
+          package = inputs.moonshine.packages.${pkgs.stdenv.hostPlatform.system}.moonshine;
 
           settings = {
             name = config.networking.hostName;
@@ -119,6 +190,13 @@ in
                 title = "Steam Big Picture";
                 boxart = "${moonshine-boxart}/steam.png";
                 command = [ "${moonshine-steam}/bin/moonshine-steam" ];
+                stdout = "journal";
+                stderr = "journal";
+              }
+              {
+                title = "Steam Big Picture (gamescope HDR)";
+                boxart = "${moonshine-boxart}/steam.png";
+                command = [ "${moonshine-steam-gamescope-hdr}/bin/moonshine-steam-gamescope-hdr" ];
                 stdout = "journal";
                 stderr = "journal";
               }
