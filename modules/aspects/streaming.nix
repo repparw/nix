@@ -1,17 +1,9 @@
 {
   den,
-  inputs,
   lib,
   ...
 }:
 {
-  # Latest upstream build (nixpkgs ships 0.13.5, upstream is 0.15.0). Declared
-  # here so write-flake keeps it in flake.nix inputs. Dropped in step 2 once
-  # nixpkgs ships 0.15.0 (nixpkgs PR 546531).
-  flake-file.inputs.moonshine = {
-    url = "github:hgaiser/moonshine";
-  };
-
   den.aspects.streaming.nixos =
     {
       config,
@@ -169,8 +161,8 @@
           enable = true;
           inherit user;
           firewallInterfaces = [ "eth0" ];
-          # Latest upstream git build (nixpkgs ships 0.13.5, upstream is 0.15.0).
-          package = inputs.moonshine.packages.${pkgs.stdenv.hostPlatform.system}.moonshine;
+          # Nixpkgs' moonshine once 0.15.0 ships (nixpkgs PR 546531).
+          package = pkgs.moonshine;
 
           settings = {
             name = config.networking.hostName;
