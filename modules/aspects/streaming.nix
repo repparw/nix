@@ -4,15 +4,10 @@
   lib,
   ...
 }:
-let
-  moonshineModule = builtins.fetchurl {
-    url = "https://raw.githubusercontent.com/NixOS/nixpkgs/refs/pull/544393/head/nixos/modules/services/networking/moonshine.nix";
-    sha256 = "sha256-YEKjwB8/JxFQ3cFXTOCxMGp8Vg+KNk6JiwLqN3iOFbk=";
-  };
-in
 {
   # Latest upstream build (nixpkgs ships 0.13.5, upstream is 0.15.0). Declared
-  # here so write-flake keeps it in flake.nix inputs.
+  # here so write-flake keeps it in flake.nix inputs. Dropped in step 2 once
+  # nixpkgs ships 0.15.0 (nixpkgs PR 546531).
   flake-file.inputs.moonshine = {
     url = "github:hgaiser/moonshine";
   };
@@ -151,8 +146,9 @@ in
       };
     in
     {
-      imports = [ moonshineModule ];
-
+      # services.moonshine options now come from the Nixpkgs module (nixpkgs PR
+      # 544393) instead of the fetched PR branch. Package stays on the flake
+      # build until step 2 (nixpkgs PR 546531).
       options.modules.streaming.shellApplications = lib.mkOption {
         type = lib.types.attrsOf lib.types.package;
         default = { };
