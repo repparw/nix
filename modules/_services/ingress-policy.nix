@@ -93,6 +93,11 @@ else
             rule = "Host(`${domain}`)";
             service = "glance";
           };
+          opencode = {
+            rule = "Host(`code.${domain}`)";
+            service = "opencode";
+            middlewares = [ "authelia" ];
+          };
         }
         // lib.optionalAttrs (hasServiceHost "qbittorrent") {
           qbittorrent = {
@@ -123,6 +128,7 @@ else
         qbit-basic-auth.headers.customRequestHeaders.Authorization = "{{ env `QBIT_AUTH` }}";
       };
       services = lib.mapAttrs (name: _: mkBackend name) proxyableDefinitions // {
+        opencode.loadBalancer.servers = [ { url = "http://localhost:4096"; } ];
         hass.loadBalancer = {
           servers = [ { url = "http://192.168.0.4"; } ];
           healthCheck = {

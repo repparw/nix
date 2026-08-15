@@ -14,12 +14,49 @@ let
 in
 {
   den.aspects.ai.provides.t3code = {
+    nixos =
+      { pkgs, ... }:
+      {
+        # Upstream t3code >= 0.0.31 delegates OpenCode session titles to the
+        # provider, but opencode auto-names sessions "New session - <ts>",
+        # which then clobbers the thread title and blocks the real generated
+        # title. Mirror the upstream PR (pingdotgg/t3code#5941): only mirror a
+        # provider title while the thread still has its default title, and
+        # filter opencode's placeholder title so it never propagates. Revisit
+        # once the fix is merged upstream and reaches our nixpkgs pin.
+        nixpkgs.overlays = [
+          (final: prev: {
+            t3code = prev.t3code.override {
+              t3code-unwrapped = prev.t3code.unwrapped.overrideAttrs (old: {
+                patches = (old.patches or [ ]) ++ [ ./t3code-title-fix.patch ];
+              });
+            };
+          })
+        ];
+      };
+
     homeManager =
       { pkgs, ... }:
       {
         home.sessionVariables = connectEnvironment;
 
         programs.t3code.enable = true;
+
+        # Point the opencode provider at the opencode-web.service server
+        # (programs.opencode.web, port 4096) instead of spawning its own
+        # per-session `opencode serve`. With serverUrl set, t3code treats the
+        # server as external and never starts a child process.
+        programs.t3code.userSettings = {
+          providerInstances.opencode = {
+            driver = "opencode";
+            enabled = true;
+            config = {
+              enabled = true;
+              binaryPath = "";
+              serverUrl = "http://127.0.0.1:4096";
+            };
+          };
+        };
 
         # TODO: Replace this hand-rolled service with programs.t3code.server
         # once https://github.com/nix-community/home-manager/pull/9695 merges
