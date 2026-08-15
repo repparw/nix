@@ -56,14 +56,6 @@
             mode = "extractor";
           };
         defaultWatchers = [
-          (mkRegexWatcher {
-            slug = "nzb360-liteapks";
-            label = "nzb360 LiteAPKs version";
-            url = "https://liteapks.com/download/nzb360-73320/1";
-            fetcher = "curl";
-            pattern = ''<button[^>]*class="[^"]*dl-version-tab[^"]*"[^>]*>[\s\S]*?<span[^>]*>v([0-9.]+)'';
-            message = "nzb360 LiteAPKs version changed: {{previous}} -> {{current}}\n{{url}}";
-          })
           (mkExtractorWatcher {
             slug = "8bitdo-ultimate-2c-firmware";
             label = "8BitDo Ultimate 2C firmware";
