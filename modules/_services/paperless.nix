@@ -45,7 +45,6 @@ in
           };
         };
         settings = {
-          PAPERLESS_OCR_LANGUAGE = "spa";
           PAPERLESS_ENABLE_HTTP_REMOTE_USER = "true";
           PAPERLESS_HTTP_REMOTE_USER_HEADER_NAME = "HTTP_REMOTE_USER";
           PAPERLESS_LOGOUT_REDIRECT_URL = "https://auth.${cfg.domain}/logout";
