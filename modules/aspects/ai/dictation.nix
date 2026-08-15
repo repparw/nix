@@ -60,6 +60,11 @@
         };
       in
       {
+        xdg.dataFile."voxtype/quickshell" = {
+          source = "${voxtypePackage.src}/quickshell";
+          recursive = true;
+        };
+
         home.packages = [
           pkgs.quickshell
           voxtypeToggle
