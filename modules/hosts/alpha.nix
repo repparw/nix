@@ -135,11 +135,39 @@
           }
         ];
 
+        boot.kernel.sysctl."vm.swappiness" = 10;
+
         services = {
           udev.extraRules = ''
             # Disable USB autosuspend for Intel AX210 Bluetooth to fix sleep/wake
             ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0032", ATTR{power/control}="on"
           '';
+        };
+
+        # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl
+        # --set standby are clamped by a vendor minimum that never engages);
+        # STANDBY IMMEDIATE (hdparm -y) is the only lever. Fire it once the
+        # media automounts above have idled out, so the platter actually sleeps
+        # between accesses.
+        systemd.services.hdd-spindown = {
+          description = "Spin down media HDD when automounts are idle";
+          serviceConfig.Type = "oneshot";
+          script = ''
+            if ${pkgs.util-linux}/bin/mountpoint -q /mnt/hdd || \
+               ${pkgs.util-linux}/bin/mountpoint -q /home/containers/media/hdd; then
+              exit 0
+            fi
+            ${pkgs.hdparm}/sbin/hdparm -y /dev/disk/by-id/ata-WDC_WD80EAZZ-00BKLB0_WD-CA2TN7HK
+          '';
+        };
+
+        systemd.timers.hdd-spindown = {
+          description = "Periodic media HDD spindown sweep";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*:0/5";
+            Persistent = true;
+          };
         };
 
         systemd.network = {
