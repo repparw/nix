@@ -145,6 +145,7 @@
             enable = true;
             settings = {
               timeout-critical = 20000;
+              notification-window-preferred-output = "HDMI-A-1";
             };
           };
           playerctld.enable = true;
@@ -188,6 +189,17 @@
                   alert = ".*notification";
                 }
               ];
+              settings = {
+                CustomButton = [
+                  {
+                    name = "Night Light";
+                    icon = "";
+                    command = "systemctl --user toggle wlsunset";
+                    status_command = "systemctl --user is-active wlsunset";
+                    tooltip = "Toggle wlsunset night light";
+                  }
+                ];
+              };
               appearance = {
                 style = "Islands";
                 opacity = 1.0;

@@ -60,6 +60,7 @@ in
           scrcpy
           godot
           tasks-org
+          tradingview
           zapzap
         ];
 
