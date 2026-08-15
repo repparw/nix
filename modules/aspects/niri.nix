@@ -60,6 +60,25 @@
           })
 
           (writeShellApplication {
+            name = "grabtext";
+            runtimeInputs = [
+              grim
+              gnugrep
+              slurp
+              tesseract
+              wl-clipboard
+            ];
+            text = ''
+              if wl-paste --list-types | grep -q '^image/'; then
+                wl-paste --type image/png | tesseract stdin stdout -l "''${TESSERACT_LANGS:-eng}" | wl-copy
+              else
+                geom=$(slurp -b "#ff000040" -c "#ff0000ff" -w 2) || exit 0
+                grim -g "$geom" -t png - | tesseract stdin stdout -l "''${TESSERACT_LANGS:-eng}" | wl-copy
+              fi
+            '';
+          })
+
+          (writeShellApplication {
             name = "niri-swap-active-monitor-windows";
             runtimeInputs = [
               niri
@@ -214,6 +233,7 @@
                 "-ic"
                 "top"
               ];
+              "Mod+Alt+T" = titledSpawn "Grab Text" [ "grabtext" ];
               "Mod+V" = titledSpawn "Clipboard" [
                 "vicinae"
                 "vicinae://launch/clipboard/history"
@@ -413,8 +433,8 @@
                       relative-to = "bottom-right";
                     };
                   }
-                  { default-column-width.fixed = 400; }
-                  { default-window-height.fixed = 225; }
+                  { default-column-width.fixed = 600; }
+                  { default-window-height.fixed = 338; }
                 ];
               }
               {
