@@ -23,26 +23,6 @@
                 };
               };
 
-              preferAvantreeCodec = {
-                "device.profile.priority.rules" = [
-                  {
-                    matches = [
-                      { "api.bluez5.address" = "00:1D:43:A0:14:D8"; }
-                    ];
-                    actions.update-props = {
-                      # Avoid aptX-LL, whose transport fails on this device.
-                      priorities = [
-                        "a2dp-sink"
-                        "a2dp-sink-sbc_xq"
-                        "a2dp-sink-sbc"
-                        "a2dp-sink-aac"
-                        "headset-head-unit"
-                      ];
-                    };
-                  }
-                ];
-              };
-
               disableHdmi = {
                 "monitor.alsa.rules" = [
                   {
