@@ -508,13 +508,18 @@
                 && !(builtins.any (rule: builtins.elem "null.example.test" rule.domain) sparsePolicy.authelia.rules)
                 && http.services.hass.loadBalancer.servers == [ { url = "http://192.168.0.4"; } ]
                 && http.services.hass.loadBalancer.healthCheck.path == "/"
-                && !(http.services ? t3code)
+                && http.services.opencode.loadBalancer.servers == [ { url = "http://localhost:4096"; } ]
                 &&
                   http.routers.home-router == {
                     rule = "Host(`home.${cfg.domain}`)";
                     service = "hass";
                   }
-                && !(http.routers ? t3code)
+                &&
+                  http.routers.opencode == {
+                    rule = "Host(`code.${cfg.domain}`)";
+                    service = "opencode";
+                    middlewares = [ "authelia" ];
+                  }
                 && http.routers.glance.rule == "Host(`${cfg.domain}`)"
                 && http.routers.qbittorrent.rule == "Host(`qbit.${cfg.domain}`) && !PathPrefix(`/api`)"
                 && http.routers.qbittorrent-api.rule == "Host(`qbit.${cfg.domain}`) && PathPrefix(`/api`)"
