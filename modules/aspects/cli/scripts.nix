@@ -10,17 +10,6 @@
         home.packages = with pkgs; [
 
           (writeShellApplication {
-            name = "clip2text";
-            runtimeInputs = [
-              wl-clipboard
-              tesseract
-            ];
-            text = ''
-              wl-paste | tesseract - stdout | wl-copy
-            '';
-          })
-
-          (writeShellApplication {
             name = "clip2qr";
             runtimeInputs = [
               wl-clipboard

@@ -144,8 +144,6 @@ in
 
             bind gd tabdetach
 
-            bind yy clipboard yankshort
-
             bind J tabnext --nowrap
             bind K tabprev --nowrap
 
