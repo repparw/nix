@@ -1,22 +1,15 @@
 {
   den,
-  inputs,
   lib,
   ...
 }:
 let
   moonshineModule = builtins.fetchurl {
-    url = "https://raw.githubusercontent.com/NixOS/nixpkgs/refs/pull/544393/head/nixos/modules/services/networking/moonshine.nix";
-    sha256 = "sha256-YEKjwB8/JxFQ3cFXTOCxMGp8Vg+KNk6JiwLqN3iOFbk=";
+    url = "https://raw.githubusercontent.com/NixOS/nixpkgs/1fa7b5d1a5463a1be4132fcff190fb20919e4d45/nixos/modules/services/networking/moonshine.nix";
+    sha256 = "sha256-nanahbt+fzl4iD+2xxTVZ0Cagk4kSwLMRmFyD7xRtdw=";
   };
 in
 {
-  # Latest upstream build (nixpkgs ships 0.13.5, upstream is 0.15.0). Declared
-  # here so write-flake keeps it in flake.nix inputs.
-  flake-file.inputs.moonshine = {
-    url = "github:hgaiser/moonshine";
-  };
-
   den.aspects.streaming.nixos =
     {
       config,
@@ -173,8 +166,7 @@ in
           enable = true;
           inherit user;
           firewallInterfaces = [ "eth0" ];
-          # Latest upstream git build (nixpkgs ships 0.13.5, upstream is 0.15.0).
-          package = inputs.moonshine.packages.${pkgs.stdenv.hostPlatform.system}.moonshine;
+          package = pkgs.moonshine;
 
           settings = {
             name = config.networking.hostName;
