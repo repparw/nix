@@ -13,8 +13,8 @@ let
       src = inputs.nixpkgs;
       patches = [
         (pkgs.fetchpatch {
-          url = "https://github.com/NixOS/nixpkgs/pull/518221.diff";
-          hash = "sha256-QURHYohiLherL4P4qp9WbZQ34EiilCEsxR+qQMNiGU8=";
+          url = "https://github.com/NixOS/nixpkgs/commit/4f9c47a6966e40144bcff663b19d8907448da1e3.diff";
+          hash = "sha256-MHPJWsCxy7cT+QZ7MXyBDA5DzsQKbhJLcGvUgwCk65Q=";
         })
       ];
     };
