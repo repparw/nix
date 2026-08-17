@@ -5,6 +5,7 @@
       archisteamfarm
       arr
       automations
+      iebApi
       jellyfin
       matrizApi
     ];
