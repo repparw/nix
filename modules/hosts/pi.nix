@@ -64,6 +64,11 @@
 
         swapDevices = [ ];
 
+        # Rootless podman's rootlessport must bind host port 80 for the HA pod
+        # (hostPort: 80 below). Debian allowed this via ip_unprivileged_port_start=80;
+        # NixOS defaults to 1024, which would make the bind fail.
+        boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 80;
+
         hardware.bluetooth.enable = true;
 
         virtualisation.podman = {
