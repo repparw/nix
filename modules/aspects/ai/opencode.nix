@@ -44,6 +44,31 @@
                 };
               };
             };
+            agent = {
+              build = {
+                prompt = ''
+                  You are the project lead. For each request:
+
+                  1. Decompose it into self-contained steps.
+                  2. Delegate each step to a subagent (general or explore) via
+                     the task tool, in parallel when independent.
+                  3. Run exploration and implementation inside subagent child
+                     sessions so the main thread stays clean; integrate their
+                     results here rather than redoing the work.
+                  4. Verify each subagent's result, then report a concise answer.
+                '';
+              };
+              general = {
+                permission = {
+                  task = "deny";
+                };
+              };
+              explore = {
+                permission = {
+                  task = "deny";
+                };
+              };
+            };
           };
         };
       };
