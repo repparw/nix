@@ -1,14 +1,14 @@
 ---
 type: Host Profiles
 title: Host Profiles
-description: The alpha desktop and beta laptop profiles.
+description: The alpha desktop, beta laptop, and pi server profiles.
 resource: modules/hosts/
-tags: [hosts, alpha, beta]
+tags: [hosts, alpha, beta, pi]
 ---
 
 # Host Profiles
 
-Both hosts share the baseline in `modules/defaults.nix` and add hardware or
+The hosts share the baseline in `modules/defaults.nix` and add hardware or
 workload-specific aspects in `modules/hosts/`.
 
 ## Alpha
@@ -24,6 +24,19 @@ Source: `modules/hosts/alpha.nix`
 handling to the shared baseline.
 
 Source: `modules/hosts/beta.nix`
+
+## Pi
+
+`pi` is the Raspberry Pi 5 home server (aarch64, `192.168.0.4`). It runs the
+home-automation LAN DNS server on systemd-resolved, ssh/mosh access, and the
+Home Assistant pod as a rootless podman kube service via the `pi-repparw` user
+aspect (headless: no desktop/GUI stack).
+
+It boots `linuxPackages_latest` through the Raspberry Pi firmware and
+generic-extlinux-compatible loader, with the user home on the NVMe volume and
+activation via the repo flake.
+
+Source: `modules/hosts/pi.nix`
 
 ## Related
 
