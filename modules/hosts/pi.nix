@@ -1,10 +1,16 @@
 {
   den,
+  inputs,
   lib,
   pkgs,
   ...
 }:
 {
+  flake-file.inputs.disko = {
+    url = "github:nix-community/disko";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
   den.aspects.pi = {
     includes = [
       den.batteries.hostname
@@ -19,7 +25,105 @@
         pkgs,
         ...
       }:
+      let
+        # RPi5 config.txt, mirroring nixpkgs' sd-image-aarch64. u-boot is the
+        # first-stage bootloader; it then reads extlinux from the ext4 root.
+        # [pi5] disables the UART so ghost inputs can't interrupt u-boot
+        # (https://bugzilla.opensuse.org/show_bug.cgi?id=1251192).
+        configTxt = pkgs.writeText "config.txt" ''
+          kernel=u-boot.bin
+
+          # Boot in 64-bit mode.
+          arm_64bit=1
+
+          # U-Boot needs this to work, regardless of whether UART is actually used or not.
+          enable_uart=1
+
+          # Prevent the firmware from smashing the framebuffer setup done by the mainline kernel
+          avoid_warnings=1
+
+          [pi3]
+          # Otherwise the serial output will be garbled.
+          core_freq=250
+
+          [pi4]
+          enable_gic=1
+          armstub=armstub8-gic.bin
+
+          # Otherwise the resolution will be weird in most cases
+          disable_overscan=1
+
+          # Supported in newer board revisions
+          arm_boost=1
+
+          [cm4]
+          # Enable host mode on the 2711 built-in XHCI USB controller.
+          otg_mode=1
+
+          [cm5]
+          dtoverlay=dwc2,dr_mode=host
+
+          [pi5]
+          # On some revisions of the RPi5, U-Boot picks up ghost inputs from the
+          # uart, interrupting the boot process.
+          enable_uart=0
+        '';
+      in
       {
+        imports = [
+          inputs.disko.nixosModules.disko
+        ];
+
+        # SD card layout managed by disko (only /dev/mmcblk0; the NVMe
+        # /home/repparw disk is deliberately NOT listed here, so nixos-anywhere
+        # never formats it). GPT with pinned partition GUIDs so the
+        # by-partuuid mounts below stay valid across installs. enableConfig is
+        # off: the fileSystems below are hand-written on purpose.
+        disko = {
+          enableConfig = false;
+          devices.disk.sd = {
+            type = "disk";
+            device = "/dev/mmcblk0";
+            content = {
+              type = "gpt";
+              partitions = {
+                firmware = {
+                  size = "512M";
+                  type = "EF00";
+                  uuid = "73ede3db-c84d-4604-895a-f18089cbc48e";
+                  content = {
+                    type = "filesystem";
+                    format = "vfat";
+                    mountpoint = "/boot/firmware";
+                    # Replicates nixpkgs' sd-image-aarch64 firmware partition:
+                    # RPi firmware blobs + device trees + u-boot + config.txt
+                    # (kernel=u-boot.bin). Runs on the installer at /mnt.
+                    # Note: no start*.elf in the current raspberrypifw package;
+                    # the RPi5 EEPROM bootloader loads u-boot.bin directly.
+                    postMountHook = ''
+                      cp ${pkgs.raspberrypifw}/share/raspberrypi/boot/bootcode.bin ${pkgs.raspberrypifw}/share/raspberrypi/boot/fixup*.dat /mnt/boot/firmware/
+                      cp ${pkgs.raspberrypifw}/share/raspberrypi/boot/bcm2712*.dtb /mnt/boot/firmware/
+                      cp ${pkgs.ubootRaspberryPiAarch64}/u-boot.bin /mnt/boot/firmware/
+                      cp ${pkgs.raspberrypi-armstubs}/armstub8-gic.bin /mnt/boot/firmware/
+                      cp ${configTxt} /mnt/boot/firmware/config.txt
+                    '';
+                  };
+                };
+                root = {
+                  size = "100%";
+                  type = "8300";
+                  uuid = "b7317088-8461-46c5-9458-a5789a071498";
+                  content = {
+                    type = "filesystem";
+                    format = "ext4";
+                    mountpoint = "/";
+                  };
+                };
+              };
+            };
+          };
+        };
+
         # Raspberry Pi 5 (aarch64) triple-boot loader: firmware (u-boot +
         # config.txt) lives on the vfat /boot/firmware partition, while NixOS
         # writes the extlinux boot files into /boot on the ext4 root.
@@ -37,7 +141,7 @@
 
         fileSystems = {
           "/" = {
-            device = "/dev/disk/by-partuuid/b50071b8-02";
+            device = "/dev/disk/by-partuuid/b7317088-8461-46c5-9458-a5789a071498";
             fsType = "ext4";
             options = [
               "defaults"
@@ -46,7 +150,7 @@
           };
 
           "/boot/firmware" = {
-            device = "/dev/disk/by-partuuid/b50071b8-01";
+            device = "/dev/disk/by-partuuid/73ede3db-c84d-4604-895a-f18089cbc48e";
             fsType = "vfat";
           };
 
