@@ -68,6 +68,31 @@ Notes:
   they are inert and can be pruned later.
 - The firmware partition ships with the image (u-boot, bcm2712 dtbs,
   config.txt with `[pi5] enable_uart=0`) — nothing to provision manually.
+- The flashed image's dos table yields PARTUUIDs `2178694e-01`/`-02`; grow
+  the root partition before installing anything (`sfdisk -N2 ... ,+` +
+  online `resize2fs`) — the image base is only 3.6G.
+- Inject SSH keys into the flashed card's `/home/nixos/.ssh/authorized_keys`
+  and `/root/.ssh/authorized_keys` while it is in the card reader: the
+  installer denies empty-password SSH.
+
+## Gotchas hit during the 2026-08 migration
+
+- **HA 2026.8 http config store**: Home Assistant persists its `http:`
+  settings in `.storage/http` after the one-time yaml migration; later edits
+  to `configuration.yaml` are ignored. When the podman graph root is wiped,
+  the kube network subnet changes (10.89.1.0/24 -> 10.89.0.0/24) and HA
+  starts rejecting proxied requests with "untrusted proxy" until the stored
+  `trusted_proxies` is updated.
+- **NixOS never changes a uid** of an existing user on switch
+  (`update-users-groups.pl` keeps the old id). Get `users.users.<name>.uid`
+  right before the user is first created, or delete the user record and
+  rebuild to recreate it.
+- **Quadlet over hand-written units**: `podman kube play` detaches, so a
+  Type=simple unit exits instantly and ExecStop tears the pod down. Use a
+  `.kube` quadlet (sd-notify wired correctly).
+- After install, alpha's `known_hosts` holds the *installer's* host key;
+  remove it once (`ssh-keygen -R`) — the installed system presents the
+  preserved Debian key again.
 
 ## First boot checks
 
