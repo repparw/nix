@@ -62,6 +62,17 @@
               "noatime"
             ];
           };
+
+          # /nix lives on the NVMe (second partition, carved out of the home
+          # disk): the SD is space-constrained and upgrade writes wear it.
+          "/nix" = {
+            device = "/dev/disk/by-partuuid/7fd52c5b-02";
+            fsType = "ext4";
+            options = [
+              "defaults"
+              "noatime"
+            ];
+          };
         };
 
         swapDevices = [ ];
