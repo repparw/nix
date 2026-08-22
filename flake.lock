@@ -68,6 +68,22 @@
         "type": "github"
       }
     },
+    "cursor-plugins": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787281804,
+        "narHash": "sha256-rTkT/2dliMzvwDkza2+JNhSIzcTr9fXjvK2zwi/lRl8=",
+        "owner": "cursor",
+        "repo": "plugins",
+        "rev": "46125561306434d8a1d7745d540d8932ab0cd2a2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "cursor",
+        "repo": "plugins",
+        "type": "github"
+      }
+    },
     "den": {
       "locked": {
         "lastModified": 1786475005,
@@ -405,6 +421,22 @@
         "type": "github"
       }
     },
+    "mp-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787309793,
+        "narHash": "sha256-FPAAotNqA5aHrFDlj/XddoLs4TDKi+4J5H/mvevlOlk=",
+        "owner": "mattpocock",
+        "repo": "skills",
+        "rev": "5b15a47f2d7150f545fbcacbfe381787fc0230dc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mattpocock",
+        "repo": "skills",
+        "type": "github"
+      }
+    },
     "nix-index-database": {
       "inputs": {
         "nixpkgs": [
@@ -675,6 +707,7 @@
     },
     "root": {
       "inputs": {
+        "cursor-plugins": "cursor-plugins",
         "den": "den",
         "firefox-addons": "firefox-addons",
         "flake-file": "flake-file",
@@ -686,6 +719,7 @@
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager_2",
         "import-tree": "import-tree",
+        "mp-skills": "mp-skills",
         "nix-index-database": "nix-index-database",
         "nixcord": "nixcord",
         "nixpkgs": "nixpkgs_3",

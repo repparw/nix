@@ -68,6 +68,17 @@
               "noatime"
             ];
           };
+
+          # /nix lives on the NVMe (second partition, carved out of the home
+          # disk): the SD is space-constrained and upgrade writes wear it.
+          "/nix" = {
+            device = "/dev/disk/by-partuuid/7fd52c5b-02";
+            fsType = "ext4";
+            options = [
+              "defaults"
+              "noatime"
+            ];
+          };
         };
 
         swapDevices = [ ];
@@ -322,6 +333,12 @@
       den.aspects.tmux
       den.aspects.git
       den.aspects.ssh
+      # t3code + its opencode backend, for running agent sessions on the pi.
+      # Skips dictation/speech (they need pipewire/wayland). The stylix theme
+      # in ai/t3code.nix is guarded and stays inert without the style aspect.
+      den.aspects.ai._.t3code
+      den.aspects.ai._.opencode
+      den.aspects.ai._.mcp
     ];
 
     user = _: {

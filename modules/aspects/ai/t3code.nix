@@ -36,8 +36,16 @@ in
       };
 
     homeManager =
-      { pkgs, config, ... }:
+      {
+        lib,
+        pkgs,
+        config,
+        ...
+      }:
       let
+        # Only resolvable on hosts that enable the style (stylix) aspect; the
+        # theme file below is skipped on headless hosts without it.
+        hasStylix = config.lib ? stylix;
         c = config.lib.stylix.colors.withHashtag;
       in
       {
@@ -49,69 +57,71 @@ in
         # imports them through the UI (Settings -> Appearance -> Add a theme).
         # Derive an importable theme file from the stylix palette and install
         # it under the desktop userData dir; re-import after a stylix change.
-        home.file.".config/t3code/themes/stylix.json".text = builtins.toJSON {
-          version = 1;
-          id = "stylix";
-          name = "Stylix";
-          appearance = "dark";
-          colors = {
-            canvas = c.base00;
-            chrome = c.base00;
-            toolbar = c.base00;
-            toolbarForeground = c.base05;
-            toolbarBorder = c.base02;
-            toolbarControl = c.base01;
-            toolbarControlForeground = c.base05;
-            toolbarControlHover = c.base02;
-            surface = c.base01;
-            surfaceRaised = c.base02;
-            surfaceOverlay = c.base02;
-            text = c.base05;
-            textMuted = c.base04;
-            border = c.base02;
-            input = c.base02;
-            focus = c.base0D;
-            accent = c.base0D;
-            accentForeground = c.base00;
-            secondary = c.base02;
-            secondaryForeground = c.base05;
-            muted = c.base01;
-            mutedForeground = c.base04;
-            placeholder = c.base04;
-            secondaryLabel = c.base04;
-            iconMuted = c.base04;
-            error = c.base08;
-            errorForeground = c.base07;
-            errorSurface = c.base01;
-            warning = c.base0A;
-            warningForeground = c.base07;
-            warningSurface = c.base01;
-            update = c.base0D;
-            updateForeground = c.base07;
-            updateSurface = c.base02;
-            accentSurface = c.base02;
-            accentSurfaceForeground = c.base05;
-            messageSurface = c.base01;
-            messageForeground = c.base05;
-            messageAction = c.base0D;
-            messageActionForeground = c.base00;
-            messageActionHover = c.base0E;
-            codeBackground = c.base01;
-            codeForeground = c.base05;
-            sidebar = c.base01;
-            sidebarForeground = c.base05;
-            sidebarMutedForeground = c.base04;
-            sidebarControlSurface = c.base02;
-            sidebarRowHover = c.base02;
-            sidebarRowActive = c.base03;
-            sidebarRowSelected = c.base02;
-            sidebarBorder = c.base02;
-            terminalBackground = c.base00;
-            terminalForeground = c.base05;
-            terminalCursor = c.base0D;
-            terminalSelection = c.base02;
-            terminalScrollbar = c.base02;
-            terminalScrollbarHover = c.base03;
+        home.file.".config/t3code/themes/stylix.json" = lib.mkIf hasStylix {
+          text = builtins.toJSON {
+            version = 1;
+            id = "stylix";
+            name = "Stylix";
+            appearance = "dark";
+            colors = {
+              canvas = c.base00;
+              chrome = c.base00;
+              toolbar = c.base00;
+              toolbarForeground = c.base05;
+              toolbarBorder = c.base02;
+              toolbarControl = c.base01;
+              toolbarControlForeground = c.base05;
+              toolbarControlHover = c.base02;
+              surface = c.base01;
+              surfaceRaised = c.base02;
+              surfaceOverlay = c.base02;
+              text = c.base05;
+              textMuted = c.base04;
+              border = c.base02;
+              input = c.base02;
+              focus = c.base0D;
+              accent = c.base0D;
+              accentForeground = c.base00;
+              secondary = c.base02;
+              secondaryForeground = c.base05;
+              muted = c.base01;
+              mutedForeground = c.base04;
+              placeholder = c.base04;
+              secondaryLabel = c.base04;
+              iconMuted = c.base04;
+              error = c.base08;
+              errorForeground = c.base07;
+              errorSurface = c.base01;
+              warning = c.base0A;
+              warningForeground = c.base07;
+              warningSurface = c.base01;
+              update = c.base0D;
+              updateForeground = c.base07;
+              updateSurface = c.base02;
+              accentSurface = c.base02;
+              accentSurfaceForeground = c.base05;
+              messageSurface = c.base01;
+              messageForeground = c.base05;
+              messageAction = c.base0D;
+              messageActionForeground = c.base00;
+              messageActionHover = c.base0E;
+              codeBackground = c.base01;
+              codeForeground = c.base05;
+              sidebar = c.base01;
+              sidebarForeground = c.base05;
+              sidebarMutedForeground = c.base04;
+              sidebarControlSurface = c.base02;
+              sidebarRowHover = c.base02;
+              sidebarRowActive = c.base03;
+              sidebarRowSelected = c.base02;
+              sidebarBorder = c.base02;
+              terminalBackground = c.base00;
+              terminalForeground = c.base05;
+              terminalCursor = c.base0D;
+              terminalSelection = c.base02;
+              terminalScrollbar = c.base02;
+              terminalScrollbarHover = c.base03;
+            };
           };
         };
 

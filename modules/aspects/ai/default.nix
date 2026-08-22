@@ -9,6 +9,8 @@
       dictation
       mcp
       opencode
+      pocock-skills
+      pstack
       speech
       t3code
     ];
