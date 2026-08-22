@@ -78,6 +78,70 @@
           autoPrune.enable = true;
         };
 
+        # Trial validated 2026-08-22; replaced the quadlet kube pod.
+        containers.homeassistant = {
+          autoStart = true;
+          privateNetwork = true;
+          hostAddress = "10.231.136.1";
+          localAddress = "10.231.136.2";
+          bindMounts."/var/lib/hass" = {
+            hostPath = "/home/repparw/services/hass";
+            isReadOnly = false;
+          };
+          config =
+            { ... }:
+            {
+              # nspawn breaks host-resolved (loopback stub); use the pi's own
+              # LAN resolver over the bridge.
+              networking.useHostResolvConf = false;
+              networking.nameservers = [ "192.168.0.4" ];
+
+              services.home-assistant = {
+                enable = true;
+                configDir = "/var/lib/hass";
+                extraComponents = [
+                  "default_config"
+                  "wake_on_lan"
+                  "google_assistant"
+                  "met"
+                  "radio_browser"
+                  "google_translate"
+                  # discovered from the migrated instance's entity registry
+                  "tuya"
+                  "webostv"
+                  "wled"
+                  "workday"
+                  "google_drive"
+                ];
+                extraPackages =
+                  ps: with ps; [
+                    aiogithubapi # hacs
+                    aiofiles
+                    jinja2
+                    joserfc # auth_oidc
+                    anthropic
+                    litellm
+                    pyyaml # ai_automation_suggester
+                  ];
+              };
+              networking.firewall.allowedTCPPorts = [ 8123 ];
+              system.stateVersion = "26.05";
+            };
+        };
+
+        # Ingress for the HA container (nginx adds the X-Forwarded-* headers
+        # that the container's trusted_proxies expect).
+        services.nginx = {
+          enable = true;
+          recommendedProxySettings = true;
+          virtualHosts."home.repparw.com" = {
+            locations."/" = {
+              proxyPass = "http://10.231.136.2:8123";
+              proxyWebsockets = true;
+            };
+          };
+        };
+
         nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 
         # LAN DNS server: resolved listens on the LAN address and proxies to
@@ -95,6 +159,14 @@
         };
 
         networking = {
+          # Give the nspawn containers internet access (HA integrations fetch
+          # weather/HACS data) via masquerade out of eth0.
+          nat = {
+            enable = true;
+            internalInterfaces = [ "ve-+" ];
+            externalInterface = "eth0";
+          };
+
           # First boot / install note: the resolver chain above only comes up
           # once this static address is configured (systemd.network below).
           interfaces.eth0.ipv4.addresses = [
@@ -148,6 +220,13 @@
               53
               60001
             ];
+          };
+
+          # Container traffic arrives on the nspawn veth, not eth0: allow its
+          # DNS queries to reach the host resolver.
+          firewall.interfaces."ve-*" = {
+            allowedTCPPorts = [ 53 ];
+            allowedUDPPorts = [ 53 ];
           };
         };
       };
