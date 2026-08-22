@@ -148,13 +148,15 @@
         # --set standby are clamped by a vendor minimum that never engages);
         # STANDBY IMMEDIATE (hdparm -y) is the only lever. Fire it once the
         # media automounts above have idled out, so the platter actually sleeps
-        # between accesses.
+        # between accesses. Guard with findmnt on the PARTITION (the fs mounts
+        # /dev/sda1, so the whole-disk by-id never matches); findmnt reads
+        # mountinfo and must NOT touch the automount (statvfs via mountpoint
+        # would reset the idle timer).
         systemd.services.hdd-spindown = {
           description = "Spin down media HDD when automounts are idle";
           serviceConfig.Type = "oneshot";
           script = ''
-            if ${pkgs.util-linux}/bin/mountpoint -q /mnt/hdd || \
-               ${pkgs.util-linux}/bin/mountpoint -q /home/containers/media/hdd; then
+            if ${pkgs.util-linux}/bin/findmnt -S /dev/disk/by-id/ata-WDC_WD80EAZZ-00BKLB0_WD-CA2TN7HK-part1 >/dev/null 2>&1; then
               exit 0
             fi
             ${pkgs.hdparm}/sbin/hdparm -y /dev/disk/by-id/ata-WDC_WD80EAZZ-00BKLB0_WD-CA2TN7HK
