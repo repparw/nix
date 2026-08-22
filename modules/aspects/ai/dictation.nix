@@ -7,7 +7,11 @@
         ...
       }:
       let
-        voxtypePackage = pkgs.voxtype-vulkan;
+        voxtypePackage = pkgs.voxtype-vulkan.overrideAttrs (old: {
+          postInstall = old.postInstall + ''
+            wrapProgram $out/bin/voxtype --prefix PATH : "$out/bin:${pkgs.quickshell}/bin"
+          '';
+        });
 
         voxtypeToggle = pkgs.writeShellApplication {
           name = "voxtype-toggle";
@@ -144,6 +148,7 @@
         services.voxtype = {
           enable = true;
           package = voxtypePackage;
+          wayland.display = "wayland-1";
           settings = {
             engine = "whisper";
             whisper = {

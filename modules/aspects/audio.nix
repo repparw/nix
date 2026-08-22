@@ -23,6 +23,27 @@
                 };
               };
 
+              bluetoothDefault = {
+                "monitor.bluez.rules" = [
+                  {
+                    matches = [
+                      {
+                        "device.api" = "bluez5";
+                        "media.class" = "Audio/Sink";
+                      }
+                    ];
+                    actions.update-props = {
+                      "priority.driver" = 2000;
+                      "priority.session" = 2000;
+                    };
+                  }
+                ];
+
+                "wireplumber.settings" = {
+                  "node.restore-default-targets" = false;
+                };
+              };
+
               disableHdmi = {
                 "monitor.alsa.rules" = [
                   {
