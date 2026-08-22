@@ -203,6 +203,11 @@
 
               services.hermes-agent = {
                 enable = true;
+                # Lean gateway variant (core + Discord/Telegram/Slack
+                # adapters, ~33MB vs ~700MB closure). It is exactly the
+                # derivation upstream CI builds and publishes to their cachix,
+                # so pi downloads instead of building.
+                package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
                 environmentFiles = [ "/run/secrets/hermes-env" ];
                 # Circuit-breaker defaults upstream recommends for unattended
                 # gateways: stop instead of looping tool calls forever.
@@ -217,6 +222,9 @@
                   ffmpeg
                   nodejs
                   ripgrep
+                  # ddgs CLI for the bundled duckduckgo-search skill (free,
+                  # keyless web search); no hermes variant ships it.
+                  (python313.withPackages (ps: [ python313Packages.ddgs ]))
                 ];
               };
 
