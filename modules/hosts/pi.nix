@@ -170,6 +170,9 @@
     user = _: {
       linger = true;
       description = "repparw";
+      # Match the Debian-era uid so the migrated data on the NVMe
+      # (/home/repparw) keeps its original ownership.
+      uid = 1000;
       extraGroups = [ "wheel" ];
       subUidRanges = [
         {
@@ -210,8 +213,19 @@
 
         # Home Assistant pod: kept as a rootless podman kube manifest so the
         # data under ~/services/hass and the container layout from the Debian
-        # installation carry over unchanged. `podman kube play --replace` is
-        # the NixOS-managed equivalent of the on-pi quadlet services.kube.
+        # installation carry over unchanged. Quadlet (.kube file) generates
+        # the systemd user unit with proper sd-notify wiring — a hand-written
+        # Type=simple unit would exit as soon as `podman kube play` detaches
+        # and tear the pod back down via ExecStop.
+        home.file.".config/containers/systemd/podservices.kube".text = ''
+          [Kube]
+          Yaml=%h/services/pod.yaml
+          AutoUpdate=registry
+
+          [Install]
+          WantedBy=default.target
+        '';
+
         home.file."services/pod.yaml".text = ''
           # Save the output of this file and use kubectl create -f to import
           # it into Kubernetes.
@@ -265,19 +279,6 @@
                 type: Directory
               name: run-dbus-host-2
         '';
-
-        systemd.user.services."podservices-homeassistant" = {
-          Unit.Description = "Home Assistant pod (podman kube)";
-          Unit.After = [ "network-online.target" ];
-          Service = {
-            Type = "simple";
-            ExecStart = "${lib.getExe pkgs.podman} kube play --replace ${config.home.homeDirectory}/services/pod.yaml";
-            ExecStop = "${lib.getExe pkgs.podman} kube down --force ${config.home.homeDirectory}/services/pod.yaml";
-            Restart = "always";
-            RestartSec = "10s";
-          };
-          Install.WantedBy = [ "default.target" ];
-        };
       };
   };
 
