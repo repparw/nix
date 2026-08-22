@@ -244,6 +244,12 @@
       den.aspects.tmux
       den.aspects.git
       den.aspects.ssh
+      # t3code + its opencode backend, for running agent sessions on the pi.
+      # Skips dictation/speech (they need pipewire/wayland). The stylix theme
+      # in ai/t3code.nix is guarded and stays inert without the style aspect.
+      den.aspects.ai._.t3code
+      den.aspects.ai._.opencode
+      den.aspects.ai._.mcp
     ];
 
     user = _: {
