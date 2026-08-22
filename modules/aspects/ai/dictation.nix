@@ -13,6 +13,41 @@
           '';
         });
 
+        voxtypeQuickshell = pkgs.runCommand "voxtype-quickshell-themed" { } ''
+          cp -R ${voxtypePackage.src}/quickshell $out
+          chmod -R u+w $out
+
+          substituteInPlace $out/voxtype-shared/Theme.qml \
+            --replace-fail 'property color bgColor: Qt.rgba(0.10, 0.10, 0.12, 0.85)' 'property color bgColor: Qt.rgba(0.07, 0.07, 0.09, 0.86)' \
+            --replace-fail 'property color accentColor: Qt.rgba(0.40, 0.78, 1.00, 1.0)' 'property color accentColor: Qt.rgba(1.00, 1.00, 1.00, 0.92)' \
+            --replace-fail 'property color recordingColor: "#e06c75"' 'property color recordingColor: "#ff3b5c"' \
+            --replace-fail 'property color streamingColor: "#61afef"' 'property color streamingColor: "#68b6ff"' \
+            --replace-fail 'property color transcribingColor: "#e5c07b"' 'property color transcribingColor: "#f0c96b"' \
+            --replace-fail 'property color textColor: "#dcdfe4"' 'property color textColor: "#f2f4f8"' \
+            --replace-fail 'property int cornerRadius: 12' 'property int cornerRadius: 999' \
+            --replace-fail 'property int padding: 14' 'property int padding: 15' \
+            --replace-fail 'property int defaultWidthPx: 400' 'property int defaultWidthPx: 118' \
+            --replace-fail 'property int defaultHeightPx: 48' 'property int defaultHeightPx: 46' \
+            --replace-fail 'property real defaultOpacity: 0.95' 'property real defaultOpacity: 0.86' \
+            --replace-fail 'property real waveformGain: 10.0' 'property real waveformGain: 8.0'
+
+          substituteInPlace $out/OsdSurface.qml \
+            --replace-fail 'height: 72' 'height: VT.Theme.defaultHeightPx' \
+            --replace-fail 'anchors.bottomMargin: 72' 'anchors.bottomMargin: 60' \
+            --replace-fail 'border.width: 2' 'border.width: 1' \
+            --replace-fail 'width: 28' 'width: 10' \
+            --replace-fail 'text: panel.daemonState === "recording"    ? "󰍬"' 'text: panel.daemonState === "recording"    ? "●"' \
+            --replace-fail ': panel.daemonState === "streaming"     ? "󰜟"' ': panel.daemonState === "streaming"     ? "●"' \
+            --replace-fail ': panel.daemonState === "transcribing"  ? "󰔟"' ': panel.daemonState === "transcribing"  ? "●"' \
+            --replace-fail ':                                          "󰍬"' ':                                          "●"' \
+            --replace-fail 'font.pixelSize: 26' 'font.pixelSize: 10' \
+            --replace-fail 'width: card.width - 28 - 2 * VT.Theme.padding - 10' 'width: card.width - 10 - 2 * VT.Theme.padding - 10' \
+            --replace-fail 'spacing: 4' 'spacing: 0' \
+            --replace-fail 'height: 36' 'height: 26' \
+            --replace-fail 'height: 6' 'height: 0
+                    visible: false'
+        '';
+
         voxtypeToggle = pkgs.writeShellApplication {
           name = "voxtype-toggle";
           runtimeInputs = with pkgs; [
@@ -65,7 +100,7 @@
       in
       {
         xdg.dataFile."voxtype/quickshell" = {
-          source = "${voxtypePackage.src}/quickshell";
+          source = voxtypeQuickshell;
           recursive = true;
         };
 
