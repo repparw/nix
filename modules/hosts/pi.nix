@@ -78,6 +78,67 @@
           autoPrune.enable = true;
         };
 
+        # Trial: Home Assistant as a native NixOS service in an alpha-style
+        # systemd-nspawn container (servicesLib.mkContainer shape). Runs in
+        # parallel with the quadlet pod on a COPY of the data while being
+        # validated; cutover = stop the quadlet, move nginx to :80.
+        containers.homeassistant = {
+          autoStart = true;
+          privateNetwork = true;
+          hostAddress = "10.231.136.1";
+          localAddress = "10.231.136.2";
+          bindMounts."/var/lib/hass" = {
+            hostPath = "/home/repparw/services/hass-nixos-trial";
+            isReadOnly = false;
+          };
+          config =
+            { ... }:
+            {
+              services.home-assistant = {
+                enable = true;
+                configDir = "/var/lib/hass";
+                extraComponents = [
+                  "default_config"
+                  "wake_on_lan"
+                  "google_assistant"
+                  "met"
+                  "radio_browser"
+                  "google_translate"
+                ];
+                extraPackages =
+                  ps: with ps; [
+                    aiogithubapi # hacs
+                    aiofiles
+                    jinja2
+                    joserfc # auth_oidc
+                    anthropic
+                    litellm
+                    pyyaml # ai_automation_suggester
+                  ];
+              };
+              networking.firewall.allowedTCPPorts = [ 8123 ];
+              system.stateVersion = "26.05";
+            };
+        };
+
+        # Trial ingress on :8080 (the quadlet pod still owns :80).
+        services.nginx = {
+          enable = true;
+          recommendedProxySettings = true;
+          virtualHosts."hass-trial" = {
+            listen = [
+              {
+                addr = "0.0.0.0";
+                port = 8080;
+              }
+            ];
+            locations."/" = {
+              proxyPass = "http://10.231.136.2:8123";
+              proxyWebsockets = true;
+            };
+          };
+        };
+
         nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 
         # LAN DNS server: resolved listens on the LAN address and proxies to
@@ -143,6 +204,7 @@
             allowedTCPPorts = [
               80
               53
+              8080 # hass-nspawn trial ingress; remove at cutover
             ];
             allowedUDPPorts = [
               53
