@@ -34,9 +34,8 @@ aspect (headless: no desktop/GUI stack).
 
 It boots `linuxPackages_latest` through the Raspberry Pi firmware and
 generic-extlinux-compatible loader, with the user home on the NVMe volume and
-activation via the repo flake. The SD card layout (GPT, pinned partition GUIDs,
-u-boot + config.txt firmware) is managed by disko; see the
-[deployment runbook](runbooks/deploy-pi-nixos.md).
+activation via the repo flake. The SD card runs the official NixOS aarch64
+sd-image layout; see the [deployment runbook](runbooks/deploy-pi-nixos.md).
 
 Source: `modules/hosts/pi.nix`
 
