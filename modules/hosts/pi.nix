@@ -1,10 +1,16 @@
 {
   den,
+  inputs,
   lib,
   pkgs,
   ...
 }:
 {
+  # Hermes Agent ships its own flake (uv2nix package + NixOS module). Keep its
+  # dependency closure isolated (no follows) so their tested combination
+  # builds unchanged; updates ride tag bumps here.
+  flake-file.inputs.hermes-agent.url = "github:NousResearch/hermes-agent/v2026.8.19";
+
   den.aspects.pi = {
     includes = [
       den.batteries.hostname
@@ -151,6 +157,86 @@
               proxyWebsockets = true;
             };
           };
+        };
+
+        # Hermes Agent gateway in its own nspawn container, mirroring the HA
+        # layout above. Written inline for the same reason: mkContainer
+        # hardcodes alpha's resolver, which is broken on pi.
+        #
+        # Gateway-only by choice: it talks outbound to chat platforms, nothing
+        # listens publicly, and there is no ingress vhost.
+        users.groups.hermes.gid = 345;
+        users.users.repparw.extraGroups = [ "hermes" ];
+
+        # Merged into the container's $HERMES_HOME/.env at activation. Seed
+        # values with: sops secrets/hermes.sops.yaml
+        sops.secrets."hermes-env" = {
+          sopsFile = ../../secrets/hermes.sops.yaml;
+        };
+
+        containers.hermes = {
+          autoStart = true;
+          privateNetwork = true;
+          hostAddress = "10.231.136.1";
+          localAddress = "10.231.136.3";
+          bindMounts = {
+            "/var/lib/hermes" = {
+              hostPath = "/home/repparw/services/hermes";
+              isReadOnly = false;
+            };
+            # Host-decrypted secret consumed via services.hermes-agent
+            # environmentFiles below.
+            "/run/secrets/hermes-env" = {
+              hostPath = config.sops.secrets."hermes-env".path;
+              isReadOnly = true;
+            };
+          };
+          config =
+            { pkgs, ... }:
+            {
+              imports = [ inputs.hermes-agent.nixosModules.default ];
+
+              # Same resolver workaround as the HA container above: nspawn
+              # breaks the host-resolved loopback stub.
+              networking.useHostResolvConf = false;
+              networking.nameservers = [ "192.168.0.4" ];
+
+              services.hermes-agent = {
+                enable = true;
+                # Lean gateway variant (core + Discord/Telegram/Slack
+                # adapters, ~33MB vs ~700MB closure). It is exactly the
+                # derivation upstream CI builds and publishes to their cachix,
+                # so pi downloads instead of building.
+                package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
+                environmentFiles = [ "/run/secrets/hermes-env" ];
+                # Circuit-breaker defaults upstream recommends for unattended
+                # gateways: stop instead of looping tool calls forever.
+                settings.tool_loop_guardrails = {
+                  hard_stop_enabled = true;
+                  hard_stop_after = {
+                    exact_failure = 5;
+                    idempotent_no_progress = 5;
+                  };
+                };
+                extraPackages = with pkgs; [
+                  ffmpeg
+                  nodejs
+                  ripgrep
+                  # ddgs CLI for the bundled duckduckgo-search skill (free,
+                  # keyless web search); no hermes variant ships it.
+                  (python313.withPackages (ps: [ python313Packages.ddgs ]))
+                ];
+              };
+
+              # Fixed ids matching the host-side hermes group (345) so the
+              # buprpi rsync job running as repparw can read the state dir.
+              # Without this the data would be unreadable on the host, like
+              # hass (uid 286, drwx------).
+              users.users.hermes.uid = 345;
+              users.groups.hermes.gid = 345;
+
+              system.stateVersion = "26.05";
+            };
         };
 
         nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
