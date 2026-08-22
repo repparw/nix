@@ -153,6 +153,14 @@
         };
 
         networking = {
+          # Give the nspawn containers internet access (HA integrations fetch
+          # weather/HACS data) via masquerade out of eth0.
+          nat = {
+            enable = true;
+            internalInterfaces = [ "ve-+" ];
+            externalInterface = "eth0";
+          };
+
           # First boot / install note: the resolver chain above only comes up
           # once this static address is configured (systemd.network below).
           interfaces.eth0.ipv4.addresses = [
