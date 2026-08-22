@@ -106,6 +106,12 @@
                   "met"
                   "radio_browser"
                   "google_translate"
+                  # discovered from the migrated instance's entity registry
+                  "tuya"
+                  "webostv"
+                  "wled"
+                  "workday"
+                  "google_drive"
                 ];
                 extraPackages =
                   ps: with ps; [
