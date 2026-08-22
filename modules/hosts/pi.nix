@@ -78,22 +78,24 @@
           autoPrune.enable = true;
         };
 
-        # Trial: Home Assistant as a native NixOS service in an alpha-style
-        # systemd-nspawn container (servicesLib.mkContainer shape). Runs in
-        # parallel with the quadlet pod on a COPY of the data while being
-        # validated; cutover = stop the quadlet, move nginx to :80.
+        # Trial validated 2026-08-22; replaced the quadlet kube pod.
         containers.homeassistant = {
           autoStart = true;
           privateNetwork = true;
           hostAddress = "10.231.136.1";
           localAddress = "10.231.136.2";
           bindMounts."/var/lib/hass" = {
-            hostPath = "/home/repparw/services/hass-nixos-trial";
+            hostPath = "/home/repparw/services/hass";
             isReadOnly = false;
           };
           config =
             { ... }:
             {
+              # nspawn breaks host-resolved (loopback stub); use the pi's own
+              # LAN resolver over the bridge.
+              networking.useHostResolvConf = false;
+              networking.nameservers = [ "192.168.0.4" ];
+
               services.home-assistant = {
                 enable = true;
                 configDir = "/var/lib/hass";
@@ -121,17 +123,12 @@
             };
         };
 
-        # Trial ingress on :8080 (the quadlet pod still owns :80).
+        # Ingress for the HA container (nginx adds the X-Forwarded-* headers
+        # that the container's trusted_proxies expect).
         services.nginx = {
           enable = true;
           recommendedProxySettings = true;
-          virtualHosts."hass-trial" = {
-            listen = [
-              {
-                addr = "0.0.0.0";
-                port = 8080;
-              }
-            ];
+          virtualHosts."home.repparw.com" = {
             locations."/" = {
               proxyPass = "http://10.231.136.2:8123";
               proxyWebsockets = true;
@@ -204,12 +201,18 @@
             allowedTCPPorts = [
               80
               53
-              8080 # hass-nspawn trial ingress; remove at cutover
             ];
             allowedUDPPorts = [
               53
               60001
             ];
+          };
+
+          # Container traffic arrives on the nspawn veth, not eth0: allow its
+          # DNS queries to reach the host resolver.
+          firewall.interfaces."ve-*" = {
+            allowedTCPPorts = [ 53 ];
+            allowedUDPPorts = [ 53 ];
           };
         };
       };
