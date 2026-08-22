@@ -29,10 +29,11 @@ files instead of copying module contents.
 ## Runbooks
 
 - [Add and maintain change-detection watchers](runbooks/change-detection-watchers.md)
+- [Check native container DNS](runbooks/check-native-container-dns.md)
+- [Deploy NixOS to the Raspberry Pi](runbooks/deploy-pi-nixos.md)
 - [Failed auto-upgrade rollback](runbooks/failed-auto-upgrade-rollback.md)
 - [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
-- [Check native container DNS](runbooks/check-native-container-dns.md)
 
 ## Research
 
