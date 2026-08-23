@@ -14,27 +14,6 @@ let
 in
 {
   den.aspects.ai.provides.t3code = {
-    nixos =
-      { pkgs, ... }:
-      {
-        # Upstream t3code >= 0.0.31 delegates OpenCode session titles to the
-        # provider, but opencode auto-names sessions "New session - <ts>",
-        # which then clobbers the thread title and blocks the real generated
-        # title. Mirror the upstream PR (pingdotgg/t3code#5941): only mirror a
-        # provider title while the thread still has its default title, and
-        # filter opencode's placeholder title so it never propagates. Revisit
-        # once the fix is merged upstream and reaches our nixpkgs pin.
-        nixpkgs.overlays = [
-          (final: prev: {
-            t3code = prev.t3code.override {
-              t3code-unwrapped = prev.t3code.unwrapped.overrideAttrs (old: {
-                patches = (old.patches or [ ]) ++ [ ./t3code-title-fix.patch ];
-              });
-            };
-          })
-        ];
-      };
-
     homeManager =
       {
         lib,

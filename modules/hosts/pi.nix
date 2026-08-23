@@ -339,6 +339,7 @@
       # Skips dictation/speech (they need pipewire/wayland). The stylix theme
       # in ai/t3code.nix is guarded and stays inert without the style aspect.
       den.aspects.ai._.t3code
+      den.aspects.ai._.t3code-title-patch
       den.aspects.ai._.opencode
       den.aspects.ai._.mcp
     ];
