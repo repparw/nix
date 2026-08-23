@@ -22,12 +22,28 @@ hook="$out/40-lan-hosts"
 cat >"$hook" <<'EOF'
 #!/bin/sh
 # Managed by nix repo scripts/deploy-tv-hosts.sh. webosbrew runs this on every
-# boot; safe to re-run manually. Bind-mounts the deployed fragment over
+# boot; safe to re-run manually. Installs the deployed fragment over
 # /etc/hosts, replacing a previous copy of itself if present.
-cp /etc/hosts /tmp/hosts.lan
-sed -i '/^# BEGIN nix lan-hosts/,/^# END nix lan-hosts/d' /tmp/hosts.lan
-cat /var/lib/webosbrew/lan-hosts >> /tmp/hosts.lan
-mount --bind /tmp/hosts.lan /etc/hosts
+#
+# webOS normally keeps /etc/hosts as a writable tmpfs bind (LG jail setup /
+# webosbrew update-blocker), so editing in place is enough and avoids this
+# kernel refusing to stack a file bind over an existing file bind. Fall back
+# to creating that bind ourselves when facing the pristine read-only file.
+FRAG=/var/lib/webosbrew/lan-hosts
+
+filter() {
+  sed '/^# BEGIN nix lan-hosts/,/^# END nix lan-hosts/d'
+}
+
+rm -f /tmp/hosts.lan* /tmp/hosts.new
+
+if [ -w /etc/hosts ]; then
+  filter </etc/hosts >/tmp/hosts.new && cat "$FRAG" >>/tmp/hosts.new &&
+    cat /tmp/hosts.new >/etc/hosts && rm -f /tmp/hosts.new
+else
+  filter </etc/hosts >/tmp/hosts.lan && cat "$FRAG" >>/tmp/hosts.lan
+  mount --bind /tmp/hosts.lan /etc/hosts
+fi
 EOF
 
 scp -q "$hook" "$tv:/var/lib/webosbrew/init.d/40-lan-hosts"
