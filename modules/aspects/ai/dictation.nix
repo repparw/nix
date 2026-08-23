@@ -3,109 +3,69 @@
   den.aspects.ai.provides.dictation = {
     homeManager =
       {
+        lib,
         pkgs,
         ...
       }:
       let
-        voxtypePackage = pkgs.voxtype-vulkan.overrideAttrs (old: {
-          postInstall = old.postInstall + ''
-            wrapProgram $out/bin/voxtype --prefix PATH : "$out/bin:${pkgs.quickshell}/bin"
+        # Upstream ships a prebuilt GTK4 layer-shell OSD, but nixpkgs only
+        # builds the quickshell frontend. Patchelf the small standalone binary
+        # rather than rebuilding voxtype (its lib pulls in whisper.cpp).
+        # Checksummed against upstream's SHA256SUMS.txt at v0.7.5.
+        voxtypeOsdGtk4 = pkgs.stdenv.mkDerivation {
+          pname = "voxtype-osd-gtk4";
+          version = "0.7.5";
+          src = pkgs.fetchurl {
+            url = "https://github.com/peteonrails/voxtype/releases/download/v0.7.5/voxtype-0.7.5-linux-x86_64-osd-gtk4";
+            hash = "sha256-/tgWlVUc7pW7D9N27G3Eljiw/XFEgFBNeKpZewBqWVI=";
+          };
+          dontUnpack = true;
+          nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+          buildInputs = with pkgs; [
+            cairo
+            glib
+            gtk4
+            gtk4-layer-shell
+            stdenv.cc.cc.lib
+          ];
+          installPhase = ''
+            runHook preInstall
+            install -Dm755 $src $out/bin/voxtype-osd-gtk4
+            runHook postInstall
           '';
-        });
-
-        voxtypeQuickshell = pkgs.runCommand "voxtype-quickshell-themed" { } ''
-          cp -R ${voxtypePackage.src}/quickshell $out
-          chmod -R u+w $out
-
-          substituteInPlace $out/voxtype-shared/Theme.qml \
-            --replace-fail 'property color bgColor: Qt.rgba(0.10, 0.10, 0.12, 0.85)' 'property color bgColor: Qt.rgba(0.07, 0.07, 0.09, 0.86)' \
-            --replace-fail 'property color accentColor: Qt.rgba(0.40, 0.78, 1.00, 1.0)' 'property color accentColor: Qt.rgba(1.00, 1.00, 1.00, 0.92)' \
-            --replace-fail 'property color recordingColor: "#e06c75"' 'property color recordingColor: "#ff3b5c"' \
-            --replace-fail 'property color streamingColor: "#61afef"' 'property color streamingColor: "#68b6ff"' \
-            --replace-fail 'property color transcribingColor: "#e5c07b"' 'property color transcribingColor: "#f0c96b"' \
-            --replace-fail 'property color textColor: "#dcdfe4"' 'property color textColor: "#f2f4f8"' \
-            --replace-fail 'property int cornerRadius: 12' 'property int cornerRadius: 999' \
-            --replace-fail 'property int padding: 14' 'property int padding: 15' \
-            --replace-fail 'property int defaultWidthPx: 400' 'property int defaultWidthPx: 118' \
-            --replace-fail 'property int defaultHeightPx: 48' 'property int defaultHeightPx: 46' \
-            --replace-fail 'property real defaultOpacity: 0.95' 'property real defaultOpacity: 0.86' \
-            --replace-fail 'property real waveformGain: 10.0' 'property real waveformGain: 8.0'
-
-          substituteInPlace $out/OsdSurface.qml \
-            --replace-fail 'height: 72' 'height: VT.Theme.defaultHeightPx' \
-            --replace-fail 'anchors.bottomMargin: 72' 'anchors.bottomMargin: 60' \
-            --replace-fail 'border.width: 2' 'border.width: 1' \
-            --replace-fail 'width: 28' 'width: 10' \
-            --replace-fail 'text: panel.daemonState === "recording"    ? "󰍬"' 'text: panel.daemonState === "recording"    ? "●"' \
-            --replace-fail ': panel.daemonState === "streaming"     ? "󰜟"' ': panel.daemonState === "streaming"     ? "●"' \
-            --replace-fail ': panel.daemonState === "transcribing"  ? "󰔟"' ': panel.daemonState === "transcribing"  ? "●"' \
-            --replace-fail ':                                          "󰍬"' ':                                          "●"' \
-            --replace-fail 'font.pixelSize: 26' 'font.pixelSize: 10' \
-            --replace-fail 'width: card.width - 28 - 2 * VT.Theme.padding - 10' 'width: card.width - 10 - 2 * VT.Theme.padding - 10' \
-            --replace-fail 'spacing: 4' 'spacing: 0' \
-            --replace-fail 'height: 36' 'height: 26' \
-            --replace-fail 'height: 6' 'height: 0
-                    visible: false'
-        '';
+        };
 
         voxtypeToggle = pkgs.writeShellApplication {
           name = "voxtype-toggle";
           runtimeInputs = with pkgs; [
             coreutils
-            gnugrep
-            pipewire
-            voxtypePackage
+            voxtype-vulkan
           ];
           text = ''
             set -euo pipefail
 
-            runtime_dir="''${XDG_RUNTIME_DIR:-/tmp}"
-            state_file="$runtime_dir/voxtype/state"
+            state_file="''${XDG_RUNTIME_DIR:-/tmp}/voxtype/state"
 
             read_state() {
               cat "$state_file" 2>/dev/null || printf 'idle'
             }
 
-            set_playback_suspended() {
-              pw-metadata -n default 0 suspend.playback "$1" Spa:Int >/dev/null
-            }
-
-            wait_for_idle_then_resume() {
-              for _ in $(seq 1 600); do
-                [ "$(read_state)" = "idle" ] && break
-                sleep 0.1
-              done
-              set_playback_suspended 0
-            }
-
             case "$(read_state)" in
               recording|streaming)
                 voxtype record stop
-                wait_for_idle_then_resume &
                 ;;
               transcribing)
                 voxtype record cancel || true
-                wait_for_idle_then_resume &
                 ;;
               *)
-                set_playback_suspended 1
-                if ! voxtype record start; then
-                  set_playback_suspended 0
-                  exit 1
-                fi
+                voxtype record start || exit 1
                 ;;
             esac
           '';
         };
       in
       {
-        xdg.dataFile."voxtype/quickshell" = {
-          source = voxtypeQuickshell;
-          recursive = true;
-        };
-
         home.packages = [
-          pkgs.quickshell
           voxtypeToggle
 
           (pkgs.writeShellApplication {
@@ -182,8 +142,7 @@
 
         services.voxtype = {
           enable = true;
-          package = voxtypePackage;
-          wayland.display = "wayland-1";
+          package = pkgs.voxtype-vulkan;
           settings = {
             engine = "whisper";
             whisper = {
@@ -193,7 +152,7 @@
                 "es"
               ];
               translate = false;
-              initial_prompt = "NixOS, Nixpkgs, Home Manager, flakes, FlakeHub, sops-nix, dendritic, den, Niri, Quickshell, Voxtype, Wayland.";
+              initial_prompt = "NixOS, Nixpkgs, Home Manager, flakes, FlakeHub, sops-nix, dendritic, den, Niri, Voxtype, Wayland.";
             };
             audio.feedback.enabled = true;
             output.notification.on_transcription = false;
@@ -209,9 +168,26 @@
             };
             osd = {
               enabled = true;
-              frontend = "quickshell";
+              frontend = "gtk4";
             };
           };
+          # The daemon spawns `voxtype-osd` and output typing needs wtype;
+          # give the service an explicit PATH instead of relying on the
+          # module's display-gated default. WAYLAND_DISPLAY itself is
+          # inherited from the user manager environment (imported by niri).
+          environment.PATH = lib.makeBinPath (
+            with pkgs;
+            [
+              coreutils
+              which
+              wl-clipboard
+              wtype
+              voxtypeOsdGtk4
+
+              # The daemon looks up the `voxtype-osd` launcher here.
+              pkgs.voxtype-vulkan
+            ]
+          );
         };
 
       };
