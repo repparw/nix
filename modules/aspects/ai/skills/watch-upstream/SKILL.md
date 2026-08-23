@@ -18,6 +18,7 @@ Find three things and state them back to the human before arming anything:
 - **Workaround** — the vendored code standing in for upstream: a `builtins.fetchurl` of a module file, a `nixpkgs.overlays` patch, a flake input, a patched package. Exact file paths and line numbers.
 - **Upstream event** — the precise observable condition meaning "landed": a file exists at a raw URL on the pinned branch (`https://raw.githubusercontent.com/<org>/<repo>/<branch>/<path>` → 200), or a PR's `merged_at` plus the pin's branch containing the merge commit.
 - **Completion actions** — everything that becomes possible once landed: bump the lockfile pin, delete the fetchurl block, mark the draft PR ready and merge it, close the tracking issue, remove now-dead flake inputs.
+- **Mechanical seam** — restructure the workaround so completion is mechanical: give vendored code its own file/provide and reference it through single-line includes from *every* consumer (a host including sub-aspects individually must be listed explicitly). Removal then is `git rm` + deleting include lines, never regex surgery on code that will have evolved by the time the probe fires.
 
 **Done when**: the human could read your three-part summary and correct any part before the probe ever fires.
 
@@ -40,6 +41,8 @@ This machine has no cron. Use a systemd user timer pair in `~/.config/systemd/us
 
 Then `systemctl --user daemon-reload && systemctl --user enable --now <name>.timer`.
 
+The script itself goes in `~/.local/bin/<name>.sh`, never in the repo. One-off watchers are machine-local tooling; committing one pollutes git history for every future reader. Hardcode the repo path in the script (`REPO="$HOME/Projects/nix"`) instead of deriving it from `$0`.
+
 Probe cadence: upstream channels batch promotions daily; 2h is plenty. Faster polling buys nothing.
 
 ## Step 4: The script contract
@@ -52,11 +55,13 @@ Every watcher script must satisfy all five properties:
 4. **Self-disarming** — on full success, `systemctl --user disable --now <name>.timer`. A completed watcher left running is sediment.
 5. **Observable** — humans find results via `journalctl --user -u <name>.service`; every decision prints a line.
 
-Reference implementation: `scripts/watch-moonshine.sh` in the nix config repo (probes raw URL → bumps `nixpkgs` pin → evals `services.moonshine` per host → pushes lockfile-only commit → merges stacked PR → closes tracking issue → disarms itself).
+Reference implementations (machine-local, deliberately outside git): `~/.local/bin/watch-moonshine.sh` and `~/.local/bin/watch-t3code-title-fix.sh` — the latter probes nixos-unstable's packaged t3code version → bumps the pin → removes the `t3code-title-patch` aspect and its include lines → gates on per-host eval plus a real build of the unpatched package → pushes → disarms itself.
 
 ## Step 5: Verify armed, report
 
 Run the script once by hand. Confirm: exits 0 on the not-ready path, journal shows the line, `list-timers` shows the next fire.
+
+Gotcha when verifying the repo side: Nix flakes only see git-tracked files, so a newly added workaround file must be staged (`git add`) before any eval against the working tree can resolve it.
 
 Report to the human: what is being watched, the exact condition, what will happen automatically, where the log lives, and the manual command that does the same thing (`journalctl --user -u <name> -f`) for watching live.
 
