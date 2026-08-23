@@ -8,6 +8,13 @@ let
         type = types.nullOr types.str;
         default = null;
       };
+      # Machine hosting the service. null keeps addressing host-local
+      # (containerAddress or loopback); set to the hosting machine's name so
+      # other hosts resolve the backend through its LAN address.
+      host = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+      };
       containerAddress = mkOption {
         type = types.nullOr types.str;
         default = null;
