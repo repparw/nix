@@ -15,6 +15,7 @@
     includes = [
       den.batteries.hostname
       den.aspects.networking
+      den.aspects.lan-hosts
       den.aspects.secrets
     ];
 
@@ -41,6 +42,16 @@
           };
         };
 
+        # Keep the glibc locale-archive small (~200MB vs ~1.3GB): the Pi
+        # builds non-cached packages locally and disk headroom is scarce.
+        # en_IE + es_AR match den.aspects.system; drop the long tail.
+        i18n.supportedLocales = [
+          "C.UTF-8/UTF-8"
+          "en_US.UTF-8/UTF-8"
+          "en_IE.UTF-8/UTF-8"
+          "es_AR.UTF-8/UTF-8"
+        ];
+
         fileSystems = {
           # SD card (mmcblk0): flashed from the official NixOS aarch64
           # sd-image, whose dos partition table yields these PARTUUIDs.
@@ -58,10 +69,14 @@
             fsType = "vfat";
           };
 
-          # User home + Home Assistant data live on the NVMe, so the pod's
+          # User home + Home Assistant data live on the NVMe, so
           # ~/services/hass carries over from the Debian install unchanged.
+          # Roles swapped 2026-08-23 (reinstall after SD death): home moved to
+          # p2 (17.6G, ~3G used) so the store could take p1 (40G) — p2 had run
+          # at 83% full as /nix. Pre-swap copy: alpha ~/backups/pi/
+          # pi-nvme-home-pre-swap-20260823/.
           "/home/repparw" = {
-            device = "/dev/disk/by-partuuid/7fd52c5b-01";
+            device = "/dev/disk/by-partuuid/7fd52c5b-02";
             fsType = "ext4";
             options = [
               "defaults"
@@ -69,10 +84,10 @@
             ];
           };
 
-          # /nix lives on the NVMe (second partition, carved out of the home
-          # disk): the SD is space-constrained and upgrade writes wear it.
+          # /nix lives on the NVMe: the SD is space-constrained and upgrade
+          # writes wear it.
           "/nix" = {
-            device = "/dev/disk/by-partuuid/7fd52c5b-02";
+            device = "/dev/disk/by-partuuid/7fd52c5b-01";
             fsType = "ext4";
             options = [
               "defaults"
@@ -275,37 +290,6 @@
           defaultGateway = {
             address = "192.168.0.1";
             interface = "eth0";
-          };
-          hosts = {
-            "192.168.0.18" = [
-              "repparw.com"
-              "code.repparw.com"
-              "auth.repparw.com"
-              "bazarr.repparw.com"
-              "broker.repparw.com"
-              "changedetection.repparw.com"
-              "ddclient.repparw.com"
-              "rss.repparw.com"
-              "jellyfin.repparw.com"
-              "mercury.repparw.com"
-              "ntfy.repparw.com"
-              "paperdb.repparw.com"
-              "paper.repparw.com"
-              "profilarr.repparw.com"
-              "prowlarr.repparw.com"
-              "qbit.repparw.com"
-              "radarr.repparw.com"
-              "seerr.repparw.com"
-              "sockpuppetbrowser.repparw.com"
-              "sonarr.repparw.com"
-              "traefik.repparw.com"
-              "valkey.repparw.com"
-              "home.repparw.com"
-            ];
-            "192.168.0.4" = [
-              "hyperion.repparw.com"
-              "pihole.repparw.com"
-            ];
           };
 
           firewall.interfaces.eth0 = {
