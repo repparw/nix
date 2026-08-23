@@ -29,7 +29,8 @@ let
       port = mkOption {
         type = types.nullOr types.port;
         default = null;
-      };auth = mkOption {
+      };
+      auth = mkOption {
         type = types.enum [
           "bypass"
           "one_factor"
@@ -68,13 +69,14 @@ let
         _: service:
         (service.hostname != null && service.port == null)
         || (service.monitor && (service.hostname == null || service.port == null))
-        || (service.host != null && !(lib.hasAttr service.host hostAddresses))
       ) definitions;
       invalidHostnames = lib.attrNames (
         lib.filterAttrs (_: service: !hasValidHostname service.hostname) definitions
       );
       unknownHosts = lib.attrNames (
-        lib.filterAttrs (_: service: service.host != null && !(lib.hasAttr service.host hostAddresses)) definitions
+        lib.filterAttrs (
+          _: service: service.host != null && !(lib.hasAttr service.host hostAddresses)
+        ) definitions
       );
       hostnames = lib.filter (hostname: hostname != null) (
         lib.catAttrs "hostname" (lib.attrValues definitions)

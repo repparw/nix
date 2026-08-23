@@ -12,9 +12,9 @@ let
       # (container bridge or own loopback).
       target =
         if service.host != null then
-          "${cfg.hostAddresses.${service.host}}:${toString (
-            if service.publishedPort != null then service.publishedPort else service.port
-          )}"
+          "${cfg.hostAddresses.${service.host}}:${
+            toString (if service.publishedPort != null then service.publishedPort else service.port)
+          }"
         else
           "${
             if service.containerAddress != null then service.containerAddress else "127.0.0.1"

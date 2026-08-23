@@ -126,12 +126,6 @@ else
       rules =
         paperShareRules
         ++ apiBypassRules
-        ++ [
-          {
-            domain = [ "home.${domain}" ];
-            policy = "bypass";
-          }
-        ]
         ++ modeRules
         ++ [
           {

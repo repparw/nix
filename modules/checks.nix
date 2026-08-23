@@ -141,17 +141,18 @@
           service-definitions =
             let
               alpha = inputs.self.nixosConfigurations.alpha.config;
+              pi = inputs.self.nixosConfigurations.pi.config;
               cfg = alpha.modules.services;
+              edgeCfg = pi.modules.services;
               miniflux = cfg.definitions.miniflux;
               paperless = cfg.definitions.paperless;
-              authelia = cfg.definitions.authelia;
+              authelia = edgeCfg.definitions.authelia;
               glance = cfg.definitions.glance;
-              finance = cfg.definitions.finance;
               archisteamfarm = cfg.definitions.archisteamfarm;
               automations = cfg.definitions.automations;
-              http = alpha.services.traefik.dynamicConfigOptions.http;
+              http = pi.services.traefik.dynamicConfigOptions.http;
               accessControl =
-                alpha.containers.authelia.config.services.authelia.instances.main.settings.access_control;
+                pi.containers.authelia.config.services.authelia.instances.main.settings.access_control;
               monitorSites = lib.findFirst (
                 page: page.name == "Home"
               ) { } alpha.containers.glance.config.services.glance.settings.pages;
@@ -328,7 +329,6 @@
                 && service.monitor
                 && service.backup.path == expectedService.backupPath
                 && alpha.containers.${name}.localAddress == service.containerAddress
-                && http.services.${name}.loadBalancer.servers == [ { url = endpoint; } ]
                 && hasMonitorSite name expectedService.hostname endpoint
                 && alpha.fileSystems."${cfg.backupDir}/${name}".device == expectedService.backupPath
                 &&
@@ -336,15 +336,15 @@
                     alpha.systemd.services."container@${name}".after
               ) (lib.attrNames expectedMediaDefinitions);
               nativeServicesMatch =
-                !(cfg ? inventory)
+                !(cfg.definitions ? hass)
+                && !(cfg.definitions ? authelia)
+                && !(cfg.definitions ? finance)
+                && edgeCfg ? definitions.hass
                 && miniflux.hostname == "rss"
                 && miniflux.port == 8081
                 && miniflux.auth == "one_factor"
                 && miniflux.monitor
                 && miniflux.backup.path == "${cfg.configDir}/miniflux"
-                && http.routers.miniflux.rule == "Host(`rss.${cfg.domain}`)"
-                && http.routers.miniflux.middlewares == [ "authelia" ]
-                && http.services.miniflux.loadBalancer.servers == [ { url = "http://127.0.0.1:8081"; } ]
                 && hasMonitorSite "miniflux" "rss" "http://127.0.0.1:8081"
                 && alpha.fileSystems."${cfg.backupDir}/miniflux".device == "${cfg.configDir}/miniflux"
                 && builtins.elem "home-containers-backup-miniflux.mount" alpha.systemd.services.miniflux.after
@@ -359,9 +359,6 @@
                 && builtins.elem paperless.port alpha.containers.paperless.config.networking.firewall.allowedTCPPorts
                 && alpha.containers.paperless.config.services.paperless.address == "0.0.0.0"
                 && alpha.containers.paperless.config.services.paperless.port == paperless.port
-                && http.routers.paperless.rule == "Host(`paper.${cfg.domain}`)"
-                && http.routers.paperless.middlewares == [ "authelia" ]
-                && http.services.paperless.loadBalancer.servers == [ { url = "http://10.231.136.12:8000"; } ]
                 && hasMonitorSite "paperless" "paper" "http://10.231.136.12:8000"
                 && alpha.fileSystems."${cfg.backupDir}/paperless".device == paperless.backup.path
                 &&
@@ -373,19 +370,11 @@
                 && authelia.port == 9091
                 && authelia.auth == "bypass"
                 && authelia.monitor
-                && authelia.backup.path == "${cfg.configDir}/authelia"
-                && alpha.containers.authelia.localAddress == authelia.containerAddress
-                && builtins.elem authelia.port alpha.containers.authelia.config.networking.firewall.allowedTCPPorts
+                && pi.containers.authelia.localAddress == authelia.containerAddress
+                && builtins.elem authelia.port pi.containers.authelia.config.networking.firewall.allowedTCPPorts
                 &&
-                  alpha.containers.authelia.config.services.authelia.instances.main.settings.server.address
+                  pi.containers.authelia.config.services.authelia.instances.main.settings.server.address
                   == "tcp://:${toString authelia.port}"
-                && http.routers.authelia.rule == "Host(`auth.${cfg.domain}`)"
-                && !(http.routers.authelia ? middlewares)
-                && http.services.authelia.loadBalancer.servers == [ { url = "http://10.231.136.7:9091"; } ]
-                &&
-                  http.middlewares.authelia.forwardAuth.address == "http://10.231.136.7:9091/api/authz/forward-auth"
-                && hasMonitorSite "authelia" "auth" "http://10.231.136.7:9091"
-                && alpha.fileSystems."${cfg.backupDir}/authelia".device == authelia.backup.path
                 && glance.containerAddress == "10.231.136.15"
                 && glance.port == 8080
                 && glance.auth == "bypass"
@@ -393,15 +382,7 @@
                 && alpha.containers.glance.config.services.glance.settings.server.host == "0.0.0.0"
                 && alpha.containers.glance.config.services.glance.settings.server.port == glance.port
                 && http.routers.glance.rule == "Host(`${cfg.domain}`)"
-                && http.services.glance.loadBalancer.servers == [ { url = "http://10.231.136.15:8080"; } ]
-                && alpha.containers.glance.config.services.glance.settings.branding.logo-text == "R"
-                && finance.hostname == "finance"
-                && finance.port == 3000
-                && finance.auth == "one_factor"
-                && http.routers.finance.rule == "Host(`finance.${cfg.domain}`)"
-                && http.routers.finance.middlewares == [ "authelia" ]
-                && hasAccessPolicy accessControl.rules "finance.${cfg.domain}" "one_factor"
-                && http.services.finance.loadBalancer.servers == [ { url = "http://127.0.0.1:3000"; } ];
+                && alpha.containers.glance.config.services.glance.settings.branding.logo-text == "R";
               backgroundServicesMatch =
                 archisteamfarm.containerAddress == "10.231.136.13"
                 && archisteamfarm.hostname == null
@@ -432,13 +413,6 @@
                 && alpha.systemd.timers.change-detection.timerConfig.RandomizedDelaySec == "5min";
               mediaSpecializationMatch =
                 mediaDefinitionsMatch
-                && http.routers.bazarr.middlewares == [ "authelia" ]
-                && http.routers.prowlarr.middlewares == [ "authelia" ]
-                && http.routers.radarr.middlewares == [ "authelia" ]
-                && http.routers.sonarr.middlewares == [ "authelia" ]
-                && !(http.routers.jellyfin ? middlewares)
-                && http.routers.qbittorrent.rule == "Host(`qbit.${cfg.domain}`) && !PathPrefix(`/api`)"
-                && http.routers.qbittorrent-api.rule == "Host(`qbit.${cfg.domain}`) && PathPrefix(`/api`)"
                 &&
                   alpha.containers.qbittorrent.forwardPorts == [
                     {
@@ -450,6 +424,11 @@
                       protocol = "udp";
                       hostPort = 54535;
                       containerPort = 54535;
+                    }
+                    {
+                      protocol = "tcp";
+                      hostPort = 18080;
+                      containerPort = 8080;
                     }
                   ]
                 && lib.all (name: alpha.containers.${name}.privateUsers == "identity") [
@@ -497,6 +476,9 @@
                 let
                   shareRule = builtins.elemAt accessControl.rules 0;
                   apiRule = builtins.elemAt accessControl.rules 1;
+                  homeBypassRules = builtins.filter (
+                    rule: rule.domain == [ "home.${cfg.domain}" ] && rule.policy == "bypass"
+                  ) accessControl.rules;
                 in
                 !(matrixPolicy.traefik.routers.bypass ? middlewares)
                 && matrixPolicy.traefik.routers.one.middlewares == [ "authelia" ]
@@ -506,28 +488,59 @@
                 && hasAccessPolicy matrixPolicy.authelia.rules "two.example.test" "two_factor"
                 && !unsupportedExternal.success
                 && !(builtins.any (rule: builtins.elem "null.example.test" rule.domain) sparsePolicy.authelia.rules)
-                && http.services.hass.loadBalancer.servers == [ { url = "http://192.168.0.4"; } ]
-                && http.services.hass.loadBalancer.healthCheck.path == "/"
-                && http.services.opencode.loadBalancer.servers == [ { url = "http://localhost:4096"; } ]
+                && !(http.routers ? opencode)
+                && !(http.routers ? home-router)
                 &&
-                  http.routers.home-router == {
+                  http.routers.glance == {
+                    rule = "Host(`${cfg.domain}`)";
+                    service = "glance";
+                  }
+                &&
+                  http.routers.hass == {
                     rule = "Host(`home.${cfg.domain}`)";
                     service = "hass";
                   }
                 &&
-                  http.routers.opencode == {
-                    rule = "Host(`code.${cfg.domain}`)";
-                    service = "opencode";
-                    middlewares = [ "authelia" ];
+                  http.routers.jellyfin == {
+                    rule = "Host(`jellyfin.${cfg.domain}`)";
+                    service = "jellyfin";
                   }
-                && http.routers.glance.rule == "Host(`${cfg.domain}`)"
+                &&
+                  http.routers.authelia == {
+                    rule = "Host(`auth.${cfg.domain}`)";
+                    service = "authelia";
+                  }
+                && lib.all (name: http.routers.${name}.middlewares == [ "authelia" ]) [
+                  "bazarr"
+                  "finance"
+                  "miniflux"
+                  "paperless"
+                  "prowlarr"
+                  "radarr"
+                  "sonarr"
+                ]
                 && http.routers.qbittorrent.rule == "Host(`qbit.${cfg.domain}`) && !PathPrefix(`/api`)"
+                && http.routers.qbittorrent.middlewares == [ "qbit-auth" ]
                 && http.routers.qbittorrent-api.rule == "Host(`qbit.${cfg.domain}`) && PathPrefix(`/api`)"
                 &&
                   http.middlewares.qbit-auth.chain.middlewares == [
                     "authelia"
                     "qbit-basic-auth"
                   ]
+                &&
+                  http.middlewares.authelia.forwardAuth.address == "http://10.231.136.7:9091/api/authz/forward-auth"
+                && http.services.authelia.loadBalancer.servers == [ { url = "http://10.231.136.7:9091"; } ]
+                && http.services.hass.loadBalancer.servers == [ { url = "http://10.231.136.2:8123"; } ]
+                && http.services.glance.loadBalancer.servers == [ { url = "http://192.168.0.18:18085"; } ]
+                && http.services.jellyfin.loadBalancer.servers == [ { url = "http://192.168.0.18:8096"; } ]
+                && http.services.qbittorrent.loadBalancer.servers == [ { url = "http://192.168.0.18:18080"; } ]
+                && http.services.bazarr.loadBalancer.servers == [ { url = "http://192.168.0.18:6767"; } ]
+                && http.services.finance.loadBalancer.servers == [ { url = "http://192.168.0.18:3000"; } ]
+                && http.services.miniflux.loadBalancer.servers == [ { url = "http://192.168.0.18:8081"; } ]
+                && http.services.paperless.loadBalancer.servers == [ { url = "http://192.168.0.18:8000"; } ]
+                && http.services.prowlarr.loadBalancer.servers == [ { url = "http://192.168.0.18:9696"; } ]
+                && http.services.radarr.loadBalancer.servers == [ { url = "http://192.168.0.18:7878"; } ]
+                && http.services.sonarr.loadBalancer.servers == [ { url = "http://192.168.0.18:8989"; } ]
                 && shareRule.domain == [ "paper.${cfg.domain}" ]
                 && shareRule.resources == [ "^/share/.*$" ]
                 && shareRule.policy == "bypass"
@@ -538,8 +551,82 @@
                     "^/v1([/?].*)?$"
                   ]
                 && apiRule.policy == "bypass"
+                && builtins.length homeBypassRules == 1
+                && hasAccessPolicy accessControl.rules "jellyfin.${cfg.domain}" "bypass"
+                && hasAccessPolicy accessControl.rules "rss.${cfg.domain}" "one_factor"
                 && (lib.last accessControl.rules).domain == [ "*.${cfg.domain}" ]
+                && (lib.last accessControl.rules).subject == [ "group:admins" ]
                 && accessControl.default_policy == "deny";
+              publishedBackendMatch =
+                !alpha.services.traefik.enable
+                && !(builtins.elem 80 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts)
+                && !(builtins.elem 443 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts)
+                && builtins.elem 54535 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts
+                && builtins.any (lib.strings.hasInfix "iifname \"eth0\" ip saddr 192.168.0.4 tcp dport { 3000, 8081 } accept") (
+                  lib.splitString "\n" alpha.networking.firewall.extraInputRules
+                )
+                && lib.strings.hasInfix "iifname \"eth0\" ip saddr 192.168.0.4 oifname \"ve-*\" accept" alpha.networking.firewall.extraForwardRules
+                && builtins.all (port: builtins.elem port pi.networking.firewall.interfaces.eth0.allowedTCPPorts) [
+                  53
+                  80
+                  443
+                ]
+                &&
+                  alpha.containers.glance.forwardPorts == [
+                    {
+                      protocol = "tcp";
+                      hostPort = 18085;
+                      containerPort = 8080;
+                    }
+                  ]
+                &&
+                  alpha.containers.paperless.forwardPorts == [
+                    {
+                      protocol = "tcp";
+                      hostPort = 8000;
+                      containerPort = 8000;
+                    }
+                  ]
+                &&
+                  alpha.containers.jellyfin.forwardPorts == [
+                    {
+                      protocol = "tcp";
+                      hostPort = 8096;
+                      containerPort = 8096;
+                    }
+                  ]
+                &&
+                  alpha.containers.bazarr.forwardPorts == [
+                    {
+                      protocol = "tcp";
+                      hostPort = 6767;
+                      containerPort = 6767;
+                    }
+                  ]
+                &&
+                  alpha.containers.prowlarr.forwardPorts == [
+                    {
+                      protocol = "tcp";
+                      hostPort = 9696;
+                      containerPort = 9696;
+                    }
+                  ]
+                &&
+                  alpha.containers.radarr.forwardPorts == [
+                    {
+                      protocol = "tcp";
+                      hostPort = 7878;
+                      containerPort = 7878;
+                    }
+                  ]
+                &&
+                  alpha.containers.sonarr.forwardPorts == [
+                    {
+                      protocol = "tcp";
+                      hostPort = 8989;
+                      containerPort = 8989;
+                    }
+                  ];
               expected = builtins.all (value: value) [
                 nativeServicesMatch
                 authenticationPresentationMatch
@@ -547,6 +634,7 @@
                 mediaSpecializationMatch
                 validationMatches
                 ingressPolicyMatches
+                publishedBackendMatch
               ];
             in
             assert expected;
