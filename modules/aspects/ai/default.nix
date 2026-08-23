@@ -9,6 +9,7 @@
       dictation
       mcp
       opencode
+      personal-skills
       pocock-skills
       pstack
       speech
