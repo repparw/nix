@@ -25,24 +25,6 @@
             };
             formatter = false;
             provider = {
-              oc-galo = {
-                npm = "@ai-sdk/openai-compatible";
-                name = "oc-galo";
-                options = {
-                  baseURL = "https://opencode.ai/zen/go/v1";
-                };
-                models = {
-                  deepseek-v4-flash = {
-                    name = "DeepSeek V4 Flash";
-                  };
-                  deepseek-v4-pro = {
-                    name = "DeepSeek V4 Pro";
-                  };
-                  "kimi-k2.6" = {
-                    name = "Kimi K2.6";
-                  };
-                };
-              };
               openrouter = {
                 npm = "@ai-sdk/openai-compatible";
                 name = "OpenRouter";
