@@ -33,6 +33,24 @@
                 };
               };
             };
+            # Nous Portal subscription routed through their OpenAI-compatible
+            # inference API. Auth handled out-of-band via /connect (no key in
+            # repo).
+            nous-portal = {
+              npm = "@ai-sdk/openai-compatible";
+              name = "Nous Portal";
+              options = {
+                baseURL = "https://inference-api.nousresearch.com/v1";
+              };
+              models = {
+                "anthropic/claude-sonnet-4-6" = {
+                  name = "Claude Sonnet 4.6";
+                };
+                "moonshotai/kimi-k3" = {
+                  name = "Kimi K3";
+                };
+              };
+            };
             orcarouter = {
               npm = "@ai-sdk/openai-compatible";
               name = "OrcaRouter";
