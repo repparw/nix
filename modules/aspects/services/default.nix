@@ -1,14 +1,17 @@
 { den, ... }:
 {
   den.aspects.nixos-services = {
-    includes = with den.aspects.nixos-services._; [
-      archisteamfarm
-      arr
-      automations
-      iebApi
-      jellyfin
-      matrizApi
-    ];
+    includes =
+      with den.aspects.nixos-services._;
+      [
+        archisteamfarm
+        arr
+        automations
+        iebApi
+        jellyfin
+        matrizApi
+      ]
+      ++ [ den.aspects.lan-hosts ];
 
     nixos =
       {
@@ -64,11 +67,6 @@
             (final: prev: {
               striptracks = final.callPackage ../../_packages/striptracks.nix { };
             })
-          ];
-
-          networking.hosts."192.168.0.18" = servicesLib.serviceHosts cfg ++ [
-            cfg.domain
-            "home.${cfg.domain}"
           ];
 
           systemd.services = servicesLib.containerBackupAfters cfg;
