@@ -32,6 +32,7 @@ files instead of copying module contents.
 - [Check native container DNS](runbooks/check-native-container-dns.md)
 - [Deploy NixOS to the Raspberry Pi](runbooks/deploy-pi-nixos.md)
 - [Failed auto-upgrade rollback](runbooks/failed-auto-upgrade-rollback.md)
+- [Migrate the edge to pi](runbooks/migrate-edge-to-pi.md)
 - [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Prune t3code and opencode databases](runbooks/prune-t3code-opencode-dbs.md)
 - [Restore service backups](runbooks/restore-service-backups.md)

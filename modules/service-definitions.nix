@@ -19,11 +19,17 @@ let
         type = types.nullOr types.str;
         default = null;
       };
-      port = mkOption {
+      # Port exposed on the hosting machine's LAN when it differs from
+      # `port` (e.g. two containers behind one host publishing the same
+      # container port). Only meaningful together with `host`.
+      publishedPort = mkOption {
         type = types.nullOr types.port;
         default = null;
       };
-      auth = mkOption {
+      port = mkOption {
+        type = types.nullOr types.port;
+        default = null;
+      };auth = mkOption {
         type = types.enum [
           "bypass"
           "one_factor"
@@ -49,7 +55,7 @@ let
     };
   };
   validateDefinitions =
-    definitions:
+    hostAddresses: definitions:
     let
       hasValidHostname =
         hostname:
@@ -62,9 +68,13 @@ let
         _: service:
         (service.hostname != null && service.port == null)
         || (service.monitor && (service.hostname == null || service.port == null))
+        || (service.host != null && !(lib.hasAttr service.host hostAddresses))
       ) definitions;
       invalidHostnames = lib.attrNames (
         lib.filterAttrs (_: service: !hasValidHostname service.hostname) definitions
+      );
+      unknownHosts = lib.attrNames (
+        lib.filterAttrs (_: service: service.host != null && !(lib.hasAttr service.host hostAddresses)) definitions
       );
       hostnames = lib.filter (hostname: hostname != null) (
         lib.catAttrs "hostname" (lib.attrValues definitions)
@@ -83,6 +93,8 @@ let
       throw "invalid service definitions: ${lib.concatStringsSep ", " (lib.attrNames invalid)}; routed and monitored services require both hostname and port"
     else if invalidHostnames != [ ] then
       throw "invalid service definition hostnames: ${lib.concatStringsSep ", " invalidHostnames}; hostnames must be lowercase DNS labels"
+    else if unknownHosts != [ ] then
+      throw "service definitions reference hosts missing from modules.services.hostAddresses: ${lib.concatStringsSep ", " unknownHosts}"
     else if duplicateHostnames != [ ] then
       throw "duplicate service definition hostnames: ${lib.concatStringsSep ", " duplicateHostnames}"
     else if duplicateAddresses != [ ] then
@@ -135,8 +147,22 @@ in
     definitions = mkOption {
       type = types.attrsOf serviceType;
       default = { };
-      apply = validateDefinitions;
+      apply = validateDefinitions cfg.hostAddresses;
       description = "Shared service facts used to derive reachability, routing, monitoring, and backups.";
+    };
+
+    # LAN address of each known machine, keyed by host name. Definitions with
+    # a `host` set resolve their loopback-bound backends through this map;
+    # containerAddress backends are reached directly via the hosting machine's
+    # routed container bridge.
+    hostAddresses = mkOption {
+      type = types.attrsOf types.str;
+      default = { };
+      example = {
+        alpha = "192.168.0.18";
+        pi = "192.168.0.4";
+      };
+      description = "Known machines and their LAN addresses for cross-host backend resolution.";
     };
 
   };

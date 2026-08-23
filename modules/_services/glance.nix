@@ -24,6 +24,15 @@ in
     inherit cfg;
     name = "glance";
     privateUsers = "pick";
+    # Published WebUI (remapped: qbittorrent owns 8080 on the LAN iface);
+    # remote ingress targets it for the apex domain.
+    forwardPorts = [
+      {
+        protocol = "tcp";
+        hostPort = 18085;
+        containerPort = 8080;
+      }
+    ];
     bindMounts = {
       "/assets" = {
         hostPath = "${glanceAssets}";

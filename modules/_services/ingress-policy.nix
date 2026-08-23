@@ -85,18 +85,9 @@ else
       routers =
         lib.mapAttrs mkRouter routableDefinitions
         // {
-          home-router = {
-            rule = "Host(`home.${domain}`)";
-            service = "hass";
-          };
           glance = {
             rule = "Host(`${domain}`)";
             service = "glance";
-          };
-          opencode = {
-            rule = "Host(`code.${domain}`)";
-            service = "opencode";
-            middlewares = [ "authelia" ];
           };
         }
         // lib.optionalAttrs (hasServiceHost "qbittorrent") {
@@ -127,17 +118,7 @@ else
         ];
         qbit-basic-auth.headers.customRequestHeaders.Authorization = "{{ env `QBIT_AUTH` }}";
       };
-      services = lib.mapAttrs (name: _: mkBackend name) proxyableDefinitions // {
-        opencode.loadBalancer.servers = [ { url = "http://localhost:4096"; } ];
-        hass.loadBalancer = {
-          servers = [ { url = "http://192.168.0.4"; } ];
-          healthCheck = {
-            path = "/";
-            interval = "10s";
-            timeout = "3s";
-          };
-        };
-      };
+      services = lib.mapAttrs (name: _: mkBackend name) proxyableDefinitions;
     };
 
     authelia = {

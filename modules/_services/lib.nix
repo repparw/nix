@@ -7,9 +7,20 @@ let
     cfg: name:
     let
       service = cfg.definitions.${name};
-      address = if service.containerAddress != null then service.containerAddress else "127.0.0.1";
+      # Remote backends (host set) are reached via the hosting machine's LAN
+      # address and published port; local backends keep host-local addressing
+      # (container bridge or own loopback).
+      target =
+        if service.host != null then
+          "${cfg.hostAddresses.${service.host}}:${toString (
+            if service.publishedPort != null then service.publishedPort else service.port
+          )}"
+        else
+          "${
+            if service.containerAddress != null then service.containerAddress else "127.0.0.1"
+          }:${toString service.port}";
     in
-    "http://${address}:${toString service.port}";
+    "http://${target}";
 
   backupServices = cfg: lib.filterAttrs (_: service: service.backup != null) cfg.definitions;
 
