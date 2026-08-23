@@ -340,6 +340,7 @@
       # in ai/t3code.nix is guarded and stays inert without the style aspect.
       den.aspects.ai._.t3code
       den.aspects.ai._.t3code-title-patch
+      den.aspects.ai._.t3code-split
       den.aspects.ai._.opencode
       den.aspects.ai._.mcp
     ];

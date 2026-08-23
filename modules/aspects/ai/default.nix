@@ -14,6 +14,7 @@
       pstack
       speech
       t3code-title-patch
+      t3code-split
       t3code
     ];
 
