@@ -1,7 +1,7 @@
 ---
 type: Runbook
 title: Deploy NixOS to the Raspberry Pi (migration)
-description: Install NixOS on the pi's SD card via the official sd-image + nixos-anywhere, keeping the NVMe home disk and the Debian SSH host key.
+description: Install NixOS on the pi's SD card via the official sd-image + nixos-anywhere, keeping the NVMe data disk (/nix + home) and the Debian SSH host key.
 when: Read when migrating the Raspberry Pi 5 from Debian to NixOS or reinstalling it.
 resource: modules/hosts/pi.nix
 tags: [runbook, pi, migration, nixos-anywhere]
@@ -9,8 +9,23 @@ tags: [runbook, pi, migration, nixos-anywhere]
 
 # Deploy NixOS to the Raspberry Pi
 
-The pi boots NixOS from the internal SD card (`/dev/mmcblk0`). The NVMe
-(`/dev/nvme0n1`) holds `/home/repparw` and is never touched by the install.
+The pi boots NixOS from the internal SD card (`/dev/mmcblk0`). The second
+drive (`/dev/nvme0n1`) holds data only and is never touched by the install:
+
+- `/nix` — partition 1 (PARTUUID `7fd52c5b-01`, 40G)
+- `/home/repparw` — partition 2 (PARTUUID `7fd52c5b-02`, 17.6G)
+
+(roles swapped 2026-08-23 after the SD died; before that `-01` was home and
+`-02` the store).
+
+**This drive is not a real SSD.** It is the 64 GB module from an LCD-model
+Steam Deck: FORESEE FE2H0M064G-B5X10 ("E2M2"), eMMC flash behind an O2 Micro
+NVMe-to-eMMC bridge (PCI ID `1217:8760`). It enumerates as a genuine NVMe
+namespace over PCIe Gen2 x1, which is why `/dev/nvme0n1` works, but it
+performs at SD-card class (~250-350 MB/s seq read) and has eMMC-class
+endurance. Known quirk: this bridge fails Pi 5 *boot* attempts in community
+reports (bootloader error 8/10 loops), so treat any plan to move the boot
+chain off the SD onto it with suspicion — see issue #41.
 
 USB-booting an installer image hard-hangs this board's bootloader (even on the
 2026-05 EEPROM), so the installer runs **from the internal SD** instead, and
