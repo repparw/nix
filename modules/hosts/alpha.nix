@@ -231,15 +231,20 @@
         };
 
         networking.firewall.interfaces.eth0 = {
+          # The public edge moved to pi: no more :80/:443 here. Only the
+          # published service backends are exposed, and only to pi, which
+          # fronts them (docs/runbooks/migrate-edge-to-pi.md).
           allowedTCPPorts = [
-            80
-            443
             54535
           ];
           allowedUDPPorts = [
             54535
           ];
         };
+
+        networking.firewall.extraInputRules = ''
+          iifname "eth0" ip saddr 192.168.0.4 tcp dport { 3000, 4096, 6767, 7878, 8000, 8081, 8096, 8989, 9696, 18080, 18085 } accept comment "pi ingress -> alpha backends"
+        '';
 
         networking.nftables.tables.qos = {
           family = "inet";

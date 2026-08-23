@@ -14,36 +14,30 @@ _: {
     nixos =
       { lib, pkgs, ... }:
       let
-        # Static addresses from hosts/alpha.nix and hosts/pi.nix.
-        alphaAddress = "192.168.0.18";
+        # Static address of the edge host (see hosts/pi.nix).
         piAddress = "192.168.0.4";
 
-        # alpha fronts the service containers through Traefik; names must
-        # match the router rules in _services/ingress-policy.nix.
-        alphaNames = [
+        # pi fronts every public service since the edge migration
+        # (docs/runbooks/migrate-edge-to-pi.md); names must match the router
+        # rules in _services/ingress-policy.nix.
+        piNames = [
           "repparw.com"
-          "home.repparw.com"
-          "code.repparw.com"
           "auth.repparw.com"
           "bazarr.repparw.com"
+          "code.repparw.com"
           "finance.repparw.com"
+          "home.repparw.com"
           "jellyfin.repparw.com"
-          "rss.repparw.com"
           "paper.repparw.com"
           "prowlarr.repparw.com"
           "qbit.repparw.com"
           "radarr.repparw.com"
+          "rss.repparw.com"
           "sonarr.repparw.com"
-        ];
-
-        piNames = [
-          "hyperion.repparw.com"
-          "pihole.repparw.com"
         ];
 
         rendered = ''
           # BEGIN nix lan-hosts (modules/aspects/lan-hosts.nix)
-          ${alphaAddress} ${lib.concatStringsSep " " alphaNames}
           ${piAddress} ${lib.concatStringsSep " " piNames}
           # END nix lan-hosts
         '';
@@ -59,7 +53,6 @@ _: {
           modules.lan-hosts.file = pkgs.writeText "lan-hosts" rendered;
 
           networking.hosts = {
-            ${alphaAddress} = alphaNames;
             ${piAddress} = piNames;
           };
         };

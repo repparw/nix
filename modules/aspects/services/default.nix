@@ -25,23 +25,18 @@
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
       in
       {
+        # The public edge (proxy/authelia/ddclient) moved to pi; this host
+        # keeps only its backend services plus the shared schema they use.
         imports = [
-          ../../_services/authelia.nix
           ../../_services/miniflux.nix
           ../../_services/paperless.nix
-          ../../_services/ddclient.nix
-          ../../_services/proxy.nix
           ../../_services/glance.nix
           ../../service-definitions.nix
         ];
 
         config = {
-          # The finance dashboard is managed outside this Nix configuration.
-          # This only wires an optional host-local listener into the proxy.
-          modules.services.definitions.finance = {
-            hostname = "finance";
-            port = 3000;
-            auth = "one_factor";
+          modules.services.hostAddresses = {
+            pi = "192.168.0.4";
           };
 
           networking = {
