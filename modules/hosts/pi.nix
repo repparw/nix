@@ -30,8 +30,13 @@
         # Raspberry Pi 5 (aarch64) triple-boot loader: firmware (u-boot +
         # config.txt) lives on the vfat /boot/firmware partition, while NixOS
         # writes the extlinux boot files into /boot on the ext4 root.
+        #
+        # Kernel pinned to 6.18 LTS-line: linuxPackages_latest (7.2) does not
+        # enumerate the BCM2712 PCIe/NVMe controller with the sd-image's DTBs
+        # (boot hung waiting for the /nix device); 6.18.4x is proven on this
+        # board. Revisit after the U-Boot NVMe work lands (issue #41).
         boot = {
-          kernelPackages = pkgs.linuxPackages_latest;
+          kernelPackages = pkgs.linuxPackages_6_18;
           kernelParams = [
             "console=ttyMA0,115200n8"
             "console=tty0"
@@ -81,6 +86,10 @@
             options = [
               "defaults"
               "noatime"
+              "nofail"
+              # BCM2712 PCIe link training can take >90s on this board;
+              # default device timeout aborted the boot first.
+              "x-systemd.device-timeout=5min"
             ];
           };
 
@@ -92,6 +101,7 @@
             options = [
               "defaults"
               "noatime"
+              "x-systemd.device-timeout=5min"
             ];
           };
         };
