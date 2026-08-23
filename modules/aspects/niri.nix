@@ -197,13 +197,6 @@
                 "t3code"
                 "t3code-desktop"
               ];
-              "Mod+Shift+G" = titledSpawn "OpenCode" [
-                "ndrop"
-                "-F"
-                "-c"
-                "opencode-desktop"
-                "ai.opencode.desktop"
-              ];
               "Mod+M" = titledSpawn "Spotify" [
                 "foot"
                 "--app-id"
