@@ -243,7 +243,7 @@
         };
 
         networking.firewall.extraInputRules = ''
-          iifname "eth0" ip saddr 192.168.0.4 tcp dport { 3000, 4096, 6767, 7878, 8000, 8081, 8096, 8989, 9696, 18080, 18085 } accept comment "pi ingress -> alpha backends"
+          iifname "eth0" ip saddr 192.168.0.4 tcp dport { 3000, 6767, 7878, 8000, 8081, 8096, 8989, 9696, 18080, 18085 } accept comment "pi ingress -> alpha backends"
         '';
 
         networking.nftables.tables.qos = {

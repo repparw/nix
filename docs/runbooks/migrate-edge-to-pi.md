@@ -45,8 +45,10 @@ After deploying the first commit of `migrate/pi-edge` to both hosts:
 ## Verification (alpha powered OFF)
 
 - `home.repparw.com`, `rss.repparw.com`, `paper.repparw.com`,
-  `jellyfin.repparw.com`, `qbit.repparw.com`, `code.repparw.com`,
-  `finance.repparw.com`, apex `repparw.com` — all resolve and respond.
+  `jellyfin.repparw.com`, `qbit.repparw.com`, `finance.repparw.com`, apex
+  `repparw.com` — all resolve and respond. (`code.repparw.com` is
+  intentionally gone: opencode is reached via t3 connect, not public
+  ingress.)
 - Authelia login works with your existing TOTP/passkey (proves the seeded
   storage carried over).
 - Home Assistant remote control still functions (its OIDC issuer is
@@ -54,11 +56,10 @@ After deploying the first commit of `migrate/pi-edge` to both hosts:
 
 ## Known caveats
 
-- **opencode (`code.repparw.com`, port 4096) and finance (port 3000)** are
-  alpha-native listeners whose bind address this repo does not control. If pi
-  cannot reach them post-cutover (`curl 192.168.0.18:4096` from pi), they bind
-  loopback-only: add `--hostname 0.0.0.0`-style args or a small
-  `socat TCP-LISTEN` publish unit on alpha.
+- **Finance (port 3000)** is an alpha-native listener whose bind address
+  this repo does not control. If pi cannot reach it post-cutover
+  (`curl 192.168.0.18:3000` from pi), it binds loopback-only and needs a
+  small publish mechanism on alpha.
 - Container backends reach pi via nspawn `forwardPorts` publishes on alpha
   (qbittorrent remapped to LAN port 18080, glance to 18085). The mapping
   lives in `_services/inventory.nix` next to each service's routing facts.

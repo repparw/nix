@@ -88,12 +88,6 @@
         auth = "one_factor";
         host = "alpha";
       };
-      opencode = {
-        hostname = "code";
-        port = 4096;
-        auth = "one_factor";
-        host = "alpha";
-      };
 
       # --- pi-local ---
       hass = {

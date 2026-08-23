@@ -24,7 +24,6 @@ _: {
           "repparw.com"
           "auth.repparw.com"
           "bazarr.repparw.com"
-          "code.repparw.com"
           "finance.repparw.com"
           "home.repparw.com"
           "jellyfin.repparw.com"
