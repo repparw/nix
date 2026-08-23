@@ -233,7 +233,7 @@
         networking.firewall.interfaces.eth0 = {
           # The public edge moved to pi: no more :80/:443 here. Only the
           # published service backends are exposed, and only to pi, which
-          # fronts them (docs/runbooks/migrate-edge-to-pi.md).
+          # fronts them.
           allowedTCPPorts = [
             54535
           ];
@@ -243,7 +243,14 @@
         };
 
         networking.firewall.extraInputRules = ''
-          iifname "eth0" ip saddr 192.168.0.4 tcp dport { 3000, 6767, 7878, 8000, 8081, 8096, 8989, 9696, 18080, 18085 } accept comment "pi ingress -> alpha backends"
+          iifname "eth0" ip saddr 192.168.0.4 tcp dport { 3000, 8081 } accept comment "pi ingress -> native alpha listeners"
+        '';
+
+        # Published container backends arrive as forwarded traffic (DNAT into
+        # the ve-* veth by nspawn), so they need forward-chain acceptance, not
+        # input.
+        networking.firewall.extraForwardRules = ''
+          iifname "eth0" ip saddr 192.168.0.4 oifname "ve-*" accept comment "pi ingress -> published container backends"
         '';
 
         networking.nftables.tables.qos = {

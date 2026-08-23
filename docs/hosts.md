@@ -17,7 +17,7 @@ workload-specific aspects in `modules/hosts/`.
 set (media, *arr stack, documents), gaming, streaming, and backup behavior.
 Since the edge migration it is no longer the public entrypoint: pi fronts
 every `*.repparw.com` vhost and reaches alpha's published backends over the
-LAN (see [the migration runbook](runbooks/migrate-edge-to-pi.md)).
+LAN.
 
 Source: `modules/hosts/alpha.nix`
 

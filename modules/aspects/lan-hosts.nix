@@ -17,9 +17,8 @@ _: {
         # Static address of the edge host (see hosts/pi.nix).
         piAddress = "192.168.0.4";
 
-        # pi fronts every public service since the edge migration
-        # (docs/runbooks/migrate-edge-to-pi.md); names must match the router
-        # rules in _services/ingress-policy.nix.
+        # pi fronts every public service since the edge migration; names must
+        # match the router rules in _services/ingress-policy.nix.
         piNames = [
           "repparw.com"
           "auth.repparw.com"
