@@ -62,11 +62,6 @@ in
           tasks-org
           tradingview
           zapzap
-
-          # Electron launcher from the local NixOS/nixpkgs#555814 stopgap
-          # (see aspects/ai/t3code-split.nix); the Mod+G binding in niri
-          # spawns this binary.
-          t3code-desktop
         ];
 
         gtk.enable = true;
