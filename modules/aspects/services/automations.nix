@@ -123,6 +123,11 @@
           "d ${stateDir} 0750 root root - -"
         ];
 
+        modules.services.definitions.${serviceName} = {
+          auth = "bypass";
+          backup.path = stateDir;
+        };
+
         systemd.services.change-detection = {
           description = "Check watched pages and notify Discord when values change";
           preStart = ''

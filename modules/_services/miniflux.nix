@@ -30,6 +30,14 @@ in
     {
       systemd.services.miniflux.after = servicesLib.backupAfter [ "miniflux" ];
 
+      modules.services.definitions.miniflux = {
+        hostname = "rss";
+        port = 8081;
+        auth = "one_factor";
+        backup.path = "${cfg.configDir}/miniflux";
+        monitor = true;
+      };
+
       services.miniflux = {
         enable = true;
         config = {

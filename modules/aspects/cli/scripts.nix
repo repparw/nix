@@ -8,7 +8,6 @@
       { pkgs, ... }:
       {
         home.packages = with pkgs; [
-          sops
 
           (writeShellApplication {
             name = "clip2qr";

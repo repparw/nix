@@ -10,19 +10,19 @@ let
   service = cfg.definitions.paperless;
 in
 {
+  modules.services.definitions.paperless = {
+    hostname = "paper";
+    containerAddress = "10.231.136.12";
+    port = 8000;
+    auth = "one_factor";
+    backup.path = "${cfg.configDir}/paperless/export";
+    monitor = true;
+  };
+
   containers.paperless = servicesLib.mkContainer {
     inherit cfg;
     name = "paperless";
     privateUsers = "pick";
-    # Publish the WebUI onto alpha's LAN so remote ingress can target it
-    # (see _services/inventory.nix).
-    forwardPorts = [
-      {
-        protocol = "tcp";
-        hostPort = 8000;
-        containerPort = 8000;
-      }
-    ];
     bindMounts = {
       "/var/lib/paperless" = {
         hostPath = "${cfg.configDir}/paper";

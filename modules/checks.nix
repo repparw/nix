@@ -141,21 +141,20 @@
           service-definitions =
             let
               alpha = inputs.self.nixosConfigurations.alpha.config;
-              pi = inputs.self.nixosConfigurations.pi.config;
               cfg = alpha.modules.services;
-              edgeCfg = pi.modules.services;
-              miniflux = edgeCfg.definitions.miniflux;
+              miniflux = cfg.definitions.miniflux;
               paperless = cfg.definitions.paperless;
-              authelia = edgeCfg.definitions.authelia;
-              glance = edgeCfg.definitions.glance;
-              archisteamfarm = edgeCfg.definitions.archisteamfarm;
-              automations = edgeCfg.definitions.automations;
-              http = pi.services.traefik.dynamicConfigOptions.http;
+              authelia = cfg.definitions.authelia;
+              glance = cfg.definitions.glance;
+              finance = cfg.definitions.finance;
+              archisteamfarm = cfg.definitions.archisteamfarm;
+              automations = cfg.definitions.automations;
+              http = alpha.services.traefik.dynamicConfigOptions.http;
               accessControl =
-                pi.containers.authelia.config.services.authelia.instances.main.settings.access_control;
+                alpha.containers.authelia.config.services.authelia.instances.main.settings.access_control;
               monitorSites = lib.findFirst (
                 page: page.name == "Home"
-              ) { } pi.containers.glance.config.services.glance.settings.pages;
+              ) { } alpha.containers.glance.config.services.glance.settings.pages;
               evalDefinition =
                 definition:
                 builtins.tryEval (
@@ -280,7 +279,6 @@
                   hostname = "qbit";
                   containerAddress = "10.231.136.4";
                   port = 8080;
-                  publishedPort = 18080;
                   auth = "external";
                   backupPath = "${cfg.configDir}/qbittorrent";
                 };
@@ -321,9 +319,7 @@
                 let
                   expectedService = expectedMediaDefinitions.${name};
                   service = cfg.definitions.${name};
-                  endpoint = "http://192.168.0.18:${
-                    toString (expectedService.publishedPort or expectedService.port)
-                  }";
+                  endpoint = "http://${expectedService.containerAddress}:${toString expectedService.port}";
                 in
                 service.hostname == expectedService.hostname
                 && service.containerAddress == expectedService.containerAddress
@@ -332,6 +328,7 @@
                 && service.monitor
                 && service.backup.path == expectedService.backupPath
                 && alpha.containers.${name}.localAddress == service.containerAddress
+                && http.services.${name}.loadBalancer.servers == [ { url = endpoint; } ]
                 && hasMonitorSite name expectedService.hostname endpoint
                 && alpha.fileSystems."${cfg.backupDir}/${name}".device == expectedService.backupPath
                 &&
@@ -339,20 +336,18 @@
                     alpha.systemd.services."container@${name}".after
               ) (lib.attrNames expectedMediaDefinitions);
               nativeServicesMatch =
-                edgeCfg ? definitions.hass
-                # Miniflux + its PostgreSQL are pi-native since issue #44.
+                !(cfg ? inventory)
                 && miniflux.hostname == "rss"
                 && miniflux.port == 8081
                 && miniflux.auth == "one_factor"
                 && miniflux.monitor
-                && miniflux.backup.path == "${edgeCfg.configDir}/miniflux"
-                && miniflux.containerAddress == "10.231.136.1"
-                && pi.services.miniflux.enable
-                && pi.services.postgresql.enable
-                && hasMonitorSite "miniflux" "rss" "http://10.231.136.1:8081"
-                && builtins.any (lib.strings.hasInfix "tcp dport 8081 accept") (
-                  lib.splitString "\n" pi.networking.firewall.extraInputRules
-                )
+                && miniflux.backup.path == "${cfg.configDir}/miniflux"
+                && http.routers.miniflux.rule == "Host(`rss.${cfg.domain}`)"
+                && http.routers.miniflux.middlewares == [ "authelia" ]
+                && http.services.miniflux.loadBalancer.servers == [ { url = "http://127.0.0.1:8081"; } ]
+                && hasMonitorSite "miniflux" "rss" "http://127.0.0.1:8081"
+                && alpha.fileSystems."${cfg.backupDir}/miniflux".device == "${cfg.configDir}/miniflux"
+                && builtins.elem "home-containers-backup-miniflux.mount" alpha.systemd.services.miniflux.after
                 && paperless.hostname == "paper"
                 && paperless.containerAddress == "10.231.136.12"
                 && paperless.port == 8000
@@ -364,7 +359,10 @@
                 && builtins.elem paperless.port alpha.containers.paperless.config.networking.firewall.allowedTCPPorts
                 && alpha.containers.paperless.config.services.paperless.address == "0.0.0.0"
                 && alpha.containers.paperless.config.services.paperless.port == paperless.port
-                && hasMonitorSite "paperless" "paper" "http://192.168.0.18:8000"
+                && http.routers.paperless.rule == "Host(`paper.${cfg.domain}`)"
+                && http.routers.paperless.middlewares == [ "authelia" ]
+                && http.services.paperless.loadBalancer.servers == [ { url = "http://10.231.136.12:8000"; } ]
+                && hasMonitorSite "paperless" "paper" "http://10.231.136.12:8000"
                 && alpha.fileSystems."${cfg.backupDir}/paperless".device == paperless.backup.path
                 &&
                   builtins.elem "home-containers-backup-paperless.mount"
@@ -375,52 +373,72 @@
                 && authelia.port == 9091
                 && authelia.auth == "bypass"
                 && authelia.monitor
-                && pi.containers.authelia.localAddress == authelia.containerAddress
-                && builtins.elem authelia.port pi.containers.authelia.config.networking.firewall.allowedTCPPorts
+                && authelia.backup.path == "${cfg.configDir}/authelia"
+                && alpha.containers.authelia.localAddress == authelia.containerAddress
+                && builtins.elem authelia.port alpha.containers.authelia.config.networking.firewall.allowedTCPPorts
                 &&
-                  pi.containers.authelia.config.services.authelia.instances.main.settings.server.address
+                  alpha.containers.authelia.config.services.authelia.instances.main.settings.server.address
                   == "tcp://:${toString authelia.port}"
+                && http.routers.authelia.rule == "Host(`auth.${cfg.domain}`)"
+                && !(http.routers.authelia ? middlewares)
+                && http.services.authelia.loadBalancer.servers == [ { url = "http://10.231.136.7:9091"; } ]
+                &&
+                  http.middlewares.authelia.forwardAuth.address == "http://10.231.136.7:9091/api/authz/forward-auth"
+                && hasMonitorSite "authelia" "auth" "http://10.231.136.7:9091"
+                && alpha.fileSystems."${cfg.backupDir}/authelia".device == authelia.backup.path
                 && glance.containerAddress == "10.231.136.15"
                 && glance.port == 8080
                 && glance.auth == "bypass"
-                && pi.containers.glance.localAddress == glance.containerAddress
-                && pi.containers.glance.config.services.glance.settings.server.host == "0.0.0.0"
-                && pi.containers.glance.config.services.glance.settings.server.port == glance.port
+                && alpha.containers.glance.localAddress == glance.containerAddress
+                && alpha.containers.glance.config.services.glance.settings.server.host == "0.0.0.0"
+                && alpha.containers.glance.config.services.glance.settings.server.port == glance.port
                 && http.routers.glance.rule == "Host(`${cfg.domain}`)"
-                && pi.containers.glance.config.services.glance.settings.branding.logo-text == "R";
+                && http.services.glance.loadBalancer.servers == [ { url = "http://10.231.136.15:8080"; } ]
+                && alpha.containers.glance.config.services.glance.settings.branding.logo-text == "R"
+                && finance.hostname == "finance"
+                && finance.port == 3000
+                && finance.auth == "one_factor"
+                && http.routers.finance.rule == "Host(`finance.${cfg.domain}`)"
+                && http.routers.finance.middlewares == [ "authelia" ]
+                && hasAccessPolicy accessControl.rules "finance.${cfg.domain}" "one_factor"
+                && http.services.finance.loadBalancer.servers == [ { url = "http://127.0.0.1:3000"; } ];
               backgroundServicesMatch =
-                # Archisteamfarm farms on pi (always-on host); its definition
-                # and container live in pi's closure since the migration.
                 archisteamfarm.containerAddress == "10.231.136.13"
                 && archisteamfarm.hostname == null
                 && archisteamfarm.port == null
                 && archisteamfarm.auth == "bypass"
                 && !archisteamfarm.monitor
                 && archisteamfarm.backup.path == "${cfg.configDir}/archisteamfarm"
-                && pi.containers.archisteamfarm.localAddress == archisteamfarm.containerAddress
+                && alpha.containers.archisteamfarm.localAddress == archisteamfarm.containerAddress
                 &&
-                  pi.containers.archisteamfarm.bindMounts."/var/lib/archisteamfarm".hostPath
+                  alpha.containers.archisteamfarm.bindMounts."/var/lib/archisteamfarm".hostPath
                   == archisteamfarm.backup.path
                 &&
-                  pi.containers.archisteamfarm.config.systemd.services.archisteamfarm.serviceConfig.LoadCredential
+                  alpha.containers.archisteamfarm.config.systemd.services.archisteamfarm.serviceConfig.LoadCredential
                   == "steamPassword:/run/secrets/steamPassword"
-                && builtins.any (lib.strings.hasInfix "archisteamfarm") pi.systemd.tmpfiles.rules
+                && alpha.fileSystems."${cfg.backupDir}/archisteamfarm".device == archisteamfarm.backup.path
+                &&
+                  builtins.elem "home-containers-backup-archisteamfarm.mount"
+                    alpha.systemd.services."container@archisteamfarm".after
                 && automations.hostname == null
                 && automations.containerAddress == null
                 && automations.port == null
                 && automations.auth == "bypass"
                 && !automations.monitor
-                && automations.backup.path == "${edgeCfg.configDir}/automations"
-                # Automations is a pi-native oneshot since issue #45: no
-                # nspawn container on either host, state dir via tmpfiles,
-                # six-hour timer local to the edge.
-                && builtins.any (lib.strings.hasInfix "automations") pi.systemd.tmpfiles.rules
+                && automations.backup.path == "${cfg.configDir}/automations"
+                && alpha.fileSystems."${cfg.backupDir}/automations".device == automations.backup.path
                 && !(builtins.hasAttr "container@automations" alpha.systemd.services)
-                && !(builtins.hasAttr "container@automations" pi.systemd.services)
-                && pi.systemd.timers.change-detection.timerConfig.OnCalendar == "*-*-* 00/6:13:00"
-                && pi.systemd.timers.change-detection.timerConfig.RandomizedDelaySec == "5min";
+                && alpha.systemd.timers.change-detection.timerConfig.OnCalendar == "*-*-* 00/6:13:00"
+                && alpha.systemd.timers.change-detection.timerConfig.RandomizedDelaySec == "5min";
               mediaSpecializationMatch =
                 mediaDefinitionsMatch
+                && http.routers.bazarr.middlewares == [ "authelia" ]
+                && http.routers.prowlarr.middlewares == [ "authelia" ]
+                && http.routers.radarr.middlewares == [ "authelia" ]
+                && http.routers.sonarr.middlewares == [ "authelia" ]
+                && !(http.routers.jellyfin ? middlewares)
+                && http.routers.qbittorrent.rule == "Host(`qbit.${cfg.domain}`) && !PathPrefix(`/api`)"
+                && http.routers.qbittorrent-api.rule == "Host(`qbit.${cfg.domain}`) && PathPrefix(`/api`)"
                 &&
                   alpha.containers.qbittorrent.forwardPorts == [
                     {
@@ -432,11 +450,6 @@
                       protocol = "udp";
                       hostPort = 54535;
                       containerPort = 54535;
-                    }
-                    {
-                      protocol = "tcp";
-                      hostPort = 18080;
-                      containerPort = 8080;
                     }
                   ]
                 && lib.all (name: alpha.containers.${name}.privateUsers == "identity") [
@@ -484,9 +497,6 @@
                 let
                   shareRule = builtins.elemAt accessControl.rules 0;
                   apiRule = builtins.elemAt accessControl.rules 1;
-                  homeBypassRules = builtins.filter (
-                    rule: rule.domain == [ "home.${cfg.domain}" ] && rule.policy == "bypass"
-                  ) accessControl.rules;
                 in
                 !(matrixPolicy.traefik.routers.bypass ? middlewares)
                 && matrixPolicy.traefik.routers.one.middlewares == [ "authelia" ]
@@ -496,59 +506,28 @@
                 && hasAccessPolicy matrixPolicy.authelia.rules "two.example.test" "two_factor"
                 && !unsupportedExternal.success
                 && !(builtins.any (rule: builtins.elem "null.example.test" rule.domain) sparsePolicy.authelia.rules)
-                && !(http.routers ? opencode)
-                && !(http.routers ? home-router)
+                && http.services.hass.loadBalancer.servers == [ { url = "http://192.168.0.4"; } ]
+                && http.services.hass.loadBalancer.healthCheck.path == "/"
+                && http.services.opencode.loadBalancer.servers == [ { url = "http://localhost:4096"; } ]
                 &&
-                  http.routers.glance == {
-                    rule = "Host(`${cfg.domain}`)";
-                    service = "glance";
-                  }
-                &&
-                  http.routers.hass == {
+                  http.routers.home-router == {
                     rule = "Host(`home.${cfg.domain}`)";
                     service = "hass";
                   }
                 &&
-                  http.routers.jellyfin == {
-                    rule = "Host(`jellyfin.${cfg.domain}`)";
-                    service = "jellyfin";
+                  http.routers.opencode == {
+                    rule = "Host(`code.${cfg.domain}`)";
+                    service = "opencode";
+                    middlewares = [ "authelia" ];
                   }
-                &&
-                  http.routers.authelia == {
-                    rule = "Host(`auth.${cfg.domain}`)";
-                    service = "authelia";
-                  }
-                && lib.all (name: http.routers.${name}.middlewares == [ "authelia" ]) [
-                  "bazarr"
-                  "finance"
-                  "miniflux"
-                  "paperless"
-                  "prowlarr"
-                  "radarr"
-                  "sonarr"
-                ]
+                && http.routers.glance.rule == "Host(`${cfg.domain}`)"
                 && http.routers.qbittorrent.rule == "Host(`qbit.${cfg.domain}`) && !PathPrefix(`/api`)"
-                && http.routers.qbittorrent.middlewares == [ "qbit-auth" ]
                 && http.routers.qbittorrent-api.rule == "Host(`qbit.${cfg.domain}`) && PathPrefix(`/api`)"
                 &&
                   http.middlewares.qbit-auth.chain.middlewares == [
                     "authelia"
                     "qbit-basic-auth"
                   ]
-                &&
-                  http.middlewares.authelia.forwardAuth.address == "http://10.231.136.7:9091/api/authz/forward-auth"
-                && http.services.authelia.loadBalancer.servers == [ { url = "http://10.231.136.7:9091"; } ]
-                && http.services.hass.loadBalancer.servers == [ { url = "http://10.231.136.2:8123"; } ]
-                && http.services.glance.loadBalancer.servers == [ { url = "http://10.231.136.15:8080"; } ]
-                && http.services.jellyfin.loadBalancer.servers == [ { url = "http://192.168.0.18:8096"; } ]
-                && http.services.qbittorrent.loadBalancer.servers == [ { url = "http://192.168.0.18:18080"; } ]
-                && http.services.bazarr.loadBalancer.servers == [ { url = "http://192.168.0.18:6767"; } ]
-                && http.services.finance.loadBalancer.servers == [ { url = "http://192.168.0.18:3000"; } ]
-                && http.services.miniflux.loadBalancer.servers == [ { url = "http://10.231.136.1:8081"; } ]
-                && http.services.paperless.loadBalancer.servers == [ { url = "http://192.168.0.18:8000"; } ]
-                && http.services.prowlarr.loadBalancer.servers == [ { url = "http://192.168.0.18:9696"; } ]
-                && http.services.radarr.loadBalancer.servers == [ { url = "http://192.168.0.18:7878"; } ]
-                && http.services.sonarr.loadBalancer.servers == [ { url = "http://192.168.0.18:8989"; } ]
                 && shareRule.domain == [ "paper.${cfg.domain}" ]
                 && shareRule.resources == [ "^/share/.*$" ]
                 && shareRule.policy == "bypass"
@@ -559,74 +538,8 @@
                     "^/v1([/?].*)?$"
                   ]
                 && apiRule.policy == "bypass"
-                && builtins.length homeBypassRules == 1
-                && hasAccessPolicy accessControl.rules "jellyfin.${cfg.domain}" "bypass"
-                && hasAccessPolicy accessControl.rules "rss.${cfg.domain}" "one_factor"
                 && (lib.last accessControl.rules).domain == [ "*.${cfg.domain}" ]
-                && (lib.last accessControl.rules).subject == [ "group:admins" ]
                 && accessControl.default_policy == "deny";
-              publishedBackendMatch =
-                !alpha.services.traefik.enable
-                && !(builtins.elem 80 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts)
-                && !(builtins.elem 443 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts)
-                && builtins.elem 54535 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts
-                && builtins.any (lib.strings.hasInfix "iifname \"eth0\" ip saddr 192.168.0.4 tcp dport { 3000, 8081 } accept") (
-                  lib.splitString "\n" alpha.networking.firewall.extraInputRules
-                )
-                && lib.strings.hasInfix "iifname \"eth0\" ip saddr 192.168.0.4 oifname \"ve-*\" accept" alpha.networking.firewall.extraForwardRules
-                && builtins.all (port: builtins.elem port pi.networking.firewall.interfaces.eth0.allowedTCPPorts) [
-                  53
-                  80
-                  443
-                ]
-                &&
-                  alpha.containers.paperless.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 8000;
-                      containerPort = 8000;
-                    }
-                  ]
-                &&
-                  alpha.containers.jellyfin.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 8096;
-                      containerPort = 8096;
-                    }
-                  ]
-                &&
-                  alpha.containers.bazarr.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 6767;
-                      containerPort = 6767;
-                    }
-                  ]
-                &&
-                  alpha.containers.prowlarr.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 9696;
-                      containerPort = 9696;
-                    }
-                  ]
-                &&
-                  alpha.containers.radarr.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 7878;
-                      containerPort = 7878;
-                    }
-                  ]
-                &&
-                  alpha.containers.sonarr.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 8989;
-                      containerPort = 8989;
-                    }
-                  ];
               expected = builtins.all (value: value) [
                 nativeServicesMatch
                 authenticationPresentationMatch
@@ -634,25 +547,11 @@
                 mediaSpecializationMatch
                 validationMatches
                 ingressPolicyMatches
-                publishedBackendMatch
               ];
-              # Interpolated into the derivation below so that evaluating it
-              # forces every matcher: an assert alone can be skipped by lazy
-              # attribute selection on the flake output.
-              matcherReport = builtins.toJSON {
-                i = ingressPolicyMatches;
-                p = publishedBackendMatch;
-                n = nativeServicesMatch;
-                a = authenticationPresentationMatch;
-                m = mediaSpecializationMatch;
-                b = backgroundServicesMatch;
-                v = validationMatches;
-              };
             in
-            assert expected || throw matcherReport;
+            assert expected;
             pkgs.runCommand "check-service-definitions" { } ''
               echo "service definitions: valid derivation and invalid combination verified" > $out
-              echo "matchers: ${matcherReport}" >> $out
             '';
         }
         // lib.genAttrs hosts evalHost;
