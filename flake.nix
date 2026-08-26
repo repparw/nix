@@ -25,7 +25,6 @@
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    gloomberb-nixpkgs.url = "github:repparw/nixpkgs/gloomberb";
     helium-nix = {
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";

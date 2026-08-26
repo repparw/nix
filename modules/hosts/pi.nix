@@ -1,36 +1,15 @@
 {
   den,
-  inputs,
   lib,
   pkgs,
   ...
 }:
 {
-  # Hermes Agent ships its own flake (uv2nix package + NixOS module). Keep its
-  # dependency closure isolated (no follows) so their tested combination
-  # builds unchanged; updates ride tag bumps here.
-  flake-file.inputs.hermes-agent.url = "github:NousResearch/hermes-agent/v2026.8.19";
-
   den.aspects.pi = {
     includes = [
       den.batteries.hostname
       den.aspects.networking
-      den.aspects.lan-hosts
       den.aspects.secrets
-      # Public edge (traefik/authelia/ddclient) + shared service inventory,
-      # migrated off alpha so pi services survive workstation downtime.
-      den.aspects.nixos-services._.edge
-      # Always-on Steam card farming; alpha reboots too often for it.
-      den.aspects.nixos-services._.archisteamfarm
-      # Page-change watcher (issue #45); Discord webhook secret + 6h timer.
-      den.aspects.nixos-services._.automations
-      # Offsite restic of every stateful dir on this host.
-      den.aspects.backup._.restic
-      # Home Assistant + Hermes Agent nspawn containers.
-      den.aspects.nixos-services._.homeassistant
-      den.aspects.nixos-services._.hermes
-      # 5-min fleet probes with two-strike Discord alerts.
-      den.aspects.nixos-services._.fleet-health
     ];
 
     nixos =
@@ -41,56 +20,11 @@
         ...
       }:
       {
-        # Offsite restic coverage (den.aspects.backup._.restic): container
-        # configs plus the two bind-mounted user service states.
-        modules.backup.paths = [
-          "/home/containers/config"
-          "/home/repparw/services/hass"
-          "/home/repparw/services/hermes"
-        ];
-
-        # pi's repparw account: the shared base aspect plus host-specific
-        # identity. The offsite restic job reads the system rclone conf, so
-        # no user-level rclone wiring is needed here.
-        users.users.repparw = {
-          # Match the Debian-era uid so the migrated data on the NVMe
-          # (/home/repparw) keeps its original ownership.
-          uid = 1000;
-          extraGroups = [ "wheel" ];
-          subUidRanges = [
-            {
-              startUid = 100000;
-              count = 65536;
-            }
-          ];
-          subGidRanges = [
-            {
-              startGid = 100000;
-              count = 65536;
-            }
-          ];
-        };
-
         # Raspberry Pi 5 (aarch64) triple-boot loader: firmware (u-boot +
         # config.txt) lives on the vfat /boot/firmware partition, while NixOS
         # writes the extlinux boot files into /boot on the ext4 root.
-        #
-        # Kernel pinned to 6.18 LTS-line: linuxPackages_latest (7.2) does not
-        # enumerate the BCM2712 PCIe/NVMe controller with the sd-image's DTBs
-        # (boot hung waiting for the /nix device); 6.18.4x is proven on this
-        # board. Revisit after the U-Boot NVMe work lands (issue #41).
         boot = {
-          kernelPackages = pkgs.linuxPackages_6_18;
-          # /nix is neededForBoot, so stage-1 must enumerate the NVMe: the
-          # BCM2712 PCIe host driver is a module (PCIE_BRCMSTB=m) and without
-          # it in the initrd the device never appears (90s timeout ->
-          # emergency). nvme alone is not enough.
-          initrd.availableKernelModules = [
-            "pcie_brcmstb"
-            "nvme"
-            "mmc_block"
-            "ext4"
-          ];
+          kernelPackages = pkgs.linuxPackages_latest;
           kernelParams = [
             "console=ttyMA0,115200n8"
             "console=tty0"
@@ -100,16 +34,6 @@
             generic-extlinux-compatible.enable = true;
           };
         };
-
-        # Keep the glibc locale-archive small (~200MB vs ~1.3GB): the Pi
-        # builds non-cached packages locally and disk headroom is scarce.
-        # en_IE + es_AR match den.aspects.system; drop the long tail.
-        i18n.supportedLocales = [
-          "C.UTF-8/UTF-8"
-          "en_US.UTF-8/UTF-8"
-          "en_IE.UTF-8/UTF-8"
-          "es_AR.UTF-8/UTF-8"
-        ];
 
         fileSystems = {
           # SD card (mmcblk0): flashed from the official NixOS aarch64
@@ -128,123 +52,100 @@
             fsType = "vfat";
           };
 
-          # User home + Home Assistant data live on the NVMe, so
+          # User home + Home Assistant data live on the NVMe, so the pod's
           # ~/services/hass carries over from the Debian install unchanged.
-          # Roles swapped 2026-08-23 (reinstall after SD death): home moved to
-          # p2 (17.6G, ~3G used) so the store could take p1 (40G) — p2 had run
-          # at 83% full as /nix. Pre-swap copy: alpha ~/backups/pi/
-          # pi-nvme-home-pre-swap-20260823/.
           "/home/repparw" = {
-            device = "/dev/disk/by-partuuid/7fd52c5b-02";
-            fsType = "ext4";
-            options = [
-              "defaults"
-              "noatime"
-              "nofail"
-              # BCM2712 PCIe link training can take >90s on this board;
-              # default device timeout aborted the boot first.
-              "x-systemd.device-timeout=5min"
-            ];
-          };
-
-          # /nix lives on the NVMe: the SD is space-constrained and upgrade
-          # writes wear it.
-          "/nix" = {
             device = "/dev/disk/by-partuuid/7fd52c5b-01";
             fsType = "ext4";
             options = [
               "defaults"
               "noatime"
-              "x-systemd.device-timeout=5min"
             ];
           };
         };
 
-        swapDevices = [
-          # NVMe-backed swap: the edge stack (traefik/authelia) plus HA make
-          # pi the always-on host, so it needs OOM headroom beyond earlyoom.
-          # NixOS creates the file automatically when `size` is set.
-          {
-            device = "/home/repparw/.swapfile";
-            size = 8192;
-          }
-        ];
+        swapDevices = [ ];
+
+        # Rootless podman's rootlessport must bind host port 80 for the HA pod
+        # (hostPort: 80 below). Debian allowed this via ip_unprivileged_port_start=80;
+        # NixOS defaults to 1024, which would make the bind fail.
+        boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 80;
 
         hardware.bluetooth.enable = true;
 
-        # Upgrade strategy B: nightly job bumps inputs, builds the new
-        # closure, and posts the diff to Discord. Switching stays a human
-        # command against the persisted work dir.
-        systemd.services.upgrade-report = {
-          description = "Build next-generation closure and report the diff";
-          after = [ "network-online.target" ];
-          wants = [ "network-online.target" ];
-          path = with pkgs; [
-            git
-            nvd
-            (pkgs.writeShellApplication {
-              name = "notify-upgrade";
-              runtimeInputs = [
-                curl
-                jq
-              ];
-              text = ''
-                # shellcheck disable=SC1091
-                source /run/secrets/hermes-env
-                curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-                  -H "Content-Type: application/json" \
-                  -d "$(jq -n --arg c "$1" '{content: $c}')" \
-                  "https://discord.com/api/v10/channels/1515064288191053979/messages" >/dev/null
-              '';
-            })
-          ];
-          serviceConfig = {
-            Type = "oneshot";
-            WorkingDirectory = "/var/lib/upgrade-report";
-            RuntimeMaxSec = "4h";
-          };
-          script = ''
-            set -eu
-            mkdir -p /var/lib/upgrade-report
-            cd /var/lib/upgrade-report
-            rm -rf src
-            git clone --depth 1 https://github.com/repparw/nix src
-            cd src
-            nix flake update
-            if git diff --exit-code flake.lock >/dev/null; then
-              echo "lock unchanged; nothing to report"
-              exit 0
-            fi
-            nix build .#nixosConfigurations.pi.config.system.build.toplevel -o /var/lib/upgrade-result
-            nvd diff /run/current-system /var/lib/upgrade-result > /var/lib/upgrade-diff.txt || true
-            changed=$(grep -c '^[<>]' /var/lib/upgrade-diff.txt || true)
-            kernel=$(grep -oE 'linux-[0-9.]+[^>]*' /var/lib/upgrade-diff.txt | head -1 || true)
-            {
-              echo "**pi: closure ready** — $changed packages changed $kernel"
-              echo '```'
-              head -c 1200 /var/lib/upgrade-diff.txt
-              echo '```'
-              echo "Flip with: \`ssh pi 'cd /var/lib/upgrade-report/src && nixos-rebuild switch --flake .#pi'\`"
-            } > /tmp/report-msg
-            notify-upgrade "$(cat /tmp/report-msg)"
-          '';
+        virtualisation.podman = {
+          enable = true;
+          autoPrune.enable = true;
         };
 
-        systemd.timers.upgrade-report = {
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "*-*-* 04:15:00";
-            Persistent = true;
-            RandomizedDelaySec = "10min";
+        # Trial validated 2026-08-22; replaced the quadlet kube pod.
+        containers.homeassistant = {
+          autoStart = true;
+          privateNetwork = true;
+          hostAddress = "10.231.136.1";
+          localAddress = "10.231.136.2";
+          bindMounts."/var/lib/hass" = {
+            hostPath = "/home/repparw/services/hass";
+            isReadOnly = false;
+          };
+          config =
+            { ... }:
+            {
+              # nspawn breaks host-resolved (loopback stub); use the pi's own
+              # LAN resolver over the bridge.
+              networking.useHostResolvConf = false;
+              networking.nameservers = [ "192.168.0.4" ];
+
+              services.home-assistant = {
+                enable = true;
+                configDir = "/var/lib/hass";
+                extraComponents = [
+                  "default_config"
+                  "wake_on_lan"
+                  "google_assistant"
+                  "met"
+                  "radio_browser"
+                  "google_translate"
+                  # discovered from the migrated instance's entity registry
+                  "tuya"
+                  "webostv"
+                  "wled"
+                  "workday"
+                  "google_drive"
+                ];
+                extraPackages =
+                  ps: with ps; [
+                    aiogithubapi # hacs
+                    aiofiles
+                    jinja2
+                    joserfc # auth_oidc
+                    anthropic
+                    litellm
+                    pyyaml # ai_automation_suggester
+                  ];
+              };
+              networking.firewall.allowedTCPPorts = [ 8123 ];
+              system.stateVersion = "26.05";
+            };
+        };
+
+        # Ingress for the HA container (nginx adds the X-Forwarded-* headers
+        # that the container's trusted_proxies expect).
+        services.nginx = {
+          enable = true;
+          recommendedProxySettings = true;
+          virtualHosts."home.repparw.com" = {
+            locations."/" = {
+              proxyPass = "http://10.231.136.2:8123";
+              proxyWebsockets = true;
+            };
           };
         };
 
         nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 
         # LAN DNS server: resolved listens on the LAN address and proxies to
-        # Cloudflare/Quad9 over DoT. The extra 10.231.136.1 listener is the
-        # nspawn bridge address — mkContainer points containers at it, and
-        # without this they lose DNS on pi.
+        # Cloudflare/Quad9 over DoT.
         services.resolved.settings.Resolve = {
           DNS = [
             "1.1.1.1#cloudflare-dns.com"
@@ -254,10 +155,7 @@
           DNSSEC = true;
           DNSOverTLS = true;
           Cache = true;
-          DNSStubListenerExtra = [
-            "192.168.0.4:53"
-            "10.231.136.1:53"
-          ];
+          DNSStubListenerExtra = "192.168.0.4:53";
         };
 
         networking = {
@@ -267,25 +165,6 @@
             enable = true;
             internalInterfaces = [ "ve-+" ];
             externalInterface = "eth0";
-            # NOTE: the iifname "ve-+" rule the module renders does not match
-            # these veths (observed 2026-08-23: UNREPLIED SYN_SENT conntrack
-            # entries while the rule was present). The working masquerade for
-            # the container subnet lives in nftables.tables.container-nat
-            # below; drop this comment with the rule if the module ever fixes
-            # the match.
-          };
-
-          # Masquerade container egress by source subnet. Separate table so
-          # it composes with the module-rendered nixos-nat; priority 90 puts
-          # it ahead of srcnat (100).
-          nftables.tables.container-nat = {
-            family = "ip";
-            content = ''
-              chain post {
-                type nat hook postrouting priority 90; policy accept;
-                ip saddr 10.231.136.0/24 oifname "eth0" masquerade
-              }
-            '';
           };
 
           # First boot / install note: the resolver chain above only comes up
@@ -300,21 +179,41 @@
             address = "192.168.0.1";
             interface = "eth0";
           };
-
-          # Containers reach the local edge by its public name (hosts file
-          # points it back here), so HA's server-side OIDC calls to
-          # auth.repparw.com must traverse INPUT on the bridge. Port 8081 is
-          # miniflux: sibling containers (glance's dashboard probes) monitor
-          # it over the bridge rather than the host loopback.
-          firewall.extraInputRules = ''
-            iifname "ve-*" tcp dport { 80, 443 } accept comment "containers -> local edge"
-            iifname "ve-*" tcp dport 8081 accept comment "containers -> miniflux"
-          '';
+          hosts = {
+            "192.168.0.18" = [
+              "repparw.com"
+              "code.repparw.com"
+              "auth.repparw.com"
+              "bazarr.repparw.com"
+              "broker.repparw.com"
+              "changedetection.repparw.com"
+              "ddclient.repparw.com"
+              "rss.repparw.com"
+              "jellyfin.repparw.com"
+              "mercury.repparw.com"
+              "ntfy.repparw.com"
+              "paperdb.repparw.com"
+              "paper.repparw.com"
+              "profilarr.repparw.com"
+              "prowlarr.repparw.com"
+              "qbit.repparw.com"
+              "radarr.repparw.com"
+              "seerr.repparw.com"
+              "sockpuppetbrowser.repparw.com"
+              "sonarr.repparw.com"
+              "traefik.repparw.com"
+              "valkey.repparw.com"
+              "home.repparw.com"
+            ];
+            "192.168.0.4" = [
+              "hyperion.repparw.com"
+              "pihole.repparw.com"
+            ];
+          };
 
           firewall.interfaces.eth0 = {
             allowedTCPPorts = [
               80
-              443
               53
             ];
             allowedUDPPorts = [
@@ -333,9 +232,136 @@
       };
   };
 
-  # Headless repparw on pi: the shared base account plus the rclone config
-  # the offsite restic job reads. Agent tooling (t3code/opencode/mcp) comes
-  # from the base aspect now; linger stays on for the user's t3code/opencode
-  # services.
-  den.hosts.aarch64-linux.pi.users.repparw.aspect = den.aspects.repparw;
+  # Minimal headless repparw: same account as alpha but without the desktop
+  # stack. Mirrors the Debian-era setup on the pi (fish shell, ssh keys, and
+  # the rootless podman Home Assistant pod below).
+  den.aspects.pi-repparw = {
+    includes = [
+      den.batteries.define-user
+      den.batteries.primary-user
+      (den.batteries.user-shell "fish")
+      den.aspects.shell
+      den.aspects.tmux
+      den.aspects.git
+      den.aspects.ssh
+    ];
+
+    user = _: {
+      linger = true;
+      description = "repparw";
+      # Match the Debian-era uid so the migrated data on the NVMe
+      # (/home/repparw) keeps its original ownership.
+      uid = 1000;
+      extraGroups = [ "wheel" ];
+      subUidRanges = [
+        {
+          startUid = 100000;
+          count = 65536;
+        }
+      ];
+      subGidRanges = [
+        {
+          startGid = 100000;
+          count = 65536;
+        }
+      ];
+    };
+
+    provides.to-hosts = {
+      nixos =
+        { ... }:
+        {
+          home-manager = {
+            useGlobalPkgs = true;
+            useUserPackages = true;
+            backupFileExtension = "hm-backup";
+          };
+        };
+    };
+
+    homeManager =
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
+      {
+        xdg.enable = true;
+        home.preferXdgDirectories = true;
+
+        # Home Assistant pod: kept as a rootless podman kube manifest so the
+        # data under ~/services/hass and the container layout from the Debian
+        # installation carry over unchanged. Quadlet (.kube file) generates
+        # the systemd user unit with proper sd-notify wiring — a hand-written
+        # Type=simple unit would exit as soon as `podman kube play` detaches
+        # and tear the pod back down via ExecStop.
+        home.file.".config/containers/systemd/podservices.kube".text = ''
+          [Kube]
+          Yaml=%h/services/pod.yaml
+          AutoUpdate=registry
+
+          [Install]
+          WantedBy=default.target
+        '';
+
+        home.file."services/pod.yaml".text = ''
+          # Save the output of this file and use kubectl create -f to import
+          # it into Kubernetes.
+          #
+          # Created with podman-5.4.2
+
+          # NOTE: The namespace sharing for a pod has been modified by the user and is not the same as the
+          # default settings for kubernetes. This can lead to unexpected behavior when running the generated
+          # kube yaml in a kubernetes cluster.
+          ---
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            annotations:
+              io.containers.autoupdate/homeassistant: registry
+              io.kubernetes.cri-o.SandboxID/homeassistant: 4bf37bb3e42a602c9ae39b84f7c1bb02525c6d9b73df1fce83680bc5454621cb
+            creationTimestamp: "2026-02-16T14:54:45Z"
+            labels:
+              app: podservices
+            name: podservices
+          spec:
+            containers:
+            - image: docker.io/homeassistant/home-assistant:stable
+              name: homeassistant
+              ports:
+              - containerPort: 8123
+                hostPort: 80
+              securityContext:
+                privileged: true
+                procMount: Unmasked
+              volumeMounts:
+              - mountPath: /config
+                name: home-repparw-services-hass-host-0
+              - mountPath: /etc/localtime
+                name: etc-localtime-host-1
+                readOnly: true
+              - mountPath: /run/dbus
+                name: run-dbus-host-2
+                readOnly: true
+            volumes:
+            - hostPath:
+                path: /home/repparw/services/hass
+                type: Directory
+              name: home-repparw-services-hass-host-0
+            - hostPath:
+                path: /etc/localtime
+                type: File
+              name: etc-localtime-host-1
+            - hostPath:
+                path: /run/dbus
+                type: Directory
+              name: run-dbus-host-2
+        '';
+      };
+  };
+
+  den.hosts.aarch64-linux.pi.users.repparw = {
+    aspect = den.aspects.pi-repparw;
+  };
 }
