@@ -1,14 +1,15 @@
 { den, ... }:
 {
   den.aspects.nixos-services = {
-    includes = with den.aspects.nixos-services._; [
-      archisteamfarm
-      arr
-      automations
-      iebApi
-      jellyfin
-      matrizApi
-    ];
+    includes =
+      with den.aspects.nixos-services._;
+      [
+        arr
+        iebApi
+        jellyfin
+        matrizApi
+      ]
+      ++ [ den.aspects.lan-hosts ];
 
     nixos =
       {
@@ -20,27 +21,24 @@
       let
         cfg = config.modules.services;
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
+        # Backup mounts only for services this host actually runs: the
+        # shared inventory also carries pi-local services whose state never
+        # exists here.
+        localBackupCfg = cfg // {
+          definitions = lib.filterAttrs (_: service: service.host == "alpha") cfg.definitions;
+        };
       in
       {
+        # The public edge (proxy/authelia/ddclient) moved to pi; this host
+        # keeps only its backend services plus the shared schema and the
+        # service inventory that owns all definitions.
         imports = [
-          ../../_services/authelia.nix
-          ../../_services/miniflux.nix
           ../../_services/paperless.nix
-          ../../_services/ddclient.nix
-          ../../_services/proxy.nix
-          ../../_services/glance.nix
           ../../service-definitions.nix
+          ../../_services/inventory.nix
         ];
 
         config = {
-          # The finance dashboard is managed outside this Nix configuration.
-          # This only wires an optional host-local listener into the proxy.
-          modules.services.definitions.finance = {
-            hostname = "finance";
-            port = 3000;
-            auth = "one_factor";
-          };
-
           networking = {
             nat = {
               enable = true;
@@ -66,14 +64,9 @@
             })
           ];
 
-          networking.hosts."192.168.0.18" = servicesLib.serviceHosts cfg ++ [
-            cfg.domain
-            "home.${cfg.domain}"
-          ];
+          systemd.services = servicesLib.containerBackupAfters localBackupCfg;
 
-          systemd.services = servicesLib.containerBackupAfters cfg;
-
-          fileSystems = servicesLib.backupMounts cfg // {
+          fileSystems = servicesLib.backupMounts localBackupCfg // {
             "${cfg.mediaPortalDir}/hdd" = {
               depends = [ "/" ];
               device = cfg.dataDir;
