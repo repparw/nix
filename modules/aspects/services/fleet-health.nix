@@ -22,6 +22,7 @@
           name = "fleet-health-probe";
           runtimeInputs = with pkgs; [
             curl
+            jq
             systemd
           ];
           text = ''
@@ -141,6 +142,17 @@
               fail "auto-update-paused" "PAUSE flag present"
             else
               ok "auto-update-paused"
+            fi
+
+            # Board reflects the current down-set (2+ strikes) and only
+            # exists while something is down; deleted on full recovery.
+            down=$(grep -rl . "$state_dir" 2>/dev/null | grep -v msgid | while read -r f; do c=$(cat "$f"); [ "$c" -ge 2 ] && printf '%s ' "$(basename "$f" | sed 's/:/ /')"; done)
+            if [ -n "$down" ]; then
+              edit_board ":red_circle: fleet: down ->''${down% }"
+            else
+              bid=$(cat "$board_id_file" 2>/dev/null || true)
+              [ -n "$bid" ] && delete_msg "$bid"
+              rm -f "$board_id_file"
             fi
 
             exit 0

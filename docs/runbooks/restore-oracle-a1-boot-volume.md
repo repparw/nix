@@ -32,8 +32,8 @@ oci bv boot-volume-backup list -c "$TEN" --all
 
 ## Path A: swap the boot volume on the same instance
 
-Keeps the instance identity and its ephemeral public IP (the IP survives
-because the VNIC stays attached).
+Keeps the instance identity and its reserved public IP `146.181.42.97`
+(the VNIC stays attached, so the address survives).
 
 ```sh
 TEN=ocid1.tenancy.oc1..aaaaaaaawlqqlvgxn5ptkg65wwt5vdsgkjrpjqjnsjfdkyoociiguaybrq7a
