@@ -3,12 +3,6 @@
   lib,
   ...
 }:
-let
-  moonshineModule = builtins.fetchurl {
-    url = "https://raw.githubusercontent.com/NixOS/nixpkgs/1fa7b5d1a5463a1be4132fcff190fb20919e4d45/nixos/modules/services/networking/moonshine.nix";
-    sha256 = "sha256-nanahbt+fzl4iD+2xxTVZ0Cagk4kSwLMRmFyD7xRtdw=";
-  };
-in
 {
   den.aspects.streaming.nixos =
     {
@@ -144,8 +138,9 @@ in
       };
     in
     {
-      imports = [ moonshineModule ];
-
+      # services.moonshine options come from the Nixpkgs module (nixpkgs PR
+      # 544393) instead of the fetched commit; the fetch is dropped once that
+      # PR merges and reaches our nixpkgs pin.
       options.modules.streaming.shellApplications = lib.mkOption {
         type = lib.types.attrsOf lib.types.package;
         default = { };
