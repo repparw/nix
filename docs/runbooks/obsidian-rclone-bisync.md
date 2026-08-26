@@ -3,7 +3,7 @@ type: Runbook
 title: Obsidian rclone bisync
 description: Bootstrap and operate the Neovim-first Obsidian vault sync.
 when: Read when bootstrapping, operating, or recovering Obsidian rclone bisync.
-resource: obsidian-sync
+resource: modules/aspects/obsidian.nix
 tags: [obsidian, rclone, bisync, dropbox]
 ---
 

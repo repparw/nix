@@ -285,22 +285,6 @@
         "type": "github"
       }
     },
-    "gloomberb-nixpkgs": {
-      "locked": {
-        "lastModified": 1787013355,
-        "narHash": "sha256-yZN4NahUuLLDC9EgNm9m45mLTVbEiOrNRnjW/Es+8Ss=",
-        "owner": "repparw",
-        "repo": "nixpkgs",
-        "rev": "1e6b6fbefac8d7372dcac07eb620e8d115f1e9b9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "repparw",
-        "ref": "gloomberb",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "gnome-shell": {
       "flake": false,
       "locked": {
@@ -714,7 +698,6 @@
         "flake-parts": "flake-parts",
         "flake-utils": "flake-utils",
         "git-hooks": "git-hooks",
-        "gloomberb-nixpkgs": "gloomberb-nixpkgs",
         "helium-nix": "helium-nix",
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager_2",

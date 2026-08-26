@@ -339,19 +339,22 @@
                     alpha.systemd.services."container@${name}".after
               ) (lib.attrNames expectedMediaDefinitions);
               nativeServicesMatch =
-                !(cfg.definitions ? hass)
-                && !(cfg.definitions ? authelia)
-                && !(cfg.definitions ? finance)
-                && edgeCfg ? definitions.hass
-                # Miniflux + its PostgreSQL are pi-native since issue #44.
+                edgeCfg ? definitions.hass
+                # Miniflux + its PostgreSQL run in an nspawn container since
+                # issue #44, reached over the bridge like the rest.
                 && miniflux.hostname == "rss"
                 && miniflux.port == 8081
                 && miniflux.auth == "one_factor"
                 && miniflux.monitor
                 && miniflux.backup.path == "${edgeCfg.configDir}/miniflux"
-                && pi.services.miniflux.enable
-                && pi.services.postgresql.enable
-                && hasMonitorSite "miniflux" "rss" "http://127.0.0.1:8081"
+                && miniflux.containerAddress == "10.231.136.16"
+                && pi.containers.miniflux.localAddress == miniflux.containerAddress
+                && pi.containers.miniflux.config.services.miniflux.enable
+                && pi.containers.miniflux.config.services.postgresql.enable
+                &&
+                  pi.containers.miniflux.bindMounts."/var/lib/postgresql".hostPath
+                  == "${edgeCfg.configDir}/miniflux/postgresql"
+                && hasMonitorSite "miniflux" "rss" "http://10.231.136.16:8081"
                 && paperless.hostname == "paper"
                 && paperless.containerAddress == "10.231.136.12"
                 && paperless.port == 8000
@@ -543,7 +546,7 @@
                 && http.services.qbittorrent.loadBalancer.servers == [ { url = "http://192.168.0.18:18080"; } ]
                 && http.services.bazarr.loadBalancer.servers == [ { url = "http://192.168.0.18:6767"; } ]
                 && http.services.finance.loadBalancer.servers == [ { url = "http://192.168.0.18:3000"; } ]
-                && http.services.miniflux.loadBalancer.servers == [ { url = "http://127.0.0.1:8081"; } ]
+                && http.services.miniflux.loadBalancer.servers == [ { url = "http://10.231.136.16:8081"; } ]
                 && http.services.paperless.loadBalancer.servers == [ { url = "http://192.168.0.18:8000"; } ]
                 && http.services.prowlarr.loadBalancer.servers == [ { url = "http://192.168.0.18:9696"; } ]
                 && http.services.radarr.loadBalancer.servers == [ { url = "http://192.168.0.18:7878"; } ]
@@ -635,10 +638,23 @@
                 ingressPolicyMatches
                 publishedBackendMatch
               ];
+              # Interpolated into the derivation below so that evaluating it
+              # forces every matcher: an assert alone can be skipped by lazy
+              # attribute selection on the flake output.
+              matcherReport = builtins.toJSON {
+                i = ingressPolicyMatches;
+                p = publishedBackendMatch;
+                n = nativeServicesMatch;
+                a = authenticationPresentationMatch;
+                m = mediaSpecializationMatch;
+                b = backgroundServicesMatch;
+                v = validationMatches;
+              };
             in
-            assert expected;
+            assert expected || throw matcherReport;
             pkgs.runCommand "check-service-definitions" { } ''
               echo "service definitions: valid derivation and invalid combination verified" > $out
+              echo "matchers: ${matcherReport}" >> $out
             '';
         }
         // lib.genAttrs hosts evalHost;

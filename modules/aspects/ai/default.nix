@@ -6,17 +6,22 @@
 {
   den.aspects.ai = {
     includes = with den.aspects.ai._; [
-      dictation
       mcp
       opencode
       personal-skills
       pocock-skills
       pstack
-      speech
+      t3code-connect
       t3code-title-patch
       t3code-split
-      t3code-connect
       t3code
+    ];
+
+    # UI/UX AI tooling: needs input and sound hardware, so it only makes
+    # sense on desktop hosts. Base consumers skip this.
+    provides.gui.includes = with den.aspects.ai._; [
+      dictation
+      speech
     ];
 
     nixos =

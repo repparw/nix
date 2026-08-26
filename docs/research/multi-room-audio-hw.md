@@ -1,3 +1,12 @@
+---
+type: Research Note
+title: Multi-Room Audio Hardware
+description: Hardware takeaways and ordering checklist for the Louder ESP32-S3 speaker endpoints.
+when: Read when selecting or assembling multi-room audio endpoint hardware.
+resource: modules/aspects/audio.nix
+tags: [research, audio, music-assistant, esp32]
+---
+
 ### Physical & Hardware Takeaways
 
 * **Form Factor & Enclosure:** The Louder-ESP32 matches Raspberry Pi 4 dimensions. It mounts inside a standard $3 plastic Pi 4 case (pass the speaker leads through the side GPIO slot) and velcros/tapes directly to the back of one speaker cabinet, leaving zero desktop clutter.

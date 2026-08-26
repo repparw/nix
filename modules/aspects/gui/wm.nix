@@ -144,7 +144,7 @@
           swaync = {
             enable = true;
             settings = {
-              timeout-critical = 20000;
+              timeout-critical = 300;
               notification-window-preferred-output = "HDMI-A-1";
             };
           };

@@ -69,49 +69,6 @@
         };
       in
       {
-        modules.services.definitions = {
-          bazarr = {
-            hostname = "bazarr";
-            containerAddress = "10.231.136.2";
-            port = 6767;
-            auth = "one_factor";
-            backup.path = "${cfg.configDir}/bazarr/backup";
-            monitor = true;
-          };
-          prowlarr = {
-            hostname = "prowlarr";
-            containerAddress = "10.231.136.3";
-            port = 9696;
-            auth = "one_factor";
-            backup.path = "${cfg.configDir}/prowlarr/Backups";
-            monitor = true;
-          };
-          qbittorrent = {
-            hostname = "qbit";
-            containerAddress = "10.231.136.4";
-            port = 8080;
-            auth = "external";
-            backup.path = "${cfg.configDir}/qbittorrent";
-            monitor = true;
-          };
-          radarr = {
-            hostname = "radarr";
-            containerAddress = "10.231.136.5";
-            port = 7878;
-            auth = "one_factor";
-            backup.path = "${cfg.configDir}/radarr/Backups";
-            monitor = true;
-          };
-          sonarr = {
-            hostname = "sonarr";
-            containerAddress = "10.231.136.6";
-            port = 8989;
-            auth = "one_factor";
-            backup.path = "${cfg.configDir}/sonarr/Backups";
-            monitor = true;
-          };
-        };
-
         containers = lib.mapAttrs mkArrContainer {
           bazarr = {
             serviceConfig = {

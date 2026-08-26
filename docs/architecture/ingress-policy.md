@@ -22,9 +22,11 @@ Ordinary service routes derive from each definition's `hostname`, `port`, and
 requires an explicit policy implementation and otherwise fails evaluation.
 
 Exceptional routes remain inside the policy implementation: the qBittorrent
-UI/API split, the apex Glance route, and the external Home Assistant and code
-targets. Identity providers, secrets, and application configuration remain in
-their owning service modules.
+UI/API split and the apex Glance route. Everything else, including Home
+Assistant (hostname `home`, `bypass` auth), is an ordinary route derived from
+its definition in `_services/inventory.nix`; there is no code service.
+Identity providers, secrets, and application configuration remain in their
+owning service modules.
 
 ## Adapters
 

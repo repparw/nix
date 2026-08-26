@@ -15,6 +15,7 @@ files instead of copying module contents.
 ## Architecture
 
 - [Den aspect composition](architecture/den-aspect-composition.md)
+- [Ingress policy](architecture/ingress-policy.md)
 - [Repository layout](architecture/repository-layout.md)
 - [Secret inventory and management](architecture/secret-inventory.md)
 
@@ -32,12 +33,15 @@ files instead of copying module contents.
 - [Check native container DNS](runbooks/check-native-container-dns.md)
 - [Deploy NixOS to the Raspberry Pi](runbooks/deploy-pi-nixos.md)
 - [Failed auto-upgrade rollback](runbooks/failed-auto-upgrade-rollback.md)
+- [Fleet health, offsite backups, and upgrade reports](runbooks/fleet-operations.md)
 - [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Prune t3code and opencode databases](runbooks/prune-t3code-opencode-dbs.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
 
 ## Research
 
+- [Multi-room audio hardware](research/multi-room-audio-hw.md)
+- [Multi-room audio Music Assistant setup](research/multi-room-audio-music-assistant-setup.md)
 - [Wispr Flow features for Voxtype](research/wispr-flow-features-for-voxtype.md)
 
 ## Agent guidance

@@ -97,6 +97,17 @@
               };
             };
 
+            # Backups ride a gdrive-only crypt: the union's consumer-cloud
+            # legs fill up (tab.digital hit 507) and restic chunks do not
+            # need triple-copy redundancy.
+            gd-crypt = {
+              config = {
+                type = "crypt";
+                remote = "gdrive:";
+              };
+              secrets.password = osConfig.sops.secrets.rcloneCrypt.path;
+            };
+
             dropbox = {
               config.type = "dropbox";
               secrets.token = osConfig.sops.secrets.rcloneDropbox.path;

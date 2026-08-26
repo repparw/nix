@@ -4,65 +4,41 @@ description: Use for "watch until upstream lands", "when nixpkgs/home-manager PR
 
 # Watch upstream
 
-A change is blocked on an upstream commit (nixpkgs, home-manager, a project repo) landing on the ref you pin. Your job has two halves and both are yours:
+A change is blocked on an upstream landing. Both halves are yours:
 
-1. **Arm** an autonomous probe that detects the landing.
-2. **Complete** the unblock — finish the cleanup work, don't just report it.
+1. **Arm** a probe that detects the landing.
+2. **Complete** the cleanup. "Tell me when it lands" is not done.
 
-The human said "merge when it lands", not "tell me when it lands". Design for a run where nobody is at the keyboard.
+## Before arming
 
-## Step 1: Identify the blocker
+State three things back to the human for correction:
 
-Find three things and state them back to the human before arming anything:
+- **Workaround**: exact file paths and lines of what stands in for upstream.
+- **Upstream event**: the precise observable condition meaning "landed" (a raw URL returns 200 on the pinned branch, or a PR's `merged_at` plus the pin containing the merge commit).
+- **Completion actions**: everything that becomes possible once landed, as mechanical edits.
 
-- **Workaround** — the vendored code standing in for upstream: a `builtins.fetchurl` of a module file, a `nixpkgs.overlays` patch, a flake input, a patched package. Exact file paths and line numbers.
-- **Upstream event** — the precise observable condition meaning "landed": a file exists at a raw URL on the pinned branch (`https://raw.githubusercontent.com/<org>/<repo>/<branch>/<path>` → 200), or a PR's `merged_at` plus the pin's branch containing the merge commit.
-- **Completion actions** — everything that becomes possible once landed: bump the lockfile pin, delete the fetchurl block, mark the draft PR ready and merge it, close the tracking issue, remove now-dead flake inputs.
-- **Mechanical seam** — restructure the workaround so completion is mechanical: give vendored code its own file/provide and reference it through single-line includes from *every* consumer (a host including sub-aspects individually must be listed explicitly). Removal then is `git rm` + deleting include lines, never regex surgery on code that will have evolved by the time the probe fires.
+Restructure first if needed: vendored code gets its own file/provide included by single lines from every consumer, so completion is `git rm` plus deleting include lines, never regex surgery.
 
-**Done when**: the human could read your three-part summary and correct any part before the probe ever fires.
+## The probe
 
-## Step 2: Gate on verification, not detection
+No cron on this machine. Systemd user pair in `~/.config/systemd/user/`: `<name>.service` (`Type=oneshot`, `ExecStart=<script>`) and `<name>.timer` (`OnCalendar=*-*-* 00/2:17:00`, **`Persistent=true`**, `WantedBy=timers.target`). Then enable and start it. Two hours is plenty; faster buys nothing.
 
-Detection alone is not permission to act. Between "URL returns 200" and "merge the cleanup PR" there must be a **gate**: run the thing that breaks if you guessed wrong, and abort leaving state untouched if it fails.
+The script goes in `~/.local/bin/<name>.sh`, never in the repo. Hardcode `REPO="$HOME/Projects/nix"`.
 
-For a Nix flake: `nix flake update <input>`, then eval the option that previously came from the vendored module for every affected host. Only eval success authorizes the commit.
+## Script contract
 
-For a package patch removal: build the package from the new pin first.
+Every watcher must satisfy all five:
 
-If the gate fails after detection succeeded, exit non-zero with the failure visible — that combination means the upstream change differs from what the workaround assumed, and a human must look.
+1. **Quiet while waiting**: not-ready prints one line, exits 0. Non-zero there pollutes journals.
+2. **Idempotent**: detect "already done" and disable the timer instead of redoing work.
+3. **Narrow writes**: stage only files the unblock owns. Refuse to run over a dirty tracked tree.
+4. **Gate before pushing**: after detection, run what breaks if you guessed wrong (flake update then eval every host; build the unpatched package). Gate failure means revert local state untouched, exit non-zero, notify. Detection alone is not permission to act.
+5. **Self-disarming**: full success disables the timer.
 
-## Step 3: Arm the probe
+Bash/awk only; python3 is not on systemd's default PATH. Gotchas: gawk treats `-v var="123"` as a string, so write `NR > (s + 0)` or line comparisons match lexicographically; flakes only see git-tracked files, so stage new workaround files before any eval against the tree.
 
-This machine has no cron. Use a systemd user timer pair in `~/.config/systemd/user/`:
+## Verify armed, report
 
-- `<name>.service` — `Type=oneshot`, `ExecStart=<script>`.
-- `<name>.timer` — `OnCalendar=*-*-* 00/2:17:00` (every 2h at :17), **`Persistent=true`** so reboots and missed runs replay, `WantedBy=timers.target`.
+Run the script once by hand (expect the not-ready path), confirm `list-timers` shows the next fire. Report: what is watched, the condition, what happens automatically, where logs live (`journalctl --user -u <name>`), and that the probe survives restarts.
 
-Then `systemctl --user daemon-reload && systemctl --user enable --now <name>.timer`.
-
-The script itself goes in `~/.local/bin/<name>.sh`, never in the repo. One-off watchers are machine-local tooling; committing one pollutes git history for every future reader. Hardcode the repo path in the script (`REPO="$HOME/Projects/nix"`) instead of deriving it from `$0`.
-
-Probe cadence: upstream channels batch promotions daily; 2h is plenty. Faster polling buys nothing.
-
-## Step 4: The script contract
-
-Every watcher script must satisfy all five properties:
-
-1. **Quiet while waiting** — probe fails to match → print one line, `exit 0`. A not-ready state is success for a watcher; non-zero there just pollutes journals.
-2. **Idempotent** — detect "already done" first (e.g. head branch no longer exists on origin = PR already merged) and disable the timer instead of redoing work.
-3. **Narrow writes** — stage only files the unblock owns (usually just the lockfile). Never sweep unrelated dirty working-tree files into the completion commit.
-4. **Self-disarming** — on full success, `systemctl --user disable --now <name>.timer`. A completed watcher left running is sediment.
-5. **Observable** — humans find results via `journalctl --user -u <name>.service`; every decision prints a line.
-
-Reference implementations (machine-local, deliberately outside git): `~/.local/bin/watch-moonshine.sh` and `~/.local/bin/watch-t3code-title-fix.sh` — the latter probes nixos-unstable's packaged t3code version → bumps the pin → removes the `t3code-title-patch` aspect and its include lines → gates on per-host eval plus a real build of the unpatched package → pushes → disarms itself.
-
-## Step 5: Verify armed, report
-
-Run the script once by hand. Confirm: exits 0 on the not-ready path, journal shows the line, `list-timers` shows the next fire.
-
-Gotcha when verifying the repo side: Nix flakes only see git-tracked files, so a newly added workaround file must be staged (`git add`) before any eval against the working tree can resolve it.
-
-Report to the human: what is being watched, the exact condition, what will happen automatically, where the log lives, and the manual command that does the same thing (`journalctl --user -u <name> -f`) for watching live.
-
-**Done when**: the probe survives a restart (Persistent=true confirmed), and the completion path is verified either by a dry-run of its early steps or by explicit reasoning over each command in it.
+Reference implementations (machine-local): `~/.local/bin/watch-moonshine.sh`, `watch-t3code-title-fix.sh`, `watch-tasks-org.sh`, `watch-qbittorrent.sh`, `watch-t3code-server.sh`, `watch-t3code-split.sh`.

@@ -1,7 +1,8 @@
-# Minimal bootable SD card for the pi: our account, our shell, our SSH
-# keys — but deliberately NOT the den host stack (its default aspects
-# assume sops keys and a desktop-class user). Boot it, then pull the real
-# system:
+# Minimal bootable rescue SD card for the pi: our account, our shell, our
+# SSH keys — but deliberately NOT the den host stack (its default aspects
+# assume sops keys and a desktop-class user). This is an image builder,
+# not a host; it lives outside modules/hosts/ for that reason. Boot it,
+# then pull the real system:
 #
 #   nixos-rebuild switch --flake github:repparw/nix#pi
 #
@@ -37,11 +38,7 @@
             description = "repparw";
             extraGroups = [ "wheel" ];
             shell = pkgs.fish;
-            openssh.authorizedKeys.keys = [
-              "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHGd04EwDYl0a0RAS16wbDI4K2cfHFM8guXXYZdH3XtX u0_a426@localhost #termux"
-              "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN6UbXeSlW/2jkIU9mQIN5xWElnFbA9tw0BfT072WXgR t440"
-              "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPFzKXBKbNZ+jr06UNKj0MHIzYw54CMP6suD8iTd7CxH ubritos@gmail.com #alpha"
-            ];
+            openssh.authorizedKeys.keys = import ../authorized-keys.nix;
           };
           users.users.root.openssh.authorizedKeys.keys = [
             "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPFzKXBKbNZ+jr06UNKj0MHIzYw54CMP6suD8iTd7CxH ubritos@gmail.com #alpha"

@@ -21,13 +21,9 @@
           # most-visited page stops depending on alpha being up.
           ../../_services/glance.nix
           # Miniflux + its PostgreSQL run natively here (issue #44); traefik
-          # reaches them on this host's own loopback.
+          # reaches them over the nspawn bridge gateway.
           ../../_services/miniflux.nix
         ];
-
-        config.modules.services.hostAddresses = {
-          alpha = "192.168.0.18";
-        };
       };
   };
 }
