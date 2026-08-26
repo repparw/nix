@@ -28,6 +28,8 @@
       den.aspects.file-manager
       den.aspects.scripts
       den.aspects.obsidian
+      den.aspects.gloomberb
+
     ];
 
     provides.to-hosts = {

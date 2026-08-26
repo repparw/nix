@@ -22,6 +22,13 @@
             HostName = "192.168.0.4";
             User = config.home.username;
           };
+
+          # Rooted webOS TV: webosbrew dropbear, root key from webOS devmode.
+          tv = {
+            HostName = "192.168.0.48";
+            User = "root";
+            IdentityFile = "~/.ssh/webos_id_ed25519";
+          };
         };
       };
     };

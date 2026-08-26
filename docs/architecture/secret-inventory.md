@@ -42,6 +42,7 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/matriz.sops.yaml` | `matrizApiUsername` | Identify the EcoValores Matriz API user without publishing its CUIT | Matriz account snapshot service | `alpha` |
 | `secrets/matriz.sops.yaml` | `matrizApiPassword` | Authenticate the local EcoValores Matriz adapter | Matriz account snapshot service | `alpha` |
 | `secrets/matriz.sops.yaml` | `matrizApiAccount` | Select the EcoValores Matriz account without publishing its identifier | Matriz account snapshot service | `alpha` |
+| `secrets/hermes.sops.yaml` | `hermes-env` | Seed `$HERMES_HOME/.env` for the Hermes gateway (chat platform tokens, LLM API keys) | `services.hermes-agent` environmentFiles | `pi` |
 The creation rule grants `alpha` only its SSH host-key recipient plus the
 recovery recipient. Add a host recipient to only the files that host consumes,
 then run `sops updatekeys` on those files.

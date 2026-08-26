@@ -4,6 +4,10 @@
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules);
 
   inputs = {
+    cursor-plugins = {
+      url = "github:cursor/plugins";
+      flake = false;
+    };
     den.url = "github:denful/den";
     firefox-addons = {
       url = "github:petrkozorezov/firefox-addons-nix";
@@ -25,15 +29,21 @@
       url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    gloomberb-nixpkgs.url = "github:repparw/nixpkgs/gloomberb";
     helium-nix = {
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hermes-agent.url = "github:NousResearch/hermes-agent/v2026.8.19";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     import-tree.url = "github:vic/import-tree";
+    mp-skills = {
+      url = "github:mattpocock/skills";
+      flake = false;
+    };
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -3,7 +3,7 @@ type: Research Note
 title: Wispr Flow Features Worth Bringing to Voxtype
 description: Source-backed comparison of current Wispr Flow features with the repository's local Voxtype setup.
 when: Read when evaluating or planning Voxtype dictation improvements.
-resource: modules/aspects/dictation.nix
+resource: modules/aspects/ai/dictation.nix
 tags: [dictation, voxtype, wispr-flow, speech]
 ---
 
@@ -14,9 +14,9 @@ Research date: 2026-07-12.
 ## Scope and current baseline
 
 The repository pins Voxtype `v0.7.5` with its Vulkan package, the Whisper `base`
-model, English and Spanish, audio feedback, a themed Quickshell OSD, a toggle
-shortcut, automatic pausing/resuming of media, and transcription notifications
-disabled. The comparison below focuses on features that improve everyday
+model, English and Spanish, audio feedback, the GTK4 layer-shell OSD, a toggle
+shortcut, MPRIS media pause (built into Voxtype), and transcription
+notifications disabled. The comparison below focuses on features that improve everyday
 dictation while preserving the setup's local-first character.
 
 Wispr Flow's distinguishing layer is not speech recognition alone. Its official
