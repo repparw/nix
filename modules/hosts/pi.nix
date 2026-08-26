@@ -41,16 +41,15 @@
         ...
       }:
       {
-          # Phase 2 edge cutover: the apex points at epsilon now, and the
-          # home IP is static (WG endpoint + jellyfin record both hardcode
-          # it), so dynamic DNS has no consumer left. ddclient ships with
-          # the edge aspect; switch it off here rather than forking that.
-          services.ddclient.enable = lib.mkForce false;
+        # Phase 2 edge cutover: the apex points at epsilon now, and the
+        # home IP is static (WG endpoint + jellyfin record both hardcode
+        # it), so dynamic DNS has no consumer left. ddclient ships with
+        # the edge aspect; switch it off here rather than forking that.
+        services.ddclient.enable = lib.mkForce false;
 
-          # Glance migrated to epsilon (stateless); keep state semantics
-          # unchanged by simply not starting the local container.
-          containers.glance.autoStart = lib.mkForce false;
-
+        # Glance migrated to epsilon (stateless); keep state semantics
+        # unchanged by simply not starting the local container.
+        containers.glance.autoStart = lib.mkForce false;
 
         # Offsite restic coverage (den.aspects.backup._.restic): container
         # configs plus the two bind-mounted user service states.
@@ -250,8 +249,11 @@
 
             cd "$state"
             rm -rf src
+            # Anonymous HTTPS fetch; the push below retargets origin at SSH
+            # because GIT_SSH_COMMAND only applies to SSH remotes.
             git clone --depth 1 https://github.com/repparw/nix src
             cd src
+            git remote set-url --push origin git@github.com:repparw/nix.git
             nix flake update
             if git diff --exit-code flake.lock >/dev/null; then
               echo "lock unchanged; nothing to do"
@@ -289,9 +291,13 @@
             if [ -f "$key" ]; then
               git config user.name "pi-auto-update"
               git config user.email "pi-auto-update@repparw.com"
-              git commit -m "chore(pi): nightly input bump" flake.lock
+              # Provenance rides the author (pi-auto-update); the subject
+              # just names what moved.
+              git commit -m "flake.lock: Update" flake.lock
               export GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-              if git push origin main; then
+              # Push by URL: the clone remote is https and GIT_SSH_COMMAND
+              # never applies to it (04:22 run: credential prompt, headless).
+              if git push "git@github.com:repparw/nix.git" main; then
                 pushed=1
               else
                 notify ":warning: pi auto-update aborted: lock push to main failed; not flipping an unpushed tree"
@@ -323,7 +329,7 @@
               nixos-rebuild switch --rollback
               if [ "$pushed" = 1 ]; then
                 git revert --no-edit HEAD || true
-                git push origin main || true
+                git push "git@github.com:repparw/nix.git" main || true
               fi
               note=""
               if [ "$streak" -ge 2 ]; then
@@ -445,6 +451,12 @@
   # Headless repparw on pi: the shared base account plus the rclone config
   # the offsite restic job reads. Agent tooling (t3code/opencode/mcp) comes
   # from the base aspect now; linger stays on for the user's t3code/opencode
-  # services.
-  den.hosts.aarch64-linux.pi.users.repparw.aspect = den.aspects.repparw;
+  # services. Pi keeps the server-only t3code build; desktop hosts run the
+  # full package.
+  den.hosts.aarch64-linux.pi.users.repparw.aspect = {
+    includes = [
+      den.aspects.repparw
+      den.aspects.ai._.t3code-split
+    ];
+  };
 }

@@ -49,6 +49,23 @@ in
         ) cfg.definitions
       );
 
+  # Post-edge contract (glance runs on epsilon now): monitor the public
+  # endpoint itself, so the widget reflects what a visitor experiences —
+  # CF, terminating edge, tunnel, and backend all included.
+  monitorPublicSites =
+    cfg:
+    lib.mapAttrsToList
+      (name: service: {
+        title = name;
+        url = "https://${service.hostname}.${cfg.domain}";
+        check-url = "https://${service.hostname}.${cfg.domain}";
+      })
+      (
+        lib.filterAttrs (
+          _: service: service.monitor && service.hostname != null && service.port != null
+        ) cfg.definitions
+      );
+
   backupMounts =
     cfg:
     lib.mapAttrs' (
@@ -80,6 +97,10 @@ in
     {
       cfg,
       name,
+      # Bridge gateway for the container; container DNS points here. Hosts
+      # overriding hostAddress (epsilon's 10.231.137.x) must override
+      # extraConfig.networking.nameservers to match.
+      hostAddress ? "10.231.136.1",
       privateUsers ? null,
       bindMounts ? { },
       allowedDevices ? [ ],
@@ -92,7 +113,7 @@ in
     {
       autoStart = true;
       privateNetwork = true;
-      hostAddress = "10.231.136.1";
+      inherit hostAddress;
       localAddress = cfg.definitions.${name}.containerAddress;
       inherit extraFlags;
       config =
@@ -101,7 +122,7 @@ in
           {
             services = serviceConfig;
             networking.useHostResolvConf = false;
-            networking.nameservers = [ "10.231.136.1" ];
+            networking.nameservers = [ hostAddress ];
             system.stateVersion = "26.05";
           }
           extraConfig

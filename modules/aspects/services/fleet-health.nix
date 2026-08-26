@@ -43,7 +43,9 @@
 
             state_dir=/var/lib/fleet-health
             mkdir -p "$state_dir"
-            board_id_file="$state_dir/board-msg-id"
+            # Dotfile so the counter glob below never sees bookkeeping.
+            board_id_file="$state_dir/.board-msg-id"
+            rm -f "$state_dir/board-msg-id"
             # shellcheck disable=SC1091
             source /run/secrets/hermes-env
             api="https://discord.com/api/v10/channels/${channelId}/messages"
@@ -145,7 +147,9 @@
             http authelia http://10.231.136.7:9091/api/health 200
             http miniflux http://10.231.136.16:8081/healthcheck 200
             http home-assistant http://10.231.136.2:8123 ""
-            http apex https://repparw.com/ 200 --resolve repparw.com:443:127.0.0.1
+            # Apex lives on epsilon since phase 2; resolve through its
+            # public address so this exercises the real edge path.
+            http apex https://repparw.com/ 200 --resolve repparw.com:443:146.181.42.97
             http rss https://rss.repparw.com/ "" --resolve rss.repparw.com:443:127.0.0.1
             remote jellyfin http://192.168.0.18:8096/ ""
             remote qbittorrent http://192.168.0.18:18080/ ""
@@ -178,7 +182,15 @@
             # The trailing || true matters: with errexit+pipefail a healthy
             # fleet makes the while body's last test fail ([ 0 -ge 2 ]) and
             # kills the probe exactly when there is nothing to report.
-            down=$(grep -rl . "$state_dir" 2>/dev/null | grep -v msgid | while read -r f; do c=$(cat "$f"); [ "$c" -ge 2 ] && printf '%s ' "$(basename "$f" | sed 's/:/ /')"; done || true)
+            down=""
+            for f in "$state_dir"/*; do
+              [ -f "$f" ] || continue
+              c=$(cat "$f" 2>/dev/null || true)
+              if [ -n "$c" ] && [ "$c" -ge 2 ] 2>/dev/null; then
+                down+="$(basename "$f" | sed 's/:/ /') "
+              fi
+            done
+            down="''${down% }"
             if [ -n "$down" ]; then
               edit_board ":red_circle: fleet: down ->''${down% }"
             else

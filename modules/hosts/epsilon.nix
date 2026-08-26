@@ -33,7 +33,35 @@
           port = 8080;
           auth = "bypass";
         };
-        containers.glance.hostAddress = lib.mkForce "10.231.137.1";
+        containers.glance = {
+          hostAddress = lib.mkForce "10.231.137.1";
+          # No in-container stub resolver chains: external DNS goes straight
+          # out the masqueraded bridge to public resolvers. Monitor names are
+          # pinned below and never consult DNS.
+          config.services.resolved.enable = false;
+          config.networking.nameservers = [
+            "1.1.1.1"
+            "9.9.9.9"
+          ];
+          # Monitors probe public names; container resolution mirrors
+          # epsilon edge routing (apex -> local glance, vhosts -> pi).
+          config.networking.hosts = {
+            "192.168.0.4" = [
+              "auth.repparw.com"
+              "bazarr.repparw.com"
+              "finance.repparw.com"
+              "home.repparw.com"
+              "jellyfin.repparw.com"
+              "paper.repparw.com"
+              "prowlarr.repparw.com"
+              "qbit.repparw.com"
+              "radarr.repparw.com"
+              "rss.repparw.com"
+              "sonarr.repparw.com"
+            ];
+            "10.231.137.15" = [ "repparw.com" ];
+          };
+        };
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
         # Installed in place via nixos-infect on top of Ubuntu's partition
         # layout: ext4 root on sda1, UEFI ESP on sda15 mounted /boot/efi.
@@ -71,6 +99,28 @@
         # den.aspects.networking disables predictable interface names, so the
         # virtio NIC answers as eth0; OCI hands out everything via DHCP.
         networking.interfaces.eth0.useDHCP = true;
+        services.resolved.settings.Resolve.DNSStubListenerExtra = [
+          "10.231.137.1"
+        ];
+        # Egress NAT for ve-* comes from systemd's io.systemd.nat masquerade;
+        # do not layer networking.nat on top.
+        networking.firewall.extraForwardRules = ''
+          iifname "ve-glance" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept comment "glance monitor checks via home tunnel"
+          iifname "wg-home" oifname "ve-glance" ct state established,related accept comment "glance monitor replies"
+        '';
+        networking.firewall.interfaces."ve-*" = {
+          allowedTCPPorts = [ 53 ];
+          allowedUDPPorts = [ 53 ];
+        };
+        networking.nftables.tables.glance-home-nat = {
+          family = "ip";
+          content = ''
+            chain postrouting {
+              type nat hook postrouting priority 100; policy accept;
+              ip saddr 10.231.137.0/24 oifname "wg-home" masquerade
+            }
+          '';
+        };
 
         # Public VPS: no mosh UDP range exposed.
         programs.mosh.openFirewall = lib.mkForce false;
