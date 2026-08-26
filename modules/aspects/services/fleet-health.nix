@@ -43,6 +43,7 @@
 
             state_dir=/var/lib/fleet-health
             mkdir -p "$state_dir"
+            board_id_file="$state_dir/board-msg-id"
             # shellcheck disable=SC1091
             source /run/secrets/hermes-env
             api="https://discord.com/api/v10/channels/${channelId}/messages"
@@ -51,6 +52,29 @@
               curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
                 -H "Content-Type: application/json" \
                 -d "{\"content\":\"$1\"}" "$api" >/dev/null || true
+            }
+
+            # Status board: one Discord message edited in place, its id kept
+            # in $board_id_file so edits never re-ping the channel.
+            board_req() { # method, path, json-body-or-empty
+              curl -s -m 15 -X "$1" \
+                -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+                -H "Content-Type: application/json" \
+                ''${3:+-d "$3"} "$api$2"
+            }
+
+            edit_board() { # content
+              local bid
+              bid=$(cat "$board_id_file" 2>/dev/null || true)
+              if [ -n "$bid" ]; then
+                if board_req PATCH "/messages/$bid" "$(jq -n --arg c "$1" '{content: $c}')" | grep -q '"id"'; then return; fi
+              fi
+              bid=$(board_req POST "" "{\"content\":\"$1\"}" | jq -r '.id // empty')
+              if [ -n "$bid" ]; then printf '%s\n' "$bid" > "$board_id_file"; fi
+            }
+
+            delete_msg() {
+              board_req DELETE "/messages/$1" >/dev/null || true
             }
 
             failures=0
@@ -81,10 +105,12 @@
               printf '0\n' > "$state_dir/$n"
             }
 
-            # systemd units (pi-local)
+            # systemd units (pi-local). container@glance lives on epsilon
+            # since the phase 2 dashboard migration; http probes follow the
+            # same rule as backends move off this host.
             for u in \
               container@hermes container@homeassistant container@authelia \
-              container@glance container@archisteamfarm \
+              container@archisteamfarm \
               container@miniflux traefik; do
               if systemctl is-active --quiet "$u"; then ok "unit:$u"; else fail "unit:$u" "systemd inactive"; fi
             done
@@ -119,7 +145,6 @@
             http authelia http://10.231.136.7:9091/api/health 200
             http miniflux http://10.231.136.16:8081/healthcheck 200
             http home-assistant http://10.231.136.2:8123 ""
-            http glance http://10.231.136.15:8080 ""
             http apex https://repparw.com/ 200 --resolve repparw.com:443:127.0.0.1
             http rss https://rss.repparw.com/ "" --resolve rss.repparw.com:443:127.0.0.1
             remote jellyfin http://192.168.0.18:8096/ ""
@@ -146,13 +171,19 @@
 
             # Board reflects the current down-set (2+ strikes) and only
             # exists while something is down; deleted on full recovery.
-            down=$(grep -rl . "$state_dir" 2>/dev/null | grep -v msgid | while read -r f; do c=$(cat "$f"); [ "$c" -ge 2 ] && printf '%s ' "$(basename "$f" | sed 's/:/ /')"; done)
+            # NOTE: renaming/removing a check leaves its counter files here
+            # as ghosts that reappear in the down-set forever. Prune them
+            # from $state_dir by hand when touching check names (happened
+            # with unit:postgresql/unit:miniflux on the container move).
+            # The trailing || true matters: with errexit+pipefail a healthy
+            # fleet makes the while body's last test fail ([ 0 -ge 2 ]) and
+            # kills the probe exactly when there is nothing to report.
+            down=$(grep -rl . "$state_dir" 2>/dev/null | grep -v msgid | while read -r f; do c=$(cat "$f"); [ "$c" -ge 2 ] && printf '%s ' "$(basename "$f" | sed 's/:/ /')"; done || true)
             if [ -n "$down" ]; then
               edit_board ":red_circle: fleet: down ->''${down% }"
             else
               bid=$(cat "$board_id_file" 2>/dev/null || true)
-              [ -n "$bid" ] && delete_msg "$bid"
-              rm -f "$board_id_file"
+              if [ -n "$bid" ]; then delete_msg "$bid"; rm -f "$board_id_file"; fi
             fi
 
             exit 0

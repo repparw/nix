@@ -41,6 +41,17 @@
         ...
       }:
       {
+          # Phase 2 edge cutover: the apex points at epsilon now, and the
+          # home IP is static (WG endpoint + jellyfin record both hardcode
+          # it), so dynamic DNS has no consumer left. ddclient ships with
+          # the edge aspect; switch it off here rather than forking that.
+          services.ddclient.enable = lib.mkForce false;
+
+          # Glance migrated to epsilon (stateless); keep state semantics
+          # unchanged by simply not starting the local container.
+          containers.glance.autoStart = lib.mkForce false;
+
+
         # Offsite restic coverage (den.aspects.backup._.restic): container
         # configs plus the two bind-mounted user service states.
         modules.backup.paths = [
