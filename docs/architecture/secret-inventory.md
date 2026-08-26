@@ -27,15 +27,15 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/rclone.sops.yaml` | `rcloneClarodrive` | Authenticate the Claro Drive remote | rclone Home Manager services | `alpha` |
 | `secrets/rclone.sops.yaml` | `rcloneDropbox` | Authorize Dropbox access | rclone Home Manager services | `alpha` |
 | `secrets/rclone.sops.yaml` | `rcloneNextcloud` | Authenticate the Nextcloud remote | rclone Home Manager services | `alpha` |
-| `secrets/proxy.sops.yaml` | `cloudflare` | Authorize Cloudflare DNS-01 certificate updates | Traefik | `alpha` |
-| `secrets/proxy.sops.yaml` | `qbittorrentAuth` | Configure qBittorrent proxy authentication | Traefik | `alpha` |
-| `secrets/ddclient.sops.yaml` | `ddclientPassword` | Authorize dynamic DNS updates | ddclient | `alpha` |
-| `secrets/authelia.sops.yaml` | `authelia/jwtSecret` | Sign Authelia identity-verification tokens | Authelia | `alpha` |
-| `secrets/authelia.sops.yaml` | `authelia/oidcHmacSecret` | Protect Authelia OIDC authorization data | Authelia | `alpha` |
-| `secrets/authelia.sops.yaml` | `authelia/oidcJwksKey` | Sign Authelia OIDC tokens | Authelia | `alpha` |
-| `secrets/authelia.sops.yaml` | `authelia/sessionSecret` | Encrypt and authenticate Authelia sessions | Authelia | `alpha` |
-| `secrets/authelia.sops.yaml` | `authelia/smtpPassword` | Authenticate Authelia to its SMTP relay | Authelia | `alpha` |
-| `secrets/authelia.sops.yaml` | `authelia/storageEncryptionKey` | Encrypt sensitive Authelia storage fields | Authelia | `alpha` |
+| `secrets/proxy.sops.yaml` | `cloudflare` | Authorize Cloudflare DNS-01 certificate updates | Traefik | `alpha`, `pi` |
+| `secrets/proxy.sops.yaml` | `qbittorrentAuth` | Configure qBittorrent proxy authentication | Traefik | `alpha`, `pi` |
+| `secrets/ddclient.sops.yaml` | `ddclientPassword` | Authorize dynamic DNS updates | ddclient | `alpha`, `pi` |
+| `secrets/authelia.sops.yaml` | `authelia/jwtSecret` | Sign Authelia identity-verification tokens | Authelia | `alpha`, `pi` |
+| `secrets/authelia.sops.yaml` | `authelia/oidcHmacSecret` | Protect Authelia OIDC authorization data | Authelia | `alpha`, `pi` |
+| `secrets/authelia.sops.yaml` | `authelia/oidcJwksKey` | Sign Authelia OIDC tokens | Authelia | `alpha`, `pi` |
+| `secrets/authelia.sops.yaml` | `authelia/sessionSecret` | Encrypt and authenticate Authelia sessions | Authelia | `alpha`, `pi` |
+| `secrets/authelia.sops.yaml` | `authelia/smtpPassword` | Authenticate Authelia to its SMTP relay | Authelia | `alpha`, `pi` |
+| `secrets/authelia.sops.yaml` | `authelia/storageEncryptionKey` | Encrypt sensitive Authelia storage fields | Authelia | `alpha`, `pi` |
 | `secrets/archisteamfarm.sops.yaml` | `steamPassword` | Authenticate the managed Steam account | ArchiSteamFarm | `alpha` |
 | `secrets/jellyfin.sops.yaml` | `jellyfinBackupKey` | Authorize Jellyfin backup creation | Jellyfin backup tooling | `alpha` |
 | `secrets/automations.sops.yaml` | `discordWebhook` | Deliver automation notifications to Discord | Automation services | `alpha` |
@@ -43,9 +43,12 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/matriz.sops.yaml` | `matrizApiPassword` | Authenticate the local EcoValores Matriz adapter | Matriz account snapshot service | `alpha` |
 | `secrets/matriz.sops.yaml` | `matrizApiAccount` | Select the EcoValores Matriz account without publishing its identifier | Matriz account snapshot service | `alpha` |
 | `secrets/hermes.sops.yaml` | `hermes-env` | Seed `$HERMES_HOME/.env` for the Hermes gateway (chat platform tokens, LLM API keys) | `services.hermes-agent` environmentFiles | `pi` |
-The creation rule grants `alpha` only its SSH host-key recipient plus the
-recovery recipient. Add a host recipient to only the files that host consumes,
-then run `sops updatekeys` on those files.
+The creation rule grants each host's SSH host-key recipient plus the personal
+recovery recipient; pi's recipient (`age1x7qu0en7rg0qm6rq5dfvyn3w34se2qt6wdw7yzgtwjkgj3skssgqmeut5m`,
+derived from its preserved Debian-era host key) is already present on every
+file, so new consumers on pi need no re-encryption. Add a recipient only when
+introducing a genuinely new key, then run `sops updatekeys` on the affected
+files.
 
 NixOS decrypts with the machine SSH host key at
 `/etc/ssh/ssh_host_ed25519_key`; the personal Age recipient in `.sops.yaml` is

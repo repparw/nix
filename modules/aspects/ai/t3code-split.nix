@@ -4,14 +4,11 @@
 }:
 {
   # Stopgap for NixOS/nixpkgs#555814 ("split desktop app into
-  # t3code-desktop"), until it merges and reaches our pin:
+  # t3code-desktop"), until it merges and reaches our pin: strip the Electron
+  # launcher from `t3code` so every host's closure is CLI/headless only.
   #
-  # - `t3code` wraps only `bin/t3`; its closure carries no Electron/GTK.
-  # - `t3code-desktop` owns the Electron dependency and the launcher.
-  #
-  # The unwrapped build already installs the full monorepo (including the
-  # desktop bundle under libexec/), so stripping here is just deleting the
-  # launcher and icons the upstream PR moved into `t3code-desktop`.
+  # The GUI need is covered by the web UI (t3code-web.service, port 3773)
+  # instead of an Electron app — see the Mod+G binding in niri.nix.
   #
   # Composes with provides.t3code-title-patch in either overlay order: both
   # derive their changes from `prev.t3code.unwrapped` rather than replacing
@@ -30,13 +27,6 @@
                 mainProgram = "t3";
               };
             });
-          };
-
-          # Lives outside modules/ because import-tree auto-imports every
-          # .nix there as a NixOS module, which would call this package
-          # builder with module args.
-          t3code-desktop = prev.callPackage ../../../packages/t3code-desktop/package.nix {
-            t3code = final.t3code;
           };
         })
       ];

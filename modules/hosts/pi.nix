@@ -17,6 +17,13 @@
       den.aspects.networking
       den.aspects.lan-hosts
       den.aspects.secrets
+      # Public edge (traefik/authelia/ddclient) + shared service inventory,
+      # migrated off alpha so pi services survive workstation downtime.
+      den.aspects.nixos-services._.edge
+      # Always-on Steam card farming; alpha reboots too often for it.
+      den.aspects.nixos-services._.archisteamfarm
+      # Page-change watcher (issue #45); Discord webhook secret + 6h timer.
+      den.aspects.nixos-services._.automations
     ];
 
     nixos =
@@ -37,6 +44,16 @@
         # board. Revisit after the U-Boot NVMe work lands (issue #41).
         boot = {
           kernelPackages = pkgs.linuxPackages_6_18;
+          # /nix is neededForBoot, so stage-1 must enumerate the NVMe: the
+          # BCM2712 PCIe host driver is a module (PCIE_BRCMSTB=m) and without
+          # it in the initrd the device never appears (90s timeout ->
+          # emergency). nvme alone is not enough.
+          initrd.availableKernelModules = [
+            "pcie_brcmstb"
+            "nvme"
+            "mmc_block"
+            "ext4"
+          ];
           kernelParams = [
             "console=ttyMA0,115200n8"
             "console=tty0"
@@ -106,21 +123,21 @@
           };
         };
 
-        swapDevices = [ ];
-
-        # Rootless podman's rootlessport must bind host port 80 for the HA pod
-        # (hostPort: 80 below). Debian allowed this via ip_unprivileged_port_start=80;
-        # NixOS defaults to 1024, which would make the bind fail.
-        boot.kernel.sysctl."net.ipv4.ip_unprivileged_port_start" = 80;
+        swapDevices = [
+          # NVMe-backed swap: the edge stack (traefik/authelia) plus HA make
+          # pi the always-on host, so it needs OOM headroom beyond earlyoom.
+          # NixOS creates the file automatically when `size` is set.
+          {
+            device = "/home/repparw/.swapfile";
+            size = 8192;
+          }
+        ];
 
         hardware.bluetooth.enable = true;
 
-        virtualisation.podman = {
-          enable = true;
-          autoPrune.enable = true;
-        };
-
-        # Trial validated 2026-08-22; replaced the quadlet kube pod.
+        # Home Assistant in nspawn; trial validated 2026-08-22, replacing the
+        # earlier rootless-podman quadlet pod (removed together with its
+        # hostPort-80 bind when Traefik took over ingress).
         containers.homeassistant = {
           autoStart = true;
           privateNetwork = true;
@@ -171,21 +188,8 @@
             };
         };
 
-        # Ingress for the HA container (nginx adds the X-Forwarded-* headers
-        # that the container's trusted_proxies expect).
-        services.nginx = {
-          enable = true;
-          recommendedProxySettings = true;
-          virtualHosts."home.repparw.com" = {
-            locations."/" = {
-              proxyPass = "http://10.231.136.2:8123";
-              proxyWebsockets = true;
-            };
-          };
-        };
-
         # Hermes Agent gateway in its own nspawn container, mirroring the HA
-        # layout above. Written inline for the same reason: mkContainer
+        # container above. Written inline for the same reason: mkContainer
         # hardcodes alpha's resolver, which is broken on pi.
         #
         # Gateway-only by choice: it talks outbound to chat platforms, nothing
@@ -251,18 +255,30 @@
           # The containers module has no [Exec]-style option for these, so
           # they go through the raw nspawn flags (extraFlags).
           extraFlags = [
-            "--drop-capability=CAP_SYS_PTRACE CAP_SYS_MODULE CAP_SYS_RAWIO CAP_MKNOD CAP_AUDIT_READ CAP_AUDIT_WRITE CAP_AUDIT_CONTROL CAP_LINUX_IMMUTABLE CAP_SYS_BOOT CAP_SYS_TIME CAP_SYS_PACCT CAP_SYS_NICE CAP_SYS_RESOURCE CAP_LEASE CAP_WAKE_ALARM CAP_BLOCK_SUSPEND CAP_BPF CAP_PERFMON CAP_MAC_ADMIN CAP_MAC_OVERRIDE"
+            "--drop-capability=CAP_SYS_PTRACE,CAP_SYS_MODULE,CAP_SYS_RAWIO,CAP_MKNOD,CAP_AUDIT_READ,CAP_AUDIT_WRITE,CAP_AUDIT_CONTROL,CAP_LINUX_IMMUTABLE,CAP_SYS_BOOT,CAP_SYS_TIME,CAP_SYS_PACCT,CAP_SYS_NICE,CAP_SYS_RESOURCE,CAP_LEASE,CAP_WAKE_ALARM,CAP_BLOCK_SUSPEND,CAP_BPF,CAP_PERFMON,CAP_MAC_ADMIN,CAP_MAC_OVERRIDE"
 
             # nspawn already applies a syscall *allow* list; this trims groups
             # no NixOS container init needs. @privileged from the original
             # wishlist was omitted deliberately: it expands to @chown @clock
             # @module @raw-io @reboot @swap, and subtracting @chown breaks the
             # in-container activation/tmpfiles chown calls at boot.
-            "--system-call-filter=~@obsolete @debug @swap @reboot @module @raw-io @cpu-emulation"
+            #
+            # DISABLED 2026-08-23: the containers module ships extraFlags via
+            # EXTRA_NSPAWN_FLAGS, which the start wrapper word-splits — a
+            # multi-word flag like this one shatters into positional args and
+            # nspawn execs "@debug" as the container init. User namespace +
+            # capability drop already contain container root; restore only if
+            # the module ever ships extraFlags as a proper argv array.
+            # "--system-call-filter=~@obsolete @debug @swap @reboot @module @raw-io @cpu-emulation"
 
             # Static veth addressing (no DHCP client), so AF_PACKET is not
             # needed; netlink stays for the container's networkd/udev.
-            "--restrict-address-families=AF_UNIX AF_INET AF_INET6 AF_NETLINK"
+            # One family per flag: the EXTRA_NSPAWN_FLAGS env var word-splits,
+            # and --restrict-address-families rejects comma lists.
+            "--restrict-address-families=AF_UNIX"
+            "--restrict-address-families=AF_INET"
+            "--restrict-address-families=AF_INET6"
+            "--restrict-address-families=AF_NETLINK"
           ];
           bindMounts = {
             "/var/lib/hermes" = {
@@ -285,6 +301,10 @@
               # breaks the host-resolved loopback stub.
               networking.useHostResolvConf = false;
               networking.nameservers = [ "192.168.0.4" ];
+              # nspawn seeds /etc/resolv.conf with the HOST stub pointer
+              # (127.0.0.53), but nothing inside serves it unless we run our
+              # own resolved forwarding to the LAN resolver above.
+              services.resolved.enable = true;
 
               services.hermes-agent = {
                 enable = true;
@@ -294,6 +314,39 @@
                 # so pi downloads instead of building.
                 package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
                 environmentFiles = [ "/run/secrets/hermes-env" ];
+                # Nous Portal OAuth credentials live in the container's
+                # auth.json (device-code flow, 2026-08-23); ox-alpha is served
+                # through the portal's inference API.
+                settings.model = {
+                  provider = "nous";
+                  # Portal serves this model under its OpenRouter-style id;
+                  # the bare name 404s.
+                  default = "stealth/ox-alpha";
+                };
+                # When the portal pauses free-tier credit access, the same
+                # model answers via OpenRouter (key already in hermes-env).
+                settings.fallback_providers = [
+                  {
+                    provider = "openrouter";
+                    model = "stealth/ox-alpha";
+                  }
+                  {
+                    provider = "opencode-go";
+                    model = "ox-alpha-free";
+                  }
+                ];
+                # Free tier: the credits gauge is pure noise in chat.
+                settings.display.credits_notices = false;
+                # Home channel for cron results and cross-platform pokes
+                # (matches /sethome in #notifications).
+                settings.platforms.discord = {
+                  enabled = true;
+                  home_channel = {
+                    platform = "discord";
+                    chat_id = "1515064288191053979";
+                    name = "notifications";
+                  };
+                };
                 # Circuit-breaker defaults upstream recommends for unattended
                 # gateways: stop instead of looping tool calls forever.
                 settings.tool_loop_guardrails = {
@@ -339,7 +392,9 @@
         nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 
         # LAN DNS server: resolved listens on the LAN address and proxies to
-        # Cloudflare/Quad9 over DoT.
+        # Cloudflare/Quad9 over DoT. The extra 10.231.136.1 listener is the
+        # nspawn bridge address — mkContainer points containers at it, and
+        # without this they lose DNS on pi.
         services.resolved.settings.Resolve = {
           DNS = [
             "1.1.1.1#cloudflare-dns.com"
@@ -349,7 +404,10 @@
           DNSSEC = true;
           DNSOverTLS = true;
           Cache = true;
-          DNSStubListenerExtra = "192.168.0.4:53";
+          DNSStubListenerExtra = [
+            "192.168.0.4:53"
+            "10.231.136.1:53"
+          ];
         };
 
         networking = {
@@ -359,6 +417,25 @@
             enable = true;
             internalInterfaces = [ "ve-+" ];
             externalInterface = "eth0";
+            # NOTE: the iifname "ve-+" rule the module renders does not match
+            # these veths (observed 2026-08-23: UNREPLIED SYN_SENT conntrack
+            # entries while the rule was present). The working masquerade for
+            # the container subnet lives in nftables.tables.container-nat
+            # below; drop this comment with the rule if the module ever fixes
+            # the match.
+          };
+
+          # Masquerade container egress by source subnet. Separate table so
+          # it composes with the module-rendered nixos-nat; priority 90 puts
+          # it ahead of srcnat (100).
+          nftables.tables.container-nat = {
+            family = "ip";
+            content = ''
+              chain post {
+                type nat hook postrouting priority 90; policy accept;
+                ip saddr 10.231.136.0/24 oifname "eth0" masquerade
+              }
+            '';
           };
 
           # First boot / install note: the resolver chain above only comes up
@@ -374,9 +451,17 @@
             interface = "eth0";
           };
 
+          # Containers reach the local edge by its public name (hosts file
+          # points it back here), so HA's server-side OIDC calls to
+          # auth.repparw.com must traverse INPUT on the bridge.
+          firewall.extraInputRules = ''
+            iifname "ve-*" tcp dport { 80, 443 } accept comment "containers -> local edge"
+          '';
+
           firewall.interfaces.eth0 = {
             allowedTCPPorts = [
               80
+              443
               53
             ];
             allowedUDPPorts = [
@@ -424,8 +509,10 @@
   };
 
   # Minimal headless repparw: same account as alpha but without the desktop
-  # stack. Mirrors the Debian-era setup on the pi (fish shell, ssh keys, and
-  # the rootless podman Home Assistant pod below).
+  # stack. Mirrors the Debian-era setup on the pi (fish shell, ssh keys).
+  # The rootless-podman HA quadlet was removed when HA moved to nspawn and
+  # Traefik took over ingress; linger stays on for the user's t3code/opencode
+  # services.
   den.aspects.pi-repparw = {
     includes = [
       den.batteries.define-user
@@ -441,6 +528,9 @@
       den.aspects.ai._.t3code
       den.aspects.ai._.t3code-title-patch
       den.aspects.ai._.t3code-split
+      # t3code-connect intentionally NOT included here: baking the VITE_*
+      # identifiers matters only for the web build alpha serves; on the pi it
+      # would force a full aarch64 t3code rebuild per switch for nothing.
       den.aspects.ai._.opencode
       den.aspects.ai._.mcp
     ];
@@ -488,75 +578,6 @@
       {
         xdg.enable = true;
         home.preferXdgDirectories = true;
-
-        # Home Assistant pod: kept as a rootless podman kube manifest so the
-        # data under ~/services/hass and the container layout from the Debian
-        # installation carry over unchanged. Quadlet (.kube file) generates
-        # the systemd user unit with proper sd-notify wiring — a hand-written
-        # Type=simple unit would exit as soon as `podman kube play` detaches
-        # and tear the pod back down via ExecStop.
-        home.file.".config/containers/systemd/podservices.kube".text = ''
-          [Kube]
-          Yaml=%h/services/pod.yaml
-          AutoUpdate=registry
-
-          [Install]
-          WantedBy=default.target
-        '';
-
-        home.file."services/pod.yaml".text = ''
-          # Save the output of this file and use kubectl create -f to import
-          # it into Kubernetes.
-          #
-          # Created with podman-5.4.2
-
-          # NOTE: The namespace sharing for a pod has been modified by the user and is not the same as the
-          # default settings for kubernetes. This can lead to unexpected behavior when running the generated
-          # kube yaml in a kubernetes cluster.
-          ---
-          apiVersion: v1
-          kind: Pod
-          metadata:
-            annotations:
-              io.containers.autoupdate/homeassistant: registry
-              io.kubernetes.cri-o.SandboxID/homeassistant: 4bf37bb3e42a602c9ae39b84f7c1bb02525c6d9b73df1fce83680bc5454621cb
-            creationTimestamp: "2026-02-16T14:54:45Z"
-            labels:
-              app: podservices
-            name: podservices
-          spec:
-            containers:
-            - image: docker.io/homeassistant/home-assistant:stable
-              name: homeassistant
-              ports:
-              - containerPort: 8123
-                hostPort: 80
-              securityContext:
-                privileged: true
-                procMount: Unmasked
-              volumeMounts:
-              - mountPath: /config
-                name: home-repparw-services-hass-host-0
-              - mountPath: /etc/localtime
-                name: etc-localtime-host-1
-                readOnly: true
-              - mountPath: /run/dbus
-                name: run-dbus-host-2
-                readOnly: true
-            volumes:
-            - hostPath:
-                path: /home/repparw/services/hass
-                type: Directory
-              name: home-repparw-services-hass-host-0
-            - hostPath:
-                path: /etc/localtime
-                type: File
-              name: etc-localtime-host-1
-            - hostPath:
-                path: /run/dbus
-                type: Directory
-              name: run-dbus-host-2
-        '';
       };
   };
 

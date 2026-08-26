@@ -24,6 +24,10 @@
       ];
 
       nixos.system.stateVersion = "26.05";
+      # Upstream moved nspawn container autoStart to machines.target; a
+      # plain host never activates it, so containers silently die on the
+      # first switch after the bump. Pull it into the boot chain.
+      nixos.systemd.targets.machines.wantedBy = [ "multi-user.target" ];
       homeManager.home.stateVersion = "26.05";
     };
   };

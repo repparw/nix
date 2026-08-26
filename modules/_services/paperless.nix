@@ -23,6 +23,15 @@ in
     inherit cfg;
     name = "paperless";
     privateUsers = "pick";
+    # Publish the WebUI onto alpha's LAN so remote ingress can target it
+    # (see _services/inventory.nix).
+    forwardPorts = [
+      {
+        protocol = "tcp";
+        hostPort = 8000;
+        containerPort = 8000;
+      }
+    ];
     bindMounts = {
       "/var/lib/paperless" = {
         hostPath = "${cfg.configDir}/paper";

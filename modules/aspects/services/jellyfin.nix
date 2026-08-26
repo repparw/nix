@@ -55,6 +55,13 @@
               inherit cfg;
               name = "jellyfin";
               privateUsers = "pick";
+              forwardPorts = [
+                {
+                  protocol = "tcp";
+                  hostPort = 8096;
+                  containerPort = 8096;
+                }
+              ];
               bindMounts = {
                 "/var/lib/jellyfin" = {
                   hostPath = "${cfg.configDir}/jellyfin";

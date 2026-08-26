@@ -22,30 +22,37 @@ swap="$(
             | map(select(.is_active and (.active_window_id != null))
             | { output, window: .active_window_id })) as $active
         | ($active | map(select(.output == $focused)) | first) as $a
-        | ($outputs | index($focused)) as $focused_index
-        | if $a == null or $focused_index == null then
+        | (($outputs | index($focused)) as $i
+          | if $i == null then $outputs[0]
+            else $outputs[(($i + 1) % ($outputs | length))]
+            end) as $target
+        | ($active
+            | map(select(.output == $target))
+            | first // null) as $b
+        | if $a == null and $b == null then
             empty
+          elif $a != null and $b != null then
+            ["swap", $a.window, $a.output, $b.window, $b.output] | @tsv
+          elif $a != null then
+            ["move", $a.window, "", "", $target] | @tsv
           else
-            ([range(1; ($outputs | length) + 1)
-              | $outputs[(($focused_index + .) % ($outputs | length))]]
-              | map(. as $output | $active[]? | select(.output == $output))
-              | first) as $b
-            | if $b == null then
-                empty
-              else
-                [$a.window, $a.output, $b.window, $b.output] | @tsv
-              end
+            ["move", $b.window, "", "", $focused] | @tsv
           end
         '
 )"
 
 if [ -z "$swap" ]; then
-    notify-send -t 2000 "Niri" "Need active windows on two monitors to swap."
+    notify-send -t 2000 "Niri" "No active windows to move."
     exit 1
 fi
 
-read -r focused_window focused_monitor other_window other_monitor <<< "$swap"
+read -r mode focused_window focused_monitor other_window other_monitor <<< "$swap"
 
-niri msg action move-window-to-monitor --id "$focused_window" "$other_monitor"
-niri msg action move-window-to-monitor --id "$other_window" "$focused_monitor"
-niri msg action focus-window --id "$other_window"
+if [ "$mode" = "swap" ]; then
+    niri msg action move-window-to-monitor --id "$focused_window" "$other_monitor"
+    niri msg action move-window-to-monitor --id "$other_window" "$focused_monitor"
+    niri msg action focus-window --id "$other_window"
+else
+    niri msg action move-window-to-monitor --id "$focused_window" "$other_monitor"
+    niri msg action focus-window --id "$focused_window"
+fi

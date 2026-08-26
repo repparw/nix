@@ -120,6 +120,15 @@
               dataDir = "/config";
             };
             extraConfig.systemd.tmpfiles.rules = [ ];
+            # Publish the WebUI onto alpha's LAN so remote ingress can target
+            # it (containers bridge out via NAT only; see _services/inventory.nix).
+            forwardPorts = [
+              {
+                protocol = "tcp";
+                hostPort = 6767;
+                containerPort = 6767;
+              }
+            ];
             extraBindMounts = {
               "/config" = {
                 hostPath = "${cfg.configDir}/bazarr";
@@ -134,6 +143,13 @@
               enable = true;
               openFirewall = true;
             };
+            forwardPorts = [
+              {
+                protocol = "tcp";
+                hostPort = 9696;
+                containerPort = 9696;
+              }
+            ];
             extraBindMounts = {
               "/var/lib/private/prowlarr/Backups" = {
                 hostPath = "${cfg.configDir}/prowlarr/Backups";
@@ -182,6 +198,12 @@
                 hostPort = 54535;
                 containerPort = 54535;
               }
+              # Published WebUI (remapped: glance owns 8080 on the LAN iface).
+              {
+                protocol = "tcp";
+                hostPort = 18080;
+                containerPort = 8080;
+              }
             ];
             extraBindMounts = {
               "/var/lib/qBittorrent/qBittorrent" = {
@@ -195,8 +217,24 @@
             };
           };
 
-          radarr = mkServarrContainer "radarr";
-          sonarr = mkServarrContainer "sonarr";
+          radarr = (mkServarrContainer "radarr") // {
+            forwardPorts = [
+              {
+                protocol = "tcp";
+                hostPort = 7878;
+                containerPort = 7878;
+              }
+            ];
+          };
+          sonarr = (mkServarrContainer "sonarr") // {
+            forwardPorts = [
+              {
+                protocol = "tcp";
+                hostPort = 8989;
+                containerPort = 8989;
+              }
+            ];
+          };
         };
       };
   };
