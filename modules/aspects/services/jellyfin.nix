@@ -42,19 +42,17 @@
               mode = "0400";
             };
 
-            modules.services.definitions.jellyfin = {
-              hostname = "jellyfin";
-              containerAddress = "10.231.136.10";
-              port = 8096;
-              auth = "bypass";
-              backup.path = "${cfg.configDir}/jellyfin/data/backups";
-              monitor = true;
-            };
-
             containers.jellyfin = servicesLib.mkContainer {
               inherit cfg;
               name = "jellyfin";
               privateUsers = "pick";
+              forwardPorts = [
+                {
+                  protocol = "tcp";
+                  hostPort = 8096;
+                  containerPort = 8096;
+                }
+              ];
               bindMounts = {
                 "/var/lib/jellyfin" = {
                   hostPath = "${cfg.configDir}/jellyfin";
@@ -63,6 +61,12 @@
                 "/data" = {
                   hostPath = cfg.mediaPortalDir;
                   isReadOnly = false;
+                };
+                # allowedDevices only sets cgroup policy; without this bind
+                # mount no /dev/dri nodes exist inside the container.
+                "/dev/dri" = {
+                  hostPath = "/dev/dri";
+                  isReadOnly = true;
                 };
               };
               allowedDevices = [
@@ -88,11 +92,7 @@
 
                 hardware.graphics = {
                   enable = true;
-                  extraPackages = with pkgs; [
-                    libva-vdpau-driver
-                    libvdpau-va-gl
-                    intel-media-driver
-                  ];
+                  # alpha's GPU is amdgpu; VAAPI comes from mesa (radeonsi).
                 };
 
                 users.users.jellyfin.extraGroups = [

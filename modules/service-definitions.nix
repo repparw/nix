@@ -8,8 +8,22 @@ let
         type = types.nullOr types.str;
         default = null;
       };
+      # Machine hosting the service. null keeps addressing host-local
+      # (containerAddress or loopback); set to the hosting machine's name so
+      # other hosts resolve the backend through its LAN address.
+      host = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+      };
       containerAddress = mkOption {
         type = types.nullOr types.str;
+        default = null;
+      };
+      # Port exposed on the hosting machine's LAN when it differs from
+      # `port` (e.g. two containers behind one host publishing the same
+      # container port). Only meaningful together with `host`.
+      publishedPort = mkOption {
+        type = types.nullOr types.port;
         default = null;
       };
       port = mkOption {
@@ -42,7 +56,7 @@ let
     };
   };
   validateDefinitions =
-    definitions:
+    hostAddresses: definitions:
     let
       hasValidHostname =
         hostname:
@@ -59,15 +73,30 @@ let
       invalidHostnames = lib.attrNames (
         lib.filterAttrs (_: service: !hasValidHostname service.hostname) definitions
       );
+      unknownHosts = lib.attrNames (
+        lib.filterAttrs (
+          _: service: service.host != null && !(lib.hasAttr service.host hostAddresses)
+        ) definitions
+      );
       hostnames = lib.filter (hostname: hostname != null) (
         lib.catAttrs "hostname" (lib.attrValues definitions)
       );
       duplicateHostnames = lib.filter (
         hostname: builtins.length (lib.filter (candidate: candidate == hostname) hostnames) > 1
       ) (lib.unique hostnames);
-      addresses = lib.filter (address: address != null) (
-        lib.catAttrs "containerAddress" (lib.attrValues definitions)
-      );
+      addresses =
+        let
+          # containerAddress lives in each host's own bridge namespace
+          # (every host runs 10.231.136.0/24), so uniqueness is scoped per
+          # owning host: "local" means this host's own bridge.
+          perHost = lib.mapAttrsToList (_: service: {
+            inherit (service) containerAddress;
+            scope = if service.host == null then "local" else service.host;
+          }) definitions;
+        in
+        map (entry: "${entry.scope} ${entry.containerAddress}") (
+          lib.filter (entry: entry.containerAddress != null) perHost
+        );
       duplicateAddresses = lib.filter (
         address: builtins.length (lib.filter (candidate: candidate == address) addresses) > 1
       ) (lib.unique addresses);
@@ -76,6 +105,8 @@ let
       throw "invalid service definitions: ${lib.concatStringsSep ", " (lib.attrNames invalid)}; routed and monitored services require both hostname and port"
     else if invalidHostnames != [ ] then
       throw "invalid service definition hostnames: ${lib.concatStringsSep ", " invalidHostnames}; hostnames must be lowercase DNS labels"
+    else if unknownHosts != [ ] then
+      throw "service definitions reference hosts missing from modules.services.hostAddresses: ${lib.concatStringsSep ", " unknownHosts}"
     else if duplicateHostnames != [ ] then
       throw "duplicate service definition hostnames: ${lib.concatStringsSep ", " duplicateHostnames}"
     else if duplicateAddresses != [ ] then
@@ -84,6 +115,22 @@ let
       definitions;
 in
 {
+  options.modules.backup = {
+    paths = lib.mkOption {
+      description = "Directories the offsite restic job covers on this host.";
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+    };
+    repository = lib.mkOption {
+      description = ''
+        Restic repository for the offsite job. Null falls back to the
+        union-backed per-host path.
+      '';
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+    };
+  };
+
   options.modules.services = {
     rootDir = mkOption {
       type = types.path;
@@ -115,11 +162,6 @@ in
       default = "${cfg.rootDir}/backup";
     };
 
-    timezone = mkOption {
-      type = types.str;
-      default = "America/Argentina/Buenos_Aires";
-    };
-
     domain = mkOption {
       type = types.str;
       default = "repparw.com";
@@ -128,8 +170,22 @@ in
     definitions = mkOption {
       type = types.attrsOf serviceType;
       default = { };
-      apply = validateDefinitions;
+      apply = validateDefinitions cfg.hostAddresses;
       description = "Shared service facts used to derive reachability, routing, monitoring, and backups.";
+    };
+
+    # LAN address of each known machine, keyed by host name. Definitions with
+    # a `host` set resolve their loopback-bound backends through this map;
+    # containerAddress backends are reached directly via the hosting machine's
+    # routed container bridge.
+    hostAddresses = mkOption {
+      type = types.attrsOf types.str;
+      default = { };
+      example = {
+        alpha = "192.168.0.18";
+        pi = "192.168.0.4";
+      };
+      description = "Known machines and their LAN addresses for cross-host backend resolution.";
     };
 
   };
