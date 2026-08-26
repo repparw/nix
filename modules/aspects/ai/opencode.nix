@@ -62,11 +62,6 @@
               options = {
                 baseURL = "https://openrouter.ai/api/v1";
               };
-              models = {
-                "stealth/ox-alpha" = {
-                  name = "Ox Alpha";
-                };
-              };
             };
             # Nous Portal subscription routed through their OpenAI-compatible
             # inference API. Auth handled out-of-band via /connect (no key in

@@ -16,11 +16,13 @@ _: {
       let
         # Static address of the edge host (see hosts/pi.nix).
         piAddress = "192.168.0.4";
+        # Phase 2 edge: epsilon fronts the apex; names move here as their
+        # backends migrate off pi.
+        epsilonAddress = "146.181.42.97";
 
-        # pi fronts every public service since the edge migration; names must
-        # match the router rules in _services/ingress-policy.nix.
+        # Still routed by pi's traefik; names must match the router rules
+        # in _services/ingress-policy.nix.
         piNames = [
-          "repparw.com"
           "auth.repparw.com"
           "bazarr.repparw.com"
           "finance.repparw.com"
@@ -34,9 +36,15 @@ _: {
           "sonarr.repparw.com"
         ];
 
+        # Served by epsilon directly (glance migration).
+        epsilonNames = [
+          "repparw.com"
+        ];
+
         rendered = ''
           # BEGIN nix lan-hosts (modules/aspects/lan-hosts.nix)
           ${piAddress} ${lib.concatStringsSep " " piNames}
+          ${epsilonAddress} ${lib.concatStringsSep " " epsilonNames}
           # END nix lan-hosts
         '';
       in
@@ -52,6 +60,7 @@ _: {
 
           networking.hosts = {
             ${piAddress} = piNames;
+            ${epsilonAddress} = epsilonNames;
           };
         };
       };

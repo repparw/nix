@@ -142,6 +142,7 @@
             let
               alpha = inputs.self.nixosConfigurations.alpha.config;
               pi = inputs.self.nixosConfigurations.pi.config;
+              epsilon = inputs.self.nixosConfigurations.epsilon.config;
               cfg = alpha.modules.services;
               edgeCfg = pi.modules.services;
               miniflux = edgeCfg.definitions.miniflux;
@@ -155,7 +156,7 @@
                 pi.containers.authelia.config.services.authelia.instances.main.settings.access_control;
               monitorSites = lib.findFirst (
                 page: page.name == "Home"
-              ) { } pi.containers.glance.config.services.glance.settings.pages;
+              ) { } epsilon.containers.glance.config.services.glance.settings.pages;
               evalDefinition =
                 definition:
                 builtins.tryEval (
@@ -321,9 +322,6 @@
                 let
                   expectedService = expectedMediaDefinitions.${name};
                   service = cfg.definitions.${name};
-                  endpoint = "http://192.168.0.18:${
-                    toString (expectedService.publishedPort or expectedService.port)
-                  }";
                 in
                 service.hostname == expectedService.hostname
                 && service.containerAddress == expectedService.containerAddress
@@ -332,7 +330,7 @@
                 && service.monitor
                 && service.backup.path == expectedService.backupPath
                 && alpha.containers.${name}.localAddress == service.containerAddress
-                && hasMonitorSite name expectedService.hostname endpoint
+                && hasMonitorSite name expectedService.hostname "https://${expectedService.hostname}.${cfg.domain}"
                 && alpha.fileSystems."${cfg.backupDir}/${name}".device == expectedService.backupPath
                 &&
                   builtins.elem "home-containers-backup-${name}.mount"
@@ -354,7 +352,7 @@
                 &&
                   pi.containers.miniflux.bindMounts."/var/lib/postgresql".hostPath
                   == "${edgeCfg.configDir}/miniflux/postgresql"
-                && hasMonitorSite "miniflux" "rss" "http://10.231.136.16:8081"
+                && hasMonitorSite "miniflux" "rss" "https://rss.repparw.com"
                 && paperless.hostname == "paper"
                 && paperless.containerAddress == "10.231.136.12"
                 && paperless.port == 8000
@@ -366,7 +364,7 @@
                 && builtins.elem paperless.port alpha.containers.paperless.config.networking.firewall.allowedTCPPorts
                 && alpha.containers.paperless.config.services.paperless.address == "0.0.0.0"
                 && alpha.containers.paperless.config.services.paperless.port == paperless.port
-                && hasMonitorSite "paperless" "paper" "http://192.168.0.18:8000"
+                && hasMonitorSite "paperless" "paper" "https://paper.repparw.com"
                 && alpha.fileSystems."${cfg.backupDir}/paperless".device == paperless.backup.path
                 &&
                   builtins.elem "home-containers-backup-paperless.mount"

@@ -19,8 +19,12 @@
     includes = [
       den.batteries.define-user
       den.batteries.primary-user
+      # Projects host-level homeManager blocks (alpha's spotifyd etc.) into
+      # this user across hosts; without it host aspects are nixos-only.
+      den.batteries.host-aspects
       (den.batteries.user-shell "fish")
       den.aspects.shell
+      den.aspects.editors
       den.aspects.tmux
       den.aspects.git
       den.aspects.ssh

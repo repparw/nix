@@ -125,25 +125,14 @@
               # so pi downloads instead of building.
               package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
               environmentFiles = [ "/run/secrets/hermes-env" ];
-              # Nous Portal OAuth credentials live in the container's
-              # auth.json (device-code flow, 2026-08-23); ox-alpha is served
-              # through the portal's inference API.
               settings.model = {
-                provider = "nous";
-                # Portal serves this model under its OpenRouter-style id;
-                # the bare name 404s.
-                default = "stealth/ox-alpha";
+                provider = "opencode-go";
+                default = "glm-5.3-flash";
               };
-              # When the portal pauses free-tier credit access, the same
-              # model answers via OpenRouter (key already in hermes-env).
               settings.fallback_providers = [
                 {
-                  provider = "openrouter";
-                  model = "stealth/ox-alpha";
-                }
-                {
-                  provider = "opencode-go";
-                  model = "ox-alpha-free";
+                  provider = "nous";
+                  model = "tencent/hy3:free";
                 }
               ];
               # Free tier: the credits gauge is pure noise in chat.

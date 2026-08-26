@@ -189,11 +189,7 @@
               "Mod+F" = titledAction "Fullscreen" "maximize-window-to-edges";
               "Mod+Alt+F" = titledAction "Toggle Floating" "toggle-window-floating";
               "Mod+Ctrl+F" = titledAction "Toggle Focus Floating" "switch-focus-between-floating-and-tiling";
-              "Mod+G" = titledSpawn "T3 Code" [
-                "chromium"
-                "--app=http://127.0.0.1:3773"
-                "--start-fullscreen"
-              ];
+              "Mod+G" = titledSpawn "T3 Code" [ "t3code-desktop" ];
               "Mod+M" = titledSpawn "Spotify" [
                 "foot"
                 "--app-id"
