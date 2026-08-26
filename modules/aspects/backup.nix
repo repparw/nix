@@ -42,7 +42,10 @@
 
               [gd-crypt]
               type = crypt
-              remote = gdrive:crypt
+              # Dedicated drive folder, OUTSIDE the gdrive:crypt leg the
+              # user-level crypt union serves: backups never mix with
+              # synced personal data.
+              remote = gdrive:nixos-backups
               password = ${config.sops.placeholder.rcloneCrypt}
             '';
           };
