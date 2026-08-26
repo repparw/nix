@@ -197,13 +197,6 @@
                 "t3code"
                 "t3code-desktop"
               ];
-              "Mod+Shift+G" = titledSpawn "OpenCode" [
-                "ndrop"
-                "-F"
-                "-c"
-                "opencode-desktop"
-                "ai.opencode.desktop"
-              ];
               "Mod+M" = titledSpawn "Spotify" [
                 "foot"
                 "--app-id"
@@ -252,7 +245,7 @@
               "Mod+Z" = titledSpawn "MPV Clipboard" [ "mpvclip" ];
 
               "Ctrl+Alt+Shift+A".spawn-sh =
-                "gamescope --steam -H 1080 --adaptive-sync -- steam -tenfoot -pipewire-dmabuf";
+                "gamescope --steam -H 1080 --adaptive-sync --fps-limit 162 -- steam -tenfoot -pipewire-dmabuf";
               "Ctrl+Alt+Shift+E" = spawn [ "Discord" ];
               "Ctrl+Alt+Shift+F" = spawn [
                 "wpctl"

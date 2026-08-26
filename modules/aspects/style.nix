@@ -65,16 +65,16 @@
 
             fonts = {
               sansSerif = {
-                name = "FiraCode Nerd Font";
-                package = pkgs.nerd-fonts.fira-code;
+                name = "GoogleSansCode Nerd Font";
+                package = pkgs.nerd-fonts.googlesanscode;
               };
               serif = {
-                name = "FiraCode Nerd Font";
-                package = pkgs.nerd-fonts.fira-code;
+                name = "GoogleSansCode Nerd Font";
+                package = pkgs.nerd-fonts.googlesanscode;
               };
               monospace = {
-                name = "FiraCode Nerd Font Mono";
-                package = pkgs.nerd-fonts.fira-code;
+                name = "GoogleSansCode Nerd Font Mono";
+                package = pkgs.nerd-fonts.googlesanscode;
               };
 
               sizes = {

@@ -3,70 +3,69 @@
   den.aspects.ai.provides.dictation = {
     homeManager =
       {
+        lib,
         pkgs,
         ...
       }:
       let
-        voxtypePackage = pkgs.voxtype-vulkan;
+        # Upstream ships a prebuilt GTK4 layer-shell OSD, but nixpkgs only
+        # builds the quickshell frontend. Patchelf the small standalone binary
+        # rather than rebuilding voxtype (its lib pulls in whisper.cpp).
+        # Checksummed against upstream's SHA256SUMS.txt at v0.7.5.
+        voxtypeOsdGtk4 = pkgs.stdenv.mkDerivation {
+          pname = "voxtype-osd-gtk4";
+          version = "0.7.5";
+          src = pkgs.fetchurl {
+            url = "https://github.com/peteonrails/voxtype/releases/download/v0.7.5/voxtype-0.7.5-linux-x86_64-osd-gtk4";
+            hash = "sha256-/tgWlVUc7pW7D9N27G3Eljiw/XFEgFBNeKpZewBqWVI=";
+          };
+          dontUnpack = true;
+          nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+          buildInputs = with pkgs; [
+            cairo
+            glib
+            gtk4
+            gtk4-layer-shell
+            stdenv.cc.cc.lib
+          ];
+          installPhase = ''
+            runHook preInstall
+            install -Dm755 $src $out/bin/voxtype-osd-gtk4
+            runHook postInstall
+          '';
+        };
 
         voxtypeToggle = pkgs.writeShellApplication {
           name = "voxtype-toggle";
           runtimeInputs = with pkgs; [
             coreutils
-            gnugrep
-            pipewire
-            voxtypePackage
+            voxtype-vulkan
           ];
           text = ''
             set -euo pipefail
 
-            runtime_dir="''${XDG_RUNTIME_DIR:-/tmp}"
-            state_file="$runtime_dir/voxtype/state"
+            state_file="''${XDG_RUNTIME_DIR:-/tmp}/voxtype/state"
 
             read_state() {
               cat "$state_file" 2>/dev/null || printf 'idle'
             }
 
-            set_playback_suspended() {
-              pw-metadata -n default 0 suspend.playback "$1" Spa:Int >/dev/null
-            }
-
-            wait_for_idle_then_resume() {
-              for _ in $(seq 1 600); do
-                [ "$(read_state)" = "idle" ] && break
-                sleep 0.1
-              done
-              set_playback_suspended 0
-            }
-
             case "$(read_state)" in
               recording|streaming)
                 voxtype record stop
-                wait_for_idle_then_resume &
                 ;;
               transcribing)
                 voxtype record cancel || true
-                wait_for_idle_then_resume &
                 ;;
               *)
-                set_playback_suspended 1
-                if ! voxtype record start; then
-                  set_playback_suspended 0
-                  exit 1
-                fi
+                voxtype record start || exit 1
                 ;;
             esac
           '';
         };
       in
       {
-        xdg.dataFile."voxtype/quickshell" = {
-          source = "${voxtypePackage.src}/quickshell";
-          recursive = true;
-        };
-
         home.packages = [
-          pkgs.quickshell
           voxtypeToggle
 
           (pkgs.writeShellApplication {
@@ -143,7 +142,7 @@
 
         services.voxtype = {
           enable = true;
-          package = voxtypePackage;
+          package = pkgs.voxtype-vulkan;
           settings = {
             engine = "whisper";
             whisper = {
@@ -153,7 +152,7 @@
                 "es"
               ];
               translate = false;
-              initial_prompt = "NixOS, Nixpkgs, Home Manager, flakes, FlakeHub, sops-nix, dendritic, den, Niri, Quickshell, Voxtype, Wayland.";
+              initial_prompt = "NixOS, Nixpkgs, Home Manager, flakes, FlakeHub, sops-nix, dendritic, den, Niri, Voxtype, Wayland.";
             };
             audio.feedback.enabled = true;
             output.notification.on_transcription = false;
@@ -169,9 +168,26 @@
             };
             osd = {
               enabled = true;
-              frontend = "quickshell";
+              frontend = "gtk4";
             };
           };
+          # The daemon spawns `voxtype-osd` and output typing needs wtype;
+          # give the service an explicit PATH instead of relying on the
+          # module's display-gated default. WAYLAND_DISPLAY itself is
+          # inherited from the user manager environment (imported by niri).
+          environment.PATH = lib.makeBinPath (
+            with pkgs;
+            [
+              coreutils
+              which
+              wl-clipboard
+              wtype
+              voxtypeOsdGtk4
+
+              # The daemon looks up the `voxtype-osd` launcher here.
+              pkgs.voxtype-vulkan
+            ]
+          );
         };
 
       };
