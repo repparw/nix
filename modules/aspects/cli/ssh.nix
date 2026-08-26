@@ -24,9 +24,10 @@
             User = config.home.username;
           };
 
-          # Oracle Cloud Always Free A1 VPS (epsilon).
+          # Oracle Cloud Always Free A1 VPS (epsilon). Reserved public IP:
+          # survives stop/start and reboots, unlike the launch-time ephemeral.
           epsilon = {
-            HostName = "146.181.36.68";
+            HostName = "146.181.42.97";
             User = config.home.username;
           };
 

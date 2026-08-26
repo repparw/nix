@@ -12,9 +12,8 @@
       # without the secrets aspect the sops-nix module is missing entirely.
       den.aspects.secrets
     ];
-
     nixos =
-      { ... }:
+      { config, ... }:
       {
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
         # Installed in place via nixos-infect on top of Ubuntu's partition
@@ -56,6 +55,32 @@
 
         # Public VPS: no mosh UDP range exposed.
         programs.mosh.openFirewall = lib.mkForce false;
+
+        # Tunnel home through the router's WireGuard hub (peer registered in
+        # the router UI as epsilon, tunnel ip 10.5.5.3). Split-tunnel on
+        # purpose: only LAN and pi's container bridge route through it.
+        sops.secrets = {
+          wgEpsilonPrivateKey.sopsFile = ../../secrets/wg.sops.yaml;
+          wgEpsilonPresharedKey.sopsFile = ../../secrets/wg.sops.yaml;
+        };
+
+        networking.wireguard.interfaces.wg-home = {
+          ips = [ "10.5.5.3/32" ];
+          privateKeyFile = config.sops.secrets.wgEpsilonPrivateKey.path;
+          peers = [
+            {
+              publicKey = "qvjDMgSHda89kuJ0vBL44LAdP681dXMczkSyfk9BnSc=";
+              presharedKeyFile = config.sops.secrets.wgEpsilonPresharedKey.path;
+              allowedIPs = [
+                "10.5.5.0/24"
+                "192.168.0.0/24"
+                "10.231.136.0/24"
+              ];
+              endpoint = "45.237.179.43:51820";
+              persistentKeepalive = 25;
+            }
+          ];
+        };
 
         # Rescue path: root keeps key access with the same shared keys.
         users.users.root.openssh.authorizedKeys.keys = import ../../authorized-keys.nix;

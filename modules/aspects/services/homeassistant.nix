@@ -59,6 +59,9 @@
                     anthropic
                     litellm
                     pyyaml # ai_automation_suggester
+                    # The TV backlight automation shells out to ssh (forced
+                    # command on the TV's webosbrew key).
+                    openssh
                   ];
               };
               networking.firewall.allowedTCPPorts = [ 8123 ];
