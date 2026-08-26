@@ -1,7 +1,8 @@
 ---
 type: Host Profiles
 title: Host Profiles
-description: The alpha desktop, beta laptop, and pi server profiles.
+description: The alpha desktop and pi server profiles, plus the parked beta laptop.
+when: Read when comparing host profiles or adding or changing a host.
 resource: modules/hosts/
 tags: [hosts, alpha, beta, pi]
 ---
@@ -24,7 +25,9 @@ Source: `modules/hosts/alpha.nix`
 ## Beta
 
 `beta` is the laptop profile. It adds laptop-specific input, power, and display
-handling to the shared baseline.
+handling to the shared baseline. It is parked: its host attachment is commented
+out in `modules/aspects/repparw.nix`, so it does not participate in flake
+evaluations until it has hardware again.
 
 Source: `modules/hosts/beta.nix`
 

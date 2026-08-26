@@ -41,15 +41,6 @@ in
     }
   ) secretNames;
 
-  modules.services.definitions.authelia = {
-    hostname = "auth";
-    containerAddress = "10.231.136.7";
-    port = 9091;
-    auth = "bypass";
-    backup.path = "${cfg.configDir}/authelia";
-    monitor = true;
-  };
-
   containers.authelia = servicesLib.mkContainer {
     inherit cfg;
     name = "authelia";

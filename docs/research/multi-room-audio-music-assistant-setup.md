@@ -1,3 +1,12 @@
+---
+type: Research Note
+title: Multi-Room Audio Music Assistant Setup
+description: Implementation specification for the Louder ESP32-S3 endpoint with Music Assistant and Spotify Connect.
+when: Read when configuring or troubleshooting the Music Assistant multi-room audio setup.
+resource: modules/aspects/audio.nix
+tags: [research, audio, music-assistant, home-assistant]
+---
+
 ### System Implementation Specification: Louder ESP32-S3 Endpoint
 
 #### 1. Hardware Architecture & Pinout

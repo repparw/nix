@@ -21,20 +21,24 @@
       let
         cfg = config.modules.services;
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
+        # Backup mounts only for services this host actually runs: the
+        # shared inventory also carries pi-local services whose state never
+        # exists here.
+        localBackupCfg = cfg // {
+          definitions = lib.filterAttrs (_: service: service.host == "alpha") cfg.definitions;
+        };
       in
       {
         # The public edge (proxy/authelia/ddclient) moved to pi; this host
-        # keeps only its backend services plus the shared schema they use.
+        # keeps only its backend services plus the shared schema and the
+        # service inventory that owns all definitions.
         imports = [
           ../../_services/paperless.nix
           ../../service-definitions.nix
+          ../../_services/inventory.nix
         ];
 
         config = {
-          modules.services.hostAddresses = {
-            pi = "192.168.0.4";
-          };
-
           networking = {
             nat = {
               enable = true;
@@ -60,9 +64,9 @@
             })
           ];
 
-          systemd.services = servicesLib.containerBackupAfters cfg;
+          systemd.services = servicesLib.containerBackupAfters localBackupCfg;
 
-          fileSystems = servicesLib.backupMounts cfg // {
+          fileSystems = servicesLib.backupMounts localBackupCfg // {
             "${cfg.mediaPortalDir}/hdd" = {
               depends = [ "/" ];
               device = cfg.dataDir;

@@ -84,9 +84,19 @@ let
       duplicateHostnames = lib.filter (
         hostname: builtins.length (lib.filter (candidate: candidate == hostname) hostnames) > 1
       ) (lib.unique hostnames);
-      addresses = lib.filter (address: address != null) (
-        lib.catAttrs "containerAddress" (lib.attrValues definitions)
-      );
+      addresses =
+        let
+          # containerAddress lives in each host's own bridge namespace
+          # (every host runs 10.231.136.0/24), so uniqueness is scoped per
+          # owning host: "local" means this host's own bridge.
+          perHost = lib.mapAttrsToList (_: service: {
+            inherit (service) containerAddress;
+            scope = if service.host == null then "local" else service.host;
+          }) definitions;
+        in
+        map (entry: "${entry.scope} ${entry.containerAddress}") (
+          lib.filter (entry: entry.containerAddress != null) perHost
+        );
       duplicateAddresses = lib.filter (
         address: builtins.length (lib.filter (candidate: candidate == address) addresses) > 1
       ) (lib.unique addresses);
@@ -105,6 +115,22 @@ let
       definitions;
 in
 {
+  options.modules.backup = {
+    paths = lib.mkOption {
+      description = "Directories the offsite restic job covers on this host.";
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+    };
+    repository = lib.mkOption {
+      description = ''
+        Restic repository for the offsite job. Null falls back to the
+        union-backed per-host path.
+      '';
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+    };
+  };
+
   options.modules.services = {
     rootDir = mkOption {
       type = types.path;
@@ -134,11 +160,6 @@ in
     backupDir = mkOption {
       type = types.path;
       default = "${cfg.rootDir}/backup";
-    };
-
-    timezone = mkOption {
-      type = types.str;
-      default = "America/Argentina/Buenos_Aires";
     };
 
     domain = mkOption {

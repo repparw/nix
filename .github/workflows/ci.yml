@@ -1,0 +1,16 @@
+# The repo gate (flake check) already evals every host's toplevel plus the
+# 500-line rendered-fleet asserts; this workflow is that gate, run on push
+# instead of only when a session remembers to run it locally.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - run: nix flake check

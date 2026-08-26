@@ -394,17 +394,6 @@
                 };
               }
               {
-                output = {
-                  _args = [ "DP-2" ];
-                  mode = "3840x2160@120.000";
-                  position._props = {
-                    x = 10000;
-                    y = 10000;
-                  };
-                  off = { };
-                };
-              }
-              {
                 window-rule = {
                   match._props.app-id = "firefox";
                   opacity = 1.0;

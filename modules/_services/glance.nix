@@ -14,12 +14,6 @@ let
   '';
 in
 {
-  modules.services.definitions.glance = {
-    containerAddress = "10.231.136.15";
-    port = 8080;
-    auth = "bypass";
-  };
-
   containers.glance = servicesLib.mkContainer {
     inherit cfg;
     name = "glance";

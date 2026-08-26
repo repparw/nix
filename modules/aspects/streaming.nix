@@ -58,9 +58,11 @@
             done
           fi
 
-          # Moonshine's upstream health check assumes /usr/share. On NixOS the
-          # implicit Vulkan layer lives in the package output, so make it
-          # discoverable to Steam, Proton, and their Vulkan loaders.
+          # Expose the moonshine-wsi implicit layer to Steam and Proton.
+          # System Vulkan loaders find it via /run/opengl-driver (wired up by
+          # the module's hardware.graphics.extraPackages), but Steam's runtime
+          # container never sees that path; Proton discovers implicit layers
+          # through forwarded host XDG_DATA_DIRS.
           export XDG_DATA_DIRS="${config.services.moonshine.package}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
           # Keep Steam from probing these automount paths and waking the disks.
@@ -96,10 +98,10 @@
             done
           fi
 
-          # Moonshine's upstream health check assumes /usr/share. On NixOS the
-          # implicit Vulkan layer lives in the package output, so make it
-          # discoverable to Steam, Proton, and their Vulkan loaders. The
-          # gamescope share is needed for the gamescope-wsi layer manifest.
+          # Gamescope's WSI layer must stay discoverable for clients
+          # presenting into gamescope; same XDG_DATA_DIRS forwarding as the
+          # plain Big Picture entry above. moonshine-wsi is force-disabled
+          # below.
           export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${gamescopeHdr}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
           # Test workaround for hgaiser/moonshine#93 (HDR/DX11 black screen):
@@ -138,9 +140,6 @@
       };
     in
     {
-      # services.moonshine options come from the Nixpkgs module (nixpkgs PR
-      # 544393) instead of the fetched commit; the fetch is dropped once that
-      # PR merges and reaches our nixpkgs pin.
       options.modules.streaming.shellApplications = lib.mkOption {
         type = lib.types.attrsOf lib.types.package;
         default = { };
@@ -161,7 +160,6 @@
           enable = true;
           inherit user;
           firewallInterfaces = [ "eth0" ];
-          package = pkgs.moonshine;
 
           settings = {
             name = config.networking.hostName;
@@ -197,9 +195,6 @@
             ];
           };
         };
-
-        # Required by Moonshine's sleep-inhibitor polkit rule.
-        users.groups.moonshine.members = [ user ];
       };
     };
 }

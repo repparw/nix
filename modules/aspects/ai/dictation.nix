@@ -140,6 +140,23 @@
           })
         ];
 
+        # The daemon must not start with default.target: at login it races
+        # amdgpu creating /dev/dri/renderD128, ggml-vulkan then enumerates zero
+        # devices, and the preloaded model stays pinned to CPU for the lifetime
+        # of the process (~real-time transcription instead of GPU speed).
+        # Device units don't exist in the user manager, so order against
+        # graphical-session.target instead: niri grabs its render node before
+        # activating it, which also gives the OSD a Wayland display at spawn.
+        # mkForce because list options append across modules; keeping the
+        # module's default.target hook would still race at login.
+        systemd.user.services.voxtype = {
+          Unit = {
+            PartOf = [ "graphical-session.target" ];
+            After = [ "graphical-session.target" ];
+          };
+          Install.WantedBy = lib.mkForce [ "graphical-session.target" ];
+        };
+
         services.voxtype = {
           enable = true;
           package = pkgs.voxtype-vulkan;
