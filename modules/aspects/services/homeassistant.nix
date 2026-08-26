@@ -26,12 +26,10 @@
               networking.useHostResolvConf = false;
               networking.nameservers = [ "192.168.0.4" ];
 
-              # shell_command.set_tv_backlight_mode SSHes the TV's ambilight
-              # server; the nspawn migration dropped the ssh binary and mode
-              # pushes started failing silently (continue_on_error hides it),
-              # leaving the TV app streaming and re-enabling WLED after HA
-              # turned it off.
-              environment.systemPackages = [ pkgs.openssh ];
+              # shell_command.set_tv_backlight_mode pushes backlight modes to
+              # the TV; the nspawn unit PATH omits system packages, so the
+              # ssh binary must be added to the service path explicitly.
+              systemd.services.home-assistant.path = [ pkgs.openssh ];
 
               services.home-assistant = {
                 enable = true;
@@ -61,7 +59,7 @@
                     pyyaml # ai_automation_suggester
                     # The TV backlight automation shells out to ssh (forced
                     # command on the TV's webosbrew key).
-                    openssh
+                    pkgs.openssh
                   ];
               };
               networking.firewall.allowedTCPPorts = [ 8123 ];

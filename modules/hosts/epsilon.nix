@@ -13,8 +13,27 @@
       den.aspects.secrets
     ];
     nixos =
-      { config, ... }:
+      { config, lib, ... }:
       {
+        imports = [
+          # Glance migrated off pi (phase 3, first piece): the dashboard is
+          # stateless, so it runs as a local container here behind the
+          # terminating edge. Definitions schema comes along for the ride.
+          ../service-definitions.nix
+          ../_services/inventory.nix
+          ../_services/glance.nix
+        ];
+
+        # pi's estate uses 10.231.136.0/24 on its own bridge AND that range
+        # is routed into the tunnel; epsilon's bridge must not collide.
+        # NOTE: redefine the whole entry — overriding a single leaf here
+        # silently drops the inventory's mkDefault siblings (port/auth).
+        modules.services.definitions.glance = {
+          containerAddress = "10.231.137.15";
+          port = 8080;
+          auth = "bypass";
+        };
+        containers.glance.hostAddress = lib.mkForce "10.231.137.1";
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
         # Installed in place via nixos-infect on top of Ubuntu's partition
         # layout: ext4 root on sda1, UEFI ESP on sda15 mounted /boot/efi.
@@ -132,18 +151,28 @@
           };
           dynamicConfigOptions = {
             http = {
-              routers.catch-all = {
-                rule = "PathPrefix(`/`)";
-                entryPoints = [ "websecure" ];
-                service = "home-edge";
-                tls = {
-                  certResolver = "cloudflare";
-                  domains = [
-                    {
-                      main = "*.repparw.com";
-                      sans = [ "repparw.com" ];
-                    }
-                  ];
+              routers = {
+                # Apex serves the local glance; everything else falls
+                # through to pi's traefik via the catch-all below.
+                apex-glance = {
+                  rule = "Host(`repparw.com`)";
+                  entryPoints = [ "websecure" ];
+                  service = "glance-local";
+                  priority = 100;
+                };
+                catch-all = {
+                  rule = "PathPrefix(`/`)";
+                  entryPoints = [ "websecure" ];
+                  service = "home-edge";
+                  tls = {
+                    certResolver = "cloudflare";
+                    domains = [
+                      {
+                        main = "*.repparw.com";
+                        sans = [ "repparw.com" ];
+                      }
+                    ];
+                  };
                 };
               };
               serversTransports.home-edge-tls = {
@@ -152,10 +181,13 @@
                 # sends no SNI and the handshake gets dropped before routing.
                 serverName = "repparw.com";
               };
-              services.home-edge.loadBalancer = {
-                passHostHeader = true;
-                serversTransport = "home-edge-tls";
-                servers = [ { url = "https://192.168.0.4:443"; } ];
+              services = {
+                glance-local.loadBalancer.servers = [ { url = "http://10.231.137.15:8080"; } ];
+                home-edge.loadBalancer = {
+                  passHostHeader = true;
+                  serversTransport = "home-edge-tls";
+                  servers = [ { url = "https://192.168.0.4:443"; } ];
+                };
               };
             };
           };
