@@ -117,6 +117,7 @@
 
               rpi = "${lib.getExe' mosh "mosh"} -P 60001 pi";
               pc = "${lib.getExe' mosh "mosh"} -P 60000 alpha";
+              eps = "${lib.getExe' mosh "mosh"} -P 60002 epsilon";
 
               ns = "${lib.getExe nix-search-tv} print | fzf --preview '${lib.getExe nix-search-tv} preview {}' --scheme history";
             });
