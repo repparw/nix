@@ -88,12 +88,10 @@
         # config.txt) lives on the vfat /boot/firmware partition, while NixOS
         # writes the extlinux boot files into /boot on the ext4 root.
         #
-        # Kernel pinned to 6.18 LTS-line: linuxPackages_latest (7.2) does not
-        # enumerate the BCM2712 PCIe/NVMe controller with the sd-image's DTBs
-        # (boot hung waiting for the /nix device); 6.18.4x is proven on this
-        # board. Revisit after the U-Boot NVMe work lands (issue #41).
+        # Try linux_latest (was pinned to 6.18 LTS - 7.2 failed to enumerate
+        # BCM2712 PCIe/eMMC bridge, issue #41). Test with backup ready.
         boot = {
-          kernelPackages = pkgs.linuxPackages_6_18;
+          kernelPackages = pkgs.linuxPackages_latest;
           # /nix is neededForBoot, so stage-1 must enumerate the NVMe: the
           # BCM2712 PCIe host driver is a module (PCIE_BRCMSTB=m) and without
           # it in the initrd the device never appears (90s timeout ->
