@@ -1,29 +1,11 @@
 _: {
   den.aspects.nix = {
     nixos =
-      { config, pkgs, ... }:
-      let
-        # The store copy of sudo is intentionally not setuid; NixOS exposes
-        # the privileged wrapper separately, so prepend /run/wrappers/bin to
-        # let nh find the setuid sudo.
-        nhWithSudoWrapper = pkgs.writeShellApplication {
-          name = "nh";
-          runtimeInputs = [ pkgs.nh ];
-          text = ''
-            export PATH="/run/wrappers/bin:$PATH"
-            exec ${pkgs.nh}/bin/nh "$@"
-          '';
-        };
-      in
+      { config, ... }:
       {
         programs.nh = {
           enable = true;
-          package = nhWithSudoWrapper;
           flake = "${config.home-manager.users.repparw.xdg.userDirs.projects}/nix";
-          clean = {
-            enable = true;
-            extraArgs = "--keep 3 --keep-since 7d --keep-one";
-          };
         };
 
         sops.secrets.accessTokens = {
