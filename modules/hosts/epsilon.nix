@@ -122,8 +122,12 @@
           '';
         };
 
-        # Public VPS: no mosh UDP range exposed.
+        # Public VPS: no mosh UDP range exposed. One pinned port for the
+        # interactive session (predictive local echo needs mosh's SSP; ssh
+        # cannot speculate). Same port answers on the tunnel.
         programs.mosh.openFirewall = lib.mkForce false;
+        networking.firewall.interfaces.eth0.allowedUDPPorts = [ 60002 ];
+        networking.firewall.interfaces."wg-home".allowedUDPPorts = [ 60002 ];
 
         # Tunnel home through the router's WireGuard hub (peer registered in
         # the router UI as epsilon, tunnel ip 10.5.5.3). Split-tunnel on
