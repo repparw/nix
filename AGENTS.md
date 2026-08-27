@@ -1,6 +1,4 @@
 Repo follows upstream `vic/den` default-template structure.
-
-## Core Rules
 - Configure generated aspects through `den.aspects.<name>`.
 - Use `includes` for aspect composition.
 - Use `imports` only for real Nix module imports.
@@ -11,16 +9,7 @@ Repo follows upstream `vic/den` default-template structure.
 
 - Do not put plaintext secrets in repo; use `sops-nix`.
 
-## Nix Research
-
-Use `mcp-nixos` before guessing package attributes, option paths, Nix functions, package versions, or documentation. It covers NixOS packages and options, Home Manager, nix-darwin, Nixvim, Noogle, FlakeHub, NixOS Wiki, `nix.dev`, package history, binary-cache status, and pinned flake inputs.
-
-Use `nh search` for repository-local CLI research and GitHub-backed Nixpkgs development history:
-
-```console
-nh search prs <query>
-nh search issues <query>
-```
+Use `nh search` for packages, options, issues and PRs on nixpkgs/home-assistant
 
 Check issues before implementing a local workaround. For merged pull requests, verify that the change reached the Nixpkgs branch pinned by this flake.
 
