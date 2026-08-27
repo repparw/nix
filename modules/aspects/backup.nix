@@ -97,6 +97,61 @@
               Persistent = true;
             };
           };
+
+          # Weekly offsite-repo weight report: how much the crypt repo
+          # occupies on the drive after prune, plus snapshot count. Posts to
+          # #notifications via the bot token like the other monitors.
+          systemd.services.restic-size-report = {
+            description = "Report offsite restic repository size to Discord";
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            path = [
+              (lib.getExe pkgs.rclone)
+              pkgs.restic
+              pkgs.jq
+              pkgs.curl
+            ];
+            environment = {
+              RCLONE_CONFIG = config.sops.templates."rclone.conf".path;
+              RESTIC_PASSWORD_FILE = config.sops.secrets.resticPassword.path;
+            };
+            serviceConfig = {
+              Type = "oneshot";
+              TimeoutStartSec = "30min";
+            };
+            script =
+              let
+                channelId = "1515064288191053979";
+              in
+              ''
+                # shellcheck disable=SC1091
+                source /run/secrets/hermes-env
+                host=$(cat /etc/hostname)
+                repo="rclone:gd-crypt:restic/$host"
+
+                size_json=$(rclone size "$repo" --json)
+                bytes=$(jq -r .bytes <<<"$size_json")
+                objects=$(jq -r .count <<<"$size_json")
+                gib=$(awk -v b="$bytes" 'BEGIN{printf "%.1f", b/1073741824}')
+
+                snaps=$(RESTIC_REPOSITORY="$repo" ${lib.getExe pkgs.restic} snapshots --json | jq length)
+
+                curl -s -m 15 -X POST \
+                  -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+                  -H "Content-Type: application/json" \
+                  -d "$(jq -n --arg c "*$host* offsite: ''${gib} GiB across $snaps snapshots ($objects objects)" '{content: $c}')" \
+                  "https://discord.com/api/v10/channels/${channelId}/messages" >/dev/null || true
+              '';
+          };
+
+          systemd.timers.restic-size-report = {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "Mon *-*-* 07:00:00";
+              Persistent = true;
+              RandomizedDelaySec = "10min";
+            };
+          };
         };
     };
 
