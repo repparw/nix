@@ -122,7 +122,7 @@ in
           {
             services = serviceConfig;
             networking.useHostResolvConf = false;
-            networking.nameservers = [ hostAddress ];
+            networking.nameservers = lib.mkDefault [ hostAddress ];
             system.stateVersion = "26.05";
           }
           extraConfig
