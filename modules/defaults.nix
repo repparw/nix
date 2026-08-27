@@ -36,6 +36,7 @@
         dates = "weekly";
         options = "--delete-older-than 21d";
       };
+      nixos.boot.tmp.useTmpfs = true;
     };
   };
 }

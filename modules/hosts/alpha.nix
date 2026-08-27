@@ -74,7 +74,6 @@
             timeout = 1;
             efi.canTouchEfiVariables = true;
           };
-          tmp.useTmpfs = true;
 
           zswap.enable = true;
         };
