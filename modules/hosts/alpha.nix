@@ -350,8 +350,10 @@
               exit 0
             fi
 
-            # Pi must be healthy before alpha follows its lock.
-            if ! curl -s -m 6 --resolve repparw.com:443:192.168.0.4 https://repparw.com/ -o /dev/null -w '%{http_code}' | grep -q 200; then
+            # Pi must be healthy before alpha follows its lock. Use plain
+            # http to pi's LAN address. Apex now lives on epsilon, so a
+            # resolved https check would hang on pi.
+            if ! curl -s -m 6 http://192.168.0.4/ -o /dev/null -w '%{http_code}' | grep -q 301; then
               echo "pi edge not healthy, deferring"
               exit 0
             fi
@@ -385,7 +387,7 @@
               if [ "$(systemctl is-system-running 2>/dev/null)" != "running" ]; then
                 ok=0
               fi
-              if ! curl -s -m 6 --resolve repparw.com:443:192.168.0.4 https://repparw.com/ -o /dev/null; then
+              if ! curl -s -m 6 http://192.168.0.4/ -o /dev/null; then
                 ok=0
               fi
               if [ "$ok" = 1 ]; then
