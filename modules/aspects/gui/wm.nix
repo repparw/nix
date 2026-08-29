@@ -111,7 +111,7 @@
           baobab
           playerctl
 
-          # Nautilus thumbnailers — no programs.nautilus upstream yet (see PR 319535)
+          # Nautilus thumbnailers — no programs.nautilus upstream yet (see PR https://github.com/NixOS/nixpkgs/pull/319535)
           # GNOME only pulls glycin/gst via services.desktopManager.gnome.enable
           papers # PDF/PS — papers.thumbnailer (GNOME 48 successor to evince)
           glycin-thumbnailer # images: heif/jxl/svg — GNOME default

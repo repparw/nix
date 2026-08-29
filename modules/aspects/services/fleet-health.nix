@@ -149,7 +149,7 @@
             http home-assistant http://10.231.136.2:8123 ""
             # Apex lives on epsilon since phase 2; resolve through its
             # public address so this exercises the real edge path.
-            http apex https://repparw.com/ 200 --resolve repparw.com:443:146.181.42.97
+            http apex https://repparw.com/ 200 
             http rss https://rss.repparw.com/ "" --resolve rss.repparw.com:443:127.0.0.1
             remote jellyfin http://192.168.0.18:8096/ ""
             remote qbittorrent http://192.168.0.18:18080/ ""

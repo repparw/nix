@@ -108,6 +108,13 @@
           iifname "ve-glance" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept comment "glance monitor checks via home tunnel"
           iifname "wg-home" oifname "ve-glance" ct state established,related accept comment "glance monitor replies"
         '';
+        # Debugging bypass: let the home WAN IP hit 443 directly even when
+        # the CF-only rule is the structural trust anchor. Goes before CF in
+        # extraInputRules so the packet matches here first.
+        networking.firewall.extraInputRules = ''
+          iifname "eth0" ip saddr 45.237.179.43 tcp dport 443 accept comment "home WAN debug bypass"
+          iifname "eth0" tcp dport 443 ip saddr { 173.245.48.0/20, 103.21.244.0/22, 103.22.200.0/22, 103.31.4.0/22, 141.101.64.0/18, 108.162.192.0/18, 131.0.72.0/22, 162.158.0.0/15, 172.64.0.0/13, 188.114.96.0/20, 190.93.240.0/20, 197.234.240.0/22, 198.41.128.0/17, 104.16.0.0-104.27.255.255 } accept comment "CF only"
+        '';
         networking.firewall.interfaces."ve-*" = {
           allowedTCPPorts = [ 53 ];
           allowedUDPPorts = [ 53 ];
@@ -247,7 +254,7 @@
           };
         };
 
-        networking.firewall.interfaces.eth0.allowedTCPPorts = [ 443 ];
+        networking.firewall.interfaces.eth0.allowedTCPPorts = [ ];
 
         # Rescue path: root keeps key access with the same shared keys.
         users.users.root.openssh.authorizedKeys.keys = import ../../authorized-keys.nix;
