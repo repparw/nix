@@ -269,6 +269,164 @@
             }
           '';
         };
+
+        # Consumer updater: alpha never bumps flake.lock. It pulls the lock
+        # pi pushed, gates on idle + pi health + local health, flips, soaks,
+        # and rolls back on failure. Single writer stays pi.
+        systemd.services.alpha-auto-update = {
+          description = "Pull main, gate on idle and pi health, flip alpha";
+          after = [ "network-online.target" ];
+          wants = [ "network-online.target" ];
+          path = with pkgs; [
+            git
+            nix
+            nvd
+            nixos-rebuild
+            curl
+            jq
+            gawk
+            gnugrep
+            coreutils
+            util-linux
+            systemd
+          ];
+          serviceConfig = {
+            Type = "oneshot";
+            WorkingDirectory = "/var/lib/alpha-auto-update";
+            StateDirectory = "alpha-auto-update";
+            TimeoutStartSec = "90min";
+          };
+          script = ''
+            state=/var/lib/alpha-auto-update
+            api="https://discord.com/api/v10/channels/1515064288191053979/messages"
+            mkdir -p "$state"
+
+            exec 9>/run/alpha-auto-update.lock
+            flock -n 9 || exit 0
+
+            if [ -e "$state/PAUSE" ]; then
+              echo "automation paused via PAUSE flag"
+              exit 0
+            fi
+
+            notify() {
+              # shellcheck disable=SC1091
+              source /run/secrets/hermes-env
+              curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" >/dev/null || true
+            }
+
+            notify_file() {
+              # shellcheck disable=SC1091
+              source /run/secrets/hermes-env
+              curl -s -m 30 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+                -F "payload_json=$(jq -n --arg c "$1" '{content: $c}')" \
+                -F "files[0]=@$2" "$api" >/dev/null || true
+            }
+
+            is_idle() {
+              # No logind sessions at all -> idle
+              if ! loginctl list-sessions --no-legend 2>/dev/null | grep -q .; then
+                return 0
+              fi
+              sess=$(loginctl --no-legend 2>/dev/null | awk '$3=="repparw"{print $1; exit}')
+              if [ -z "$sess" ]; then
+                return 0
+              fi
+              idle=$(loginctl show-session "$sess" -p IdleHint 2>/dev/null | cut -d= -f2)
+              if [ "$idle" = "yes" ]; then
+                return 0
+              fi
+              state=$(loginctl show-session "$sess" -p State 2>/dev/null | cut -d= -f2)
+              if [ "$state" != "active" ]; then
+                return 0
+              fi
+              return 1
+            }
+
+            if ! is_idle; then
+              echo "graphical session active, deferring alpha flip"
+              exit 0
+            fi
+
+            # Pi must be healthy before alpha follows its lock.
+            if ! curl -s -m 6 --resolve repparw.com:443:192.168.0.4 https://repparw.com/ -o /dev/null -w '%{http_code}' | grep -q 200; then
+              echo "pi edge not healthy, deferring"
+              exit 0
+            fi
+
+            if [ "$(systemctl is-system-running 2>/dev/null)" = "failed" ]; then
+              notify ":warning: alpha auto-update deferred: local system degraded before flip"
+              exit 0
+            fi
+
+            cd "$state"
+            rm -rf src
+            git clone --depth 1 https://github.com/repparw/nix src
+            cd src
+
+            nix build .#nixosConfigurations.alpha.config.system.build.toplevel -o /var/lib/alpha-auto-update/result
+            nvd diff /run/current-system /var/lib/alpha-auto-update/result > "$state/diff.txt" || true
+            changed=$(grep -c '^[<>]' "$state/diff.txt" || true)
+            if [ "$changed" -eq 0 ]; then
+              echo "no package change for alpha"
+              exit 0
+            fi
+            kernel=$(grep -oE 'linux-[0-9.]+' "$state/diff.txt" | head -1 || true)
+
+            nixos-rebuild switch --flake .#alpha
+
+            passes=0
+            i=0
+            sleep 60
+            while [ "$i" -lt 10 ]; do
+              ok=1
+              if [ "$(systemctl is-system-running 2>/dev/null)" != "running" ]; then
+                ok=0
+              fi
+              if ! curl -s -m 6 --resolve repparw.com:443:192.168.0.4 https://repparw.com/ -o /dev/null; then
+                ok=0
+              fi
+              if [ "$ok" = 1 ]; then
+                passes=$((passes + 1))
+              else
+                passes=0
+              fi
+              [ "$passes" -ge 2 ] && break
+              i=$((i + 1))
+              sleep 60
+            done
+
+            if [ "$passes" -lt 2 ]; then
+              streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
+              printf '%s\n' "$streak" > "$state/rollback-streak"
+              nixos-rebuild switch --rollback
+              note=""
+              if [ "$streak" -ge 2 ]; then
+                touch "$state/PAUSE"
+                note=" — automation PAUSED (breaker)"
+              fi
+              notify ":rotating_light: alpha flipped then ROLLED BACK (soak failed); $streak consecutive$note"
+              notify_file "rolled-back generation diff:" "$state/diff.txt"
+              exit 1
+            fi
+
+            printf '0\n' > "$state/rollback-streak"
+            klabel=""
+            [ -n "$kernel" ] && klabel=" ($kernel)"
+            notify_file "**alpha flipped** — $changed packages changed$klabel" "$state/diff.txt"
+          '';
+        };
+
+        systemd.timers.alpha-auto-update = {
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*-*-* 05:30:00";
+            Persistent = true;
+            RandomizedDelaySec = "15min";
+          };
+        };
       };
 
     homeManager = {
