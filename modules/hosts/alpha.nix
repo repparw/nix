@@ -330,7 +330,10 @@
               if ! loginctl list-sessions --no-legend 2>/dev/null | grep -q .; then
                 return 0
               fi
-              sess=$(loginctl --no-legend 2>/dev/null | awk '$3=="repparw"{print $1; exit}')
+              sess=$(loginctl --no-legend 2>/dev/null | awk '$3=="repparw" && $6=="user"{print $1; exit}')
+              if [ -z "$sess" ]; then
+                sess=$(loginctl --no-legend 2>/dev/null | awk '$3=="repparw"{print $1; exit}')
+              fi
               if [ -z "$sess" ]; then
                 return 0
               fi
