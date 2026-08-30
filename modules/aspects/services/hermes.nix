@@ -45,7 +45,7 @@
         # by the container appear on the host as 328025. The buprpi rsync
         # backup as repparw keeps working while those files stay
         # other-readable.
-        privateUsers = 327680;
+        # privateUsers = 327680;  # DISABLED: breaks bind mounts on epsilon systemd-nspawn
 
         # Capability drop for an agent container that only needs to talk to
         # chat platforms over the veth. Kept (container init needs them):
