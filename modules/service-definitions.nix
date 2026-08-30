@@ -115,22 +115,6 @@ let
       definitions;
 in
 {
-  options.modules.backup = {
-    paths = lib.mkOption {
-      description = "Directories the offsite restic job covers on this host.";
-      type = lib.types.listOf lib.types.str;
-      default = [ ];
-    };
-    repository = lib.mkOption {
-      description = ''
-        Restic repository for the offsite job. Null falls back to the
-        union-backed per-host path.
-      '';
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-    };
-  };
-
   options.modules.services = {
     rootDir = mkOption {
       type = types.path;

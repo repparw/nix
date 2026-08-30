@@ -15,20 +15,16 @@
       den.aspects.networking
       den.aspects.lan-hosts
       den.aspects.secrets
-      # Public edge (traefik/authelia/ddclient) + shared service inventory,
-      # migrated off alpha so pi services survive workstation downtime.
-      den.aspects.nixos-services._.edge
-      # Always-on Steam card farming; alpha reboots too often for it.
-      den.aspects.nixos-services._.archisteamfarm
-      # Page-change watcher (issue #45); Discord webhook secret + 6h timer.
-      den.aspects.nixos-services._.automations
       # Offsite restic of every stateful dir on this host.
-      den.aspects.backup._.restic
-      # Home Assistant nspawn container.
+      den.aspects.backup
+      # nixos-services parent aspect carries the modules.services schema
+      # (options, definitions); needed by sub-aspects below.
+      den.aspects.nixos-services
+      # Edge/pi sub-aspects (each provides individual service definitions,
+      # host addresses and backup config; kept in sync with inventory).
+      den.aspects.nixos-services._.archisteamfarm
+      den.aspects.nixos-services._.automations
       den.aspects.nixos-services._.homeassistant
-      # Hermes Agent migrated to epsilon; see epsilon's hermes aspect.
-      # den.aspects.nixos-services._.hermes
-      # 5-min fleet probes with two-strike Discord alerts.
       den.aspects.nixos-services._.fleet-health
     ];
 
@@ -45,10 +41,6 @@
         # it), so dynamic DNS has no consumer left. ddclient ships with
         # the edge aspect; switch it off here rather than forking that.
         services.ddclient.enable = lib.mkForce false;
-
-        # Glance migrated to epsilon (stateless); keep state semantics
-        # unchanged by simply not starting the local container.
-        containers.glance.autoStart = lib.mkForce false;
 
         # Offsite restic coverage (den.aspects.backup._.restic): container
         # configs plus the two bind-mounted user service states.
@@ -87,14 +79,12 @@
         # config.txt) lives on the vfat /boot/firmware partition, while NixOS
         # writes the extlinux boot files into /boot on the ext4 root.
         #
-        # Try linux_latest (was pinned to 6.18 LTS - 7.2 failed to enumerate
-        # BCM2712 PCIe/eMMC bridge, issue #41). Test with backup ready.
+        # /nix is neededForBoot, so stage-1 must enumerate the NVMe: the
+        # BCM2712 PCIe host driver is a module (PCIE_BRCMSTB=m) and without
+        # it in the initrd the device never appears (90s timeout ->
+        # emergency). nvme alone is not enough.
         boot = {
           kernelPackages = pkgs.linuxPackages_latest;
-          # /nix is neededForBoot, so stage-1 must enumerate the NVMe: the
-          # BCM2712 PCIe host driver is a module (PCIE_BRCMSTB=m) and without
-          # it in the initrd the device never appears (90s timeout ->
-          # emergency). nvme alone is not enough.
           initrd.availableKernelModules = [
             "pcie_brcmstb"
             "nvme"

@@ -99,26 +99,28 @@ in
         host = "alpha";
       };
 
-      # --- pi ---
-      # Edge ingress stack (traefik/authelia/ddclient/glance).
+      # --- epsilon (edge ingress stack moved here; pi keeps HA + automations) ---
+      # Authelia container on epsilon's bridge (10.231.137.x) since phase 3.
       authelia = {
         hostname = "auth";
-        containerAddress = "10.231.136.7";
+        containerAddress = "10.231.137.7";
         port = 9091;
         auth = "bypass";
         monitor = true;
         backup.path = "${cfg.configDir}/authelia";
       };
+      # Glance dashboard migrated off pi (stateless); runs as a local
+      # container on epsilon behind the terminating edge.
       glance = {
-        containerAddress = "10.231.136.15";
+        containerAddress = "10.231.137.15";
         port = 8080;
         auth = "bypass";
       };
-      # Miniflux + its PostgreSQL in an nspawn container (issue #44);
+      # Miniflux + its PostgreSQL in an nspawn container on epsilon (issue #44);
       # traefik and sibling containers reach it over the bridge.
       miniflux = {
         hostname = "rss";
-        containerAddress = "10.231.136.16";
+        containerAddress = "10.231.137.16";
         port = 8081;
         auth = "one_factor";
         monitor = true;
