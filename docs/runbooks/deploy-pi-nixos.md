@@ -23,9 +23,7 @@ Steam Deck: FORESEE FE2H0M064G-B5X10 ("E2M2"), eMMC flash behind an O2 Micro
 NVMe-to-eMMC bridge (PCI ID `1217:8760`). It enumerates as a genuine NVMe
 namespace over PCIe Gen2 x1, which is why `/dev/nvme0n1` works, but it
 performs at SD-card class (~250-350 MB/s seq read) and has eMMC-class
-endurance. Known quirk: this bridge fails Pi 5 *boot* attempts in community
-reports (bootloader error 8/10 loops), so treat any plan to move the boot
-chain off the SD onto it with suspicion — see issue #41.
+endurance.
 
 USB-booting an installer image hard-hangs this board's bootloader (even on the
 2026-05 EEPROM), so the installer runs **from the internal SD** instead, and

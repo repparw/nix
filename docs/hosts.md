@@ -49,10 +49,11 @@ stack):
   platforms, no inbound ports, no ingress vhost.
 
 It boots through the Raspberry Pi firmware and generic-extlinux-compatible
-loader (kernel pinned to the 6.18 LTS line until latest enumerates the
-BCM2712 NVMe controller), with home, store, and swap on the NVMe volume and
-activation via the repo flake. The SD card runs the official NixOS aarch64
-sd-image layout; see the [deployment runbook](runbooks/deploy-pi-nixos.md).
+loader (linuxPackages_latest, with the `pcie_brcmstb` module in the initrd
+so stage-1 enumerates the NVMe), with home, store, and swap on the NVMe
+volume and activation via the repo flake. The SD card runs the official
+NixOS aarch64 sd-image layout; see the
+[deployment runbook](runbooks/deploy-pi-nixos.md).
 
 Source: `modules/hosts/pi.nix`
 
