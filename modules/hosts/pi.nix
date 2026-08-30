@@ -6,10 +6,8 @@
   ...
 }:
 {
-  # Hermes Agent ships its own flake (uv2nix package + NixOS module). Keep its
-  # dependency closure isolated (no follows) so their tested combination
-  # builds unchanged; updates ride tag bumps here.
-  flake-file.inputs.hermes-agent.url = "github:NousResearch/hermes-agent/v2026.8.19";
+  # Hermes Agent flake input moved to epsilon (hermes migrated there).
+  # flake-file.inputs.hermes-agent.url = "github:NousResearch/hermes-agent/v2026.8.19";
 
   den.aspects.pi = {
     includes = [
@@ -26,9 +24,10 @@
       den.aspects.nixos-services._.automations
       # Offsite restic of every stateful dir on this host.
       den.aspects.backup._.restic
-      # Home Assistant + Hermes Agent nspawn containers.
+      # Home Assistant nspawn container.
       den.aspects.nixos-services._.homeassistant
-      den.aspects.nixos-services._.hermes
+      # Hermes Agent migrated to epsilon; see epsilon's hermes aspect.
+      # den.aspects.nixos-services._.hermes
       # 5-min fleet probes with two-strike Discord alerts.
       den.aspects.nixos-services._.fleet-health
     ];
@@ -53,10 +52,10 @@
 
         # Offsite restic coverage (den.aspects.backup._.restic): container
         # configs plus the two bind-mounted user service states.
+        # hermes state dir moved to epsilon; backup runs there now.
         modules.backup.paths = [
           "/home/containers/config"
           "/home/repparw/services/hass"
-          "/home/repparw/services/hermes"
         ];
         # Explicit crypt remote: the aspect default spells a "crypt" remote
         # name that the rendered config never defined.

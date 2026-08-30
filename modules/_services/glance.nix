@@ -131,10 +131,12 @@ in
                             {
                               type = "reddit";
                               subreddit = "selfhosted";
+                              request-url-template = "https://old.reddit.com/r/{SUBREDDIT}/{SORT}.json";
                             }
                             {
                               type = "reddit";
                               subreddit = "homelab";
+                              request-url-template = "https://old.reddit.com/r/{SUBREDDIT}/{SORT}.json";
                             }
                           ];
                         }
