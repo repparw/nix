@@ -55,6 +55,79 @@
             };
           };
           formatter = false;
+          agent = {
+            # PStack role agents with model mappings
+            feature = {
+              model = "openrouter/grok-4";
+              description = "PStack feature role";
+              mode = "subagent";
+            };
+            refactoring = {
+              model = "openrouter/grok-4";
+              description = "PStack refactoring role";
+              mode = "subagent";
+            };
+            bug-fix = {
+              model = "openrouter/gpt-4.5";
+              description = "PStack bug-fix role";
+              mode = "subagent";
+            };
+            perf-issue = {
+              model = "openrouter/gpt-4.5";
+              description = "PStack performance issue role";
+              mode = "subagent";
+            };
+            hillclimb = {
+              model = "openrouter/gpt-4.5";
+              description = "PStack hillclimb role";
+              mode = "subagent";
+            };
+            judgment-and-prose = {
+              model = "openrouter/anthropic/claude-3.5-sonnet";
+              description = "PStack judgment and prose role";
+              mode = "subagent";
+            };
+            hardest-tasks = {
+              model = "openrouter/anthropic/claude-3.5-sonnet";
+              description = "PStack hardest tasks role";
+              mode = "subagent";
+            };
+            how-explorer = {
+              model = "openrouter/grok-4";
+              description = "PStack how explorer role";
+              mode = "subagent";
+            };
+            how-explainer = {
+              model = "openrouter/anthropic/claude-3.5-sonnet";
+              description = "PStack how explainer role";
+              mode = "subagent";
+            };
+            why-investigators = {
+              model = "openrouter/grok-4";
+              description = "PStack why investigators role";
+              mode = "subagent";
+            };
+            why-synthesizer = {
+              model = "openrouter/anthropic/claude-3.5-sonnet";
+              description = "PStack why synthesizer role";
+              mode = "subagent";
+            };
+            reflect-tooling = {
+              model = "openrouter/gpt-4.5";
+              description = "PStack reflect tooling role";
+              mode = "subagent";
+            };
+            reflect-synthesizer = {
+              model = "openrouter/anthropic/claude-3.5-sonnet";
+              description = "PStack reflect synthesizer role";
+              mode = "subagent";
+            };
+            swarm-workers = {
+              model = "openrouter/grok-4";
+              description = "PStack swarm workers role";
+              mode = "subagent";
+            };
+          };
           provider = {
             openrouter = {
               npm = "@ai-sdk/openai-compatible";
