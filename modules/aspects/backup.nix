@@ -5,11 +5,66 @@
 }:
 {
   den.aspects.backup = {
+    nixos =
+      {
+        config,
+        pkgs,
+        lib,
+        ...
+      }:
+      {
+        options.modules.backup = {
+          paths = lib.mkOption {
+            description = "Directories the offsite restic job covers on this host.";
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+          repository = lib.mkOption {
+            description = ''
+              Restic repository for the offsite job. Null falls back to the
+              union-backed per-host path.
+            '';
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+          };
+        };
+
+        config = {
+          services.rsync = {
+            enable = true;
+            jobs = lib.optionalAttrs (config.networking.hostName == "alpha") {
+              buptohdd = {
+                destination = "/mnt/hdd/backup";
+                sources = [
+                  "${config.users.users.repparw.home}/Pictures"
+                  "${config.users.users.repparw.home}/Documents"
+                  "${config.users.users.repparw.home}/.config"
+                ];
+                settings = {
+                  archive = true;
+                  delete = true;
+                };
+              };
+              buprpi = {
+                destination = "${config.modules.services.backupDir}/pi-services/";
+                sources = [ "pi:services/" ];
+                settings = {
+                  archive = true;
+                  "copy-links" = true;
+                  delete = true;
+                };
+              };
+            };
+          };
+        };
+      };
+
     provides.restic = {
       nixos =
         {
           config,
           pkgs,
+          lib,
           ...
         }:
         let
@@ -154,47 +209,5 @@
           };
         };
     };
-
-    nixos =
-      {
-        config,
-        pkgs,
-        ...
-      }:
-      let
-        cfg = config.modules.services;
-        user = config.users.users.repparw;
-        userHome = user.home;
-      in
-      {
-        # Alpha-local rsync mirrors: HDD copy of personal dirs and the old
-        # pi-services pull. Offsite restic lives in provides.restic.
-        services.rsync = {
-          enable = true;
-          jobs = {
-            buptohdd = {
-              destination = "/mnt/hdd/backup";
-              sources = [
-                "${userHome}/Pictures"
-                "${userHome}/Documents"
-                "${userHome}/.config"
-              ];
-              settings = {
-                archive = true;
-                delete = true;
-              };
-            };
-            buprpi = {
-              destination = "${cfg.backupDir}/pi-services/";
-              sources = [ "pi:services/" ];
-              settings = {
-                archive = true;
-                "copy-links" = true;
-                delete = true;
-              };
-            };
-          };
-        };
-      };
   };
 }

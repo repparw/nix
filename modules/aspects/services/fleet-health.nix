@@ -107,13 +107,11 @@
               printf '0\n' > "$state_dir/$n"
             }
 
-            # systemd units (pi-local). container@glance lives on epsilon
-            # since the phase 2 dashboard migration; http probes follow the
-            # same rule as backends move off this host.
+            # systemd units (pi-local). container@authelia and container@miniflux
+            # live on epsilon now; their HTTP endpoints are checked above.
             for u in \
-              container@hermes container@homeassistant container@authelia \
-              container@archisteamfarm \
-              container@miniflux traefik; do
+              container@homeassistant container@archisteamfarm \
+              container@hermes traefik; do
               if systemctl is-active --quiet "$u"; then ok "unit:$u"; else fail "unit:$u" "systemd inactive"; fi
             done
 
@@ -144,8 +142,8 @@
               [ "$local_only" = 1 ] || http "$@"
             }
 
-            http authelia http://10.231.136.7:9091/api/health 200
-            http miniflux http://10.231.136.16:8081/healthcheck 200
+            http authelia http://10.231.137.7:9091/api/health 200
+            http miniflux http://10.231.137.16:8081/healthcheck 200
             http home-assistant http://10.231.136.2:8123 ""
             # Apex lives on epsilon since phase 2; resolve through its
             # public address so this exercises the real edge path.

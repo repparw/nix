@@ -16,6 +16,8 @@
       # den.aspects.nix (in den.default) declares sops.secrets.accessTokens;
       # without the secrets aspect the sops-nix module is missing entirely.
       den.aspects.secrets
+      # Edge ingress stack (Traefik, Authelia, Glance, Miniflux, ddclient)
+      den.aspects.nixos-services._.edge
       # Hermes Agent gateway (migrated from pi; private network 10.231.137.x).
       den.aspects.nixos-services._.hermes
     ];

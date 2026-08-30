@@ -144,16 +144,16 @@
               pi = inputs.self.nixosConfigurations.pi.config;
               epsilon = inputs.self.nixosConfigurations.epsilon.config;
               cfg = alpha.modules.services;
-              edgeCfg = pi.modules.services;
+              edgeCfg = epsilon.modules.services;
               miniflux = edgeCfg.definitions.miniflux;
               paperless = cfg.definitions.paperless;
               authelia = edgeCfg.definitions.authelia;
               glance = edgeCfg.definitions.glance;
               archisteamfarm = edgeCfg.definitions.archisteamfarm;
               automations = edgeCfg.definitions.automations;
-              http = pi.services.traefik.dynamicConfigOptions.http;
+              http = epsilon.services.traefik.dynamicConfigOptions.http;
               accessControl =
-                pi.containers.authelia.config.services.authelia.instances.main.settings.access_control;
+                epsilon.containers.authelia.config.services.authelia.instances.main.settings.access_control;
               monitorSites = lib.findFirst (
                 page: page.name == "Home"
               ) { } epsilon.containers.glance.config.services.glance.settings.pages;
@@ -345,12 +345,12 @@
                 && miniflux.auth == "one_factor"
                 && miniflux.monitor
                 && miniflux.backup.path == "${edgeCfg.configDir}/miniflux"
-                && miniflux.containerAddress == "10.231.136.16"
-                && pi.containers.miniflux.localAddress == miniflux.containerAddress
-                && pi.containers.miniflux.config.services.miniflux.enable
-                && pi.containers.miniflux.config.services.postgresql.enable
+                && miniflux.containerAddress == "10.231.137.16"
+                && epsilon.containers.miniflux.localAddress == miniflux.containerAddress
+                && epsilon.containers.miniflux.config.services.miniflux.enable
+                && epsilon.containers.miniflux.config.services.postgresql.enable
                 &&
-                  pi.containers.miniflux.bindMounts."/var/lib/postgresql".hostPath
+                  epsilon.containers.miniflux.bindMounts."/var/lib/postgresql".hostPath
                   == "${edgeCfg.configDir}/miniflux/postgresql"
                 && hasMonitorSite "miniflux" "rss" "https://rss.repparw.com"
                 && paperless.hostname == "paper"
@@ -371,23 +371,23 @@
                     alpha.systemd.services."container@paperless".after;
               authenticationPresentationMatch =
                 authelia.hostname == "auth"
-                && authelia.containerAddress == "10.231.136.7"
+                && authelia.containerAddress == "10.231.137.7"
                 && authelia.port == 9091
                 && authelia.auth == "bypass"
                 && authelia.monitor
-                && pi.containers.authelia.localAddress == authelia.containerAddress
-                && builtins.elem authelia.port pi.containers.authelia.config.networking.firewall.allowedTCPPorts
+                && epsilon.containers.authelia.localAddress == authelia.containerAddress
+                && builtins.elem authelia.port epsilon.containers.authelia.config.networking.firewall.allowedTCPPorts
                 &&
-                  pi.containers.authelia.config.services.authelia.instances.main.settings.server.address
+                  epsilon.containers.authelia.config.services.authelia.instances.main.settings.server.address
                   == "tcp://:${toString authelia.port}"
-                && glance.containerAddress == "10.231.136.15"
+                && glance.containerAddress == "10.231.137.15"
                 && glance.port == 8080
                 && glance.auth == "bypass"
-                && pi.containers.glance.localAddress == glance.containerAddress
-                && pi.containers.glance.config.services.glance.settings.server.host == "0.0.0.0"
-                && pi.containers.glance.config.services.glance.settings.server.port == glance.port
+                && epsilon.containers.glance.localAddress == glance.containerAddress
+                && epsilon.containers.glance.config.services.glance.settings.server.host == "0.0.0.0"
+                && epsilon.containers.glance.config.services.glance.settings.server.port == glance.port
                 && http.routers.glance.rule == "Host(`${cfg.domain}`)"
-                && pi.containers.glance.config.services.glance.settings.branding.logo-text == "R";
+                && epsilon.containers.glance.config.services.glance.settings.branding.logo-text == "R";
               backgroundServicesMatch =
                 # Archisteamfarm farms on pi (always-on host); its definition
                 # and container live in pi's closure since the migration.
@@ -536,15 +536,15 @@
                     "qbit-basic-auth"
                   ]
                 &&
-                  http.middlewares.authelia.forwardAuth.address == "http://10.231.136.7:9091/api/authz/forward-auth"
-                && http.services.authelia.loadBalancer.servers == [ { url = "http://10.231.136.7:9091"; } ]
+                  http.middlewares.authelia.forwardAuth.address == "http://10.231.137.7:9091/api/authz/forward-auth"
+                && http.services.authelia.loadBalancer.servers == [ { url = "http://10.231.137.7:9091"; } ]
                 && http.services.hass.loadBalancer.servers == [ { url = "http://10.231.136.2:8123"; } ]
-                && http.services.glance.loadBalancer.servers == [ { url = "http://10.231.136.15:8080"; } ]
+                && http.services.glance.loadBalancer.servers == [ { url = "http://10.231.137.15:8080"; } ]
                 && http.services.jellyfin.loadBalancer.servers == [ { url = "http://192.168.0.18:8096"; } ]
                 && http.services.qbittorrent.loadBalancer.servers == [ { url = "http://192.168.0.18:18080"; } ]
                 && http.services.bazarr.loadBalancer.servers == [ { url = "http://192.168.0.18:6767"; } ]
                 && http.services.finance.loadBalancer.servers == [ { url = "http://192.168.0.18:3000"; } ]
-                && http.services.miniflux.loadBalancer.servers == [ { url = "http://10.231.136.16:8081"; } ]
+                && http.services.miniflux.loadBalancer.servers == [ { url = "http://10.231.137.16:8081"; } ]
                 && http.services.paperless.loadBalancer.servers == [ { url = "http://192.168.0.18:8000"; } ]
                 && http.services.prowlarr.loadBalancer.servers == [ { url = "http://192.168.0.18:9696"; } ]
                 && http.services.radarr.loadBalancer.servers == [ { url = "http://192.168.0.18:7878"; } ]
