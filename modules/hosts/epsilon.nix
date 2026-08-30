@@ -4,6 +4,11 @@
   ...
 }:
 {
+  # Hermes Agent ships its own flake (uv2nix package + NixOS module). Keep its
+  # dependency closure isolated (no follows) so their tested combination
+  # builds unchanged; updates ride tag bumps here.
+  flake-file.inputs.hermes-agent.url = "github:NousResearch/hermes-agent/v2026.8.19";
+
   den.aspects.epsilon = {
     includes = [
       den.batteries.hostname
@@ -11,6 +16,8 @@
       # den.aspects.nix (in den.default) declares sops.secrets.accessTokens;
       # without the secrets aspect the sops-nix module is missing entirely.
       den.aspects.secrets
+      # Hermes Agent gateway (migrated from pi; private network 10.231.137.x).
+      den.aspects.nixos-services._.hermes
     ];
     nixos =
       { config, lib, ... }:
@@ -62,6 +69,15 @@
             "10.231.137.15" = [ "repparw.com" ];
           };
         };
+        # Hermes Agent container (migrated from pi). Uses the same /24 bridge
+        # as glance (10.231.137.x) so it shares the WireGuard tunnel.
+        containers.hermes = {
+          hostAddress = lib.mkForce "10.231.137.1";
+          localAddress = lib.mkForce "10.231.137.3";
+          autoStart = true;
+          privateNetwork = true;
+          privateUsers = 327680;
+        };
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
         # Installed in place via nixos-infect on top of Ubuntu's partition
         # layout: ext4 root on sda1, UEFI ESP on sda15 mounted /boot/efi.
@@ -101,12 +117,15 @@
         networking.interfaces.eth0.useDHCP = true;
         services.resolved.settings.Resolve.DNSStubListenerExtra = [
           "10.231.137.1"
+          # Hermes agent container on 10.231.137.3; both share the bridge.
+          "10.231.137.3"
         ];
         # Egress NAT for ve-* comes from systemd's io.systemd.nat masquerade;
         # do not layer networking.nat on top.
         networking.firewall.extraForwardRules = ''
           iifname "ve-glance" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept comment "glance monitor checks via home tunnel"
           iifname "wg-home" oifname "ve-glance" ct state established,related accept comment "glance monitor replies"
+          iifname "ve-hermes" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept comment "hermes egress to home (DDNS/state)
         '';
         # Debugging bypass: let the home WAN IP hit 443 directly even when
         # the CF-only rule is the structural trust anchor. Goes before CF in
@@ -120,6 +139,17 @@
           allowedUDPPorts = [ 53 ];
         };
         networking.nftables.tables.glance-home-nat = {
+          family = "ip";
+          content = ''
+            chain postrouting {
+              type nat hook postrouting priority 100; policy accept;
+              ip saddr 10.231.137.0/24 oifname "wg-home" masquerade
+            }
+          '';
+        };
+        # Egress for hermes agent container: same host bridge, same home
+        # tunnel; same /24 masquerade as glance above.
+        networking.nftables.tables.hermes-home-nat = {
           family = "ip";
           content = ''
             chain postrouting {
