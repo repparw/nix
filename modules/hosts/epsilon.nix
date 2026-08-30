@@ -76,10 +76,7 @@
           localAddress = lib.mkForce "10.231.137.3";
           autoStart = true;
           privateNetwork = true;
-          # No privateUsers: breaks bind mounts on epsilon systemd-nspawn
-          # (host /home/repparw/services/hermes owned by repparw:users).
-          # The aspect modules/aspects/services/hermes.nix defines
-          # bindMounts, extraFlags, sops, and the in-container config.
+          privateUsers = 327680;
         };
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
         # Installed in place via nixos-infect on top of Ubuntu's partition
