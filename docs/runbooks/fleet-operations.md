@@ -96,8 +96,9 @@ Failure handling:
 - Two consecutive rollbacks trip the breaker: automation sets its own
   PAUSE flag and alerts.
 - Boot-level regressions cannot self-heal — that is what the rescue SD is
-  for. Kernel stays pinned to the 6.18 LTS line until the spare card is
-  boot-tested (issue #41 tracks the linux-latest retry).
+  for. pi runs linuxPackages_latest with the `pcie_brcmstb` initrd module
+  so stage-1 enumerates the NVMe; a cold power-cycle boot on latest is
+  proven.
 
 Operator controls:
 
