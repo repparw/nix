@@ -23,18 +23,5 @@
       speech
       voxtype-graphical-workaround
     ];
-
-    nixos =
-      { config, ... }:
-      {
-        hardware.uinput.enable = true;
-
-        programs.ydotool = {
-          enable = true;
-          group = "uinput";
-        };
-
-        users.groups.uinput.members = [ config.users.users.repparw.name ];
-      };
   };
 }

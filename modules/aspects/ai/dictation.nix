@@ -1,6 +1,19 @@
 { den, ... }:
 {
   den.aspects.ai.provides.dictation = {
+    nixos =
+      { config, ... }:
+      {
+        hardware.uinput.enable = true;
+
+        programs.ydotool = {
+          enable = true;
+          group = "uinput";
+        };
+
+        users.groups.uinput.members = [ config.users.users.repparw.name ];
+      };
+
     homeManager =
       {
         lib,
