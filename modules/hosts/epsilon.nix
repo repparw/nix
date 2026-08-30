@@ -71,14 +71,15 @@
             "10.231.137.15" = [ "repparw.com" ];
           };
         };
-        # Hermes Agent container (migrated from pi). Uses the same /24 bridge
-        # as glance (10.231.137.x) so it shares the WireGuard tunnel.
         containers.hermes = {
           hostAddress = lib.mkForce "10.231.137.1";
           localAddress = lib.mkForce "10.231.137.3";
           autoStart = true;
           privateNetwork = true;
-          privateUsers = 327680;
+          # No privateUsers: breaks bind mounts on epsilon systemd-nspawn
+          # (host /home/repparw/services/hermes owned by repparw:users).
+          # The aspect modules/aspects/services/hermes.nix defines
+          # bindMounts, extraFlags, sops, and the in-container config.
         };
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
         # Installed in place via nixos-infect on top of Ubuntu's partition
