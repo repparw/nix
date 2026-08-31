@@ -15,4 +15,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v22
       - uses: DeterminateSystems/magic-nix-cache-action@main
-      - run: nix flake check --print-build-logs --keep-going
+      # hermes-agent (uv2nix) is already built/tested upstream (NousResearch/hermes-agent CI + Cachix);
+      # skip building its closure here — eval the fleet gate without it.
+      - run: nix flake check --no-build --print-build-logs --keep-going
+      - run: nix build .#checks.x86_64-linux.service-definitions --print-build-logs
+      - run: nix build .#checks.x86_64-linux.shellcheck .#checks.x86_64-linux.formatting --print-build-logs
