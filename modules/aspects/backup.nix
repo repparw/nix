@@ -5,6 +5,10 @@
 }:
 {
   den.aspects.backup = {
+    # Auto-include the offsite restic provide: a host that asks for "backup"
+    # wants its state covered. Splitting it into a separate `_.restic` was a
+    # footgun — pi only included the base and silently lost its restic job.
+    includes = [ den.aspects.backup._.restic ];
     nixos =
       {
         config,

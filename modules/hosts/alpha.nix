@@ -8,7 +8,6 @@
     includes = [
       den.aspects.host-common
       den.aspects.backup
-      den.aspects.backup._.restic
       den.aspects.btrfs-maintenance
       den.aspects.desktop
       den.aspects.gaming
