@@ -14,9 +14,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v22
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-      # hermes-agent (uv2nix) is already built/tested upstream (NousResearch/hermes-agent CI + Cachix);
-      # skip building its closure here — eval the fleet gate without it.
+      # No magic-nix-cache: deprecated upstream, and its FlakeHub path
+      # fails unauthenticated while serving invalid store paths. The gate
+      # only builds small checks (--no-build for host toplevels), plain
+      # cache.nixos.org substitution is enough.
       - run: nix flake check --no-build --print-build-logs --keep-going
       - run: nix build .#checks.x86_64-linux.service-definitions --print-build-logs
       - run: nix build .#checks.x86_64-linux.shellcheck .#checks.x86_64-linux.formatting --print-build-logs
