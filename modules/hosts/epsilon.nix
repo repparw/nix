@@ -52,22 +52,9 @@
             "1.1.1.1"
             "9.9.9.9"
           ];
-          # Monitors probe public names; container resolution mirrors
-          # epsilon edge routing (apex -> local glance, vhosts -> pi).
+          # Monitors probe public endpoints (CF + edge + backends); apex
+          # is pinned local, vhosts resolve via public DNS.
           config.networking.hosts = {
-            "192.168.0.4" = [
-              "auth.repparw.com"
-              "bazarr.repparw.com"
-              "finance.repparw.com"
-              "home.repparw.com"
-              "jellyfin.repparw.com"
-              "paper.repparw.com"
-              "prowlarr.repparw.com"
-              "qbit.repparw.com"
-              "radarr.repparw.com"
-              "rss.repparw.com"
-              "sonarr.repparw.com"
-            ];
             "10.231.137.15" = [ "repparw.com" ];
           };
         };
@@ -190,98 +177,6 @@
               persistentKeepalive = 25;
             }
           ];
-        };
-
-        # Phase 2 public edge: terminate TLS here on a wildcard cert
-        # (Cloudflare DNS-01, same token pi uses), then forward every vhost
-        # to pi's traefik over the tunnel with the original Host preserved.
-        # Internal routing, authelia, and every backend stay untouched.
-        # Phase 3 swaps this block for the full edge aspect as stateful
-        # pieces migrate off pi.
-        sops.secrets.cloudflare.sopsFile = ../../secrets/proxy.sops.yaml;
-
-        services.traefik = {
-          enable = true;
-          environmentFiles = [ config.sops.secrets.cloudflare.path ];
-          dataDir = "/var/lib/traefik";
-          staticConfigOptions = {
-            entryPoints.websecure = {
-              address = ":443";
-              asDefault = true;
-              forwardedHeaders.trustedIPs = [
-                "173.245.48.0/20"
-                "103.21.244.0/22"
-                "103.22.200.0/22"
-                "103.31.4.0/22"
-                "141.101.64.0/18"
-                "108.162.192.0/18"
-                "190.93.240.0/20"
-                "188.114.96.0/20"
-                "197.234.240.0/22"
-                "198.41.128.0/17"
-                "162.158.0.0/15"
-                "104.16.0.0/13"
-                "104.24.0.0/14"
-                "172.64.0.0/13"
-                "131.0.72.0/22"
-              ];
-              http.tls.certResolver = "cloudflare";
-            };
-            ping = { };
-            certificatesResolvers.cloudflare.acme = {
-              email = "ubritos@gmail.com";
-              storage = "/var/lib/traefik/acme.json";
-              dnsChallenge = {
-                provider = "cloudflare";
-                resolvers = [
-                  "1.1.1.1:53"
-                  "1.0.0.1:53"
-                ];
-              };
-            };
-          };
-          dynamicConfigOptions = {
-            http = {
-              routers = {
-                # Apex serves the local glance; everything else falls
-                # through to pi's traefik via the catch-all below.
-                apex-glance = {
-                  rule = "Host(`repparw.com`)";
-                  entryPoints = [ "websecure" ];
-                  service = "glance-local";
-                  priority = 100;
-                };
-                catch-all = {
-                  rule = "PathPrefix(`/`)";
-                  entryPoints = [ "websecure" ];
-                  service = "home-edge";
-                  tls = {
-                    certResolver = "cloudflare";
-                    domains = [
-                      {
-                        main = "*.repparw.com";
-                        sans = [ "repparw.com" ];
-                      }
-                    ];
-                  };
-                };
-              };
-              serversTransports.home-edge-tls = {
-                insecureSkipVerify = true;
-                # pi's websecure entrypoint runs sniStrict; dialing it by IP
-                # sends no SNI and the handshake gets dropped before routing.
-                serverName = "repparw.com";
-              };
-              services = {
-                glance-local.loadBalancer.servers = [ { url = "http://10.231.137.15:8080"; } ];
-                home-edge.loadBalancer = {
-                  passHostHeader = true;
-                  serversTransport = "home-edge-tls";
-                  servers = [ { url = "https://192.168.0.4:443"; } ];
-                };
-              };
-            };
-          };
         };
 
         networking.firewall.interfaces.eth0.allowedTCPPorts = [ ];
