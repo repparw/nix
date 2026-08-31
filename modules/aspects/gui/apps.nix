@@ -22,6 +22,8 @@ in
 {
   flake-file.inputs.nixcord = {
     url = "github:FlameFlag/nixcord";
+    inputs.nixpkgs.follows = "nixpkgs";
+    inputs.flake-parts.follows = "flake-parts";
   };
 
   den.aspects.gui.provides.guiApps = {
