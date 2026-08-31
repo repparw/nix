@@ -4,13 +4,10 @@
   ...
 }:
 {
-  # Hermes Agent (uv2nix). Follow our nixpkgs/flake-parts to dedupe closure
-  # (was isolated, but duped 200+ store paths on every switch).
-  flake-file.inputs.hermes-agent = {
-    url = "github:NousResearch/hermes-agent/v2026.8.19";
-    inputs.nixpkgs.follows = "nixpkgs";
-    inputs.flake-parts.follows = "flake-parts";
-  };
+  # Hermes Agent ships its own flake (uv2nix package + NixOS module). Keep its
+  # dependency closure isolated (no follows) so their tested combination
+  # builds unchanged; updates ride tag bumps here.
+  flake-file.inputs.hermes-agent.url = "github:NousResearch/hermes-agent/v2026.8.19";
 
   den.aspects.epsilon = {
     includes = [
