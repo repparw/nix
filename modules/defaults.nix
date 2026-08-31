@@ -30,7 +30,10 @@
       # Disk headroom policy (pi ENOSPC'd a build at 6.2G free): the daemon
       # GCs when free space drops below min-free mid-build instead of dying,
       # and old generations expire weekly so retention stops creeping.
-      nixos.nix.settings.min-free = 10 * 1024 * 1024 * 1024;
+      # 10G on pi's 40G disk made EVERY large build dip below the threshold,
+      # auto-GC deleting in-flight deps ("reference X is not a valid path",
+      # builders dying mid-fetch). 3G still guards ENOSPC without thrashing.
+      nixos.nix.settings.min-free = 3 * 1024 * 1024 * 1024;
       nixos.nix.gc = {
         automatic = true;
         dates = "weekly";
