@@ -14,10 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v22
-      # No magic-nix-cache: deprecated upstream, and its FlakeHub path
-      # fails unauthenticated while serving invalid store paths. The gate
-      # only builds small checks (--no-build for host toplevels), plain
-      # cache.nixos.org substitution is enough.
-      - run: nix flake check --no-build --print-build-logs --keep-going
-      - run: nix build .#checks.x86_64-linux.service-definitions --print-build-logs
-      - run: nix build .#checks.x86_64-linux.shellcheck .#checks.x86_64-linux.formatting --print-build-logs
+      # Plain check: --no-build breaks IFD during eval (stylix base16-schemes,
+      # app checks -> "path is not valid"). Host toplevels are eval-only here
+      # anyway; check derivations are small. The 20m job timeout covers the
+      # slow first-fetch of hermes-agent's flake inputs during epsilon eval.
+      - run: nix flake check --print-build-logs --keep-going
