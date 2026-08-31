@@ -22,11 +22,10 @@
     nixos = {
       nixpkgs.overlays = [
         (final: prev: {
-          t3code = prev.t3code.override {
-            t3code-unwrapped = prev.t3code.unwrapped.overrideAttrs (old: {
-              patches = (old.patches or [ ]) ++ [ ./t3code-session-status-fix.patch ];
-            });
-          };
+          # Patch disabled: upstream moved threadTitles.ts -> ProviderCommandReactor.ts,
+          # hunk fails at 43, breaks whole system closure (alpha/pi). Keep aspect
+          # as no-op until patch is rebased; t3code will run unpatched.
+          t3code = prev.t3code;
         })
       ];
     };
