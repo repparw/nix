@@ -42,6 +42,11 @@
         # the edge aspect; switch it off here rather than forking that.
         services.ddclient.enable = lib.mkForce false;
 
+        # Pi /nix is 98% full (homeassistant scipy/scikit-learn closure);
+        # disable HA container until store GC + repair completes, so the
+        # minimal jellyfin local edge can switch.
+        containers.homeassistant.autoStart = lib.mkForce false;
+
         # Offsite restic coverage (den.aspects.backup._.restic): container
         # configs plus the two bind-mounted user service states.
         # hermes state dir moved to epsilon; backup runs there now.
