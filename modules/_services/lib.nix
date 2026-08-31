@@ -42,6 +42,9 @@ in
         title = name;
         url = "https://${service.hostname}.${cfg.domain}";
         check-url = serviceUrl cfg name;
+        # Some apps answer the root path with a redirect to their own login
+        # (jellyfin -> /web, paperless -> /login); that still means "up".
+        alt-status-codes = [ 302 ];
       })
       (
         lib.filterAttrs (
