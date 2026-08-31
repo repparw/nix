@@ -72,6 +72,22 @@
             "linking.role-based.duck-level" = 0.25;
             "node.restore-default-targets" = false;
           };
+          "node.rules" = [
+            {
+              matches = [
+                {
+                  "application.name" = "ZapZap";
+                  "media.class" = "Audio/Source";
+                }
+              ];
+              actions = {
+                "update-props" = {
+                  "media.role" = "Speech";
+                  "node.pause-on-idle" = false;
+                };
+              };
+            }
+          ];
         };
 
         extraConfig.pipewire-pulse."99-zapzap-media-role" = {
@@ -97,6 +113,10 @@
                 {
                   "application.name" = "ZapZap";
                   "media.role" = "music";
+                }
+                {
+                  "application.name" = "ZapZap";
+                  "media.class" = "Audio/Source";
                 }
               ];
               actions = {
