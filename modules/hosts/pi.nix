@@ -17,11 +17,11 @@
       den.aspects.secrets
       # Offsite restic of every stateful dir on this host.
       den.aspects.backup
-      # nixos-services parent aspect carries the modules.services schema
-      # (options, definitions); needed by sub-aspects below.
-      den.aspects.nixos-services
-      # Edge/pi sub-aspects (each provides individual service definitions,
-      # host addresses and backup config; kept in sync with inventory).
+      # NOTE: do NOT include the nixos-services parent here. Its includes
+      # pull the arr/jellyfin/paperless/matriz container closures (which run
+      # on alpha) into pi's toplevel — ~10G on a 40G /nix that ENOSPCs on
+      # every switch. Pi needs only the modules.services schema, imported
+      # directly in the nixos block below, plus the sub-aspects it runs.
       den.aspects.nixos-services._.archisteamfarm
       den.aspects.nixos-services._.automations
       den.aspects.nixos-services._.homeassistant
@@ -36,6 +36,13 @@
         ...
       }:
       {
+        imports = [
+          # modules.services schema (options/definitions) + cross-host
+          # inventory — previously inherited from the nixos-services parent.
+          ../service-definitions.nix
+          ../_services/inventory.nix
+        ];
+
         # Phase 2 edge cutover: the apex points at epsilon now, and the
         # home IP is static (WG endpoint + jellyfin record both hardcode
         # it), so dynamic DNS has no consumer left. ddclient ships with
