@@ -37,9 +37,17 @@ filter() {
 
 rm -f /tmp/hosts.lan* /tmp/hosts.new
 
+# Try direct write (tmpfs case), fallback to bind-mount on ro root (pristine webOS)
 if [ -w /etc/hosts ]; then
-  filter </etc/hosts >/tmp/hosts.new && cat "$FRAG" >>/tmp/hosts.new &&
-    cat /tmp/hosts.new >/etc/hosts && rm -f /tmp/hosts.new
+  filter </etc/hosts >/tmp/hosts.new && cat "$FRAG" >>/tmp/hosts.new
+  if cat /tmp/hosts.new >/etc/hosts 2>/dev/null; then
+    rm -f /tmp/hosts.new
+  else
+    # ro root: use bind-mount path
+    filter </etc/hosts >/tmp/hosts.lan && cat "$FRAG" >>/tmp/hosts.lan
+    mount --bind /tmp/hosts.lan /etc/hosts
+    rm -f /tmp/hosts.new
+  fi
 else
   filter </etc/hosts >/tmp/hosts.lan && cat "$FRAG" >>/tmp/hosts.lan
   mount --bind /tmp/hosts.lan /etc/hosts
