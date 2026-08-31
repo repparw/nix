@@ -14,8 +14,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v22
-      # Plain check: --no-build breaks IFD during eval (stylix base16-schemes,
-      # app checks -> "path is not valid"). Host toplevels are eval-only here
-      # anyway; check derivations are small. The 20m job timeout covers the
-      # slow first-fetch of hermes-agent's flake inputs during epsilon eval.
-      - run: nix flake check --print-build-logs --keep-going
+      # Not `nix flake check`: it verifies every nixosConfigurations toplevel,
+      # and epsilon's pulls the hermes-agent flake (uv2nix/pyproject sources)
+      # into eval — most of the gate's wall time, and hermes is tested
+      # upstream. Build the check derivations explicitly instead: they cover
+      # the fleet asserts (service-definitions evals epsilon's edge config
+      # without forcing hermes) plus alpha/pi/pi-sd toplevel evals. Epsilon's
+      # toplevel is exercised by pi's auto-update probes and local dev.
+      - run: >
+          nix build
+          .#checks.x86_64-linux.formatting
+          .#checks.x86_64-linux.shellcheck
+          .#checks.x86_64-linux.sops-files
+          .#checks.x86_64-linux.change-detection
+          .#checks.x86_64-linux.check-flake-file
+          .#checks.x86_64-linux.service-definitions
+          .#checks.x86_64-linux.alpha
+          .#checks.x86_64-linux.pi
+          .#checks.x86_64-linux.pi-sd
+          --print-build-logs --keep-going
