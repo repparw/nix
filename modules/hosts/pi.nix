@@ -43,9 +43,11 @@
         services.ddclient.enable = lib.mkForce false;
 
         # Pi /nix is 98% full (homeassistant scipy/scikit-learn closure);
-        # disable HA container until store GC + repair completes, so the
-        # minimal jellyfin local edge can switch.
+        # disable HA until store GC + repair completes, so the minimal
+        # jellyfin local edge can switch. autoStart false still builds the
+        # closure, so also disable the service.
         containers.homeassistant.autoStart = lib.mkForce false;
+        containers.homeassistant.config.services.home-assistant.enable = lib.mkForce false;
 
         # Offsite restic coverage (den.aspects.backup._.restic): container
         # configs plus the two bind-mounted user service states.
