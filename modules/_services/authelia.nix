@@ -44,6 +44,7 @@ in
   containers.authelia = servicesLib.mkContainer {
     inherit cfg;
     name = "authelia";
+    hostAddress = lib.mkForce "10.231.137.1";
     privateUsers = "identity";
     bindMounts = {
       "/config" = {
@@ -162,9 +163,10 @@ in
         };
       };
 
-      systemd.services.authelia-main.serviceConfig = {
+systemd.services.authelia-main.serviceConfig = {
         LoadCredential = [ "SMTP_PASSWORD:/run/secrets/authelia/SMTP_PASSWORD" ];
         ProtectSystem = lib.mkForce "full";
+        ExecStartPre = lib.mkForce "/usr/bin/chown -R 999:999 ${cfg.configDir}/authelia/config ${cfg.configDir}/authelia/secrets";
       };
 
       services.redis.servers.authelia = {

@@ -100,13 +100,27 @@ const ALL: Record<string, { name: string }> = {
   "zai.glm-5": { name: "zai.glm-5" },
 }
 
+const GROK: Record<string, { name: string }> = {
+  "xai.grok-4.6": { name: "xai.grok-4.6 (us-west-2)" },
+}
+
 export default (async () => ({
   config: async (cfg: any) => {
-    // Inject every available Bedrock model (us. + global. + bare on-demand).
-    // The native provider only surfaces us. profiles; this adds the rest.
+    // Inject every available Bedrock model (us. + global. + bare on-demand)
+    // into the primary amazon-bedrock provider (default region, us-east-1).
     const p = (cfg.provider ??= {})["amazon-bedrock"] ??= {}
     p.name ??= "Amazon Bedrock"
     p.npm ??= "@ai-sdk/amazon-bedrock"
     p.models = Object.assign({}, p.models, ALL)
+
+    // Grok 4.6 is served only on the mantle endpoint in us-west-2, so it
+    // needs its own provider pinned to that region (a single amazon-bedrock
+    // provider is one-region-per-instance).
+    const g = (cfg.provider ??= {})["bedrock-grok"] ??= {}
+    g.name ??= "Amazon Bedrock (Grok, us-west-2)"
+    g.npm ??= "@ai-sdk/amazon-bedrock"
+    g.options ??= {}
+    g.options.region ??= "us-west-2"
+    g.models = Object.assign({}, g.models, GROK)
   },
 })) satisfies Plugin

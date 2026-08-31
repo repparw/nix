@@ -91,12 +91,15 @@
 
               vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
 
+              # Alpha is a consumer: pi owns flake.lock (sole writer). These
+              # flip this host to whatever main currently pins; they never
+              # bump inputs, else they'd diverge from pi's lock.
               nrs = "nh os switch";
               nrb = "nh os boot";
               nrt = "nh os test";
 
-              nrsu = "nrs -u --commit-lock-file";
-              nrbu = "nrb -u --commit-lock-file";
+              nrsu = "nrs";
+              nrbu = "nrb";
 
               ln = "ln -i";
               mv = "mv -i";
