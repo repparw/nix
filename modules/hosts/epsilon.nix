@@ -16,6 +16,9 @@
       # den.aspects.nix (in den.default) declares sops.secrets.accessTokens;
       # without the secrets aspect the sops-nix module is missing entirely.
       den.aspects.secrets
+      # Offsite restic of the stateful edge services + hermes on this host.
+      den.aspects.backup
+      den.aspects.backup._.restic
       # Edge ingress stack (Traefik, Authelia, Glance, Miniflux, ddclient)
       den.aspects.nixos-services._.edge
       # Hermes Agent gateway (migrated from pi; private network 10.231.137.x).
@@ -32,6 +35,15 @@
           ../_services/inventory.nix
           ../_services/glance.nix
         ];
+
+        # Offsite restic coverage (den.aspects.backup): the stateful edge
+        # services (authelia/miniflux) plus hermes agent state. pi previously
+        # covered these under its own repo; post-migration they live here.
+        modules.backup.paths = [
+          "/home/containers/config"
+          "/home/repparw/services"
+        ];
+        modules.backup.repository = "rclone:gd-crypt:restic/epsilon";
 
         # pi's estate uses 10.231.136.0/24 on its own bridge AND that range
         # is routed into the tunnel; epsilon's bridge must not collide.
