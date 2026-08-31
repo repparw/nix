@@ -1,0 +1,754 @@
+From 92f59fa3623594492b5c564821ca6182d9c332f6 Mon Sep 17 00:00:00 2001
+From: Hans Gaiser <hansg91@gmail.com>
+Date: Fri, 21 Aug 2026 13:45:14 +0200
+Subject: [PATCH 1/2] fix: don't crash the session when a pulse client stops
+ reading
+
+---
+ .../stream/audio/pulse_server/commands.rs     | 140 ++++++----
+ .../session/stream/audio/pulse_server/mod.rs  | 240 ++++++++++++++----
+ moonshine-wsi/src/swapchain.rs                |   9 +-
+ 3 files changed, 279 insertions(+), 110 deletions(-)
+
+diff --git a/moonshine-core/src/session/stream/audio/pulse_server/commands.rs b/moonshine-core/src/session/stream/audio/pulse_server/commands.rs
+index 7fdcb66..63ab368 100644
+--- a/moonshine-core/src/session/stream/audio/pulse_server/commands.rs
++++ b/moonshine-core/src/session/stream/audio/pulse_server/commands.rs
+@@ -5,7 +5,7 @@ use pulseaudio::protocol::{self as pulse, ClientInfoList};
+ 
+ use crate::session::stream::audio::pulse_server::dyn_buffer::DynPlaybackBuffer;
+ use crate::session::stream::audio::pulse_server::{
+-	Client, Error, PlaybackStream, SINK_NAME, ServerState, StreamState, pop_missing,
++	Client, ClientWriter, Error, PlaybackStream, SINK_NAME, ServerState, StreamState, pop_missing,
+ };
+ 
+ pub(super) fn handle_command(
+@@ -23,7 +23,7 @@ pub(super) fn handle_command(
+ 			tracing::trace!("client protocol version: {}", version);
+ 
+ 			write_reply(
+-				&mut client.socket,
++				client,
+ 				seq,
+ 				&pulse::AuthReply {
+ 					version: pulse::MAX_VERSION,
+@@ -38,7 +38,7 @@ pub(super) fn handle_command(
+ 			client.props = Some(props);
+ 
+ 			write_reply(
+-				&mut client.socket,
++				client,
+ 				seq,
+ 				&pulse::SetClientNameReply { client_id: client.id },
+ 				client.protocol_version,
+@@ -47,7 +47,7 @@ pub(super) fn handle_command(
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetServerInfo => {
+-			write_reply(&mut client.socket, seq, &server.server_info, client.protocol_version)?;
++			write_reply(client, seq, &server.server_info, client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetClientInfo(id) => {
+@@ -55,47 +55,55 @@ pub(super) fn handle_command(
+ 				index: id,
+ 				..Default::default()
+ 			};
+-			write_reply(&mut client.socket, seq, &reply, client.protocol_version)?;
++			write_reply(client, seq, &reply, client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetClientInfoList => {
+ 			let reply: ClientInfoList = Vec::new();
+-			write_reply(&mut client.socket, seq, &reply, client.protocol_version)?;
++			write_reply(client, seq, &reply, client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetCardInfo(_) => {
+-			pulse::write_error(&mut client.socket, seq, &pulse::PulseError::NoEntity)?;
++			pulse::write_error(
++				&mut ClientWriter(&mut client.outgoing),
++				seq,
++				&pulse::PulseError::NoEntity,
++			)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetCardInfoList => {
+ 			let reply: Vec<pulse::CardInfo> = Vec::new();
+-			write_reply(&mut client.socket, seq, &reply, client.protocol_version)?;
++			write_reply(client, seq, &reply, client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetSinkInfo(_) => {
+-			write_reply(&mut client.socket, seq, &server.sinks[0], client.protocol_version)?;
++			write_reply(client, seq, &server.sinks[0], client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetSinkInfoList => {
+-			write_reply(&mut client.socket, seq, &server.sinks, client.protocol_version)?;
++			write_reply(client, seq, &server.sinks, client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetSourceInfo(_) => {
+-			pulse::write_error(&mut client.socket, seq, &pulse::PulseError::NoEntity)?;
++			pulse::write_error(
++				&mut ClientWriter(&mut client.outgoing),
++				seq,
++				&pulse::PulseError::NoEntity,
++			)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetSourceOutputInfoList => {
+ 			let reply: pulse::SourceOutputInfoList = Vec::new();
+-			write_reply(&mut client.socket, seq, &reply, client.protocol_version)?;
++			write_reply(client, seq, &reply, client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetSourceInfoList => {
+ 			let reply: pulse::SourceInfoList = Vec::new();
+-			write_reply(&mut client.socket, seq, &reply, client.protocol_version)?;
++			write_reply(client, seq, &reply, client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::Subscribe(_) => {
+-			pulse::write_ack_message(&mut client.socket, seq)?;
++			pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), seq)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::CreatePlaybackStream(params) => {
+@@ -113,7 +121,11 @@ pub(super) fn handle_command(
+ 
+ 			if !is_supported_format(sample_spec.format) {
+ 				tracing::warn!("rejecting unsupported sample format {:?}", sample_spec.format);
+-				pulse::write_error(&mut client.socket, seq, &pulse::PulseError::NotSupported)?;
++				pulse::write_error(
++					&mut ClientWriter(&mut client.outgoing),
++					seq,
++					&pulse::PulseError::NotSupported,
++				)?;
+ 				return Ok(());
+ 			}
+ 
+@@ -191,14 +203,18 @@ pub(super) fn handle_command(
+ 				..Default::default()
+ 			};
+ 
+-			write_reply(&mut client.socket, seq, &reply, client.protocol_version)?;
++			write_reply(client, seq, &reply, client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::DrainPlaybackStream(channel) => {
+ 			if let Some(stream) = client.playback_streams.get_mut(&channel) {
+ 				stream.state = StreamState::Draining(seq);
+ 			} else {
+-				pulse::write_error(&mut client.socket, seq, &pulse::PulseError::NoEntity)?;
++				pulse::write_error(
++					&mut ClientWriter(&mut client.outgoing),
++					seq,
++					&pulse::PulseError::NoEntity,
++				)?;
+ 			}
+ 			Ok(())
+ 		},
+@@ -216,15 +232,19 @@ pub(super) fn handle_command(
+ 					playing_for: stream.played_bytes,
+ 				};
+ 
+-				write_reply(&mut client.socket, seq, &reply, client.protocol_version)?;
++				write_reply(client, seq, &reply, client.protocol_version)?;
+ 			} else {
+-				pulse::write_error(&mut client.socket, seq, &pulse::PulseError::NoEntity)?;
++				pulse::write_error(
++					&mut ClientWriter(&mut client.outgoing),
++					seq,
++					&pulse::PulseError::NoEntity,
++				)?;
+ 			}
+ 
+ 			Ok(())
+ 		},
+ 		pulse::Command::UpdatePlaybackStreamProplist(_) => {
+-			pulse::write_ack_message(&mut client.socket, seq)?;
++			pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), seq)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::CorkPlaybackStream(params) => {
+@@ -255,7 +275,7 @@ pub(super) fn handle_command(
+ 
+ 						stream.state = if req > 0 {
+ 							pulse::write_command_message(
+-								&mut client.socket,
++								&mut ClientWriter(&mut client.outgoing),
+ 								u32::MAX,
+ 								&pulse::Command::Request(pulse::Request {
+ 									channel: params.channel,
+@@ -271,7 +291,7 @@ pub(super) fn handle_command(
+ 				}
+ 			}
+ 
+-			pulse::write_ack_message(&mut client.socket, seq)?;
++			pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), seq)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::FlushPlaybackStream(channel) => {
+@@ -287,11 +307,15 @@ pub(super) fn handle_command(
+ 				stream.read_offset = stream.write_offset;
+ 			}
+ 
+-			pulse::write_ack_message(&mut client.socket, seq)?;
++			pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), seq)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::Extension(_) => {
+-			pulse::write_error(&mut client.socket, seq, &pulse::PulseError::NoExtension)?;
++			pulse::write_error(
++				&mut ClientWriter(&mut client.outgoing),
++				seq,
++				&pulse::PulseError::NoExtension,
++			)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::SetSinkInputVolume(params) => {
+@@ -300,7 +324,7 @@ pub(super) fn handle_command(
+ 					stream.volume = cvolume_to_linear(&params.volume, server.capture_channels);
+ 				}
+ 			}
+-			pulse::write_ack_message(&mut client.socket, seq)?;
++			pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), seq)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::SetSinkInputMute(params) => {
+@@ -309,40 +333,39 @@ pub(super) fn handle_command(
+ 					stream.muted = params.mute;
+ 				}
+ 			}
+-			pulse::write_ack_message(&mut client.socket, seq)?;
++			pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), seq)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::SetSinkVolume(params) => {
+ 			server.sink_volume = cvolume_to_linear(&params.volume, server.capture_channels);
+-			pulse::write_ack_message(&mut client.socket, seq)?;
++			pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), seq)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::SetSinkMute(params) => {
+ 			server.sink_muted = params.mute;
+-			pulse::write_ack_message(&mut client.socket, seq)?;
++			pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), seq)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::DeletePlaybackStream(channel) => {
+ 			client.playback_streams.remove(&channel);
+-			pulse::write_ack_message(&mut client.socket, seq)?;
++			pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), seq)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::LookupSink(name) => {
+ 			let sink_name = CString::new(SINK_NAME).unwrap();
+ 			if name == sink_name {
+-				write_reply(&mut client.socket, seq, &pulse::LookupReply(1), client.protocol_version)?;
++				write_reply(client, seq, &pulse::LookupReply(1), client.protocol_version)?;
+ 			} else {
+-				pulse::write_error(&mut client.socket, seq, &pulse::PulseError::NoEntity)?;
++				pulse::write_error(
++					&mut ClientWriter(&mut client.outgoing),
++					seq,
++					&pulse::PulseError::NoEntity,
++				)?;
+ 			}
+ 			Ok(())
+ 		},
+ 		pulse::Command::Stat => {
+-			write_reply(
+-				&mut client.socket,
+-				seq,
+-				&pulse::StatInfo::default(),
+-				client.protocol_version,
+-			)?;
++			write_reply(client, seq, &pulse::StatInfo::default(), client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::TriggerPlaybackStream(channel) => {
+@@ -351,7 +374,7 @@ pub(super) fn handle_command(
+ 			{
+ 				stream.state = StreamState::Playing;
+ 			}
+-			pulse::write_ack_message(&mut client.socket, seq)?;
++			pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), seq)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::PrebufPlaybackStream(channel) => {
+@@ -365,7 +388,7 @@ pub(super) fn handle_command(
+ 				stream.missing = stream.buffer_attr.pre_buffering as i64;
+ 				stream.requested = 0;
+ 			}
+-			pulse::write_ack_message(&mut client.socket, seq)?;
++			pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), seq)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetSinkInputInfo(index) => {
+@@ -376,9 +399,13 @@ pub(super) fn handle_command(
+ 				.map(|s| sink_input_info_from_stream(s, client.id));
+ 
+ 			if let Some(info) = info {
+-				write_reply(&mut client.socket, seq, &info, client.protocol_version)?;
++				write_reply(client, seq, &info, client.protocol_version)?;
+ 			} else {
+-				pulse::write_error(&mut client.socket, seq, &pulse::PulseError::NoEntity)?;
++				pulse::write_error(
++					&mut ClientWriter(&mut client.outgoing),
++					seq,
++					&pulse::PulseError::NoEntity,
++				)?;
+ 			}
+ 			Ok(())
+ 		},
+@@ -388,7 +415,7 @@ pub(super) fn handle_command(
+ 				.values()
+ 				.map(|s| sink_input_info_from_stream(s, client.id))
+ 				.collect();
+-			write_reply(&mut client.socket, seq, &list, client.protocol_version)?;
++			write_reply(client, seq, &list, client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::SetPlaybackStreamBufferAttr(params) => {
+@@ -403,33 +430,42 @@ pub(super) fn handle_command(
+ 				let buf_len = stream.buffer.len_bytes();
+ 				stream.missing = (new_target.saturating_sub(buf_len + stream.requested)) as i64;
+ 
++				let buffer_attr = stream.buffer_attr;
+ 				write_reply(
+-					&mut client.socket,
++					client,
+ 					seq,
+ 					&pulse::SetPlaybackStreamBufferAttrReply {
+-						buffer_attr: stream.buffer_attr,
++						buffer_attr,
+ 						configured_sink_latency: 10000,
+ 					},
+ 					client.protocol_version,
+ 				)?;
+ 			} else {
+-				pulse::write_error(&mut client.socket, seq, &pulse::PulseError::NoEntity)?;
++				pulse::write_error(
++					&mut ClientWriter(&mut client.outgoing),
++					seq,
++					&pulse::PulseError::NoEntity,
++				)?;
+ 			}
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetModuleInfoList => {
+ 			let reply: pulse::ModuleInfoList = Vec::new();
+-			write_reply(&mut client.socket, seq, &reply, client.protocol_version)?;
++			write_reply(client, seq, &reply, client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		pulse::Command::GetSampleInfoList => {
+ 			let reply: pulse::SampleInfoList = Vec::new();
+-			write_reply(&mut client.socket, seq, &reply, client.protocol_version)?;
++			write_reply(client, seq, &reply, client.protocol_version)?;
+ 			Ok(())
+ 		},
+ 		_ => {
+ 			tracing::warn!("ignoring command {:?}", cmd.tag());
+-			pulse::write_error(&mut client.socket, seq, &pulse::PulseError::NotImplemented)?;
++			pulse::write_error(
++				&mut ClientWriter(&mut client.outgoing),
++				seq,
++				&pulse::PulseError::NotImplemented,
++			)?;
+ 			Ok(())
+ 		},
+ 	}
+@@ -515,7 +551,7 @@ pub(super) fn handle_stream_write(client: &mut Client, desc: pulse::Descriptor,
+ 	let remaining = (stream.buffer_attr.max_length as usize).saturating_sub(buffer_len);
+ 	let payload = if payload.len() > remaining {
+ 		pulse::write_command_message(
+-			&mut client.socket,
++			&mut ClientWriter(&mut client.outgoing),
+ 			u32::MAX,
+ 			&pulse::Command::Overflow(payload.len().saturating_sub(remaining) as u32),
+ 			client.protocol_version,
+@@ -532,7 +568,7 @@ pub(super) fn handle_stream_write(client: &mut Client, desc: pulse::Descriptor,
+ 		} else {
+ 			tracing::debug!("Starting playback for stream {}", desc.channel);
+ 			pulse::write_command_message(
+-				&mut client.socket,
++				&mut ClientWriter(&mut client.outgoing),
+ 				u32::MAX,
+ 				&pulse::Command::Started(desc.channel),
+ 				client.protocol_version,
+@@ -595,13 +631,13 @@ fn configure_buffer(attr: &mut pulse::stream::BufferAttr, spec: &pulse::SampleSp
+ }
+ 
+ fn write_reply<T: pulse::CommandReply + std::fmt::Debug>(
+-	socket: &mut mio::net::UnixStream,
++	client: &mut Client,
+ 	seq: u32,
+ 	reply: &T,
+ 	version: u16,
+ ) -> Result<(), Error> {
+ 	tracing::trace!("sending reply [{}] ({}): {:#?}", seq, version, reply);
+-	pulse::write_reply_message(socket, seq, reply, version)?;
++	pulse::write_reply_message(&mut ClientWriter(&mut client.outgoing), seq, reply, version)?;
+ 	Ok(())
+ }
+ 
+diff --git a/moonshine-core/src/session/stream/audio/pulse_server/mod.rs b/moonshine-core/src/session/stream/audio/pulse_server/mod.rs
+index 6ebb4c9..7da7e40 100644
+--- a/moonshine-core/src/session/stream/audio/pulse_server/mod.rs
++++ b/moonshine-core/src/session/stream/audio/pulse_server/mod.rs
+@@ -2,13 +2,13 @@ mod commands;
+ mod dyn_buffer;
+ 
+ use std::collections::BTreeMap;
+-use std::io::{Cursor, Read};
++use std::io::{Cursor, Read, Write};
+ use std::os::unix::io::AsRawFd;
+ use std::path::PathBuf;
+ use std::time;
+ 
+ use async_shutdown::ShutdownManager;
+-use bytes::BytesMut;
++use bytes::{Buf, BytesMut};
+ use mio::net::UnixListener;
+ use pulseaudio::protocol::{self as pulse};
+ 
+@@ -21,6 +21,11 @@ type Error = Box<dyn std::error::Error + Send + Sync>;
+ const LISTENER: mio::Token = mio::Token(0);
+ const CLOCK: mio::Token = mio::Token(1);
+ 
++/// Cap on per-client pending outgoing data. A buffer exceeding this means the
++/// client has stopped reading; the stuck client is dropped rather than letting
++/// the buffer grow unboundedly, and the session survives.
++const MAX_OUTGOING_BUFFER: usize = 64 * 1024 * 1024;
++
+ /// The server emits samples at this rate to the encoder.
+ pub(crate) const CAPTURE_SAMPLE_RATE: u32 = 48000;
+ 
+@@ -78,9 +83,57 @@ struct Client {
+ 	protocol_version: u16,
+ 	props: Option<pulse::Props>,
+ 	incoming: BytesMut,
++	outgoing: BytesMut,
++	writable_registered: bool,
+ 	playback_streams: BTreeMap<u32, PlaybackStream>,
+ }
+ 
++/// Outcome of attempting to flush a client's outgoing buffer.
++enum FlushResult {
++	/// Buffer fully drained; socket is idle.
++	Done,
++	/// Socket send buffer is full; retry when the socket becomes writable.
++	Blocked,
++	/// Socket write failed (peer gone, etc.); the client should be dropped.
++	Dead,
++}
++
++impl Client {
++	/// Write as much of the outgoing buffer to the socket as possible.
++	///
++	/// `WouldBlock` is not an error: the remainder stays buffered and the
++	/// caller arms `WRITABLE` interest. A real write error only ever kills the
++	/// offending client, never the server.
++	fn flush(&mut self) -> FlushResult {
++		loop {
++			if self.outgoing.is_empty() {
++				return FlushResult::Done;
++			}
++			match self.socket.write(&self.outgoing) {
++				Ok(0) => return FlushResult::Dead,
++				Ok(n) => self.outgoing.advance(n),
++				Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => return FlushResult::Blocked,
++				Err(_) => return FlushResult::Dead,
++			}
++		}
++	}
++}
++
++/// Adapter that lets the `pulseaudio` protocol writers append directly into a
++/// client's outgoing buffer instead of hitting a nonblocking socket.
++struct ClientWriter<'a>(&'a mut BytesMut);
++
++impl std::io::Write for ClientWriter<'_> {
++	fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
++		self.0.extend_from_slice(buf);
++		Ok(buf.len())
++	}
++
++	fn flush(&mut self) -> std::io::Result<()> {
++		Ok(())
++	}
++}
++
+ struct ServerState {
+ 	server_info: pulse::ServerInfo,
+ 	sinks: Vec<pulse::SinkInfo>,
+@@ -342,6 +395,8 @@ impl PulseServer {
+ 								protocol_version: pulse::MAX_VERSION,
+ 								props: None,
+ 								incoming: BytesMut::new(),
++								outgoing: BytesMut::new(),
++								writable_registered: false,
+ 								playback_streams: BTreeMap::new(),
+ 							},
+ 						);
+@@ -360,6 +415,9 @@ impl PulseServer {
+ 							}
+ 						}
+ 					},
++					client_token if event.is_writable() => {
++						self.flush_client(client_token);
++					},
+ 					_ => (),
+ 				}
+ 			}
+@@ -367,67 +425,135 @@ impl PulseServer {
+ 	}
+ 
+ 	fn recv(&mut self, client_token: mio::Token) -> Result<(), Error> {
+-		let client = self.clients.get_mut(&client_token).unwrap();
++		let result = (|| -> Result<(), Error> {
++			let client = self.clients.get_mut(&client_token).unwrap();
+ 
+-		let mut read_size = 8192;
++			let mut read_size = 8192;
+ 
+-		'read: loop {
+-			let off = client.incoming.len();
+-			client.incoming.resize(off + read_size, 0);
+-			let n = match client.socket.read(&mut client.incoming[off..]) {
+-				Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+-					client.incoming.truncate(off);
+-					return Ok(());
+-				},
+-				v => v.map_err(|e| -> Error { format!("recv error: {e}").into() })?,
+-			};
++			'read: loop {
++				let off = client.incoming.len();
++				client.incoming.resize(off + read_size, 0);
++				let n = match client.socket.read(&mut client.incoming[off..]) {
++					Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
++						client.incoming.truncate(off);
++						return Ok(());
++					},
++					v => v.map_err(|e| -> Error { format!("recv error: {e}").into() })?,
++				};
+ 
+-			client.incoming.truncate(off + n);
++				client.incoming.truncate(off + n);
+ 
+-			loop {
+-				if client.incoming.len() < pulse::DESCRIPTOR_SIZE {
+-					read_size = 8192;
+-					continue 'read;
+-				}
++				loop {
++					if client.incoming.len() < pulse::DESCRIPTOR_SIZE {
++						read_size = 8192;
++						continue 'read;
++					}
+ 
+-				let desc = pulse::read_descriptor(&mut Cursor::new(&client.incoming[..pulse::DESCRIPTOR_SIZE]))?;
++					let desc = pulse::read_descriptor(&mut Cursor::new(&client.incoming[..pulse::DESCRIPTOR_SIZE]))?;
+ 
+-				// Guard against excessively large payloads (max 4 MiB).
+-				const MAX_PAYLOAD_SIZE: u32 = 4 * 1024 * 1024;
+-				if desc.length > MAX_PAYLOAD_SIZE {
+-					return Err(format!("payload too large: {} bytes", desc.length).into());
+-				}
++					// Guard against excessively large payloads (max 4 MiB).
++					const MAX_PAYLOAD_SIZE: u32 = 4 * 1024 * 1024;
++					if desc.length > MAX_PAYLOAD_SIZE {
++						return Err(format!("payload too large: {} bytes", desc.length).into());
++					}
+ 
+-				if client.incoming.len() < (desc.length as usize + pulse::DESCRIPTOR_SIZE) {
+-					read_size = desc.length as usize + pulse::DESCRIPTOR_SIZE - client.incoming.len();
+-					continue 'read;
+-				}
++					if client.incoming.len() < (desc.length as usize + pulse::DESCRIPTOR_SIZE) {
++						read_size = desc.length as usize + pulse::DESCRIPTOR_SIZE - client.incoming.len();
++						continue 'read;
++					}
+ 
+-				let _desc_bytes = client.incoming.split_to(pulse::DESCRIPTOR_SIZE);
+-				let payload = client.incoming.split_to(desc.length as usize).freeze();
++					let _desc_bytes = client.incoming.split_to(pulse::DESCRIPTOR_SIZE);
++					let payload = client.incoming.split_to(desc.length as usize).freeze();
+ 
+-				if desc.channel == u32::MAX {
+-					let (seq, cmd) =
+-						match pulse::Command::read_tag_prefixed(&mut Cursor::new(payload), client.protocol_version) {
+-							Err(pulse::ProtocolError::Unimplemented(seq, cmd)) => {
+-								tracing::warn!("Unimplemented PA command: {:?}", cmd);
+-								pulse::write_error(&mut client.socket, seq, &pulse::PulseError::NotImplemented)?;
+-								continue;
++					if desc.channel == u32::MAX {
++						let (seq, cmd) =
++							match pulse::Command::read_tag_prefixed(&mut Cursor::new(payload), client.protocol_version)
++							{
++								Err(pulse::ProtocolError::Unimplemented(seq, cmd)) => {
++									tracing::warn!("Unimplemented PA command: {:?}", cmd);
++									pulse::write_error(
++										&mut ClientWriter(&mut client.outgoing),
++										seq,
++										&pulse::PulseError::NotImplemented,
++									)?;
++									continue;
++								},
++								v => v.map_err(|e| -> Error { format!("decoding command: {e}").into() })?,
++							};
++
++						match commands::handle_command(client, &mut self.server_state, seq, cmd) {
++							Ok(()) => (),
++							Err(e) => {
++								let _ = pulse::write_error(
++									&mut ClientWriter(&mut client.outgoing),
++									seq,
++									&pulse::PulseError::Internal,
++								);
++								return Err(e);
+ 							},
+-							v => v.map_err(|e| -> Error { format!("decoding command: {e}").into() })?,
+-						};
+-
+-					match commands::handle_command(client, &mut self.server_state, seq, cmd) {
+-						Ok(()) => (),
+-						Err(e) => {
+-							let _ = pulse::write_error(&mut client.socket, seq, &pulse::PulseError::Internal);
+-							return Err(e);
+-						},
++						}
++					} else {
++						commands::handle_stream_write(client, desc, &payload)?;
+ 					}
+-				} else {
+-					commands::handle_stream_write(client, desc, &payload)?;
+ 				}
+ 			}
++		})();
++
++		if result.is_ok() {
++			self.flush_client(client_token);
++		}
++
++		result
++	}
++
++	/// Flush a client's pending outgoing data, managing `WRITABLE` interest and
++	/// dropping clients that are stuck or whose socket has failed.
++	fn flush_client(&mut self, client_token: mio::Token) {
++		let remove = {
++			let client = match self.clients.get_mut(&client_token) {
++				Some(client) => client,
++				None => return,
++			};
++
++			if client.outgoing.len() > MAX_OUTGOING_BUFFER {
++				tracing::warn!(
++					"PulseAudio client {} is stuck (outgoing buffer {} B exceeds cap), dropping",
++					client.id,
++					MAX_OUTGOING_BUFFER,
++				);
++				true
++			} else {
++				match client.flush() {
++					FlushResult::Done => {
++						if client.writable_registered {
++							client.writable_registered = false;
++							let _ = self.poll.registry().reregister(
++								&mut client.socket,
++								client_token,
++								mio::Interest::READABLE,
++							);
++						}
++						false
++					},
++					FlushResult::Blocked => {
++						if !client.writable_registered {
++							client.writable_registered = true;
++							let _ = self.poll.registry().reregister(
++								&mut client.socket,
++								client_token,
++								mio::Interest::READABLE | mio::Interest::WRITABLE,
++							);
++						}
++						false
++					},
++					FlushResult::Dead => true,
++				}
++			}
++		};
++
++		if remove && let Some(mut client) = self.clients.remove(&client_token) {
++			tracing::debug!("PulseAudio client disconnected (id={})", client.id);
++			let _ = self.poll.registry().deregister(&mut client.socket);
+ 		}
+ 	}
+ 
+@@ -487,7 +613,7 @@ impl PulseServer {
+ 						// Buffer underrun: notify client and (re-)enter prebuffering.
+ 						tracing::warn!("Buffer underrun for stream {}", id);
+ 						pulse::write_command_message(
+-							&mut client.socket,
++							&mut ClientWriter(&mut client.outgoing),
+ 							u32::MAX,
+ 							&pulse::Command::Underflow(pulse::Underflow {
+ 								channel: *id,
+@@ -531,7 +657,7 @@ impl PulseServer {
+ 					let req = pop_missing(&mut stream.missing, &mut stream.requested, min_req, in_prebuf);
+ 					if req > 0 {
+ 						pulse::write_command_message(
+-							&mut client.socket,
++							&mut ClientWriter(&mut client.outgoing),
+ 							u32::MAX,
+ 							&pulse::Command::Request(pulse::Request {
+ 								channel: *id,
+@@ -546,11 +672,19 @@ impl PulseServer {
+ 			for id in done_draining.iter() {
+ 				let stream = client.playback_streams.remove(id).unwrap();
+ 				if let StreamState::Draining(drain_seq) = stream.state {
+-					pulse::write_ack_message(&mut client.socket, drain_seq)?;
++					pulse::write_ack_message(&mut ClientWriter(&mut client.outgoing), drain_seq)?;
+ 				}
+ 			}
+ 		}
+ 
++		// Flush pending output for all clients. WouldBlock is handled gracefully
++		// (buffered + WRITABLE interest); a stuck client is dropped, never the
++		// whole server.
++		let tokens: Vec<mio::Token> = self.clients.keys().copied().collect();
++		for token in tokens {
++			self.flush_client(token);
++		}
++
+ 		// Apply sink-level volume.
+ 		if self.server_state.sink_muted {
+ 			frame.buf.fill(0.0);
+diff --git a/moonshine-wsi/src/swapchain.rs b/moonshine-wsi/src/swapchain.rs
+index 09eb568..be135ce 100644
+--- a/moonshine-wsi/src/swapchain.rs
++++ b/moonshine-wsi/src/swapchain.rs
+@@ -60,15 +60,14 @@ pub unsafe extern "C" fn create_swapchain(
+ 		// Determine whether XWayland bypass is allowed for this surface.
+ 		let bypass_allowed = can_bypass_xwayland(surface_key);
+ 
+-		let p_create_info_for_icd;
+ 		let mut patched_create_info;
+-		if need_remap {
++		let p_create_info_for_icd = if need_remap {
+ 			patched_create_info = *create_info;
+ 			patched_create_info.image_color_space = ash::vk::ColorSpaceKHR::SRGB_NONLINEAR;
+-			p_create_info_for_icd = &patched_create_info as *const VkSwapchainCreateInfoKHR;
++			&patched_create_info as *const VkSwapchainCreateInfoKHR
+ 		} else {
+-			p_create_info_for_icd = p_create_info;
+-		}
++			p_create_info
++		};
+ 
+ 		// Call the next layer/ICD first.
+ 		let result = with_device(device_key, |data| data.dispatch.create_swapchain)
