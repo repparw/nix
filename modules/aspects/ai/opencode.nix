@@ -2,6 +2,10 @@
 {
   den.aspects.ai.provides.opencode = {
     homeManager = {
+      xdg.configFile."opencode/plugin/bedrock.ts" = {
+        source = ./opencode-plugins/bedrock.ts;
+      };
+
       xdg.configFile."opencode/plugin/nous-live.ts".text = ''
         import type { Plugin } from "@opencode-ai/plugin"
         import { readFile } from "node:fs/promises"
@@ -48,7 +52,10 @@
           ];
         };
         settings = {
-          plugin = [ "./plugin/nous-live.ts" ];
+          plugin = [
+            "./plugin/nous-live.ts"
+            "./plugin/bedrock.ts"
+          ];
           permission = {
             "*" = {
               "*" = "allow";
