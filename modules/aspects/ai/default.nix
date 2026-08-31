@@ -12,7 +12,6 @@
       pocock-skills
       pstack
       t3code-connect
-      t3code-title-patch
       t3code-session-status-patch
       t3code
     ];
