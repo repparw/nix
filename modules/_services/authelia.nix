@@ -44,7 +44,6 @@ in
   containers.authelia = servicesLib.mkContainer {
     inherit cfg;
     name = "authelia";
-    hostAddress = lib.mkForce "10.231.137.1";
     privateUsers = "identity";
     bindMounts = {
       "/config" = {
@@ -163,10 +162,14 @@ in
         };
       };
 
-systemd.services.authelia-main.serviceConfig = {
+      systemd.services.authelia-main.serviceConfig = {
         LoadCredential = [ "SMTP_PASSWORD:/run/secrets/authelia/SMTP_PASSWORD" ];
+        # The rw /config bind is the authelia state dir (users db, sqlite).
+        # Ensure it is owned by the service user regardless of who created the
+        # host dir. "+" runs this as root before the User= drop, so it applies
+        # inside the container's 1:1 userns to the host-side directory.
+        ExecStartPre = [ "+${pkgs.coreutils}/bin/chown -R 999:999 /config" ];
         ProtectSystem = lib.mkForce "full";
-        ExecStartPre = lib.mkForce "/usr/bin/chown -R 999:999 ${cfg.configDir}/authelia/config ${cfg.configDir}/authelia/secrets";
       };
 
       services.redis.servers.authelia = {

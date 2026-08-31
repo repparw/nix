@@ -65,6 +65,19 @@
           privateNetwork = true;
           privateUsers = 327680;
         };
+        # Authelia joined epsilon's 10.231.137.0/24 bridge (like glance/hermes);
+        # without this it defaulted to pi's 10.231.136.1, pointing its nameserver
+        # at a bridge that doesn't exist here, so DNS lookups failed.
+        containers.authelia = {
+          hostAddress = lib.mkForce "10.231.137.1";
+          config.networking.nameservers = lib.mkForce [ "10.231.137.1" ];
+        };
+        # Miniflux fetched no feeds after migration: it also defaulted to pi's
+        # 10.231.136.1 bridge, so its nameserver didn't resolve on epsilon.
+        containers.miniflux = {
+          hostAddress = lib.mkForce "10.231.137.1";
+          config.networking.nameservers = lib.mkForce [ "10.231.137.1" ];
+        };
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
         # Installed in place via nixos-infect on top of Ubuntu's partition
         # layout: ext4 root on sda1, UEFI ESP on sda15 mounted /boot/efi.
