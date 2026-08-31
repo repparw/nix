@@ -244,14 +244,14 @@
         };
 
         networking.firewall.extraInputRules = ''
-          iifname "eth0" ip saddr 192.168.0.4 tcp dport { 3000, 8081 } accept comment "pi ingress -> native alpha listeners"
+          iifname "eth0" ip saddr { 192.168.0.4, 10.5.5.3 } tcp dport { 3000, 8081 } accept comment "edge ingress -> native alpha listeners"
         '';
 
         # Published container backends arrive as forwarded traffic (DNAT into
         # the ve-* veth by nspawn), so they need forward-chain acceptance, not
         # input.
         networking.firewall.extraForwardRules = ''
-          iifname "eth0" ip saddr 192.168.0.4 oifname "ve-*" accept comment "pi ingress -> published container backends"
+          iifname "eth0" ip saddr { 192.168.0.4, 10.5.5.3 } oifname "ve-*" accept comment "edge ingress -> published container backends"
         '';
 
         networking.nftables.tables.qos = {

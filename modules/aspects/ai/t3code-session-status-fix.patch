@@ -1,0 +1,87 @@
+diff --git c/apps/server/src/orchestration/Layers/ProviderRuntimeIngestion.ts i/apps/server/src/orchestration/Layers/ProviderRuntimeIngestion.ts
+index c942960f3..72b029d8a 100644
+--- c/apps/server/src/orchestration/Layers/ProviderRuntimeIngestion.ts
++++ i/apps/server/src/orchestration/Layers/ProviderRuntimeIngestion.ts
+@@ -43,7 +43,7 @@ import {
+ } from "../Services/ProviderRuntimeIngestion.ts";
+ import { forkParked } from "../../serverActivation.ts";
+ import { ServerSettingsService } from "../../serverSettings.ts";
+-import { canReplaceThreadTitle } from "../threadTitles.ts";
++import { canReplaceSessionStatus, canReplaceThreadTitle } from "../threadTitles.ts";
+ 
+ const providerTurnKey = (threadId: ThreadId, turnId: TurnId) => `${threadId}:${turnId}`;
+ const providerTaskKey = (threadId: ThreadId, taskId: string) => `${threadId}:${taskId}`;
+@@ -1621,24 +1621,27 @@ const make = Effect.gen(function* () {
+             );
+           }
+ 
+-          yield* orchestrationEngine.dispatch({
+-            type: "thread.session.set",
+-            commandId: yield* providerCommandId(event, "thread-session-set"),
+-            threadId: thread.id,
+-            session: {
++          const currentSessionStatus = thread.session?.status ?? "ready";
++          if (canReplaceSessionStatus(currentSessionStatus, status)) {
++            yield* orchestrationEngine.dispatch({
++              type: "thread.session.set",
++              commandId: yield* providerCommandId(event, "thread-session-set"),
+               threadId: thread.id,
+-              status,
+-              providerName: event.provider,
+-              ...(event.providerInstanceId !== undefined
+-                ? { providerInstanceId: event.providerInstanceId }
+-                : {}),
+-              runtimeMode: thread.session?.runtimeMode ?? "full-access",
+-              activeTurnId: nextActiveTurnId,
+-              lastError,
+-              updatedAt: now,
+-            },
+-            createdAt: now,
+-          });
++              session: {
++                threadId: thread.id,
++                status,
++                providerName: event.provider,
++                ...(event.providerInstanceId !== undefined
++                  ? { providerInstanceId: event.providerInstanceId }
++                  : {}),
++                runtimeMode: thread.session?.runtimeMode ?? "full-access",
++                activeTurnId: nextActiveTurnId,
++                lastError,
++                updatedAt: now,
++              },
++              createdAt: now,
++            });
++          }
+         }
+       }
+ 
+diff --git c/apps/server/src/orchestration/threadTitles.ts i/apps/server/src/orchestration/threadTitles.ts
+index c9a9c4f72..efb32324e 100644
+--- c/apps/server/src/orchestration/threadTitles.ts
++++ i/apps/server/src/orchestration/threadTitles.ts
+@@ -11,3 +11,24 @@ export function canReplaceThreadTitle(currentTitle: string, titleSeed?: string):
+     ? trimmedCurrentTitle === trimmedTitleSeed
+     : false;
+ }
++
++export type SessionStatus = "starting" | "running" | "ready" | "stopped" | "error" | "interrupted";
++
++const TERMINAL_STATUSES: ReadonlySet<SessionStatus> = new Set(["stopped", "error", "interrupted"] as const);
++const ACTIVE_STATUSES: ReadonlySet<SessionStatus> = new Set(["starting", "running", "ready"] as const);
++
++export function canReplaceSessionStatus(
++  currentStatus: SessionStatus,
++  nextStatus: SessionStatus,
++): boolean {
++  if (TERMINAL_STATUSES.has(currentStatus)) {
++    return true;
++  }
++  if (TERMINAL_STATUSES.has(nextStatus)) {
++    return true;
++  }
++  if (currentStatus === "ready" && ACTIVE_STATUSES.has(nextStatus)) {
++    return true;
++  }
++  return false;
++}

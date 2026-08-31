@@ -444,6 +444,43 @@
             allowedUDPPorts = [ 53 ];
           };
         };
+
+        # Minimal local edge for LAN HTTPS (TV): Jellyfin via pi:443 -> alpha:8096
+        # External is via epsilon (CF). Keeps LAN https without cloud round-trip.
+        sops.secrets.cloudflare.sopsFile = ../../secrets/proxy.sops.yaml;
+
+        services.traefik = {
+          enable = true;
+          environmentFiles = [ config.sops.secrets.cloudflare.path ];
+          staticConfigOptions = {
+            entryPoints.websecure = {
+              address = ":443";
+              http.tls.certResolver = "cloudflare";
+            };
+            certificatesResolvers.cloudflare.acme = {
+              email = "ubritos@gmail.com";
+              storage = "/var/lib/traefik/acme.json";
+              dnsChallenge = {
+                provider = "cloudflare";
+                resolvers = [
+                  "1.1.1.1:53"
+                  "1.0.0.1:53"
+                ];
+              };
+            };
+          };
+          dynamicConfigOptions = {
+            tls.options.default.sniStrict = true;
+            http = {
+              routers.jellyfin = {
+                rule = "Host(`jellyfin.repparw.com`)";
+                service = "jellyfin";
+                tls.certResolver = "cloudflare";
+              };
+              services.jellyfin.loadBalancer.servers = [ { url = "http://192.168.0.18:8096"; } ];
+            };
+          };
+        };
       };
   };
 

@@ -20,14 +20,20 @@ _: {
         # backends migrate off pi.
         epsilonAddress = "146.181.42.97";
 
-        # Still routed by pi's traefik; names must match the router rules
-        # in _services/ingress-policy.nix.
+        # Split edge: external via epsilon (CF), LAN via pi for
+        # 192.168.0.0/24 hosts + TV. Keeps Jellyfin https local without
+        # cloud round-trip. Keep in sync with ingress-policy.nix.
         piNames = [
+          "jellyfin.repparw.com"
+        ];
+
+        # Served by epsilon directly (apex + remaining vhosts external).
+        epsilonNames = [
+          "repparw.com"
           "auth.repparw.com"
           "bazarr.repparw.com"
           "finance.repparw.com"
           "home.repparw.com"
-          "jellyfin.repparw.com"
           "paper.repparw.com"
           "prowlarr.repparw.com"
           "qbit.repparw.com"
@@ -36,14 +42,9 @@ _: {
           "sonarr.repparw.com"
         ];
 
-        # Served by epsilon directly (glance migration).
-        epsilonNames = [
-          "repparw.com"
-        ];
-
         rendered = ''
           # BEGIN nix lan-hosts (modules/aspects/lan-hosts.nix)
-          ${piAddress} ${lib.concatStringsSep " " piNames}
+          ${lib.optionalString (piNames != [ ]) "${piAddress} ${lib.concatStringsSep " " piNames}"}
           ${epsilonAddress} ${lib.concatStringsSep " " epsilonNames}
           # END nix lan-hosts
         '';

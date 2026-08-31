@@ -570,10 +570,10 @@
                 && !(builtins.elem 80 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts)
                 && !(builtins.elem 443 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts)
                 && builtins.elem 54535 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts
-                && builtins.any (lib.strings.hasInfix "iifname \"eth0\" ip saddr 192.168.0.4 tcp dport { 3000, 8081 } accept") (
+                && builtins.any (lib.strings.hasInfix "ip saddr { 192.168.0.4, 10.5.5.3 } tcp dport { 3000, 8081 } accept") (
                   lib.splitString "\n" alpha.networking.firewall.extraInputRules
                 )
-                && lib.strings.hasInfix "iifname \"eth0\" ip saddr 192.168.0.4 oifname \"ve-*\" accept" alpha.networking.firewall.extraForwardRules
+                && lib.strings.hasInfix "ip saddr { 192.168.0.4, 10.5.5.3 } oifname \"ve-*\" accept" alpha.networking.firewall.extraForwardRules
                 && builtins.all (port: builtins.elem port pi.networking.firewall.interfaces.eth0.allowedTCPPorts) [
                   53
                   80
