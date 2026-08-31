@@ -16,9 +16,9 @@
       # den.aspects.nix (in den.default) declares sops.secrets.accessTokens;
       # without the secrets aspect the sops-nix module is missing entirely.
       den.aspects.secrets
-      # Offsite restic of the stateful edge services + hermes on this host.
+      # Offsite restic of the stateful edge services + hermes on this host
+      # (backup aspect pulls in restic itself).
       den.aspects.backup
-      den.aspects.backup._.restic
       # Edge ingress stack (Traefik, Authelia, Glance, Miniflux, ddclient)
       den.aspects.nixos-services._.edge
       # Hermes Agent gateway (migrated from pi; private network 10.231.137.x).
