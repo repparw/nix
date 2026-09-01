@@ -90,5 +90,5 @@
   };
 
   # Parked: no laptop using this host config. Re-enable when hardware is back.
-  den.hosts.x86_64-linux.beta.users.repparw = { };
+  # den.hosts.x86_64-linux.beta.users.repparw = { };
 }
