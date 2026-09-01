@@ -1,10 +1,10 @@
 ---
 type: Host Profiles
 title: Host Profiles
-description: The alpha desktop and pi server profiles, plus the parked beta laptop.
+description: The alpha desktop, pi home server, and epsilon VPS edge profiles, plus the parked beta laptop.
 when: Read when comparing host profiles or adding or changing a host.
 resource: modules/hosts/
-tags: [hosts, alpha, beta, pi]
+tags: [hosts, alpha, beta, pi, epsilon]
 ---
 
 # Host Profiles
@@ -14,11 +14,15 @@ workload-specific aspects in `modules/hosts/`.
 
 ## Alpha
 
-`alpha` is the desktop workstation. It carries the heavier backend service
-set (media, *arr stack, documents), gaming, streaming, and backup behavior.
-Since the edge migration it is no longer the public entrypoint: pi fronts
-every `*.repparw.com` vhost and reaches alpha's published backends over the
-LAN.
+`alpha` is the desktop workstation (x86_64, `192.168.0.18`). It carries the
+heavier backend service set (media, *arr stack, documents), gaming,
+streaming, and backup behavior. Since the edge migrations it is not a
+public entrypoint: epsilon terminates the public vhosts, and pi fronts
+alpha's published service backends over the LAN.
+
+Alpha's updates are pulled, not pushed: the gated consumer flips it to
+whatever main pins, only while idle. See the
+[fleet operations runbook](runbooks/fleet-operations.md).
 
 Source: `modules/hosts/alpha.nix`
 
@@ -34,19 +38,18 @@ Source: `modules/hosts/beta.nix`
 ## Pi
 
 `pi` is the Raspberry Pi 5 home server (aarch64, `192.168.0.4`) and the
-always-on public edge: Traefik terminates `*.repparw.com` with Authelia SSO
-in front, ddclient owns dynamic DNS, and LAN DNS runs on systemd-resolved.
-Headless services run in declarative nspawn containers (no desktop/GUI
-stack):
+always-on host: it runs the LAN-side edge (Traefik with Authelia SSO) and
+the declarative nspawn services that must survive workstation downtime.
+It is also the fleet's **sole flake.lock writer**: its nightly auto-update
+bumps inputs, pushes the lock to main, and both hosts flip onto it.
 
-- Traefik (:80/:443) routes every vhost; local backends target the nspawn
-  bridge, remote ones alpha's published ports (`_services/inventory.nix`).
+- Traefik (:80/:443) routes the LAN vhosts; local backends target the
+  nspawn bridge, remote ones alpha's published ports
+  (`_services/inventory.nix`).
 - `containers.authelia` (`10.231.136.7`) provides SSO/forward-auth/OIDC.
 - `containers.homeassistant` (`10.231.136.2`) serves `home.repparw.com`.
-- `containers.hermes` (`10.231.136.3`) runs the Hermes Agent messaging gateway
-  via upstream's NixOS module; state lives under `/home/repparw/services/hermes`
-  so the alpha-side `buprpi` rsync job captures it. Gateway-only: outbound chat
-  platforms, no inbound ports, no ingress vhost.
+- `containers.miniflux` (`10.231.136.4`) serves `rss.repparw.com`.
+- Fleet-health monitoring and the nightly auto-update pipeline run here.
 
 It boots through the Raspberry Pi firmware and generic-extlinux-compatible
 loader (linuxPackages_latest, with the `pcie_brcmstb` module in the initrd
@@ -56,6 +59,28 @@ NixOS aarch64 sd-image layout; see the
 [deployment runbook](runbooks/deploy-pi-nixos.md).
 
 Source: `modules/hosts/pi.nix`
+
+## Epsilon
+
+`epsilon` is the Oracle Cloud Always Free A1 VPS (aarch64,
+sa-santiago-1) and the terminating public edge: Cloudflare fronts it, its
+firewall accepts 443 from CF ranges only, and Traefik terminates the
+public vhosts with Authelia SSO. Installed in place via nixos-infect
+(grub removable EFI on the Ubuntu partition layout).
+
+- `containers.authelia`, `containers.miniflux`, and `containers.glance`
+  run on its own `10.231.137.0/24` nspawn bridge; glance's monitors probe
+  the public endpoints through the home tunnel.
+- `containers.hermes` runs the Hermes Agent messaging gateway here
+  (migrated from pi).
+- A split-tunnel WireGuard link (`wg-home`, via the router's hub) reaches
+  the home LAN and pi's container bridge for monitoring and agent egress.
+- Offsite restic covers its stateful edge services under
+  `gd-crypt:restic/epsilon`.
+
+It runs no update pipeline: deploy and switch manually.
+
+Source: `modules/hosts/epsilon.nix`
 
 ## Related
 

@@ -32,7 +32,7 @@ files instead of copying module contents.
 - [Add and maintain change-detection watchers](runbooks/change-detection-watchers.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
 - [Deploy NixOS to the Raspberry Pi](runbooks/deploy-pi-nixos.md)
-- [Failed auto-upgrade rollback](runbooks/failed-auto-upgrade-rollback.md)
+- [Update rollback](runbooks/update-rollback.md)
 - [Fleet health, offsite backups, and upgrade reports](runbooks/fleet-operations.md)
 - [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Prune t3code and opencode databases](runbooks/prune-t3code-opencode-dbs.md)
