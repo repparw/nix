@@ -282,6 +282,12 @@
                 "-ic"
                 "rpi"
               ];
+              "Mod+Alt+R" = titledSpawn "VPS" [
+                "foot"
+                "fish"
+                "-ic"
+                "eps"
+              ];
               "Mod+Comma" = titledSpawn "Show Layout" [
                 "ndrop"
                 "-c"
