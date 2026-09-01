@@ -20,7 +20,118 @@
         lib,
         ...
       }:
+      let
+        # Gated manual update (issue #53): probe -> GC headroom -> diff
+        # review -> flip -> soak -> rollback. Consumers pull and flip;
+        # input bumps belong to pi's auto-update pipeline. PROBE overrides
+        # the built-in gate with a stricter external check (pi's pipeline
+        # sets it to the fleet-health probe).
+        host-update = pkgs.writeShellApplication {
+          name = "host-update";
+          runtimeInputs = with pkgs; [
+            git
+            nix
+            nixos-rebuild
+            nvd
+            curl
+            gawk
+            gnugrep
+            coreutils
+            sudo
+          ];
+          text = ''
+            set -u
+            flake="''${FLAKE:-$HOME/Projects/nix}"
+            host=$(hostname)
+
+            gate() {
+              if [ -n "''${PROBE:-}" ]; then
+                "$PROBE" --strict --local
+              else
+                # "degraded" is acceptable (alpha carries benign failed
+                # user noise); only a failed manager blocks. Pi is probed
+                # by TCP on its edge port: post-migration its traefik
+                # serves LAN vhosts over 443 only, no plain http.
+                state=$(systemctl is-system-running 2>/dev/null || true)
+                case "$state" in
+                  running | degraded) ;;
+                  *) return 1 ;;
+                esac
+                timeout 3 bash -c 'exec 3<>/dev/tcp/192.168.0.4/443' 2>/dev/null
+              fi
+            }
+
+            if ! gate; then
+              echo "health gate failing; fix before updating"
+              exit 1
+            fi
+
+            cd "$flake"
+
+            # Consumers pull; pi pushes. Never bump inputs here.
+            git fetch origin main
+            behind=$(git rev-list --count HEAD..origin/main || echo 0)
+            if [ "$behind" -gt 0 ]; then
+              if [ -z "$(git status --porcelain)" ]; then
+                git merge --ff-only origin/main
+              else
+                echo "note: tree dirty and $behind commits behind origin; building local state"
+              fi
+            fi
+
+            free_kb=$(df -k /nix | awk 'NR==2 {print $4}')
+            if [ "$free_kb" -lt $((10 * 1024 * 1024)) ]; then
+              echo "below 10G on /nix; running gc (sudo password may be asked)"
+              sudo nix-collect-garbage -d || true
+            fi
+
+            nix build ".#nixosConfigurations.$host.config.system.build.toplevel" \
+              -o /tmp/host-update-result
+            nvd diff /run/current-system /tmp/host-update-result \
+              | tee /tmp/host-update-diff.txt
+            changed=$(grep -c '^[<>]' /tmp/host-update-diff.txt || true)
+            if [ "$changed" -eq 0 ]; then
+              echo "already at the pinned generation"
+              exit 0
+            fi
+
+            printf '\nFlip %s to this generation? [y/N] ' "$host"
+            read -r answer
+            [ "$answer" = "y" ] || {
+              echo "aborted; nothing flipped"
+              exit 1
+            }
+
+            sudo nixos-rebuild switch --flake ".#$host"
+
+            # Soak: settle, then two consecutive clean gate passes.
+            sleep 45
+            passes=0
+            i=0
+            while [ "$i" -lt 10 ]; do
+              if gate; then
+                passes=$((passes + 1))
+              else
+                passes=0
+              fi
+              [ "$passes" -ge 2 ] && break
+              i=$((i + 1))
+              sleep 30
+            done
+
+            if [ "$passes" -lt 2 ]; then
+              echo "soak failed; rolling back"
+              sudo nixos-rebuild switch --rollback
+              exit 1
+            fi
+
+            echo "soak clean; $host updated"
+          '';
+        };
+      in
       {
+        home.packages = [ host-update ];
+
         programs = {
           btop.enable = true;
 
@@ -91,14 +202,15 @@
 
               vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
 
-              # Alpha is a consumer: pi owns flake.lock (sole writer). These
-              # flip this host to whatever main currently pins; they never
-              # bump inputs, else they'd diverge from pi's lock.
+              # Alpha is a consumer: pi owns flake.lock (sole writer). The
+              # manual path runs the gated host-update wrapper (probe, GC
+              # headroom, diff review, soak, rollback) — it never bumps
+              # inputs. Raw nrs/nrb stay for one-off local builds.
               nrs = "nh os switch";
               nrb = "nh os boot";
               nrt = "nh os test";
 
-              nrsu = "nrs";
+              nrsu = "host-update";
               nrbu = "nrb";
 
               ln = "ln -i";

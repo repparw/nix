@@ -363,10 +363,10 @@
               exit 0
             fi
 
-            # Pi must be healthy before alpha follows its lock. Use plain
-            # http to pi's LAN address. Apex now lives on epsilon, so a
-            # resolved https check would hang on pi.
-            if ! curl -s -m 6 http://192.168.0.4/ -o /dev/null -w '%{http_code}' | grep -q 301; then
+            # Pi must be healthy before alpha follows its lock. TCP to its
+            # edge port: post-migration pi's traefik serves vhosts over
+            # 443 only, so vhost http probes are meaningless.
+            if ! timeout 3 bash -c 'exec 3<>/dev/tcp/192.168.0.4/443' 2>/dev/null; then
               echo "pi edge not healthy, deferring"
               exit 0
             fi
@@ -397,7 +397,9 @@
             sleep 60
             while [ "$i" -lt 10 ]; do
               ok=1
-              if [ "$(systemctl is-system-running 2>/dev/null)" != "running" ]; then
+              # degraded is acceptable (benign failed units); only a
+              # failed manager counts against the soak.
+              if [ "$(systemctl is-system-running 2>/dev/null)" = "failed" ]; then
                 ok=0
               fi
               if ! curl -s -m 6 http://192.168.0.4/ -o /dev/null; then
