@@ -124,6 +124,27 @@
               ok "unit:restic-backups-offsite"
             fi
 
+            # Failed-unit sweep: catch any latched failed state, not just the
+            # watchlist above. Monitoring only — never part of strict gates,
+            # so a broken unit cannot block update flips. Noise control rides
+            # the two-strike machinery per unit: a failure must persist
+            # across two runs (>= 10 min) to alert once, and a failure that
+            # clears between runs never alerts at all. The previous run's
+            # failed set is tracked so recovered units get ok() (counter
+            # reset + recovery notice) instead of stale counters.
+            if [ "$strict" != 1 ]; then
+              failed_cur=$(systemctl list-units --state=failed --no-legend --no-pager 2>/dev/null | awk '{print $1}')
+              failed_prev=$(cat "$state_dir/.failed-units" 2>/dev/null || true)
+
+              for u in $failed_prev; do
+                printf '%s\n' "$failed_cur" | grep -qx "$u" || ok "unit-failed:$u"
+              done
+              for u in $failed_cur; do
+                fail "unit-failed:$u" "systemd failed state"
+              done
+              printf '%s\n' "$failed_cur" > "$state_dir/.failed-units"
+            fi
+
             # http probes: alive = any response; strict = exact code required
             http() { # name, url, strict_code_or_empty, extra_curl_args...
               local n="$1" url="$2" want="$3"; shift 3
@@ -225,6 +246,140 @@
             wantedBy = [ "timers.target" ];
             timerConfig = {
               OnCalendar = "*:0/5";
+              Persistent = true;
+            };
+          };
+        };
+      };
+  };
+
+  den.aspects.nixos-services.provides.coredump-watch = {
+    nixos =
+      {
+        options,
+        config,
+        pkgs,
+        lib,
+        ...
+      }:
+      let
+        cfg = config.modules.coredump-watch;
+
+        # Same delivery contract as the probe: post via the Discord REST API
+        # on the hermes bot token so the watcher never dies with hermes.
+        channelId = "1515064288191053979";
+
+        coredumpsScript = pkgs.writeShellApplication {
+          name = "coredump-watch";
+          runtimeInputs = with pkgs; [
+            curl
+            jq
+            systemd
+          ];
+          text = ''
+            state_dir=/var/lib/fleet-health
+            mkdir -p "$state_dir"
+            # Dotfile so the probe's counter glob never sees bookkeeping.
+            marker="$state_dir/.coredumps-since"
+            now=$(date +%s)
+
+            # First run: establish the baseline and stay silent — a fresh
+            # install must not replay crash history into the channel.
+            if [ ! -e "$marker" ]; then
+              printf '%s\n' "$now" > "$marker"
+              echo "coredumps: baseline set, nothing reported"
+              exit 0
+            fi
+
+            since=$(cat "$marker")
+            printf '%s\n' "$now" > "$marker"
+
+            # shellcheck disable=SC1091
+            source /run/secrets/hermes-env
+            api="https://discord.com/api/v10/channels/${channelId}/messages"
+            notify() {
+              curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" >/dev/null || true
+            }
+
+            MUTE_JSON="''${MUTE_JSON:-[]}"
+            entries=$(coredumpctl list --json=short --no-pager --since="@$since" 2>/dev/null || echo "[]")
+
+            # Group new crashes by binary + signal; mute by basename so
+            # known-noisy crashers are logged but never notified.
+            report=$(printf '%s' "$entries" | jq -r --argjson mute "$MUTE_JSON" '
+              [ .[]
+                | select(.exe != null and .exe != "")
+                | { base: (.exe | split("/") | last), sig: (.sig // "unknown") } ]
+              | map(select((.base as $b | $mute | index($b)) | not))
+              | sort_by(.base, .sig)
+              | group_by([.base, .sig])
+              | map("\(length)x \(.[0].base) (sig \(.[0].sig))")
+              | .[]' 2>/dev/null || true)
+
+            count=$(printf '%s\n' "$report" | grep -c . || true)
+            if [ "$count" -gt 0 ]; then
+              body=":warning: coredumps: $count new crash kind(s) on $HOSTNAME"
+              while IFS= read -r line; do
+                body+=$'\n'"• $line"
+              done <<< "$report"
+              notify "$body"
+            else
+              echo "coredumps: nothing new"
+            fi
+
+            muted=$(printf '%s' "$entries" | jq -r --argjson mute "$MUTE_JSON" '
+              [ .[]
+                | select(.exe != null and .exe != "")
+                | (.exe | split("/") | last)
+                | select(. as $b | $mute | index($b)) ] | length' 2>/dev/null || echo 0)
+            [ "$muted" -gt 0 ] && echo "coredumps: $muted muted crash(es) suppressed"
+          '';
+        };
+      in
+      {
+        options.modules.coredump-watch = {
+          enable = lib.mkEnableOption "coredump surfacing to Discord (host-local; needs a persistent journal, so keep it off pi)";
+
+          mute = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            description = "Executable basenames whose crashes are logged locally but never notified (known-noisy crashers)";
+          };
+
+          script = lib.mkOption {
+            type = lib.types.package;
+            readOnly = true;
+            description = "coredump-watch package";
+          };
+        };
+
+        config = {
+          modules.coredump-watch.script = coredumpsScript;
+
+          systemd.services.fleet-health-coredumps = lib.mkIf cfg.enable {
+            description = "Surface new coredumps to Discord";
+            after = [
+              "network-online.target"
+              "multi-user.target"
+            ];
+            wants = [ "network-online.target" ];
+            environment = {
+              HOSTNAME = config.networking.hostName;
+              MUTE_JSON = builtins.toJSON cfg.mute;
+            };
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = lib.getExe coredumpsScript;
+              StateDirectory = "fleet-health";
+            };
+          };
+
+          systemd.timers.fleet-health-coredumps = lib.mkIf cfg.enable {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "*:0/15";
               Persistent = true;
             };
           };
