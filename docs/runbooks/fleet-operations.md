@@ -117,4 +117,4 @@ attached as a file.
 ## Related
 
 - [Deploy NixOS to the Raspberry Pi](deploy-pi-nixos.md)
-- [Failed auto-upgrade rollback](failed-auto-upgrade-rollback.md)
+- [Update rollback](update-rollback.md)
