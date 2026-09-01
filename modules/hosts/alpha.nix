@@ -383,7 +383,7 @@
 
             nix build .#nixosConfigurations.alpha.config.system.build.toplevel -o /var/lib/alpha-auto-update/result
             nvd diff /run/current-system /var/lib/alpha-auto-update/result > "$state/diff.txt" || true
-            changed=$(grep -c '^[<>]' "$state/diff.txt" || true)
+            changed=$(grep -cE '^[<>] ' "$state/diff.txt" || true)
             if [ "$changed" -eq 0 ]; then
               echo "no package change for alpha"
               exit 0
