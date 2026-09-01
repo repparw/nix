@@ -329,8 +329,8 @@
               ) (lib.attrNames expectedMediaDefinitions);
               nativeServicesMatch =
                 edgeCfg ? definitions.hass
-                # Miniflux + its PostgreSQL run in an nspawn container since
-                # issue #44, reached over the bridge like the rest.
+                # Miniflux + its PostgreSQL run in an nspawn container,
+                # reached over the bridge like the rest.
                 && miniflux.hostname == "rss"
                 && miniflux.port == 8081
                 && miniflux.auth == "one_factor"
@@ -381,7 +381,7 @@
                 && epsilon.containers.glance.config.services.glance.settings.branding.logo-text == "R";
               backgroundServicesMatch =
                 # Archisteamfarm farms on pi (always-on host); its definition
-                # and container live in pi's closure since the migration.
+                # and container live in pi's closure.
                 archisteamfarm.containerAddress == "10.231.136.13"
                 && archisteamfarm.hostname == null
                 && archisteamfarm.port == null
@@ -402,7 +402,7 @@
                 && automations.auth == "bypass"
                 && !automations.monitor
                 && automations.backup.path == "${edgeCfg.configDir}/automations"
-                # Automations is a pi-native oneshot since issue #45: no
+                # Automations is a pi-native oneshot: no
                 # nspawn container on either host, state dir via tmpfiles,
                 # six-hour timer local to the edge.
                 && builtins.any (lib.strings.hasInfix "automations") pi.systemd.tmpfiles.rules

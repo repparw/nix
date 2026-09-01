@@ -6,9 +6,6 @@
   ...
 }:
 {
-  # Hermes Agent flake input moved to epsilon (hermes migrated there).
-  # flake-file.inputs.hermes-agent.url = "github:NousResearch/hermes-agent/v2026.8.19";
-
   den.aspects.pi = {
     includes = [
       den.batteries.hostname
@@ -38,7 +35,7 @@
       {
         imports = [
           # modules.services schema (options/definitions) + cross-host
-          # inventory — previously inherited from the nixos-services parent.
+          # inventory.
           ../service-definitions.nix
           ../_services/inventory.nix
         ];
@@ -51,14 +48,10 @@
 
         # Offsite restic coverage (den.aspects.backup._.restic): container
         # configs plus the two bind-mounted user service states.
-        # hermes state dir moved to epsilon; backup runs there now.
         modules.backup.paths = [
           "/home/containers/config"
           "/home/repparw/services/hass"
         ];
-        # Explicit crypt remote: the aspect default spells a "crypt" remote
-        # name that the rendered config never defined.
-        modules.backup.repository = "rclone:gd-crypt:restic/pi";
 
         # pi's repparw account: the shared base aspect plus host-specific
         # identity. The offsite restic job reads the system rclone conf, so
@@ -149,10 +142,6 @@
 
           # User home + Home Assistant data live on the NVMe, so
           # ~/services/hass carries over from the Debian install unchanged.
-          # Roles swapped 2026-08-23 (reinstall after SD death): home moved to
-          # p2 (17.6G, ~3G used) so the store could take p1 (40G) — p2 had run
-          # at 83% full as /nix. Pre-swap copy: alpha ~/backups/pi/
-          # pi-nvme-home-pre-swap-20260823/.
           "/home/repparw" = {
             device = "/dev/disk/by-partuuid/7fd52c5b-02";
             fsType = "ext4";
@@ -304,12 +293,10 @@
             if [ -f "$key" ]; then
               git config user.name "pi-auto-update"
               git config user.email "pi-auto-update@repparw.com"
-              # Provenance rides the author (pi-auto-update); the subject
-              # just names what moved.
               git commit -m "flake.lock: Update" flake.lock
               export GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
               # Push by URL: the clone remote is https and GIT_SSH_COMMAND
-              # never applies to it (04:22 run: credential prompt, headless).
+              # never applies to it.
               if git push "git@github.com:repparw/nix.git" main; then
                 pushed=1
               else
@@ -318,8 +305,8 @@
               fi
             fi
 
-            # Flip, soak, and rollback ride the shared host-update wrapper
-            # (issue #53). The wrapper gates on PROBE, diffs the prebuilt
+            # Flip, soak, and rollback ride the shared host-update wrapper.
+            # The wrapper gates on PROBE, diffs the prebuilt
             # result, switches, and reverts on soak failure; pi stays
             # responsible for its writer duties (bump above, revert-push
             # and breaker here) and the Discord reports.

@@ -42,7 +42,6 @@
           "/home/repparw/Pictures"
           "/home/repparw/Documents"
         ];
-        modules.backup.repository = "rclone:gd-crypt:restic/alpha";
 
         # Crash capture: surface new coredumps to Discord. Only alpha runs
         # this — pi's volatile journal cannot retain coredumps. wine64-
@@ -242,9 +241,9 @@
         };
 
         networking.firewall.interfaces.eth0 = {
-          # The public edge moved to pi: no more :80/:443 here. Only the
-          # published service backends are exposed, and only to pi, which
-          # fronts them.
+          # No :80/:443 here. Only the published service backends are
+          # exposed, and only to the edge hosts that front them: pi (LAN)
+          # and epsilon (public, over the tunnel).
           allowedTCPPorts = [
             54535
           ];

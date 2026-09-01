@@ -42,11 +42,9 @@
       nixos.boot.tmp.useTmpfs = true;
 
       # Fleet-ops Discord delivery (health probe, update reports, backups,
-      # coredump watch) posts with the hermes bot token. The secret used to
-      # ride the hermes aspect alone, so hosts lost it when hermes migrated
-      # to epsilon — pi's probe then died at source on every run, silently
-      # gating auto-updates. Declare it fleet-wide; epsilon's container
-      # uid-mapping override (hermes aspect) merges on top.
+      # coredump watch) posts with the hermes bot token. The hermes aspect
+      # only exists on epsilon, so the secret is declared fleet-wide;
+      # epsilon's container uid-mapping override merges on top.
       nixos.sops.secrets."hermes-env".sopsFile = ../secrets/hermes.sops.yaml;
     };
   };
