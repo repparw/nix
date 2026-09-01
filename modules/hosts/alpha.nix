@@ -14,6 +14,7 @@
       den.aspects.logid
       den.aspects.nixos-services
       den.aspects.streaming
+      den.aspects.streaming._.pulse-crash-fix
     ];
 
     nixos =
