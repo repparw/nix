@@ -139,9 +139,14 @@ in
       };
 
       # --- unowned locals ---
+      # hass runs on pi but serves through epsilon's edge: routing it at its
+      # bridge address needs the router to forward 10.231.136.0/24 (broken,
+      # and ambiguous with alpha's bridge which also uses that /24). Reach it
+      # like the other remote backends via pi's published 8123 (nspawn
+      # forwardPorts DNATs to the container).
       hass = {
         hostname = "home";
-        containerAddress = "10.231.136.2"; # pi's own nspawn bridge
+        host = "pi";
         port = 8123;
         auth = "bypass";
       };

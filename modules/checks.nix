@@ -529,7 +529,7 @@
                 &&
                   http.middlewares.authelia.forwardAuth.address == "http://10.231.137.7:9091/api/authz/forward-auth"
                 && http.services.authelia.loadBalancer.servers == [ { url = "http://10.231.137.7:9091"; } ]
-                && http.services.hass.loadBalancer.servers == [ { url = "http://10.231.136.2:8123"; } ]
+                && http.services.hass.loadBalancer.servers == [ { url = "http://192.168.0.4:8123"; } ]
                 && http.services.glance.loadBalancer.servers == [ { url = "http://10.231.137.15:8080"; } ]
                 && http.services.jellyfin.loadBalancer.servers == [ { url = "http://192.168.0.18:8096"; } ]
                 && http.services.qbittorrent.loadBalancer.servers == [ { url = "http://192.168.0.18:18080"; } ]
