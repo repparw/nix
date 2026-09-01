@@ -114,6 +114,23 @@ Artifacts: diff at `/var/lib/auto-update/diff.txt`, built closure at
 summary (`pi flipped — N packages changed (kernel)`) with the full diff
 attached as a file.
 
+## Firmware updates (`fwupd`, hardware hosts)
+
+`services.fwupd` is enabled on hosts with LVFS-discoverable devices (alpha,
+beta). pi is an SD-boot SBC and epsilon a VPS — neither carries fwupd-managed
+hardware. Firmware does not ride the flake: check and apply it by hand every
+few weeks, or when the edge/dock hardware misbehaves.
+
+```sh
+ssh alpha 'fwupdmgr refresh'      # pull metadata from LVFS
+ssh alpha 'fwupdmgr get-updates'  # list pending firmware
+ssh alpha 'fwupdmgr update'       # stage; some devices only apply at reboot
+```
+
+Device firmware applies at the next reboot of the device or host — schedule
+accordingly. UEFI capsule updates require the ESP mounted at `/boot` (alpha's
+systemd-boot layout already satisfies this).
+
 ## Related
 
 - [Deploy NixOS to the Raspberry Pi](deploy-pi-nixos.md)
