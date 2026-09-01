@@ -205,8 +205,9 @@
             gnugrep
             coreutils
             # host-update ships in repparw's per-user profile (shell aspect);
-            # the flip/soak/rollback below calls it.
-            "/etc/profiles/per-user/repparw/bin"
+            # the flip/soak/rollback below calls it. NixOS appends /bin to
+            # path entries, so the entry is the profile root.
+            "/etc/profiles/per-user/repparw"
           ];
           serviceConfig = {
             Type = "oneshot";
