@@ -21,29 +21,24 @@
       den.aspects.backup
       # Edge ingress stack (Traefik, Authelia, Glance, Miniflux, ddclient)
       den.aspects.nixos-services._.edge
-      # Hermes Agent gateway (migrated from pi; private network 10.231.137.x).
+      # Hermes Agent gateway.
       den.aspects.nixos-services._.hermes
     ];
     nixos =
       { config, lib, ... }:
       {
         imports = [
-          # Glance migrated off pi (phase 3, first piece): the dashboard is
-          # stateless, so it runs as a local container here behind the
-          # terminating edge. Definitions schema comes along for the ride.
           ../service-definitions.nix
           ../_services/inventory.nix
           ../_services/glance.nix
         ];
 
         # Offsite restic coverage (den.aspects.backup): the stateful edge
-        # services (authelia/miniflux) plus hermes agent state. pi previously
-        # covered these under its own repo; post-migration they live here.
+        # services (authelia/miniflux) plus hermes agent state.
         modules.backup.paths = [
           "/home/containers/config"
           "/home/repparw/services"
         ];
-        modules.backup.repository = "rclone:gd-crypt:restic/epsilon";
 
         # pi's estate uses 10.231.136.0/24 on its own bridge AND that range
         # is routed into the tunnel; epsilon's bridge must not collide.
@@ -129,7 +124,6 @@
         networking.interfaces.eth0.useDHCP = true;
         services.resolved.settings.Resolve.DNSStubListenerExtra = [
           "10.231.137.1"
-          # Hermes agent container on 10.231.137.3; both share the bridge.
           "10.231.137.3"
         ];
         # Egress NAT for ve-* comes from systemd's io.systemd.nat masquerade;

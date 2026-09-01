@@ -24,13 +24,15 @@
             User = config.home.username;
           };
 
-          # Oracle Cloud Always Free A1 VPS (epsilon)
+          # Oracle Cloud Always Free A1 VPS (epsilon). Reserved public IP:
+          # survives stop/start and reboots, unlike the launch-time ephemeral.
           epsilon = {
             HostName = "146.181.42.97";
             User = config.home.username;
           };
 
-          # Rooted webOS TV: webosbrew dropbear, root login.
+          # Rooted webOS TV: webosbrew dropbear. Each host enlists its default
+          # ~/.ssh/id_ed25519 in the TV's authorized_keys like any other machine.
           tv = {
             HostName = "192.168.0.48";
             User = "root";

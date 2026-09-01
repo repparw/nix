@@ -10,9 +10,7 @@
           hassPort = 8123;
         in
         {
-          # Home Assistant in nspawn; trial validated 2026-08-22, replacing the
-          # earlier rootless-podman quadlet pod (removed together with its
-          # hostPort-80 bind when Traefik took over ingress).
+          # Home Assistant in nspawn.
           networking.firewall.interfaces.eth0.allowedTCPPorts = [ hassPort ];
           containers.homeassistant = {
             autoStart = true;

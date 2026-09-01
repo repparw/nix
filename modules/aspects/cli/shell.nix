@@ -21,7 +21,7 @@
         ...
       }:
       let
-        # Gated manual update (issue #53): probe -> GC headroom -> diff
+        # Gated manual update: probe -> GC headroom -> diff
         # review -> flip -> soak -> rollback. Consumers pull and flip;
         # input bumps belong to pi's auto-update pipeline. PROBE overrides
         # the built-in gate with a stricter external check (pi's pipeline

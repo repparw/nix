@@ -16,8 +16,6 @@ _: {
       let
         # Static address of the edge host (see hosts/pi.nix).
         piAddress = "192.168.0.4";
-        # Phase 2 edge: epsilon fronts the apex; names move here as their
-        # backends migrate off pi.
         epsilonAddress = "146.181.42.97";
 
         # Split edge: external via epsilon (CF), LAN via pi for

@@ -49,7 +49,7 @@ in
         ) cfg.definitions
       );
 
-  # Post-edge contract (glance runs on epsilon now): monitor the public
+  # Post-edge contract: monitor the public
   # endpoint itself, so the widget reflects what a visitor experiences —
   # CF, terminating edge, tunnel, and backend all included.
   monitorPublicSites =

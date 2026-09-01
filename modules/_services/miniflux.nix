@@ -39,8 +39,7 @@ in
     extraOptions.timeoutStartSec = "10min";
     bindMounts = {
       # PostgreSQL cluster: owned by the container's postgres user (same
-      # uid mapping, no privateUsers), migrated from the former native
-      # instance.
+      # uid mapping, no privateUsers).
       "/var/lib/postgresql" = {
         hostPath = "${stateDir}/postgresql";
         isReadOnly = false;
