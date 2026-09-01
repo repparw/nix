@@ -257,10 +257,14 @@
             }
 
             cd "$state"
-            rm -rf src
-            # Anonymous HTTPS fetch; the push below retargets origin at SSH
-            # because GIT_SSH_COMMAND only applies to SSH remotes.
-            git clone --depth 1 https://github.com/repparw/nix src
+            # Persistent clone, converged to origin/main every run: same
+            # end state as a fresh clone without the re-clone cost.
+            if [ -d src/.git ]; then
+              git -C src fetch origin main
+              git -C src reset --hard origin/main
+            else
+              git clone --depth 1 https://github.com/repparw/nix src
+            fi
             cd src
             git remote set-url --push origin git@github.com:repparw/nix.git
             nix flake update

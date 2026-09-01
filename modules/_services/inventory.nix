@@ -27,7 +27,7 @@ in
     };
 
     modules.services.definitions = lib.mapAttrs (_: lib.mkDefault) {
-      # --- alpha nspawn containers (published via forwardPorts) ---
+      # --- alpha ---
       jellyfin = {
         hostname = "jellyfin";
         containerAddress = "10.231.136.10";
@@ -59,7 +59,7 @@ in
         hostname = "qbit";
         containerAddress = "10.231.136.4";
         port = 8080;
-        publishedPort = 18080; # remapped: glance historically owned 18085, qbit keeps 18080
+        publishedPort = 18080;
         auth = "external";
         host = "alpha";
         monitor = true;
@@ -99,8 +99,7 @@ in
         host = "alpha";
       };
 
-      # --- epsilon (edge ingress stack moved here; pi keeps HA + automations) ---
-      # Authelia container on epsilon's bridge (10.231.137.x) since phase 3.
+      # --- epsilon ---
       authelia = {
         hostname = "auth";
         containerAddress = "10.231.137.7";
@@ -109,15 +108,11 @@ in
         monitor = true;
         backup.path = "${cfg.configDir}/authelia";
       };
-      # Glance dashboard migrated off pi (stateless); runs as a local
-      # container on epsilon behind the terminating edge.
       glance = {
         containerAddress = "10.231.137.15";
         port = 8080;
         auth = "bypass";
       };
-      # Miniflux + its PostgreSQL in an nspawn container on epsilon (issue #44);
-      # traefik and sibling containers reach it over the bridge.
       miniflux = {
         hostname = "rss";
         containerAddress = "10.231.137.16";
@@ -126,24 +121,16 @@ in
         monitor = true;
         backup.path = "${cfg.configDir}/miniflux";
       };
-      # Always-on Steam card farming (issue #43).
       archisteamfarm = {
         containerAddress = "10.231.136.13";
         auth = "bypass";
         backup.path = "${cfg.configDir}/archisteamfarm";
       };
-      # Page-change watcher oneshot (issue #45); no inbound routing.
       automations = {
         auth = "bypass";
         backup.path = "${cfg.configDir}/automations";
       };
-
-      # --- unowned locals ---
-      # hass runs on pi but serves through epsilon's edge: routing it at its
-      # bridge address needs the router to forward 10.231.136.0/24 (broken,
-      # and ambiguous with alpha's bridge which also uses that /24). Reach it
-      # like the other remote backends via pi's published 8123 (nspawn
-      # forwardPorts DNATs to the container).
+      # --- pi ---
       hass = {
         hostname = "home";
         host = "pi";
