@@ -119,20 +119,7 @@
       };
     in
     {
-      options.modules.streaming.shellApplications = lib.mkOption {
-        type = lib.types.attrsOf lib.types.package;
-        default = { };
-        description = "Shell applications generated for the streaming service.";
-      };
-
       config = {
-        modules.streaming.shellApplications = {
-          inherit
-            moonshine-steam
-            moonshine-steam-gamescope-hdr
-            ;
-        };
-
         services.moonshine = {
           enable = true;
           inherit user;
