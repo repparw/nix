@@ -23,6 +23,9 @@
           runtimeInputs = with pkgs; [
             curl
             jq
+            gawk
+            gnused
+            coreutils
             systemd
           ];
           text = ''
@@ -276,6 +279,9 @@
           runtimeInputs = with pkgs; [
             curl
             jq
+            gawk
+            gnused
+            coreutils
             systemd
           ];
           text = ''
