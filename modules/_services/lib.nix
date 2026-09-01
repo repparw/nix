@@ -42,9 +42,6 @@ in
         title = name;
         url = "https://${service.hostname}.${cfg.domain}";
         check-url = serviceUrl cfg name;
-        # Some apps answer the root path with a redirect to their own login
-        # (jellyfin -> /web, paperless -> /login); that still means "up".
-        alt-status-codes = [ 302 ];
       })
       (
         lib.filterAttrs (
@@ -62,6 +59,9 @@ in
         title = name;
         url = "https://${service.hostname}.${cfg.domain}";
         check-url = "https://${service.hostname}.${cfg.domain}";
+        # authelia answers protected vhosts with a 302 redirect to its login
+        # page for anonymous probes; that still means the service is up.
+        alt-status-codes = [ 302 ];
       })
       (
         lib.filterAttrs (
