@@ -13,6 +13,8 @@
       den.aspects.gaming
       den.aspects.logid
       den.aspects.nixos-services
+      den.aspects.nixos-services._.firmware
+      den.aspects.nixos-services._.coredump-watch
       den.aspects.streaming
       den.aspects.streaming._.pulse-crash-fix
     ];
@@ -41,6 +43,14 @@
           "/home/repparw/Documents"
         ];
         modules.backup.repository = "rclone:gd-crypt:restic/alpha";
+
+        # Crash capture: surface new coredumps to Discord. Only alpha runs
+        # this — pi's volatile journal cannot retain coredumps. wine64-
+        # preloader is routine proton breakage; adjust as tolerance changes.
+        modules.coredump-watch = {
+          enable = true;
+          mute = [ "wine64-preloader" ];
+        };
 
         # The desktop layer's user-facing groups (the desktop aspect itself
         # is user-agnostic).
