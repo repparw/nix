@@ -211,7 +211,8 @@ export function validateWatchers(watchers) {
       }
     } else if (
       watcher.mode !== "extractor" ||
-      watcher.extractor !== "eightBitdoUltimate2cFirmware"
+      (watcher.extractor !== "eightBitdoUltimate2cFirmware" &&
+       watcher.extractor !== "nixosReleaseChanges")
     ) {
       throw new Error(`Unknown watcher mode for ${watcher.slug}`);
     }
@@ -296,6 +297,68 @@ export function stableStringify(value) {
     .join(",")}}`;
 }
 
+function extractNixosReleaseChanges(body) {
+  // Extract the first (latest) release section
+  const releaseMatch = body.match(/<h2[^>]*id="sec-release-\d{2}\.\d{2}"[^>]*>([\s\S]*?)(?=<h2[^>]*id="sec-release-|$)/);
+  if (!releaseMatch) {
+    throw new Error("Could not find NixOS release section");
+  }
+
+  const releaseContent = releaseMatch[1];
+  const releaseVersionMatch = body.match(/<h2[^>]*id="sec-release-(\d{2}\.\d{2})"[^>]*>/);
+  const releaseVersion = releaseVersionMatch ? releaseVersionMatch[1] : 'unknown';
+
+  // Extract sections
+  const newModulesSection = releaseContent.match(/<h3[^>]*id="sec-release-\d{2}\.\d{2}-new-modules"[^>]*>([\s\S]*?)(?=<h3|$)/);
+  const breakingSection = releaseContent.match(/<h3[^>]*id="sec-release-\d{2}\.\d{2}-incompatibilities"[^>]*>([\s\S]*?)(?=<h3|$)/);
+  const notableSection = releaseContent.match(/<h3[^>]*id="sec-release-\d{2}\.\d{2}-notable-changes"[^>]*>([\s\S]*?)(?=<h3|$)/);
+
+  // Extract list items and clean HTML
+  const extractItems = (sectionContent) => {
+    if (!sectionContent) return [];
+    const items = [];
+    const itemRegex = /<li class="listitem"><p>([\s\S]*?)<\/p>(?:\s*<\/li>|<\/li>)/g;
+    let match;
+    while ((match = itemRegex.exec(sectionContent[1])) !== null) {
+      items.push(cleanHtml(match[1]));
+    }
+    return items;
+  };
+
+  return {
+    version: releaseVersion,
+    newModules: extractItems(newModulesSection),
+    breakingChanges: extractItems(breakingSection),
+    otherChanges: extractItems(notableSection),
+  };
+}
+
+function cleanHtml(html) {
+  // Convert links to markdown format: [text](url)
+  let cleaned = html.replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/g, '[$2]($1)');
+
+  // Remove all other HTML tags
+  cleaned = cleaned.replace(/<[^>]+>/g, '');
+
+  // Decode common HTML entities
+  cleaned = cleaned
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#x201[cd];/g, '"') // Smart quotes
+    .replace(/&#x201[34];/g, "'") // Smart apostrophes
+    .replace(/&ndash;/g, '–')
+    .replace(/&mdash;/g, '—');
+
+  // Clean up whitespace
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+
+  return cleaned;
+}
+
 export function extractEightBitdoUltimate2cFirmware(body) {
   const anchor = 'id="ultimate-2c-wireless"';
   const start = body.indexOf(anchor);
@@ -336,6 +399,23 @@ export function extractEightBitdoUltimate2cFirmware(body) {
 function displayValue(watcher, current, currentKey) {
   if (watcher.displayTemplate === "8bitdoFirmware") {
     return `controller v${current.controller}, adapter v${current.adapter}`;
+  }
+  if (watcher.displayTemplate === "nixosReleaseChanges") {
+    if (typeof current === 'string') {
+      return current;
+    }
+    // Format changes for display
+    const parts = [];
+    if (current.newModules && current.newModules.length > 0) {
+      parts.push(`+${current.newModules.length} new modules`);
+    }
+    if (current.breakingChanges && current.breakingChanges.length > 0) {
+      parts.push(`+${current.breakingChanges.length} breaking changes`);
+    }
+    if (current.otherChanges && current.otherChanges.length > 0) {
+      parts.push(`+${current.otherChanges.length} other changes`);
+    }
+    return parts.length > 0 ? parts.join(' ') : 'No changes detected';
   }
   return typeof current === "string" ? current : currentKey;
 }
@@ -455,6 +535,13 @@ export function extractValue(watcher, body) {
     return extractEightBitdoUltimate2cFirmware(body);
   }
 
+  if (
+    watcher.mode === "extractor" &&
+    watcher.extractor === "nixosReleaseChanges"
+  ) {
+    return extractNixosReleaseChanges(body);
+  }
+
   throw new Error(`Unknown watcher mode for ${watcher.slug}`);
 }
 
@@ -545,6 +632,48 @@ export async function runChangeDetection({
         );
         content = replaceLiteral(content, "{{current}}", currentDisplay);
         content = replaceLiteral(content, "{{url}}", watcher.url);
+
+        // For NixOS release changes, compute diff and inject new modules/changes
+        if (watcher.extractor === "nixosReleaseChanges" && typeof current === "object") {
+          content = replaceLiteral(content, "{{version}}", current.version ?? "latest");
+          const previousCurrent = previous?.current;
+          const previousNewModules = new Set(
+            typeof previousCurrent === "object" && previousCurrent !== null
+              ? (previousCurrent.newModules ?? [])
+              : [],
+          );
+          const previousBreaking = new Set(
+            typeof previousCurrent === "object" && previousCurrent !== null
+              ? (previousCurrent.breakingChanges ?? [])
+              : [],
+          );
+          const previousOther = new Set(
+            typeof previousCurrent === "object" && previousCurrent !== null
+              ? (previousCurrent.otherChanges ?? [])
+              : [],
+          );
+
+          const addedModules = current.newModules.filter((m) => !previousNewModules.has(m));
+          const addedBreaking = current.breakingChanges.filter((c) => !previousBreaking.has(c));
+          const addedOther = current.otherChanges.filter((c) => !previousOther.has(c));
+
+          content = replaceLiteral(
+            content,
+            "{{newModules}}",
+            addedModules.length > 0 ? addedModules.map((m) => `- ${m}`).join("\n") : "_None_",
+          );
+          content = replaceLiteral(
+            content,
+            "{{breakingChanges}}",
+            addedBreaking.length > 0 ? addedBreaking.map((c) => `- ${c}`).join("\n") : "_None_",
+          );
+          content = replaceLiteral(
+            content,
+            "{{otherChanges}}",
+            addedOther.length > 0 ? addedOther.map((c) => `- ${c}`).join("\n") : "_None_",
+          );
+        }
+
         await notifyDiscord(discordWebhookPath, content, fetchImpl);
         log(
           `${watcher.slug}: changed from ${previousDisplay ?? previousKey} to ${currentDisplay}`,
