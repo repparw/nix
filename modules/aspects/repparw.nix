@@ -5,13 +5,6 @@
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  den.hosts.x86_64-linux = {
-    alpha.users.repparw.aspect = den.aspects.repparw-desktop;
-    # Disabled while there is no laptop using this host config. Re-enable when
-    # beta has hardware again so it participates in flake evals.
-    # beta.users.repparw = { };
-  };
-
   # Headless-safe base account: everything repparw needs on a server.
   # Desktop hosts layer den.aspects.desktop on the host side, which is
   # where the GUI stack and desktop-only AI tooling live.
