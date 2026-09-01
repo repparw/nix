@@ -215,6 +215,9 @@
             gawk
             gnugrep
             coreutils
+            # host-update ships in repparw's per-user profile (shell aspect);
+            # the flip/soak/rollback below calls it.
+            "/etc/profiles/per-user/repparw/bin"
           ];
           serviceConfig = {
             Type = "oneshot";
@@ -311,28 +314,20 @@
               fi
             fi
 
-            nixos-rebuild switch --flake .#pi
-
-            # Soak: settle past container cold-start (authelia 502s during
-            # its first minute), then require two consecutive clean passes.
-            passes=0
-            i=0
-            sleep 120
-            while [ "$i" -lt 10 ]; do
-              if "$PROBE" --strict --local; then
-                passes=$((passes + 1))
-              else
-                passes=0
-              fi
-              [ "$passes" -ge 2 ] && break
-              i=$((i + 1))
-              sleep 60
-            done
-
-            if [ "$passes" -lt 2 ]; then
+            # Flip, soak, and rollback ride the shared host-update wrapper
+            # (issue #53). The wrapper gates on PROBE, diffs the prebuilt
+            # result, switches, and reverts on soak failure; pi stays
+            # responsible for its writer duties (bump above, revert-push
+            # and breaker here) and the Discord reports.
+            export FLAKE="$state/src"
+            if host-update --yes --no-pull --result=/var/lib/auto-update-result; then
+              printf '0\n' > "$state/rollback-streak"
+              klabel=""
+              [ -n "$kernel" ] && klabel=" ($kernel)"
+              notify_file "**pi flipped** — $changed packages changed$klabel" "$state/diff.txt"
+            else
               streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
               printf '%s\n' "$streak" > "$state/rollback-streak"
-              nixos-rebuild switch --rollback
               if [ "$pushed" = 1 ]; then
                 git revert --no-edit HEAD || true
                 git push "git@github.com:repparw/nix.git" main || true
@@ -346,11 +341,6 @@
               notify_file "rolled-back generation's diff:" "$state/diff.txt"
               exit 1
             fi
-
-            printf '0\n' > "$state/rollback-streak"
-            klabel=""
-            [ -n "$kernel" ] && klabel=" ($kernel)"
-            notify_file "**pi flipped** — $changed packages changed$klabel" "$state/diff.txt"
           '';
         };
 
