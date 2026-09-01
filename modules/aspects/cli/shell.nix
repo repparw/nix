@@ -43,6 +43,24 @@
             set -u
             flake="''${FLAKE:-$HOME/Projects/nix}"
             host=$(hostname)
+            yes=0
+            no_pull=0
+            result=""
+
+            # Flags: --yes flips without prompting (headless callers),
+            # --no-pull leaves tree management to the caller, --result=PATH
+            # diffs a prebuilt closure instead of building (skips GC too).
+            for a in "$@"; do
+              case "$a" in
+                --yes) yes=1 ;;
+                --no-pull) no_pull=1 ;;
+                --result=*) result="''${a#--result=}" ;;
+                *)
+                  echo "unknown arg: $a"
+                  exit 2
+                  ;;
+              esac
+            done
 
             gate() {
               if [ -n "''${PROBE:-}" ]; then
@@ -69,25 +87,31 @@
             cd "$flake"
 
             # Consumers pull; pi pushes. Never bump inputs here.
-            git fetch origin main
-            behind=$(git rev-list --count HEAD..origin/main || echo 0)
-            if [ "$behind" -gt 0 ]; then
-              if [ -z "$(git status --porcelain)" ]; then
-                git merge --ff-only origin/main
-              else
-                echo "note: tree dirty and $behind commits behind origin; building local state"
+            if [ "$no_pull" = 0 ]; then
+              git fetch origin main
+              behind=$(git rev-list --count HEAD..origin/main || echo 0)
+              if [ "$behind" -gt 0 ]; then
+                if [ -z "$(git status --porcelain)" ]; then
+                  git merge --ff-only origin/main
+                else
+                  echo "note: tree dirty and $behind commits behind origin; building local state"
+                fi
               fi
             fi
 
-            free_kb=$(df -k /nix | awk 'NR==2 {print $4}')
-            if [ "$free_kb" -lt $((10 * 1024 * 1024)) ]; then
-              echo "below 10G on /nix; running gc (sudo password may be asked)"
-              sudo nix-collect-garbage -d || true
+            if [ -z "$result" ]; then
+              free_kb=$(df -k /nix | awk 'NR==2 {print $4}')
+              if [ "$free_kb" -lt $((10 * 1024 * 1024)) ]; then
+                echo "below 10G on /nix; running gc (sudo password may be asked)"
+                sudo nix-collect-garbage -d || true
+              fi
+
+              nix build ".#nixosConfigurations.$host.config.system.build.toplevel" \
+                -o /tmp/host-update-result
+              result=/tmp/host-update-result
             fi
 
-            nix build ".#nixosConfigurations.$host.config.system.build.toplevel" \
-              -o /tmp/host-update-result
-            nvd diff /run/current-system /tmp/host-update-result \
+            nvd diff /run/current-system "$result" \
               | tee /tmp/host-update-diff.txt
             changed=$(grep -cE '^[<>] ' /tmp/host-update-diff.txt || true)
             if [ "$changed" -eq 0 ]; then
@@ -95,14 +119,21 @@
               exit 0
             fi
 
-            printf '\nFlip %s to this generation? [y/N] ' "$host"
-            read -r answer
-            [ "$answer" = "y" ] || {
-              echo "aborted; nothing flipped"
-              exit 1
-            }
+            if [ "$yes" = 0 ]; then
+              printf '\nFlip %s to this generation? [y/N] ' "$host"
+              read -r answer
+              [ "$answer" = "y" ] || {
+                echo "aborted; nothing flipped"
+                exit 1
+              }
+            fi
 
-            sudo nixos-rebuild switch --flake ".#$host"
+            # Headless callers already run as root; interactive users sudo.
+            if [ "$(id -u)" = 0 ]; then
+              nixos-rebuild switch --flake ".#$host"
+            else
+              sudo nixos-rebuild switch --flake ".#$host"
+            fi
 
             # Soak: settle, then two consecutive clean gate passes.
             sleep 45
@@ -121,7 +152,11 @@
 
             if [ "$passes" -lt 2 ]; then
               echo "soak failed; rolling back"
-              sudo nixos-rebuild switch --rollback
+              if [ "$(id -u)" = 0 ]; then
+                nixos-rebuild switch --rollback
+              else
+                sudo nixos-rebuild switch --rollback
+              fi
               exit 1
             fi
 
