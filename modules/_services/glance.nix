@@ -125,6 +125,35 @@ in
                             { type = "lobsters"; }
                           ];
                         }
+                        {
+                          type = "group";
+                          widgets = [
+                            {
+                              type = "rss";
+                              title = "r/selfhosted";
+                              feeds = [
+                                {
+                                  url = "https://www.reddit.com/r/selfhosted/.rss";
+                                  # reddit fingerprint-blocks non-browser clients
+                                  # and rate-limits concurrent .rss per IP, so a
+                                  # browser UA is required and two subreddits may
+                                  # not both load on the same fetch cycle.
+                                  headers."User-Agent" = "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0";
+                                }
+                              ];
+                            }
+                            {
+                              type = "rss";
+                              title = "r/homelab";
+                              feeds = [
+                                {
+                                  url = "https://www.reddit.com/r/homelab/.rss";
+                                  headers."User-Agent" = "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0";
+                                }
+                              ];
+                            }
+                          ];
+                        }
                       ];
                     }
                   ];
