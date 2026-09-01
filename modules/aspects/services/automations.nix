@@ -93,6 +93,15 @@
             pattern = ''(Annual\s+report\s+of\s+communications:[\s\S]{0,1600})'';
             message = "BCRA communications index changed; review new regulatory material.\n{{url}}";
           })
+          (mkExtractorWatcher {
+            slug = "nixos-latest-release-notes";
+            label = "NixOS latest release notes";
+            url = "https://nixos.org/manual/nixos/unstable/release-notes";
+            fetchUrl = "https://nixos.org/manual/nixos/unstable/release-notes";
+            extractor = "nixosReleaseChanges";
+            displayTemplate = "nixosReleaseChanges";
+            message = "**NixOS {{version}} release notes updated**\n{{url}}\n\n**New modules:**\n{{newModules}}\n\n**Breaking changes:**\n{{breakingChanges}}\n\n**Other notable changes:**\n{{otherChanges}}";
+          })
         ];
         defaultWatchersFile = pkgs.writeText "change-detection-default-watchers.json" (
           builtins.toJSON defaultWatchers
