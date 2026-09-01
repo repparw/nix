@@ -7,6 +7,9 @@
   den.aspects.beta = {
     includes = [
       den.aspects.host-common
+      # Laptop hardware: vendor firmware updates via LVFS. Inert while the
+      # host attachment is parked in modules/aspects/repparw.nix.
+      den.aspects.nixos-services._.firmware
     ];
 
     nixos =
