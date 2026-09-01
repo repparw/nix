@@ -94,7 +94,21 @@
                 if [ -z "$(git status --porcelain)" ]; then
                   git merge --ff-only origin/main
                 else
-                  echo "note: tree dirty and $behind commits behind origin; building local state"
+                  # Carry WIP onto main when it applies cleanly;
+                  # otherwise keep WIP in the stash and build main.
+                  git stash push -m "host-update carry" >/dev/null
+                  if git merge --ff-only origin/main 2>/dev/null; then
+                    if git stash apply >/dev/null 2>&1; then
+                      git stash drop >/dev/null
+                      echo "note: carried local WIP onto origin/main"
+                    else
+                      git reset --hard origin/main
+                      echo "note: WIP conflicts with main; kept in stash@{0}; building main"
+                    fi
+                  else
+                    git stash pop >/dev/null 2>&1 || true
+                    echo "note: local history diverged; building local state"
+                  fi
                 fi
               fi
             fi
