@@ -28,15 +28,18 @@
           > $out/heroic.png
       '';
 
-      moonshine-desktop = pkgs.writeShellApplication {
-        name = "moonshine-desktop";
-        runtimeInputs = [ pkgs.niri ];
-        text = ''
-          # Run a nested, isolated Niri desktop on Moonshine's Wayland output.
-          # Do not use --session: this is not the user's primary compositor.
-          exec niri
-        '';
-      };
+      # Steam is single-instance per user; stop the desktop instance so it
+      # cannot steal Big Picture from Moonshine's private compositor. Shared
+      # prelude for both Big Picture launchers.
+      stopDesktopSteam = ''
+        if pgrep -x steam >/dev/null; then
+          steam -shutdown >/dev/null 2>&1 || true
+          for _ in $(seq 1 30); do
+            pgrep -x steam >/dev/null || break
+            sleep 1
+          done
+        fi
+      '';
 
       moonshine-steam = pkgs.writeShellApplication {
         name = "moonshine-steam";
@@ -48,15 +51,7 @@
           config.programs.steam.package
         ];
         text = ''
-          # Steam is single-instance per user. Stop the desktop instance so it
-          # cannot steal Big Picture from Moonshine's private compositor.
-          if pgrep -x steam >/dev/null; then
-            steam -shutdown >/dev/null 2>&1 || true
-            for _ in $(seq 1 30); do
-              pgrep -x steam >/dev/null || break
-              sleep 1
-            done
-          fi
+          ${stopDesktopSteam}
 
           # Expose the moonshine-wsi implicit layer to Steam and Proton.
           # System Vulkan loaders find it via /run/opengl-driver (wired up by
@@ -88,15 +83,7 @@
           config.programs.steam.package
         ];
         text = ''
-          # Steam is single-instance per user. Stop the desktop instance so it
-          # cannot steal Big Picture from Moonshine's private compositor.
-          if pgrep -x steam >/dev/null; then
-            steam -shutdown >/dev/null 2>&1 || true
-            for _ in $(seq 1 30); do
-              pgrep -x steam >/dev/null || break
-              sleep 1
-            done
-          fi
+          ${stopDesktopSteam}
 
           # Gamescope's WSI layer must stay discoverable for clients
           # presenting into gamescope; same XDG_DATA_DIRS forwarding as the
@@ -130,14 +117,6 @@
           exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- steam -tenfoot
         '';
       };
-
-      moonshine-heroic = pkgs.writeShellApplication {
-        name = "moonshine-heroic";
-        runtimeInputs = [ pkgs.heroic ];
-        text = ''
-          exec heroic --console
-        '';
-      };
     in
     {
       options.modules.streaming.shellApplications = lib.mkOption {
@@ -149,10 +128,8 @@
       config = {
         modules.streaming.shellApplications = {
           inherit
-            moonshine-desktop
             moonshine-steam
             moonshine-steam-gamescope-hdr
-            moonshine-heroic
             ;
         };
 
@@ -171,9 +148,11 @@
             stream.timeout = 300;
             application = [
               {
+                # Nested, isolated Niri desktop on Moonshine's Wayland output;
+                # no --session: this is not the user's primary compositor.
                 title = "Desktop";
                 boxart = "${moonshine-boxart}/desktop.png";
-                command = [ "${moonshine-desktop}/bin/moonshine-desktop" ];
+                command = [ (lib.getExe pkgs.niri) ];
                 stdout = "journal";
                 stderr = "journal";
               }
@@ -194,7 +173,10 @@
               {
                 title = "Heroic Games Launcher";
                 boxart = "${moonshine-boxart}/heroic.png";
-                command = [ "${moonshine-heroic}/bin/moonshine-heroic" ];
+                command = [
+                  (lib.getExe pkgs.heroic)
+                  "--console"
+                ];
                 stdout = "journal";
                 stderr = "journal";
               }
