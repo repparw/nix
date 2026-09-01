@@ -18,34 +18,23 @@
       {
         lib,
         pkgs,
+        config,
         ...
       }:
       let
-        # Upstream ships a prebuilt GTK4 layer-shell OSD, but nixpkgs only
-        # builds the quickshell frontend. Patchelf the small standalone binary
-        # rather than rebuilding voxtype (its lib pulls in whisper.cpp).
-        # Checksummed against upstream's SHA256SUMS.txt at v0.7.5.
-        voxtypeOsdGtk4 = pkgs.stdenv.mkDerivation {
-          pname = "voxtype-osd-gtk4";
-          version = "0.7.5";
-          src = pkgs.fetchurl {
-            url = "https://github.com/peteonrails/voxtype/releases/download/v0.7.5/voxtype-0.7.5-linux-x86_64-osd-gtk4";
-            hash = "sha256-/tgWlVUc7pW7D9N27G3Eljiw/XFEgFBNeKpZewBqWVI=";
-          };
-          dontUnpack = true;
-          nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-          buildInputs = with pkgs; [
-            cairo
-            glib
-            gtk4
-            gtk4-layer-shell
-            stdenv.cc.cc.lib
-          ];
-          installPhase = ''
-            runHook preInstall
-            install -Dm755 $src $out/bin/voxtype-osd-gtk4
-            runHook postInstall
-          '';
+        # quickshell OSD recipe colors, pulled from the Stylix base16 palette.
+        # dictation only applies on GUI hosts, so Stylix is always present.
+        c = config.lib.stylix.colors.withHashtag;
+
+        # nixpkgs's voxtype ships the `voxtype-osd-quickshell` launcher but not
+        # the quickshell QML tree it needs to render, and not the `qs` runtime.
+        # Provide the QML shell from the pinned voxtype source and the runtime
+        # from nixpkgs#quickshell. Recipe theming (PR #501) needs voxtype >= 1.0.1.
+        voxtypeQsQml = pkgs.fetchFromGitHub {
+          owner = "peteonrails";
+          repo = "voxtype";
+          rev = "dda37ca72b71294d08b0c5bb49c5b24ca590d847"; # v1.0.1
+          hash = "sha256-OT0tVSi9x3U7NwgZU00mojXk3RRWxuFoezpdSknLmmU=";
         };
 
         voxtypeToggle = pkgs.writeShellApplication {
@@ -78,6 +67,14 @@
         };
       in
       {
+        # nixpkgs doesn't ship the voxtype quickshell QML tree; install it so
+        # `voxtype-osd-quickshell` finds shell.qml. Sourced from the pinned
+        # voxtype repo so it matches the recipe config shipped above.
+        xdg.dataFile."voxtype/quickshell" = {
+          source = "${voxtypeQsQml}/quickshell";
+          recursive = true;
+        };
+
         home.packages = [
           voxtypeToggle
 
@@ -181,7 +178,40 @@
             };
             osd = {
               enabled = true;
-              frontend = "gtk4";
+              frontend = "quickshell";
+              layout = "wide";
+              frame = {
+                background = "none";
+                border = "none";
+                glow = true;
+                halo = false;
+              };
+              visual.layers = [
+                {
+                  type = "pulse";
+                  source = "rms";
+                  color = c.base0D;
+                  order = 0;
+                  x = 0.03;
+                  y = 0.08;
+                  width = 0.94;
+                  height = 0.64;
+                  gain = 1.2;
+                  opacity = 0.14;
+                  radius = 10;
+                }
+                {
+                  type = "waveform";
+                  source = "peak";
+                  color = c.base0C;
+                  order = 10;
+                  x = 0.03;
+                  y = 0.2;
+                  width = 0.94;
+                  height = 0.6;
+                  opacity = 0.9;
+                }
+              ];
             };
           };
           # The daemon spawns `voxtype-osd` and output typing needs wtype;
@@ -195,7 +225,7 @@
               which
               wl-clipboard
               wtype
-              voxtypeOsdGtk4
+              quickshell
 
               # The daemon looks up the `voxtype-osd` launcher here.
               pkgs.voxtype-vulkan
