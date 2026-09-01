@@ -125,19 +125,6 @@ in
                             { type = "lobsters"; }
                           ];
                         }
-                        {
-                          type = "group";
-                          widgets = [
-                            {
-                              type = "reddit";
-                              subreddit = "selfhosted";
-                            }
-                            {
-                              type = "reddit";
-                              subreddit = "homelab";
-                            }
-                          ];
-                        }
                       ];
                     }
                   ];
