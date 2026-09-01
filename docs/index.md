@@ -42,6 +42,7 @@ files instead of copying module contents.
 
 - [Multi-room audio hardware](research/multi-room-audio-hw.md)
 - [Multi-room audio Music Assistant setup](research/multi-room-audio-music-assistant-setup.md)
+- [Omarchy portable ideas](research/omarchy-portable-ideas.md)
 - [Wispr Flow features for Voxtype](research/wispr-flow-features-for-voxtype.md)
 
 ## Agent guidance
