@@ -201,6 +201,13 @@
             ];
           };
         };
+
+        # Boot race: moonshine's healthcheck starts before the GPU finishes
+        # initializing (Vulkan FAIL, exit 1, recovered only by Restart=).
+        # Order after graphical.target — the DM cannot start before the GPU
+        # is ready. Wants keeps a headless boot (no DM) from blocking it.
+        systemd.services.moonshine.wants = [ "graphical.target" ];
+        systemd.services.moonshine.after = lib.mkAfter [ "graphical.target" ];
       };
     };
 }
