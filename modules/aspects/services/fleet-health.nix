@@ -54,6 +54,9 @@
             api="https://discord.com/api/v10/channels/${channelId}/messages"
 
             notify() {
+              # Journal first, Discord second: the machine keeps the log
+              # even when Discord delivery fails.
+              echo "fleet-health: $1"
               curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
                 -H "Content-Type: application/json" \
                 -d "{\"content\":\"$1\"}" "$api" >/dev/null || true
@@ -138,7 +141,10 @@
             # failed set is tracked so recovered units get ok() (counter
             # reset + recovery notice) instead of stale counters.
             if [ "$strict" != 1 ]; then
-              failed_cur=$(systemctl list-units --state=failed --no-legend --no-pager 2>/dev/null | awk '{print $1}')
+              # systemd prefixes failed rows with a bullet on newer
+              # versions; extract real unit names by their suffix.
+              failed_cur=$(systemctl list-units --state=failed --no-legend --no-pager 2>/dev/null \
+                | grep -oE '[a-zA-Z0-9@._\\-]+\.(service|timer|mount|path|scope|socket|target)' | sort -u)
               failed_prev=$(cat "$state_dir/.failed-units" 2>/dev/null || true)
 
               for u in $failed_prev; do
@@ -168,13 +174,17 @@
               [ "$local_only" = 1 ] || http "$@"
             }
 
-            http authelia http://10.231.137.7:9091/api/health 200
-            http miniflux http://10.231.137.16:8081/healthcheck 200
+            # authelia and miniflux are epsilon-hosted now: probe their
+            # public vhosts through the real edge path. As cross-host
+            # surfaces they are remote() checks — epsilon's health never
+            # gates or rolls back pi's flip.
+            remote authelia https://auth.repparw.com/api/health 200
+            remote miniflux https://rss.repparw.com/healthcheck 200
             http home-assistant http://10.231.136.2:8123 ""
-            # Apex lives on epsilon; resolve through its public address so
-            # this exercises the real edge path.
-            http apex https://repparw.com/ 200 
-            http rss https://rss.repparw.com/ "" --resolve rss.repparw.com:443:127.0.0.1
+            # pi's own traefik still serves the LAN vhost for HA; the check
+            # pins SNI to the local loopback per the sniStrict gotcha.
+            http home https://home.repparw.com/ "" --resolve home.repparw.com:443:127.0.0.1
+            remote apex https://repparw.com/ 200
             remote jellyfin http://192.168.0.18:8096/ ""
             remote qbittorrent http://192.168.0.18:18080/ ""
             remote bazarr http://192.168.0.18:6767/ ""
