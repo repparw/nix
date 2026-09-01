@@ -163,6 +163,12 @@
 
           settings = {
             name = config.networking.hostName;
+
+            # Grace period after the client's last ping before the session is
+            # torn down (default 60). A reconnecting client resumes the live
+            # session inside this window instead of killing the game; the
+            # 19:51:06 drop gave the client only ~44s to come back.
+            stream.timeout = 300;
             application = [
               {
                 title = "Desktop";
