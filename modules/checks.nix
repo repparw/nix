@@ -40,16 +40,7 @@
           flakePackageRecords = lib.mapAttrsToList (name: package: packageRecord "flake:${name}" package) (
             lib.filterAttrs (_: isGeneratedShellPackage) config.packages
           );
-          servicePackageRecords = lib.concatMap (
-            host:
-            let
-              hostConfig = inputs.self.nixosConfigurations.${host}.config;
-            in
-            lib.mapAttrsToList (name: package: packageRecord "service:${host}:${name}" package) (
-              hostConfig.modules.streaming.shellApplications or { }
-            )
-          ) hosts;
-          generatedShellRecords = homePackageRecords ++ flakePackageRecords ++ servicePackageRecords;
+          generatedShellRecords = homePackageRecords ++ flakePackageRecords;
           generatedShellsByScript = lib.foldl' (
             scripts: record:
             let
