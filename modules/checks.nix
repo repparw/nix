@@ -136,6 +136,7 @@
               epsilon = inputs.self.nixosConfigurations.epsilon.config;
               cfg = alpha.modules.services;
               edgeCfg = epsilon.modules.services;
+              servicesLib = import ./_services/lib.nix { inherit lib pkgs; };
               miniflux = edgeCfg.definitions.miniflux;
               paperless = cfg.definitions.paperless;
               authelia = edgeCfg.definitions.authelia;
@@ -321,7 +322,7 @@
                 && service.monitor
                 && service.backup.path == expectedService.backupPath
                 && alpha.containers.${name}.localAddress == service.containerAddress
-                && hasMonitorSite name expectedService.hostname "https://${expectedService.hostname}.${cfg.domain}"
+                && hasMonitorSite name expectedService.hostname (servicesLib.serviceUrl cfg name)
                 && alpha.fileSystems."${cfg.backupDir}/${name}".device == expectedService.backupPath
                 &&
                   builtins.elem "home-containers-backup-${name}.mount"
@@ -343,7 +344,7 @@
                 &&
                   epsilon.containers.miniflux.bindMounts."/var/lib/postgresql".hostPath
                   == "${edgeCfg.configDir}/miniflux/postgresql"
-                && hasMonitorSite "miniflux" "rss" "https://rss.repparw.com"
+                && hasMonitorSite "miniflux" "rss" (servicesLib.serviceUrl edgeCfg "miniflux")
                 && paperless.hostname == "paper"
                 && paperless.containerAddress == "10.231.136.12"
                 && paperless.port == 8000
@@ -355,7 +356,7 @@
                 && builtins.elem paperless.port alpha.containers.paperless.config.networking.firewall.allowedTCPPorts
                 && alpha.containers.paperless.config.services.paperless.address == "0.0.0.0"
                 && alpha.containers.paperless.config.services.paperless.port == paperless.port
-                && hasMonitorSite "paperless" "paper" "https://paper.repparw.com"
+                && hasMonitorSite "paperless" "paper" (servicesLib.serviceUrl cfg "paperless")
                 && alpha.fileSystems."${cfg.backupDir}/paperless".device == paperless.backup.path
                 &&
                   builtins.elem "home-containers-backup-paperless.mount"

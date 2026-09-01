@@ -42,6 +42,10 @@ in
         title = name;
         url = "https://${service.hostname}.${cfg.domain}";
         check-url = serviceUrl cfg name;
+        # Probe the internal backend (bypassing authelia's public auth wall);
+        # some apps answer the root path with a redirect to their own login
+        # (jellyfin -> /web, paperless -> /login), which still means "up".
+        alt-status-codes = [ 302 ];
       })
       (
         lib.filterAttrs (

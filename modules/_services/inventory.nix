@@ -141,6 +141,7 @@ in
         host = "pi";
         port = 8123;
         auth = "bypass";
+        monitor = true;
       };
     };
   };
