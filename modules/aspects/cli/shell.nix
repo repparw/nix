@@ -42,7 +42,7 @@
           text = ''
             set -u
             flake="''${FLAKE:-$HOME/Projects/nix}"
-            host=$(hostname)
+            host=$(cat /etc/hostname)
             yes=0
             no_pull=0
             result=""
