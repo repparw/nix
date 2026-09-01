@@ -89,7 +89,7 @@
               -o /tmp/host-update-result
             nvd diff /run/current-system /tmp/host-update-result \
               | tee /tmp/host-update-diff.txt
-            changed=$(grep -c '^[<>]' /tmp/host-update-diff.txt || true)
+            changed=$(grep -cE '^[<>] ' /tmp/host-update-diff.txt || true)
             if [ "$changed" -eq 0 ]; then
               echo "already at the pinned generation"
               exit 0

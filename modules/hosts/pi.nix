@@ -288,7 +288,7 @@
 
             nix build .#nixosConfigurations.pi.config.system.build.toplevel -o /var/lib/auto-update-result
             nvd diff /run/current-system /var/lib/auto-update-result > "$state/diff.txt" || true
-            changed=$(grep -c '^[<>]' "$state/diff.txt" || true)
+            changed=$(grep -cE '^[<>] ' "$state/diff.txt" || true)
             kernel=$(grep -oE 'linux-[0-9.]+' "$state/diff.txt" | head -1 || true)
 
             pushed=0
