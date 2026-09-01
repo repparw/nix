@@ -8,7 +8,7 @@
     includes = [
       den.aspects.host-common
       # Laptop hardware: vendor firmware updates via LVFS. Inert while the
-      # host attachment is parked in modules/aspects/repparw.nix.
+      # host attachment is parked in modules/hosts/beta.nix.
       den.aspects.nixos-services._.firmware
     ];
 
@@ -88,4 +88,7 @@
         home.packages = [ pkgs.brightnessctl ];
       };
   };
+
+  # Parked: no laptop using this host config. Re-enable when hardware is back.
+  den.hosts.x86_64-linux.beta.users.repparw = { };
 }

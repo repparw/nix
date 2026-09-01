@@ -465,4 +465,6 @@
       };
     };
   };
+
+  den.hosts.x86_64-linux.alpha.users.repparw.aspect = den.aspects.repparw-desktop;
 }
