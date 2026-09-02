@@ -142,6 +142,26 @@
               options = {
                 baseURL = "https://openrouter.ai/api/v1";
               };
+              models = {
+                # Pin GLM Flash (latest alias) to the z-ai provider. OpenRouter has
+                # no `:z-ai` model-id suffix (only :free/:floor/:nitro/:exacto), and
+                # the `~z-ai/glm-flash-latest` router alias honors the request-body
+                # `provider` field (verified: default routing → GMICloud, with the
+                # body → Z.AI). model `options` map to providerOptions.openaiCompatible
+                # which the SDK merges into the body, so `provider.only: ["z-ai"]`
+                # reaches OpenRouter and pins routing to Z.AI's endpoint.
+                # Deliberately NOT `:floor`: that sorts by *list* price, so it also
+                # admits providers price-matching Z.AI at list, missing Z.AI's 50%
+                # effective discount and better cache-hit rate.
+                "~z-ai/glm-flash-latest" = {
+                  name = "GLM Flash Latest (Z.ai)";
+                  options = {
+                    provider = {
+                      only = [ "z-ai" ];
+                    };
+                  };
+                };
+              };
             };
             # Nous Portal subscription routed through their OpenAI-compatible
             # inference API. Auth handled out-of-band via /connect (no key in
