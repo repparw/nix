@@ -111,7 +111,7 @@
             # Same resolver workaround as the HA container: nspawn breaks
             # the host-resolved loopback stub.
             networking.useHostResolvConf = false;
-            networking.nameservers = [ "192.168.0.4" ];
+            networking.nameservers = [ "10.231.137.1" ];
             # nspawn seeds /etc/resolv.conf with the HOST stub pointer
             # (127.0.0.53), but nothing inside serves it unless we run our
             # own resolved forwarding to the LAN resolver above.
@@ -132,7 +132,7 @@
               settings.fallback_providers = [
                 {
                   provider = "nous";
-                  model = "tencent/hy3:free";
+                  model = "stepfun/step-3.7-flash:free";
                 }
               ];
               # Free tier: the credits gauge is pure noise in chat.

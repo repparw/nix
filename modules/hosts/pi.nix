@@ -347,25 +347,10 @@
 
         nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 
-        # LAN DNS server: resolved listens on the LAN address and proxies to
-        # Cloudflare/Quad9 over DoT. The extra 10.231.136.1 listener is the
-        # nspawn bridge address — mkContainer points containers at it, and
-        # without this they lose DNS on pi.
-        services.resolved.settings.Resolve = {
-          DNS = [
-            "1.1.1.1#cloudflare-dns.com"
-            "1.0.0.1#cloudflare-dns.com"
-          ];
-          FallbackDNS = [ "9.9.9.9#dns.quad9.net" ];
-          DNSSEC = true;
-          DNSOverTLS = true;
-          Cache = true;
-          DNSStubListenerExtra = [
-            "192.168.0.4:53"
-            "10.231.136.1:53"
-          ];
-        };
-
+        # The LAN DNS resolver (192.168.0.4 + 10.231.136.1) was decommissioned:
+        # no LAN clients (tv/phone) or pi containers use it anymore. hass and
+        # hermes resolve upstream directly; the host uses the default
+        # nameservers from den.aspects.networking.
         networking = {
           # Give the nspawn containers internet access (HA integrations fetch
           # weather/HACS data) via masquerade out of eth0.
@@ -418,19 +403,10 @@
             allowedTCPPorts = [
               80
               443
-              53
             ];
             allowedUDPPorts = [
-              53
               60001
             ];
-          };
-
-          # Container traffic arrives on the nspawn veth, not eth0: allow its
-          # DNS queries to reach the host resolver.
-          firewall.interfaces."ve-*" = {
-            allowedTCPPorts = [ 53 ];
-            allowedUDPPorts = [ 53 ];
           };
         };
 

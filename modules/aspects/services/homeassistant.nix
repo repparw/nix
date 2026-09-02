@@ -31,10 +31,13 @@
             config =
               { pkgs, ... }:
               {
-                # nspawn breaks host-resolved (loopback stub); use the pi's own
-                # LAN resolver over the bridge.
+                # nspawn breaks host-resolved (loopback stub); the pi LAN resolver was
+                # decommissioned, so resolve straight out the masqueraded bridge.
                 networking.useHostResolvConf = false;
-                networking.nameservers = [ "192.168.0.4" ];
+                networking.nameservers = [
+                  "1.1.1.1"
+                  "9.9.9.9"
+                ];
 
                 # shell_command.set_tv_backlight_mode pushes backlight modes to
                 # the TV; the nspawn unit PATH omits system packages, so the
