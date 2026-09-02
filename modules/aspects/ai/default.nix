@@ -6,6 +6,7 @@
 {
   den.aspects.ai = {
     includes = with den.aspects.ai._; [
+      codex
       mcp
       opencode
       personal-skills
