@@ -53,6 +53,14 @@ let
         type = types.bool;
         default = false;
       };
+      # Unauthenticated HTTP path the service serves to signal liveness
+      # (e.g. miniflux /healthcheck, servarr /ping). When set, the service
+      # becomes publicly probeable through the edge: authelia bypasses it and
+      # monitors (glance, fleet-health) check it via https://host/healthcheck.
+      healthcheck = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+      };
     };
   };
   validateDefinitions =
@@ -69,6 +77,7 @@ let
         _: service:
         (service.hostname != null && service.port == null)
         || (service.monitor && (service.hostname == null || service.port == null))
+        || (service.healthcheck != null && (service.hostname == null || service.port == null))
       ) definitions;
       invalidHostnames = lib.attrNames (
         lib.filterAttrs (_: service: !hasValidHostname service.hostname) definitions
@@ -102,7 +111,7 @@ let
       ) (lib.unique addresses);
     in
     if invalid != { } then
-      throw "invalid service definitions: ${lib.concatStringsSep ", " (lib.attrNames invalid)}; routed and monitored services require both hostname and port"
+      throw "invalid service definitions: ${lib.concatStringsSep ", " (lib.attrNames invalid)}; routed, monitored, and healthcheck-bearing services require both hostname and port"
     else if invalidHostnames != [ ] then
       throw "invalid service definition hostnames: ${lib.concatStringsSep ", " invalidHostnames}; hostnames must be lowercase DNS labels"
     else if unknownHosts != [ ] then

@@ -25,9 +25,21 @@ let
   backupServices = cfg: lib.filterAttrs (_: service: service.backup != null) cfg.definitions;
 
   backupMountUnit = name: "home-containers-backup-${name}.mount";
+
+  # Public healthcheck URL: "https://<host>.<domain><healthcheck>" for
+  # services that expose one, else the internal backend URL.
+  publicHealthUrl =
+    cfg: name:
+    let
+      service = cfg.definitions.${name};
+    in
+    if service.healthcheck != null then
+      "https://${service.hostname}.${cfg.domain}${service.healthcheck}"
+    else
+      serviceUrl cfg name;
 in
 {
-  inherit serviceUrl;
+  inherit serviceUrl publicHealthUrl;
 
   serviceHosts =
     cfg:
@@ -35,38 +47,31 @@ in
       lib.filterAttrs (_: service: service.hostname != null) cfg.definitions
     );
 
+  # Post-edge contract: probe the public endpoint itself so the widget
+  # reflects what a visitor experiences — CF, terminating edge, tunnel, and
+  # backend all included. Services exposing a healthcheck (authelia-bypassed)
+  # are probed at https://host/healthcheck expecting a real 200; services
+  # without one are probed at their internal backend, where a redirect to
+  # their own login (jellyfin -> /web, paperless -> /login) still means "up".
   monitorSites =
     cfg:
     lib.mapAttrsToList
-      (name: service: {
-        title = name;
-        url = "https://${service.hostname}.${cfg.domain}";
-        check-url = serviceUrl cfg name;
-        # Probe the internal backend (bypassing authelia's public auth wall);
-        # some apps answer the root path with a redirect to their own login
-        # (jellyfin -> /web, paperless -> /login), which still means "up".
-        alt-status-codes = [ 302 ];
-      })
       (
-        lib.filterAttrs (
-          _: service: service.monitor && service.hostname != null && service.port != null
-        ) cfg.definitions
-      );
-
-  # Post-edge contract: monitor the public
-  # endpoint itself, so the widget reflects what a visitor experiences —
-  # CF, terminating edge, tunnel, and backend all included.
-  monitorPublicSites =
-    cfg:
-    lib.mapAttrsToList
-      (name: service: {
-        title = name;
-        url = "https://${service.hostname}.${cfg.domain}";
-        check-url = "https://${service.hostname}.${cfg.domain}";
-        # authelia answers protected vhosts with a 302 redirect to its login
-        # page for anonymous probes; that still means the service is up.
-        alt-status-codes = [ 302 ];
-      })
+        name: service:
+        if service.healthcheck != null then
+          {
+            title = name;
+            url = "https://${service.hostname}.${cfg.domain}";
+            check-url = publicHealthUrl cfg name;
+          }
+        else
+          {
+            title = name;
+            url = "https://${service.hostname}.${cfg.domain}";
+            check-url = serviceUrl cfg name;
+            alt-status-codes = [ 302 ];
+          }
+      )
       (
         lib.filterAttrs (
           _: service: service.monitor && service.hostname != null && service.port != null

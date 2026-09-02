@@ -179,6 +179,9 @@
                   hostname = "invalid.example";
                   port = 8080;
                 }
+                {
+                  healthcheck = "/healthcheck";
+                }
               ];
               duplicateHostnames = builtins.tryEval (
                 (lib.evalModules {
@@ -322,7 +325,12 @@
                 && service.monitor
                 && service.backup.path == expectedService.backupPath
                 && alpha.containers.${name}.localAddress == service.containerAddress
-                && hasMonitorSite name expectedService.hostname (servicesLib.serviceUrl cfg name)
+                && hasMonitorSite name expectedService.hostname (
+                  if service.healthcheck != null then
+                    servicesLib.publicHealthUrl cfg name
+                  else
+                    servicesLib.serviceUrl cfg name
+                )
                 && alpha.fileSystems."${cfg.backupDir}/${name}".device == expectedService.backupPath
                 &&
                   builtins.elem "home-containers-backup-${name}.mount"
@@ -344,7 +352,7 @@
                 &&
                   epsilon.containers.miniflux.bindMounts."/var/lib/postgresql".hostPath
                   == "${edgeCfg.configDir}/miniflux/postgresql"
-                && hasMonitorSite "miniflux" "rss" (servicesLib.serviceUrl edgeCfg "miniflux")
+                && hasMonitorSite "miniflux" "rss" (servicesLib.publicHealthUrl edgeCfg "miniflux")
                 && paperless.hostname == "paper"
                 && paperless.containerAddress == "10.231.136.12"
                 && paperless.port == 8000
@@ -479,6 +487,23 @@
                   homeBypassRules = builtins.filter (
                     rule: rule.domain == [ "home.${cfg.domain}" ] && rule.policy == "bypass"
                   ) accessControl.rules;
+                  # Every service exposing a healthcheck path and sitting behind authelia
+                  # must be reachable unauthenticated (public-edge monitoring).
+                  # Bypassed vhosts (jellyfin) don't need a healthcheck rule.
+                  hasHealthcheckBypass =
+                    name:
+                    let
+                      service = cfg.definitions.${name};
+                    in
+                    service.healthcheck == null
+                    || service.auth == "bypass"
+                    || service.hostname == null
+                    || builtins.any (
+                      rule:
+                      rule.domain == [ "${service.hostname}.${cfg.domain}" ]
+                      && rule.policy == "bypass"
+                      && builtins.elem "^${lib.escapeRegex service.healthcheck}([?].*)?$" (rule.resources or [ ])
+                    ) accessControl.rules;
                 in
                 !(matrixPolicy.traefik.routers.bypass ? middlewares)
                 && matrixPolicy.traefik.routers.one.middlewares == [ "authelia" ]
@@ -554,6 +579,7 @@
                 && builtins.length homeBypassRules == 1
                 && hasAccessPolicy accessControl.rules "jellyfin.${cfg.domain}" "bypass"
                 && hasAccessPolicy accessControl.rules "rss.${cfg.domain}" "one_factor"
+                && lib.all hasHealthcheckBypass (lib.attrNames cfg.definitions)
                 && (lib.last accessControl.rules).domain == [ "*.${cfg.domain}" ]
                 && (lib.last accessControl.rules).subject == [ "group:admins" ]
                 && accessControl.default_policy == "deny";
