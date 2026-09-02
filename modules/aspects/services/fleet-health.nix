@@ -53,14 +53,10 @@
             source /run/secrets/hermes-env
             api="https://discord.com/api/v10/channels/${channelId}/messages"
 
-            notify() {
-              # Journal first, Discord second: the machine keeps the log
-              # even when Discord delivery fails.
-              echo "fleet-health: $1"
-              curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "{\"content\":\"$1\"}" "$api" >/dev/null || true
-            }
+            # Alerts live ONLY on the status board (edited in place, deleted
+            # on recovery — the channel shows what is currently down, and
+            # nothing else). Per-check history stays in the journal and
+            # these counters; transient noise never posts messages.
 
             # Status board: one Discord message edited in place, its id kept
             # in $board_id_file so edits never re-ping the channel.
@@ -87,30 +83,22 @@
 
             failures=0
 
-            # Monitoring mode: two-strike counter files plus alert-once and
-            # recovery notices. Strict mode (gates): silent, count only.
+            # Two-strike counters: a check at 2+ strikes lands on the
+            # status board; recovery zeroes it and the board disappears.
+            # Strict mode (gates): silent, count only.
             fail() { # name, detail
-              local n="$1" detail="$2" count
+              local n="$1" count
               if [ "$strict" = 1 ]; then
                 failures=$((failures + 1))
                 return
               fi
               count=$(( $(cat "$state_dir/$n" 2>/dev/null || echo 0) + 1 ))
               printf '%s\n' "$count" > "$state_dir/$n"
-              if [ "$count" -ge 2 ] && [ ! -e "$state_dir/$n.alerted" ]; then
-                notify ":red_circle: DOWN $n ($detail) — $count consecutive failures"
-                touch "$state_dir/$n.alerted"
-              fi
             }
 
             ok() { # name
-              local n="$1"
-              if [ "$strict" = 1 ]; then return; fi
-              if [ -e "$state_dir/$n.alerted" ]; then
-                notify ":green_circle: UP $n — recovered"
-                rm -f "$state_dir/$n.alerted"
-              fi
-              printf '0\n' > "$state_dir/$n"
+              [ "$strict" = 1 ] && return
+              printf '0\n' > "$state_dir/$1"
             }
 
             # systemd units (pi-local). container@authelia and container@miniflux
