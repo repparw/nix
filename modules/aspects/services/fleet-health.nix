@@ -125,7 +125,8 @@
               # systemd prefixes failed rows with a bullet on newer
               # versions; extract real unit names by their suffix.
               failed_cur=$(systemctl list-units --state=failed --no-legend --no-pager 2>/dev/null \
-                | grep -oE '[a-zA-Z0-9@._\\-]+\.(service|timer|mount|path|scope|socket|target)' | sort -u)
+                | grep -oE '[a-zA-Z0-9@._\\-]+\.(service|timer|mount|path|scope|socket|target)' \
+                | sort -u || true)
               failed_prev=$(cat "$state_dir/.failed-units" 2>/dev/null || true)
 
               for u in $failed_prev; do
