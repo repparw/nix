@@ -35,6 +35,7 @@ in
         auth = "bypass";
         host = "alpha";
         monitor = true;
+        healthcheck = "/health";
         backup.path = "${cfg.configDir}/jellyfin/data/backups";
       };
       bazarr = {
@@ -44,6 +45,7 @@ in
         auth = "one_factor";
         host = "alpha";
         monitor = true;
+        healthcheck = "/health";
         backup.path = "${cfg.configDir}/bazarr/backup";
       };
       prowlarr = {
@@ -53,6 +55,7 @@ in
         auth = "one_factor";
         host = "alpha";
         monitor = true;
+        healthcheck = "/ping";
         backup.path = "${cfg.configDir}/prowlarr/Backups";
       };
       qbittorrent = {
@@ -72,6 +75,7 @@ in
         auth = "one_factor";
         host = "alpha";
         monitor = true;
+        healthcheck = "/ping";
         backup.path = "${cfg.configDir}/radarr/Backups";
       };
       sonarr = {
@@ -81,6 +85,7 @@ in
         auth = "one_factor";
         host = "alpha";
         monitor = true;
+        healthcheck = "/ping";
         backup.path = "${cfg.configDir}/sonarr/Backups";
       };
       paperless = {
@@ -119,6 +124,7 @@ in
         port = 8081;
         auth = "one_factor";
         monitor = true;
+        healthcheck = "/healthcheck";
         backup.path = "${cfg.configDir}/miniflux";
       };
       archisteamfarm = {

@@ -167,12 +167,17 @@
             # pins SNI to the local loopback per the sniStrict gotcha.
             http home https://home.repparw.com/ "" --resolve home.repparw.com:443:127.0.0.1
             remote apex https://repparw.com/ 200
-            remote jellyfin http://192.168.0.18:8096/ ""
+            # Services exposing a healthcheck are probed at their public
+            # healthcheck endpoint (authelia-bypassed) through the real edge,
+            # so the probe reflects what a visitor experiences. Services
+            # without one (qbittorrent/paperless/finance) stay on the LAN
+            # root where any response means "up".
+            remote jellyfin https://jellyfin.repparw.com/health 200
+            remote bazarr https://bazarr.repparw.com/health 200
+            remote prowlarr https://prowlarr.repparw.com/ping 200
+            remote radarr https://radarr.repparw.com/ping 200
+            remote sonarr https://sonarr.repparw.com/ping 200
             remote qbittorrent http://192.168.0.18:18080/ ""
-            remote bazarr http://192.168.0.18:6767/ ""
-            remote prowlarr http://192.168.0.18:9696/ ""
-            remote radarr http://192.168.0.18:7878/ ""
-            remote sonarr http://192.168.0.18:8989/ ""
             remote paperless http://192.168.0.18:8000/ ""
             remote finance http://192.168.0.18:3000/ ""
 
