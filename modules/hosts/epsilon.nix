@@ -164,6 +164,21 @@
             }
           '';
         };
+        # Miniflux's container-side address (10.231.137.16) races with
+        # systemd-networkd's io.systemd.nat masq_saddr population and ends up
+        # missing from it, so its general egress is not masqueraded. Pin an
+        # explicit rule for this single container (matches io.systemd.nat's
+        # shape: no oifname, so it covers all egress). Home-tunnel traffic is
+        # already handled by hermes-home-nat above.
+        networking.nftables.tables.miniflux-egress-nat = {
+          family = "ip";
+          content = ''
+            chain postrouting {
+              type nat hook postrouting priority 100; policy accept;
+              ip saddr 10.231.137.16 masquerade
+            }
+          '';
+        };
 
         # Public VPS: no mosh UDP range exposed. One pinned port for the
         # interactive session (predictive local echo needs mosh's SSP; ssh
