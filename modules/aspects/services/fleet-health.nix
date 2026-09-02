@@ -46,59 +46,52 @@
 
             state_dir=/var/lib/fleet-health
             mkdir -p "$state_dir"
-            # Dotfile so the counter glob below never sees bookkeeping.
-            board_id_file="$state_dir/.board-msg-id"
-            rm -f "$state_dir/board-msg-id"
             # shellcheck disable=SC1091
             source /run/secrets/hermes-env
             api="https://discord.com/api/v10/channels/${channelId}/messages"
 
-            # Alerts live ONLY on the status board (edited in place, deleted
-            # on recovery — the channel shows what is currently down, and
-            # nothing else). Per-check history stays in the journal and
-            # these counters; transient noise never posts messages.
-
-            # Status board: one Discord message edited in place, its id kept
-            # in $board_id_file so edits never re-ping the channel.
-            board_req() { # method, path, json-body-or-empty
-              curl -s -m 15 -X "$1" \
-                -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+            # Alerts are per-check Discord messages: a check reaching two
+            # strikes posts DOWN (a new message, so channel notifications
+            # fire), and recovery DELETES that message — the channel only
+            # ever shows what is currently down. The message id lives in
+            # the dotfile .$n.msgid so counter globs never see it.
+            alert_post() { # content -> message id (empty on failure)
+              curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
                 -H "Content-Type: application/json" \
-                ''${3:+-d "$3"} "$api$2"
+                -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" \
+                | jq -r '.id // empty'
             }
 
-            edit_board() { # content
-              local bid
-              bid=$(cat "$board_id_file" 2>/dev/null || true)
-              if [ -n "$bid" ]; then
-                if board_req PATCH "/messages/$bid" "$(jq -n --arg c "$1" '{content: $c}')" | grep -q '"id"'; then return; fi
-              fi
-              bid=$(board_req POST "" "{\"content\":\"$1\"}" | jq -r '.id // empty')
-              if [ -n "$bid" ]; then printf '%s\n' "$bid" > "$board_id_file"; fi
-            }
-
-            delete_msg() {
-              board_req DELETE "/messages/$1" >/dev/null || true
+            alert_delete() { # message id
+              curl -s -m 15 -o /dev/null -X DELETE \
+                -H "Authorization: Bot $DISCORD_BOT_TOKEN" "$api/messages/$1" || true
             }
 
             failures=0
 
-            # Two-strike counters: a check at 2+ strikes lands on the
-            # status board; recovery zeroes it and the board disappears.
-            # Strict mode (gates): silent, count only.
             fail() { # name, detail
-              local n="$1" count
+              local n="$1" detail="$2" count mid
               if [ "$strict" = 1 ]; then
                 failures=$((failures + 1))
                 return
               fi
               count=$(( $(cat "$state_dir/$n" 2>/dev/null || echo 0) + 1 ))
               printf '%s\n' "$count" > "$state_dir/$n"
+              if [ "$count" -ge 2 ] && [ ! -e "$state_dir/.$n.msgid" ]; then
+                mid=$(alert_post ":red_circle: DOWN $n ($detail)")
+                [ -n "$mid" ] && printf '%s\n' "$mid" > "$state_dir/.$n.msgid"
+              fi
             }
 
             ok() { # name
               [ "$strict" = 1 ] && return
-              printf '0\n' > "$state_dir/$1"
+              local n="$1" mid
+              if [ -e "$state_dir/.$n.msgid" ]; then
+                mid=$(cat "$state_dir/.$n.msgid")
+                alert_delete "$mid"
+                rm -f "$state_dir/.$n.msgid"
+              fi
+              printf '0\n' > "$state_dir/$n"
             }
 
             # systemd units (pi-local). container@authelia and container@miniflux
@@ -198,27 +191,9 @@
             # Board reflects the current down-set (2+ strikes) and only
             # exists while something is down; deleted on full recovery.
             # NOTE: renaming/removing a check leaves its counter files here
-            # as ghosts that reappear in the down-set forever. Prune them
-            # from $state_dir by hand when touching check names (happened
-            # with unit:postgresql/unit:miniflux on the container move).
-            # The trailing || true matters: with errexit+pipefail a healthy
-            # fleet makes the while body's last test fail ([ 0 -ge 2 ]) and
-            # kills the probe exactly when there is nothing to report.
-            down=""
-            for f in "$state_dir"/*; do
-              [ -f "$f" ] || continue
-              c=$(cat "$f" 2>/dev/null || true)
-              if [ -n "$c" ] && [ "$c" -ge 2 ] 2>/dev/null; then
-                down+="$(basename "$f" | sed 's/:/ /') "
-              fi
-            done
-            down="''${down% }"
-            if [ -n "$down" ]; then
-              edit_board ":red_circle: fleet: down ->''${down% }"
-            else
-              bid=$(cat "$board_id_file" 2>/dev/null || true)
-              if [ -n "$bid" ]; then delete_msg "$bid"; rm -f "$board_id_file"; fi
-            fi
+            # as ghosts that keep failing the strict gate forever. Prune
+            # them from $state_dir by hand when touching check names
+            # (happened with unit:postgresql/unit:miniflux on the move).
 
             exit 0
           '';
