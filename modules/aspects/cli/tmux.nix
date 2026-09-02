@@ -50,6 +50,12 @@
             yank
           ];
           extraConfig = ''
+            set -g set-clipboard on
+            # mosh-server accepts only the 'c' (CLIPBOARD) OSC52 selector and
+            # drops PRIMARY; force it via the Ms terminfo so yank reaches the
+            # local clipboard over mosh (mobile-shell/mosh#1054 discussion).
+            set -ga terminal-overrides ",xterm-256color:Ms=\\E]52;c;%p2%s\\7"
+
             bind-key @ command-prompt -p "create pane from:" "join-pane -s ':%%'"
 
             bind -n M-H previous-window
