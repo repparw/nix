@@ -4,21 +4,22 @@
 }:
 let
   serviceUrl =
-    cfg: name:
+    cfg: hostConfig: name:
     let
       service = cfg.definitions.${name};
-      # Remote backends (host set) are reached via the hosting machine's LAN
-      # address and published port; local backends keep host-local addressing
-      # (container bridge or own loopback).
       target =
-        if service.host != null then
+        if service.host != null && service.host != cfg.hostName then
+          # A backend owned by another host, reached over the LAN/tunnel.
           "${cfg.hostAddresses.${service.host}}:${
             toString (if service.publishedPort != null then service.publishedPort else service.port)
           }"
+        else if
+          lib.hasAttr name hostConfig.containers && hostConfig.containers.${name}.localAddress != null
+        then
+          # A local container on this host, reached on its bridge address.
+          "${hostConfig.containers.${name}.localAddress}:${toString service.port}"
         else
-          "${
-            if service.containerAddress != null then service.containerAddress else "127.0.0.1"
-          }:${toString service.port}";
+          "127.0.0.1:${toString service.port}";
     in
     "http://${target}";
 
@@ -29,14 +30,14 @@ let
   # Public healthcheck URL: "https://<host>.<domain><healthcheck>" for
   # services that expose one, else the internal backend URL.
   publicHealthUrl =
-    cfg: name:
+    cfg: hostConfig: name:
     let
       service = cfg.definitions.${name};
     in
     if service.healthcheck != null then
       "https://${service.hostname}.${cfg.domain}${service.healthcheck}"
     else
-      serviceUrl cfg name;
+      serviceUrl cfg hostConfig name;
 in
 {
   inherit serviceUrl publicHealthUrl;
@@ -54,7 +55,7 @@ in
   # without one are probed at their internal backend, where a redirect to
   # their own login (jellyfin -> /web, paperless -> /login) still means "up".
   monitorSites =
-    cfg:
+    cfg: hostConfig:
     lib.mapAttrsToList
       (
         name: service:
@@ -62,13 +63,13 @@ in
           {
             title = name;
             url = "https://${service.hostname}.${cfg.domain}";
-            check-url = publicHealthUrl cfg name;
+            check-url = publicHealthUrl cfg hostConfig name;
           }
         else
           {
             title = name;
             url = "https://${service.hostname}.${cfg.domain}";
-            check-url = serviceUrl cfg name;
+            check-url = serviceUrl cfg hostConfig name;
             alt-status-codes = [ 302 ];
           }
       )
@@ -129,7 +130,6 @@ in
     }:
     let
       effectiveHost = if hostAddress != null then hostAddress else "${cfg.bridgePrefix}.1";
-      hasAddr = lib.hasAttr name cfg.definitions && cfg.definitions.${name}.containerAddress != null;
     in
     {
       autoStart = true;
@@ -147,9 +147,6 @@ in
           }
           extraConfig
         ];
-    }
-    // lib.optionalAttrs hasAddr {
-      localAddress = lib.mkDefault cfg.definitions.${name}.containerAddress;
     }
     // lib.optionalAttrs (privateUsers != null) { inherit privateUsers; }
     // lib.optionalAttrs (bindMounts != { }) { inherit bindMounts; }

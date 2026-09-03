@@ -24,6 +24,7 @@ in
     modules.services.hostAddresses = {
       alpha = "192.168.0.18";
       pi = "192.168.0.4";
+      epsilon = "10.5.5.3";
     };
 
     modules.services.definitions = lib.mapAttrs (_: lib.mkDefault) {
@@ -33,6 +34,7 @@ in
         port = 8096;
         auth = "bypass";
         host = "alpha";
+        container = true;
         monitor = true;
         healthcheck = "/health";
         backup.path = "${cfg.configDir}/jellyfin/data/backups";
@@ -42,6 +44,7 @@ in
         port = 6767;
         auth = "one_factor";
         host = "alpha";
+        container = true;
         monitor = true;
         healthcheck = "/health";
         backup.path = "${cfg.configDir}/bazarr/backup";
@@ -51,6 +54,7 @@ in
         port = 9696;
         auth = "one_factor";
         host = "alpha";
+        container = true;
         monitor = true;
         healthcheck = "/ping";
         backup.path = "${cfg.configDir}/prowlarr/Backups";
@@ -61,6 +65,7 @@ in
         publishedPort = 18080;
         auth = "external";
         host = "alpha";
+        container = true;
         monitor = true;
         backup.path = "${cfg.configDir}/qbittorrent";
       };
@@ -69,6 +74,7 @@ in
         port = 7878;
         auth = "one_factor";
         host = "alpha";
+        container = true;
         monitor = true;
         healthcheck = "/ping";
         backup.path = "${cfg.configDir}/radarr/Backups";
@@ -78,6 +84,7 @@ in
         port = 8989;
         auth = "one_factor";
         host = "alpha";
+        container = true;
         monitor = true;
         healthcheck = "/ping";
         backup.path = "${cfg.configDir}/sonarr/Backups";
@@ -87,6 +94,7 @@ in
         port = 8000;
         auth = "one_factor";
         host = "alpha";
+        container = true;
         monitor = true;
         backup.path = "${cfg.configDir}/paperless/export";
       };
@@ -102,38 +110,48 @@ in
         hostname = "auth";
         port = 9091;
         auth = "bypass";
+        host = "epsilon";
+        container = true;
         monitor = true;
         backup.path = "${cfg.configDir}/authelia";
       };
       glance = {
         port = 8080;
         auth = "bypass";
+        host = "epsilon";
+        container = true;
       };
       miniflux = {
         hostname = "rss";
         port = 8081;
         auth = "one_factor";
+        host = "epsilon";
+        container = true;
         monitor = true;
         healthcheck = "/healthcheck";
         backup.path = "${cfg.configDir}/miniflux";
       };
       archisteamfarm = {
         auth = "bypass";
+        host = "pi";
+        container = true;
         backup.path = "${cfg.configDir}/archisteamfarm";
       };
       automations = {
         auth = "bypass";
+        host = "pi";
         backup.path = "${cfg.configDir}/automations";
       };
       # --- pi ---
-      # hass runs on pi but serves through epsilon's edge: routing it at its
+      # homeassistant runs on pi but serves through epsilon's edge: routing it at its
       # bridge address needs the router to forward 10.231.136.0/24 (broken,
       # and ambiguous with alpha's bridge which also uses that /24). Reach it
       # like the other remote backends via pi's published 8123 (nspawn
       # forwardPorts DNATs to the container).
-      hass = {
+      homeassistant = {
         hostname = "home";
         host = "pi";
+        container = true;
         port = 8123;
         auth = "bypass";
         monitor = true;

@@ -327,9 +327,9 @@
                 && alpha.containers.${name}.localAddress == expectedService.localAddress
                 && hasMonitorSite name expectedService.hostname (
                   if service.healthcheck != null then
-                    servicesLib.publicHealthUrl cfg name
+                    servicesLib.publicHealthUrl edgeCfg epsilon name
                   else
-                    servicesLib.serviceUrl cfg name
+                    servicesLib.serviceUrl edgeCfg epsilon name
                 )
                 && alpha.fileSystems."${cfg.backupDir}/${name}".device == expectedService.backupPath
                 &&
@@ -337,7 +337,7 @@
                     alpha.systemd.services."container@${name}".after
               ) (lib.attrNames expectedMediaDefinitions);
               nativeServicesMatch =
-                edgeCfg ? definitions.hass
+                edgeCfg ? definitions.homeassistant
                 # Miniflux + its PostgreSQL run in an nspawn container,
                 # reached over the bridge like the rest.
                 && miniflux.hostname == "rss"
@@ -352,7 +352,7 @@
                 &&
                   epsilon.containers.miniflux.bindMounts."/var/lib/postgresql".hostPath
                   == "${edgeCfg.configDir}/miniflux/postgresql"
-                && hasMonitorSite "miniflux" "rss" (servicesLib.publicHealthUrl edgeCfg "miniflux")
+                && hasMonitorSite "miniflux" "rss" (servicesLib.publicHealthUrl edgeCfg epsilon "miniflux")
                 && paperless.hostname == "paper"
                 && paperless.containerAddress == null
                 && paperless.port == 8000
@@ -364,7 +364,7 @@
                 && builtins.elem paperless.port alpha.containers.paperless.config.networking.firewall.allowedTCPPorts
                 && alpha.containers.paperless.config.services.paperless.address == "0.0.0.0"
                 && alpha.containers.paperless.config.services.paperless.port == paperless.port
-                && hasMonitorSite "paperless" "paper" (servicesLib.serviceUrl cfg "paperless")
+                && hasMonitorSite "paperless" "paper" (servicesLib.serviceUrl edgeCfg epsilon "paperless")
                 && alpha.fileSystems."${cfg.backupDir}/paperless".device == paperless.backup.path
                 &&
                   builtins.elem "home-containers-backup-paperless.mount"
@@ -521,9 +521,9 @@
                     service = "glance";
                   }
                 &&
-                  http.routers.hass == {
+                  http.routers.homeassistant == {
                     rule = "Host(`home.${cfg.domain}`)";
-                    service = "hass";
+                    service = "homeassistant";
                   }
                 &&
                   http.routers.jellyfin == {
@@ -558,7 +558,7 @@
                 &&
                   http.services.authelia.loadBalancer.servers
                   == [ { url = "http://${epsilon.containers.authelia.localAddress}:9091"; } ]
-                && http.services.hass.loadBalancer.servers == [ { url = "http://192.168.0.4:8123"; } ]
+                && http.services.homeassistant.loadBalancer.servers == [ { url = "http://192.168.0.4:8123"; } ]
                 &&
                   http.services.glance.loadBalancer.servers
                   == [ { url = "http://${epsilon.containers.glance.localAddress}:8080"; } ]

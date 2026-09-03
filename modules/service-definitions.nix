@@ -19,6 +19,11 @@ let
         type = types.nullOr types.str;
         default = null;
       };
+      container = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Whether this service runs in an nspawn container on its host.";
+      };
       # Port exposed on the hosting machine's LAN when it differs from
       # `port` (e.g. two containers behind one host publishing the same
       # container port). Only meaningful together with `host`.
@@ -187,5 +192,13 @@ in
       description = "Container bridge subnet prefix (first three octets) for this host's local containers.";
     };
 
+    hostName = mkOption {
+      type = types.str;
+      default = "";
+      description = "Name of the host evaluating this config (== networking.hostName).";
+    };
+
   };
+
+  config.modules.services.hostName = config.networking.hostName;
 }
