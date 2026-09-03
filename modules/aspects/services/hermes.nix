@@ -189,27 +189,27 @@
       # observe, not enforce — chain policy stays accept). Watch
       # `journalctl -k | grep hermes-egress-new` and the counters, then
       # promote to an allowlist: named sets of permitted endpoints plus a
-      # default drop for 10.231.136.3. The RFC1918 block also covers
-      # sibling containers (10.231.136.x, e.g. Home Assistant) as SSRF
-      # containment for the agent.
+      # default drop for the hermes container. The RFC1918 block also
+      # covers sibling containers on the shared bridge as SSRF containment
+      # for the agent.
       networking.nftables.tables.hermes-monitor = {
         family = "inet";
         # No sets yet; phase 2 adds allowed-endpoint sets here.
         content = ''
-          chain forward {
-            type filter hook forward priority filter; policy accept;
+                      chain forward {
+                        type filter hook forward priority filter; policy accept;
 
-            # DNS to the host resolver is always allowed.
-            ip saddr 10.231.136.3 ip daddr 192.168.0.4 meta l4proto { tcp, udp } th dport 53 counter accept
+          # DNS to the host resolver is always allowed.
+                      ip saddr ${config.containers.hermes.localAddress} ip daddr ${config.containers.hermes.hostAddress} meta l4proto { tcp, udp } th dport 53 counter accept
 
-            # Block LAN/internal SSRF targets from the agent container
-            # (log+drop), except the DNS rule above. Covers RFC1918 +
-            # link-local + loopback.
-            ip saddr 10.231.136.3 ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16, 127.0.0.0/8 } counter log prefix "hermes-egress-block: " drop
+                      # Block LAN/internal SSRF targets from the agent container
+                      # (log+drop), except the DNS rule above. Covers RFC1918 +
+                      # link-local + loopback.
+                      ip saddr ${config.containers.hermes.localAddress} ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16, 127.0.0.0/8 } counter log prefix "hermes-egress-block: " drop
 
-            # Monitor everything else outbound: log first packet of each new flow.
-            ip saddr 10.231.136.3 ct state new counter log prefix "hermes-egress-new: " accept
-          }
+                      # Monitor everything else outbound: log first packet of each new flow.
+                      ip saddr ${config.containers.hermes.localAddress} ct state new counter log prefix "hermes-egress-new: " accept
+                      }
         '';
       };
     };
