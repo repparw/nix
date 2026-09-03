@@ -299,7 +299,6 @@
             coreutils
             util-linux
             systemd
-            loginctl
             # host-update ships in repparw's per-user profile (shell aspect);
             # the flip/soak/rollback below calls it. NixOS appends /bin to
             # path entries, so the entry is the profile root.
