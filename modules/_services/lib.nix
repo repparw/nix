@@ -127,6 +127,7 @@ in
       serviceConfig ? { },
       extraConfig ? { },
       extraOptions ? { },
+      imports ? [ ],
     }:
     let
       effectiveHost = if hostAddress != null then hostAddress else "${cfg.bridgePrefix}.1";
@@ -137,16 +138,19 @@ in
       hostAddress = lib.mkDefault effectiveHost;
       inherit extraFlags;
       config =
-        { ... }:
-        lib.mkMerge [
-          {
-            services = serviceConfig;
-            networking.useHostResolvConf = false;
-            networking.nameservers = lib.mkDefault [ effectiveHost ];
-            system.stateVersion = "26.05";
-          }
-          extraConfig
-        ];
+        { pkgs, ... }@args:
+        {
+          inherit imports;
+          config = lib.mkMerge [
+            {
+              services = serviceConfig;
+              networking.useHostResolvConf = false;
+              networking.nameservers = lib.mkDefault [ effectiveHost ];
+              system.stateVersion = "26.05";
+            }
+            (if builtins.isFunction extraConfig then extraConfig args else extraConfig)
+          ];
+        };
     }
     // lib.optionalAttrs (privateUsers != null) { inherit privateUsers; }
     // lib.optionalAttrs (bindMounts != { }) { inherit bindMounts; }

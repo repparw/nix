@@ -58,11 +58,6 @@
             "${config.containers.glance.localAddress}" = [ "repparw.com" ];
           };
         };
-        containers.hermes = {
-          autoStart = true;
-          privateNetwork = true;
-          privateUsers = 327680;
-        };
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
         # Installed in place via nixos-infect on top of Ubuntu's partition
         # layout: ext4 root on sda1, UEFI ESP on sda15 mounted /boot/efi.
