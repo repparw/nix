@@ -97,22 +97,27 @@ in
   containerBackupAfters =
     cfg:
     lib.mapAttrs' (
-      name: _:
-      lib.nameValuePair "container@${name}" {
-        after = [ (backupMountUnit name) ];
-      }
-    ) (lib.filterAttrs (_: service: service.containerAddress != null) (backupServices cfg));
+      name: _: lib.nameValuePair "container@${name}" { after = [ (backupMountUnit name) ]; }
+    ) (backupServices cfg);
 
   backupAfter = names: map backupMountUnit names;
+
+  allocateBridgeAddresses =
+    prefix: names:
+    lib.listToAttrs (
+      lib.imap0 (i: name: lib.nameValuePair name "${prefix}.${toString (i + 2)}") (
+        lib.sort lib.lessThan names
+      )
+    );
 
   mkContainer =
     {
       cfg,
       name,
-      # Bridge gateway for the container; container DNS points here. Hosts
-      # overriding hostAddress (epsilon's 10.231.137.x) must override
-      # extraConfig.networking.nameservers to match.
-      hostAddress ? "10.231.136.1",
+      # Bridge gateway for the container; container DNS points here. Defaults
+      # to the host's bridgePrefix gateway so epsilon's 10.231.137.x bridge
+      # is automatic without per-container overrides.
+      hostAddress ? null,
       privateUsers ? null,
       bindMounts ? { },
       allowedDevices ? [ ],
@@ -122,11 +127,14 @@ in
       extraConfig ? { },
       extraOptions ? { },
     }:
+    let
+      effectiveHost = if hostAddress != null then hostAddress else "${cfg.bridgePrefix}.1";
+      hasAddr = lib.hasAttr name cfg.definitions && cfg.definitions.${name}.containerAddress != null;
+    in
     {
       autoStart = true;
       privateNetwork = true;
-      hostAddress = lib.mkDefault hostAddress;
-      localAddress = lib.mkDefault cfg.definitions.${name}.containerAddress;
+      hostAddress = lib.mkDefault effectiveHost;
       inherit extraFlags;
       config =
         { ... }:
@@ -134,11 +142,14 @@ in
           {
             services = serviceConfig;
             networking.useHostResolvConf = false;
-            networking.nameservers = lib.mkDefault [ hostAddress ];
+            networking.nameservers = lib.mkDefault [ effectiveHost ];
             system.stateVersion = "26.05";
           }
           extraConfig
         ];
+    }
+    // lib.optionalAttrs hasAddr {
+      localAddress = lib.mkDefault cfg.definitions.${name}.containerAddress;
     }
     // lib.optionalAttrs (privateUsers != null) { inherit privateUsers; }
     // lib.optionalAttrs (bindMounts != { }) { inherit bindMounts; }

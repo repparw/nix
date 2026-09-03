@@ -27,8 +27,6 @@
       containers.hermes = {
         autoStart = true;
         privateNetwork = true;
-        hostAddress = lib.mkDefault "10.231.136.1";
-        localAddress = lib.mkDefault "10.231.136.3";
 
         # User namespace: container uid 0 -> host 327680 (= 5 x 65536,
         # systemd's upper-16-bit recommendation). Deterministic instead of
@@ -109,9 +107,9 @@
             imports = [ inputs.hermes-agent.nixosModules.default ];
 
             # Same resolver workaround as the HA container: nspawn breaks
-            # the host-resolved loopback stub.
+            # the host-resolved loopback stub. Nameservers default to the
+            # host's bridge gateway via mkContainer's effectiveHost.
             networking.useHostResolvConf = false;
-            networking.nameservers = [ "10.231.137.1" ];
             # nspawn seeds /etc/resolv.conf with the HOST stub pointer
             # (127.0.0.53), but nothing inside serves it unless we run our
             # own resolved forwarding to the LAN resolver above.

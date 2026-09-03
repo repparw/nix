@@ -10,13 +10,11 @@
           hassPort = 8123;
         in
         {
-          # Home Assistant in nspawn.
+          # Home Assistant in nspawn (bridge addresses auto-allocated).
           networking.firewall.interfaces.eth0.allowedTCPPorts = [ hassPort ];
           containers.homeassistant = {
             autoStart = true;
             privateNetwork = true;
-            hostAddress = "10.231.136.1";
-            localAddress = "10.231.136.2";
             forwardPorts = [
               {
                 containerPort = hassPort;

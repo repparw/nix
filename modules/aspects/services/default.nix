@@ -45,8 +45,8 @@
               internalInterfaces = [ "ve-*" ];
             };
             firewall.extraInputRules = ''
-              iifname "ve-*" ip daddr 10.231.136.1 tcp dport 53 accept
-              iifname "ve-*" ip daddr 10.231.136.1 udp dport 53 accept
+              iifname "ve-*" ip daddr ${cfg.bridgePrefix}.1 tcp dport 53 accept
+              iifname "ve-*" ip daddr ${cfg.bridgePrefix}.1 udp dport 53 accept
               iifname "ve-*" accept comment "trust container interfaces"
             '';
           };

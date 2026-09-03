@@ -181,5 +181,11 @@ in
       description = "Known machines and their LAN addresses for cross-host backend resolution.";
     };
 
+    bridgePrefix = mkOption {
+      type = types.str;
+      default = "10.231.136";
+      description = "Container bridge subnet prefix (first three octets) for this host's local containers.";
+    };
+
   };
 }

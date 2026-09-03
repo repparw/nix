@@ -38,6 +38,7 @@
           # inventory.
           ../service-definitions.nix
           ../_services/inventory.nix
+          ../_services/address-allocator.nix
         ];
 
         # Phase 2 edge cutover: the apex points at epsilon now, and the
@@ -374,7 +375,7 @@
             content = ''
               chain post {
                 type nat hook postrouting priority 90; policy accept;
-                ip saddr 10.231.136.0/24 oifname "eth0" masquerade
+                ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname "eth0" masquerade
               }
             '';
           };
