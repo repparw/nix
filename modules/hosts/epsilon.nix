@@ -25,13 +25,16 @@
       den.aspects.nixos-services._.hermes
     ];
     nixos =
-      { config, lib, ... }:
+      { config, ... }:
       {
         imports = [
           ../service-definitions.nix
           ../_services/inventory.nix
           ../_services/glance.nix
+          ../_services/address-allocator.nix
         ];
+
+        modules.services.bridgePrefix = "10.231.137";
 
         # Offsite restic coverage (den.aspects.backup): the stateful edge
         # services (authelia/miniflux) plus hermes agent state.
@@ -40,17 +43,7 @@
           "/home/repparw/services"
         ];
 
-        # pi's estate uses 10.231.136.0/24 on its own bridge AND that range
-        # is routed into the tunnel; epsilon's bridge must not collide.
-        # NOTE: redefine the whole entry — overriding a single leaf here
-        # silently drops the inventory's mkDefault siblings (port/auth).
-        modules.services.definitions.glance = {
-          containerAddress = "10.231.137.15";
-          port = 8080;
-          auth = "bypass";
-        };
         containers.glance = {
-          hostAddress = "10.231.137.1";
           # No in-container stub resolver chains: external DNS goes straight
           # out the masqueraded bridge to public resolvers. Monitor names are
           # pinned below and never consult DNS.
@@ -62,28 +55,13 @@
           # Monitors probe public endpoints (CF + edge + backends); apex
           # is pinned local, vhosts resolve via public DNS.
           config.networking.hosts = {
-            "10.231.137.15" = [ "repparw.com" ];
+            "${config.containers.glance.localAddress}" = [ "repparw.com" ];
           };
         };
         containers.hermes = {
-          hostAddress = "10.231.137.1";
-          localAddress = "10.231.137.3";
           autoStart = true;
           privateNetwork = true;
           privateUsers = 327680;
-        };
-        # Authelia joined epsilon's 10.231.137.0/24 bridge (like glance/hermes);
-        # without this it defaulted to pi's 10.231.136.1, pointing its nameserver
-        # at a bridge that doesn't exist here, so DNS lookups failed.
-        containers.authelia = {
-          hostAddress = "10.231.137.1";
-          config.networking.nameservers = lib.mkForce [ "10.231.137.1" ];
-        };
-        # Miniflux fetched no feeds after migration: it also defaulted to pi's
-        # 10.231.136.1 bridge, so its nameserver didn't resolve on epsilon.
-        containers.miniflux = {
-          hostAddress = "10.231.137.1";
-          config.networking.nameservers = lib.mkForce [ "10.231.137.1" ];
         };
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
         # Installed in place via nixos-infect on top of Ubuntu's partition
@@ -123,8 +101,8 @@
         # virtio NIC answers as eth0; OCI hands out everything via DHCP.
         networking.interfaces.eth0.useDHCP = true;
         services.resolved.settings.Resolve.DNSStubListenerExtra = [
-          "10.231.137.1"
-          "10.231.137.3"
+          "${config.modules.services.bridgePrefix}.1"
+          config.containers.hermes.localAddress
         ];
         # Egress NAT for ve-* comes from systemd's io.systemd.nat masquerade;
         # do not layer networking.nat on top.
@@ -149,7 +127,7 @@
           content = ''
             chain postrouting {
               type nat hook postrouting priority 100; policy accept;
-              ip saddr 10.231.137.0/24 oifname "wg-home" masquerade
+              ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname "wg-home" masquerade
             }
           '';
         };
@@ -160,22 +138,22 @@
           content = ''
             chain postrouting {
               type nat hook postrouting priority 100; policy accept;
-              ip saddr 10.231.137.0/24 oifname "wg-home" masquerade
+              ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname "wg-home" masquerade
             }
           '';
         };
-        # Miniflux's container-side address (10.231.137.16) races with
-        # systemd-networkd's io.systemd.nat masq_saddr population and ends up
-        # missing from it, so its general egress is not masqueraded. Pin an
-        # explicit rule for this single container (matches io.systemd.nat's
-        # shape: no oifname, so it covers all egress). Home-tunnel traffic is
-        # already handled by hermes-home-nat above.
+        # Miniflux's container-side address races with systemd-networkd's
+        # io.systemd.nat masq_saddr population and ends up missing from it, so
+        # its general egress is not masqueraded. Pin an explicit rule for this
+        # single container (matches io.systemd.nat's shape: no oifname, so it
+        # covers all egress). Home-tunnel traffic is already handled by
+        # hermes-home-nat above.
         networking.nftables.tables.miniflux-egress-nat = {
           family = "ip";
           content = ''
             chain postrouting {
               type nat hook postrouting priority 100; policy accept;
-              ip saddr 10.231.137.16 masquerade
+              ip saddr ${config.containers.miniflux.localAddress} masquerade
             }
           '';
         };

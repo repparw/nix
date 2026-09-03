@@ -260,21 +260,21 @@
               expectedMediaDefinitions = {
                 bazarr = {
                   hostname = "bazarr";
-                  containerAddress = "10.231.136.2";
+                  localAddress = "10.231.136.2";
                   port = 6767;
                   auth = "one_factor";
                   backupPath = "${cfg.configDir}/bazarr/backup";
                 };
                 prowlarr = {
                   hostname = "prowlarr";
-                  containerAddress = "10.231.136.3";
+                  localAddress = "10.231.136.5";
                   port = 9696;
                   auth = "one_factor";
                   backupPath = "${cfg.configDir}/prowlarr/Backups";
                 };
                 qbittorrent = {
                   hostname = "qbit";
-                  containerAddress = "10.231.136.4";
+                  localAddress = "10.231.136.6";
                   port = 8080;
                   publishedPort = 18080;
                   auth = "external";
@@ -282,21 +282,21 @@
                 };
                 radarr = {
                   hostname = "radarr";
-                  containerAddress = "10.231.136.5";
+                  localAddress = "10.231.136.7";
                   port = 7878;
                   auth = "one_factor";
                   backupPath = "${cfg.configDir}/radarr/Backups";
                 };
                 sonarr = {
                   hostname = "sonarr";
-                  containerAddress = "10.231.136.6";
+                  localAddress = "10.231.136.8";
                   port = 8989;
                   auth = "one_factor";
                   backupPath = "${cfg.configDir}/sonarr/Backups";
                 };
                 jellyfin = {
                   hostname = "jellyfin";
-                  containerAddress = "10.231.136.10";
+                  localAddress = "10.231.136.3";
                   port = 8096;
                   auth = "bypass";
                   backupPath = "${cfg.configDir}/jellyfin/data/backups";
@@ -319,12 +319,12 @@
                   service = cfg.definitions.${name};
                 in
                 service.hostname == expectedService.hostname
-                && service.containerAddress == expectedService.containerAddress
+                && service.containerAddress == null
                 && service.port == expectedService.port
                 && service.auth == expectedService.auth
                 && service.monitor
                 && service.backup.path == expectedService.backupPath
-                && alpha.containers.${name}.localAddress == service.containerAddress
+                && alpha.containers.${name}.localAddress == expectedService.localAddress
                 && hasMonitorSite name expectedService.hostname (
                   if service.healthcheck != null then
                     servicesLib.publicHealthUrl cfg name
@@ -345,8 +345,8 @@
                 && miniflux.auth == "one_factor"
                 && miniflux.monitor
                 && miniflux.backup.path == "${edgeCfg.configDir}/miniflux"
-                && miniflux.containerAddress == "10.231.137.16"
-                && epsilon.containers.miniflux.localAddress == miniflux.containerAddress
+                && miniflux.containerAddress == null
+                && epsilon.containers.miniflux.localAddress == "10.231.137.5"
                 && epsilon.containers.miniflux.config.services.miniflux.enable
                 && epsilon.containers.miniflux.config.services.postgresql.enable
                 &&
@@ -354,12 +354,12 @@
                   == "${edgeCfg.configDir}/miniflux/postgresql"
                 && hasMonitorSite "miniflux" "rss" (servicesLib.publicHealthUrl edgeCfg "miniflux")
                 && paperless.hostname == "paper"
-                && paperless.containerAddress == "10.231.136.12"
+                && paperless.containerAddress == null
                 && paperless.port == 8000
                 && paperless.auth == "one_factor"
                 && paperless.monitor
                 && paperless.backup.path == "${cfg.configDir}/paperless/export"
-                && alpha.containers.paperless.localAddress == paperless.containerAddress
+                && alpha.containers.paperless.localAddress == "10.231.136.4"
                 && alpha.containers.paperless.bindMounts."/var/lib/paperless".hostPath == "${cfg.configDir}/paper"
                 && builtins.elem paperless.port alpha.containers.paperless.config.networking.firewall.allowedTCPPorts
                 && alpha.containers.paperless.config.services.paperless.address == "0.0.0.0"
@@ -371,19 +371,19 @@
                     alpha.systemd.services."container@paperless".after;
               authenticationPresentationMatch =
                 authelia.hostname == "auth"
-                && authelia.containerAddress == "10.231.137.7"
+                && authelia.containerAddress == null
                 && authelia.port == 9091
                 && authelia.auth == "bypass"
                 && authelia.monitor
-                && epsilon.containers.authelia.localAddress == authelia.containerAddress
+                && epsilon.containers.authelia.localAddress == "10.231.137.2"
                 && builtins.elem authelia.port epsilon.containers.authelia.config.networking.firewall.allowedTCPPorts
                 &&
                   epsilon.containers.authelia.config.services.authelia.instances.main.settings.server.address
                   == "tcp://:${toString authelia.port}"
-                && glance.containerAddress == "10.231.137.15"
+                && glance.containerAddress == null
                 && glance.port == 8080
                 && glance.auth == "bypass"
-                && epsilon.containers.glance.localAddress == glance.containerAddress
+                && epsilon.containers.glance.localAddress == "10.231.137.3"
                 && epsilon.containers.glance.config.services.glance.settings.server.host == "0.0.0.0"
                 && epsilon.containers.glance.config.services.glance.settings.server.port == glance.port
                 && http.routers.glance.rule == "Host(`${cfg.domain}`)"
@@ -391,13 +391,13 @@
               backgroundServicesMatch =
                 # Archisteamfarm farms on pi (always-on host); its definition
                 # and container live in pi's closure.
-                archisteamfarm.containerAddress == "10.231.136.13"
+                archisteamfarm.containerAddress == null
                 && archisteamfarm.hostname == null
                 && archisteamfarm.port == null
                 && archisteamfarm.auth == "bypass"
                 && !archisteamfarm.monitor
                 && archisteamfarm.backup.path == "${cfg.configDir}/archisteamfarm"
-                && pi.containers.archisteamfarm.localAddress == archisteamfarm.containerAddress
+                && pi.containers.archisteamfarm.localAddress == "10.231.136.2"
                 &&
                   pi.containers.archisteamfarm.bindMounts."/var/lib/archisteamfarm".hostPath
                   == archisteamfarm.backup.path
@@ -553,15 +553,22 @@
                     "qbit-basic-auth"
                   ]
                 &&
-                  http.middlewares.authelia.forwardAuth.address == "http://10.231.137.7:9091/api/authz/forward-auth"
-                && http.services.authelia.loadBalancer.servers == [ { url = "http://10.231.137.7:9091"; } ]
+                  http.middlewares.authelia.forwardAuth.address
+                  == "http://${epsilon.containers.authelia.localAddress}:9091/api/authz/forward-auth"
+                &&
+                  http.services.authelia.loadBalancer.servers
+                  == [ { url = "http://${epsilon.containers.authelia.localAddress}:9091"; } ]
                 && http.services.hass.loadBalancer.servers == [ { url = "http://192.168.0.4:8123"; } ]
-                && http.services.glance.loadBalancer.servers == [ { url = "http://10.231.137.15:8080"; } ]
+                &&
+                  http.services.glance.loadBalancer.servers
+                  == [ { url = "http://${epsilon.containers.glance.localAddress}:8080"; } ]
                 && http.services.jellyfin.loadBalancer.servers == [ { url = "http://192.168.0.18:8096"; } ]
                 && http.services.qbittorrent.loadBalancer.servers == [ { url = "http://192.168.0.18:18080"; } ]
                 && http.services.bazarr.loadBalancer.servers == [ { url = "http://192.168.0.18:6767"; } ]
                 && http.services.finance.loadBalancer.servers == [ { url = "http://192.168.0.18:3000"; } ]
-                && http.services.miniflux.loadBalancer.servers == [ { url = "http://10.231.137.16:8081"; } ]
+                &&
+                  http.services.miniflux.loadBalancer.servers
+                  == [ { url = "http://${epsilon.containers.miniflux.localAddress}:8081"; } ]
                 && http.services.paperless.loadBalancer.servers == [ { url = "http://192.168.0.18:8000"; } ]
                 && http.services.prowlarr.loadBalancer.servers == [ { url = "http://192.168.0.18:9696"; } ]
                 && http.services.radarr.loadBalancer.servers == [ { url = "http://192.168.0.18:7878"; } ]
@@ -593,7 +600,6 @@
                 )
                 && lib.strings.hasInfix "ip saddr { 192.168.0.4, 10.5.5.3 } oifname \"ve-*\" accept" alpha.networking.firewall.extraForwardRules
                 && builtins.all (port: builtins.elem port pi.networking.firewall.interfaces.eth0.allowedTCPPorts) [
-                  53
                   80
                   443
                 ]

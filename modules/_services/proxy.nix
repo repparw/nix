@@ -6,12 +6,29 @@
 }:
 let
   cfg = config.modules.services;
-  servicesLib = import ./lib.nix { inherit lib pkgs; };
   domain = cfg.domain;
+  serviceUrl =
+    name:
+    let
+      service = cfg.definitions.${name};
+      portStr = toString service.port;
+      target =
+        if service.host != null then
+          "${cfg.hostAddresses.${service.host}}:${
+            toString (if service.publishedPort != null then service.publishedPort else service.port)
+          }"
+        else if service.containerAddress != null then
+          "${service.containerAddress}:${portStr}"
+        else if lib.hasAttr name config.containers && config.containers.${name}.localAddress != null then
+          "${config.containers.${name}.localAddress}:${portStr}"
+        else
+          "127.0.0.1:${portStr}";
+    in
+    "http://${target}";
   ingressPolicy = import ./ingress-policy.nix { inherit lib; } {
     definitions = cfg.definitions;
     inherit domain;
-    serviceUrl = servicesLib.serviceUrl cfg;
+    inherit serviceUrl;
   };
   # Cloudflare proxy IP ranges — https://www.cloudflare.com/ips-v4 / ips-v6
   cfIpRanges = [

@@ -30,7 +30,6 @@ in
       # --- alpha ---
       jellyfin = {
         hostname = "jellyfin";
-        containerAddress = "10.231.136.10";
         port = 8096;
         auth = "bypass";
         host = "alpha";
@@ -40,7 +39,6 @@ in
       };
       bazarr = {
         hostname = "bazarr";
-        containerAddress = "10.231.136.2";
         port = 6767;
         auth = "one_factor";
         host = "alpha";
@@ -50,7 +48,6 @@ in
       };
       prowlarr = {
         hostname = "prowlarr";
-        containerAddress = "10.231.136.3";
         port = 9696;
         auth = "one_factor";
         host = "alpha";
@@ -60,7 +57,6 @@ in
       };
       qbittorrent = {
         hostname = "qbit";
-        containerAddress = "10.231.136.4";
         port = 8080;
         publishedPort = 18080;
         auth = "external";
@@ -70,7 +66,6 @@ in
       };
       radarr = {
         hostname = "radarr";
-        containerAddress = "10.231.136.5";
         port = 7878;
         auth = "one_factor";
         host = "alpha";
@@ -80,7 +75,6 @@ in
       };
       sonarr = {
         hostname = "sonarr";
-        containerAddress = "10.231.136.6";
         port = 8989;
         auth = "one_factor";
         host = "alpha";
@@ -90,7 +84,6 @@ in
       };
       paperless = {
         hostname = "paper";
-        containerAddress = "10.231.136.12";
         port = 8000;
         auth = "one_factor";
         host = "alpha";
@@ -107,20 +100,17 @@ in
       # --- epsilon ---
       authelia = {
         hostname = "auth";
-        containerAddress = "10.231.137.7";
         port = 9091;
         auth = "bypass";
         monitor = true;
         backup.path = "${cfg.configDir}/authelia";
       };
       glance = {
-        containerAddress = "10.231.137.15";
         port = 8080;
         auth = "bypass";
       };
       miniflux = {
         hostname = "rss";
-        containerAddress = "10.231.137.16";
         port = 8081;
         auth = "one_factor";
         monitor = true;
@@ -128,7 +118,6 @@ in
         backup.path = "${cfg.configDir}/miniflux";
       };
       archisteamfarm = {
-        containerAddress = "10.231.136.13";
         auth = "bypass";
         backup.path = "${cfg.configDir}/archisteamfarm";
       };

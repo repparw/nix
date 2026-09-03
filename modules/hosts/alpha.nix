@@ -30,6 +30,7 @@
       {
         imports = [
           (modulesPath + "/installer/scan/not-detected.nix")
+          ../_services/address-allocator.nix
         ];
 
         # Offsite restic coverage. The gdrive-backed repo is deliberate:

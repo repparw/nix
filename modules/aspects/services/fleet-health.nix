@@ -162,7 +162,7 @@
             # gates or rolls back pi's flip.
             remote authelia https://auth.repparw.com/api/health 200
             remote miniflux https://rss.repparw.com/healthcheck 200
-            http home-assistant http://10.231.136.2:8123 ""
+            http home-assistant http://${config.containers.homeassistant.localAddress}:8123 ""
             # pi's own traefik still serves the LAN vhost for HA; the check
             # pins SNI to the local loopback per the sniStrict gotcha.
             http home https://home.repparw.com/ "" --resolve home.repparw.com:443:127.0.0.1
