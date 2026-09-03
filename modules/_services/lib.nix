@@ -125,8 +125,8 @@ in
     {
       autoStart = true;
       privateNetwork = true;
-      inherit hostAddress;
-      localAddress = cfg.definitions.${name}.containerAddress;
+      hostAddress = lib.mkDefault hostAddress;
+      localAddress = lib.mkDefault cfg.definitions.${name}.containerAddress;
       inherit extraFlags;
       config =
         { ... }:

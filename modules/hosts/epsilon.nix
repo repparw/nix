@@ -50,7 +50,7 @@
           auth = "bypass";
         };
         containers.glance = {
-          hostAddress = lib.mkForce "10.231.137.1";
+          hostAddress = "10.231.137.1";
           # No in-container stub resolver chains: external DNS goes straight
           # out the masqueraded bridge to public resolvers. Monitor names are
           # pinned below and never consult DNS.
@@ -66,8 +66,8 @@
           };
         };
         containers.hermes = {
-          hostAddress = lib.mkForce "10.231.137.1";
-          localAddress = lib.mkForce "10.231.137.3";
+          hostAddress = "10.231.137.1";
+          localAddress = "10.231.137.3";
           autoStart = true;
           privateNetwork = true;
           privateUsers = 327680;
@@ -76,13 +76,13 @@
         # without this it defaulted to pi's 10.231.136.1, pointing its nameserver
         # at a bridge that doesn't exist here, so DNS lookups failed.
         containers.authelia = {
-          hostAddress = lib.mkForce "10.231.137.1";
+          hostAddress = "10.231.137.1";
           config.networking.nameservers = lib.mkForce [ "10.231.137.1" ];
         };
         # Miniflux fetched no feeds after migration: it also defaulted to pi's
         # 10.231.136.1 bridge, so its nameserver didn't resolve on epsilon.
         containers.miniflux = {
-          hostAddress = lib.mkForce "10.231.137.1";
+          hostAddress = "10.231.137.1";
           config.networking.nameservers = lib.mkForce [ "10.231.137.1" ];
         };
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).

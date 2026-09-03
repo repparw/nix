@@ -4,7 +4,7 @@
 }:
 {
   den.aspects.nixos-services.provides.hermes = {
-    nixos = { config, ... }: {
+    nixos = { config, lib, ... }: {
       users.groups.hermes.gid = 345;
       users.users.repparw.extraGroups = [ "hermes" ];
 
@@ -27,8 +27,8 @@
       containers.hermes = {
         autoStart = true;
         privateNetwork = true;
-        hostAddress = "10.231.136.1";
-        localAddress = "10.231.136.3";
+        hostAddress = lib.mkDefault "10.231.136.1";
+        localAddress = lib.mkDefault "10.231.136.3";
 
         # User namespace: container uid 0 -> host 327680 (= 5 x 65536,
         # systemd's upper-16-bit recommendation). Deterministic instead of
