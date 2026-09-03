@@ -6,15 +6,25 @@
     { ... }:
     {
       nixos =
+        {
+          config,
+          lib,
+          pkgs,
+          ...
+        }:
         let
+          cfg = config.modules.services;
+          servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
           hassPort = 8123;
         in
         {
           # Home Assistant in nspawn (bridge addresses auto-allocated).
           networking.firewall.interfaces.eth0.allowedTCPPorts = [ hassPort ];
-          containers.homeassistant = {
-            autoStart = true;
-            privateNetwork = true;
+          containers.homeassistant = servicesLib.mkContainer {
+            inherit cfg;
+            name = "homeassistant";
+            # Reached over host port-forwarding, not the bridge, so this
+            # container keeps its own reachability model.
             forwardPorts = [
               {
                 containerPort = hassPort;
@@ -26,12 +36,12 @@
               hostPath = "/home/repparw/services/hass";
               isReadOnly = false;
             };
-            config =
+            extraConfig =
               { pkgs, ... }:
               {
-                # nspawn breaks host-resolved (loopback stub); the pi LAN resolver was
-                # decommissioned, so resolve straight out the masqueraded bridge.
-                networking.useHostResolvConf = false;
+                # The pi LAN resolver was decommissioned, so resolve straight
+                # out the masqueraded bridge via public DNS instead of the
+                # bridge gateway mkContainer defaults to.
                 networking.nameservers = [
                   "1.1.1.1"
                   "9.9.9.9"
@@ -74,7 +84,6 @@
                     ];
                 };
                 networking.firewall.allowedTCPPorts = [ 8123 ];
-                system.stateVersion = "26.05";
               };
           };
         };
