@@ -1,13 +1,15 @@
-{ den, pkgs, ... }:
+{ den, ... }:
 {
   den.aspects.ai.provides.codex = {
-    homeManager = {
-      home.packages = [ pkgs.codex ];
+    homeManager =
+      { pkgs, ... }:
+      {
+        home.packages = [ pkgs.codex ];
 
-      programs.codex = {
-        enable = true;
-        skills = { };
+        programs.codex = {
+          enable = true;
+          skills = { };
+        };
       };
-    };
   };
 }
