@@ -299,6 +299,11 @@
             coreutils
             util-linux
             systemd
+            loginctl
+            # host-update ships in repparw's per-user profile (shell aspect);
+            # the flip/soak/rollback below calls it. NixOS appends /bin to
+            # path entries, so the entry is the profile root.
+            "/etc/profiles/per-user/repparw"
           ];
           serviceConfig = {
             Type = "oneshot";
@@ -363,76 +368,34 @@
               exit 0
             fi
 
-            # Pi must be healthy before alpha follows its lock. TCP to its
-            # edge port: post-migration pi's traefik serves vhosts over
-            # 443 only, so vhost http probes are meaningless.
-            if ! timeout 3 bash -c 'exec 3<>/dev/tcp/192.168.0.4/443' 2>/dev/null; then
-              echo "pi edge not healthy, deferring"
-              exit 0
-            fi
-
-            if [ "$(systemctl is-system-running 2>/dev/null)" = "failed" ]; then
-              notify ":warning: alpha auto-update deferred: local system degraded before flip"
-              exit 0
-            fi
-
+            # Clone the pin pi published, then hand gate/build/diff/flip/
+            # soak/rollback to the shared wrapper (issue #54). Alpha stays
+            # responsible for idle detection, the breaker, and the reports.
             cd "$state"
-            rm -rf src
-            git clone --depth 1 https://github.com/repparw/nix src
+            if [ -d src/.git ]; then
+              git -C src fetch origin main
+              git -C src reset --hard origin/main
+            else
+              git clone --depth 1 https://github.com/repparw/nix src
+            fi
             cd src
 
-            nix build .#nixosConfigurations.alpha.config.system.build.toplevel -o /var/lib/alpha-auto-update/result
-            nvd diff /run/current-system /var/lib/alpha-auto-update/result > "$state/diff.txt" || true
-            changed=$(grep -cE '^[<>] ' "$state/diff.txt" || true)
-            if [ "$changed" -eq 0 ]; then
-              echo "no package change for alpha"
-              exit 0
-            fi
-            kernel=$(grep -oE 'linux-[0-9.]+' "$state/diff.txt" | head -1 || true)
-
-            nixos-rebuild switch --flake .#alpha
-
-            passes=0
-            i=0
-            sleep 60
-            while [ "$i" -lt 10 ]; do
-              ok=1
-              # degraded is acceptable (benign failed units); only a
-              # failed manager counts against the soak.
-              if [ "$(systemctl is-system-running 2>/dev/null)" = "failed" ]; then
-                ok=0
-              fi
-              if ! curl -s -m 6 http://192.168.0.4/ -o /dev/null; then
-                ok=0
-              fi
-              if [ "$ok" = 1 ]; then
-                passes=$((passes + 1))
-              else
-                passes=0
-              fi
-              [ "$passes" -ge 2 ] && break
-              i=$((i + 1))
-              sleep 60
-            done
-
-            if [ "$passes" -lt 2 ]; then
+            export FLAKE="$state/src"
+            if host-update --yes --no-pull; then
+              printf '0\n' > "$state/rollback-streak"
+              notify ":white_check_mark: alpha flip complete (or already current)"
+            else
               streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
               printf '%s\n' "$streak" > "$state/rollback-streak"
-              nixos-rebuild switch --rollback
               note=""
               if [ "$streak" -ge 2 ]; then
                 touch "$state/PAUSE"
                 note=" — automation PAUSED (breaker)"
               fi
               notify ":rotating_light: alpha flipped then ROLLED BACK (soak failed); $streak consecutive$note"
-              notify_file "rolled-back generation diff:" "$state/diff.txt"
+              notify_file "rolled-back generation diff:" /tmp/host-update-diff.txt
               exit 1
             fi
-
-            printf '0\n' > "$state/rollback-streak"
-            klabel=""
-            [ -n "$kernel" ] && klabel=" ($kernel)"
-            notify_file "**alpha flipped** — $changed packages changed$klabel" "$state/diff.txt"
           '';
         };
 
