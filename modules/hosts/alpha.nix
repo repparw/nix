@@ -380,9 +380,14 @@
             cd src
 
             export FLAKE="$state/src"
-            if host-update --yes --no-pull; then
+            host-update --yes --no-pull
+            rc=$?
+            if [ "$rc" = 0 ]; then
               printf '0\n' > "$state/rollback-streak"
-              notify ":white_check_mark: alpha flip complete (or already current)"
+              notify ":white_check_mark: alpha flip complete"
+            elif [ "$rc" = 3 ]; then
+              printf '0\n' > "$state/rollback-streak"
+              echo "alpha already at the pinned generation"
             else
               streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
               printf '%s\n' "$streak" > "$state/rollback-streak"

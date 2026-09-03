@@ -313,11 +313,16 @@
             # responsible for its writer duties (bump above, revert-push
             # and breaker here) and the Discord reports.
             export FLAKE="$state/src"
-            if host-update --yes --no-pull --result=/var/lib/auto-update-result; then
+            host-update --yes --no-pull --result=/var/lib/auto-update-result
+            rc=$?
+            if [ "$rc" = 0 ]; then
               printf '0\n' > "$state/rollback-streak"
               klabel=""
               [ -n "$kernel" ] && klabel=" ($kernel)"
               notify_file "**pi flipped** — $changed packages changed$klabel" "$state/diff.txt"
+            elif [ "$rc" = 3 ]; then
+              printf '0\n' > "$state/rollback-streak"
+              echo "lock pushed but pi closure unchanged"
             else
               streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
               printf '%s\n' "$streak" > "$state/rollback-streak"
