@@ -12,7 +12,7 @@ let
   ingressPolicy = import ./ingress-policy.nix { inherit lib; } {
     definitions = cfg.definitions;
     domain = cfg.domain;
-    serviceUrl = servicesLib.serviceUrl cfg;
+    serviceUrl = name: servicesLib.serviceUrl cfg config name;
   };
   credentialsDir = "/run/credentials/authelia-main.service";
   secretNames = {

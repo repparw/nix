@@ -113,7 +113,7 @@ in
                       type = "monitor";
                       hide-header = true;
                       title = "Services";
-                      sites = servicesLib.monitorSites cfg;
+                      sites = servicesLib.monitorSites cfg config;
                     }
                     {
                       type = "split-column";

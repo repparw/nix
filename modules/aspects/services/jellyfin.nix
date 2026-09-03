@@ -22,7 +22,7 @@
               -H "X-Emby-Token: $key" \
               -H "Content-Type: application/json" \
               -d '{}' \
-              ${servicesLib.serviceUrl cfg "jellyfin"}/Backup/Create)
+              ${servicesLib.serviceUrl cfg config "jellyfin"}/Backup/Create)
             echo "$response"
             path=$(echo "$response" | sed -n 's/.*"Path":"\([^"]*\)".*/\1/p')
             if [ -n "$path" ]; then

@@ -13,12 +13,10 @@ let
       service = cfg.definitions.${name};
       portStr = toString service.port;
       target =
-        if service.host != null then
+        if service.host != null && service.host != cfg.hostName then
           "${cfg.hostAddresses.${service.host}}:${
             toString (if service.publishedPort != null then service.publishedPort else service.port)
           }"
-        else if service.containerAddress != null then
-          "${service.containerAddress}:${portStr}"
         else if lib.hasAttr name config.containers && config.containers.${name}.localAddress != null then
           "${config.containers.${name}.localAddress}:${portStr}"
         else
