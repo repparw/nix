@@ -88,7 +88,8 @@
             fi
 
             cd "$flake"
-            rm -f /tmp/host-update-diff.txt
+            diff_path="''${HOST_UPDATE_DIFF:-/tmp/host-update-diff.txt}"
+            rm -f "$diff_path"
 
             # Consumers pull; pi pushes. Never bump inputs here.
             if [ "$no_pull" = 0 ]; then
@@ -130,8 +131,8 @@
             fi
 
             nvd diff /run/current-system "$result" \
-              | tee /tmp/host-update-diff.txt
-            changed=$(grep -cE '^[<>] ' /tmp/host-update-diff.txt || true)
+              | tee "$diff_path"
+            changed=$(grep -cE '^[<>] ' "$diff_path" || true)
             if [ "$changed" -eq 0 ]; then
               echo "already at the pinned generation"
               # Exit 3 = no-op: automated callers stay silent instead of
