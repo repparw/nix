@@ -380,11 +380,22 @@
             cd src
 
             export FLAKE="$state/src"
-            host-update --yes --no-pull
-            rc=$?
+            export SOAK_SETTLE_SECONDS=60
+            export SOAK_INTERVAL_SECONDS=60
+            export SOAK_ATTEMPTS=10
+            rm -f "$state/diff.txt"
+            rc=0
+            host-update --yes --no-pull || rc=$?
+            if [ -f /tmp/host-update-diff.txt ]; then
+              cp /tmp/host-update-diff.txt "$state/diff.txt"
+            fi
             if [ "$rc" = 0 ]; then
               printf '0\n' > "$state/rollback-streak"
-              notify ":white_check_mark: alpha flip complete"
+              changed=$(grep -cE '^[<>] ' "$state/diff.txt" || true)
+              kernel=$(grep -oE 'linux-[0-9.]+' "$state/diff.txt" | head -1 || true)
+              klabel=""
+              [ -n "$kernel" ] && klabel=" ($kernel)"
+              notify_file "**alpha flipped** — $changed packages changed$klabel" "$state/diff.txt"
             elif [ "$rc" = 3 ]; then
               printf '0\n' > "$state/rollback-streak"
               echo "alpha already at the pinned generation"
@@ -397,7 +408,9 @@
                 note=" — automation PAUSED (breaker)"
               fi
               notify ":rotating_light: alpha flipped then ROLLED BACK (soak failed); $streak consecutive$note"
-              notify_file "rolled-back generation diff:" /tmp/host-update-diff.txt
+              if [ -f "$state/diff.txt" ]; then
+                notify_file "rolled-back generation diff:" "$state/diff.txt"
+              fi
               exit 1
             fi
           '';

@@ -313,8 +313,8 @@
             # responsible for its writer duties (bump above, revert-push
             # and breaker here) and the Discord reports.
             export FLAKE="$state/src"
-            host-update --yes --no-pull --result=/var/lib/auto-update-result
-            rc=$?
+            rc=0
+            host-update --yes --no-pull --result=/var/lib/auto-update-result || rc=$?
             if [ "$rc" = 0 ]; then
               printf '0\n' > "$state/rollback-streak"
               klabel=""
