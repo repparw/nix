@@ -9,13 +9,9 @@ let
         default = null;
       };
       # Machine hosting the service. null keeps addressing host-local
-      # (containerAddress or loopback); set to the hosting machine's name so
+      # (container bridge or loopback); set to the hosting machine's name so
       # other hosts resolve the backend through its LAN address.
       host = mkOption {
-        type = types.nullOr types.str;
-        default = null;
-      };
-      containerAddress = mkOption {
         type = types.nullOr types.str;
         default = null;
       };
@@ -98,22 +94,6 @@ let
       duplicateHostnames = lib.filter (
         hostname: builtins.length (lib.filter (candidate: candidate == hostname) hostnames) > 1
       ) (lib.unique hostnames);
-      addresses =
-        let
-          # containerAddress lives in each host's own bridge namespace
-          # (every host runs 10.231.136.0/24), so uniqueness is scoped per
-          # owning host: "local" means this host's own bridge.
-          perHost = lib.mapAttrsToList (_: service: {
-            inherit (service) containerAddress;
-            scope = if service.host == null then "local" else service.host;
-          }) definitions;
-        in
-        map (entry: "${entry.scope} ${entry.containerAddress}") (
-          lib.filter (entry: entry.containerAddress != null) perHost
-        );
-      duplicateAddresses = lib.filter (
-        address: builtins.length (lib.filter (candidate: candidate == address) addresses) > 1
-      ) (lib.unique addresses);
     in
     if invalid != { } then
       throw "invalid service definitions: ${lib.concatStringsSep ", " (lib.attrNames invalid)}; routed, monitored, and healthcheck-bearing services require both hostname and port"
@@ -123,8 +103,6 @@ let
       throw "service definitions reference hosts missing from modules.services.hostAddresses: ${lib.concatStringsSep ", " unknownHosts}"
     else if duplicateHostnames != [ ] then
       throw "duplicate service definition hostnames: ${lib.concatStringsSep ", " duplicateHostnames}"
-    else if duplicateAddresses != [ ] then
-      throw "duplicate service definition container addresses: ${lib.concatStringsSep ", " duplicateAddresses}"
     else
       definitions;
 in
@@ -174,8 +152,8 @@ in
 
     # LAN address of each known machine, keyed by host name. Definitions with
     # a `host` set resolve their loopback-bound backends through this map;
-    # containerAddress backends are reached directly via the hosting machine's
-    # routed container bridge.
+    # Remote backends are reached through the hosting machine's LAN address;
+    # local container backends use their allocated bridge address.
     hostAddresses = mkOption {
       type = types.attrsOf types.str;
       default = { };

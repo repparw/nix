@@ -131,6 +131,10 @@ in
         healthcheck = "/healthcheck";
         backup.path = "${cfg.configDir}/miniflux";
       };
+      hermes = {
+        host = "epsilon";
+        container = true;
+      };
       archisteamfarm = {
         auth = "bypass";
         host = "pi";

@@ -103,14 +103,6 @@ in
 
   backupAfter = names: map backupMountUnit names;
 
-  allocateBridgeAddresses =
-    prefix: names:
-    lib.listToAttrs (
-      lib.imap0 (i: name: lib.nameValuePair name "${prefix}.${toString (i + 2)}") (
-        lib.sort lib.lessThan names
-      )
-    );
-
   mkContainer =
     {
       cfg,

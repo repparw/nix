@@ -24,13 +24,13 @@ modules.
 Shared reachability, routing, monitoring, and backup facts belong in
 `modules.services.definitions`. Consumers derive their configuration from that
 definition. Invalid routed or monitored definitions and duplicate container
-addresses fail evaluation at this seam.
+hostnames fail evaluation at this seam.
 
 Definition fields drive host behavior as follows:
 
 - `hostname` and `domain` produce the public host name and proxy router.
-- `containerAddress` selects the private-container endpoint; services without
-  one use the host loopback endpoint.
+- `host` and `container` determine host membership and whether the allocator
+  assigns a private bridge address.
 - `port` produces the proxy backend URL.
 - `auth` selects the proxy authentication middleware where routing is generic.
 - `monitor` adds the public URL and internal check URL to Glance.
@@ -39,9 +39,10 @@ Definition fields drive host behavior as follows:
 Service-specific settings, mounts, devices, secrets, and exceptional proxy
 rules remain local to the owning service module.
 
-Private containers use the host bridge at `10.231.136.1`. Service backup
-exports are gathered under `modules.services.backupDir`, which defaults to
-`/home/containers/backup`.
+Private containers use the gateway derived from the host's
+`modules.services.bridgePrefix` (`10.231.136.1` by default; epsilon uses
+`10.231.137.1`). Service backup exports are gathered under
+`modules.services.backupDir`, which defaults to `/home/containers/backup`.
 
 ## Related
 

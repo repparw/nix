@@ -202,19 +202,6 @@
                   ];
                 }).config.modules.services.definitions
               );
-              duplicateMediaAddresses = builtins.tryEval (
-                (lib.evalModules {
-                  modules = [
-                    ./service-definitions.nix
-                    {
-                      modules.services.definitions = {
-                        first.containerAddress = "10.231.136.99";
-                        second.containerAddress = "10.231.136.99";
-                      };
-                    }
-                  ];
-                }).config.modules.services.definitions
-              );
               mkIngressPolicy = import ./_services/ingress-policy.nix { inherit lib; };
               matrixPolicy = mkIngressPolicy {
                 domain = "example.test";
@@ -319,7 +306,6 @@
                   service = cfg.definitions.${name};
                 in
                 service.hostname == expectedService.hostname
-                && service.containerAddress == null
                 && service.port == expectedService.port
                 && service.auth == expectedService.auth
                 && service.monitor
@@ -345,7 +331,6 @@
                 && miniflux.auth == "one_factor"
                 && miniflux.monitor
                 && miniflux.backup.path == "${edgeCfg.configDir}/miniflux"
-                && miniflux.containerAddress == null
                 && epsilon.containers.miniflux.localAddress == "10.231.137.5"
                 && epsilon.containers.miniflux.config.services.miniflux.enable
                 && epsilon.containers.miniflux.config.services.postgresql.enable
@@ -354,7 +339,6 @@
                   == "${edgeCfg.configDir}/miniflux/postgresql"
                 && hasMonitorSite "miniflux" "rss" (servicesLib.publicHealthUrl edgeCfg epsilon "miniflux")
                 && paperless.hostname == "paper"
-                && paperless.containerAddress == null
                 && paperless.port == 8000
                 && paperless.auth == "one_factor"
                 && paperless.monitor
@@ -371,7 +355,6 @@
                     alpha.systemd.services."container@paperless".after;
               authenticationPresentationMatch =
                 authelia.hostname == "auth"
-                && authelia.containerAddress == null
                 && authelia.port == 9091
                 && authelia.auth == "bypass"
                 && authelia.monitor
@@ -380,7 +363,6 @@
                 &&
                   epsilon.containers.authelia.config.services.authelia.instances.main.settings.server.address
                   == "tcp://:${toString authelia.port}"
-                && glance.containerAddress == null
                 && glance.port == 8080
                 && glance.auth == "bypass"
                 && epsilon.containers.glance.localAddress == "10.231.137.3"
@@ -391,8 +373,7 @@
               backgroundServicesMatch =
                 # Archisteamfarm farms on pi (always-on host); its definition
                 # and container live in pi's closure.
-                archisteamfarm.containerAddress == null
-                && archisteamfarm.hostname == null
+                archisteamfarm.hostname == null
                 && archisteamfarm.port == null
                 && archisteamfarm.auth == "bypass"
                 && !archisteamfarm.monitor
@@ -406,7 +387,6 @@
                   == "steamPassword:/run/secrets/steamPassword"
                 && builtins.any (lib.strings.hasInfix "archisteamfarm") pi.systemd.tmpfiles.rules
                 && automations.hostname == null
-                && automations.containerAddress == null
                 && automations.port == null
                 && automations.auth == "bypass"
                 && !automations.monitor
@@ -474,9 +454,7 @@
                 && alpha.systemd.services."container@jellyfin".serviceConfig.IOWeight == 50
                 && alpha.systemd.services."container@jellyfin".serviceConfig.Nice == 10;
               validationMatches =
-                builtins.all (result: !result.success) invalidDefinitions
-                && !duplicateHostnames.success
-                && !duplicateMediaAddresses.success;
+                builtins.all (result: !result.success) invalidDefinitions && !duplicateHostnames.success;
               hasAccessPolicy =
                 rules: host: policy:
                 builtins.any (rule: builtins.elem host rule.domain && rule.policy == policy) rules;
