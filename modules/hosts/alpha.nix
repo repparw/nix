@@ -380,15 +380,13 @@
             cd src
 
             export FLAKE="$state/src"
+            export HOST_UPDATE_DIFF="$state/diff.txt"
             export SOAK_SETTLE_SECONDS=60
             export SOAK_INTERVAL_SECONDS=60
             export SOAK_ATTEMPTS=10
             rm -f "$state/diff.txt"
             rc=0
             host-update --yes --no-pull || rc=$?
-            if [ -f /tmp/host-update-diff.txt ]; then
-              cp /tmp/host-update-diff.txt "$state/diff.txt"
-            fi
             if [ "$rc" = 0 ]; then
               printf '0\n' > "$state/rollback-streak"
               changed=$(grep -cE '^[<>] ' "$state/diff.txt" || true)

@@ -9,6 +9,10 @@
       flake = false;
     };
     den.url = "github:denful/den";
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     firefox-addons = {
       url = "github:petrkozorezov/firefox-addons-nix";
       inputs = {

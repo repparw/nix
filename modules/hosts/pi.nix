@@ -313,6 +313,7 @@
             # responsible for its writer duties (bump above, revert-push
             # and breaker here) and the Discord reports.
             export FLAKE="$state/src"
+            export HOST_UPDATE_DIFF="$state/diff.txt"
             rc=0
             host-update --yes --no-pull --result=/var/lib/auto-update-result || rc=$?
             if [ "$rc" = 0 ]; then
