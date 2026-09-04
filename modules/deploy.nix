@@ -48,10 +48,9 @@ in
     };
   };
 
-  # Validate the deploy graph and every activation profile as part of the
-  # ordinary flake checks before a remote command is attempted.
-  # Both checks retain references to epsilon's aarch64 closure, so they run
-  # on epsilon (or another configured aarch64 builder), not the x86_64 CI
+  # Expose deploy-rs' graph and activation checks for manual remote
+  # validation. Both retain references to epsilon's aarch64 closure, so they
+  # run on epsilon (or another configured aarch64 builder), not the x86_64 CI
   # runner.
   flake.checks.aarch64-linux = deployChecksFor "aarch64-linux";
 
