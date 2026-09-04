@@ -46,6 +46,9 @@
             yes=0
             no_pull=0
             result=""
+            soak_settle_seconds="''${SOAK_SETTLE_SECONDS:-45}"
+            soak_interval_seconds="''${SOAK_INTERVAL_SECONDS:-30}"
+            soak_attempts="''${SOAK_ATTEMPTS:-10}"
 
             # Flags: --yes flips without prompting (headless callers),
             # --no-pull leaves tree management to the caller, --result=PATH
@@ -85,6 +88,7 @@
             fi
 
             cd "$flake"
+            rm -f /tmp/host-update-diff.txt
 
             # Consumers pull; pi pushes. Never bump inputs here.
             if [ "$no_pull" = 0 ]; then
@@ -130,7 +134,9 @@
             changed=$(grep -cE '^[<>] ' /tmp/host-update-diff.txt || true)
             if [ "$changed" -eq 0 ]; then
               echo "already at the pinned generation"
-              exit 0
+              # Exit 3 = no-op: automated callers stay silent instead of
+              # reporting a flip that did not happen.
+              exit 3
             fi
 
             if [ "$yes" = 0 ]; then
@@ -150,10 +156,10 @@
             fi
 
             # Soak: settle, then two consecutive clean gate passes.
-            sleep 45
+            sleep "$soak_settle_seconds"
             passes=0
             i=0
-            while [ "$i" -lt 10 ]; do
+            while [ "$i" -lt "$soak_attempts" ]; do
               if gate; then
                 passes=$((passes + 1))
               else
@@ -161,7 +167,7 @@
               fi
               [ "$passes" -ge 2 ] && break
               i=$((i + 1))
-              sleep 30
+              sleep "$soak_interval_seconds"
             done
 
             if [ "$passes" -lt 2 ]; then
