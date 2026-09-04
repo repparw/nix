@@ -25,7 +25,7 @@
         # shared inventory also carries pi-local services whose state never
         # exists here.
         localBackupCfg = cfg // {
-          definitions = lib.filterAttrs (_: service: service.host == "alpha") cfg.definitions;
+          definitions = lib.filterAttrs (_: service: service.host == cfg.hostName) cfg.definitions;
         };
       in
       {
