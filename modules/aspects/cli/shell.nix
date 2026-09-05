@@ -132,8 +132,22 @@
 
             nvd diff /run/current-system "$result" \
               | tee "$diff_path"
-            changed=$(grep -cE '^[<>] ' "$diff_path" || true)
-            if [ "$changed" -eq 0 ]; then
+            current_system=$(readlink -f /run/current-system) || {
+              echo "cannot resolve /run/current-system" >&2
+              exit 1
+            }
+            candidate_system=$(readlink -f "$result") || {
+              echo "cannot resolve candidate system: $result" >&2
+              exit 1
+            }
+            case "$current_system:$candidate_system" in
+              /nix/store/*:/nix/store/*) ;;
+              *)
+                echo "system paths must resolve into /nix/store" >&2
+                exit 1
+                ;;
+            esac
+            if [ "$current_system" = "$candidate_system" ]; then
               echo "already at the pinned generation"
               # Exit 3 = no-op: automated callers stay silent instead of
               # reporting a flip that did not happen.
