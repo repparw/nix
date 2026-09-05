@@ -28,6 +28,7 @@ jobs:
           .#checks.x86_64-linux.sops-files
           .#checks.x86_64-linux.change-detection
           .#checks.x86_64-linux.check-flake-file
+          .#checks.x86_64-linux.deploy-schema
           .#checks.x86_64-linux.service-definitions
           .#checks.x86_64-linux.alpha
           .#checks.x86_64-linux.pi

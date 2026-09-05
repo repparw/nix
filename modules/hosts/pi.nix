@@ -23,6 +23,7 @@
       den.aspects.nixos-services._.automations
       den.aspects.nixos-services._.homeassistant
       den.aspects.nixos-services._.fleet-health
+      den.aspects.deploy-target
     ];
 
     nixos =
@@ -181,165 +182,23 @@
 
         hardware.bluetooth.enable = true;
 
-        # Upgrade strategy C: nightly job bumps inputs, builds the next
-        # closure, gates on strict local probes, pushes the bumped lock to
-        # main via repparw's enrolled GitHub key, flips, soaks against
-        # the probe set, and rolls back automatically if the soak fails.
-        # Two consecutive rollbacks trip the breaker and pause automation;
-        # pause/resume by touching /var/lib/auto-update/PAUSE, surfaced by
-        # fleet-health so a paused updater never rots silently.
+        # Pi remains the sole lock writer. The shared updater pushes a
+        # clean candidate before staging epsilon -> pi -> idle alpha through
+        # deploy-rs, then reverts main and every reached host on health failure.
         systemd.services.auto-update = {
-          description = "Bump inputs, build, gate, flip, and watch the result";
+          description = "Bump inputs and converge the fleet through deploy-rs";
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
-          path = with pkgs; [
-            git
-            nix
-            nvd
-            nixos-rebuild
-            util-linux
-            openssh
-            systemd
-            curl
-            jq
-            gawk
-            gnugrep
-            coreutils
-            # host-update ships in repparw's per-user profile (shell aspect);
-            # the flip/soak/rollback below calls it. NixOS appends /bin to
-            # path entries, so the entry is the profile root.
-            "/etc/profiles/per-user/repparw"
-          ];
+          restartIfChanged = false;
           serviceConfig = {
             Type = "oneshot";
             WorkingDirectory = "/var/lib/auto-update";
             StateDirectory = "auto-update";
             TimeoutStartSec = "90min";
           };
-          # probe comes from den.aspects.nixos-services._.fleet-health
-          environment.PROBE = lib.getExe config.modules.fleet-health.probe;
           script = ''
-            state=/var/lib/auto-update
-            api="https://discord.com/api/v10/channels/1515064288191053979/messages"
-            mkdir -p "$state"
-
-            exec 9>/run/auto-update.lock
-            flock -n 9 || exit 0
-
-            if [ -e "$state/PAUSE" ]; then
-              echo "automation paused via PAUSE flag"
-              exit 0
-            fi
-
-            notify() { # content
-              # shellcheck disable=SC1091
-              source /run/secrets/hermes-env
-              curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" >/dev/null || true
-            }
-
-            notify_file() { # content, file
-              # shellcheck disable=SC1091
-              source /run/secrets/hermes-env
-              curl -s -m 30 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-                -F "payload_json=$(jq -n --arg c "$1" '{content: $c}')" \
-                -F "files[0]=@$2" "$api" >/dev/null || true
-            }
-
-            cd "$state"
-            # Persistent clone, converged to origin/main every run: same
-            # end state as a fresh clone without the re-clone cost.
-            if [ -d src/.git ]; then
-              git -C src fetch origin main
-              git -C src reset --hard origin/main
-            else
-              git clone --depth 1 https://github.com/repparw/nix src
-            fi
-            cd src
-            git remote set-url --push origin git@github.com:repparw/nix.git
-            nix flake update
-            if git diff --exit-code flake.lock >/dev/null; then
-              echo "lock unchanged; nothing to do"
-              exit 0
-            fi
-
-            free_kb() { df -k /nix | awk 'NR==2{print $4}'; }
-            if [ "$(free_kb)" -lt $((10 * 1024 * 1024)) ]; then
-              echo "below 10G on /nix; GCing old generations first"
-              nix-collect-garbage -d >/dev/null || true
-            fi
-            if [ "$(free_kb)" -lt $((6 * 1024 * 1024)) ]; then
-              notify ":warning: pi auto-update aborted: $(df -h /nix | awk 'NR==2{print $4}') free on /nix even after GC"
-              exit 1
-            fi
-
-            if ! "$PROBE" --strict --local; then
-              notify ":warning: pi auto-update aborted: local probes failing before the flip; system left untouched"
-              exit 1
-            fi
-
-            # Insurance for forward-only state moves (postgres schemas):
-            # best-effort fresh snapshot, never a reason to skip the flip.
-            timeout 20m systemctl start restic-backups-offsite.service ||
-              notify ":information_source: pi auto-update flipping without a fresh snapshot"
-
-            nix build .#nixosConfigurations.pi.config.system.build.toplevel -o /var/lib/auto-update-result
-            nvd diff /run/current-system /var/lib/auto-update-result > "$state/diff.txt" || true
-            changed=$(grep -cE '^[<>] ' "$state/diff.txt" || true)
-            kernel=$(grep -oE 'linux-[0-9.]+' "$state/diff.txt" | head -1 || true)
-
-            pushed=0
-            # repparw's enrolled GitHub key; root has none of its own.
-            key=/home/repparw/.ssh/id_ed25519
-            if [ -f "$key" ]; then
-              git config user.name "pi-auto-update"
-              git config user.email "pi-auto-update@repparw.com"
-              git commit -m "flake.lock: Update" flake.lock
-              export GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-              # Push by URL: the clone remote is https and GIT_SSH_COMMAND
-              # never applies to it.
-              if git push "git@github.com:repparw/nix.git" main; then
-                pushed=1
-              else
-                notify ":warning: pi auto-update aborted: lock push to main failed; not flipping an unpushed tree"
-                exit 1
-              fi
-            fi
-
-            # Flip, soak, and rollback ride the shared host-update wrapper.
-            # The wrapper gates on PROBE, diffs the prebuilt
-            # result, switches, and reverts on soak failure; pi stays
-            # responsible for its writer duties (bump above, revert-push
-            # and breaker here) and the Discord reports.
-            export FLAKE="$state/src"
-            export HOST_UPDATE_DIFF="$state/diff.txt"
-            rc=0
-            host-update --yes --no-pull --result=/var/lib/auto-update-result || rc=$?
-            if [ "$rc" = 0 ]; then
-              printf '0\n' > "$state/rollback-streak"
-              klabel=""
-              [ -n "$kernel" ] && klabel=" ($kernel)"
-              notify_file "**pi flipped** — $changed packages changed$klabel" "$state/diff.txt"
-            elif [ "$rc" = 3 ]; then
-              printf '0\n' > "$state/rollback-streak"
-              echo "lock pushed but pi closure unchanged"
-            else
-              streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
-              printf '%s\n' "$streak" > "$state/rollback-streak"
-              if [ "$pushed" = 1 ]; then
-                git revert --no-edit HEAD || true
-                git push "git@github.com:repparw/nix.git" main || true
-              fi
-              note=""
-              if [ "$streak" -ge 2 ]; then
-                touch "$state/PAUSE"
-                note=" — automation PAUSED (breaker)"
-              fi
-              notify ":rotating_light: pi flipped then ROLLED BACK (soak failed); $streak consecutive$note"
-              notify_file "rolled-back generation's diff:" "$state/diff.txt"
-              exit 1
-            fi
+            exec ${lib.getExe config.modules.fleet-update.package} \
+              --update-lock --state /var/lib/auto-update
           '';
         };
 
