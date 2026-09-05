@@ -272,15 +272,17 @@
 
               vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
 
-              # Alpha is a consumer: pi owns flake.lock (sole writer). The
-              # manual path runs the gated host-update wrapper (probe, GC
-              # headroom, diff review, soak, rollback) — it never bumps
-              # inputs. Raw nrs/nrb stay for one-off local builds.
+              # Alpha is a consumer: pi owns flake.lock (sole writer). Mod+U
+              # asks pi's serialized deploy-rs controller to converge alpha
+              # explicitly, bypassing unattended desktop activity policy and
+              # PAUSE but retaining deployment health/rollback. host-update
+              # remains available for local review; raw nrs/nrb stay for
+              # one-off local builds.
               nrs = "nh os switch";
               nrb = "nh os boot";
               nrt = "nh os test";
 
-              nrsu = "host-update";
+              nrsu = "${lib.getExe pkgs.openssh} -t -i /home/repparw/.ssh/id_ed25519 -o BatchMode=yes -o IdentitiesOnly=yes root@192.168.0.4 /run/current-system/sw/bin/fleet-update --host alpha --force --wait-lock 3600 --state /var/lib/auto-update";
               nrbu = "nrb";
 
               ln = "ln -i";

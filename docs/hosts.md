@@ -22,9 +22,13 @@ alpha's published service backends over the LAN.
 
 Alpha is the final stage of deploy-rs fleet updates and is activated only when
 every local graphical user session is idle, locked, or no longer active. This
-policy comes from its desktop aspect rather than its host name. Its local gated
-consumer retries the current main revision when the pi controller deferred or
-could not reach it. See the
+policy also defers for block-mode systemd sleep inhibitors, so a remote game or
+media stream remains active even when the physical session is locked. It
+ignores delay-mode and non-sleep inhibitors. The policy comes from alpha's
+desktop aspect rather than its host name. Its scheduled retry asks pi's
+controller to consume the current main revision when the fleet pass deferred
+or could not reach it, ensuring every deployment shares one controller mutex.
+See the
 [fleet operations runbook](runbooks/fleet-operations.md).
 
 Source: `modules/hosts/alpha.nix`
