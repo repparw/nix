@@ -92,6 +92,7 @@ in
       config = {
         modules.fleet-update.package = mkFleetUpdate pkgs;
         environment.systemPackages = [ config.modules.fleet-update.package ];
+        systemd.tmpfiles.rules = [ "d /run/deploy-rs 0700 root root -" ];
         users.users.root.openssh.authorizedKeys.keys = import ../authorized-keys.nix;
         system.configurationRevision = inputs.self.rev or (inputs.self.dirtyRev or null);
       };
