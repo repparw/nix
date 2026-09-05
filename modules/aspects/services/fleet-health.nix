@@ -321,7 +321,9 @@
                 | select(.exe != null and .exe != "")
                 | (.exe | split("/") | last)
                 | select(. as $b | $mute | index($b)) ] | length' 2>/dev/null || echo 0)
-            [ "$muted" -gt 0 ] && echo "coredumps: $muted muted crash(es) suppressed"
+            if [ "$muted" -gt 0 ]; then
+              echo "coredumps: $muted muted crash(es) suppressed"
+            fi
           '';
         };
       in
