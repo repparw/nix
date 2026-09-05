@@ -290,7 +290,7 @@ deploy_one() {
   activity_gate=$(nix eval --json ".#nixosConfigurations.$host.config.modules.fleet-update.activityGate") || return 1
   case "$activity_gate" in
     true)
-      if ! host_is_idle "$host"; then
+      if [ "$dry_activate" = 0 ] && ! host_is_idle "$host"; then
         echo "$host has an active graphical session or is unavailable; deferring it"
         notify ":information_source: fleet update deferred $host (active or unavailable) at ${revision:0:8}"
         deferred+=("$host")
