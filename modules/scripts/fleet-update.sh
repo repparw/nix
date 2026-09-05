@@ -135,6 +135,9 @@ remote() { # host, command...
 
 alpha_is_idle() {
   remote alpha bash -s <<'EOF'
+locked=""
+idle=""
+session_state=""
 if ! loginctl list-sessions --no-legend 2>/dev/null | grep -q .; then
   exit 0
 fi
@@ -143,8 +146,12 @@ if [ -z "$sess" ]; then
   sess=$(loginctl --no-legend 2>/dev/null | awk '$3=="repparw" { print $1; exit }')
 fi
 [ -z "$sess" ] && exit 0
-[ "$(loginctl show-session "$sess" -p IdleHint --value 2>/dev/null)" = yes ] && exit 0
-[ "$(loginctl show-session "$sess" -p State --value 2>/dev/null)" != active ] && exit 0
+locked=$(loginctl show-session "$sess" -p LockedHint --value 2>/dev/null)
+idle=$(loginctl show-session "$sess" -p IdleHint --value 2>/dev/null)
+session_state=$(loginctl show-session "$sess" -p State --value 2>/dev/null)
+[ "$locked" = yes ] && exit 0
+[ "$idle" = yes ] && exit 0
+[ -n "$session_state" ] && [ "$session_state" != active ] && exit 0
 exit 1
 EOF
 }
@@ -265,6 +272,12 @@ failure_host=""
 deploy_one() {
   local host="$1" running_revision before after_generation
 
+  running_revision=$(remote "$host" nixos-version --configuration-revision 2>/dev/null || true)
+  if [ "$running_revision" = "$revision" ] && [ "$dry_activate" = 0 ]; then
+    echo "$host already runs ${revision:0:8}"
+    return 2
+  fi
+
   if [ "$host" = alpha ]; then
     if ! alpha_is_idle; then
       echo "alpha is active or unavailable; deferring it"
@@ -272,12 +285,6 @@ deploy_one() {
       deferred+=(alpha)
       return 2
     fi
-  fi
-
-  running_revision=$(remote "$host" nixos-version --configuration-revision 2>/dev/null || true)
-  if [ "$running_revision" = "$revision" ] && [ "$dry_activate" = 0 ]; then
-    echo "$host already runs ${revision:0:8}"
-    return 2
   fi
 
   # Bootstrap the private activation directory on nodes that predate the
