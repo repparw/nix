@@ -1,12 +1,12 @@
 {
+  den,
   inputs,
   lib,
   ...
 }:
 let
   # Keep deploy-rs' activation library, but use the cache-backed Nixpkgs CLI
-  # in the generated activation wrapper. This is the upstream-recommended
-  # overlay shape and avoids rebuilding the Rust CLI for every target system.
+  # in generated activation wrappers.
   mkDeployPkgs =
     system:
     let
@@ -24,46 +24,151 @@ let
         })
       ];
     };
-  epsilonDeployPkgs = mkDeployPkgs "aarch64-linux";
-  deployChecksFor = system: (mkDeployPkgs system).deploy-rs.lib.deployChecks inputs.self.deploy;
+
+  deployPkgs = {
+    aarch64-linux = mkDeployPkgs "aarch64-linux";
+    x86_64-linux = mkDeployPkgs "x86_64-linux";
+  };
+
+  mkFleetUpdate =
+    pkgs:
+    pkgs.writeShellApplication {
+      name = "fleet-update";
+      runtimeInputs = with pkgs; [
+        coreutils
+        curl
+        deploy-rs
+        git
+        gawk
+        gnugrep
+        jq
+        nix
+        openssh
+        systemd
+        util-linux
+      ];
+      text = builtins.readFile ./scripts/fleet-update.sh;
+    };
+
+  mkDeploySchemaCheck =
+    pkgs:
+    pkgs.runCommand "deploy-schema" { nativeBuildInputs = [ pkgs.check-jsonschema ]; } ''
+      check-jsonschema \
+        --schemafile ${inputs.deploy-rs}/interface.json \
+        ${pkgs.writeText "deploy.json" (
+          builtins.unsafeDiscardStringContext (builtins.toJSON inputs.self.deploy)
+        )}
+      touch "$out"
+    '';
+
+  mkActivationCheck =
+    pkgs: node:
+    let
+      profile = inputs.self.deploy.nodes.${node}.profiles.system.path;
+    in
+    pkgs.runCommand "deploy-activate-${node}" { } ''
+      test -f ${profile}/deploy-rs-activate
+      test -f ${profile}/activate-rs
+      touch "$out"
+    '';
 in
 {
-  # deploy-rs prototype: epsilon first (no pipeline there today). Deploys
-  # run from alpha against origin/main — the same pin pi's pipeline
-  # publishes — with the closure built on the target and deploy-rs'
-  # auto-rollback + magic rollback covering boot-level failures.
   flake-file.inputs.deploy-rs = {
     url = "github:serokell/deploy-rs";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  flake.deploy.nodes.epsilon = {
-    # ssh config alias; root has the shared authorized keys.
-    hostname = "epsilon";
+  # Shared target plumbing. Key-only root access lets the always-on pi
+  # controller activate every node without password-bearing automation.
+  den.aspects.deploy-target.nixos =
+    { config, pkgs, ... }:
+    {
+      options.modules.fleet-update.package = lib.mkOption {
+        type = lib.types.package;
+        readOnly = true;
+        description = "Transactional deploy-rs fleet updater";
+      };
+
+      config = {
+        modules.fleet-update.package = mkFleetUpdate pkgs;
+        environment.systemPackages = [ config.modules.fleet-update.package ];
+        users.users.root.openssh.authorizedKeys.keys = import ../authorized-keys.nix;
+        system.configurationRevision = inputs.self.rev or (inputs.self.dirtyRev or null);
+      };
+    };
+
+  flake.deploy = {
+    autoRollback = true;
+    magicRollback = true;
+    tempPath = "/run/deploy-rs";
     sshUser = "root";
-    remoteBuild = true;
-    profiles.system = {
-      user = "root";
-      path = epsilonDeployPkgs.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.epsilon;
+    sshOpts = [
+      "-i"
+      "/home/repparw/.ssh/id_ed25519"
+      "-o"
+      "BatchMode=yes"
+      "-o"
+      "IdentitiesOnly=yes"
+      "-o"
+      "StrictHostKeyChecking=accept-new"
+    ];
+    nodes = {
+      epsilon = {
+        hostname = "146.181.42.97";
+        remoteBuild = true;
+        profiles.system = {
+          user = "root";
+          path = deployPkgs.aarch64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.epsilon;
+        };
+      };
+      pi = {
+        hostname = "192.168.0.4";
+        remoteBuild = true;
+        profiles.system = {
+          user = "root";
+          path = deployPkgs.aarch64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.pi;
+        };
+      };
+      alpha = {
+        hostname = "192.168.0.18";
+        remoteBuild = true;
+        profiles.system = {
+          user = "root";
+          path = deployPkgs.x86_64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.alpha;
+        };
+      };
     };
   };
 
-  # Expose deploy-rs' graph and activation checks for manual remote
-  # validation. Both retain references to epsilon's aarch64 closure, so they
-  # run on epsilon (or another configured aarch64 builder), not the x86_64 CI
-  # runner.
-  flake.checks.aarch64-linux = deployChecksFor "aarch64-linux";
+  # Schema checks discard store-path contexts and therefore validate the
+  # mixed-architecture graph on either runner. Activation checks stay native.
+  flake.checks = {
+    aarch64-linux = {
+      deploy-schema = mkDeploySchemaCheck deployPkgs.aarch64-linux;
+      deploy-activate-epsilon = mkActivationCheck deployPkgs.aarch64-linux "epsilon";
+      deploy-activate-pi = mkActivationCheck deployPkgs.aarch64-linux "pi";
+    };
+    x86_64-linux = {
+      deploy-schema = mkDeploySchemaCheck deployPkgs.x86_64-linux;
+      deploy-activate-alpha = mkActivationCheck deployPkgs.x86_64-linux "alpha";
+    };
+  };
 
-  # Use the cache-backed Nixpkgs CLI with deploy-rs' flake library. Building
-  # the input's bundled CLI is unnecessary and bypasses the binary cache.
   perSystem =
     { pkgs, ... }:
     {
       packages.deploy-rs = pkgs.deploy-rs;
+      packages.fleet-update = mkFleetUpdate pkgs;
+
       apps.deploy-rs = {
         type = "app";
         program = lib.getExe pkgs.deploy-rs;
         meta.description = "Deploy a configured node with deploy-rs";
+      };
+      apps.fleet-update = {
+        type = "app";
+        program = lib.getExe (mkFleetUpdate pkgs);
+        meta.description = "Update and converge the NixOS fleet transactionally";
       };
     };
 }

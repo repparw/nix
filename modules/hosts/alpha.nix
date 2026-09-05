@@ -17,6 +17,7 @@
       den.aspects.nixos-services._.coredump-watch
       den.aspects.streaming
       den.aspects.streaming._.pulse-crash-fix
+      den.aspects.deploy-target
     ];
 
     nixos =
@@ -280,30 +281,14 @@
           '';
         };
 
-        # Consumer updater: alpha never bumps flake.lock. It pulls the lock
-        # pi pushed, gates on idle + pi health + local health, flips, soaks,
-        # and rolls back on failure. Single writer stays pi.
+        # Consumer retry: alpha never writes flake.lock. The shared updater
+        # pulls main, defers while the desktop is active, and converges this
+        # node through deploy-rs if pi's staged run could not reach it.
         systemd.services.alpha-auto-update = {
-          description = "Pull main, gate on idle and pi health, flip alpha";
+          description = "Converge idle alpha through deploy-rs";
           after = [ "network-online.target" ];
           wants = [ "network-online.target" ];
-          path = with pkgs; [
-            git
-            nix
-            nvd
-            nixos-rebuild
-            curl
-            jq
-            gawk
-            gnugrep
-            coreutils
-            util-linux
-            systemd
-            # host-update ships in repparw's per-user profile (shell aspect);
-            # the flip/soak/rollback below calls it. NixOS appends /bin to
-            # path entries, so the entry is the profile root.
-            "/etc/profiles/per-user/repparw"
-          ];
+          restartIfChanged = false;
           serviceConfig = {
             Type = "oneshot";
             WorkingDirectory = "/var/lib/alpha-auto-update";
@@ -311,106 +296,8 @@
             TimeoutStartSec = "90min";
           };
           script = ''
-            state=/var/lib/alpha-auto-update
-            api="https://discord.com/api/v10/channels/1515064288191053979/messages"
-            mkdir -p "$state"
-
-            exec 9>/run/alpha-auto-update.lock
-            flock -n 9 || exit 0
-
-            if [ -e "$state/PAUSE" ]; then
-              echo "automation paused via PAUSE flag"
-              exit 0
-            fi
-
-            notify() {
-              # shellcheck disable=SC1091
-              source /run/secrets/hermes-env
-              curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" >/dev/null || true
-            }
-
-            notify_file() {
-              # shellcheck disable=SC1091
-              source /run/secrets/hermes-env
-              curl -s -m 30 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-                -F "payload_json=$(jq -n --arg c "$1" '{content: $c}')" \
-                -F "files[0]=@$2" "$api" >/dev/null || true
-            }
-
-            is_idle() {
-              # No logind sessions at all -> idle
-              if ! loginctl list-sessions --no-legend 2>/dev/null | grep -q .; then
-                return 0
-              fi
-              sess=$(loginctl --no-legend 2>/dev/null | awk '$3=="repparw" && $6=="user"{print $1; exit}')
-              if [ -z "$sess" ]; then
-                sess=$(loginctl --no-legend 2>/dev/null | awk '$3=="repparw"{print $1; exit}')
-              fi
-              if [ -z "$sess" ]; then
-                return 0
-              fi
-              idle=$(loginctl show-session "$sess" -p IdleHint 2>/dev/null | cut -d= -f2)
-              if [ "$idle" = "yes" ]; then
-                return 0
-              fi
-              state=$(loginctl show-session "$sess" -p State 2>/dev/null | cut -d= -f2)
-              if [ "$state" != "active" ]; then
-                return 0
-              fi
-              return 1
-            }
-
-            if ! is_idle; then
-              echo "graphical session active, deferring alpha flip"
-              exit 0
-            fi
-
-            # Clone the pin pi published, then hand gate/build/diff/flip/
-            # soak/rollback to the shared wrapper (issue #54). Alpha stays
-            # responsible for idle detection, the breaker, and the reports.
-            cd "$state"
-            if [ -d src/.git ]; then
-              git -C src fetch origin main
-              git -C src reset --hard origin/main
-            else
-              git clone --depth 1 https://github.com/repparw/nix src
-            fi
-            cd src
-
-            export FLAKE="$state/src"
-            export HOST_UPDATE_DIFF="$state/diff.txt"
-            export SOAK_SETTLE_SECONDS=60
-            export SOAK_INTERVAL_SECONDS=60
-            export SOAK_ATTEMPTS=10
-            rm -f "$state/diff.txt"
-            rc=0
-            host-update --yes --no-pull || rc=$?
-            if [ "$rc" = 0 ]; then
-              printf '0\n' > "$state/rollback-streak"
-              changed=$(grep -cE '^[<>] ' "$state/diff.txt" || true)
-              kernel=$(grep -oE 'linux-[0-9.]+' "$state/diff.txt" | head -1 || true)
-              klabel=""
-              [ -n "$kernel" ] && klabel=" ($kernel)"
-              notify_file "**alpha flipped** — $changed packages changed$klabel" "$state/diff.txt"
-            elif [ "$rc" = 3 ]; then
-              printf '0\n' > "$state/rollback-streak"
-              echo "alpha already at the pinned generation"
-            else
-              streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
-              printf '%s\n' "$streak" > "$state/rollback-streak"
-              note=""
-              if [ "$streak" -ge 2 ]; then
-                touch "$state/PAUSE"
-                note=" — automation PAUSED (breaker)"
-              fi
-              notify ":rotating_light: alpha flipped then ROLLED BACK (soak failed); $streak consecutive$note"
-              if [ -f "$state/diff.txt" ]; then
-                notify_file "rolled-back generation diff:" "$state/diff.txt"
-              fi
-              exit 1
-            fi
+            exec ${lib.getExe config.modules.fleet-update.package} \
+              --host alpha --state /var/lib/alpha-auto-update
           '';
         };
 

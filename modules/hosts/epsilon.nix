@@ -11,6 +11,7 @@
 
   den.aspects.epsilon = {
     includes = [
+      den.aspects.deploy-target
       den.batteries.hostname
       den.aspects.networking
       # den.aspects.nix (in den.default) declares sops.secrets.accessTokens;
@@ -188,8 +189,6 @@
 
         networking.firewall.interfaces.eth0.allowedTCPPorts = [ ];
 
-        # Rescue path: root keeps key access with the same shared keys.
-        users.users.root.openssh.authorizedKeys.keys = import ../../authorized-keys.nix;
       };
   };
 

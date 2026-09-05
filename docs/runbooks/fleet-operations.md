@@ -1,26 +1,26 @@
 ---
 type: Runbook
 title: Fleet health, offsite backups, and auto-updates
-description: How the pi's fleet-health alerting, offsite restic backups, and nightly auto-update pipeline work — probing, restoring, pausing, and rolling back.
-when: Read when a Discord health alert fires, when restoring service state from the offsite repo, or when pi flips or rolls back on its own and you need to pause or inspect automation.
-resource: modules/aspects/services/fleet-health.nix
-tags: [runbook, pi, alpha, backups, restic, alerting, upgrades]
+description: How fleet-health alerting, offsite restic backups, and the staged deploy-rs updater work — probing, restoring, pausing, and rolling back.
+when: Read when a Discord health alert fires, when restoring service state from the offsite repo, or when a staged fleet update deploys, defers, or rolls back.
+resource: modules/deploy.nix
+tags: [runbook, pi, alpha, epsilon, backups, restic, alerting, upgrades, deploy-rs]
 ---
 
 # Fleet health, offsite backups, and auto-updates
 
-The pi is the always-on host. Three systems keep it observable and
-recoverable: fleet-health probes, an offsite restic repo, and a nightly
-auto-update pipeline. All three post to the `#notifications` Discord
+The pi is the always-on controller. Three systems keep the fleet observable and
+recoverable: fleet-health probes, an offsite restic repo, and a nightly staged
+deploy-rs update. All three post to the `#notifications` Discord
 channel using the bot token from `hermes-env` — the monitor deliberately
 does not go through the hermes container, so it still reports when hermes
 itself is down.
 
 ## Fleet health (`fleet-health.timer`, every 5 min)
 
-Probes every systemd unit that matters plus every HTTP surface on both
-hosts: the pi edge (traefik, authelia, HA, hermes, glance, ASF, the
-miniflux container), the apex and rss vhosts, and alpha's published
+Probes every systemd unit that matters plus every HTTP surface across the
+fleet: the pi and epsilon services (traefik, authelia, HA, hermes, glance, ASF,
+and miniflux), the apex and rss vhosts, and alpha's published
 backends (jellyfin, qbit, bazarr, prowlarr, radarr, sonarr, paperless,
 finance).
 
@@ -34,9 +34,9 @@ finance).
   `modules/aspects/services/fleet-health.nix` (unit or HTTP probe).
 
 The probe doubles as a library for gates: `fleet-health-probe --strict
---local` exits nonzero on any failure and skips cross-host checks. The
-auto-update job uses exactly that scope, so an unrelated alpha outage can
-never gate or roll back pi. Monitoring mode also alerts once if
+--local` exits nonzero on any failure and skips cross-host checks. The updater
+also runs explicit per-node unit and HTTP gates during each soak. Monitoring
+mode alerts once if
 `/var/lib/auto-update/PAUSE` exists, so paused automation never rots
 silently.
 
@@ -74,16 +74,21 @@ Adding a new host's key to a secrets file:
 `sops updatekeys --yes secrets/<file>.sops.yaml` from a machine that can
 decrypt it.
 
-## Auto-update (strategy C, `auto-update.timer`, daily 04:15)
+## Staged auto-update (`auto-update.timer`, daily 04:15)
 
-The nightly job runs unattended and replaces the old report-then-ssh-flip
-flow. Pipeline: clone main → bump all inputs (skip silently if the lock
-did not move) → GC if `/nix` is under 10G, abort-and-alert under 6G →
-strict local probe of the current system → best-effort restic snapshot
-(capped at 20 min) → build pi's closure → commit and push the bumped lock
-to main via repparw's enrolled GitHub key (abort if the push fails; never
-flip an unpushed tree) → `nixos-rebuild switch` → soak for up to ten
-minutes against strict local probes.
+Pi is the controller and sole lock writer. Its `fleet-update --update-lock`
+cycle resets a persistent checkout to `origin/main`, checks disk and current pi
+health, takes a best-effort restic snapshot, bumps all inputs, and validates the
+deploy schema plus all three host evaluations. If the lock changed, it commits
+and pushes the candidate to GitHub before changing any host; the GitLab mirror
+push is best-effort.
+
+The candidate is then deployed with deploy-rs in blast-radius order:
+**epsilon → pi → alpha**. Every changed node is activated with deploy-rs magic
+rollback enabled, then must pass two consecutive unit and HTTP health checks.
+Alpha is deployed only when its graphical session is idle; otherwise it is
+reported as deferred. Its 05:30 `alpha-auto-update.timer` is a consumer-only
+retry against the current main revision.
 
 Invariant: **origin/main's flake.lock always equals the pin production
 converged on.** Rollbacks push a revert commit; git log is the update
@@ -91,28 +96,30 @@ history.
 
 Failure handling:
 
-- Soak failure → automatic `nixos-rebuild switch --rollback`, revert
-  push, `ROLLED BACK` alert with the generation's diff attached.
-- Two consecutive rollbacks trip the breaker: automation sets its own
-  PAUSE flag and alerts.
-- Boot-level regressions cannot self-heal — that is what the rescue SD is
-  for. pi runs linuxPackages_latest with the `pcie_brcmstb` initrd module
-  so stage-1 enumerates the NVMe; a cold power-cycle boot on latest is
-  proven.
+- Activation failures are handled first by deploy-rs magic rollback.
+- A failed post-activation soak reverts the candidate commit on main and
+  redeploys the reverted graph to every node already reached. If that deploy
+  fails, the updater switches the node back to its exact pre-update profile.
+- Two consecutive failed cycles trip the controller's breaker by creating its
+  `PAUSE` flag and alerting.
+- Boot-level regressions remain a rescue-console problem. Pi's rescue SD is the
+  final recovery path for an unbootable generation.
 
 Operator controls:
 
 ```sh
-ssh pi 'touch /var/lib/auto-update/PAUSE'   # pause automation
-ssh pi 'rm /var/lib/auto-update/PAUSE'      # resume
-ssh pi 'systemctl start auto-update.service' # force a cycle now
+ssh root@192.168.0.4 'touch /var/lib/auto-update/PAUSE'    # pause writer
+ssh root@192.168.0.4 'rm /var/lib/auto-update/PAUSE'       # resume writer
+ssh root@192.168.0.4 'systemctl start auto-update.service' # force a cycle
+nix run .#fleet-update -- --host epsilon                    # converge one node
+nix run .#fleet-update -- --host epsilon --dry-activate     # activation test
 ```
 
-Artifacts: diff at `/var/lib/auto-update/diff.txt`, built closure at
-`/var/lib/auto-update-result`, rollback streak in
-`/var/lib/auto-update/rollback-streak`. Success posts a classified
-summary (`pi flipped — N packages changed (kernel)`) with the full diff
-attached as a file.
+Controller artifacts live in `/var/lib/auto-update/`: `candidate-revision`,
+`deployed-revision`, `rollback-streak`, and `diff-<host>.txt`. Alpha's retry
+uses `/var/lib/alpha-auto-update/`. A `PAUSE` file is scoped to that job. Node
+success notifications attach the closure diff; the final notification
+distinguishes full convergence from a deferred alpha.
 
 ## Firmware updates (`fwupd`, hardware hosts)
 

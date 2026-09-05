@@ -20,8 +20,9 @@ streaming, and backup behavior. Since the edge migrations it is not a
 public entrypoint: epsilon terminates the public vhosts, and pi fronts
 alpha's published service backends over the LAN.
 
-Alpha's updates are pulled, not pushed: the gated consumer flips it to
-whatever main pins, only while idle. See the
+Alpha is the final stage of deploy-rs fleet updates and is activated only while
+idle. Its local gated consumer retries the current main revision when the pi
+controller deferred or could not reach it. See the
 [fleet operations runbook](runbooks/fleet-operations.md).
 
 Source: `modules/hosts/alpha.nix`
@@ -40,8 +41,9 @@ Source: `modules/hosts/beta.nix`
 `pi` is the Raspberry Pi 5 home server (aarch64, `192.168.0.4`) and the
 always-on host: it runs the LAN-side edge (Traefik with Authelia SSO) and
 the declarative nspawn services that must survive workstation downtime.
-It is also the fleet's **sole flake.lock writer**: its nightly auto-update
-bumps inputs, pushes the lock to main, and both hosts flip onto it.
+It is also the fleet's **sole flake.lock writer and deployment controller**:
+its nightly auto-update publishes the candidate to main, then stages epsilon,
+pi, and idle alpha through deploy-rs.
 
 - Traefik (:80/:443) routes the LAN vhosts; local backends target the
   nspawn bridge, remote ones alpha's published ports
@@ -78,7 +80,8 @@ public vhosts with Authelia SSO. Installed in place via nixos-infect
 - Offsite restic covers its stateful edge services under
   `gd-crypt:restic/epsilon`.
 
-It runs no update pipeline: deploy and switch manually.
+It is the first stage of the fleet's deploy-rs update, limiting blast radius
+before the home controller and desktop are activated.
 
 Source: `modules/hosts/epsilon.nix`
 
