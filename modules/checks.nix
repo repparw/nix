@@ -632,11 +632,17 @@
               fleetUpdaterMatch =
                 let
                   authorizedKeys = import ../authorized-keys.nix;
+                  fleetUpdateSource = builtins.readFile ./scripts/fleet-update.sh;
                 in
                 !alpha.systemd.services.alpha-auto-update.restartIfChanged
                 && !pi.systemd.services.auto-update.restartIfChanged
-                && lib.strings.hasInfix "--host alpha --state /var/lib/alpha-auto-update" alpha.systemd.services.alpha-auto-update.script
+                && alpha.systemd.services.alpha-auto-update.serviceConfig.TimeoutStartSec == "180min"
+                && lib.strings.hasInfix "root@192.168.0.4" alpha.systemd.services.alpha-auto-update.script
+                && lib.strings.hasInfix "--host alpha --wait-lock 3600 --state /var/lib/auto-update" alpha.systemd.services.alpha-auto-update.script
                 && lib.strings.hasInfix "--update-lock --state /var/lib/auto-update" pi.systemd.services.auto-update.script
+                && lib.strings.hasInfix "systemd-inhibit --list --json=short" fleetUpdateSource
+                && lib.strings.hasInfix ".mode == \"block\"" fleetUpdateSource
+                && lib.strings.hasInfix "--host alpha --force --wait-lock 3600 --state /var/lib/auto-update" alpha.home-manager.users.repparw.programs.fish.shellAliases.nrsu
                 && alpha.modules.desktop.enable
                 && alpha.modules.fleet-update.activityGate
                 && !pi.modules.fleet-update.activityGate
