@@ -640,6 +640,11 @@
                 && builtins.elem alpha.modules.fleet-update.package alpha.environment.systemPackages
                 && builtins.elem pi.modules.fleet-update.package pi.environment.systemPackages
                 && builtins.elem epsilon.modules.fleet-update.package epsilon.environment.systemPackages
+                && lib.all (host: builtins.elem "d /run/deploy-rs 0700 root root -" host.systemd.tmpfiles.rules) [
+                  alpha
+                  pi
+                  epsilon
+                ]
                 && lib.all (
                   key: builtins.elem key alpha.users.users.root.openssh.authorizedKeys.keys
                 ) authorizedKeys

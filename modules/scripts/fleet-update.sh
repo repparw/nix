@@ -280,6 +280,10 @@ deploy_one() {
     return 2
   fi
 
+  # Bootstrap the private activation directory on nodes that predate the
+  # deploy-target tmpfiles rule. The rule recreates it after every boot.
+  remote "$host" install -d -m 0700 -o root -g root /run/deploy-rs || return 1
+
   before=$(remote "$host" readlink /run/current-system) || return 1
   if [[ "$before" != /nix/store/* ]]; then
     echo "$host returned an invalid current-system path: ${before:-empty}" >&2
