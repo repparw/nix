@@ -629,6 +629,24 @@
                       containerPort = 8989;
                     }
                   ];
+              fleetUpdaterMatch =
+                let
+                  authorizedKeys = import ../authorized-keys.nix;
+                in
+                !alpha.systemd.services.alpha-auto-update.restartIfChanged
+                && !pi.systemd.services.auto-update.restartIfChanged
+                && lib.strings.hasInfix "--host alpha --state /var/lib/alpha-auto-update" alpha.systemd.services.alpha-auto-update.script
+                && lib.strings.hasInfix "--update-lock --state /var/lib/auto-update" pi.systemd.services.auto-update.script
+                && builtins.elem alpha.modules.fleet-update.package alpha.environment.systemPackages
+                && builtins.elem pi.modules.fleet-update.package pi.environment.systemPackages
+                && builtins.elem epsilon.modules.fleet-update.package epsilon.environment.systemPackages
+                && lib.all (
+                  key: builtins.elem key alpha.users.users.root.openssh.authorizedKeys.keys
+                ) authorizedKeys
+                && lib.all (key: builtins.elem key pi.users.users.root.openssh.authorizedKeys.keys) authorizedKeys
+                && lib.all (
+                  key: builtins.elem key epsilon.users.users.root.openssh.authorizedKeys.keys
+                ) authorizedKeys;
               expected = builtins.all (value: value) [
                 nativeServicesMatch
                 authenticationPresentationMatch
@@ -637,6 +655,7 @@
                 validationMatches
                 ingressPolicyMatches
                 publishedBackendMatch
+                fleetUpdaterMatch
               ];
               # Interpolated into the derivation below so that evaluating it
               # forces every matcher: an assert alone can be skipped by lazy
@@ -648,6 +667,7 @@
                 a = authenticationPresentationMatch;
                 m = mediaSpecializationMatch;
                 b = backgroundServicesMatch;
+                f = fleetUpdaterMatch;
                 v = validationMatches;
               };
             in
