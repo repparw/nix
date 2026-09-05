@@ -281,9 +281,9 @@
           '';
         };
 
-        # Consumer retry: alpha never writes flake.lock. The shared updater
-        # pulls main, defers while the desktop is active, and converges this
-        # node through deploy-rs if pi's staged run could not reach it.
+        # Consumer retry: ask pi's controller to converge alpha so scheduled,
+        # fleet-wide, and Mod+U deployments all share its serialization lock.
+        # Alpha never writes flake.lock.
         systemd.services.alpha-auto-update = {
           description = "Converge idle alpha through deploy-rs";
           after = [ "network-online.target" ];
@@ -291,13 +291,20 @@
           restartIfChanged = false;
           serviceConfig = {
             Type = "oneshot";
-            WorkingDirectory = "/var/lib/alpha-auto-update";
-            StateDirectory = "alpha-auto-update";
-            TimeoutStartSec = "90min";
+            # One hour may be spent queued behind the fleet transaction;
+            # leave a full deployment budget after the shared lock is won.
+            TimeoutStartSec = "180min";
           };
           script = ''
-            exec ${lib.getExe config.modules.fleet-update.package} \
-              --host alpha --state /var/lib/alpha-auto-update
+            exec ${lib.getExe' pkgs.openssh "ssh"} \
+              -i /home/repparw/.ssh/id_ed25519 \
+              -o BatchMode=yes \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=accept-new \
+              -o ConnectTimeout=10 \
+              root@192.168.0.4 \
+              /run/current-system/sw/bin/fleet-update \
+              --host alpha --wait-lock 3600 --state /var/lib/auto-update
           '';
         };
 

@@ -1,8 +1,10 @@
 # shellcheck shell=bash
-usage="usage: fleet-update [--update-lock] [--host alpha|pi|epsilon] [--dry-activate] [--state DIR] [--source DIR]"
+usage="usage: fleet-update [--update-lock] [--host alpha|pi|epsilon] [--force] [--wait-lock SECONDS] [--dry-activate] [--state DIR] [--source DIR]"
 
 update_lock=0
 dry_activate=0
+force=0
+lock_wait=0
 requested_host=all
 state="${FLEET_UPDATE_STATE:-/var/lib/fleet-update}"
 source_repo="${FLEET_UPDATE_SOURCE:-}"
@@ -10,6 +12,12 @@ source_repo="${FLEET_UPDATE_SOURCE:-}"
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --update-lock) update_lock=1 ;;
+    --force) force=1 ;;
+    --wait-lock)
+      [ "$#" -ge 2 ] || { echo "$usage" >&2; exit 2; }
+      lock_wait="$2"
+      shift
+      ;;
     --dry-activate) dry_activate=1 ;;
     --host)
       [ "$#" -ge 2 ] || { echo "$usage" >&2; exit 2; }
@@ -42,6 +50,9 @@ case "$requested_host" in
   all | alpha | pi | epsilon) ;;
   *) echo "$usage" >&2; exit 2 ;;
 esac
+case "$lock_wait" in
+  '' | *[!0-9]*) echo "--wait-lock requires whole seconds" >&2; exit 2 ;;
+esac
 
 if [ "$update_lock" = 1 ] && [ "$requested_host" != all ]; then
   echo "--update-lock always operates on the staged fleet" >&2
@@ -51,6 +62,14 @@ if [ "$update_lock" = 1 ] && [ "$dry_activate" = 1 ]; then
   echo "--update-lock and --dry-activate cannot be combined" >&2
   exit 2
 fi
+if [ "$force" = 1 ] && [ "$requested_host" = all ]; then
+  echo "--force requires an explicit --host" >&2
+  exit 2
+fi
+if [ "$force" = 1 ] && [ "$update_lock" = 1 ]; then
+  echo "--force cannot be combined with --update-lock" >&2
+  exit 2
+fi
 if [ -n "$source_repo" ] && [ "$dry_activate" != 1 ]; then
   echo "--source is restricted to dry activation" >&2
   exit 2
@@ -58,14 +77,22 @@ fi
 
 mkdir -p "$state"
 exec 9>"${FLEET_UPDATE_LOCK:-/run/fleet-update.lock}"
-if ! flock -n 9; then
+if [ "$lock_wait" -gt 0 ]; then
+  if ! flock -w "$lock_wait" 9; then
+    echo "timed out waiting ${lock_wait}s for another fleet update" >&2
+    exit 1
+  fi
+elif ! flock -n 9; then
   echo "another fleet update is already running"
   exit 0
 fi
 
-if [ -e "$state/PAUSE" ]; then
+if [ -e "$state/PAUSE" ] && [ "$force" = 0 ]; then
   echo "automation paused via $state/PAUSE"
   exit 0
+fi
+if [ -e "$state/PAUSE" ]; then
+  echo "explicit force overrides automation pause at $state/PAUSE"
 fi
 
 api="https://discord.com/api/v10/channels/1515064288191053979/messages"
@@ -134,7 +161,33 @@ remote() { # host, command...
 }
 
 host_is_idle() {
-  local host="$1"
+  local host="$1" inhibitors blocking_sleep
+
+  # A locked physical session can still be serving an active remote game or
+  # media stream.  Those applications publish the standard systemd sleep
+  # inhibitor; delay-mode power-management hooks are not evidence of use.
+  if ! inhibitors=$(remote "$host" systemd-inhibit --list --json=short --no-pager); then
+    echo "$host inhibitor state is unavailable" >&2
+    return 1
+  fi
+  if ! jq -e 'type == "array"' <<< "$inhibitors" >/dev/null; then
+    echo "$host returned invalid inhibitor state" >&2
+    return 1
+  fi
+  blocking_sleep=$(
+    jq -r '
+      .[]
+      | select(.mode == "block")
+      | select(((.what // "") | split(":")) | index("sleep") != null)
+      | "\(.who // .comm // "unknown") (\(.why // "no reason"))"
+    ' <<< "$inhibitors"
+  ) || return 1
+  if [ -n "$blocking_sleep" ]; then
+    echo "$host has a block-mode sleep inhibitor:" >&2
+    printf '%s\n' "$blocking_sleep" >&2
+    return 1
+  fi
+
   remote "$host" bash -s <<'EOF'
 locked=""
 idle=""
@@ -290,7 +343,7 @@ deploy_one() {
   activity_gate=$(nix eval --json ".#nixosConfigurations.$host.config.modules.fleet-update.activityGate") || return 1
   case "$activity_gate" in
     true)
-      if [ "$dry_activate" = 0 ] && ! host_is_idle "$host"; then
+      if [ "$dry_activate" = 0 ] && [ "$force" = 0 ] && ! host_is_idle "$host"; then
         echo "$host has an active graphical session or is unavailable; deferring it"
         notify ":information_source: fleet update deferred $host (active or unavailable) at ${revision:0:8}"
         deferred+=("$host")

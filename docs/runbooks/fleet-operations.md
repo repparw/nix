@@ -88,11 +88,18 @@ The candidate is then deployed with deploy-rs in blast-radius order:
 rollback enabled, then must pass two consecutive unit and HTTP health checks.
 Hosts carrying `den.aspects.desktop` are deployed only when every local
 graphical user session is idle, locked, or no longer active; otherwise they are
-reported as deferred. The gate reads logind's idle, lock, and session-state
-hints rather than depending on a particular graphical locker or user. Alpha's
-05:30 `alpha-auto-update.timer` is a consumer-only retry against the current
-main revision. A host that already runs the candidate is recognized as
-converged before this activity gate.
+reported as deferred. Before accepting those session hints, the gate also
+rejects any runtime systemd inhibitor whose mode is `block` and whose `what`
+contains `sleep`. This catches active remote game and media streams even while
+the physical session is locked. Delay-mode sleep inhibitors (including rtkit
+and swayidle) and inhibitors for unrelated actions such as power-key handling
+do not gate deployment. Alpha's 05:30 `alpha-auto-update.timer` asks pi's
+controller for a consumer-only retry against the current main revision, so the
+retry, full-fleet pass, and interactive force command share one serialization
+lock. The retry and force paths wait up to one hour for an in-progress fleet
+transaction, then either converge alpha or recognize that it is already
+current. A host that already runs the candidate is recognized as converged
+before this activity gate.
 
 deploy-rs owns closure builds and copies, activation, SSH confirmation, and
 activation-failure rollback. The wrapper supplies fleet policy around it: Git
@@ -125,9 +132,17 @@ nix run .#fleet-update -- --host epsilon                    # converge one node
 nix run .#fleet-update -- --host epsilon --dry-activate     # activation test
 ```
 
+Alpha's interactive `Mod+U` asks pi's fleet controller to run
+`fleet-update --host alpha --force`. Because the user explicitly initiates it,
+the command bypasses the desktop activity/inhibitor gate and automation
+`PAUSE`. It still shares the controller's serialization lock, deploys the exact
+current `origin/main` revision through deploy-rs, applies the health soak, and
+rolls back a failed deployment. The separate `host-update` command remains
+available when an operator specifically wants to build and review a local tree.
+
 Controller artifacts live in `/var/lib/auto-update/`: `candidate-revision`,
 `deployed-revision`, `rollback-streak`, and `diff-<host>.txt`. Alpha's retry
-uses `/var/lib/alpha-auto-update/`. A `PAUSE` file is scoped to that job. Node
+uses that same controller state. A `PAUSE` file is scoped to that job. Node
 success notifications attach the closure diff; the final notification
 distinguishes full convergence from a deferred alpha.
 
