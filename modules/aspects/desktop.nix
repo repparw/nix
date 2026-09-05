@@ -20,7 +20,18 @@
 
     provides.to-hosts = {
       includes = [ den.aspects.gui ];
-      nixos.home-manager.sharedModules = [ inputs.nixcord.homeModules.default ];
+      nixos =
+        { lib, ... }:
+        {
+          options.modules.desktop.enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            readOnly = true;
+            description = "Whether this host includes the desktop aspect";
+          };
+
+          config.home-manager.sharedModules = [ inputs.nixcord.homeModules.default ];
+        };
     };
   };
 }

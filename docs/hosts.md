@@ -20,9 +20,11 @@ streaming, and backup behavior. Since the edge migrations it is not a
 public entrypoint: epsilon terminates the public vhosts, and pi fronts
 alpha's published service backends over the LAN.
 
-Alpha is the final stage of deploy-rs fleet updates and is activated only while
-idle. Its local gated consumer retries the current main revision when the pi
-controller deferred or could not reach it. See the
+Alpha is the final stage of deploy-rs fleet updates and is activated only when
+every local graphical user session is idle, locked, or no longer active. This
+policy comes from its desktop aspect rather than its host name. Its local gated
+consumer retries the current main revision when the pi controller deferred or
+could not reach it. See the
 [fleet operations runbook](runbooks/fleet-operations.md).
 
 Source: `modules/hosts/alpha.nix`
