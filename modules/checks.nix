@@ -637,6 +637,10 @@
                 && !pi.systemd.services.auto-update.restartIfChanged
                 && lib.strings.hasInfix "--host alpha --state /var/lib/alpha-auto-update" alpha.systemd.services.alpha-auto-update.script
                 && lib.strings.hasInfix "--update-lock --state /var/lib/auto-update" pi.systemd.services.auto-update.script
+                && alpha.modules.desktop.enable
+                && alpha.modules.fleet-update.activityGate
+                && !pi.modules.fleet-update.activityGate
+                && !epsilon.modules.fleet-update.activityGate
                 && builtins.elem alpha.modules.fleet-update.package alpha.environment.systemPackages
                 && builtins.elem pi.modules.fleet-update.package pi.environment.systemPackages
                 && builtins.elem epsilon.modules.fleet-update.package epsilon.environment.systemPackages

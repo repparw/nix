@@ -83,10 +83,18 @@ in
   den.aspects.deploy-target.nixos =
     { config, pkgs, ... }:
     {
-      options.modules.fleet-update.package = lib.mkOption {
-        type = lib.types.package;
-        readOnly = true;
-        description = "Transactional deploy-rs fleet updater";
+      options.modules.fleet-update = {
+        package = lib.mkOption {
+          type = lib.types.package;
+          readOnly = true;
+          description = "Transactional deploy-rs fleet updater";
+        };
+        activityGate = lib.mkOption {
+          type = lib.types.bool;
+          default = config.modules.desktop.enable or false;
+          readOnly = true;
+          description = "Whether deployment waits for local graphical sessions to be idle or locked";
+        };
       };
 
       config = {
@@ -100,6 +108,8 @@ in
 
   flake.deploy = {
     autoRollback = true;
+    activationTimeout = 180;
+    confirmTimeout = 90;
     magicRollback = true;
     tempPath = "/run/deploy-rs";
     sshUser = "root";

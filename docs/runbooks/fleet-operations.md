@@ -86,9 +86,19 @@ push is best-effort.
 The candidate is then deployed with deploy-rs in blast-radius order:
 **epsilon → pi → alpha**. Every changed node is activated with deploy-rs magic
 rollback enabled, then must pass two consecutive unit and HTTP health checks.
-Alpha is deployed only when its graphical session is idle; otherwise it is
-reported as deferred. Its 05:30 `alpha-auto-update.timer` is a consumer-only
-retry against the current main revision.
+Hosts carrying `den.aspects.desktop` are deployed only when every local
+graphical user session is idle, locked, or no longer active; otherwise they are
+reported as deferred. The gate reads logind's idle, lock, and session-state
+hints rather than depending on a particular graphical locker or user. Alpha's
+05:30 `alpha-auto-update.timer` is a consumer-only retry against the current
+main revision. A host that already runs the candidate is recognized as
+converged before this activity gate.
+
+deploy-rs owns closure builds and copies, activation, SSH confirmation, and
+activation-failure rollback. The wrapper supplies fleet policy around it: Git
+publication, serial canary ordering, desktop gating, application-health soaks,
+notifications, and post-soak rollback. Activation and confirmation timeouts
+live in the deploy-rs configuration rather than command-line overrides.
 
 Invariant: **origin/main's flake.lock always equals the pin production
 converged on.** Rollbacks push a revert commit; git log is the update
