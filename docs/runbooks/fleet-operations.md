@@ -86,9 +86,12 @@ push is best-effort.
 The candidate is then deployed with deploy-rs in blast-radius order:
 **epsilon → pi → alpha**. Every changed node is activated with deploy-rs magic
 rollback enabled, then must pass two consecutive unit and HTTP health checks.
-Alpha is deployed only when its graphical session is idle; otherwise it is
-reported as deferred. Its 05:30 `alpha-auto-update.timer` is a consumer-only
-retry against the current main revision.
+Alpha is deployed only when its graphical session is idle, locked, or no
+longer active; otherwise it is reported as deferred. The gate reads logind's
+idle, lock, and session-state hints rather than depending on the graphical
+locker implementation. Its 05:30 `alpha-auto-update.timer` is a consumer-only
+retry against the current main revision. An alpha that already runs the
+candidate is recognized as converged before this activity gate.
 
 Invariant: **origin/main's flake.lock always equals the pin production
 converged on.** Rollbacks push a revert commit; git log is the update
