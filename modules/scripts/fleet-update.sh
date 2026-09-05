@@ -133,25 +133,35 @@ remote() { # host, command...
   ssh "${ssh_options[@]}" "root@$(host_address "$host")" "$@"
 }
 
-alpha_is_idle() {
-  remote alpha bash -s <<'EOF'
+host_is_idle() {
+  local host="$1"
+  remote "$host" bash -s <<'EOF'
 locked=""
 idle=""
 session_state=""
+session_type=""
 sessions=$(loginctl list-sessions --no-legend 2>/dev/null) || exit 1
 [ -z "$sessions" ] && exit 0
-sess=$(printf '%s\n' "$sessions" | awk '$3=="repparw" && $6=="user" { print $1; exit }')
-if [ -z "$sess" ]; then
-  sess=$(printf '%s\n' "$sessions" | awk '$3=="repparw" { print $1; exit }')
-fi
-[ -z "$sess" ] && exit 0
-locked=$(loginctl show-session "$sess" -p LockedHint --value 2>/dev/null)
-idle=$(loginctl show-session "$sess" -p IdleHint --value 2>/dev/null)
-session_state=$(loginctl show-session "$sess" -p State --value 2>/dev/null)
-[ "$locked" = yes ] && exit 0
-[ "$idle" = yes ] && exit 0
-[ -n "$session_state" ] && [ "$session_state" != active ] && exit 0
-exit 1
+while read -r sess _; do
+  [ -n "$sess" ] || continue
+  class=$(loginctl show-session "$sess" -p Class --value 2>/dev/null) || exit 1
+  is_remote=$(loginctl show-session "$sess" -p Remote --value 2>/dev/null) || exit 1
+  session_type=$(loginctl show-session "$sess" -p Type --value 2>/dev/null) || exit 1
+  [ "$class" = user ] || continue
+  [ "$is_remote" = no ] || continue
+  case "$session_type" in
+    wayland | x11) ;;
+    *) continue ;;
+  esac
+
+  locked=$(loginctl show-session "$sess" -p LockedHint --value 2>/dev/null) || exit 1
+  idle=$(loginctl show-session "$sess" -p IdleHint --value 2>/dev/null) || exit 1
+  session_state=$(loginctl show-session "$sess" -p State --value 2>/dev/null) || exit 1
+  [ "$locked" = yes ] && continue
+  [ "$idle" = yes ] && continue
+  [ -n "$session_state" ] && [ "$session_state" != active ] && continue
+  exit 1
+done <<< "$sessions"
 EOF
 }
 
@@ -269,7 +279,7 @@ deferred=()
 failure_host=""
 
 deploy_one() {
-  local host="$1" running_revision before after_generation
+  local host="$1" running_revision before after_generation activity_gate
 
   running_revision=$(remote "$host" nixos-version --configuration-revision 2>/dev/null || true)
   if [ "$running_revision" = "$revision" ] && [ "$dry_activate" = 0 ]; then
@@ -277,18 +287,22 @@ deploy_one() {
     return 2
   fi
 
-  if [ "$host" = alpha ]; then
-    if ! alpha_is_idle; then
-      echo "alpha is active or unavailable; deferring it"
-      notify ":information_source: fleet update deferred alpha (active or unavailable) at ${revision:0:8}"
-      deferred+=(alpha)
-      return 2
-    fi
-  fi
-
-  # Bootstrap the private activation directory on nodes that predate the
-  # deploy-target tmpfiles rule. The rule recreates it after every boot.
-  remote "$host" install -d -m 0700 -o root -g root /run/deploy-rs || return 1
+  activity_gate=$(nix eval --json ".#nixosConfigurations.$host.config.modules.fleet-update.activityGate") || return 1
+  case "$activity_gate" in
+    true)
+      if ! host_is_idle "$host"; then
+        echo "$host has an active graphical session or is unavailable; deferring it"
+        notify ":information_source: fleet update deferred $host (active or unavailable) at ${revision:0:8}"
+        deferred+=("$host")
+        return 2
+      fi
+      ;;
+    false) ;;
+    *)
+      echo "$host returned an invalid activity-gate value: $activity_gate" >&2
+      return 1
+      ;;
+  esac
 
   before=$(remote "$host" readlink /run/current-system) || return 1
   if [[ "$before" != /nix/store/* ]]; then
@@ -296,7 +310,7 @@ deploy_one() {
     return 1
   fi
   before_generation["$host"]=$before
-  deploy_args=(".#$host" --skip-checks --confirm-timeout 90 --activation-timeout 180)
+  deploy_args=(".#$host" --skip-checks)
   [ "$dry_activate" = 1 ] && deploy_args+=(--dry-activate)
   if ! deploy "${deploy_args[@]}"; then
     return 1
@@ -347,7 +361,7 @@ if [ -n "$failure_host" ]; then
     rollback_failed=0
     for ((i = ${#deployed[@]} - 1; i >= 0; i--)); do
       host=${deployed[$i]}
-      if ! deploy ".#$host" --skip-checks --confirm-timeout 90 --activation-timeout 180; then
+      if ! deploy ".#$host" --skip-checks; then
         rollback_failed=1
         remote "$host" nix-env -p /nix/var/nix/profiles/system --set "${before_generation[$host]}" || true
         remote "$host" "${before_generation[$host]}/bin/switch-to-configuration" switch || true
