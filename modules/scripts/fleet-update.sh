@@ -138,12 +138,11 @@ alpha_is_idle() {
 locked=""
 idle=""
 session_state=""
-if ! loginctl list-sessions --no-legend 2>/dev/null | grep -q .; then
-  exit 0
-fi
-sess=$(loginctl --no-legend 2>/dev/null | awk '$3=="repparw" && $6=="user" { print $1; exit }')
+sessions=$(loginctl list-sessions --no-legend 2>/dev/null) || exit 1
+[ -z "$sessions" ] && exit 0
+sess=$(printf '%s\n' "$sessions" | awk '$3=="repparw" && $6=="user" { print $1; exit }')
 if [ -z "$sess" ]; then
-  sess=$(loginctl --no-legend 2>/dev/null | awk '$3=="repparw" { print $1; exit }')
+  sess=$(printf '%s\n' "$sessions" | awk '$3=="repparw" { print $1; exit }')
 fi
 [ -z "$sess" ] && exit 0
 locked=$(loginctl show-session "$sess" -p LockedHint --value 2>/dev/null)
