@@ -263,7 +263,7 @@ deferred=()
 failure_host=""
 
 deploy_one() {
-  local host="$1" running_revision after_generation
+  local host="$1" running_revision before after_generation
 
   if [ "$host" = alpha ]; then
     if ! alpha_is_idle; then
@@ -280,9 +280,12 @@ deploy_one() {
     return 2
   fi
 
-  if ! before_generation["$host"]=$(remote "$host" readlink /run/current-system); then
+  before=$(remote "$host" readlink /run/current-system) || return 1
+  if [[ "$before" != /nix/store/* ]]; then
+    echo "$host returned an invalid current-system path: ${before:-empty}" >&2
     return 1
   fi
+  before_generation["$host"]=$before
   deploy_args=(".#$host" --skip-checks --confirm-timeout 90 --activation-timeout 180)
   [ "$dry_activate" = 1 ] && deploy_args+=(--dry-activate)
   if ! deploy "${deploy_args[@]}"; then
