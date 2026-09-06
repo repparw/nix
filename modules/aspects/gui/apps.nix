@@ -1,23 +1,17 @@
 {
   den,
-  inputs,
   ...
 }:
 let
   # TODO: Remove this patch and use pkgs.tasks-org once
   # https://github.com/NixOS/nixpkgs/pull/518221 lands in our pin.
-  tasksOrgNixpkgs =
-    pkgs:
-    pkgs.applyPatches {
-      name = "nixpkgs-tasks-org-patched";
-      src = inputs.nixpkgs;
-      patches = [
-        (pkgs.fetchpatch {
-          url = "https://github.com/NixOS/nixpkgs/commit/4f9c47a6966e40144bcff663b19d8907448da1e3.diff";
-          hash = "sha256-Iy4s7BKHKJidPXiGgS39tfibx7O63hd4YoO0ajuYwk0=";
-        })
-      ];
-    };
+  # Fetch the single upstream package expression in the evaluator. Patching a
+  # whole x86 nixpkgs tree made mixed-architecture deploy evaluation attempt an
+  # x86 import-from-derivation on the aarch64 controller.
+  tasksOrgPackage = builtins.fetchurl {
+    url = "https://raw.githubusercontent.com/NixOS/nixpkgs/4f9c47a6966e40144bcff663b19d8907448da1e3/pkgs/by-name/ta/tasks-org/package.nix";
+    sha256 = "sha256-vjz+y0o/PrD9LteEgl7fizaPgAV5lcvAs5CJdf0l5wA=";
+  };
 in
 {
   flake-file.inputs.nixcord = {
@@ -29,18 +23,8 @@ in
       { pkgs, ... }:
       {
         nixpkgs.overlays = [
-          (final: prev: {
-            tasks-org =
-              (final.callPackage (tasksOrgNixpkgs final + "/pkgs/by-name/ta/tasks-org/package.nix") { })
-              .overrideAttrs
-                (_: {
-                  postFixup = ''
-                    wrapProgram $out/bin/tasks-org \
-                      --prefix LD_LIBRARY_PATH : "$out/lib/runtime/lib:$out/lib/runtime/lib/server:${
-                        final.lib.makeLibraryPath [ final.dbus ]
-                      }"
-                  '';
-                });
+          (final: _prev: {
+            tasks-org = final.callPackage tasksOrgPackage { };
           })
         ];
 
