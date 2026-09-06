@@ -30,6 +30,49 @@ let
     x86_64-linux = mkDeployPkgs "x86_64-linux";
   };
 
+  deployBase = {
+    autoRollback = true;
+    activationTimeout = 180;
+    confirmTimeout = 90;
+    magicRollback = true;
+    tempPath = "/run/deploy-rs";
+    sshUser = "root";
+    sshOpts = [
+      "-i"
+      "/home/repparw/.ssh/id_ed25519"
+      "-o"
+      "BatchMode=yes"
+      "-o"
+      "IdentitiesOnly=yes"
+      "-o"
+      "StrictHostKeyChecking=accept-new"
+    ];
+    nodes = {
+      epsilon = {
+        hostname = "146.181.42.97";
+        remoteBuild = true;
+        profiles.system.user = "root";
+      };
+      pi = {
+        hostname = "192.168.0.4";
+        remoteBuild = true;
+        profiles.system.user = "root";
+      };
+      alpha = {
+        hostname = "192.168.0.18";
+        remoteBuild = true;
+        profiles.system.user = "root";
+      };
+    };
+  };
+
+  deploySchema = deployBase // {
+    nodes = lib.mapAttrs (
+      _nodeName: node:
+      lib.recursiveUpdate node { profiles.system.path = "/nix/store/deploy-schema-placeholder"; }
+    ) deployBase.nodes;
+  };
+
   mkFleetUpdate =
     pkgs:
     pkgs.writeShellApplication {
@@ -52,11 +95,14 @@ let
 
   mkDeploySchemaCheck =
     pkgs:
+    # The interface only requires profile paths to be strings. The
+    # architecture-neutral base avoids evaluating every system closure (and
+    # any IFD it contains) on the runner. Native checks validate real paths.
     pkgs.runCommand "deploy-schema" { nativeBuildInputs = [ pkgs.check-jsonschema ]; } ''
       check-jsonschema \
         --schemafile ${inputs.deploy-rs}/interface.json \
         ${pkgs.writeText "deploy.json" (
-          builtins.unsafeDiscardStringContext (builtins.toJSON inputs.self.deploy)
+          builtins.unsafeDiscardStringContext (builtins.toJSON deploySchema)
         )}
       touch "$out"
     '';
@@ -106,48 +152,11 @@ in
       };
     };
 
-  flake.deploy = {
-    autoRollback = true;
-    activationTimeout = 180;
-    confirmTimeout = 90;
-    magicRollback = true;
-    tempPath = "/run/deploy-rs";
-    sshUser = "root";
-    sshOpts = [
-      "-i"
-      "/home/repparw/.ssh/id_ed25519"
-      "-o"
-      "BatchMode=yes"
-      "-o"
-      "IdentitiesOnly=yes"
-      "-o"
-      "StrictHostKeyChecking=accept-new"
-    ];
+  flake.deploy = lib.recursiveUpdate deployBase {
     nodes = {
-      epsilon = {
-        hostname = "146.181.42.97";
-        remoteBuild = true;
-        profiles.system = {
-          user = "root";
-          path = deployPkgs.aarch64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.epsilon;
-        };
-      };
-      pi = {
-        hostname = "192.168.0.4";
-        remoteBuild = true;
-        profiles.system = {
-          user = "root";
-          path = deployPkgs.aarch64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.pi;
-        };
-      };
-      alpha = {
-        hostname = "192.168.0.18";
-        remoteBuild = true;
-        profiles.system = {
-          user = "root";
-          path = deployPkgs.x86_64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.alpha;
-        };
-      };
+      epsilon.profiles.system.path = deployPkgs.aarch64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.epsilon;
+      pi.profiles.system.path = deployPkgs.aarch64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.pi;
+      alpha.profiles.system.path = deployPkgs.x86_64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.alpha;
     };
   };
 
