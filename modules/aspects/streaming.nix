@@ -52,6 +52,7 @@
         name = "moonshine-steam";
         runtimeInputs = [
           gamescopeHdr
+          pkgs.bubblewrap
           pkgs.procps
           # Use the NixOS-configured wrapper so extraCompatPackages (GE-Proton)
           # is exported to Steam inside Moonshine's transient session too.
@@ -82,15 +83,22 @@
           export DISABLE_MOONSHINE_WSI=1
           unset ENABLE_MOONSHINE_WSI
 
-          # No bwrap for now (overlay diagnostic 2026-09-06): the Steam overlay
-          # never spawns under the sandboxed wrapper while it worked without
-          # one, so the sandbox is the prime suspect. Known cost: without the
-          # mask, Steam stats every mount at startup (drive enumeration) and
-          # Proton maps them as DOS drives (verified with strace 2026-09-05),
-          # spinning up the idle Seagate disk on every launch. If the overlay
-          # returns, the next step is a namespace setup that keeps both.
+          # bwrap sits INSIDE gamescope, not outside: gamescope spawns its own
+          # Xwayland, and inside bwrap's user namespace the root-owned
+          # /tmp/.X11-unix appears owned by "nobody", which wlroots rejects
+          # (segfault). Here gamescope sets up Xwayland outside the sandbox
+          # and only the Steam child is sandboxed. The sandbox masks the
+          # Seagate automounts: Steam stats every mount at startup (drive
+          # enumeration) and Proton maps them as DOS drives (verified with
+          # strace 2026-09-05), which would otherwise spin up the idle disk
+          # on every launch. Overlay diagnostic 2026-09-06: removing this
+          # sandbox did not restore the overlay, so the sandbox is exonerated.
           gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
-          exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- steam -tenfoot
+          exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- bwrap \
+            --dev-bind / / \
+            --tmpfs /mnt/seagate \
+            --tmpfs /home/containers/media/seagate \
+            -- steam -tenfoot
         '';
       };
     in
