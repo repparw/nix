@@ -25,9 +25,10 @@ every local graphical user session is idle, locked, or no longer active. This
 policy also defers for block-mode systemd sleep inhibitors, so a remote game or
 media stream remains active even when the physical session is locked. It
 ignores delay-mode and non-sleep inhibitors. The policy comes from alpha's
-desktop aspect rather than its host name. Its scheduled retry asks pi's
-controller to consume the current main revision when the fleet pass deferred
-or could not reach it, ensuring every deployment shares one controller mutex.
+desktop aspect rather than its host name. Pi schedules the retry against the
+current main revision when the fleet pass deferred or could not reach alpha,
+ensuring every deployment shares one controller mutex and alpha never updates
+the system from inside a unit being replaced.
 See the
 [fleet operations runbook](runbooks/fleet-operations.md).
 
@@ -48,8 +49,9 @@ Source: `modules/hosts/beta.nix`
 always-on host: it runs the LAN-side edge (Traefik with Authelia SSO) and
 the declarative nspawn services that must survive workstation downtime.
 It is also the fleet's **sole flake.lock writer and deployment controller**:
-its nightly auto-update publishes the candidate to main, then stages epsilon,
-pi, and idle alpha through deploy-rs.
+one nightly transaction publishes a validated candidate to main, and an
+independent later transaction stages exact current main through epsilon, pi,
+and idle alpha with deploy-rs.
 
 - Traefik (:80/:443) routes the LAN vhosts; local backends target the
   nspawn bridge, remote ones alpha's published ports
