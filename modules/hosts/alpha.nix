@@ -281,41 +281,6 @@
           '';
         };
 
-        # Consumer retry: ask pi's controller to converge alpha so scheduled,
-        # fleet-wide, and Mod+U deployments all share its serialization lock.
-        # Alpha never writes flake.lock.
-        systemd.services.alpha-auto-update = {
-          description = "Converge idle alpha through deploy-rs";
-          after = [ "network-online.target" ];
-          wants = [ "network-online.target" ];
-          restartIfChanged = false;
-          serviceConfig = {
-            Type = "oneshot";
-            # One hour may be spent queued behind the fleet transaction;
-            # leave a full deployment budget after the shared lock is won.
-            TimeoutStartSec = "180min";
-          };
-          script = ''
-            exec ${lib.getExe' pkgs.openssh "ssh"} \
-              -i /home/repparw/.ssh/id_ed25519 \
-              -o BatchMode=yes \
-              -o IdentitiesOnly=yes \
-              -o StrictHostKeyChecking=accept-new \
-              -o ConnectTimeout=10 \
-              root@192.168.0.4 \
-              /run/current-system/sw/bin/fleet-update \
-              --host alpha --wait-lock 3600 --state /var/lib/auto-update
-          '';
-        };
-
-        systemd.timers.alpha-auto-update = {
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "*-*-* 05:30:00";
-            Persistent = true;
-            RandomizedDelaySec = "15min";
-          };
-        };
       };
 
     homeManager = {
