@@ -116,7 +116,10 @@
         # eMMC/SD wear: journald volatile (RAM only), weekly fstrim, and
         # reduced commit interval for SD root. /tmp already tmpfs via
         # host-common. See Steam Deck eMMC bridge docs.
-        services.journald.extraConfig = "Storage=volatile\nRuntimeMaxUse=50M";
+        services.journald.settings.Journal = {
+          Storage = "volatile";
+          RuntimeMaxUse = "50M";
+        };
         services.fstrim.enable = true;
         zramSwap = {
           enable = true;
