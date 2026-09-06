@@ -29,8 +29,7 @@
       '';
 
       # Steam is single-instance per user; stop the desktop instance so it
-      # cannot steal Big Picture from Moonshine's private compositor. Shared
-      # prelude for both Big Picture launchers.
+      # cannot steal Big Picture from Moonshine's private compositor.
       stopDesktopSteam = ''
         if pgrep -x steam >/dev/null; then
           steam -shutdown >/dev/null 2>&1 || true
@@ -41,9 +40,18 @@
         fi
       '';
 
+      # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
+      # to gamescope; nixpkgs disables it by default.
+      gamescopeHdr = pkgs.gamescope.override { enableWsi = true; };
+
+      # Single Steam entry: gamescope HDR wrapper covers SDR too (SDR content
+      # presents fine inside --hdr-enabled gamescope), while plain moonshine-wsi
+      # Steam black-screens HDR/DX11 games (hgaiser/moonshine#93, confirmed on
+      # 0.15.0). One icon, no per-game choice.
       moonshine-steam = pkgs.writeShellApplication {
         name = "moonshine-steam";
         runtimeInputs = [
+          gamescopeHdr
           pkgs.bubblewrap
           pkgs.procps
           # Use the NixOS-configured wrapper so extraCompatPackages (GE-Proton)
@@ -53,45 +61,11 @@
         text = ''
           ${stopDesktopSteam}
 
-          # Expose the moonshine-wsi implicit layer to Steam and Proton.
-          # System Vulkan loaders find it via /run/opengl-driver (wired up by
-          # the module's hardware.graphics.extraPackages), but Steam's runtime
-          # container never sees that path; Proton discovers implicit layers
-          # through forwarded host XDG_DATA_DIRS.
-          export XDG_DATA_DIRS="${config.services.moonshine.package}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
-
-          # Keep Steam from probing these automount paths and waking the disks.
-          exec bwrap \
-            --dev-bind / / \
-            --tmpfs /mnt/seagate \
-            --tmpfs /home/containers/media/seagate \
-            -- steam steam://open/bigpicture
-        '';
-      };
-
-      # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
-      # to gamescope; nixpkgs disables it by default.
-      gamescopeHdr = pkgs.gamescope.override { enableWsi = true; };
-
-      moonshine-steam-gamescope-hdr = pkgs.writeShellApplication {
-        name = "moonshine-steam-gamescope-hdr";
-        runtimeInputs = [
-          gamescopeHdr
-          pkgs.procps
-          # Use the NixOS-configured wrapper so extraCompatPackages (GE-Proton)
-          # is exported to Steam inside Moonshine's transient session too.
-          config.programs.steam.package
-        ];
-        text = ''
-          ${stopDesktopSteam}
-
           # Gamescope's WSI layer must stay discoverable for clients
-          # presenting into gamescope; same XDG_DATA_DIRS forwarding as the
-          # plain Big Picture entry above. moonshine-wsi is force-disabled
-          # below.
+          # presenting into gamescope. moonshine-wsi is force-disabled below.
           export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${gamescopeHdr}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
-          # Test workaround for hgaiser/moonshine#93 (HDR/DX11 black screen):
+          # Workaround for hgaiser/moonshine#93 (HDR/DX11 black screen):
           # wrap Steam in Gamescope at the client's resolution. Gamescope owns
           # the surface Moonshine's compositor sees, so games present to
           # Gamescope instead of creating their own (HDR 1x1) WSI swapchain.
@@ -109,12 +83,21 @@
           export DISABLE_MOONSHINE_WSI=1
           unset ENABLE_MOONSHINE_WSI
 
-          # No bwrap here: gamescope spawns its own Xwayland, and inside
-          # bwrap's user namespace the root-owned /tmp/.X11-unix appears owned
-          # by "nobody", which wlroots rejects. Without the sandbox the check
-          # passes (the directory is root-owned).
+          # bwrap sits INSIDE gamescope, not outside: gamescope spawns its own
+          # Xwayland, and inside bwrap's user namespace the root-owned
+          # /tmp/.X11-unix appears owned by "nobody", which wlroots rejects
+          # (segfault). Here gamescope sets up Xwayland outside the sandbox
+          # and only the Steam child is sandboxed. The sandbox masks the
+          # Seagate automounts: Steam stats every mount at startup (drive
+          # enumeration) and Proton maps them as DOS drives (verified with
+          # strace 2026-09-05), which would otherwise spin up the idle disk
+          # on every launch.
           gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
-          exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- steam -tenfoot
+          exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- bwrap \
+            --dev-bind / / \
+            --tmpfs /mnt/seagate \
+            --tmpfs /home/containers/media/seagate \
+            -- steam -tenfoot
         '';
       };
     in
@@ -147,13 +130,6 @@
                 title = "Steam Big Picture";
                 boxart = "${moonshine-boxart}/steam.png";
                 command = [ "${moonshine-steam}/bin/moonshine-steam" ];
-                stdout = "journal";
-                stderr = "journal";
-              }
-              {
-                title = "Steam Big Picture (gamescope HDR)";
-                boxart = "${moonshine-boxart}/steam.png";
-                command = [ "${moonshine-steam-gamescope-hdr}/bin/moonshine-steam-gamescope-hdr" ];
                 stdout = "journal";
                 stderr = "journal";
               }
