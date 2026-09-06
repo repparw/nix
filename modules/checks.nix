@@ -635,22 +635,40 @@
                   fleetUpdateSource = builtins.readFile ./scripts/fleet-update.sh;
                   shellSource = builtins.readFile ./aspects/cli/shell.nix;
                 in
-                !alpha.systemd.services.alpha-auto-update.restartIfChanged
-                && !pi.systemd.services.auto-update.restartIfChanged
-                && alpha.systemd.services.alpha-auto-update.serviceConfig.TimeoutStartSec == "180min"
-                && lib.strings.hasInfix "root@192.168.0.4" alpha.systemd.services.alpha-auto-update.script
-                && lib.strings.hasInfix "--host alpha --wait-lock 3600 --state /var/lib/auto-update" alpha.systemd.services.alpha-auto-update.script
-                && lib.strings.hasInfix "--update-lock --state /var/lib/auto-update" pi.systemd.services.auto-update.script
+                !pi.systemd.services.fleet-promote.restartIfChanged
+                && !pi.systemd.services.fleet-deploy.restartIfChanged
+                && !pi.systemd.services.fleet-alpha-retry.restartIfChanged
+                && !(builtins.hasAttr "auto-update" pi.systemd.services)
+                && !(builtins.hasAttr "alpha-auto-update" alpha.systemd.services)
+                && !(builtins.elem "fleet-promote.service" pi.systemd.services.fleet-deploy.after)
+                && lib.strings.hasInfix "promote --state /var/lib/auto-update" pi.systemd.services.fleet-promote.script
+                && lib.strings.hasInfix "--unit=fleet-deploy-run" pi.systemd.services.fleet-deploy.script
+                && lib.strings.hasInfix "is-active --quiet fleet-deploy-run.service" pi.systemd.services.fleet-deploy.script
+                && lib.strings.hasInfix "--property=RuntimeMaxSec=180min" pi.systemd.services.fleet-deploy.script
+                && lib.strings.hasInfix "deploy --wait-lock 7200 --state /var/lib/auto-update" pi.systemd.services.fleet-deploy.script
+                && lib.strings.hasInfix "deploy --host alpha --wait-lock 10800 --state /var/lib/auto-update" pi.systemd.services.fleet-alpha-retry.script
+                && pi.systemd.timers.fleet-promote.timerConfig.OnCalendar == "*-*-* 04:15:00"
+                && pi.systemd.timers.fleet-deploy.timerConfig.OnCalendar == "*-*-* 05:30:00"
+                && pi.systemd.timers.fleet-alpha-retry.timerConfig.OnCalendar == "*-*-* 07:00:00"
                 && lib.strings.hasInfix "systemd-inhibit --list --json=short" fleetUpdateSource
                 && lib.strings.hasInfix ".mode == \"block\"" fleetUpdateSource
-                && lib.strings.hasInfix "--host alpha --force --wait-lock 3600 --state /var/lib/auto-update" shellSource
+                && lib.strings.hasInfix "fleet-update <promote|deploy>" fleetUpdateSource
+                && lib.strings.hasInfix "FLEET_UPDATE_STATE:-/var/lib/auto-update" fleetUpdateSource
+                && lib.strings.hasInfix "candidate_commit_is_safe" fleetUpdateSource
+                && lib.strings.hasInfix "remote_revision\" = \"$candidate_revision" fleetUpdateSource
+                && !(lib.strings.hasInfix "--update-lock" fleetUpdateSource)
+                && !(lib.strings.hasInfix "--dry-activate" fleetUpdateSource)
+                && !(lib.strings.hasInfix "--source" fleetUpdateSource)
+                && lib.strings.hasInfix "deploy --host alpha --force --wait-lock 10800 --state /var/lib/auto-update" shellSource
                 && alpha.modules.desktop.enable
                 && alpha.modules.fleet-update.activityGate
                 && !pi.modules.fleet-update.activityGate
                 && !epsilon.modules.fleet-update.activityGate
-                && builtins.elem alpha.modules.fleet-update.package alpha.environment.systemPackages
                 && builtins.elem pi.modules.fleet-update.package pi.environment.systemPackages
-                && builtins.elem epsilon.modules.fleet-update.package epsilon.environment.systemPackages
+                && !(builtins.elem alpha.modules.fleet-update.package alpha.environment.systemPackages)
+                && !(builtins.elem epsilon.modules.fleet-update.package epsilon.environment.systemPackages)
+                && alpha.modules.fleet-update.controllerHost == pi.modules.fleet-update.controllerHost
+                && pi.modules.fleet-update.controllerHost == "192.168.0.4"
                 && lib.all (host: builtins.elem "d /run/deploy-rs 0700 root root -" host.systemd.tmpfiles.rules) [
                   alpha
                   pi

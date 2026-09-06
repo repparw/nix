@@ -9,10 +9,10 @@ tags: [runbook, recovery, updates, pi, alpha, epsilon, deploy-rs]
 
 # Update Rollback
 
-Pi's 04:15 job owns the staged fleet transaction. It is the sole
-`flake.lock` writer and deploys the published candidate in the order epsilon,
-pi, then idle alpha. Alpha's 05:30 job only retries convergence to current main
-if it was deferred or unreachable.
+Pi's 04:15 promotion job is the sole `flake.lock` writer and exits after
+publishing a validated candidate. The independent 05:30 consumer deploys exact
+current main in the order epsilon, pi, then idle alpha. Pi's 07:00 alpha retry
+only retries convergence if the desktop was deferred or unreachable.
 
 Full pipeline detail lives in the
 [fleet operations runbook](fleet-operations.md).
@@ -26,8 +26,9 @@ falls back to each node's exact pre-update profile if necessary. Check the
 controller and retry journals before the next cycle:
 
 ```sh
-journalctl -u auto-update -b          # pi
-journalctl -u alpha-auto-update -b    # alpha
+journalctl -u fleet-promote -b      # pi producer
+journalctl -u fleet-deploy-run -b   # pi transient fleet consumer
+journalctl -u fleet-alpha-retry -b  # pi alpha retry
 ```
 
 ## Manual rollback
@@ -59,8 +60,8 @@ extlinux via the Pi firmware.
 
    ```sh
    nix flake check
-   nix run .#fleet-update -- --host <alpha|pi|epsilon> --dry-activate
-   nix run .#fleet-update -- --host <alpha|pi|epsilon>
+   nix run .#deploy-rs -- .#alpha --dry-activate
+   ssh root@192.168.0.4 'fleet-update deploy --host alpha'
    ```
 
 ## Related

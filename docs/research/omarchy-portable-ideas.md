@@ -203,10 +203,10 @@ What Omarchy does. Well-defined lifecycle events expose hook directories
 `omarchy hook install` to wire a script in; executables in the directory run
 at the event.[^dotfiles-manual]
 
-What this repo does today. The auto-update pipeline is a monolith: the flip,
-the soak, the rollback, and the Discord notification all live inline in one
-script, and there is no sanctioned way to attach behavior at lifecycle points
-without editing it.[^alpha]
+What this repo does today. Promotion and deployment are separate scheduled
+transactions, but fleet policy, soak, rollback, and Discord notification still
+live in one controller script. There is no sanctioned way to attach behavior
+at lifecycle points without editing it.[^alpha]
 
 What to port. First-draft caution: Omarchy's hook directories are per-user,
 session-scoped, and mutable (`~/.config/omarchy/hooks/<event>.d/`); copying
@@ -457,7 +457,7 @@ GitHub citations reference `basecamp/omarchy` at HEAD (`4.0.0.alpha`).[^version]
 [^auto-upgrade-aspect]: `modules/aspects/auto-upgrade.nix` (`system.autoUpgrade`; included by no host — unused mechanism)
 [^deploy-pi]: `docs/runbooks/deploy-pi-nixos.md`
 [^den-docs]: `docs/architecture/den-aspect-composition.md`
-[^alpha]: `modules/hosts/alpha.nix` (alpha-auto-update service: pull pi's lock, gate on idle + pi health, soak, rollback, circuit breaker)
+[^alpha]: `modules/deploy.nix` and `modules/hosts/pi.nix` (pi-owned promotion, fleet deployment, and gated alpha retry)
 [^style]: `modules/aspects/style.nix` (Stylix, single tokyodark scheme, pinned wallpaper)
 [^btrfs]: `modules/aspects/btrfs-maintenance.nix` (scrub/balance/health, no snapper)
 [^scripts]: `modules/aspects/cli/scripts.nix` (`clip2qr`, `hotswap`)

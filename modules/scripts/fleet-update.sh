@@ -1,24 +1,27 @@
 # shellcheck shell=bash
-usage="usage: fleet-update [--update-lock] [--host alpha|pi|epsilon] [--force] [--wait-lock SECONDS] [--dry-activate] [--state DIR] [--source DIR]"
+usage="usage: fleet-update <promote|deploy> [--host alpha|pi|epsilon] [--force] [--wait-lock SECONDS] [--state DIR]"
 
-update_lock=0
-dry_activate=0
+[ "$#" -gt 0 ] || { echo "$usage" >&2; exit 2; }
+action="$1"
+shift
+case "$action" in
+  promote | deploy) ;;
+  *) echo "$usage" >&2; exit 2 ;;
+esac
+
 force=0
 lock_wait=0
 requested_host=all
-state="${FLEET_UPDATE_STATE:-/var/lib/fleet-update}"
-source_repo="${FLEET_UPDATE_SOURCE:-}"
+state="${FLEET_UPDATE_STATE:-/var/lib/auto-update}"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --update-lock) update_lock=1 ;;
     --force) force=1 ;;
     --wait-lock)
       [ "$#" -ge 2 ] || { echo "$usage" >&2; exit 2; }
       lock_wait="$2"
       shift
       ;;
-    --dry-activate) dry_activate=1 ;;
     --host)
       [ "$#" -ge 2 ] || { echo "$usage" >&2; exit 2; }
       requested_host="$2"
@@ -27,11 +30,6 @@ while [ "$#" -gt 0 ]; do
     --state)
       [ "$#" -ge 2 ] || { echo "$usage" >&2; exit 2; }
       state="$2"
-      shift
-      ;;
-    --source)
-      [ "$#" -ge 2 ] || { echo "$usage" >&2; exit 2; }
-      source_repo="$2"
       shift
       ;;
     -h | --help)
@@ -54,24 +52,16 @@ case "$lock_wait" in
   '' | *[!0-9]*) echo "--wait-lock requires whole seconds" >&2; exit 2 ;;
 esac
 
-if [ "$update_lock" = 1 ] && [ "$requested_host" != all ]; then
-  echo "--update-lock always operates on the staged fleet" >&2
-  exit 2
-fi
-if [ "$update_lock" = 1 ] && [ "$dry_activate" = 1 ]; then
-  echo "--update-lock and --dry-activate cannot be combined" >&2
+if [ "$action" = promote ] && [ "$requested_host" != all ]; then
+  echo "promote does not accept --host" >&2
   exit 2
 fi
 if [ "$force" = 1 ] && [ "$requested_host" = all ]; then
   echo "--force requires an explicit --host" >&2
   exit 2
 fi
-if [ "$force" = 1 ] && [ "$update_lock" = 1 ]; then
-  echo "--force cannot be combined with --update-lock" >&2
-  exit 2
-fi
-if [ -n "$source_repo" ] && [ "$dry_activate" != 1 ]; then
-  echo "--source is restricted to dry activation" >&2
+if [ "$force" = 1 ] && [ "$action" = promote ]; then
+  echo "promote does not accept --force" >&2
   exit 2
 fi
 
@@ -115,19 +105,15 @@ notify_file() { # content, file
     -F "files[0]=@$2" "$api" >/dev/null || true
 }
 
-if [ -n "$source_repo" ]; then
-  repo=$(realpath "$source_repo")
-else
-  repo="$state/src"
-  if [ -d "$repo/.git" ]; then
-    git -C "$repo" fetch origin main
-    if [ "$(git -C "$repo" rev-parse --is-shallow-repository)" = true ]; then
-      git -C "$repo" fetch --unshallow origin
-    fi
-    git -C "$repo" reset --hard origin/main
-  else
-    git clone https://github.com/repparw/nix "$repo"
+repo="$state/src"
+if [ -d "$repo/.git" ]; then
+  git -C "$repo" fetch origin main
+  if [ "$(git -C "$repo" rev-parse --is-shallow-repository)" = true ]; then
+    git -C "$repo" fetch --unshallow origin
   fi
+  git -C "$repo" reset --hard origin/main
+else
+  git clone https://github.com/repparw/nix "$repo"
 fi
 cd "$repo" || exit 1
 
@@ -146,9 +132,9 @@ ssh_options=(
 
 host_address() {
   case "$1" in
-    alpha) echo 192.168.0.18 ;;
-    pi) echo 192.168.0.4 ;;
-    epsilon) echo 146.181.42.97 ;;
+    alpha) echo @FLEET_ALPHA_ADDRESS@ ;;
+    pi) echo @FLEET_PI_ADDRESS@ ;;
+    epsilon) echo @FLEET_EPSILON_ADDRESS@ ;;
   esac
 }
 
@@ -270,60 +256,130 @@ soak() {
 }
 
 free_kb() { df -k /nix | awk 'NR == 2 { print $4 }'; }
-if [ "$(free_kb)" -lt $((10 * 1024 * 1024)) ]; then
-  echo "below 10G on /nix; collecting old generations"
-  nix-collect-garbage -d >/dev/null || true
-fi
 if [ "$(free_kb)" -lt $((6 * 1024 * 1024)) ]; then
   notify ":warning: fleet update aborted: $(df -h /nix | awk 'NR == 2 { print $4 }') free on /nix"
   exit 1
 fi
 
-candidate_created=0
-if [ "$update_lock" = 1 ]; then
+write_candidate() { # revision, parent, status
+  local tmp="$state/candidate.new.$$"
+  printf '%s\t%s\t%s\n' "$1" "$2" "$3" > "$tmp"
+  mv "$tmp" "$state/candidate"
+}
+
+read_candidate() {
+  candidate_revision=""
+  candidate_parent=""
+  candidate_status=""
+  [ -r "$state/candidate" ] || return 1
+  IFS=$'\t' read -r candidate_revision candidate_parent candidate_status < "$state/candidate"
+  [[ "$candidate_revision" =~ ^[0-9a-f]{40}$ ]] || return 1
+  [[ "$candidate_parent" =~ ^[0-9a-f]{40}$ ]] || return 1
+  case "$candidate_status" in
+    prepared | published | completed | stale | reverted) ;;
+    *) return 1 ;;
+  esac
+}
+
+candidate_commit_is_safe() {
+  local revision="$1" parent="$2" changed
+  [ "$(git rev-parse "$revision^")" = "$parent" ] || return 1
+  [ "$(git show -s --format='%an <%ae>' "$revision")" = "pi-auto-update <pi-auto-update@repparw.com>" ] || return 1
+  [ "$(git show -s --format=%s "$revision")" = "flake.lock: Update" ] || return 1
+  changed=$(git diff-tree --no-commit-id --name-only -r "$revision") || return 1
+  [ "$changed" = flake.lock ]
+}
+
+cleanup_candidate_roots() { # revision
+  local host
+  for host in epsilon pi alpha; do
+    remote "$host" rm -f "/nix/var/nix/gcroots/fleet-update/$1" 2>/dev/null || true
+  done
+}
+
+preflight_hosts() {
+  local host
+  for host in "$@"; do
+    nix eval ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath" --raw >/dev/null
+  done
+}
+
+if [ "$action" = promote ]; then
   if ! health_once pi; then
-    notify ":warning: fleet update aborted: pi health gate is failing before the lock bump"
+    notify ":warning: fleet promotion aborted: pi health gate is failing before the lock bump"
     exit 1
   fi
 
+  revision=$(git rev-parse HEAD)
+  if read_candidate; then
+    case "$candidate_status" in
+      prepared | published)
+        if [ "$candidate_revision" = "$revision" ] && [ "$(cat "$state/deployed-revision" 2>/dev/null || true)" != "$revision" ]; then
+          notify ":warning: fleet promotion deferred: candidate ${revision:0:8} has not fully converged"
+          echo "candidate ${revision:0:8} has not fully converged; run fleet-update deploy first" >&2
+          exit 1
+        fi
+        cleanup_candidate_roots "$candidate_revision"
+        write_candidate "$candidate_revision" "$candidate_parent" stale
+        ;;
+      completed | stale | reverted)
+        cleanup_candidate_roots "$candidate_revision"
+        ;;
+    esac
+  fi
+
   timeout 20m systemctl start restic-backups-offsite.service ||
-    notify ":information_source: fleet update proceeding without a fresh pi snapshot"
+    notify ":information_source: fleet promotion proceeding without a fresh pi snapshot"
 
   nix flake update
-  if ! git diff --exit-code flake.lock >/dev/null; then
-    current_system=$(nix eval --impure --raw --expr builtins.currentSystem)
-    nix build ".#checks.$current_system.deploy-schema" --no-link
-    for host in epsilon pi alpha; do
-      nix eval ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath" --raw >/dev/null
-    done
-
-    git config user.name pi-auto-update
-    git config user.email pi-auto-update@repparw.com
-    git add flake.lock
-    git commit -m "flake.lock: Update"
-    export GIT_SSH_COMMAND="ssh -i $deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-    if ! git push git@github.com:repparw/nix.git HEAD:main; then
-      notify ":warning: fleet update aborted: lock push failed; no host was changed"
-      exit 1
-    fi
-    git push git@gitlab.com:repparw/nix.git HEAD:main ||
-      notify ":warning: fleet update landed on GitHub but the GitLab mirror push failed"
-    candidate_created=1
-  else
-    echo "lock unchanged; checking fleet convergence"
+  if git diff --exit-code flake.lock >/dev/null; then
+    echo "lock unchanged; nothing to promote"
+    exit 0
   fi
-else
+
   current_system=$(nix eval --impure --raw --expr builtins.currentSystem)
   nix build ".#checks.$current_system.deploy-schema" --no-link
-fi
+  preflight_hosts epsilon pi alpha
 
-revision=$(git rev-parse HEAD)
-printf '%s\n' "$revision" > "$state/candidate-revision"
+  git config user.name pi-auto-update
+  git config user.email pi-auto-update@repparw.com
+  git add flake.lock
+  git commit -m "flake.lock: Update"
+  revision=$(git rev-parse HEAD)
+  parent=$(git rev-parse HEAD^)
+  write_candidate "$revision" "$parent" prepared
+  export GIT_SSH_COMMAND="ssh -i $deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+  if ! git push git@github.com:repparw/nix.git HEAD:main; then
+    notify ":warning: fleet promotion aborted: lock push failed; no host was changed"
+    exit 1
+  fi
+  write_candidate "$revision" "$parent" published
+  git push git@gitlab.com:repparw/nix.git HEAD:main ||
+    notify ":warning: fleet promotion landed on GitHub but the GitLab mirror push failed"
+  notify ":arrow_up: fleet candidate ${revision:0:8} published; deployment is a separate transaction"
+  exit 0
+fi
 
 if [ "$requested_host" = all ]; then
   hosts=(epsilon pi alpha)
 else
   hosts=("$requested_host")
+fi
+
+current_system=$(nix eval --impure --raw --expr builtins.currentSystem)
+nix build ".#checks.$current_system.deploy-schema" --no-link
+# Force every real profile path before the first canary changes. Evaluation or
+# mixed-architecture errors are preflight failures, not rollback events.
+preflight_hosts "${hosts[@]}"
+
+revision=$(git rev-parse HEAD)
+printf '%s\n' "$revision" > "$state/target-revision"
+candidate_active=0
+if read_candidate \
+  && { [ "$candidate_status" = published ] || [ "$candidate_status" = prepared ]; } \
+  && [ "$candidate_revision" = "$revision" ] \
+  && candidate_commit_is_safe "$candidate_revision" "$candidate_parent"; then
+  candidate_active=1
 fi
 
 declare -A before_generation
@@ -335,15 +391,21 @@ deploy_one() {
   local host="$1" running_revision before after_generation activity_gate
 
   running_revision=$(remote "$host" nixos-version --configuration-revision 2>/dev/null || true)
-  if [ "$running_revision" = "$revision" ] && [ "$dry_activate" = 0 ]; then
+  if [ "$running_revision" = "$revision" ]; then
     echo "$host already runs ${revision:0:8}"
+    if [ "$candidate_active" = 1 ]; then
+      before=$(cat "$state/before-$revision-$host" 2>/dev/null || true)
+      if [[ "$before" == /nix/store/* ]]; then
+        touch "$state/reached-$revision-$host" || return 1
+      fi
+    fi
     return 2
   fi
 
   activity_gate=$(nix eval --json ".#nixosConfigurations.$host.config.modules.fleet-update.activityGate") || return 1
   case "$activity_gate" in
     true)
-      if [ "$dry_activate" = 0 ] && [ "$force" = 0 ] && ! host_is_idle "$host"; then
+      if [ "$force" = 0 ] && ! host_is_idle "$host"; then
         echo "$host has an active graphical session or is unavailable; deferring it"
         notify ":information_source: fleet update deferred $host (active or unavailable) at ${revision:0:8}"
         deferred+=("$host")
@@ -363,14 +425,19 @@ deploy_one() {
     return 1
   fi
   before_generation["$host"]=$before
-  deploy_args=(".#$host" --skip-checks)
-  [ "$dry_activate" = 1 ] && deploy_args+=(--dry-activate)
-  if ! deploy "${deploy_args[@]}"; then
+  if [ "$candidate_active" = 1 ]; then
+    printf '%s\n' "$before" > "$state/before-$revision-$host" || return 1
+    remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || return 1
+    remote "$host" ln -sfn "$before" "/nix/var/nix/gcroots/fleet-update/$revision" || return 1
+  fi
+  if ! deploy ".#$host" --skip-checks; then
     return 1
   fi
-  [ "$dry_activate" = 1 ] && return 0
 
   deployed+=("$host")
+  if [ "$candidate_active" = 1 ]; then
+    touch "$state/reached-$revision-$host" || return 1
+  fi
   running_revision=$(remote "$host" nixos-version --configuration-revision 2>/dev/null || true)
   if [ "$running_revision" != "$revision" ]; then
     echo "$host activated revision ${running_revision:-unknown}, expected $revision" >&2
@@ -397,31 +464,74 @@ done
 
 if [ -n "$failure_host" ]; then
   streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
-  printf '%s\n' "$streak" > "$state/rollback-streak"
+  printf '%s\n' "$streak" > "$state/rollback-streak" \
+    || notify ":warning: could not persist the fleet rollback streak"
   note=""
   if [ "$streak" -ge 2 ]; then
-    touch "$state/PAUSE"
-    note=" — automation PAUSED (breaker)"
+    if touch "$state/PAUSE"; then
+      note=" — automation PAUSED (breaker)"
+    else
+      note=" — WARNING: failed to persist the automation pause"
+    fi
   fi
 
-  if [ "$candidate_created" = 1 ]; then
-    git revert --no-edit HEAD
-    revert_revision=$(git rev-parse HEAD)
-    git push git@github.com:repparw/nix.git HEAD:main ||
-      notify ":rotating_light: CRITICAL: failed to push the fleet lock revert"
-    git push git@gitlab.com:repparw/nix.git HEAD:main || true
+  if [ "$candidate_active" = 1 ]; then
+    export GIT_SSH_COMMAND="ssh -i $deploy_key -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+    remote_revision=""
+    revert_published=0
+    if git fetch origin main; then
+      remote_revision=$(git rev-parse origin/main 2>/dev/null || true)
+    fi
+    if [ "$remote_revision" = "$candidate_revision" ] \
+      && candidate_commit_is_safe "$candidate_revision" "$candidate_parent"; then
+      if git reset --hard "$candidate_revision" \
+        && git config user.name pi-auto-update \
+        && git config user.email pi-auto-update@repparw.com \
+        && git revert --no-edit "$candidate_revision" \
+        && git push git@github.com:repparw/nix.git HEAD:main; then
+        revert_published=1
+        write_candidate "$candidate_revision" "$candidate_parent" reverted \
+          || notify ":warning: candidate revert was published but its status could not be persisted"
+        git push git@gitlab.com:repparw/nix.git HEAD:main || true
+      else
+        notify ":rotating_light: CRITICAL: failed to publish the exact candidate revert; refusing to guess at main"
+      fi
+    else
+      notify ":rotating_light: candidate ${candidate_revision:0:8} failed soak, but main moved to ${remote_revision:0:8}; refusing to revert a manual commit"
+    fi
 
     rollback_failed=0
-    for ((i = ${#deployed[@]} - 1; i >= 0; i--)); do
-      host=${deployed[$i]}
-      if ! deploy ".#$host" --skip-checks; then
+    for host in alpha pi epsilon; do
+      rollback_host=0
+      if [ -e "$state/reached-$revision-$host" ]; then
+        rollback_host=1
+      else
+        for deployed_host in "${deployed[@]}"; do
+          if [ "$deployed_host" = "$host" ]; then
+            rollback_host=1
+            break
+          fi
+        done
+      fi
+      [ "$rollback_host" = 1 ] || continue
+      before=$(cat "$state/before-$revision-$host" 2>/dev/null || true)
+      if [[ "$before" != /nix/store/* ]] \
+        && [[ "${before_generation[$host]-}" == /nix/store/* ]]; then
+        before=${before_generation[$host]}
+      fi
+      if [ "$revert_published" = 1 ] && deploy ".#$host" --skip-checks; then
+        continue
+      fi
+      if [[ "$before" != /nix/store/* ]] \
+        || ! remote "$host" nix-env -p /nix/var/nix/profiles/system --set "$before" \
+        || ! remote "$host" "$before/bin/switch-to-configuration" switch; then
         rollback_failed=1
-        remote "$host" nix-env -p /nix/var/nix/profiles/system --set "${before_generation[$host]}" || true
-        remote "$host" "${before_generation[$host]}/bin/switch-to-configuration" switch || true
       fi
     done
     if [ "$rollback_failed" = 1 ]; then
-      notify ":rotating_light: fleet rollback to ${revert_revision:0:8} needs operator help"
+      notify ":rotating_light: fleet rollback after ${revision:0:8} needs operator review"
+    else
+      cleanup_candidate_roots "$revision"
     fi
   else
     for ((i = ${#deployed[@]} - 1; i >= 0; i--)); do
@@ -435,10 +545,14 @@ if [ -n "$failure_host" ]; then
   exit 1
 fi
 
-if [ "$dry_activate" = 0 ]; then
-  printf '0\n' > "$state/rollback-streak"
+printf '0\n' > "$state/rollback-streak"
+if [ "$requested_host" = all ]; then
   if [ "${#deferred[@]}" = 0 ]; then
     printf '%s\n' "$revision" > "$state/deployed-revision"
+    if [ "$candidate_active" = 1 ]; then
+      write_candidate "$candidate_revision" "$candidate_parent" completed
+      cleanup_candidate_roots "$revision"
+    fi
     notify ":white_check_mark: fleet converged on ${revision:0:8}"
   else
     notify ":information_source: required nodes converged on ${revision:0:8}; alpha remains deferred"

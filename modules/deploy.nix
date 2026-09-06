@@ -83,14 +83,25 @@ let
         deploy-rs
         git
         gawk
-        gnugrep
         jq
         nix
         openssh
         systemd
         util-linux
       ];
-      text = builtins.readFile ./scripts/fleet-update.sh;
+      text =
+        builtins.replaceStrings
+          [
+            "@FLEET_ALPHA_ADDRESS@"
+            "@FLEET_PI_ADDRESS@"
+            "@FLEET_EPSILON_ADDRESS@"
+          ]
+          [
+            deployBase.nodes.alpha.hostname
+            deployBase.nodes.pi.hostname
+            deployBase.nodes.epsilon.hostname
+          ]
+          (builtins.readFile ./scripts/fleet-update.sh);
     };
 
   mkDeploySchemaCheck =
@@ -141,11 +152,16 @@ in
           readOnly = true;
           description = "Whether deployment waits for local graphical sessions to be idle or locked";
         };
+        controllerHost = lib.mkOption {
+          type = lib.types.str;
+          default = deployBase.nodes.pi.hostname;
+          readOnly = true;
+          description = "Address of the serialized fleet deployment controller";
+        };
       };
 
       config = {
         modules.fleet-update.package = mkFleetUpdate pkgs;
-        environment.systemPackages = [ config.modules.fleet-update.package ];
         systemd.tmpfiles.rules = [ "d /run/deploy-rs 0700 root root -" ];
         users.users.root.openssh.authorizedKeys.keys = import ../authorized-keys.nix;
         system.configurationRevision = inputs.self.rev or (inputs.self.dirtyRev or null);
@@ -188,7 +204,7 @@ in
       apps.fleet-update = {
         type = "app";
         program = lib.getExe (mkFleetUpdate pkgs);
-        meta.description = "Update and converge the NixOS fleet transactionally";
+        meta.description = "Promote or deploy the NixOS fleet transactionally";
       };
     };
 }

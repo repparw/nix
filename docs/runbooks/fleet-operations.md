@@ -74,16 +74,20 @@ Adding a new host's key to a secrets file:
 `sops updatekeys --yes secrets/<file>.sops.yaml` from a machine that can
 decrypt it.
 
-## Staged auto-update (`auto-update.timer`, daily 04:15)
+## Staged auto-update
 
-Pi is the controller and sole lock writer. Its `fleet-update --update-lock`
-cycle resets a persistent checkout to `origin/main`, checks disk and current pi
+Pi is the controller and sole lock writer, but publishing and deploying are
+independent transactions. `fleet-promote.timer` runs daily at 04:15. It resets
+a persistent checkout to exact `origin/main`, checks disk and current pi
 health, takes a best-effort restic snapshot, bumps all inputs, and validates the
 deploy schema plus all three host evaluations. If the lock changed, it commits
-and pushes the candidate to GitHub before changing any host; the GitLab mirror
-push is best-effort.
+and pushes the candidate to GitHub, records its exact revision and parent, and
+exits without changing a host. The GitLab mirror push is best-effort.
 
-The candidate is then deployed with deploy-rs in blast-radius order:
+`fleet-deploy.timer` runs at 05:30 whether promotion succeeded or failed. It
+fetches exact current `origin/main`, pre-evaluates every real deployment
+profile before changing the canary, and deploys it with deploy-rs in
+blast-radius order:
 **epsilon → pi → alpha**. Every changed node is activated with deploy-rs magic
 rollback enabled, then must pass two consecutive unit and HTTP health checks.
 Hosts carrying `den.aspects.desktop` are deployed only when every local
@@ -93,19 +97,26 @@ rejects any runtime systemd inhibitor whose mode is `block` and whose `what`
 contains `sleep`. This catches active remote game and media streams even while
 the physical session is locked. Delay-mode sleep inhibitors (including rtkit
 and swayidle) and inhibitors for unrelated actions such as power-key handling
-do not gate deployment. Alpha's 05:30 `alpha-auto-update.timer` asks pi's
-controller for a consumer-only retry against the current main revision, so the
-retry, full-fleet pass, and interactive force command share one serialization
-lock. The retry and force paths wait up to one hour for an in-progress fleet
-transaction, then either converge alpha or recognize that it is already
-current. A host that already runs the candidate is recognized as converged
-before this activity gate.
+do not gate deployment. Pi's 07:00 `fleet-alpha-retry.timer` runs a
+consumer-only retry against the current main revision, so the retry,
+full-fleet pass, and interactive force command share one serialization lock.
+Keeping this service on pi also avoids replacing an active update unit on
+alpha during activation. The retry and force paths wait up to three hours for an
+in-progress fleet transaction, then either converge alpha or recognize that it
+is already current. A host that already runs the candidate is recognized as
+converged before this activity gate.
 
-deploy-rs owns closure builds and copies, activation, SSH confirmation, and
-activation-failure rollback. The wrapper supplies fleet policy around it: Git
-publication, serial canary ordering, desktop gating, application-health soaks,
-notifications, and post-soak rollback. Activation and confirmation timeouts
-live in the deploy-rs configuration rather than command-line overrides.
+The timer launches the long transaction as the transient
+`fleet-deploy-run.service`. This keeps the declarative launcher inactive while
+pi replaces its own system configuration and avoids a self-update systemd
+transaction cycle.
+
+deploy-rs owns closure builds and copies, activation, SSH confirmation,
+dry-activation, and activation-failure rollback. The wrapper supplies only
+fleet policy that deploy-rs does not: exact-main consumption, serial canary
+ordering, desktop gating, application-health soaks, notifications, and
+post-soak rollback. Activation and confirmation timeouts live in the deploy-rs
+configuration rather than command-line overrides.
 
 Invariant: **origin/main's flake.lock always equals the pin production
 converged on.** Rollbacks push a revert commit; git log is the update
@@ -114,9 +125,12 @@ history.
 Failure handling:
 
 - Activation failures are handled first by deploy-rs magic rollback.
-- A failed post-activation soak reverts the candidate commit on main and
-  redeploys the reverted graph to every node already reached. If that deploy
-  fails, the updater switches the node back to its exact pre-update profile.
+- A failed post-activation soak reverts main only when it still points at the
+  recorded, bot-authored, flake-lock-only candidate. It never infers a
+  candidate from `HEAD` or reverts a later manual commit. The consumer then
+  redeploys the reverted graph to every persistently recorded node already
+  reached. If that deploy fails, it switches the node back to its recorded
+  pre-update profile.
 - Two consecutive failed cycles trip the controller's breaker by creating its
   `PAUSE` flag and alerting.
 - Boot-level regressions remain a rescue-console problem. Pi's rescue SD is the
@@ -125,26 +139,29 @@ Failure handling:
 Operator controls:
 
 ```sh
-ssh root@192.168.0.4 'touch /var/lib/auto-update/PAUSE'    # pause writer
-ssh root@192.168.0.4 'rm /var/lib/auto-update/PAUSE'       # resume writer
-ssh root@192.168.0.4 'systemctl start auto-update.service' # force a cycle
-nix run .#fleet-update -- --host epsilon                    # converge one node
-nix run .#fleet-update -- --host epsilon --dry-activate     # activation test
+ssh root@192.168.0.4 'touch /var/lib/auto-update/PAUSE'       # pause automation
+ssh root@192.168.0.4 'rm /var/lib/auto-update/PAUSE'          # resume automation
+ssh root@192.168.0.4 'systemctl start fleet-promote.service'  # produce an update
+ssh root@192.168.0.4 'systemctl start fleet-deploy.service'   # launch fleet consumption
+ssh root@192.168.0.4 'fleet-update deploy --host epsilon'     # consume main on one host
+nix run .#deploy-rs -- .#epsilon --dry-activate               # test a local tree
 ```
 
 Alpha's interactive `Mod+U` asks pi's fleet controller to run
-`fleet-update --host alpha --force`. Because the user explicitly initiates it,
+`fleet-update deploy --host alpha --force`. Because the user explicitly initiates it,
 the command bypasses the desktop activity/inhibitor gate and automation
 `PAUSE`. It still shares the controller's serialization lock, deploys the exact
 current `origin/main` revision through deploy-rs, applies the health soak, and
 rolls back a failed deployment. The separate `host-update` command remains
 available when an operator specifically wants to build and review a local tree.
 
-Controller artifacts live in `/var/lib/auto-update/`: `candidate-revision`,
-`deployed-revision`, `rollback-streak`, and `diff-<host>.txt`. Alpha's retry
-uses that same controller state. A `PAUSE` file is scoped to that job. Node
-success notifications attach the closure diff; the final notification
-distinguishes full convergence from a deferred alpha.
+Controller artifacts live in `/var/lib/auto-update/`: the atomic `candidate`
+record, `target-revision`, `deployed-revision`, `rollback-streak`, durable
+`before-<revision>-<host>` / `reached-<revision>-<host>` rollback records, and
+`diff-<host>.txt`. Alpha's retry uses that same controller state. A `PAUSE`
+file pauses both scheduled transactions. Node success notifications attach the
+closure diff; the final notification distinguishes full convergence from a
+deferred alpha.
 
 ## Firmware updates (`fwupd`, hardware hosts)
 
