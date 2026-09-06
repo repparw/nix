@@ -32,8 +32,8 @@ let
 
   deployBase = {
     autoRollback = true;
-    activationTimeout = 180;
-    confirmTimeout = 90;
+    activationTimeout = 300;
+    confirmTimeout = 60;
     magicRollback = true;
     tempPath = "/run/deploy-rs";
     sshUser = "root";
