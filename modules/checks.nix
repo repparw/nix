@@ -633,6 +633,7 @@
                 let
                   authorizedKeys = import ../authorized-keys.nix;
                   fleetUpdateSource = builtins.readFile ./scripts/fleet-update.sh;
+                  shellSource = builtins.readFile ./aspects/cli/shell.nix;
                 in
                 !alpha.systemd.services.alpha-auto-update.restartIfChanged
                 && !pi.systemd.services.auto-update.restartIfChanged
@@ -642,7 +643,7 @@
                 && lib.strings.hasInfix "--update-lock --state /var/lib/auto-update" pi.systemd.services.auto-update.script
                 && lib.strings.hasInfix "systemd-inhibit --list --json=short" fleetUpdateSource
                 && lib.strings.hasInfix ".mode == \"block\"" fleetUpdateSource
-                && lib.strings.hasInfix "--host alpha --force --wait-lock 3600 --state /var/lib/auto-update" alpha.home-manager.users.repparw.programs.fish.shellAliases.nrsu
+                && lib.strings.hasInfix "--host alpha --force --wait-lock 3600 --state /var/lib/auto-update" shellSource
                 && alpha.modules.desktop.enable
                 && alpha.modules.fleet-update.activityGate
                 && !pi.modules.fleet-update.activityGate
