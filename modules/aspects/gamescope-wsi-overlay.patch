@@ -1,0 +1,28 @@
+diff --git a/layer/VkLayer_FROG_gamescope_wsi.cpp b/layer/VkLayer_FROG_gamescope_wsi.cpp
+--- a/layer/VkLayer_FROG_gamescope_wsi.cpp
++++ b/layer/VkLayer_FROG_gamescope_wsi.cpp
+@@ -318,0 +319,4 @@ namespace GamescopeWSILayer {
++    const char *fixOverlayEnv = getenv("GAMESCOPE_WSI_FIX_OVERLAY");
++    if (fixOverlayEnv && *fixOverlayEnv && atoi(fixOverlayEnv) != 0)
++      flags |= GamescopeLayerClient::Flag::SteamOverlayFix;
++
+@@ -413,0 +418 @@ namespace GamescopeWSILayer {
++    bool createdFirstSwapchain = false;
+@@ -431,0 +437,4 @@ namespace GamescopeWSILayer {
++      // Give Steam Overlay one real X11 swapchain to hook after HDR support
++      // has already been detected through the initial Gamescope WSI swapchain.
++      if (flags & GamescopeLayerClient::Flag::SteamOverlayFix && createdFirstSwapchain)
++        return false;
+@@ -1311,0 +1322,7 @@ namespace GamescopeWSILayer {
++      if (!gamescopeSurface->createdFirstSwapchain) {
++        gamescopeSurface->createdFirstSwapchain = true;
++      } else {
++        // Only one X11-backed swapchain is needed for overlay injection.
++        gamescopeSurface->flags &= ~GamescopeLayerClient::Flag::SteamOverlayFix;
++      }
++
+diff --git a/src/layer_defines.h b/src/layer_defines.h
+--- a/src/layer_defines.h
++++ b/src/layer_defines.h
+@@ -15,0 +16 @@ namespace GamescopeLayerClient
++        static constexpr uint32_t SteamOverlayFix = 1u << 5;

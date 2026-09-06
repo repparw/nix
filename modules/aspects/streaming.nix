@@ -42,7 +42,9 @@
 
       # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
       # to gamescope; nixpkgs disables it by default.
-      gamescopeHdr = pkgs.gamescope.override { enableWsi = true; };
+      gamescopeHdr = (pkgs.gamescope.override { enableWsi = true; }).overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [ ./gamescope-wsi-overlay.patch ];
+      });
 
       # Single Steam entry: gamescope HDR wrapper covers SDR too (SDR content
       # presents fine inside --hdr-enabled gamescope), while plain moonshine-wsi
@@ -82,6 +84,13 @@
           # Moonshine sets on the environment).
           export DISABLE_MOONSHINE_WSI=1
           unset ENABLE_MOONSHINE_WSI
+
+          # Steam Overlay only hooks X11 windows, while gamescope-wsi bypasses
+          # Xwayland for game swapchains. Opt into the upstream PoC from
+          # ValveSoftware/gamescope#1537: after HDR detection on the first
+          # swapchain, expose one X11-backed swapchain for overlay injection,
+          # then resume the normal HDR gamescope-wsi path.
+          export GAMESCOPE_WSI_FIX_OVERLAY=1
 
           # bwrap sits INSIDE gamescope, not outside: gamescope spawns its own
           # Xwayland, and inside bwrap's user namespace the root-owned
@@ -150,10 +159,13 @@
 
         # Boot race: moonshine's healthcheck starts before the GPU finishes
         # initializing (Vulkan FAIL, exit 1, recovered only by Restart=).
-        # Order after graphical.target — the DM cannot start before the GPU
-        # is ready. Wants keeps a headless boot (no DM) from blocking it.
-        systemd.services.moonshine.wants = [ "graphical.target" ];
-        systemd.services.moonshine.after = lib.mkAfter [ "graphical.target" ];
+        # Order after udev-settle so DRM probe and firmware load are done
+        # before the first healthcheck. (Not After=graphical.target: moonshine
+        # is WantedBy multi-user, so that ordering cycles
+        # multi-user -> moonshine -> graphical -> multi-user and breaks
+        # graphical.target entirely.)
+        systemd.services.moonshine.wants = [ "systemd-udev-settle.service" ];
+        systemd.services.moonshine.after = [ "systemd-udev-settle.service" ];
       };
     };
 }
