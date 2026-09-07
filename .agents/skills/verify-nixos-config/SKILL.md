@@ -9,7 +9,7 @@ The "app" is the NixOS flake in this repo. A user "runs" it by switching
 (`sudo nh os switch .`, password required — agents cannot run it). Everything
 an agent can verify happens **without** the switch: evaluate, build, diff.
 
-Hosts: `alpha` (this machine), `epsilon`, `pi`, `pi-sd`. Default to `alpha`
+Hosts: `alpha` (this machine), `epsilon`, `pi`. Default to `alpha`
 unless the change is host-specific elsewhere. `$HOST` below means the target
 host name.
 

@@ -19,7 +19,7 @@ jobs:
       # into eval — most of the gate's wall time, and hermes is tested
       # upstream. Build the check derivations explicitly instead: they cover
       # the fleet asserts (service-definitions evals epsilon's edge config
-      # without forcing hermes) plus alpha/pi/pi-sd toplevel evals. Epsilon's
+      # without forcing hermes) plus alpha/pi toplevel evals. Epsilon's
       # toplevel is exercised by pi's auto-update probes and local dev.
       - run: >
           nix build
@@ -32,5 +32,4 @@ jobs:
           .#checks.x86_64-linux.service-definitions
           .#checks.x86_64-linux.alpha
           .#checks.x86_64-linux.pi
-          .#checks.x86_64-linux.pi-sd
           --print-build-logs --keep-going

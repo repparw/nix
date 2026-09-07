@@ -133,8 +133,9 @@ Failure handling:
   pre-update profile.
 - Two consecutive failed cycles trip the controller's breaker by creating its
   `PAUSE` flag and alerting.
-- Boot-level regressions remain a rescue-console problem. Pi's rescue SD is the
-  final recovery path for an unbootable generation.
+- Boot-level regressions remain a rescue-console problem. Re-imaging the pi from
+  a cloned SD of the last known-good running system is the final recovery path
+  for an unbootable generation.
 
 Operator controls:
 

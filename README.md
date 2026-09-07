@@ -12,8 +12,7 @@ Hosts:
   declarative nspawn containers.
 
 `beta` is parked: its host attachment is commented out in
-`modules/aspects/repparw.nix` pending laptop hardware. `pi-sd` is a rescue
-SD-image builder, not a host.
+`modules/aspects/repparw.nix` pending laptop hardware.
 
 ## Commands
 
