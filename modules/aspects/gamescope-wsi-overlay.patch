@@ -6,26 +6,26 @@ diff --git a/layer/VkLayer_FROG_gamescope_wsi.cpp b/layer/VkLayer_FROG_gamescope
 +    if (fixOverlayEnv && *fixOverlayEnv && atoi(fixOverlayEnv) != 0)
 +      flags |= GamescopeLayerClient::Flag::SteamOverlayFix;
 +
-@@ -413,0 +418 @@ namespace GamescopeWSILayer {
+@@ -413,0 +418,2 @@ namespace GamescopeWSILayer {
 +    bool createdFirstSwapchain = false;
-@@ -431,0 +437,4 @@ namespace GamescopeWSILayer {
-+      // Give Steam Overlay one real X11 swapchain to hook after HDR support
-+      // has already been detected through the initial Gamescope WSI swapchain.
-+      if (flags & GamescopeLayerClient::Flag::SteamOverlayFix && createdFirstSwapchain)
-+        return false;
-@@ -1260,5 +1271,12 @@ namespace GamescopeWSILayer {
-         gamescopeInstance->engineName.c_str());
-
++    uint64_t overlayFixXwaylandStart = 0;
+@@ -431,0 +438,11 @@ namespace GamescopeWSILayer {
++      // Give Steam Overlay a real X11 swapchain after HDR support has already
++      // been detected, and keep presenting it long enough for Steam's UI to
++      // attach. QueuePresentKHR notices the later true result and forces the
++      // swapchain back onto the normal HDR gamescope-wsi path.
++      if (flags & GamescopeLayerClient::Flag::SteamOverlayFix && createdFirstSwapchain) {
++        if (overlayFixXwaylandStart == 0)
++          overlayFixXwaylandStart = getTimeMonotonic();
++        if (getTimeMonotonic() - overlayFixXwaylandStart < 5'000'000'000ull)
++          return false;
++        flags &= ~GamescopeLayerClient::Flag::SteamOverlayFix;
++      }
+@@ -1311,0 +1329,4 @@ namespace GamescopeWSILayer {
 +      if (!gamescopeSurface->createdFirstSwapchain) {
 +        gamescopeSurface->createdFirstSwapchain = true;
-+      } else {
-+        // Only one X11-backed swapchain is needed for overlay injection.
-+        gamescopeSurface->flags &= ~GamescopeLayerClient::Flag::SteamOverlayFix;
 +      }
 +
-       return VK_SUCCESS;
-     }
-
 diff --git a/src/layer_defines.h b/src/layer_defines.h
 --- a/src/layer_defines.h
 +++ b/src/layer_defines.h
