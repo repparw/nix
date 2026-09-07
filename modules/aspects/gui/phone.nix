@@ -4,7 +4,7 @@
   ...
 }:
 {
-  den.aspects.phone = {
+  den.aspects.gui.provides.phone = {
     nixos = {
       networking.firewall.interfaces.eth0 = {
         allowedTCPPortRanges = [
@@ -84,6 +84,8 @@
         home.packages = [
           kdeconnect
           sendClipboard
+          pkgs.scrcpy
+          pkgs.android-tools
         ];
 
         systemd.user.services.kdeconnect = {

@@ -6,6 +6,7 @@
       [
         session
         niri
+        phone
         browser
         mpv
         spotify
