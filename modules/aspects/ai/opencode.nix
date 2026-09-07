@@ -161,6 +161,22 @@
                     };
                   };
                 };
+                # Pin Luna to OpenAI's flex tier endpoint. Same mechanism as
+                # the Z.AI pin above: model `options` map to
+                # providerOptions.openaiCompatible which the SDK merges into
+                # the request body, so `provider.only: ["openai/flex"]`
+                # reaches OpenRouter and restricts routing to the flex
+                # endpoint (50% discount, higher latency, no fallback to
+                # default tier). Base slug "openai" would NOT match tier
+                # endpoints — explicit `openai/flex` opt-in is required.
+                "openai/gpt-5.6-luna" = {
+                  name = "GPT 5.6 Luna (OpenAI Flex)";
+                  options = {
+                    provider = {
+                      only = [ "openai/flex" ];
+                    };
+                  };
+                };
               };
             };
             # Nous Portal subscription routed through their OpenAI-compatible
