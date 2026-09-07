@@ -15,6 +15,7 @@
       den.aspects.nixos-services
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
+      den.aspects.nixos-services._.disk-watch
       den.aspects.streaming
       den.aspects.streaming._.pulse-crash-fix
       den.aspects.deploy-target
@@ -51,6 +52,32 @@
         modules.coredump-watch = {
           enable = true;
           mute = [ "wine64-preloader" ];
+        };
+
+        # Disk-space surfacing to Discord (same delivery contract as
+        # coredump-watch: posts on breach, deletes the message on
+        # recovery). Thresholds picked after the Sep 2026 ENOSPC incident:
+        # btrfs metadata sat at 97.7% while df still showed 64G free, so
+        # the metadata pool gets its own check alongside df percents.
+        modules.disk-watch = {
+          enable = true;
+          mounts = [
+            {
+              mount = "/";
+              warn = 85;
+              crit = 93;
+            }
+            {
+              mount = "/mnt/hdd";
+              warn = 95;
+              crit = 96;
+            }
+            {
+              mount = "/mnt/seagate";
+              warn = 90;
+              crit = 96;
+            }
+          ];
         };
 
         # The desktop layer's user-facing groups (the desktop aspect itself
