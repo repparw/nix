@@ -103,7 +103,6 @@
               enable = true;
               dotIcons.enable = false;
             };
-            xresources.path = ".config/Xresources";
             stylix = {
               icons = {
                 enable = true;
@@ -111,6 +110,7 @@
                 package = pkgs.papirus-icon-theme;
               };
               targets = {
+                x11.enable = false;
                 nixvim = {
                   transparentBackground = {
                     main = true;
