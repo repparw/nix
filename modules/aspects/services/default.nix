@@ -5,7 +5,6 @@
       with den.aspects.nixos-services._;
       [
         arr
-        iebApi
         jellyfin
         matrizApi
       ]

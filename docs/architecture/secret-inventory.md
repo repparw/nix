@@ -43,15 +43,13 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/matriz.sops.yaml` | `matrizApiPassword` | Authenticate the local EcoValores Matriz adapter | Matriz account snapshot service | `alpha` |
 | `secrets/matriz.sops.yaml` | `matrizApiAccount` | Select the EcoValores Matriz account without publishing its identifier | Matriz account snapshot service | `alpha` |
 | `secrets/hermes.sops.yaml` | `hermes-env` | Seed `$HERMES_HOME/.env` for the Hermes gateway (chat platform tokens, LLM API keys) | `services.hermes-agent` environmentFiles | `pi` |
-| `secrets/ieb.sops.yaml` | `iebUsername` | Identify the IEB API user | IEB API adapter (`ieb-api` aspect) | `alpha` |
-| `secrets/ieb.sops.yaml` | `iebPassword` | Authenticate the IEB API user | IEB API adapter (`ieb-api` aspect) | `alpha` |
 The creation rule grants each host's SSH host-key recipient plus the personal
 recovery recipient. Files carry only the recipients their consumers need:
 files for services that run on both hosts (`proxy`, `ddclient`, `authelia`,
 `backup`, `rclone`, `archisteamfarm`, `automations`) include pi's recipient
 (`age1x7qu0en7rg0qm6rq5dfvyn3w34se2qt6wdw7yzgtwjkgj3skssgqmeut5m`, derived
 from its preserved Debian-era host key), while files for alpha-only services
-(`ieb`, `jellyfin`, `matriz`) do not. New consumers on pi therefore need a
+(`jellyfin`, `matriz`) do not. New consumers on pi therefore need a
 recipient added to any file that lacks it. Add a recipient only when
 introducing a genuinely new key, then run `sops updatekeys` on the affected
 files.
