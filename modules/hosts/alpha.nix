@@ -143,6 +143,7 @@
               "noauto"
               "x-systemd.automount"
               "x-systemd.idle-timeout=10min"
+              "x-gvfs-trash"
             ];
           };
 
@@ -159,6 +160,7 @@
               "errors=remount-ro"
               "x-systemd.automount"
               "x-systemd.idle-timeout=10min"
+              "x-gvfs-trash"
             ];
           };
         };
