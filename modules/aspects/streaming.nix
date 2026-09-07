@@ -46,69 +46,92 @@
         patches = (old.patches or [ ]) ++ [ ./gamescope-wsi-overlay.patch ];
       });
 
-      # Single Steam entry: gamescope HDR wrapper covers SDR too (SDR content
-      # presents fine inside --hdr-enabled gamescope), while plain moonshine-wsi
-      # Steam black-screens HDR/DX11 games (hgaiser/moonshine#93, confirmed on
-      # 0.15.0). One icon, no per-game choice.
-      moonshine-steam = pkgs.writeShellApplication {
+      # Run Steam through Gamescope so Moonshine always captures one stable
+      # surface. The default path disables Gamescope WSI: Steam's overlay only
+      # hooks/composites reliably when the game remains X11-backed. Keep HDR as
+      # a separate opt-in entry because HDR requires Gamescope WSI and its Steam
+      # overlay support remains broken (ValveSoftware/gamescope#1537).
+      mkMoonshineSteam =
+        {
+          name,
+          hdr,
+        }:
+        pkgs.writeShellApplication {
+          inherit name;
+          runtimeInputs = [
+            gamescopeHdr
+            pkgs.bubblewrap
+            pkgs.procps
+            # Use the NixOS-configured wrapper so extraCompatPackages (GE-Proton)
+            # is exported to Steam inside Moonshine's transient session too.
+            config.programs.steam.package
+          ];
+          text = ''
+            ${stopDesktopSteam}
+
+            # Gamescope's WSI layer must remain discoverable for the HDR entry.
+            # moonshine-wsi is force-disabled below for both paths.
+            export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${gamescopeHdr}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+            # Workaround for hgaiser/moonshine#93 (HDR/DX11 black screen):
+            # wrap Steam in Gamescope at the client's resolution. Gamescope owns
+            # the surface Moonshine's compositor sees, so games present to
+            # Gamescope instead of creating their own (HDR 1x1) WSI swapchain.
+            w=''${MOONSHINE_CLIENT_WIDTH:-1920}
+            h=''${MOONSHINE_CLIENT_HEIGHT:-1080}
+            rate=''${MOONSHINE_CLIENT_FRAMERATE:-60}
+
+            # The moonshine-wsi Vulkan layer breaks gamescope (a compositor, not
+            # a game): it redirects swapchains into Moonshine's WSI path. Games
+            # inside gamescope present to gamescope's own compositor, and
+            # gamescope presents to Moonshine as a plain Wayland client, so the
+            # layer is not needed here. Disable it for the whole gamescope session
+            # (DISABLE_* takes precedence over the ENABLE_MOONSHINE_WSI=1 that
+            # Moonshine sets on the environment).
+            export DISABLE_MOONSHINE_WSI=1
+            unset ENABLE_MOONSHINE_WSI
+
+            ${lib.optionalString hdr ''
+              # Steam Overlay only hooks X11 windows, while gamescope-wsi bypasses
+              # Xwayland for game swapchains. Opt into the upstream PoC from
+              # ValveSoftware/gamescope#1537. This is best-effort: Steam's menu
+              # may still be invisible even though it receives input and renders.
+              unset DISABLE_GAMESCOPE_WSI
+              export GAMESCOPE_WSI_FIX_OVERLAY=1
+            ''}
+            ${lib.optionalString (!hdr) ''
+              # Reliable overlay path: keep all game presentation X11-backed.
+              export DISABLE_GAMESCOPE_WSI=1
+              unset GAMESCOPE_WSI_FIX_OVERLAY
+            ''}
+
+            # bwrap sits INSIDE gamescope, not outside: gamescope spawns its own
+            # Xwayland, and inside bwrap's user namespace the root-owned
+            # /tmp/.X11-unix appears owned by "nobody", which wlroots rejects
+            # (segfault). Here gamescope sets up Xwayland outside the sandbox
+            # and only the Steam child is sandboxed. The sandbox masks the
+            # Seagate automounts: Steam stats every mount at startup (drive
+            # enumeration) and Proton maps them as DOS drives (verified with
+            # strace 2026-09-05), which would otherwise spin up the idle disk
+            # on every launch. Overlay diagnostic 2026-09-06: removing this
+            # sandbox did not restore the overlay, so the sandbox is exonerated.
+            gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" ${lib.optionalString hdr "--hdr-enabled"})
+            exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- bwrap \
+              --dev-bind / / \
+              --tmpfs /mnt/seagate \
+              --tmpfs /home/containers/media/seagate \
+              -- steam -tenfoot
+          '';
+        };
+
+      moonshine-steam = mkMoonshineSteam {
         name = "moonshine-steam";
-        runtimeInputs = [
-          gamescopeHdr
-          pkgs.bubblewrap
-          pkgs.procps
-          # Use the NixOS-configured wrapper so extraCompatPackages (GE-Proton)
-          # is exported to Steam inside Moonshine's transient session too.
-          config.programs.steam.package
-        ];
-        text = ''
-          ${stopDesktopSteam}
+        hdr = false;
+      };
 
-          # Gamescope's WSI layer must stay discoverable for clients
-          # presenting into gamescope. moonshine-wsi is force-disabled below.
-          export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${gamescopeHdr}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
-
-          # Workaround for hgaiser/moonshine#93 (HDR/DX11 black screen):
-          # wrap Steam in Gamescope at the client's resolution. Gamescope owns
-          # the surface Moonshine's compositor sees, so games present to
-          # Gamescope instead of creating their own (HDR 1x1) WSI swapchain.
-          w=''${MOONSHINE_CLIENT_WIDTH:-1920}
-          h=''${MOONSHINE_CLIENT_HEIGHT:-1080}
-          rate=''${MOONSHINE_CLIENT_FRAMERATE:-60}
-
-          # The moonshine-wsi Vulkan layer breaks gamescope (a compositor, not
-          # a game): it redirects swapchains into Moonshine's WSI path. Games
-          # inside gamescope present to gamescope's own compositor, and
-          # gamescope presents to Moonshine as a plain Wayland client, so the
-          # layer is not needed here. Disable it for the whole gamescope session
-          # (DISABLE_* takes precedence over the ENABLE_MOONSHINE_WSI=1 that
-          # Moonshine sets on the environment).
-          export DISABLE_MOONSHINE_WSI=1
-          unset ENABLE_MOONSHINE_WSI
-
-          # Steam Overlay only hooks X11 windows, while gamescope-wsi bypasses
-          # Xwayland for game swapchains. Opt into the upstream PoC from
-          # ValveSoftware/gamescope#1537: after HDR detection on the first
-          # swapchain, expose one X11-backed swapchain for overlay injection,
-          # then resume the normal HDR gamescope-wsi path.
-          export GAMESCOPE_WSI_FIX_OVERLAY=1
-
-          # bwrap sits INSIDE gamescope, not outside: gamescope spawns its own
-          # Xwayland, and inside bwrap's user namespace the root-owned
-          # /tmp/.X11-unix appears owned by "nobody", which wlroots rejects
-          # (segfault). Here gamescope sets up Xwayland outside the sandbox
-          # and only the Steam child is sandboxed. The sandbox masks the
-          # Seagate automounts: Steam stats every mount at startup (drive
-          # enumeration) and Proton maps them as DOS drives (verified with
-          # strace 2026-09-05), which would otherwise spin up the idle disk
-          # on every launch. Overlay diagnostic 2026-09-06: removing this
-          # sandbox did not restore the overlay, so the sandbox is exonerated.
-          gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
-          exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- bwrap \
-            --dev-bind / / \
-            --tmpfs /mnt/seagate \
-            --tmpfs /home/containers/media/seagate \
-            -- steam -tenfoot
-        '';
+      moonshine-steam-hdr = mkMoonshineSteam {
+        name = "moonshine-steam-hdr";
+        hdr = true;
       };
     in
     {
@@ -140,6 +163,13 @@
                 title = "Steam Big Picture";
                 boxart = "${moonshine-boxart}/steam.png";
                 command = [ "${moonshine-steam}/bin/moonshine-steam" ];
+                stdout = "journal";
+                stderr = "journal";
+              }
+              {
+                title = "Steam Big Picture HDR";
+                boxart = "${moonshine-boxart}/steam.png";
+                command = [ "${moonshine-steam-hdr}/bin/moonshine-steam-hdr" ];
                 stdout = "journal";
                 stderr = "journal";
               }
