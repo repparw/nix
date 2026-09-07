@@ -375,4 +375,202 @@
         };
       };
   };
+
+  den.aspects.nixos-services.provides.disk-watch = {
+    nixos =
+      {
+        options,
+        config,
+        pkgs,
+        lib,
+        ...
+      }:
+      let
+        cfg = config.modules.disk-watch;
+
+        # Same delivery contract as the probe and coredump-watch: post via
+        # the Discord REST API on the hermes bot token so the watcher never
+        # dies with hermes.
+        channelId = "1515064288191053979";
+
+        diskWatchScript = pkgs.writeShellApplication {
+          name = "disk-watch";
+          runtimeInputs = with pkgs; [
+            curl
+            jq
+            gawk
+            gnugrep
+            coreutils
+            btrfs-progs
+          ];
+          text = ''
+            # Per-check breach state: the channel only ever shows what is
+            # currently breached. A level change deletes the old message and
+            # posts a new one; recovery deletes silently (same contract as
+            # the fleet-health probe). Message ids live in dotfiles so a
+            # channel rescan never trips over bookkeeping.
+            state_dir="$STATE_DIRECTORY"
+            mkdir -p "$state_dir"
+
+            # shellcheck disable=SC1091
+            source /run/secrets/hermes-env
+            api="https://discord.com/api/v10/channels/${channelId}/messages"
+
+            notify_post() { # content -> message id (empty on failure)
+              curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" \
+                | jq -r '.id // empty'
+            }
+
+            notify_delete() { # message id
+              curl -s -m 15 -o /dev/null -X DELETE \
+                -H "Authorization: Bot $DISCORD_BOT_TOKEN" "$api/messages/$1" || true
+            }
+
+            slug() { printf '%s' "$1" | tr -c '[:alnum:]._-' '_'; }
+
+            # set_level <check> <new-level> <detail>: post on a fresh breach
+            # or escalation, replace the message on any level change, delete
+            # on recovery, silent when unchanged.
+            set_level() { # check, level, detail
+              local check="$1" level="$2" detail="$3" s mid prev
+              s="$(slug "$check")"
+              prev="ok"
+              [ -f "$state_dir/$s.level" ] && prev="$(cat "$state_dir/$s.level")"
+              if [ "$level" = "$prev" ]; then
+                return 0
+              fi
+              if [ -f "$state_dir/.$s.msgid" ]; then
+                mid="$(cat "$state_dir/.$s.msgid")"
+                notify_delete "$mid"
+                rm -f "$state_dir/.$s.msgid"
+              fi
+              if [ "$level" != "ok" ]; then
+                if [ "$level" = "crit" ]; then
+                  mid=$(notify_post ":red_circle: disk-space CRIT $check ($detail)")
+                else
+                  mid=$(notify_post ":warning: disk-space warn $check ($detail)")
+                fi
+                [ -n "$mid" ] && printf '%s\n' "$mid" > "$state_dir/.$s.msgid"
+              fi
+              printf '%s\n' "$level" > "$state_dir/$s.level"
+            }
+
+            level_for() { # pct, warn, crit -> ok|warn|crit
+              awk -v p="$1" -v w="$2" -v c="$3" 'BEGIN {
+                if (p >= c) print "crit"; else if (p >= w) print "warn"; else print "ok"
+              }'
+            }
+
+            MOUNTS_JSON="''${MOUNTS_JSON:-[]}"
+            META_WARN="''${META_WARN:-85}"
+            META_CRIT="''${META_CRIT:-93}"
+
+            printf '%s' "$MOUNTS_JSON" | jq -c '.[]' | while IFS= read -r row; do
+              mp=$(printf '%s' "$row" | jq -r '.mount')
+              warn=$(printf '%s' "$row" | jq -r '.warn')
+              crit=$(printf '%s' "$row" | jq -r '.crit')
+              if [ ! -d "$mp" ]; then
+                echo "disk-watch: $mp missing, skipping" >&2
+                continue
+              fi
+              pct=$(df --output=pcent "$mp" | tail -n 1 | tr -d ' %')
+              set_level "mount:$mp" "$(level_for "$pct" "$warn" "$crit")" "$mp at $pct% (warn>=$warn crit>=$crit)"
+
+              # btrfs hides allocation pressure from df: a full metadata
+              # pool ENOSPCs writes while data space still shows free, so
+              # watch the metadata pool directly on btrfs mounts.
+              if [ "$(stat -f -c %T "$mp")" = "btrfs" ]; then
+                meta_pct=$(btrfs filesystem usage "$mp" 2>/dev/null |
+                  awk '/Metadata.*:/ {
+                    if (match($0, /\([0-9.]+%\)/)) {
+                      s = substr($0, RSTART+1, RLENGTH-2)
+                      sub(/%$/, "", s)
+                      print s
+                    }
+                  }' | head -n 1)
+                if [ -n "$meta_pct" ]; then
+                  meta_lvl=$(level_for "$meta_pct" "$META_WARN" "$META_CRIT")
+                  set_level "btrfs-meta:$mp" "$meta_lvl" "$mp metadata at $meta_pct% (warn>=$META_WARN crit>=$META_CRIT)"
+                fi
+              fi
+            done
+          '';
+        };
+      in
+      {
+        options.modules.disk-watch = {
+          enable = lib.mkEnableOption "disk-space surfacing to Discord (posts on breach, deletes on recovery)";
+
+          interval = lib.mkOption {
+            type = lib.types.str;
+            default = "*:0/15";
+            description = "systemd OnCalendar for the disk-watch timer";
+          };
+
+          mounts = lib.mkOption {
+            type = lib.types.listOf (
+              lib.types.submodule {
+                options = {
+                  mount = lib.mkOption {
+                    type = lib.types.str;
+                    description = "Mountpoint to watch";
+                  };
+                  warn = lib.mkOption {
+                    type = lib.types.int;
+                    description = "Warn threshold in used percent";
+                  };
+                  crit = lib.mkOption {
+                    type = lib.types.int;
+                    description = "Critical threshold in used percent";
+                  };
+                };
+              }
+            );
+            default = [ ];
+            description = "Mounts to watch with warn/crit used-percent thresholds";
+          };
+
+          metadataWarn = lib.mkOption {
+            type = lib.types.int;
+            default = 85;
+            description = "Warn threshold for btrfs metadata pool usage percent";
+          };
+
+          metadataCrit = lib.mkOption {
+            type = lib.types.int;
+            default = 93;
+            description = "Critical threshold for btrfs metadata pool usage percent";
+          };
+        };
+
+        config = {
+          systemd.services.disk-watch = lib.mkIf cfg.enable {
+            description = "Check disk space and alert to Discord on breach";
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            environment = {
+              HOSTNAME = config.networking.hostName;
+              MOUNTS_JSON = builtins.toJSON cfg.mounts;
+              META_WARN = toString cfg.metadataWarn;
+              META_CRIT = toString cfg.metadataCrit;
+            };
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = lib.getExe diskWatchScript;
+              StateDirectory = "disk-watch";
+            };
+          };
+
+          systemd.timers.disk-watch = lib.mkIf cfg.enable {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = cfg.interval;
+              Persistent = true;
+            };
+          };
+        };
+      };
+  };
 }
