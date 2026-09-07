@@ -76,6 +76,7 @@
                 "noauto"
                 "x-systemd.automount"
                 "x-systemd.idle-timeout=10min"
+                "x-gvfs-notrash"
               ];
             };
             "${cfg.mediaPortalDir}/seagate" = {
@@ -88,6 +89,7 @@
                 "noauto"
                 "x-systemd.automount"
                 "x-systemd.idle-timeout=10min"
+                "x-gvfs-notrash"
               ];
             };
           };
