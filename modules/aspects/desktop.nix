@@ -9,10 +9,7 @@
   # injects the GUI host stack via to-hosts and configures the user's home.
   den.aspects.desktop = {
     includes = [
-      den.aspects.phone
-      den.aspects.editors
       den.aspects.file-manager
-      den.aspects.scripts
       den.aspects.obsidian
       # GUI AI tooling (dictation/speech need input+sound hardware).
       den.aspects.ai._.gui

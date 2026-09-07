@@ -11,7 +11,7 @@
       {
         nixpkgs.overlays = [
           (final: prev: {
-            ndrop = final.callPackage ../_packages/ndrop.nix { };
+            ndrop = final.callPackage ../../_packages/ndrop.nix { };
             wshowkeys = prev.wshowkeys.overrideAttrs (old: {
               src = prev.fetchFromGitHub {
                 owner = "repparw";
@@ -75,6 +75,17 @@
                 geom=$(slurp -b "#ff000040" -c "#ff0000ff" -w 2) || exit 0
                 grim -g "$geom" -t png - | tesseract stdin stdout -l "''${TESSERACT_LANGS:-eng}" | wl-copy
               fi
+            '';
+          })
+
+          (writeShellApplication {
+            name = "clip2qr";
+            runtimeInputs = [
+              wl-clipboard
+              zbar
+            ];
+            text = ''
+              wl-paste --type image/png | zbarimg --raw - | wl-copy
             '';
           })
 
