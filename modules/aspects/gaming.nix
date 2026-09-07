@@ -7,13 +7,78 @@
   den.aspects.gaming = {
     nixos =
       { pkgs, ... }:
+      let
+        # GE-Proton 11-6 is newer than the version in the pinned nixpkgs and is
+        # the first release with Steam-overlay support for Wine-Wayland. Use
+        # GitHub's release-asset digests directly so the pin remains auditable.
+        protonGe11_6 =
+          let
+            version = "GE-Proton11-6";
+            variant =
+              if pkgs.stdenv.hostPlatform.isx86_64 then
+                {
+                  arch = "x86_64";
+                  hash = "sha256-ZZ+NcfL3hlk0ASCyDBxaFGSqE4k5MyoTdt6iL20twuQ=";
+                }
+              else if pkgs.stdenv.hostPlatform.isAarch64 then
+                {
+                  arch = "aarch64";
+                  hash = "sha256-d5KdzV+VGxobif5ZTZGHijrflRZAb2gHaXGYjuLP30M=";
+                }
+              else
+                throw "GE-Proton 11-6 is only packaged for x86_64 and aarch64";
+          in
+          pkgs.stdenvNoCC.mkDerivation {
+            pname = "proton-ge-bin";
+            inherit version;
+
+            src = pkgs.fetchurl {
+              url = "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/${version}/${version}-${variant.arch}.tar.gz";
+              inherit (variant) hash;
+            };
+
+            dontUnpack = true;
+            dontConfigure = true;
+            dontBuild = true;
+            outputs = [
+              "out"
+              "steamcompattool"
+            ];
+            nativeBuildInputs = [
+              pkgs.gnutar
+              pkgs.gzip
+            ];
+
+            installPhase = ''
+              runHook preInstall
+
+              echo "Use programs.steam.extraCompatPackages, not environment.systemPackages." > "$out"
+              mkdir -p "$steamcompattool"
+              tar -xzf "$src" --strip-components=1 -C "$steamcompattool"
+              substituteInPlace "$steamcompattool/compatibilitytool.vdf" \
+                --replace-fail "${version}-${variant.arch}" "GE-Proton"
+
+              runHook postInstall
+            '';
+
+            meta = {
+              homepage = "https://github.com/GloriousEggroll/proton-ge-custom";
+              license = lib.licenses.bsd3;
+              platforms = [
+                "x86_64-linux"
+                "aarch64-linux"
+              ];
+              sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
+            };
+          };
+      in
       {
         boot.kernelModules = [ "ntsync" ];
         hardware.xpadneo.enable = true;
         programs = {
           steam = {
             enable = true;
-            extraCompatPackages = with pkgs; [ proton-ge-bin ];
+            extraCompatPackages = [ protonGe11_6 ];
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
           };
@@ -30,7 +95,7 @@
                 gamescope
                 gamemode
                 mangohud
-                proton-ge-bin
+                protonGe11_6
               ];
           })
         ];

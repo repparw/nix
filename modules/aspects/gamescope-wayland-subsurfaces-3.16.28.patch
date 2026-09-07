@@ -1,0 +1,14 @@
+diff --git a/src/steamcompmgr.cpp b/src/steamcompmgr.cpp
+index ad66e9dd0..2fab7d90a 100644
+--- a/src/steamcompmgr.cpp
++++ b/src/steamcompmgr.cpp
+@@ -2129 +2129 @@ static void paint_subsurface_tree( struct wlr_subsurface *sub,
+-	if ( frameInfo->layerCount >= k_nMaxLayers )
++	if ( frameInfo->layers.count() >= k_nMaxLayers )
+@@ -2144 +2144 @@ static void paint_subsurface_tree( struct wlr_subsurface *sub,
+-		if ( pSubTex && frameInfo->layerCount < k_nMaxLayers )
++		if ( pSubTex && frameInfo->layers.count() < k_nMaxLayers )
+@@ -2146,2 +2146 @@ static void paint_subsurface_tree( struct wlr_subsurface *sub,
+-			int curLayer = frameInfo->layerCount++;
+-			FrameInfo_t::Layer_t *sublayer = &frameInfo->layers[ curLayer ];
++			FrameInfo_t::Layer_t *sublayer = frameInfo->layers.push();
