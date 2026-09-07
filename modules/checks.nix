@@ -331,7 +331,7 @@
                 && miniflux.auth == "one_factor"
                 && miniflux.monitor
                 && miniflux.backup.path == "${edgeCfg.configDir}/miniflux"
-                && epsilon.containers.miniflux.localAddress == "10.231.137.5"
+                && epsilon.containers.miniflux.localAddress == "10.231.137.6"
                 && epsilon.containers.miniflux.config.services.miniflux.enable
                 && epsilon.containers.miniflux.config.services.postgresql.enable
                 &&
@@ -358,34 +358,34 @@
                 && authelia.port == 9091
                 && authelia.auth == "bypass"
                 && authelia.monitor
-                && epsilon.containers.authelia.localAddress == "10.231.137.2"
+                && epsilon.containers.authelia.localAddress == "10.231.137.3"
                 && builtins.elem authelia.port epsilon.containers.authelia.config.networking.firewall.allowedTCPPorts
                 &&
                   epsilon.containers.authelia.config.services.authelia.instances.main.settings.server.address
                   == "tcp://:${toString authelia.port}"
                 && glance.port == 8080
                 && glance.auth == "bypass"
-                && epsilon.containers.glance.localAddress == "10.231.137.3"
+                && epsilon.containers.glance.localAddress == "10.231.137.4"
                 && epsilon.containers.glance.config.services.glance.settings.server.host == "0.0.0.0"
                 && epsilon.containers.glance.config.services.glance.settings.server.port == glance.port
                 && http.routers.glance.rule == "Host(`${cfg.domain}`)"
                 && epsilon.containers.glance.config.services.glance.settings.branding.logo-text == "R";
               backgroundServicesMatch =
-                # Archisteamfarm farms on pi (always-on host); its definition
-                # and container live in pi's closure.
+                # Archisteamfarm farms on epsilon (VPS uptime); its definition
+                # and container live in epsilon's closure.
                 archisteamfarm.hostname == null
                 && archisteamfarm.port == null
                 && archisteamfarm.auth == "bypass"
                 && !archisteamfarm.monitor
                 && archisteamfarm.backup.path == "${cfg.configDir}/archisteamfarm"
-                && pi.containers.archisteamfarm.localAddress == "10.231.136.2"
+                && epsilon.containers.archisteamfarm.localAddress == "10.231.137.2"
                 &&
-                  pi.containers.archisteamfarm.bindMounts."/var/lib/archisteamfarm".hostPath
+                  epsilon.containers.archisteamfarm.bindMounts."/var/lib/archisteamfarm".hostPath
                   == archisteamfarm.backup.path
                 &&
-                  pi.containers.archisteamfarm.config.systemd.services.archisteamfarm.serviceConfig.LoadCredential
+                  epsilon.containers.archisteamfarm.config.systemd.services.archisteamfarm.serviceConfig.LoadCredential
                   == "steamPassword:/run/secrets/steamPassword"
-                && builtins.any (lib.strings.hasInfix "archisteamfarm") pi.systemd.tmpfiles.rules
+                && builtins.any (lib.strings.hasInfix "archisteamfarm") epsilon.systemd.tmpfiles.rules
                 && automations.hostname == null
                 && automations.port == null
                 && automations.auth == "bypass"

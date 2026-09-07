@@ -83,6 +83,8 @@ public vhosts with Authelia SSO. Installed in place via nixos-infect
   the public endpoints through the home tunnel.
 - `containers.hermes` runs the Hermes Agent messaging gateway here
   (migrated from pi).
+- `containers.archisteamfarm` runs the Steam bot here (migrated from pi
+  for VPS uptime; not LAN-dependent, not exposed).
 - A split-tunnel WireGuard link (`wg-home`, via the router's hub) reaches
   the home LAN and pi's container bridge for monitoring and agent egress.
 - Offsite restic covers its stateful edge services under
