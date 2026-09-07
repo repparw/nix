@@ -13,7 +13,9 @@ diff --git a/layer/VkLayer_FROG_gamescope_wsi.cpp b/layer/VkLayer_FROG_gamescope
 +      // has already been detected through the initial Gamescope WSI swapchain.
 +      if (flags & GamescopeLayerClient::Flag::SteamOverlayFix && createdFirstSwapchain)
 +        return false;
-@@ -1311,0 +1322,7 @@ namespace GamescopeWSILayer {
+@@ -1260,5 +1271,12 @@ namespace GamescopeWSILayer {
+         gamescopeInstance->engineName.c_str());
+
 +      if (!gamescopeSurface->createdFirstSwapchain) {
 +        gamescopeSurface->createdFirstSwapchain = true;
 +      } else {
@@ -21,6 +23,9 @@ diff --git a/layer/VkLayer_FROG_gamescope_wsi.cpp b/layer/VkLayer_FROG_gamescope
 +        gamescopeSurface->flags &= ~GamescopeLayerClient::Flag::SteamOverlayFix;
 +      }
 +
+       return VK_SUCCESS;
+     }
+
 diff --git a/src/layer_defines.h b/src/layer_defines.h
 --- a/src/layer_defines.h
 +++ b/src/layer_defines.h
