@@ -2,7 +2,7 @@
 
 ## Sub-features
 
-- Flake evaluates for every host: `alpha`, `epsilon`, `pi`, `pi-sd`
+- Flake evaluates for every host: `alpha`, `epsilon`, `pi`
 - Module options under `home-manager.users.repparw.programs.*` hold intended values
 - `den.aspects` composition (includes/defaults) resolves without conflicts
 
