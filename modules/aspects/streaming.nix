@@ -40,22 +40,9 @@
         fi
       '';
 
-      # 3.16.25 introduced an unresolved Steam Overlay/Steam Input regression
-      # together with the wlroots 0.18 -> 0.19 migration
-      # (ValveSoftware/gamescope#2289). Import only Gamescope from the exact
-      # nixpkgs revision that packaged 3.16.22; the rest of the system remains
-      # on this flake's current nixpkgs.
-      gamescopeNixpkgs = builtins.fetchTarball {
-        url = "https://github.com/NixOS/nixpkgs/archive/98f1a5ba7a39.tar.gz";
-        sha256 = "sha256-pnyfzXWAKGlJ4Nc+mJuOQjrJfYnJT4JN005TD5W58fQ=";
-      };
-      gamescopePkgs = import gamescopeNixpkgs {
-        inherit (pkgs) system;
-      };
-
       # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
       # to gamescope; nixpkgs disables it by default.
-      gamescopeHdr = (gamescopePkgs.gamescope.override { enableWsi = true; }).overrideAttrs (old: {
+      gamescopeHdr = (pkgs.gamescope.override { enableWsi = true; }).overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [ ./gamescope-wsi-overlay.patch ];
       });
 
