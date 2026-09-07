@@ -24,6 +24,8 @@
       den.aspects.nixos-services._.edge
       # Hermes Agent gateway.
       den.aspects.nixos-services._.hermes
+      # Steam bot: moved here from pi for VPS uptime (not LAN/exposed).
+      den.aspects.nixos-services._.archisteamfarm
     ];
     nixos =
       { config, ... }:

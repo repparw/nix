@@ -220,13 +220,13 @@ health_once() {
     epsilon)
       remote epsilon systemctl is-active --quiet \
         container@hermes.service container@authelia.service \
-        container@miniflux.service traefik.service || return 1
+        container@miniflux.service container@archisteamfarm.service traefik.service || return 1
       http_code https://repparw.com/ 200 || return 1
       http_code https://rss.repparw.com/healthcheck 200 || return 1
       ;;
     pi)
       remote pi systemctl is-active --quiet \
-        container@homeassistant.service container@archisteamfarm.service traefik.service || return 1
+        container@homeassistant.service traefik.service || return 1
       http_code https://home.repparw.com/ 200 || return 1
       ;;
     alpha)

@@ -19,7 +19,6 @@
       # on alpha) into pi's toplevel — ~10G on a 40G /nix that ENOSPCs on
       # every switch. Pi needs only the modules.services schema, imported
       # directly in the nixos block below, plus the sub-aspects it runs.
-      den.aspects.nixos-services._.archisteamfarm
       den.aspects.nixos-services._.automations
       den.aspects.nixos-services._.homeassistant
       den.aspects.nixos-services._.fleet-health

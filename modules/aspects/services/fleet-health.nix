@@ -96,10 +96,11 @@
 
             # systemd units (pi-local). container@authelia and container@miniflux
             # live on epsilon now; their HTTP endpoints are checked above.
-            # container@hermes moved to epsilon too and runs no HTTP endpoint;
-            # its unit is monitored from epsilon's own checks.
+            # container@hermes and container@archisteamfarm moved to epsilon
+            # too; hermes is monitored from epsilon's own checks and ASF runs
+            # no HTTP endpoint (not monitored).
             for u in \
-              container@homeassistant container@archisteamfarm \
+              container@homeassistant \
               traefik; do
               if systemctl is-active --quiet "$u"; then ok "unit:$u"; else fail "unit:$u" "systemd inactive"; fi
             done

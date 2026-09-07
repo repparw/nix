@@ -36,7 +36,7 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/authelia.sops.yaml` | `authelia/sessionSecret` | Encrypt and authenticate Authelia sessions | Authelia | `alpha`, `pi` |
 | `secrets/authelia.sops.yaml` | `authelia/smtpPassword` | Authenticate Authelia to its SMTP relay | Authelia | `alpha`, `pi` |
 | `secrets/authelia.sops.yaml` | `authelia/storageEncryptionKey` | Encrypt sensitive Authelia storage fields | Authelia | `alpha`, `pi` |
-| `secrets/archisteamfarm.sops.yaml` | `steamPassword` | Authenticate the managed Steam account | ArchiSteamFarm | `pi` |
+| `secrets/archisteamfarm.sops.yaml` | `steamPassword` | Authenticate the managed Steam account | ArchiSteamFarm | `epsilon` |
 | `secrets/jellyfin.sops.yaml` | `jellyfinBackupKey` | Authorize Jellyfin backup creation | Jellyfin backup tooling | `alpha` |
 | `secrets/automations.sops.yaml` | `discordWebhook` | Deliver automation notifications to Discord | Automation services | `pi` |
 | `secrets/matriz.sops.yaml` | `matrizApiUsername` | Identify the EcoValores Matriz API user without publishing its CUIT | Matriz account snapshot service | `alpha` |
@@ -45,8 +45,8 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/hermes.sops.yaml` | `hermes-env` | Seed `$HERMES_HOME/.env` for the Hermes gateway (chat platform tokens, LLM API keys) | `services.hermes-agent` environmentFiles | `pi` |
 The creation rule grants each host's SSH host-key recipient plus the personal
 recovery recipient. Files carry only the recipients their consumers need:
-files for services that run on both hosts (`proxy`, `ddclient`, `authelia`,
-`backup`, `rclone`, `archisteamfarm`, `automations`) include pi's recipient
+files for services that run on pi (`proxy`, `ddclient`, `authelia`,
+`backup`, `rclone`, `automations`) include pi's recipient
 (`age1x7qu0en7rg0qm6rq5dfvyn3w34se2qt6wdw7yzgtwjkgj3skssgqmeut5m`, derived
 from its preserved Debian-era host key), while files for alpha-only services
 (`jellyfin`, `matriz`) do not. New consumers on pi therefore need a

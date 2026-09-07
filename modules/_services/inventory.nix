@@ -137,7 +137,7 @@ in
       };
       archisteamfarm = {
         auth = "bypass";
-        host = "pi";
+        host = "epsilon";
         container = true;
         backup.path = "${cfg.configDir}/archisteamfarm";
       };
