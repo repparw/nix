@@ -103,7 +103,8 @@
               "**/CachedData/**"
               "**/Crashpad/**"
               "**/Service Worker/**"
-            ] ++ bcfg.excludes;
+            ]
+            ++ bcfg.excludes;
             extraOptions = [
               "rclone.program=${lib.getExe pkgs.rclone}"
             ];
