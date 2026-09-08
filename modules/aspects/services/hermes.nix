@@ -189,31 +189,26 @@
           TasksMax = 512;
         };
 
-        # Egress monitoring for the hermes agent container (phase 1:
-        # observe, not enforce — chain policy stays accept). Watch
-        # `journalctl -k | grep hermes-egress-new` and the counters, then
-        # promote to an allowlist: named sets of permitted endpoints plus a
-        # default drop for the hermes container. The RFC1918 block also
-        # covers sibling containers on the shared bridge as SSRF containment
-        # for the agent.
+        # Egress monitoring and private-network SSRF containment for the
+        # Hermes agent. The explicit home-LAN exception matches epsilon's
+        # forwarding policy; all other private and sibling destinations fail
+        # closed before public flows are logged and accepted.
         networking.nftables.tables.hermes-monitor = {
           family = "inet";
-          # No sets yet; phase 2 adds allowed-endpoint sets here.
           content = ''
-                        chain forward {
-                          type filter hook forward priority filter; policy accept;
+            chain forward {
+              type filter hook forward priority filter; policy accept;
 
-            # DNS to the host resolver is always allowed.
-                        ip saddr ${config.containers.hermes.localAddress} ip daddr ${config.containers.hermes.hostAddress} meta l4proto { tcp, udp } th dport 53 counter accept
+              # DNS to the host resolver and required home services.
+              ip saddr ${config.containers.hermes.localAddress} ip daddr ${config.containers.hermes.hostAddress} meta l4proto { tcp, udp } th dport 53 counter accept
+              ip saddr ${config.containers.hermes.localAddress} ip daddr 192.168.0.0/24 counter accept
 
-                        # Block LAN/internal SSRF targets from the agent container
-                        # (log+drop), except the DNS rule above. Covers RFC1918 +
-                        # link-local + loopback.
-                        ip saddr ${config.containers.hermes.localAddress} ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16, 127.0.0.0/8 } counter log prefix "hermes-egress-block: " drop
+              # Block remaining RFC1918, link-local, and loopback targets.
+              ip saddr ${config.containers.hermes.localAddress} ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16, 127.0.0.0/8 } counter log prefix "hermes-egress-block: " drop
 
-                        # Monitor everything else outbound: log first packet of each new flow.
-                        ip saddr ${config.containers.hermes.localAddress} ct state new counter log prefix "hermes-egress-new: " accept
-                        }
+              # Log the first packet of every accepted public flow.
+              ip saddr ${config.containers.hermes.localAddress} ct state new counter log prefix "hermes-egress-new: " accept
+            }
           '';
         };
       };
