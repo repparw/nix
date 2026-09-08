@@ -59,7 +59,7 @@ and idle alpha with deploy-rs.
 - `containers.authelia` (`10.231.136.7`) provides SSO/forward-auth/OIDC.
 - `containers.homeassistant` (`10.231.136.2`) serves `home.repparw.com`.
 - `containers.miniflux` (`10.231.136.4`) serves `rss.repparw.com`.
-- Fleet-health monitoring and the nightly auto-update pipeline run here.
+- Fleet-health monitoring and the `fleet-controller` auto-update pipeline run here.
 
 It boots through the Raspberry Pi firmware and generic-extlinux-compatible
 loader (linuxPackages_latest, with the `pcie_brcmstb` module in the initrd

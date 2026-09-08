@@ -9,10 +9,14 @@ tags: [services, containers, proxy, backup]
 
 # Service Model
 
-Service behavior is split between the service aspect and individual service
-modules.
+Service behavior is split between the common host substrate, service bundles,
+and individual service modules.
 
-- `modules/aspects/services/default.nix` composes the service aspect.
+- `service-host` provides the validated schema, inventory, and address allocator
+  without selecting any services.
+- `media-stack` composes Alpha's media services and shared container substrate.
+- Hosts include only the individual `nixos-services._.*` aspects they run.
+- `modules/aspects/services/default.nix` defines the substrate and bundles.
 - `modules/_services/` contains NixOS service modules imported by the service
   aspect.
 - `modules/service-definitions.nix` defines the validated service-definition shape.

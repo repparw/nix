@@ -6,21 +6,19 @@
   };
 
   # Headless-safe base account: everything repparw needs on a server.
-  # Desktop hosts layer den.aspects.desktop on the host side, which is
-  # where the GUI stack and desktop-only AI tooling live.
+  # Desktop users layer den.aspects.desktop, which sends the GUI host stack
+  # back to their host and keeps desktop-only AI tooling out of servers.
   den.aspects.repparw = {
     includes = [
       den.batteries.define-user
       den.batteries.primary-user
-      # Projects host-level homeManager blocks (alpha's spotifyd etc.) into
-      # this user across hosts; without it host aspects are nixos-only.
-      den.batteries.host-aspects
       (den.batteries.user-shell "fish")
       den.aspects.shell
       den.aspects.editors
       den.aspects.tmux
       den.aspects.git
       den.aspects.ssh
+      den.aspects.secrets
       # Base AI tooling; gui AI (dictation/speech) stays desktop-side.
       den.aspects.ai
     ];

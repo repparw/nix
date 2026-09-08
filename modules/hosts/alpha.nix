@@ -6,13 +6,11 @@
 {
   den.aspects.alpha = {
     includes = [
-      den.aspects.host-common
       den.aspects.backup
       den.aspects.btrfs-maintenance
-      den.aspects.desktop
       den.aspects.gaming
       den.aspects.logid
-      den.aspects.nixos-services
+      den.aspects.media-stack
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.disk-watch
@@ -30,10 +28,7 @@
         ...
       }:
       {
-        imports = [
-          (modulesPath + "/installer/scan/not-detected.nix")
-          ../_services/address-allocator.nix
-        ];
+        imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
         # Offsite restic coverage. The gdrive-backed repo is deliberate:
         # the union's consumer legs cannot hold 35G of Documents (tab.digital
@@ -79,15 +74,6 @@
             }
           ];
         };
-
-        # The desktop layer's user-facing groups (the desktop aspect itself
-        # is user-agnostic).
-        users.users.repparw.extraGroups = [
-          "adbusers"
-          "gamemode"
-          "render"
-          "video"
-        ];
 
         boot = {
           initrd = {
@@ -312,7 +298,7 @@
 
       };
 
-    homeManager = {
+    provides.repparw.homeManager = {
       services.spotifyd = {
         enable = true;
         settings.global = {
@@ -330,7 +316,10 @@
         Service.RuntimeMaxSec = "6h";
       };
     };
+
+    # Gaming has both host and user halves. The host includes it above; send
+    # its Home Manager half explicitly to the desktop user.
+    provides.repparw.includes = [ den.aspects.gaming ];
   };
 
-  den.hosts.x86_64-linux.alpha.users.repparw.aspect = den.aspects.repparw-desktop;
 }
