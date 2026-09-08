@@ -125,7 +125,6 @@
                   ];
                 };
                 swaylock.image.enable = false;
-                vicinae.opacity.enable = false;
               };
             };
           }

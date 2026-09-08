@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v22
       # Not `nix flake check`: it verifies every nixosConfigurations toplevel,
       # and epsilon's pulls the hermes-agent flake (uv2nix/pyproject sources)
