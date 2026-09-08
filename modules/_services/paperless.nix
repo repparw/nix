@@ -15,7 +15,7 @@ in
     name = "paperless";
     privateUsers = "pick";
     # Publish the WebUI onto alpha's LAN so remote ingress can target it
-    # (see _services/inventory.nix).
+    # (see the media-stack service-registry entry).
     forwardPorts = [
       {
         protocol = "tcp";

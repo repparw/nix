@@ -55,7 +55,7 @@ and idle alpha with deploy-rs.
 
 - Traefik (:80/:443) routes the LAN vhosts; local backends target the
   nspawn bridge, remote ones alpha's published ports
-  (`_services/inventory.nix`).
+  (the service aspects' `service-registry` emissions).
 - `containers.authelia` (`10.231.136.7`) provides SSO/forward-auth/OIDC.
 - `containers.homeassistant` (`10.231.136.2`) serves `home.repparw.com`.
 - `containers.miniflux` (`10.231.136.4`) serves `rss.repparw.com`.

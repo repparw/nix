@@ -3,13 +3,77 @@
   # Common contract for every host that runs or consumes fleet services.
   # Service selection is deliberately separate so a small host can use the
   # schema and allocator without pulling Alpha's media closures.
-  den.aspects.service-host.nixos.imports = [
-    ../../service-definitions.nix
-    ../../_services/inventory.nix
-    ../../_services/address-allocator.nix
-  ];
+  den.aspects.service-host.nixos =
+    {
+      config,
+      lib,
+      service-registry,
+      ...
+    }:
+    let
+      entries = map (
+        entry:
+        let
+          definition = entry.definition;
+          resolvedDefinition =
+            removeAttrs definition [ "backupRelativePath" ]
+            // lib.optionalAttrs (definition ? backupRelativePath) {
+              backup.path = "${config.modules.services.configDir}/${definition.backupRelativePath}";
+            };
+        in
+        {
+          inherit (entry) name;
+          value = resolvedDefinition // {
+            inherit (entry) host;
+          };
+        }
+      ) service-registry;
+      names = map (entry: entry.name) entries;
+      definitions =
+        if builtins.length names != builtins.length (lib.unique names) then
+          throw "duplicate service registry entries: ${lib.concatStringsSep ", " names}"
+        else
+          builtins.listToAttrs entries;
+    in
+    {
+      imports = [
+        ../../service-definitions.nix
+        ../../_services/address-allocator.nix
+      ];
+
+      modules.services = {
+        inherit definitions;
+        hostAddresses = {
+          alpha = "192.168.0.18";
+          pi = "192.168.0.4";
+          epsilon = "10.5.5.3";
+        };
+      };
+    };
 
   den.aspects.media-stack = {
+    service-registry = [
+      {
+        name = "paperless";
+        definition = {
+          hostname = "paper";
+          port = 8000;
+          auth = "one_factor";
+          container = true;
+          monitor = true;
+          backupRelativePath = "paperless/export";
+        };
+      }
+      {
+        name = "finance";
+        definition = {
+          hostname = "finance";
+          port = 3000;
+          auth = "one_factor";
+        };
+      }
+    ];
+
     includes =
       with den.aspects.nixos-services._;
       [

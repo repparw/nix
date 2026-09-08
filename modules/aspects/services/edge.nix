@@ -2,11 +2,44 @@
   lib,
   ...
 }:
-# Edge ingress stack: Traefik, Authelia, and ddclient plus the shared service
-# definition schema and cross-host inventory. Composable on any host that
-# fronts public traffic.
+# Edge ingress stack: Traefik, Authelia, and ddclient. Its services publish
+# their operational metadata through the fleet service registry.
 {
   den.aspects.nixos-services.provides.edge = {
+    service-registry = [
+      {
+        name = "authelia";
+        definition = {
+          hostname = "auth";
+          port = 9091;
+          auth = "bypass";
+          container = true;
+          monitor = true;
+          backupRelativePath = "authelia";
+        };
+      }
+      {
+        name = "glance";
+        definition = {
+          port = 8080;
+          auth = "bypass";
+          container = true;
+        };
+      }
+      {
+        name = "miniflux";
+        definition = {
+          hostname = "rss";
+          port = 8081;
+          auth = "one_factor";
+          container = true;
+          monitor = true;
+          healthcheck = "/healthcheck";
+          backupRelativePath = "miniflux";
+        };
+      }
+    ];
+
     nixos =
       { ... }:
       {
@@ -14,8 +47,6 @@
           ../../_services/proxy.nix
           ../../_services/authelia.nix
           ../../_services/ddclient.nix
-          ../../service-definitions.nix
-          ../../_services/inventory.nix
           # The dashboard lives with the edge: apex routing is local and the
           # most-visited page stops depending on alpha being up.
           ../../_services/glance.nix
