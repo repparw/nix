@@ -5,7 +5,7 @@
 }:
 {
   den.aspects.gaming = {
-    nixos =
+    provides.to-hosts.nixos =
       { pkgs, ... }:
       let
         # GE-Proton 11-6 is newer than the version in the pinned nixpkgs and is

@@ -23,13 +23,34 @@
       den.aspects.ai
     ];
 
-    provides.to-hosts.nixos = {
-      home-manager = {
-        useGlobalPkgs = true;
-        useUserPackages = true;
-        backupFileExtension = "hm-backup";
+    provides.to-hosts =
+      { user, ... }:
+      {
+        nixos =
+          { config, ... }:
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              backupFileExtension = "hm-backup";
+            };
+
+            programs.nh.flake = "${config.home-manager.users.${user.name}.xdg.userDirs.projects}/nix";
+
+            sops.secrets.accessTokens = {
+              sopsFile = ../../secrets/nix.sops.yaml;
+              mode = "0440";
+              owner = user.name;
+            };
+
+            nix = {
+              settings.allowed-users = [ user.name ];
+              extraOptions = ''
+                !include ${config.sops.secrets.accessTokens.path}
+              '';
+            };
+          };
       };
-    };
 
     user = _: {
       linger = true;

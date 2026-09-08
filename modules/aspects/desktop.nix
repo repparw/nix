@@ -23,20 +23,25 @@
       ];
     };
 
-    provides.to-hosts = {
-      includes = [ den.aspects.gui ];
-      nixos =
-        { lib, ... }:
-        {
-          options.modules.desktop.enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            readOnly = true;
-            description = "Whether this host includes the desktop aspect";
-          };
+    provides.to-hosts =
+      { user, ... }:
+      {
+        includes = [ den.aspects.gui ];
+        nixos =
+          { lib, ... }:
+          {
+            options.modules.desktop.enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              readOnly = true;
+              description = "Whether this host includes the desktop aspect";
+            };
 
-          config.home-manager.sharedModules = [ inputs.nixcord.homeModules.default ];
-        };
-    };
+            config = {
+              home-manager.sharedModules = [ inputs.nixcord.homeModules.default ];
+              services.displayManager.autoLogin.user = user.name;
+            };
+          };
+      };
   };
 }

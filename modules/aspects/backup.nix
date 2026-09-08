@@ -1,8 +1,4 @@
-{
-  den,
-  lib,
-  ...
-}:
+{ den, ... }:
 {
   den.aspects.backup = {
     # Auto-include the offsite restic provide: a host that asks for "backup"
@@ -10,12 +6,7 @@
     # footgun — pi only included the base and silently lost its restic job.
     includes = [ den.aspects.backup._.restic ];
     nixos =
-      {
-        config,
-        pkgs,
-        lib,
-        ...
-      }:
+      { lib, ... }:
       {
         options.modules.backup = {
           paths = lib.mkOption {
@@ -31,34 +22,10 @@
             type = lib.types.nullOr lib.types.str;
             default = null;
           };
-        };
-
-        config = {
-          services.rsync = {
-            enable = true;
-            jobs = lib.optionalAttrs (config.networking.hostName == "alpha") {
-              buptohdd = {
-                destination = "/mnt/hdd/backup";
-                sources = [
-                  "${config.users.users.repparw.home}/Pictures"
-                  "${config.users.users.repparw.home}/Documents"
-                  "${config.users.users.repparw.home}/.config"
-                ];
-                settings = {
-                  archive = true;
-                  delete = true;
-                };
-              };
-              buprpi = {
-                destination = "${config.modules.services.backupDir}/pi-services/";
-                sources = [ "pi:services/" ];
-                settings = {
-                  archive = true;
-                  "copy-links" = true;
-                  delete = true;
-                };
-              };
-            };
+          excludes = lib.mkOption {
+            description = "Host-specific paths or globs excluded from the offsite backup.";
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
           };
         };
       };
@@ -122,7 +89,7 @@
             passwordFile = config.sops.secrets.resticPassword.path;
             initialize = true;
             inhibitsSleep = true;
-            paths = config.modules.backup.paths;
+            paths = bcfg.paths;
             exclude = [
               # Electron/browser cache and shader junk: the bulk of .config
               # with near-zero restore value.
@@ -136,11 +103,7 @@
               "**/CachedData/**"
               "**/Crashpad/**"
               "**/Service Worker/**"
-              "/home/repparw/.config/heroic/**"
-              "/home/repparw/.config/clipse/**"
-              # Owner-managed archive (still in Documents).
-              "/home/repparw/Documents/Memorias/**"
-            ];
+            ] ++ bcfg.excludes;
             extraOptions = [
               "rclone.program=${lib.getExe pkgs.rclone}"
             ];

@@ -8,13 +8,11 @@
     includes = [
       den.aspects.backup
       den.aspects.btrfs-maintenance
-      den.aspects.gaming
       den.aspects.logid
       den.aspects.media-stack
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.disk-watch
-      den.aspects.streaming
       den.aspects.streaming._.pulse-crash-fix
       den.aspects.deploy-target
     ];
@@ -35,11 +33,19 @@
         # sat at 507 for weeks). Raw/Memorias are excluded — owner-managed.
         # .config is deliberately absent: Firefox sync covers the browser,
         # and the rest is cache or regenerating state.
-        modules.backup.paths = [
-          "/home/containers/backup"
-          "/home/repparw/Pictures"
-          "/home/repparw/Documents"
-        ];
+        modules.backup = {
+          paths = [
+            "/home/containers/backup"
+            "/home/repparw/Pictures"
+            "/home/repparw/Documents"
+          ];
+          excludes = [
+            "${config.users.users.repparw.home}/.config/heroic/**"
+            "${config.users.users.repparw.home}/.config/clipse/**"
+            # Owner-managed archive (still in Documents).
+            "${config.users.users.repparw.home}/Documents/Memorias/**"
+          ];
+        };
 
         # Crash capture: surface new coredumps to Discord. Only alpha runs
         # this — pi's volatile journal cannot retain coredumps. wine64-
@@ -169,6 +175,36 @@
             # Disable USB autosuspend for Intel AX210 Bluetooth to fix sleep/wake
             ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0032", ATTR{power/control}="on"
           '';
+
+          # Local replication belongs to Alpha: these jobs depend on its
+          # attached disks and on Pi's service state, not on the generic
+          # offsite-backup capability.
+          rsync = {
+            enable = true;
+            jobs = {
+              buptohdd = {
+                destination = "/mnt/hdd/backup";
+                sources = [
+                  "${config.users.users.repparw.home}/Pictures"
+                  "${config.users.users.repparw.home}/Documents"
+                  "${config.users.users.repparw.home}/.config"
+                ];
+                settings = {
+                  archive = true;
+                  delete = true;
+                };
+              };
+              buprpi = {
+                destination = "${config.modules.services.backupDir}/pi-services/";
+                sources = [ "pi:services/" ];
+                settings = {
+                  archive = true;
+                  "copy-links" = true;
+                  delete = true;
+                };
+              };
+            };
+          };
         };
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl
@@ -316,10 +352,6 @@
         Service.RuntimeMaxSec = "6h";
       };
     };
-
-    # Gaming has both host and user halves. The host includes it above; send
-    # its Home Manager half explicitly to the desktop user.
-    provides.repparw.includes = [ den.aspects.gaming ];
   };
 
 }
