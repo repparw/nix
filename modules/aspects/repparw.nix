@@ -41,23 +41,4 @@
       home.preferXdgDirectories = true;
     };
   };
-
-  # repparw on a desktop host: the base account plus the desktop user
-  # layer. Thin by design — the desktop content lives in
-  # den.aspects.desktop and follows whichever user it is attached to.
-  den.aspects.repparw-desktop = {
-    includes = [
-      den.aspects.repparw
-      den.aspects.desktop
-    ];
-
-    user = _: {
-      extraGroups = [
-        "adbusers"
-        "gamemode"
-        "render"
-        "video"
-      ];
-    };
-  };
 }

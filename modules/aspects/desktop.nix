@@ -16,6 +16,13 @@
       den.aspects.ai._.gui
     ];
 
+    user = _: {
+      extraGroups = [
+        "render"
+        "video"
+      ];
+    };
+
     provides.to-hosts = {
       includes = [ den.aspects.gui ];
       nixos =
