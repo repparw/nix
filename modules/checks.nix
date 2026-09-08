@@ -629,6 +629,42 @@
                       containerPort = 8989;
                     }
                   ];
+              epsilonNetworkingMatch =
+                let
+                  containerNetwork = epsilon.systemd.network.networks."10-nixos-container";
+                  inputRules = epsilon.networking.firewall.extraInputRules;
+                  forwardRules = epsilon.networking.firewall.extraForwardRules;
+                  natTables = epsilon.networking.nftables.tables;
+                  natRule = natTables.container-egress-nat.content;
+                  hermesPolicy = natTables.hermes-monitor.content;
+                in
+                containerNetwork.matchConfig == {
+                  Kind = "veth";
+                  Name = "ve-*";
+                }
+                && containerNetwork.linkConfig.Unmanaged
+                && !containerNetwork.linkConfig.RequiredForOnline
+                && epsilon.boot.kernel.sysctl."net.ipv4.ip_forward" == 1
+                && epsilon.networking.firewall.filterForward
+                && epsilon.services.resolved.settings.Resolve.DNSStubListenerExtra == "${edgeCfg.bridgePrefix}.1"
+                && lib.all (
+                  name: epsilon.containers.${name}.config.networking.nameservers == [ "${edgeCfg.bridgePrefix}.1" ]
+                ) (builtins.attrNames epsilon.containers)
+                && lib.strings.hasInfix ''iifname "ve-*" oifname "eth0" accept'' forwardRules
+                && lib.strings.hasInfix ''iifname "eth0" oifname "ve-*" ct state established,related accept'' forwardRules
+                && lib.strings.hasInfix ''iifname "ve-hermes" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept'' forwardRules
+                && lib.strings.hasInfix ''iifname "ve-*" ip daddr ${edgeCfg.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept'' inputRules
+                && lib.strings.hasInfix ''iifname "eth0" ip saddr 45.237.179.43 udp dport 60002 accept'' inputRules
+                && !(lib.strings.hasInfix "ip saddr 45.237.179.43 tcp dport 443 accept" inputRules)
+                && epsilon.networking.firewall.interfaces.eth0.allowedUDPPorts == [ ]
+                && epsilon.networking.firewall.interfaces."wg-home".allowedUDPPorts == [ 60002 ]
+                && lib.strings.hasInfix ''ip saddr ${edgeCfg.bridgePrefix}.0/24 oifname { "eth0", "wg-home" } masquerade'' natRule
+                && !(natTables ? glance-home-nat)
+                && !(natTables ? glance-egress-nat)
+                && !(natTables ? hermes-home-nat)
+                && !(natTables ? miniflux-egress-nat)
+                && lib.strings.hasInfix "ip daddr 192.168.0.0/24 counter accept" hermesPolicy
+                && lib.strings.hasInfix "ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16" hermesPolicy;
               fleetUpdaterMatch =
                 let
                   authorizedKeys = import ../authorized-keys.nix;
@@ -689,6 +725,7 @@
                 validationMatches
                 ingressPolicyMatches
                 publishedBackendMatch
+                epsilonNetworkingMatch
                 fleetUpdaterMatch
               ];
               # Interpolated into the derivation below so that evaluating it
@@ -697,6 +734,7 @@
               matcherReport = builtins.toJSON {
                 i = ingressPolicyMatches;
                 p = publishedBackendMatch;
+                e = epsilonNetworkingMatch;
                 n = nativeServicesMatch;
                 a = authenticationPresentationMatch;
                 m = mediaSpecializationMatch;

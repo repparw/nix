@@ -46,20 +46,9 @@
           "/home/repparw/services"
         ];
 
-        containers.glance = {
-          # No in-container stub resolver chains: external DNS goes straight
-          # out the masqueraded bridge to public resolvers. Monitor names are
-          # pinned below and never consult DNS.
-          config.services.resolved.enable = false;
-          config.networking.nameservers = [
-            "1.1.1.1"
-            "9.9.9.9"
-          ];
-          # Monitors probe public endpoints (CF + edge + backends); apex
-          # is pinned local, vhosts resolve via public DNS.
-          config.networking.hosts = {
-            "${config.containers.glance.localAddress}" = [ "repparw.com" ];
-          };
+        # Glance probes the public routes, except the apex dashboard itself.
+        containers.glance.config.networking.hosts = {
+          "${config.containers.glance.localAddress}" = [ "repparw.com" ];
         };
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
         # Installed in place via nixos-infect on top of Ubuntu's partition
@@ -98,60 +87,45 @@
         # den.aspects.networking disables predictable interface names, so the
         # virtio NIC answers as eth0; OCI hands out everything via DHCP.
         networking.interfaces.eth0.useDHCP = true;
-        services.resolved.settings.Resolve.DNSStubListenerExtra = [
-          "${config.modules.services.bridgePrefix}.1"
-          config.containers.hermes.localAddress
-        ];
-        # Egress NAT for ve-* comes from systemd's io.systemd.nat masquerade;
-        # do not layer networking.nat on top.
+        services.resolved.settings.Resolve.DNSStubListenerExtra =
+          "${config.modules.services.bridgePrefix}.1";
+
+        # NixOS containers assign point-to-point addresses and routes itself.
+        # Claim these links before systemd's generic 80-container-ve.network,
+        # which would otherwise add an unrelated DHCP subnet and its own NAT.
+        systemd.network.networks."10-nixos-container" = {
+          matchConfig = {
+            Kind = "veth";
+            Name = "ve-*";
+          };
+          linkConfig = {
+            RequiredForOnline = false;
+            Unmanaged = true;
+          };
+        };
+
+        boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
+        networking.firewall.filterForward = true;
         networking.firewall.extraForwardRules = ''
+          iifname "ve-*" oifname "eth0" accept comment "container internet egress"
+          iifname "eth0" oifname "ve-*" ct state established,related accept comment "container internet replies"
           iifname "ve-glance" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept comment "glance monitor checks via home tunnel"
-          iifname "wg-home" oifname "ve-glance" ct state established,related accept comment "glance monitor replies"
-          iifname "ve-hermes" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept comment "hermes egress to home (DDNS/state)
+          iifname "ve-hermes" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept comment "hermes egress to home (DDNS/state)"
+          iifname "wg-home" oifname { "ve-glance", "ve-hermes" } ct state established,related accept comment "container home-tunnel replies"
         '';
-        # Debugging bypass: let the home WAN IP hit 443 directly even when
-        # the CF-only rule is the structural trust anchor. Goes before CF in
-        # extraInputRules so the packet matches here first.
         networking.firewall.extraInputRules = ''
-          iifname "eth0" ip saddr 45.237.179.43 tcp dport 443 accept comment "home WAN debug bypass"
           iifname "eth0" tcp dport 443 ip saddr { 173.245.48.0/20, 103.21.244.0/22, 103.22.200.0/22, 103.31.4.0/22, 141.101.64.0/18, 108.162.192.0/18, 131.0.72.0/22, 162.158.0.0/15, 172.64.0.0/13, 188.114.96.0/20, 190.93.240.0/20, 197.234.240.0/22, 198.41.128.0/17, 104.16.0.0-104.27.255.255 } accept comment "CF only"
+          iifname "eth0" ip saddr 45.237.179.43 udp dport 60002 accept comment "mosh from home"
+          iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
         '';
-        networking.firewall.interfaces."ve-*" = {
-          allowedTCPPorts = [ 53 ];
-          allowedUDPPorts = [ 53 ];
-        };
-        networking.nftables.tables.glance-home-nat = {
+        # The point-to-point container allocation is represented as a /24 for
+        # matching, but only traffic leaving epsilon is source-NATed.
+        networking.nftables.tables.container-egress-nat = {
           family = "ip";
           content = ''
             chain postrouting {
               type nat hook postrouting priority 100; policy accept;
-              ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname "wg-home" masquerade
-            }
-          '';
-        };
-        # Egress for hermes agent container: same host bridge, same home
-        # tunnel; same /24 masquerade as glance above.
-        networking.nftables.tables.hermes-home-nat = {
-          family = "ip";
-          content = ''
-            chain postrouting {
-              type nat hook postrouting priority 100; policy accept;
-              ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname "wg-home" masquerade
-            }
-          '';
-        };
-        # Miniflux's container-side address races with systemd-networkd's
-        # io.systemd.nat masq_saddr population and ends up missing from it, so
-        # its general egress is not masqueraded. Pin an explicit rule for this
-        # single container (matches io.systemd.nat's shape: no oifname, so it
-        # covers all egress). Home-tunnel traffic is already handled by
-        # hermes-home-nat above.
-        networking.nftables.tables.miniflux-egress-nat = {
-          family = "ip";
-          content = ''
-            chain postrouting {
-              type nat hook postrouting priority 100; policy accept;
-              ip saddr ${config.containers.miniflux.localAddress} masquerade
+              ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname { "eth0", "wg-home" } masquerade
             }
           '';
         };
@@ -160,7 +134,6 @@
         # interactive session (predictive local echo needs mosh's SSP; ssh
         # cannot speculate). Same port answers on the tunnel.
         programs.mosh.openFirewall = lib.mkForce false;
-        networking.firewall.interfaces.eth0.allowedUDPPorts = [ 60002 ];
         networking.firewall.interfaces."wg-home".allowedUDPPorts = [ 60002 ];
 
         # Tunnel home through the router's WireGuard hub (peer registered in

@@ -78,9 +78,13 @@ firewall accepts 443 from CF ranges only, and Traefik terminates the
 public vhosts with Authelia SSO. Installed in place via nixos-infect
 (grub removable EFI on the Ubuntu partition layout).
 
-- `containers.authelia`, `containers.miniflux`, and `containers.glance`
-  run on its own `10.231.137.0/24` nspawn bridge; glance's monitors probe
-  the public endpoints through the home tunnel.
+- `containers.authelia`, `containers.miniflux`, `containers.glance`, and
+  `containers.hermes` use point-to-point nspawn veths allocated from
+  `10.231.137.0/24`. A host-specific early networkd rule leaves those links
+  under NixOS container ownership; the firewall explicitly owns forwarding
+  and masquerades the allocation range only toward `eth0` and `wg-home`.
+  Containers resolve through the host at `10.231.137.1`; Glance's monitors
+  probe public endpoints through the home tunnel where required.
 - `containers.hermes` runs the Hermes Agent messaging gateway here
   (migrated from pi).
 - `containers.archisteamfarm` runs the Steam bot here (migrated from pi
