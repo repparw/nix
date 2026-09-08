@@ -3,13 +3,13 @@
   den = {
     schema.user.classes = lib.mkDefault [ "homeManager" ];
 
-    aspects.host-common = {
-      includes = [
-        den.batteries.hostname
-        den.aspects.networking
-        den.aspects.secrets
-      ];
-    };
+    # Universal host policy belongs to the host schema rather than a
+    # pseudo-role that every machine must remember to include.
+    schema.host.includes = [
+      den.batteries.hostname
+      den.aspects.networking
+      den.aspects.secrets
+    ];
 
     default = {
       includes = with den.aspects; [

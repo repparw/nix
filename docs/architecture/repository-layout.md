@@ -9,12 +9,15 @@ tags: [architecture, layout]
 
 # Repository Layout
 
-The repository follows the upstream `vic/den` default-template structure.
+The repository is a feature-first, multi-host Den fleet. Entity declarations
+describe topology separately from host implementations, while reusable
+capabilities are composed as aspects.
 
 | Path | Purpose |
 | --- | --- |
 | `flake.nix` | Generated flake; regenerate with `nix run .#write-flake`. |
 | `modules/defaults.nix` | Repo-wide `den.default` and shared host composition. |
+| `modules/entities.nix` | Fleet topology: hosts, users, and user aspect attachments. |
 | `modules/hosts/` | Host aspects. |
 | `modules/aspects/` | Reusable den aspects. |
 | `modules/_services/` | NixOS service modules imported by service aspects. |

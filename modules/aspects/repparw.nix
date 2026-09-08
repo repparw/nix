@@ -6,32 +6,51 @@
   };
 
   # Headless-safe base account: everything repparw needs on a server.
-  # Desktop hosts layer den.aspects.desktop on the host side, which is
-  # where the GUI stack and desktop-only AI tooling live.
+  # Desktop users layer den.aspects.desktop, which sends the GUI host stack
+  # back to their host and keeps desktop-only AI tooling out of servers.
   den.aspects.repparw = {
     includes = [
       den.batteries.define-user
       den.batteries.primary-user
-      # Projects host-level homeManager blocks (alpha's spotifyd etc.) into
-      # this user across hosts; without it host aspects are nixos-only.
-      den.batteries.host-aspects
       (den.batteries.user-shell "fish")
       den.aspects.shell
       den.aspects.editors
       den.aspects.tmux
       den.aspects.git
       den.aspects.ssh
+      den.aspects.secrets
       # Base AI tooling; gui AI (dictation/speech) stays desktop-side.
       den.aspects.ai
     ];
 
-    provides.to-hosts.nixos = {
-      home-manager = {
-        useGlobalPkgs = true;
-        useUserPackages = true;
-        backupFileExtension = "hm-backup";
+    provides.to-hosts =
+      { user, ... }:
+      {
+        nixos =
+          { config, ... }:
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              backupFileExtension = "hm-backup";
+            };
+
+            programs.nh.flake = "${config.home-manager.users.${user.name}.xdg.userDirs.projects}/nix";
+
+            sops.secrets.accessTokens = {
+              sopsFile = ../../secrets/nix.sops.yaml;
+              mode = "0440";
+              owner = user.name;
+            };
+
+            nix = {
+              settings.allowed-users = [ user.name ];
+              extraOptions = ''
+                !include ${config.sops.secrets.accessTokens.path}
+              '';
+            };
+          };
       };
-    };
 
     user = _: {
       linger = true;
@@ -41,25 +60,6 @@
     homeManager = _: {
       xdg.enable = true;
       home.preferXdgDirectories = true;
-    };
-  };
-
-  # repparw on a desktop host: the base account plus the desktop user
-  # layer. Thin by design — the desktop content lives in
-  # den.aspects.desktop and follows whichever user it is attached to.
-  den.aspects.repparw-desktop = {
-    includes = [
-      den.aspects.repparw
-      den.aspects.desktop
-    ];
-
-    user = _: {
-      extraGroups = [
-        "adbusers"
-        "gamemode"
-        "render"
-        "video"
-      ];
     };
   };
 }

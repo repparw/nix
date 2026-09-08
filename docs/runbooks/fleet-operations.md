@@ -76,6 +76,9 @@ decrypt it.
 
 ## Staged auto-update
 
+The controller units are owned by `den.aspects.fleet-controller`, currently
+included by Pi.
+
 Pi is the controller and sole lock writer, but publishing and deploying are
 independent transactions. `fleet-promote.timer` runs daily at 04:15. It resets
 a persistent checkout to exact `origin/main`, checks disk and current pi

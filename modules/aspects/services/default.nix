@@ -1,6 +1,15 @@
 { den, ... }:
 {
-  den.aspects.nixos-services = {
+  # Common contract for every host that runs or consumes fleet services.
+  # Service selection is deliberately separate so a small host can use the
+  # schema and allocator without pulling Alpha's media closures.
+  den.aspects.service-host.nixos.imports = [
+    ../../service-definitions.nix
+    ../../_services/inventory.nix
+    ../../_services/address-allocator.nix
+  ];
+
+  den.aspects.media-stack = {
     includes =
       with den.aspects.nixos-services._;
       [
@@ -8,7 +17,10 @@
         jellyfin
         matrizApi
       ]
-      ++ [ den.aspects.lan-hosts ];
+      ++ [
+        den.aspects.service-host
+        den.aspects.lan-hosts
+      ];
 
     nixos =
       {
@@ -28,14 +40,7 @@
         };
       in
       {
-        # The public edge (proxy/authelia/ddclient) moved to pi; this host
-        # keeps only its backend services plus the shared schema and the
-        # service inventory that owns all definitions.
-        imports = [
-          ../../_services/paperless.nix
-          ../../service-definitions.nix
-          ../../_services/inventory.nix
-        ];
+        imports = [ ../../_services/paperless.nix ];
 
         config = {
           networking = {

@@ -41,7 +41,6 @@ in
       }:
       {
         home.packages = with pkgs; [
-          scrcpy
           godot
           tasks-org
           tradingview
