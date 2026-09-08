@@ -654,8 +654,8 @@
                 && lib.strings.hasInfix ''iifname "eth0" oifname "ve-*" ct state established,related accept'' forwardRules
                 && lib.strings.hasInfix ''iifname "ve-hermes" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept'' forwardRules
                 && lib.strings.hasInfix ''iifname "ve-*" ip daddr ${edgeCfg.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept'' inputRules
+                && lib.strings.hasInfix ''iifname "eth0" ip saddr 45.237.179.43 tcp dport 443 accept'' inputRules
                 && lib.strings.hasInfix ''iifname "eth0" ip saddr 45.237.179.43 udp dport 60002 accept'' inputRules
-                && !(lib.strings.hasInfix "ip saddr 45.237.179.43 tcp dport 443 accept" inputRules)
                 && epsilon.networking.firewall.interfaces.eth0.allowedUDPPorts == [ ]
                 && epsilon.networking.firewall.interfaces."wg-home".allowedUDPPorts == [ 60002 ]
                 && lib.strings.hasInfix ''ip saddr ${edgeCfg.bridgePrefix}.0/24 oifname { "eth0", "wg-home" } masquerade'' natRule

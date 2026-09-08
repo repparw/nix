@@ -115,6 +115,7 @@
         '';
         networking.firewall.extraInputRules = ''
           iifname "eth0" tcp dport 443 ip saddr { 173.245.48.0/20, 103.21.244.0/22, 103.22.200.0/22, 103.31.4.0/22, 141.101.64.0/18, 108.162.192.0/18, 131.0.72.0/22, 162.158.0.0/15, 172.64.0.0/13, 188.114.96.0/20, 190.93.240.0/20, 197.234.240.0/22, 198.41.128.0/17, 104.16.0.0-104.27.255.255 } accept comment "CF only"
+          iifname "eth0" ip saddr 45.237.179.43 tcp dport 443 accept comment "fleet health over split DNS"
           iifname "eth0" ip saddr 45.237.179.43 udp dport 60002 accept comment "mosh from home"
           iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
         '';
