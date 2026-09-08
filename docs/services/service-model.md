@@ -12,8 +12,8 @@ tags: [services, containers, proxy, backup]
 Service behavior is split between the common host substrate, service bundles,
 and individual service modules.
 
-- `service-host` provides the validated schema, inventory, and address allocator
-  without selecting any services.
+- `service-host` collects the fleet service registry into the validated schema
+  and provides the address allocator without selecting any services.
 - `media-stack` composes Alpha's media services and shared container substrate.
 - Hosts include only the individual `nixos-services._.*` aspects they run.
 - `modules/aspects/services/default.nix` defines the substrate and bundles.
@@ -25,10 +25,13 @@ and individual service modules.
   from service definitions.
 - `modules/_services/glance.nix` owns dashboard and monitoring presentation.
 
-Shared reachability, routing, monitoring, and backup facts belong in
-`modules.services.definitions`. Consumers derive their configuration from that
-definition. Invalid routed or monitored definitions and duplicate container
-hostnames fail evaluation at this seam.
+Each service aspect emits its reachability, routing, monitoring, and backup
+facts through the `service-registry` quirk. A fleet-wide pipe broadcasts those
+facts across architecture scopes and derives `host` from the emitting host.
+`service-host` folds the result into `modules.services.definitions`, preserving
+the validated compatibility seam used by existing consumers. Invalid routed
+or monitored definitions and duplicate names or container hostnames fail
+evaluation there.
 
 Definition fields drive host behavior as follows:
 
