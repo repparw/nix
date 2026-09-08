@@ -3,7 +3,12 @@
   # Fleet topology only. Host implementations live in modules/hosts/ and
   # reusable user capabilities live in modules/aspects/.
   den.hosts = {
-    x86_64-linux.alpha.users.repparw.aspect = den.aspects.repparw-desktop;
+    x86_64-linux.alpha.users.repparw.aspect = {
+      includes = [
+        den.aspects.repparw
+        den.aspects.desktop
+      ];
+    };
 
     aarch64-linux = {
       epsilon.users.repparw.aspect = den.aspects.repparw;
@@ -17,5 +22,10 @@
   };
 
   # Parked: no laptop using this host config. Re-enable when hardware is back.
-  # den.hosts.x86_64-linux.beta.users.repparw.aspect = den.aspects.repparw-desktop;
+  # den.hosts.x86_64-linux.beta.users.repparw.aspect = {
+  #   includes = [
+  #     den.aspects.repparw
+  #     den.aspects.desktop
+  #   ];
+  # };
 }

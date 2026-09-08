@@ -5,6 +5,10 @@
 }:
 {
   den.aspects.gui.provides.phone = {
+    user = _: {
+      extraGroups = [ "adbusers" ];
+    };
+
     nixos = {
       networking.firewall.interfaces.eth0 = {
         allowedTCPPortRanges = [
