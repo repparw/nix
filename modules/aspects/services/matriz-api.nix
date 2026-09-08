@@ -1,6 +1,15 @@
 { den, ... }:
 {
   den.aspects.nixos-services.provides.matrizApi = {
+    service-registry = {
+      name = "finance";
+      definition = {
+        hostname = "finance";
+        port = 3000;
+        auth = "one_factor";
+      };
+    };
+
     nixos =
       { config, ... }:
       {

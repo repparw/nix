@@ -14,7 +14,8 @@
       entries = map (
         entry:
         let
-          definition = entry.definition;
+          service = entry.value;
+          definition = service.definition;
           resolvedDefinition =
             removeAttrs definition [ "backupRelativePath" ]
             // lib.optionalAttrs (definition ? backupRelativePath) {
@@ -22,18 +23,19 @@
             };
         in
         {
-          inherit (entry) name;
+          inherit (service) name;
           value = resolvedDefinition // {
-            inherit (entry) host;
+            host = entry.source.host.name;
           };
         }
       ) service-registry;
       names = map (entry: entry.name) entries;
-      definitions =
+      generatedDefinitions =
         if builtins.length names != builtins.length (lib.unique names) then
           throw "duplicate service registry entries: ${lib.concatStringsSep ", " names}"
         else
           builtins.listToAttrs entries;
+      definitions = lib.mapAttrs (_: lib.mkDefault) generatedDefinitions;
     in
     {
       imports = [
@@ -62,14 +64,6 @@
           container = true;
           monitor = true;
           backupRelativePath = "paperless/export";
-        };
-      }
-      {
-        name = "finance";
-        definition = {
-          hostname = "finance";
-          port = 3000;
-          auth = "one_factor";
         };
       }
     ];

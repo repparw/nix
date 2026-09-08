@@ -5,14 +5,14 @@ in
 {
   den.quirks.service-registry.description = "Service-owned routing, monitoring, and backup metadata";
 
-  den.policies.broadcast-service-registry =
-    { host, ... }:
+  den.policies.collect-service-registry =
+    { ... }:
     [
       (pipe.from "service-registry" [
-        (pipe.transform (service: service // { host = host.name; }))
-        (pipe.broadcast ({ host, ... }: true))
+        (pipe.collectAll ({ host, ... }: true))
+        pipe.withProvenance
       ])
     ];
 
-  den.schema.host.includes = [ den.policies.broadcast-service-registry ];
+  den.schema.host.includes = [ den.policies.collect-service-registry ];
 }
