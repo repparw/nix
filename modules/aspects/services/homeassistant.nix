@@ -5,6 +5,17 @@
   den.aspects.nixos-services.provides.homeassistant =
     { ... }:
     {
+      service-registry = {
+        name = "homeassistant";
+        definition = {
+          hostname = "home";
+          container = true;
+          port = 8123;
+          auth = "bypass";
+          monitor = true;
+        };
+      };
+
       nixos =
         {
           config,

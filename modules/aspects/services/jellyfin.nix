@@ -5,6 +5,19 @@
 }:
 {
   den.aspects.nixos-services.provides.jellyfin = {
+    service-registry = {
+      name = "jellyfin";
+      definition = {
+        hostname = "jellyfin";
+        port = 8096;
+        auth = "bypass";
+        container = true;
+        monitor = true;
+        healthcheck = "/health";
+        backupRelativePath = "jellyfin/data/backups";
+      };
+    };
+
     nixos =
       { config, pkgs, ... }:
       let

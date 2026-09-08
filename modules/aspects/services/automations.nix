@@ -5,6 +5,14 @@
 }:
 {
   den.aspects.nixos-services.provides.automations = {
+    service-registry = {
+      name = "automations";
+      definition = {
+        auth = "bypass";
+        backupRelativePath = "automations";
+      };
+    };
+
     nixos =
       { config, pkgs, ... }:
       let
