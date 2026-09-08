@@ -4,6 +4,11 @@
 }:
 {
   den.aspects.nixos-services.provides.hermes = {
+    service-registry = {
+      name = "hermes";
+      definition.container = true;
+    };
+
     nixos =
       {
         config,

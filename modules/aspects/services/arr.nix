@@ -5,6 +5,69 @@
 }:
 {
   den.aspects.nixos-services.provides.arr = {
+    service-registry = [
+      {
+        name = "bazarr";
+        definition = {
+          hostname = "bazarr";
+          port = 6767;
+          auth = "one_factor";
+          container = true;
+          monitor = true;
+          healthcheck = "/health";
+          backupRelativePath = "bazarr/backup";
+        };
+      }
+      {
+        name = "prowlarr";
+        definition = {
+          hostname = "prowlarr";
+          port = 9696;
+          auth = "one_factor";
+          container = true;
+          monitor = true;
+          healthcheck = "/ping";
+          backupRelativePath = "prowlarr/Backups";
+        };
+      }
+      {
+        name = "qbittorrent";
+        definition = {
+          hostname = "qbit";
+          port = 8080;
+          publishedPort = 18080;
+          auth = "external";
+          container = true;
+          monitor = true;
+          backupRelativePath = "qbittorrent";
+        };
+      }
+      {
+        name = "radarr";
+        definition = {
+          hostname = "radarr";
+          port = 7878;
+          auth = "one_factor";
+          container = true;
+          monitor = true;
+          healthcheck = "/ping";
+          backupRelativePath = "radarr/Backups";
+        };
+      }
+      {
+        name = "sonarr";
+        definition = {
+          hostname = "sonarr";
+          port = 8989;
+          auth = "one_factor";
+          container = true;
+          monitor = true;
+          healthcheck = "/ping";
+          backupRelativePath = "sonarr/Backups";
+        };
+      }
+    ];
+
     nixos =
       { config, pkgs, ... }:
       let
@@ -78,7 +141,7 @@
             };
             extraConfig.systemd.tmpfiles.rules = [ ];
             # Publish the WebUI onto alpha's LAN so remote ingress can target
-            # it (containers bridge out via NAT only; see _services/inventory.nix).
+            # it (containers bridge out via NAT only; see service-registry).
             forwardPorts = [
               {
                 protocol = "tcp";

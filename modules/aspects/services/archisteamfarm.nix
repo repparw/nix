@@ -5,6 +5,15 @@
 }:
 {
   den.aspects.nixos-services.provides.archisteamfarm = {
+    service-registry = {
+      name = "archisteamfarm";
+      definition = {
+        auth = "bypass";
+        container = true;
+        backupRelativePath = "archisteamfarm";
+      };
+    };
+
     nixos =
       { config, pkgs, ... }:
       let
