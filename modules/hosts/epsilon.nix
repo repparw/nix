@@ -12,14 +12,10 @@
   den.aspects.epsilon = {
     includes = [
       den.aspects.deploy-target
-      den.batteries.hostname
-      den.aspects.networking
-      # den.aspects.nix (in den.default) declares sops.secrets.accessTokens;
-      # without the secrets aspect the sops-nix module is missing entirely.
-      den.aspects.secrets
       # Offsite restic of the stateful edge services + hermes on this host
       # (backup aspect pulls in restic itself).
       den.aspects.backup
+      den.aspects.service-host
       # Edge ingress stack (Traefik, Authelia, Glance, Miniflux, ddclient)
       den.aspects.nixos-services._.edge
       # Hermes Agent gateway.
@@ -30,12 +26,7 @@
     nixos =
       { config, ... }:
       {
-        imports = [
-          ../service-definitions.nix
-          ../_services/inventory.nix
-          ../_services/glance.nix
-          ../_services/address-allocator.nix
-        ];
+        imports = [ ../_services/glance.nix ];
 
         modules.services.bridgePrefix = "10.231.137";
 
@@ -168,7 +159,4 @@
       };
   };
 
-  # Headless repparw on epsilon: same base account as pi, which carries the
-  # authorized keys for alpha and pi access.
-  den.hosts.aarch64-linux.epsilon.users.repparw.aspect = den.aspects.repparw;
 }

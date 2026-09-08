@@ -5,7 +5,7 @@
 }:
 {
   den.aspects.gaming = {
-    nixos =
+    provides.to-hosts.nixos =
       { pkgs, ... }:
       let
         # GE-Proton 11-6 is newer than the version in the pinned nixpkgs and is
@@ -106,6 +106,11 @@
           ATTRS{idVendor}=="2dc8", ATTRS{idProduct}=="310a", RUN+="${pkgs.linuxConsoleTools}/bin/evdev-joystick --evdev /dev/input/%k --deadzone 0 --fuzz 0"
         '';
       };
+
+    user = _: {
+      extraGroups = [ "gamemode" ];
+    };
+
     homeManager =
       { config, pkgs, ... }:
       let
