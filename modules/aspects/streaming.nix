@@ -46,28 +46,15 @@
           # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
           # to gamescope; nixpkgs disables it by default.
           gamescopeHdr = (pkgs.gamescope.override { enableWsi = true; }).overrideAttrs (old: {
-            patches = (old.patches or [ ]) ++ [
-              # Gamescope's internal compositor lacks wl_subcompositor and
-              # wp_viewporter, which Wine's native Wayland driver requires. This
-              # draft upstream change lets us exercise GE-Proton 11-6's new native
-              # Wayland Steam-overlay bridge without the game escaping Gamescope.
-              # https://github.com/ValveSoftware/gamescope/pull/2307
-              (pkgs.fetchpatch {
-                url = "https://github.com/ValveSoftware/gamescope/commit/9da913f8c7d1b1acb214f6979dd6e249a3eab0e5.patch";
-                hash = "sha256-6bl/HfxgULP28jLX5w+DoaYHUCXPK8Q3TIzlRoZCLwM=";
-              })
-              # Port the draft patch from its older FrameInfo_t flat-array API to
-              # 3.16.28's bounded LayerStack_t API.
-              ./gamescope-wayland-subsurfaces-3.16.28.patch
-            ];
+            patches = (old.patches or [ ]) ++ [ ./gamescope-wsi-overlay.patch ];
           });
 
           # Run Steam through Gamescope so Moonshine always captures one stable HDR
-          # surface. GE-Proton 11-6 supplies a native Wayland Steam-overlay bridge;
-          # --expose-wayland and the upstream protocol patch above keep that native
-          # Wayland game inside Gamescope.
-          moonshine-steam = pkgs.writeShellApplication {
-            name = "moonshine-steam";
+          # surface. Steam's overlay does not normally composite with gamescope-wsi;
+          # the local patch opts into the proof of concept from
+          # ValveSoftware/gamescope#1537.
+          moonshine-steam-hdr = pkgs.writeShellApplication {
+            name = "moonshine-steam-hdr";
             runtimeInputs = [
               gamescopeHdr
               pkgs.bubblewrap
@@ -80,7 +67,7 @@
               ${stopDesktopSteam}
 
               # Gamescope's WSI layer must remain discoverable for the HDR entry.
-              # moonshine-wsi is force-disabled below for both paths.
+              # moonshine-wsi is force-disabled below.
               export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${gamescopeHdr}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
               # Workaround for hgaiser/moonshine#93 (HDR/DX11 black screen):
@@ -101,14 +88,11 @@
               export DISABLE_MOONSHINE_WSI=1
               unset ENABLE_MOONSHINE_WSI
 
-              # GE-Proton 11-6's overlay support lives in its native Wayland path.
-              # HDR does not imply that path when Proton runs under Gamescope, so
-              # request both explicitly. Keep Gamescope WSI available as fallback
-              # for games that cannot use Wine-Wayland.
-              export PROTON_ENABLE_HDR=1
-              export PROTON_ENABLE_WAYLAND=1
+              # Steam Overlay only hooks X11 windows, while gamescope-wsi bypasses
+              # Xwayland for game swapchains. Opt into the upstream PoC from
+              # ValveSoftware/gamescope#1537.
               unset DISABLE_GAMESCOPE_WSI
-              unset GAMESCOPE_WSI_FIX_OVERLAY
+              export GAMESCOPE_WSI_FIX_OVERLAY=1
 
               # bwrap sits INSIDE gamescope, not outside: gamescope spawns its own
               # Xwayland, and inside bwrap's user namespace the root-owned
@@ -120,7 +104,7 @@
               # strace 2026-09-05), which would otherwise spin up the idle disk
               # on every launch. Overlay diagnostic 2026-09-06: removing this
               # sandbox did not restore the overlay, so the sandbox is exonerated.
-              gs_args=(--steam --expose-wayland --hdr-enabled -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate")
+              gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
               exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- bwrap \
                 --dev-bind / / \
                 --tmpfs /mnt/seagate \
@@ -128,7 +112,6 @@
                 -- steam -tenfoot
             '';
           };
-
         in
         {
           config = {
@@ -158,7 +141,7 @@
                   {
                     title = "Steam Big Picture HDR";
                     boxart = "${moonshine-boxart}/steam.png";
-                    command = [ "${moonshine-steam}/bin/moonshine-steam" ];
+                    command = [ "${moonshine-steam-hdr}/bin/moonshine-steam-hdr" ];
                     stdout = "journal";
                     stderr = "journal";
                   }
