@@ -163,7 +163,8 @@ in
       config = {
         modules.fleet-update.package = mkFleetUpdate pkgs;
         systemd.tmpfiles.rules = [ "d /run/deploy-rs 0700 root root -" ];
-        users.users.root.openssh.authorizedKeys.keys = import ../authorized-keys.nix;
+        users.users.root.openssh.authorizedKeys.keys =
+          config.users.users.repparw.openssh.authorizedKeys.keys;
         system.configurationRevision = inputs.self.rev or (inputs.self.dirtyRev or null);
       };
     };
