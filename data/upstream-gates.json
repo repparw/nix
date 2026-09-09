@@ -1,0 +1,264 @@
+{
+  "schema": 1,
+  "gates": {
+    "moonshine-pulse-fix": {
+      "input": "nixpkgs",
+      "repository": "NixOS/nixpkgs",
+      "branch": "nixos-unstable",
+      "source": {
+        "kind": "tag-contains-commits",
+        "repository": "hgaiser/moonshine",
+        "tag": "v0.15.0",
+        "commits": [
+          "2a9e21298093944c69ddb33f233621135e591498",
+          "5258d19dba83d862bd5184693eb8466897a29750"
+        ]
+      },
+      "channel": {
+        "kind": "package-tag-contains-commits",
+        "path": "pkgs/by-name/mo/moonshine/package.nix",
+        "repository": "hgaiser/moonshine",
+        "tag_prefix": "v",
+        "commits": [
+          "2a9e21298093944c69ddb33f233621135e591498",
+          "5258d19dba83d862bd5184693eb8466897a29750"
+        ]
+      },
+      "pin": {
+        "kind": "package-tag-contains-commits",
+        "path": "pkgs/by-name/mo/moonshine/package.nix",
+        "repository": "hgaiser/moonshine",
+        "tag_prefix": "v",
+        "commits": [
+          "2a9e21298093944c69ddb33f233621135e591498",
+          "5258d19dba83d862bd5184693eb8466897a29750"
+        ]
+      },
+      "workaround": [
+        "modules/aspects/streaming-pulse-crash-fix.nix",
+        "modules/aspects/moonshine-pr184-pulse-client-stall.patch",
+        "modules/aspects/moonshine-pr167-timerfd-eagain.patch",
+        "modules/hosts/alpha.nix"
+      ],
+      "completion": "Update nixpkgs, remove the Moonshine workaround and include, evaluate every host, push, and close issue #49.",
+      "watcher": "watch-moonshine-pulse-fix.timer",
+      "issue": "https://github.com/repparw/nix/issues/49",
+      "upstream": [
+        "https://github.com/hgaiser/moonshine/pull/184",
+        "https://github.com/hgaiser/moonshine/pull/167"
+      ]
+    },
+    "qbittorrent-pr-24055": {
+      "input": "nixpkgs",
+      "repository": "NixOS/nixpkgs",
+      "branch": "nixos-unstable",
+      "source": {
+        "kind": "pull-request-release",
+        "repository": "qbittorrent/qBittorrent",
+        "number": 24055
+      },
+      "channel": {
+        "kind": "package-release-version",
+        "path": "pkgs/by-name/qb/qbittorrent/package.nix"
+      },
+      "pin": {
+        "kind": "package-release-version",
+        "path": "pkgs/by-name/qb/qbittorrent/package.nix"
+      },
+      "workaround": [
+        "modules/aspects/services/arr.nix"
+      ],
+      "completion": "Update nixpkgs, remove the qbittorrent-nox fetchpatch overlay, evaluate every host, and push.",
+      "watcher": "watch-qbittorrent.timer",
+      "issue": null,
+      "upstream": [
+        "https://github.com/qbittorrent/qBittorrent/pull/24055"
+      ]
+    },
+    "nixpkgs-555921-t3code-connect": {
+      "input": "nixpkgs",
+      "repository": "NixOS/nixpkgs",
+      "branch": "nixos-unstable",
+      "source": {
+        "kind": "pull-request",
+        "repository": "NixOS/nixpkgs",
+        "number": 555921
+      },
+      "channel": {
+        "kind": "commit-in-branch"
+      },
+      "pin": {
+        "kind": "commit-in-pin"
+      },
+      "workaround": [
+        "modules/aspects/ai/t3code-connect.nix",
+        "modules/aspects/ai/default.nix"
+      ],
+      "completion": "Update nixpkgs, remove the T3 Connect aspect and include, evaluate and build t3code, then push.",
+      "watcher": "watch-t3code-connect.timer",
+      "issue": null,
+      "upstream": [
+        "https://github.com/NixOS/nixpkgs/pull/555921"
+      ]
+    },
+    "nixpkgs-555814-t3code-split": {
+      "input": "nixpkgs",
+      "repository": "NixOS/nixpkgs",
+      "branch": "nixos-unstable",
+      "source": {
+        "kind": "pull-request",
+        "repository": "NixOS/nixpkgs",
+        "number": 555814
+      },
+      "channel": {
+        "kind": "commit-in-branch"
+      },
+      "pin": {
+        "kind": "commit-in-pin"
+      },
+      "workaround": [
+        "modules/aspects/ai/t3code-split.nix",
+        "modules/aspects/ai/default.nix"
+      ],
+      "completion": "Update nixpkgs, remove the T3 Code split aspect and include, evaluate and build both consumers, then push.",
+      "watcher": "watch-t3code-split.timer",
+      "issue": null,
+      "upstream": [
+        "https://github.com/NixOS/nixpkgs/pull/555814"
+      ]
+    },
+    "home-manager-9695-t3code-server": {
+      "input": "home-manager",
+      "repository": "nix-community/home-manager",
+      "branch": "master",
+      "source": {
+        "kind": "pull-request",
+        "repository": "nix-community/home-manager",
+        "number": 9695
+      },
+      "channel": {
+        "kind": "commit-in-branch"
+      },
+      "pin": {
+        "kind": "commit-in-pin"
+      },
+      "workaround": [
+        "modules/aspects/ai/t3code.nix",
+        "docs/runbooks/prune-t3code-opencode-dbs.md"
+      ],
+      "completion": "Update Home Manager, replace the hand-rolled t3code-web service with programs.t3code.server, evaluate every host, update the runbook, and push.",
+      "watcher": "watch-t3code-server.timer",
+      "issue": null,
+      "upstream": [
+        "https://github.com/nix-community/home-manager/pull/9695"
+      ]
+    },
+    "nixpkgs-voxtype-graphical-session": {
+      "input": "nixpkgs",
+      "repository": "NixOS/nixpkgs",
+      "branch": "nixos-unstable",
+      "source": {
+        "kind": "none"
+      },
+      "channel": {
+        "kind": "file-contains",
+        "path": "modules/services/voxtype.nix",
+        "text": "graphical-session.target"
+      },
+      "pin": {
+        "kind": "file-contains",
+        "path": "modules/services/voxtype.nix",
+        "text": "graphical-session.target"
+      },
+      "workaround": [
+        "modules/aspects/ai/voxtype-graphical-workaround.nix",
+        "modules/aspects/ai/default.nix"
+      ],
+      "completion": "Update nixpkgs, remove the Voxtype workaround and include, evaluate every host plus flake checks, then push.",
+      "watcher": "watch-voxtype-graphical.timer",
+      "issue": null,
+      "upstream": []
+    },
+    "home-manager-9842-cliamp": {
+      "input": "home-manager",
+      "repository": "nix-community/home-manager",
+      "branch": "master",
+      "source": {
+        "kind": "pull-request",
+        "repository": "nix-community/home-manager",
+        "number": 9842
+      },
+      "channel": {
+        "kind": "commit-in-branch"
+      },
+      "pin": {
+        "kind": "commit-in-pin"
+      },
+      "workaround": [
+        "modules/aspects/cliamp.nix"
+      ],
+      "completion": "Update Home Manager past the #9842 merge, drop the fetchurl pin and sharedModules line in modules/aspects/cliamp.nix in favor of the upstream module, evaluate every host, push.",
+      "watcher": "watch-cliamp-hm-module.timer",
+      "issue": null,
+      "upstream": [
+        "https://github.com/nix-community/home-manager/pull/9842"
+      ]
+    },
+    "cliamp-attach-453": {
+      "input": "nixpkgs",
+      "repository": "NixOS/nixpkgs",
+      "branch": "nixos-unstable",
+      "source": {
+        "kind": "pull-request",
+        "repository": "bjarneo/cliamp",
+        "number": 453
+      },
+      "channel": {
+        "kind": "package-version",
+        "path": "pkgs/by-name/cl/cliamp/package.nix",
+        "minimum": "2.0.2"
+      },
+      "pin": {
+        "kind": "package-version",
+        "path": "pkgs/by-name/cl/cliamp/package.nix",
+        "minimum": "2.0.2"
+      },
+      "workaround": [
+        "modules/aspects/cliamp.nix"
+      ],
+      "completion": "Update nixpkgs past a cliamp release containing #453, verify attach/quit work in the stock package, drop the overlay from modules/aspects/cliamp.nix, evaluate every host, push.",
+      "watcher": "watch-cliamp-attach.timer",
+      "issue": null,
+      "upstream": [
+        "https://github.com/bjarneo/cliamp/pull/453"
+      ]
+    },
+    "spotify-player-0.25.1": {
+      "input": "nixpkgs",
+      "repository": "NixOS/nixpkgs",
+      "branch": "nixos-unstable",
+      "source": {
+        "kind": "release",
+        "repository": "aome510/spotify-player",
+        "tag": "v0.25.1"
+      },
+      "channel": {
+        "kind": "package-version",
+        "path": "pkgs/by-name/sp/spotify-player/package.nix",
+        "minimum": "0.25.1"
+      },
+      "pin": {
+        "kind": "package-version",
+        "path": "pkgs/by-name/sp/spotify-player/package.nix",
+        "minimum": "0.25.1"
+      },
+      "workaround": [],
+      "completion": "Update nixpkgs and verify the spotify-player package and Home Manager output.",
+      "watcher": null,
+      "issue": null,
+      "upstream": [
+        "https://github.com/aome510/spotify-player/releases/tag/v0.25.1"
+      ]
+    }
+  }
+}

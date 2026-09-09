@@ -8,7 +8,9 @@
     includes = [
       den.aspects.backup
       den.aspects.btrfs-maintenance
+      den.aspects.gaming
       den.aspects.logid
+      den.aspects.streaming
       den.aspects.media-stack
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
