@@ -100,9 +100,42 @@ notify_file() { # content, file
   [ -s "$2" ] || return 0
   # shellcheck disable=SC1091
   source /run/secrets/hermes-env
-  curl -sS -m 30 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-    -F "payload_json=$(jq -n --arg c "$1" '{content: $c}')" \
-    -F "files[0]=@$2" "$api" >/dev/null || true
+  # Discord caps content at 2000 chars and has no collapsible code
+  # blocks, so inline a truncated ```diff snippet and only attach the
+  # full diff when it overflows the budget.
+  header="$1"
+  file="$2"
+  budget=1600
+  # Built in double quotes: shellcheck reads backticks in single quotes
+  # as command substitution that will never expand (SC2016).
+  fence="\`\`\`"
+  raw=$(<"$file")
+  # Fence-breaking backticks never survive into the snippet.
+  sanitized=${raw//\`/\'}
+  # diff-closures echoes every bump as a +/- pair under its summary
+  # line; the `old → new` line carries the whole signal, so inline
+  # summaries only. Pure add/removes have no summary line, hence the
+  # fallback to the full text.
+  summaries=$(printf '%s' "$sanitized" | awk '/→/')
+  if [ -n "$summaries" ]; then
+    inline=$summaries
+  else
+    inline=$sanitized
+  fi
+  if [ "${#inline}" -gt "$budget" ]; then
+    # jq slices by characters, so multibyte output (nix's → arrows)
+    # is never split mid-codepoint the way head -c would split it.
+    snippet=$(printf '%s' "$inline" | jq -Rs -r --argjson n "$budget" '.[0:$n]')
+    body=$(printf '%s\n%sdiff\n%s\n%s\n(full diff attached)' "$header" "$fence" "$snippet" "$fence")
+    curl -sS -m 30 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+      -F "payload_json=$(jq -n --arg c "$body" '{content: $c}')" \
+      -F "files[0]=@$file" "$api" >/dev/null || true
+  else
+    body=$(printf '%s\n%sdiff\n%s\n%s' "$header" "$fence" "$inline" "$fence")
+    curl -sS -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$(jq -n --arg c "$body" '{content: $c}')" "$api" >/dev/null || true
+  fi
 }
 
 repo="$state/src"
@@ -354,8 +387,9 @@ if [ "$action" = promote ]; then
     exit 1
   fi
   write_candidate "$revision" "$parent" published
-  git push git@gitlab.com:repparw/nix.git HEAD:main ||
-    notify ":warning: fleet promotion landed on GitHub but the GitLab mirror push failed"
+  # GitHub is authoritative; keep mirror failures in the service log without
+  # turning them into fleet-health notifications.
+  git push git@gitlab.com:repparw/nix.git HEAD:main || true
   notify ":arrow_up: fleet candidate ${revision:0:8} published; deployment is a separate transaction"
   exit 0
 fi
@@ -450,7 +484,7 @@ deploy_one() {
   after_generation=$(remote "$host" readlink /run/current-system)
   remote "$host" nix store diff-closures "${before_generation[$host]}" "$after_generation" \
     > "$state/diff-$host.txt" || true
-  notify_file "**$host deployed** — ${revision:0:8}" "$state/diff-$host.txt"
+  notify_file "**$host deployed** — \`${revision:0:8}\`" "$state/diff-$host.txt"
 }
 
 for host in "${hosts[@]}"; do

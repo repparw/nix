@@ -24,3 +24,11 @@ Issues, PRDs, and work tickets live in GitHub Issues for `repparw/nix`. Use the 
 - Use native issue dependencies for blocking relationships.
 - Claim work by assigning the issue to yourself before making changes.
 - Resolve work by recording the answer, closing the issue, and adding its context pointer to the map.
+
+## Upstream waits
+
+For an external change that must reach a NixOS or Home Manager input, keep the
+canonical state in `data/upstream-gates.json` and inspect it with
+`nix run .#upstream-gates -- check`. A GitHub issue and a `watch-upstream`
+timer may support the wait, but they link to the gate ID rather than becoming a
+second status system. Close or update the issue when the gate reaches adoption.

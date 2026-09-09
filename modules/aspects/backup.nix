@@ -115,7 +115,9 @@
             ];
             checkOpts = [ "--read-data-subset=5%" ];
             timerConfig = {
-              OnCalendar = "*-*-* 05:00:00";
+              # Leave the promotion/deployment window clear. Large alpha
+              # snapshots can run for hours and inhibit its gated deploy.
+              OnCalendar = "*-*-* 01:00:00";
               RandomizedDelaySec = "15min";
               Persistent = true;
             };
