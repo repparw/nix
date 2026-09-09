@@ -24,12 +24,16 @@ and miniflux), the apex and rss vhosts, and alpha's published
 backends (jellyfin, qbit, bazarr, prowlarr, radarr, sonarr, paperless,
 finance).
 
-- Two consecutive failures alert (`DOWN name (detail)`); recovery posts
-  `UP name`. Single blips stay silent.
+- Two consecutive failures post `DOWN name (detail)` as a new message;
+  recovery deletes that message (no `UP` post — the channel only shows
+  what is currently down). Single blips stay silent. If a DOWN message
+  lingers after recovery, check `journalctl -u fleet-health.service` for
+  `POST failed` / `DELETE failed` lines: a failed delete keeps the msgid
+  file for retry on the next run.
 - Oneshot units (restic) are judged by `systemctl is-failed`, not
   `is-active` — inactive between runs is healthy.
 - State lives in `/var/lib/fleet-health/`. To re-arm an alert while
-  debugging, delete the counter (and `.alerted`) for that check.
+  debugging, delete the counter (and `.<check>.msgid`) for that check.
 - Adding a service = one line in
   `modules/aspects/services/fleet-health.nix` (unit or HTTP probe).
 
