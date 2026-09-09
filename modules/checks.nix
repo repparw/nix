@@ -667,7 +667,7 @@
                 && lib.strings.hasInfix "ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16" hermesPolicy;
               fleetUpdaterMatch =
                 let
-                  authorizedKeys = import ../authorized-keys.nix;
+                  authorizedKeys = alpha.users.users.repparw.openssh.authorizedKeys.keys;
                   fleetUpdateSource = builtins.readFile ./scripts/fleet-update.sh;
                   shellSource = builtins.readFile ./aspects/cli/shell.nix;
                 in
