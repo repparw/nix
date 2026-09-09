@@ -12,6 +12,7 @@
           den.aspects.desktop
           den.aspects.gaming
           den.aspects.streaming
+          den.aspects.cliamp
         ];
       };
     };
@@ -39,6 +40,3 @@
   #   includes = [
   #     den.aspects.repparw
   #     den.aspects.desktop
-  #   ];
-  # };
-}
