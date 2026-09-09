@@ -9,6 +9,7 @@
         den.aspects.desktop
         den.aspects.gaming
         den.aspects.streaming
+        den.aspects.cliamp
       ];
     };
 
