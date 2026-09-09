@@ -56,15 +56,32 @@
             # ever shows what is currently down. The message id lives in
             # the dotfile .$n.msgid so counter globs never see it.
             alert_post() { # content -> message id (empty on failure)
-              curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+              # Logs go to stderr: callers capture stdout as the message id.
+              local content="$1" resp code body mid
+              resp=$(curl -s -m 15 -w '\n%{http_code}' -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
                 -H "Content-Type: application/json" \
-                -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" \
-                | jq -r '.id // empty'
+                -d "$(jq -n --arg c "$content" '{content: $c}')" "$api" || true)
+              code=$(printf '%s' "$resp" | tail -n 1)
+              body=$(printf '%s' "$resp" | sed '$d')
+              mid=$(printf '%s' "$body" | jq -r '.id // empty' 2>/dev/null || true)
+              if [ -n "$mid" ]; then
+                echo "fleet-health: posted DOWN: $content -> msg $mid (http $code)" >&2
+                printf '%s' "$mid"
+              else
+                echo "fleet-health: POST failed: content='$content' http='$code' body='$body'" >&2
+              fi
             }
 
-            alert_delete() { # message id
-              curl -s -m 15 -o /dev/null -X DELETE \
-                -H "Authorization: Bot $DISCORD_BOT_TOKEN" "$api/messages/$1" || true
+            alert_delete() { # check name, message id
+              local n="$1" id="$2" code
+              code=$(curl -s -m 15 -o /dev/null -w '%{http_code}' -X DELETE \
+                -H "Authorization: Bot $DISCORD_BOT_TOKEN" "$api/messages/$id" || echo curl-fail)
+              if [ "$code" = 204 ] || [ "$code" = 200 ]; then
+                echo "fleet-health: deleted recovery $n msg $id (http $code)"
+              else
+                echo "fleet-health: DELETE failed: $n msg $id http=$code (msgid kept for retry)" >&2
+                return 1
+              fi
             }
 
             failures=0
@@ -88,8 +105,9 @@
               local n="$1" mid
               if [ -e "$state_dir/.$n.msgid" ]; then
                 mid=$(cat "$state_dir/.$n.msgid")
-                alert_delete "$mid"
-                rm -f "$state_dir/.$n.msgid"
+                if alert_delete "$n" "$mid"; then
+                  rm -f "$state_dir/.$n.msgid"
+                fi
               fi
               printf '0\n' > "$state_dir/$n"
             }
