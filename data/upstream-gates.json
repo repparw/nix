@@ -179,31 +179,6 @@
       "issue": null,
       "upstream": []
     },
-    "home-manager-9842-cliamp": {
-      "input": "home-manager",
-      "repository": "nix-community/home-manager",
-      "branch": "master",
-      "source": {
-        "kind": "pull-request",
-        "repository": "nix-community/home-manager",
-        "number": 9842
-      },
-      "channel": {
-        "kind": "commit-in-branch"
-      },
-      "pin": {
-        "kind": "commit-in-pin"
-      },
-      "workaround": [
-        "modules/aspects/cliamp.nix"
-      ],
-      "completion": "Update Home Manager past the #9842 merge, drop the fetchurl pin and sharedModules line in modules/aspects/cliamp.nix in favor of the upstream module, evaluate every host, push.",
-      "watcher": "watch-cliamp-hm-module.timer",
-      "issue": null,
-      "upstream": [
-        "https://github.com/nix-community/home-manager/pull/9842"
-      ]
-    },
     "cliamp-attach-453": {
       "input": "nixpkgs",
       "repository": "NixOS/nixpkgs",

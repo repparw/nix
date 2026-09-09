@@ -1,10 +1,4 @@
 { den, lib, ... }:
-let
-  hmCliampModule = builtins.fetchurl {
-    url = "https://raw.githubusercontent.com/rachitvrma/home-manager/d1faef32f5e6ab3cb34ada5e030cbceb52307775/modules/programs/cliamp.nix";
-    sha256 = "sha256-gtDq3a/wH7LQTGb5NuFTVQyrHURyaDv8+57MGYoRT6w=";
-  };
-in
 {
   den.aspects.cliamp = {
     nixos = { ... }: {
@@ -24,8 +18,6 @@ in
       ];
 
       services.pipewire.alsa.enable = lib.mkDefault true;
-
-      home-manager.sharedModules = [ hmCliampModule ];
     };
 
     homeManager = { ... }: {
