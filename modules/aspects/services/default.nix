@@ -36,6 +36,18 @@
         else
           builtins.listToAttrs entries;
       definitions = lib.mapAttrs (_: lib.mkDefault) generatedDefinitions;
+
+      # The registry provenance carries the complete originating host entity.
+      # Keep the service-reachable address with fleet topology and derive the
+      # compatibility map here instead of maintaining a second host registry.
+      hostAddresses = builtins.listToAttrs (
+        map (entry: {
+          name = entry.source.host.name;
+          value =
+            entry.source.host.serviceAddress
+              or (throw "service host ${entry.source.host.name} is missing serviceAddress topology metadata");
+        }) service-registry
+      );
     in
     {
       imports = [
@@ -44,12 +56,7 @@
       ];
 
       modules.services = {
-        inherit definitions;
-        hostAddresses = {
-          alpha = "192.168.0.18";
-          pi = "192.168.0.4";
-          epsilon = "10.5.5.3";
-        };
+        inherit definitions hostAddresses;
       };
     };
 
