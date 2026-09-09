@@ -36,7 +36,7 @@ finance).
 - A `PAUSE` flag on the updater (`/var/lib/auto-update/PAUSE`) raises an
   alert of its own, so paused automation never rots silently.
 
-## Offsite backups (`restic-backups-offsite.timer`, daily 05:00)
+## Offsite backups (`restic-backups-offsite.timer`, daily 01:00–01:15)
 
 Restic over rclone to `gd-crypt:restic/<hostname>`. Covers:
 
