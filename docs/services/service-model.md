@@ -26,12 +26,15 @@ and individual service modules.
 - `modules/_services/glance.nix` owns dashboard and monitoring presentation.
 
 Each service aspect emits its reachability, routing, monitoring, and backup
-facts through the `service-registry` quirk. A fleet-wide pipe broadcasts those
-facts across architecture scopes and derives `host` from the emitting host.
-`service-host` folds the result into `modules.services.definitions`, preserving
-the validated compatibility seam used by existing consumers. Invalid routed
-or monitored definitions and duplicate names or container hostnames fail
-evaluation there.
+facts through the `service-registry` quirk. A fleet-wide `collectAll` pipe
+collects those facts with provenance, so `service-host` derives each service's
+`host` from the originating host entity. The host entity's `serviceAddress`
+field supplies cross-host reachability and is folded into
+`modules.services.hostAddresses`; there is no separate address registry.
+`service-host` then folds the registry into `modules.services.definitions`,
+preserving the validated compatibility seam used by existing consumers.
+Invalid routed or monitored definitions and duplicate names or container
+hostnames fail evaluation there.
 
 Definition fields drive host behavior as follows:
 
