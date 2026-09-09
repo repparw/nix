@@ -24,9 +24,9 @@ requires an explicit policy implementation and otherwise fails evaluation.
 Exceptional routes remain inside the policy implementation: the qBittorrent
 UI/API split and the apex Glance route. Everything else, including Home
 Assistant (hostname `home`, `bypass` auth), is an ordinary route derived from
-its `service-registry` definition in `media-stack`; there is no code service.
-Identity providers, secrets, and application configuration remain in their
-owning service modules.
+metadata emitted by its owning service aspect; there is no service-specific
+routing code. Identity providers, secrets, and application configuration
+remain in their owning service modules.
 
 ## Adapters
 

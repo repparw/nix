@@ -61,26 +61,13 @@
     };
 
   den.aspects.media-stack = {
-    service-registry = [
-      {
-        name = "paperless";
-        definition = {
-          hostname = "paper";
-          port = 8000;
-          auth = "one_factor";
-          container = true;
-          monitor = true;
-          backupRelativePath = "paperless/export";
-        };
-      }
-    ];
-
     includes =
       with den.aspects.nixos-services._;
       [
         arr
         jellyfin
         matrizApi
+        paperless
       ]
       ++ [
         den.aspects.service-host
@@ -105,8 +92,6 @@
         };
       in
       {
-        imports = [ ../../_services/paperless.nix ];
-
         config = {
           networking = {
             nat = {

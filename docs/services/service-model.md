@@ -10,15 +10,15 @@ tags: [services, containers, proxy, backup]
 # Service Model
 
 Service behavior is split between the common host substrate, service bundles,
-and individual service modules.
+and individual service aspects.
 
 - `service-host` collects the fleet service registry into the validated schema
   and provides the address allocator without selecting any services.
 - `media-stack` composes Alpha's media services and shared container substrate.
 - Hosts include only the individual `nixos-services._.*` aspects they run.
 - `modules/aspects/services/default.nix` defines the substrate and bundles.
-- `modules/_services/` contains NixOS service modules imported by the service
-  aspect.
+- `modules/aspects/services/` contains service-owned implementation and metadata.
+- `modules/_services/` contains shared service infrastructure and adapters.
 - `modules/service-definitions.nix` defines the validated service-definition shape.
 - `modules/_services/proxy.nix` owns proxy routing.
 - `modules/_services/ingress-policy.nix` generates Traefik and Authelia policy
@@ -47,7 +47,7 @@ Definition fields drive host behavior as follows:
 - `backup.path` produces the read-only backup export and container ordering.
 
 Service-specific settings, mounts, devices, secrets, and exceptional proxy
-rules remain local to the owning service module.
+rules remain local to the owning service aspect.
 
 Private containers use the gateway derived from the host's
 `modules.services.bridgePrefix` (`10.231.136.1` by default; epsilon uses
