@@ -5,10 +5,8 @@
   ...
 }:
 let
-  chatGptChromeExtensionId = "hehggadaopoacecdllhhajmbjkdcmajg";
   openInFirefoxExtensionId = "lmeddoobegbaiopohmpmmobpnpjifpii";
   heliumExtensionIds = [
-    chatGptChromeExtensionId
     openInFirefoxExtensionId
     "nngceckbapebfimnlniiiahkandclblb" # Bitwarden
     "ddkjiahejlhfcafbddmgiahcphecmpfh" # uBlock Origin Lite
