@@ -2,13 +2,13 @@
 {
   den.aspects.ai.provides.codex = {
     homeManager =
-      { pkgs, ... }:
+      { config, pkgs, ... }:
       {
         home.packages = [ pkgs.codex ];
 
         programs.codex = {
           enable = true;
-          skills = { };
+          skills = config.programs.opencode.skills;
         };
       };
   };
