@@ -686,6 +686,8 @@
                 && pi.systemd.timers.fleet-promote.timerConfig.OnCalendar == "*-*-* 04:15:00"
                 && pi.systemd.timers.fleet-deploy.timerConfig.OnCalendar == "*-*-* 05:30:00"
                 && pi.systemd.timers.fleet-alpha-retry.timerConfig.OnCalendar == "*-*-* 07:00:00"
+                && pi.systemd.timers.restic-backups-offsite.timerConfig.OnCalendar == "*-*-* 01:00:00"
+                && alpha.systemd.timers.restic-backups-offsite.timerConfig.OnCalendar == "*-*-* 01:00:00"
                 && lib.strings.hasInfix "systemd-inhibit --list --json=short" fleetUpdateSource
                 && lib.strings.hasInfix ".mode == \"block\"" fleetUpdateSource
                 && lib.strings.hasInfix "fleet-update <promote|deploy>" fleetUpdateSource

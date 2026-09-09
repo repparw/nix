@@ -53,8 +53,8 @@
           # surface. Steam's overlay does not normally composite with gamescope-wsi;
           # the local patch opts into the proof of concept from
           # ValveSoftware/gamescope#1537.
-          moonshine-steam-hdr = pkgs.writeShellApplication {
-            name = "moonshine-steam-hdr";
+          moonshine-steam = pkgs.writeShellApplication {
+            name = "moonshine-steam";
             runtimeInputs = [
               gamescopeHdr
               pkgs.bubblewrap
@@ -139,9 +139,9 @@
                     stderr = "journal";
                   }
                   {
-                    title = "Steam Big Picture HDR";
+                    title = "Steam Big Picture";
                     boxart = "${moonshine-boxart}/steam.png";
-                    command = [ "${moonshine-steam-hdr}/bin/moonshine-steam-hdr" ];
+                    command = [ "${moonshine-steam}/bin/moonshine-steam" ];
                     stdout = "journal";
                     stderr = "journal";
                   }
