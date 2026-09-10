@@ -60,6 +60,9 @@ in
           CREATE_ADMIN = 0;
           RUN_MIGRATIONS = 1;
           CLEANUP_FREQUENCY_HOURS = 24;
+          # Keep retrying after transient network outages instead of permanently
+          # removing feeds from the scheduler after the default three errors.
+          POLLING_PARSING_ERROR_LIMIT = 0;
         };
       };
     };
