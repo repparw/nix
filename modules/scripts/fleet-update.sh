@@ -95,6 +95,14 @@ notify() { # content
     -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" >/dev/null || true
 }
 
+# nix store diff-closures emits ANSI color codes even when piped (verified:
+# `nix store diff-closures a b | cat -v` shows ^[[31;1m). Discord eats the
+# ESC byte and renders the bare `[31;1m` fragments, so scrub control
+# sequences before the diff reaches a message or an attachment.
+strip_ansi() {
+  awk 'BEGIN { esc = sprintf("%c", 27) } { gsub(esc "\\[[0-9;?]*[A-Za-z]", ""); gsub(/\r/, ""); print }'
+}
+
 notify_file() { # content, file
   [ -r /run/secrets/hermes-env ] || return 0
   [ -s "$2" ] || return 0
@@ -484,6 +492,10 @@ deploy_one() {
   after_generation=$(remote "$host" readlink /run/current-system)
   remote "$host" nix store diff-closures "${before_generation[$host]}" "$after_generation" \
     > "$state/diff-$host.txt" || true
+  if [ -s "$state/diff-$host.txt" ]; then
+    strip_ansi < "$state/diff-$host.txt" > "$state/diff-$host.tmp" \
+      && mv "$state/diff-$host.tmp" "$state/diff-$host.txt"
+  fi
   notify_file "**$host deployed** — \`${revision:0:8}\`" "$state/diff-$host.txt"
 }
 
