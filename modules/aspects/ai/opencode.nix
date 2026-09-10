@@ -142,6 +142,13 @@
               options = {
                 baseURL = "https://openrouter.ai/api/v1";
               };
+              # Hide the rest of the OpenRouter catalog; only the pinned models
+              # below plus the free variant stay selectable.
+              whitelist = [
+                "~z-ai/glm-flash-latest"
+                "deepseek/deepseek-v4.1-flash"
+                "openrouter/free"
+              ];
               models = {
                 # Pin GLM Flash (latest alias) to the z-ai provider. OpenRouter has
                 # no `:z-ai` model-id suffix (only :free/:floor/:nitro/:exacto), and
@@ -161,6 +168,17 @@
                     };
                   };
                 };
+                # Same treatment: DeepSeek's own endpoint is cheapest on input,
+                # output, and cache reads (half of Novita/DeepInfra),
+                # so pin to the `deepseek` provider.
+                "deepseek/deepseek-v4.1-flash" = {
+                  name = "DeepSeek V4.1 Flash (DeepSeek)";
+                  options = {
+                    provider = {
+                      only = [ "deepseek" ];
+                    };
+                  };
+                };
                 # Pin Luna to OpenAI's flex tier endpoint. Same mechanism as
                 # the Z.AI pin above: model `options` map to
                 # providerOptions.openaiCompatible which the SDK merges into
@@ -169,6 +187,8 @@
                 # endpoint (50% discount, higher latency, no fallback to
                 # default tier). Base slug "openai" would NOT match tier
                 # endpoints — explicit `openai/flex` opt-in is required.
+                # NOTE: currently hidden by the provider `whitelist` above;
+                # add "openai/gpt-5.6-luna" there to re-enable.
                 "openai/gpt-5.6-luna" = {
                   name = "GPT 5.6 Luna (OpenAI Flex)";
                   options = {
