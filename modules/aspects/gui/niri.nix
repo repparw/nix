@@ -240,11 +240,11 @@
                 "ndrop"
                 "-F"
                 "-c"
-                "chrome-agimnkijcaahngcdmfeangaknmldooml-Default"
-                "chromium"
+                "helium-youtube"
+                "helium"
                 "--password-store=basic"
-                "--profile-directory=Default"
-                "--app-id=agimnkijcaahngcdmfeangaknmldooml"
+                "--class=helium-youtube"
+                "--app=https://www.youtube.com"
               ];
               "Mod+Z" = titledSpawn "MPV Clipboard" [ "mpvclip" ];
 
