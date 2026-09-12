@@ -73,6 +73,7 @@
             ];
             text = ''
               device="''${TOGGLE_BT_DEVICE:-00:1D:43:A0:14:D8}"
+              audio_sink="0000110b-0000-1000-8000-00805f9b34fb"
               action="''${1:-toggle}"
 
               # cache single DBus round-trip; most invocations need only this one call
@@ -86,10 +87,24 @@
 
               do_connect() {
                 bluetoothctl unblock "$device" >/dev/null 2>&1 || true
-                if ! timeout 5 bluetoothctl connect "$device" >/dev/null 2>&1; then
+                if ! timeout 20 bluetoothctl connect "$device" >/dev/null 2>&1; then
                   block_quiet
                   exit 3
                 fi
+
+                audio_connected=false
+                for _ in $(seq 1 10); do
+                  if timeout 20 bluetoothctl connect "$device" "$audio_sink" >/dev/null 2>&1; then
+                    audio_connected=true
+                    break
+                  fi
+                  sleep 1
+                done
+                if ! $audio_connected; then
+                  block_quiet
+                  exit 3
+                fi
+
                 refresh_info
                 if ! is_connected; then
                   block_quiet
