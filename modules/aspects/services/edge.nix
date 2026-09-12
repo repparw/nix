@@ -15,6 +15,7 @@
           auth = "bypass";
           container = true;
           monitor = true;
+          healthcheck = "/api/health";
           backupRelativePath = "authelia";
         };
       }

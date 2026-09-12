@@ -358,11 +358,13 @@
                 && authelia.port == 9091
                 && authelia.auth == "bypass"
                 && authelia.monitor
+                && authelia.healthcheck == "/api/health"
                 && epsilon.containers.authelia.localAddress == "10.231.137.3"
                 && builtins.elem authelia.port epsilon.containers.authelia.config.networking.firewall.allowedTCPPorts
                 &&
                   epsilon.containers.authelia.config.services.authelia.instances.main.settings.server.address
                   == "tcp://:${toString authelia.port}"
+                && hasMonitorSite "authelia" "auth" (servicesLib.publicHealthUrl edgeCfg epsilon "authelia")
                 && glance.port == 8080
                 && glance.auth == "bypass"
                 && epsilon.containers.glance.localAddress == "10.231.137.4"
