@@ -485,6 +485,8 @@
             MOUNTS_JSON="''${MOUNTS_JSON:-[]}"
             META_WARN="''${META_WARN:-85}"
             META_CRIT="''${META_CRIT:-93}"
+            META_UNALLOC_WARN_GB="''${META_UNALLOC_WARN_GB:-10}"
+            META_UNALLOC_CRIT_GB="''${META_UNALLOC_CRIT_GB:-2}"
 
             printf '%s' "$MOUNTS_JSON" | jq -c '.[]' | while IFS= read -r row; do
               mp=$(printf '%s' "$row" | jq -r '.mount')
@@ -501,7 +503,8 @@
               # pool ENOSPCs writes while data space still shows free, so
               # watch the metadata pool directly on btrfs mounts.
               if [ "$(stat -f -c %T "$mp")" = "btrfs" ]; then
-                meta_pct=$(btrfs filesystem usage "$mp" 2>/dev/null |
+                usage=$(btrfs filesystem usage "$mp" 2>/dev/null)
+                meta_pct=$(printf '%s' "$usage" |
                   awk '/Metadata.*:/ {
                     if (match($0, /\([0-9.]+%\)/)) {
                       s = substr($0, RSTART+1, RLENGTH-2)
@@ -509,9 +512,30 @@
                       print s
                     }
                   }' | head -n 1)
+                # GiB the allocator can still grow into. Raw metadata %
+                # alone hovers 70-90%+ on healthy pools (btrfs sizes the
+                # pool to demand), so gate the alert on whether it can
+                # still grow: the Sep 2026 incident was 97.7% with ~0
+                # unallocated while df looked fine.
+                unalloc_gb=$(printf '%s' "$usage" |
+                  awk '/Device unallocated:/ {
+                    for (i=1; i<=NF; i++) if ($i ~ /^[0-9.]+(KiB|MiB|GiB|TiB)$/) { v=$i; break }
+                    if (v ~ /KiB$/) { sub(/KiB$/, "", v); printf "%.2f", v/1048576 }
+                    else if (v ~ /MiB$/) { sub(/MiB$/, "", v); printf "%.2f", v/1024 }
+                    else if (v ~ /GiB$/) { sub(/GiB$/, "", v); printf "%.2f", v+0 }
+                    else if (v ~ /TiB$/) { sub(/TiB$/, "", v); printf "%.2f", v*1024 }
+                  }' | head -n 1)
                 if [ -n "$meta_pct" ]; then
-                  meta_lvl=$(level_for "$meta_pct" "$META_WARN" "$META_CRIT")
-                  set_level "btrfs-meta:$mp" "$meta_lvl" "$mp metadata at $meta_pct% (warn>=$META_WARN crit>=$META_CRIT)"
+                  meta_lvl=$(awk -v p="$meta_pct" -v u="$unalloc_gb" \
+                    -v w="$META_WARN" -v c="$META_CRIT" \
+                    -v uw="$META_UNALLOC_WARN_GB" -v uc="$META_UNALLOC_CRIT_GB" 'BEGIN {
+                    if (u == "") {
+                      if (p+0 >= c+0) print "crit"; else if (p+0 >= w+0) print "warn"; else print "ok"
+                    } else if (u+0 < uc+0) print "crit";
+                    else if (p+0 >= w+0 && u+0 < uw+0) print "warn";
+                    else print "ok"
+                  }')
+                  set_level "btrfs-meta:$mp" "$meta_lvl" "$mp metadata at $meta_pct% with ''${unalloc_gb:-unknown}GiB unallocated (warn>=$META_WARN% + <$META_UNALLOC_WARN_GB GiB unalloc, crit=<$META_UNALLOC_CRIT_GB GiB unalloc)"
                 fi
               fi
             done
@@ -562,6 +586,18 @@
             default = 93;
             description = "Critical threshold for btrfs metadata pool usage percent";
           };
+
+          metadataUnallocWarnGiB = lib.mkOption {
+            type = lib.types.int;
+            default = 10;
+            description = "Warn when btrfs metadata pool is over metadataWarn percent AND unallocated space drops below this many GiB";
+          };
+
+          metadataUnallocCritGiB = lib.mkOption {
+            type = lib.types.int;
+            default = 2;
+            description = "Critical when btrfs unallocated space drops below this many GiB, regardless of metadata percent";
+          };
         };
 
         config = {
@@ -574,6 +610,8 @@
               MOUNTS_JSON = builtins.toJSON cfg.mounts;
               META_WARN = toString cfg.metadataWarn;
               META_CRIT = toString cfg.metadataCrit;
+              META_UNALLOC_WARN_GB = toString cfg.metadataUnallocWarnGiB;
+              META_UNALLOC_CRIT_GB = toString cfg.metadataUnallocCritGiB;
             };
             serviceConfig = {
               Type = "oneshot";
