@@ -60,8 +60,17 @@
       };
 
     homeManager =
-      { pkgs, ... }:
       {
+        lib,
+        osConfig,
+        pkgs,
+        ...
+      }:
+      {
+        home.sessionVariables = lib.mkIf (osConfig.modules.host-facts.bluetoothDevice != null) {
+          TOGGLE_BT_DEVICE = osConfig.modules.host-facts.bluetoothDevice;
+        };
+
         home.packages = with pkgs; [
           pwvucontrol
 
@@ -72,9 +81,14 @@
               coreutils
             ];
             text = ''
-              device="''${TOGGLE_BT_DEVICE:-00:1D:43:A0:14:D8}"
+              device="''${TOGGLE_BT_DEVICE:-}"
               audio_sink="0000110b-0000-1000-8000-00805f9b34fb"
               action="''${1:-toggle}"
+
+              if [ -z "$device" ]; then
+                echo "bttoggle: TOGGLE_BT_DEVICE is not set; provide the Bluetooth device MAC" >&2
+                exit 2
+              fi
 
               # cache single DBus round-trip; most invocations need only this one call
               info=$(bluetoothctl info "$device" 2>&1 || true)
