@@ -296,7 +296,10 @@
                   widget.type or null == "monitor"
                   && builtins.any (
                     site:
-                    site.title == name && site.url == "https://${hostname}.${cfg.domain}" && site.check-url == checkUrl
+                    site.title == name
+                    && site.url == "https://${hostname}.${cfg.domain}"
+                    && site.check-url == checkUrl
+                    && site.timeout == "10s"
                   ) widget.sites
                 ) (lib.concatMap (column: column.widgets) monitorSites.columns);
               mediaDefinitionsMatch = lib.all (

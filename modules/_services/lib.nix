@@ -64,12 +64,14 @@ in
             title = name;
             url = "https://${service.hostname}.${cfg.domain}";
             check-url = publicHealthUrl cfg hostConfig name;
+            timeout = "10s";
           }
         else
           {
             title = name;
             url = "https://${service.hostname}.${cfg.domain}";
             check-url = serviceUrl cfg hostConfig name;
+            timeout = "10s";
             alt-status-codes = [ 302 ];
           }
       )
