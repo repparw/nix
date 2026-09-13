@@ -642,6 +642,7 @@
                   natTables = epsilon.networking.nftables.tables;
                   natRule = natTables.container-egress-nat.content;
                   hermesPolicy = natTables.hermes-monitor.content;
+                  wanIp = epsilon.modules.host-facts.wanIp;
                 in
                 containerNetwork.matchConfig == {
                   Kind = "veth";
@@ -659,8 +660,13 @@
                 && lib.strings.hasInfix ''iifname "eth0" oifname "ve-*" ct state established,related accept'' forwardRules
                 && lib.strings.hasInfix ''iifname "ve-hermes" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept'' forwardRules
                 && lib.strings.hasInfix ''iifname "ve-*" ip daddr ${edgeCfg.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept'' inputRules
-                && lib.strings.hasInfix ''iifname "eth0" ip saddr 45.237.179.43 tcp dport 443 accept'' inputRules
-                && lib.strings.hasInfix ''iifname "eth0" ip saddr 45.237.179.43 udp dport 60002 accept'' inputRules
+                && (
+                  wanIp == null
+                  || (
+                    lib.strings.hasInfix ''iifname "eth0" ip saddr ${wanIp} tcp dport 443 accept comment "fleet health over split DNS"'' inputRules
+                    && lib.strings.hasInfix ''iifname "eth0" ip saddr ${wanIp} udp dport 60002 accept comment "mosh from home"'' inputRules
+                  )
+                )
                 && epsilon.networking.firewall.interfaces.eth0.allowedUDPPorts == [ ]
                 && epsilon.networking.firewall.interfaces."wg-home".allowedUDPPorts == [ 60002 ]
                 && lib.strings.hasInfix ''ip saddr ${edgeCfg.bridgePrefix}.0/24 oifname { "eth0", "wg-home" } masquerade'' natRule

@@ -30,6 +30,15 @@
 
         modules.services.bridgePrefix = "10.231.137";
 
+        # Fail visibly, not silently: without the private facts file the
+        # home WAN allowlists below are omitted and the wg-home endpoint is
+        # an unroutable placeholder. Create
+        # /home/repparw/.config/nix/private-facts/facts.nix (see
+        # private-facts.example.nix) before deploying this host.
+        warnings = lib.optional (config.modules.host-facts.wanIp == null) ''
+          epsilon: modules.host-facts.wanIp is unset; home firewall allowlists are omitted and the wg-home endpoint is a placeholder.
+        '';
+
         # Offsite restic coverage (den.aspects.backup): the stateful edge
         # services (authelia/miniflux) plus hermes agent state.
         modules.backup.paths = [
@@ -106,8 +115,12 @@
         '';
         networking.firewall.extraInputRules = ''
           iifname "eth0" tcp dport 443 ip saddr { 173.245.48.0/20, 103.21.244.0/22, 103.22.200.0/22, 103.31.4.0/22, 141.101.64.0/18, 108.162.192.0/18, 131.0.72.0/22, 162.158.0.0/15, 172.64.0.0/13, 188.114.96.0/20, 190.93.240.0/20, 197.234.240.0/22, 198.41.128.0/17, 104.16.0.0-104.27.255.255 } accept comment "CF only"
-          iifname "eth0" ip saddr 45.237.179.43 tcp dport 443 accept comment "fleet health over split DNS"
-          iifname "eth0" ip saddr 45.237.179.43 udp dport 60002 accept comment "mosh from home"
+          ${lib.optionalString (config.modules.host-facts.wanIp != null)
+            ''iifname "eth0" ip saddr ${config.modules.host-facts.wanIp} tcp dport 443 accept comment "fleet health over split DNS"''
+          }
+          ${lib.optionalString (config.modules.host-facts.wanIp != null)
+            ''iifname "eth0" ip saddr ${config.modules.host-facts.wanIp} udp dport 60002 accept comment "mosh from home"''
+          }
           iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
         '';
         # The point-to-point container allocation is represented as a /24 for
@@ -148,7 +161,14 @@
                 "192.168.0.0/24"
                 "10.231.136.0/24"
               ];
-              endpoint = "45.237.179.43:51820";
+              # 192.0.2.1 (TEST-NET-1, RFC 5737) is deliberately unroutable:
+              # it only lets fact-less evaluation (CI) succeed. Real deploys
+              # always set wanIp; see the warning above.
+              endpoint =
+                if config.modules.host-facts.wanIp != null then
+                  "${config.modules.host-facts.wanIp}:51820"
+                else
+                  "192.0.2.1:51820";
               persistentKeepalive = 25;
             }
           ];
