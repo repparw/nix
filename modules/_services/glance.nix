@@ -61,7 +61,7 @@ in
                     {
                       type = "weather";
                       hide-header = true;
-                      location = "REDACTED";
+                      location = config.modules.host-facts.weatherLocation;
                       units = "metric";
                       hour-format = "24h";
                     }
