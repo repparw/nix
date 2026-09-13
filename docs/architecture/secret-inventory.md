@@ -59,9 +59,35 @@ NixOS decrypts with the machine SSH host key at
 recovery access and is not used during activation. Docs, plans, and commits
 should refer to SOPS secret names or source modules, never secret values.
 
+## Private host facts (not SOPS)
+
+Values that must exist at Nix evaluation time cannot come from SOPS, which
+only materializes at activation. Those live in a machine-local facts file,
+read through the `host-facts` flake input
+(`modules/aspects/host-facts.nix`):
+
+| Fact | Purpose | Consumers |
+| --- | --- | --- |
+| `wanIp` | Home WAN IP for epsilon's firewall allowlists and the `wg-home` endpoint | `epsilon` |
+| `weatherLocation` | Glance weather widget location (defaults to `Buenos Aires, Argentina`) | `epsilon` (glance container) |
+| `bluetoothDevice` | MAC targeted by `bttoggle`, exported as `TOGGLE_BT_DEVICE` | `alpha` |
+| `clarodriveUser` | Claro Drive WebDAV account id baked into the rclone `claro` remote | `alpha` |
+
+Setup: copy `private-facts.example.nix` to
+`/home/repparw/.config/nix/private-facts/facts.nix` (outside the repo, mode
+`600`), fill in real values, then `nix flake lock --update-input host-facts`
+before rebuilding — the input is pinned by hash, so edits apply silently
+stale without the refresh. The pin hash in `flake.lock` reveals nothing
+about the values. With no facts file, every option falls back to a harmless
+default (firewall/claro legs omitted, coarse weather) and evaluation still
+succeeds; hosts additionally emit a `warnings` entry so a fact-less deploy
+fails visibly, not silently. CI materializes null defaults for the input
+(see `.github/workflows/ci.yml`).
+
 ## Source
 
 - `modules/aspects/secrets.nix`
+- `modules/aspects/host-facts.nix`
 - `secrets/`
 
 ## Related
