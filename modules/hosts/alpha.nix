@@ -213,18 +213,19 @@
         # --set standby are clamped by a vendor minimum that never engages);
         # STANDBY IMMEDIATE (hdparm -y) is the only lever. Fire it once the
         # media automounts above have idled out, so the platter actually sleeps
-        # between accesses. Guard with findmnt on the PARTITION (the fs mounts
-        # /dev/sda1, so the whole-disk by-id never matches); findmnt reads
-        # mountinfo and must NOT touch the automount (statvfs via mountpoint
-        # would reset the idle timer).
+        # between accesses. Address the disk by its filesystem label (HDD,
+        # the same token the /mnt/hdd automount uses) so the hardware serial
+        # never appears in the tree. Guard with findmnt on the LABEL; findmnt
+        # reads mountinfo and must NOT touch the automount (statvfs via
+        # mountpoint would reset the idle timer).
         systemd.services.hdd-spindown = {
           description = "Spin down media HDD when automounts are idle";
           serviceConfig.Type = "oneshot";
           script = ''
-            if ${pkgs.util-linux}/bin/findmnt -S /dev/disk/by-id/ata-WDC_WD80EAZZ-00BKLB0_REDACTED-part1 >/dev/null 2>&1; then
+            if ${pkgs.util-linux}/bin/findmnt -S /dev/disk/by-label/HDD >/dev/null 2>&1; then
               exit 0
             fi
-            ${pkgs.hdparm}/sbin/hdparm -y /dev/disk/by-id/ata-WDC_WD80EAZZ-00BKLB0_REDACTED
+            ${pkgs.hdparm}/sbin/hdparm -y /dev/disk/by-label/HDD
           '';
         };
 
