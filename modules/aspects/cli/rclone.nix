@@ -35,10 +35,18 @@
         ...
       }:
       let
-        clarodriveUser = "f8ff72993b43109297c1f4e7";
+        clarodriveUser = osConfig.modules.host-facts.clarodriveUser;
         cloudDir = "${config.home.homeDirectory}/.cloud";
       in
       {
+        # Fail visibly, not silently: without the private facts file the
+        # claro remote (and its union leg) is omitted. Create
+        # /home/repparw/.config/nix/private-facts/facts.nix (see
+        # private-facts.example.nix).
+        warnings = lib.optional (clarodriveUser == null) ''
+          rclone: modules.host-facts.clarodriveUser is unset; the claro remote is omitted.
+        '';
+
         # Fix: rclone-config service must remain active after exit for mount dependencies
         systemd.user.services.rclone-config.Service.RemainAfterExit = "yes";
         programs.rclone = {
@@ -76,7 +84,8 @@
             union = {
               config = {
                 type = "union";
-                upstreams = "gdrive:crypt nextcloud:crypt claro:crypt";
+                upstreams =
+                  "gdrive:crypt nextcloud:crypt" + lib.optionalString (clarodriveUser != null) " claro:crypt";
                 policy_read = "all";
                 action_policy = "all";
                 create_policy = "all";
@@ -117,6 +126,8 @@
               };
             };
 
+          }
+          // lib.optionalAttrs (clarodriveUser != null) {
             claro = {
               config = {
                 type = "webdav";

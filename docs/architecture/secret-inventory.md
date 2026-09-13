@@ -37,6 +37,7 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/authelia.sops.yaml` | `authelia/smtpPassword` | Authenticate Authelia to its SMTP relay | Authelia | `alpha`, `pi` |
 | `secrets/authelia.sops.yaml` | `authelia/storageEncryptionKey` | Encrypt sensitive Authelia storage fields | Authelia | `alpha`, `pi` |
 | `secrets/archisteamfarm.sops.yaml` | `steamPassword` | Authenticate the managed Steam account | ArchiSteamFarm | `epsilon` |
+| `secrets/archisteamfarm.sops.yaml` | `steamUsername` | Identify the managed Steam account (substituted into the bot config at runtime via `replace-secret`; ASF only accepts a literal `SteamLogin`) | ArchiSteamFarm | `epsilon` |
 | `secrets/jellyfin.sops.yaml` | `jellyfinBackupKey` | Authorize Jellyfin backup creation | Jellyfin backup tooling | `alpha` |
 | `secrets/automations.sops.yaml` | `discordWebhook` | Deliver automation notifications to Discord | Automation services | `pi` |
 | `secrets/matriz.sops.yaml` | `matrizApiUsername` | Identify the EcoValores Matriz API user without publishing its CUIT | Matriz account snapshot service | `alpha` |

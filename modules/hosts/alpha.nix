@@ -340,7 +340,6 @@
       services.spotifyd = {
         enable = true;
         settings.global = {
-          username = "2ksy00sfypgevoabx2128ia4g";
           device_name = "alpha";
           bitrate = 320;
           max_cache_size = 5000000000;
