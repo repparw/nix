@@ -5,8 +5,16 @@
   ...
 }:
 let
-  chatGptChromeExtensionId = "hehggadaopoacecdllhhajmbjkdcmajg";
   openInFirefoxExtensionId = "lmeddoobegbaiopohmpmmobpnpjifpii";
+  heliumExtensionIds = [
+    openInFirefoxExtensionId
+    "nngceckbapebfimnlniiiahkandclblb" # Bitwarden
+    "ddkjiahejlhfcafbddmgiahcphecmpfh" # uBlock Origin Lite
+    "mnjggcdmjocbbbhaepdhchncahnbgone" # SponsorBlock
+    "enamippconapkdmgfgjchkhakpfinmaj" # DeArrow
+    "bnomihfieiccainjcjblhegjgglakjdd"
+    "dbepggeogbaibhgnhhndojpepiihcmeb"
+  ];
   allOpenInExtensionIds = [
     "lmeddoobegbaiopohmpmmobpnpjifpii" # Open in Firefox
     "mjoebkkejejidnkfdekpbooceogbapnf" # Open in Edge
@@ -79,6 +87,7 @@ in
       }:
       let
         openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
+        ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
         browserWithoutMimeApps =
           desktopFile: browser:
           (pkgs.symlinkJoin {
@@ -96,7 +105,6 @@ in
             override = args: browserWithoutMimeApps desktopFile (browser.override args);
           };
 
-        chromiumWithoutMimeApps = browserWithoutMimeApps "chromium-browser.desktop";
         heliumWithoutMimeApps = browserWithoutMimeApps "helium.desktop";
         helium = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
       in
@@ -106,16 +114,33 @@ in
         home.packages = [
           (pkgs.writeShellApplication {
             name = "webapp";
-            runtimeInputs = [ (chromiumWithoutMimeApps pkgs.chromium) ];
+            runtimeInputs = [
+              (heliumWithoutMimeApps helium)
+              ndrop
+            ];
             text = ''
-              exec chromium --password-store=basic --app="$1" "''${@:2}"
+              if [ "$#" -lt 2 ]; then
+                echo "usage: webapp <app-id> <url> [helium args...]" >&2
+                exit 2
+              fi
+
+              app_id="$1"
+              url="$2"
+              shift 2
+
+              exec ndrop -F -c "$app_id" \
+                helium \
+                --password-store=basic \
+                --class="$app_id" \
+                --app="$url" \
+                "$@"
             '';
           })
         ];
 
         home.file = {
           ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
-          ".config/chromium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
+          ".config/helium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
             name = "com.add0n.node";
             description = "Node Host for Native Messaging";
             path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
@@ -164,7 +189,15 @@ in
 
             autocmd DocStart tradingview.com mode ignore
           '';
-        };
+        }
+        // lib.listToAttrs (
+          map (id: {
+            name = ".config/helium/External Extensions/${id}.json";
+            value.text = builtins.toJSON {
+              external_update_url = "https://clients2.google.com/service/update2/crx";
+            };
+          }) heliumExtensionIds
+        );
         programs = {
           firefox = {
             enable = true;
@@ -329,27 +362,13 @@ in
               };
           };
 
-          chromium = {
-            enable = true;
-            package = chromiumWithoutMimeApps pkgs.chromium;
-            commandLineArgs = [
-              "--force-renderer-accessibility"
-              "--silent-debugger-extension-api"
-            ];
-            extensions = [
-              { id = chatGptChromeExtensionId; }
-              { id = openInFirefoxExtensionId; }
-              { id = "ddkjiahejlhfcafbddmgiahcphecmpfh"; }
-              { id = "mnjggcdmjocbbbhaepdhchncahnbgone"; }
-              { id = "enamippconapkdmgfgjchkhakpfinmaj"; }
-              { id = "bnomihfieiccainjcjblhegjgglakjdd"; }
-              { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; }
-            ];
-          };
-
           helium = {
             enable = true;
             package = heliumWithoutMimeApps helium;
+            flags = [
+              "--force-renderer-accessibility"
+              "--silent-debugger-extension-api"
+            ];
           };
         };
       };
