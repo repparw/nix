@@ -233,14 +233,9 @@
               ];
               "Mod+X" = titledSpawn "Tasks" [ "tasks-org" ];
               "Mod+Y" = titledSpawn "YouTube" [
-                "ndrop"
-                "-F"
-                "-c"
-                "chrome-agimnkijcaahngcdmfeangaknmldooml-Default"
-                "chromium"
-                "--password-store=basic"
-                "--profile-directory=Default"
-                "--app-id=agimnkijcaahngcdmfeangaknmldooml"
+                "webapp"
+                "youtube"
+                "https://www.youtube.com"
               ];
               "Mod+Z" = titledSpawn "MPV Clipboard" [ "mpvclip" ];
 
@@ -435,7 +430,7 @@
               }
               {
                 window-rule = {
-                  match._props.app-id = "chrome-agimnkijcaahngcdmfeangaknmldooml-Default";
+                  match._props.app-id = "youtube";
                   open-on-output = "HDMI-A-1";
                   default-column-width.proportion = 1.0;
                 };
