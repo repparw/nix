@@ -151,7 +151,10 @@
         sops.secrets = {
           wgEpsilonPrivateKey.sopsFile = ../../secrets/wg.sops.yaml;
           wgEpsilonPresharedKey.sopsFile = ../../secrets/wg.sops.yaml;
-          homeWanIp.sopsFile = ../../secrets/home.sops.yaml;
+          homeWanIp = {
+            sopsFile = ../../secrets/home.sops.yaml;
+            restartUnits = [ "home-wan.service" ];
+          };
         };
 
         # Provision the home uplink from the homeWanIp secret: populate the
@@ -167,7 +170,6 @@
           ];
           wants = [ "sops-install-secrets.service" ];
           wantedBy = [ "multi-user.target" ];
-          restartTriggers = [ config.sops.secrets.homeWanIp.path ];
           serviceConfig.Type = "oneshot";
           script = ''
             set -euo pipefail
