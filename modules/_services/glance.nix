@@ -61,7 +61,9 @@ in
                     {
                       type = "weather";
                       hide-header = true;
-                      location = "REDACTED";
+                      # Deliberately coarse: precise town would be PII in
+                      # committed source for zero dashboard benefit.
+                      location = "Buenos Aires, Argentina";
                       units = "metric";
                       hour-format = "24h";
                     }

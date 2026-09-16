@@ -25,6 +25,8 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/rclone.sops.yaml` | `rcloneCrypt` | Unlock the encrypted rclone remote | rclone Home Manager services | `alpha`, `pi` |
 | `secrets/rclone.sops.yaml` | `rcloneObsidianCrypt` | Unlock the Remotely Save-compatible Obsidian crypt remote | Obsidian bisync service | `alpha` |
 | `secrets/rclone.sops.yaml` | `rcloneClarodrive` | Authenticate the Claro Drive remote | rclone Home Manager services | `alpha`, `pi` |
+| `secrets/rclone.sops.yaml` | `rcloneClarodriveUser` | Identify the Claro Drive account (injected into the remote `user` at activation, never baked into the store) | rclone Home Manager services | `alpha`, `pi` |
+| `secrets/rclone.sops.yaml` | `rcloneClarodriveUrl` | Claro Drive WebDAV endpoint carrying the account id (injected at activation) | rclone Home Manager services | `alpha`, `pi` |
 | `secrets/rclone.sops.yaml` | `rcloneDropbox` | Authorize Dropbox access | rclone Home Manager services | `alpha`, `pi` |
 | `secrets/rclone.sops.yaml` | `rcloneNextcloud` | Authenticate the Nextcloud remote | rclone Home Manager services | `alpha`, `pi` |
 | `secrets/proxy.sops.yaml` | `cloudflare` | Authorize Cloudflare DNS-01 certificate updates | Traefik | `alpha`, `pi` |
@@ -37,6 +39,9 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/authelia.sops.yaml` | `authelia/smtpPassword` | Authenticate Authelia to its SMTP relay | Authelia | `alpha`, `pi` |
 | `secrets/authelia.sops.yaml` | `authelia/storageEncryptionKey` | Encrypt sensitive Authelia storage fields | Authelia | `alpha`, `pi` |
 | `secrets/archisteamfarm.sops.yaml` | `steamPassword` | Authenticate the managed Steam account | ArchiSteamFarm | `epsilon` |
+| `secrets/archisteamfarm.sops.yaml` | `steamUsername` | Identify the managed Steam account (substituted into the bot config at runtime via `replace-secret`; ASF only accepts a literal `SteamLogin`) | ArchiSteamFarm | `epsilon` |
+| `secrets/home.sops.yaml` | `homeWanIp` | Home WAN IP: populates the `home-wan` nft set and the `wg-home` endpoint at boot via the `home-wan` service (firewall/WG strings render at evaluation time, so SOPS feeds them at runtime instead) | home uplink provisioning | `epsilon` |
+| `secrets/bluetooth.sops.yaml` | `btDevice` | Bluetooth MAC targeted by `bttoggle`, read as a fallback when `TOGGLE_BT_DEVICE` is unset | bttoggle helper | `alpha` |
 | `secrets/jellyfin.sops.yaml` | `jellyfinBackupKey` | Authorize Jellyfin backup creation | Jellyfin backup tooling | `alpha` |
 | `secrets/automations.sops.yaml` | `discordWebhook` | Deliver automation notifications to Discord | Automation services | `pi` |
 | `secrets/matriz.sops.yaml` | `matrizApiUsername` | Identify the EcoValores Matriz API user without publishing its CUIT | Matriz account snapshot service | `alpha` |
@@ -58,6 +63,17 @@ NixOS decrypts with the machine SSH host key at
 `/etc/ssh/ssh_host_ed25519_key`; the personal Age recipient in `.sops.yaml` is
 recovery access and is not used during activation. Docs, plans, and commits
 should refer to SOPS secret names or source modules, never secret values.
+
+## Eval-time values via runtime provisioning (not SOPS-at-eval)
+
+SOPS only materializes at activation, but firewall strings and the
+WireGuard endpoint render at evaluation time. For those, the committed
+config carries structure only (an empty `home-wan` nft set, an endpoint-less
+peer) and a `home-wan` oneshot fills both from `homeWanIp` at boot,
+re-running when the secret changes. An empty set matches nothing, so a
+missing secret fails closed; a malformed one fails the unit loudly. The
+Bluetooth MAC rides the same pattern one level simpler: `bttoggle` reads
+the user-owned `btDevice` secret file when `TOGGLE_BT_DEVICE` is unset.
 
 ## Source
 

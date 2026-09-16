@@ -23,6 +23,8 @@
             "rcloneDropbox"
             "rcloneNextcloud"
             "rcloneClarodrive"
+            "rcloneClarodriveUser"
+            "rcloneClarodriveUrl"
           ]
       );
     };
@@ -35,7 +37,6 @@
         ...
       }:
       let
-        clarodriveUser = "REDACTED";
         cloudDir = "${config.home.homeDirectory}/.cloud";
       in
       {
@@ -117,14 +118,19 @@
               };
             };
 
+            # The account id appears in both url and user, so both are
+            # injected from SOPS at activation; nothing identifying lands
+            # in the world-readable store.
             claro = {
               config = {
                 type = "webdav";
-                url = "https://i0001.clarodrive.com/remote.php/dav/files/${clarodriveUser}";
                 vendor = "nextcloud";
-                user = clarodriveUser;
               };
-              secrets.pass = osConfig.sops.secrets.rcloneClarodrive.path;
+              secrets = {
+                url = osConfig.sops.secrets.rcloneClarodriveUrl.path;
+                user = osConfig.sops.secrets.rcloneClarodriveUser.path;
+                pass = osConfig.sops.secrets.rcloneClarodrive.path;
+              };
               mounts."" = {
                 enable = true;
                 mountPoint = "${cloudDir}/claro";

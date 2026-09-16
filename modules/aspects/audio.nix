@@ -2,8 +2,16 @@
 {
   den.aspects.audio = {
     nixos =
-      { ... }:
+      { config, ... }:
       {
+        # User-owned so the interactive bttoggle helper can read it as a
+        # fallback when TOGGLE_BT_DEVICE is unset in its environment.
+        sops.secrets.btDevice = {
+          sopsFile = ../../secrets/bluetooth.sops.yaml;
+          owner = config.users.users.repparw.name;
+          mode = "0400";
+        };
+
         hardware.bluetooth.enable = true;
 
         services = {
@@ -72,9 +80,14 @@
               coreutils
             ];
             text = ''
-              device="''${TOGGLE_BT_DEVICE:-REDACTED}"
+              device="''${TOGGLE_BT_DEVICE:-$(cat /run/secrets/btDevice 2>/dev/null || true)}"
               audio_sink="0000110b-0000-1000-8000-00805f9b34fb"
               action="''${1:-toggle}"
+
+              if [ -z "$device" ]; then
+                echo "bttoggle: no device configured; set TOGGLE_BT_DEVICE or provision the btDevice secret" >&2
+                exit 2
+              fi
 
               # cache single DBus round-trip; most invocations need only this one call
               info=$(bluetoothctl info "$device" 2>&1 || true)

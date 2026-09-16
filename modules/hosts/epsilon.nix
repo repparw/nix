@@ -24,7 +24,7 @@
       den.aspects.nixos-services._.archisteamfarm
     ];
     nixos =
-      { config, ... }:
+      { config, pkgs, ... }:
       {
         imports = [ ../_services/glance.nix ];
 
@@ -106,10 +106,33 @@
         '';
         networking.firewall.extraInputRules = ''
           iifname "eth0" tcp dport 443 ip saddr { 173.245.48.0/20, 103.21.244.0/22, 103.22.200.0/22, 103.31.4.0/22, 141.101.64.0/18, 108.162.192.0/18, 131.0.72.0/22, 162.158.0.0/15, 172.64.0.0/13, 188.114.96.0/20, 190.93.240.0/20, 197.234.240.0/22, 198.41.128.0/17, 104.16.0.0-104.27.255.255 } accept comment "CF only"
-          iifname "eth0" ip saddr REDACTED tcp dport 443 accept comment "fleet health over split DNS"
-          iifname "eth0" ip saddr REDACTED udp dport 60002 accept comment "mosh from home"
+          iifname "eth0" meta mark 0x484f4d45 tcp dport 443 accept comment "home uplink https"
+          iifname "eth0" meta mark 0x484f4d45 udp dport 60002 accept comment "home uplink mosh"
           iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
         '';
+        # Home-uplink allowlists (HTTPS health check over split DNS, mosh)
+        # cannot take a SOPS value: firewall strings render at evaluation
+        # time. Instead the address lives in a set populated at boot from
+        # the homeWanIp secret. This earlier base chain tags matching packets;
+        # the normal NixOS input chain above performs the final accepts, since
+        # an accept verdict in an earlier base chain does not bypass later
+        # base chains. The tunnel endpoint is provisioned from the same secret.
+        # An empty set matches nothing, so a missing secret fails closed.
+        networking.nftables.tables.home-wan = {
+          family = "inet";
+          content = ''
+            set home_wan {
+              type ipv4_addr
+            }
+
+            chain input {
+              type filter hook input priority filter - 1; policy accept;
+              iifname "eth0" ip saddr @home_wan meta mark set 0x484f4d45 comment "tag home uplink"
+              iifname "eth0" ip saddr @home_wan tcp dport 443 accept comment "fleet health over split DNS"
+              iifname "eth0" ip saddr @home_wan udp dport 60002 accept comment "mosh from home"
+            }
+          '';
+        };
         # The point-to-point container allocation is represented as a /24 for
         # matching, but only traffic leaving epsilon is source-NATed.
         networking.nftables.tables.container-egress-nat = {
@@ -134,6 +157,42 @@
         sops.secrets = {
           wgEpsilonPrivateKey.sopsFile = ../../secrets/wg.sops.yaml;
           wgEpsilonPresharedKey.sopsFile = ../../secrets/wg.sops.yaml;
+          homeWanIp = {
+            sopsFile = ../../secrets/home.sops.yaml;
+            restartUnits = [ "home-wan.service" ];
+          };
+        };
+
+        # Provision the home uplink from the homeWanIp secret: populate the
+        # home-wan nft set and point the tunnel at the router. Fails loudly
+        # when the secret is missing; re-runs when it changes (e.g. after
+        # an ISP renumber + secret rotation, restart this unit).
+        systemd.services.home-wan = {
+          description = "Provision home uplink (firewall set + WireGuard endpoint) from secret";
+          after = [
+            "sops-install-secrets.service"
+            "nftables.service"
+            "systemd-networkd.service"
+          ];
+          wants = [ "sops-install-secrets.service" ];
+          wantedBy = [ "multi-user.target" ];
+          restartTriggers = [ config.sops.secrets.homeWanIp.path ];
+          serviceConfig.Type = "oneshot";
+          script = ''
+            set -euo pipefail
+            wanIp=$(tr -d '[:space:]' < ${config.sops.secrets.homeWanIp.path})
+            if [[ ! "$wanIp" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "home-wan: refusing to provision, secret is not an IPv4 address" >&2
+              exit 1
+            fi
+            ${pkgs.nftables}/bin/nft flush set inet home-wan home_wan
+            ${pkgs.nftables}/bin/nft add element inet home-wan home_wan "{ $wanIp }"
+            for ((i = 0; i < 60; i++)); do
+              [ -e /sys/class/net/wg-home ] && break
+              ${pkgs.coreutils}/bin/sleep 2
+            done
+            ${pkgs.wireguard-tools}/bin/wg set wg-home peer "qvjDMgSHda89kuJ0vBL44LAdP681dXMczkSyfk9BnSc=" endpoint "$wanIp:51820"
+          '';
         };
 
         networking.wireguard.interfaces.wg-home = {
@@ -148,7 +207,10 @@
                 "192.168.0.0/24"
                 "10.231.136.0/24"
               ];
-              endpoint = "REDACTED:51820";
+              # No endpoint: the router initiates toward this host's static
+              # IP, and home-wan.service sets the return endpoint at boot
+              # from the homeWanIp secret (WireGuard learns it from inbound
+              # packets thereafter). Nothing identifying in the store.
               persistentKeepalive = 25;
             }
           ];
