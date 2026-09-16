@@ -72,7 +72,6 @@ read through the `host-facts` flake input
 | Fact | Purpose | Consumers |
 | --- | --- | --- |
 | `wanIp` | Home WAN IP for epsilon's firewall allowlists and the `wg-home` endpoint | `epsilon` |
-| `weatherLocation` | Glance weather widget location (defaults to `Buenos Aires, Argentina`) | `epsilon` (glance container) |
 | `bluetoothDevice` | MAC targeted by `bttoggle`, exported as `TOGGLE_BT_DEVICE` | `alpha` |
 
 Setup: copy `private-facts.example.nix` to

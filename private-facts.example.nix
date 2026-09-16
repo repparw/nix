@@ -23,10 +23,6 @@
   # health check + Mosh) and the WireGuard home-tunnel endpoint.
   wanIp = null;
 
-  # Glance weather widget location. Null yields the coarse default
-  # "Buenos Aires, Argentina"; set a precise town only if you want it shown.
-  weatherLocation = null;
-
   # Bluetooth device MAC targeted by `bttoggle` (exported as TOGGLE_BT_DEVICE).
   bluetoothDevice = null;
 }
