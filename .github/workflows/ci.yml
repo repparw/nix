@@ -21,7 +21,7 @@ jobs:
       # hash, and evaluation uses the pinned copy, not the live directory.
       - run: >
           sudo mkdir -p /home/repparw/.config/nix/private-facts &&
-          echo '{ wanIp = null; weatherLocation = null; bluetoothDevice = null; clarodriveUser = null; }'
+          echo '{ wanIp = null; weatherLocation = null; bluetoothDevice = null; }'
           | sudo tee /home/repparw/.config/nix/private-facts/facts.nix > /dev/null &&
           sudo chmod -R a+rX /home/repparw/.config/nix/private-facts &&
           nix flake lock --update-input host-facts

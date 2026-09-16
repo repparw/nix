@@ -23,6 +23,8 @@
             "rcloneDropbox"
             "rcloneNextcloud"
             "rcloneClarodrive"
+            "rcloneClarodriveUser"
+            "rcloneClarodriveUrl"
           ]
       );
     };
@@ -35,18 +37,9 @@
         ...
       }:
       let
-        clarodriveUser = osConfig.modules.host-facts.clarodriveUser;
         cloudDir = "${config.home.homeDirectory}/.cloud";
       in
       {
-        # Fail visibly, not silently: without the private facts file the
-        # claro remote (and its union leg) is omitted. Create
-        # /home/repparw/.config/nix/private-facts/facts.nix (see
-        # private-facts.example.nix).
-        warnings = lib.optional (clarodriveUser == null) ''
-          rclone: modules.host-facts.clarodriveUser is unset; the claro remote is omitted.
-        '';
-
         # Fix: rclone-config service must remain active after exit for mount dependencies
         systemd.user.services.rclone-config.Service.RemainAfterExit = "yes";
         programs.rclone = {
@@ -84,8 +77,7 @@
             union = {
               config = {
                 type = "union";
-                upstreams =
-                  "gdrive:crypt nextcloud:crypt" + lib.optionalString (clarodriveUser != null) " claro:crypt";
+                upstreams = "gdrive:crypt nextcloud:crypt claro:crypt";
                 policy_read = "all";
                 action_policy = "all";
                 create_policy = "all";
@@ -126,16 +118,19 @@
               };
             };
 
-          }
-          // lib.optionalAttrs (clarodriveUser != null) {
+            # The account id appears in both url and user, so both are
+            # injected from SOPS at activation; nothing identifying lands
+            # in the world-readable store.
             claro = {
               config = {
                 type = "webdav";
-                url = "https://i0001.clarodrive.com/remote.php/dav/files/${clarodriveUser}";
                 vendor = "nextcloud";
-                user = clarodriveUser;
               };
-              secrets.pass = osConfig.sops.secrets.rcloneClarodrive.path;
+              secrets = {
+                url = osConfig.sops.secrets.rcloneClarodriveUrl.path;
+                user = osConfig.sops.secrets.rcloneClarodriveUser.path;
+                pass = osConfig.sops.secrets.rcloneClarodrive.path;
+              };
               mounts."" = {
                 enable = true;
                 mountPoint = "${cloudDir}/claro";

@@ -29,7 +29,4 @@
 
   # Bluetooth device MAC targeted by `bttoggle` (exported as TOGGLE_BT_DEVICE).
   bluetoothDevice = null;
-
-  # Claro Drive WebDAV account identifier for the rclone `claro` remote.
-  clarodriveUser = null;
 }
