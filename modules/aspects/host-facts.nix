@@ -47,15 +47,6 @@
             default = facts.bluetoothDevice or null;
             description = "Bluetooth device MAC for bttoggle (private host-facts).";
           };
-
-          # Claro Drive WebDAV account identifier, baked into the rclone config
-          # at evaluation time (the Home Manager rclone module writes `user`
-          # literally).
-          clarodriveUser = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = facts.clarodriveUser or null;
-            description = "Claro Drive account identifier for the rclone `claro` remote.";
-          };
         };
       };
   };

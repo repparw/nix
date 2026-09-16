@@ -25,6 +25,8 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/rclone.sops.yaml` | `rcloneCrypt` | Unlock the encrypted rclone remote | rclone Home Manager services | `alpha`, `pi` |
 | `secrets/rclone.sops.yaml` | `rcloneObsidianCrypt` | Unlock the Remotely Save-compatible Obsidian crypt remote | Obsidian bisync service | `alpha` |
 | `secrets/rclone.sops.yaml` | `rcloneClarodrive` | Authenticate the Claro Drive remote | rclone Home Manager services | `alpha`, `pi` |
+| `secrets/rclone.sops.yaml` | `rcloneClarodriveUser` | Identify the Claro Drive account (injected into the remote `user` at activation, never baked into the store) | rclone Home Manager services | `alpha`, `pi` |
+| `secrets/rclone.sops.yaml` | `rcloneClarodriveUrl` | Claro Drive WebDAV endpoint carrying the account id (injected at activation) | rclone Home Manager services | `alpha`, `pi` |
 | `secrets/rclone.sops.yaml` | `rcloneDropbox` | Authorize Dropbox access | rclone Home Manager services | `alpha`, `pi` |
 | `secrets/rclone.sops.yaml` | `rcloneNextcloud` | Authenticate the Nextcloud remote | rclone Home Manager services | `alpha`, `pi` |
 | `secrets/proxy.sops.yaml` | `cloudflare` | Authorize Cloudflare DNS-01 certificate updates | Traefik | `alpha`, `pi` |
@@ -72,7 +74,6 @@ read through the `host-facts` flake input
 | `wanIp` | Home WAN IP for epsilon's firewall allowlists and the `wg-home` endpoint | `epsilon` |
 | `weatherLocation` | Glance weather widget location (defaults to `Buenos Aires, Argentina`) | `epsilon` (glance container) |
 | `bluetoothDevice` | MAC targeted by `bttoggle`, exported as `TOGGLE_BT_DEVICE` | `alpha` |
-| `clarodriveUser` | Claro Drive WebDAV account id baked into the rclone `claro` remote | `alpha` |
 
 Setup: copy `private-facts.example.nix` to
 `/home/repparw/.config/nix/private-facts/facts.nix` (outside the repo, mode
@@ -80,7 +81,7 @@ Setup: copy `private-facts.example.nix` to
 before rebuilding — the input is pinned by hash, so edits apply silently
 stale without the refresh. The pin hash in `flake.lock` reveals nothing
 about the values. With no facts file, every option falls back to a harmless
-default (firewall/claro legs omitted, coarse weather) and evaluation still
+default (home firewall rules omitted, coarse weather) and evaluation still
 succeeds; hosts additionally emit a `warnings` entry so a fact-less deploy
 fails visibly, not silently. CI materializes null defaults for the input
 (see `.github/workflows/ci.yml`).
