@@ -642,7 +642,8 @@
                   natTables = epsilon.networking.nftables.tables;
                   natRule = natTables.container-egress-nat.content;
                   hermesPolicy = natTables.hermes-monitor.content;
-                  wanIp = epsilon.modules.host-facts.wanIp;
+                  homeWan = natTables.home-wan.content;
+                  homeWanProvision = epsilon.systemd.services.home-wan;
                 in
                 containerNetwork.matchConfig == {
                   Kind = "veth";
@@ -660,13 +661,15 @@
                 && lib.strings.hasInfix ''iifname "eth0" oifname "ve-*" ct state established,related accept'' forwardRules
                 && lib.strings.hasInfix ''iifname "ve-hermes" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept'' forwardRules
                 && lib.strings.hasInfix ''iifname "ve-*" ip daddr ${edgeCfg.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept'' inputRules
-                && (
-                  wanIp == null
-                  || (
-                    lib.strings.hasInfix ''iifname "eth0" ip saddr ${wanIp} tcp dport 443 accept comment "fleet health over split DNS"'' inputRules
-                    && lib.strings.hasInfix ''iifname "eth0" ip saddr ${wanIp} udp dport 60002 accept comment "mosh from home"'' inputRules
-                  )
-                )
+                && !(lib.strings.hasInfix "fleet health over split DNS" inputRules)
+                && !(lib.strings.hasInfix "mosh from home" inputRules)
+                && lib.strings.hasInfix "set home_wan" homeWan
+                && lib.strings.hasInfix "type filter hook input priority filter - 1" homeWan
+                && lib.strings.hasInfix ''iifname "eth0" ip saddr @home_wan tcp dport 443 accept comment "fleet health over split DNS"'' homeWan
+                && lib.strings.hasInfix ''iifname "eth0" ip saddr @home_wan udp dport 60002 accept comment "mosh from home"'' homeWan
+                && lib.strings.hasInfix "nft add element inet home-wan home_wan" homeWanProvision.script
+                && lib.strings.hasInfix "wg set wg-home peer" homeWanProvision.script
+                && homeWanProvision.restartTriggers == [ epsilon.sops.secrets.homeWanIp.path ]
                 && epsilon.networking.firewall.interfaces.eth0.allowedUDPPorts == [ ]
                 && epsilon.networking.firewall.interfaces."wg-home".allowedUDPPorts == [ 60002 ]
                 && lib.strings.hasInfix ''ip saddr ${edgeCfg.bridgePrefix}.0/24 oifname { "eth0", "wg-home" } masquerade'' natRule

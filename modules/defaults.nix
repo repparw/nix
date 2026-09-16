@@ -18,7 +18,6 @@
         nixpkgs
         nix
         system
-        host-facts
       ];
 
       nixos.system.stateVersion = "26.05";
