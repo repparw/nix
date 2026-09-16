@@ -428,19 +428,6 @@
         "type": "github"
       }
     },
-    "host-facts": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1789525260,
-        "narHash": "sha256-tk0ARZJkHpvMUjri/BzdIuIA0PtUKFvAMtr58UaLpuk=",
-        "path": "/home/repparw/.config/nix/private-facts",
-        "type": "path"
-      },
-      "original": {
-        "path": "/home/repparw/.config/nix/private-facts",
-        "type": "path"
-      }
-    },
     "import-tree": {
       "locked": {
         "lastModified": 1788467110,
@@ -753,7 +740,6 @@
         "helium-nix": "helium-nix",
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager_2",
-        "host-facts": "host-facts",
         "import-tree": "import-tree",
         "mp-skills": "mp-skills",
         "nix-index-database": "nix-index-database",

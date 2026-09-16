@@ -42,10 +42,6 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    host-facts = {
-      url = "path:/home/repparw/.config/nix/private-facts";
-      flake = false;
-    };
     import-tree.url = "github:vic/import-tree";
     mp-skills = {
       url = "github:mattpocock/skills";

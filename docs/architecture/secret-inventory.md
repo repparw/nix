@@ -40,6 +40,8 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/authelia.sops.yaml` | `authelia/storageEncryptionKey` | Encrypt sensitive Authelia storage fields | Authelia | `alpha`, `pi` |
 | `secrets/archisteamfarm.sops.yaml` | `steamPassword` | Authenticate the managed Steam account | ArchiSteamFarm | `epsilon` |
 | `secrets/archisteamfarm.sops.yaml` | `steamUsername` | Identify the managed Steam account (substituted into the bot config at runtime via `replace-secret`; ASF only accepts a literal `SteamLogin`) | ArchiSteamFarm | `epsilon` |
+| `secrets/home.sops.yaml` | `homeWanIp` | Home WAN IP: populates the `home-wan` nft set and the `wg-home` endpoint at boot via the `home-wan` service (firewall/WG strings render at evaluation time, so SOPS feeds them at runtime instead) | home uplink provisioning | `epsilon` |
+| `secrets/bluetooth.sops.yaml` | `btDevice` | Bluetooth MAC targeted by `bttoggle`, read as a fallback when `TOGGLE_BT_DEVICE` is unset | bttoggle helper | `alpha` |
 | `secrets/jellyfin.sops.yaml` | `jellyfinBackupKey` | Authorize Jellyfin backup creation | Jellyfin backup tooling | `alpha` |
 | `secrets/automations.sops.yaml` | `discordWebhook` | Deliver automation notifications to Discord | Automation services | `pi` |
 | `secrets/matriz.sops.yaml` | `matrizApiUsername` | Identify the EcoValores Matriz API user without publishing its CUIT | Matriz account snapshot service | `alpha` |
@@ -62,33 +64,20 @@ NixOS decrypts with the machine SSH host key at
 recovery access and is not used during activation. Docs, plans, and commits
 should refer to SOPS secret names or source modules, never secret values.
 
-## Private host facts (not SOPS)
+## Eval-time values via runtime provisioning (not SOPS-at-eval)
 
-Values that must exist at Nix evaluation time cannot come from SOPS, which
-only materializes at activation. Those live in a machine-local facts file,
-read through the `host-facts` flake input
-(`modules/aspects/host-facts.nix`):
-
-| Fact | Purpose | Consumers |
-| --- | --- | --- |
-| `wanIp` | Home WAN IP for epsilon's firewall allowlists and the `wg-home` endpoint | `epsilon` |
-| `bluetoothDevice` | MAC targeted by `bttoggle`, exported as `TOGGLE_BT_DEVICE` | `alpha` |
-
-Setup: copy `private-facts.example.nix` to
-`/home/repparw/.config/nix/private-facts/facts.nix` (outside the repo, mode
-`600`), fill in real values, then `nix flake lock --update-input host-facts`
-before rebuilding — the input is pinned by hash, so edits apply silently
-stale without the refresh. The pin hash in `flake.lock` reveals nothing
-about the values. With no facts file, every option falls back to a harmless
-default (home firewall rules omitted, coarse weather) and evaluation still
-succeeds; hosts additionally emit a `warnings` entry so a fact-less deploy
-fails visibly, not silently. CI materializes null defaults for the input
-(see `.github/workflows/ci.yml`).
+SOPS only materializes at activation, but firewall strings and the
+WireGuard endpoint render at evaluation time. For those, the committed
+config carries structure only (an empty `home-wan` nft set, an endpoint-less
+peer) and a `home-wan` oneshot fills both from `homeWanIp` at boot,
+re-running when the secret changes. An empty set matches nothing, so a
+missing secret fails closed; a malformed one fails the unit loudly. The
+Bluetooth MAC rides the same pattern one level simpler: `bttoggle` reads
+the user-owned `btDevice` secret file when `TOGGLE_BT_DEVICE` is unset.
 
 ## Source
 
 - `modules/aspects/secrets.nix`
-- `modules/aspects/host-facts.nix`
 - `secrets/`
 
 ## Related
