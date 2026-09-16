@@ -5,16 +5,6 @@
   ...
 }:
 let
-  openInFirefoxExtensionId = "lmeddoobegbaiopohmpmmobpnpjifpii";
-  heliumExtensionIds = [
-    openInFirefoxExtensionId
-    "nngceckbapebfimnlniiiahkandclblb" # Bitwarden
-    "ddkjiahejlhfcafbddmgiahcphecmpfh" # uBlock Origin Lite
-    "mnjggcdmjocbbbhaepdhchncahnbgone" # SponsorBlock
-    "enamippconapkdmgfgjchkhakpfinmaj" # DeArrow
-    "bnomihfieiccainjcjblhegjgglakjdd"
-    "dbepggeogbaibhgnhhndojpepiihcmeb"
-  ];
   allOpenInExtensionIds = [
     "lmeddoobegbaiopohmpmmobpnpjifpii" # Open in Firefox
     "mjoebkkejejidnkfdekpbooceogbapnf" # Open in Edge
@@ -87,6 +77,13 @@ in
       let
         openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
+        heliumExtensions =
+          # callPackage adds override/overrideDerivation helpers; strip them
+          # so mapping below only sees extension IDs.
+          builtins.removeAttrs (pkgs.callPackage ../../_packages/helium-extensions.nix { }) [
+            "override"
+            "overrideDerivation"
+          ];
         browserWithoutMimeApps =
           desktopFile: browser:
           (pkgs.symlinkJoin {
@@ -230,12 +227,13 @@ in
           '';
         }
         // lib.listToAttrs (
-          map (id: {
+          lib.mapAttrsToList (id: ext: {
             name = "${heliumConfigDir}/External Extensions/${id}.json";
             value.text = builtins.toJSON {
-              external_update_url = "https://clients2.google.com/service/update2/crx";
+              external_crx = "${ext.crx}";
+              external_version = ext.version;
             };
-          }) heliumExtensionIds
+          }) heliumExtensions
         );
         programs = {
           firefox = {
