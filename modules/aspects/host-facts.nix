@@ -28,18 +28,6 @@
             description = "Home WAN/static IPv4; read from the private host-facts flake input, null in CI.";
           };
 
-          # Glance weather widget location. Coarse public default; the precise
-          # town lives in the private host-facts file.
-          weatherLocation = lib.mkOption {
-            type = lib.types.str;
-            default =
-              if (facts.weatherLocation or null) != null then
-                facts.weatherLocation
-              else
-                "Buenos Aires, Argentina";
-            description = "Glance weather widget location.";
-          };
-
           # Bluetooth device MAC targeted by `bttoggle`. Exported as
           # TOGGLE_BT_DEVICE; the helper fails clearly when unset.
           bluetoothDevice = lib.mkOption {
