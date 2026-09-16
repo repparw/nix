@@ -66,11 +66,10 @@ in
       ];
 
       environment.etc = {
+        # Helium reads platform policies from /etc/chromium (verified via
+        # --enable-logging --v=1: config_dir_policy_loader scans
+        # /etc/chromium/policies/managed). The /etc/helium path is not read.
         "chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
-          BrowserSignin = 0;
-          PasswordManagerEnabled = false;
-        };
-        "helium/policies/managed/helium-nixos.json".text = builtins.toJSON {
           BrowserSignin = 0;
           PasswordManagerEnabled = false;
         };
@@ -107,6 +106,12 @@ in
 
         heliumWithoutMimeApps = browserWithoutMimeApps "helium.desktop";
         helium = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
+        # Helium's user-data-dir on Linux is ~/.config/net.imput.helium
+        # (verified: live Default/, SingletonSocket, and crashpad database
+        # all live there). Per-profile files (External Extensions,
+        # NativeMessagingHosts) must go under it; ~/.config/helium is not
+        # read by the browser.
+        heliumConfigDir = ".config/net.imput.helium";
       in
       {
         imports = [ inputs.helium-nix.homeModules.default ];
@@ -174,7 +179,7 @@ in
 
         home.file = {
           ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
-          ".config/helium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
+          "${heliumConfigDir}/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
             name = "com.add0n.node";
             description = "Node Host for Native Messaging";
             path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
@@ -226,7 +231,7 @@ in
         }
         // lib.listToAttrs (
           map (id: {
-            name = ".config/helium/External Extensions/${id}.json";
+            name = "${heliumConfigDir}/External Extensions/${id}.json";
             value.text = builtins.toJSON {
               external_update_url = "https://clients2.google.com/service/update2/crx";
             };
