@@ -5,8 +5,16 @@
   ...
 }:
 let
-  chatGptChromeExtensionId = "hehggadaopoacecdllhhajmbjkdcmajg";
   openInFirefoxExtensionId = "lmeddoobegbaiopohmpmmobpnpjifpii";
+  heliumExtensionIds = [
+    openInFirefoxExtensionId
+    "nngceckbapebfimnlniiiahkandclblb" # Bitwarden
+    "ddkjiahejlhfcafbddmgiahcphecmpfh" # uBlock Origin Lite
+    "mnjggcdmjocbbbhaepdhchncahnbgone" # SponsorBlock
+    "enamippconapkdmgfgjchkhakpfinmaj" # DeArrow
+    "bnomihfieiccainjcjblhegjgglakjdd"
+    "dbepggeogbaibhgnhhndojpepiihcmeb"
+  ];
   allOpenInExtensionIds = [
     "lmeddoobegbaiopohmpmmobpnpjifpii" # Open in Firefox
     "mjoebkkejejidnkfdekpbooceogbapnf" # Open in Edge
@@ -58,11 +66,10 @@ in
       ];
 
       environment.etc = {
+        # Helium reads platform policies from /etc/chromium (verified via
+        # --enable-logging --v=1: config_dir_policy_loader scans
+        # /etc/chromium/policies/managed). The /etc/helium path is not read.
         "chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
-          BrowserSignin = 0;
-          PasswordManagerEnabled = false;
-        };
-        "helium/policies/managed/helium-nixos.json".text = builtins.toJSON {
           BrowserSignin = 0;
           PasswordManagerEnabled = false;
         };
@@ -79,6 +86,7 @@ in
       }:
       let
         openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
+        ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
         browserWithoutMimeApps =
           desktopFile: browser:
           (pkgs.symlinkJoin {
@@ -96,9 +104,14 @@ in
             override = args: browserWithoutMimeApps desktopFile (browser.override args);
           };
 
-        chromiumWithoutMimeApps = browserWithoutMimeApps "chromium-browser.desktop";
         heliumWithoutMimeApps = browserWithoutMimeApps "helium.desktop";
         helium = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
+        # Helium's user-data-dir on Linux is ~/.config/net.imput.helium
+        # (verified: live Default/, SingletonSocket, and crashpad database
+        # all live there). Per-profile files (External Extensions,
+        # NativeMessagingHosts) must go under it; ~/.config/helium is not
+        # read by the browser.
+        heliumConfigDir = ".config/net.imput.helium";
       in
       {
         imports = [ inputs.helium-nix.homeModules.default ];
@@ -106,16 +119,67 @@ in
         home.packages = [
           (pkgs.writeShellApplication {
             name = "webapp";
-            runtimeInputs = [ (chromiumWithoutMimeApps pkgs.chromium) ];
+            runtimeInputs = [
+              (heliumWithoutMimeApps helium)
+              ndrop
+            ];
             text = ''
-              exec chromium --password-store=basic --app="$1" "''${@:2}"
+              if [ "$#" -lt 2 ]; then
+                echo "usage: webapp <app-id> <url> [helium args...]" >&2
+                exit 2
+              fi
+
+              app_id="$1"
+              url="$2"
+              shift 2
+
+              # Helium/Chromium on native Wayland ignores --class for --app
+              # windows and exposes a derived app_id of the form
+              # chrome-<host>__<path>-Default (e.g. https://www.youtube.com
+              # becomes chrome-www.youtube.com__-Default, verified via
+              # `niri msg windows`). Derive it so ndrop exact-matches the
+              # existing window instead of spawning a duplicate.
+              # NOTE: --class is intentionally not passed: it is ignored for
+              # --app windows, and when the webapp starts the first browser
+              # process it would mislabel later normal windows with the
+              # webapp name instead of "helium".
+              no_scheme="''${url#https://}"
+              no_scheme="''${no_scheme#http://}"
+              no_scheme="''${no_scheme%%[?#]*}"
+              case "$no_scheme" in
+                */*)
+                  host="''${no_scheme%%/*}"
+                  path="''${no_scheme#*/}"
+                  ;;
+                *)
+                  host="$no_scheme"
+                  path=""
+                  ;;
+              esac
+              host="$(printf '%s' "$host" | tr '[:upper:]' '[:lower:]')"
+              path="$(printf '%s' "$path" | tr '/' '_' | sed -e 's/^_*//' -e 's/_*$//')"
+              if [ -n "$path" ]; then
+                chrome_id="chrome-''${host}__''${path}-Default"
+              elif [ -n "$host" ]; then
+                chrome_id="chrome-''${host}__-Default"
+              else
+                # Should not happen for valid URLs; fall back to the given
+                # name so ndrop still has something stable to match.
+                chrome_id="$app_id"
+              fi
+
+              exec ndrop -F -c "$chrome_id" \
+                helium \
+                --password-store=basic \
+                --app="$url" \
+                "$@"
             '';
           })
         ];
 
         home.file = {
           ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
-          ".config/chromium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
+          "${heliumConfigDir}/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
             name = "com.add0n.node";
             description = "Node Host for Native Messaging";
             path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
@@ -164,7 +228,15 @@ in
 
             autocmd DocStart tradingview.com mode ignore
           '';
-        };
+        }
+        // lib.listToAttrs (
+          map (id: {
+            name = "${heliumConfigDir}/External Extensions/${id}.json";
+            value.text = builtins.toJSON {
+              external_update_url = "https://clients2.google.com/service/update2/crx";
+            };
+          }) heliumExtensionIds
+        );
         programs = {
           firefox = {
             enable = true;
@@ -329,27 +401,13 @@ in
               };
           };
 
-          chromium = {
-            enable = true;
-            package = chromiumWithoutMimeApps pkgs.chromium;
-            commandLineArgs = [
-              "--force-renderer-accessibility"
-              "--silent-debugger-extension-api"
-            ];
-            extensions = [
-              { id = chatGptChromeExtensionId; }
-              { id = openInFirefoxExtensionId; }
-              { id = "ddkjiahejlhfcafbddmgiahcphecmpfh"; }
-              { id = "mnjggcdmjocbbbhaepdhchncahnbgone"; }
-              { id = "enamippconapkdmgfgjchkhakpfinmaj"; }
-              { id = "bnomihfieiccainjcjblhegjgglakjdd"; }
-              { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; }
-            ];
-          };
-
           helium = {
             enable = true;
             package = heliumWithoutMimeApps helium;
+            flags = [
+              "--force-renderer-accessibility"
+              "--silent-debugger-extension-api"
+            ];
           };
         };
       };
