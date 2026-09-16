@@ -430,7 +430,10 @@
               }
               {
                 window-rule = {
-                  match._props.app-id = "youtube";
+                  # Must match the derived Chromium --app id (native Wayland
+                  # ignores --class): https://www.youtube.com ->
+                  # chrome-www.youtube.com__-Default. See webapp in browser.nix.
+                  match._props.app-id = "chrome-www.youtube.com__-Default";
                   open-on-output = "HDMI-A-1";
                   default-column-width.proportion = 1.0;
                 };

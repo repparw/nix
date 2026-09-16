@@ -128,10 +128,44 @@ in
               url="$2"
               shift 2
 
-              exec ndrop -F -c "$app_id" \
+              # Helium/Chromium on native Wayland ignores --class for --app
+              # windows and exposes a derived app_id of the form
+              # chrome-<host>__<path>-Default (e.g. https://www.youtube.com
+              # becomes chrome-www.youtube.com__-Default, verified via
+              # `niri msg windows`). Derive it so ndrop exact-matches the
+              # existing window instead of spawning a duplicate.
+              # NOTE: --class is intentionally not passed: it is ignored for
+              # --app windows, and when the webapp starts the first browser
+              # process it would mislabel later normal windows with the
+              # webapp name instead of "helium".
+              no_scheme="''${url#https://}"
+              no_scheme="''${no_scheme#http://}"
+              no_scheme="''${no_scheme%%[?#]*}"
+              case "$no_scheme" in
+                */*)
+                  host="''${no_scheme%%/*}"
+                  path="''${no_scheme#*/}"
+                  ;;
+                *)
+                  host="$no_scheme"
+                  path=""
+                  ;;
+              esac
+              host="$(printf '%s' "$host" | tr '[:upper:]' '[:lower:]')"
+              path="$(printf '%s' "$path" | tr '/' '_' | sed -e 's/^_*//' -e 's/_*$//')"
+              if [ -n "$path" ]; then
+                chrome_id="chrome-''${host}__''${path}-Default"
+              elif [ -n "$host" ]; then
+                chrome_id="chrome-''${host}__-Default"
+              else
+                # Should not happen for valid URLs; fall back to the given
+                # name so ndrop still has something stable to match.
+                chrome_id="$app_id"
+              fi
+
+              exec ndrop -F -c "$chrome_id" \
                 helium \
                 --password-store=basic \
-                --class="$app_id" \
                 --app="$url" \
                 "$@"
             '';
