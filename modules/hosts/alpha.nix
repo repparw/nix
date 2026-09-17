@@ -62,23 +62,25 @@
         # recovery). Thresholds picked after the Sep 2026 ENOSPC incident:
         # btrfs metadata sat at 97.7% while df still showed 64G free, so
         # the metadata pool gets its own check alongside df percents.
+        # Media disks sit nearly full by design, so their thresholds only
+        # fire when genuinely close to full (/mnt/hdd warn = ~150G free).
         modules.disk-watch = {
           enable = true;
           mounts = [
             {
               mount = "/";
-              warn = 85;
+              warn = 90;
               crit = 93;
             }
             {
               mount = "/mnt/hdd";
-              warn = 95;
-              crit = 96;
+              warn = 98;
+              crit = 99;
             }
             {
               mount = "/mnt/seagate";
-              warn = 90;
-              crit = 96;
+              warn = 95;
+              crit = 98;
             }
           ];
         };
