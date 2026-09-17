@@ -46,7 +46,14 @@
           # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
           # to gamescope; nixpkgs disables it by default.
           gamescopeHdr = (pkgs.gamescope.override { enableWsi = true; }).overrideAttrs (old: {
-            patches = (old.patches or [ ]) ++ [ ./gamescope-wsi-overlay.patch ];
+            patches = (old.patches or [ ]) ++ [
+              ./gamescope-wsi-overlay.patch
+              (pkgs.fetchpatch {
+                url = "https://github.com/ValveSoftware/gamescope/commit/9da913f8c7d1b1acb214f6979dd6e249a3eab0e5.patch";
+                hash = "sha256-6bl/HfxgULP28jLX5w+DoaYHUCXPK8Q3TIzlRoZCLwM=";
+              })
+              ./gamescope-wayland-subsurfaces-3.16.28.patch
+            ];
           });
 
           # Run Steam through Gamescope so Moonshine always captures one stable HDR
@@ -104,7 +111,7 @@
               # strace 2026-09-05), which would otherwise spin up the idle disk
               # on every launch. Overlay diagnostic 2026-09-06: removing this
               # sandbox did not restore the overlay, so the sandbox is exonerated.
-              gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
+              gs_args=(--steam --expose-wayland -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
               exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- bwrap \
                 --dev-bind / / \
                 --tmpfs /mnt/seagate \
