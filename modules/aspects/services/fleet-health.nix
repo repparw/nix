@@ -3,6 +3,88 @@
   pkgs,
   ...
 }:
+let
+  # Single delivery path for all fleet watchers. Alerts must not die
+  # with the thing they monitor, so delivery posts via the Discord REST
+  # API directly instead of going through the hermes container.
+  # Watchers call `discord-notify post "<content>"` (prints the message
+  # id on stdout) and `discord-notify delete <id>`; transport, auth and
+  # failure logging live here so the three scripts share them instead
+  # of each reimplementing curl+jq. Watcher policy (strikes, levels,
+  # grouping) stays in each script.
+  # Pure text (no pkgs): each watcher block instantiates it with
+  # writeShellApplication below.
+  discordChannelId = "1515064288191053979";
+
+  discordNotifyText = ''
+    if [ $# -lt 1 ]; then
+      echo "usage: discord-notify post <content> | delete <message-id>" >&2
+      exit 2
+    fi
+    cmd="$1"; shift
+
+    # shellcheck disable=SC1091
+    source /run/secrets/hermes-env
+    if [ -z "''${DISCORD_BOT_TOKEN:-}" ]; then
+      echo "discord-notify: DISCORD_BOT_TOKEN missing (hermes-env unreadable?)" >&2
+      exit 1
+    fi
+    if [ -z "''${DISCORD_CHANNEL_ID:-}" ]; then
+      echo "discord-notify: DISCORD_CHANNEL_ID not set" >&2
+      exit 1
+    fi
+    api="https://discord.com/api/v10/channels/$DISCORD_CHANNEL_ID/messages"
+
+    case "$cmd" in
+      post)
+        # Callers capture stdout as the message id and guard with
+        # `|| true`: logs go to stderr, nothing on stdout on failure.
+        content="''${1:-}"
+        resp=$(curl -s -m 15 -w '\n%{http_code}' -X POST \
+          -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "$(jq -n --arg c "$content" '{content: $c}')" "$api" || true)
+        code=$(printf '%s' "$resp" | tail -n 1)
+        mid=$(printf '%s' "$resp" | sed '$d' | jq -r '.id // empty' 2>/dev/null || true)
+        if [ -n "$mid" ]; then
+          echo "discord-notify: posted msg $mid (http $code)" >&2
+          printf '%s' "$mid"
+        else
+          echo "discord-notify: POST failed (http $code)" >&2
+          exit 1
+        fi
+        ;;
+      delete)
+        id="''${1:-}"
+        code=$(curl -s -m 15 -o /dev/null -w '%{http_code}' -X DELETE \
+          -H "Authorization: Bot $DISCORD_BOT_TOKEN" "$api/messages/$id" || echo curl-fail)
+        if [ "$code" = 204 ] || [ "$code" = 200 ]; then
+          echo "discord-notify: deleted msg $id (http $code)" >&2
+        else
+          echo "discord-notify: DELETE failed: msg $id http=$code (msgid kept for retry)" >&2
+          exit 1
+        fi
+        ;;
+      *)
+        echo "usage: discord-notify post <content> | delete <message-id>" >&2
+        exit 2
+        ;;
+    esac
+  '';
+
+  # Instantiate the shared helper (function: pkgs only flows inside
+  # each watcher's module, never at file scope).
+  mkDiscordNotify =
+    pkgs_:
+    pkgs_.writeShellApplication {
+      name = "discord-notify";
+      runtimeInputs = with pkgs_; [
+        curl
+        jq
+      ];
+      text = discordNotifyText;
+    };
+in
 {
   den.aspects.nixos-services.provides.fleet-health = {
     nixos =
@@ -13,15 +95,13 @@
         ...
       }:
       let
-        # Delivery rides the existing bot token: the probe must not die with
-        # the thing it monitors, so it posts via the Discord REST API
-        # directly instead of going through the hermes container.
-        channelId = "1515064288191053979";
-
+        # Probe policy lives here; delivery rides the shared
+        # discord-notify helper (top of file).
         probeScript = pkgs.writeShellApplication {
           name = "fleet-health-probe";
           runtimeInputs = with pkgs; [
             curl
+            (mkDiscordNotify pkgs)
             jq
             gawk
             gnused
@@ -44,45 +124,15 @@
               esac
             done
 
-            state_dir=/var/lib/fleet-health
+            state_dir="''${STATE_DIRECTORY:-/var/lib/fleet-health}"
             mkdir -p "$state_dir"
-            # shellcheck disable=SC1091
-            source /run/secrets/hermes-env
-            api="https://discord.com/api/v10/channels/${channelId}/messages"
 
             # Alerts are per-check Discord messages: a check reaching two
             # strikes posts DOWN (a new message, so channel notifications
             # fire), and recovery DELETES that message — the channel only
             # ever shows what is currently down. The message id lives in
             # the dotfile .$n.msgid so counter globs never see it.
-            alert_post() { # content -> message id (empty on failure)
-              # Logs go to stderr: callers capture stdout as the message id.
-              local content="$1" resp code body mid
-              resp=$(curl -s -m 15 -w '\n%{http_code}' -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "$(jq -n --arg c "$content" '{content: $c}')" "$api" || true)
-              code=$(printf '%s' "$resp" | tail -n 1)
-              body=$(printf '%s' "$resp" | sed '$d')
-              mid=$(printf '%s' "$body" | jq -r '.id // empty' 2>/dev/null || true)
-              if [ -n "$mid" ]; then
-                echo "fleet-health: posted DOWN: $content -> msg $mid (http $code)" >&2
-                printf '%s' "$mid"
-              else
-                echo "fleet-health: POST failed: content='$content' http='$code' body='$body'" >&2
-              fi
-            }
-
-            alert_delete() { # check name, message id
-              local n="$1" id="$2" code
-              code=$(curl -s -m 15 -o /dev/null -w '%{http_code}' -X DELETE \
-                -H "Authorization: Bot $DISCORD_BOT_TOKEN" "$api/messages/$id" || echo curl-fail)
-              if [ "$code" = 204 ] || [ "$code" = 200 ]; then
-                echo "fleet-health: deleted recovery $n msg $id (http $code)"
-              else
-                echo "fleet-health: DELETE failed: $n msg $id http=$code (msgid kept for retry)" >&2
-                return 1
-              fi
-            }
+            # Delivery via discord-notify (top of file).
 
             failures=0
 
@@ -95,7 +145,7 @@
               count=$(( $(cat "$state_dir/$n" 2>/dev/null || echo 0) + 1 ))
               printf '%s\n' "$count" > "$state_dir/$n"
               if [ "$count" -ge 2 ] && [ ! -e "$state_dir/.$n.msgid" ]; then
-                mid=$(alert_post ":red_circle: DOWN $n ($detail)")
+                mid=$(discord-notify post ":red_circle: DOWN $HOSTNAME $n ($detail)" || true)
                 [ -n "$mid" ] && printf '%s\n' "$mid" > "$state_dir/.$n.msgid"
               fi
             }
@@ -105,7 +155,7 @@
               local n="$1" mid
               if [ -e "$state_dir/.$n.msgid" ]; then
                 mid=$(cat "$state_dir/.$n.msgid")
-                if alert_delete "$n" "$mid"; then
+                if discord-notify delete "$mid"; then
                   rm -f "$state_dir/.$n.msgid"
                 fi
               fi
@@ -149,7 +199,7 @@
               failed_prev=$(cat "$state_dir/.failed-units" 2>/dev/null || true)
 
               for u in $failed_prev; do
-                printf '%s\n' "$failed_cur" | grep -qx "$u" || ok "unit-failed:$u"
+                printf '%s\n' "$failed_cur" | grep -qxF -e "$u" || ok "unit-failed:$u"
               done
               for u in $failed_cur; do
                 fail "unit-failed:$u" "systemd failed state"
@@ -238,6 +288,10 @@
             description = "Probe the fleet and alert on state changes";
             after = [ "network-online.target" ];
             wants = [ "network-online.target" ];
+            environment = {
+              HOSTNAME = config.networking.hostName;
+              DISCORD_CHANNEL_ID = discordChannelId;
+            };
             serviceConfig = {
               Type = "oneshot";
               ExecStart = lib.getExe probeScript;
@@ -268,14 +322,13 @@
       let
         cfg = config.modules.coredump-watch;
 
-        # Same delivery contract as the probe: post via the Discord REST API
-        # on the hermes bot token so the watcher never dies with hermes.
-        channelId = "1515064288191053979";
-
+        # Policy here (group by binary+signal, mute list); delivery via
+        # the shared discord-notify helper (top of file).
         coredumpsScript = pkgs.writeShellApplication {
           name = "coredump-watch";
           runtimeInputs = with pkgs; [
             curl
+            (mkDiscordNotify pkgs)
             jq
             gawk
             gnused
@@ -283,7 +336,7 @@
             systemd
           ];
           text = ''
-            state_dir=/var/lib/fleet-health
+            state_dir="''${STATE_DIRECTORY:-/var/lib/fleet-health}"
             mkdir -p "$state_dir"
             # Dotfile so the probe's counter glob never sees bookkeeping.
             marker="$state_dir/.coredumps-since"
@@ -299,15 +352,6 @@
 
             since=$(cat "$marker")
             printf '%s\n' "$now" > "$marker"
-
-            # shellcheck disable=SC1091
-            source /run/secrets/hermes-env
-            api="https://discord.com/api/v10/channels/${channelId}/messages"
-            notify() {
-              curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" >/dev/null || true
-            }
 
             MUTE_JSON="''${MUTE_JSON:-[]}"
             entries=$(coredumpctl list --json=short --no-pager --since="@$since" 2>/dev/null || echo "[]")
@@ -330,7 +374,7 @@
               while IFS= read -r line; do
                 body+=$'\n'"• $line"
               done <<< "$report"
-              notify "$body"
+              discord-notify post "$body" || true
             else
               echo "coredumps: nothing new"
             fi
@@ -375,6 +419,7 @@
             wants = [ "network-online.target" ];
             environment = {
               HOSTNAME = config.networking.hostName;
+              DISCORD_CHANNEL_ID = discordChannelId;
               MUTE_JSON = builtins.toJSON cfg.mute;
             };
             serviceConfig = {
@@ -407,15 +452,13 @@
       let
         cfg = config.modules.disk-watch;
 
-        # Same delivery contract as the probe and coredump-watch: post via
-        # the Discord REST API on the hermes bot token so the watcher never
-        # dies with hermes.
-        channelId = "1515064288191053979";
-
+        # Policy here (levels per check, replace-on-change); delivery via
+        # the shared discord-notify helper (top of file).
         diskWatchScript = pkgs.writeShellApplication {
           name = "disk-watch";
           runtimeInputs = with pkgs; [
             curl
+            (mkDiscordNotify pkgs)
             jq
             gawk
             gnugrep
@@ -430,22 +473,6 @@
             # channel rescan never trips over bookkeeping.
             state_dir="$STATE_DIRECTORY"
             mkdir -p "$state_dir"
-
-            # shellcheck disable=SC1091
-            source /run/secrets/hermes-env
-            api="https://discord.com/api/v10/channels/${channelId}/messages"
-
-            notify_post() { # content -> message id (empty on failure)
-              curl -s -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" \
-                | jq -r '.id // empty'
-            }
-
-            notify_delete() { # message id
-              curl -s -m 15 -o /dev/null -X DELETE \
-                -H "Authorization: Bot $DISCORD_BOT_TOKEN" "$api/messages/$1" || true
-            }
 
             slug() { printf '%s' "$1" | tr -c '[:alnum:]._-' '_'; }
 
@@ -462,14 +489,14 @@
               fi
               if [ -f "$state_dir/.$s.msgid" ]; then
                 mid="$(cat "$state_dir/.$s.msgid")"
-                notify_delete "$mid"
+                discord-notify delete "$mid" || true
                 rm -f "$state_dir/.$s.msgid"
               fi
               if [ "$level" != "ok" ]; then
                 if [ "$level" = "crit" ]; then
-                  mid=$(notify_post ":red_circle: disk-space CRIT $check ($detail)")
+                  mid=$(discord-notify post ":red_circle: disk-space CRIT $HOSTNAME $check ($detail)" || true)
                 else
-                  mid=$(notify_post ":warning: disk-space warn $check ($detail)")
+                  mid=$(discord-notify post ":warning: disk-space warn $HOSTNAME $check ($detail)" || true)
                 fi
                 [ -n "$mid" ] && printf '%s\n' "$mid" > "$state_dir/.$s.msgid"
               fi
@@ -608,6 +635,7 @@
             environment = {
               HOSTNAME = config.networking.hostName;
               MOUNTS_JSON = builtins.toJSON cfg.mounts;
+              DISCORD_CHANNEL_ID = discordChannelId;
               META_WARN = toString cfg.metadataWarn;
               META_CRIT = toString cfg.metadataCrit;
               META_UNALLOC_WARN_GB = toString cfg.metadataUnallocWarnGiB;
