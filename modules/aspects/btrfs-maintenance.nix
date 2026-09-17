@@ -27,28 +27,6 @@
           interval = "monthly";
         };
 
-        systemd.services.btrfs-balance-root = {
-          description = "Light btrfs balance on root";
-          documentation = [ "man:btrfs-balance(8)" ];
-          serviceConfig = {
-            Type = "oneshot";
-            IOSchedulingClass = "idle";
-          };
-          script = ''
-            ${pkgs.btrfs-progs}/bin/btrfs balance start -dusage=20 -musage=50 ${root}
-          '';
-        };
-
-        systemd.timers.btrfs-balance-root = {
-          description = "Monthly light btrfs balance on root";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "monthly";
-            Persistent = true;
-            RandomizedDelaySec = "1h";
-          };
-        };
-
         systemd.services.btrfs-health-root = {
           description = "Check root btrfs allocation health";
           documentation = [ "man:btrfs-filesystem(8)" ];
