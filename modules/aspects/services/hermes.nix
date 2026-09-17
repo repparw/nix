@@ -134,16 +134,56 @@
                 # so pi downloads instead of building.
                 package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
                 environmentFiles = [ "/run/secrets/hermes-env" ];
+                # No Go subscription right now: default to the free Nous
+                # endpoint instead of opencode-go. LongCat 2.0 leads the
+                # free tier on terminal-agent work (TB-2.1 70.8 /
+                # SWE-Pro 59.5 / 1M ctx, 2026-09-12).
                 settings.model = {
-                  provider = "opencode-go";
-                  default = "glm-5.3-flash";
+                  provider = "nous";
+                  default = "meituan/longcat-2.0:free";
                 };
                 settings.fallback_providers = [
                   {
                     provider = "nous";
+                    # Second free net with a known-good slug (was the
+                    # previous fallback). Runner-up Laguna S 2.1 (TB-2.1
+                    # 70.2, open-weight) if either free window closes.
                     model = "stepfun/step-3.7-flash:free";
                   }
+                  {
+                    # ChatGPT/Codex subscription OAuth (separate from the
+                    # free Nous tier above). Credential is NOT a sops
+                    # secret: `hermes auth` is interactive (browser
+                    # login) and stores refreshable tokens in
+                    # $HERMES_HOME/auth.json, which the upstream module
+                    # deliberately leaves alone after first install.
+                    # authFile is store-path typed, so it cannot point
+                    # at a /run/secrets runtime path without leaking
+                    # the token into the Nix store — hence no authFile
+                    # here. Seed once on epsilon (as root):
+                    #   sudo install -o 328025 -g 328025 -m 600 auth.json \
+                    #     /home/repparw/services/hermes/.hermes/auth.json
+                    # (host ids for container hermes 345, see the
+                    # user-namespace comment above; .hermes = HERMES_HOME
+                    # = stateDir/.hermes). Then:
+                    #   sudo systemctl restart container@hermes
+                    # Get auth.json from any machine with the hermes CLI:
+                    # `hermes model` -> ChatGPT or Codex Subscription.
+                    # Until that file exists this entry is inert: Hermes
+                    # only resolves it when the Nous chain above fails.
+                    # Last in the chain so the free fallbacks stay first.
+                    provider = "openai-codex";
+                    # Flagship tier at default effort; revisit once the
+                    # gateway's real workload is known (Terra-medium is
+                    # the likely cost/quality sweet spot, Luna for bulk).
+                    model = "gpt-5.6-sol";
+                  }
                 ];
+                # Pinned (not inherited): keeps the Codex fallback at
+                # medium even if the global reasoning_effort moves.
+                # No `hermes config set` support upstream, but the Nix
+                # settings map lands in config.yaml all the same.
+                settings.reasoning_overrides."gpt-5.6-sol" = "medium";
                 # Free tier: the credits gauge is pure noise in chat.
                 settings.display.credits_notices = false;
                 # Home channel for cron results and cross-platform pokes
