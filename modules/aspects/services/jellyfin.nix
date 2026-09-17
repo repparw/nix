@@ -32,7 +32,7 @@
             set -euo pipefail
             key=$(cat ${jellyfinBackupKeyFile})
             response=$(curl -fsS -X POST \
-              -H "X-Emby-Token: $key" \
+              -H "Authorization: MediaBrowser Client=Backup, Device=JellyfinBackup, DeviceId=jellyfin-backup, Version=1, Token=$key" \
               -H "Content-Type: application/json" \
               -d '{}' \
               ${servicesLib.serviceUrl cfg config "jellyfin"}/Backup/Create)
