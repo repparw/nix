@@ -107,36 +107,6 @@ Alpha's interactive `Mod+U` asks the pi controller to run
 and `PAUSE` but keeps the health soak and rollback. The separate
 `host-update` command remains for building and reviewing a local tree by hand.
 
-## Scheduled reboots (`scheduled-reboot.timer`, headless hosts)
-
-deploy-rs activates by switch, so kernel/initrd-staged generations sit
-pending until the next boot. pi and epsilon converge them with a daily
-gated check — epsilon at 03:00, pi at 03:30 (local time), staggered so
-both edges are never down together and clear of restic (01:00),
-promote (04:15), deploy (05:30), and the alpha retry (07:00):
-
-- Reboots only when the staged system differs in kernel, kernel
-  modules, or initrd from the booted one (the `allowReboot`
-  comparison); anything else already converged by switch.
-- Skips while the fleet-update lock is held, so the controller never
-  reboots mid-run. `Persistent=false`, so a host powered off through
-  the window does not reboot on return.
-- A 1–3 min reboot stays under the two-strike health gate and posts
-  nothing; a stuck host surfaces through the normal DOWN path.
-
-Source: `modules/aspects/scheduled-reboot.nix`.
-
-## Reboot-required (`reboot-watch.timer`, alpha)
-
-Alpha never auto-reboots — the activity gate means a seated user or an
-active stream always wins over automation. Instead a 15-min local check
-posts `:arrows_counterclockwise: reboot-required` to `#notifications`
-when the staged kernel/initrd drifts from the booted one (the same
-comparison as above) and deletes the message once a manual reboot
-converges. Reboot by hand when convenient; the message is the reminder.
-
-Source: `modules/aspects/services/fleet-health.nix` (`reboot-watch`).
-
 ## Firmware updates (`fwupd`, hardware hosts)
 
 `services.fwupd` is enabled on hosts with LVFS-discoverable devices (alpha,
