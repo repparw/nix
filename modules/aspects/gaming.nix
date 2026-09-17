@@ -7,13 +7,26 @@
   den.aspects.gaming = {
     nixos =
       { pkgs, ... }:
+      let
+        protonGe =
+          if pkgs.stdenv.hostPlatform.isx86_64 then
+            pkgs.proton-ge-bin.overrideAttrs {
+              version = "GE-Proton11-7";
+              src = pkgs.fetchzip {
+                url = "https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton11-7/GE-Proton11-7-x86_64.tar.gz";
+                hash = "sha256-ftW0vE45v2JsbaYqo/So0ZFfvdtakHX0XEXEE4TdxLk=";
+              };
+            }
+          else
+            pkgs.proton-ge-bin;
+      in
       {
         boot.kernelModules = [ "ntsync" ];
         hardware.xpadneo.enable = true;
         programs = {
           steam = {
             enable = true;
-            extraCompatPackages = with pkgs; [ proton-ge-bin ];
+            extraCompatPackages = [ protonGe ];
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
           };
@@ -30,7 +43,7 @@
                 gamescope
                 gamemode
                 mangohud
-                proton-ge-bin
+                protonGe
               ];
           })
         ];
