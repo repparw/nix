@@ -658,4 +658,101 @@ in
         };
       };
   };
+
+  den.aspects.nixos-services.provides.reboot-watch = {
+    nixos =
+      {
+        options,
+        config,
+        pkgs,
+        lib,
+        ...
+      }:
+      let
+        cfg = config.modules.reboot-watch;
+
+        # Policy here (pending vs converged, post-on-change); delivery
+        # via the shared discord-notify helper (top of file).
+        rebootWatchScript = pkgs.writeShellApplication {
+          name = "reboot-watch";
+          runtimeInputs = with pkgs; [
+            curl
+            (mkDiscordNotify pkgs)
+            jq
+            coreutils
+          ];
+          text = ''
+            # Same comparison as system.autoUpgrade.allowReboot: pending
+            # means the staged system differs in kernel, kernel modules,
+            # or initrd from what is booted. The channel only ever shows
+            # what is currently pending (same contract as disk-watch):
+            # post on first sight, delete silently once a reboot
+            # converges. Message id lives in a dotfile so a channel
+            # rescan never trips over bookkeeping.
+            state_dir="$STATE_DIRECTORY"
+            mkdir -p "$state_dir"
+
+            booted=$(readlink /run/booted-system/{initrd,kernel,kernel-modules} 2>/dev/null || true)
+            built=$(readlink /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules} 2>/dev/null || true)
+
+            if [ -z "$booted" ] || [ -z "$built" ]; then
+              echo "reboot-watch: cannot determine boot state, skipping" >&2
+              exit 0
+            fi
+
+            if [ "$booted" = "$built" ]; then
+              if [ -f "$state_dir/.reboot-required.msgid" ]; then
+                mid="$(cat "$state_dir/.reboot-required.msgid")"
+                discord-notify delete "$mid" || true
+                rm -f "$state_dir/.reboot-required.msgid"
+              fi
+              echo "reboot-watch: converged"
+            else
+              if [ ! -f "$state_dir/.reboot-required.msgid" ]; then
+                mid=$(discord-notify post ":arrows_counterclockwise: reboot-required $HOSTNAME (staged kernel/initrd differs from booted — reboot to converge)" || true)
+                [ -n "$mid" ] && printf '%s\n' "$mid" > "$state_dir/.reboot-required.msgid"
+              else
+                echo "reboot-watch: still pending"
+              fi
+            fi
+          '';
+        };
+      in
+      {
+        options.modules.reboot-watch = {
+          enable = lib.mkEnableOption "reboot-required surfacing to Discord (posts on pending, deletes on convergence)";
+
+          interval = lib.mkOption {
+            type = lib.types.str;
+            default = "*:0/15";
+            description = "systemd OnCalendar for the reboot-watch timer";
+          };
+        };
+
+        config = {
+          systemd.services.reboot-watch = lib.mkIf cfg.enable {
+            description = "Check for a pending kernel/initrd generation and alert to Discord";
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            environment = {
+              HOSTNAME = config.networking.hostName;
+              DISCORD_CHANNEL_ID = discordChannelId;
+            };
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = lib.getExe rebootWatchScript;
+              StateDirectory = "reboot-watch";
+            };
+          };
+
+          systemd.timers.reboot-watch = lib.mkIf cfg.enable {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = cfg.interval;
+              Persistent = true;
+            };
+          };
+        };
+      };
+  };
 }

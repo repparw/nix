@@ -126,6 +126,17 @@ promote (04:15), deploy (05:30), and the alpha retry (07:00):
 
 Source: `modules/aspects/scheduled-reboot.nix`.
 
+## Reboot-required (`reboot-watch.timer`, alpha)
+
+Alpha never auto-reboots — the activity gate means a seated user or an
+active stream always wins over automation. Instead a 15-min local check
+posts `:arrows_counterclockwise: reboot-required` to `#notifications`
+when the staged kernel/initrd drifts from the booted one (the same
+comparison as above) and deletes the message once a manual reboot
+converges. Reboot by hand when convenient; the message is the reminder.
+
+Source: `modules/aspects/services/fleet-health.nix` (`reboot-watch`).
+
 ## Firmware updates (`fwupd`, hardware hosts)
 
 `services.fwupd` is enabled on hosts with LVFS-discoverable devices (alpha,

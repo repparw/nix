@@ -15,6 +15,7 @@
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.disk-watch
+      den.aspects.nixos-services._.reboot-watch
       den.aspects.streaming._.pulse-crash-fix
       den.aspects.deploy-target
     ];
@@ -56,6 +57,12 @@
           enable = true;
           mute = [ "wine64-preloader" ];
         };
+
+        # Reboot-required surfacing to Discord (same delivery contract
+        # as disk-watch: posts on pending, deletes the message once a
+        # reboot converges). Alpha reboots by hand — the activity gate
+        # means automation must never reboot it unattended.
+        modules.reboot-watch.enable = true;
 
         # Disk-space surfacing to Discord (same delivery contract as
         # coredump-watch: posts on breach, deletes the message on
