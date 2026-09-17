@@ -15,6 +15,7 @@
       den.aspects.fleet-controller
       den.aspects.lan-edge
       den.aspects.deploy-target
+      den.aspects.scheduled-reboot
     ];
 
     nixos =
@@ -52,6 +53,13 @@
               count = 65536;
             }
           ];
+        };
+
+        # Gated reboot into kernel/initrd-staged generations, 30 min
+        # after epsilon so both edges are never down together.
+        modules.scheduled-reboot = {
+          enable = true;
+          onCalendar = "*-*-* 03:30:00";
         };
 
         # Raspberry Pi 5 (aarch64) triple-boot loader: firmware (u-boot +
