@@ -683,11 +683,15 @@
                 let
                   authorizedKeys = alpha.users.users.repparw.openssh.authorizedKeys.keys;
                   fleetUpdateSource = builtins.readFile ./scripts/fleet-update.sh;
+                  fleetControllerSource = builtins.readFile ./aspects/fleet-controller.nix;
                   shellSource = builtins.readFile ./aspects/cli/shell.nix;
                 in
                 !pi.systemd.services.fleet-promote.restartIfChanged
                 && !pi.systemd.services.fleet-deploy.restartIfChanged
                 && !pi.systemd.services.fleet-alpha-retry.restartIfChanged
+                && !pi.systemd.services.fleet-headless-reboot.restartIfChanged
+                && pi.systemd.services.fleet-headless-reboot.serviceConfig.TimeoutStartSec == "30min"
+                && lib.strings.hasInfix "fleet-headless-reboot" pi.systemd.services.fleet-headless-reboot.serviceConfig.ExecStart
                 && !(builtins.hasAttr "auto-update" pi.systemd.services)
                 && !(builtins.hasAttr "alpha-auto-update" alpha.systemd.services)
                 && !(builtins.elem "fleet-promote.service" pi.systemd.services.fleet-deploy.after)
@@ -700,8 +704,20 @@
                 && pi.systemd.timers.fleet-promote.timerConfig.OnCalendar == "*-*-* 04:15:00"
                 && pi.systemd.timers.fleet-deploy.timerConfig.OnCalendar == "*-*-* 05:30:00"
                 && pi.systemd.timers.fleet-alpha-retry.timerConfig.OnCalendar == "*-*-* 07:00:00"
+                && pi.systemd.timers.fleet-headless-reboot.timerConfig.OnCalendar == "*-*-* 03:00:00"
+                && !pi.systemd.timers.fleet-headless-reboot.timerConfig.Persistent
+                && !(builtins.hasAttr "scheduled-reboot" pi.systemd.timers)
+                && !(builtins.hasAttr "scheduled-reboot" epsilon.systemd.timers)
                 && pi.systemd.timers.restic-backups-offsite.timerConfig.OnCalendar == "*-*-* 01:00:00"
                 && alpha.systemd.timers.restic-backups-offsite.timerConfig.OnCalendar == "*-*-* 01:00:00"
+                && lib.strings.hasInfix "exec 9>/run/fleet-update.lock" fleetControllerSource
+                && lib.strings.hasInfix "flock -n 9" fleetControllerSource
+                && lib.strings.hasInfix "/proc/sys/kernel/random/boot_id" fleetControllerSource
+                && lib.strings.hasInfix "restic-backups-offsite.service" fleetControllerSource
+                && lib.strings.hasInfix "epsilon health gate is failing; pi stays up" fleetControllerSource
+                && lib.strings.hasInfix "systemctl reboot --no-block" fleetControllerSource
+                && alpha.systemd.timers.reboot-watch.timerConfig.OnCalendar == "*:0/15"
+                && alpha.systemd.timers.reboot-watch.timerConfig.Persistent
                 && lib.strings.hasInfix "systemd-inhibit --list --json=short" fleetUpdateSource
                 && lib.strings.hasInfix ".mode == \"block\"" fleetUpdateSource
                 && lib.strings.hasInfix "fleet-update <promote|deploy>" fleetUpdateSource
@@ -721,6 +737,9 @@
                 && !(builtins.elem epsilon.modules.fleet-update.package epsilon.environment.systemPackages)
                 && alpha.modules.fleet-update.controllerHost == pi.modules.fleet-update.controllerHost
                 && pi.modules.fleet-update.controllerHost == "192.168.0.4"
+                && pi.modules.fleet-update.targetAddresses.epsilon == "146.181.42.97"
+                && pi.modules.fleet-update.targetAddresses.pi == "192.168.0.4"
+                && pi.modules.fleet-update.targetAddresses.alpha == "192.168.0.18"
                 && lib.all (host: builtins.elem "d /run/deploy-rs 0700 root root -" host.systemd.tmpfiles.rules) [
                   alpha
                   pi
