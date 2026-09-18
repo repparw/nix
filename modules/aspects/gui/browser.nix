@@ -77,13 +77,20 @@ in
       let
         openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
-        heliumExtensions =
-          # callPackage adds override/overrideDerivation helpers; strip them
-          # so mapping below only sees extension IDs.
-          builtins.removeAttrs (pkgs.callPackage ../../_packages/helium-extensions.nix { }) [
-            "override"
-            "overrideDerivation"
-          ];
+        # Helium strips update-ping parameters on Google's endpoint
+        # (os=win, no prodversion), so Google always answers `noupdate`.
+        # Point descriptors at Helium's own extension proxy instead: it
+        # answers with the latest CRX, so install and updates are
+        # automatic with no version/hash maintenance in this repo.
+        heliumExtensionIds = [
+          "lmeddoobegbaiopohmpmmobpnpjifpii" # Open in Firefox
+          "nngceckbapebfimnlniiiahkandclblb" # Bitwarden
+          "ddkjiahejlhfcafbddmgiahcphecmpfh" # uBlock Origin Lite
+          "mnjggcdmjocbbbhaepdhchncahnbgone" # SponsorBlock
+          "enamippconapkdmgfgjchkhakpfinmaj" # DeArrow
+          "bnomihfieiccainjcjblhegjgglakjdd" # Improve YouTube!
+          "dbepggeogbaibhgnhhndojpepiihcmeb" # Vimium
+        ];
         browserWithoutMimeApps =
           desktopFile: browser:
           (pkgs.symlinkJoin {
@@ -227,13 +234,12 @@ in
           '';
         }
         // lib.listToAttrs (
-          lib.mapAttrsToList (id: ext: {
+          map (id: {
             name = "${heliumConfigDir}/External Extensions/${id}.json";
             value.text = builtins.toJSON {
-              external_crx = "${ext.crx}";
-              external_version = ext.version;
+              external_update_url = "https://services.helium.imput.net/ext";
             };
-          }) heliumExtensions
+          }) heliumExtensionIds
         );
         programs = {
           firefox = {
