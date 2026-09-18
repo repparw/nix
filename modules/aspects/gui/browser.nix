@@ -8,7 +8,6 @@ let
   heliumExtensionIds = [
     "lmeddoobegbaiopohmpmmobpnpjifpii" # Open in Firefox
     "nngceckbapebfimnlniiiahkandclblb" # Bitwarden
-    "ddkjiahejlhfcafbddmgiahcphecmpfh" # uBlock Origin Lite
     "mnjggcdmjocbbbhaepdhchncahnbgone" # SponsorBlock
     "enamippconapkdmgfgjchkhakpfinmaj" # DeArrow
     "bnomihfieiccainjcjblhegjgglakjdd" # Improve YouTube!
