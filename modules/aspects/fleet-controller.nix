@@ -79,7 +79,10 @@
               running | degraded) ;;
               *) return 1 ;;
             esac
-            remote_epsilon systemctl is-active --quiet               container@hermes.service container@authelia.service               container@miniflux.service container@archisteamfarm.service traefik.service               || return 1
+            remote_epsilon systemctl is-active --quiet \
+              container@hermes.service container@authelia.service \
+              container@miniflux.service container@archisteamfarm.service traefik.service \
+              || return 1
             http_200 https://repparw.com/ || return 1
             http_200 https://rss.repparw.com/healthcheck || return 1
           }
