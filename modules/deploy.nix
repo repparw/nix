@@ -158,10 +158,16 @@ in
           readOnly = true;
           description = "Address of the serialized fleet deployment controller";
         };
+        targetAddresses = lib.mkOption {
+          type = lib.types.attrsOf lib.types.str;
+          readOnly = true;
+          description = "Deploy target addresses used by controller-side fleet automation";
+        };
       };
 
       config = {
         modules.fleet-update.package = mkFleetUpdate pkgs;
+        modules.fleet-update.targetAddresses = lib.mapAttrs (_: node: node.hostname) deployBase.nodes;
         systemd.tmpfiles.rules = [ "d /run/deploy-rs 0700 root root -" ];
         users.users.root.openssh.authorizedKeys.keys =
           config.users.users.repparw.openssh.authorizedKeys.keys;
