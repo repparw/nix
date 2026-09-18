@@ -692,19 +692,21 @@ in
             state_dir="$STATE_DIRECTORY"
             mkdir -p "$state_dir"
 
-            booted=$(readlink /run/booted-system/{initrd,kernel,kernel-modules} 2>/dev/null || true)
-            built=$(readlink /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules} 2>/dev/null || true)
-
-            if [ -z "$booted" ] || [ -z "$built" ]; then
-              echo "reboot-watch: cannot determine boot state, skipping" >&2
+            if ! booted=$(readlink /run/booted-system/{initrd,kernel,kernel-modules} 2>/dev/null); then
+              echo "reboot-watch: cannot determine booted kernel/initrd state, skipping" >&2
+              exit 0
+            fi
+            if ! built=$(readlink /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules} 2>/dev/null); then
+              echo "reboot-watch: cannot determine staged kernel/initrd state, skipping" >&2
               exit 0
             fi
 
             if [ "$booted" = "$built" ]; then
               if [ -f "$state_dir/.reboot-required.msgid" ]; then
                 mid="$(cat "$state_dir/.reboot-required.msgid")"
-                discord-notify delete "$mid" || true
-                rm -f "$state_dir/.reboot-required.msgid"
+                if discord-notify delete "$mid"; then
+                  rm -f "$state_dir/.reboot-required.msgid"
+                fi
               fi
               echo "reboot-watch: converged"
             else
