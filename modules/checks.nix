@@ -737,6 +737,9 @@
                 && !(builtins.elem epsilon.modules.fleet-update.package epsilon.environment.systemPackages)
                 && alpha.modules.fleet-update.controllerHost == pi.modules.fleet-update.controllerHost
                 && pi.modules.fleet-update.controllerHost == "192.168.0.4"
+                && pi.modules.fleet-update.targetAddresses.epsilon == "146.181.42.97"
+                && pi.modules.fleet-update.targetAddresses.pi == "192.168.0.4"
+                && pi.modules.fleet-update.targetAddresses.alpha == "192.168.0.18"
                 && lib.all (host: builtins.elem "d /run/deploy-rs 0700 root root -" host.systemd.tmpfiles.rules) [
                   alpha
                   pi
