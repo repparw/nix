@@ -22,7 +22,6 @@
       den.aspects.nixos-services._.hermes
       # Steam bot: moved here from pi for VPS uptime (not LAN/exposed).
       den.aspects.nixos-services._.archisteamfarm
-      den.aspects.scheduled-reboot
     ];
     nixos =
       { config, pkgs, ... }:
@@ -31,14 +30,6 @@
 
         modules.services.bridgePrefix = "10.231.137";
 
-        # Gated reboot into kernel/initrd-staged generations: epsilon
-        # reboots first (03:00), pi follows at 03:30, so both edges are
-        # never down together. Window sits clear of restic (01:00),
-        # promote (04:15), deploy (05:30), and the alpha retry (07:00).
-        modules.scheduled-reboot = {
-          enable = true;
-          onCalendar = "*-*-* 03:00:00";
-        };
 
         # Offsite restic coverage (den.aspects.backup): the stateful edge
         # services (authelia/miniflux) plus hermes agent state.
