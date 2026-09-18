@@ -54,7 +54,6 @@
           ];
         };
 
-
         # Raspberry Pi 5 (aarch64) triple-boot loader: firmware (u-boot +
         # config.txt) lives on the vfat /boot/firmware partition, while NixOS
         # writes the extlinux boot files into /boot on the ext4 root.
