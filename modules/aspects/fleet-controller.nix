@@ -46,6 +46,8 @@
           )
 
           remote_epsilon() {
+            # Arguments are intentionally expanded by this client-side wrapper.
+            # shellcheck disable=SC2029
             ssh "''${ssh_options[@]}" "root@$epsilon" "$@"
           }
 
