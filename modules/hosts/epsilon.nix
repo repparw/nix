@@ -30,7 +30,6 @@
 
         modules.services.bridgePrefix = "10.231.137";
 
-
         # Offsite restic coverage (den.aspects.backup): the stateful edge
         # services (authelia/miniflux) plus hermes agent state.
         modules.backup.paths = [
