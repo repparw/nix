@@ -36,7 +36,7 @@
             exit 0
           fi
 
-          epsilon=${lib.escapeShellArg config.modules.services.hostAddresses.epsilon}
+          epsilon=${lib.escapeShellArg config.modules.fleet-update.targetAddresses.epsilon}
           ssh_options=(
             -i "$deploy_key"
             -o BatchMode=yes
