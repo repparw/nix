@@ -5,6 +5,16 @@
   ...
 }:
 let
+  heliumExtensionIds = [
+    "lmeddoobegbaiopohmpmmobpnpjifpii" # Open in Firefox
+    "nngceckbapebfimnlniiiahkandclblb" # Bitwarden
+    "ddkjiahejlhfcafbddmgiahcphecmpfh" # uBlock Origin Lite
+    "mnjggcdmjocbbbhaepdhchncahnbgone" # SponsorBlock
+    "enamippconapkdmgfgjchkhakpfinmaj" # DeArrow
+    "bnomihfieiccainjcjblhegjgglakjdd" # Improve YouTube!
+    "dbepggeogbaibhgnhhndojpepiihcmeb" # Vimium
+  ];
+
   allOpenInExtensionIds = [
     "lmeddoobegbaiopohmpmmobpnpjifpii" # Open in Firefox
     "mjoebkkejejidnkfdekpbooceogbapnf" # Open in Edge
@@ -62,6 +72,10 @@ in
         "chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
           BrowserSignin = 0;
           PasswordManagerEnabled = false;
+
+          # Let Helium's Chromium updater install and update these through
+          # Helium's Web Store proxy. No CRX versions or hashes are managed by Nix.
+          ExtensionInstallForcelist = heliumExtensionIds;
         };
       };
     };
@@ -77,13 +91,6 @@ in
       let
         openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
-        heliumExtensions =
-          # callPackage adds override/overrideDerivation helpers; strip them
-          # so mapping below only sees extension IDs.
-          builtins.removeAttrs (pkgs.callPackage ../../_packages/helium-extensions.nix { }) [
-            "override"
-            "overrideDerivation"
-          ];
         browserWithoutMimeApps =
           desktopFile: browser:
           (pkgs.symlinkJoin {
@@ -103,11 +110,18 @@ in
 
         heliumWithoutMimeApps = browserWithoutMimeApps "helium.desktop";
         helium = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
+        heliumPackage = heliumWithoutMimeApps helium;
+        heliumFlags = [
+          "--force-renderer-accessibility"
+          "--silent-debugger-extension-api"
+        ];
+        # webapp can start Helium's singleton browser process, so it must use
+        # the same wrapper flags as programs.helium.
+        heliumForWebapps = heliumPackage.override { flags = heliumFlags; };
         # Helium's user-data-dir on Linux is ~/.config/net.imput.helium
         # (verified: live Default/, SingletonSocket, and crashpad database
-        # all live there). Per-profile files (External Extensions,
-        # NativeMessagingHosts) must go under it; ~/.config/helium is not
-        # read by the browser.
+        # all live there). NativeMessagingHosts must go under it;
+        # ~/.config/helium is not read by the browser.
         heliumConfigDir = ".config/net.imput.helium";
       in
       {
@@ -117,7 +131,7 @@ in
           (pkgs.writeShellApplication {
             name = "webapp";
             runtimeInputs = [
-              (heliumWithoutMimeApps helium)
+              heliumForWebapps
               ndrop
             ];
             text = ''
@@ -145,20 +159,35 @@ in
               no_scheme="''${no_scheme%%[?#]*}"
               case "$no_scheme" in
                 */*)
-                  host="''${no_scheme%%/*}"
-                  path="''${no_scheme#*/}"
+                  authority="''${no_scheme%%/*}"
+                  path="/''${no_scheme#*/}"
                   ;;
                 *)
-                  host="$no_scheme"
-                  path=""
+                  authority="$no_scheme"
+                  path="/"
+                  ;;
+              esac
+
+              # Chromium builds the application name as host + "_" + URL path,
+              # then sanitizes path separators for its Linux desktop/XDG ID.
+              # Keep the leading/trailing path separators: /foo/ must become
+              # __foo_ rather than __foo, otherwise ndrop misses the window.
+              host="''${authority##*@}"
+              case "$host" in
+                \[*\]:*)
+                  host="''${host%%]:*}]"
+                  ;;
+                \[*\])
+                  ;;
+                *:*)
+                  host="''${host%%:*}"
                   ;;
               esac
               host="$(printf '%s' "$host" | tr '[:upper:]' '[:lower:]')"
-              path="$(printf '%s' "$path" | tr '/' '_' | sed -e 's/^_*//' -e 's/_*$//')"
-              if [ -n "$path" ]; then
-                chrome_id="chrome-''${host}__''${path}-Default"
-              elif [ -n "$host" ]; then
-                chrome_id="chrome-''${host}__-Default"
+
+              if [ -n "$host" ]; then
+                app_name="$(printf '%s_%s' "$host" "$path" | tr '/ ' '__')"
+                chrome_id="chrome-''${app_name}-Default"
               else
                 # Should not happen for valid URLs; fall back to the given
                 # name so ndrop still has something stable to match.
@@ -225,16 +254,7 @@ in
 
             autocmd DocStart tradingview.com mode ignore
           '';
-        }
-        // lib.listToAttrs (
-          lib.mapAttrsToList (id: ext: {
-            name = "${heliumConfigDir}/External Extensions/${id}.json";
-            value.text = builtins.toJSON {
-              external_crx = "${ext.crx}";
-              external_version = ext.version;
-            };
-          }) heliumExtensions
-        );
+        };
         programs = {
           firefox = {
             enable = true;
@@ -401,11 +421,8 @@ in
 
           helium = {
             enable = true;
-            package = heliumWithoutMimeApps helium;
-            flags = [
-              "--force-renderer-accessibility"
-              "--silent-debugger-extension-api"
-            ];
+            package = heliumPackage;
+            flags = heliumFlags;
           };
         };
       };
