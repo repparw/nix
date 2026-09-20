@@ -19,9 +19,8 @@ still reports when hermes itself is down.
 
 Probes every systemd unit that matters plus every HTTP surface across the
 fleet: the pi and epsilon services (traefik, authelia, HA, hermes, glance, ASF,
-and miniflux), the apex and rss vhosts, and alpha's published
-backends (jellyfin, qbit, bazarr, prowlarr, radarr, sonarr, paperless,
-finance).
+and miniflux), the apex, rss, and paper vhosts, and alpha's published
+backends (jellyfin, qbit, bazarr, prowlarr, radarr, sonarr, finance).
 
 - Two consecutive failures post `DOWN name (detail)` as a new message;
   recovery deletes that message (no `UP` post — the channel only shows

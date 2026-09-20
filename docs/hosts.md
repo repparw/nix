@@ -15,7 +15,7 @@ workload-specific aspects in `modules/hosts/`.
 ## Alpha
 
 `alpha` is the desktop workstation (x86_64, `192.168.0.18`). It carries the
-heavier backend service set (media, *arr stack, documents), gaming,
+heavier backend service set (media, *arr stack), gaming,
 streaming, and backup behavior. Since the edge migrations it is not a
 public entrypoint: epsilon terminates the public vhosts, and pi fronts
 alpha's published service backends over the LAN.
@@ -89,6 +89,9 @@ public vhosts with Authelia SSO. Installed in place via nixos-infect
   (migrated from pi).
 - `containers.archisteamfarm` runs the Steam bot here (migrated from pi
   for VPS uptime; not LAN-dependent, not exposed).
+- `containers.paperless` holds the document archive here (migrated from
+  alpha). Traefik reaches it on the local bridge; it is not published
+  on the VPS public address.
 - A split-tunnel WireGuard link (`wg-home`, via the router's hub) reaches
   the home LAN and pi's container bridge for monitoring and agent egress.
 - Offsite restic covers its stateful edge services under

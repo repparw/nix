@@ -22,6 +22,7 @@
       den.aspects.nixos-services._.hermes
       # Steam bot: moved here from pi for VPS uptime (not LAN/exposed).
       den.aspects.nixos-services._.archisteamfarm
+      den.aspects.nixos-services._.paperless
     ];
     nixos =
       { config, pkgs, ... }:
@@ -107,6 +108,7 @@
         networking.firewall.extraInputRules = ''
           iifname "eth0" tcp dport 443 ip saddr { 173.245.48.0/20, 103.21.244.0/22, 103.22.200.0/22, 103.31.4.0/22, 141.101.64.0/18, 108.162.192.0/18, 131.0.72.0/22, 162.158.0.0/15, 172.64.0.0/13, 188.114.96.0/20, 190.93.240.0/20, 197.234.240.0/22, 198.41.128.0/17, 104.16.0.0-104.27.255.255 } accept comment "CF only"
           iifname "eth0" meta mark 0x484f4d45 tcp dport 443 accept comment "home uplink https"
+          iifname "eth0" meta mark 0x484f4d45 tcp dport 22 accept comment "home uplink ssh"
           iifname "eth0" meta mark 0x484f4d45 udp dport 60002 accept comment "home uplink mosh"
           iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
         '';
@@ -129,6 +131,7 @@
               type filter hook input priority filter - 1; policy accept;
               iifname "eth0" ip saddr @home_wan meta mark set 0x484f4d45 comment "tag home uplink"
               iifname "eth0" ip saddr @home_wan tcp dport 443 accept comment "fleet health over split DNS"
+              iifname "eth0" ip saddr @home_wan tcp dport 22 accept comment "ssh from home"
               iifname "eth0" ip saddr @home_wan udp dport 60002 accept comment "mosh from home"
             }
           '';
@@ -149,6 +152,8 @@
         # interactive session (predictive local echo needs mosh's SSP; ssh
         # cannot speculate). Same port answers on the tunnel.
         programs.mosh.openFirewall = lib.mkForce false;
+        services.openssh.openFirewall = lib.mkForce false;
+        networking.firewall.interfaces."wg-home".allowedTCPPorts = [ 22 ];
         networking.firewall.interfaces."wg-home".allowedUDPPorts = [ 60002 ];
 
         # Tunnel home through the router's WireGuard hub (peer registered in

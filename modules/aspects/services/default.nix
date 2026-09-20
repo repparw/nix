@@ -67,7 +67,6 @@
         arr
         jellyfin
         matrizApi
-        paperless
       ]
       ++ [
         den.aspects.service-host

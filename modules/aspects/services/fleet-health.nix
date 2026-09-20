@@ -231,6 +231,7 @@ in
             # gates or rolls back pi's flip.
             remote authelia https://auth.repparw.com/api/health 200
             remote miniflux https://rss.repparw.com/healthcheck 200
+            remote paperless https://paper.repparw.com/api/health/ 200
             http home-assistant http://${config.containers.homeassistant.localAddress}:8123 ""
             # pi's own traefik still serves the LAN vhost for HA; the check
             # pins SNI to the local loopback per the sniStrict gotcha.
@@ -239,7 +240,7 @@ in
             # Services exposing a healthcheck are probed at their public
             # healthcheck endpoint (authelia-bypassed) through the real edge,
             # so the probe reflects what a visitor experiences. Services
-            # without one (qbittorrent/paperless/finance) stay on the LAN
+            # without one (qbittorrent/finance) stay on the LAN
             # root where any response means "up".
             remote jellyfin https://jellyfin.repparw.com/health 200
             remote bazarr https://bazarr.repparw.com/health 200
@@ -247,7 +248,6 @@ in
             remote radarr https://radarr.repparw.com/ping 200
             remote sonarr https://sonarr.repparw.com/ping 200
             remote qbittorrent http://192.168.0.18:18080/ ""
-            remote paperless http://192.168.0.18:8000/ ""
             remote finance http://192.168.0.18:3000/ ""
 
             if [ "$strict" = 1 ]; then
