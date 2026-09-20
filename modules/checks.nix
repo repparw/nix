@@ -9,23 +9,46 @@
           evalHost =
             host:
             let
-              original = inputs.self.nixosConfigurations.${host};
-              stubbed =
-                if host == "epsilon" then
-                  original.extendModules {
-                    modules = [
-                      (
-                        { lib, pkgs, ... }:
-                        {
-                          containers.hermes.config.services.hermes-agent.package = lib.mkForce (
-                            pkgs.writeShellScriptBin "hermes-agent" "exit 0"
-                          );
-                        }
-                      )
-                    ];
-                  }
-                else
-                  original;
+              mkStub =
+                pkgs: name:
+                let
+                  p = pkgs.writeShellScriptBin name "exit 0";
+                in
+                p
+                // {
+                  override = _: p;
+                  extend = _: p;
+                };
+              stubbed = inputs.self.nixosConfigurations.${host}.extendModules {
+                modules = [
+                  (
+                    { lib, pkgs, ... }:
+                    {
+                      nixpkgs.overlays = [
+                        (final: prev: {
+                          repparw-neovim = mkStub pkgs "nvim";
+                        })
+                      ];
+                    }
+                  )
+                ]
+                ++ lib.optionals (host == "epsilon") [
+                  (
+                    { lib, pkgs, ... }:
+                    {
+                      containers.hermes.config.services.hermes-agent.package = lib.mkForce (mkStub pkgs "hermes-agent");
+                    }
+                  )
+                ]
+                ++ lib.optionals (host == "alpha") [
+                  (
+                    { lib, pkgs, ... }:
+                    {
+                      home-manager.users.repparw.programs.helium.package = lib.mkForce (mkStub pkgs "helium");
+                    }
+                  )
+                ];
+              };
               evaluatedDrvPath = builtins.unsafeDiscardStringContext stubbed.config.system.build.toplevel.drvPath;
             in
             pkgs.runCommand "check-nixos-${host}-eval" { } ''

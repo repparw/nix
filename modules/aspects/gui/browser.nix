@@ -108,15 +108,10 @@ in
           };
 
         heliumWithoutMimeApps = browserWithoutMimeApps "helium.desktop";
-        helium = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
-        heliumPackage = heliumWithoutMimeApps helium;
         heliumFlags = [
           "--force-renderer-accessibility"
           "--silent-debugger-extension-api"
         ];
-        # webapp can start Helium's singleton browser process, so it must use
-        # the same wrapper flags as programs.helium.
-        heliumForWebapps = heliumPackage.override { flags = heliumFlags; };
         # Helium's user-data-dir on Linux is ~/.config/net.imput.helium
         # (verified: live Default/, SingletonSocket, and crashpad database
         # all live there). NativeMessagingHosts must go under it;
@@ -130,7 +125,7 @@ in
           (pkgs.writeShellApplication {
             name = "webapp";
             runtimeInputs = [
-              heliumForWebapps
+              (config.programs.helium.package.override { flags = heliumFlags; })
               ndrop
             ];
             text = ''
@@ -420,7 +415,9 @@ in
 
           helium = {
             enable = true;
-            package = heliumPackage;
+            package =
+              heliumWithoutMimeApps
+                inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
             flags = heliumFlags;
           };
         };
