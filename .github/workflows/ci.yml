@@ -1,6 +1,6 @@
-# The repo gate (flake check) already evals every host's toplevel plus the
-# 500-line rendered-fleet asserts; this workflow is that gate, run on push
-# instead of only when a session remembers to run it locally.
+# The repo gate (flake check) already evals host toplevels plus service-definition
+# validation; this workflow is that gate, run on push instead of only when a
+# session remembers to run it locally.
 name: ci
 on:
   push:
@@ -18,9 +18,9 @@ jobs:
       # and epsilon's pulls the hermes-agent flake (uv2nix/pyproject sources)
       # into eval — most of the gate's wall time, and hermes is tested
       # upstream. Build the check derivations explicitly instead: they cover
-      # the fleet asserts (service-definitions evals epsilon's edge config
-      # without forcing hermes) plus alpha/pi toplevel evals. Epsilon's
-      # toplevel is exercised by pi's auto-update probes and local dev.
+        # service-definitions (evals epsilon's edge config without forcing
+        # hermes) plus alpha/pi toplevel evals. Epsilon's toplevel is
+        # exercised by pi's auto-update probes and local dev.
       - run: >
           nix build
           .#checks.x86_64-linux.formatting

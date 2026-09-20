@@ -132,23 +132,12 @@
           service-definitions =
             let
               alpha = inputs.self.nixosConfigurations.alpha.config;
-              pi = inputs.self.nixosConfigurations.pi.config;
               epsilon = inputs.self.nixosConfigurations.epsilon.config;
-              cfg = alpha.modules.services;
-              edgeCfg = epsilon.modules.services;
-              servicesLib = import ./_services/lib.nix { inherit lib pkgs; };
-              miniflux = edgeCfg.definitions.miniflux;
-              paperless = cfg.definitions.paperless;
-              authelia = edgeCfg.definitions.authelia;
-              glance = edgeCfg.definitions.glance;
-              archisteamfarm = edgeCfg.definitions.archisteamfarm;
-              automations = edgeCfg.definitions.automations;
-              http = epsilon.services.traefik.dynamicConfigOptions.http;
+              domain = alpha.modules.services.domain;
+              definitions = alpha.modules.services.definitions // epsilon.modules.services.definitions;
               accessControl =
                 epsilon.containers.authelia.config.services.authelia.instances.main.settings.access_control;
-              monitorSites = lib.findFirst (
-                page: page.name == "Home"
-              ) { } epsilon.containers.glance.config.services.glance.settings.pages;
+
               evalDefinition =
                 definition:
                 builtins.tryEval (
@@ -202,6 +191,7 @@
                   ];
                 }).config.modules.services.definitions
               );
+
               mkIngressPolicy = import ./_services/ingress-policy.nix { inherit lib; };
               matrixPolicy = mkIngressPolicy {
                 domain = "example.test";
@@ -244,251 +234,31 @@
                   auth = "bypass";
                 };
               };
-              expectedMediaDefinitions = {
-                bazarr = {
-                  hostname = "bazarr";
-                  localAddress = "10.231.136.2";
-                  port = 6767;
-                  auth = "one_factor";
-                  backupPath = "${cfg.configDir}/bazarr/backup";
-                };
-                prowlarr = {
-                  hostname = "prowlarr";
-                  localAddress = "10.231.136.5";
-                  port = 9696;
-                  auth = "one_factor";
-                  backupPath = "${cfg.configDir}/prowlarr/Backups";
-                };
-                qbittorrent = {
-                  hostname = "qbit";
-                  localAddress = "10.231.136.6";
-                  port = 8080;
-                  publishedPort = 18080;
-                  auth = "external";
-                  backupPath = "${cfg.configDir}/qbittorrent";
-                };
-                radarr = {
-                  hostname = "radarr";
-                  localAddress = "10.231.136.7";
-                  port = 7878;
-                  auth = "one_factor";
-                  backupPath = "${cfg.configDir}/radarr/Backups";
-                };
-                sonarr = {
-                  hostname = "sonarr";
-                  localAddress = "10.231.136.8";
-                  port = 8989;
-                  auth = "one_factor";
-                  backupPath = "${cfg.configDir}/sonarr/Backups";
-                };
-                jellyfin = {
-                  hostname = "jellyfin";
-                  localAddress = "10.231.136.3";
-                  port = 8096;
-                  auth = "bypass";
-                  backupPath = "${cfg.configDir}/jellyfin/data/backups";
-                };
-              };
-              hasMonitorSite =
-                name: hostname: checkUrl:
-                builtins.any (
-                  widget:
-                  widget.type or null == "monitor"
-                  && builtins.any (
-                    site:
-                    site.title == name
-                    && site.url == "https://${hostname}.${cfg.domain}"
-                    && site.check-url == checkUrl
-                    && site.timeout == "10s"
-                  ) widget.sites
-                ) (lib.concatMap (column: column.widgets) monitorSites.columns);
-              mediaDefinitionsMatch = lib.all (
-                name:
-                let
-                  expectedService = expectedMediaDefinitions.${name};
-                  service = cfg.definitions.${name};
-                in
-                service.hostname == expectedService.hostname
-                && service.port == expectedService.port
-                && service.auth == expectedService.auth
-                && service.monitor
-                && service.backup.path == expectedService.backupPath
-                && alpha.containers.${name}.localAddress == expectedService.localAddress
-                && hasMonitorSite name expectedService.hostname (
-                  if service.healthcheck != null then
-                    servicesLib.publicHealthUrl edgeCfg epsilon name
-                  else
-                    servicesLib.serviceUrl edgeCfg epsilon name
-                )
-                && alpha.fileSystems."${cfg.backupDir}/${name}".device == expectedService.backupPath
-                &&
-                  builtins.elem "home-containers-backup-${name}.mount"
-                    alpha.systemd.services."container@${name}".after
-              ) (lib.attrNames expectedMediaDefinitions);
-              nativeServicesMatch =
-                edgeCfg ? definitions.homeassistant
-                # Miniflux + its PostgreSQL run in an nspawn container,
-                # reached over the bridge like the rest.
-                && miniflux.hostname == "rss"
-                && miniflux.port == 8081
-                && miniflux.auth == "one_factor"
-                && miniflux.monitor
-                && miniflux.backup.path == "${edgeCfg.configDir}/miniflux"
-                && epsilon.containers.miniflux.localAddress == "10.231.137.6"
-                && epsilon.containers.miniflux.config.services.miniflux.enable
-                && epsilon.containers.miniflux.config.services.postgresql.enable
-                &&
-                  epsilon.containers.miniflux.bindMounts."/var/lib/postgresql".hostPath
-                  == "${edgeCfg.configDir}/miniflux/postgresql"
-                && hasMonitorSite "miniflux" "rss" (servicesLib.publicHealthUrl edgeCfg epsilon "miniflux")
-                && paperless.hostname == "paper"
-                && paperless.port == 8000
-                && paperless.auth == "one_factor"
-                && paperless.monitor
-                && paperless.backup.path == "${cfg.configDir}/paperless/export"
-                && alpha.containers.paperless.localAddress == "10.231.136.4"
-                && alpha.containers.paperless.bindMounts."/var/lib/paperless".hostPath == "${cfg.configDir}/paper"
-                && builtins.elem paperless.port alpha.containers.paperless.config.networking.firewall.allowedTCPPorts
-                && alpha.containers.paperless.config.services.paperless.address == "0.0.0.0"
-                && alpha.containers.paperless.config.services.paperless.port == paperless.port
-                && hasMonitorSite "paperless" "paper" (servicesLib.serviceUrl edgeCfg epsilon "paperless")
-                && alpha.fileSystems."${cfg.backupDir}/paperless".device == paperless.backup.path
-                &&
-                  builtins.elem "home-containers-backup-paperless.mount"
-                    alpha.systemd.services."container@paperless".after;
-              authenticationPresentationMatch =
-                authelia.hostname == "auth"
-                && authelia.port == 9091
-                && authelia.auth == "bypass"
-                && authelia.monitor
-                && authelia.healthcheck == "/api/health"
-                && epsilon.containers.authelia.localAddress == "10.231.137.3"
-                && builtins.elem authelia.port epsilon.containers.authelia.config.networking.firewall.allowedTCPPorts
-                &&
-                  epsilon.containers.authelia.config.services.authelia.instances.main.settings.server.address
-                  == "tcp://:${toString authelia.port}"
-                && hasMonitorSite "authelia" "auth" (servicesLib.publicHealthUrl edgeCfg epsilon "authelia")
-                && glance.port == 8080
-                && glance.auth == "bypass"
-                && epsilon.containers.glance.localAddress == "10.231.137.4"
-                && epsilon.containers.glance.config.services.glance.settings.server.host == "0.0.0.0"
-                && epsilon.containers.glance.config.services.glance.settings.server.port == glance.port
-                && http.routers.glance.rule == "Host(`${cfg.domain}`)"
-                && epsilon.containers.glance.config.services.glance.settings.branding.logo-text == "R";
-              backgroundServicesMatch =
-                # Archisteamfarm farms on epsilon (VPS uptime); its definition
-                # and container live in epsilon's closure.
-                archisteamfarm.hostname == null
-                && archisteamfarm.port == null
-                && archisteamfarm.auth == "bypass"
-                && !archisteamfarm.monitor
-                && archisteamfarm.backup.path == "${cfg.configDir}/archisteamfarm"
-                && epsilon.containers.archisteamfarm.localAddress == "10.231.137.2"
-                &&
-                  epsilon.containers.archisteamfarm.bindMounts."/var/lib/archisteamfarm".hostPath
-                  == archisteamfarm.backup.path
-                &&
-                  epsilon.containers.archisteamfarm.config.systemd.services.archisteamfarm.serviceConfig.LoadCredential
-                  == "steamPassword:/run/secrets/steamPassword"
-                && builtins.any (lib.strings.hasInfix "archisteamfarm") epsilon.systemd.tmpfiles.rules
-                && automations.hostname == null
-                && automations.port == null
-                && automations.auth == "bypass"
-                && !automations.monitor
-                && automations.backup.path == "${edgeCfg.configDir}/automations"
-                # Automations is a pi-native oneshot: no
-                # nspawn container on either host, state dir via tmpfiles,
-                # six-hour timer local to the edge.
-                && builtins.any (lib.strings.hasInfix "automations") pi.systemd.tmpfiles.rules
-                && !(builtins.hasAttr "container@automations" alpha.systemd.services)
-                && !(builtins.hasAttr "container@automations" pi.systemd.services)
-                && pi.systemd.timers.change-detection.timerConfig.OnCalendar == "*-*-* 00/6:13:00"
-                && pi.systemd.timers.change-detection.timerConfig.RandomizedDelaySec == "5min";
-              mediaSpecializationMatch =
-                mediaDefinitionsMatch
-                &&
-                  alpha.containers.qbittorrent.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 54535;
-                      containerPort = 54535;
-                    }
-                    {
-                      protocol = "udp";
-                      hostPort = 54535;
-                      containerPort = 54535;
-                    }
-                    {
-                      protocol = "tcp";
-                      hostPort = 18080;
-                      containerPort = 8080;
-                    }
-                  ]
-                && lib.all (name: alpha.containers.${name}.privateUsers == "identity") [
-                  "bazarr"
-                  "prowlarr"
-                  "qbittorrent"
-                  "radarr"
-                  "sonarr"
-                ]
-                && alpha.containers.jellyfin.privateUsers == "pick"
-                && alpha.containers.radarr.bindMounts."/data".hostPath == cfg.mediaPortalDir
-                && alpha.containers.radarr.bindMounts."/config".hostPath == "${cfg.configDir}/radarr"
-                && alpha.containers.radarr.bindMounts."/data/torrents".hostPath == "${cfg.rootDir}/torrents"
-                && alpha.containers.sonarr.bindMounts."/data".hostPath == cfg.mediaPortalDir
-                && alpha.containers.sonarr.bindMounts."/config".hostPath == "${cfg.configDir}/sonarr"
-                &&
-                  alpha.containers.prowlarr.bindMounts."/var/lib/private/prowlarr/Backups".hostPath
-                  == "${cfg.configDir}/prowlarr/Backups"
-                &&
-                  alpha.containers.qbittorrent.bindMounts."/var/lib/qBittorrent/qBittorrent".hostPath
-                  == "${cfg.configDir}/qbittorrent"
-                && alpha.containers.qbittorrent.bindMounts."/data/torrents".hostPath == "${cfg.rootDir}/torrents"
-                && alpha.containers.qbittorrent.config.services.qbittorrent.torrentingPort == 54535
-                && alpha.containers.radarr.config.services.radarr.settings.server.bindAddress == "*"
-                && alpha.containers.radarr.config.services.radarr.dataDir == "/config"
-                && alpha.containers.jellyfin.bindMounts."/var/lib/jellyfin".hostPath == "${cfg.configDir}/jellyfin"
-                && alpha.containers.jellyfin.bindMounts."/data".hostPath == cfg.mediaPortalDir
-                &&
-                  map (device: device.node) alpha.containers.jellyfin.allowedDevices == [
-                    "/dev/dri/renderD128"
-                    "/dev/dri/card0"
-                    "/dev/dri/card1"
-                  ]
-                && alpha.systemd.services."container@jellyfin".serviceConfig.CPUQuota == "100%"
-                && alpha.systemd.services."container@jellyfin".serviceConfig.CPUWeight == 20
-                && alpha.systemd.services."container@jellyfin".serviceConfig.IOWeight == 50
-                && alpha.systemd.services."container@jellyfin".serviceConfig.Nice == 10;
-              validationMatches =
-                builtins.all (result: !result.success) invalidDefinitions && !duplicateHostnames.success;
+
               hasAccessPolicy =
                 rules: host: policy:
                 builtins.any (rule: builtins.elem host rule.domain && rule.policy == policy) rules;
-              ingressPolicyMatches =
+
+              healthcheckBypassMatches = lib.all (
+                name:
                 let
-                  shareRule = builtins.elemAt accessControl.rules 0;
-                  apiRule = builtins.elemAt accessControl.rules 1;
-                  homeBypassRules = builtins.filter (
-                    rule: rule.domain == [ "home.${cfg.domain}" ] && rule.policy == "bypass"
-                  ) accessControl.rules;
-                  # Every service exposing a healthcheck path and sitting behind authelia
-                  # must be reachable unauthenticated (public-edge monitoring).
-                  # Bypassed vhosts (jellyfin) don't need a healthcheck rule.
-                  hasHealthcheckBypass =
-                    name:
-                    let
-                      service = cfg.definitions.${name};
-                    in
-                    service.healthcheck == null
-                    || service.auth == "bypass"
-                    || service.hostname == null
-                    || builtins.any (
-                      rule:
-                      rule.domain == [ "${service.hostname}.${cfg.domain}" ]
-                      && rule.policy == "bypass"
-                      && builtins.elem "^${lib.escapeRegex service.healthcheck}([?].*)?$" (rule.resources or [ ])
-                    ) accessControl.rules;
+                  service = definitions.${name};
                 in
+                service.healthcheck == null
+                || service.auth == "bypass"
+                || service.hostname == null
+                || builtins.any (
+                  rule:
+                  rule.domain == [ "${service.hostname}.${domain}" ]
+                  && rule.policy == "bypass"
+                  && builtins.elem "^${lib.escapeRegex service.healthcheck}([?].*)?$" (rule.resources or [ ])
+                ) accessControl.rules
+              ) (lib.attrNames definitions);
+
+              validationMatches =
+                builtins.all (result: !result.success) invalidDefinitions && !duplicateHostnames.success;
+
+              ingressPolicyMatches =
                 !(matrixPolicy.traefik.routers.bypass ? middlewares)
                 && matrixPolicy.traefik.routers.one.middlewares == [ "authelia" ]
                 && matrixPolicy.traefik.routers.two.middlewares == [ "authelia" ]
@@ -497,286 +267,12 @@
                 && hasAccessPolicy matrixPolicy.authelia.rules "two.example.test" "two_factor"
                 && !unsupportedExternal.success
                 && !(builtins.any (rule: builtins.elem "null.example.test" rule.domain) sparsePolicy.authelia.rules)
-                && !(http.routers ? opencode)
-                && !(http.routers ? home-router)
-                &&
-                  http.routers.glance == {
-                    rule = "Host(`${cfg.domain}`)";
-                    service = "glance";
-                  }
-                &&
-                  http.routers.homeassistant == {
-                    rule = "Host(`home.${cfg.domain}`)";
-                    service = "homeassistant";
-                  }
-                &&
-                  http.routers.jellyfin == {
-                    rule = "Host(`jellyfin.${cfg.domain}`)";
-                    service = "jellyfin";
-                  }
-                &&
-                  http.routers.authelia == {
-                    rule = "Host(`auth.${cfg.domain}`)";
-                    service = "authelia";
-                  }
-                && lib.all (name: http.routers.${name}.middlewares == [ "authelia" ]) [
-                  "bazarr"
-                  "finance"
-                  "miniflux"
-                  "paperless"
-                  "prowlarr"
-                  "radarr"
-                  "sonarr"
-                ]
-                && http.routers.qbittorrent.rule == "Host(`qbit.${cfg.domain}`) && !PathPrefix(`/api`)"
-                && http.routers.qbittorrent.middlewares == [ "qbit-auth" ]
-                && http.routers.qbittorrent-api.rule == "Host(`qbit.${cfg.domain}`) && PathPrefix(`/api`)"
-                &&
-                  http.middlewares.qbit-auth.chain.middlewares == [
-                    "authelia"
-                    "qbit-basic-auth"
-                  ]
-                &&
-                  http.middlewares.authelia.forwardAuth.address
-                  == "http://${epsilon.containers.authelia.localAddress}:9091/api/authz/forward-auth"
-                &&
-                  http.services.authelia.loadBalancer.servers
-                  == [ { url = "http://${epsilon.containers.authelia.localAddress}:9091"; } ]
-                && http.services.homeassistant.loadBalancer.servers == [ { url = "http://192.168.0.4:8123"; } ]
-                &&
-                  http.services.glance.loadBalancer.servers
-                  == [ { url = "http://${epsilon.containers.glance.localAddress}:8080"; } ]
-                && http.services.jellyfin.loadBalancer.servers == [ { url = "http://192.168.0.18:8096"; } ]
-                && http.services.qbittorrent.loadBalancer.servers == [ { url = "http://192.168.0.18:18080"; } ]
-                && http.services.bazarr.loadBalancer.servers == [ { url = "http://192.168.0.18:6767"; } ]
-                && http.services.finance.loadBalancer.servers == [ { url = "http://192.168.0.18:3000"; } ]
-                &&
-                  http.services.miniflux.loadBalancer.servers
-                  == [ { url = "http://${epsilon.containers.miniflux.localAddress}:8081"; } ]
-                && http.services.paperless.loadBalancer.servers == [ { url = "http://192.168.0.18:8000"; } ]
-                && http.services.prowlarr.loadBalancer.servers == [ { url = "http://192.168.0.18:9696"; } ]
-                && http.services.radarr.loadBalancer.servers == [ { url = "http://192.168.0.18:7878"; } ]
-                && http.services.sonarr.loadBalancer.servers == [ { url = "http://192.168.0.18:8989"; } ]
-                && shareRule.domain == [ "paper.${cfg.domain}" ]
-                && shareRule.resources == [ "^/share/.*$" ]
-                && shareRule.policy == "bypass"
-                && builtins.elem "qbit.${cfg.domain}" apiRule.domain
-                &&
-                  apiRule.resources == [
-                    "^/api([/?].*)?$"
-                    "^/v1([/?].*)?$"
-                  ]
-                && apiRule.policy == "bypass"
-                && builtins.length homeBypassRules == 1
-                && hasAccessPolicy accessControl.rules "jellyfin.${cfg.domain}" "bypass"
-                && hasAccessPolicy accessControl.rules "rss.${cfg.domain}" "one_factor"
-                && lib.all hasHealthcheckBypass (lib.attrNames cfg.definitions)
-                && (lib.last accessControl.rules).domain == [ "*.${cfg.domain}" ]
-                && (lib.last accessControl.rules).subject == [ "group:admins" ]
-                && accessControl.default_policy == "deny";
-              publishedBackendMatch =
-                !alpha.services.traefik.enable
-                && !(builtins.elem 80 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts)
-                && !(builtins.elem 443 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts)
-                && builtins.elem 54535 alpha.networking.firewall.interfaces.eth0.allowedTCPPorts
-                && builtins.any (lib.strings.hasInfix "ip saddr { 192.168.0.4, 10.5.5.3 } tcp dport { 3000, 8081 } accept") (
-                  lib.splitString "\n" alpha.networking.firewall.extraInputRules
-                )
-                && lib.strings.hasInfix "ip saddr { 192.168.0.4, 10.5.5.3 } oifname \"ve-*\" accept" alpha.networking.firewall.extraForwardRules
-                && builtins.all (port: builtins.elem port pi.networking.firewall.interfaces.eth0.allowedTCPPorts) [
-                  80
-                  443
-                ]
-                &&
-                  alpha.containers.paperless.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 8000;
-                      containerPort = 8000;
-                    }
-                  ]
-                &&
-                  alpha.containers.jellyfin.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 8096;
-                      containerPort = 8096;
-                    }
-                  ]
-                &&
-                  alpha.containers.bazarr.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 6767;
-                      containerPort = 6767;
-                    }
-                  ]
-                &&
-                  alpha.containers.prowlarr.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 9696;
-                      containerPort = 9696;
-                    }
-                  ]
-                &&
-                  alpha.containers.radarr.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 7878;
-                      containerPort = 7878;
-                    }
-                  ]
-                &&
-                  alpha.containers.sonarr.forwardPorts == [
-                    {
-                      protocol = "tcp";
-                      hostPort = 8989;
-                      containerPort = 8989;
-                    }
-                  ];
-              epsilonNetworkingMatch =
-                let
-                  containerNetwork = epsilon.systemd.network.networks."10-nixos-container";
-                  inputRules = epsilon.networking.firewall.extraInputRules;
-                  forwardRules = epsilon.networking.firewall.extraForwardRules;
-                  natTables = epsilon.networking.nftables.tables;
-                  natRule = natTables.container-egress-nat.content;
-                  hermesPolicy = natTables.hermes-monitor.content;
-                  homeWan = natTables.home-wan.content;
-                  homeWanProvision = epsilon.systemd.services.home-wan;
-                in
-                containerNetwork.matchConfig == {
-                  Kind = "veth";
-                  Name = "ve-*";
-                }
-                && containerNetwork.linkConfig.Unmanaged
-                && !containerNetwork.linkConfig.RequiredForOnline
-                && epsilon.boot.kernel.sysctl."net.ipv4.ip_forward" == 1
-                && epsilon.networking.firewall.filterForward
-                && epsilon.services.resolved.settings.Resolve.DNSStubListenerExtra == "${edgeCfg.bridgePrefix}.1"
-                && lib.all (
-                  name: epsilon.containers.${name}.config.networking.nameservers == [ "${edgeCfg.bridgePrefix}.1" ]
-                ) (builtins.attrNames epsilon.containers)
-                && lib.strings.hasInfix ''iifname "ve-*" oifname "eth0" accept'' forwardRules
-                && lib.strings.hasInfix ''iifname "eth0" oifname "ve-*" ct state established,related accept'' forwardRules
-                && lib.strings.hasInfix ''iifname "ve-hermes" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept'' forwardRules
-                && lib.strings.hasInfix ''iifname "ve-*" ip daddr ${edgeCfg.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept'' inputRules
-                && !(lib.strings.hasInfix "fleet health over split DNS" inputRules)
-                && !(lib.strings.hasInfix "mosh from home" inputRules)
-                && lib.strings.hasInfix "set home_wan" homeWan
-                && lib.strings.hasInfix "type filter hook input priority filter - 1" homeWan
-                && lib.strings.hasInfix ''iifname "eth0" ip saddr @home_wan tcp dport 443 accept comment "fleet health over split DNS"'' homeWan
-                && lib.strings.hasInfix ''iifname "eth0" ip saddr @home_wan udp dport 60002 accept comment "mosh from home"'' homeWan
-                && lib.strings.hasInfix "nft add element inet home-wan home_wan" homeWanProvision.script
-                && lib.strings.hasInfix "wg set wg-home peer" homeWanProvision.script
-                && homeWanProvision.restartTriggers == [ epsilon.sops.secrets.homeWanIp.path ]
-                && epsilon.networking.firewall.interfaces.eth0.allowedUDPPorts == [ ]
-                && epsilon.networking.firewall.interfaces."wg-home".allowedUDPPorts == [ 60002 ]
-                && lib.strings.hasInfix ''ip saddr ${edgeCfg.bridgePrefix}.0/24 oifname { "eth0", "wg-home" } masquerade'' natRule
-                && !(natTables ? glance-home-nat)
-                && !(natTables ? glance-egress-nat)
-                && !(natTables ? hermes-home-nat)
-                && !(natTables ? miniflux-egress-nat)
-                && lib.strings.hasInfix "ip daddr 192.168.0.0/24 counter accept" hermesPolicy
-                && lib.strings.hasInfix "ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16" hermesPolicy;
-              fleetUpdaterMatch =
-                let
-                  authorizedKeys = alpha.users.users.repparw.openssh.authorizedKeys.keys;
-                  fleetUpdateSource = builtins.readFile ./scripts/fleet-update.sh;
-                  fleetControllerSource = builtins.readFile ./aspects/fleet-controller.nix;
-                  shellSource = builtins.readFile ./aspects/cli/shell.nix;
-                in
-                !pi.systemd.services.fleet-promote.restartIfChanged
-                && !pi.systemd.services.fleet-deploy.restartIfChanged
-                && !pi.systemd.services.fleet-alpha-retry.restartIfChanged
-                && !pi.systemd.services.fleet-headless-reboot.restartIfChanged
-                && pi.systemd.services.fleet-headless-reboot.serviceConfig.TimeoutStartSec == "30min"
-                && lib.strings.hasInfix "fleet-headless-reboot" pi.systemd.services.fleet-headless-reboot.serviceConfig.ExecStart
-                && !(builtins.hasAttr "auto-update" pi.systemd.services)
-                && !(builtins.hasAttr "alpha-auto-update" alpha.systemd.services)
-                && !(builtins.elem "fleet-promote.service" pi.systemd.services.fleet-deploy.after)
-                && lib.strings.hasInfix "promote --state /var/lib/auto-update" pi.systemd.services.fleet-promote.script
-                && lib.strings.hasInfix "--unit=fleet-deploy-run" pi.systemd.services.fleet-deploy.script
-                && lib.strings.hasInfix "is-active --quiet fleet-deploy-run.service" pi.systemd.services.fleet-deploy.script
-                && lib.strings.hasInfix "--property=RuntimeMaxSec=180min" pi.systemd.services.fleet-deploy.script
-                && lib.strings.hasInfix "deploy --wait-lock 7200 --state /var/lib/auto-update" pi.systemd.services.fleet-deploy.script
-                && lib.strings.hasInfix "deploy --host alpha --wait-lock 10800 --state /var/lib/auto-update" pi.systemd.services.fleet-alpha-retry.script
-                && pi.systemd.timers.fleet-promote.timerConfig.OnCalendar == "*-*-* 04:15:00"
-                && pi.systemd.timers.fleet-deploy.timerConfig.OnCalendar == "*-*-* 05:30:00"
-                && pi.systemd.timers.fleet-alpha-retry.timerConfig.OnCalendar == "*-*-* 07:00:00"
-                && pi.systemd.timers.fleet-headless-reboot.timerConfig.OnCalendar == "*-*-* 03:00:00"
-                && !pi.systemd.timers.fleet-headless-reboot.timerConfig.Persistent
-                && !(builtins.hasAttr "scheduled-reboot" pi.systemd.timers)
-                && !(builtins.hasAttr "scheduled-reboot" epsilon.systemd.timers)
-                && pi.systemd.timers.restic-backups-offsite.timerConfig.OnCalendar == "*-*-* 01:00:00"
-                && alpha.systemd.timers.restic-backups-offsite.timerConfig.OnCalendar == "*-*-* 01:00:00"
-                && lib.strings.hasInfix "exec 9>/run/fleet-update.lock" fleetControllerSource
-                && lib.strings.hasInfix "flock -n 9" fleetControllerSource
-                && lib.strings.hasInfix "/proc/sys/kernel/random/boot_id" fleetControllerSource
-                && lib.strings.hasInfix "restic-backups-offsite.service" fleetControllerSource
-                && lib.strings.hasInfix "epsilon health gate is failing; pi stays up" fleetControllerSource
-                && lib.strings.hasInfix "systemctl reboot --no-block" fleetControllerSource
-                && alpha.systemd.timers.reboot-watch.timerConfig.OnCalendar == "*:0/15"
-                && alpha.systemd.timers.reboot-watch.timerConfig.Persistent
-                && lib.strings.hasInfix "systemd-inhibit --list --json=short" fleetUpdateSource
-                && lib.strings.hasInfix ".mode == \"block\"" fleetUpdateSource
-                && lib.strings.hasInfix "fleet-update <promote|deploy>" fleetUpdateSource
-                && lib.strings.hasInfix "FLEET_UPDATE_STATE:-/var/lib/auto-update" fleetUpdateSource
-                && lib.strings.hasInfix "candidate_commit_is_safe" fleetUpdateSource
-                && lib.strings.hasInfix "remote_revision\" = \"$candidate_revision" fleetUpdateSource
-                && !(lib.strings.hasInfix "--update-lock" fleetUpdateSource)
-                && !(lib.strings.hasInfix "--dry-activate" fleetUpdateSource)
-                && !(lib.strings.hasInfix "--source" fleetUpdateSource)
-                && lib.strings.hasInfix "deploy --host alpha --force --wait-lock 10800 --state /var/lib/auto-update" shellSource
-                && alpha.modules.desktop.enable
-                && alpha.modules.fleet-update.activityGate
-                && !pi.modules.fleet-update.activityGate
-                && !epsilon.modules.fleet-update.activityGate
-                && builtins.elem pi.modules.fleet-update.package pi.environment.systemPackages
-                && !(builtins.elem alpha.modules.fleet-update.package alpha.environment.systemPackages)
-                && !(builtins.elem epsilon.modules.fleet-update.package epsilon.environment.systemPackages)
-                && alpha.modules.fleet-update.controllerHost == pi.modules.fleet-update.controllerHost
-                && pi.modules.fleet-update.controllerHost == "192.168.0.4"
-                && pi.modules.fleet-update.targetAddresses.epsilon == "146.181.42.97"
-                && pi.modules.fleet-update.targetAddresses.pi == "192.168.0.4"
-                && pi.modules.fleet-update.targetAddresses.alpha == "192.168.0.18"
-                && lib.all (host: builtins.elem "d /run/deploy-rs 0700 root root -" host.systemd.tmpfiles.rules) [
-                  alpha
-                  pi
-                  epsilon
-                ]
-                && lib.all (
-                  key: builtins.elem key alpha.users.users.root.openssh.authorizedKeys.keys
-                ) authorizedKeys
-                && lib.all (key: builtins.elem key pi.users.users.root.openssh.authorizedKeys.keys) authorizedKeys
-                && lib.all (
-                  key: builtins.elem key epsilon.users.users.root.openssh.authorizedKeys.keys
-                ) authorizedKeys;
-              expected = builtins.all (value: value) [
-                nativeServicesMatch
-                authenticationPresentationMatch
-                backgroundServicesMatch
-                mediaSpecializationMatch
-                validationMatches
-                ingressPolicyMatches
-                publishedBackendMatch
-                epsilonNetworkingMatch
-                fleetUpdaterMatch
-              ];
-              # Interpolated into the derivation below so that evaluating it
-              # forces every matcher: an assert alone can be skipped by lazy
-              # attribute selection on the flake output.
+                && healthcheckBypassMatches;
+
+              expected = validationMatches && ingressPolicyMatches;
               matcherReport = builtins.toJSON {
-                i = ingressPolicyMatches;
-                p = publishedBackendMatch;
-                e = epsilonNetworkingMatch;
-                n = nativeServicesMatch;
-                a = authenticationPresentationMatch;
-                m = mediaSpecializationMatch;
-                b = backgroundServicesMatch;
-                f = fleetUpdaterMatch;
                 v = validationMatches;
+                i = ingressPolicyMatches;
               };
             in
             assert expected || throw matcherReport;
