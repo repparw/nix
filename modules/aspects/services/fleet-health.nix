@@ -273,6 +273,20 @@ in
             exit 0
           '';
         };
+
+        failureDropins = pkgs.symlinkJoin {
+          name = "fleet-health-failure-dropins";
+          paths = [
+            (pkgs.writeTextDir "lib/systemd/system/service.d/90-fleet-health.conf" ''
+              [Unit]
+              OnFailure=fleet-health-event.service
+            '')
+            (pkgs.writeTextDir "lib/systemd/system/fleet-health-event.service.d/99-no-recursion.conf" ''
+              [Unit]
+              OnFailure=
+            '')
+          ];
+        };
       in
       {
         options.modules.fleet-health.probe = lib.mkOption {
@@ -297,6 +311,20 @@ in
               ExecStart = lib.getExe probeScript;
               StateDirectory = "fleet-health";
             };
+          };
+
+          systemd.packages = [ failureDropins ];
+
+          systemd.services.fleet-health-event = {
+            description = "Confirm a systemd service failure through fleet health";
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            serviceConfig.Type = "oneshot";
+            script = ''
+              systemctl start fleet-health.service || true
+              sleep 60
+              systemctl start fleet-health.service || true
+            '';
           };
 
           systemd.timers.fleet-health = {

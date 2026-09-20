@@ -36,6 +36,15 @@ finance).
 - A `PAUSE` flag on the updater (`/var/lib/auto-update/PAUSE`) raises an
   alert of its own, so paused automation never rots silently.
 
+Pi also installs a type-wide systemd `service.d` failure hook. When any
+service exhausts its configured restart policy and enters the failed state,
+the hook starts the normal fleet probe immediately and again after 60 seconds.
+Those two serialized passes use the same counters and Discord messages as the
+timer, reducing persistent service-failure detection to about one minute
+without bypassing the two-strike rule. Existing unit-specific `OnFailure=`
+handlers are additive and continue to run. HTTP and cross-host failures still
+rely on the periodic sweep because they do not emit local systemd failures.
+
 ## Offsite backups (`restic-backups-offsite.timer`, daily 01:00–01:15)
 
 Restic over rclone to `gd-crypt:restic/<hostname>`. Covers:
