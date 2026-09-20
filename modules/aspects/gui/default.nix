@@ -9,7 +9,6 @@
         phone
         browser
         mpv
-        spotify
         wm
         zathura
         guiApps

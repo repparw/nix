@@ -232,33 +232,6 @@
       "upstream": [
         "https://github.com/bjarneo/cliamp/pull/453"
       ]
-    },
-    "spotify-player-0.25.1": {
-      "input": "nixpkgs",
-      "repository": "NixOS/nixpkgs",
-      "branch": "nixos-unstable",
-      "source": {
-        "kind": "release",
-        "repository": "aome510/spotify-player",
-        "tag": "v0.25.1"
-      },
-      "channel": {
-        "kind": "package-version",
-        "path": "pkgs/by-name/sp/spotify-player/package.nix",
-        "minimum": "0.25.1"
-      },
-      "pin": {
-        "kind": "package-version",
-        "path": "pkgs/by-name/sp/spotify-player/package.nix",
-        "minimum": "0.25.1"
-      },
-      "workaround": [],
-      "completion": "Update nixpkgs and verify the spotify-player package and Home Manager output.",
-      "watcher": null,
-      "issue": null,
-      "upstream": [
-        "https://github.com/aome510/spotify-player/releases/tag/v0.25.1"
-      ]
     }
   }
 }

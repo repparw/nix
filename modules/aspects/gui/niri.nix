@@ -201,11 +201,12 @@
               "Mod+Alt+F" = titledAction "Toggle Floating" "toggle-window-floating";
               "Mod+Ctrl+F" = titledAction "Toggle Focus Floating" "switch-focus-between-floating-and-tiling";
               "Mod+G" = titledSpawn "T3 Code" [ "t3code-desktop" ];
-              "Mod+M" = titledSpawn "Spotify" [
+              "Mod+M" = titledSpawn "cliamp" [
                 "foot"
                 "--app-id"
-                "spotify"
-                "spotify_player"
+                "cliamp"
+                "cliamp"
+                "attach"
               ];
               "Mod+N" = titledSpawn "Notes (Neovim)" [
                 "foot"
