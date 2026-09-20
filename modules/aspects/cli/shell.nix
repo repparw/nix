@@ -21,11 +21,9 @@
         ...
       }:
       let
-        # Gated manual update: probe -> GC headroom -> diff
-        # review -> flip -> soak -> rollback. Consumers pull and flip;
-        # input bumps belong to pi's auto-update pipeline. PROBE overrides
-        # the built-in gate with a stricter external check (pi's pipeline
-        # sets it to the fleet-health probe).
+        sshAddresses = lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) (
+          lib.concatMapAttrs (_system: hosts: hosts) den.hosts
+        );
         host-update = pkgs.writeShellApplication {
           name = "host-update";
           runtimeInputs = with pkgs; [
@@ -50,9 +48,6 @@
             soak_interval_seconds="''${SOAK_INTERVAL_SECONDS:-30}"
             soak_attempts="''${SOAK_ATTEMPTS:-10}"
 
-            # Flags: --yes flips without prompting (headless callers),
-            # --no-pull leaves tree management to the caller, --result=PATH
-            # diffs a prebuilt closure instead of building (skips GC too).
             for a in "$@"; do
               case "$a" in
                 --yes) yes=1 ;;
@@ -69,16 +64,12 @@
               if [ -n "''${PROBE:-}" ]; then
                 "$PROBE" --strict --local
               else
-                # "degraded" is acceptable (alpha carries benign failed
-                # user noise); only a failed manager blocks. Pi is probed
-                # by TCP on its edge port: post-migration its traefik
-                # serves LAN vhosts over 443 only, no plain http.
                 state=$(systemctl is-system-running 2>/dev/null || true)
                 case "$state" in
                   running | degraded) ;;
                   *) return 1 ;;
                 esac
-                timeout 3 bash -c 'exec 3<>/dev/tcp/192.168.0.4/443' 2>/dev/null
+                timeout 3 bash -c 'exec 3<>/dev/tcp/${sshAddresses.pi}/443' 2>/dev/null
               fi
             }
 
@@ -91,7 +82,6 @@
             diff_path="''${HOST_UPDATE_DIFF:-/tmp/host-update-diff.txt}"
             rm -f "$diff_path"
 
-            # Consumers pull; pi pushes. Never bump inputs here.
             if [ "$no_pull" = 0 ]; then
               git fetch origin main
               behind=$(git rev-list --count HEAD..origin/main || echo 0)
@@ -99,8 +89,6 @@
                 if [ -z "$(git status --porcelain)" ]; then
                   git merge --ff-only origin/main
                 else
-                  # Carry WIP onto main when it applies cleanly;
-                  # otherwise keep WIP in the stash and build main.
                   git stash push -m "host-update carry" >/dev/null
                   if git merge --ff-only origin/main 2>/dev/null; then
                     if git stash apply >/dev/null 2>&1; then
@@ -149,8 +137,6 @@
             esac
             if [ "$current_system" = "$candidate_system" ]; then
               echo "already at the pinned generation"
-              # Exit 3 = no-op: automated callers stay silent instead of
-              # reporting a flip that did not happen.
               exit 3
             fi
 
@@ -163,14 +149,12 @@
               }
             fi
 
-            # Headless callers already run as root; interactive users sudo.
             if [ "$(id -u)" = 0 ]; then
               nixos-rebuild switch --flake ".#$host"
             else
               sudo nixos-rebuild switch --flake ".#$host"
             fi
 
-            # Soak: settle, then two consecutive clean gate passes.
             sleep "$soak_settle_seconds"
             passes=0
             i=0
@@ -272,12 +256,6 @@
 
               vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";
 
-              # Alpha is a consumer: pi owns flake.lock (sole writer). Mod+U
-              # asks pi's serialized deploy-rs controller to converge alpha
-              # explicitly, bypassing unattended desktop activity policy and
-              # PAUSE but retaining deployment health/rollback. host-update
-              # remains available for local review; raw nrs/nrb stay for
-              # one-off local builds.
               nrs = "nh os switch";
               nrb = "nh os boot";
               nrt = "nh os test";

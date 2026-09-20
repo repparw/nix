@@ -5,8 +5,6 @@
   ...
 }:
 let
-  # Keep deploy-rs' activation library, but use the cache-backed Nixpkgs CLI
-  # in generated activation wrappers.
   mkDeployPkgs =
     system:
     let
@@ -30,6 +28,16 @@ let
     x86_64-linux = mkDeployPkgs "x86_64-linux";
   };
 
+  sshAddresses = lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) (
+    lib.concatMapAttrs (_system: hosts: hosts) den.hosts
+  );
+
+  deployNode = hostname: {
+    inherit hostname;
+    remoteBuild = true;
+    profiles.system.user = "root";
+  };
+
   deployBase = {
     autoRollback = true;
     activationTimeout = 300;
@@ -47,23 +55,7 @@ let
       "-o"
       "StrictHostKeyChecking=accept-new"
     ];
-    nodes = {
-      epsilon = {
-        hostname = "146.181.42.97";
-        remoteBuild = true;
-        profiles.system.user = "root";
-      };
-      pi = {
-        hostname = "192.168.0.4";
-        remoteBuild = true;
-        profiles.system.user = "root";
-      };
-      alpha = {
-        hostname = "192.168.0.18";
-        remoteBuild = true;
-        profiles.system.user = "root";
-      };
-    };
+    nodes = lib.mapAttrs (_: deployNode) sshAddresses;
   };
 
   deploySchema = deployBase // {
@@ -118,9 +110,6 @@ let
 
   mkDeploySchemaCheck =
     pkgs:
-    # The interface only requires profile paths to be strings. The
-    # architecture-neutral base avoids evaluating every system closure (and
-    # any IFD it contains) on the runner. Native checks validate real paths.
     pkgs.runCommand "deploy-schema" { nativeBuildInputs = [ pkgs.check-jsonschema ]; } ''
       check-jsonschema \
         --schemafile ${inputs.deploy-rs}/interface.json \
@@ -147,8 +136,6 @@ in
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  # Shared target plumbing. Key-only root access lets the always-on pi
-  # controller activate every node without password-bearing automation.
   den.aspects.deploy-target.nixos =
     { config, pkgs, ... }:
     {
@@ -215,8 +202,6 @@ in
     };
   };
 
-  # Schema checks discard store-path contexts and therefore validate the
-  # mixed-architecture graph on either runner. Activation checks stay native.
   flake.checks = {
     aarch64-linux = {
       deploy-schema = mkDeploySchemaCheck deployPkgs.aarch64-linux;

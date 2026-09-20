@@ -1,8 +1,12 @@
 {
   den,
+  lib,
   ...
 }:
 let
+  sshAddresses = lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) (
+    lib.concatMapAttrs (_system: hosts: hosts) den.hosts
+  );
   authorizedKeys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHGd04EwDYl0a0RAS16wbDI4K2cfHFM8guXXYZdH3XtX u0_a426@localhost #termux"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN6UbXeSlW/2jkIU9mQIN5xWElnFbA9tw0BfT072WXgR t440"
@@ -22,31 +26,17 @@ in
         enable = true;
         enableDefaultConfig = false;
 
-        settings = {
-          pi = {
-            HostName = "192.168.0.4";
+        settings =
+          lib.mapAttrs (_: hostname: {
+            HostName = hostname;
             User = config.home.username;
+          }) sshAddresses
+          // {
+            tv = {
+              HostName = "192.168.0.48";
+              User = "root";
+            };
           };
-
-          alpha = {
-            HostName = "192.168.0.18";
-            User = config.home.username;
-          };
-
-          # Oracle Cloud Always Free A1 VPS (epsilon). Reserved public IP:
-          # survives stop/start and reboots, unlike the launch-time ephemeral.
-          epsilon = {
-            HostName = "146.181.42.97";
-            User = config.home.username;
-          };
-
-          # Rooted webOS TV: webosbrew dropbear. Each host enlists its default
-          # ~/.ssh/id_ed25519 in the TV's authorized_keys like any other machine.
-          tv = {
-            HostName = "192.168.0.48";
-            User = "root";
-          };
-        };
       };
     };
   };

@@ -1,8 +1,5 @@
 { den, ... }:
 {
-  # Fleet topology only. Host implementations live in modules/hosts/ and
-  # reusable user capabilities live in modules/aspects/. serviceAddress is the
-  # address other fleet hosts use to reach services owned by that host.
   den.hosts = {
     x86_64-linux.alpha = {
       serviceAddress = "192.168.0.18";
@@ -20,6 +17,7 @@
     aarch64-linux = {
       epsilon = {
         serviceAddress = "10.5.5.3";
+        sshAddress = "146.181.42.97";
         users.repparw.aspect = den.aspects.repparw;
       };
 
@@ -34,12 +32,4 @@
       };
     };
   };
-
-  # Parked: no laptop using this host config. Re-enable when hardware is back.
-  # den.hosts.x86_64-linux.beta.users.repparw.aspect = {
-  #   includes = [
-  #     den.aspects.repparw
-  #     den.aspects.desktop
-  #   ];
-  # };
 }

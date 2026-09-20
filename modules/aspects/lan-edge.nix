@@ -1,17 +1,14 @@
-{ den, ... }:
+{ den, lib, ... }:
 {
-  # Minimal local edge for LAN HTTPS: Jellyfin reaches Alpha directly rather
-  # than making local clients round-trip through the public Epsilon edge.
   den.aspects.lan-edge.nixos =
-    { config, lib, ... }:
+    { config, pkgs, ... }:
+    let
+      servicesLib = import ../_services/lib.nix { inherit lib pkgs; };
+    in
     {
-      # Dynamic DNS has no consumer after the public edge moved to Epsilon;
-      # the home address used by WireGuard and Jellyfin is static.
       services.ddclient.enable = lib.mkForce false;
 
       networking.firewall = {
-        # Containers use public names pinned back to this edge, so server-side
-        # OIDC traffic must be allowed from their bridge.
         extraInputRules = ''
           iifname "ve-*" tcp dport { 80, 443 } accept comment "containers -> local edge"
         '';
@@ -51,7 +48,9 @@
               service = "jellyfin";
               tls.certResolver = "cloudflare";
             };
-            services.jellyfin.loadBalancer.servers = [ { url = "http://192.168.0.18:8096"; } ];
+            services.jellyfin.loadBalancer.servers = [
+              { url = servicesLib.serviceUrl config.modules.services config "jellyfin"; }
+            ];
           };
         };
       };
