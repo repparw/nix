@@ -9,9 +9,24 @@
           evalHost =
             host:
             let
-              evaluatedDrvPath = builtins.unsafeDiscardStringContext (
-                inputs.self.nixosConfigurations.${host}.config.system.build.toplevel.drvPath
-              );
+              original = inputs.self.nixosConfigurations.${host};
+              stubbed =
+                if host == "epsilon" then
+                  original.extendModules {
+                    modules = [
+                      (
+                        { lib, pkgs, ... }:
+                        {
+                          containers.hermes.config.services.hermes-agent.package = lib.mkForce (
+                            pkgs.writeShellScriptBin "hermes-agent" "exit 0"
+                          );
+                        }
+                      )
+                    ];
+                  }
+                else
+                  original;
+              evaluatedDrvPath = builtins.unsafeDiscardStringContext stubbed.config.system.build.toplevel.drvPath;
             in
             pkgs.runCommand "check-nixos-${host}-eval" { } ''
               printf '%s\n' ${lib.escapeShellArg evaluatedDrvPath} > $out

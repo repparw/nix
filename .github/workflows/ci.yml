@@ -1,6 +1,5 @@
-# The repo gate (flake check) already evals host toplevels plus service-definition
-# validation; this workflow is that gate, run on push instead of only when a
-# session remembers to run it locally.
+# Host toplevel evals stub hermes-agent's package (upstream CI). This workflow
+# is that gate, run on push instead of only when a session remembers to run it.
 name: ci
 on:
   push:
@@ -14,13 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v22
-      # Not `nix flake check`: it verifies every nixosConfigurations toplevel,
-      # and epsilon's pulls the hermes-agent flake (uv2nix/pyproject sources)
-      # into eval — most of the gate's wall time, and hermes is tested
-      # upstream. Build the check derivations explicitly instead: they cover
-        # service-definitions (evals epsilon's edge config without forcing
-        # hermes) plus alpha/pi toplevel evals. Epsilon's toplevel is
-        # exercised by pi's auto-update probes and local dev.
       - run: >
           nix build
           .#checks.x86_64-linux.formatting
@@ -32,4 +24,5 @@ jobs:
           .#checks.x86_64-linux.service-definitions
           .#checks.x86_64-linux.alpha
           .#checks.x86_64-linux.pi
+          .#checks.x86_64-linux.epsilon
           --print-build-logs --keep-going
