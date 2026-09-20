@@ -124,10 +124,7 @@ in
         home.packages = [
           (pkgs.writeShellApplication {
             name = "webapp";
-            runtimeInputs = [
-              (config.programs.helium.package.override { flags = heliumFlags; })
-              ndrop
-            ];
+            runtimeInputs = [ ndrop ];
             text = ''
               if [ "$#" -lt 2 ]; then
                 echo "usage: webapp <app-id> <url> [helium args...]" >&2
