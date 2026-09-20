@@ -82,6 +82,28 @@ in
       }:
       let
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
+        cfg = config.modules.services;
+        vhostProbes = lib.concatStringsSep "\n" (
+          map (
+            name:
+            let
+              service = cfg.definitions.${name};
+              fqdn = "${service.hostname}.${cfg.domain}";
+            in
+            if name == "homeassistant" then
+              ''
+                            http home-assistant ${servicesLib.serviceUrl cfg config name} ""
+                            http home https://${fqdn}/ "" --resolve ${fqdn}:443:127.0.0.1''
+            else if service.healthcheck != null then
+              "            remote ${name} ${servicesLib.publicHealthUrl cfg config name} 200"
+            else
+              "            remote ${name} ${servicesLib.serviceUrl cfg config name}/ \"\""
+          ) (lib.sort (a: b: a < b) (
+            lib.attrNames (
+              lib.filterAttrs (_: service: (service.hostname or null) != null) cfg.definitions
+            )
+          ))
+        );
         probeScript = pkgs.writeShellApplication {
           name = "fleet-health-probe";
           runtimeInputs = with pkgs; [
@@ -185,20 +207,8 @@ in
               [ "$local_only" = 1 ] || http "$@"
             }
 
-            remote authelia https://auth.repparw.com/api/health 200
-            remote miniflux https://rss.repparw.com/healthcheck 200
-            http home-assistant http://${config.containers.homeassistant.localAddress}:8123 ""
-            # Traefik sniStrict: pin SNI to local loopback.
-            http home https://home.repparw.com/ "" --resolve home.repparw.com:443:127.0.0.1
-            remote apex https://repparw.com/ 200
-            remote jellyfin https://jellyfin.repparw.com/health 200
-            remote bazarr https://bazarr.repparw.com/health 200
-            remote prowlarr https://prowlarr.repparw.com/ping 200
-            remote radarr https://radarr.repparw.com/ping 200
-            remote sonarr https://sonarr.repparw.com/ping 200
-            remote qbittorrent ${servicesLib.serviceUrl config.modules.services config "qbittorrent"}/ ""
-            remote paperless ${servicesLib.serviceUrl config.modules.services config "paperless"}/ ""
-            remote finance ${servicesLib.serviceUrl config.modules.services config "finance"}/ ""
+${vhostProbes}
+            remote apex https://${cfg.domain}/ 200
 
             if [ "$strict" = 1 ]; then
               [ "$failures" -eq 0 ]

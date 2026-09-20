@@ -287,11 +287,11 @@
         };
 
         networking.firewall.extraInputRules = ''
-          iifname "eth0" ip saddr { 192.168.0.4, 10.5.5.3 } tcp dport { 3000, 8081 } accept comment "edge ingress -> native alpha listeners"
+          iifname "eth0" ip saddr { ${config.modules.services.hostAddresses.pi}, ${config.modules.services.hostAddresses.epsilon} } tcp dport { 3000, 8081 } accept comment "edge ingress -> native alpha listeners"
         '';
 
         networking.firewall.extraForwardRules = ''
-          iifname "eth0" ip saddr { 192.168.0.4, 10.5.5.3 } oifname "ve-*" accept comment "edge ingress -> published container backends"
+          iifname "eth0" ip saddr { ${config.modules.services.hostAddresses.pi}, ${config.modules.services.hostAddresses.epsilon} } oifname "ve-*" accept comment "edge ingress -> published container backends"
         '';
 
         networking.nftables.tables.qos = {

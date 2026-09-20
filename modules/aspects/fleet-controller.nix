@@ -21,6 +21,10 @@
         )
       );
 
+      servicesLib = import ../_services/lib.nix { inherit lib pkgs; };
+      cfg = config.modules.services;
+      apexUrl = "https://${cfg.domain}/";
+      minifluxHealth = servicesLib.publicHealthUrl cfg config "miniflux";
       headlessReboot = pkgs.writeShellApplication {
         name = "fleet-headless-reboot";
         runtimeInputs = with pkgs; [
@@ -91,9 +95,9 @@
             remote_epsilon systemctl is-active --quiet \
               ${epsilonContainers} traefik.service \
               || return 1
-            http_200 https://${config.modules.services.domain}/ || return 1
-            http_200 https://rss.${config.modules.services.domain}/healthcheck || return 1
-          }
+            http_200 ${apexUrl} || return 1
+            http_200 ${minifluxHealth} || return 1
+            }
 
           backup_state_epsilon() {
             remote_epsilon systemctl is-active restic-backups-offsite.service 2>/dev/null || true

@@ -44,7 +44,7 @@
           tls.options.default.sniStrict = true;
           http = {
             routers.jellyfin = {
-              rule = "Host(`jellyfin.${config.modules.services.domain}`)";
+              rule = "Host(`${config.modules.services.definitions.jellyfin.hostname}.${config.modules.services.domain}`)";
               service = "jellyfin";
               tls.certResolver = "cloudflare";
             };
