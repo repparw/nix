@@ -15,6 +15,9 @@ Check issues before implementing a local workaround. For merged pull requests, v
 
 ## Agent skills
 
+For configuration changes or pre-deployment checks, use
+[verify-nixos-config](.agents/skills/verify-nixos-config/SKILL.md).
+
 ### Issue tracker
 
 Issues and PRDs are tracked in GitHub Issues. See `docs/agents/issue-tracker.md`.

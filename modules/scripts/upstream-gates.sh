@@ -73,7 +73,7 @@ package_version() {
 
   if ! source=$(raw_file "$repository" "$ref" "$path"); then
     DETAIL="could not read $repository/$ref/$path"
-    return 1
+    return 2
   fi
   awk -F'"' '/^[[:space:]]*version[[:space:]]*=[[:space:]]*"/{print $2; exit}' <<<"$source"
 }
@@ -231,7 +231,7 @@ check_predicate() {
       local source
       if ! source=$(raw_file "$repository" "$ref" "$path"); then
         DETAIL="could not read $repository/$ref/$path"
-        return 1
+        return 2
       fi
       if ! grep -Fq -- "$text" <<<"$source"; then
         DETAIL="$repository/$ref/$path does not contain: $text"

@@ -1,31 +1,18 @@
-# system-build
+# Build the system closure
 
-## Sub-features
-
-- `nixosConfigurations.<host>.config.system.build.toplevel` builds to a store path
-- New modules/options typecheck during build (eval-only gaps surface here)
-- Pre-commit hooks (deadnix, nixfmt, convco) stay green on committed code
-
-## How to get to it (user POV)
-
-The user is about to run `sudo nh os switch .` and wants certainty the switch
-won't fail midway leaving a half-applied generation. A successful toplevel
-build is that certainty.
-
-## Driving it with nix build
+Use the setup in [SKILL.md](../SKILL.md):
 
 ```bash
-nix build .#nixosConfigurations.alpha.config.system.build.toplevel --no-link --print-build-logs 2>&1 | tee /tmp/nix-verify/build-alpha.log
+SYSTEM_OUTPUT=$(bash "$VERIFY_BUILD" \
+  ".#nixosConfigurations.$VERIFY_HOST.config.system.build.toplevel" \
+  "$VERIFY_EVIDENCE")
+printf '%s\n' "$SYSTEM_OUTPUT" > "$VERIFY_EVIDENCE/system-$VERIFY_HOST.txt"
 ```
 
-Exit 0 + `./result` symlink = buildable. On failure, the log tail names the
-failing derivation and option.
+A zero exit status and returned store path prove that this closure built.
+The helper saves the build log and preserves a failing Nix exit status.
+An evaluation error can be investigated with [flake-eval](flake-eval.md).
 
-## Gotchas
-
-- Minutes-long on first run or after a channel bump; cached otherwise. Prefer
-  the lighter features unless a system-level module changed.
-- The build runs the user's rebuild user-privately — no sudo involved, nothing
-  is activated. `nixos-rebuild test`/`switch` are out of scope for agents.
-- If the failure is an eval error, drop back to
-  [flake-eval](flake-eval.md) to localize it before rebuilding.
+The build does not activate the system, run commit hooks, or prove service
+health. Cross-architecture targets may need a suitable builder. Prefer the
+lighter checks for changes they can observe directly.
