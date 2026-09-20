@@ -116,7 +116,8 @@
             };
 
             systemd.services."container@jellyfin".serviceConfig = {
-              CPUQuota = "300%";
+              CPUQuota = "100%";
+              CPUWeight = 20;
               IOWeight = 50;
               Nice = 10;
             };

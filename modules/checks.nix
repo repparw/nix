@@ -455,7 +455,8 @@
                     "/dev/dri/card0"
                     "/dev/dri/card1"
                   ]
-                && alpha.systemd.services."container@jellyfin".serviceConfig.CPUQuota == "300%"
+                && alpha.systemd.services."container@jellyfin".serviceConfig.CPUQuota == "100%"
+                && alpha.systemd.services."container@jellyfin".serviceConfig.CPUWeight == 20
                 && alpha.systemd.services."container@jellyfin".serviceConfig.IOWeight == 50
                 && alpha.systemd.services."container@jellyfin".serviceConfig.Nice == 10;
               validationMatches =
