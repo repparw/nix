@@ -5,6 +5,10 @@
 }:
 {
   den.aspects.gaming = {
+    user = _: {
+      extraGroups = [ "gamemode" ];
+    };
+
     nixos =
       { pkgs, ... }:
       {
@@ -23,12 +27,9 @@
         };
         environment.systemPackages = with pkgs; [
           shipwright
-          hydralauncher
           (heroic.override {
             extraPkgs =
               pkgs': with pkgs'; [
-                gamescope
-                gamemode
                 mangohud
                 proton-ge-bin
               ];
