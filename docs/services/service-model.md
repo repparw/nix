@@ -28,19 +28,24 @@ and individual service aspects.
 Each service aspect emits its reachability, routing, monitoring, and backup
 facts through the `service-registry` quirk. A fleet-wide `collectAll` pipe
 collects those facts with provenance, so `service-host` derives each service's
-`host` from the originating host entity. The host entity's `serviceAddress`
-field supplies cross-host reachability and is folded into
-`modules.services.hostAddresses`; there is no separate address registry.
-`service-host` then folds the registry into `modules.services.definitions`,
-preserving the validated compatibility seam used by existing consumers.
-Invalid routed or monitored definitions and duplicate names or container
-hostnames fail evaluation there.
+`host` from the originating host entity. `host` is required.
+The host entity's `serviceAddress` is the backend other fleet hosts use
+(`modules.services.hostAddresses`). `sshAddress` (defaulting to
+`serviceAddress`) is SSH, deploy-rs, and LAN `/etc/hosts`. Epsilon sets
+`sshAddress` to its public IP; its WireGuard address stays on
+`serviceAddress`.
+
+`service-host` also folds LAN DNS: vhosts with `lanEdge` resolve to
+`lanEdgeHost` (pi); other public names and the apex domain resolve to
+`publicEdgeHost` (epsilon's `sshAddress`). Invalid routed or monitored
+definitions and duplicate names or container hostnames fail evaluation.
 
 Definition fields drive host behavior as follows:
 
-- `hostname` and `domain` produce the public host name and proxy router.
+- `hostname` and `domain` produce the public host name and the proxy router.
 - `host` and `container` determine host membership and whether the allocator
   assigns a private bridge address.
+- `lanEdge` sends LAN clients to the LAN edge instead of the public edge.
 - `port` produces the proxy backend URL.
 - `auth` selects the proxy authentication middleware where routing is generic.
 - `monitor` adds the public URL and internal check URL to Glance.

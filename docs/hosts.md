@@ -37,28 +37,26 @@ Source: `modules/hosts/alpha.nix`
 ## Beta
 
 `beta` is the laptop profile. It adds laptop-specific input, power, and display
-handling to the shared baseline. It is parked: its host attachment is commented
-out in `modules/aspects/repparw.nix`, so it does not participate in flake
-evaluations until it has hardware again.
+handling to the shared baseline. It is parked: there is no `den.hosts` entry,
+so it does not participate in flake evaluations until it has hardware again.
 
 Source: `modules/hosts/beta.nix`
 
 ## Pi
 
 `pi` is the Raspberry Pi 5 home server (aarch64, `192.168.0.4`) and the
-always-on host: it runs the LAN-side edge (Traefik with Authelia SSO) and
-the declarative nspawn services that must survive workstation downtime.
-It is also the fleet's **sole flake.lock writer and deployment controller**:
+always-on host: it runs the LAN HTTPS edge for Jellyfin and Home Assistant,
+plus fleet-health and the deploy-rs controller. Authelia, Miniflux, and
+Glance live on epsilon.
+
+It is the fleet's **sole flake.lock writer and deployment controller**:
 one nightly transaction publishes a validated candidate to main, and an
 independent later transaction stages exact current main through epsilon, pi,
 and idle alpha with deploy-rs.
 
-- Traefik (:80/:443) routes the LAN vhosts; local backends target the
-  nspawn bridge, remote ones alpha's published ports
-  (the service aspects' `service-registry` emissions).
-- `containers.authelia` (`10.231.136.7`) provides SSO/forward-auth/OIDC.
-- `containers.homeassistant` (`10.231.136.2`) serves `home.repparw.com`.
-- `containers.miniflux` (`10.231.136.4`) serves `rss.repparw.com`.
+- Traefik (:80/:443) fronts `jellyfin.repparw.com` on the LAN and
+  `home.repparw.com` locally. Jellyfin's backend is alpha's published port.
+- `containers.homeassistant` serves `home.repparw.com`.
 - Fleet-health monitoring and the `fleet-controller` auto-update pipeline run here.
 
 It boots through the Raspberry Pi firmware and generic-extlinux-compatible
