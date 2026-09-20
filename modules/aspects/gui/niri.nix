@@ -25,8 +25,6 @@
 
         programs.niri.enable = lib.mkDefault true;
         programs.wshowkeys.enable = true;
-
-        environment.systemPackages = [ pkgs.xwayland-satellite ];
       };
 
     homeManager =
@@ -104,8 +102,6 @@
           package = pkgs.niri;
           systemd.enable = false;
           portalPackage = null;
-          xwaylandSatellitePackage = null;
-
           settings = {
             screenshot-path = "/home/repparw/Pictures/ss/screenshot-%Y-%m-%d_%H-%M-%S.png";
             prefer-no-csd = { };
