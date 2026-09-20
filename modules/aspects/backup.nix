@@ -131,7 +131,7 @@
             after = [ "network-online.target" ];
             wants = [ "network-online.target" ];
             path = [
-              (lib.getExe pkgs.rclone)
+              pkgs.rclone
               pkgs.restic
               pkgs.jq
               pkgs.curl
