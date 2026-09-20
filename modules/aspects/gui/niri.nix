@@ -424,6 +424,13 @@
               {
                 window-rule._children = [
                   { match._props.app-id = "^(gamescope)$"; }
+                  { open-fullscreen = true; }
+                  { variable-refresh-rate = true; }
+                  { open-on-output = "DP-1"; }
+                ];
+              }
+              {
+                window-rule._children = [
                   { match._props.app-id = "^(steam_app_.*)$"; }
                   { open-fullscreen = true; }
                   { variable-refresh-rate = true; }

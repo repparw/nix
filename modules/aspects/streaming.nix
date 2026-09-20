@@ -168,7 +168,97 @@
             # graphical.target entirely.)
             systemd.services.moonshine.wants = [ "systemd-udev-settle.service" ];
             systemd.services.moonshine.after = [ "systemd-udev-settle.service" ];
+
+            services.udev.extraRules = ''
+              ACTION=="add", SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_JOYSTICK}=="1", ATTRS{idVendor}=="2dc8", ATTRS{idProduct}=="310a", TAG+="systemd", ENV{SYSTEMD_USER_WANTS}+="8bitdo-tv-moonlight.service"
+            '';
           };
         };
+    };
+
+  den.aspects.streaming.homeManager =
+    { osConfig, pkgs, ... }:
+    let
+      moonlightAppId = "com.limelight.webos";
+      moonshineHostUuid = "dd0f9f90-97b2-4959-84fe-c4676ffce110";
+      steamAppId = 594305089;
+      launchPayload = builtins.toJSON {
+        id = moonlightAppId;
+        params = {
+          host_uuid = moonshineHostUuid;
+          host_app_id = steamAppId;
+        };
+      };
+      launchRemote = "luna-send -n 1 -w 3000 -f luna://com.webos.applicationManager/launch '${launchPayload}'";
+      launch = pkgs.writeShellApplication {
+        name = "8bitdo-tv-moonlight";
+        runtimeInputs = [
+          pkgs.jq
+          pkgs.niri
+          pkgs.openssh
+          pkgs.procps
+          pkgs.systemd
+        ];
+        text = ''
+          ssh_tv() {
+            ssh -o BatchMode=yes -o ConnectTimeout=5 -o RequestTTY=force tv "$@"
+          }
+
+          session_unlocked() {
+            local session _uid user class seat hint
+            while read -r session _uid user _; do
+              [ "$user" = "$USER" ] || continue
+              class="$(loginctl show-session "$session" -p Class --value 2>/dev/null || true)"
+              seat="$(loginctl show-session "$session" -p Seat --value 2>/dev/null || true)"
+              hint="$(loginctl show-session "$session" -p LockedHint --value 2>/dev/null || true)"
+              if [ "$class" = user ] && [ -n "$seat" ] && [ "$hint" = no ]; then
+                return 0
+              fi
+            done < <(loginctl list-sessions --no-legend)
+            return 1
+          }
+
+          tv_on=0
+          if power="$(ssh_tv 'luna-send -n 1 -w 3000 -f luna://com.webos.service.tvpower/power/getPowerState "{}"' 2>/dev/null)"; then
+            if jq -e '.state == "Active"' >/dev/null <<<"$power"; then
+              tv_on=1
+            fi
+          fi
+
+          if [ "$tv_on" -eq 1 ]; then
+            ssh_tv ${lib.escapeShellArg launchRemote} >/dev/null
+            exit 0
+          fi
+
+          session_unlocked || exit 0
+          [ -n "''${WAYLAND_DISPLAY:-}" ] || exit 0
+
+          niri msg action focus-monitor DP-1 >/dev/null
+
+          if pgrep -x gamescope >/dev/null || pgrep -x steam >/dev/null; then
+            exec ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
+          fi
+
+          exec ${lib.getExe pkgs.gamescope} --steam -H 1080 --adaptive-sync --fps-limit 162 -- \
+            ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
+        '';
+      };
+    in
+    {
+      home.packages = [ launch ];
+
+      systemd.user.services."8bitdo-tv-moonlight" = {
+        Unit = {
+          Description = "Start Steam via TV Moonlight or local Big Picture when the 8BitDo connects";
+          After = [
+            "network-online.target"
+            "graphical-session.target"
+          ];
+        };
+        Service = {
+          Type = "exec";
+          ExecStart = lib.getExe launch;
+        };
+      };
     };
 }
