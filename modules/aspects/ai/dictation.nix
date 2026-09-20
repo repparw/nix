@@ -22,18 +22,12 @@
         ...
       }:
       let
-        # quickshell OSD recipe colors, pulled from the Stylix base16 palette.
-        # dictation only applies on GUI hosts, so Stylix is always present.
         c = config.lib.stylix.colors.withHashtag;
 
-        # nixpkgs's voxtype ships the `voxtype-osd-quickshell` launcher but not
-        # the quickshell QML tree it needs to render, and not the `qs` runtime.
-        # Provide the QML shell from the pinned voxtype source and the runtime
-        # from nixpkgs#quickshell. Recipe theming (PR #501) needs voxtype >= 1.0.1.
         voxtypeQsQml = pkgs.fetchFromGitHub {
           owner = "peteonrails";
           repo = "voxtype";
-          rev = "dda37ca72b71294d08b0c5bb49c5b24ca590d847"; # v1.0.1
+          rev = "dda37ca72b71294d08b0c5bb49c5b24ca590d847";
           hash = "sha256-OT0tVSi9x3U7NwgZU00mojXk3RRWxuFoezpdSknLmmU=";
         };
 
@@ -67,9 +61,6 @@
         };
       in
       {
-        # nixpkgs doesn't ship the voxtype quickshell QML tree; install it so
-        # `voxtype-osd-quickshell` finds shell.qml. Sourced from the pinned
-        # voxtype repo so it matches the recipe config shipped above.
         xdg.dataFile."voxtype/quickshell" = {
           source = "${voxtypeQsQml}/quickshell";
           recursive = true;
@@ -214,10 +205,6 @@
               ];
             };
           };
-          # The daemon spawns `voxtype-osd` and output typing needs wtype;
-          # give the service an explicit PATH instead of relying on the
-          # module's display-gated default. WAYLAND_DISPLAY itself is
-          # inherited from the user manager environment (imported by niri).
           environment.PATH = lib.makeBinPath (
             with pkgs;
             [
@@ -226,8 +213,6 @@
               wl-clipboard
               wtype
               quickshell
-
-              # The daemon looks up the `voxtype-osd` launcher here.
               pkgs.voxtype-vulkan
             ]
           );

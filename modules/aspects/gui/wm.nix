@@ -111,15 +111,13 @@
           baobab
           playerctl
 
-          # Nautilus thumbnailers — no programs.nautilus upstream yet (see PR https://github.com/NixOS/nixpkgs/pull/319535)
-          # GNOME only pulls glycin/gst via services.desktopManager.gnome.enable
-          papers # PDF/PS — papers.thumbnailer (GNOME 48 successor to evince)
-          glycin-thumbnailer # images: heif/jxl/svg — GNOME default
-          gst-thumbnailers # video/audio via gstreamer — GNOME default
-          ffmpegthumbnailer # video fallback
-          sushi # Space preview, reuses thumbnailers
-          libgsf # office files (gsf-office.thumbnailer)
-          webp-pixbuf-loader # webp
+          papers
+          glycin-thumbnailer
+          gst-thumbnailers
+          ffmpegthumbnailer
+          sushi
+          libgsf
+          webp-pixbuf-loader
         ];
 
         services = {

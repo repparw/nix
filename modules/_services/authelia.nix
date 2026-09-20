@@ -164,9 +164,7 @@ in
 
       systemd.services.authelia-main.serviceConfig = {
         LoadCredential = [ "SMTP_PASSWORD:/run/secrets/authelia/SMTP_PASSWORD" ];
-        # The rw /config bind is the authelia state dir (users db, sqlite).
-        # Ensure it is owned by the service user regardless of who created the
-        # host dir. "+" runs this as root before the User= drop, so it applies
+        # "+" runs this as root before the User= drop, so it applies
         # inside the container's 1:1 userns to the host-side directory.
         ExecStartPre = [ "+${pkgs.coreutils}/bin/chown -R 999:999 /config" ];
         ProtectSystem = lib.mkForce "full";

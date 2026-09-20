@@ -4,10 +4,6 @@
   pkgs,
   ...
 }:
-# Miniflux + its PostgreSQL in an nspawn container, matching the estate
-# pattern (authelia/glance/ASF): traefik and sibling containers reach it
-# over the bridge at its own address, state lives under configDir, and the
-# nightly pg_dump lands next to it for the offsite restic sweep.
 let
   cfg = config.modules.services;
   servicesLib = import ./lib.nix { inherit lib pkgs; };
@@ -34,17 +30,12 @@ in
   containers.miniflux = servicesLib.mkContainer {
     inherit cfg;
     name = "miniflux";
-    # PostgreSQL startup plus migration checks outrun the 90s default on
-    # this board's first boot.
     extraOptions.timeoutStartSec = "10min";
     bindMounts = {
-      # PostgreSQL cluster: owned by the container's postgres user (same
-      # uid mapping, no privateUsers).
       "/var/lib/postgresql" = {
         hostPath = "${stateDir}/postgresql";
         isReadOnly = false;
       };
-      # Dump target passes through to the restic-swept configDir.
       "/srv/backups" = {
         hostPath = stateDir;
         isReadOnly = false;
@@ -60,8 +51,6 @@ in
           CREATE_ADMIN = 0;
           RUN_MIGRATIONS = 1;
           CLEANUP_FREQUENCY_HOURS = 24;
-          # Keep retrying after transient network outages instead of permanently
-          # removing feeds from the scheduler after the default three errors.
           POLLING_PARSING_ERROR_LIMIT = 0;
         };
       };

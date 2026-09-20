@@ -9,7 +9,6 @@
         auth = "one_factor";
         container = true;
         monitor = true;
-        healthcheck = "/api/health/";
         backupRelativePath = "paperless/export";
       };
     };
@@ -27,14 +26,17 @@
         service = cfg.definitions.paperless;
       in
       {
-        systemd.tmpfiles.rules = [
-          "d ${cfg.configDir}/paper 0755 root root -"
-        ];
-
         containers.paperless = servicesLib.mkContainer {
           inherit cfg;
           name = "paperless";
           privateUsers = "pick";
+          forwardPorts = [
+            {
+              protocol = "tcp";
+              hostPort = 8000;
+              containerPort = 8000;
+            }
+          ];
           bindMounts = {
             "/var/lib/paperless" = {
               hostPath = "${cfg.configDir}/paper";

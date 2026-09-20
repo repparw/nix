@@ -59,15 +59,11 @@
               gamescopeHdr
               pkgs.bubblewrap
               pkgs.procps
-              # Use the NixOS-configured wrapper so extraCompatPackages (GE-Proton)
-              # is exported to Steam inside Moonshine's transient session too.
               config.programs.steam.package
             ];
             text = ''
               ${stopDesktopSteam}
 
-              # Gamescope's WSI layer must remain discoverable for the HDR entry.
-              # moonshine-wsi is force-disabled below.
               export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${gamescopeHdr}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
               # Workaround for hgaiser/moonshine#93 (HDR/DX11 black screen):
@@ -123,15 +119,9 @@
               settings = {
                 name = config.networking.hostName;
 
-                # Grace period after the client's last ping before the session is
-                # torn down (default 60). A reconnecting client resumes the live
-                # session inside this window instead of killing the game; the
-                # 19:51:06 drop gave the client only ~44s to come back.
                 stream.timeout = 300;
                 application = [
                   {
-                    # Nested, isolated Niri desktop on Moonshine's Wayland output;
-                    # no --session: this is not the user's primary compositor.
                     title = "Desktop";
                     boxart = "${moonshine-boxart}/desktop.png";
                     command = [ (lib.getExe pkgs.niri) ];

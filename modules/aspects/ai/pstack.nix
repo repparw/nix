@@ -11,8 +11,6 @@
 
   den.aspects.ai.provides.pstack =
     let
-      # Guarded so `nix run .#write-flake` can collect the flake-file
-      # declaration before the input exists in the generated flake.
       plugins =
         inputs.cursor-plugins
           or (throw "flake input `cursor-plugins` missing; run `nix run .#write-flake`");
@@ -52,7 +50,6 @@
             // {
               poteto-mode = toString potetoMode;
 
-              # companion skills from cursor-team-kit referenced by pstack playbooks
               deslop = teamSkill "deslop";
               control-cli = teamSkill "control-cli";
               control-ui = teamSkill "control-ui";

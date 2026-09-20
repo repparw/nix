@@ -30,11 +30,6 @@
       {
         imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
-        # Offsite restic coverage. The gdrive-backed repo is deliberate:
-        # the union's consumer legs cannot hold 35G of Documents (tab.digital
-        # sat at 507 for weeks). Raw/Memorias are excluded — owner-managed.
-        # .config is deliberately absent: Firefox sync covers the browser,
-        # and the rest is cache or regenerating state.
         modules.backup = {
           paths = [
             "/home/containers/backup"
@@ -44,32 +39,17 @@
           excludes = [
             "${config.users.users.repparw.home}/.config/heroic/**"
             "${config.users.users.repparw.home}/.config/clipse/**"
-            # Owner-managed archive (still in Documents).
             "${config.users.users.repparw.home}/Documents/Memorias/**"
           ];
         };
 
-        # Crash capture: surface new coredumps to Discord. Only alpha runs
-        # this — pi's volatile journal cannot retain coredumps. wine64-
-        # preloader is routine proton breakage; adjust as tolerance changes.
         modules.coredump-watch = {
           enable = true;
           mute = [ "wine64-preloader" ];
         };
 
-        # Reboot-required surfacing to Discord (same delivery contract
-        # as disk-watch: posts on pending, deletes the message once a
-        # reboot converges). Alpha reboots by hand — the activity gate
-        # means automation must never reboot it unattended.
         modules.reboot-watch.enable = true;
 
-        # Disk-space surfacing to Discord (same delivery contract as
-        # coredump-watch: posts on breach, deletes the message on
-        # recovery). Thresholds picked after the Sep 2026 ENOSPC incident:
-        # btrfs metadata sat at 97.7% while df still showed 64G free, so
-        # the metadata pool gets its own check alongside df percents.
-        # Media disks sit nearly full by design, so their thresholds only
-        # fire when genuinely close to full (/mnt/hdd warn = ~150G free).
         modules.disk-watch = {
           enable = true;
           mounts = [
@@ -186,9 +166,6 @@
             ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0032", ATTR{power/control}="on"
           '';
 
-          # Local replication belongs to Alpha: these jobs depend on its
-          # attached disks and on Pi's service state, not on the generic
-          # offsite-backup capability.
           rsync = {
             enable = true;
             jobs = {
@@ -219,13 +196,9 @@
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl
         # --set standby are clamped by a vendor minimum that never engages);
-        # STANDBY IMMEDIATE (hdparm -y) is the only lever. Fire it once the
-        # media automounts above have idled out, so the platter actually sleeps
-        # between accesses. Address the disk by its filesystem label (HDD,
-        # the same token the /mnt/hdd automount uses) so the hardware serial
-        # never appears in the tree. Guard with findmnt on the LABEL; findmnt
-        # reads mountinfo and must NOT touch the automount (statvfs via
-        # mountpoint would reset the idle timer).
+        # STANDBY IMMEDIATE (hdparm -y) is the only lever. Guard with findmnt
+        # on the LABEL; findmnt reads mountinfo and must NOT touch the
+        # automount (statvfs via mountpoint would reset the idle timer).
         systemd.services.hdd-spindown = {
           description = "Spin down media HDD when automounts are idle";
           serviceConfig.Type = "oneshot";
@@ -305,9 +278,6 @@
         };
 
         networking.firewall.interfaces.eth0 = {
-          # No :80/:443 here. Only the published service backends are
-          # exposed, and only to the edge hosts that front them: pi (LAN)
-          # and epsilon (public, over the tunnel).
           allowedTCPPorts = [
             54535
           ];
@@ -320,9 +290,6 @@
           iifname "eth0" ip saddr { 192.168.0.4, 10.5.5.3 } tcp dport { 3000, 8081 } accept comment "edge ingress -> native alpha listeners"
         '';
 
-        # Published container backends arrive as forwarded traffic (DNAT into
-        # the ve-* veth by nspawn), so they need forward-chain acceptance, not
-        # input.
         networking.firewall.extraForwardRules = ''
           iifname "eth0" ip saddr { 192.168.0.4, 10.5.5.3 } oifname "ve-*" accept comment "edge ingress -> published container backends"
         '';

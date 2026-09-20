@@ -39,10 +39,6 @@ let
     ];
     policy = "bypass";
   };
-  # Healthcheck paths are probe endpoints for public-edge monitoring, so they
-  # must be reachable without authentication. One rule per service exposing a
-  # healthcheck path (each has its own), scoped to its vhost. Services already
-  # bypassed (jellyfin/auth=bypass) don't need one.
   healthcheckBypassRules =
     lib.mapAttrsToList
       (name: service: {

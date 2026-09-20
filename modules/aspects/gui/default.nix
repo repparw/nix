@@ -13,7 +13,6 @@
         zathura
         guiApps
       ]
-      # Sound and theming only exist where a GUI does; headless hosts skip both.
       ++ (with den.aspects; [
         audio
         style

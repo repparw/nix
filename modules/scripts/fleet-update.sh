@@ -90,7 +90,7 @@ if [ -e "$state/PAUSE" ]; then
 fi
 
 api="https://discord.com/api/v10/channels/@FLEET_DISCORD_CHANNEL@/messages"
-notify() { # content
+notify() {
   [ -r /run/secrets/hermes-env ] || return 0
   # shellcheck disable=SC1091
   source /run/secrets/hermes-env
@@ -107,14 +107,12 @@ strip_ansi() {
   awk 'BEGIN { esc = sprintf("%c", 27) } { gsub(esc "\\[[0-9;?]*[A-Za-z]", ""); gsub(/\r/, ""); print }'
 }
 
-notify_file() { # content, file
+notify_file() {
   [ -r /run/secrets/hermes-env ] || return 0
   [ -s "$2" ] || return 0
   # shellcheck disable=SC1091
   source /run/secrets/hermes-env
-  # Discord caps content at 2000 chars and has no collapsible code
-  # blocks, so inline a truncated ```diff snippet and only attach the
-  # full diff when it overflows the budget.
+  # Discord caps content at 2000 chars and has no collapsible code blocks.
   header="$1"
   file="$2"
   budget=1600
@@ -122,12 +120,7 @@ notify_file() { # content, file
   # as command substitution that will never expand (SC2016).
   fence="\`\`\`"
   raw=$(<"$file")
-  # Fence-breaking backticks never survive into the snippet.
   sanitized=${raw//\`/\'}
-  # diff-closures echoes every bump as a +/- pair under its summary
-  # line; the `old → new` line carries the whole signal, so inline
-  # summaries only. Pure add/removes have no summary line, hence the
-  # fallback to the full text.
   summaries=$(printf '%s' "$sanitized" | awk '/→/')
   if [ -n "$summaries" ]; then
     inline=$summaries
@@ -183,11 +176,9 @@ host_address() {
   esac
 }
 
-remote() { # host, command...
+remote() {
   local host="$1"
   shift
-  # Arguments are intentionally expanded by this client-side wrapper.
-  # shellcheck disable=SC2029
   ssh "${ssh_options[@]}" "root@$(host_address "$host")" "$@"
 }
 
@@ -195,7 +186,7 @@ host_is_idle() {
   local host="$1" inhibitors blocking_sleep
 
   # A locked physical session can still be serving an active remote game or
-  # media stream.  Those applications publish the standard systemd sleep
+  # media stream. Those applications publish the standard systemd sleep
   # inhibitor; delay-mode power-management hooks are not evidence of use.
   if ! inhibitors=$(remote "$host" systemd-inhibit --list --json=short --no-pager); then
     echo "$host inhibitor state is unavailable" >&2
@@ -327,7 +318,7 @@ if [ "$(free_kb)" -lt $((6 * 1024 * 1024)) ]; then
   exit 1
 fi
 
-write_candidate() { # revision, parent, status
+write_candidate() {
   local tmp="$state/candidate.new.$$"
   printf '%s\t%s\t%s\n' "$1" "$2" "$3" > "$tmp"
   mv "$tmp" "$state/candidate"
@@ -356,7 +347,7 @@ candidate_commit_is_safe() {
   [ "$changed" = flake.lock ]
 }
 
-cleanup_candidate_roots() { # revision
+cleanup_candidate_roots() {
   local host
   for host in epsilon pi alpha; do
     remote "$host" rm -f "/nix/var/nix/gcroots/fleet-update/$1" 2>/dev/null || true
@@ -420,8 +411,6 @@ if [ "$action" = promote ]; then
     exit 1
   fi
   write_candidate "$revision" "$parent" published
-  # GitHub is authoritative; keep mirror failures in the service log without
-  # turning them into fleet-health notifications.
   git push git@gitlab.com:repparw/nix.git HEAD:main || true
   notify ":arrow_up: fleet candidate ${revision:0:8} published; deployment is a separate transaction"
   exit 0
@@ -435,8 +424,6 @@ fi
 
 current_system=$(nix eval --impure --raw --expr builtins.currentSystem)
 nix build ".#checks.$current_system.deploy-schema" --no-link
-# Force every real profile path before the first canary changes. Evaluation or
-# mixed-architecture errors are preflight failures, not rollback events.
 preflight_hosts "${hosts[@]}"
 
 revision=$(git rev-parse HEAD)

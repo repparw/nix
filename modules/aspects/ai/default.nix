@@ -16,8 +16,6 @@
       t3code
     ];
 
-    # UI/UX AI tooling: needs input and sound hardware, so it only makes
-    # sense on desktop hosts. Base consumers skip this.
     provides.gui.includes = with den.aspects.ai._; [
       dictation
       speech

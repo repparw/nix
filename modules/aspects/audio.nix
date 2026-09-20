@@ -4,8 +4,6 @@
     nixos =
       { config, ... }:
       {
-        # User-owned so the interactive bttoggle helper can read it as a
-        # fallback when TOGGLE_BT_DEVICE is unset in its environment.
         sops.secrets.btDevice = {
           sopsFile = ../../secrets/bluetooth.sops.yaml;
           owner = config.users.users.repparw.name;
@@ -89,7 +87,6 @@
                 exit 2
               fi
 
-              # cache single DBus round-trip; most invocations need only this one call
               info=$(bluetoothctl info "$device" 2>&1 || true)
 
               is_connected() { [[ $info == *"Connected: yes"* ]]; }

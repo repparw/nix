@@ -48,8 +48,6 @@ _: {
           };
         };
 
-        # Defer iwd since ethernet is primary; wifi is backup only.
-        # Remove it from multi-user.target so it does not block boot.
         systemd.services.iwd.wantedBy = lib.mkForce [ ];
       };
   };
