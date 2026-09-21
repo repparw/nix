@@ -1,6 +1,6 @@
 ---
 type: Agent Guide
-title: Issue Tracker: GitHub
+title: "Issue Tracker: GitHub"
 description: Conventions for GitHub Issues, PRDs, and work tickets.
 when: Read when creating, fetching, claiming, or resolving repository work tickets.
 tags: [agents, github, issues]
@@ -31,4 +31,6 @@ For an external change that must reach a NixOS or Home Manager input, keep the
 canonical state in `data/upstream-gates.json` and inspect it with
 `nix run .#upstream-gates -- check`. A GitHub issue and a `watch-upstream`
 timer may support the wait, but they link to the gate ID rather than becoming a
-second status system. Close or update the issue when the gate reaches adoption.
+second status system. `adopting` means the pinned input is ready for cleanup.
+Close the issue only after cleanup and validation succeed and the result is
+confirmed on `origin/main`. A failed check or push leaves the issue open.

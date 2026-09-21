@@ -1,86 +1,102 @@
 ---
 name: watch-upstream
-description: 'Use for "watch until upstream lands", "when nixpkgs/home-manager PR X merges", "unblock when upstream", "remove the vendored workaround after", or any blocked-on-upstream cleanup: set an autonomous probe that completes the unblock (bump pin, drop workaround, merge the stacked PR) without human intervention.'
+description: Automate a cleanup that is waiting for an upstream change to reach a flake input. Use for watching upstream PRs, removing vendored workarounds after landing, or unblocking a stacked change.
 ---
 
 # Watch upstream
 
-A change is blocked on an upstream landing. Both halves are yours:
+Record the workaround paths, the upstream condition, and the requested
+completion actions. Preserve the user's scope: a notification-only request
+does not authorize an automated cleanup or push.
 
-1. **Arm** a probe that detects the landing.
-2. **Complete** the cleanup. "Tell me when it lands" is not done.
+## Define the gate
 
-## Before arming
+Create or update the gate in `data/upstream-gates.json`. It is the canonical
+source for landing predicates, the input to update, owned paths, timer name,
+and tracking issue. Use the existing schema and validate it with:
 
-State three things back to the human for correction:
+```bash
+nix run .#upstream-gates -- validate
+```
 
-- **Workaround**: exact file paths and lines of what stands in for upstream.
-- **Upstream event**: the precise observable condition meaning "landed" (a raw URL returns 200 on the pinned branch, or a PR's `merged_at` plus the pin containing the merge commit).
-- **Completion actions**: everything that becomes possible once landed, as mechanical edits.
+The checker distinguishes:
 
-Create or update the matching gate in `data/upstream-gates.json` before arming
-the timer, then run `nix run .#upstream-gates -- validate`. The registry is the
-canonical state; the timer, issue, and this skill are linked mechanisms. Use
-`nix run .#upstream-gates -- check <gate-id>` to derive the state:
+- `waiting-upstream`: the source change is unavailable.
+- `waiting-unstable`: the source is ready, but the target branch is not.
+- `waiting-pin`: the branch is ready, but this lockfile is behind.
+- `adopting`: the exact pin is ready for cleanup, which has not yet completed.
 
-- `waiting-upstream`: the release, commit, or PR is not available.
-- `waiting-unstable`: upstream has it, but the target branch does not.
-- `waiting-pin`: the target branch has it, but the exact `flake.lock` revision does not.
-- `adopting`: the exact lock contains it and the guarded cleanup can run.
+Keep branch and pin predicates equivalent apart from their reference.
+`nh search` helps discover changes; it does not prove that the exact lockfile
+contains one. Record real upstream references, or use a source predicate when
+no PR exists.
 
-Never collapse `waiting-unstable` and `waiting-pin`: the former cannot be
-fixed by the next lock update, while the latter can. Record the input,
-authoritative branch, exact channel and pin predicates, workaround paths, and
-completion action. If no upstream PR exists, use a release or source
-predicate; do not invent a PR number.
+The `workaround` array is also the allowed edit list. Include every file the
+cleanup changes, including consumers of a removed aspect. The runner also
+allows `flake.lock`. Add the tracking issue URL when one exists.
 
-Each gate defines `input`, `repository`, `branch`, `source`, `channel`, `pin`,
-`workaround`, `completion`, `watcher`, `issue`, and `upstream`. Predicates use
-`file-contains`, `package-version`, `package-release-version`,
-`package-tag-contains-commits`, or `commit-in-branch`/`commit-in-pin`; keep the
-channel and pin predicates equivalent except for their reference.
+## Implement cleanup
 
-Restructure first if needed: vendored code gets its own file/provide included by single lines from every consumer, so completion is `git rm` plus deleting include lines, never regex surgery.
+Use the tracked [runner](scripts/run.sh) and [gate actions](scripts/actions.sh).
+Add the gate's three actions:
 
-## The probe
+- `completed` reads the checkout and returns 0 for completed cleanup, 1 for
+  remaining work, or another status for a failed inspection.
+- `apply` performs the narrow cleanup. Check anchors before editing shared
+  files; prefer removing a dedicated workaround and its includes.
+- `verify` evaluates affected hosts and builds or exercises the behavior the
+  workaround provided. Discover hosts from the flake instead of keeping a list.
 
-No cron on this machine. Systemd user pair in `~/.config/systemd/user/`: `<name>.service` (`Type=oneshot`, `ExecStart=<script>`) and `<name>.timer` (`OnCalendar=*-*-* 00/2:17:00`, **`Persistent=true`**, `WantedBy=timers.target`). Then enable and start it. Two hours is plenty; faster buys nothing.
+The runner fetches `origin/main` and uses a unique detached worktree. It calls
+the checker from that checkout, updates only the declared input for
+`waiting-pin`, and rechecks the new lock before editing. Errors fail the run;
+ordinary waiting exits 0. A per-gate lock prevents overlapping executions.
 
-The script goes in `~/.local/bin/<name>.sh`, never in the repo. Hardcode `REPO="$HOME/Projects/nix"`.
+After cleanup it checks owned paths, validates, commits, and pushes without
+force. It confirms completion on freshly fetched origin before closing the
+tracking issue and disabling the timer. Failed validation, pushes, or issue
+closure leave the timer armed for retry. The user's working files are never
+pulled, reset, or used to decide completion.
 
-The probe's comments, notifications, and completion commit should include the
-gate ID. It should call the checker before acting and distinguish its branch
-and pin predicates. `nh search` is useful for discovery, but is not proof of a
-specific branch or lockfile revision. For package waits, use the target
-package source path and semantic version or behavior predicate; a moving
-channel result is not proof that this flake's pin has landed it.
+## Verify and install
 
-## Script contract
+Run the isolated tests, which use a local bare Git repository and substitute
+network, Nix-build, issue, and systemd operations:
 
-Every watcher must satisfy all five:
+```bash
+node --test modules/aspects/ai/skills/watch-upstream/scripts/run.test.mjs
+```
 
-1. **Quiet while waiting**: not-ready prints one line, exits 0. Non-zero there pollutes journals.
-2. **Idempotent**: detect "already done" and disable the timer instead of redoing work.
-3. **Narrow writes**: stage only files the unblock owns. Detection and gating run in a pristine worktree from `origin/main` and must not read the working copy; only steps that mutate the local checkout (the convenience pull) may check for a dirty tree, and they stay guarded so dirt merely skips them.
-4. **Gate before pushing**: after detection, run what breaks if you guessed wrong (flake update then eval every host; build the unpatched package). Gate failure means revert local state untouched, exit non-zero, notify. Detection alone is not permission to act.
-5. **Self-disarming**: full success disables the timer.
+Tests cover the current cleanups, waiting states, failed checks, retries,
+publication, and retirement. Add a case when a new cleanup needs another
+observable assertion. CI also runs `checks.agent-skills` and
+`checks.upstream-gates`.
 
-Bash/awk only; python3 is not on systemd's default PATH. Gotchas: gawk treats `-v var="123"` as a string, so write `NR > (s + 0)` or line comparisons match lexicographically; flakes only see git-tracked files, so stage new workaround files before any eval against the tree.
+Install the registered launchers:
 
-## Verify armed, report
+```bash
+bash modules/aspects/ai/skills/watch-upstream/scripts/install.sh "$PWD"
+~/.local/bin/watch-qbittorrent.sh --check-only
+```
 
-Run the script once by hand (expect the not-ready path), confirm `list-timers` shows the next fire. Report: what is watched, the condition, what happens automatically, where logs live (`journalctl --user -u <name>`), and that the probe survives restarts.
+The installer copies a versioned runner/action bundle under `~/.local/lib/`,
+backs up replaced scripts there, and atomically replaces the launchers in
+`~/.local/bin/`. It does not enable or start timers. Gate definitions must be
+on `origin/main` before the installed runner can use them. `--check-only`
+reports readiness or completion without updating inputs, applying changes,
+pushing, closing issues, or changing timers.
 
-Reference implementations (machine-local): `watch-t3code-title-fix.sh`, `watch-tasks-org.sh`, `watch-qbittorrent.sh`, `watch-t3code-server.sh`, `watch-t3code-split.sh`.
+For a new authorized automation, create a systemd user oneshot service whose
+`ExecStart` is the installed launcher. Use a two-hour timer with
+`Persistent=true` and `WantedBy=timers.target`, then enable and start it.
+Confirm the next fire with `systemctl --user list-timers` and report the gate,
+automatic actions, and logs at `journalctl --user -u <service>`.
 
-## Dropping a watcher
+## Retire
 
-When the upstream event is permanently satisfied (branch merged and gone, workaround removed on `origin/main`, tracking issue closed), retire the probe instead of leaving a disabled timer behind:
-
-1. **Confirm done on origin, not the worktree**: branch gone (`ls-remote --heads origin <branch>` empty), workaround files absent from `origin/main`, issue closed. Local checkout state is irrelevant.
-2. **Run the script by hand**: expect its idempotent disarm path (disable timer, prune worktree), exit 0. This doubles as proof the disarm branch works.
-3. **Remove the dead units**: `rm ~/.config/systemd/user/<name>.{timer,service}`, `systemctl --user daemon-reload`, confirm gone via `list-timers` and `is-enabled`.
-4. **Decide the script's fate**: keep it if cited above as a reference implementation; otherwise delete `~/.local/bin/<name>.sh` and drop it from the reference list.
-5. **Grep for stragglers**: repo, `~/.local/bin`, and the unit dir for the watcher name; update any docs or issues that still point at it.
-
-Retirement must work over a dirty tree — disarm checks read `origin`, never the working copy.
+The runner disables the timer only after completion is confirmed on origin
+and the tracking issue is closed. Once that is confirmed, remove its user
+service and timer files, run `systemctl --user daemon-reload`, and verify that
+they are gone. Remove the obsolete launcher and registry entry together with
+its gate-specific actions. Historical reference scripts are unnecessary;
+the maintained runner and tests remain in the repository.
