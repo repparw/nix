@@ -16,7 +16,6 @@
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.disk-watch
       den.aspects.nixos-services._.reboot-watch
-      den.aspects.streaming._.pulse-crash-fix
       den.aspects.deploy-target
     ];
 
