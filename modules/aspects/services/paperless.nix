@@ -31,8 +31,13 @@
         # module's in-container tmpfiles cannot chown across an unmapped
         # mount, and Django refuses to start when PAPERLESS_DATA_DIR is not
         # writeable (boot loops forever, nspawn never signals READY).
+        # `d` creates the dir; `z` recursively heals ownership of migrated
+        # trees (a host root chown cannot touch files under the active
+        # idmapped bind mount, but tmpfiles runs while the container is
+        # stopped during switch, and before it starts at boot).
         systemd.tmpfiles.rules = [
           "d ${cfg.configDir}/paper 0755 393531 393531 -"
+          "z ${cfg.configDir}/paper 0755 393531 393531 -"
         ];
 
         # First boot on slow storage can spend minutes in the scheduler
