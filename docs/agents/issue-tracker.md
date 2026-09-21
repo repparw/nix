@@ -1,6 +1,6 @@
 ---
 type: Agent Guide
-title: Issue Tracker: GitHub
+title: "Issue Tracker: GitHub"
 description: Conventions for GitHub Issues, PRDs, and work tickets.
 when: Read when creating, fetching, claiming, or resolving repository work tickets.
 tags: [agents, github, issues]

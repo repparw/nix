@@ -167,6 +167,17 @@
                 touch $out
               '';
 
+          agent-docs =
+            pkgs.runCommand "check-agent-docs"
+              {
+                nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+              }
+              ''
+                export PYTHONDONTWRITEBYTECODE=1
+                python3 ${./scripts}/check-agent-docs.test.py ${inputs.self}
+                touch $out
+              '';
+
           service-definitions =
             let
               alpha = inputs.self.nixosConfigurations.alpha.config;
