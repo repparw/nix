@@ -30,5 +30,27 @@
         ${lib.getExe upstreamGates} validate
         touch "$out"
       '';
+
+      checks.agent-skills =
+        pkgs.runCommand "check-agent-skills"
+          {
+            nativeBuildInputs = with pkgs; [
+              bash
+              git
+              jq
+              nix
+              nodejs
+              util-linux
+            ];
+          }
+          ''
+            export HOME=$(mktemp -d)
+            export GIT_CONFIG_NOSYSTEM=1
+            export AGENT_SKILLS_SOURCE=${../.}
+            node --test \
+              ${../.agents/skills/verify-nixos-config/scripts}/build.test.mjs \
+              ${./aspects/ai/skills/watch-upstream/scripts}/run.test.mjs
+            touch "$out"
+          '';
     };
 }
