@@ -179,6 +179,8 @@ host_address() {
 remote() {
   local host="$1"
   shift
+  # Arguments are intentionally expanded by this client-side wrapper.
+  # shellcheck disable=SC2029
   ssh "${ssh_options[@]}" "root@$(host_address "$host")" "$@"
 }
 
