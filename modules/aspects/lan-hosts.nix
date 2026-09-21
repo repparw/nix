@@ -12,8 +12,15 @@ _: {
   # When adding a service, mirror its ingress-policy.nix router rule here.
   den.aspects.lan-hosts = {
     nixos =
-      { lib, pkgs, ... }:
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
       let
+        domain = config.modules.services.domain;
+
         # Static address of the edge host (see hosts/pi.nix).
         piAddress = "192.168.0.4";
         epsilonAddress = "146.181.42.97";
@@ -22,22 +29,22 @@ _: {
         # 192.168.0.0/24 hosts + TV. Keeps Jellyfin https local without
         # cloud round-trip. Keep in sync with ingress-policy.nix.
         piNames = [
-          "jellyfin.repparw.com"
+          "jellyfin.${domain}"
         ];
 
         # Served by epsilon directly (apex + remaining vhosts external).
         epsilonNames = [
-          "repparw.com"
-          "auth.repparw.com"
-          "bazarr.repparw.com"
-          "finance.repparw.com"
-          "home.repparw.com"
-          "paper.repparw.com"
-          "prowlarr.repparw.com"
-          "qbit.repparw.com"
-          "radarr.repparw.com"
-          "rss.repparw.com"
-          "sonarr.repparw.com"
+          domain
+          "auth.${domain}"
+          "bazarr.${domain}"
+          "finance.${domain}"
+          "home.${domain}"
+          "paper.${domain}"
+          "prowlarr.${domain}"
+          "qbit.${domain}"
+          "radarr.${domain}"
+          "rss.${domain}"
+          "sonarr.${domain}"
         ];
 
         rendered = ''

@@ -40,7 +40,7 @@
 
         # Glance probes the public routes, except the apex dashboard itself.
         containers.glance.config.networking.hosts = {
-          "${config.containers.glance.localAddress}" = [ "repparw.com" ];
+          "${config.containers.glance.localAddress}" = [ config.modules.services.domain ];
         };
         # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
         # Installed in place via nixos-infect on top of Ubuntu's partition

@@ -3,6 +3,9 @@
   lib,
   ...
 }:
+let
+  domain = config.modules.services.domain;
+in
 {
   sops.secrets.ddclientPassword = {
     sopsFile = ../../secrets/ddclient.sops.yaml;
@@ -28,8 +31,8 @@
   services.ddclient = {
     enable = true;
     protocol = "cloudflare";
-    zone = "repparw.com";
-    domains = [ "repparw.com" ];
+    zone = domain;
+    domains = [ domain ];
     username = "token";
     passwordFile = config.sops.secrets.ddclientPassword.path;
     usev4 = "webv4, webv4=ifconfig.me/ip";

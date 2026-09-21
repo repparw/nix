@@ -8,6 +8,19 @@
       ...
     }:
     let
+      # Container units on epsilon, derived from the fleet service registry
+      # (host == epsilon with container = true) instead of a hardcoded list,
+      # so the reboot gate cannot drift when services move between hosts.
+      epsilonContainers = lib.concatStringsSep " " (
+        map (name: "container@${name}") (
+          lib.attrNames (
+            lib.filterAttrs (_: service: service.host == "epsilon" && service.container) (
+              config.modules.services.definitions or { }
+            )
+          )
+        )
+      );
+
       # One controller-side transaction owns both headless reboots. Holding
       # the normal fleet lock across epsilon's reboot and recovery prevents
       # promote/deploy from racing either host, while the post-boot health
@@ -81,12 +94,13 @@
               running | degraded) ;;
               *) return 1 ;;
             esac
+            # Container units derive from the service registry; traefik is
+            # the native edge ingress and stays outside the container gate.
             remote_epsilon systemctl is-active --quiet \
-              container@hermes.service container@authelia.service \
-              container@miniflux.service container@archisteamfarm.service traefik.service \
+              ${epsilonContainers} traefik.service \
               || return 1
-            http_200 https://repparw.com/ || return 1
-            http_200 https://rss.repparw.com/healthcheck || return 1
+            http_200 https://${config.modules.services.domain}/ || return 1
+            http_200 https://rss.${config.modules.services.domain}/healthcheck || return 1
           }
 
           backup_state_epsilon() {

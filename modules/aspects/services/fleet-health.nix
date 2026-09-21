@@ -13,8 +13,8 @@ let
   # of each reimplementing curl+jq. Watcher policy (strikes, levels,
   # grouping) stays in each script.
   # Pure text (no pkgs): each watcher block instantiates it with
-  # writeShellApplication below.
-  discordChannelId = "1515064288191053979";
+  # writeShellApplication below. The channel id itself comes from
+  # modules.services.discordChannelId (service-definitions.nix).
 
   discordNotifyText = ''
     if [ $# -lt 1 ]; then
@@ -229,24 +229,24 @@ in
             # public vhosts through the real edge path. As cross-host
             # surfaces they are remote() checks — epsilon's health never
             # gates or rolls back pi's flip.
-            remote authelia https://auth.repparw.com/api/health 200
-            remote miniflux https://rss.repparw.com/healthcheck 200
-            remote paperless https://paper.repparw.com/api/health/ 200
+            remote authelia https://auth.${config.modules.services.domain}/api/health 200
+            remote miniflux https://rss.${config.modules.services.domain}/healthcheck 200
+            remote paperless https://paper.${config.modules.services.domain}/api/health/ 200
             http home-assistant http://${config.containers.homeassistant.localAddress}:8123 ""
             # pi's own traefik still serves the LAN vhost for HA; the check
             # pins SNI to the local loopback per the sniStrict gotcha.
-            http home https://home.repparw.com/ "" --resolve home.repparw.com:443:127.0.0.1
-            remote apex https://repparw.com/ 200
+            http home https://home.${config.modules.services.domain}/ "" --resolve home.${config.modules.services.domain}:443:127.0.0.1
+            remote apex https://${config.modules.services.domain}/ 200
             # Services exposing a healthcheck are probed at their public
             # healthcheck endpoint (authelia-bypassed) through the real edge,
             # so the probe reflects what a visitor experiences. Services
             # without one (qbittorrent/finance) stay on the LAN
             # root where any response means "up".
-            remote jellyfin https://jellyfin.repparw.com/health 200
-            remote bazarr https://bazarr.repparw.com/health 200
-            remote prowlarr https://prowlarr.repparw.com/ping 200
-            remote radarr https://radarr.repparw.com/ping 200
-            remote sonarr https://sonarr.repparw.com/ping 200
+            remote jellyfin https://jellyfin.${config.modules.services.domain}/health 200
+            remote bazarr https://bazarr.${config.modules.services.domain}/health 200
+            remote prowlarr https://prowlarr.${config.modules.services.domain}/ping 200
+            remote radarr https://radarr.${config.modules.services.domain}/ping 200
+            remote sonarr https://sonarr.${config.modules.services.domain}/ping 200
             remote qbittorrent http://192.168.0.18:18080/ ""
             remote finance http://192.168.0.18:3000/ ""
 
@@ -304,7 +304,7 @@ in
             wants = [ "network-online.target" ];
             environment = {
               HOSTNAME = config.networking.hostName;
-              DISCORD_CHANNEL_ID = discordChannelId;
+              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
             };
             serviceConfig = {
               Type = "oneshot";
@@ -447,7 +447,7 @@ in
             wants = [ "network-online.target" ];
             environment = {
               HOSTNAME = config.networking.hostName;
-              DISCORD_CHANNEL_ID = discordChannelId;
+              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
               MUTE_JSON = builtins.toJSON cfg.mute;
             };
             serviceConfig = {
@@ -663,7 +663,7 @@ in
             environment = {
               HOSTNAME = config.networking.hostName;
               MOUNTS_JSON = builtins.toJSON cfg.mounts;
-              DISCORD_CHANNEL_ID = discordChannelId;
+              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
               META_WARN = toString cfg.metadataWarn;
               META_CRIT = toString cfg.metadataCrit;
               META_UNALLOC_WARN_GB = toString cfg.metadataUnallocWarnGiB;
@@ -766,7 +766,7 @@ in
             wants = [ "network-online.target" ];
             environment = {
               HOSTNAME = config.networking.hostName;
-              DISCORD_CHANNEL_ID = discordChannelId;
+              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
             };
             serviceConfig = {
               Type = "oneshot";

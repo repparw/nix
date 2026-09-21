@@ -13,6 +13,10 @@ force=0
 lock_wait=0
 requested_host=all
 state="${FLEET_UPDATE_STATE:-/var/lib/auto-update}"
+# Git identity of automation-authored commits (candidate safety check,
+# promote, revert). A git identity, not a DNS name.
+auto_update_name="pi-auto-update"
+auto_update_email="pi-auto-update@repparw.com"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -85,7 +89,7 @@ if [ -e "$state/PAUSE" ]; then
   echo "explicit force overrides automation pause at $state/PAUSE"
 fi
 
-api="https://discord.com/api/v10/channels/1515064288191053979/messages"
+api="https://discord.com/api/v10/channels/@FLEET_DISCORD_CHANNEL@/messages"
 notify() { # content
   [ -r /run/secrets/hermes-env ] || return 0
   # shellcheck disable=SC1091
@@ -249,31 +253,52 @@ http_code() {
   [ "$(curl -sS -m 10 -o /dev/null -w '%{http_code}' "$1" || true)" = "$2" ]
 }
 
+# Container units owned by a host, derived from the service registry of the
+# deployed revision (definitions with container = true) instead of a
+# hardcoded list, so the soak gate cannot drift when services move between
+# hosts. Evaluated once per host per run and cached; the raw JSON stays in
+# the cache so a legitimately empty list is not re-evaluated.
+declare -A container_units_json
+container_units() { # host -> space-separated container@name units; 1 on eval failure
+  local host="$1"
+  if [ -z "${container_units_json[$host]-}" ]; then
+    container_units_json[$host]=$(nix eval --json ".#nixosConfigurations.$host.config.modules.fleet-update.containerUnits") || return 1
+  fi
+  jq -r 'join(" ")' <<< "${container_units_json[$host]}"
+}
+
 health_once() {
-  local host="$1" state_now
+  local host="$1" state_now units
   state_now=$(remote "$host" systemctl is-system-running 2>/dev/null || true)
   case "$state_now" in
     running | degraded) ;;
     *) return 1 ;;
   esac
 
+  units=$(container_units "$host") || return 1
+  if [ -n "$units" ]; then
+    # Unit names are intentionally expanded by this client-side wrapper.
+    # shellcheck disable=SC2086,SC2029
+    remote "$host" systemctl is-active --quiet $units || return 1
+  fi
+  # The native edge ingress is not a container; it stays outside the
+  # derived container gate.
+  case "$host" in
+    epsilon | pi)
+      remote "$host" systemctl is-active --quiet traefik.service || return 1
+      ;;
+  esac
+
   case "$host" in
     epsilon)
-      remote epsilon systemctl is-active --quiet \
-        container@hermes.service container@authelia.service \
-        container@miniflux.service container@archisteamfarm.service traefik.service || return 1
-      http_code https://repparw.com/ 200 || return 1
-      http_code https://rss.repparw.com/healthcheck 200 || return 1
+      http_code https://@FLEET_DOMAIN@/ 200 || return 1
+      http_code https://rss.@FLEET_DOMAIN@/healthcheck 200 || return 1
       ;;
     pi)
-      remote pi systemctl is-active --quiet \
-        container@homeassistant.service traefik.service || return 1
-      http_code https://home.repparw.com/ 200 || return 1
+      http_code https://home.@FLEET_DOMAIN@/ 200 || return 1
       ;;
     alpha)
-      remote alpha systemctl is-active --quiet \
-        container@jellyfin.service container@paperless.service || return 1
-      http_code http://192.168.0.18:8096/health 200 || return 1
+      http_code http://@FLEET_ALPHA_ADDRESS@:8096/health 200 || return 1
       ;;
   esac
 }
@@ -325,7 +350,7 @@ read_candidate() {
 candidate_commit_is_safe() {
   local revision="$1" parent="$2" changed
   [ "$(git rev-parse "$revision^")" = "$parent" ] || return 1
-  [ "$(git show -s --format='%an <%ae>' "$revision")" = "pi-auto-update <pi-auto-update@repparw.com>" ] || return 1
+  [ "$(git show -s --format='%an <%ae>' "$revision")" = "$auto_update_name <$auto_update_email>" ] || return 1
   [ "$(git show -s --format=%s "$revision")" = "flake.lock: Update" ] || return 1
   changed=$(git diff-tree --no-commit-id --name-only -r "$revision") || return 1
   [ "$changed" = flake.lock ]
@@ -382,8 +407,8 @@ if [ "$action" = promote ]; then
   nix build ".#checks.$current_system.deploy-schema" --no-link
   preflight_hosts epsilon pi alpha
 
-  git config user.name pi-auto-update
-  git config user.email pi-auto-update@repparw.com
+  git config user.name "$auto_update_name"
+  git config user.email "$auto_update_email"
   git add flake.lock
   git commit -m "flake.lock: Update"
   revision=$(git rev-parse HEAD)
@@ -531,8 +556,8 @@ if [ -n "$failure_host" ]; then
     if [ "$remote_revision" = "$candidate_revision" ] \
       && candidate_commit_is_safe "$candidate_revision" "$candidate_parent"; then
       if git reset --hard "$candidate_revision" \
-        && git config user.name pi-auto-update \
-        && git config user.email pi-auto-update@repparw.com \
+        && git config user.name "$auto_update_name" \
+        && git config user.email "$auto_update_email" \
         && git revert --no-edit "$candidate_revision" \
         && git push git@github.com:repparw/nix.git HEAD:main; then
         revert_published=1

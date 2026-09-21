@@ -146,7 +146,7 @@
             };
             script =
               let
-                channelId = "1515064288191053979";
+                channelId = config.modules.services.discordChannelId;
               in
               ''
                 # shellcheck disable=SC1091

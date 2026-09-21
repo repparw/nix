@@ -75,6 +75,14 @@ let
 
   mkFleetUpdate =
     pkgs:
+    let
+      # Fleet facts as the controller evaluates them. service-definitions.nix
+      # (imported by service-host on every fleet host) is the canonical source;
+      # pi is the serialized fleet controller (deployBase.nodes below), so its
+      # config resolves the option defaults the script is built from. Lazy
+      # read: the fixed-point materializes before the package value is forced.
+      controllerConfig = inputs.self.nixosConfigurations.pi.config;
+    in
     pkgs.writeShellApplication {
       name = "fleet-update";
       runtimeInputs = with pkgs; [
@@ -95,11 +103,15 @@ let
             "@FLEET_ALPHA_ADDRESS@"
             "@FLEET_PI_ADDRESS@"
             "@FLEET_EPSILON_ADDRESS@"
+            "@FLEET_DOMAIN@"
+            "@FLEET_DISCORD_CHANNEL@"
           ]
           [
             deployBase.nodes.alpha.hostname
             deployBase.nodes.pi.hostname
             deployBase.nodes.epsilon.hostname
+            controllerConfig.modules.services.domain
+            controllerConfig.modules.services.discordChannelId
           ]
           (builtins.readFile ./scripts/fleet-update.sh);
     };
@@ -163,11 +175,31 @@ in
           readOnly = true;
           description = "Deploy target addresses used by controller-side fleet automation";
         };
+        containerUnits = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          readOnly = true;
+          description = ''
+            Container units owned by this host, derived from service
+            definitions with container = true. Fleet health gates eval this
+            per target so the checked unit list cannot drift from the
+            registry when services move between hosts.
+          '';
+        };
       };
 
       config = {
         modules.fleet-update.package = mkFleetUpdate pkgs;
         modules.fleet-update.targetAddresses = lib.mapAttrs (_: node: node.hostname) deployBase.nodes;
+        # Definitions come from the fleet-wide service registry (every host
+        # sees all services with their owning host); the empty fallback
+        # keeps a service-less deploy target evaluable.
+        modules.fleet-update.containerUnits = map (name: "container@${name}") (
+          lib.attrNames (
+            lib.filterAttrs (_: service: service.host == config.networking.hostName && service.container) (
+              config.modules.services.definitions or { }
+            )
+          )
+        );
         systemd.tmpfiles.rules = [ "d /run/deploy-rs 0700 root root -" ];
         users.users.root.openssh.authorizedKeys.keys =
           config.users.users.repparw.openssh.authorizedKeys.keys;

@@ -173,7 +173,7 @@ in
                           links = [
                             {
                               title = "Mail";
-                              url = "mailto:me@repparw.com";
+                              url = "mailto:me@${cfg.domain}";
                             }
                             {
                               title = "Github";

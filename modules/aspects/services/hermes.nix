@@ -187,12 +187,13 @@
                 # Free tier: the credits gauge is pure noise in chat.
                 settings.display.credits_notices = false;
                 # Home channel for cron results and cross-platform pokes
-                # (matches /sethome in #notifications).
+                # (matches /sethome in #notifications). The id comes from
+                # modules.services.discordChannelId (service-definitions.nix).
                 settings.platforms.discord = {
                   enabled = true;
                   home_channel = {
                     platform = "discord";
-                    chat_id = "1515064288191053979";
+                    chat_id = config.modules.services.discordChannelId;
                     name = "notifications";
                   };
                 };
