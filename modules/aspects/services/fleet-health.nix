@@ -4,8 +4,6 @@
   ...
 }:
 let
-  discordChannelId = "1515064288191053979";
-
   discordNotifyText = ''
     if [ $# -lt 1 ]; then
       echo "usage: discord-notify post <content> | delete <message-id>" >&2
@@ -256,7 +254,7 @@ ${vhostProbes}
             wants = [ "network-online.target" ];
             environment = {
               HOSTNAME = config.networking.hostName;
-              DISCORD_CHANNEL_ID = discordChannelId;
+              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
             };
             serviceConfig = {
               Type = "oneshot";
@@ -392,7 +390,7 @@ ${vhostProbes}
             wants = [ "network-online.target" ];
             environment = {
               HOSTNAME = config.networking.hostName;
-              DISCORD_CHANNEL_ID = discordChannelId;
+              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
               MUTE_JSON = builtins.toJSON cfg.mute;
             };
             serviceConfig = {
@@ -596,7 +594,7 @@ ${vhostProbes}
             environment = {
               HOSTNAME = config.networking.hostName;
               MOUNTS_JSON = builtins.toJSON cfg.mounts;
-              DISCORD_CHANNEL_ID = discordChannelId;
+              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
               META_WARN = toString cfg.metadataWarn;
               META_CRIT = toString cfg.metadataCrit;
               META_UNALLOC_WARN_GB = toString cfg.metadataUnallocWarnGiB;
@@ -690,7 +688,7 @@ ${vhostProbes}
             wants = [ "network-online.target" ];
             environment = {
               HOSTNAME = config.networking.hostName;
-              DISCORD_CHANNEL_ID = discordChannelId;
+              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
             };
             serviceConfig = {
               Type = "oneshot";

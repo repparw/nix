@@ -1,3 +1,5 @@
+# Host toplevel evals stub hermes-agent's package (upstream CI). This workflow
+# is that gate, run on push instead of only when a session remembers to run it.
 name: ci
 on:
   push:
@@ -22,4 +24,5 @@ jobs:
           .#checks.x86_64-linux.service-definitions
           .#checks.x86_64-linux.alpha
           .#checks.x86_64-linux.pi
+          .#checks.x86_64-linux.epsilon
           --print-build-logs --keep-going
