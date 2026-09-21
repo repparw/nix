@@ -17,12 +17,12 @@ history is small by comparison.
 
 ## Data layout
 
-| Path | Contents | History? |
-| --- | --- | --- |
-| `~/.t3/userdata/state.sqlite` | `orchestration_events` (append-only event store), projections, receipts | Conversations live in `projection_thread_messages` (~30 MB); events are replays |
-| `~/.local/share/opencode/opencode-stable.db` | `event` table (streaming-update replays), plus `session`/`message`/`part` | Chat history is `message` + `part`; `event` rows are duplicates |
-| `~/.t3/userdata/logs/provider/` | Per-thread provider logs named `events.<thread-uuid>.log` | No |
-| `~/.t3/userdata/server-runtime.json` | Lease file proving which process owns port 3773 | No |
+| Path                                         | Contents                                                                  | History?                                                                        |
+| -------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `~/.t3/userdata/state.sqlite`                | `orchestration_events` (append-only event store), projections, receipts   | Conversations live in `projection_thread_messages` (~30 MB); events are replays |
+| `~/.local/share/opencode/opencode-stable.db` | `event` table (streaming-update replays), plus `session`/`message`/`part` | Chat history is `message` + `part`; `event` rows are duplicates                 |
+| `~/.t3/userdata/logs/provider/`              | Per-thread provider logs named `events.<thread-uuid>.log`                 | No                                                                              |
+| `~/.t3/userdata/server-runtime.json`         | Lease file proving which process owns port 3773                           | No                                                                              |
 
 What t3code cleans up on its own: deleting a thread cascades to projection
 tables and attachments, and the `ProviderSessionReaper` evicts live in-memory

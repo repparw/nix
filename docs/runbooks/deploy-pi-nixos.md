@@ -103,7 +103,7 @@ Notes:
 - **Quadlet over hand-written units**: `podman kube play` detaches, so a
   Type=simple unit exits instantly and ExecStop tears the pod down. Use a
   `.kube` quadlet (sd-notify wired correctly).
-- After install, alpha's `known_hosts` holds the *installer's* host key;
+- After install, alpha's `known_hosts` holds the _installer's_ host key;
   remove it once (`ssh-keygen -R`) — the installed system presents the
   preserved Debian key again.
 

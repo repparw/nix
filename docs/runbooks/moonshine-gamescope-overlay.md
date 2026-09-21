@@ -20,13 +20,13 @@ resolution, and fails when the two match. The current theory is that the 1:1
 presentation path bypasses composition the overlay hook needs, but that
 mechanism is unproven — the matrix below is the ground truth:
 
-| Gamescope output | P3R resolution | P3R mode | Steam overlay |
-| --- | --- | --- | --- |
-| 3840x2160 | 1920x1080 | Fullscreen | Works |
-| 3840x2160 | 3840x2160 | Fullscreen | Fails |
-| 3840x2160 | 3840x2160 | Borderless | Fails |
-| 1920x1080 | 1920x1080 | Fullscreen | Fails |
-| 1920x1080 | 1920x1080 | Borderless | Fails |
+| Gamescope output | P3R resolution | P3R mode   | Steam overlay |
+| ---------------- | -------------- | ---------- | ------------- |
+| 3840x2160        | 1920x1080      | Fullscreen | Works         |
+| 3840x2160        | 3840x2160      | Fullscreen | Fails         |
+| 3840x2160        | 3840x2160      | Borderless | Fails         |
+| 1920x1080        | 1920x1080      | Fullscreen | Fails         |
+| 1920x1080        | 1920x1080      | Borderless | Fails         |
 
 ## Known-good settings
 

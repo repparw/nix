@@ -1,4 +1,5 @@
 Repo follows upstream `vic/den` default-template structure.
+
 - Configure generated aspects through `den.aspects.<name>`.
 - Use `includes` for aspect composition.
 - Use `imports` only for real Nix module imports.

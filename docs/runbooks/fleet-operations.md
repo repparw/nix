@@ -4,7 +4,8 @@ title: Fleet health, offsite backups, and auto-updates
 description: How fleet-health alerting, offsite restic backups, and the staged deploy-rs updater work — probing, restoring, pausing, and rolling back.
 when: Read when a Discord health alert fires, when restoring service state from the offsite repo, or when a staged fleet update deploys, defers, or rolls back.
 resource: modules/deploy.nix
-tags: [runbook, pi, alpha, epsilon, backups, restic, alerting, upgrades, deploy-rs]
+tags:
+  [runbook, pi, alpha, epsilon, backups, restic, alerting, upgrades, deploy-rs]
 ---
 
 # Fleet health, offsite backups, and auto-updates

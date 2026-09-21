@@ -28,9 +28,7 @@ Watchers merge by `slug`: a runtime entry with the same slug replaces the
 whole default entry (no deep merge). Disable a default with:
 
 ```json
-[
-  { "slug": "example-watcher", "enabled": false }
-]
+[{ "slug": "example-watcher", "enabled": false }]
 ```
 
 ## Add a normal watcher

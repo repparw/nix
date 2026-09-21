@@ -4,7 +4,18 @@ title: Omarchy Ideas Worth Porting to This NixOS Fleet
 description: Source-backed review of DHH's Omarchy (Arch + Hyprland) manual and repo, extracting which of its opinionated patterns fit this den-aspect NixOS repository.
 when: Read when planning update-pipeline hardening, theming ergonomics, host bootstrapping, agent-facing tooling, or docs style changes.
 resource: modules/hosts/pi.nix
-tags: [research, omarchy, updates, migrations, theming, bootstrap, fleet, docs, agents]
+tags:
+  [
+    research,
+    omarchy,
+    updates,
+    migrations,
+    theming,
+    bootstrap,
+    fleet,
+    docs,
+    agents,
+  ]
 ---
 
 # Omarchy Ideas Worth Porting to This NixOS Fleet
@@ -49,7 +60,7 @@ same update — an explicit agent skill (`agents/skills/migrations.md`) tells AI
 agents how to author them.[^migrations-skill] There are 103 shipped migrations
 on HEAD.[^tree]
 
-What this repo does today. Nothing equivalent. Nix makes *configuration*
+What this repo does today. Nothing equivalent. Nix makes _configuration_
 switches atomic and rollbackable, but the fleet has mutable state that
 upgrades do not touch: nspawn container configs under `/home/containers/config`,
 restic repo layout, Discord webhook plumbing, automations state
@@ -63,7 +74,7 @@ today it is ad hoc by construction.
 Why it ports. The pi auto-update pipeline is the natural hook — with one
 placement caveat the first draft missed: pi's script exits early when the
 lock is unchanged (`modules/hosts/pi.nix:265` "lock unchanged; nothing to
-do"), so migrations must be checked *before* that early exit (or run on every
+do"), so migrations must be checked _before_ that early exit (or run on every
 successful cycle), not only after a flip. Run any pending
 `modules/migrations/*.sh` against a per-host state directory, wired via
 systemd-native `onSuccess`/`postStart` rather than mutable hook directories
@@ -90,13 +101,13 @@ explicit escape hatch (`OMARCHY_ALLOW_DIRECT_PACMAN=1`), pointing them back to
 scans the transcript for anomalies.[^update-bin]
 
 What this repo does today. The unattended path is strong (pi pipeline, alpha
-gated flip), but the *manual* path is raw: `nh os switch` or
+gated flip), but the _manual_ path is raw: `nh os switch` or
 `nixos-rebuild switch` straight from the repo, and easy to run without the
 gates from an interactive shell.[^fleet-ops][^runbook-rollback] One correction
 to the first draft: the most important gate — the strict health probe — is
-*already* a reusable binary (`fleet-health-probe --strict/--local`); the
+_already_ a reusable binary (`fleet-health-probe --strict/--local`); the
 runbook says verbatim that "the probe doubles as a library for
-gates".[^fleet-ops] What is genuinely duplicated inline is the *orchestration*
+gates".[^fleet-ops] What is genuinely duplicated inline is the _orchestration_
 around it: GC headroom check, `nvd diff` review, soak, and rollback logic live
 separately in `modules/hosts/pi.nix` and `modules/hosts/alpha.nix`. Also note:
 the repo had a second, unused update mechanism — `den.aspects.auto-upgrade`
@@ -119,7 +130,7 @@ lock; consumers only pull. Done after this research: the unused
 `den.aspects.auto-upgrade` was deleted and the stale runbook replaced, so
 there is one canonical updater story. Idea 5's `fleet update` subcommand is an
 alias over this wrapper, not a second implementation. Omarchy's insight is that the guard only
-works when the blessed path is *more* convenient than the raw one.
+works when the blessed path is _more_ convenient than the raw one.
 
 ### 3. Release channels (stable / RC / edge / dev)
 
@@ -133,7 +144,7 @@ fresh builds; RC validates majors; dev links to a git checkout in
 Why ignore. The repo already implements a better-fitting two-stage channel
 with topology: pi is the single writer that bumps all inputs and pushes the
 converged lock; alpha is a consumer that never bumps its own lock and only
-flips when pi is healthy.[^alpha][^fleet-ops] That *is* "stable lags edge",
+flips when pi is healthy.[^alpha][^fleet-ops] That _is_ "stable lags edge",
 enforced by git rather than by a mirror. Adding a channel abstraction would be
 ceremony without a third stage to justify it.
 
@@ -160,7 +171,7 @@ the same file.[^style] Switching the whole fleet's look means editing
 `modules/aspects/style.nix`; there is no theme notion, no per-host variation,
 and no second palette.
 
-What to port. Restructure the style aspect around a theme *parameter*: a
+What to port. Restructure the style aspect around a theme _parameter_: a
 small attrset of named themes (base16 scheme + wallpaper + polarity), an
 option like `modules.style.theme = "tokyodark";`, and per-host overrides in
 `modules/hosts/`. Omarchy's security rule is worth copying verbatim as design
@@ -217,7 +228,7 @@ that shape onto a root-run unattended pipeline would create a mutable,
 root-executed script directory — a persistence vector on the very pipeline
 whose trustworthiness idea 1 depends on — and "Nix-declared state-backed
 executables" is self-contradictory (a Nix-declared executable needs no hook
-directory). Also, Omarchy orders migrations *before* its post-update hooks;
+directory). Also, Omarchy orders migrations _before_ its post-update hooks;
 post-flip-after-soak placement would invert that. The portable, Nix-native
 version is therefore not a directory convention but lifecycle wiring declared
 in Nix: `systemd.services.<pipeline>.onSuccess` / `onFailure` (or
@@ -245,13 +256,13 @@ and sops age keys per host — but nothing that turns "blank machine" into
 hand.[^hosts][^deploy-pi]
 
 What to port. Not the ISO mechanics — NixOS equivalents are `nixos-anywhere` /
-`disko` territory. Portable is the *seed contract*: define one small
+`disko` territory. Portable is the _seed contract_: define one small
 "new-host seed" format for this fleet (hostname, flake URL + ref, authorized
 keys, Tailscale/auth material) and a runbook + helper that consumes it, so a
 future host is a data file plus one command instead of a bespoke evening.
-One hard correction from review: the seed file must *not* carry the sops age
+One hard correction from review: the seed file must _not_ carry the sops age
 private key in plaintext — that would violate the repo's sops-nix rule and be
-worse than Omarchy's password *hash*. The age key is retrieved out-of-band
+worse than Omarchy's password _hash_. The age key is retrieved out-of-band
 (or wrapped in sops immediately), and the seed media is destroyed after use —
 Omarchy's own caveat ("treat the drive as the secret it is") applies
 verbatim.[^unattended-manual]
@@ -309,7 +320,7 @@ overrides, atomic switch, and generation rollback. The repo's equivalent —
 aspects generate configs, options override, `nh os switch` applies[^den-docs] —
 has no mutable-defaults failure mode to guard against. Its keybinding story is
 likewise already declarative in the compositor aspects rather than an override
-file. Reading the Dotfiles chapter is a useful reminder of *why* the Nix model
+file. Reading the Dotfiles chapter is a useful reminder of _why_ the Nix model
 is worth maintaining, not a source of features.
 
 ### 11. Crash capture surfaced to humans (and optionally agents)
@@ -321,7 +332,7 @@ gets a "Process crashed" notification which, when clicked, hands the core
 dump to the default AI agent with a diagnose-crash skill; per-program muting
 exists for known-noisy crashes.[^ai-manual]
 
-What this repo does today. Fleet-health probes detect *services* being down
+What this repo does today. Fleet-health probes detect _services_ being down
 (HTTP surfaces, unit states) but say nothing about processes crashing
 elsewhere — a silently-restarting user service or repeated coredumps on alpha
 is invisible until something else fails.[^fleet-ops]
@@ -341,17 +352,17 @@ copying so known-buggy binaries don't cry wolf.
 **Verdict: ADAPT.**
 
 What Omarchy does. Beyond the big chapters, the manual maintains three
-patterns the repo lacks: *Common tweaks* — a page of small, named,
+patterns the repo lacks: _Common tweaks_ — a page of small, named,
 copy-paste-able adjustments, each stating which file to edit and warning that
-updates may restore configs (moving changes to `.bak`); a *Troubleshooting*
+updates may restore configs (moving changes to `.bak`); a _Troubleshooting_
 page of symptom→fix pairs ("I broke my system with an update!", subsystem
-restarts before rebooting); and an *FAQ* of one-answer questions, including a
+restarts before rebooting); and an _FAQ_ of one-answer questions, including a
 "how do I remove all the extra software" escape hatch that deletes the whole
 opinionated layer in one action.[^tweaks-manual][^troubleshooting-manual][^faq-manual]
 
-What this repo does today. Docs are excellent for *procedures* (runbooks with
-frontmatter routing, agent guidance) and *architecture*, but scattered for
-*small* knowledge: the traefik SNI probe gotcha lives inside
+What this repo does today. Docs are excellent for _procedures_ (runbooks with
+frontmatter routing, agent guidance) and _architecture_, but scattered for
+_small_ knowledge: the traefik SNI probe gotcha lives inside
 `fleet-operations.md`, resize/scale fixes would live in host files, and there
 is no symptom-indexed page.[^index][^fleet-ops]
 
@@ -405,21 +416,21 @@ they should not be re-imported even as adaptations:
 
 ## Summary table
 
-| Idea | Verdict | One-line rationale |
-|---|---|---|
-| One-time migrations with state markers in the update pipeline | ADOPT | The repo has an unattended trusted execution point (pi pipeline) but no once-per-host state-repair mechanism; run via systemd lifecycle wiring, checked before the lock-unchanged early exit; pi + alpha only until epsilon gains a pipeline. |
-| Single guarded update path with transcript | ADAPT | Health probe is already a reusable gate library; the gap is duplicated orchestration (GC/diff/soak/rollback) across pi.nix and alpha.nix — one wrapper, pi stays sole lock writer; the unused `den.aspects.auto-upgrade` has since been deleted. |
-| Release channels (stable/RC/edge/dev) | IGNORE | pi-writer/alpha-consumer topology already implements staged rollout with git as the channel. |
-| Theme as a switchable parameter | ADAPT | Stylix covers generation, but the theme is hardcoded in `style.nix`; make it a named, per-host option. |
-| Unified discoverable host CLI (agent-first, `--json`) | ADAPT | Ops helpers are scattered across aspects and runbooks; one namespaced surface helps humans and agents — with `fleet update` aliasing the idea-2 wrapper, not re-implementing it. |
-| Event hook directories on the update pipeline | ADAPT | Folded into idea 1: Nix-declared systemd `onSuccess`/`onFailure` lifecycle wiring, not mutable root-executable hook directories. |
-| Seed-file unattended bootstrap for new hosts | ADAPT | Define a fleet "new-host seed" contract + runbook; age key stays out-of-band, never plaintext on the seed media. |
-| Firmware updates in the update flow | ADOPT | `services.fwupd` on hardware hosts is a one-line aspect closing a real coverage gap. |
-| Bootable snapshots / reset-to-baseline | IGNORE | Nix generations + restic offsite already exceed root-only snapshot recovery (alpha/beta-shaped; pi's ext4/extlinux makes snapper moot there). |
-| Defaults-vs-user-override dotfile split | IGNORE | home-manager/NixOS options are the structural answer Omarchy approximates in shell. |
-| Crash capture surfaced to humans | ADAPT | Fleet-health probes services, not coredumps; a coredump check class closes that blind spot on alpha (pi's volatile journald rules it out there). |
-| Common tweaks / Troubleshooting / FAQ docs | ADAPT | Small recurring knowledge needs a symptom-indexed home alongside the existing runbooks; the `hosts.md` profiles and `update-rollback.md` runbook (both corrected since this research) are first candidates. |
-| OCR text extraction helper | ADAPT | Same shape as existing `clip2qr` (mirrored: produces onto the clipboard); alpha desktop only. |
+| Idea                                                          | Verdict | One-line rationale                                                                                                                                                                                                                               |
+| ------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| One-time migrations with state markers in the update pipeline | ADOPT   | The repo has an unattended trusted execution point (pi pipeline) but no once-per-host state-repair mechanism; run via systemd lifecycle wiring, checked before the lock-unchanged early exit; pi + alpha only until epsilon gains a pipeline.    |
+| Single guarded update path with transcript                    | ADAPT   | Health probe is already a reusable gate library; the gap is duplicated orchestration (GC/diff/soak/rollback) across pi.nix and alpha.nix — one wrapper, pi stays sole lock writer; the unused `den.aspects.auto-upgrade` has since been deleted. |
+| Release channels (stable/RC/edge/dev)                         | IGNORE  | pi-writer/alpha-consumer topology already implements staged rollout with git as the channel.                                                                                                                                                     |
+| Theme as a switchable parameter                               | ADAPT   | Stylix covers generation, but the theme is hardcoded in `style.nix`; make it a named, per-host option.                                                                                                                                           |
+| Unified discoverable host CLI (agent-first, `--json`)         | ADAPT   | Ops helpers are scattered across aspects and runbooks; one namespaced surface helps humans and agents — with `fleet update` aliasing the idea-2 wrapper, not re-implementing it.                                                                 |
+| Event hook directories on the update pipeline                 | ADAPT   | Folded into idea 1: Nix-declared systemd `onSuccess`/`onFailure` lifecycle wiring, not mutable root-executable hook directories.                                                                                                                 |
+| Seed-file unattended bootstrap for new hosts                  | ADAPT   | Define a fleet "new-host seed" contract + runbook; age key stays out-of-band, never plaintext on the seed media.                                                                                                                                 |
+| Firmware updates in the update flow                           | ADOPT   | `services.fwupd` on hardware hosts is a one-line aspect closing a real coverage gap.                                                                                                                                                             |
+| Bootable snapshots / reset-to-baseline                        | IGNORE  | Nix generations + restic offsite already exceed root-only snapshot recovery (alpha/beta-shaped; pi's ext4/extlinux makes snapper moot there).                                                                                                    |
+| Defaults-vs-user-override dotfile split                       | IGNORE  | home-manager/NixOS options are the structural answer Omarchy approximates in shell.                                                                                                                                                              |
+| Crash capture surfaced to humans                              | ADAPT   | Fleet-health probes services, not coredumps; a coredump check class closes that blind spot on alpha (pi's volatile journald rules it out there).                                                                                                 |
+| Common tweaks / Troubleshooting / FAQ docs                    | ADAPT   | Small recurring knowledge needs a symptom-indexed home alongside the existing runbooks; the `hosts.md` profiles and `update-rollback.md` runbook (both corrected since this research) are first candidates.                                      |
+| OCR text extraction helper                                    | ADAPT   | Same shape as existing `clip2qr` (mirrored: produces onto the clipboard); alpha desktop only.                                                                                                                                                    |
 
 ## Sources
 
@@ -428,43 +439,83 @@ authoritative in-repo source (`manual/`) mirrored to omarchy.org.[^manual-repo]
 GitHub citations reference `basecamp/omarchy` at HEAD (`4.0.0.alpha`).[^version]
 
 [^manual-repo]: [Omarchy README — manual/ is the authoritative source](https://github.com/basecamp/omarchy#the-omarchy-manual)
+
 [^welcome]: [The Omarchy Manual — Welcome to Omarchy!](https://omarchy.org/manual/)
+
 [^getting-started]: [The Omarchy Manual — Getting Started](https://omarchy.org/manual/getting-started/)
+
 [^updates-manual]: [The Omarchy Manual — Updates](https://omarchy.org/manual/updates/)
+
 [^themes-manual]: [The Omarchy Manual — Themes](https://omarchy.org/manual/themes/)
+
 [^theme-making]: [The Omarchy Manual — Making your own theme](https://omarchy.org/manual/making-your-own-theme/)
+
 [^dotfiles-manual]: [The Omarchy Manual — Dotfiles](https://omarchy.org/manual/dotfiles/)
+
 [^cli-manual]: [The Omarchy Manual — Omarchy CLI](https://omarchy.org/manual/omarchy-cli/)
+
 [^snapshots-manual]: [The Omarchy Manual — System snapshots](https://omarchy.org/manual/system-snapshots/)
+
 [^unattended-manual]: [The Omarchy Manual — Unattended Installs](https://omarchy.org/manual/unattended-installs/)
+
 [^security-manual]: [The Omarchy Manual — Security](https://omarchy.org/manual/security/)
+
 [^ai-manual]: [The Omarchy Manual — AI](https://omarchy.org/manual/ai/)
+
 [^ocr-manual]: [The Omarchy Manual — Text Extraction & Dictation](https://omarchy.org/manual/text-extraction-dictation/)
+
 [^tweaks-manual]: [The Omarchy Manual — Common tweaks](https://omarchy.org/manual/common-tweaks/)
+
 [^troubleshooting-manual]: [The Omarchy Manual — Troubleshooting](https://omarchy.org/manual/troubleshooting/)
+
 [^faq-manual]: [The Omarchy Manual — FAQ](https://omarchy.org/manual/faq/)
+
 [^omarchy-on]: [The Omarchy Manual — Omarchy on... (notes henrysipp/omarchy-nix as the NixOS port)](https://omarchy.org/manual/omarchy-on/)
+
 [^update-src]: [`basecamp/omarchy` — `bin/omarchy-update` (snapshot, lock, transcript, unattended mode, migration ordering)](https://github.com/basecamp/omarchy/blob/HEAD/bin/omarchy-update)
+
 [^migrate-src]: [`basecamp/omarchy` — `bin/omarchy-migrate` (state markers, `--pending`)](https://github.com/basecamp/omarchy/blob/HEAD/bin/omarchy-migrate)
+
 [^migrations-skill]: [`basecamp/omarchy` — `agents/skills/migrations.md` (migration model contract)](https://github.com/basecamp/omarchy/blob/HEAD/agents/skills/migrations.md)
+
 [^pacman-guard]: [`basecamp/omarchy` — `bin/omarchy-update-pacman-guard` and `default/libalpm/hooks/00-omarchy-update-guard.hook`](https://github.com/basecamp/omarchy/blob/HEAD/bin/omarchy-update-pacman-guard)
+
 [^snapshot-src]: [`basecamp/omarchy` — `bin/omarchy-snapshot` (snapper create/restore via limine-snapper-restore)](https://github.com/basecamp/omarchy/blob/HEAD/bin/omarchy-snapshot)
+
 [^update-bin]: [`basecamp/omarchy` — `bin/` helper family (`omarchy-update-firmware`, `omarchy-update-analyze-logs`, etc.)](https://github.com/basecamp/omarchy/tree/HEAD/bin)
+
 [^version]: [`basecamp/omarchy` — `version` file at HEAD](https://github.com/basecamp/omarchy/blob/HEAD/version)
+
 [^tree]: File census from the `basecamp/omarchy` git tree at HEAD (103 migrations, 444 bin scripts; 22 theme directories — the per-asset theme file count varied between verification passes and is omitted).
+
 [^tree-themes]: [`basecamp/omarchy` — `themes/<name>/colors.toml` layout (e.g. catppuccin)](https://github.com/basecamp/omarchy/tree/HEAD/themes/catppuccin)
+
 [^hosts]: `docs/hosts.md` (documents alpha, beta, pi, and epsilon; corrected after this research to reflect the phase-2 edge cutover)
+
 [^epsilon]: `modules/hosts/epsilon.nix` (aarch64 VPS edge: traefik/authelia/glance/miniflux/ddclient, hermes gateway, restic backup; no update pipeline in its `includes`)
+
 [^fleet-ops]: `docs/runbooks/fleet-operations.md`
+
 [^runbook-rollback]: `docs/runbooks/update-rollback.md` (replaced `failed-auto-upgrade-rollback.md` after this research; describes the pi auto-update, deploy-rs fleet pass, and alpha gated retry — the pipelines that actually run)
+
 [^auto-upgrade-aspect]: `modules/aspects/auto-upgrade.nix` (`system.autoUpgrade`; was included by no host — unused mechanism, deleted after this research)
+
 [^deploy-pi]: `docs/runbooks/deploy-pi-nixos.md`
+
 [^den-docs]: `docs/architecture/den-aspect-composition.md`
+
 [^alpha]: `modules/deploy.nix` and `modules/hosts/pi.nix` (pi-owned promotion, fleet deployment, and gated alpha retry)
+
 [^style]: `modules/aspects/style.nix` (Stylix, single tokyodark scheme, pinned wallpaper)
+
 [^btrfs]: `modules/aspects/btrfs-maintenance.nix` (scrub/balance/health, no snapper)
+
 [^scripts]: `modules/aspects/cli/scripts.nix` (`clip2qr`, `hotswap`)
+
 [^dictation]: `modules/aspects/ai/dictation.nix`
+
 [^wispr-note]: `docs/research/wispr-flow-features-for-voxtype.md`
+
 [^index]: `docs/index.md`
+
 [^defaults]: `modules/defaults.nix`
