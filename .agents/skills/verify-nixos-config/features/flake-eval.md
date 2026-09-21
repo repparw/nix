@@ -1,35 +1,27 @@
-# flake-eval
+# Evaluate the configuration
 
-## Sub-features
-
-- Flake evaluates for every host: `alpha`, `epsilon`, `pi`
-- Module options under `home-manager.users.repparw.programs.*` hold intended values
-- `den.aspects` composition (includes/defaults) resolves without conflicts
-
-## How to get to it (user POV)
-
-The user edits `modules/aspects/**` and wants to know: does the flake still
-evaluate, and did my option land where I think it did?
-
-## Driving it with nix eval
+Use the setup in [SKILL.md](../SKILL.md). For a shared composition change,
+evaluate every affected host's toplevel, not just a release string:
 
 ```bash
-# Host exists and evaluates
-nix eval .#nixosConfigurations.alpha.config.system.nixos.release --raw && echo
-
-# Option holds intended value (path mirrors the module's settings tree)
-nix eval .#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.opencode.settings.agent --json | jq
+nix eval .#nixosConfigurations --apply builtins.attrNames --json --no-update-lock-file \
+  > "$VERIFY_EVIDENCE/hosts.json"
+mapfile -t VERIFY_HOSTS < <(jq -r '.[]' "$VERIFY_EVIDENCE/hosts.json")
+for VERIFY_HOST in "${VERIFY_HOSTS[@]}"; do
+  nix eval ".#nixosConfigurations.$VERIFY_HOST.config.system.build.toplevel.drvPath" \
+    --raw --no-update-lock-file > "$VERIFY_EVIDENCE/toplevel-$VERIFY_HOST.txt"
+done
 ```
 
-For options you cannot name yet, walk the tree:
+For a host-specific change, evaluate that host. Also query the option changed
+by the task and check its value. For example:
 
 ```bash
-nix eval .#nixosConfigurations.alpha.config.home-manager.users.repparw.programs --json | jq 'keys'
+nix eval ".#nixosConfigurations.$VERIFY_HOST.config.home-manager.users.repparw.programs.opencode.settings.agent" \
+  --json --no-update-lock-file > "$VERIFY_EVIDENCE/agents-$VERIFY_HOST.json"
+jq 'map_values(.model)' "$VERIFY_EVIDENCE/agents-$VERIFY_HOST.json"
 ```
 
-## Gotchas
-
-- Repo convention: generated aspects are configured via `den.aspects.<name>`,
-  not `imports` — if your eval shows the default value, check whether an
-  aspect include or `modules/defaults.nix` overrides yours.
-- Store eval output as evidence per SKILL.md (`/tmp/nix-verify/`).
+If an option retains its default, inspect aspect composition and
+`modules/defaults.nix`. For generated-file changes, continue with
+[file inspection](home-manager-files.md).

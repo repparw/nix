@@ -1,16 +1,14 @@
-# Feature map — verify-nixos-config
+# Verification checks
 
-User-facing "features" of this flake, from the user's point of view: what they
-get from it, and what observable state proves each works. Drive one feature
-per verification run; the map exists so later runs cover the rest.
+Choose the checks that observe the changed behavior. Run more than one when
+needed, and report relevant checks that were skipped.
 
-| Feature | Proves | Cost |
-|---|---|---|
-| [flake-eval](flake-eval.md) | the checkout evaluates and module options hold the intended values | seconds |
-| [home-manager-files](home-manager-files.md) | generated dotfiles (opencode.json etc.) contain what the modules say | ~1 min |
-| [system-build](system-build.md) | the full system closure builds — switch will not fail midway | minutes |
-| [closure-diff](closure-diff.md) | exactly what a switch would change on this machine | minutes |
+| Check | What it proves | Cost |
+| --- | --- | --- |
+| [flake-eval](flake-eval.md) | Affected host configurations evaluate and changed options have the expected values. | Seconds |
+| [home-manager-files](home-manager-files.md) | Generated dotfiles contain the intended configuration. | About a minute |
+| [system-build](system-build.md) | The selected system closure builds. | Minutes |
+| [closure-diff](closure-diff.md) | Package differences from the running target system. | Minutes |
 
-Precedence: eval < generated-files < build. A change is proven when the
-cheapest feature that observes it directly passes, and the map's stronger
-features are noted if they were skipped.
+Builds do not run commit hooks or prove activation and service health.
+Deployment and runtime checks follow the [fleet runbook](../../../../docs/runbooks/fleet-operations.md).

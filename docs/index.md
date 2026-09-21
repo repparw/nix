@@ -48,6 +48,7 @@ files instead of copying module contents.
 
 ## Agent guidance
 
+- [Verify NixOS configuration changes](../.agents/skills/verify-nixos-config/SKILL.md)
 - [Domain docs](agents/domain.md)
 - [GitHub issue tracker](agents/issue-tracker.md)
 - [Upstream landing gates](agents/upstream-gates.md)
