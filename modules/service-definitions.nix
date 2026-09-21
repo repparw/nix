@@ -143,6 +143,14 @@ in
       default = "repparw.com";
     };
 
+    # Discord channel every fleet watcher delivers to (health probe,
+    # coredump/disk/reboot watch, update reports, backup size report).
+    # The bot token itself stays in the hermes-env sops secret.
+    discordChannelId = mkOption {
+      type = types.str;
+      default = "1515064288191053979";
+    };
+
     definitions = mkOption {
       type = types.attrsOf serviceType;
       default = { };
