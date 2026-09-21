@@ -70,7 +70,7 @@
       ],
       "completion": "Update nixpkgs, remove the qbittorrent-nox fetchpatch overlay, evaluate every host, and push.",
       "watcher": "watch-qbittorrent.timer",
-      "issue": null,
+      "issue": "https://github.com/repparw/nix/issues/26",
       "upstream": [
         "https://github.com/qbittorrent/qBittorrent/pull/24055"
       ]
@@ -118,7 +118,8 @@
       },
       "workaround": [
         "modules/aspects/ai/t3code-split.nix",
-        "modules/aspects/ai/default.nix"
+        "modules/aspects/ai/default.nix",
+        "modules/entities.nix"
       ],
       "completion": "Update nixpkgs, remove the T3 Code split aspect and include, evaluate and build both consumers, then push.",
       "watcher": "watch-t3code-split.timer",
@@ -148,15 +149,15 @@
       ],
       "completion": "Update Home Manager, replace the hand-rolled t3code-web service with programs.t3code.server, evaluate every host, update the runbook, and push.",
       "watcher": "watch-t3code-server.timer",
-      "issue": null,
+      "issue": "https://github.com/repparw/nix/issues/25",
       "upstream": [
         "https://github.com/nix-community/home-manager/pull/9695"
       ]
     },
     "nixpkgs-voxtype-graphical-session": {
-      "input": "nixpkgs",
-      "repository": "NixOS/nixpkgs",
-      "branch": "nixos-unstable",
+      "input": "home-manager",
+      "repository": "nix-community/home-manager",
+      "branch": "master",
       "source": {
         "kind": "none"
       },
@@ -174,7 +175,7 @@
         "modules/aspects/ai/voxtype-graphical-workaround.nix",
         "modules/aspects/ai/default.nix"
       ],
-      "completion": "Update nixpkgs, remove the Voxtype workaround and include, evaluate every host plus flake checks, then push.",
+      "completion": "Update Home Manager, remove the Voxtype workaround and include, evaluate every host plus flake checks, then push.",
       "watcher": "watch-voxtype-graphical.timer",
       "issue": null,
       "upstream": []
