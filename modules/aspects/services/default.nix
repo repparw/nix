@@ -43,8 +43,7 @@
       );
       hostAddresses = lib.mapAttrs (
         name: host:
-        host.serviceAddress
-          or (throw "service host ${name} is missing serviceAddress topology metadata")
+        host.serviceAddress or (throw "service host ${name} is missing serviceAddress topology metadata")
       ) hostMeta;
       hostSshAddresses = lib.mapAttrs (
         name: host:
@@ -54,8 +53,7 @@
       svc = config.modules.services;
       domain = svc.domain;
       lanIp =
-        hostSshAddresses.${svc.lanEdgeHost}
-          or (throw "lanEdgeHost ${svc.lanEdgeHost} missing ssh address");
+        hostSshAddresses.${svc.lanEdgeHost} or (throw "lanEdgeHost ${svc.lanEdgeHost} missing ssh address");
       publicIp =
         hostSshAddresses.${svc.publicEdgeHost}
           or (throw "publicEdgeHost ${svc.publicEdgeHost} missing ssh address");
@@ -64,10 +62,10 @@
       lanNames = lib.mapAttrsToList (_: fqdn) (
         lib.filterAttrs (_: service: service.lanEdge or false) vhosts
       );
-      publicNames = [ domain ]
-        ++ lib.mapAttrsToList (_: fqdn) (
-          lib.filterAttrs (_: service: !(service.lanEdge or false)) vhosts
-        );
+      publicNames = [
+        domain
+      ]
+      ++ lib.mapAttrsToList (_: fqdn) (lib.filterAttrs (_: service: !(service.lanEdge or false)) vhosts);
       rendered = ''
         ${lib.optionalString (lanNames != [ ]) "${lanIp} ${lib.concatStringsSep " " lanNames}"}
         ${publicIp} ${lib.concatStringsSep " " publicNames}

@@ -81,9 +81,7 @@ let
         lib.filterAttrs (_: service: !hasValidHostname service.hostname) definitions
       );
       unknownHosts = lib.attrNames (
-        lib.filterAttrs (
-          _: service: !(lib.hasAttr service.host hostAddresses)
-        ) definitions
+        lib.filterAttrs (_: service: !(lib.hasAttr service.host hostAddresses)) definitions
       );
       hostnames = lib.filter (hostname: hostname != null) (
         lib.catAttrs "hostname" (lib.attrValues definitions)

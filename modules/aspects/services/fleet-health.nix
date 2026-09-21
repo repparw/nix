@@ -82,25 +82,27 @@ in
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         cfg = config.modules.services;
         vhostProbes = lib.concatStringsSep "\n" (
-          map (
-            name:
-            let
-              service = cfg.definitions.${name};
-              fqdn = "${service.hostname}.${cfg.domain}";
-            in
-            if name == "homeassistant" then
-              ''
-                            http home-assistant ${servicesLib.serviceUrl cfg config name} ""
-                            http home https://${fqdn}/ "" --resolve ${fqdn}:443:127.0.0.1''
-            else if service.healthcheck != null then
-              "            remote ${name} ${servicesLib.publicHealthUrl cfg config name} 200"
-            else
-              "            remote ${name} ${servicesLib.serviceUrl cfg config name}/ \"\""
-          ) (lib.sort (a: b: a < b) (
-            lib.attrNames (
-              lib.filterAttrs (_: service: (service.hostname or null) != null) cfg.definitions
+          map
+            (
+              name:
+              let
+                service = cfg.definitions.${name};
+                fqdn = "${service.hostname}.${cfg.domain}";
+              in
+              if name == "homeassistant" then
+                ''
+                  http home-assistant ${servicesLib.serviceUrl cfg config name} ""
+                  http home https://${fqdn}/ "" --resolve ${fqdn}:443:127.0.0.1''
+              else if service.healthcheck != null then
+                "            remote ${name} ${servicesLib.publicHealthUrl cfg config name} 200"
+              else
+                "            remote ${name} ${servicesLib.serviceUrl cfg config name}/ \"\""
             )
-          ))
+            (
+              lib.sort (a: b: a < b) (
+                lib.attrNames (lib.filterAttrs (_: service: (service.hostname or null) != null) cfg.definitions)
+              )
+            )
         );
         probeScript = pkgs.writeShellApplication {
           name = "fleet-health-probe";
@@ -114,113 +116,113 @@ in
             systemd
           ];
           text = ''
-            usage="usage: fleet-health-probe [--strict] [--local]"
+                        usage="usage: fleet-health-probe [--strict] [--local]"
 
-            strict=0
-            local_only=0
-            for a in "$@"; do
-              case "$a" in
-                --strict) strict=1 ;;
-                --local) local_only=1 ;;
-                *)
-                  echo "$usage" >&2
-                  exit 2
-                  ;;
-              esac
-            done
+                        strict=0
+                        local_only=0
+                        for a in "$@"; do
+                          case "$a" in
+                            --strict) strict=1 ;;
+                            --local) local_only=1 ;;
+                            *)
+                              echo "$usage" >&2
+                              exit 2
+                              ;;
+                          esac
+                        done
 
-            state_dir="''${STATE_DIRECTORY:-/var/lib/fleet-health}"
-            mkdir -p "$state_dir"
-
-
-            failures=0
-
-            fail() {
-              local n="$1" detail="$2" count mid
-              if [ "$strict" = 1 ]; then
-                failures=$((failures + 1))
-                return
-              fi
-              count=$(( $(cat "$state_dir/$n" 2>/dev/null || echo 0) + 1 ))
-              printf '%s\n' "$count" > "$state_dir/$n"
-              if [ "$count" -ge 2 ] && [ ! -e "$state_dir/.$n.msgid" ]; then
-                mid=$(discord-notify post ":red_circle: DOWN $HOSTNAME $n ($detail)" || true)
-                [ -n "$mid" ] && printf '%s\n' "$mid" > "$state_dir/.$n.msgid"
-              fi
-            }
-
-            ok() {
-              [ "$strict" = 1 ] && return
-              local n="$1" mid
-              if [ -e "$state_dir/.$n.msgid" ]; then
-                mid=$(cat "$state_dir/.$n.msgid")
-                if discord-notify delete "$mid"; then
-                  rm -f "$state_dir/.$n.msgid"
-                fi
-              fi
-              printf '0\n' > "$state_dir/$n"
-            }
-
-            for u in \
-              container@homeassistant \
-              traefik; do
-              if systemctl is-active --quiet "$u"; then ok "unit:$u"; else fail "unit:$u" "systemd inactive"; fi
-            done
-
-            if [ "$(systemctl is-failed restic-backups-offsite)" = failed ]; then
-              fail "unit:restic-backups-offsite" "oneshot failed"
-            else
-              ok "unit:restic-backups-offsite"
-            fi
-
-            if [ "$strict" != 1 ]; then
-              # systemd prefixes failed rows with a bullet on newer
-              # versions; extract real unit names by their suffix.
-              failed_cur=$(systemctl list-units --state=failed --no-legend --no-pager 2>/dev/null \
-                | grep -oE '[a-zA-Z0-9@._\\-]+\.(service|timer|mount|path|scope|socket|target)' \
-                | sort -u || true)
-              failed_prev=$(cat "$state_dir/.failed-units" 2>/dev/null || true)
-
-              for u in $failed_prev; do
-                printf '%s\n' "$failed_cur" | grep -qxF -e "$u" || ok "unit-failed:$u"
-              done
-              for u in $failed_cur; do
-                fail "unit-failed:$u" "systemd failed state"
-              done
-              printf '%s\n' "$failed_cur" > "$state_dir/.failed-units"
-            fi
-
-            http() {
-              local n="$1" url="$2" want="$3"; shift 3
-              local code
-              code=$(curl -s -m 6 -o /dev/null -w '%{http_code}' "$@" "$url" || true)
-              if [ -n "$want" ]; then
-                if [ "$code" = "$want" ]; then ok "http:$n"; else fail "http:$n" "got $code want $want"; fi
-              else
-                if [ "$code" != 000 ]; then ok "http:$n"; else fail "http:$n" "no response"; fi
-              fi
-            }
-
-            remote() {
-              [ "$local_only" = 1 ] || http "$@"
-            }
-
-${vhostProbes}
-            remote apex https://${cfg.domain}/ 200
-
-            if [ "$strict" = 1 ]; then
-              [ "$failures" -eq 0 ]
-              exit $?
-            fi
-
-            if [ -e /var/lib/auto-update/PAUSE ]; then
-              fail "auto-update-paused" "PAUSE flag present"
-            else
-              ok "auto-update-paused"
-            fi
+                        state_dir="''${STATE_DIRECTORY:-/var/lib/fleet-health}"
+                        mkdir -p "$state_dir"
 
 
-            exit 0
+                        failures=0
+
+                        fail() {
+                          local n="$1" detail="$2" count mid
+                          if [ "$strict" = 1 ]; then
+                            failures=$((failures + 1))
+                            return
+                          fi
+                          count=$(( $(cat "$state_dir/$n" 2>/dev/null || echo 0) + 1 ))
+                          printf '%s\n' "$count" > "$state_dir/$n"
+                          if [ "$count" -ge 2 ] && [ ! -e "$state_dir/.$n.msgid" ]; then
+                            mid=$(discord-notify post ":red_circle: DOWN $HOSTNAME $n ($detail)" || true)
+                            [ -n "$mid" ] && printf '%s\n' "$mid" > "$state_dir/.$n.msgid"
+                          fi
+                        }
+
+                        ok() {
+                          [ "$strict" = 1 ] && return
+                          local n="$1" mid
+                          if [ -e "$state_dir/.$n.msgid" ]; then
+                            mid=$(cat "$state_dir/.$n.msgid")
+                            if discord-notify delete "$mid"; then
+                              rm -f "$state_dir/.$n.msgid"
+                            fi
+                          fi
+                          printf '0\n' > "$state_dir/$n"
+                        }
+
+                        for u in \
+                          container@homeassistant \
+                          traefik; do
+                          if systemctl is-active --quiet "$u"; then ok "unit:$u"; else fail "unit:$u" "systemd inactive"; fi
+                        done
+
+                        if [ "$(systemctl is-failed restic-backups-offsite)" = failed ]; then
+                          fail "unit:restic-backups-offsite" "oneshot failed"
+                        else
+                          ok "unit:restic-backups-offsite"
+                        fi
+
+                        if [ "$strict" != 1 ]; then
+                          # systemd prefixes failed rows with a bullet on newer
+                          # versions; extract real unit names by their suffix.
+                          failed_cur=$(systemctl list-units --state=failed --no-legend --no-pager 2>/dev/null \
+                            | grep -oE '[a-zA-Z0-9@._\\-]+\.(service|timer|mount|path|scope|socket|target)' \
+                            | sort -u || true)
+                          failed_prev=$(cat "$state_dir/.failed-units" 2>/dev/null || true)
+
+                          for u in $failed_prev; do
+                            printf '%s\n' "$failed_cur" | grep -qxF -e "$u" || ok "unit-failed:$u"
+                          done
+                          for u in $failed_cur; do
+                            fail "unit-failed:$u" "systemd failed state"
+                          done
+                          printf '%s\n' "$failed_cur" > "$state_dir/.failed-units"
+                        fi
+
+                        http() {
+                          local n="$1" url="$2" want="$3"; shift 3
+                          local code
+                          code=$(curl -s -m 6 -o /dev/null -w '%{http_code}' "$@" "$url" || true)
+                          if [ -n "$want" ]; then
+                            if [ "$code" = "$want" ]; then ok "http:$n"; else fail "http:$n" "got $code want $want"; fi
+                          else
+                            if [ "$code" != 000 ]; then ok "http:$n"; else fail "http:$n" "no response"; fi
+                          fi
+                        }
+
+                        remote() {
+                          [ "$local_only" = 1 ] || http "$@"
+                        }
+
+            ${vhostProbes}
+                        remote apex https://${cfg.domain}/ 200
+
+                        if [ "$strict" = 1 ]; then
+                          [ "$failures" -eq 0 ]
+                          exit $?
+                        fi
+
+                        if [ -e /var/lib/auto-update/PAUSE ]; then
+                          fail "auto-update-paused" "PAUSE flag present"
+                        else
+                          ok "auto-update-paused"
+                        fi
+
+
+                        exit 0
           '';
         };
 

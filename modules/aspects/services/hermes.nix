@@ -86,8 +86,8 @@
                   }
                 ];
                 settings.reasoning_overrides."gpt-5.6-sol" = "medium";
-                  settings.display.credits_notices = false;
-                  settings.platforms.discord = {
+                settings.display.credits_notices = false;
+                settings.platforms.discord = {
                   enabled = true;
                   home_channel = {
                     platform = "discord";
