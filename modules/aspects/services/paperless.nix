@@ -30,6 +30,12 @@
           "d ${cfg.configDir}/paper 0755 root root -"
         ];
 
+        # First boot on slow storage can spend minutes in the scheduler
+        # preStart (Django migrate + Tantivy reindex) before nspawn sees
+        # READY. The default 60s start timeout kills the container mid-boot
+        # and restart-loops forever without ever converging.
+        systemd.services."container@paperless".serviceConfig.TimeoutStartSec = lib.mkForce "10min";
+
         containers.paperless = servicesLib.mkContainer {
           inherit cfg;
           name = "paperless";
