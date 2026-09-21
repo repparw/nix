@@ -26,6 +26,10 @@
         service = cfg.definitions.paperless;
       in
       {
+        systemd.tmpfiles.rules = [
+          "d ${cfg.configDir}/paper 0755 root root -"
+        ];
+
         containers.paperless = servicesLib.mkContainer {
           inherit cfg;
           name = "paperless";
