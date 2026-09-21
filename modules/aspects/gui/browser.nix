@@ -391,10 +391,6 @@ in
                         urls = [ { template = "https://www.imdb.com/find?q={searchTerms}&s=all"; } ];
                         definedAliases = [ "imdb" ];
                       };
-                      "AI" = {
-                        urls = [ { template = "https://chat.repparw.com/?q={searchTerms}"; } ];
-                        definedAliases = [ "ai" ];
-                      };
                       "youtube" = {
                         urls = [ { template = "https://www.youtube.com/results?search_query={searchTerms}"; } ];
                         definedAliases = [ "y" ];
