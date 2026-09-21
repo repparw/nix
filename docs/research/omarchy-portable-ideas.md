@@ -99,10 +99,13 @@ runbook says verbatim that "the probe doubles as a library for
 gates".[^fleet-ops] What is genuinely duplicated inline is the *orchestration*
 around it: GC headroom check, `nvd diff` review, soak, and rollback logic live
 separately in `modules/hosts/pi.nix` and `modules/hosts/alpha.nix`. Also note:
-the repo has a second, unused update mechanism — `den.aspects.auto-upgrade`
-(`system.autoUpgrade`) is included by no host, and the
-`failed-auto-upgrade-rollback.md` runbook still claims it is enabled, which is
-stale.[^auto-upgrade-aspect][^runbook-rollback] Epsilon runs no updater at all.
+the repo had a second, unused update mechanism — `den.aspects.auto-upgrade`
+(`system.autoUpgrade`) was included by no host, and the
+`failed-auto-upgrade-rollback.md` runbook still claimed it was enabled, which
+was stale.[^auto-upgrade-aspect][^runbook-rollback] (Resolved after this
+research: the unused aspect was deleted and the runbook was replaced by
+`update-rollback.md`, which describes the pipelines that actually run.)
+Epsilon runs no updater at all.
 
 What to port. Not the libalpm hook (there is no pacman to guard; Nix
 generations already make a bad manual switch reversible). Portable instead:
@@ -112,10 +115,10 @@ strict probe gate (reusing the existing probe), GC headroom check, `nvd diff`
 shown before flipping, soak after, rollback on failure — so manual updates and
 automated updates share one implementation. The wrapper must state lock
 ownership explicitly: pi remains the single writer that bumps and pushes the
-lock; consumers only pull. Before building, deprecate or delete the unused
-`den.aspects.auto-upgrade` and fix the stale runbook so there is one canonical
-updater story. Idea 5's `fleet update` subcommand is an alias over this
-wrapper, not a second implementation. Omarchy's insight is that the guard only
+lock; consumers only pull. Done after this research: the unused
+`den.aspects.auto-upgrade` was deleted and the stale runbook replaced, so
+there is one canonical updater story. Idea 5's `fleet update` subcommand is an
+alias over this wrapper, not a second implementation. Omarchy's insight is that the guard only
 works when the blessed path is *more* convenient than the raw one.
 
 ### 3. Release channels (stable / RC / edge / dev)
@@ -405,7 +408,7 @@ they should not be re-imported even as adaptations:
 | Idea | Verdict | One-line rationale |
 |---|---|---|
 | One-time migrations with state markers in the update pipeline | ADOPT | The repo has an unattended trusted execution point (pi pipeline) but no once-per-host state-repair mechanism; run via systemd lifecycle wiring, checked before the lock-unchanged early exit; pi + alpha only until epsilon gains a pipeline. |
-| Single guarded update path with transcript | ADAPT | Health probe is already a reusable gate library; the gap is duplicated orchestration (GC/diff/soak/rollback) across pi.nix and alpha.nix — one wrapper, pi stays sole lock writer; deprecate unused `den.aspects.auto-upgrade` first. |
+| Single guarded update path with transcript | ADAPT | Health probe is already a reusable gate library; the gap is duplicated orchestration (GC/diff/soak/rollback) across pi.nix and alpha.nix — one wrapper, pi stays sole lock writer; the unused `den.aspects.auto-upgrade` has since been deleted. |
 | Release channels (stable/RC/edge/dev) | IGNORE | pi-writer/alpha-consumer topology already implements staged rollout with git as the channel. |
 | Theme as a switchable parameter | ADAPT | Stylix covers generation, but the theme is hardcoded in `style.nix`; make it a named, per-host option. |
 | Unified discoverable host CLI (agent-first, `--json`) | ADAPT | Ops helpers are scattered across aspects and runbooks; one namespaced surface helps humans and agents — with `fleet update` aliasing the idea-2 wrapper, not re-implementing it. |
@@ -415,7 +418,7 @@ they should not be re-imported even as adaptations:
 | Bootable snapshots / reset-to-baseline | IGNORE | Nix generations + restic offsite already exceed root-only snapshot recovery (alpha/beta-shaped; pi's ext4/extlinux makes snapper moot there). |
 | Defaults-vs-user-override dotfile split | IGNORE | home-manager/NixOS options are the structural answer Omarchy approximates in shell. |
 | Crash capture surfaced to humans | ADAPT | Fleet-health probes services, not coredumps; a coredump check class closes that blind spot on alpha (pi's volatile journald rules it out there). |
-| Common tweaks / Troubleshooting / FAQ docs | ADAPT | Small recurring knowledge needs a symptom-indexed home alongside the existing runbooks; the stale `hosts.md`/`failed-auto-upgrade-rollback.md` are first candidates. |
+| Common tweaks / Troubleshooting / FAQ docs | ADAPT | Small recurring knowledge needs a symptom-indexed home alongside the existing runbooks; the `hosts.md` profiles and `update-rollback.md` runbook (both corrected since this research) are first candidates. |
 | OCR text extraction helper | ADAPT | Same shape as existing `clip2qr` (mirrored: produces onto the clipboard); alpha desktop only. |
 
 ## Sources
@@ -450,11 +453,11 @@ GitHub citations reference `basecamp/omarchy` at HEAD (`4.0.0.alpha`).[^version]
 [^version]: [`basecamp/omarchy` — `version` file at HEAD](https://github.com/basecamp/omarchy/blob/HEAD/version)
 [^tree]: File census from the `basecamp/omarchy` git tree at HEAD (103 migrations, 444 bin scripts; 22 theme directories — the per-asset theme file count varied between verification passes and is omitted).
 [^tree-themes]: [`basecamp/omarchy` — `themes/<name>/colors.toml` layout (e.g. catppuccin)](https://github.com/basecamp/omarchy/tree/HEAD/themes/catppuccin)
-[^hosts]: `docs/hosts.md` (documents alpha, beta, pi; epsilon is missing — stale relative to the phase-2 edge cutover comments in `modules/hosts/pi.nix` and `modules/hosts/epsilon.nix`)
+[^hosts]: `docs/hosts.md` (documents alpha, beta, pi, and epsilon; corrected after this research to reflect the phase-2 edge cutover)
 [^epsilon]: `modules/hosts/epsilon.nix` (aarch64 VPS edge: traefik/authelia/glance/miniflux/ddclient, hermes gateway, restic backup; no update pipeline in its `includes`)
 [^fleet-ops]: `docs/runbooks/fleet-operations.md`
-[^runbook-rollback]: `docs/runbooks/failed-auto-upgrade-rollback.md` (note: its claim that auto-upgrade is enabled via `den.aspects.auto-upgrade` is stale — no host includes that aspect)
-[^auto-upgrade-aspect]: `modules/aspects/auto-upgrade.nix` (`system.autoUpgrade`; included by no host — unused mechanism)
+[^runbook-rollback]: `docs/runbooks/update-rollback.md` (replaced `failed-auto-upgrade-rollback.md` after this research; describes the pi auto-update, deploy-rs fleet pass, and alpha gated retry — the pipelines that actually run)
+[^auto-upgrade-aspect]: `modules/aspects/auto-upgrade.nix` (`system.autoUpgrade`; was included by no host — unused mechanism, deleted after this research)
 [^deploy-pi]: `docs/runbooks/deploy-pi-nixos.md`
 [^den-docs]: `docs/architecture/den-aspect-composition.md`
 [^alpha]: `modules/deploy.nix` and `modules/hosts/pi.nix` (pi-owned promotion, fleet deployment, and gated alpha retry)
