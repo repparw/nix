@@ -4,23 +4,15 @@
   ...
 }:
 {
-  # Hermes Agent ships its own flake (uv2nix package + NixOS module). Keep its
-  # dependency closure isolated (no follows) so their tested combination
-  # builds unchanged; updates ride tag bumps here.
   flake-file.inputs.hermes-agent.url = "github:NousResearch/hermes-agent/v2026.8.19";
 
   den.aspects.epsilon = {
     includes = [
       den.aspects.deploy-target
-      # Offsite restic of the stateful edge services + hermes on this host
-      # (backup aspect pulls in restic itself).
       den.aspects.backup
       den.aspects.service-host
-      # Edge ingress stack (Traefik, Authelia, Glance, Miniflux, ddclient)
       den.aspects.nixos-services._.edge
-      # Hermes Agent gateway.
       den.aspects.nixos-services._.hermes
-      # Steam bot: moved here from pi for VPS uptime (not LAN/exposed).
       den.aspects.nixos-services._.archisteamfarm
       den.aspects.nixos-services._.paperless
     ];
@@ -31,20 +23,14 @@
 
         modules.services.bridgePrefix = "10.231.137";
 
-        # Offsite restic coverage (den.aspects.backup): the stateful edge
-        # services (authelia/miniflux) plus hermes agent state.
         modules.backup.paths = [
           "/home/containers/config"
           "/home/repparw/services"
         ];
 
-        # Glance probes the public routes, except the apex dashboard itself.
         containers.glance.config.networking.hosts = {
           "${config.containers.glance.localAddress}" = [ config.modules.services.domain ];
         };
-        # Oracle Cloud Always Free A1 (VM.Standard.A1.Flex, aarch64, sa-santiago-1).
-        # Installed in place via nixos-infect on top of Ubuntu's partition
-        # layout: ext4 root on sda1, UEFI ESP on sda15 mounted /boot/efi.
         # The removable GRUB entry needs no NVRAM writes, which OCI VMs
         # do not persist across stop/start.
         boot.loader = {
@@ -76,13 +62,10 @@
 
         zramSwap.enable = true;
 
-        # den.aspects.networking disables predictable interface names, so the
-        # virtio NIC answers as eth0; OCI hands out everything via DHCP.
         networking.interfaces.eth0.useDHCP = true;
         services.resolved.settings.Resolve.DNSStubListenerExtra =
           "${config.modules.services.bridgePrefix}.1";
 
-        # NixOS containers assign point-to-point addresses and routes itself.
         # Claim these links before systemd's generic 80-container-ve.network,
         # which would otherwise add an unrelated DHCP subnet and its own NAT.
         systemd.network.networks."10-nixos-container" = {
@@ -112,14 +95,10 @@
           iifname "eth0" meta mark 0x484f4d45 udp dport 60002 accept comment "home uplink mosh"
           iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
         '';
-        # Home-uplink allowlists (HTTPS health check over split DNS, mosh)
-        # cannot take a SOPS value: firewall strings render at evaluation
-        # time. Instead the address lives in a set populated at boot from
-        # the homeWanIp secret. This earlier base chain tags matching packets;
-        # the normal NixOS input chain above performs the final accepts, since
-        # an accept verdict in an earlier base chain does not bypass later
-        # base chains. The tunnel endpoint is provisioned from the same secret.
-        # An empty set matches nothing, so a missing secret fails closed.
+        # Home-uplink allowlists cannot take a SOPS value: firewall strings
+        # render at evaluation time. An accept verdict in an earlier base
+        # chain does not bypass later base chains. An empty set matches
+        # nothing, so a missing secret fails closed.
         networking.nftables.tables.home-wan = {
           family = "inet";
           content = ''
@@ -136,8 +115,6 @@
             }
           '';
         };
-        # The point-to-point container allocation is represented as a /24 for
-        # matching, but only traffic leaving epsilon is source-NATed.
         networking.nftables.tables.container-egress-nat = {
           family = "ip";
           content = ''
@@ -148,17 +125,11 @@
           '';
         };
 
-        # Public VPS: no mosh UDP range exposed. One pinned port for the
-        # interactive session (predictive local echo needs mosh's SSP; ssh
-        # cannot speculate). Same port answers on the tunnel.
         programs.mosh.openFirewall = lib.mkForce false;
         services.openssh.openFirewall = lib.mkForce false;
         networking.firewall.interfaces."wg-home".allowedTCPPorts = [ 22 ];
         networking.firewall.interfaces."wg-home".allowedUDPPorts = [ 60002 ];
 
-        # Tunnel home through the router's WireGuard hub (peer registered in
-        # the router UI as epsilon, tunnel ip 10.5.5.3). Split-tunnel on
-        # purpose: only LAN and pi's container bridge route through it.
         sops.secrets = {
           wgEpsilonPrivateKey.sopsFile = ../../secrets/wg.sops.yaml;
           wgEpsilonPresharedKey.sopsFile = ../../secrets/wg.sops.yaml;
@@ -168,10 +139,6 @@
           };
         };
 
-        # Provision the home uplink from the homeWanIp secret: populate the
-        # home-wan nft set and point the tunnel at the router. Fails loudly
-        # when the secret is missing; re-runs when it changes (e.g. after
-        # an ISP renumber + secret rotation, restart this unit).
         systemd.services.home-wan = {
           description = "Provision home uplink (firewall set + WireGuard endpoint) from secret";
           after = [
@@ -212,10 +179,6 @@
                 "192.168.0.0/24"
                 "10.231.136.0/24"
               ];
-              # No endpoint: the router initiates toward this host's static
-              # IP, and home-wan.service sets the return endpoint at boot
-              # from the homeWanIp secret (WireGuard learns it from inbound
-              # packets thereafter). Nothing identifying in the store.
               persistentKeepalive = 25;
             }
           ];

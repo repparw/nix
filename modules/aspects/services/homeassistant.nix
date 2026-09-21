@@ -29,13 +29,10 @@
           hassPort = 8123;
         in
         {
-          # Home Assistant in nspawn (bridge addresses auto-allocated).
           networking.firewall.interfaces.eth0.allowedTCPPorts = [ hassPort ];
           containers.homeassistant = servicesLib.mkContainer {
             inherit cfg;
             name = "homeassistant";
-            # Reached over host port-forwarding, not the bridge, so this
-            # container keeps its own reachability model.
             forwardPorts = [
               {
                 containerPort = hassPort;
@@ -50,16 +47,12 @@
             extraConfig =
               { pkgs, ... }:
               {
-                # The pi LAN resolver was decommissioned, so resolve straight
-                # out the masqueraded bridge via public DNS instead of the
-                # bridge gateway mkContainer defaults to.
                 networking.nameservers = [
                   "1.1.1.1"
                   "9.9.9.9"
                 ];
 
-                # shell_command.set_tv_backlight_mode pushes backlight modes to
-                # the TV; the nspawn unit PATH omits system packages, so the
+                # The nspawn unit PATH omits system packages, so the
                 # ssh binary must be added to the service path explicitly.
                 systemd.services.home-assistant.path = [ pkgs.openssh ];
 
@@ -73,7 +66,6 @@
                     "met"
                     "radio_browser"
                     "google_translate"
-                    # discovered from the migrated instance's entity registry
                     "tuya"
                     "webostv"
                     "wled"
@@ -89,8 +81,6 @@
                       anthropic
                       litellm
                       pyyaml # ai_automation_suggester
-                      # The TV backlight automation shells out to ssh (forced
-                      # command on the TV's webosbrew key).
                       pkgs.openssh
                     ];
                 };

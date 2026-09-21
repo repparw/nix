@@ -6,8 +6,6 @@
 {
   den.aspects.beta = {
     includes = [
-      # Laptop hardware: vendor firmware updates via LVFS. Inert while the
-      # host attachment is parked in modules/hosts/beta.nix.
       den.aspects.nixos-services._.firmware
     ];
 

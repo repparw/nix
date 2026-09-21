@@ -11,7 +11,6 @@
       {
         programs.tmux = {
           enable = true;
-          # shell = "${lib.getExe pkgs.fish}";
           historyLimit = 10000;
           prefix = "C-a";
           mouse = true;

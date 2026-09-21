@@ -298,7 +298,6 @@ export function stableStringify(value) {
 }
 
 function extractNixosReleaseChanges(body) {
-  // Extract the first (latest) release section
   const releaseMatch = body.match(/<h2[^>]*id="sec-release-\d{2}\.\d{2}"[^>]*>([\s\S]*?)(?=<h2[^>]*id="sec-release-|$)/);
   if (!releaseMatch) {
     throw new Error("Could not find NixOS release section");
@@ -308,12 +307,10 @@ function extractNixosReleaseChanges(body) {
   const releaseVersionMatch = body.match(/<h2[^>]*id="sec-release-(\d{2}\.\d{2})"[^>]*>/);
   const releaseVersion = releaseVersionMatch ? releaseVersionMatch[1] : 'unknown';
 
-  // Extract sections
   const newModulesSection = releaseContent.match(/<h3[^>]*id="sec-release-\d{2}\.\d{2}-new-modules"[^>]*>([\s\S]*?)(?=<h3|$)/);
   const breakingSection = releaseContent.match(/<h3[^>]*id="sec-release-\d{2}\.\d{2}-incompatibilities"[^>]*>([\s\S]*?)(?=<h3|$)/);
   const notableSection = releaseContent.match(/<h3[^>]*id="sec-release-\d{2}\.\d{2}-notable-changes"[^>]*>([\s\S]*?)(?=<h3|$)/);
 
-  // Extract list items and clean HTML
   const extractItems = (sectionContent) => {
     if (!sectionContent) return [];
     const items = [];
@@ -334,13 +331,10 @@ function extractNixosReleaseChanges(body) {
 }
 
 function cleanHtml(html) {
-  // Convert links to markdown format: [text](url)
   let cleaned = html.replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/g, '[$2]($1)');
 
-  // Remove all other HTML tags
   cleaned = cleaned.replace(/<[^>]+>/g, '');
 
-  // Decode common HTML entities
   cleaned = cleaned
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
@@ -353,7 +347,6 @@ function cleanHtml(html) {
     .replace(/&ndash;/g, '–')
     .replace(/&mdash;/g, '—');
 
-  // Clean up whitespace
   cleaned = cleaned.replace(/\s+/g, ' ').trim();
 
   return cleaned;
@@ -404,7 +397,6 @@ function displayValue(watcher, current, currentKey) {
     if (typeof current === 'string') {
       return current;
     }
-    // Format changes for display
     const parts = [];
     if (current.newModules && current.newModules.length > 0) {
       parts.push(`+${current.newModules.length} new modules`);
@@ -633,7 +625,6 @@ export async function runChangeDetection({
         content = replaceLiteral(content, "{{current}}", currentDisplay);
         content = replaceLiteral(content, "{{url}}", watcher.url);
 
-        // For NixOS release changes, compute diff and inject new modules/changes
         if (watcher.extractor === "nixosReleaseChanges" && typeof current === "object") {
           content = replaceLiteral(content, "{{version}}", current.version ?? "latest");
           const previousCurrent = previous?.current;

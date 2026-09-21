@@ -22,8 +22,6 @@ in
         ...
       }:
       let
-        # Only resolvable on hosts that enable the style (stylix) aspect; the
-        # theme file below is skipped on headless hosts without it.
         hasStylix = config.lib ? stylix;
         c = config.lib.stylix.colors.withHashtag;
       in
@@ -104,10 +102,6 @@ in
           };
         };
 
-        # Point the opencode provider at the opencode-web.service server
-        # (programs.opencode.web, port 4096) instead of spawning its own
-        # per-session `opencode serve`. With serverUrl set, t3code treats the
-        # server as external and never starts a child process.
         programs.t3code.userSettings = {
           providerInstances.opencode = {
             driver = "opencode";
@@ -120,9 +114,6 @@ in
           };
         };
 
-        # TODO: Replace this hand-rolled service with programs.t3code.server
-        # once https://github.com/nix-community/home-manager/pull/9695 merges
-        # and reaches our pinned input.
         systemd.user.services.t3code-web = {
           Unit = {
             Description = "T3 Code Web Service";

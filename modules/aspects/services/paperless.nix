@@ -9,7 +9,6 @@
         auth = "one_factor";
         container = true;
         monitor = true;
-        healthcheck = "/api/health/";
         backupRelativePath = "paperless/export";
       };
     };
@@ -35,6 +34,13 @@
           inherit cfg;
           name = "paperless";
           privateUsers = "pick";
+          forwardPorts = [
+            {
+              protocol = "tcp";
+              hostPort = 8000;
+              containerPort = 8000;
+            }
+          ];
           bindMounts = {
             "/var/lib/paperless" = {
               hostPath = "${cfg.configDir}/paper";

@@ -4,18 +4,6 @@
   ...
 }:
 let
-  # Single delivery path for all fleet watchers. Alerts must not die
-  # with the thing they monitor, so delivery posts via the Discord REST
-  # API directly instead of going through the hermes container.
-  # Watchers call `discord-notify post "<content>"` (prints the message
-  # id on stdout) and `discord-notify delete <id>`; transport, auth and
-  # failure logging live here so the three scripts share them instead
-  # of each reimplementing curl+jq. Watcher policy (strikes, levels,
-  # grouping) stays in each script.
-  # Pure text (no pkgs): each watcher block instantiates it with
-  # writeShellApplication below. The channel id itself comes from
-  # modules.services.discordChannelId (service-definitions.nix).
-
   discordNotifyText = ''
     if [ $# -lt 1 ]; then
       echo "usage: discord-notify post <content> | delete <message-id>" >&2
@@ -37,8 +25,6 @@ let
 
     case "$cmd" in
       post)
-        # Callers capture stdout as the message id and guard with
-        # `|| true`: logs go to stderr, nothing on stdout on failure.
         content="''${1:-}"
         resp=$(curl -s -m 15 -w '\n%{http_code}' -X POST \
           -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
@@ -72,8 +58,6 @@ let
     esac
   '';
 
-  # Instantiate the shared helper (function: pkgs only flows inside
-  # each watcher's module, never at file scope).
   mkDiscordNotify =
     pkgs_:
     pkgs_.writeShellApplication {
@@ -95,8 +79,31 @@ in
         ...
       }:
       let
-        # Probe policy lives here; delivery rides the shared
-        # discord-notify helper (top of file).
+        servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
+        cfg = config.modules.services;
+        vhostProbes = lib.concatStringsSep "\n" (
+          map
+            (
+              name:
+              let
+                service = cfg.definitions.${name};
+                fqdn = "${service.hostname}.${cfg.domain}";
+              in
+              if name == "homeassistant" then
+                ''
+                  http home-assistant ${servicesLib.serviceUrl cfg config name} ""
+                  http home https://${fqdn}/ "" --resolve ${fqdn}:443:127.0.0.1''
+              else if service.healthcheck != null then
+                "            remote ${name} ${servicesLib.publicHealthUrl cfg config name} 200"
+              else
+                "            remote ${name} ${servicesLib.serviceUrl cfg config name}/ \"\""
+            )
+            (
+              lib.sort (a: b: a < b) (
+                lib.attrNames (lib.filterAttrs (_: service: (service.hostname or null) != null) cfg.definitions)
+              )
+            )
+        );
         probeScript = pkgs.writeShellApplication {
           name = "fleet-health-probe";
           runtimeInputs = with pkgs; [
@@ -109,168 +116,113 @@ in
             systemd
           ];
           text = ''
-            usage="usage: fleet-health-probe [--strict] [--local]"
+                        usage="usage: fleet-health-probe [--strict] [--local]"
 
-            strict=0
-            local_only=0
-            for a in "$@"; do
-              case "$a" in
-                --strict) strict=1 ;;
-                --local) local_only=1 ;;
-                *)
-                  echo "$usage" >&2
-                  exit 2
-                  ;;
-              esac
-            done
+                        strict=0
+                        local_only=0
+                        for a in "$@"; do
+                          case "$a" in
+                            --strict) strict=1 ;;
+                            --local) local_only=1 ;;
+                            *)
+                              echo "$usage" >&2
+                              exit 2
+                              ;;
+                          esac
+                        done
 
-            state_dir="''${STATE_DIRECTORY:-/var/lib/fleet-health}"
-            mkdir -p "$state_dir"
+                        state_dir="''${STATE_DIRECTORY:-/var/lib/fleet-health}"
+                        mkdir -p "$state_dir"
 
-            # Alerts are per-check Discord messages: a check reaching two
-            # strikes posts DOWN (a new message, so channel notifications
-            # fire), and recovery DELETES that message — the channel only
-            # ever shows what is currently down. The message id lives in
-            # the dotfile .$n.msgid so counter globs never see it.
-            # Delivery via discord-notify (top of file).
 
-            failures=0
+                        failures=0
 
-            fail() { # name, detail
-              local n="$1" detail="$2" count mid
-              if [ "$strict" = 1 ]; then
-                failures=$((failures + 1))
-                return
-              fi
-              count=$(( $(cat "$state_dir/$n" 2>/dev/null || echo 0) + 1 ))
-              printf '%s\n' "$count" > "$state_dir/$n"
-              if [ "$count" -ge 2 ] && [ ! -e "$state_dir/.$n.msgid" ]; then
-                mid=$(discord-notify post ":red_circle: DOWN $HOSTNAME $n ($detail)" || true)
-                [ -n "$mid" ] && printf '%s\n' "$mid" > "$state_dir/.$n.msgid"
-              fi
-            }
+                        fail() {
+                          local n="$1" detail="$2" count mid
+                          if [ "$strict" = 1 ]; then
+                            failures=$((failures + 1))
+                            return
+                          fi
+                          count=$(( $(cat "$state_dir/$n" 2>/dev/null || echo 0) + 1 ))
+                          printf '%s\n' "$count" > "$state_dir/$n"
+                          if [ "$count" -ge 2 ] && [ ! -e "$state_dir/.$n.msgid" ]; then
+                            mid=$(discord-notify post ":red_circle: DOWN $HOSTNAME $n ($detail)" || true)
+                            [ -n "$mid" ] && printf '%s\n' "$mid" > "$state_dir/.$n.msgid"
+                          fi
+                        }
 
-            ok() { # name
-              [ "$strict" = 1 ] && return
-              local n="$1" mid
-              if [ -e "$state_dir/.$n.msgid" ]; then
-                mid=$(cat "$state_dir/.$n.msgid")
-                if discord-notify delete "$mid"; then
-                  rm -f "$state_dir/.$n.msgid"
-                fi
-              fi
-              printf '0\n' > "$state_dir/$n"
-            }
+                        ok() {
+                          [ "$strict" = 1 ] && return
+                          local n="$1" mid
+                          if [ -e "$state_dir/.$n.msgid" ]; then
+                            mid=$(cat "$state_dir/.$n.msgid")
+                            if discord-notify delete "$mid"; then
+                              rm -f "$state_dir/.$n.msgid"
+                            fi
+                          fi
+                          printf '0\n' > "$state_dir/$n"
+                        }
 
-            # systemd units (pi-local). container@authelia and container@miniflux
-            # live on epsilon now; their HTTP endpoints are checked above.
-            # container@hermes and container@archisteamfarm moved to epsilon
-            # too; hermes is monitored from epsilon's own checks and ASF runs
-            # no HTTP endpoint (not monitored).
-            for u in \
-              container@homeassistant \
-              traefik; do
-              if systemctl is-active --quiet "$u"; then ok "unit:$u"; else fail "unit:$u" "systemd inactive"; fi
-            done
+                        for u in \
+                          container@homeassistant \
+                          traefik; do
+                          if systemctl is-active --quiet "$u"; then ok "unit:$u"; else fail "unit:$u" "systemd inactive"; fi
+                        done
 
-            # Oneshots are inactive between runs by design: healthy means
-            # "not failed". Excluded from strict gates on purpose — a broken
-            # backup job must not block updates, monitoring still alerts.
-            if [ "$(systemctl is-failed restic-backups-offsite)" = failed ]; then
-              fail "unit:restic-backups-offsite" "oneshot failed"
-            else
-              ok "unit:restic-backups-offsite"
-            fi
+                        if [ "$(systemctl is-failed restic-backups-offsite)" = failed ]; then
+                          fail "unit:restic-backups-offsite" "oneshot failed"
+                        else
+                          ok "unit:restic-backups-offsite"
+                        fi
 
-            # Failed-unit sweep: catch any latched failed state, not just the
-            # watchlist above. Monitoring only — never part of strict gates,
-            # so a broken unit cannot block update flips. Noise control rides
-            # the two-strike machinery per unit: a failure must persist
-            # across two runs (>= 10 min) to alert once, and a failure that
-            # clears between runs never alerts at all. The previous run's
-            # failed set is tracked so recovered units get ok() (counter
-            # reset + recovery notice) instead of stale counters.
-            if [ "$strict" != 1 ]; then
-              # systemd prefixes failed rows with a bullet on newer
-              # versions; extract real unit names by their suffix.
-              failed_cur=$(systemctl list-units --state=failed --no-legend --no-pager 2>/dev/null \
-                | grep -oE '[a-zA-Z0-9@._\\-]+\.(service|timer|mount|path|scope|socket|target)' \
-                | sort -u || true)
-              failed_prev=$(cat "$state_dir/.failed-units" 2>/dev/null || true)
+                        if [ "$strict" != 1 ]; then
+                          # systemd prefixes failed rows with a bullet on newer
+                          # versions; extract real unit names by their suffix.
+                          failed_cur=$(systemctl list-units --state=failed --no-legend --no-pager 2>/dev/null \
+                            | grep -oE '[a-zA-Z0-9@._\\-]+\.(service|timer|mount|path|scope|socket|target)' \
+                            | sort -u || true)
+                          failed_prev=$(cat "$state_dir/.failed-units" 2>/dev/null || true)
 
-              for u in $failed_prev; do
-                printf '%s\n' "$failed_cur" | grep -qxF -e "$u" || ok "unit-failed:$u"
-              done
-              for u in $failed_cur; do
-                fail "unit-failed:$u" "systemd failed state"
-              done
-              printf '%s\n' "$failed_cur" > "$state_dir/.failed-units"
-            fi
+                          for u in $failed_prev; do
+                            printf '%s\n' "$failed_cur" | grep -qxF -e "$u" || ok "unit-failed:$u"
+                          done
+                          for u in $failed_cur; do
+                            fail "unit-failed:$u" "systemd failed state"
+                          done
+                          printf '%s\n' "$failed_cur" > "$state_dir/.failed-units"
+                        fi
 
-            # http probes: alive = any response; strict = exact code required
-            http() { # name, url, strict_code_or_empty, extra_curl_args...
-              local n="$1" url="$2" want="$3"; shift 3
-              local code
-              code=$(curl -s -m 6 -o /dev/null -w '%{http_code}' "$@" "$url" || true)
-              if [ -n "$want" ]; then
-                if [ "$code" = "$want" ]; then ok "http:$n"; else fail "http:$n" "got $code want $want"; fi
-              else
-                if [ "$code" != 000 ]; then ok "http:$n"; else fail "http:$n" "no response"; fi
-              fi
-            }
+                        http() {
+                          local n="$1" url="$2" want="$3"; shift 3
+                          local code
+                          code=$(curl -s -m 6 -o /dev/null -w '%{http_code}' "$@" "$url" || true)
+                          if [ -n "$want" ]; then
+                            if [ "$code" = "$want" ]; then ok "http:$n"; else fail "http:$n" "got $code want $want"; fi
+                          else
+                            if [ "$code" != 000 ]; then ok "http:$n"; else fail "http:$n" "no response"; fi
+                          fi
+                        }
 
-            # Cross-host surfaces live on alpha: skipped under --local so an
-            # unrelated alpha outage can never gate or roll back pi's flip.
-            remote() {
-              [ "$local_only" = 1 ] || http "$@"
-            }
+                        remote() {
+                          [ "$local_only" = 1 ] || http "$@"
+                        }
 
-            # authelia and miniflux are epsilon-hosted now: probe their
-            # public vhosts through the real edge path. As cross-host
-            # surfaces they are remote() checks — epsilon's health never
-            # gates or rolls back pi's flip.
-            remote authelia https://auth.${config.modules.services.domain}/api/health 200
-            remote miniflux https://rss.${config.modules.services.domain}/healthcheck 200
-            remote paperless https://paper.${config.modules.services.domain}/api/health/ 200
-            http home-assistant http://${config.containers.homeassistant.localAddress}:8123 ""
-            # pi's own traefik still serves the LAN vhost for HA; the check
-            # pins SNI to the local loopback per the sniStrict gotcha.
-            http home https://home.${config.modules.services.domain}/ "" --resolve home.${config.modules.services.domain}:443:127.0.0.1
-            remote apex https://${config.modules.services.domain}/ 200
-            # Services exposing a healthcheck are probed at their public
-            # healthcheck endpoint (authelia-bypassed) through the real edge,
-            # so the probe reflects what a visitor experiences. Services
-            # without one (qbittorrent/finance) stay on the LAN
-            # root where any response means "up".
-            remote jellyfin https://jellyfin.${config.modules.services.domain}/health 200
-            remote bazarr https://bazarr.${config.modules.services.domain}/health 200
-            remote prowlarr https://prowlarr.${config.modules.services.domain}/ping 200
-            remote radarr https://radarr.${config.modules.services.domain}/ping 200
-            remote sonarr https://sonarr.${config.modules.services.domain}/ping 200
-            remote qbittorrent http://192.168.0.18:18080/ ""
-            remote finance http://192.168.0.18:3000/ ""
+            ${vhostProbes}
+                        remote apex https://${cfg.domain}/ 200
 
-            if [ "$strict" = 1 ]; then
-              [ "$failures" -eq 0 ]
-              exit $?
-            fi
+                        if [ "$strict" = 1 ]; then
+                          [ "$failures" -eq 0 ]
+                          exit $?
+                        fi
 
-            # Automation observability: a paused updater must never rot
-            # silently. Monitoring mode only, so gates ignore it.
-            if [ -e /var/lib/auto-update/PAUSE ]; then
-              fail "auto-update-paused" "PAUSE flag present"
-            else
-              ok "auto-update-paused"
-            fi
+                        if [ -e /var/lib/auto-update/PAUSE ]; then
+                          fail "auto-update-paused" "PAUSE flag present"
+                        else
+                          ok "auto-update-paused"
+                        fi
 
-            # Board reflects the current down-set (2+ strikes) and only
-            # exists while something is down; deleted on full recovery.
-            # NOTE: renaming/removing a check leaves its counter files here
-            # as ghosts that keep failing the strict gate forever. Prune
-            # them from $state_dir by hand when touching check names
-            # (happened with unit:postgresql/unit:miniflux on the move).
 
-            exit 0
+                        exit 0
           '';
         };
 
@@ -350,8 +302,6 @@ in
       let
         cfg = config.modules.coredump-watch;
 
-        # Policy here (group by binary+signal, mute list); delivery via
-        # the shared discord-notify helper (top of file).
         coredumpsScript = pkgs.writeShellApplication {
           name = "coredump-watch";
           runtimeInputs = with pkgs; [
@@ -366,12 +316,9 @@ in
           text = ''
             state_dir="''${STATE_DIRECTORY:-/var/lib/fleet-health}"
             mkdir -p "$state_dir"
-            # Dotfile so the probe's counter glob never sees bookkeeping.
             marker="$state_dir/.coredumps-since"
             now=$(date +%s)
 
-            # First run: establish the baseline and stay silent — a fresh
-            # install must not replay crash history into the channel.
             if [ ! -e "$marker" ]; then
               printf '%s\n' "$now" > "$marker"
               echo "coredumps: baseline set, nothing reported"
@@ -384,8 +331,6 @@ in
             MUTE_JSON="''${MUTE_JSON:-[]}"
             entries=$(coredumpctl list --json=short --no-pager --since="@$since" 2>/dev/null || echo "[]")
 
-            # Group new crashes by binary + signal; mute by basename so
-            # known-noisy crashers are logged but never notified.
             report=$(printf '%s' "$entries" | jq -r --argjson mute "$MUTE_JSON" '
               [ .[]
                 | select(.exe != null and .exe != "")
@@ -480,8 +425,6 @@ in
       let
         cfg = config.modules.disk-watch;
 
-        # Policy here (levels per check, replace-on-change); delivery via
-        # the shared discord-notify helper (top of file).
         diskWatchScript = pkgs.writeShellApplication {
           name = "disk-watch";
           runtimeInputs = with pkgs; [
@@ -494,20 +437,12 @@ in
             btrfs-progs
           ];
           text = ''
-            # Per-check breach state: the channel only ever shows what is
-            # currently breached. A level change deletes the old message and
-            # posts a new one; recovery deletes silently (same contract as
-            # the fleet-health probe). Message ids live in dotfiles so a
-            # channel rescan never trips over bookkeeping.
             state_dir="$STATE_DIRECTORY"
             mkdir -p "$state_dir"
 
             slug() { printf '%s' "$1" | tr -c '[:alnum:]._-' '_'; }
 
-            # set_level <check> <new-level> <detail>: post on a fresh breach
-            # or escalation, replace the message on any level change, delete
-            # on recovery, silent when unchanged.
-            set_level() { # check, level, detail
+            set_level() {
               local check="$1" level="$2" detail="$3" s mid prev
               s="$(slug "$check")"
               prev="ok"
@@ -531,7 +466,7 @@ in
               printf '%s\n' "$level" > "$state_dir/$s.level"
             }
 
-            level_for() { # pct, warn, crit -> ok|warn|crit
+            level_for() {
               awk -v p="$1" -v w="$2" -v c="$3" 'BEGIN {
                 if (p >= c) print "crit"; else if (p >= w) print "warn"; else print "ok"
               }'
@@ -567,11 +502,9 @@ in
                       print s
                     }
                   }' | head -n 1)
-                # GiB the allocator can still grow into. Raw metadata %
-                # alone hovers 70-90%+ on healthy pools (btrfs sizes the
-                # pool to demand), so gate the alert on whether it can
-                # still grow: the Sep 2026 incident was 97.7% with ~0
-                # unallocated while df looked fine.
+                # Raw metadata % hovers 70-90%+ on healthy pools. Gate on
+                # whether the allocator can still grow: Sep 2026 was 97.7%
+                # with ~0 unallocated while df looked fine.
                 unalloc_gb=$(printf '%s' "$usage" |
                   awk '/Device unallocated:/ {
                     for (i=1; i<=NF; i++) if ($i ~ /^[0-9.]+(KiB|MiB|GiB|TiB)$/) { v=$i; break }
@@ -699,8 +632,6 @@ in
       let
         cfg = config.modules.reboot-watch;
 
-        # Policy here (pending vs converged, post-on-change); delivery
-        # via the shared discord-notify helper (top of file).
         rebootWatchScript = pkgs.writeShellApplication {
           name = "reboot-watch";
           runtimeInputs = with pkgs; [
@@ -710,13 +641,6 @@ in
             coreutils
           ];
           text = ''
-            # Same comparison as system.autoUpgrade.allowReboot: pending
-            # means the staged system differs in kernel, kernel modules,
-            # or initrd from what is booted. The channel only ever shows
-            # what is currently pending (same contract as disk-watch):
-            # post on first sight, delete silently once a reboot
-            # converges. Message id lives in a dotfile so a channel
-            # rescan never trips over bookkeeping.
             state_dir="$STATE_DIRECTORY"
             mkdir -p "$state_dir"
 

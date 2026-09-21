@@ -2,8 +2,6 @@
   lib,
   ...
 }:
-# Edge ingress stack: Traefik, Authelia, and ddclient. Its services publish
-# their operational metadata through the fleet service registry.
 {
   den.aspects.nixos-services.provides.edge = {
     service-registry = [
@@ -48,11 +46,7 @@
           ../../_services/proxy.nix
           ../../_services/authelia.nix
           ../../_services/ddclient.nix
-          # The dashboard lives with the edge: apex routing is local and the
-          # most-visited page stops depending on alpha being up.
           ../../_services/glance.nix
-          # Miniflux + its PostgreSQL run natively here; traefik
-          # reaches them over the nspawn bridge gateway.
           ../../_services/miniflux.nix
         ];
       };

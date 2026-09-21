@@ -106,8 +106,6 @@ const GROK: Record<string, { name: string }> = {
 
 export default (async () => ({
   config: async (cfg: any) => {
-    // Inject every available Bedrock model (us. + global. + bare on-demand)
-    // into the primary amazon-bedrock provider (default region, us-east-1).
     const p = (cfg.provider ??= {})["amazon-bedrock"] ??= {}
     p.name ??= "Amazon Bedrock"
     p.npm ??= "@ai-sdk/amazon-bedrock"

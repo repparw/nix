@@ -140,8 +140,6 @@
               dataDir = "/config";
             };
             extraConfig.systemd.tmpfiles.rules = [ ];
-            # Publish the WebUI onto alpha's LAN so remote ingress can target
-            # it (containers bridge out via NAT only; see service-registry).
             forwardPorts = [
               {
                 protocol = "tcp";
@@ -184,8 +182,6 @@
               nixpkgs.overlays = [
                 (final: prev: {
                   qbittorrent-nox = prev.qbittorrent-nox.overrideAttrs (old: {
-                    # TODO: Remove this patch once qBittorrent PR #24055 lands
-                    # in a release covered by Nixpkgs.
                     patches = (old.patches or [ ]) ++ [
                       (prev.fetchpatch {
                         url = "https://patch-diff.githubusercontent.com/raw/qbittorrent/qBittorrent/pull/24055.patch";
@@ -218,7 +214,6 @@
                 hostPort = 54535;
                 containerPort = 54535;
               }
-              # Published WebUI (remapped: glance owns 8080 on the LAN iface).
               {
                 protocol = "tcp";
                 hostPort = 18080;

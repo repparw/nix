@@ -8,15 +8,13 @@ let
     let
       service = cfg.definitions.${name};
       target =
-        if service.host != null && service.host != cfg.hostName then
-          # A backend owned by another host, reached over the LAN/tunnel.
+        if service.host != cfg.hostName then
           "${cfg.hostAddresses.${service.host}}:${
             toString (if service.publishedPort != null then service.publishedPort else service.port)
           }"
         else if
           lib.hasAttr name hostConfig.containers && hostConfig.containers.${name}.localAddress != null
         then
-          # A local container on this host, reached on its bridge address.
           "${hostConfig.containers.${name}.localAddress}:${toString service.port}"
         else
           "127.0.0.1:${toString service.port}";
@@ -27,8 +25,6 @@ let
 
   backupMountUnit = name: "home-containers-backup-${name}.mount";
 
-  # Public healthcheck URL: "https://<host>.<domain><healthcheck>" for
-  # services that expose one, else the internal backend URL.
   publicHealthUrl =
     cfg: hostConfig: name:
     let
@@ -48,12 +44,6 @@ in
       lib.filterAttrs (_: service: service.hostname != null) cfg.definitions
     );
 
-  # Post-edge contract: probe the public endpoint itself so the widget
-  # reflects what a visitor experiences — CF, terminating edge, tunnel, and
-  # backend all included. Services exposing a healthcheck (authelia-bypassed)
-  # are probed at https://host/healthcheck expecting a real 200; services
-  # without one are probed at their internal backend, where a redirect to
-  # their own login (jellyfin -> /web, paperless -> /login) still means "up".
   monitorSites =
     cfg: hostConfig:
     lib.mapAttrsToList
@@ -109,9 +99,6 @@ in
     {
       cfg,
       name,
-      # Bridge gateway for the container; container DNS points here. Defaults
-      # to the host's bridgePrefix gateway so epsilon's 10.231.137.x bridge
-      # is automatic without per-container overrides.
       hostAddress ? null,
       privateUsers ? null,
       bindMounts ? { },

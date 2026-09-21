@@ -98,9 +98,6 @@
               };
             };
 
-            # Backups ride a gdrive-only crypt: the union's consumer-cloud
-            # legs fill up (tab.digital hit 507) and restic chunks do not
-            # need triple-copy redundancy.
             gd-crypt = {
               config = {
                 type = "crypt";
@@ -118,9 +115,6 @@
               };
             };
 
-            # The account id appears in both url and user, so both are
-            # injected from SOPS at activation; nothing identifying lands
-            # in the world-readable store.
             claro = {
               config = {
                 type = "webdav";

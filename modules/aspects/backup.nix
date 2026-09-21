@@ -1,9 +1,6 @@
 { den, ... }:
 {
   den.aspects.backup = {
-    # Auto-include the offsite restic provide: a host that asks for "backup"
-    # wants its state covered. Splitting it into a separate `_.restic` was a
-    # footgun — pi only included the base and silently lost its restic job.
     includes = [ den.aspects.backup._.restic ];
     nixos =
       { lib, ... }:
@@ -68,9 +65,6 @@
 
               [gd-crypt]
               type = crypt
-              # Dedicated drive folder, OUTSIDE the gdrive:crypt leg the
-              # user-level crypt union serves: backups never mix with
-              # synced personal data.
               remote = gdrive:nixos-backups
               password = ${config.sops.placeholder.rcloneCrypt}
             '';
@@ -91,8 +85,6 @@
             inhibitsSleep = true;
             paths = bcfg.paths;
             exclude = [
-              # Electron/browser cache and shader junk: the bulk of .config
-              # with near-zero restore value.
               "**/cache/**"
               "**/Cache/**"
               "**/Code Cache/**"
@@ -115,17 +107,12 @@
             ];
             checkOpts = [ "--read-data-subset=5%" ];
             timerConfig = {
-              # Leave the promotion/deployment window clear. Large alpha
-              # snapshots can run for hours and inhibit its gated deploy.
               OnCalendar = "*-*-* 01:00:00";
               RandomizedDelaySec = "15min";
               Persistent = true;
             };
           };
 
-          # Weekly offsite-repo weight report: how much the crypt repo
-          # occupies on the drive after prune, plus snapshot count. Posts to
-          # #notifications via the bot token like the other monitors.
           systemd.services.restic-size-report = {
             description = "Report offsite restic repository size to Discord";
             after = [ "network-online.target" ];

@@ -8,24 +8,19 @@ let
         type = types.nullOr types.str;
         default = null;
       };
-      # Machine hosting the service. null keeps addressing host-local
-      # (container bridge or loopback); set to the hosting machine's name so
-      # other hosts resolve the backend through its LAN address.
       host = mkOption {
-        type = types.nullOr types.str;
-        default = null;
+        type = types.str;
+        description = "Hosting machine name. Remote backends use hostAddresses; the current host uses the container bridge or 127.0.0.1.";
       };
       container = mkOption {
         type = types.bool;
         default = false;
         description = "Whether this service runs in an nspawn container on its host.";
       };
-      # Port exposed on the hosting machine's LAN when it differs from
-      # `port` (e.g. two containers behind one host publishing the same
-      # container port). Only meaningful together with `host`.
       publishedPort = mkOption {
         type = types.nullOr types.port;
         default = null;
+        description = "LAN port on the hosting machine when it differs from port.";
       };
       port = mkOption {
         type = types.nullOr types.port;
@@ -54,13 +49,15 @@ let
         type = types.bool;
         default = false;
       };
-      # Unauthenticated HTTP path the service serves to signal liveness
-      # (e.g. miniflux /healthcheck, servarr /ping). When set, the service
-      # becomes publicly probeable through the edge: authelia bypasses it and
-      # monitors (glance, fleet-health) check it via https://host/healthcheck.
       healthcheck = mkOption {
         type = types.nullOr types.str;
         default = null;
+        description = "Unauthenticated liveness path. When set, the edge bypasses it and monitors probe https://host/healthcheck.";
+      };
+      lanEdge = mkOption {
+        type = types.bool;
+        default = false;
+        description = "LAN clients resolve this vhost to lanEdgeHost instead of publicEdgeHost.";
       };
     };
   };
@@ -84,9 +81,7 @@ let
         lib.filterAttrs (_: service: !hasValidHostname service.hostname) definitions
       );
       unknownHosts = lib.attrNames (
-        lib.filterAttrs (
-          _: service: service.host != null && !(lib.hasAttr service.host hostAddresses)
-        ) definitions
+        lib.filterAttrs (_: service: !(lib.hasAttr service.host hostAddresses)) definitions
       );
       hostnames = lib.filter (hostname: hostname != null) (
         lib.catAttrs "hostname" (lib.attrValues definitions)
@@ -158,18 +153,28 @@ in
       description = "Shared service facts used to derive reachability, routing, monitoring, and backups.";
     };
 
-    # LAN address of each known machine, keyed by host name. Definitions with
-    # a `host` set resolve their loopback-bound backends through this map;
-    # Remote backends are reached through the hosting machine's LAN address;
-    # local container backends use their allocated bridge address.
     hostAddresses = mkOption {
       type = types.attrsOf types.str;
       default = { };
-      example = {
-        alpha = "192.168.0.18";
-        pi = "192.168.0.4";
-      };
       description = "Known machines and their LAN addresses for cross-host backend resolution.";
+    };
+
+    hostSshAddresses = mkOption {
+      type = types.attrsOf types.str;
+      default = { };
+      description = "SSH/deploy/LAN-DNS addresses. Defaults to serviceAddress when a host omits sshAddress.";
+    };
+
+    lanEdgeHost = mkOption {
+      type = types.str;
+      default = "pi";
+      description = "Host whose sshAddress LAN clients use for lanEdge vhosts.";
+    };
+
+    publicEdgeHost = mkOption {
+      type = types.str;
+      default = "epsilon";
+      description = "Host whose sshAddress LAN clients use for public vhosts.";
     };
 
     bridgePrefix = mkOption {

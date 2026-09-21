@@ -6,34 +6,34 @@
 }:
 let
   heliumExtensionIds = [
-    "lmeddoobegbaiopohmpmmobpnpjifpii" # Open in Firefox
-    "nngceckbapebfimnlniiiahkandclblb" # Bitwarden
-    "mnjggcdmjocbbbhaepdhchncahnbgone" # SponsorBlock
-    "enamippconapkdmgfgjchkhakpfinmaj" # DeArrow
-    "bnomihfieiccainjcjblhegjgglakjdd" # Improve YouTube!
-    "dbepggeogbaibhgnhhndojpepiihcmeb" # Vimium
+    "lmeddoobegbaiopohmpmmobpnpjifpii"
+    "nngceckbapebfimnlniiiahkandclblb"
+    "mnjggcdmjocbbbhaepdhchncahnbgone"
+    "enamippconapkdmgfgjchkhakpfinmaj"
+    "bnomihfieiccainjcjblhegjgglakjdd"
+    "dbepggeogbaibhgnhhndojpepiihcmeb"
   ];
 
   allOpenInExtensionIds = [
-    "lmeddoobegbaiopohmpmmobpnpjifpii" # Open in Firefox
-    "mjoebkkejejidnkfdekpbooceogbapnf" # Open in Edge
-    "amojccmdnkdlcjcplmkijeenigbhfbpd" # Open in Opera
-    "looohpideggedchhpphemdmppnmdkgfd" # Open in IE
-    "bhfenhhfpcpkknkahnlogooiodcofkjl" # Open in Chromium
-    "mgmnomlncpmfgelhofilonnecmbdaoia" # Open in Brave
-    "bifmfjgpgndemajpeeoiopbeilbaifdo" # External Application Button
-    "ihpiinojhnfhpdmmacgmpoonphhimkaj" # Open in VLC
-    "jgpghknlbaljigdhcjimjnkkjniiipmm" # Open in GIMP
-    "cehiomcamjpnfmemkmpjadaclohoibgo" # Open in PDF viewer
-    "balknnpjeohaolphkfhghbaapifbokik" # Open in Onion Browser
-    "nfpgfobeckckemhmggkdfjkjaiikadnd" # Open in Yandex
-    "kjoabfljeghcinlpjhdbdfbcflapkccm" # Tor Control
-    "gkmonffckeeffppchajngpdakfppalfo" # Auto Shutdown
-    "eaicplkoeceoelookkiaeekhodehdhde" # Easy Video Downloader
-    "lhplfipknbnglagbgbfogdaihdcekfga" # Open in Foxit Reader
-    "bffjckjhidlcnenenacdahhpbacpgapo" # Country Flags
-    "oofmnabdpcibefadlibdpnnbglcehfpj" # Email Client for Notmuch
-    "ocnfecjfebnllnapjjoncgjnnkfmobjc" # Media Converter
+    "lmeddoobegbaiopohmpmmobpnpjifpii"
+    "mjoebkkejejidnkfdekpbooceogbapnf"
+    "amojccmdnkdlcjcplmkijeenigbhfbpd"
+    "looohpideggedchhpphemdmppnmdkgfd"
+    "bhfenhhfpcpkknkahnlogooiodcofkjl"
+    "mgmnomlncpmfgelhofilonnecmbdaoia"
+    "bifmfjgpgndemajpeeoiopbeilbaifdo"
+    "ihpiinojhnfhpdmmacgmpoonphhimkaj"
+    "jgpghknlbaljigdhcjimjnkkjniiipmm"
+    "cehiomcamjpnfmemkmpjadaclohoibgo"
+    "balknnpjeohaolphkfhghbaapifbokik"
+    "nfpgfobeckckemhmggkdfjkjaiikadnd"
+    "kjoabfljeghcinlpjhdbdfbcflapkccm"
+    "gkmonffckeeffppchajngpdakfppalfo"
+    "eaicplkoeceoelookkiaeekhodehdhde"
+    "lhplfipknbnglagbgbfogdaihdcekfga"
+    "bffjckjhidlcnenenacdahhpbacpgapo"
+    "oofmnabdpcibefadlibdpnnbglcehfpj"
+    "ocnfecjfebnllnapjjoncgjnnkfmobjc"
   ];
 in
 {
@@ -72,8 +72,6 @@ in
           BrowserSignin = 0;
           PasswordManagerEnabled = false;
 
-          # Let Helium's Chromium updater install and update these through
-          # Helium's Web Store proxy. No CRX versions or hashes are managed by Nix.
           ExtensionInstallForcelist = heliumExtensionIds;
         };
       };
@@ -108,10 +106,13 @@ in
           };
 
         heliumWithoutMimeApps = browserWithoutMimeApps "helium.desktop";
+        helium = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
+        heliumPackage = heliumWithoutMimeApps helium;
         heliumFlags = [
           "--force-renderer-accessibility"
           "--silent-debugger-extension-api"
         ];
+        heliumForWebapps = heliumPackage.override { flags = heliumFlags; };
         # Helium's user-data-dir on Linux is ~/.config/net.imput.helium
         # (verified: live Default/, SingletonSocket, and crashpad database
         # all live there). NativeMessagingHosts must go under it;
@@ -124,7 +125,10 @@ in
         home.packages = [
           (pkgs.writeShellApplication {
             name = "webapp";
-            runtimeInputs = [ ndrop ];
+            runtimeInputs = [
+              heliumForWebapps
+              ndrop
+            ];
             text = ''
               if [ "$#" -lt 2 ]; then
                 echo "usage: webapp <app-id> <url> [helium args...]" >&2
@@ -180,8 +184,6 @@ in
                 app_name="$(printf '%s_%s' "$host" "$path" | tr '/ ' '__')"
                 chrome_id="chrome-''${app_name}-Default"
               else
-                # Should not happen for valid URLs; fall back to the given
-                # name so ndrop still has something stable to match.
                 chrome_id="$app_id"
               fi
 
@@ -408,9 +410,7 @@ in
 
           helium = {
             enable = true;
-            package =
-              heliumWithoutMimeApps
-                inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
+            package = heliumPackage;
             flags = heliumFlags;
           };
         };

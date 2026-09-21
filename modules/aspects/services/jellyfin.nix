@@ -13,6 +13,7 @@
         auth = "bypass";
         container = true;
         monitor = true;
+        lanEdge = true;
         healthcheck = "/health";
         backupRelativePath = "jellyfin/data/backups";
       };
@@ -105,7 +106,6 @@
 
                 hardware.graphics = {
                   enable = true;
-                  # alpha's GPU is amdgpu; VAAPI comes from mesa (radeonsi).
                 };
 
                 users.users.jellyfin.extraGroups = [

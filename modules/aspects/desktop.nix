@@ -4,15 +4,11 @@
   ...
 }:
 {
-  # The desktop user layer: window-manager-side tools and the desktop-only
-  # AI tooling. Attach it to whichever user sits at a desktop host — it
-  # injects the GUI host stack via to-hosts and configures the user's home.
   den.aspects.desktop = {
     includes = [
       den.aspects.gui
       den.aspects.file-manager
       den.aspects.obsidian
-      # GUI AI tooling (dictation/speech need input+sound hardware).
       den.aspects.ai._.gui
     ];
 

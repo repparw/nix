@@ -21,8 +21,6 @@
 
         home.packages =
           let
-            # Headless hosts (pi) carry no stylix: an unstyled nvim beats a
-            # broken eval there, styled hosts extend with the real module.
             nvim = pkgs.repparw-neovim.extend (config.stylix.targets.nixvim.exportedModule or { });
           in
           with pkgs;
@@ -41,7 +39,6 @@
             ffmpeg
             imagemagick
             less
-            # yt-dlp
 
             fastfetch
             tlrc

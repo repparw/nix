@@ -14,8 +14,6 @@
               ${host.system.build.vm}/bin/run-${host.networking.hostName}-vm "$@"
             '';
         };
-
-        # vmBeta stays parked until beta hardware is back.
       };
 
       apps = {
@@ -24,8 +22,6 @@
           program = "${config.packages.vmAlpha}/bin/vm-alpha";
           meta.description = "Run the alpha NixOS VM";
         };
-
-        # vmBeta stays parked until beta hardware is back.
       };
     };
 }

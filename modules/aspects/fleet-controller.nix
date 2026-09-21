@@ -21,10 +21,10 @@
         )
       );
 
-      # One controller-side transaction owns both headless reboots. Holding
-      # the normal fleet lock across epsilon's reboot and recovery prevents
-      # promote/deploy from racing either host, while the post-boot health
-      # gate prevents pi from going down unless epsilon is back.
+      servicesLib = import ../_services/lib.nix { inherit lib pkgs; };
+      cfg = config.modules.services;
+      apexUrl = "https://${cfg.domain}/";
+      minifluxHealth = servicesLib.publicHealthUrl cfg config "miniflux";
       headlessReboot = pkgs.writeShellApplication {
         name = "fleet-headless-reboot";
         runtimeInputs = with pkgs; [
@@ -41,8 +41,6 @@
             exit 1
           fi
 
-          # Same lock as fleet-update. Keep fd 9 open for the entire
-          # epsilon -> health gate -> pi transaction.
           exec 9>/run/fleet-update.lock
           if ! flock -n 9; then
             echo "fleet-headless-reboot: another fleet operation is running; skipping"
@@ -99,9 +97,9 @@
             remote_epsilon systemctl is-active --quiet \
               ${epsilonContainers} traefik.service \
               || return 1
-            http_200 https://${config.modules.services.domain}/ || return 1
-            http_200 https://rss.${config.modules.services.domain}/healthcheck || return 1
-          }
+            http_200 ${apexUrl} || return 1
+            http_200 ${minifluxHealth} || return 1
+            }
 
           backup_state_epsilon() {
             remote_epsilon systemctl is-active restic-backups-offsite.service 2>/dev/null || true
@@ -206,8 +204,6 @@
             exit 0
           fi
 
-          # Even when epsilon itself did not need a reboot, pi only goes down
-          # behind a live edge. Check immediately before requesting shutdown.
           if ! epsilon_healthy; then
             echo "fleet-headless-reboot: epsilon health gate is failing; pi stays up" >&2
             exit 1
@@ -228,22 +224,14 @@
           echo "fleet-headless-reboot: rebooting pi into staged kernel/initrd"
           systemctl reboot --no-block
 
-          # Hold the fleet lock until shutdown actually tears this service
-          # down; otherwise a manual fleet run could enter after the reboot
-          # request was queued but before pi leaves userspace.
           exec sleep infinity
         '';
       };
     in
     {
-      # Install the controller only on the coordinator. Other nodes are
-      # deploy-rs targets, not alternate fleet coordinators.
       environment.systemPackages = [ config.modules.fleet-update.package ];
       systemd.tmpfiles.rules = [ "d /var/lib/auto-update 0700 root root -" ];
 
-      # Headless kernel/initrd convergence is one controller-owned
-      # transaction. Persistent=false deliberately avoids a catch-up reboot
-      # when pi boots after the 03:00 maintenance window.
       systemd.services.fleet-headless-reboot = {
         description = "Sequentially reboot headless hosts into staged kernel/initrd generations";
         after = [ "network-online.target" ];
@@ -264,9 +252,6 @@
         };
       };
 
-      # Promotion and consumption are independent transactions. A failed
-      # input bump cannot suppress deployment of already-approved main; the
-      # shared controller lock serializes their Git and state access.
       systemd.services.fleet-promote = {
         description = "Validate and publish a flake.lock candidate";
         after = [ "network-online.target" ];
@@ -299,8 +284,6 @@
         wants = [ "network-online.target" ];
         restartIfChanged = false;
         serviceConfig.Type = "oneshot";
-        # Pi is itself a deployment target. Run the long-lived worker as a
-        # transient unit outside the configuration it may replace.
         script = ''
           if ${lib.getExe' pkgs.systemd "systemctl"} is-active --quiet fleet-deploy-run.service; then
             echo "fleet-deploy-run.service is already active"
@@ -317,8 +300,6 @@
               deploy --wait-lock 7200 --state /var/lib/auto-update; then
             exit 0
           fi
-          # The activity check and unit creation cannot be one atomic call.
-          # If another launcher won that race, convergence is already owned.
           if ${lib.getExe' pkgs.systemd "systemctl"} is-active --quiet fleet-deploy-run.service; then
             echo "fleet-deploy-run.service was started concurrently"
             exit 0
@@ -336,9 +317,6 @@
         };
       };
 
-      # Keep retries on the controller. An alpha-local service would remain
-      # active while replacing itself and can make systemd reject the
-      # activation transaction as cyclic.
       systemd.services.fleet-alpha-retry = {
         description = "Retry gated alpha fleet convergence";
         after = [ "network-online.target" ];

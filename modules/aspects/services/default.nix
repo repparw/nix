@@ -1,12 +1,10 @@
 { den, ... }:
 {
-  # Common contract for every host that runs or consumes fleet services.
-  # Service selection is deliberately separate so a small host can use the
-  # schema and allocator without pulling Alpha's media closures.
   den.aspects.service-host.nixos =
     {
       config,
       lib,
+      pkgs,
       service-registry,
       ...
     }:
@@ -37,17 +35,41 @@
           builtins.listToAttrs entries;
       definitions = lib.mapAttrs (_: lib.mkDefault) generatedDefinitions;
 
-      # The registry provenance carries the complete originating host entity.
-      # Keep the service-reachable address with fleet topology and derive the
-      # compatibility map here instead of maintaining a second host registry.
-      hostAddresses = builtins.listToAttrs (
+      hostMeta = builtins.listToAttrs (
         map (entry: {
           name = entry.source.host.name;
-          value =
-            entry.source.host.serviceAddress
-              or (throw "service host ${entry.source.host.name} is missing serviceAddress topology metadata");
+          value = entry.source.host;
         }) service-registry
       );
+      hostAddresses = lib.mapAttrs (
+        name: host:
+        host.serviceAddress or (throw "service host ${name} is missing serviceAddress topology metadata")
+      ) hostMeta;
+      hostSshAddresses = lib.mapAttrs (
+        name: host:
+        host.sshAddress or host.serviceAddress
+          or (throw "service host ${name} is missing sshAddress and serviceAddress topology metadata")
+      ) hostMeta;
+      svc = config.modules.services;
+      domain = svc.domain;
+      lanIp =
+        hostSshAddresses.${svc.lanEdgeHost} or (throw "lanEdgeHost ${svc.lanEdgeHost} missing ssh address");
+      publicIp =
+        hostSshAddresses.${svc.publicEdgeHost}
+          or (throw "publicEdgeHost ${svc.publicEdgeHost} missing ssh address");
+      vhosts = lib.filterAttrs (_: service: (service.hostname or null) != null) generatedDefinitions;
+      fqdn = service: "${service.hostname}.${domain}";
+      lanNames = lib.mapAttrsToList (_: fqdn) (
+        lib.filterAttrs (_: service: service.lanEdge or false) vhosts
+      );
+      publicNames = [
+        domain
+      ]
+      ++ lib.mapAttrsToList (_: fqdn) (lib.filterAttrs (_: service: !(service.lanEdge or false)) vhosts);
+      rendered = ''
+        ${lib.optionalString (lanNames != [ ]) "${lanIp} ${lib.concatStringsSep " " lanNames}"}
+        ${publicIp} ${lib.concatStringsSep " " publicNames}
+      '';
     in
     {
       imports = [
@@ -55,8 +77,23 @@
         ../../_services/address-allocator.nix
       ];
 
-      modules.services = {
-        inherit definitions hostAddresses;
+      options.modules.lan-hosts.file = lib.mkOption {
+        type = lib.types.package;
+        readOnly = true;
+        description = "Rendered hosts fragment for external consumers (TV deployment).";
+      };
+
+      config = {
+        modules.services = {
+          inherit definitions hostAddresses hostSshAddresses;
+        };
+
+        modules.lan-hosts.file = pkgs.writeText "lan-hosts" rendered;
+
+        networking.hosts = lib.mkIf (config.networking.hostName != svc.publicEdgeHost) {
+          ${lanIp} = lanNames;
+          ${publicIp} = publicNames;
+        };
       };
     };
 
@@ -70,7 +107,6 @@
       ]
       ++ [
         den.aspects.service-host
-        den.aspects.lan-hosts
       ];
 
     nixos =
@@ -83,9 +119,6 @@
       let
         cfg = config.modules.services;
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
-        # Backup mounts only for services this host actually runs: the
-        # shared inventory also carries pi-local services whose state never
-        # exists here.
         localBackupCfg = cfg // {
           definitions = lib.filterAttrs (_: service: service.host == cfg.hostName) cfg.definitions;
         };
