@@ -39,6 +39,8 @@ KNOWN_TYPES = frozenset(
         "Research Note",
         "Runbook",
         "Service Architecture",
+        "Troubleshooting",
+        "Tweaks",
     }
 )
 SKILL_FIELDS = ("name", "description")

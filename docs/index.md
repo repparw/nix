@@ -39,6 +39,11 @@ files instead of copying module contents.
 - [Prune t3code and opencode databases](runbooks/prune-t3code-opencode-dbs.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
 
+## Fixes
+
+- [Tweaks](tweaks.md)
+- [Troubleshooting](troubleshooting.md)
+
 ## Research
 
 - [Multi-room audio hardware](research/multi-room-audio-hw.md)

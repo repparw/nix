@@ -137,3 +137,4 @@ systemd-boot layout already satisfies this).
 
 - [Deploy NixOS to the Raspberry Pi](deploy-pi-nixos.md)
 - [Update rollback](update-rollback.md)
+- [Troubleshooting](../troubleshooting.md)
