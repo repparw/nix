@@ -229,7 +229,7 @@
             exec ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
           fi
 
-          exec ${lib.getExe pkgs.gamescope} --steam -H 1080 --adaptive-sync --fps-limit 162 -- \
+          exec ${lib.getExe pkgs.gamescope} --steam -H 1080 -r 162 --adaptive-sync -- \
             ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
         '';
       };
