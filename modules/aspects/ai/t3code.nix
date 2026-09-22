@@ -120,7 +120,8 @@ in
             After = [ "network.target" ];
           };
           Service = {
-            ExecStart = "${pkgs.t3code}/bin/t3 serve --mode web";
+            # Follow programs.t3code.package (pi pins the server-only build).
+            ExecStart = "${config.programs.t3code.package}/bin/t3 serve --mode web";
             Restart = "always";
             RestartSec = 5;
             Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") connectEnvironment) ++ [
