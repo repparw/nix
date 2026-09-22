@@ -18,7 +18,12 @@
       epsilon = {
         serviceAddress = "10.5.5.3";
         sshAddress = "146.181.42.97";
-        users.repparw.aspect = den.aspects.repparw;
+        users.repparw.aspect = {
+          includes = [
+            den.aspects.repparw
+            den.aspects.ai._.t3code-split
+          ];
+        };
       };
 
       pi = {
