@@ -13,6 +13,4 @@ in
         pipe.withProvenance
       ])
     ];
-
-  den.schema.host.includes = [ den.policies.collect-service-registry ];
 }

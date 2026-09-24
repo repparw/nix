@@ -1,5 +1,7 @@
 { den, ... }:
 {
+  den.aspects.service-host.includes = [ den.policies.collect-service-registry ];
+
   den.aspects.service-host.nixos =
     {
       config,
