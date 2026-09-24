@@ -15,7 +15,7 @@
     };
     systems.url = "github:nix-systems/default";
 
-    den.url = "github:denful/den";
+    den.url = "github:denful/den/latest";
     flake-file.url = "github:vic/flake-file";
     git-hooks = {
       url = "github:cachix/git-hooks.nix";
