@@ -10,10 +10,10 @@ Run from the repository root. Select the checks in the
 aspects and defaults require evaluation of every affected host; a host-specific
 change can target that host. Discover host names from the flake.
 
-This procedure evaluates and builds without activation. For deployment, use
-the [fleet runbook](../../../docs/runbooks/fleet-operations.md) and the user's
-authorization for that task. A successful build does not prove activation or
-runtime health.
+This procedure evaluates and builds without activation. For runtime inspection
+or an authorized deployment, hand off to
+[fleet-operations](../fleet-operations/SKILL.md). A successful build does not
+prove activation or runtime health.
 
 ## Prepare
 

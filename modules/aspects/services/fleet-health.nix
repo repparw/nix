@@ -249,6 +249,7 @@ in
 
         config = {
           modules.fleet-health.probe = probeScript;
+          environment.systemPackages = [ probeScript ];
 
           systemd.services.fleet-health = {
             description = "Probe the fleet and alert on state changes";

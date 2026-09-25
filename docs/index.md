@@ -54,6 +54,7 @@ files instead of copying module contents.
 ## Agent guidance
 
 - [Verify NixOS configuration changes](../.agents/skills/verify-nixos-config/SKILL.md)
+- [Operate the running fleet](../.agents/skills/fleet-operations/SKILL.md)
 - [Domain docs](agents/domain.md)
 - [GitHub issue tracker](agents/issue-tracker.md)
 - [Triage labels](agents/triage-labels.md)

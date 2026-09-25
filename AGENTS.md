@@ -17,7 +17,9 @@ Check issues before implementing a local workaround. For merged pull requests, v
 ## Agent skills
 
 For configuration changes or pre-deployment checks, use
-[verify-nixos-config](.agents/skills/verify-nixos-config/SKILL.md).
+[verify-nixos-config](.agents/skills/verify-nixos-config/SKILL.md). For
+running-fleet inspection or an authorized activation, use
+[fleet-operations](.agents/skills/fleet-operations/SKILL.md).
 
 ### Issue tracker
 
