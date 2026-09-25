@@ -12,8 +12,9 @@ tags: [services, containers, proxy, backup]
 Service behavior is split between the common host substrate, service bundles,
 and individual service aspects.
 
-- `service-host` collects the fleet service registry into the validated schema
-  and provides the address allocator without selecting any services.
+- `service-host` activates the fleet service-registry collector, materializes
+  the validated schema, and provides the address allocator without selecting any
+  services.
 - `media-stack` composes Alpha's media services and shared container substrate.
 - Hosts include only the individual `nixos-services._.*` aspects they run.
 - `modules/aspects/services/default.nix` defines the substrate and bundles.
@@ -26,9 +27,10 @@ and individual service aspects.
 - `modules/_services/glance.nix` owns dashboard and monitoring presentation.
 
 Each service aspect emits its reachability, routing, monitoring, and backup
-facts through the `service-registry` quirk. A fleet-wide `collectAll` pipe
-collects those facts with provenance, so `service-host` derives each service's
-`host` from the originating host entity. `host` is required.
+facts through the `service-registry` quirk. `service-host` activates a
+fleet-wide `collectAll` pipe that collects those facts with provenance, then
+derives each service's `host` from the originating host entity. `host` is
+required.
 The host entity's `serviceAddress` is the backend other fleet hosts use
 (`modules.services.hostAddresses`). `sshAddress` (defaulting to
 `serviceAddress`) is SSH, deploy-rs, and LAN `/etc/hosts`. Epsilon sets

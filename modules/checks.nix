@@ -181,9 +181,13 @@
           service-definitions =
             let
               alpha = inputs.self.nixosConfigurations.alpha.config;
+              pi = inputs.self.nixosConfigurations.pi.config;
               epsilon = inputs.self.nixosConfigurations.epsilon.config;
               domain = alpha.modules.services.domain;
               definitions = alpha.modules.services.definitions // epsilon.modules.services.definitions;
+              registryNames = config: lib.attrNames config.modules.services.definitions;
+              fleetRegistryMatches =
+                registryNames alpha == registryNames pi && registryNames alpha == registryNames epsilon;
               accessControl =
                 epsilon.containers.authelia.config.services.authelia.instances.main.settings.access_control;
 
@@ -318,8 +322,9 @@
                 && !(builtins.any (rule: builtins.elem "null.example.test" rule.domain) sparsePolicy.authelia.rules)
                 && healthcheckBypassMatches;
 
-              expected = validationMatches && ingressPolicyMatches;
+              expected = fleetRegistryMatches && validationMatches && ingressPolicyMatches;
               matcherReport = builtins.toJSON {
+                r = fleetRegistryMatches;
                 v = validationMatches;
                 i = ingressPolicyMatches;
               };
