@@ -16,4 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Show OpenAlgo Nix formatting diff
+        run: |
+          nix fmt modules/openalgo.nix
+          git diff -- modules/openalgo.nix
       - run: nix build .#openalgo --print-build-logs
