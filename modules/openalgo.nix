@@ -126,19 +126,20 @@ in
 
             exec ${venv}/bin/python app.py "$@"
           '';
-        }).overrideAttrs (old: {
-          passthru = (old.passthru or { }) // {
-            inherit openalgoSrc venv;
-            sourceRev = openalgoRev;
-          };
-          meta = (old.meta or { }) // {
-            description = "Broker-agnostic open-source trading automation platform";
-            homepage = "https://github.com/marketcalls/openalgo";
-            license = lib.licenses.agpl3Only;
-            mainProgram = "openalgo";
-            platforms = lib.platforms.linux;
-          };
-        });
+        }).overrideAttrs
+          (old: {
+            passthru = (old.passthru or { }) // {
+              inherit openalgoSrc venv;
+              sourceRev = openalgoRev;
+            };
+            meta = (old.meta or { }) // {
+              description = "Broker-agnostic open-source trading automation platform";
+              homepage = "https://github.com/marketcalls/openalgo";
+              license = lib.licenses.agpl3Only;
+              mainProgram = "openalgo";
+              platforms = lib.platforms.linux;
+            };
+          });
     in
     {
       packages.openalgo = package;
