@@ -6,6 +6,7 @@
       checks =
         let
           hosts = lib.attrNames inputs.self.nixosConfigurations;
+          fleetCli = inputs.self.nixosConfigurations.alpha.config.modules.fleet-cli.package;
           evalHost =
             host:
             let
@@ -175,6 +176,45 @@
               ''
                 export PYTHONDONTWRITEBYTECODE=1
                 python3 ${./scripts}/check-agent-docs.test.py ${inputs.self}
+                touch $out
+              '';
+
+          fleet-cli =
+            pkgs.runCommand "check-fleet-cli"
+              {
+                nativeBuildInputs = [
+                  fleetCli
+                  pkgs.jq
+                ];
+              }
+              ''
+                fleet --help >/dev/null
+                fleet health --help >/dev/null
+                fleet backup --help >/dev/null
+
+                registry=$(fleet commands --json)
+                printf '%s\n' "$registry" | jq -e 'type == "array" and length > 0' >/dev/null
+
+                while IFS= read -r row; do
+                  usage=$(printf '%s' "$row" | jq -r .usage)
+                  mapfile -t path < <(printf '%s' "$row" | jq -r '.path[]')
+                  help=$(fleet "''${path[@]}" --help)
+                  grep -F "Usage: $usage" <<< "$help" >/dev/null
+                done < <(printf '%s\n' "$registry" | jq -c '.[]')
+
+                if fleet commands nope >/dev/null 2>&1; then
+                  echo "fleet commands accepted an invalid argument" >&2
+                  exit 1
+                fi
+                if fleet backup status nope >/dev/null 2>&1; then
+                  echo "fleet backup status accepted an invalid argument" >&2
+                  exit 1
+                fi
+                if fleet debug not-a-host >/dev/null 2>&1; then
+                  echo "fleet debug accepted an unknown host" >&2
+                  exit 1
+                fi
+
                 touch $out
               '';
 

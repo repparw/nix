@@ -11,4 +11,6 @@ needed, and report relevant checks that were skipped.
 | [closure-diff](closure-diff.md)             | Package differences from the running target system.                                 | Minutes        |
 
 Builds do not run commit hooks or prove activation and service health.
-Deployment and runtime checks follow the [fleet runbook](../../../../docs/runbooks/fleet-operations.md).
+Deployment and runtime checks follow the
+[fleet-operations skill](../../fleet-operations/SKILL.md) and
+[fleet runbook](../../../../docs/runbooks/fleet-operations.md).

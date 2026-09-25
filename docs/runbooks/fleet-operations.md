@@ -16,6 +16,27 @@ deploy-rs update. All three post to the `#notifications` Discord channel, and
 the monitor posts directly rather than through the hermes container, so it
 still reports when hermes itself is down.
 
+## Fleet CLI and agent discovery
+
+The generated `fleet` CLI is the operator-facing discovery and inspection
+surface. Its command registry generates dispatch, help, and machine-readable
+metadata from one Nix attrset:
+
+```sh
+fleet --help
+fleet commands --json
+```
+
+Agents should use the
+[fleet-operations skill](../../.agents/skills/fleet-operations/SKILL.md) for
+runtime work and discover capabilities from `fleet commands --json` instead
+of copying this command surface into prose. Configuration verification remains
+a separate pre-activation procedure in `verify-nixos-config`.
+
+`fleet update` delegates to the interactive `host-update` path for the local
+tree. It is deliberately distinct from the controller-side `fleet-update`
+transaction below, which promotes and deploys the pinned production revision.
+
 ## Fleet health (`fleet-health.timer`, every 5 min)
 
 Probes every systemd unit that matters plus every HTTP surface across the

@@ -7,6 +7,7 @@
       den.batteries.hostname
       den.aspects.networking
       den.aspects.secrets
+      den.aspects.fleet-cli
     ];
 
     default = {
