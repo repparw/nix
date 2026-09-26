@@ -35,7 +35,6 @@
             gawk
             gnugrep
             coreutils
-            sudo
           ];
           text = ''
             set -u
@@ -47,6 +46,10 @@
             soak_settle_seconds="''${SOAK_SETTLE_SECONDS:-45}"
             soak_interval_seconds="''${SOAK_INTERVAL_SECONDS:-30}"
             soak_attempts="''${SOAK_ATTEMPTS:-10}"
+            # Privilege escalation must go through the setuid wrapper. The
+            # nixpkgs sudo is a non-setuid store binary and shadows the wrapper
+            # when listed in runtimeInputs, so never add sudo there.
+            escalate=/run/wrappers/bin/sudo
 
             for a in "$@"; do
               case "$a" in
@@ -110,7 +113,7 @@
               free_kb=$(df -k /nix | awk 'NR==2 {print $4}')
               if [ "$free_kb" -lt $((10 * 1024 * 1024)) ]; then
                 echo "below 10G on /nix; running gc (sudo password may be asked)"
-                sudo nix-collect-garbage -d || true
+                "$escalate" nix-collect-garbage -d || true
               fi
 
               nix build ".#nixosConfigurations.$host.config.system.build.toplevel" \
@@ -152,7 +155,7 @@
             if [ "$(id -u)" = 0 ]; then
               nixos-rebuild switch --flake ".#$host"
             else
-              sudo nixos-rebuild switch --flake ".#$host"
+              "$escalate" nixos-rebuild switch --flake ".#$host"
             fi
 
             sleep "$soak_settle_seconds"
@@ -174,7 +177,7 @@
               if [ "$(id -u)" = 0 ]; then
                 nixos-rebuild switch --rollback
               else
-                sudo nixos-rebuild switch --rollback
+                "$escalate" nixos-rebuild switch --rollback
               fi
               exit 1
             fi

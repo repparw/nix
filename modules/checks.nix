@@ -141,6 +141,30 @@
                 touch $out
               '';
 
+          sudo-wrappers =
+            let
+              sudoChecks = lib.concatStringsSep "\n" (
+                lib.mapAttrsToList (
+                  _: entry:
+                  let
+                    description = lib.concatStringsSep ", " (lib.sort builtins.lessThan (lib.unique entry.labels));
+                  in
+                  ''
+                    if grep -nE '^[[:space:]]*sudo([[:space:]]|$)' ${lib.escapeShellArg entry.script}; then
+                      printf 'Bare sudo in generated application: %s (%s)\n' \
+                        ${lib.escapeShellArg description} ${lib.escapeShellArg entry.script} >&2
+                      printf 'Escalate via /run/wrappers/bin/sudo; the nixpkgs sudo is non-setuid.\n' >&2
+                      exit 1
+                    fi
+                  ''
+                ) generatedShellsByScript
+              );
+            in
+            pkgs.runCommand "check-sudo-wrappers" { } ''
+              ${sudoChecks}
+              touch $out
+            '';
+
           sops-files = pkgs.runCommand "check-sops-files" { } ''
             invalid_names=$(find ${inputs.self}/secrets -maxdepth 1 -type f -name '*.yaml' ! -name '*.sops.yaml' -print)
             missing_metadata=$(find ${inputs.self}/secrets -maxdepth 1 -type f -name '*.sops.yaml' ! -exec grep -q '^sops:$' {} \; -print)
