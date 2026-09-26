@@ -40,3 +40,13 @@ this page only routes.
   timer.
 - Fix: STANDBY IMMEDIATE guarded by `findmnt`; see
   [Spin down alpha's media HDD](tweaks.md#spin-down-alphas-media-hdd).
+
+## Modem DOCSIS errors on 2026-09-26 13:08–13:13 are not failure evidence
+
+- Symptom: the modem event log shows RCS Partial Service, SYNC loss, and
+  T3/T4 timeouts clustered around 13:08–13:13 -03 on 2026-09-26.
+- Diagnosis: that window coincides with a manual coax
+  disconnection/reseat at the modem end, so the cluster is contaminated
+  and must not be cited as spontaneous plant-failure evidence.
+- Fix: none; future RF investigations should use measurements taken
+  outside that window.
