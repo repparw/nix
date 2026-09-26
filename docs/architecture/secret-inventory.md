@@ -38,6 +38,9 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/authelia.sops.yaml`                                                  | `authelia/sessionSecret`        | Encrypt and authenticate Authelia sessions                                                                                                                                                         | Authelia                                 | `epsilon`     |
 | `secrets/authelia.sops.yaml`                                                  | `authelia/smtpPassword`         | Authenticate Authelia to its SMTP relay                                                                                                                                                            | Authelia                                 | `epsilon`     |
 | `secrets/authelia.sops.yaml`                                                  | `authelia/storageEncryptionKey` | Encrypt sensitive Authelia storage fields                                                                                                                                                          | Authelia                                 | `epsilon`     |
+| `secrets/authelia-users.sops.yaml`                                            | `usersDatabase`                 | Seed Authelia's initial users database when the writable runtime file is absent                                                                                                                    | Authelia                                 | `epsilon`     |
+| `secrets/users-pi.sops.yaml`                                                  | `repparwPasswordHash`           | Bootstrap the Pi account password when the user is created; existing passwords remain mutable                                                                                                     | NixOS user creation                      | `pi`          |
+| `secrets/users-epsilon.sops.yaml`                                             | `repparwPasswordHash`           | Bootstrap the epsilon account password when the user is created; existing passwords remain mutable                                                                                                | NixOS user creation                      | `epsilon`     |
 | `secrets/archisteamfarm.sops.yaml`                                            | `steamPassword`                 | Authenticate the managed Steam account                                                                                                                                                             | ArchiSteamFarm                           | `epsilon`     |
 | `secrets/archisteamfarm.sops.yaml`                                            | `steamUsername`                 | Identify the managed Steam account (substituted into the bot config at runtime via `replace-secret`; ASF only accepts a literal `SteamLogin`)                                                      | ArchiSteamFarm                           | `epsilon`     |
 | `secrets/home.sops.yaml`                                                      | `homeWanIp`                     | Home WAN IP: populates the `home-wan` nft set and the `wg-home` endpoint at boot via the `home-wan` service (firewall/WG strings render at evaluation time, so SOPS feeds them at runtime instead) | home uplink provisioning                 | `epsilon`     |
@@ -63,6 +66,29 @@ NixOS decrypts with the machine SSH host key at
 `/etc/ssh/ssh_host_ed25519_key`; the personal Age recipient in `.sops.yaml` is
 recovery access and is not used during activation. Docs, plans, and commits
 should refer to SOPS secret names or source modules, never secret values.
+
+## Account password and Authelia user provisioning
+
+The pi and epsilon password hashes are stored in separate SOPS files and
+materialized early with `neededForUsers`; each host points
+`users.users.repparw.hashedPasswordFile` at its own hash. The default
+`users.mutableUsers = true` policy is unchanged, so NixOS uses these password
+options when creating the account but does not overwrite an existing account's
+password on later activations. Normal `passwd` changes therefore remain
+authoritative. If an imperative password change should also become the
+bootstrap password for a rebuilt host, update its SOPS value separately.
+
+The bootstrap files use narrower recipient rules than the legacy shared rule:
+the personal recovery recipient plus only the consuming host recipient. Existing
+ciphertext must be rekeyed with `sops updatekeys` after this change so its
+embedded recipients match those rules.
+
+`authelia-users.sops.yaml` is a bootstrap copy of the current user database.
+Authelia continues to use the writable
+`/home/containers/config/authelia/config/users_database.yml`; systemd seeds it
+from the SOPS credential only when that file is absent. Existing runtime
+password resets and user edits therefore remain authoritative. Back up the
+mutable file before intentionally removing it to request a fresh seed.
 
 ## Eval-time values via runtime provisioning (not SOPS-at-eval)
 
