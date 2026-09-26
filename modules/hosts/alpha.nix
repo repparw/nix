@@ -11,6 +11,7 @@
       den.aspects.gaming
       den.aspects.logid
       den.aspects.streaming
+      den.aspects.networking._.wan-ingress-shaping
       den.aspects.media-stack
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
