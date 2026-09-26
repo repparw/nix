@@ -17,7 +17,6 @@
         programs = {
           steam = {
             enable = true;
-            extraCompatPackages = with pkgs; [ proton-ge-bin ];
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
           };
@@ -28,11 +27,7 @@
         environment.systemPackages = with pkgs; [
           shipwright
           (heroic.override {
-            extraPkgs =
-              pkgs': with pkgs'; [
-                mangohud
-                proton-ge-bin
-              ];
+            extraPkgs = pkgs': with pkgs'; [ mangohud ];
           })
         ];
 
@@ -48,6 +43,8 @@
         sm64Baserom = "${config.home.homeDirectory}/Games/sm64/rom.z64";
       in
       {
+        home.file.".local/share/Steam/compatibilitytools.d/GE-Proton".source =
+          pkgs.proton-ge-bin.steamcompattool;
         home.packages = with pkgs; [ shadps4 ];
         programs.sm64ex = lib.mkIf (builtins.pathExists sm64Baserom) {
           enable = true;
