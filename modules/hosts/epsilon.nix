@@ -10,6 +10,7 @@
     includes = [
       den.aspects.deploy-target
       den.aspects.backup
+      den.aspects.persistence
       den.aspects.service-host
       den.aspects.nixos-services._.edge
       den.aspects.nixos-services._.hermes
@@ -35,6 +36,26 @@
         modules.backup.paths = [
           "/home/containers/config"
           "/home/repparw/services"
+        ];
+
+        environment.persistence."/persist".directories = [
+          {
+            directory = "/home/repparw";
+            user = "repparw";
+            group = "users";
+            mode = "0700";
+          }
+          {
+            directory = "/home/containers/config";
+            user = "repparw";
+            group = "users";
+          }
+          {
+            directory = "/var/lib/ddclient";
+            user = "ddclient";
+            group = "ddclient";
+          }
+          "/var/log"
         ];
 
         containers.glance.config.networking.hosts = {

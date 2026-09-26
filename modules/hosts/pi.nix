@@ -6,6 +6,7 @@
   den.aspects.pi = {
     includes = [
       den.aspects.backup
+      den.aspects.persistence
       den.aspects.service-host
       den.aspects.nixos-services._.automations
       den.aspects.nixos-services._.homeassistant
@@ -32,6 +33,20 @@
         modules.backup.paths = [
           "/home/containers/config"
           "/home/repparw/services/hass"
+        ];
+
+        environment.persistence."/persist".directories = [
+          "/home/containers/config"
+          "/var/lib/fleet-health"
+          "/var/lib/systemd/rfkill"
+          {
+            directory = "/var/lib/auto-update";
+            mode = "0700";
+          }
+          {
+            directory = "/var/lib/bluetooth";
+            mode = "0700";
+          }
         ];
 
         users.users.repparw = {
@@ -132,10 +147,14 @@
           "/home/repparw" = {
             device = "/dev/disk/by-partuuid/7fd52c5b-02";
             fsType = "ext4";
+            neededForBoot = config.modules.persistence.enable;
             options = [
               "defaults"
               "noatime"
-              "nofail"
+            ]
+            # A missing NVMe must not boot into an empty HA/user data directory.
+            ++ lib.optional (!config.modules.persistence.enable) "nofail"
+            ++ [
               # BCM2712 PCIe link training can take >90s on this board;
               # default device timeout aborted the boot first.
               "x-systemd.device-timeout=5min"

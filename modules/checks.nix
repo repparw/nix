@@ -115,6 +115,8 @@
           );
         in
         {
+          host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
+
           formatting =
             pkgs.runCommand "check-formatting"
               {
