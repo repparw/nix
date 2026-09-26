@@ -147,7 +147,7 @@
           settings = {
             engine = "whisper";
             whisper = {
-              model = "base";
+              model = "small";
               language = [
                 "en"
                 "es"
