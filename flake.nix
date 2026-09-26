@@ -69,6 +69,18 @@
         nixvim.follows = "nixvim";
       };
     };
+    pyproject-build-systems = {
+      url = "github:pyproject-nix/build-system-pkgs/62c0d86027edb1c4f39a5facc09876348144f7c9";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        pyproject-nix.follows = "pyproject-nix";
+        uv2nix.follows = "uv2nix";
+      };
+    };
+    pyproject-nix = {
+      url = "github:pyproject-nix/pyproject.nix/e3b599ca2e7fcf93d4edf65d7f19bbf6491724f3";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -82,5 +94,12 @@
       };
     };
     systems.url = "github:nix-systems/default";
+    uv2nix = {
+      url = "github:pyproject-nix/uv2nix/5a836d395cbf5fc22670eb98dd4aa4fc4d406977";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        pyproject-nix.follows = "pyproject-nix";
+      };
+    };
   };
 }
