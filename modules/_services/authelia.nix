@@ -32,6 +32,15 @@ let
   ) secretNames;
 in
 {
+  # The host directory is the security boundary for mutable Authelia state.
+  # Secrets themselves are projected read-only from sops-nix below; keep
+  # password hashes and the SQLite auth/session state inaccessible to other
+  # host users even when Authelia creates them with a permissive umask.
+  systemd.tmpfiles.rules = [
+    "d ${cfg.configDir}/authelia 0700 999 999 - -"
+    "d ${cfg.configDir}/authelia/config 0700 999 999 - -"
+  ];
+
   sops.secrets = lib.mapAttrs' (
     _: secret:
     lib.nameValuePair "authelia/${secret}" {
@@ -49,10 +58,6 @@ in
       "/config" = {
         hostPath = "${cfg.configDir}/authelia/config";
         isReadOnly = false;
-      };
-      "/secrets" = {
-        hostPath = "${cfg.configDir}/authelia/secrets";
-        isReadOnly = true;
       };
     }
     // secretBindMounts;
