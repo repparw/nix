@@ -11,6 +11,7 @@
       den.aspects.gaming
       den.aspects.logid
       den.aspects.streaming
+      den.aspects.wan-ingress-shaping
       den.aspects.media-stack
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
@@ -217,6 +218,12 @@
             OnCalendar = "*:0/5";
             Persistent = true;
           };
+        };
+
+        modules.wan-ingress-shaping = {
+          enable = true;
+          wanInterface = "eth0";
+          bandwidth = "23Mbit";
         };
 
         systemd.network = {
