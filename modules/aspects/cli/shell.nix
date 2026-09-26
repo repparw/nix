@@ -278,7 +278,7 @@
               diff = "${lib.getExe colordiff}";
               cat = "${lib.getExe bat}";
               df = "${lib.getExe duf} -hide-mp /home/containers/\\* -only local";
-              du = "${lib.getExe dust}";
+              du = "${lib.getExe dust} -x";
 
               rpi = "${lib.getExe' mosh "mosh"} -P 60001 pi";
               pc = "${lib.getExe' mosh "mosh"} -P 60000 alpha";
