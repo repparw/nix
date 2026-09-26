@@ -141,7 +141,6 @@
                 touch $out
               '';
 
-
           sops-files = pkgs.runCommand "check-sops-files" { } ''
             invalid_names=$(find ${inputs.self}/secrets -maxdepth 1 -type f -name '*.yaml' ! -name '*.sops.yaml' -print)
             missing_metadata=$(find ${inputs.self}/secrets -maxdepth 1 -type f -name '*.sops.yaml' ! -exec grep -q '^sops:$' {} \; -print)
