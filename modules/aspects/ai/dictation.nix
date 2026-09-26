@@ -156,6 +156,7 @@
               initial_prompt = "NixOS, Nixpkgs, Home Manager, flakes, FlakeHub, sops-nix, dendritic, den, Niri, Voxtype, Wayland.";
             };
             audio.feedback.enabled = true;
+            audio.max_duration_secs = 120;
             output.notification.on_transcription = false;
             text = {
               filter_filler_words = true;
