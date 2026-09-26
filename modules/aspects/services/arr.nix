@@ -139,7 +139,14 @@
               openFirewall = true;
               dataDir = "/config";
             };
-            extraConfig.systemd.tmpfiles.rules = [ ];
+            # bazarr writes subtitle sidecars next to the media, so it needs
+            # the media group like sonarr/radarr. See mkServarrContainer.
+            extraConfig = {
+              systemd.tmpfiles.rules = [ ];
+              services.bazarr.group = "media";
+              users.groups.media.gid = 900;
+              systemd.services.bazarr.serviceConfig.UMask = lib.mkForce "0002";
+            };
             forwardPorts = [
               {
                 protocol = "tcp";
