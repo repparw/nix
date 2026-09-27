@@ -23,6 +23,12 @@
         ...
       }:
       {
+        sops.secrets.repparwPasswordHash = {
+          sopsFile = ../../secrets/users-pi.sops.yaml;
+          key = "repparwPasswordHash";
+          neededForUsers = true;
+        };
+
         modules.backup.paths = [
           "/home/containers/config"
           "/home/repparw/services/hass"
@@ -30,6 +36,9 @@
 
         users.users.repparw = {
           uid = 1000;
+          # users.mutableUsers stays true: this is a creation-time bootstrap,
+          # not an activation-time password reset.
+          hashedPasswordFile = config.sops.secrets.repparwPasswordHash.path;
           extraGroups = [ "wheel" ];
           subUidRanges = [
             {
@@ -77,7 +86,26 @@
         services.journald.settings.Journal = {
           Storage = "volatile";
           RuntimeMaxUse = "50M";
+          # Preserve the host's existing cap drop-in. Storage is volatile, so
+          # SystemMaxUse is currently dormant; RuntimeMaxUse remains active.
+          SystemMaxUse = "64M";
         };
+
+        # This preserves the host's existing rule. nixos-rebuild can activate
+        # arbitrary NixOS configuration, so this is root-equivalent access, not
+        # a meaningful privilege boundary.
+        security.sudo.extraRules = [
+          {
+            users = [ "repparw" ];
+            commands = [
+              {
+                command = "/run/current-system/sw/bin/nixos-rebuild";
+                options = [ "NOPASSWD" ];
+              }
+            ];
+          }
+        ];
+
         services.fstrim.enable = true;
         zramSwap = {
           enable = true;

@@ -21,6 +21,15 @@
       {
         imports = [ ../_services/glance.nix ];
 
+        sops.secrets.repparwPasswordHash = {
+          sopsFile = ../../secrets/users-epsilon.sops.yaml;
+          key = "repparwPasswordHash";
+          neededForUsers = true;
+        };
+        # users.mutableUsers stays true: this is a creation-time bootstrap,
+        # not an activation-time password reset.
+        users.users.repparw.hashedPasswordFile = config.sops.secrets.repparwPasswordHash.path;
+
         modules.services.bridgePrefix = "10.231.137";
 
         modules.backup.paths = [
