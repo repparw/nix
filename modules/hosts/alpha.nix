@@ -35,6 +35,46 @@
             "/home/containers/backup"
             "/home/repparw/Pictures"
             "/home/repparw/Documents"
+            # Small irreplaceable state, mirrored by the HDD allowlist jobs.
+            # sops/age/keys.txt deliberately excluded: HDD + manual only.
+            "/home/repparw/.config/moonshine"
+            "/home/repparw/.config/kdeconnect"
+            "/home/repparw/.config/vicinae/settings.json"
+            "/home/repparw/.config/unity3d"
+            "/home/repparw/.config/Wasteland3"
+            "/home/repparw/.config/Loop_Hero"
+            "/home/repparw/.config/Zelda64Recompiled"
+            "/home/repparw/.config/godot"
+            "/home/repparw/.config/vesktop/settings.json"
+            "/home/repparw/.config/vesktop/settings"
+            "/home/repparw/.config/ZapZap"
+            "/home/repparw/.config/Moonlight Game Streaming Project"
+            "/home/repparw/.config/codex/config.toml"
+            "/home/repparw/.config/codex/skills"
+            "/home/repparw/.config/codex/plugins"
+            "/home/repparw/.config/codex/goals_1.sqlite"
+            "/home/repparw/.config/net.imput.helium/Default/Preferences"
+            "/home/repparw/.config/net.imput.helium/Default/Secure Preferences"
+            "/home/repparw/.config/net.imput.helium/Default/History"
+            "/home/repparw/.config/net.imput.helium/Default/Login Data"
+            "/home/repparw/.config/net.imput.helium/Default/Login Data For Account"
+            "/home/repparw/.config/net.imput.helium/Default/Sessions"
+            "/home/repparw/.config/fish/fish_variables"
+            "/home/repparw/.config/mpv/watch_later"
+            "/home/repparw/.config/Raspberry Pi/Raspberry Pi Imager.conf"
+            "/home/repparw/.local/share/vicinae/vicinae.db"
+            "/home/repparw/.local/share/vicinae/metadata.json"
+            "/home/repparw/.local/share/vicinae/script-metadata.json"
+            "/home/repparw/.local/share/Anki2"
+            "/home/repparw/.local/share/fish/fish_history"
+            "/home/repparw/.local/share/tmux/resurrect"
+            "/home/repparw/.local/state/nvim/undo"
+            "/home/repparw/.local/state/nvim/shada"
+            "/home/repparw/.local/state/nvim/file_frecency.bin"
+            "/home/repparw/.local/state/nvim/avante"
+            "/home/repparw/.local/share/voxtype/meetings"
+            "/home/repparw/.local/share/shadPS4/savedata"
+            "/home/repparw/.local/share/shadPS4/keys.json"
           ];
           excludes = [
             "${config.users.users.repparw.home}/.config/heroic/**"
@@ -232,6 +272,8 @@
               };
               # Vicinae keeps its state under ~/.local/share (clipboard history,
               # extensions and image cache excluded: settings + registry only).
+              # Plus other small irreplaceable ~/.local state (mirrored offsite
+              # via modules.backup.paths).
               bupshare = {
                 destination = "/mnt/hdd/backup/.local";
                 sources =
@@ -244,6 +286,16 @@
                     "${home}/./.local/share/vicinae/vicinae.db-wal"
                     "${home}/./.local/share/vicinae/metadata.json"
                     "${home}/./.local/share/vicinae/script-metadata.json"
+                    "${home}/./.local/share/Anki2/"
+                    "${home}/./.local/share/fish/fish_history"
+                    "${home}/./.local/share/tmux/resurrect/"
+                    "${home}/./.local/state/nvim/undo/"
+                    "${home}/./.local/state/nvim/shada"
+                    "${home}/./.local/state/nvim/file_frecency.bin"
+                    "${home}/./.local/state/nvim/avante/"
+                    "${home}/./.local/share/voxtype/meetings/"
+                    "${home}/./.local/share/shadPS4/savedata/"
+                    "${home}/./.local/share/shadPS4/keys.json"
                   ];
                 settings = {
                   archive = true;
