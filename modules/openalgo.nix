@@ -89,7 +89,7 @@ in
               # Upstream assumes the checkout itself is writable. Keep its
               # source in the Nix store, but mirror it into persistent state
               # on version changes while preserving runtime data.
-              ${pkgs.rsync}/bin/rsync -a --delete \
+              ${pkgs.rsync}/bin/rsync -a --chmod=Du+w,Fu+w --delete \
                 --exclude='.env' \
                 --exclude='/db/' \
                 --exclude='/keys/' \
