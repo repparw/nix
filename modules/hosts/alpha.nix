@@ -177,8 +177,11 @@
                 settings = {
                   archive = true;
                   delete = true;
-                  # Protect bupconfig's output (same dest root) from --delete.
-                  exclude = [ "/.config/" ];
+                  # Protect the allowlist jobs' output (same dest root).
+                  exclude = [
+                    "/.config/"
+                    "/.local/"
+                  ];
                 };
               };
               # Explicit allowlist of irreplaceable ~/.config state. Everything
@@ -196,11 +199,7 @@
                     "${home}/./.config/sops/age/keys.txt"
                     "${home}/./.config/moonshine/"
                     "${home}/./.config/kdeconnect/"
-                    "${home}/./.config/heroic/config.json"
-                    "${home}/./.config/heroic/GamesConfig/"
-                    "${home}/./.config/heroic/legendaryConfig/"
-                    "${home}/./.config/heroic/fixes/"
-                    "${home}/./.config/heroic/sideload_apps/"
+                    "${home}/./.config/vicinae/settings.json"
                     "${home}/./.config/unity3d/"
                     "${home}/./.config/Wasteland3/"
                     "${home}/./.config/Loop_Hero/"
@@ -208,7 +207,6 @@
                     "${home}/./.config/godot/"
                     "${home}/./.config/vesktop/settings.json"
                     "${home}/./.config/vesktop/settings/"
-                    "${home}/./.config/Bitwarden/data.json"
                     "${home}/./.config/ZapZap/"
                     "${home}/./.config/Moonlight Game Streaming Project/"
                     "${home}/./.config/codex/config.toml"
@@ -224,6 +222,28 @@
                     "${home}/./.config/fish/fish_variables"
                     "${home}/./.config/mpv/watch_later"
                     "${home}/./.config/Raspberry Pi/Raspberry Pi Imager.conf"
+                  ];
+                settings = {
+                  archive = true;
+                  delete = true;
+                  relative = true;
+                  ignore-missing-args = true;
+                };
+              };
+              # Vicinae keeps its state under ~/.local/share (clipboard history,
+              # extensions and image cache excluded: settings + registry only).
+              bupshare = {
+                destination = "/mnt/hdd/backup/.local";
+                sources =
+                  let
+                    home = config.users.users.repparw.home;
+                  in
+                  [
+                    "${home}/./.local/share/vicinae/vicinae.db"
+                    "${home}/./.local/share/vicinae/vicinae.db-shm"
+                    "${home}/./.local/share/vicinae/vicinae.db-wal"
+                    "${home}/./.local/share/vicinae/metadata.json"
+                    "${home}/./.local/share/vicinae/script-metadata.json"
                   ];
                 settings = {
                   archive = true;
