@@ -38,7 +38,6 @@
           ];
           excludes = [
             "${config.users.users.repparw.home}/.config/heroic/**"
-            "${config.users.users.repparw.home}/.config/clipse/**"
             "${config.users.users.repparw.home}/Documents/Memorias/**"
           ];
         };
@@ -174,11 +173,63 @@
                 sources = [
                   "${config.users.users.repparw.home}/Pictures"
                   "${config.users.users.repparw.home}/Documents"
-                  "${config.users.users.repparw.home}/.config"
                 ];
                 settings = {
                   archive = true;
                   delete = true;
+                  # Protect bupconfig's output (same dest root) from --delete.
+                  exclude = [ "/.config/" ];
+                };
+              };
+              # Explicit allowlist of irreplaceable ~/.config state. Everything
+              # else is nix-declared (rebuild restores it), OAuth/session
+              # (re-login), or regenerable cache. Sources use /./ with
+              # --relative so the .config hierarchy is preserved under the
+              # destination. delete prunes entries removed from the allowlist.
+              bupconfig = {
+                destination = "/mnt/hdd/backup/.config";
+                sources =
+                  let
+                    home = config.users.users.repparw.home;
+                  in
+                  [
+                    "${home}/./.config/sops/age/keys.txt"
+                    "${home}/./.config/moonshine/"
+                    "${home}/./.config/kdeconnect/"
+                    "${home}/./.config/heroic/config.json"
+                    "${home}/./.config/heroic/GamesConfig/"
+                    "${home}/./.config/heroic/legendaryConfig/"
+                    "${home}/./.config/heroic/fixes/"
+                    "${home}/./.config/heroic/sideload_apps/"
+                    "${home}/./.config/unity3d/"
+                    "${home}/./.config/Wasteland3/"
+                    "${home}/./.config/Loop_Hero/"
+                    "${home}/./.config/Zelda64Recompiled/"
+                    "${home}/./.config/godot/"
+                    "${home}/./.config/vesktop/settings.json"
+                    "${home}/./.config/vesktop/settings/"
+                    "${home}/./.config/Bitwarden/data.json"
+                    "${home}/./.config/ZapZap/"
+                    "${home}/./.config/Moonlight Game Streaming Project/"
+                    "${home}/./.config/codex/config.toml"
+                    "${home}/./.config/codex/skills/"
+                    "${home}/./.config/codex/plugins/"
+                    "${home}/./.config/codex/goals_1.sqlite"
+                    "${home}/./.config/net.imput.helium/Default/Preferences"
+                    "${home}/./.config/net.imput.helium/Default/Secure Preferences"
+                    "${home}/./.config/net.imput.helium/Default/History"
+                    "${home}/./.config/net.imput.helium/Default/Login Data"
+                    "${home}/./.config/net.imput.helium/Default/Login Data For Account"
+                    "${home}/./.config/net.imput.helium/Default/Sessions/"
+                    "${home}/./.config/fish/fish_variables"
+                    "${home}/./.config/mpv/watch_later"
+                    "${home}/./.config/Raspberry Pi/Raspberry Pi Imager.conf"
+                  ];
+                settings = {
+                  archive = true;
+                  delete = true;
+                  relative = true;
+                  ignore-missing-args = true;
                 };
               };
               buprpi = {
