@@ -46,6 +46,14 @@ When enabled, SOPS reads the SSH identity directly from
 before `/etc/ssh` is mounted. Preserve the identity before booting the new
 layout; generating a replacement key cannot decrypt the old secrets.
 
+Mutable account passwords need a separate persistence step before root reset.
+The current inventory does not preserve `/etc/shadow`. With
+`users.mutableUsers = true`, losing that file would recreate passwords from
+the creation-time bootstrap secrets, discarding later password changes.
+Preserve the account database with ordering compatible with user activation
+and password updates, then test that a changed password survives repeated
+boots. Persisting `/var/lib/nixos` alone only retains UID/GID allocation state.
+
 The mounted application state already covers HA's registries, pairings,
 history and custom integrations; Authelia's authentication database; Miniflux's
 PostgreSQL cluster and dumps; Paperless's documents/database; ASF's login
@@ -119,9 +127,10 @@ Do not add deletion or repartitioning to that trial.
    [HA component migration](homeassistant-custom-components.md), and rerun the
    inventory. Preserve UI-managed HA state and intentional watcher overrides.
 3. Test on a clone/VM: stable machine ID, SSH/SOPS access, password provisioning,
-   UID/GID allocation, services, timers and controller pause state must survive
-   repeated boots. Simulate missing persistence storage and verify failure
-   rather than initialization of empty application state.
+   subsequent password changes, UID/GID allocation, services, timers and
+   controller pause state must survive repeated boots. Simulate missing
+   persistence storage and verify failure rather than initialization of empty
+   application state.
 4. Preserve the actual boot layout. Pi's extlinux configuration and kernels
    live under `/boot` on the SD root, outside `/boot/firmware`. Epsilon has
    `/boot/grub` outside `/boot/efi`. Both need more than their firmware partition.
