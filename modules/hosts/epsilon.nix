@@ -33,9 +33,10 @@
 
         modules.services.bridgePrefix = "10.231.137";
 
+        modules.backup.hostRecovery.enable = true;
         modules.backup.paths = [
           "/home/containers/config"
-          "/home/repparw/services"
+          "/var/lib/ddclient"
         ];
 
         environment.persistence."/persist".directories = [

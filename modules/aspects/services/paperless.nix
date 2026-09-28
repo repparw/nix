@@ -9,7 +9,7 @@
         auth = "one_factor";
         container = true;
         monitor = true;
-        backupRelativePath = "paperless/export";
+        backupRelativePath = "paper/export";
       };
     };
 

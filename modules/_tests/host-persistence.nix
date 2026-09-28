@@ -13,6 +13,7 @@ let
       modules = [
         {
           modules.persistence.enable = true;
+          modules.persistence.mutableAccounts = true;
           fileSystems."/persist" = {
             device = "/dev/disk/by-label/persistence-test";
             fsType = "ext4";
@@ -33,13 +34,30 @@ let
       mounts = persistenceMounts enabled;
     in
     assert !normal.modules.persistence.enable;
+    assert !normal.modules.persistence.mutableAccounts;
     assert !normal.environment.persistence."/persist".enable;
     assert persistenceMounts normal == [ ];
     assert !(normal.fileSystems ? "/persist");
     assert normal.sops.age.sshKeyPaths == [ "/etc/ssh/ssh_host_ed25519_key" ];
     assert enabled.fileSystems."/".fsType == normal.fileSystems."/".fsType;
     assert enabled.sops.age.sshKeyPaths == [ "/persist/etc/ssh/ssh_host_ed25519_key" ];
-    assert lib.any (mount: mount.where == "/etc/ssh" && mount.what == "/persist/etc/ssh") mounts;
+    assert lib.any (mount: mount.where == "/etc" && mount.what == "/persist/etc") mounts;
+    assert lib.elem "sysroot-etc.mount"
+      enabled.boot.initrd.systemd.services.initrd-nixos-activation.requires;
+    assert lib.elem "initrd-nixos-activation.service"
+      enabled.boot.initrd.systemd.services.check-persistence-state.requiredBy;
+    assert normal.users.mutableUsers;
+    assert normal.modules.backup.hostRecovery.enable;
+    assert lib.all (path: lib.elem path normal.services.restic.backups.offsite.paths) [
+      "/etc"
+      "/boot"
+      "/root"
+      "/home/repparw"
+      "/var/lib/nixos"
+      "/var/lib/nixos-containers"
+    ];
+    assert lib.elem "/home/repparw/.swapfile" normal.services.restic.backups.offsite.exclude;
+    assert lib.elem "/var/lib/nixos-containers/*/nix" normal.services.restic.backups.offsite.exclude;
     assert lib.any (
       mount: mount.where == "/sysroot/var/lib/nixos" && mount.what == "/sysroot/persist/var/lib/nixos"
     ) enabled.boot.initrd.systemd.mounts;
@@ -52,8 +70,15 @@ let
   results = lib.genAttrs [ "pi" "epsilon" ] verifyHost;
 in
 assert !(hosts.alpha.config.modules ? persistence);
+assert !hosts.alpha.config.modules.backup.hostRecovery.enable;
+assert
+  hosts.epsilon.config.modules.services.definitions.paperless.backup.path
+  == "/home/containers/config/paper/export";
 assert lib.any (
   assertion: !assertion.assertion && lib.hasPrefix "Host persistence requires" assertion.message
+) unprepared.assertions;
+assert lib.any (
+  assertion: !assertion.assertion && lib.hasPrefix "Mutable passwords require" assertion.message
 ) unprepared.assertions;
 assert (prepared "pi").fileSystems."/home/repparw".neededForBoot;
 assert !(lib.elem "nofail" (prepared "pi").fileSystems."/home/repparw".options);

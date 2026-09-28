@@ -15,9 +15,12 @@ initial persistence inventory. Pi and epsilon include it. Alpha does not.
 not create persistence mounts, move files, reset root, or change boot storage.
 
 Enabling requires a separately prepared `/persist` filesystem marked
-`neededForBoot`. That assertion checks configuration, not whether data has
-been copied correctly. **Do not enable it on the existing layouts.** The disk
-layout, migration, recovery procedure and boot tests are separate prerequisites.
+`neededForBoot`. Before activation, an initrd guard checks the backing machine ID, SSH key,
+UID/GID state directory, account database when requested, and a
+`.host-persistence-ready` marker containing the host name. This rejects an
+empty or unprepared volume; it does not prove every application was copied
+correctly. **Do not enable it on the existing layouts.** Live migration remains
+pending: the available recovery access is SSH only.
 
 When enabled, pi's existing home filesystem becomes required in the initrd
 and loses `nofail`, so a missing NVMe cannot silently become an empty HA/user
@@ -46,13 +49,26 @@ When enabled, SOPS reads the SSH identity directly from
 before `/etc/ssh` is mounted. Preserve the identity before booting the new
 layout; generating a replacement key cannot decrypt the old secrets.
 
-Mutable account passwords need a separate persistence step before root reset.
-The current inventory does not preserve `/etc/shadow`. With
-`users.mutableUsers = true`, losing that file would recreate passwords from
-the creation-time bootstrap secrets, discarding later password changes.
-Preserve the account database with ordering compatible with user activation
-and password updates, then test that a changed password survives repeated
-boots. Persisting `/var/lib/nixos` alone only retains UID/GID allocation state.
+## Mutable passwords
+
+`users.mutableUsers = true` remains in effect. The SOPS hash is a creation-time
+bootstrap; subsequent `passwd` changes must survive activation and root reset.
+With mutable users, enabling persistence requires the explicit choice
+`modules.persistence.mutableAccounts = true`. This persists **all of `/etc`**,
+including account databases, machine ID and SSH identity, and mounts it before
+user activation. Both persistence options default to false.
+
+This is a conservative first-migration tradeoff: undeclared files in `/etc`
+also survive. Individual account-file bind mounts or symlinks are unsuitable
+because PAM and NixOS replace those files atomically; see
+[Impermanence issue #120](https://github.com/nix-community/impermanence/issues/120).
+Keeping the directory lets ordinary password changes work without custom PAM
+hooks. It does not require that passwords have ever been changed locally.
+`/var/lib/nixos` separately retains UID/GID allocation state.
+
+Before migration, preserve `/etc` with its numeric owners, modes and symlinks.
+Test password equality without printing hashes. Changing the SOPS bootstrap
+later is a separate operation and does not reset the existing password.
 
 The mounted application state already covers HA's registries, pairings,
 history and custom integrations; Authelia's authentication database; Miniflux's
@@ -118,19 +134,20 @@ Do not add deletion or repartitioning to that trial.
 
 ## Storage and recovery prerequisites
 
-1. Expand and restore-test backups. Existing restic jobs cover the main service
-   paths, but omit host identity keys, deployment-controller state and much of
-   the user homes. Successful backups and partial integrity checks do not prove
-   restoration. Exclude swap files and reproducible caches from backup scope.
-   Keep an independently recoverable SOPS/backup identity.
-2. Reconcile the declarative cleanup with existing mutable files, including the
-   [HA component migration](homeassistant-custom-components.md), and rerun the
-   inventory. Preserve UI-managed HA state and intentional watcher overrides.
-3. Test on a clone/VM: stable machine ID, SSH/SOPS access, password provisioning,
-   subsequent password changes, UID/GID allocation, services, timers and
-   controller pause state must survive repeated boots. Simulate missing
-   persistence storage and verify failure rather than initialization of empty
-   application state.
+1. Complete a [full pi backup and isolated restore](host-recovery.md). Daily
+   backup scope now includes identity, account files, whole homes, container
+   roots and controller state on pi/epsilon. Daily jobs exclude reproducible
+   caches and swap; the explicit full backup also includes `/nix/store` and
+   caches, excluding runtime/temporary files and swap. Scope changes take
+   effect only after normal deployment.
+2. Verify recovery credentials outside the fleet. The personal recovery Age
+   recipient is configured, but an independent private-key copy has **not been
+   confirmed**. A restore using epsilon's credentials proves recovery from
+   losing pi, not from losing the whole fleet.
+3. Use the VM check below for the shared mount/password/recovery behavior.
+   Production service boot, ARM firmware and real disk attachment still need
+   their own trial. The HA component migration and interactive Authelia/HA
+   checks were completed with the declarative cleanup in PR #102.
 4. Preserve the actual boot layout. Pi's extlinux configuration and kernels
    live under `/boot` on the SD root, outside `/boot/firmware`. Epsilon has
    `/boot/grub` outside `/boot/efi`. Both need more than their firmware partition.
@@ -138,13 +155,16 @@ Do not add deletion or repartitioning to that trial.
    tmpfs root can reuse ext4 as backing storage; no Btrfs conversion is needed.
    Epsilon also needs its existing `/nix` attached to the new root. Pi's home
    volume must fail closed rather than allow empty HA state on a missing disk.
-6. Trial pi, then epsilon. Keep this work outside automatic fleet deployment
-   until boot recovery and restore behavior are established.
+   Write the readiness marker only after copying and verifying the backing
+   data, and retain a bootable known-good disk or rescue console. **SSH alone
+   cannot recover a failed initrd. Do not perform the live root migration.**
+6. Once rescue access and restoration are proven, trial pi, then epsilon.
+   Keep the root-layout change outside automatic fleet deployment. An ordinary
+   generation rollback cannot reverse a repartition or restore missing data.
 
-Two related backup details need separate attention: Paperless's registry
-export path is `paperless/export` while its live mount is `paper`; epsilon's
-broad config-directory backup currently covers the latter. Raw live database
-copies still require database-consistent restoration procedures.
+Paperless's registry export path now matches its actual `paper/export` mount.
+Raw live database copies still require database-consistent restoration;
+pi's full checkpoint includes a separate HA archive made with HA stopped.
 
 ## Alpha later
 
@@ -183,11 +203,24 @@ option for alpha only after its data is separated from the root subvolume.
 - [Impermanence SOPS ordering report](https://github.com/nix-community/impermanence/issues/294)
 - [Preservation permission/ordering report](https://github.com/nix-community/preservation/issues/24)
 
-`checks.<system>.host-persistence` evaluates the disabled defaults, rejects an
-enabled configuration without an early backing filesystem, checks early
-UID/GID and SOPS handling, verifies pi's separate home mount and epsilon's
-home persistence, and confirms alpha does not opt in. It does not boot a VM
-or prove that production data has been migrated.
+`checks.<system>.host-persistence` evaluates disabled defaults, explicit
+mutable-account consent, early UID/GID and SOPS ordering, backup coverage,
+pi's separate home mount, epsilon's home persistence and alpha's exclusion.
+
+`checks.x86_64-linux.host-persistence-vm` boots the actual persistence module
+with a tmpfs root and ext4 backing disk. It uses disposable credentials and
+checks:
+
+- a real `passwd` change across activation, reboot and abrupt restart;
+- stable SSH key, machine ID, SOPS decryption and UID allocation;
+- application data, timer stamps and deployment pause state;
+- the recovery helper's stopped-writer archive, encrypted backup and isolated
+  restore, including identity, SOPS, SQLite, ownership, modes, ACLs and xattrs;
+- failed boot with missing storage or an unprepared backing volume, followed
+  by repair of the VM disk offline and a successful boot.
+
+CI runs that VM separately from the evaluation gate. This is a synthetic x86
+recovery test, not a boot of pi/epsilon's real service images or production data.
 
 See the [configuration verification skill](../../.agents/skills/verify-nixos-config/SKILL.md)
 and [fleet operations runbook](fleet-operations.md) for the separate build,

@@ -6,6 +6,22 @@
       { lib, ... }:
       {
         options.modules.backup = {
+          hostRecovery.enable = lib.mkEnableOption "host identity, account, home and container recovery backups";
+          hostRecovery.package = lib.mkOption {
+            type = lib.types.package;
+            readOnly = true;
+            description = "Full filesystem checkpoint and isolated restore verification command.";
+          };
+          hostRecovery.quiesceUnits = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            description = "Running application units stopped only for an explicit full --quiesce checkpoint.";
+          };
+          hostRecovery.capturePaths = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            description = "Application paths archived while quiesceUnits are stopped, before an offsite transfer.";
+          };
           paths = lib.mkOption {
             description = "Directories the offsite restic job covers on this host.";
             type = lib.types.listOf lib.types.str;
@@ -37,8 +53,106 @@
         }:
         let
           bcfg = config.modules.backup;
+          repository =
+            if bcfg.repository != null then
+              bcfg.repository
+            else
+              "rclone:gd-crypt:restic/${config.networking.hostName}";
+          fullPaths = lib.attrNames (
+            lib.filterAttrs (
+              _: fs:
+              lib.elem fs.fsType [
+                "ext4"
+                "vfat"
+                "btrfs"
+                "xfs"
+              ]
+            ) config.fileSystems
+          );
+          fullExcludes = [
+            "/proc"
+            "/sys"
+            "/dev"
+            "/run"
+            "/tmp"
+            "/var/tmp"
+            "/var/cache/restic-backups-offsite"
+          ]
+          ++ map (swap: swap.device) config.swapDevices
+          ++ map (path: "/var/lib/nixos-containers/*/${path}") [
+            "nix"
+            "proc"
+            "sys"
+            "dev"
+            "run"
+            "tmp"
+          ];
+          recoveryPackage = pkgs.writeShellApplication {
+            name = "host-recovery";
+            runtimeInputs = [
+              pkgs.coreutils
+              pkgs.findutils
+              pkgs.util-linux
+              pkgs.systemd
+              pkgs.restic
+              pkgs.rclone
+              pkgs.jq
+              pkgs.sops
+              pkgs.ssh-to-age
+              pkgs.sqlite
+              pkgs.gnutar
+            ];
+            text = ''
+              export RESTIC_REPOSITORY="''${RESTIC_REPOSITORY:-${repository}}"
+              export RESTIC_PASSWORD_FILE="''${RESTIC_PASSWORD_FILE:-${config.sops.secrets.resticPassword.path}}"
+              export RCLONE_CONFIG="''${RCLONE_CONFIG:-${config.sops.templates."rclone.conf".path}}"
+              export RESTIC_CACHE_DIR="''${RESTIC_CACHE_DIR:-/var/cache/restic-backups-offsite}"
+              export RECOVERY_PATHS_FILE=${pkgs.writeText "recovery-filesystems" (lib.concatLines fullPaths)}
+              export RECOVERY_EXCLUDES_FILE=${pkgs.writeText "recovery-excludes" (lib.concatLines fullExcludes)}
+              export RECOVERY_UNITS_FILE=${pkgs.writeText "recovery-quiesce-units" (lib.concatLines bcfg.hostRecovery.quiesceUnits)}
+              export RECOVERY_CAPTURE_PATHS_FILE=${pkgs.writeText "recovery-capture-paths" (lib.concatLines bcfg.hostRecovery.capturePaths)}
+              export RECOVERY_BOOTSTRAP_FILE=${config.sops.secrets.repparwPasswordHash.sopsFile}
+              ${builtins.readFile ../scripts/host-recovery.sh}
+            '';
+          };
         in
         {
+          environment.systemPackages = lib.optional bcfg.hostRecovery.enable recoveryPackage;
+          modules.backup = lib.mkIf bcfg.hostRecovery.enable {
+            hostRecovery.package = recoveryPackage;
+            paths = [
+              "/etc"
+              "/boot"
+              "/root"
+              "/home/repparw"
+              "/var/lib/nixos"
+              "/var/lib/nixos-containers"
+              "/var/lib/systemd/timers"
+              "/var/lib/host-recovery"
+            ]
+            ++ lib.optional config.services.traefik.enable "/var/lib/traefik";
+            excludes = [
+              "**/.cache/**"
+              "**/node_modules/**"
+              "**/.direnv/**"
+              "**/__pycache__/**"
+              "/home/repparw/.swapfile"
+              "/home/repparw/.local/share/Trash/**"
+            ]
+            ++ map (path: "/var/lib/nixos-containers/*/${path}") [
+              "nix"
+              "proc"
+              "sys"
+              "dev"
+              "run"
+              "tmp"
+            ];
+          };
+
+          systemd.tmpfiles.rules = lib.mkIf bcfg.hostRecovery.enable [
+            "d /var/lib/host-recovery 0700 root root -"
+          ];
+
           sops.secrets = {
             resticPassword = {
               sopsFile = ../../secrets/backup.sops.yaml;
@@ -75,15 +189,12 @@
           };
 
           services.restic.backups.offsite = {
-            repository =
-              if bcfg.repository != null then
-                bcfg.repository
-              else
-                "rclone:gd-crypt:restic/${config.networking.hostName}";
+            inherit repository;
             passwordFile = config.sops.secrets.resticPassword.path;
             initialize = true;
             inhibitsSleep = true;
             paths = bcfg.paths;
+            extraBackupArgs = lib.optionals bcfg.hostRecovery.enable [ "--one-file-system" ];
             exclude = [
               "**/cache/**"
               "**/Cache/**"

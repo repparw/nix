@@ -30,9 +30,15 @@
           neededForUsers = true;
         };
 
+        modules.backup.hostRecovery.enable = true;
+        modules.backup.hostRecovery.quiesceUnits = [ "container@homeassistant.service" ];
+        modules.backup.hostRecovery.capturePaths = [ "/home/repparw/services/hass" ];
         modules.backup.paths = [
           "/home/containers/config"
-          "/home/repparw/services/hass"
+          "/var/lib/auto-update"
+          "/var/lib/fleet-health"
+          "/var/lib/bluetooth"
+          "/var/lib/systemd/rfkill"
         ];
 
         environment.persistence."/persist".directories = [
