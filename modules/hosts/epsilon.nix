@@ -9,6 +9,7 @@
   den.aspects.epsilon = {
     includes = [
       den.aspects.deploy-target
+      den.aspects.passwordless-sudo
       den.aspects.backup
       den.aspects.service-host
       den.aspects.nixos-services._.edge

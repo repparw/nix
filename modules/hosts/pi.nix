@@ -13,6 +13,7 @@
       den.aspects.fleet-controller
       den.aspects.lan-edge
       den.aspects.deploy-target
+      den.aspects.passwordless-sudo
     ];
 
     nixos =
