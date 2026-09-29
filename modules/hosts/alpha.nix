@@ -27,6 +27,54 @@
         modulesPath,
         ...
       }:
+      let
+        home = config.users.users.repparw.home;
+        # Single source of truth for small irreplaceable home state, kept on
+        # HDD (rsync jobs below) and offsite (restic paths). Everything else
+        # is nix-declared, OAuth/session (re-login), or regenerable cache.
+        # sops/age/keys.txt deliberately excluded: HDD + manual only.
+        homeState = [
+          ".config/moonshine/"
+          ".config/kdeconnect/"
+          ".config/vicinae/settings.json"
+          ".config/unity3d/"
+          ".config/Wasteland3/"
+          ".config/Loop_Hero/"
+          ".config/Zelda64Recompiled/"
+          ".config/godot/"
+          ".config/vesktop/settings.json"
+          ".config/vesktop/settings/"
+          ".config/ZapZap/"
+          ".config/Moonlight Game Streaming Project/"
+          ".config/codex/config.toml"
+          ".config/codex/skills/"
+          ".config/codex/plugins/"
+          ".config/codex/goals_1.sqlite"
+          ".config/net.imput.helium/Default/Preferences"
+          ".config/net.imput.helium/Default/Secure Preferences"
+          ".config/net.imput.helium/Default/History"
+          ".config/net.imput.helium/Default/Login Data"
+          ".config/net.imput.helium/Default/Login Data For Account"
+          ".config/net.imput.helium/Default/Sessions/"
+          ".config/fish/fish_variables"
+          ".config/mpv/watch_later"
+          ".config/Raspberry Pi/Raspberry Pi Imager.conf"
+          ".local/share/vicinae/vicinae.db"
+          ".local/share/vicinae/vicinae.db-shm"
+          ".local/share/vicinae/vicinae.db-wal"
+          ".local/share/vicinae/metadata.json"
+          ".local/share/vicinae/script-metadata.json"
+          ".local/share/fish/fish_history"
+          ".local/share/tmux/resurrect/"
+          ".local/state/nvim/undo/"
+          ".local/state/nvim/shada"
+          ".local/state/nvim/file_frecency.bin"
+          ".local/state/nvim/avante/"
+          ".local/share/voxtype/meetings/"
+          ".local/share/shadPS4/savedata/"
+          ".local/share/shadPS4/keys.json"
+        ];
+      in
       {
         imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
@@ -35,46 +83,8 @@
             "/home/containers/backup"
             "/home/repparw/Pictures"
             "/home/repparw/Documents"
-            # Small irreplaceable state, mirrored by the HDD allowlist jobs.
-            # sops/age/keys.txt deliberately excluded: HDD + manual only.
-            "/home/repparw/.config/moonshine"
-            "/home/repparw/.config/kdeconnect"
-            "/home/repparw/.config/vicinae/settings.json"
-            "/home/repparw/.config/unity3d"
-            "/home/repparw/.config/Wasteland3"
-            "/home/repparw/.config/Loop_Hero"
-            "/home/repparw/.config/Zelda64Recompiled"
-            "/home/repparw/.config/godot"
-            "/home/repparw/.config/vesktop/settings.json"
-            "/home/repparw/.config/vesktop/settings"
-            "/home/repparw/.config/ZapZap"
-            "/home/repparw/.config/Moonlight Game Streaming Project"
-            "/home/repparw/.config/codex/config.toml"
-            "/home/repparw/.config/codex/skills"
-            "/home/repparw/.config/codex/plugins"
-            "/home/repparw/.config/codex/goals_1.sqlite"
-            "/home/repparw/.config/net.imput.helium/Default/Preferences"
-            "/home/repparw/.config/net.imput.helium/Default/Secure Preferences"
-            "/home/repparw/.config/net.imput.helium/Default/History"
-            "/home/repparw/.config/net.imput.helium/Default/Login Data"
-            "/home/repparw/.config/net.imput.helium/Default/Login Data For Account"
-            "/home/repparw/.config/net.imput.helium/Default/Sessions"
-            "/home/repparw/.config/fish/fish_variables"
-            "/home/repparw/.config/mpv/watch_later"
-            "/home/repparw/.config/Raspberry Pi/Raspberry Pi Imager.conf"
-            "/home/repparw/.local/share/vicinae/vicinae.db"
-            "/home/repparw/.local/share/vicinae/metadata.json"
-            "/home/repparw/.local/share/vicinae/script-metadata.json"
-            "/home/repparw/.local/share/fish/fish_history"
-            "/home/repparw/.local/share/tmux/resurrect"
-            "/home/repparw/.local/state/nvim/undo"
-            "/home/repparw/.local/state/nvim/shada"
-            "/home/repparw/.local/state/nvim/file_frecency.bin"
-            "/home/repparw/.local/state/nvim/avante"
-            "/home/repparw/.local/share/voxtype/meetings"
-            "/home/repparw/.local/share/shadPS4/savedata"
-            "/home/repparw/.local/share/shadPS4/keys.json"
-          ];
+          ]
+          ++ map (p: "${home}/${p}") homeState;
           excludes = [
             "${config.users.users.repparw.home}/.config/heroic/**"
             "${config.users.users.repparw.home}/Documents/Memorias/**"
@@ -223,45 +233,17 @@
                   ];
                 };
               };
-              # Explicit allowlist of irreplaceable ~/.config state. Everything
-              # else is nix-declared (rebuild restores it), OAuth/session
-              # (re-login), or regenerable cache. Sources use /./ with
-              # --relative so the .config hierarchy is preserved under the
-              # destination. delete prunes entries removed from the allowlist.
+              # HDD mirrors of homeState, split by destination subtree. Sources
+              # use /./ with --relative so the hierarchy is preserved. delete
+              # prunes entries removed from the allowlist. keys.txt is
+              # HDD-only (excluded from the offsite paths above).
               bupconfig = {
                 destination = "/mnt/hdd/backup/.config";
                 sources =
-                  let
-                    home = config.users.users.repparw.home;
-                  in
-                  [
-                    "${home}/./.config/sops/age/keys.txt"
-                    "${home}/./.config/moonshine/"
-                    "${home}/./.config/kdeconnect/"
-                    "${home}/./.config/vicinae/settings.json"
-                    "${home}/./.config/unity3d/"
-                    "${home}/./.config/Wasteland3/"
-                    "${home}/./.config/Loop_Hero/"
-                    "${home}/./.config/Zelda64Recompiled/"
-                    "${home}/./.config/godot/"
-                    "${home}/./.config/vesktop/settings.json"
-                    "${home}/./.config/vesktop/settings/"
-                    "${home}/./.config/ZapZap/"
-                    "${home}/./.config/Moonlight Game Streaming Project/"
-                    "${home}/./.config/codex/config.toml"
-                    "${home}/./.config/codex/skills/"
-                    "${home}/./.config/codex/plugins/"
-                    "${home}/./.config/codex/goals_1.sqlite"
-                    "${home}/./.config/net.imput.helium/Default/Preferences"
-                    "${home}/./.config/net.imput.helium/Default/Secure Preferences"
-                    "${home}/./.config/net.imput.helium/Default/History"
-                    "${home}/./.config/net.imput.helium/Default/Login Data"
-                    "${home}/./.config/net.imput.helium/Default/Login Data For Account"
-                    "${home}/./.config/net.imput.helium/Default/Sessions/"
-                    "${home}/./.config/fish/fish_variables"
-                    "${home}/./.config/mpv/watch_later"
-                    "${home}/./.config/Raspberry Pi/Raspberry Pi Imager.conf"
-                  ];
+                  [ "${home}/./.config/sops/age/keys.txt" ]
+                  ++ map (p: "${home}/./${p}") (
+                    lib.filter (p: lib.hasPrefix ".config/" p) homeState
+                  );
                 settings = {
                   archive = true;
                   delete = true;
@@ -269,32 +251,11 @@
                   ignore-missing-args = true;
                 };
               };
-              # Vicinae keeps its state under ~/.local/share (clipboard history,
-              # extensions and image cache excluded: settings + registry only).
-              # Plus other small irreplaceable ~/.local state (mirrored offsite
-              # via modules.backup.paths).
               bupshare = {
                 destination = "/mnt/hdd/backup/.local";
-                sources =
-                  let
-                    home = config.users.users.repparw.home;
-                  in
-                  [
-                    "${home}/./.local/share/vicinae/vicinae.db"
-                    "${home}/./.local/share/vicinae/vicinae.db-shm"
-                    "${home}/./.local/share/vicinae/vicinae.db-wal"
-                    "${home}/./.local/share/vicinae/metadata.json"
-                    "${home}/./.local/share/vicinae/script-metadata.json"
-                    "${home}/./.local/share/fish/fish_history"
-                    "${home}/./.local/share/tmux/resurrect/"
-                    "${home}/./.local/state/nvim/undo/"
-                    "${home}/./.local/state/nvim/shada"
-                    "${home}/./.local/state/nvim/file_frecency.bin"
-                    "${home}/./.local/state/nvim/avante/"
-                    "${home}/./.local/share/voxtype/meetings/"
-                    "${home}/./.local/share/shadPS4/savedata/"
-                    "${home}/./.local/share/shadPS4/keys.json"
-                  ];
+                sources = map (p: "${home}/./${p}") (
+                  lib.filter (p: lib.hasPrefix ".local/" p) homeState
+                );
                 settings = {
                   archive = true;
                   delete = true;
