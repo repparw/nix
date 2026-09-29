@@ -141,9 +141,10 @@ Do not add deletion or repartitioning to that trial.
    caches, excluding runtime/temporary files and swap. Scope changes take
    effect only after normal deployment.
 2. Verify recovery credentials outside the fleet. The personal recovery Age
-   recipient is configured, but an independent private-key copy has **not been
-   confirmed**. A restore using epsilon's credentials proves recovery from
-   losing pi, not from losing the whole fleet.
+   recipient derives from alpha's user SSH key. SSH key copies are reported
+   in Bitwarden; test the matching retrieved private key as described in the
+   [recovery runbook](host-recovery.md). A restore using epsilon's credentials
+   proves recovery from losing pi, not from losing the whole fleet.
 3. Use the VM check below for the shared mount/password/recovery behavior.
    Production service boot, ARM firmware and real disk attachment still need
    their own trial. The HA component migration and interactive Authelia/HA

@@ -130,6 +130,9 @@
               "/var/lib/systemd/timers"
               "/var/lib/host-recovery"
             ]
+            # --one-file-system stops at nested boot mounts. Include firmware
+            # and EFI filesystems explicitly as well as /boot on the root disk.
+            ++ lib.filter (path: lib.hasPrefix "/boot/" path) fullPaths
             ++ lib.optional config.services.traefik.enable "/var/lib/traefik";
             excludes = [
               "**/.cache/**"

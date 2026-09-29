@@ -31,7 +31,9 @@ other filesystem types require explicit handling. On pi this covers `/`,
 filesystem, the complete Nix store, caches and old migration archives.
 Pseudo-filesystems, runtime/temporary directories, Restic's cache, swap and
 duplicate container runtime/Nix mounts are excluded. Daily backups have a
-smaller scope and also exclude reproducible caches.
+smaller scope and also exclude reproducible caches. They explicitly include
+the separate firmware/EFI mounts so `--one-file-system` does not skip those
+boot files.
 
 This is a full file backup, not a raw disk image or atomic whole-system
 snapshot. The helper records partition tables, filesystem IDs, mount layout,
@@ -108,9 +110,12 @@ Do not run partition-table restoration commands against a running host.
 
 ## Recovery after losing the whole fleet
 
-The personal Age recipient in `.sops.yaml` is public metadata. It proves
-nothing about possession of its private identity. As of this preparation,
-an off-fleet private-key copy has **not been confirmed**.
+The personal Age recipient in `.sops.yaml` matches the Age conversion of
+alpha's user SSH public key, `~/.ssh/id_ed25519.pub`. Its corresponding private
+SSH key can recreate the Age identity; a separate Age key file is unnecessary.
+The owner reports three SSH keys stored in Bitwarden. Confirm the matching
+entry by testing a copy retrieved from the vault; possession of the key on
+alpha alone does not verify the off-fleet backup.
 
 Locate that identity in a password manager or offline storage. Compare its
 derived public recipient with `.sops.yaml`, and test decryption of the backup,

@@ -71,6 +71,8 @@ let
 in
 assert !(hosts.alpha.config.modules ? persistence);
 assert !hosts.alpha.config.modules.backup.hostRecovery.enable;
+assert lib.elem "/boot/firmware" hosts.pi.config.services.restic.backups.offsite.paths;
+assert lib.elem "/boot/efi" hosts.epsilon.config.services.restic.backups.offsite.paths;
 assert
   hosts.epsilon.config.modules.services.definitions.paperless.backup.path
   == "/home/containers/config/paper/export";
