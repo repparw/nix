@@ -1,36 +1,43 @@
 ---
 type: Runbook
-title: Moonshine HDR Gamescope Steam overlay
-description: Reproduce and verify the working Steam overlay path inside a Moonshine HDR session.
-when: Debugging or changing Moonshine, Gamescope WSI, HDR streaming, or the Steam overlay.
+title: Moonshine HDR Gamescope streaming
+description: Reproduce and verify the HDR streaming path, and why the Steam overlay is not part of it.
+when: Debugging or changing Moonshine, Gamescope WSI, or HDR streaming on alpha.
 resource: modules/aspects/streaming.nix
-tags: [moonshine, moonlight, gamescope, steam, overlay, hdr, gaming]
+tags: [moonshine, moonlight, gamescope, steam, hdr, gaming]
 ---
 
-# Moonshine HDR Gamescope Steam overlay
+# Moonshine HDR Gamescope streaming
 
-Baseline confirmed working in Persona 3 Reload on `alpha` on 2026-09-08
-(Moonshine 0.15.0, Gamescope 3.16.28). Preserve this path when changing the
-streaming stack — in particular, do not re-enable Moonshine's WSI layer
-around the nested Gamescope compositor.
+Moonshine captures one stable HDR surface from Steam by running it inside a
+nested Gamescope compositor. Do not re-enable Moonshine's own WSI layer around
+that compositor; Gamescope has to own the surface Moonshine sees.
 
-The deciding factor is resolution, not window mode: the overlay works when
-the game resolution is smaller than the Gamescope/Moonlight output
-resolution, and fails when the two match. The current theory is that the 1:1
-presentation path bypasses composition the overlay hook needs, but that
-mechanism is unproven — the matrix below is the ground truth:
+## No Steam overlay
 
-| Gamescope output | P3R resolution | P3R mode   | Steam overlay |
-| ---------------- | -------------- | ---------- | ------------- |
-| 3840x2160        | 1920x1080      | Fullscreen | Works         |
-| 3840x2160        | 3840x2160      | Fullscreen | Fails         |
-| 3840x2160        | 3840x2160      | Borderless | Fails         |
-| 1920x1080        | 1920x1080      | Fullscreen | Fails         |
-| 1920x1080        | 1920x1080      | Borderless | Fails         |
+The Steam overlay does not composite with `gamescope-wsi`, which HDR requires.
+This is upstream [ValveSoftware/gamescope#1537], open since 2024-09-20 and
+unfixed. Shift+Tab will not open the overlay in this path. Do not spend time
+re-diagnosing it.
+
+A local patch used to carry a proof of concept for that issue. It was dropped on
+2026-09-29 because it bought a working overlay in only one of five tested
+configurations, and because it used line-number-only patch hunks with no
+context: any Gamescope release that shifted a line made the patch apply at the
+wrong offset and fail to compile rather than fail to apply. It broke the fleet
+for five consecutive nights before that was diagnosed, blocking a nixpkgs bump
+each time. If a future Gamescope or nixpkgs bump reintroduces it, pin the
+derivation and assert its version rather than carrying a context-free patch
+against a rolling input.
+
+`gamescope-wsi` is still required for HDR. Dropping the overlay patch did not
+change that; `gamescopeHdr` is `pkgs.gamescope.override { enableWsi = true; }`
+with no local patches, so a Gamescope bump now either builds or fails cleanly.
 
 ## Known-good settings
 
-P3R `GameUserSettings.ini` for the working case:
+Persona 3 Reload on `alpha`, confirmed 2026-09-08 with Moonshine 0.15.0 and
+Gamescope 3.16.28:
 
 ```ini
 ResolutionSizeX=1920
@@ -40,44 +47,39 @@ PreferredFullscreenMode=0
 FrameRateLimit=60.000000
 ```
 
-The working Gamescope invocation (4K output, HDR):
+The working Gamescope invocation, with a 4K output and a 1080p game:
 
-```text
+```sh
 gamescope --steam -f -b -W 3840 -H 2160 -w 3840 -h 2160 -r 60 \
   --hdr-enabled -- bwrap --dev-bind / / \
   --tmpfs /mnt/seagate --tmpfs /home/containers/media/seagate -- \
   steam -tenfoot
 ```
 
-`bwrap` stays inside Gamescope: Gamescope creates Xwayland outside the user
-namespace while the Seagate mounts stay hidden from Steam.
+`bwrap` stays inside Gamescope. Gamescope creates Xwayland outside the user
+namespace; inside bwrap's namespace the root-owned `/tmp/.X11-unix` looks owned
+by `nobody`, which wlroots rejects with a segfault. The sandbox exists to mask
+the Seagate automounts, which Steam otherwise stats at startup and Proton maps
+as DOS drives.
 
-Required environment (see the HDR launcher in `streaming.nix`): the game
-process must observe `ENABLE_GAMESCOPE_WSI=1`,
-`GAMESCOPE_WSI_FIX_OVERLAY=1`, and
-`ENABLE_VK_LAYER_VALVE_steam_overlay_1=1`, with Moonshine's own WSI layer
-disabled. The local Gamescope patch (ValveSoftware/gamescope#1537) gives the
-overlay an X11-backed swapchain at startup, then returns to the normal WSI
-path after five seconds — that is what keeps HDR while letting the overlay
-hook attach. Do not add `PROTON_ENABLE_WAYLAND=1`: it belongs to the failed
-native Wine-Wayland experiment.
+Required in the game process: `ENABLE_GAMESCOPE_WSI=1` and
+`ENABLE_VK_LAYER_VALVE_steam_overlay_1=1`, with `DISABLE_MOONSHINE_WSI=1` set.
+Do not set `PROTON_ENABLE_WAYLAND`; it belongs to a native Wine-Wayland
+experiment that was tried on 2026-09-17 and abandoned the same day.
 
 ## Verify after a change
 
-After rebuilding but before switching, confirm all of the following:
+Before switching:
 
 1. The generated Moonshine config contains the `Steam Big Picture HDR`
    application and no separate SDR Steam entry.
-2. The Gamescope derivation enables its WSI layer and lists
-   `gamescope-wsi-overlay.patch` in `patches`.
-3. The HDR launcher sets `DISABLE_MOONSHINE_WSI=1` and
-   `GAMESCOPE_WSI_FIX_OVERLAY=1`, does not set `PROTON_ENABLE_WAYLAND`, and
-   launches Gamescope with `--hdr-enabled`.
-4. In a live game, `/proc/$game_pid/environ` contains
-   `ENABLE_GAMESCOPE_WSI=1`, `GAMESCOPE_WSI_FIX_OVERLAY=1`, and
-   `ENABLE_VK_LAYER_VALVE_steam_overlay_1=1`.
-5. For the known-good P3R test, keep the Moonlight/Gamescope output at 4K and
-   set the game itself to 1920x1080 Fullscreen. Equal game and output
-   resolutions are known to fail with the current patch.
-6. Shift+Tab visibly opens and closes the Steam overlay in an SDR game launched
-   through the HDR entry.
+2. The Gamescope derivation enables its WSI layer
+   (`pkgs.gamescope.override { enableWsi = true; }`) and lists no local
+   patches.
+3. The HDR launcher sets `DISABLE_MOONSHINE_WSI=1`, unsets
+   `DISABLE_GAMESCOPE_WSI`, does not set `PROTON_ENABLE_WAYLAND`, and launches
+   Gamescope with `--hdr-enabled`.
+4. In a live game, `/proc/$game_pid/environ` contains `ENABLE_GAMESCOPE_WSI=1`
+   and `ENABLE_VK_LAYER_VALVE_steam_overlay_1=1`.
+5. The stream is HDR end to end. Shift+Tab opening the overlay is not a valid
+   check on this path.
