@@ -7,7 +7,12 @@
     homeManager =
       { config, ... }:
       let
-        inherit (config.xdg) cacheHome configHome dataHome stateHome;
+        inherit (config.xdg)
+          cacheHome
+          configHome
+          dataHome
+          stateHome
+          ;
       in
       {
         xdg.configFile."wget/wgetrc".text = ''
