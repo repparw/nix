@@ -5,28 +5,35 @@
   ...
 }:
 let
-  chatGptChromeExtensionId = "hehggadaopoacecdllhhajmbjkdcmajg";
-  openInFirefoxExtensionId = "lmeddoobegbaiopohmpmmobpnpjifpii";
+  heliumExtensionIds = [
+    "lmeddoobegbaiopohmpmmobpnpjifpii"
+    "nngceckbapebfimnlniiiahkandclblb"
+    "mnjggcdmjocbbbhaepdhchncahnbgone"
+    "enamippconapkdmgfgjchkhakpfinmaj"
+    "bnomihfieiccainjcjblhegjgglakjdd"
+    "dbepggeogbaibhgnhhndojpepiihcmeb"
+  ];
+
   allOpenInExtensionIds = [
-    "lmeddoobegbaiopohmpmmobpnpjifpii" # Open in Firefox
-    "mjoebkkejejidnkfdekpbooceogbapnf" # Open in Edge
-    "amojccmdnkdlcjcplmkijeenigbhfbpd" # Open in Opera
-    "looohpideggedchhpphemdmppnmdkgfd" # Open in IE
-    "bhfenhhfpcpkknkahnlogooiodcofkjl" # Open in Chromium
-    "mgmnomlncpmfgelhofilonnecmbdaoia" # Open in Brave
-    "bifmfjgpgndemajpeeoiopbeilbaifdo" # External Application Button
-    "ihpiinojhnfhpdmmacgmpoonphhimkaj" # Open in VLC
-    "jgpghknlbaljigdhcjimjnkkjniiipmm" # Open in GIMP
-    "cehiomcamjpnfmemkmpjadaclohoibgo" # Open in PDF viewer
-    "balknnpjeohaolphkfhghbaapifbokik" # Open in Onion Browser
-    "nfpgfobeckckemhmggkdfjkjaiikadnd" # Open in Yandex
-    "kjoabfljeghcinlpjhdbdfbcflapkccm" # Tor Control
-    "gkmonffckeeffppchajngpdakfppalfo" # Auto Shutdown
-    "eaicplkoeceoelookkiaeekhodehdhde" # Easy Video Downloader
-    "lhplfipknbnglagbgbfogdaihdcekfga" # Open in Foxit Reader
-    "bffjckjhidlcnenenacdahhpbacpgapo" # Country Flags
-    "oofmnabdpcibefadlibdpnnbglcehfpj" # Email Client for Notmuch
-    "ocnfecjfebnllnapjjoncgjnnkfmobjc" # Media Converter
+    "lmeddoobegbaiopohmpmmobpnpjifpii"
+    "mjoebkkejejidnkfdekpbooceogbapnf"
+    "amojccmdnkdlcjcplmkijeenigbhfbpd"
+    "looohpideggedchhpphemdmppnmdkgfd"
+    "bhfenhhfpcpkknkahnlogooiodcofkjl"
+    "mgmnomlncpmfgelhofilonnecmbdaoia"
+    "bifmfjgpgndemajpeeoiopbeilbaifdo"
+    "ihpiinojhnfhpdmmacgmpoonphhimkaj"
+    "jgpghknlbaljigdhcjimjnkkjniiipmm"
+    "cehiomcamjpnfmemkmpjadaclohoibgo"
+    "balknnpjeohaolphkfhghbaapifbokik"
+    "nfpgfobeckckemhmggkdfjkjaiikadnd"
+    "kjoabfljeghcinlpjhdbdfbcflapkccm"
+    "gkmonffckeeffppchajngpdakfppalfo"
+    "eaicplkoeceoelookkiaeekhodehdhde"
+    "lhplfipknbnglagbgbfogdaihdcekfga"
+    "bffjckjhidlcnenenacdahhpbacpgapo"
+    "oofmnabdpcibefadlibdpnnbglcehfpj"
+    "ocnfecjfebnllnapjjoncgjnnkfmobjc"
   ];
 in
 {
@@ -58,13 +65,14 @@ in
       ];
 
       environment.etc = {
+        # Helium reads platform policies from /etc/chromium (verified via
+        # --enable-logging --v=1: config_dir_policy_loader scans
+        # /etc/chromium/policies/managed). The /etc/helium path is not read.
         "chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
           BrowserSignin = 0;
           PasswordManagerEnabled = false;
-        };
-        "helium/policies/managed/helium-nixos.json".text = builtins.toJSON {
-          BrowserSignin = 0;
-          PasswordManagerEnabled = false;
+
+          ExtensionInstallForcelist = heliumExtensionIds;
         };
       };
     };
@@ -79,6 +87,7 @@ in
       }:
       let
         openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
+        ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
         browserWithoutMimeApps =
           desktopFile: browser:
           (pkgs.symlinkJoin {
@@ -96,16 +105,145 @@ in
             override = args: browserWithoutMimeApps desktopFile (browser.override args);
           };
 
-        chromiumWithoutMimeApps = browserWithoutMimeApps "chromium-browser.desktop";
         heliumWithoutMimeApps = browserWithoutMimeApps "helium.desktop";
-        helium = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
+        heliumBase = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
+        # Upstream bakes '${NIXOS_OZONE_WL:+...}' into a compiled wrapper
+        # that performs no shell expansion, so every launch carries the
+        # inert literal in argv and the intended ozone hint never applies.
+        # Filter the literal here and apply the hint for real when the
+        # session requests Wayland (NIXOS_OZONE_WL=1, see system aspect).
+        heliumShim =
+          base:
+          let
+            shimScript = pkgs.writeShellApplication {
+              name = "helium-shim";
+              text = ''
+                args=()
+                for arg in "$@"; do
+                  case "$arg" in
+                    *NIXOS_OZONE_WL*) continue ;;
+                    *) args+=("$arg") ;;
+                  esac
+                done
+                if [ -n "''${NIXOS_OZONE_WL:-}" ] && [ -n "''${WAYLAND_DISPLAY:-}" ]; then
+                  args+=(--ozone-platform-hint=auto)
+                fi
+                exec ${base}/bin/helium "''${args[@]}"
+              '';
+            };
+          in
+          (pkgs.symlinkJoin {
+            name = "${base.name}-clean-argv";
+            paths = [ base ];
+            postBuild = ''
+              rm "$out/bin/helium"
+              install -Dm755 ${shimScript}/bin/helium-shim "$out/bin/helium"
+            '';
+          })
+          // {
+            override = newArgs: heliumShim (base.override newArgs);
+            meta = base.meta;
+          };
+        helium = heliumShim heliumBase;
+        heliumPackage = heliumWithoutMimeApps helium;
+        heliumFlags = [
+          "--force-renderer-accessibility"
+          "--silent-debugger-extension-api"
+          # OSCrypt backend must be identical for normal windows and
+          # --app webapps: they share ~/.config/net.imput.helium, and
+          # Chromium honors the first process's backend. Mixed backends
+          # (basic vs libsecret) rewrite Local State without an
+          # encrypted_key and orphan cookie encryption keys, which drops
+          # Google/YouTube session cookies on the next start. basic
+          # persists without requiring an unlocked login keyring.
+          "--password-store=basic"
+        ];
+        heliumForWebapps = heliumPackage.override { flags = heliumFlags; };
+        # Helium's user-data-dir on Linux is ~/.config/net.imput.helium
+        # (verified: live Default/, SingletonSocket, and crashpad database
+        # all live there). NativeMessagingHosts must go under it;
+        # ~/.config/helium is not read by the browser.
+        heliumConfigDir = ".config/net.imput.helium";
       in
       {
         imports = [ inputs.helium-nix.homeModules.default ];
 
+        home.packages = [
+          (pkgs.writeShellApplication {
+            name = "webapp";
+            runtimeInputs = [
+              heliumForWebapps
+              ndrop
+            ];
+            text = ''
+              if [ "$#" -lt 2 ]; then
+                echo "usage: webapp <app-id> <url> [helium args...]" >&2
+                exit 2
+              fi
+
+              app_id="$1"
+              url="$2"
+              shift 2
+
+              # Helium/Chromium on native Wayland ignores --class for --app
+              # windows and exposes a derived app_id of the form
+              # chrome-<host>__<path>-Default (e.g. https://www.youtube.com
+              # becomes chrome-www.youtube.com__-Default, verified via
+              # `niri msg windows`). Derive it so ndrop exact-matches the
+              # existing window instead of spawning a duplicate.
+              # NOTE: --class is intentionally not passed: it is ignored for
+              # --app windows, and when the webapp starts the first browser
+              # process it would mislabel later normal windows with the
+              # webapp name instead of "helium".
+              no_scheme="''${url#https://}"
+              no_scheme="''${no_scheme#http://}"
+              no_scheme="''${no_scheme%%[?#]*}"
+              case "$no_scheme" in
+                */*)
+                  authority="''${no_scheme%%/*}"
+                  path="/''${no_scheme#*/}"
+                  ;;
+                *)
+                  authority="$no_scheme"
+                  path="/"
+                  ;;
+              esac
+
+              # Chromium builds the application name as host + "_" + URL path,
+              # then sanitizes path separators for its Linux desktop/XDG ID.
+              # Keep the leading/trailing path separators: /foo/ must become
+              # __foo_ rather than __foo, otherwise ndrop misses the window.
+              host="''${authority##*@}"
+              case "$host" in
+                \[*\]:*)
+                  host="''${host%%]:*}]"
+                  ;;
+                \[*\])
+                  ;;
+                *:*)
+                  host="''${host%%:*}"
+                  ;;
+              esac
+              host="$(printf '%s' "$host" | tr '[:upper:]' '[:lower:]')"
+
+              if [ -n "$host" ]; then
+                app_name="$(printf '%s_%s' "$host" "$path" | tr '/ ' '__')"
+                chrome_id="chrome-''${app_name}-Default"
+              else
+                chrome_id="$app_id"
+              fi
+
+              exec ndrop -F -c "$chrome_id" \
+                helium \
+                --app="$url" \
+                "$@"
+            '';
+          })
+        ];
+
         home.file = {
           ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
-          ".config/chromium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
+          "${heliumConfigDir}/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
             name = "com.add0n.node";
             description = "Node Host for Native Messaging";
             path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
@@ -133,8 +271,6 @@ in
             unbind <C-e>
 
             bind gd tabdetach
-
-            bind yy clipboard yankshort
 
             bind J tabnext --nowrap
             bind K tabprev --nowrap
@@ -302,10 +438,6 @@ in
                         urls = [ { template = "https://www.imdb.com/find?q={searchTerms}&s=all"; } ];
                         definedAliases = [ "imdb" ];
                       };
-                      "AI" = {
-                        urls = [ { template = "https://chat.repparw.com/?q={searchTerms}"; } ];
-                        definedAliases = [ "ai" ];
-                      };
                       "youtube" = {
                         urls = [ { template = "https://www.youtube.com/results?search_query={searchTerms}"; } ];
                         definedAliases = [ "y" ];
@@ -321,27 +453,10 @@ in
               };
           };
 
-          chromium = {
-            enable = true;
-            package = chromiumWithoutMimeApps pkgs.chromium;
-            commandLineArgs = [
-              "--force-renderer-accessibility"
-              "--silent-debugger-extension-api"
-            ];
-            extensions = [
-              { id = chatGptChromeExtensionId; }
-              { id = openInFirefoxExtensionId; }
-              { id = "ddkjiahejlhfcafbddmgiahcphecmpfh"; }
-              { id = "mnjggcdmjocbbbhaepdhchncahnbgone"; }
-              { id = "enamippconapkdmgfgjchkhakpfinmaj"; }
-              { id = "bnomihfieiccainjcjblhegjgglakjdd"; }
-              { id = "dbepggeogbaibhgnhhndojpepiihcmeb"; }
-            ];
-          };
-
           helium = {
             enable = true;
-            package = heliumWithoutMimeApps helium;
+            package = heliumPackage;
+            flags = heliumFlags;
           };
         };
       };

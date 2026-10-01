@@ -6,12 +6,13 @@
 }:
 let
   cfg = config.modules.services;
-  servicesLib = import ./lib.nix { inherit lib pkgs; };
   domain = cfg.domain;
+  servicesLib = import ./lib.nix { inherit lib pkgs; };
+  serviceUrl = servicesLib.serviceUrl cfg config;
   ingressPolicy = import ./ingress-policy.nix { inherit lib; } {
     definitions = cfg.definitions;
     inherit domain;
-    serviceUrl = servicesLib.serviceUrl cfg;
+    inherit serviceUrl;
   };
   # Cloudflare proxy IP ranges — https://www.cloudflare.com/ips-v4 / ips-v6
   cfIpRanges = [

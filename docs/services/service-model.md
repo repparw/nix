@@ -2,49 +2,68 @@
 type: Service Architecture
 title: Service Model
 description: How service definitions, containers, proxying, monitoring, and backups fit together.
+when: Read when adding services or changing shared service routing, monitoring, or backups.
 resource: modules/aspects/services/default.nix
 tags: [services, containers, proxy, backup]
 ---
 
 # Service Model
 
-Service behavior is split between the service aspect and individual service
-modules.
+Service behavior is split between the common host substrate, service bundles,
+and individual service aspects.
 
-- `modules/aspects/services/default.nix` composes the service aspect.
-- `modules/_services/` contains NixOS service modules imported by the service
-  aspect.
+- `service-host` activates the fleet service-registry collector, materializes
+  the validated schema, and provides the address allocator without selecting any
+  services.
+- `media-stack` composes Alpha's media services and shared container substrate.
+- Hosts include only the individual `nixos-services._.*` aspects they run.
+- `modules/aspects/services/default.nix` defines the substrate and bundles.
+- `modules/aspects/services/` contains service-owned implementation and metadata.
+- `modules/_services/` contains shared service infrastructure and adapters.
 - `modules/service-definitions.nix` defines the validated service-definition shape.
 - `modules/_services/proxy.nix` owns proxy routing.
 - `modules/_services/ingress-policy.nix` generates Traefik and Authelia policy
   from service definitions.
 - `modules/_services/glance.nix` owns dashboard and monitoring presentation.
 
-Shared reachability, routing, monitoring, and backup facts belong in
-`modules.services.definitions`. Consumers derive their configuration from that
-definition. Invalid routed or monitored definitions and duplicate container
-addresses fail evaluation at this seam.
+Each service aspect emits its reachability, routing, monitoring, and backup
+facts through the `service-registry` quirk. `service-host` activates a
+fleet-wide `collectAll` pipe that collects those facts with provenance, then
+derives each service's `host` from the originating host entity. `host` is
+required.
+The host entity's `serviceAddress` is the backend other fleet hosts use
+(`modules.services.hostAddresses`). `sshAddress` (defaulting to
+`serviceAddress`) is SSH, deploy-rs, and LAN `/etc/hosts`. Epsilon sets
+`sshAddress` to its public IP; its WireGuard address stays on
+`serviceAddress`.
+
+`service-host` also folds LAN DNS: vhosts with `lanEdge` resolve to
+`lanEdgeHost` (pi); other public names and the apex domain resolve to
+`publicEdgeHost` (epsilon's `sshAddress`). Invalid routed or monitored
+definitions and duplicate names or container hostnames fail evaluation.
 
 Definition fields drive host behavior as follows:
 
-- `hostname` and `domain` produce the public host name and proxy router.
-- `containerAddress` selects the private-container endpoint; services without
-  one use the host loopback endpoint.
+- `hostname` and `domain` produce the public host name and the proxy router.
+- `host` and `container` determine host membership and whether the allocator
+  assigns a private bridge address.
+- `lanEdge` sends LAN clients to the LAN edge instead of the public edge.
 - `port` produces the proxy backend URL.
 - `auth` selects the proxy authentication middleware where routing is generic.
 - `monitor` adds the public URL and internal check URL to Glance.
 - `backup.path` produces the read-only backup export and container ordering.
 
 Service-specific settings, mounts, devices, secrets, and exceptional proxy
-rules remain local to the owning service module.
+rules remain local to the owning service aspect.
 
-Private containers use the host bridge at `10.231.136.1`. Service backup
-exports are gathered under `modules.services.backupDir`, which defaults to
-`/home/containers/backup`.
+Private containers use the gateway derived from the host's
+`modules.services.bridgePrefix` (`10.231.136.1` by default; epsilon uses
+`10.231.137.1`). Service backup exports are gathered under
+`modules.services.backupDir`, which defaults to `/home/containers/backup`.
 
 ## Related
 
 - [Ingress policy](../architecture/ingress-policy.md)
 - [Restore service backups](../runbooks/restore-service-backups.md)
 - [Check native container DNS](../runbooks/check-native-container-dns.md)
-- [Alpha](../hosts/alpha.md)
+- [Host profiles](../hosts.md)

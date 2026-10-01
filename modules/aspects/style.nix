@@ -65,16 +65,16 @@
 
             fonts = {
               sansSerif = {
-                name = "FiraCode Nerd Font";
-                package = pkgs.nerd-fonts.fira-code;
+                name = "GoogleSansCode Nerd Font";
+                package = pkgs.nerd-fonts.googlesanscode;
               };
               serif = {
-                name = "FiraCode Nerd Font";
-                package = pkgs.nerd-fonts.fira-code;
+                name = "GoogleSansCode Nerd Font";
+                package = pkgs.nerd-fonts.googlesanscode;
               };
               monospace = {
-                name = "FiraCode Nerd Font Mono";
-                package = pkgs.nerd-fonts.fira-code;
+                name = "GoogleSansCode Nerd Font Mono";
+                package = pkgs.nerd-fonts.googlesanscode;
               };
 
               sizes = {
@@ -103,7 +103,6 @@
               enable = true;
               dotIcons.enable = false;
             };
-            xresources.path = ".config/Xresources";
             stylix = {
               icons = {
                 enable = true;
@@ -111,6 +110,9 @@
                 package = pkgs.papirus-icon-theme;
               };
               targets = {
+                x11.enable = false;
+                sxiv.enable = false;
+                gtk.flatpakSupport.enable = false;
                 nixvim = {
                   transparentBackground = {
                     main = true;
@@ -125,7 +127,6 @@
                   ];
                 };
                 swaylock.image.enable = false;
-                vicinae.opacity.enable = false;
               };
             };
           }

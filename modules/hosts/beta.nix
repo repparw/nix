@@ -6,7 +6,7 @@
 {
   den.aspects.beta = {
     includes = [
-      den.aspects.host-common
+      den.aspects.nixos-services._.firmware
     ];
 
     nixos =
@@ -79,10 +79,11 @@
 
     provides.repparw.includes = [ den.aspects.kanshi ];
 
-    homeManager =
+    provides.repparw.homeManager =
       { pkgs, ... }:
       {
         home.packages = [ pkgs.brightnessctl ];
       };
   };
+
 }

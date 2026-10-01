@@ -14,12 +14,6 @@ let
   '';
 in
 {
-  modules.services.definitions.glance = {
-    containerAddress = "10.231.136.15";
-    port = 8080;
-    auth = "bypass";
-  };
-
   containers.glance = servicesLib.mkContainer {
     inherit cfg;
     name = "glance";
@@ -67,7 +61,7 @@ in
                     {
                       type = "weather";
                       hide-header = true;
-                      location = "REDACTED";
+                      location = "Buenos Aires, Argentina";
                       units = "metric";
                       hour-format = "24h";
                     }
@@ -119,7 +113,7 @@ in
                       type = "monitor";
                       hide-header = true;
                       title = "Services";
-                      sites = servicesLib.monitorSites cfg;
+                      sites = servicesLib.monitorSites cfg config;
                     }
                     {
                       type = "split-column";
@@ -135,12 +129,28 @@ in
                           type = "group";
                           widgets = [
                             {
-                              type = "reddit";
-                              subreddit = "selfhosted";
+                              type = "rss";
+                              title = "r/selfhosted";
+                              feeds = [
+                                {
+                                  url = "https://www.reddit.com/r/selfhosted/.rss";
+                                  # reddit fingerprint-blocks non-browser clients
+                                  # and rate-limits concurrent .rss per IP, so a
+                                  # browser UA is required and two subreddits may
+                                  # not both load on the same fetch cycle.
+                                  headers."User-Agent" = "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0";
+                                }
+                              ];
                             }
                             {
-                              type = "reddit";
-                              subreddit = "homelab";
+                              type = "rss";
+                              title = "r/homelab";
+                              feeds = [
+                                {
+                                  url = "https://www.reddit.com/r/homelab/.rss";
+                                  headers."User-Agent" = "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0";
+                                }
+                              ];
                             }
                           ];
                         }
@@ -161,7 +171,7 @@ in
                           links = [
                             {
                               title = "Mail";
-                              url = "mailto:me@repparw.com";
+                              url = "mailto:me@${cfg.domain}";
                             }
                             {
                               title = "Github";

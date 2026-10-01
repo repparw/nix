@@ -4,19 +4,39 @@
 }:
 let
   serviceUrl =
-    cfg: name:
+    cfg: hostConfig: name:
     let
       service = cfg.definitions.${name};
-      address = if service.containerAddress != null then service.containerAddress else "127.0.0.1";
+      target =
+        if service.host != cfg.hostName then
+          "${cfg.hostAddresses.${service.host}}:${
+            toString (if service.publishedPort != null then service.publishedPort else service.port)
+          }"
+        else if
+          lib.hasAttr name hostConfig.containers && hostConfig.containers.${name}.localAddress != null
+        then
+          "${hostConfig.containers.${name}.localAddress}:${toString service.port}"
+        else
+          "127.0.0.1:${toString service.port}";
     in
-    "http://${address}:${toString service.port}";
+    "http://${target}";
 
   backupServices = cfg: lib.filterAttrs (_: service: service.backup != null) cfg.definitions;
 
   backupMountUnit = name: "home-containers-backup-${name}.mount";
+
+  publicHealthUrl =
+    cfg: hostConfig: name:
+    let
+      service = cfg.definitions.${name};
+    in
+    if service.healthcheck != null then
+      "https://${service.hostname}.${cfg.domain}${service.healthcheck}"
+    else
+      serviceUrl cfg hostConfig name;
 in
 {
-  inherit serviceUrl;
+  inherit serviceUrl publicHealthUrl;
 
   serviceHosts =
     cfg:
@@ -25,13 +45,26 @@ in
     );
 
   monitorSites =
-    cfg:
+    cfg: hostConfig:
     lib.mapAttrsToList
-      (name: service: {
-        title = name;
-        url = "https://${service.hostname}.${cfg.domain}";
-        check-url = serviceUrl cfg name;
-      })
+      (
+        name: service:
+        if service.healthcheck != null then
+          {
+            title = name;
+            url = "https://${service.hostname}.${cfg.domain}";
+            check-url = publicHealthUrl cfg hostConfig name;
+            timeout = "10s";
+          }
+        else
+          {
+            title = name;
+            url = "https://${service.hostname}.${cfg.domain}";
+            check-url = serviceUrl cfg hostConfig name;
+            timeout = "10s";
+            alt-status-codes = [ 302 ];
+          }
+      )
       (
         lib.filterAttrs (
           _: service: service.monitor && service.hostname != null && service.port != null
@@ -57,11 +90,8 @@ in
   containerBackupAfters =
     cfg:
     lib.mapAttrs' (
-      name: _:
-      lib.nameValuePair "container@${name}" {
-        after = [ (backupMountUnit name) ];
-      }
-    ) (lib.filterAttrs (_: service: service.containerAddress != null) (backupServices cfg));
+      name: _: lib.nameValuePair "container@${name}" { after = [ (backupMountUnit name) ]; }
+    ) (backupServices cfg);
 
   backupAfter = names: map backupMountUnit names;
 
@@ -69,6 +99,7 @@ in
     {
       cfg,
       name,
+      hostAddress ? null,
       privateUsers ? null,
       bindMounts ? { },
       allowedDevices ? [ ],
@@ -77,24 +108,30 @@ in
       serviceConfig ? { },
       extraConfig ? { },
       extraOptions ? { },
+      imports ? [ ],
     }:
+    let
+      effectiveHost = if hostAddress != null then hostAddress else "${cfg.bridgePrefix}.1";
+    in
     {
       autoStart = true;
       privateNetwork = true;
-      hostAddress = "10.231.136.1";
-      localAddress = cfg.definitions.${name}.containerAddress;
+      hostAddress = lib.mkDefault effectiveHost;
       inherit extraFlags;
       config =
-        { ... }:
-        lib.mkMerge [
-          {
-            services = serviceConfig;
-            networking.useHostResolvConf = false;
-            networking.nameservers = [ "10.231.136.1" ];
-            system.stateVersion = "26.05";
-          }
-          extraConfig
-        ];
+        { pkgs, ... }@args:
+        {
+          inherit imports;
+          config = lib.mkMerge [
+            {
+              services = serviceConfig;
+              networking.useHostResolvConf = false;
+              networking.nameservers = lib.mkDefault [ effectiveHost ];
+              system.stateVersion = "26.05";
+            }
+            (if builtins.isFunction extraConfig then extraConfig args else extraConfig)
+          ];
+        };
     }
     // lib.optionalAttrs (privateUsers != null) { inherit privateUsers; }
     // lib.optionalAttrs (bindMounts != { }) { inherit bindMounts; }
