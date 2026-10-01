@@ -7,7 +7,10 @@
 {
   den.aspects.shell = {
     nixos = {
-      programs.fish.useBabelfish = true;
+      programs.fish = {
+        enable = true;
+        useBabelfish = true;
+      };
     };
 
     homeManager =
@@ -17,7 +20,175 @@
         lib,
         ...
       }:
+      let
+        sshAddresses = lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) (
+          lib.concatMapAttrs (_system: hosts: hosts) den.hosts
+        );
+        host-update = pkgs.writeShellApplication {
+          name = "host-update";
+          runtimeInputs = with pkgs; [
+            git
+            nix
+            nixos-rebuild
+            nvd
+            curl
+            gawk
+            gnugrep
+            coreutils
+          ];
+          text = ''
+            set -u
+            flake="''${FLAKE:-$HOME/Projects/nix}"
+            host=$(cat /etc/hostname)
+            yes=0
+            no_pull=0
+            result=""
+            soak_settle_seconds="''${SOAK_SETTLE_SECONDS:-45}"
+            soak_interval_seconds="''${SOAK_INTERVAL_SECONDS:-30}"
+            soak_attempts="''${SOAK_ATTEMPTS:-10}"
+            # Privilege escalation must go through the setuid wrapper. The
+            # nixpkgs sudo is a non-setuid store binary and shadows the wrapper
+            # when listed in runtimeInputs, so never add sudo there.
+            escalate=/run/wrappers/bin/sudo
+
+            for a in "$@"; do
+              case "$a" in
+                --yes) yes=1 ;;
+                --no-pull) no_pull=1 ;;
+                --result=*) result="''${a#--result=}" ;;
+                *)
+                  echo "unknown arg: $a"
+                  exit 2
+                  ;;
+              esac
+            done
+
+            gate() {
+              if [ -n "''${PROBE:-}" ]; then
+                "$PROBE" --strict --local
+              else
+                state=$(systemctl is-system-running 2>/dev/null || true)
+                case "$state" in
+                  running | degraded) ;;
+                  *) return 1 ;;
+                esac
+                timeout 3 bash -c 'exec 3<>/dev/tcp/${sshAddresses.pi}/443' 2>/dev/null
+              fi
+            }
+
+            if ! gate; then
+              echo "health gate failing; fix before updating"
+              exit 1
+            fi
+
+            cd "$flake"
+            diff_path="''${HOST_UPDATE_DIFF:-/tmp/host-update-diff.txt}"
+            rm -f "$diff_path"
+
+            if [ "$no_pull" = 0 ]; then
+              git fetch origin main
+              behind=$(git rev-list --count HEAD..origin/main || echo 0)
+              if [ "$behind" -gt 0 ]; then
+                if [ -z "$(git status --porcelain)" ]; then
+                  git merge --ff-only origin/main
+                else
+                  git stash push -m "host-update carry" >/dev/null
+                  if git merge --ff-only origin/main 2>/dev/null; then
+                    if git stash apply >/dev/null 2>&1; then
+                      git stash drop >/dev/null
+                      echo "note: carried local WIP onto origin/main"
+                    else
+                      git reset --hard origin/main
+                      echo "note: WIP conflicts with main; kept in stash@{0}; building main"
+                    fi
+                  else
+                    git stash pop >/dev/null 2>&1 || true
+                    echo "note: local history diverged; building local state"
+                  fi
+                fi
+              fi
+            fi
+
+            if [ -z "$result" ]; then
+              free_kb=$(df -k /nix | awk 'NR==2 {print $4}')
+              if [ "$free_kb" -lt $((10 * 1024 * 1024)) ]; then
+                echo "below 10G on /nix; running gc (sudo password may be asked)"
+                "$escalate" nix-collect-garbage -d || true
+              fi
+
+              nix build ".#nixosConfigurations.$host.config.system.build.toplevel" \
+                -o /tmp/host-update-result
+              result=/tmp/host-update-result
+            fi
+
+            nvd diff /run/current-system "$result" \
+              | tee "$diff_path"
+            current_system=$(readlink -f /run/current-system) || {
+              echo "cannot resolve /run/current-system" >&2
+              exit 1
+            }
+            candidate_system=$(readlink -f "$result") || {
+              echo "cannot resolve candidate system: $result" >&2
+              exit 1
+            }
+            case "$current_system:$candidate_system" in
+              /nix/store/*:/nix/store/*) ;;
+              *)
+                echo "system paths must resolve into /nix/store" >&2
+                exit 1
+                ;;
+            esac
+            if [ "$current_system" = "$candidate_system" ]; then
+              echo "already at the pinned generation"
+              exit 3
+            fi
+
+            if [ "$yes" = 0 ]; then
+              printf '\nFlip %s to this generation? [y/N] ' "$host"
+              read -r answer
+              [ "$answer" = "y" ] || {
+                echo "aborted; nothing flipped"
+                exit 1
+              }
+            fi
+
+            if [ "$(id -u)" = 0 ]; then
+              nixos-rebuild switch --flake ".#$host"
+            else
+              "$escalate" nixos-rebuild switch --flake ".#$host"
+            fi
+
+            sleep "$soak_settle_seconds"
+            passes=0
+            i=0
+            while [ "$i" -lt "$soak_attempts" ]; do
+              if gate; then
+                passes=$((passes + 1))
+              else
+                passes=0
+              fi
+              [ "$passes" -ge 2 ] && break
+              i=$((i + 1))
+              sleep "$soak_interval_seconds"
+            done
+
+            if [ "$passes" -lt 2 ]; then
+              echo "soak failed; rolling back"
+              if [ "$(id -u)" = 0 ]; then
+                nixos-rebuild switch --rollback
+              else
+                "$escalate" nixos-rebuild switch --rollback
+              fi
+              exit 1
+            fi
+
+            echo "soak clean; $host updated"
+          '';
+        };
+      in
       {
+        home.packages = [ host-update ];
+
         programs = {
           btop.enable = true;
 
@@ -92,8 +263,8 @@
               nrb = "nh os boot";
               nrt = "nh os test";
 
-              nrsu = "nrs -u --commit-lock-file";
-              nrbu = "nrb -u --commit-lock-file";
+              nrsu = "${lib.getExe pkgs.openssh} -t -i /home/repparw/.ssh/id_ed25519 -o BatchMode=yes -o IdentitiesOnly=yes root@${osConfig.modules.fleet-update.controllerHost} /run/current-system/sw/bin/fleet-update deploy --host alpha --force --wait-lock 10800 --state /var/lib/auto-update";
+              nrbu = "nrb";
 
               ln = "ln -i";
               mv = "mv -i";
@@ -110,10 +281,11 @@
               diff = "${lib.getExe colordiff}";
               cat = "${lib.getExe bat}";
               df = "${lib.getExe duf} -hide-mp /home/containers/\\* -only local";
-              du = "${lib.getExe dust}";
+              du = "${lib.getExe dust} -x";
 
               rpi = "${lib.getExe' mosh "mosh"} -P 60001 pi";
               pc = "${lib.getExe' mosh "mosh"} -P 60000 alpha";
+              eps = "${lib.getExe' mosh "mosh"} -P 60002 epsilon";
 
               ns = "${lib.getExe nix-search-tv} print | fzf --preview '${lib.getExe nix-search-tv} preview {}' --scheme history";
             });

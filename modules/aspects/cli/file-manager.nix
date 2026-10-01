@@ -5,9 +5,24 @@
 }:
 {
   den.aspects.file-manager = {
+    nixos = {
+      services.gvfs.enable = true;
+    };
+
     homeManager =
       { pkgs, ... }:
       {
+        services.udiskie = {
+          enable = true;
+          tray = "never";
+          settings.device_config = [
+            {
+              id_label = "seagate";
+              ignore = true;
+            }
+          ];
+        };
+
         programs = {
           yazi = {
             enable = true;

@@ -5,74 +5,58 @@
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  den.hosts.x86_64-linux = {
-    alpha.users.repparw = { };
-    # Disabled while there is no laptop using this host config. Re-enable when
-    # beta has hardware again so it participates in flake evals.
-    # beta.users.repparw = { };
-  };
-
   den.aspects.repparw = {
     includes = [
       den.batteries.define-user
       den.batteries.primary-user
       (den.batteries.user-shell "fish")
-      den.batteries.host-aspects
       den.aspects.shell
+      den.aspects.editors
       den.aspects.tmux
       den.aspects.git
-      den.aspects.ai
       den.aspects.ssh
-      den.aspects.editors
-      den.aspects.file-manager
-      den.aspects.scripts
-      den.aspects.rclone
+      den.aspects.secrets
+      den.aspects.ai
+      den.aspects.xdg
     ];
 
-    provides.to-hosts = {
-      includes = [ den.aspects.gui ];
+    provides.to-hosts =
+      { user, ... }:
+      {
+        nixos =
+          { config, ... }:
+          {
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+              backupFileExtension = "hm-backup";
+            };
 
-      nixos =
-        { ... }:
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            backupFileExtension = "hm-backup";
+            programs.nh.flake = "${config.home-manager.users.${user.name}.xdg.userDirs.projects}/nix";
 
-            sharedModules = [
-              inputs.nixcord.homeModules.default
-            ];
+            sops.secrets.accessTokens = {
+              sopsFile = ../../secrets/nix.sops.yaml;
+              mode = "0440";
+              owner = user.name;
+            };
+
+            nix = {
+              settings.allowed-users = [ user.name ];
+              extraOptions = ''
+                !include ${config.sops.secrets.accessTokens.path}
+              '';
+            };
           };
-        };
-    };
+      };
 
     user = _: {
       linger = true;
       description = "repparw";
-      extraGroups = [
-        "adbusers"
-        "gamemode"
-        "render"
-        "video"
-        "wheel"
-      ];
     };
 
     homeManager = _: {
       xdg.enable = true;
       home.preferXdgDirectories = true;
-      services.udiskie = {
-        enable = true;
-        tray = "never";
-        settings.device_config = [
-          {
-            id_label = "seagate";
-            ignore = true;
-          }
-        ];
-      };
-
     };
   };
 }

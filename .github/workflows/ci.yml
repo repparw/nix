@@ -1,0 +1,41 @@
+# Host toplevel evals stub hermes-agent's package (upstream CI). This workflow
+# is that gate, run on push instead of only when a session remembers to run it.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - run: >
+          nix build
+          .#checks.x86_64-linux.formatting
+          .#checks.x86_64-linux.shellcheck
+          .#checks.x86_64-linux.sops-files
+          .#checks.x86_64-linux.change-detection
+          .#checks.x86_64-linux.agent-docs
+          .#checks.x86_64-linux.fleet-cli
+          .#checks.x86_64-linux.check-flake-file
+          .#checks.x86_64-linux.deploy-schema
+          .#checks.x86_64-linux.service-definitions
+          .#checks.x86_64-linux.host-persistence
+          .#checks.x86_64-linux.alpha
+          .#checks.x86_64-linux.pi
+          .#checks.x86_64-linux.epsilon
+          --print-build-logs --keep-going
+
+  persistence-vm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v22
+        with:
+          kvm: true
+      - run: nix build .#checks.x86_64-linux.host-persistence-vm --no-link --print-build-logs

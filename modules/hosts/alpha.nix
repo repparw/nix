@@ -6,13 +6,18 @@
 {
   den.aspects.alpha = {
     includes = [
-      den.aspects.host-common
       den.aspects.backup
       den.aspects.btrfs-maintenance
       den.aspects.gaming
       den.aspects.logid
-      den.aspects.nixos-services
       den.aspects.streaming
+      den.aspects.networking._.wan-ingress-shaping
+      den.aspects.media-stack
+      den.aspects.nixos-services._.firmware
+      den.aspects.nixos-services._.coredump-watch
+      den.aspects.nixos-services._.disk-watch
+      den.aspects.nixos-services._.reboot-watch
+      den.aspects.deploy-target
     ];
 
     nixos =
@@ -24,14 +29,50 @@
         ...
       }:
       {
-        imports = [
-          (modulesPath + "/installer/scan/not-detected.nix")
-        ];
+        imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
+
+        modules.backup = {
+          paths = [
+            "/home/containers/backup"
+            "/home/repparw/Pictures"
+            "/home/repparw/Documents"
+          ];
+          excludes = [
+            "${config.users.users.repparw.home}/.config/heroic/**"
+            "${config.users.users.repparw.home}/.config/clipse/**"
+            "${config.users.users.repparw.home}/Documents/Memorias/**"
+          ];
+        };
+
+        modules.coredump-watch = {
+          enable = true;
+          mute = [ "wine64-preloader" ];
+        };
+
+        modules.reboot-watch.enable = true;
+
+        modules.disk-watch = {
+          enable = true;
+          mounts = [
+            {
+              mount = "/";
+              warn = 90;
+              crit = 93;
+            }
+            {
+              mount = "/mnt/hdd";
+              warn = 98;
+              crit = 99;
+            }
+            {
+              mount = "/mnt/seagate";
+              warn = 95;
+              crit = 98;
+            }
+          ];
+        };
 
         boot = {
-          extraModprobeConfig = ''
-            options netconsole netconsole=6665@192.168.0.18/eth0,6666@192.168.0.4/2c:cf:67:00:4f:47
-          '';
           initrd = {
             systemd.enable = true;
             availableKernelModules = [
@@ -44,12 +85,7 @@
               "sd_mod"
             ];
           };
-          kernel.sysctl."kernel.sysrq" = 1;
           kernelModules = [ "kvm-amd" ];
-          # Temporarily reproduce the intermittent shutdown hang with
-          # persistent netconsole and SysRq diagnostics enabled. The previous
-          # boot generation retains the known-good Linux 6.18 kernel.
-          kernelPackages = pkgs.linuxPackages_latest;
           loader = {
             systemd-boot = {
               enable = true;
@@ -59,22 +95,8 @@
             timeout = 1;
             efi.canTouchEfiVariables = true;
           };
-          tmp.useTmpfs = true;
 
           zswap.enable = true;
-        };
-
-        # The interface is not available when boot.kernelModules is processed,
-        # so load netconsole only after networkd has created and configured it.
-        systemd.services.netconsole-shutdown-diagnostics = {
-          description = "Load netconsole for shutdown diagnostics";
-          after = [ "network-online.target" ];
-          wants = [ "network-online.target" ];
-          wantedBy = [ "multi-user.target" ];
-          serviceConfig.Type = "oneshot";
-          script = ''
-            ${pkgs.kmod}/bin/modprobe netconsole
-          '';
         };
 
         virtualisation.vmVariant.boot.zswap.enable = lib.mkForce false;
@@ -104,6 +126,7 @@
               "noauto"
               "x-systemd.automount"
               "x-systemd.idle-timeout=10min"
+              "x-gvfs-trash"
             ];
           };
 
@@ -120,6 +143,7 @@
               "errors=remount-ro"
               "x-systemd.automount"
               "x-systemd.idle-timeout=10min"
+              "x-gvfs-trash"
             ];
           };
         };
@@ -135,11 +159,65 @@
           }
         ];
 
+        boot.kernel.sysctl."vm.swappiness" = 10;
+
         services = {
           udev.extraRules = ''
             # Disable USB autosuspend for Intel AX210 Bluetooth to fix sleep/wake
             ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0032", ATTR{power/control}="on"
           '';
+
+          rsync = {
+            enable = true;
+            jobs = {
+              buptohdd = {
+                destination = "/mnt/hdd/backup";
+                sources = [
+                  "${config.users.users.repparw.home}/Pictures"
+                  "${config.users.users.repparw.home}/Documents"
+                  "${config.users.users.repparw.home}/.config"
+                ];
+                settings = {
+                  archive = true;
+                  delete = true;
+                };
+              };
+              buprpi = {
+                destination = "${config.modules.services.backupDir}/pi-services/";
+                sources = [ "pi:services/" ];
+                settings = {
+                  archive = true;
+                  "copy-links" = true;
+                  delete = true;
+                };
+              };
+            };
+          };
+        };
+
+        # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl
+        # --set standby are clamped by a vendor minimum that never engages);
+        # STANDBY IMMEDIATE (hdparm -y) is the only lever. Guard with findmnt
+        # on the LABEL; findmnt reads mountinfo and must NOT touch the
+        # automount (statvfs via mountpoint would reset the idle timer).
+        systemd.services.hdd-spindown = {
+          description = "Spin down media HDD when automounts are idle";
+          serviceConfig.Type = "oneshot";
+          script = ''
+            if ${pkgs.util-linux}/bin/findmnt -S /dev/disk/by-label/HDD >/dev/null 2>&1; then
+              exit 0
+            fi
+            ${pkgs.hdparm}/sbin/hdparm -y /dev/disk/by-label/HDD
+          '';
+        };
+
+        systemd.timers.hdd-spindown = {
+          description = "Periodic media HDD spindown sweep";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*:0/5";
+            Persistent = true;
+          };
         };
 
         systemd.network = {
@@ -202,14 +280,20 @@
 
         networking.firewall.interfaces.eth0 = {
           allowedTCPPorts = [
-            80
-            443
             54535
           ];
           allowedUDPPorts = [
             54535
           ];
         };
+
+        networking.firewall.extraInputRules = ''
+          iifname "eth0" ip saddr { ${config.modules.services.hostAddresses.pi}, ${config.modules.services.hostAddresses.epsilon} } tcp dport { 3000, 8081 } accept comment "edge ingress -> native alpha listeners"
+        '';
+
+        networking.firewall.extraForwardRules = ''
+          iifname "eth0" ip saddr { ${config.modules.services.hostAddresses.pi}, ${config.modules.services.hostAddresses.epsilon} } oifname "ve-*" accept comment "edge ingress -> published container backends"
+        '';
 
         networking.nftables.tables.qos = {
           family = "inet";
@@ -226,25 +310,8 @@
             }
           '';
         };
-      };
 
-    homeManager = {
-      services.spotifyd = {
-        enable = true;
-        settings.global = {
-          username = "REDACTED";
-          device_name = "alpha";
-          bitrate = 320;
-          max_cache_size = 5000000000;
-          initial_volume = 50;
-          volume_normalisation = false;
-        };
       };
-
-      systemd.user.services.spotifyd = {
-        Unit.After = [ "network-online.target" ];
-        Service.RuntimeMaxSec = "6h";
-      };
-    };
   };
+
 }

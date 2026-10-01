@@ -5,6 +5,69 @@
 }:
 {
   den.aspects.nixos-services.provides.arr = {
+    service-registry = [
+      {
+        name = "bazarr";
+        definition = {
+          hostname = "bazarr";
+          port = 6767;
+          auth = "one_factor";
+          container = true;
+          monitor = true;
+          healthcheck = "/health";
+          backupRelativePath = "bazarr/backup";
+        };
+      }
+      {
+        name = "prowlarr";
+        definition = {
+          hostname = "prowlarr";
+          port = 9696;
+          auth = "one_factor";
+          container = true;
+          monitor = true;
+          healthcheck = "/ping";
+          backupRelativePath = "prowlarr/Backups";
+        };
+      }
+      {
+        name = "qbittorrent";
+        definition = {
+          hostname = "qbit";
+          port = 8080;
+          publishedPort = 18080;
+          auth = "external";
+          container = true;
+          monitor = true;
+          backupRelativePath = "qbittorrent";
+        };
+      }
+      {
+        name = "radarr";
+        definition = {
+          hostname = "radarr";
+          port = 7878;
+          auth = "one_factor";
+          container = true;
+          monitor = true;
+          healthcheck = "/ping";
+          backupRelativePath = "radarr/Backups";
+        };
+      }
+      {
+        name = "sonarr";
+        definition = {
+          hostname = "sonarr";
+          port = 8989;
+          auth = "one_factor";
+          container = true;
+          monitor = true;
+          healthcheck = "/ping";
+          backupRelativePath = "sonarr/Backups";
+        };
+      }
+    ];
+
     nixos =
       { config, pkgs, ... }:
       let
@@ -36,8 +99,12 @@
             };
             bindMounts =
               lib.optionalAttrs mediaBind {
-                "/data" = {
-                  hostPath = cfg.mediaPortalDir;
+                "/data/hdd" = {
+                  hostPath = "${cfg.mediaPortalDir}/hdd";
+                  isReadOnly = false;
+                };
+                "/data/seagate" = {
+                  hostPath = "${cfg.mediaPortalDir}/seagate";
                   isReadOnly = false;
                 };
               }
@@ -69,49 +136,6 @@
         };
       in
       {
-        modules.services.definitions = {
-          bazarr = {
-            hostname = "bazarr";
-            containerAddress = "10.231.136.2";
-            port = 6767;
-            auth = "one_factor";
-            backup.path = "${cfg.configDir}/bazarr/backup";
-            monitor = true;
-          };
-          prowlarr = {
-            hostname = "prowlarr";
-            containerAddress = "10.231.136.3";
-            port = 9696;
-            auth = "one_factor";
-            backup.path = "${cfg.configDir}/prowlarr/Backups";
-            monitor = true;
-          };
-          qbittorrent = {
-            hostname = "qbit";
-            containerAddress = "10.231.136.4";
-            port = 8080;
-            auth = "external";
-            backup.path = "${cfg.configDir}/qbittorrent";
-            monitor = true;
-          };
-          radarr = {
-            hostname = "radarr";
-            containerAddress = "10.231.136.5";
-            port = 7878;
-            auth = "one_factor";
-            backup.path = "${cfg.configDir}/radarr/Backups";
-            monitor = true;
-          };
-          sonarr = {
-            hostname = "sonarr";
-            containerAddress = "10.231.136.6";
-            port = 8989;
-            auth = "one_factor";
-            backup.path = "${cfg.configDir}/sonarr/Backups";
-            monitor = true;
-          };
-        };
-
         containers = lib.mapAttrs mkArrContainer {
           bazarr = {
             serviceConfig = {
@@ -119,7 +143,21 @@
               openFirewall = true;
               dataDir = "/config";
             };
-            extraConfig.systemd.tmpfiles.rules = [ ];
+            # bazarr writes subtitle sidecars next to the media, so it needs
+            # the media group like sonarr/radarr. See mkServarrContainer.
+            extraConfig = {
+              systemd.tmpfiles.rules = [ ];
+              services.bazarr.group = "media";
+              users.groups.media.gid = 900;
+              systemd.services.bazarr.serviceConfig.UMask = lib.mkForce "0002";
+            };
+            forwardPorts = [
+              {
+                protocol = "tcp";
+                hostPort = 6767;
+                containerPort = 6767;
+              }
+            ];
             extraBindMounts = {
               "/config" = {
                 hostPath = "${cfg.configDir}/bazarr";
@@ -134,6 +172,13 @@
               enable = true;
               openFirewall = true;
             };
+            forwardPorts = [
+              {
+                protocol = "tcp";
+                hostPort = 9696;
+                containerPort = 9696;
+              }
+            ];
             extraBindMounts = {
               "/var/lib/private/prowlarr/Backups" = {
                 hostPath = "${cfg.configDir}/prowlarr/Backups";
@@ -168,6 +213,11 @@
                 hostPort = 54535;
                 containerPort = 54535;
               }
+              {
+                protocol = "tcp";
+                hostPort = 18080;
+                containerPort = 8080;
+              }
             ];
             extraBindMounts = {
               "/var/lib/qBittorrent/qBittorrent" = {
@@ -181,8 +231,24 @@
             };
           };
 
-          radarr = mkServarrContainer "radarr";
-          sonarr = mkServarrContainer "sonarr";
+          radarr = (mkServarrContainer "radarr") // {
+            forwardPorts = [
+              {
+                protocol = "tcp";
+                hostPort = 7878;
+                containerPort = 7878;
+              }
+            ];
+          };
+          sonarr = (mkServarrContainer "sonarr") // {
+            forwardPorts = [
+              {
+                protocol = "tcp";
+                hostPort = 8989;
+                containerPort = 8989;
+              }
+            ];
+          };
         };
       };
   };

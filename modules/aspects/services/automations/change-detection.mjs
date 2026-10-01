@@ -1,7 +1,9 @@
+import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { promisify } from "node:util";
 
 const MAX_WATCHERS_FILE_BYTES = 1024 * 1024;
 const MAX_STATE_FILE_BYTES = 8 * 1024 * 1024;
@@ -9,6 +11,10 @@ const MAX_WEBHOOK_FILE_BYTES = 16 * 1024;
 const DEFAULT_MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 const MAX_RESPONSE_BYTES = 16 * 1024 * 1024;
 const MAX_WATCHERS = 1000;
+const DEFAULT_USER_AGENT = "change-monitor/1.0";
+const DEFAULT_ACCEPT =
+  "text/html,application/xhtml+xml,application/json,text/plain";
+const execFileAsync = promisify(execFile);
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -48,6 +54,28 @@ function parseJsonFile(file, maxBytes, label) {
   }
 }
 
+function readWatchersFile(file, label) {
+  return validateWatchers(
+    parseJsonFile(file, MAX_WATCHERS_FILE_BYTES, label),
+  );
+}
+
+function loadWatchers(watchersPath, defaultWatchersPath) {
+  const groups = [];
+  if (defaultWatchersPath !== undefined) {
+    groups.push(
+      readWatchersFile(defaultWatchersPath, "default watchers config"),
+    );
+  }
+  groups.push(readWatchersFile(watchersPath, "watchers config"));
+
+  const bySlug = new Map();
+  for (const group of groups) {
+    for (const watcher of group) bySlug.set(watcher.slug, watcher);
+  }
+  return validateWatchers([...bySlug.values()]);
+}
+
 function validateHttpUrl(value, label) {
   if (typeof value !== "string" || value.length === 0) {
     throw new Error(`${label} must be a non-empty HTTP(S) URL`);
@@ -62,6 +90,18 @@ function validateHttpUrl(value, label) {
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(`${label} must use HTTP or HTTPS`);
   }
+}
+
+function requestHeaders(watcher) {
+  return {
+    "User-Agent": DEFAULT_USER_AGENT,
+    Accept: DEFAULT_ACCEPT,
+    ...(watcher.headers ?? {}),
+  };
+}
+
+function targetUrl(watcher) {
+  return watcher.fetchUrl ?? watcher.url;
 }
 
 export function validateWatchers(watchers) {
@@ -131,6 +171,7 @@ export function validateWatchers(watchers) {
       }
     }
     for (const field of [
+      "fetcher",
       "method",
       "flags",
       "label",
@@ -143,6 +184,13 @@ export function validateWatchers(watchers) {
     }
     if (watcher.method === "") {
       throw new Error(`${label}.method must not be empty`);
+    }
+    if (
+      watcher.fetcher !== undefined &&
+      watcher.fetcher !== "node" &&
+      watcher.fetcher !== "curl"
+    ) {
+      throw new Error(`${label}.fetcher must be either node or curl`);
     }
 
     if (watcher.mode === "regex") {
@@ -163,7 +211,8 @@ export function validateWatchers(watchers) {
       }
     } else if (
       watcher.mode !== "extractor" ||
-      watcher.extractor !== "eightBitdoUltimate2cFirmware"
+      (watcher.extractor !== "eightBitdoUltimate2cFirmware" &&
+       watcher.extractor !== "nixosReleaseChanges")
     ) {
       throw new Error(`Unknown watcher mode for ${watcher.slug}`);
     }
@@ -248,6 +297,61 @@ export function stableStringify(value) {
     .join(",")}}`;
 }
 
+function extractNixosReleaseChanges(body) {
+  const releaseMatch = body.match(/<h2[^>]*id="sec-release-\d{2}\.\d{2}"[^>]*>([\s\S]*?)(?=<h2[^>]*id="sec-release-|$)/);
+  if (!releaseMatch) {
+    throw new Error("Could not find NixOS release section");
+  }
+
+  const releaseContent = releaseMatch[1];
+  const releaseVersionMatch = body.match(/<h2[^>]*id="sec-release-(\d{2}\.\d{2})"[^>]*>/);
+  const releaseVersion = releaseVersionMatch ? releaseVersionMatch[1] : 'unknown';
+
+  const newModulesSection = releaseContent.match(/<h3[^>]*id="sec-release-\d{2}\.\d{2}-new-modules"[^>]*>([\s\S]*?)(?=<h3|$)/);
+  const breakingSection = releaseContent.match(/<h3[^>]*id="sec-release-\d{2}\.\d{2}-incompatibilities"[^>]*>([\s\S]*?)(?=<h3|$)/);
+  const notableSection = releaseContent.match(/<h3[^>]*id="sec-release-\d{2}\.\d{2}-notable-changes"[^>]*>([\s\S]*?)(?=<h3|$)/);
+
+  const extractItems = (sectionContent) => {
+    if (!sectionContent) return [];
+    const items = [];
+    const itemRegex = /<li class="listitem"><p>([\s\S]*?)<\/p>(?:\s*<\/li>|<\/li>)/g;
+    let match;
+    while ((match = itemRegex.exec(sectionContent[1])) !== null) {
+      items.push(cleanHtml(match[1]));
+    }
+    return items;
+  };
+
+  return {
+    version: releaseVersion,
+    newModules: extractItems(newModulesSection),
+    breakingChanges: extractItems(breakingSection),
+    otherChanges: extractItems(notableSection),
+  };
+}
+
+function cleanHtml(html) {
+  let cleaned = html.replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/g, '[$2]($1)');
+
+  cleaned = cleaned.replace(/<[^>]+>/g, '');
+
+  cleaned = cleaned
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#x201[cd];/g, '"') // Smart quotes
+    .replace(/&#x201[34];/g, "'") // Smart apostrophes
+    .replace(/&ndash;/g, '–')
+    .replace(/&mdash;/g, '—');
+
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+
+  return cleaned;
+}
+
 export function extractEightBitdoUltimate2cFirmware(body) {
   const anchor = 'id="ultimate-2c-wireless"';
   const start = body.indexOf(anchor);
@@ -289,6 +393,22 @@ function displayValue(watcher, current, currentKey) {
   if (watcher.displayTemplate === "8bitdoFirmware") {
     return `controller v${current.controller}, adapter v${current.adapter}`;
   }
+  if (watcher.displayTemplate === "nixosReleaseChanges") {
+    if (typeof current === 'string') {
+      return current;
+    }
+    const parts = [];
+    if (current.newModules && current.newModules.length > 0) {
+      parts.push(`+${current.newModules.length} new modules`);
+    }
+    if (current.breakingChanges && current.breakingChanges.length > 0) {
+      parts.push(`+${current.breakingChanges.length} breaking changes`);
+    }
+    if (current.otherChanges && current.otherChanges.length > 0) {
+      parts.push(`+${current.otherChanges.length} other changes`);
+    }
+    return parts.length > 0 ? parts.join(' ') : 'No changes detected';
+  }
   return typeof current === "string" ? current : currentKey;
 }
 
@@ -324,16 +444,56 @@ async function readBoundedResponse(response, maxBytes, slug) {
 }
 
 async function fetchText(watcher, fetchImpl) {
+  if (watcher.fetcher === "curl") {
+    const maxBytes = watcher.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
+    const timeoutMs = watcher.timeoutMs ?? 30000;
+    const headers = requestHeaders(watcher);
+    const userAgent = headers["User-Agent"];
+    delete headers["User-Agent"];
+    try {
+      const { stdout } = await execFileAsync(
+        "curl",
+        [
+          "--fail",
+          "--silent",
+          "--show-error",
+          "--location",
+          "--max-time",
+          String(Math.ceil(timeoutMs / 1000)),
+          "--user-agent",
+          userAgent,
+          ...Object.entries(headers).flatMap(([name, value]) => [
+            "--header",
+            `${name}: ${value}`,
+          ]),
+          targetUrl(watcher),
+        ],
+        {
+          encoding: "utf8",
+          maxBuffer: maxBytes + 1,
+          timeout: timeoutMs + 5000,
+        },
+      );
+      return stdout;
+    } catch (error) {
+      if (
+        error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" ||
+        /maxBuffer/i.test(error.message ?? "")
+      ) {
+        throw new Error(`${watcher.slug} response exceeds ${maxBytes} bytes`, {
+          cause: error,
+        });
+      }
+      throw new Error(`${watcher.slug} curl request failed`, { cause: error });
+    }
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), watcher.timeoutMs ?? 30000);
   try {
-    const response = await fetchImpl(watcher.fetchUrl ?? watcher.url, {
+    const response = await fetchImpl(targetUrl(watcher), {
       method: watcher.method ?? "GET",
-      headers: {
-        "User-Agent": "change-monitor/1.0",
-        Accept: "text/html,application/xhtml+xml,application/json,text/plain",
-        ...(watcher.headers ?? {}),
-      },
+      headers: requestHeaders(watcher),
       signal: controller.signal,
     });
     if (!response.ok) {
@@ -367,6 +527,13 @@ export function extractValue(watcher, body) {
     return extractEightBitdoUltimate2cFirmware(body);
   }
 
+  if (
+    watcher.mode === "extractor" &&
+    watcher.extractor === "nixosReleaseChanges"
+  ) {
+    return extractNixosReleaseChanges(body);
+  }
+
   throw new Error(`Unknown watcher mode for ${watcher.slug}`);
 }
 
@@ -393,6 +560,7 @@ async function notifyDiscord(webhookPath, content, fetchImpl) {
 
 export async function runChangeDetection({
   watchersPath,
+  defaultWatchersPath,
   statePath,
   discordWebhookPath,
   fetchImpl = globalThis.fetch,
@@ -400,9 +568,7 @@ export async function runChangeDetection({
   log = console.log,
   handleSignals = false,
 }) {
-  const watchers = validateWatchers(
-    parseJsonFile(watchersPath, MAX_WATCHERS_FILE_BYTES, "watchers config"),
-  );
+  const watchers = loadWatchers(watchersPath, defaultWatchersPath);
   const releaseLock = acquireStateLock(statePath);
   const signalHandlers = new Map();
   if (handleSignals) {
@@ -458,6 +624,47 @@ export async function runChangeDetection({
         );
         content = replaceLiteral(content, "{{current}}", currentDisplay);
         content = replaceLiteral(content, "{{url}}", watcher.url);
+
+        if (watcher.extractor === "nixosReleaseChanges" && typeof current === "object") {
+          content = replaceLiteral(content, "{{version}}", current.version ?? "latest");
+          const previousCurrent = previous?.current;
+          const previousNewModules = new Set(
+            typeof previousCurrent === "object" && previousCurrent !== null
+              ? (previousCurrent.newModules ?? [])
+              : [],
+          );
+          const previousBreaking = new Set(
+            typeof previousCurrent === "object" && previousCurrent !== null
+              ? (previousCurrent.breakingChanges ?? [])
+              : [],
+          );
+          const previousOther = new Set(
+            typeof previousCurrent === "object" && previousCurrent !== null
+              ? (previousCurrent.otherChanges ?? [])
+              : [],
+          );
+
+          const addedModules = current.newModules.filter((m) => !previousNewModules.has(m));
+          const addedBreaking = current.breakingChanges.filter((c) => !previousBreaking.has(c));
+          const addedOther = current.otherChanges.filter((c) => !previousOther.has(c));
+
+          content = replaceLiteral(
+            content,
+            "{{newModules}}",
+            addedModules.length > 0 ? addedModules.map((m) => `- ${m}`).join("\n") : "_None_",
+          );
+          content = replaceLiteral(
+            content,
+            "{{breakingChanges}}",
+            addedBreaking.length > 0 ? addedBreaking.map((c) => `- ${c}`).join("\n") : "_None_",
+          );
+          content = replaceLiteral(
+            content,
+            "{{otherChanges}}",
+            addedOther.length > 0 ? addedOther.map((c) => `- ${c}`).join("\n") : "_None_",
+          );
+        }
+
         await notifyDiscord(discordWebhookPath, content, fetchImpl);
         log(
           `${watcher.slug}: changed from ${previousDisplay ?? previousKey} to ${currentDisplay}`,
@@ -478,14 +685,15 @@ export async function runChangeDetection({
 }
 
 export async function main(args = process.argv.slice(2)) {
-  const [watchersPath, statePath, discordWebhookPath] = args;
+  const [watchersPath, statePath, discordWebhookPath, defaultWatchersPath] = args;
   if (!watchersPath || !statePath || !discordWebhookPath) {
     throw new Error(
-      "usage: change-detection <watchers.json> <state.json> <discord-webhook-file>",
+      "usage: change-detection <watchers.json> <state.json> <discord-webhook-file> [default-watchers.json]",
     );
   }
   return runChangeDetection({
     watchersPath,
+    defaultWatchersPath,
     statePath,
     discordWebhookPath,
     handleSignals: true,

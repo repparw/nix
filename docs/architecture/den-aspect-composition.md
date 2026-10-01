@@ -2,6 +2,7 @@
 type: Architecture Concept
 title: Den Aspect Composition
 description: Rules for composing repo behavior with den aspects.
+when: Read when changing den aspects, defaults, includes, or module composition.
 resource: modules/defaults.nix
 tags: [architecture, den, aspects]
 ---
@@ -14,12 +15,18 @@ Use `includes` for aspect composition. Use `imports` only for real Nix module
 imports. Repo-wide defaults belong in `modules/defaults.nix` under
 `den.default`.
 
+Universal host policy belongs in `den.schema.host.includes`. Keep entity
+declarations in `modules/entities.nix`; host files implement machine-specific
+behavior and reusable aspects implement capabilities. Deliver host-specific
+user configuration explicitly with `provides.<user>` or `provides.to-users`.
+
 Keep related logic together, usually wrapped in the same aspect. Reusable
 features should live in dedicated aspect files.
 
 ## Source
 
 - `modules/defaults.nix`
+- `modules/entities.nix`
 - `modules/aspects/`
 - `modules/hosts/`
 

@@ -2,28 +2,26 @@
 type: Documentation Index
 title: Nix Repository Documentation
 description: Entry point for the repository's architecture, operations, and decision documentation.
+when: Start here when selecting repository documentation for a task.
 resource: README.md
 tags: [nix, nixos, home-manager, den]
 ---
 
 # Nix Repository Documentation
 
-These docs record stable knowledge about the NixOS and Home Manager
-configuration in this repository. They stay intentionally close to the codebase:
-concept files explain intent and link back to source files instead of copying
-module contents.
+These pages record stable knowledge about the configuration and link to source
+files instead of copying module contents.
 
 ## Architecture
 
 - [Den aspect composition](architecture/den-aspect-composition.md)
+- [Ingress policy](architecture/ingress-policy.md)
 - [Repository layout](architecture/repository-layout.md)
-- [Secret inventory](architecture/secret-inventory.md)
-- [Secrets management](architecture/secrets-management.md)
+- [Secret inventory and management](architecture/secret-inventory.md)
 
 ## Hosts
 
-- [Alpha](hosts/alpha.md)
-- [Beta](hosts/beta.md)
+- [Host profiles](hosts.md)
 
 ## Services
 
@@ -31,6 +29,35 @@ module contents.
 
 ## Runbooks
 
-- [Failed auto-upgrade rollback](runbooks/failed-auto-upgrade-rollback.md)
-- [Restore service backups](runbooks/restore-service-backups.md)
+- [Add and maintain change-detection watchers](runbooks/change-detection-watchers.md)
+- [Migrate Home Assistant custom components](runbooks/homeassistant-custom-components.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
+- [Deploy NixOS to the Raspberry Pi](runbooks/deploy-pi-nixos.md)
+- [Update rollback](runbooks/update-rollback.md)
+- [Fleet health, offsite backups, and upgrade reports](runbooks/fleet-operations.md)
+- [Moonshine HDR Gamescope streaming](runbooks/moonshine-gamescope-overlay.md)
+- [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
+- [Prune t3code and opencode databases](runbooks/prune-t3code-opencode-dbs.md)
+- [Restore service backups](runbooks/restore-service-backups.md)
+- [Back up and restore a complete host](runbooks/host-recovery.md)
+- [Prepare pi and epsilon for persistent state](runbooks/host-persistence.md)
+
+## Fixes
+
+- [Tweaks](tweaks.md)
+- [Troubleshooting](troubleshooting.md)
+
+## Research
+
+- [Multi-room audio hardware](research/multi-room-audio-hw.md)
+- [Multi-room audio Music Assistant setup](research/multi-room-audio-music-assistant-setup.md)
+- [Omarchy portable ideas](research/omarchy-portable-ideas.md)
+- [Wispr Flow features for Voxtype](research/wispr-flow-features-for-voxtype.md)
+
+## Agent guidance
+
+- [Verify NixOS configuration changes](../.agents/skills/verify-nixos-config/SKILL.md)
+- [Operate the running fleet](../.agents/skills/fleet-operations/SKILL.md)
+- [Domain docs](agents/domain.md)
+- [GitHub issue tracker](agents/issue-tracker.md)
+- [Triage labels](agents/triage-labels.md)
