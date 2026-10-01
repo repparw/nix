@@ -60,8 +60,6 @@
           ".config/mpv/watch_later"
           ".config/Raspberry Pi/Raspberry Pi Imager.conf"
           ".local/share/vicinae/vicinae.db"
-          ".local/share/vicinae/vicinae.db-shm"
-          ".local/share/vicinae/vicinae.db-wal"
           ".local/share/vicinae/metadata.json"
           ".local/share/vicinae/script-metadata.json"
           ".local/share/fish/fish_history"
@@ -74,6 +72,43 @@
           ".local/share/shadPS4/savedata/"
           ".local/share/shadPS4/keys.json"
         ];
+        homeDatabases = [
+          ".config/codex/goals_1.sqlite"
+          ".config/net.imput.helium/Default/History"
+          ".config/net.imput.helium/Default/Login Data"
+          ".config/net.imput.helium/Default/Login Data For Account"
+          ".local/share/vicinae/vicinae.db"
+        ];
+        stateRoot = "/var/lib/home-state-backup";
+        # Each consumer has its own staging tree. A failed export never replaces
+        # its previous tree, and ExecStartPre/backupPrepareCommand abort the job.
+        prepareHomeState = pkgs.writeShellScript "prepare-home-state" ''
+          set -euo pipefail
+          export PATH=${lib.makeBinPath [ pkgs.coreutils pkgs.rsync pkgs.sqlite ]}
+          test -d ${lib.escapeShellArg home}
+          case "$1" in hdd|offsite) ;; *) exit 1 ;; esac
+          destination=${stateRoot}/$1
+          temporary=$(mktemp -d "${stateRoot}/.prepare-$1.XXXXXX")
+          trap 'rm -rf "$temporary"' EXIT
+          mkdir -p "$temporary/.config" "$temporary/.local"
+          rsync --archive --relative --ignore-missing-args -- \
+            ${lib.escapeShellArgs (map (p: "${home}/./${p}") (lib.filter (p: !(lib.elem p homeDatabases)) homeState))} \
+            "$temporary/"
+          ${lib.concatMapStringsSep "\n" (p: ''
+            if [ -f ${lib.escapeShellArg "${home}/${p}"} ]; then
+              mkdir -p "$temporary/${builtins.dirOf p}"
+              sqlite3 ${lib.escapeShellArg "${home}/${p}"} \
+                '.timeout 10000' ".backup '$temporary/${p}'"
+              chmod --reference=${lib.escapeShellArg "${home}/${p}"} "$temporary/${p}"
+            fi
+          '') homeDatabases}
+          if [ "$1" = hdd ]; then
+            rsync --archive --relative --ignore-missing-args -- \
+              ${lib.escapeShellArg "${home}/./.config/sops/age/keys.txt"} "$temporary/"
+          fi
+          rm -rf "$destination"
+          mv "$temporary" "$destination"
+        '';
       in
       {
         imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
@@ -83,8 +118,9 @@
             "/home/containers/backup"
             "/home/repparw/Pictures"
             "/home/repparw/Documents"
-          ]
-          ++ map (p: "${home}/${p}") homeState;
+            "${stateRoot}/offsite/.config"
+            "${stateRoot}/offsite/.local"
+          ];
           excludes = [
             "${config.users.users.repparw.home}/.config/heroic/**"
             "${config.users.users.repparw.home}/Documents/Memorias/**"
@@ -233,34 +269,17 @@
                   ];
                 };
               };
-              # HDD mirrors of homeState, split by destination subtree. Sources
-              # use /./ with --relative so the hierarchy is preserved. delete
-              # prunes entries removed from the allowlist. keys.txt is
-              # HDD-only (excluded from the offsite paths above).
-              bupconfig = {
-                destination = "/mnt/hdd/backup/.config";
-                sources =
-                  [ "${home}/./.config/sops/age/keys.txt" ]
-                  ++ map (p: "${home}/./${p}") (
-                    lib.filter (p: lib.hasPrefix ".config/" p) homeState
-                  );
+              # Sync complete staged subtrees: --delete now prunes removed
+              # allowlist leaves and the legacy whole-.config contents too.
+              bupstate = {
+                destination = "/mnt/hdd/backup";
+                sources = [
+                  "${stateRoot}/hdd/.config"
+                  "${stateRoot}/hdd/.local"
+                ];
                 settings = {
                   archive = true;
                   delete = true;
-                  relative = true;
-                  ignore-missing-args = true;
-                };
-              };
-              bupshare = {
-                destination = "/mnt/hdd/backup/.local";
-                sources = map (p: "${home}/./${p}") (
-                  lib.filter (p: lib.hasPrefix ".local/" p) homeState
-                );
-                settings = {
-                  archive = true;
-                  delete = true;
-                  relative = true;
-                  ignore-missing-args = true;
                 };
               };
               buprpi = {
@@ -275,6 +294,17 @@
             };
           };
         };
+
+        systemd.services.rsync-job-bupstate.serviceConfig = {
+          StateDirectory = "home-state-backup";
+          StateDirectoryMode = "0700";
+          ExecStartPre = "${prepareHomeState} hdd";
+        };
+        systemd.services.restic-backups-offsite.serviceConfig = {
+          StateDirectory = "home-state-backup";
+          StateDirectoryMode = "0700";
+        };
+        services.restic.backups.offsite.backupPrepareCommand = "${prepareHomeState} offsite";
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl
         # --set standby are clamped by a vendor minimum that never engages);
