@@ -17,6 +17,7 @@
       den.aspects.ssh
       den.aspects.secrets
       den.aspects.ai
+      den.aspects.xdg
     ];
 
     provides.to-hosts =

@@ -111,6 +111,8 @@
               };
               targets = {
                 x11.enable = false;
+                sxiv.enable = false;
+                gtk.flatpakSupport.enable = false;
                 nixvim = {
                   transparentBackground = {
                     main = true;
