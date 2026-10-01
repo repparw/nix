@@ -6,6 +6,7 @@
   den.aspects.pi = {
     includes = [
       den.aspects.backup
+      den.aspects.persistence
       den.aspects.service-host
       den.aspects.nixos-services._.automations
       den.aspects.nixos-services._.homeassistant
@@ -23,13 +24,42 @@
         ...
       }:
       {
+        sops.secrets.repparwPasswordHash = {
+          sopsFile = ../../secrets/users-pi.sops.yaml;
+          key = "repparwPasswordHash";
+          neededForUsers = true;
+        };
+
+        modules.backup.hostRecovery.enable = true;
+        modules.backup.hostRecovery.quiesceUnits = [ "container@homeassistant.service" ];
+        modules.backup.hostRecovery.capturePaths = [ "/home/repparw/services/hass" ];
         modules.backup.paths = [
           "/home/containers/config"
-          "/home/repparw/services/hass"
+          "/var/lib/auto-update"
+          "/var/lib/fleet-health"
+          "/var/lib/bluetooth"
+          "/var/lib/systemd/rfkill"
+        ];
+
+        environment.persistence."/persist".directories = [
+          "/home/containers/config"
+          "/var/lib/fleet-health"
+          "/var/lib/systemd/rfkill"
+          {
+            directory = "/var/lib/auto-update";
+            mode = "0700";
+          }
+          {
+            directory = "/var/lib/bluetooth";
+            mode = "0700";
+          }
         ];
 
         users.users.repparw = {
           uid = 1000;
+          # users.mutableUsers stays true: this is a creation-time bootstrap,
+          # not an activation-time password reset.
+          hashedPasswordFile = config.sops.secrets.repparwPasswordHash.path;
           extraGroups = [ "wheel" ];
           subUidRanges = [
             {
@@ -77,7 +107,26 @@
         services.journald.settings.Journal = {
           Storage = "volatile";
           RuntimeMaxUse = "50M";
+          # Preserve the host's existing cap drop-in. Storage is volatile, so
+          # SystemMaxUse is currently dormant; RuntimeMaxUse remains active.
+          SystemMaxUse = "64M";
         };
+
+        # This preserves the host's existing rule. nixos-rebuild can activate
+        # arbitrary NixOS configuration, so this is root-equivalent access, not
+        # a meaningful privilege boundary.
+        security.sudo.extraRules = [
+          {
+            users = [ "repparw" ];
+            commands = [
+              {
+                command = "/run/current-system/sw/bin/nixos-rebuild";
+                options = [ "NOPASSWD" ];
+              }
+            ];
+          }
+        ];
+
         services.fstrim.enable = true;
         zramSwap = {
           enable = true;
@@ -104,10 +153,14 @@
           "/home/repparw" = {
             device = "/dev/disk/by-partuuid/7fd52c5b-02";
             fsType = "ext4";
+            neededForBoot = config.modules.persistence.enable;
             options = [
               "defaults"
               "noatime"
-              "nofail"
+            ]
+            # A missing NVMe must not boot into an empty HA/user data directory.
+            ++ lib.optional (!config.modules.persistence.enable) "nofail"
+            ++ [
               # BCM2712 PCIe link training can take >90s on this board;
               # default device timeout aborted the boot first.
               "x-systemd.device-timeout=5min"

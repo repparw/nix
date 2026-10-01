@@ -10,6 +10,7 @@
     includes = [
       den.aspects.deploy-target
       den.aspects.backup
+      den.aspects.persistence
       den.aspects.service-host
       den.aspects.nixos-services._.edge
       den.aspects.nixos-services._.hermes
@@ -21,11 +22,41 @@
       {
         imports = [ ../_services/glance.nix ];
 
+        sops.secrets.repparwPasswordHash = {
+          sopsFile = ../../secrets/users-epsilon.sops.yaml;
+          key = "repparwPasswordHash";
+          neededForUsers = true;
+        };
+        # users.mutableUsers stays true: this is a creation-time bootstrap,
+        # not an activation-time password reset.
+        users.users.repparw.hashedPasswordFile = config.sops.secrets.repparwPasswordHash.path;
+
         modules.services.bridgePrefix = "10.231.137";
 
+        modules.backup.hostRecovery.enable = true;
         modules.backup.paths = [
           "/home/containers/config"
-          "/home/repparw/services"
+          "/var/lib/ddclient"
+        ];
+
+        environment.persistence."/persist".directories = [
+          {
+            directory = "/home/repparw";
+            user = "repparw";
+            group = "users";
+            mode = "0700";
+          }
+          {
+            directory = "/home/containers/config";
+            user = "repparw";
+            group = "users";
+          }
+          {
+            directory = "/var/lib/ddclient";
+            user = "ddclient";
+            group = "ddclient";
+          }
+          "/var/log"
         ];
 
         containers.glance.config.networking.hosts = {

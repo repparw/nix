@@ -70,8 +70,11 @@ rely on the periodic sweep because they do not emit local systemd failures.
 
 Restic over rclone to `gd-crypt:restic/<hostname>`. Covers:
 
-- pi: `/home/containers/config`, `/home/repparw/services/hass`,
-  `/home/repparw/services/hermes`
+- pi/epsilon: `/etc`, `/boot`, `/root`, the whole `/home/repparw`, container
+  configuration and roots, NixOS account allocation state, timers and recovery
+  metadata. Pi also includes deployment/health controller and Bluetooth/radio
+  state; epsilon includes ddclient state. See the host declarations and
+  `modules/aspects/backup.nix` for the complete paths and exclusions.
 - alpha: `/home/containers/backup`, Pictures, Documents (Memorias excluded),
   and the small home-state allowlist in `modules/hosts/alpha.nix`. SQLite
   databases are exported with `.backup` into a private staging tree under
@@ -86,15 +89,14 @@ sources. `rsync-job-buptohdd` handles Pictures and Documents separately and
 protects those two state subtrees. Restore staged offsite state beneath the
 user's home, rather than to its original `/var/lib` staging path.
 
-Retention 7d/4w/12m; 5% data check each run.
+Daily jobs exclude reproducible caches, container runtime mounts and swap.
+Retention is 7d/4w/12m with a 5% data check each run. The pi/epsilon live backups are
+not automatically consistent database exports.
 
-Restore:
-
-```sh
-export RESTIC_PASSWORD_FILE=/run/secrets/resticPassword
-restic -r rclone:gd-crypt:restic/pi -o rclone.program=$(which rclone) snapshots
-restic -r rclone:gd-crypt:restic/pi -o rclone.program=$(which rclone) restore latest --target /tmp/restore
-```
+For a full pi checkpoint, including the Nix store and a stopped-HA archive,
+and a verified restore into a fresh directory, use the
+[host recovery runbook](host-recovery.md). Never restore over live paths while
+testing recovery. Backup scope changes apply after deployment.
 
 Adding a new host's key to a secrets file:
 `sops updatekeys --yes secrets/<file>.sops.yaml` from a machine that can
