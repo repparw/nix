@@ -72,6 +72,10 @@
                     "workday"
                     "google_drive"
                   ];
+                  customComponents = with pkgs.home-assistant-custom-components; [
+                    auth_oidc
+                    adaptive_lighting
+                  ];
                   extraPackages =
                     ps: with ps; [
                       aiogithubapi # hacs

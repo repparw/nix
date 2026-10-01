@@ -99,7 +99,9 @@ in
                 --exclude='/workspace/' \
                 --exclude='/strategies/scripts/' \
                 --exclude='/strategies/indicators/' \
-                --exclude='/strategies/strategy_configs.json' \
+                --exclude='/strategies/openscript/' \
+                --exclude='/strategies/*.json' \
+                --exclude='/strategies/.secure_env' \
                 ${openalgoSrc}/ "$app_root/"
 
               printf '%s\n' "${openalgoRev}" > "$source_marker"
@@ -113,7 +115,8 @@ in
               "$app_root/tmp" \
               "$app_root/workspace" \
               "$app_root/strategies/scripts" \
-              "$app_root/strategies/indicators"
+              "$app_root/strategies/indicators" \
+              "$app_root/strategies/openscript"
 
             if [[ ! -e "$app_root/.env" ]]; then
               cp "$app_root/.sample.env" "$app_root/.env"

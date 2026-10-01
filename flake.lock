@@ -433,6 +433,22 @@
         "type": "github"
       }
     },
+    "impermanence": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1769548169,
+        "narHash": "sha256-03+JxvzmfwRu+5JafM0DLbxgHttOQZkUtDWBmeUkN8Y=",
+        "owner": "nix-community",
+        "repo": "impermanence",
+        "rev": "7b1d382faf603b6d264f58627330f9faa5cba149",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "impermanence",
+        "type": "github"
+      }
+    },
     "import-tree": {
       "locked": {
         "lastModified": 1788467110,
@@ -753,6 +769,7 @@
         "helium-nix": "helium-nix",
         "hermes-agent": "hermes-agent",
         "home-manager": "home-manager_2",
+        "impermanence": "impermanence",
         "import-tree": "import-tree",
         "mp-skills": "mp-skills",
         "nix-index-database": "nix-index-database",

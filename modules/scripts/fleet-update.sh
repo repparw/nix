@@ -414,7 +414,7 @@ if [ "$action" = promote ]; then
   fi
   write_candidate "$revision" "$parent" published
   git push git@gitlab.com:repparw/nix.git HEAD:main || true
-  notify ":arrow_up: fleet candidate ${revision:0:8} published; deployment is a separate transaction"
+  notify "update ${revision:0:8} pushed"
   exit 0
 fi
 
@@ -445,6 +445,10 @@ failure_host=""
 
 deploy_one() {
   local host="$1" running_revision before after_generation activity_gate
+
+  # Clear any stale diff so the failure report below never posts a
+  # previous revision's diff for this host.
+  rm -f "$state/diff-$host.txt"
 
   running_revision=$(remote "$host" nixos-version --configuration-revision 2>/dev/null || true)
   if [ "$running_revision" = "$revision" ]; then
@@ -510,7 +514,9 @@ deploy_one() {
     strip_ansi < "$state/diff-$host.txt" > "$state/diff-$host.tmp" \
       && mv "$state/diff-$host.tmp" "$state/diff-$host.txt"
   fi
-  notify_file "**$host deployed** — \`${revision:0:8}\`" "$state/diff-$host.txt"
+  # Per-host success posts were channel noise: the diff stays on disk for
+  # the failure report below, and the converged one-liner is the only
+  # success signal. Diffs surface on failure only.
 }
 
 for host in "${hosts[@]}"; do
@@ -602,6 +608,7 @@ if [ -n "$failure_host" ]; then
   fi
 
   notify ":rotating_light: fleet deployment failed at $failure_host (${revision:0:8}); rollback initiated, $streak consecutive$note"
+  notify_file ":rotating_light: diff for failed host $failure_host (${revision:0:8})" "$state/diff-$failure_host.txt"
   exit 1
 fi
 

@@ -106,11 +106,57 @@ in
           };
 
         heliumWithoutMimeApps = browserWithoutMimeApps "helium.desktop";
-        helium = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
+        heliumBase = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
+        # Upstream bakes '${NIXOS_OZONE_WL:+...}' into a compiled wrapper
+        # that performs no shell expansion, so every launch carries the
+        # inert literal in argv and the intended ozone hint never applies.
+        # Filter the literal here and apply the hint for real when the
+        # session requests Wayland (NIXOS_OZONE_WL=1, see system aspect).
+        heliumShim =
+          base:
+          let
+            shimScript = pkgs.writeShellApplication {
+              name = "helium-shim";
+              text = ''
+                args=()
+                for arg in "$@"; do
+                  case "$arg" in
+                    *NIXOS_OZONE_WL*) continue ;;
+                    *) args+=("$arg") ;;
+                  esac
+                done
+                if [ -n "''${NIXOS_OZONE_WL:-}" ] && [ -n "''${WAYLAND_DISPLAY:-}" ]; then
+                  args+=(--ozone-platform-hint=auto)
+                fi
+                exec ${base}/bin/helium "''${args[@]}"
+              '';
+            };
+          in
+          (pkgs.symlinkJoin {
+            name = "${base.name}-clean-argv";
+            paths = [ base ];
+            postBuild = ''
+              rm "$out/bin/helium"
+              install -Dm755 ${shimScript}/bin/helium-shim "$out/bin/helium"
+            '';
+          })
+          // {
+            override = newArgs: heliumShim (base.override newArgs);
+            meta = base.meta;
+          };
+        helium = heliumShim heliumBase;
         heliumPackage = heliumWithoutMimeApps helium;
         heliumFlags = [
           "--force-renderer-accessibility"
           "--silent-debugger-extension-api"
+          # OSCrypt backend must be identical for normal windows and
+          # --app webapps: they share ~/.config/net.imput.helium, and
+          # Chromium honors the first process's backend. Mixed backends
+          # (basic vs libsecret) rewrite Local State without an
+          # encrypted_key and orphan cookie encryption keys, which drops
+          # Google/YouTube session cookies on the next start. basic
+          # persists without requiring an unlocked login keyring.
+          "--password-store=basic"
         ];
         heliumForWebapps = heliumPackage.override { flags = heliumFlags; };
         # Helium's user-data-dir on Linux is ~/.config/net.imput.helium
@@ -189,7 +235,6 @@ in
 
               exec ndrop -F -c "$chrome_id" \
                 helium \
-                --password-store=basic \
                 --app="$url" \
                 "$@"
             '';

@@ -42,6 +42,10 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    impermanence = {
+      url = "github:nix-community/impermanence";
+      flake = false;
+    };
     import-tree.url = "github:vic/import-tree";
     mp-skills = {
       url = "github:mattpocock/skills";

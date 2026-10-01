@@ -23,13 +23,20 @@ let
     SMTP_PASSWORD = "smtpPassword";
     STORAGE_ENCRYPTION_KEY = "storageEncryptionKey";
   };
-  secretBindMounts = lib.mapAttrs' (
-    credential: secret:
-    lib.nameValuePair "/run/secrets/authelia/${credential}" {
-      hostPath = config.sops.secrets."authelia/${secret}".path;
-      isReadOnly = true;
-    }
-  ) secretNames;
+  secretBindMounts =
+    lib.mapAttrs' (
+      credential: secret:
+      lib.nameValuePair "/run/secrets/authelia/${credential}" {
+        hostPath = config.sops.secrets."authelia/${secret}".path;
+        isReadOnly = true;
+      }
+    ) secretNames
+    // {
+      "/run/secrets/authelia/USERS_DATABASE" = {
+        hostPath = config.sops.secrets.autheliaUsersDatabase.path;
+        isReadOnly = true;
+      };
+    };
 in
 {
   # The host directory is the security boundary for mutable Authelia state.
@@ -41,14 +48,23 @@ in
     "d ${cfg.configDir}/authelia/config 0700 999 999 - -"
   ];
 
-  sops.secrets = lib.mapAttrs' (
-    _: secret:
-    lib.nameValuePair "authelia/${secret}" {
-      sopsFile = ../../secrets/authelia.sops.yaml;
-      owner = "root";
-      mode = "0400";
-    }
-  ) secretNames;
+  sops.secrets =
+    lib.mapAttrs' (
+      _: secret:
+      lib.nameValuePair "authelia/${secret}" {
+        sopsFile = ../../secrets/authelia.sops.yaml;
+        owner = "root";
+        mode = "0400";
+      }
+    ) secretNames
+    // {
+      autheliaUsersDatabase = {
+        sopsFile = ../../secrets/authelia-users.sops.yaml;
+        key = "usersDatabase";
+        owner = "root";
+        mode = "0400";
+      };
+    };
 
   containers.authelia = servicesLib.mkContainer {
     inherit cfg;
@@ -168,10 +184,20 @@ in
       };
 
       systemd.services.authelia-main.serviceConfig = {
-        LoadCredential = [ "SMTP_PASSWORD:/run/secrets/authelia/SMTP_PASSWORD" ];
+        LoadCredential = [
+          "SMTP_PASSWORD:/run/secrets/authelia/SMTP_PASSWORD"
+          "INITIAL_USERS_DATABASE:/run/secrets/authelia/USERS_DATABASE"
+        ];
         # "+" runs this as root before the User= drop, so it applies
         # inside the container's 1:1 userns to the host-side directory.
-        ExecStartPre = [ "+${pkgs.coreutils}/bin/chown -R 999:999 /config" ];
+        ExecStartPre = [
+          "+${pkgs.coreutils}/bin/chown -R 999:999 /config"
+          "+${pkgs.writeShellScript "authelia-seed-users-database" ''
+            if [ ! -e /config/users_database.yml ]; then
+              ${pkgs.coreutils}/bin/install --owner=999 --group=999 --mode=0600 ${credentialsDir}/INITIAL_USERS_DATABASE /config/users_database.yml
+            fi
+          ''}"
+        ];
         ProtectSystem = lib.mkForce "full";
       };
 
