@@ -39,6 +39,8 @@ files instead of copying module contents.
 - [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Prune t3code and opencode databases](runbooks/prune-t3code-opencode-dbs.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
+- [Back up and restore a complete host](runbooks/host-recovery.md)
+- [Prepare pi and epsilon for persistent state](runbooks/host-persistence.md)
 
 ## Fixes
 

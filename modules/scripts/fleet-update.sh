@@ -124,7 +124,8 @@ fail() {
 # explanation had to be truncated to fit.
 notify_failure() {
   [ -r /run/secrets/hermes-env ] || return 0
-  local header="$1" log="$2" budget=1200 fence detail body sanitized
+  local header="$1" log="$2" budget=1200 fence detail body sanitized detail_units
+  local -a attachment=()
   # shellcheck disable=SC1091
   source /run/secrets/hermes-env
   # Built in double quotes: shellcheck reads backticks in single quotes
@@ -139,19 +140,32 @@ notify_failure() {
   case "$failure_reason" in
     soak:*) detail=$failure_reason ;;
   esac
-  if [ -z "$detail" ] && [ -s "$log" ]; then
+  if [[ "$failure_reason" == "build or activation of "* ]] && [ -s "$log" ]; then
     # nix ends a failed build with a cascade of "Cannot build ... Reason: N
     # dependencies failed" and buries the compiler or evaluator error that
     # actually explains it in the middle, so take the lines naming a failure.
     sanitized=$(strip_ansi <"$log")
-    detail=$(printf '%s\n' "$sanitized" | grep -E 'error:|FAILED:|Reason:|build stopped' | head -n 25)
+    # Read the whole stream: grep|head can fail with SIGPIPE under pipefail,
+    # and grep's no-match status must not abort the rollback notification.
+    detail=$(printf '%s\n' "$sanitized" | awk '
+      /error:|FAILED:|Reason:|build stopped/ { if (++matches <= 25) print }
+    ')
   fi
   [ -n "$detail" ] || detail=$failure_reason
   [ -n "$detail" ] || detail="no reason recorded; see the attached log"
   # Discord renders a bare backtick as markup start, so neutralise it.
   detail=${detail//\`/\'}
 
-  if [ "${#detail}" -le "$budget" ]; then
+  # Count UTF-16 units, including two units for supplementary characters.
+  # Discord's limit includes the header and code fences.
+  budget=$(jq -n --arg h "$header" '
+    2000 - ($h | explode | map(if . > 65535 then 2 else 1 end) | add // 0) - 80
+    | if . < 0 then 0 elif . > 1200 then 1200 else . end
+  ')
+  detail_units=$(printf '%s' "$detail" | jq -Rs '
+    explode | map(if . > 65535 then 2 else 1 end) | add // 0
+  ')
+  if [ "$detail_units" -le "$budget" ]; then
     body=$(printf '%s\n%swhat failed\n%s\n%s' \
       "$header" "$fence" "$detail" "$fence")
     curl -sS -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
@@ -159,16 +173,29 @@ notify_failure() {
       -d "$(jq -n --arg c "$body" '{content: $c}')" "$api" >/dev/null || true
     return 0
   fi
-  # jq slices by characters, so multibyte output is never split mid-codepoint
-  # the way tail -c would split it.
-  detail=$(printf '%s\n' "$detail" | jq -Rs -r --argjson n "$budget" '.[0:$n]')
-  # Never end on a half-sliced line; the attachment carries the remainder.
-  detail=${detail%$'\n'*}
-  body=$(printf '%s\n%swhat failed\n%s\n%s\n(full output attached)' \
-    "$header" "$fence" "$detail" "$fence")
-  curl -sS -m 30 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-    -F "payload_json=$(jq -n --arg c "$body" '{content: $c}')" \
-    -F "files[0]=@$log" "$api" >/dev/null || true
+  detail=$(printf '%s' "$detail" | jq -Rs -r --argjson n "$budget" '
+    reduce explode[] as $c ({units: 0, chars: [], full: false};
+      ($c | if . > 65535 then 2 else 1 end) as $width
+      | if .full or .units + $width > $n then .full = true
+        else .units += $width | .chars += [$c] end
+    ) | .chars | implode
+  ')
+  # Prefer complete lines when available, but keep a long single-line error.
+  if [[ "$detail" == *$'\n'* ]]; then detail=${detail%$'\n'*}; fi
+  if [ -s "$log" ]; then
+    body=$(printf '%s\n%swhat failed\n%s\n%s\n(full output attached)' \
+      "$header" "$fence" "$detail" "$fence")
+    attachment=(-F "files[0]=@$log")
+    curl -sS -m 30 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+      -F "payload_json=$(jq -n --arg c "$body" '{content: $c}')" \
+      "${attachment[@]}" "$api" >/dev/null || true
+  else
+    body=$(printf '%s\n%swhat failed\n%s\n%s\n(detail truncated)' \
+      "$header" "$fence" "$detail" "$fence")
+    curl -sS -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$(jq -n --arg c "$body" '{content: $c}')" "$api" >/dev/null || true
+  fi
 }
 
 notify_file() {
@@ -551,6 +578,7 @@ for host in epsilon pi alpha; do rm -f "$state/fail-$host.log"; done
 deploy_one() {
   local host="$1" running_revision before after_generation activity_gate
   failure_log="$state/fail-$host.log"
+  failure_reason=""
 
   # Clear any stale diff so the failure report below never posts a
   # previous revision's diff for this host.
@@ -599,8 +627,14 @@ deploy_one() {
   before_generation["$host"]=$before
   if [ "$candidate_active" = 1 ]; then
     printf '%s\n' "$before" > "$state/before-$revision-$host" || return 1
-    remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || return 1
-    remote "$host" ln -sfn "$before" "/nix/var/nix/gcroots/fleet-update/$revision" || return 1
+    remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || {
+      fail "could not create rollback roots on $host"
+      return 1
+    }
+    remote "$host" ln -sfn "$before" "/nix/var/nix/gcroots/fleet-update/$revision" || {
+      fail "could not pin the rollback generation on $host"
+      return 1
+    }
   fi
   # The build and activation output is the only record of why this failed, and
   # it has to outlive the transient unit, so keep it beside the other state.
