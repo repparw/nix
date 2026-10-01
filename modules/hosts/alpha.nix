@@ -84,7 +84,13 @@
         # its previous tree, and ExecStartPre/backupPrepareCommand abort the job.
         prepareHomeState = pkgs.writeShellScript "prepare-home-state" ''
           set -euo pipefail
-          export PATH=${lib.makeBinPath [ pkgs.coreutils pkgs.rsync pkgs.sqlite ]}
+          export PATH=${
+            lib.makeBinPath [
+              pkgs.coreutils
+              pkgs.rsync
+              pkgs.sqlite
+            ]
+          }
           test -d ${lib.escapeShellArg home}
           case "$1" in hdd|offsite) ;; *) exit 1 ;; esac
           destination=${stateRoot}/$1
@@ -92,7 +98,11 @@
           trap 'rm -rf "$temporary"' EXIT
           mkdir -p "$temporary/.config" "$temporary/.local"
           rsync --archive --relative --ignore-missing-args -- \
-            ${lib.escapeShellArgs (map (p: "${home}/./${p}") (lib.filter (p: !(lib.elem p homeDatabases)) homeState))} \
+            ${
+              lib.escapeShellArgs (
+                map (p: "${home}/./${p}") (lib.filter (p: !(lib.elem p homeDatabases)) homeState)
+              )
+            } \
             "$temporary/"
           ${lib.concatMapStringsSep "\n" (p: ''
             if [ -f ${lib.escapeShellArg "${home}/${p}"} ]; then
@@ -100,6 +110,7 @@
               sqlite3 ${lib.escapeShellArg "${home}/${p}"} \
                 '.timeout 10000' ".backup '$temporary/${p}'"
               chmod --reference=${lib.escapeShellArg "${home}/${p}"} "$temporary/${p}"
+              chown --reference=${lib.escapeShellArg "${home}/${p}"} "$temporary/${p}"
             fi
           '') homeDatabases}
           if [ "$1" = hdd ]; then
