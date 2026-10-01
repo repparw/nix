@@ -99,8 +99,12 @@
             };
             bindMounts =
               lib.optionalAttrs mediaBind {
-                "/data" = {
-                  hostPath = cfg.mediaPortalDir;
+                "/data/hdd" = {
+                  hostPath = "${cfg.mediaPortalDir}/hdd";
+                  isReadOnly = false;
+                };
+                "/data/seagate" = {
+                  hostPath = "${cfg.mediaPortalDir}/seagate";
                   isReadOnly = false;
                 };
               }

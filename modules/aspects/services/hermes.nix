@@ -33,7 +33,8 @@
           };
           "arr-api-keys" = {
             sopsFile = ../../../secrets/hermes.sops.yaml;
-            uid = 327680;
+            # Tools run as hermes (container UID 345), not container root.
+            uid = 327680 + 345;
           };
         };
 
@@ -105,10 +106,9 @@
                     name = "notifications";
                   };
                 };
-                # Cron fleet runs on the cheap free-tier model, independent of
-                # the chat default: unattended polls must never inherit a
-                # switch to a paid provider, and the drift guard stays quiet
-                # for an axis covered here.
+                # Pin cron's primary model independently of the chat default.
+                # The global fallback chain still applies if that model fails;
+                # this is a primary-model preference, not a spending limit.
                 settings.cron = {
                   model = "stepfun/step-3.7-flash:free";
                   model_provider = "nous";

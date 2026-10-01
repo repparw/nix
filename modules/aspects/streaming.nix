@@ -45,14 +45,12 @@
 
           # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
           # to gamescope; nixpkgs disables it by default.
-          gamescopeHdr = (pkgs.gamescope.override { enableWsi = true; }).overrideAttrs (old: {
-            patches = (old.patches or [ ]) ++ [ ./gamescope-wsi-overlay.patch ];
-          });
+          gamescopeHdr = pkgs.gamescope.override { enableWsi = true; };
 
           # Run Steam through Gamescope so Moonshine always captures one stable HDR
-          # surface. Steam's overlay does not normally composite with gamescope-wsi;
-          # the local patch opts into the proof of concept from
-          # ValveSoftware/gamescope#1537.
+          # surface. Steam's overlay does not composite with gamescope-wsi; that is
+          # ValveSoftware/gamescope#1537, still open, and the local PoC that
+          # addressed it was dropped. Expect no Steam overlay in this session.
           moonshine-steam = pkgs.writeShellApplication {
             name = "moonshine-steam";
             runtimeInputs = [
@@ -85,10 +83,9 @@
               unset ENABLE_MOONSHINE_WSI
 
               # Steam Overlay only hooks X11 windows, while gamescope-wsi bypasses
-              # Xwayland for game swapchains. Opt into the upstream PoC from
-              # ValveSoftware/gamescope#1537.
+              # Xwayland for game swapchains, so the overlay is not expected to
+              # appear. See ValveSoftware/gamescope#1537.
               unset DISABLE_GAMESCOPE_WSI
-              export GAMESCOPE_WSI_FIX_OVERLAY=1
 
               # bwrap sits INSIDE gamescope, not outside: gamescope spawns its own
               # Xwayland, and inside bwrap's user namespace the root-owned
