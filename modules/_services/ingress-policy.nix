@@ -39,6 +39,24 @@ let
     ];
     policy = "bypass";
   };
+  healthcheckBypassRules =
+    lib.mapAttrsToList
+      (name: service: {
+        domain = [ (serviceHost name) ];
+        resources = [ "^${lib.escapeRegex service.healthcheck}([?].*)?$" ];
+        policy = "bypass";
+      })
+      (
+        lib.filterAttrs (
+          _: service:
+          (service.healthcheck or null) != null
+          && service.hostname != null
+          && builtins.elem service.auth [
+            "one_factor"
+            "two_factor"
+          ]
+        ) definitions
+      );
   authMiddleware =
     service:
     lib.optional (builtins.elem service.auth [
@@ -85,15 +103,6 @@ else
       routers =
         lib.mapAttrs mkRouter routableDefinitions
         // {
-          home-router = {
-            rule = "Host(`home.${domain}`)";
-            service = "hass";
-          };
-          t3code = {
-            rule = "Host(`code.${domain}`)";
-            service = "t3code";
-            middlewares = [ "authelia" ];
-          };
           glance = {
             rule = "Host(`${domain}`)";
             service = "glance";
@@ -127,17 +136,7 @@ else
         ];
         qbit-basic-auth.headers.customRequestHeaders.Authorization = "{{ env `QBIT_AUTH` }}";
       };
-      services = lib.mapAttrs (name: _: mkBackend name) proxyableDefinitions // {
-        hass.loadBalancer = {
-          servers = [ { url = "http://192.168.0.4"; } ];
-          healthCheck = {
-            path = "/";
-            interval = "10s";
-            timeout = "3s";
-          };
-        };
-        t3code.loadBalancer.servers = [ { url = "http://localhost:4097"; } ];
-      };
+      services = lib.mapAttrs (name: _: mkBackend name) proxyableDefinitions;
     };
 
     authelia = {
@@ -145,12 +144,7 @@ else
       rules =
         paperShareRules
         ++ apiBypassRules
-        ++ [
-          {
-            domain = [ "home.${domain}" ];
-            policy = "bypass";
-          }
-        ]
+        ++ healthcheckBypassRules
         ++ modeRules
         ++ [
           {

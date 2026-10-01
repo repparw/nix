@@ -15,16 +15,27 @@ import {
 
 const noop = () => {};
 
-function fixture(t, watchers, state) {
+function fixture(t, watchers, state, defaultWatchers) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "change-detection-test-"));
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const watchersPath = path.join(directory, "watchers.json");
+  const defaultWatchersPath = path.join(directory, "default-watchers.json");
   const statePath = path.join(directory, "state.json");
   const discordWebhookPath = path.join(directory, "webhook");
   fs.writeFileSync(watchersPath, JSON.stringify(watchers));
+  if (defaultWatchers !== undefined) {
+    fs.writeFileSync(defaultWatchersPath, JSON.stringify(defaultWatchers));
+  }
   fs.writeFileSync(discordWebhookPath, "https://discord.example/webhook\n");
   if (state !== undefined) fs.writeFileSync(statePath, JSON.stringify(state));
-  return { directory, watchersPath, statePath, discordWebhookPath };
+  const files = {
+    directory,
+    watchersPath,
+    statePath,
+    discordWebhookPath,
+  };
+  if (defaultWatchers !== undefined) files.defaultWatchersPath = defaultWatchersPath;
+  return files;
 }
 
 function regexWatcher(overrides = {}) {
@@ -66,6 +77,7 @@ test("watcher validation rejects malformed, ambiguous, and unsafe configurations
     [[regexWatcher({ headers: { Accept: 4 } })], /must be a string/],
     [[regexWatcher({ message: 4 })], /message must be a string/],
     [[regexWatcher({ method: "" })], /method must not be empty/],
+    [[regexWatcher({ fetcher: "wget" })], /fetcher/],
     [[regexWatcher({ mode: "unknown" })], /Unknown watcher mode/],
   ];
 
@@ -76,6 +88,46 @@ test("watcher validation rejects malformed, ambiguous, and unsafe configurations
   assert.doesNotThrow(() =>
     validateWatchers([{ slug: "paused", enabled: false }]),
   );
+  assert.doesNotThrow(() =>
+    validateWatchers([regexWatcher({ fetcher: "curl" })]),
+  );
+});
+
+test("default watchers are merged and user watchers override by slug", async (t) => {
+  const defaultWatcher = regexWatcher({
+    slug: "default",
+    url: "https://default.example/page",
+  });
+  const overriddenDefault = regexWatcher({
+    slug: "release",
+    url: "https://default-release.example/page",
+  });
+  const userWatcher = regexWatcher({
+    slug: "release",
+    url: "https://user-release.example/page",
+  });
+  const files = fixture(
+    t,
+    [userWatcher],
+    undefined,
+    [defaultWatcher, overriddenDefault],
+  );
+  const fetched = [];
+
+  await runChangeDetection({
+    ...files,
+    defaultWatchersPath: files.defaultWatchersPath,
+    fetchImpl: async (url) => {
+      fetched.push(url);
+      return response("version: 1");
+    },
+    log: noop,
+  });
+
+  assert.deepEqual(fetched.sort(), [
+    "https://default.example/page",
+    "https://user-release.example/page",
+  ]);
 });
 
 test("extractors fail closed and handle distant firmware entries", () => {

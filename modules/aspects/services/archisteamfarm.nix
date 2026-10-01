@@ -5,6 +5,15 @@
 }:
 {
   den.aspects.nixos-services.provides.archisteamfarm = {
+    service-registry = {
+      name = "archisteamfarm";
+      definition = {
+        auth = "bypass";
+        container = true;
+        backupRelativePath = "archisteamfarm";
+      };
+    };
+
     nixos =
       { config, pkgs, ... }:
       let
@@ -21,15 +30,15 @@
           mode = "0400";
         };
 
+        sops.secrets.steamUsername = {
+          sopsFile = ../../../secrets/archisteamfarm.sops.yaml;
+          owner = "root";
+          mode = "0400";
+        };
+
         systemd.tmpfiles.rules = [
           "d ${cfg.configDir}/archisteamfarm 0755 root root - -"
         ];
-
-        modules.services.definitions.archisteamfarm = {
-          containerAddress = "10.231.136.13";
-          auth = "bypass";
-          backup.path = "${cfg.configDir}/archisteamfarm";
-        };
 
         containers.archisteamfarm = servicesLib.mkContainer {
           inherit cfg;
@@ -41,6 +50,10 @@
             };
             "/run/secrets/steamPassword" = {
               hostPath = steamPasswordPath;
+              isReadOnly = true;
+            };
+            "/run/secrets/steamUsername" = {
+              hostPath = config.sops.secrets.steamUsername.path;
               isReadOnly = true;
             };
           };
@@ -65,7 +78,9 @@
                     }
                   ];
                 };
-                username = "REDACTED";
+                # Substituted at runtime by `replace-secret` in the preStart
+                # below; ASF only accepts a literal string for SteamLogin.
+                username = "#steamUsername#";
                 passwordFile = credentialPasswordPath;
               };
             };
@@ -76,6 +91,9 @@
                 preStart = lib.mkAfter ''
                   [ -e plugins ] && chmod -R u+w plugins && rm -rf plugins
                   cp -rs ${freepackages}/lib/FreePackages plugins/
+                  cp config/repparw.json config/repparw.json.tmp
+                  ${pkgs.replace-secret}/bin/replace-secret '#steamUsername#' /run/secrets/steamUsername config/repparw.json.tmp
+                  mv -f config/repparw.json.tmp config/repparw.json
                 '';
               };
             };

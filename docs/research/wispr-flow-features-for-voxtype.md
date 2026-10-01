@@ -2,7 +2,8 @@
 type: Research Note
 title: Wispr Flow Features Worth Bringing to Voxtype
 description: Source-backed comparison of current Wispr Flow features with the repository's local Voxtype setup.
-resource: modules/aspects/dictation.nix
+when: Read when evaluating or planning Voxtype dictation improvements.
+resource: modules/aspects/ai/dictation.nix
 tags: [dictation, voxtype, wispr-flow, speech]
 ---
 
@@ -13,9 +14,9 @@ Research date: 2026-07-12.
 ## Scope and current baseline
 
 The repository pins Voxtype `v0.7.5` with its Vulkan package, the Whisper `base`
-model, English and Spanish, audio feedback, a themed Quickshell OSD, a toggle
-shortcut, automatic pausing/resuming of media, and transcription notifications
-disabled. The comparison below focuses on features that improve everyday
+model, English and Spanish, audio feedback, the GTK4 layer-shell OSD, a toggle
+shortcut, MPRIS media pause (built into Voxtype), and transcription
+notifications disabled. The comparison below focuses on features that improve everyday
 dictation while preserving the setup's local-first character.
 
 Wispr Flow's distinguishing layer is not speech recognition alone. Its official
@@ -185,20 +186,37 @@ All product claims below come from Wispr's official site/help center or the
 official Voxtype repository at the exact revision pinned by this flake.
 
 [^flow-features]: [Wispr Flow official feature overview](https://try.wisprflow.ai/)
+
 [^why-flow]: [Wispr Flow, “Why Flow”](https://wisprflow.ai/why-flow)
+
 [^dictionary]: [Wispr Flow Help, “Teach Flow your words with the dictionary”](https://docs.wisprflow.ai/articles/4052411709-teach-flow-your-words-with-the-dictionary)
+
 [^snippets]: [Wispr Flow Help, “Create and use snippets”](https://docs.wisprflow.ai/articles/5784437944-create-and-use-snippets)
+
 [^context]: [Wispr Flow Help, “Context Awareness”](https://docs.wisprflow.ai/articles/4678293671-feature-context-awareness)
+
 [^styles]: [Wispr Flow Help, “How to setup Flow Styles”](https://docs.wisprflow.ai/articles/2368263928-how-to-setup-flow-styles)
+
 [^whats-new]: [Wispr Flow official changelog](https://wisprflow.ai/whats-new)
+
 [^long-dictation]: [Wispr Flow Help, “Longer dictation sessions”](https://docs.wisprflow.ai/articles/4841123325-longer-dictation-sessions-now-up-to-20-minutes)
+
 [^hands-free]: [Wispr Flow Help, “Use Flow hands-free”](https://docs.wisprflow.ai/articles/6391241694-use-flow-hands-free)
+
 [^languages]: [Wispr Flow Help, “Use Flow with multiple languages”](https://docs.wisprflow.ai/articles/3191899797-use-flow-with-multiple-languages)
+
 [^privacy]: [Wispr Flow Help, “Understanding Privacy Mode and Private Cloud Sync”](https://docs.wisprflow.ai/articles/4709791908-understanding-privacy-mode-and-cloud-sync)
+
 [^scratchpad]: [Wispr Flow Help, “Using the Scratchpad to save and edit notes”](https://docs.wisprflow.ai/articles/9618237082-using-the-scratchpad-to-save-and-edit-notes)
+
 [^voxtype-readme]: [Voxtype README at pinned revision](https://github.com/peteonrails/voxtype/blob/8d49248baa53f29cb33007c9625a37281c72e799/README.md)
+
 [^voxtype-text]: [Voxtype text-processing configuration at pinned revision](https://github.com/peteonrails/voxtype/blob/8d49248baa53f29cb33007c9625a37281c72e799/docs/CONFIGURATION.md#text)
+
 [^voxtype-post]: [Voxtype post-processing configuration at pinned revision](https://github.com/peteonrails/voxtype/blob/8d49248baa53f29cb33007c9625a37281c72e799/docs/CONFIGURATION.md#outputpost_process)
+
 [^voxtype-profiles]: [Voxtype profiles configuration at pinned revision](https://github.com/peteonrails/voxtype/blob/8d49248baa53f29cb33007c9625a37281c72e799/docs/CONFIGURATION.md#profiles)
+
 [^voxtype-cli]: [Voxtype CLI documentation at pinned revision](https://github.com/peteonrails/voxtype/blob/8d49248baa53f29cb33007c9625a37281c72e799/README.md#cli-options)
+
 [^voxtype-meeting]: [Voxtype meeting mode at pinned revision](https://github.com/peteonrails/voxtype/blob/8d49248baa53f29cb33007c9625a37281c72e799/docs/MEETING_MODE.md)

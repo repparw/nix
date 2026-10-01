@@ -24,5 +24,9 @@
         sops.defaultSopsFormat = "yaml";
         sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
       };
+
+    homeManager = { pkgs, ... }: {
+      home.packages = [ pkgs.sops ];
+    };
   };
 }

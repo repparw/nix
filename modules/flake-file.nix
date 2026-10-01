@@ -6,6 +6,7 @@ _: {
         runtimeInputs = with pkgs; [
           nixfmt
           deadnix
+          prettier
         ];
         settings = {
           on-unmatched = "info";
@@ -21,6 +22,11 @@ _: {
               "--no-lambda-pattern-names"
             ];
             includes = [ "*.nix" ];
+          };
+          formatter.prettier = {
+            command = "prettier";
+            options = [ "--write" ];
+            includes = [ "*.md" ];
           };
         };
       };

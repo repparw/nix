@@ -2,6 +2,7 @@
 type: Architecture Concept
 title: Ingress Policy
 description: How one ingress-policy seam generates Traefik and Authelia configuration.
+when: Read when changing service routing, proxy authentication, or ingress exceptions.
 resource: modules/_services/ingress-policy.nix
 tags: [architecture, services, proxy, authentication]
 ---
@@ -21,9 +22,11 @@ Ordinary service routes derive from each definition's `hostname`, `port`, and
 requires an explicit policy implementation and otherwise fails evaluation.
 
 Exceptional routes remain inside the policy implementation: the qBittorrent
-UI/API split, the apex Glance route, and the external Home Assistant and code
-targets. Identity providers, secrets, and application configuration remain in
-their owning service modules.
+UI/API split and the apex Glance route. Everything else, including Home
+Assistant (hostname `home`, `bypass` auth), is an ordinary route derived from
+metadata emitted by its owning service aspect; there is no service-specific
+routing code. Identity providers, secrets, and application configuration
+remain in their owning service modules.
 
 ## Adapters
 

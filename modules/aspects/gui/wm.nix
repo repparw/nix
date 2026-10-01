@@ -110,6 +110,14 @@
           nautilus
           baobab
           playerctl
+
+          papers
+          glycin-thumbnailer
+          gst-thumbnailers
+          ffmpegthumbnailer
+          sushi
+          libgsf
+          webp-pixbuf-loader
         ];
 
         services = {
@@ -144,7 +152,8 @@
           swaync = {
             enable = true;
             settings = {
-              timeout-critical = 20000;
+              timeout-critical = 300;
+              notification-window-preferred-output = "HDMI-A-1";
             };
           };
           playerctld.enable = true;
@@ -188,6 +197,17 @@
                   alert = ".*notification";
                 }
               ];
+              settings = {
+                CustomButton = [
+                  {
+                    name = "Night Light";
+                    icon = "";
+                    command = "systemctl --user toggle wlsunset";
+                    status_command = "systemctl --user is-active wlsunset";
+                    tooltip = "Toggle wlsunset night light";
+                  }
+                ];
+              };
               appearance = {
                 style = "Islands";
                 opacity = 1.0;

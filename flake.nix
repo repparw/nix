@@ -1,17 +1,18 @@
-# DO-NOT-EDIT. This file was auto-generated using github:vic/flake-file.
+# DO-NOT-EDIT. This file was auto-generated using github:denful/flake-file.
 # Use `nix run .#write-flake` to regenerate it.
 {
   outputs = inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules);
 
   inputs = {
-    codex-desktop-linux = {
-      url = "github:ilysenko/codex-desktop-linux";
-      inputs = {
-        flake-utils.follows = "flake-utils";
-        nixpkgs.follows = "nixpkgs";
-      };
+    cursor-plugins = {
+      url = "github:cursor/plugins";
+      flake = false;
     };
-    den.url = "github:denful/den";
+    den.url = "github:denful/den/latest";
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     firefox-addons = {
       url = "github:petrkozorezov/firefox-addons-nix";
       inputs = {
@@ -36,14 +37,19 @@
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    hermes-agent.url = "github:NousResearch/hermes-agent/v2026.8.19";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    impermanence = {
+      url = "github:nix-community/impermanence";
+      flake = false;
+    };
     import-tree.url = "github:vic/import-tree";
-    moonshine = {
-      url = "github:hgaiser/moonshine";
-      inputs.nixpkgs.follows = "nixpkgs";
+    mp-skills = {
+      url = "github:mattpocock/skills";
+      flake = false;
     };
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
@@ -80,12 +86,5 @@
       };
     };
     systems.url = "github:nix-systems/default";
-    voxtype = {
-      url = "github:peteonrails/voxtype/v0.7.5";
-      inputs = {
-        flake-utils.follows = "flake-utils";
-        nixpkgs.follows = "nixpkgs";
-      };
-    };
   };
 }

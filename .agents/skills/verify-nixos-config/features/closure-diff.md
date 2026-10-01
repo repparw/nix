@@ -1,0 +1,19 @@
+# Compare system closures
+
+Build `SYSTEM_OUTPUT` as described in [system-build](system-build.md). For a
+build targeting the machine running these commands:
+
+```bash
+RUNNING_SYSTEM=$(readlink -f /run/current-system)
+nix store diff-closures "$RUNNING_SYSTEM" "$SYSTEM_OUTPUT" \
+  | tee "$VERIFY_EVIDENCE/closure-diff-$VERIFY_HOST.txt"
+```
+
+For another host, read its `/run/current-system` over SSH and make that closure
+available locally before comparing. Do not use the local machine's closure as
+the baseline for a different target.
+
+Review package additions, removals, and version changes against the intended
+change. An empty diff reports no package delta; it does not prove generated
+configuration is identical or runtime behavior is healthy. Inspect generated
+files separately when the task changes them.

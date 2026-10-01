@@ -5,6 +5,10 @@
 {
   den.aspects.gui.provides.zathura = {
     homeManager = _: {
+      xdg.mimeApps.defaultApplications = {
+        "application/pdf" = "org.pwmt.zathura-pdf-mupdf.desktop";
+      };
+
       programs.zathura = {
         enable = true;
         options = {

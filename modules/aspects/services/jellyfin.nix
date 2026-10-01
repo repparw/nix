@@ -5,6 +5,20 @@
 }:
 {
   den.aspects.nixos-services.provides.jellyfin = {
+    service-registry = {
+      name = "jellyfin";
+      definition = {
+        hostname = "jellyfin";
+        port = 8096;
+        auth = "bypass";
+        container = true;
+        monitor = true;
+        lanEdge = true;
+        healthcheck = "/health";
+        backupRelativePath = "jellyfin/data/backups";
+      };
+    };
+
     nixos =
       { config, pkgs, ... }:
       let
@@ -19,10 +33,10 @@
             set -euo pipefail
             key=$(cat ${jellyfinBackupKeyFile})
             response=$(curl -fsS -X POST \
-              -H "X-Emby-Token: $key" \
+              -H "Authorization: MediaBrowser Client=Backup, Device=JellyfinBackup, DeviceId=jellyfin-backup, Version=1, Token=$key" \
               -H "Content-Type: application/json" \
               -d '{}' \
-              ${servicesLib.serviceUrl cfg "jellyfin"}/Backup/Create)
+              ${servicesLib.serviceUrl cfg config "jellyfin"}/Backup/Create)
             echo "$response"
             path=$(echo "$response" | sed -n 's/.*"Path":"\([^"]*\)".*/\1/p')
             if [ -n "$path" ]; then
@@ -42,19 +56,17 @@
               mode = "0400";
             };
 
-            modules.services.definitions.jellyfin = {
-              hostname = "jellyfin";
-              containerAddress = "10.231.136.10";
-              port = 8096;
-              auth = "bypass";
-              backup.path = "${cfg.configDir}/jellyfin/data/backups";
-              monitor = true;
-            };
-
             containers.jellyfin = servicesLib.mkContainer {
               inherit cfg;
               name = "jellyfin";
               privateUsers = "pick";
+              forwardPorts = [
+                {
+                  protocol = "tcp";
+                  hostPort = 8096;
+                  containerPort = 8096;
+                }
+              ];
               bindMounts = {
                 "/var/lib/jellyfin" = {
                   hostPath = "${cfg.configDir}/jellyfin";
@@ -63,6 +75,12 @@
                 "/data" = {
                   hostPath = cfg.mediaPortalDir;
                   isReadOnly = false;
+                };
+                # allowedDevices only sets cgroup policy; without this bind
+                # mount no /dev/dri nodes exist inside the container.
+                "/dev/dri" = {
+                  hostPath = "/dev/dri";
+                  isReadOnly = true;
                 };
               };
               allowedDevices = [
@@ -88,11 +106,6 @@
 
                 hardware.graphics = {
                   enable = true;
-                  extraPackages = with pkgs; [
-                    libva-vdpau-driver
-                    libvdpau-va-gl
-                    intel-media-driver
-                  ];
                 };
 
                 users.users.jellyfin.extraGroups = [
@@ -103,7 +116,8 @@
             };
 
             systemd.services."container@jellyfin".serviceConfig = {
-              CPUQuota = "300%";
+              CPUQuota = "100%";
+              CPUWeight = 20;
               IOWeight = 50;
               Nice = 10;
             };

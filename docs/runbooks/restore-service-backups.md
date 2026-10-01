@@ -2,6 +2,7 @@
 type: Runbook
 title: Restore Service Backups
 description: Restore service data from exported backup paths.
+when: Read when restoring service data from an exported backup.
 resource: modules/aspects/backup.nix
 tags: [runbook, recovery, services, backups]
 ---
@@ -37,4 +38,4 @@ bind mounts from `/home/containers/config`.
 ## Related
 
 - [Service model](../services/service-model.md)
-- [Alpha](../hosts/alpha.md)
+- [Host profiles](../hosts.md)
