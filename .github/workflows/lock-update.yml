@@ -1,0 +1,73 @@
+name: lock-update
+on:
+  schedule:
+    - cron: '15 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: lock-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Update the lock PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch=automation/flake-lock
+          main_sha=$(git rev-parse HEAD)
+          expected=$(git ls-remote --heads origin "$branch" | cut -f1)
+          if [ -n "$expected" ]; then
+            git fetch --no-tags origin "$expected"
+          fi
+          nix flake update
+          pr=$(gh pr list --head "${GH_REPO%%/*}:$branch" --base main --state open --json number --jq '.[0].number // empty')
+          if git diff --quiet -- flake.lock; then
+            if [ -n "$pr" ]; then
+              gh pr close "$pr" --comment 'The current lock matches main; no update remains.'
+            fi
+            exit 0
+          fi
+          git add flake.lock
+          desired_tree=$(git write-tree)
+          if [ -n "$expected" ] \
+            && [ "$(git rev-parse "$expected^" 2>/dev/null || true)" = "$main_sha" ] \
+            && [ "$(git rev-parse "$expected^{tree}")" = "$desired_tree" ]; then
+            revision=$expected
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git switch -C "$branch"
+            git commit -m 'flake.lock: Update'
+            revision=$(git rev-parse HEAD)
+            git push "--force-with-lease=refs/heads/$branch:$expected" origin "HEAD:refs/heads/$branch"
+          fi
+          if [ -z "$pr" ]; then
+            gh pr create --base main --head "$branch" --title 'flake.lock: Update' \
+              --body 'Update flake inputs. Explicitly dispatched CI checks the lock commit; deployment separately requires successful push CI on merged main.'
+          fi
+          if [ "$(git ls-remote --heads origin "$branch" | cut -f1)" != "$revision" ]; then
+            echo 'Lock branch changed before CI dispatch; retry the lock workflow.' >&2
+            exit 1
+          fi
+          runs=$(gh api --method GET "repos/$GH_REPO/actions/workflows/ci.yml/runs" \
+            -f branch="$branch" -f head_sha="$revision" -f event=workflow_dispatch \
+            --jq '.workflow_runs | length')
+          if [ "$runs" -eq 0 ]; then
+            gh workflow run ci.yml --ref "$branch" -f expected_sha="$revision"
+          fi

@@ -252,34 +252,8 @@
         };
       };
 
-      systemd.services.fleet-promote = {
-        description = "Validate and publish a flake.lock candidate";
-        after = [ "network-online.target" ];
-        wants = [ "network-online.target" ];
-        restartIfChanged = false;
-        serviceConfig = {
-          Type = "oneshot";
-          WorkingDirectory = "/var/lib/auto-update";
-          StateDirectory = "auto-update";
-          TimeoutStartSec = "120min";
-        };
-        script = ''
-          exec ${lib.getExe config.modules.fleet-update.package} \
-            promote --state /var/lib/auto-update
-        '';
-      };
-
-      systemd.timers.fleet-promote = {
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = "*-*-* 04:15:00";
-          Persistent = true;
-          RandomizedDelaySec = "10min";
-        };
-      };
-
       systemd.services.fleet-deploy = {
-        description = "Launch convergence on the approved main revision";
+        description = "Launch convergence on main after successful CI";
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
         restartIfChanged = false;
