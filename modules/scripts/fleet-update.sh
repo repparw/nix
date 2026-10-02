@@ -1,5 +1,5 @@
 # shellcheck shell=bash
-usage="usage: fleet-update deploy [--host alpha|pi|epsilon] [--force] [--wait-lock SECONDS] [--state DIR]"
+usage="usage: fleet-update deploy [--host all|alpha|pi|epsilon] [--force] [--wait-lock SECONDS] [--state DIR]"
 
 [ "$#" -gt 0 ] || { echo "$usage" >&2; exit 2; }
 action="$1"
@@ -12,6 +12,7 @@ esac
 force=0
 lock_wait=0
 requested_host=all
+host_selected=0
 state="${FLEET_UPDATE_STATE:-/var/lib/auto-update}"
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -24,6 +25,7 @@ while [ "$#" -gt 0 ]; do
     --host)
       [ "$#" -ge 2 ] || { echo "$usage" >&2; exit 2; }
       requested_host="$2"
+      host_selected=1
       shift
       ;;
     --state)
@@ -51,7 +53,7 @@ case "$lock_wait" in
   '' | *[!0-9]*) echo "--wait-lock requires whole seconds" >&2; exit 2 ;;
 esac
 
-if [ "$force" = 1 ] && [ "$requested_host" = all ]; then
+if [ "$force" = 1 ] && [ "$host_selected" = 0 ]; then
   echo "--force requires an explicit --host" >&2
   exit 2
 fi

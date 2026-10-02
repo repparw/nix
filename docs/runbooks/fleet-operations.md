@@ -232,6 +232,11 @@ nix run .#deploy-rs -- .#epsilon --dry-activate               # test a local tre
 
 A manual deploy takes the same serialization lock — without `--wait-lock`
 it exits if a transaction is already running rather than interrupting it.
+An authorized manual whole-fleet rollout can use
+`fleet-update deploy --host all --force`. Force requires an explicit `--host`;
+it bypasses the activity and pause gates while preserving the PAUSE file.
+It keeps the exact-main push CI gate, serialization, health checks, and rollback.
+
 Alpha's interactive `Mod+U` asks the pi controller to run
 `fleet-update deploy --host alpha --force`: it bypasses the activity gate
 and `PAUSE` but keeps the exact-commit CI gate, health checks, and rollback. The separate

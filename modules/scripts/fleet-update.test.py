@@ -150,6 +150,21 @@ class Deployment(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assert_no_activation()
 
+    def test_explicit_forced_fleet_deploy_preserves_pause(self):
+        pause = self.state / "PAUSE"
+        pause.write_text("existing operator pause\n")
+        result = self.deploy(arguments=["--host", "all", "--force"])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(pause.read_text(), "existing operator pause\n")
+        self.assertEqual((self.state / "deployed-revision").read_text().strip(), REVISION)
+        self.assertEqual([c[1] for c in self.calls if c[0] == "deploy"], [".#epsilon", ".#pi", ".#alpha"])
+
+    def test_force_requires_explicit_host_selection(self):
+        result = subprocess.run(["bash", str(self.script), "deploy", "--force"],
+                                text=True, capture_output=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("explicit --host", result.stderr)
+
     def test_preflight_failure_on_first_host_cannot_be_hidden_by_later_hosts(self):
         result = self.deploy(eval_failure="epsilon")
         self.assertNotEqual(result.returncode, 0)
