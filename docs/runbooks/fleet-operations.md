@@ -79,8 +79,8 @@ All three hosts retain failed offsite backup results; alpha additionally
 retains Btrfs-health/scrub, Jellyfin-backup, and configured rsync job results.
 `ExecStopPost` records failed runs in `/var/lib/fleet-unit-state/<unit>` and
 removes that record only after a successful rerun. Each record contains a
-timestamp and systemd's service result. The directory persists across reboot
-(including `/persist` on Pi and epsilon), so `systemctl reset-failed` does not
+timestamp and systemd's service result. The directory persists across reboot on the current roots and is declared for
+`/persist` when host persistence is enabled, so `systemctl reset-failed` does not
 make an unsuccessful backup look recovered. This is evidence of the most
 recent observed failure, not proof of a fresh or restorable backup: jobs that
 have never run and failures before installing the hook have no retained record.
