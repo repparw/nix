@@ -26,14 +26,18 @@
       let
         vault = "${config.home.homeDirectory}/Documents/obsidian";
         remote = "obsidian-rs-crypt:";
+        workDir = "${config.xdg.stateHome}/rclone/obsidian-bisync";
         filterFile = "${config.xdg.configHome}/rclone/obsidian-bisync.filter";
 
         obsidianBisync = pkgs.writeShellScript "obsidian-bisync" ''
           set -euo pipefail
 
+          ${pkgs.coreutils}/bin/mkdir -p -m 0700 ${lib.escapeShellArg workDir}
+
           exec ${lib.getExe pkgs.rclone} bisync \
             ${lib.escapeShellArg vault} \
             ${lib.escapeShellArg remote} \
+            --workdir ${lib.escapeShellArg workDir} \
             --filters-file ${lib.escapeShellArg filterFile} \
             --check-access \
             --max-delete 10 \
