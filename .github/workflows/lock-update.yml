@@ -1,0 +1,54 @@
+name: lock-update
+on:
+  schedule:
+    - cron: '15 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lock-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Require a token that triggers PR CI
+        env:
+          GH_TOKEN: ${{ secrets.LOCK_UPDATE_TOKEN }}
+        run: test -n "$GH_TOKEN"
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          token: ${{ secrets.LOCK_UPDATE_TOKEN }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Update the lock PR
+        env:
+          GH_TOKEN: ${{ secrets.LOCK_UPDATE_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch=automation/flake-lock
+          expected=$(git ls-remote --heads origin "$branch" | cut -f1)
+          nix flake update
+          pr=$(gh pr list --head "$branch" --base main --state open --json number --jq '.[0].number // empty')
+          if git diff --quiet -- flake.lock; then
+            if [ -n "$pr" ]; then
+              gh pr close "$pr" --comment 'The current lock matches main; no update remains.'
+            fi
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c "$branch"
+          git add flake.lock
+          git commit -m 'flake.lock: Update'
+          git push "--force-with-lease=refs/heads/$branch:$expected" origin "HEAD:refs/heads/$branch"
+          if [ -z "$pr" ]; then
+            gh pr create --base main --head "$branch" --title 'flake.lock: Update' \
+              --body 'Update flake inputs. CI checks this PR; deployment separately requires successful CI on the merged main commit.'
+          fi

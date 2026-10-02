@@ -190,6 +190,8 @@
                   pkgs.jq
                   pkgs.python3
                   pkgs.bash
+                  pkgs.git
+                  pkgs.util-linux
                 ];
               }
               ''
@@ -221,6 +223,8 @@
                 fi
 
                 python3 ${./scripts/fleet-update-notifications.test.py} ${./scripts/fleet-update.sh}
+                python3 ${./scripts/fleet-update.test.py} ${./scripts/fleet-update.sh}
+                python3 ${./scripts/lock-update.test.py} ${inputs.self}/.github/workflows/lock-update.yml
                 touch $out
               '';
 

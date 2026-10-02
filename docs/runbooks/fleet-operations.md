@@ -35,7 +35,7 @@ a separate pre-activation procedure in `verify-nixos-config`.
 
 `fleet update` delegates to the interactive `host-update` path for the local
 tree. It is deliberately distinct from the controller-side `fleet-update`
-transaction below, which promotes and deploys the pinned production revision.
+transaction below, which deploys a main revision after successful CI.
 
 ## Fleet health (`fleet-health.timer`, every 5 min)
 
@@ -104,35 +104,71 @@ decrypt it.
 
 ## Staged auto-update
 
-Promotion and deployment are independent transactions, both serialized on
-the pi:
+Lock maintenance runs in GitHub Actions; deployment runs on pi:
 
-- `fleet-promote.timer` (daily 04:15) bumps all inputs and pushes the new
-  lock as a candidate commit. It changes no host.
-- `fleet-deploy.timer` (daily 05:30) consumes current `origin/main` in
-  blast-radius order: **epsilon → pi → alpha**. Each changed node soaks on
-  health checks before the next proceeds.
-- `fleet-alpha-retry.timer` (daily 07:00) retries a deferred alpha against
-  current main.
+- `.github/workflows/lock-update.yml` runs daily at 04:15 UTC or through
+  `workflow_dispatch`. It opens or refreshes `automation/flake-lock` as a PR.
+  It never pushes main or activates a host.
+- `fleet-deploy.timer` runs daily at 05:30 in the controller's timezone.
+  It snapshots current `origin/main` and requires a successful push run of
+  `ci.yml` for that exact commit before evaluation or activation.
+  Missing, pending, failed, or unavailable CI results defer deployment without
+  changing the rollback streak. The next scheduled run retries current main.
+- Deployment proceeds through epsilon, pi, then alpha. Each host passes health
+  checks before the next proceeds, including hosts already on that revision.
+- `fleet-alpha-retry.timer` runs daily at 07:00 in the controller's timezone.
+  It retries a deferred alpha against current main, with the same CI gate.
+
+CI's host checks stub selected packages. Successful CI proves those checks,
+not full system builds or runtime health. Real builds still run on targets
+through deploy-rs; the controller still performs configuration evaluation.
+
+### Enable lock update PRs
+
+Create the repository Actions secret `LOCK_UPDATE_TOKEN` with a token scoped to
+`repparw/nix`. Grant Contents and Pull requests write access. A dedicated token
+allows automated PR updates to trigger CI without a workflow approval prompt;
+see [GitHub's workflow triggering rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
+Keep the token in GitHub Secrets. The workflow fails before checkout if the
+secret is missing.
+
+Run `gh workflow run lock-update.yml` after this workflow reaches main.
+Review the resulting PR and its `gate` and `persistence-vm` checks before merging.
+The workflow does not enable automatic merging. Deployments also require the
+post-merge CI run, since the merged main commit can differ from the PR commit.
+
+The lock workflow has its own concurrency group and one branch. Pi's pause
+flag affects deployment only. Applying this configuration removes the old
+`fleet-promote` service and timer; existing pause and rollback state remain.
+Older controllers used rollback roots named by commit. After a verified full
+rollout, inspect `/nix/var/nix/gcroots/fleet-update/` on each host and remove
+obsolete commit roots. Keep `previous` while a rollout or recovery is pending.
 
 Hosts with graphical sessions deploy only when every local session is idle
 or locked — active use (including media streams) defers the host instead of
 forcing it. A deferred alpha is reported, not failed.
 
-Invariant: **origin/main's flake.lock is always the pin production converged
-on.** Rollbacks push a revert commit; git log is the update history. Manual
-commits are never auto-reverted.
+Main records the desired revision. `/var/lib/auto-update/deployed-revision`
+records the last revision verified across all hosts. A deferred alpha leaves
+that value unchanged, and a rollback can leave hosts behind main.
 
 Failure handling:
 
 - Activation failures roll back via deploy-rs magic rollback.
-- A failed post-activation soak reverts the candidate and redeploys
-  previous graph to every node already reached.
+- Before activation, the controller saves and roots each host's prior system.
+  A deployment failure restores those exact systems on hosts reached during
+  this revision, including a host whose activation command failed. The saved
+  state also covers hosts reached in an earlier run before alpha was deferred.
+  Rollback verifies the restored system path. An unsuccessful rollback pauses
+  deployment and retains the roots for recovery. Deployment never writes Git.
+  Each host has one `fleet-update/previous` root, replaced on its next
+  activation attempt. After a successful rollback or full convergence, these
+  roots are removed.
 - Two consecutive failed cycles pause automation (`PAUSE` flag) and alert. A
   build or activation failure pauses on the first cycle instead: the same lock
   fails the same way, so a second attempt only spends a deploy cycle. Soak
   failures keep the two-strike rule, because a flapping container or a
-  timed-out probe clears on its own and the next candidate is a fair retest.
+  timed-out probe can clear before the next attempt.
 - Boot-level regressions remain a rescue-console problem; re-imaging the pi
   from a cloned SD of the last known-good system is the final recovery path.
 
@@ -166,7 +202,7 @@ Operator controls:
 ```sh
 ssh root@192.168.0.4 'touch /var/lib/auto-update/PAUSE'       # pause automation
 ssh root@192.168.0.4 'rm /var/lib/auto-update/PAUSE'          # resume automation
-ssh root@192.168.0.4 'systemctl start fleet-promote.service'  # produce an update
+gh workflow run lock-update.yml                            # open a lock update PR
 ssh root@192.168.0.4 'systemctl start fleet-deploy.service'   # launch fleet consumption
 ssh root@192.168.0.4 'fleet-update deploy --host epsilon'     # consume main on one host
 nix run .#deploy-rs -- .#epsilon --dry-activate               # test a local tree
@@ -176,7 +212,7 @@ A manual deploy takes the same serialization lock — without `--wait-lock`
 it exits if a transaction is already running rather than interrupting it.
 Alpha's interactive `Mod+U` asks the pi controller to run
 `fleet-update deploy --host alpha --force`: it bypasses the activity gate
-and `PAUSE` but keeps the health soak and rollback. The separate
+and `PAUSE` but keeps the exact-commit CI gate, health checks, and rollback. The separate
 `host-update` command remains for building and reviewing a local tree by hand.
 
 ## Firmware updates (`fwupd`, hardware hosts)
