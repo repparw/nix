@@ -188,6 +188,8 @@
                 nativeBuildInputs = [
                   fleetCli
                   pkgs.jq
+                  pkgs.python3
+                  pkgs.bash
                 ];
               }
               ''
@@ -218,6 +220,7 @@
                   exit 1
                 fi
 
+                python3 ${./scripts/fleet-update-notifications.test.py} ${./scripts/fleet-update.sh}
                 touch $out
               '';
 
