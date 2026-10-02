@@ -296,7 +296,7 @@
               };
               buprpi = {
                 destination = "${config.modules.services.backupDir}/pi-services/";
-                sources = [ "pi:services/" ];
+                sources = [ "repparw@${den.hosts.aarch64-linux.pi.serviceAddress}:services/" ];
                 settings = {
                   archive = true;
                   "copy-links" = true;
@@ -317,6 +317,11 @@
           StateDirectoryMode = "0700";
         };
         services.restic.backups.offsite.backupPrepareCommand = "${prepareHomeState} offsite";
+        # Use the account that owns the destination and has SSH access to pi.
+        systemd.services.rsync-job-buprpi.serviceConfig = {
+          User = lib.mkForce "repparw";
+          Group = lib.mkForce config.users.users.repparw.group;
+        };
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl
         # --set standby are clamped by a vendor minimum that never engages);
