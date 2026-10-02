@@ -36,6 +36,9 @@ stdenv.mkDerivation rec {
     cp root/usr/local/bin/striptracks.sh $out/bin/striptracks.sh
     chmod +x $out/bin/striptracks.sh
 
+    # Keep upstream's executable wrapper (including its shebang), but use the
+    # script's :org pseudo-language so Sonarr resolves each series' original
+    # language dynamically. Keep the existing English-only subtitle policy.
     cp root/usr/local/bin/striptracks-eng.sh $out/bin/striptracks
     chmod +x $out/bin/striptracks
 
@@ -45,7 +48,8 @@ stdenv.mkDerivation rec {
       --replace '/usr/bin/jq' '${jq}/bin/jq'
 
     substituteInPlace $out/bin/striptracks \
-      --replace '/usr/local/bin/striptracks.sh' "$out/bin/striptracks.sh"
+      --replace '/usr/local/bin/striptracks.sh' "$out/bin/striptracks.sh" \
+      --replace '--audio :eng:und --subs :eng' '--audio :eng:org:und --subs :eng'
 
     wrapProgram $out/bin/striptracks.sh \
       --prefix PATH : ${
@@ -60,6 +64,11 @@ stdenv.mkDerivation rec {
           bash
         ]
       }
+  '';
+
+  postFixup = ''
+    test -x $out/bin/striptracks
+    head -n 1 $out/bin/striptracks | grep -q '^#!'
   '';
 
   passthru.updateScript = nix-update-script {
