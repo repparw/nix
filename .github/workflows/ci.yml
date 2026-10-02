@@ -25,6 +25,7 @@ jobs:
           .#checks.x86_64-linux.deploy-schema
           .#checks.x86_64-linux.service-definitions
           .#checks.x86_64-linux.host-persistence
+          .#checks.x86_64-linux.fleet-failed-units
           .#checks.x86_64-linux.alpha
           .#checks.x86_64-linux.pi
           .#checks.x86_64-linux.epsilon

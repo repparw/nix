@@ -6,6 +6,7 @@
 {
   den.aspects.alpha = {
     includes = [
+      den.aspects.fleet-unit-state
       den.aspects.backup
       den.aspects.btrfs-maintenance
       den.aspects.gaming
@@ -124,6 +125,12 @@
       in
       {
         imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
+
+        modules.fleet-unit-state.retainedJobs = [
+          "btrfs-health-root"
+          "btrfs-scrub@"
+          "jellyfin-backup"
+        ];
 
         modules.backup = {
           paths = [

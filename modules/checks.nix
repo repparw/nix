@@ -118,6 +118,32 @@
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
 
+          fleet-failed-units =
+            let
+              probe = pkgs.writeText "fleet-health-probe-test.sh" (
+                builtins.unsafeDiscardStringContext inputs.self.nixosConfigurations.pi.config.modules.fleet-health.probe.text
+              );
+            in
+            pkgs.runCommand "check-fleet-failed-units"
+              {
+                nativeBuildInputs = with pkgs; [
+                  nodejs
+                  bash
+                  coreutils
+                  findutils
+                  gawk
+                  gnugrep
+                  util-linux
+                ];
+                FLEET_HEALTH_PROBE = probe;
+                FLEET_UNIT_SOURCE = ./aspects/fleet-unit-state;
+                TEST_BASH = "${pkgs.bash}/bin/bash";
+              }
+              ''
+                node --test ${./_tests/fleet-failed-units.mjs}
+                touch $out
+              '';
+
           formatting =
             pkgs.runCommand "check-formatting"
               {
