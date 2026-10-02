@@ -44,12 +44,24 @@ let
         id="''${1:-}"
         code=$(curl -s -m 15 -o /dev/null -w '%{http_code}' -X DELETE \
           -H "Authorization: Bot $DISCORD_BOT_TOKEN" "$api/messages/$id" || echo curl-fail)
-        if [ "$code" = 204 ] || [ "$code" = 200 ]; then
-          echo "discord-notify: deleted msg $id (http $code)" >&2
-        else
-          echo "discord-notify: DELETE failed: msg $id http=$code (msgid kept for retry)" >&2
-          exit 1
-        fi
+        case "$code" in
+          200 | 204)
+            echo "discord-notify: deleted msg $id (http $code)" >&2
+            ;;
+          # 404 Unknown Message means the message is already gone, which is the
+          # state the caller asked for. Treating it as retryable pinned the
+          # msgid file forever: every probe re-attempted a deletion that can
+          # never succeed. Exiting zero lets the caller clear its own state.
+          # A 5xx or a transport failure stays retryable, because the message
+          # may well still be there.
+          404)
+            echo "discord-notify: msg $id already absent (http 404), treating as cleared" >&2
+            ;;
+          *)
+            echo "discord-notify: DELETE failed: msg $id http=$code (msgid kept for retry)" >&2
+            exit 1
+            ;;
+        esac
         ;;
       *)
         echo "usage: discord-notify post <content> | delete <message-id>" >&2
