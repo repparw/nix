@@ -125,12 +125,28 @@ through deploy-rs; the controller still performs configuration evaluation.
 
 ### Enable lock update PRs
 
-Create the repository Actions secret `LOCK_UPDATE_TOKEN` with a token scoped to
-`repparw/nix`. Grant Contents and Pull requests write access. A dedicated token
-allows automated PR updates to trigger CI without a workflow approval prompt;
-see [GitHub's workflow triggering rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
-Keep the token in GitHub Secrets. The workflow fails before checkout if the
-secret is missing.
+Create a dedicated fine-grained personal access token with these settings:
+
+- Resource owner: `repparw`.
+- Repository access: only `nix`.
+- Repository permissions: Contents read and write, and Pull requests read and
+  write. Metadata read access is included automatically.
+
+Use an account with write access to `repparw/nix`. Set an expiration date and
+replace the secret before the token expires. No Actions or Workflows write
+permission is required: the workflow changes only `flake.lock` and its PR.
+
+Store the token as the repository Actions secret `LOCK_UPDATE_TOKEN`. To enter
+it through GitHub CLI's hidden interactive prompt, run:
+
+```sh
+gh secret set LOCK_UPDATE_TOKEN --repo repparw/nix
+```
+
+Do not pass the token as a command argument or commit it to this repository.
+A dedicated token allows automated PR updates to trigger CI without a workflow
+approval prompt; see [GitHub's workflow triggering rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
+The workflow fails before checkout if the secret is missing.
 
 Run `gh workflow run lock-update.yml` after this workflow reaches main.
 Review the resulting PR and its `gate` and `persistence-vm` checks before merging.
