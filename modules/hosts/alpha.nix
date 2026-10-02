@@ -28,6 +28,100 @@
         modulesPath,
         ...
       }:
+      let
+        home = config.users.users.repparw.home;
+        # Single source of truth for small irreplaceable home state, kept on
+        # HDD (rsync jobs below) and offsite (restic paths). Everything else
+        # is nix-declared, OAuth/session (re-login), or regenerable cache.
+        # sops/age/keys.txt deliberately excluded: HDD + manual only.
+        homeState = [
+          ".config/moonshine/"
+          ".config/kdeconnect/"
+          ".config/vicinae/settings.json"
+          ".config/unity3d/"
+          ".config/Wasteland3/"
+          ".config/Loop_Hero/"
+          ".config/Zelda64Recompiled/"
+          ".config/godot/"
+          ".config/vesktop/settings.json"
+          ".config/vesktop/settings/"
+          ".config/ZapZap/"
+          ".config/Moonlight Game Streaming Project/"
+          ".config/codex/config.toml"
+          ".config/codex/skills/"
+          ".config/codex/plugins/"
+          ".config/codex/goals_1.sqlite"
+          ".config/net.imput.helium/Default/Preferences"
+          ".config/net.imput.helium/Default/Secure Preferences"
+          ".config/net.imput.helium/Default/History"
+          ".config/net.imput.helium/Default/Login Data"
+          ".config/net.imput.helium/Default/Login Data For Account"
+          ".config/net.imput.helium/Default/Sessions/"
+          ".config/fish/fish_variables"
+          ".config/mpv/watch_later"
+          ".config/Raspberry Pi/Raspberry Pi Imager.conf"
+          ".local/share/vicinae/vicinae.db"
+          ".local/share/vicinae/metadata.json"
+          ".local/share/vicinae/script-metadata.json"
+          ".local/share/fish/fish_history"
+          ".local/share/tmux/resurrect/"
+          ".local/state/nvim/undo/"
+          ".local/state/nvim/shada"
+          ".local/state/nvim/file_frecency.bin"
+          ".local/state/nvim/avante/"
+          ".local/share/voxtype/meetings/"
+          ".local/share/shadPS4/savedata/"
+          ".local/share/shadPS4/keys.json"
+        ];
+        homeDatabases = [
+          ".config/codex/goals_1.sqlite"
+          ".config/net.imput.helium/Default/History"
+          ".config/net.imput.helium/Default/Login Data"
+          ".config/net.imput.helium/Default/Login Data For Account"
+          ".local/share/vicinae/vicinae.db"
+        ];
+        stateRoot = "/var/lib/home-state-backup";
+        # Each consumer has its own staging tree. A failed export never replaces
+        # its previous tree, and ExecStartPre/backupPrepareCommand abort the job.
+        prepareHomeState = pkgs.writeShellScript "prepare-home-state" ''
+          set -euo pipefail
+          export PATH=${
+            lib.makeBinPath [
+              pkgs.coreutils
+              pkgs.rsync
+              pkgs.sqlite
+            ]
+          }
+          test -d ${lib.escapeShellArg home}
+          case "$1" in hdd|offsite) ;; *) exit 1 ;; esac
+          destination=${stateRoot}/$1
+          temporary=$(mktemp -d "${stateRoot}/.prepare-$1.XXXXXX")
+          trap 'rm -rf "$temporary"' EXIT
+          mkdir -p "$temporary/.config" "$temporary/.local"
+          rsync --archive --relative --ignore-missing-args -- \
+            ${
+              lib.escapeShellArgs (
+                map (p: "${home}/./${p}") (lib.filter (p: !(lib.elem p homeDatabases)) homeState)
+              )
+            } \
+            "$temporary/"
+          ${lib.concatMapStringsSep "\n" (p: ''
+            if [ -f ${lib.escapeShellArg "${home}/${p}"} ]; then
+              mkdir -p "$temporary/${builtins.dirOf p}"
+              sqlite3 ${lib.escapeShellArg "${home}/${p}"} \
+                '.timeout 10000' ".backup '$temporary/${p}'"
+              chmod --reference=${lib.escapeShellArg "${home}/${p}"} "$temporary/${p}"
+              chown --reference=${lib.escapeShellArg "${home}/${p}"} "$temporary/${p}"
+            fi
+          '') homeDatabases}
+          if [ "$1" = hdd ]; then
+            rsync --archive --relative --ignore-missing-args -- \
+              ${lib.escapeShellArg "${home}/./.config/sops/age/keys.txt"} "$temporary/"
+          fi
+          rm -rf "$destination"
+          mv "$temporary" "$destination"
+        '';
+      in
       {
         imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
@@ -36,10 +130,11 @@
             "/home/containers/backup"
             "/home/repparw/Pictures"
             "/home/repparw/Documents"
+            "${stateRoot}/offsite/.config"
+            "${stateRoot}/offsite/.local"
           ];
           excludes = [
             "${config.users.users.repparw.home}/.config/heroic/**"
-            "${config.users.users.repparw.home}/.config/clipse/**"
             "${config.users.users.repparw.home}/Documents/Memorias/**"
           ];
         };
@@ -175,7 +270,24 @@
                 sources = [
                   "${config.users.users.repparw.home}/Pictures"
                   "${config.users.users.repparw.home}/Documents"
-                  "${config.users.users.repparw.home}/.config"
+                ];
+                settings = {
+                  archive = true;
+                  delete = true;
+                  # Protect the allowlist jobs' output (same dest root).
+                  exclude = [
+                    "/.config/"
+                    "/.local/"
+                  ];
+                };
+              };
+              # Sync complete staged subtrees: --delete now prunes removed
+              # allowlist leaves and the legacy whole-.config contents too.
+              bupstate = {
+                destination = "/mnt/hdd/backup";
+                sources = [
+                  "${stateRoot}/hdd/.config"
+                  "${stateRoot}/hdd/.local"
                 ];
                 settings = {
                   archive = true;
@@ -194,6 +306,17 @@
             };
           };
         };
+
+        systemd.services.rsync-job-bupstate.serviceConfig = {
+          StateDirectory = "home-state-backup";
+          StateDirectoryMode = "0700";
+          ExecStartPre = "${prepareHomeState} hdd";
+        };
+        systemd.services.restic-backups-offsite.serviceConfig = {
+          StateDirectory = "home-state-backup";
+          StateDirectoryMode = "0700";
+        };
+        services.restic.backups.offsite.backupPrepareCommand = "${prepareHomeState} offsite";
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl
         # --set standby are clamped by a vendor minimum that never engages);

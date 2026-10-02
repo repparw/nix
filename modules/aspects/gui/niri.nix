@@ -171,7 +171,6 @@
               ];
               "Mod+Shift+Space" = titledSpawn "Browser" [ "firefox" ];
 
-              "Mod+A" = titledSpawn "Anki" [ "anki" ];
               "Mod+B" = titledSpawn "Bluetooth Toggle" [ "bttoggle" ];
               "Mod+C" = titledSpawn "WhatsApp" [
                 "ndrop"

@@ -75,11 +75,22 @@ Restic over rclone to `gd-crypt:restic/<hostname>`. Covers:
   metadata. Pi also includes deployment/health controller and Bluetooth/radio
   state; epsilon includes ddclient state. See the host declarations and
   `modules/aspects/backup.nix` for the complete paths and exclusions.
-- alpha: `/home/containers/backup`, Pictures, Documents (Raw/Memorias,
-  `.config`, and browser state excluded); unchanged by host recovery work.
+- alpha: `/home/containers/backup`, Pictures, Documents (Memorias excluded),
+  and the small home-state allowlist in `modules/hosts/alpha.nix`. SQLite
+  databases are exported with `.backup` into a private staging tree under
+  `/var/lib/home-state-backup/offsite` before restic runs. Missing optional
+  entries are skipped; an export failure aborts the backup. Age keys are
+  included only in the HDD staging tree, never in the offsite tree.
+
+Alpha's `rsync-job-bupstate` mirrors its separately prepared HDD staging tree
+into `/mnt/hdd/backup/.config` and `.local`. It deletes destination entries
+outside the allowlist, including legacy whole-`.config` contents and removed
+sources. `rsync-job-buptohdd` handles Pictures and Documents separately and
+protects those two state subtrees. Restore staged offsite state beneath the
+user's home, rather than to its original `/var/lib` staging path.
 
 Daily jobs exclude reproducible caches, container runtime mounts and swap.
-Retention is 7d/4w/12m with a 5% data check each run. These live backups are
+Retention is 7d/4w/12m with a 5% data check each run. The pi/epsilon live backups are
 not automatically consistent database exports.
 
 For a full pi checkpoint, including the Nix store and a stopped-HA archive,
