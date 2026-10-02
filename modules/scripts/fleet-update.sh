@@ -107,70 +107,6 @@ strip_ansi() {
   awk 'BEGIN { esc = sprintf("%c", 27) } { gsub(esc "\\[[0-9;?]*[A-Za-z]", ""); gsub(/\r/, ""); print }'
 }
 
-# Why the current transaction is failing, in one line, for the rollback
-# notification. Set by fail() and by health_once() so a soak failure names the
-# probe that broke rather than just the host.
-failure_reason=""
-
-fail() {
-  failure_reason="$1"
-  echo "$1" >&2
-  return 1
-}
-
-# A failure is only actionable with the failing command's own output, and the
-# transient deploy unit's journal does not survive the controller rebooting.
-# Post the best single explanation available and attach the log when the
-# explanation had to be truncated to fit.
-notify_failure() {
-  [ -r /run/secrets/hermes-env ] || return 0
-  local header="$1" log="$2" budget=1200 fence detail body sanitized
-  # shellcheck disable=SC1091
-  source /run/secrets/hermes-env
-  # Built in double quotes: shellcheck reads backticks in single quotes
-  # as command substitution that will never expand (SC2016).
-  fence="\`\`\`"
-
-  # A soak failure is fully described by the probe that broke, and the log it
-  # would otherwise quote is the activation that just succeeded. A build
-  # failure is described by its own output, which already names the host. So
-  # pick one, never both: the reason only appears when it is the better story.
-  detail=""
-  case "$failure_reason" in
-    soak:*) detail=$failure_reason ;;
-  esac
-  if [ -z "$detail" ] && [ -s "$log" ]; then
-    # nix ends a failed build with a cascade of "Cannot build ... Reason: N
-    # dependencies failed" and buries the compiler or evaluator error that
-    # actually explains it in the middle, so take the lines naming a failure.
-    sanitized=$(strip_ansi <"$log")
-    detail=$(printf '%s\n' "$sanitized" | grep -E 'error:|FAILED:|Reason:|build stopped' | head -n 25)
-  fi
-  [ -n "$detail" ] || detail=$failure_reason
-  [ -n "$detail" ] || detail="no reason recorded; see the attached log"
-  # Discord renders a bare backtick as markup start, so neutralise it.
-  detail=${detail//\`/\'}
-
-  if [ "${#detail}" -le "$budget" ]; then
-    body=$(printf '%s\n%swhat failed\n%s\n%s' \
-      "$header" "$fence" "$detail" "$fence")
-    curl -sS -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-      -H "Content-Type: application/json" \
-      -d "$(jq -n --arg c "$body" '{content: $c}')" "$api" >/dev/null || true
-    return 0
-  fi
-  # jq slices by characters, so multibyte output is never split mid-codepoint
-  # the way tail -c would split it.
-  detail=$(printf '%s\n' "$detail" | jq -Rs -r --argjson n "$budget" '.[0:$n]')
-  # Never end on a half-sliced line; the attachment carries the remainder.
-  detail=${detail%$'\n'*}
-  body=$(printf '%s\n%swhat failed\n%s\n%s\n(full output attached)' \
-    "$header" "$fence" "$detail" "$fence")
-  curl -sS -m 30 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-    -F "payload_json=$(jq -n --arg c "$body" '{content: $c}')" \
-    -F "files[0]=@$log" "$api" >/dev/null || true
-}
-
 notify_file() {
   [ -r /run/secrets/hermes-env ] || return 0
   [ -s "$2" ] || return 0
@@ -325,74 +261,37 @@ container_units() { # host -> space-separated container@name units; 1 on eval fa
 }
 
 health_once() {
-  local host="$1" state_now units unit unit_state
+  local host="$1" state_now units
   state_now=$(remote "$host" systemctl is-system-running 2>/dev/null || true)
   case "$state_now" in
     running | degraded) ;;
-    *)
-      fail "soak: $host is-system-running is ${state_now:-unreachable}"
-      return 1
-      ;;
+    *) return 1 ;;
   esac
 
-  if ! units=$(container_units "$host"); then
-    fail "soak: could not evaluate the container unit list for $host"
-    return 1
-  fi
+  units=$(container_units "$host") || return 1
   if [ -n "$units" ]; then
     # Unit names are intentionally expanded by this client-side wrapper.
     # shellcheck disable=SC2086,SC2029
-    if ! remote "$host" systemctl is-active --quiet $units; then
-      for unit in $units; do
-        # systemctl prints the state on stdout and exits non-zero for a unit
-        # that is not active, so take the first line and ignore the status.
-        # shellcheck disable=SC2029
-        unit_state=$(remote "$host" systemctl is-active "$unit" 2>/dev/null | head -1) || true
-        [ "$unit_state" = active ] && continue
-        fail "soak: $unit is ${unit_state:-unreachable} on $host"
-        return 1
-      done
-      fail "soak: a container unit on $host is not active"
-      return 1
-    fi
+    remote "$host" systemctl is-active --quiet $units || return 1
   fi
   # The native edge ingress is not a container; it stays outside the
   # derived container gate.
   case "$host" in
     epsilon | pi)
-      if ! remote "$host" systemctl is-active --quiet traefik.service; then
-        fail "soak: traefik.service is not active on $host"
-        return 1
-      fi
+      remote "$host" systemctl is-active --quiet traefik.service || return 1
       ;;
   esac
 
   case "$host" in
     epsilon)
-      http_code https://@FLEET_DOMAIN@/ 200 ||
-        {
-          fail "soak: https://@FLEET_DOMAIN@/ on $host did not return 200"
-          return 1
-        }
-      http_code https://rss.@FLEET_DOMAIN@/healthcheck 200 ||
-        {
-          fail "soak: rss healthcheck on $host did not return 200"
-          return 1
-        }
+      http_code https://@FLEET_DOMAIN@/ 200 || return 1
+      http_code https://rss.@FLEET_DOMAIN@/healthcheck 200 || return 1
       ;;
     pi)
-      http_code https://home.@FLEET_DOMAIN@/ 200 ||
-        {
-          fail "soak: https://home.@FLEET_DOMAIN@/ on $host did not return 200"
-          return 1
-        }
+      http_code https://home.@FLEET_DOMAIN@/ 200 || return 1
       ;;
     alpha)
-      http_code http://@FLEET_ALPHA_ADDRESS@:8096/health 200 ||
-        {
-          fail "soak: jellyfin health on $host did not return 200"
-          return 1
-        }
+      http_code http://@FLEET_ALPHA_ADDRESS@:8096/health 200 || return 1
       ;;
   esac
 }
@@ -543,14 +442,9 @@ declare -A before_generation
 deployed=()
 deferred=()
 failure_host=""
-# One log per host, overwritten each run, so the evidence for the failure being
-# reported is the evidence for that failure rather than a stale earlier one.
-failure_log=""
-for host in epsilon pi alpha; do rm -f "$state/fail-$host.log"; done
 
 deploy_one() {
   local host="$1" running_revision before after_generation activity_gate
-  failure_log="$state/fail-$host.log"
 
   # Clear any stale diff so the failure report below never posts a
   # previous revision's diff for this host.
@@ -568,10 +462,7 @@ deploy_one() {
     return 2
   fi
 
-  activity_gate=$(nix eval --json ".#nixosConfigurations.$host.config.modules.fleet-update.activityGate") || {
-    fail "could not evaluate the activity gate for $host"
-    return 1
-  }
+  activity_gate=$(nix eval --json ".#nixosConfigurations.$host.config.modules.fleet-update.activityGate") || return 1
   case "$activity_gate" in
     true)
       if [ "$force" = 0 ] && ! host_is_idle "$host"; then
@@ -583,17 +474,14 @@ deploy_one() {
       ;;
     false) ;;
     *)
-      fail "$host returned an invalid activity-gate value: $activity_gate"
+      echo "$host returned an invalid activity-gate value: $activity_gate" >&2
       return 1
       ;;
   esac
 
-  before=$(remote "$host" readlink /run/current-system) || {
-    fail "could not read the current system generation on $host"
-    return 1
-  }
+  before=$(remote "$host" readlink /run/current-system) || return 1
   if [[ "$before" != /nix/store/* ]]; then
-    fail "$host returned an invalid current-system path: ${before:-empty}"
+    echo "$host returned an invalid current-system path: ${before:-empty}" >&2
     return 1
   fi
   before_generation["$host"]=$before
@@ -602,11 +490,7 @@ deploy_one() {
     remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || return 1
     remote "$host" ln -sfn "$before" "/nix/var/nix/gcroots/fleet-update/$revision" || return 1
   fi
-  # The build and activation output is the only record of why this failed, and
-  # it has to outlive the transient unit, so keep it beside the other state.
-  # pipefail propagates deploy-rs' own status through tee.
-  if ! deploy ".#$host" --skip-checks 2>&1 | tee "$failure_log"; then
-    fail "build or activation of $host failed"
+  if ! deploy ".#$host" --skip-checks; then
     return 1
   fi
 
@@ -616,11 +500,10 @@ deploy_one() {
   fi
   running_revision=$(remote "$host" nixos-version --configuration-revision 2>/dev/null || true)
   if [ "$running_revision" != "$revision" ]; then
-    fail "$host activated revision ${running_revision:-unknown}, expected $revision"
+    echo "$host activated revision ${running_revision:-unknown}, expected $revision" >&2
     return 1
   fi
   if ! soak "$host"; then
-    fail "${failure_reason:-soak: $host never passed two consecutive health checks}"
     return 1
   fi
 
@@ -646,21 +529,11 @@ for host in "${hosts[@]}"; do
 done
 
 if [ -n "$failure_host" ]; then
-  # The two classes fail differently and so deserve different patience. A build
-  # or activation failure is conclusive on its first cycle: the same lock
-  # produces the same error, so a retry spends a whole deploy cycle confirming
-  # it. A soak failure can be a flapping container or a timed-out probe, so the
-  # next cycle's different candidate is a fair second observation. The reason
-  # already carries the distinction; a soak reason is prefixed "soak:".
-  case "$failure_reason" in
-    soak:*) trip=2 ;;
-    *) trip=1 ;;
-  esac
   streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
   printf '%s\n' "$streak" > "$state/rollback-streak" \
     || notify ":warning: could not persist the fleet rollback streak"
   note=""
-  if [ "$streak" -ge "$trip" ]; then
+  if [ "$streak" -ge 2 ]; then
     if touch "$state/PAUSE"; then
       note=" — automation PAUSED (breaker)"
     else
@@ -734,11 +607,7 @@ if [ -n "$failure_host" ]; then
     done
   fi
 
-  # The reason and the failing command's own output first, then the closure
-  # diff when the host got far enough to have one. A build failure clears the
-  # diff, so a broken build posts only the error.
-  notify_failure ":rotating_light: fleet deployment failed at $failure_host (${revision:0:8}); rollback initiated, $streak consecutive$note" \
-    "$failure_log"
+  notify ":rotating_light: fleet deployment failed at $failure_host (${revision:0:8}); rollback initiated, $streak consecutive$note"
   notify_file ":rotating_light: diff for failed host $failure_host (${revision:0:8})" "$state/diff-$failure_host.txt"
   exit 1
 fi

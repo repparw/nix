@@ -115,39 +115,11 @@ commits are never auto-reverted.
 Failure handling:
 
 - Activation failures roll back via deploy-rs magic rollback.
-- A failed post-activation soak reverts the candidate and redeploys
+- A failed post-activation soak reverts the candidate and redeploys the
   previous graph to every node already reached.
-- Two consecutive failed cycles pause automation (`PAUSE` flag) and alert. A
-  build or activation failure pauses on the first cycle instead: the same lock
-  fails the same way, so a second attempt only spends a deploy cycle. Soak
-  failures keep the two-strike rule, because a flapping container or a
-  timed-out probe clears on its own and the next candidate is a fair retest.
+- Two consecutive failed cycles pause automation (`PAUSE` flag) and alert.
 - Boot-level regressions remain a rescue-console problem; re-imaging the pi
   from a cloned SD of the last known-good system is the final recovery path.
-
-### Reading a deploy failure alert
-
-The rollback alert carries the reason, so the alert is usually enough to
-diagnose without reproducing the deploy. A build failure quotes the error:
-
-````text
-:rotating_light: fleet deployment failed at alpha (139e7d50); rollback
-initiated, 2 consecutive — automation PAUSED (breaker)
-```what failed
-gamescope> FAILED: [code=1] layer/libVkLayer_..._wsi_x86_64.so.p/....o
-gamescope> ../layer/VkLayer_FROG_gamescope_wsi.cpp:319:5: error: ...
-````
-
-A soak or gate failure names the probe or step instead, for example
-`soak: container@jellyfin is activating on alpha`. Only one of the two ever
-appears; the alert never restates the host the headline already names.
-
-The full build and activation output is kept at
-`/var/lib/auto-update/fail-<host>.log` on the pi, one file per host,
-overwritten by the next deploy. It outlives the transient
-`fleet-deploy-run` unit's journal, which does not survive a controller
-reboot — a controller that rebooted mid-deploy leaves no unit entries to
-read. Prefer that file over `journalctl -u fleet-deploy-run`.
 
 Operator controls:
 
