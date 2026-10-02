@@ -32,7 +32,8 @@
         obsidianBisync = pkgs.writeShellScript "obsidian-bisync" ''
           set -euo pipefail
 
-          ${pkgs.coreutils}/bin/mkdir -p -m 0700 ${lib.escapeShellArg workDir}
+          umask 077
+          ${pkgs.coreutils}/bin/mkdir -p ${lib.escapeShellArg workDir}
 
           exec ${lib.getExe pkgs.rclone} bisync \
             ${lib.escapeShellArg vault} \

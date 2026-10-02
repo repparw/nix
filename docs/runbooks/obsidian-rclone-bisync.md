@@ -111,7 +111,8 @@ Stop if the destination already exists; inspect it before choosing a baseline:
 
 ```bash
 workdir="${XDG_STATE_HOME:-$HOME/.local/state}/rclone/obsidian-bisync"
-mkdir -m 0700 -p "$(dirname "$workdir")"
+umask 077
+mkdir -p "$(dirname "$workdir")"
 mkdir -m 0700 "$workdir" &&
   cp -a "$HOME/.cache/rclone/bisync/." "$workdir/"
 ```
