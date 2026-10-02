@@ -5,13 +5,33 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact commit expected at the dispatched ref
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event_name == 'workflow_dispatch' && format('{0}-{1}', github.sha, inputs.expected_sha) || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   gate:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Verify dispatched revision
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
       - uses: DeterminateSystems/nix-installer-action@v22
       - run: >
           nix build
@@ -34,7 +54,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - name: Verify dispatched revision
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
       - uses: DeterminateSystems/nix-installer-action@v22
         with:
           kvm: true

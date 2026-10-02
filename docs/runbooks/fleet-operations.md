@@ -125,33 +125,39 @@ through deploy-rs; the controller still performs configuration evaluation.
 
 ### Enable lock update PRs
 
-Create a dedicated fine-grained personal access token with these settings:
+The lock workflow uses the built-in `GITHUB_TOKEN`. Its permissions are
+Contents write for the lock branch, Pull requests write for the PR, and Actions
+write for dispatching CI. No separate token or repository secret is needed.
+The repository must allow GitHub Actions to create pull requests. Its current
+`can_approve_pull_request_reviews` setting is enabled; the workflow never
+approves or merges a PR.
 
-- Resource owner: `repparw`.
-- Repository access: only `nix`.
-- Repository permissions: Contents read and write, and Pull requests read and
-  write. Metadata read access is included automatically.
+Run `gh workflow run lock-update.yml` after this workflow and CI's
+`workflow_dispatch` support reach main. GitHub requires the dispatched workflow
+to exist on the default branch. Bot PR events are not the CI trigger this
+workflow relies on; see [GitHub's workflow triggering rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
 
-Use an account with write access to `repparw/nix`. Set an expiration date and
-replace the secret before the token expires. No Actions or Workflows write
-permission is required: the workflow changes only `flake.lock` and its PR.
+After publishing the lock branch and opening or updating its PR, the updater
+explicitly dispatches `ci.yml` on `automation/flake-lock` with the expected head
+SHA. Both CI jobs verify that SHA before checking out the event's immutable
+`github.sha`. A branch change during dispatch fails that check rather than
+validating a different commit.
 
-Store the token as the repository Actions secret `LOCK_UPDATE_TOKEN`. To enter
-it through GitHub CLI's hidden interactive prompt, run:
+An unchanged lock tree on the same main parent reuses the existing commit.
+The updater checks for an existing dispatched run on that branch and SHA before
+sending another dispatch. Concurrent dispatches for the same SHA share a CI
+concurrency group, so only one remains active. GitHub indexing and dispatch are
+not atomic: a recently accepted run may not be visible yet. An ambiguous
+request failure is reported, and a retry checks GitHub before dispatching.
+If an unchanged commit already has a failed or canceled run, rerun that CI run
+explicitly after diagnosing it; the nightly updater does not repeat it.
 
-```sh
-gh secret set LOCK_UPDATE_TOKEN --repo repparw/nix
-```
-
-Do not pass the token as a command argument or commit it to this repository.
-A dedicated token allows automated PR updates to trigger CI without a workflow
-approval prompt; see [GitHub's workflow triggering rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
-The workflow fails before checkout if the secret is missing.
-
-Run `gh workflow run lock-update.yml` after this workflow reaches main.
-Review the resulting PR and its `gate` and `persistence-vm` checks before merging.
-The workflow does not enable automatic merging. Deployments also require the
-post-merge CI run, since the merged main commit can differ from the PR commit.
+Review the lock commit's dispatched `gate` and `persistence-vm` results before
+merging. Bot PR events may also create approval-required runs; approving those
+is unnecessary for the explicit dispatch and can start duplicate PR checks.
+Deployment still requires a successful **push** CI run for the exact merged
+main commit. A lock-branch dispatch, or even a manual dispatch on main, cannot
+satisfy that separate deployment gate.
 
 The lock workflow has its own concurrency group and one branch. Pi's pause
 flag affects deployment only. Applying this configuration removes the old

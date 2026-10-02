@@ -224,7 +224,7 @@
 
                 python3 ${./scripts/fleet-update-notifications.test.py} ${./scripts/fleet-update.sh}
                 python3 ${./scripts/fleet-update.test.py} ${./scripts/fleet-update.sh}
-                python3 ${./scripts/lock-update.test.py} ${inputs.self}/.github/workflows/lock-update.yml
+                python3 ${./scripts/lock-update.test.py} ${inputs.self}/.github/workflows/lock-update.yml ${inputs.self}/.github/workflows/ci.yml
                 touch $out
               '';
 

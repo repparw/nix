@@ -124,7 +124,7 @@ class Deployment(unittest.TestCase):
 
     def test_ci_missing_pending_failed_wrong_sha_and_pr_do_not_activate(self):
         fixtures = [[], [run(status="in_progress", conclusion=None)], [run(conclusion="failure")],
-                    [run(head_sha="c" * 40)], [run(event="pull_request")],
+                    [run(head_sha="c" * 40)], [run(event="pull_request")], [run(event="workflow_dispatch")],
                     [run(head_branch="automation/flake-lock")],
                     [run(), run(2, status="queued", conclusion=None)]]
         for runs in fixtures:
