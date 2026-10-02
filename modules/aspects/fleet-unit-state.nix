@@ -25,15 +25,17 @@
         runtimeInputs = [ pkgs.coreutils ];
         text = builtins.readFile ./fleet-unit-state/record.sh;
       };
-      trackedJobs =
-        config.modules.fleet-unit-state.retainedJobs
-        ++ map (name: "rsync-job-${name}") (lib.attrNames config.services.rsync.jobs);
+      trackedJobs = [
+        "restic-backups-offsite"
+      ]
+      ++ config.modules.fleet-unit-state.retainedJobs
+      ++ map (name: "rsync-job-${name}") (lib.attrNames config.services.rsync.jobs);
     in
     {
       options.modules.fleet-unit-state.retainedJobs = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ "restic-backups-offsite" ];
-        description = "One-shot services whose failed result is retained until a successful rerun";
+        default = [ ];
+        description = "Additional one-shot services whose failed result is retained until a successful rerun";
       };
       options.modules.fleet-unit-state.snapshot = lib.mkOption {
         type = lib.types.package;
