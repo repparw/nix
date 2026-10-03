@@ -177,9 +177,11 @@
         };
       };
       launchRemote = "luna-send -n 1 -w 3000 -f luna://com.webos.applicationManager/launch '${launchPayload}'";
+      closeRemote = "luna-send -n 1 -f luna://com.webos.service.applicationmanager/closeByAppId '{\"id\":\"${moonlightAppId}\"}'";
       launch = pkgs.writeShellApplication {
         name = "8bitdo-tv-moonlight";
         runtimeInputs = [
+          pkgs.evtest
           pkgs.jq
           pkgs.niri
           pkgs.openssh
@@ -189,6 +191,42 @@
         text = ''
           ssh_tv() {
             ssh -o BatchMode=yes -o ConnectTimeout=5 -o RequestTTY=force tv "$@"
+          }
+
+          # The 2.4GHz dongle re-enumerates as 2dc8:310a whenever the controller
+          # powers on, including from a wall charger, so enumeration alone cannot
+          # tell charging from playing. xpad maps 0x310a as a plain Xbox 360 pad
+          # and reports no battery state, so the only distinguishing signal is
+          # real button input. by-id survives re-enumeration and the
+          # -event-joystick suffix keeps the sibling keyboard and mouse nodes
+          # out of the way.
+          joystick_node() {
+            local node
+            for node in /dev/input/by-id/*Ultimate_2C*event-joystick; do
+              [ -e "$node" ] || continue
+              printf '%s\n' "$node"
+              return 0
+            done
+            return 1
+          }
+
+          wait_button() {
+            local node deadline
+            deadline=$((SECONDS + $1))
+            while :; do
+              node="$(joystick_node)" && break
+              [ "$SECONDS" -lt "$deadline" ] || return 1
+              sleep 0.2
+            done
+            # grep -m1 closes the pipe on the first button press, which kills
+            # evtest with SIGPIPE; pipefail would turn that into a failed gate.
+            local status
+            set +o pipefail
+            timeout "$1" evtest "$node" 2>&1 |
+              grep -qm1 -E 'type 1 \(EV_KEY\), code [0-9]+ \([^)]*\), value 1'
+            status=$?
+            set -o pipefail
+            return "$status"
           }
 
           session_unlocked() {
@@ -205,6 +243,21 @@
             return 1
           }
 
+          wait_button 30 || exit 0
+
+          # Never interrupt a live stream: on controller reconnect the dongle
+          # re-enumerates and the button gate above passes (the user is mashing
+          # buttons), but their input is already flowing to the game. The
+          # journal session state machine is precise: the latest terminal
+          # line is either streams starting (active) or stopped+waiting (idle).
+          # No lines (never streamed since boot) fails open to launching.
+          moonshine_streaming() {
+            journalctl -u moonshine --no-pager -n 1000 2>/dev/null |
+              grep -E "session::manager: (Starting session streams|Session stopped (by user|unexpectedly))" |
+              tail -n 1 |
+              grep -q "Starting session streams"
+          }
+
           tv_on=0
           if power="$(ssh_tv 'luna-send -n 1 -w 3000 -f luna://com.webos.service.tvpower/power/getPowerState "{}"' 2>/dev/null)"; then
             if jq -e '.state == "Active"' >/dev/null <<<"$power"; then
@@ -213,6 +266,15 @@
           fi
 
           if [ "$tv_on" -eq 1 ]; then
+            # A live stream means the button input is already reaching the
+            # game: exit quietly instead of killing it with the close below.
+            moonshine_streaming && exit 0
+            # webOS only delivers launch params on a cold start: a lingering
+            # Moonlight is re-foregrounded via webOSRelaunch with params
+            # dropped, landing on the app picker instead of Steam. Close first
+            # (a failed close just means it was not running), then launch.
+            ssh_tv ${lib.escapeShellArg closeRemote} >/dev/null 2>&1 || true
+            sleep 1
             ssh_tv ${lib.escapeShellArg launchRemote} >/dev/null
             exit 0
           fi
@@ -236,7 +298,7 @@
 
       systemd.user.services."8bitdo-tv-moonlight" = {
         Unit = {
-          Description = "Start Steam via TV Moonlight or local Big Picture when the 8BitDo connects";
+          Description = "Start Steam via TV Moonlight or local Big Picture when the 8BitDo connects and a button is pressed";
           After = [
             "network-online.target"
             "graphical-session.target"
