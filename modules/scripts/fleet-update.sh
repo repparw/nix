@@ -128,7 +128,7 @@ notify_failure() {
   case "$failure_reason" in
     soak:*) detail=$failure_reason ;;
   esac
-  if [[ "$failure_reason" == "build or activation of "* ]] && [ -s "$log" ]; then
+  if [[ "$failure_reason" == "build or activation of "* || "$failure_reason" == "preparation of "* ]] && [ -s "$log" ]; then
     # nix ends a failed build with a cascade of "Cannot build ... Reason: N
     # dependencies failed" and buries the compiler or evaluator error that
     # actually explains it in the middle, so take the lines naming a failure.
@@ -502,7 +502,7 @@ prepare_host() {
   NIX_SSHOPTS="${ssh_options[*]}" nix copy -s --to "$store" --derivation "$drv" || return 1
   remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || return 1
   built=$(remote "$host" nix build "$drv^out" --out-link /nix/var/nix/gcroots/fleet-update/prepared --print-out-paths) || return 1
-  [ "$built" = "$profile" ] || { echo "$host prepared unexpected profile: $built" >&2; return 1; }
+  [ "$built" = "$profile" ] || { echo "error: $host prepared unexpected profile: $built" >&2; return 1; }
   remote "$host" test -f "$profile/activate-rs" || return 1
   remote "$host" test -f "$profile/deploy-rs-activate" || return 1
   observed=$(remote "$host" "$system/sw/bin/nixos-version" --configuration-revision) || return 1
@@ -510,7 +510,7 @@ prepare_host() {
     --arg profilePath "$built" --arg outcome prepared \
     '{host: $host, revision: $revision, systemPath: $systemPath, profilePath: $profilePath, outcome: $outcome}' \
     > "$preparation/result-$host.json"
-  [ "$observed" = "$revision" ] || { echo "$host prepared revision $observed, expected $revision" >&2; return 1; }
+  [ "$observed" = "$revision" ] || { echo "error: $host prepared revision $observed, expected $revision" >&2; return 1; }
   jq '.deployment' "$preparation/$host.json" > "$preparation/$host/deploy.json"
   printf '%s\n' '{ outputs = { self }: { deploy = builtins.fromJSON (builtins.readFile ./deploy.json); }; }' \
     > "$preparation/$host/flake.nix"

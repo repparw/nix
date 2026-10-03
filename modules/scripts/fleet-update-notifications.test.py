@@ -53,6 +53,10 @@ class Notifications(unittest.TestCase):
         body, _ = self.report("build or activation of alpha failed", "connection refused\n")
         self.assertIn("build or activation of alpha failed", body)
 
+    def test_preparation_failure_reports_its_build_error(self):
+        body, _ = self.report("preparation of alpha failed", "error: target build failed\n")
+        self.assertIn("error: target build failed", body)
+
     def test_many_errors_do_not_abort_on_sigpipe(self):
         body, attached = self.report("build or activation of alpha failed", "error: failed\n" * 10000)
         self.assertIn("error: failed", body)
