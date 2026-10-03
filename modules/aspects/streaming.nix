@@ -245,6 +245,19 @@
 
           wait_button 30 || exit 0
 
+          # Never interrupt a live stream: on controller reconnect the dongle
+          # re-enumerates and the button gate above passes (the user is mashing
+          # buttons), but their input is already flowing to the game. The
+          # journal session state machine is precise: the latest terminal
+          # line is either streams starting (active) or stopped+waiting (idle).
+          # No lines (never streamed since boot) fails open to launching.
+          moonshine_streaming() {
+            journalctl -u moonshine --no-pager -n 1000 2>/dev/null |
+              grep -E "session::manager: (Starting session streams|Session stopped (by user|unexpectedly))" |
+              tail -n 1 |
+              grep -q "Starting session streams"
+          }
+
           tv_on=0
           if power="$(ssh_tv 'luna-send -n 1 -w 3000 -f luna://com.webos.service.tvpower/power/getPowerState "{}"' 2>/dev/null)"; then
             if jq -e '.state == "Active"' >/dev/null <<<"$power"; then
@@ -253,6 +266,9 @@
           fi
 
           if [ "$tv_on" -eq 1 ]; then
+            # A live stream means the button input is already reaching the
+            # game: exit quietly instead of killing it with the close below.
+            moonshine_streaming && exit 0
             # webOS only delivers launch params on a cold start: a lingering
             # Moonlight is re-foregrounded via webOSRelaunch with params
             # dropped, landing on the app picker instead of Steam. Close first
