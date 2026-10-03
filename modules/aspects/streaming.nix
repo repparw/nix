@@ -180,6 +180,7 @@
       launch = pkgs.writeShellApplication {
         name = "8bitdo-tv-moonlight";
         runtimeInputs = [
+          pkgs.evtest
           pkgs.jq
           pkgs.niri
           pkgs.openssh
@@ -189,6 +190,42 @@
         text = ''
           ssh_tv() {
             ssh -o BatchMode=yes -o ConnectTimeout=5 -o RequestTTY=force tv "$@"
+          }
+
+          # The 2.4GHz dongle re-enumerates as 2dc8:310a whenever the controller
+          # powers on, including from a wall charger, so enumeration alone cannot
+          # tell charging from playing. xpad maps 0x310a as a plain Xbox 360 pad
+          # and reports no battery state, so the only distinguishing signal is
+          # real button input. by-id survives re-enumeration and the
+          # -event-joystick suffix keeps the sibling keyboard and mouse nodes
+          # out of the way.
+          joystick_node() {
+            local node
+            for node in /dev/input/by-id/*Ultimate_2C*event-joystick; do
+              [ -e "$node" ] || continue
+              printf '%s\n' "$node"
+              return 0
+            done
+            return 1
+          }
+
+          wait_button() {
+            local node deadline
+            deadline=$((SECONDS + $1))
+            while :; do
+              node="$(joystick_node)" && break
+              [ "$SECONDS" -lt "$deadline" ] || return 1
+              sleep 0.2
+            done
+            # grep -m1 closes the pipe on the first button press, which kills
+            # evtest with SIGPIPE; pipefail would turn that into a failed gate.
+            local status
+            set +o pipefail
+            timeout "$1" evtest "$node" 2>&1 |
+              grep -qm1 -E 'type 1 \(EV_KEY\), code [0-9]+ \([^)]*\), value 1'
+            status=$?
+            set -o pipefail
+            return "$status"
           }
 
           session_unlocked() {
@@ -204,6 +241,8 @@
             done < <(loginctl list-sessions --no-legend)
             return 1
           }
+
+          wait_button 30 || exit 0
 
           tv_on=0
           if power="$(ssh_tv 'luna-send -n 1 -w 3000 -f luna://com.webos.service.tvpower/power/getPowerState "{}"' 2>/dev/null)"; then
@@ -236,7 +275,7 @@
 
       systemd.user.services."8bitdo-tv-moonlight" = {
         Unit = {
-          Description = "Start Steam via TV Moonlight or local Big Picture when the 8BitDo connects";
+          Description = "Start Steam via TV Moonlight or local Big Picture when the 8BitDo connects and a button is pressed";
           After = [
             "network-online.target"
             "graphical-session.target"
