@@ -285,6 +285,35 @@ Alpha's interactive `Mod+U` asks the pi controller to run
 and `PAUSE` but keeps the exact-commit CI gate, health checks, and rollback. The separate
 `host-update` command remains for building and reviewing a local tree by hand.
 
+## Pi store retention
+
+Pi's 40 GB `/nix` filesystem uses daily GC. Before collecting unrooted paths,
+`pi-generation-retention` keeps the newest five system profile generations,
+the selected profile, and any generation whose closure contains the running
+or booted system. This also handles deploy-rs profiles that wrap a NixOS system.
+Missing runtime GC roots or a failed closure query abort cleanup before pruning.
+
+The retention command holds `/run/fleet-update.lock` across pruning and GC. It
+defers if a deployment or headless reboot sequence owns the lock. It changes
+only system-profile generation links. User profiles, preparation roots under
+`/var/lib/fleet-verify`, and `/nix/var/nix/gcroots/fleet-update/previous` remain
+intact. Old preparation roots require a separate reviewed cleanup after the
+corresponding rollout and rollback window have finished.
+
+Preview eligibility without deleting generations or collecting store paths:
+
+```sh
+ssh root@192.168.0.4 'pi-generation-retention plan'
+```
+
+An authorized manual cleanup uses `pi-generation-retention apply`, or starts
+`nix-gc.service`. Avoid `nix-collect-garbage -d`: it bypasses this generation
+policy. Retaining five recent generations bounds ordinary profile history,
+but cannot impose a byte limit on required systems or separately rooted
+builds. Continue checking `df -h /nix`; the deployment preflight still requires
+6 GiB free. Pi's automatic Nix GC also keeps its existing 3 GiB `min-free`
+setting and never deletes profile generations itself.
+
 ## Firmware updates (`fwupd`, hardware hosts)
 
 `services.fwupd` is enabled on hosts with LVFS-discoverable devices (alpha,
