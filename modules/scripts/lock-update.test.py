@@ -158,7 +158,9 @@ class LockUpdate(unittest.TestCase):
     def test_ci_dispatch_guard_rejects_moved_ref(self):
         guards = [line.strip().removeprefix("run: ") for line in CI.splitlines()
                   if 'run: test "$GITHUB_SHA" = "$EXPECTED_SHA"' in line]
-        self.assertEqual(len(guards), 2)
+        checkout_count = CI.count("uses: actions/checkout@")
+        self.assertGreater(checkout_count, 0)
+        self.assertEqual(len(guards), checkout_count)
         for guard in guards:
             for sha, expected, success in [("a" * 40, "a" * 40, True),
                                            ("b" * 40, "a" * 40, False),
@@ -166,7 +168,7 @@ class LockUpdate(unittest.TestCase):
                 result = subprocess.run(["bash", "-c", guard],
                                         env=os.environ | {"GITHUB_SHA": sha, "EXPECTED_SHA": expected})
                 self.assertEqual(result.returncode == 0, success)
-        self.assertEqual(CI.count("ref: ${{ github.sha }}"), 2)
+        self.assertEqual(CI.count("ref: ${{ github.sha }}"), checkout_count)
 
 
 if __name__ == "__main__":
