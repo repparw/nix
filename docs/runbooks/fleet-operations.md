@@ -146,9 +146,12 @@ Lock maintenance runs in GitHub Actions; deployment runs on pi:
   `ci.yml` for that exact commit before evaluation or activation.
   Missing, pending, failed, or unavailable CI results defer deployment without
   changing the rollback streak. The next scheduled run retries current main.
-- Deployment proceeds through epsilon, alpha, then pi, so remote unit collectors
-  are available before the controller starts polling them. Each host passes health
-  checks before the next proceeds, including hosts already on that revision.
+- Deployment attempts epsilon, alpha, then pi. Alpha can be deferred by the
+  activity gate; Pi reports its snapshot as unavailable until its collector is
+  installed. For the initial collector rollout, use an authorized
+  `--host all --force` deployment or activate both remote hosts first. Each
+  activated host passes health checks before the next proceeds, including hosts
+  already on that revision.
 - `fleet-alpha-retry.timer` runs daily at 07:00 in the controller's timezone.
   It retries a deferred alpha against current main, with the same CI gate.
 
