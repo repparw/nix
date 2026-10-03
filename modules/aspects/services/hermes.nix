@@ -69,23 +69,19 @@
                 package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
                 environmentFiles = [ "/run/secrets/hermes-env" ];
                 settings.model = {
-                  provider = "nous";
-                  default = "meituan/longcat-2.0:free";
+                  provider = "openai-codex";
+                  default = "gpt-6.1-sol";
                 };
                 settings.fallback_providers = [
                   {
                     provider = "nous";
-                    model = "stepfun/step-3.7-flash:free";
+                    model = "meituan/longcat-2.0:free";
                   }
                   {
-                    # authFile is store-path typed, so it cannot point
-                    # at a /run/secrets runtime path without leaking the token
-                    # into the Nix store.
-                    provider = "openai-codex";
-                    model = "gpt-5.6-sol";
+                    provider = "nous";
+                    model = "stepfun/step-3.7-flash:free";
                   }
                 ];
-                settings.reasoning_overrides."gpt-5.6-sol" = "medium";
                 settings.display.credits_notices = false;
                 settings.platforms.discord = {
                   enabled = true;
