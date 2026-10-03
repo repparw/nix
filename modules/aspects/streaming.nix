@@ -247,7 +247,9 @@
 
           # Never interrupt a live stream: on controller reconnect the dongle
           # re-enumerates and the button gate above passes (the user is mashing
-          # buttons), but their input is already flowing to the game. The
+          # buttons), but their input is already flowing to the game. This is
+          # checked before any branch, because both the TV relaunch and the
+          # desk focus/launch would tear down an in-progress session. The
           # journal session state machine is precise: the latest terminal
           # line is either streams starting (active) or stopped+waiting (idle).
           # No lines (never streamed since boot) fails open to launching.
@@ -258,6 +260,8 @@
               grep -q "Starting session streams"
           }
 
+          moonshine_streaming && exit 0
+
           tv_on=0
           if power="$(ssh_tv 'luna-send -n 1 -w 3000 -f luna://com.webos.service.tvpower/power/getPowerState "{}"' 2>/dev/null)"; then
             if jq -e '.state == "Active"' >/dev/null <<<"$power"; then
@@ -266,9 +270,6 @@
           fi
 
           if [ "$tv_on" -eq 1 ]; then
-            # A live stream means the button input is already reaching the
-            # game: exit quietly instead of killing it with the close below.
-            moonshine_streaming && exit 0
             # webOS only delivers launch params on a cold start: a lingering
             # Moonlight is re-foregrounded via webOSRelaunch with params
             # dropped, landing on the app picker instead of Steam. Close first
@@ -281,6 +282,14 @@
 
           session_unlocked || exit 0
           [ -n "''${WAYLAND_DISPLAY:-}" ] || exit 0
+
+          # Already on the desk inside a Steam game: the button press is input
+          # to that game, not a request to relaunch anything. Steam spawns a
+          # `reaper SteamLaunch AppId=...` child for a running (or launching)
+          # game; plain Big Picture has none, and still gets focus + raise.
+          if pgrep -f "reaper SteamLaunch" >/dev/null; then
+            exit 0
+          fi
 
           niri msg action focus-monitor DP-1 >/dev/null
 
