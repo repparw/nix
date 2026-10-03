@@ -31,6 +31,15 @@
           uid = 327680;
         };
 
+        # Agent LLM/tool keys only. `hermes-env` stays fleet-wide because
+        # fleet-update, backup, and fleet-health source it for the Discord
+        # token; this secret is declared here so only epsilon (the Hermes
+        # host) decrypts provider keys.
+        sops.secrets."hermes-llm-env" = {
+          sopsFile = ../../../secrets/hermes.sops.yaml;
+          uid = 327680;
+        };
+
         containers.hermes = servicesLib.mkContainer {
           inherit cfg;
           name = "hermes";
@@ -58,6 +67,10 @@
               hostPath = config.sops.secrets."hermes-env".path;
               isReadOnly = true;
             };
+            "/run/secrets/hermes-llm-env" = {
+              hostPath = config.sops.secrets."hermes-llm-env".path;
+              isReadOnly = true;
+            };
           };
           extraConfig =
             { pkgs, ... }:
@@ -67,12 +80,20 @@
               services.hermes-agent = {
                 enable = true;
                 package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
-                environmentFiles = [ "/run/secrets/hermes-env" ];
+                environmentFiles = [ "/run/secrets/hermes-env" "/run/secrets/hermes-llm-env" ];
                 settings.model = {
                   provider = "openai-codex";
                   default = "gpt-6.1-sol";
                 };
                 settings.fallback_providers = [
+                  {
+                    provider = "opencode-free";
+                    model = "space-bunny-free";
+                  }
+                  {
+                    provider = "opencode-free";
+                    model = "muse-spark-1.3-contributor-free";
+                  }
                   {
                     provider = "nous";
                     model = "meituan/longcat-2.0:free";
