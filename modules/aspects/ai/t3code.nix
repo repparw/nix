@@ -114,23 +114,21 @@ in
           };
         };
 
-        systemd.user.services.t3code-web = {
-          Unit = {
-            Description = "T3 Code Web Service";
-            After = [ "network.target" ];
-          };
-          Service = {
-            # Follow programs.t3code.package (pi pins the server-only build).
-            ExecStart = "${config.programs.t3code.package}/bin/t3 serve --mode web";
-            Restart = "always";
-            RestartSec = 5;
-            Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") connectEnvironment) ++ [
-              "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
-            ];
-          };
-          Install = {
-            WantedBy = [ "default.target" ];
-          };
+        programs.t3code.server = {
+          enable = true;
+          extraArgs = [
+            "--mode"
+            "web"
+          ];
+        };
+        # Preserve Connect's relay environment and the existing restart policy.
+        # The upstream server module follows programs.t3code.package, including
+        # pi's server-only package override.
+        systemd.user.services.t3code.Service = {
+          Restart = lib.mkForce "always";
+          Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") connectEnvironment) ++ [
+            "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
+          ];
         };
       };
   };
