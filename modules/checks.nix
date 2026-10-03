@@ -118,6 +118,23 @@
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
 
+          ci-workflow =
+            pkgs.runCommand "check-ci-workflow"
+              {
+                nativeBuildInputs = [
+                  pkgs.nodejs
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.actionlint
+                ];
+              }
+              ''
+                cd ${inputs.self}
+                node --test .github/scripts/ci.test.mjs
+                actionlint -shellcheck= .github/workflows/ci.yml
+                touch $out
+              '';
+
           formatting =
             pkgs.runCommand "check-formatting"
               {

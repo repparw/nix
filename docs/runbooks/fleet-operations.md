@@ -123,6 +123,16 @@ CI's host checks stub selected packages. Successful CI proves those checks,
 not full system builds or runtime health. Real builds still run on targets
 through deploy-rs; the controller still performs configuration evaluation.
 
+Lightweight checks, shared configuration checks, and each host's stubbed
+evaluation run in parallel. The required `gate` waits for every group and the
+disposable persistence VM test; a failed, skipped, or cancelled dependency
+fails the gate. Each job uploads individual check logs and records durations
+in its summary. Superseded PR runs are cancelled, while main push runs retain
+separate concurrency groups so the deployment controller can verify its
+captured revision. Explicit lock-update dispatches remain deduplicated by
+workflow SHA and expected SHA, with the expected SHA verified before checkout
+in every build job.
+
 ### Enable lock update PRs
 
 The lock workflow uses the built-in `GITHUB_TOKEN`. Its permissions are
