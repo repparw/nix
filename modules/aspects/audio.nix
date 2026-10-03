@@ -60,6 +60,23 @@
                   }
                 ];
               };
+
+              disableEmeetMic = {
+                "monitor.alsa.rules" = [
+                  {
+                    matches = [ { "device.name" = "~alsa_card.usb-EMEET_*"; } ];
+                    actions.update-props = {
+                      "device.disabled" = true;
+                    };
+                  }
+                  {
+                    matches = [ { "node.name" = "~alsa_input.usb-EMEET_*"; } ];
+                    actions.update-props = {
+                      "node.disabled" = true;
+                    };
+                  }
+                ];
+              };
             };
           };
         };
