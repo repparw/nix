@@ -26,9 +26,16 @@
 
         # sops-nix's `owner` option takes a username, not a number; `uid`
         # is the numeric variant and applies even though no host user has that id.
-        sops.secrets."hermes-env" = {
-          sopsFile = ../../../secrets/hermes.sops.yaml;
-          uid = 327680;
+        sops.secrets = {
+          "hermes-env" = {
+            sopsFile = ../../../secrets/hermes.sops.yaml;
+            uid = 327680;
+          };
+          "arr-api-keys" = {
+            sopsFile = ../../../secrets/hermes.sops.yaml;
+            # Tools run as hermes (container UID 345), not container root.
+            uid = 327680 + 345;
+          };
         };
 
         containers.hermes = servicesLib.mkContainer {
@@ -58,6 +65,10 @@
               hostPath = config.sops.secrets."hermes-env".path;
               isReadOnly = true;
             };
+            "/run/secrets/arr-api-keys" = {
+              hostPath = config.sops.secrets."arr-api-keys".path;
+              isReadOnly = true;
+            };
           };
           extraConfig =
             { pkgs, ... }:
@@ -82,10 +93,10 @@
                     # at a /run/secrets runtime path without leaking the token
                     # into the Nix store.
                     provider = "openai-codex";
-                    model = "gpt-5.6-sol";
+                    model = "gpt-6.1-sol";
                   }
                 ];
-                settings.reasoning_overrides."gpt-5.6-sol" = "medium";
+                settings.reasoning_overrides."gpt-6.1-sol" = "medium";
                 settings.display.credits_notices = false;
                 settings.platforms.discord = {
                   enabled = true;
@@ -95,6 +106,13 @@
                     name = "notifications";
                   };
                 };
+                # Pin cron's primary model independently of the chat default.
+                # The global fallback chain still applies if that model fails;
+                # this is a primary-model preference, not a spending limit.
+                settings.cron = {
+                  model = "stepfun/step-3.7-flash:free";
+                  model_provider = "nous";
+                };
                 settings.tool_loop_guardrails = {
                   hard_stop_enabled = true;
                   hard_stop_after = {
@@ -103,6 +121,7 @@
                   };
                 };
                 extraPackages = with pkgs; [
+                  curl
                   ffmpeg
                   nodejs
                   ripgrep
