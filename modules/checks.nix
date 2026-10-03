@@ -160,11 +160,19 @@
                     inputs.self.nixosConfigurations.${host}.config.systemd.units."${job}.service".text
                 ) expectedJobs.${host}
               ) (lib.attrNames expectedJobs);
+              collectorsAreInstalled = lib.all (
+                host:
+                let
+                  config = inputs.self.nixosConfigurations.${host}.config;
+                in
+                lib.elem config.modules.fleet-unit-state.snapshot config.environment.systemPackages
+              ) (lib.attrNames expectedJobs);
               probe = pkgs.writeText "fleet-health-probe-test.sh" (
                 builtins.unsafeDiscardStringContext inputs.self.nixosConfigurations.pi.config.modules.fleet-health.probe.text
               );
             in
             assert retainedJobsHaveHooks;
+            assert collectorsAreInstalled;
             pkgs.runCommand "check-fleet-failed-units"
               {
                 nativeBuildInputs = with pkgs; [

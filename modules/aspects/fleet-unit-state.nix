@@ -42,26 +42,28 @@
         readOnly = true;
         description = "Local failed units and retained scheduled job failures";
       };
-      config = {
-        modules.fleet-unit-state.snapshot = snapshot;
-        environment.systemPackages = [ snapshot ];
-        systemd.tmpfiles.rules = [ "d ${stateDir} 0700 root root -" ];
-        systemd.services = lib.genAttrs trackedJobs (_: {
-          serviceConfig = {
-            ExecStopPost = [ "+${lib.getExe record} %n" ];
-            ReadWritePaths = [ stateDir ];
+      config = lib.mkMerge [
+        {
+          modules.fleet-unit-state.snapshot = snapshot;
+          environment.systemPackages = [ snapshot ];
+          systemd.tmpfiles.rules = [ "d ${stateDir} 0700 root root -" ];
+          systemd.services = lib.genAttrs trackedJobs (_: {
+            serviceConfig = {
+              ExecStopPost = [ "+${lib.getExe record} %n" ];
+              ReadWritePaths = [ stateDir ];
+            };
+          });
+        }
+        (lib.optionalAttrs (options ? environment.persistence) {
+          environment.persistence = {
+            "/persist".directories = [
+              {
+                directory = stateDir;
+                mode = "0700";
+              }
+            ];
           };
-        });
-      }
-      // lib.optionalAttrs (options ? environment.persistence) {
-        environment.persistence = {
-          "/persist".directories = [
-            {
-              directory = stateDir;
-              mode = "0700";
-            }
-          ];
-        };
-      };
+        })
+      ];
     };
 }
