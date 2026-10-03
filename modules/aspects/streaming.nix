@@ -105,6 +105,74 @@
                 -- steam -tenfoot
             '';
           };
+          # Desktop stream: nested niri plus a kiosk launcher loop. Vicinae
+          # cannot serve the stream (its daemon is bound to the login
+          # session's display), so fuzzel -- a plain Wayland client --
+          # opens whenever the streamed workspace is empty. It is already
+          # focused when it appears, so typing filters immediately with no
+          # Mod key and no lost first character. Phone-friendly by design.
+          moonshine-desktop = pkgs.writeShellApplication {
+            name = "moonshine-desktop";
+            runtimeInputs = [
+              pkgs.coreutils
+              pkgs.foot
+              pkgs.fuzzel
+              pkgs.gnugrep
+              pkgs.gnused
+              pkgs.jq
+              pkgs.niri
+            ];
+            text = ''
+              work="$(mktemp -d)"
+              niri_pid=""
+              tail_pid=""
+              cleanup() {
+                if [ -n "$tail_pid" ]; then kill "$tail_pid" 2>/dev/null || true; fi
+                if [ -n "$niri_pid" ]; then kill "$niri_pid" 2>/dev/null || true; fi
+                rm -rf "$work"
+              }
+              trap cleanup EXIT
+
+              # Moonshine launches with systemd's default environment; fuzzel
+              # needs the system application database to list anything.
+              home_dir="''${HOME:-/home/${sessionUser}}"
+              export XDG_DATA_DIRS="/run/current-system/sw/share:''${home_dir}/.nix-profile/share:''${home_dir}/.local/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+              niri >"$work/niri.log" 2>&1 &
+              niri_pid=$!
+              tail -n +1 -f "$work/niri.log" &
+              tail_pid=$!
+
+              # niri prints its exact IPC socket on startup; capture it
+              # instead of guessing, then derive the Wayland display from it.
+              sock=""
+              for _ in $(seq 1 200); do
+                sock="$(grep -Eo '/run/user/[0-9]+/niri\.wayland-[^[:space:]"]+\.sock' "$work/niri.log" 2>/dev/null | head -n 1 || true)"
+                if [ -n "$sock" ] && [ -S "$sock" ]; then break; fi
+                sock=""
+                if ! kill -0 "$niri_pid" 2>/dev/null; then break; fi
+                sleep 0.1
+              done
+              if [ -z "$sock" ]; then
+                echo "moonshine-desktop: nested niri published no IPC socket" >&2
+                exit 1
+              fi
+              display="$(basename "$sock" | sed -E 's/^niri\.(wayland-[0-9]+)\.[0-9]+\.sock$/\1/')"
+              export NIRI_SOCKET="$sock"
+              export WAYLAND_DISPLAY="$display"
+              echo "moonshine-desktop: nested niri on $WAYLAND_DISPLAY ($NIRI_SOCKET)" >&2
+
+              while kill -0 "$niri_pid" 2>/dev/null; do
+                windows="$(niri msg --json windows 2>/dev/null | jq -r 'length' 2>/dev/null || echo '?')"
+                if [ "$windows" = "0" ]; then
+                  fuzzel || true
+                  sleep 1
+                else
+                  sleep 2
+                fi
+              done
+            '';
+          };
         in
         {
           config = {
@@ -121,7 +189,7 @@
                   {
                     title = "Desktop";
                     boxart = "${moonshine-boxart}/desktop.png";
-                    command = [ (lib.getExe pkgs.niri) ];
+                    command = [ "${moonshine-desktop}/bin/moonshine-desktop" ];
                     stdout = "journal";
                     stderr = "journal";
                   }

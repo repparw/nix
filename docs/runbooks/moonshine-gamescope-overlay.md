@@ -34,6 +34,21 @@ against a rolling input.
 change that; `gamescopeHdr` is `pkgs.gamescope.override { enableWsi = true; }`
 with no local patches, so a Gamescope bump now either builds or fails cleanly.
 
+## Desktop stream launcher
+
+The `Desktop` application boots a nested niri inside Moonshine's isolated
+compositor (`modules/aspects/streaming.nix`: `moonshine-desktop`). Vicinae
+cannot serve that session: its daemon is bound to the login session's
+display, so `Mod+Space` in the stream would open the launcher on the
+physical monitor at home, invisible to the client.
+
+Instead the wrapper keeps a daemon-less `fuzzel` open whenever the streamed
+workspace is empty (auto-open on connect, reopen after the last window
+closes). It is already focused, so typing filters immediately with no Mod
+key -- the phone-friendly path. `fuzzel`'s terminal for console entries is
+pinned in `modules/aspects/gui/niri.nix` (`fuzzel/fuzzel.ini`), because the
+stream has no `$TERMINAL`.
+
 ## Known-good settings
 
 Persona 3 Reload on `alpha`, confirmed 2026-09-08 with Moonshine 0.15.0 and
