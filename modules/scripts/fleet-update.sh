@@ -467,7 +467,7 @@ preflight_hosts() {
 }
 
 if [ "$requested_host" = all ]; then
-  hosts=(epsilon pi alpha)
+  hosts=(epsilon alpha pi)
 else
   hosts=("$requested_host")
 fi
@@ -618,7 +618,7 @@ if [ -n "$failure_host" ]; then
   fi
 
   rollback_failed=0
-  for host in alpha pi epsilon; do
+  for host in pi alpha epsilon; do
     [ -e "$state/reached-$revision-$host" ] || continue
     before=$(cat "$state/before-$revision-$host" 2>/dev/null || true)
     if [[ "$before" != /nix/store/* ]] \

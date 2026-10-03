@@ -140,7 +140,7 @@ class Deployment(unittest.TestCase):
     def test_all_hosts_converge_after_ci(self):
         result = self.deploy()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual([c[1] for c in self.calls if c[0] == "deploy"], [".#epsilon", ".#pi", ".#alpha"])
+        self.assertEqual([c[1] for c in self.calls if c[0] == "deploy"], [".#epsilon", ".#alpha", ".#pi"])
         self.assertEqual((self.state / "deployed-revision").read_text().strip(), REVISION)
         self.assertEqual(list(self.state.glob("reached-*")), [])
         self.assertFalse(any(c[0] == "git" and c[1] in ["push", "revert", "commit"] for c in self.calls))
@@ -157,7 +157,7 @@ class Deployment(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(pause.read_text(), "existing operator pause\n")
         self.assertEqual((self.state / "deployed-revision").read_text().strip(), REVISION)
-        self.assertEqual([c[1] for c in self.calls if c[0] == "deploy"], [".#epsilon", ".#pi", ".#alpha"])
+        self.assertEqual([c[1] for c in self.calls if c[0] == "deploy"], [".#epsilon", ".#alpha", ".#pi"])
 
     def test_force_requires_explicit_host_selection(self):
         result = subprocess.run(["bash", str(self.script), "deploy", "--force"],
@@ -179,9 +179,16 @@ class Deployment(unittest.TestCase):
         result = self.deploy(deploy_failure="pi")
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual((self.root / "pi").read_text(), "old")
+        self.assertEqual((self.root / "alpha").read_text(), "old")
         self.assertEqual((self.root / "epsilon").read_text(), "old")
         self.assertTrue((self.state / "PAUSE").exists())
         self.assertFalse(any(c[0] == "git" and c[1] in ["push", "revert", "commit"] for c in self.calls))
+
+    def test_failed_alpha_prevents_controller_activation(self):
+        result = self.deploy(deploy_failure="alpha")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual([c[1] for c in self.calls if c[0] == "deploy"], [".#epsilon", ".#alpha"])
+        self.assertFalse((self.root / "pi").exists())
 
     def test_failed_rollback_keeps_roots_and_pauses(self):
         result = self.deploy(deploy_failure="pi", rollback_failure="pi")

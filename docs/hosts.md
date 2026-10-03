@@ -51,7 +51,7 @@ Glance live on epsilon.
 
 It is the fleet's deployment controller. GitHub Actions opens lock update PRs.
 After merge and successful CI on the exact main commit, pi stages that revision
-through epsilon, pi, and idle alpha with deploy-rs.
+through epsilon, idle alpha, and finally pi with deploy-rs.
 
 - Traefik (:80/:443) fronts `jellyfin.repparw.com` on the LAN and
   `home.repparw.com` locally. Jellyfin's backend is alpha's published port.

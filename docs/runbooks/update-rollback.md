@@ -10,7 +10,7 @@ tags: [runbook, recovery, updates, pi, alpha, epsilon, deploy-rs]
 # Update Rollback
 
 GitHub Actions opens lock update PRs. Pi's independent 05:30 consumer requires
-successful CI for exact current main, then deploys epsilon, pi, and idle alpha.
+successful CI for exact current main, then deploys epsilon, idle alpha, and finally pi.
 Pi's 07:00 alpha retry uses the same CI gate.
 
 Full pipeline detail lives in the

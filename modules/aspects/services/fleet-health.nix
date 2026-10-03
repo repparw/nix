@@ -126,6 +126,10 @@ in
             gnused
             coreutils
             systemd
+            openssh
+            util-linux
+            gnugrep
+            config.modules.fleet-unit-state.snapshot
           ];
           text = ''
                         usage="usage: fleet-health-probe [--strict] [--local]"
@@ -147,6 +151,11 @@ in
                         mkdir -p "$state_dir"
 
 
+                        if [ "$strict" != 1 ]; then
+                          exec 9>"$state_dir/.probe.lock"
+                          flock 9
+                        fi
+
                         failures=0
 
                         fail() {
@@ -159,7 +168,7 @@ in
                           printf '%s\n' "$count" > "$state_dir/$n"
                           if [ "$count" -ge 2 ] && [ ! -e "$state_dir/.$n.msgid" ]; then
                             mid=$(discord-notify post ":red_circle: DOWN $HOSTNAME $n ($detail)" || true)
-                            [ -n "$mid" ] && printf '%s\n' "$mid" > "$state_dir/.$n.msgid"
+                            [ -z "$mid" ] || printf '%s\n' "$mid" > "$state_dir/.$n.msgid"
                           fi
                         }
 
@@ -187,21 +196,56 @@ in
                           ok "unit:restic-backups-offsite"
                         fi
 
-                        if [ "$strict" != 1 ]; then
-                          # systemd prefixes failed rows with a bullet on newer
-                          # versions; extract real unit names by their suffix.
-                          failed_cur=$(systemctl list-units --state=failed --no-legend --no-pager 2>/dev/null \
-                            | grep -oE '[a-zA-Z0-9@._\\-]+\.(service|timer|mount|path|scope|socket|target)' \
-                            | sort -u || true)
-                          failed_prev=$(cat "$state_dir/.failed-units" 2>/dev/null || true)
+                        sweep_units() {
+                          local host="$1" current previous unit recovering="" prefix="unit-failed:$1:" previous_file="$state_dir/.failed-units-$1"
+                          if [ "$host" = "$HOSTNAME" ]; then
+                            prefix="unit-failed:"
+                            previous_file="$state_dir/.failed-units"
+                            if ! current=$(fleet-unit-snapshot); then
+                              fail "host-units:$host" "failed-unit snapshot unavailable"
+                              return 0
+                            fi
+                          else
+                            if ! current=$(timeout 30 ssh \
+                              -i /home/repparw/.ssh/id_ed25519 \
+                              -o BatchMode=yes -o IdentitiesOnly=yes \
+                              -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 \
+                              "root@$2" fleet-unit-snapshot); then
+                              fail "host-units:$host" "SSH failed-unit snapshot unavailable"
+                              return 0
+                            fi
+                          fi
+                          if printf '%s\n' "$current" | grep -vE '^$|^[a-zA-Z0-9@._:\\-]+\.(service|timer|mount|path|scope|socket|target|automount|slice|device|swap)$' >/dev/null; then
+                            fail "host-units:$host" "invalid failed-unit snapshot"
+                            return 0
+                          fi
+                          ok "host-units:$host"
+                          previous=$(cat "$previous_file" 2>/dev/null || true)
+                          for unit in $previous; do
+                            if ! printf '%s\n' "$current" | grep -xF -e "$unit" >/dev/null; then
+                              ok "$prefix$unit"
+                              if [ -e "$state_dir/.$prefix$unit.msgid" ]; then
+                                recovering+="$unit"$'\n'
+                              fi
+                            fi
+                          done
+                          for unit in $current; do
+                            fail "$prefix$unit" "systemd failure or retained job failure"
+                          done
+                          printf '%s\n' "$current" "$recovering" | sed '/^$/d' | sort -u > "$previous_file"
+                        }
 
-                          for u in $failed_prev; do
-                            printf '%s\n' "$failed_cur" | grep -qxF -e "$u" || ok "unit-failed:$u"
-                          done
-                          for u in $failed_cur; do
-                            fail "unit-failed:$u" "systemd failed state"
-                          done
-                          printf '%s\n' "$failed_cur" > "$state_dir/.failed-units"
+                        if [ "$strict" != 1 ]; then
+                          sweep_units "$HOSTNAME"
+                          if [ "$local_only" != 1 ]; then
+                            ${lib.concatMapStringsSep "\n"
+                              (host: "sweep_units ${lib.escapeShellArg host} ${lib.escapeShellArg cfg.hostAddresses.${host}}")
+                              [
+                                "alpha"
+                                "epsilon"
+                              ]
+                            }
+                          fi
                         fi
 
                         http() {

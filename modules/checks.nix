@@ -139,6 +139,52 @@
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
 
+          fleet-failed-units =
+            let
+              expectedJobs = {
+                alpha = [
+                  "restic-backups-offsite"
+                  "btrfs-health-root"
+                  "btrfs-scrub@"
+                  "jellyfin-backup"
+                  "rsync-job-buprpi"
+                ];
+                pi = [ "restic-backups-offsite" ];
+                epsilon = [ "restic-backups-offsite" ];
+              };
+              retainedJobsHaveHooks = lib.all (
+                host:
+                lib.all (
+                  job:
+                  lib.hasInfix "/fleet-unit-record %n"
+                    inputs.self.nixosConfigurations.${host}.config.systemd.units."${job}.service".text
+                ) expectedJobs.${host}
+              ) (lib.attrNames expectedJobs);
+              probe = pkgs.writeText "fleet-health-probe-test.sh" (
+                builtins.unsafeDiscardStringContext inputs.self.nixosConfigurations.pi.config.modules.fleet-health.probe.text
+              );
+            in
+            assert retainedJobsHaveHooks;
+            pkgs.runCommand "check-fleet-failed-units"
+              {
+                nativeBuildInputs = with pkgs; [
+                  nodejs
+                  bash
+                  coreutils
+                  findutils
+                  gawk
+                  gnugrep
+                  util-linux
+                ];
+                FLEET_HEALTH_PROBE = probe;
+                FLEET_UNIT_SOURCE = ./aspects/fleet-unit-state;
+                TEST_BASH = "${pkgs.bash}/bin/bash";
+              }
+              ''
+                node --test ${./_tests/fleet-failed-units.mjs}
+                touch $out
+              '';
+
           ci-workflow =
             pkgs.runCommand "check-ci-workflow"
               {

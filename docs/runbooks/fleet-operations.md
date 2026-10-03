@@ -66,6 +66,38 @@ without bypassing the two-strike rule. Existing unit-specific `OnFailure=`
 handlers are additive and continue to run. HTTP and cross-host failures still
 rely on the periodic sweep because they do not emit local systemd failures.
 
+Pi also collects `fleet-unit-snapshot` over root SSH from alpha and epsilon,
+using their configured service addresses and the existing deployment key. Unit
+alerts include the remote hostname, so identically named units remain separate.
+`host-units:<host>` means the snapshot could not be read (including an SSH
+outage), rather than that the host has recovered. Existing unit alerts and the
+last successful snapshot stay intact until that host can be inspected again.
+`--local` skips these SSH sweeps; `--strict` keeps the existing deployment probe
+behavior and does not change failed-unit alert state.
+
+All three hosts retain failed offsite backup results; alpha additionally
+retains Btrfs-health/scrub, Jellyfin-backup, and configured rsync job results.
+`ExecStopPost` records failed runs in `/var/lib/fleet-unit-state/<unit>` and
+removes that record only after a successful rerun. Each record contains a
+timestamp and systemd's service result. The directory persists across reboot on the current roots and is declared for
+`/persist` when host persistence is enabled, so `systemctl reset-failed` does not
+make an unsuccessful backup look recovered. This is evidence of the most
+recent observed failure, not proof of a fresh or restorable backup: jobs that
+have never run and failures before installing the hook have no retained record.
+
+Roll out the snapshot/recording aspect on alpha and epsilon before activating
+the Pi controller change. Until a remote collector is installed, Pi reports
+that host's snapshot as unavailable. To inspect retained evidence on a host:
+
+```sh
+sudo fleet-unit-snapshot
+sudo ls -l /var/lib/fleet-unit-state
+sudo cat /var/lib/fleet-unit-state/jellyfin-backup.service
+```
+
+Repair and rerun the underlying job to recover its alert. Removing evidence
+manually only acknowledges the failure; it does not establish backup success.
+
 ## Offsite backups (`restic-backups-offsite.timer`, daily 01:00–01:15)
 
 Restic over rclone to `gd-crypt:restic/<hostname>`. Covers:
@@ -114,8 +146,12 @@ Lock maintenance runs in GitHub Actions; deployment runs on pi:
   `ci.yml` for that exact commit before evaluation or activation.
   Missing, pending, failed, or unavailable CI results defer deployment without
   changing the rollback streak. The next scheduled run retries current main.
-- Deployment proceeds through epsilon, pi, then alpha. Each host passes health
-  checks before the next proceeds, including hosts already on that revision.
+- Deployment attempts epsilon, alpha, then pi. Alpha can be deferred by the
+  activity gate; Pi reports its snapshot as unavailable until its collector is
+  installed. For the initial collector rollout, use an authorized
+  `--host all --force` deployment or activate both remote hosts first. Each
+  activated host passes health checks before the next proceeds, including hosts
+  already on that revision.
 - `fleet-alpha-retry.timer` runs daily at 07:00 in the controller's timezone.
   It retries a deferred alpha against current main, with the same CI gate.
 
