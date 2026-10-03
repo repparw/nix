@@ -82,7 +82,6 @@
                     model = "stepfun/step-3.7-flash:free";
                   }
                 ];
-                settings.reasoning_overrides."gpt-6.1-sol" = "medium";
                 settings.display.credits_notices = false;
                 settings.platforms.discord = {
                   enabled = true;
