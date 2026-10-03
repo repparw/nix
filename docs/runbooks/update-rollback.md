@@ -9,10 +9,9 @@ tags: [runbook, recovery, updates, pi, alpha, epsilon, deploy-rs]
 
 # Update Rollback
 
-Pi's 04:15 promotion job is the sole `flake.lock` writer and exits after
-publishing a validated candidate. The independent 05:30 consumer deploys exact
-current main in the order epsilon, pi, then idle alpha. Pi's 07:00 alpha retry
-only retries convergence if the desktop was deferred or unreachable.
+GitHub Actions opens lock update PRs. Pi's independent 05:30 consumer requires
+successful CI for exact current main, then deploys epsilon, idle alpha, and finally pi.
+Pi's 07:00 alpha retry uses the same CI gate.
 
 Full pipeline detail lives in the
 [fleet operations runbook](fleet-operations.md).
@@ -20,13 +19,12 @@ Full pipeline detail lives in the
 ## Automatic rollback
 
 The updater handles the common cases itself. deploy-rs magic rollback covers a
-failed activation. A failed soak reverts main when the cycle created a lock
-candidate, redeploys the reverted graph to every node already reached, and
-falls back to each node's exact pre-update profile if necessary. Check the
+failed activation. The controller saves and roots each host's pre-update system
+before attempting activation. A failed deployment restores those systems on
+every host reached during this revision, without reverting main. Check the
 controller and retry journals before the next cycle:
 
 ```sh
-journalctl -u fleet-promote -b      # pi producer
 journalctl -u fleet-deploy-run -b   # pi transient fleet consumer
 journalctl -u fleet-alpha-retry -b  # pi alpha retry
 ```
@@ -48,8 +46,9 @@ extlinux via the Pi firmware.
 
 1. Find why the new generation misbehaved (journal, fleet-health
    counters in `/var/lib/fleet-health/`).
-2. If the controller created the bad lock commit, confirm the updater's revert
-   reached `origin/main`. If it was paused by the breaker, inspect and resume:
+2. Main still records the desired revision. Fix or explicitly revert a bad
+   configuration through a PR and wait for CI on the resulting main commit.
+   If deployment was paused by the breaker, inspect and resume:
 
    ```sh
    ssh root@192.168.0.4 'rm /var/lib/auto-update/PAUSE'    # resume automation

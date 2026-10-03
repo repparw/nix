@@ -228,7 +228,7 @@ in
       apps.fleet-update = {
         type = "app";
         program = lib.getExe (mkFleetUpdate pkgs);
-        meta.description = "Promote or deploy the NixOS fleet transactionally";
+        meta.description = "Deploy the NixOS fleet after successful CI";
       };
     };
 }

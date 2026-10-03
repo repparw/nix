@@ -1,42 +1,127 @@
-# Host toplevel evals stub hermes-agent's package (upstream CI). This workflow
-# is that gate, run on push instead of only when a session remembers to run it.
+# Host checks evaluate configurations with package stubs, not native closures.
 name: ci
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact commit expected at the dispatched ref
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || (github.event_name == 'workflow_dispatch' && format('{0}-{1}', github.sha, inputs.expected_sha) || github.run_id) }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
-  gate:
+  checks:
+    name: checks (${{ matrix.group }})
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: lightweight
+            checks: formatting sops-files change-detection agent-docs check-flake-file deploy-schema ci-workflow
+          - group: configuration
+            checks: shellcheck fleet-cli service-definitions host-persistence fleet-failed-units
     steps:
+      - name: Verify dispatched revision
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
       - uses: DeterminateSystems/nix-installer-action@v22
-      - run: >
-          nix build
-          .#checks.x86_64-linux.formatting
-          .#checks.x86_64-linux.shellcheck
-          .#checks.x86_64-linux.sops-files
-          .#checks.x86_64-linux.change-detection
-          .#checks.x86_64-linux.agent-docs
-          .#checks.x86_64-linux.fleet-cli
-          .#checks.x86_64-linux.check-flake-file
-          .#checks.x86_64-linux.deploy-schema
-          .#checks.x86_64-linux.service-definitions
-          .#checks.x86_64-linux.host-persistence
-          .#checks.x86_64-linux.fleet-failed-units
-          .#checks.x86_64-linux.alpha
-          .#checks.x86_64-linux.pi
-          .#checks.x86_64-linux.epsilon
-          --print-build-logs --keep-going
+      - name: Run attributed checks
+        env:
+          CI_CHECKS: ${{ matrix.checks }}
+        run: bash .github/scripts/run-checks.sh
+      - name: Upload check logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checks-${{ matrix.group }}
+          path: ci-logs/
+          if-no-files-found: ignore
+
+  host-eval:
+    name: host-eval (${{ matrix.host }}, stubbed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [alpha, pi, epsilon]
+    steps:
+      - name: Verify dispatched revision
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Evaluate host with stubs
+        env:
+          CI_CHECKS: ${{ matrix.host }}
+        run: bash .github/scripts/run-checks.sh
+      - name: Upload evaluation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-eval-${{ matrix.host }}
+          path: ci-logs/
+          if-no-files-found: ignore
 
   persistence-vm:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - name: Verify dispatched revision
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
       - uses: DeterminateSystems/nix-installer-action@v22
         with:
           kvm: true
-      - run: nix build .#checks.x86_64-linux.host-persistence-vm --no-link --print-build-logs
+      - name: Exercise persistence in disposable VMs
+        env:
+          CI_CHECKS: host-persistence-vm
+        run: bash .github/scripts/run-checks.sh
+      - name: Upload VM logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: persistence-vm
+          path: ci-logs/
+          if-no-files-found: ignore
+
+  gate:
+    if: always()
+    needs: [checks, host-eval, persistence-vm]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every check group
+        env:
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          HOSTS_RESULT: ${{ needs.host-eval.result }}
+          PERSISTENCE_RESULT: ${{ needs.persistence-vm.result }}
+        run: |
+          for result in "$CHECKS_RESULT" "$HOSTS_RESULT" "$PERSISTENCE_RESULT"; do
+            test "$result" = success || exit 1
+          done
