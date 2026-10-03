@@ -188,7 +188,7 @@ class Deployment(unittest.TestCase):
         result = self.deploy(deploy_failure="alpha")
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual([c[1] for c in self.calls if c[0] == "deploy"], [".#epsilon", ".#alpha"])
-        self.assertEqual((self.root / "pi").read_text(), "old")
+        self.assertFalse((self.root / "pi").exists())
 
     def test_failed_rollback_keeps_roots_and_pauses(self):
         result = self.deploy(deploy_failure="pi", rollback_failure="pi")
