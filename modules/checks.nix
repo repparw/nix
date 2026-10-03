@@ -224,14 +224,12 @@
                 touch $out
               '';
 
-          shellcheck =
-            pkgs.runCommand "check-shellcheck"
+          generated-shellcheck =
+            pkgs.runCommand "check-generated-shellcheck"
               {
                 nativeBuildInputs = [ pkgs.shellcheck ];
               }
               ''
-                cd ${inputs.self}
-                find . \( -name '*.sh' -o -name '.envrc' \) -type f -exec shellcheck {} +
                 ${generatedShellChecks}
                 touch $out
               '';
