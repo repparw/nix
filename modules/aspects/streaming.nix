@@ -177,6 +177,7 @@
         };
       };
       launchRemote = "luna-send -n 1 -w 3000 -f luna://com.webos.applicationManager/launch '${launchPayload}'";
+      closeRemote = "luna-send -n 1 -f luna://com.webos.service.applicationmanager/closeByAppId '{\"id\":\"${moonlightAppId}\"}'";
       launch = pkgs.writeShellApplication {
         name = "8bitdo-tv-moonlight";
         runtimeInputs = [
@@ -252,6 +253,12 @@
           fi
 
           if [ "$tv_on" -eq 1 ]; then
+            # webOS only delivers launch params on a cold start: a lingering
+            # Moonlight is re-foregrounded via webOSRelaunch with params
+            # dropped, landing on the app picker instead of Steam. Close first
+            # (a failed close just means it was not running), then launch.
+            ssh_tv ${lib.escapeShellArg closeRemote} >/dev/null 2>&1 || true
+            sleep 1
             ssh_tv ${lib.escapeShellArg launchRemote} >/dev/null
             exit 0
           fi
