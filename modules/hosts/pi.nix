@@ -12,6 +12,7 @@
       den.aspects.nixos-services._.homeassistant
       den.aspects.nixos-services._.fleet-health
       den.aspects.fleet-controller
+      den.aspects.pi-generation-retention
       den.aspects.lan-edge
       den.aspects.deploy-target
       den.aspects.passwordless-sudo
