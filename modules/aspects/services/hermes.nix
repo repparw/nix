@@ -80,7 +80,10 @@
               services.hermes-agent = {
                 enable = true;
                 package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
-                environmentFiles = [ "/run/secrets/hermes-env" "/run/secrets/hermes-llm-env" ];
+                environmentFiles = [
+                  "/run/secrets/hermes-env"
+                  "/run/secrets/hermes-llm-env"
+                ];
                 settings.model = {
                   provider = "openai-codex";
                   default = "gpt-6.1-sol";
