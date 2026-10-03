@@ -115,6 +115,27 @@
           );
         in
         {
+          btrfs-health =
+            let
+              script = pkgs.writeText "btrfs-health-root.sh" inputs.self.nixosConfigurations.alpha.config.systemd.services.btrfs-health-root.script;
+            in
+            pkgs.runCommand "check-btrfs-health"
+              {
+                nativeBuildInputs = with pkgs; [
+                  nodejs
+                  bash
+                  coreutils
+                  gawk
+                  gnugrep
+                  shellcheck
+                ];
+              }
+              ''
+                shellcheck --shell=bash ${script}
+                node ${./_tests/btrfs-health.mjs} ${script}
+                touch $out
+              '';
+
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
 
