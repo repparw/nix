@@ -484,13 +484,29 @@ capture_host() {
     and (.containerUnits | type == "array")
     and (.deployment.nodes[$host].profiles.system.path | test("^/nix/store/[A-Za-z0-9+._=-]+$"))
     and (.deployment.nodes[$host].profiles.system.drvPath | test("^/nix/store/[A-Za-z0-9+._=-]+\\.drv$"))
-  ' "$preparation/$host.json" >/dev/null || return 1
+  ' "$preparation/$host.json" >/dev/null || {
+    echo "error: captured metadata for $host is invalid or has a different revision than $revision" >&2
+    return 1
+  }
   drv=$(jq -r --arg host "$host" '.deployment.nodes[$host].profiles.system.drvPath' "$preparation/$host.json")
   mkdir -p "$roots" || return 1
   ln -sfn "$drv" "$roots/derivation-$host" || return 1
   jq --arg host "$host" '{host: $host, revision, systemPath,
     profilePath: .deployment.nodes[$host].profiles.system.path, outcome: "not_attempted"}' \
     "$preparation/$host.json" > "$preparation/result-$host.json"
+}
+
+capture_hosts() {
+  local host
+  for host in "${hosts[@]}"; do
+    if ! capture_host "$host" > "$preparation/capture-$host.log" 2>&1; then
+      jq '.outcome = "failed" | .stage = "capture"' "$preparation/result-$host.json" \
+        > "$preparation/result-$host.tmp"
+      mv "$preparation/result-$host.tmp" "$preparation/result-$host.json"
+      cat "$preparation/capture-$host.log"
+      return 1
+    fi
+  done
 }
 
 prepare_host() {
@@ -534,9 +550,14 @@ printf '%s\n' "$revision" > "$state/target-revision"
 current_system=$(nix eval --impure --raw --expr builtins.currentSystem)
 preparation=$(mktemp -d "$state/preparation-$revision.XXXXXX")
 printf '%s\n' "$preparation" > "$state/latest-preparation"
+for host in "${hosts[@]}"; do
+  jq -n --arg host "$host" --arg revision "$revision" \
+    '{host: $host, revision: $revision, systemPath: null, profilePath: null, outcome: "not_attempted"}' \
+    > "$preparation/result-$host.json"
+done
 preflight_log="$state/preflight.log"
 if ! nix build ".#checks.$current_system.deploy-schema" --no-link > "$preflight_log" 2>&1 \
-  || ! (for host in "${hosts[@]}"; do capture_host "$host" || exit 1; done) >> "$preflight_log" 2>&1; then
+  || ! capture_hosts >> "$preflight_log" 2>&1; then
   failure_reason="deployment preflight failed"
   notify_failure ":warning: fleet deployment aborted before activation (${revision:0:8})" "$preflight_log"
   exit 1

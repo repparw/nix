@@ -51,7 +51,8 @@ elif name == 'nix':
             print('true' if config.get('busy_alpha') and '.alpha.' in target else 'false')
         elif 'builtins.getFlake' in target:
             host = next(h for h in ['epsilon', 'alpha', 'pi'] if f'nixosConfigurations.{h}.' in target)
-            print(json.dumps(dict(revision=revision, systemPath=f'/nix/store/{host}-system-26.11',
+            print(json.dumps(dict(revision=revision,
+                systemPath='invalid-path' if config.get('invalid_metadata') == host else f'/nix/store/{host}-system-26.11',
                 activityGate=bool(config.get('busy_alpha') and host == 'alpha'), containerUnits=[],
                 deployment=dict(remoteBuild=True, nodes={host: dict(hostname=host,
                     profiles=dict(system=dict(path=f'/nix/store/{host}-profile-26.11',
@@ -192,6 +193,53 @@ class Deployment(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assert_no_activation()
         self.assertIn("host evaluation failed", (self.state / "preflight.log").read_text())
+        evidence = Path((self.state / 'latest-preparation').read_text().strip())
+        results = {p.stem.removeprefix('result-'): json.loads(p.read_text())
+                   for p in evidence.glob('result-*.json')}
+        self.assertEqual(results, {
+            'epsilon': dict(host='epsilon', revision=REVISION, systemPath=None,
+                            profilePath=None, outcome='failed', stage='capture'),
+            'alpha': dict(host='alpha', revision=REVISION, systemPath=None,
+                          profilePath=None, outcome='not_attempted'),
+            'pi': dict(host='pi', revision=REVISION, systemPath=None,
+                       profilePath=None, outcome='not_attempted'),
+        })
+        self.assertIn('host evaluation failed', (evidence / 'capture-epsilon.log').read_text())
+
+    def test_invalid_captured_metadata_records_failure_and_unattempted_hosts(self):
+        result = self.deploy(invalid_metadata='alpha')
+        self.assertNotEqual(result.returncode, 0)
+        self.assert_no_activation()
+        evidence = Path((self.state / 'latest-preparation').read_text().strip())
+        self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text()),
+                         dict(host='alpha', revision=REVISION, systemPath=None,
+                              profilePath=None, outcome='failed', stage='capture'))
+        self.assertEqual(json.loads((evidence / 'result-pi.json').read_text()),
+                         dict(host='pi', revision=REVISION, systemPath=None,
+                              profilePath=None, outcome='not_attempted'))
+        self.assertEqual(json.loads((evidence / 'result-epsilon.json').read_text()),
+                         dict(host='epsilon', revision=REVISION,
+                              systemPath='/nix/store/epsilon-system-26.11',
+                              profilePath='/nix/store/epsilon-profile-26.11', outcome='not_attempted'))
+        self.assertEqual(json.loads((evidence / 'alpha.json').read_text())['systemPath'], 'invalid-path')
+        self.assertIn('captured metadata for alpha is invalid', (evidence / 'capture-alpha.log').read_text())
+        self.assertFalse((evidence / 'capture-pi.log').exists())
+
+    def test_capture_failure_records_only_selected_host_and_preserves_prior_evidence(self):
+        previous = self.state / 'preparation-prior'
+        previous.mkdir()
+        prior_files = {previous / f'result-{host}.json': json.dumps(dict(host=host, outcome='prepared'))
+                       for host in ['epsilon', 'alpha', 'pi']}
+        for path, contents in prior_files.items():
+            path.write_text(contents)
+        result = self.deploy(eval_failure='alpha', arguments=['--host', 'alpha'])
+        self.assertNotEqual(result.returncode, 0)
+        self.assert_no_activation()
+        evidence = Path((self.state / 'latest-preparation').read_text().strip())
+        self.assertEqual([p.name for p in evidence.glob('result-*.json')], ['result-alpha.json'])
+        self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text())['outcome'], 'failed')
+        for path, contents in prior_files.items():
+            self.assertEqual(path.read_text(), contents)
 
     def test_schema_failure_does_not_activate(self):
         self.assertNotEqual(self.deploy(schema_failure=True).returncode, 0)

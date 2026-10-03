@@ -173,9 +173,11 @@ host so garbage collection cannot discard captured build inputs before
 activation. The next preparation replaces these roots.
 
 Read `/var/lib/auto-update/latest-preparation` for the current evidence
-directory. Each invocation retains captured host metadata, a preparation log,
+directory. Each invocation retains captured host metadata, capture and preparation logs,
 and a result containing the host, revision, system path, profile path, and
-outcome. `not_attempted` means an earlier host failed preparation. A failed
+outcome. Every selected host has a result before capture starts, with null paths
+until metadata is available. Capture failures record `failed` with `stage: capture`.
+`not_attempted` means target preparation did not start for that host. A failed
 revision check retains the revision returned by the built system.
 
 The 2026-10-03 capacity inspection found 4 CPUs and 8 GiB RAM on Pi,
