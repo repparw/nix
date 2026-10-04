@@ -3,6 +3,21 @@
   lib,
   ...
 }:
+let
+  # Steam is single-instance per user; stop the desktop instance so it cannot
+  # steal Big Picture from a private compositor. Both the Moonshine stream and
+  # the controller-driven desk launch need gamescope to own the session, so both
+  # go through this.
+  stopDesktopSteam = ''
+    if pgrep -x steam >/dev/null; then
+      steam -shutdown >/dev/null 2>&1 || true
+      for _ in $(seq 1 30); do
+        pgrep -x steam >/dev/null || break
+        sleep 1
+      done
+    fi
+  '';
+in
 {
   den.aspects.streaming.provides.to-hosts =
     { user, ... }:
@@ -29,18 +44,6 @@
               --height 512 \
               ${pkgs.heroic}/share/icons/hicolor/scalable/apps/com.heroicgameslauncher.hgl.svg \
               > $out/heroic.png
-          '';
-
-          # Steam is single-instance per user; stop the desktop instance so it
-          # cannot steal Big Picture from Moonshine's private compositor.
-          stopDesktopSteam = ''
-            if pgrep -x steam >/dev/null; then
-              steam -shutdown >/dev/null 2>&1 || true
-              for _ in $(seq 1 30); do
-                pgrep -x steam >/dev/null || break
-                sleep 1
-              done
-            fi
           '';
 
           # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
@@ -257,6 +260,7 @@
           pkgs.openssh
           pkgs.procps
           pkgs.systemd
+          osConfig.programs.steam.package
         ];
         text = ''
           ssh_tv() {
@@ -363,9 +367,19 @@
 
           niri msg action focus-monitor DP-1 >/dev/null
 
-          if pgrep -x gamescope >/dev/null || pgrep -x steam >/dev/null; then
+          # Big Picture always runs under gamescope here, so HDR, 1080p162 and
+          # adaptive sync apply the same way they do for a stream. An existing
+          # gamescope session (plain BP, no game) is reused as-is; anything
+          # else means taking over, so stop the desktop Steam client first.
+          # Without this, single-instance Steam would just switch itself to BP
+          # outside the new compositor and leave gamescope empty. The guards
+          # above already ruled out a live stream and a running game, so the
+          # only casualty here is a tray/downloading client, which resumes.
+          if pgrep -x gamescope >/dev/null; then
             exec ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
           fi
+
+          ${stopDesktopSteam}
 
           exec ${lib.getExe pkgs.gamescope} --steam -H 1080 -r 162 --adaptive-sync -- \
             ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
