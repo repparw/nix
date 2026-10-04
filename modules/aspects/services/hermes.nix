@@ -79,7 +79,9 @@
 
               services.hermes-agent = {
                 enable = true;
-                package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
+                package = pkgs.callPackage ../../_packages/hermes-agent.nix {
+                  upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
+                };
                 environmentFiles = [
                   "/run/secrets/hermes-env"
                   "/run/secrets/hermes-llm-env"
