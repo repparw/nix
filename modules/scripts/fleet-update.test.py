@@ -40,17 +40,25 @@ elif name == 'nix':
         sys.exit(1)
     if args[0] == 'eval':
         target = ' '.join(args)
-        if 'drvPath' in target and config.get('eval_failure') and config['eval_failure'] in target:
+        if 'builtins.getFlake' in target and config.get('eval_failure') and config['eval_failure'] in target:
             print('error: host evaluation failed', file=sys.stderr)
             sys.exit(1)
         if 'currentSystem' in target:
             print('x86_64-linux')
-        elif 'containerUnits' in target:
+        elif 'containerUnits' in target and 'builtins.getFlake' not in target:
             print('[]')
-        elif 'activityGate' in target:
+        elif 'activityGate' in target and 'builtins.getFlake' not in target:
             print('true' if config.get('busy_alpha') and '.alpha.' in target else 'false')
+        elif 'builtins.getFlake' in target:
+            host = next(h for h in ['epsilon', 'alpha', 'pi'] if f'nixosConfigurations.{h}.' in target)
+            print(json.dumps(dict(revision=revision,
+                systemPath='invalid-path' if config.get('invalid_metadata') == host else f'/nix/store/{host}-system-26.11',
+                activityGate=bool(config.get('busy_alpha') and host == 'alpha'), containerUnits=[],
+                deployment=dict(remoteBuild=True, nodes={host: dict(hostname=host,
+                    profiles=dict(system=dict(path=f'/nix/store/{host}-profile-26.11',
+                                              drvPath=f'/nix/store/{host}-profile-26.11.drv', user='root')))}))))
 elif name == 'deploy':
-    host = args[0].removeprefix('.#')
+    host = args[0].split('#')[-1]
     (root / host).write_text('new')
     if config.get('deploy_failure') == host:
         print('error: activation connection lost', file=sys.stderr)
@@ -60,7 +68,14 @@ elif name == 'ssh':
     host = args[index].removeprefix('root@')
     command = args[index + 1:]
     current = (root / host).read_text() if (root / host).exists() else 'old'
-    if command[0] == 'nixos-version':
+    if command[0].endswith('/sw/bin/nixos-version'):
+        print('c' * 40 if config.get('inconsistent_revision') == host else revision)
+    elif command[0] == 'nix' and command[1] == 'build':
+        if config.get('prepare_failure') == host:
+            print('error: preparation build failed', file=sys.stderr)
+            sys.exit(1)
+        print(f'/nix/store/{host}-profile-26.11')
+    elif command[0] == 'nixos-version':
         print(revision if current == 'new' else 'b' * 40)
     elif command[0] == 'readlink':
         print(f'/nix/store/{host}-{current}')
@@ -108,6 +123,7 @@ class Deployment(unittest.TestCase):
             "PATH": f"{self.bin}:{os.environ['PATH']}",
             "FIXTURE": str(self.root),
             "FLEET_UPDATE_LOCK": str(self.root / "lock"),
+            "FLEET_UPDATE_ROOTS": str(self.root / "roots"),
             "FLEET_DEPLOY_KEY": str(self.script),
             "FLEET_SOAK_ATTEMPTS": "2",
         }
@@ -140,7 +156,14 @@ class Deployment(unittest.TestCase):
     def test_all_hosts_converge_after_ci(self):
         result = self.deploy()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual([c[1] for c in self.calls if c[0] == "deploy"], [".#epsilon", ".#alpha", ".#pi"])
+        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["epsilon", "alpha", "pi"])
+        first_activation = next(i for i, c in enumerate(self.calls) if c[0] == 'deploy')
+        prepared = [c for c in self.calls[:first_activation] if c[0] == 'ssh' and 'build' in c]
+        self.assertEqual(len(prepared), 3)
+        evidence = Path((self.state / 'latest-preparation').read_text().strip())
+        results = [json.loads(p.read_text()) for p in evidence.glob('result-*.json')]
+        self.assertEqual({r['host'] for r in results}, {'epsilon', 'alpha', 'pi'})
+        self.assertTrue(all(r['revision'] == REVISION and r['outcome'] == 'prepared' for r in results))
         self.assertEqual((self.state / "deployed-revision").read_text().strip(), REVISION)
         self.assertEqual(list(self.state.glob("reached-*")), [])
         self.assertFalse(any(c[0] == "git" and c[1] in ["push", "revert", "commit"] for c in self.calls))
@@ -157,7 +180,7 @@ class Deployment(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(pause.read_text(), "existing operator pause\n")
         self.assertEqual((self.state / "deployed-revision").read_text().strip(), REVISION)
-        self.assertEqual([c[1] for c in self.calls if c[0] == "deploy"], [".#epsilon", ".#alpha", ".#pi"])
+        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["epsilon", "alpha", "pi"])
 
     def test_force_requires_explicit_host_selection(self):
         result = subprocess.run(["bash", str(self.script), "deploy", "--force"],
@@ -170,6 +193,53 @@ class Deployment(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assert_no_activation()
         self.assertIn("host evaluation failed", (self.state / "preflight.log").read_text())
+        evidence = Path((self.state / 'latest-preparation').read_text().strip())
+        results = {p.stem.removeprefix('result-'): json.loads(p.read_text())
+                   for p in evidence.glob('result-*.json')}
+        self.assertEqual(results, {
+            'epsilon': dict(host='epsilon', revision=REVISION, systemPath=None,
+                            profilePath=None, outcome='failed', stage='capture'),
+            'alpha': dict(host='alpha', revision=REVISION, systemPath=None,
+                          profilePath=None, outcome='not_attempted'),
+            'pi': dict(host='pi', revision=REVISION, systemPath=None,
+                       profilePath=None, outcome='not_attempted'),
+        })
+        self.assertIn('host evaluation failed', (evidence / 'capture-epsilon.log').read_text())
+
+    def test_invalid_captured_metadata_records_failure_and_unattempted_hosts(self):
+        result = self.deploy(invalid_metadata='alpha')
+        self.assertNotEqual(result.returncode, 0)
+        self.assert_no_activation()
+        evidence = Path((self.state / 'latest-preparation').read_text().strip())
+        self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text()),
+                         dict(host='alpha', revision=REVISION, systemPath=None,
+                              profilePath=None, outcome='failed', stage='capture'))
+        self.assertEqual(json.loads((evidence / 'result-pi.json').read_text()),
+                         dict(host='pi', revision=REVISION, systemPath=None,
+                              profilePath=None, outcome='not_attempted'))
+        self.assertEqual(json.loads((evidence / 'result-epsilon.json').read_text()),
+                         dict(host='epsilon', revision=REVISION,
+                              systemPath='/nix/store/epsilon-system-26.11',
+                              profilePath='/nix/store/epsilon-profile-26.11', outcome='not_attempted'))
+        self.assertEqual(json.loads((evidence / 'alpha.json').read_text())['systemPath'], 'invalid-path')
+        self.assertIn('captured metadata for alpha is invalid', (evidence / 'capture-alpha.log').read_text())
+        self.assertFalse((evidence / 'capture-pi.log').exists())
+
+    def test_capture_failure_records_only_selected_host_and_preserves_prior_evidence(self):
+        previous = self.state / 'preparation-prior'
+        previous.mkdir()
+        prior_files = {previous / f'result-{host}.json': json.dumps(dict(host=host, outcome='prepared'))
+                       for host in ['epsilon', 'alpha', 'pi']}
+        for path, contents in prior_files.items():
+            path.write_text(contents)
+        result = self.deploy(eval_failure='alpha', arguments=['--host', 'alpha'])
+        self.assertNotEqual(result.returncode, 0)
+        self.assert_no_activation()
+        evidence = Path((self.state / 'latest-preparation').read_text().strip())
+        self.assertEqual([p.name for p in evidence.glob('result-*.json')], ['result-alpha.json'])
+        self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text())['outcome'], 'failed')
+        for path, contents in prior_files.items():
+            self.assertEqual(path.read_text(), contents)
 
     def test_schema_failure_does_not_activate(self):
         self.assertNotEqual(self.deploy(schema_failure=True).returncode, 0)
@@ -187,7 +257,7 @@ class Deployment(unittest.TestCase):
     def test_failed_alpha_prevents_controller_activation(self):
         result = self.deploy(deploy_failure="alpha")
         self.assertNotEqual(result.returncode, 0)
-        self.assertEqual([c[1] for c in self.calls if c[0] == "deploy"], [".#epsilon", ".#alpha"])
+        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["epsilon", "alpha"])
         self.assertFalse((self.root / "pi").exists())
 
     def test_failed_rollback_keeps_roots_and_pauses(self):
@@ -212,6 +282,26 @@ class Deployment(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((self.state / "deployed-revision").exists())
         self.assertFalse(any(c[0] == "deploy" for c in self.calls))
+
+    def test_failed_preparation_stops_before_any_activation(self):
+        result = self.deploy(prepare_failure='alpha')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(c[0] == 'deploy' for c in self.calls))
+        self.assertFalse(any(c[0] == 'ssh' and 'switch-to-configuration' in ' '.join(c) for c in self.calls))
+        self.assertTrue((self.state / 'PAUSE').exists())
+        self.assertEqual(list(self.state.glob('reached-*')), [])
+        evidence = Path((self.state / 'latest-preparation').read_text().strip())
+        self.assertIn('preparation build failed', (evidence / 'prepare-alpha.log').read_text())
+        self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text())['outcome'], 'failed')
+        self.assertEqual(json.loads((evidence / 'result-pi.json').read_text())['outcome'], 'not_attempted')
+
+    def test_inconsistent_prepared_revision_stops_before_any_activation(self):
+        result = self.deploy(inconsistent_revision='pi')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(c[0] == 'deploy' for c in self.calls))
+        evidence = Path((self.state / 'latest-preparation').read_text().strip())
+        self.assertEqual(json.loads((evidence / 'result-pi.json').read_text())['revision'], 'c' * 40)
+        self.assertIn('expected ' + REVISION, (evidence / 'prepare-pi.log').read_text())
 
 
 if __name__ == "__main__":

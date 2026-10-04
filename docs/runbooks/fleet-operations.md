@@ -146,7 +146,13 @@ Lock maintenance runs in GitHub Actions; deployment runs on pi:
   `ci.yml` for that exact commit before evaluation or activation.
   Missing, pending, failed, or unavailable CI results defer deployment without
   changing the rollback streak. The next scheduled run retries current main.
-- Deployment attempts epsilon, alpha, then pi. Alpha can be deferred by the
+- Preparation captures the same immutable Git revision for every selected
+  host, evaluates each configuration sequentially, then builds and pins each
+  deploy-rs profile on its target. It verifies the built system's revision
+  before any activation starts. A failed preparation pauses automation without
+  activating or rolling back a host.
+- Activation attempts epsilon, alpha, then pi using the captured profiles.
+  Alpha can be deferred by the
   activity gate; Pi reports its snapshot as unavailable until its collector is
   installed. For the initial collector rollout, use an authorized
   `--host all --force` deployment or activate both remote hosts first. Each
@@ -156,8 +162,30 @@ Lock maintenance runs in GitHub Actions; deployment runs on pi:
   It retries a deferred alpha against current main, with the same CI gate.
 
 CI's host checks stub selected packages. Successful CI proves those checks,
-not full system builds or runtime health. Real builds still run on targets
-through deploy-rs; the controller still performs configuration evaluation.
+not full system builds or runtime health. The controller evaluates each host
+once and sends its derivation graph to that target. Targets build their own
+closures and retain one `fleet-update/prepared` GC root. Deploy-rs activates
+the captured derivations, which are already built, with its existing magic
+rollback and confirmation protocol. Activation does not evaluate host modules
+again or resolve a newer main revision.
+The controller retains one `fleet-update/derivation-<host>` root per selected
+host so garbage collection cannot discard captured build inputs before
+activation. The next preparation replaces these roots.
+
+Read `/var/lib/auto-update/latest-preparation` for the current evidence
+directory. Each invocation retains captured host metadata, capture and preparation logs,
+and a result containing the host, revision, system path, profile path, and
+outcome. Every selected host has a result before capture starts, with null paths
+until metadata is available. Capture failures record `failed` with `stage: capture`.
+`not_attempted` means target preparation did not start for that host. A failed
+revision check retains the revision returned by the built system.
+
+The 2026-10-03 capacity inspection found 4 CPUs and 8 GiB RAM on Pi,
+12 CPUs and 64 GiB RAM on Alpha, and 2 CPUs and 12 GiB RAM on Epsilon.
+Pi had 12 GiB free on `/nix`; Epsilon had 104 GiB free. Sequential evaluation
+keeps Pi from evaluating three systems concurrently. Native target builds
+avoid storing Alpha's system closure on Pi and avoid cross compilation.
+This design uses the existing substituters and needs no shared binary cache.
 
 Lightweight checks, shared configuration checks, and each host's stubbed
 evaluation run in parallel. The required `gate` waits for every group and the

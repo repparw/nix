@@ -128,7 +128,7 @@ notify_failure() {
   case "$failure_reason" in
     soak:*) detail=$failure_reason ;;
   esac
-  if [[ "$failure_reason" == "build or activation of "* ]] && [ -s "$log" ]; then
+  if [[ "$failure_reason" == "build or activation of "* || "$failure_reason" == "preparation of "* ]] && [ -s "$log" ]; then
     # nix ends a failed build with a cascade of "Cannot build ... Reason: N
     # dependencies failed" and buries the compiler or evaluator error that
     # actually explains it in the middle, so take the lines naming a failure.
@@ -459,11 +459,77 @@ ci_passed() {
   ' <<< "$runs" >/dev/null
 }
 
-preflight_hosts() {
+capture_host() {
+  local host="$1" drv roots="${FLEET_UPDATE_ROOTS:-/nix/var/nix/gcroots/fleet-update}"
+  nix eval --json --no-update-lock-file --expr "
+    let f = builtins.getFlake \"$source\";
+        c = f.nixosConfigurations.$host.config;
+        n = f.deploy.nodes.$host;
+    in {
+      revision = c.system.configurationRevision;
+      systemPath = c.system.build.toplevel.outPath;
+      activityGate = c.modules.fleet-update.activityGate;
+      containerUnits = c.modules.fleet-update.containerUnits;
+      deployment = f.deploy // { nodes = {
+        $host = n // { profiles.system = n.profiles.system // {
+          path = n.profiles.system.path.outPath;
+          drvPath = n.profiles.system.path.drvPath;
+        }; };
+      }; };
+    }" > "$preparation/$host.json" || return 1
+  jq -e --arg revision "$revision" --arg host "$host" '
+    .revision == $revision
+    and (.systemPath | test("^/nix/store/[A-Za-z0-9+._=-]+$"))
+    and (.activityGate | type == "boolean")
+    and (.containerUnits | type == "array")
+    and (.deployment.nodes[$host].profiles.system.path | test("^/nix/store/[A-Za-z0-9+._=-]+$"))
+    and (.deployment.nodes[$host].profiles.system.drvPath | test("^/nix/store/[A-Za-z0-9+._=-]+\\.drv$"))
+  ' "$preparation/$host.json" >/dev/null || {
+    echo "error: captured metadata for $host is invalid or has a different revision than $revision" >&2
+    return 1
+  }
+  drv=$(jq -r --arg host "$host" '.deployment.nodes[$host].profiles.system.drvPath' "$preparation/$host.json")
+  mkdir -p "$roots" || return 1
+  ln -sfn "$drv" "$roots/derivation-$host" || return 1
+  jq --arg host "$host" '{host: $host, revision, systemPath,
+    profilePath: .deployment.nodes[$host].profiles.system.path, outcome: "not_attempted"}' \
+    "$preparation/$host.json" > "$preparation/result-$host.json"
+}
+
+capture_hosts() {
   local host
-  for host in "$@"; do
-    nix eval ".#nixosConfigurations.$host.config.system.build.toplevel.drvPath" --raw >/dev/null || return 1
+  for host in "${hosts[@]}"; do
+    if ! capture_host "$host" > "$preparation/capture-$host.log" 2>&1; then
+      jq '.outcome = "failed" | .stage = "capture"' "$preparation/result-$host.json" \
+        > "$preparation/result-$host.tmp"
+      mv "$preparation/result-$host.tmp" "$preparation/result-$host.json"
+      cat "$preparation/capture-$host.log"
+      return 1
+    fi
   done
+}
+
+prepare_host() {
+  local host="$1" drv profile system built observed store
+  drv=$(jq -r --arg host "$host" '.deployment.nodes[$host].profiles.system.drvPath' "$preparation/$host.json")
+  profile=$(jq -r --arg host "$host" '.deployment.nodes[$host].profiles.system.path' "$preparation/$host.json")
+  system=$(jq -r '.systemPath' "$preparation/$host.json")
+  store="ssh-ng://root@$(host_address "$host")"
+  NIX_SSHOPTS="${ssh_options[*]}" nix copy -s --to "$store" --derivation "$drv" || return 1
+  remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || return 1
+  built=$(remote "$host" nix build "$drv^out" --out-link /nix/var/nix/gcroots/fleet-update/prepared --print-out-paths) || return 1
+  [ "$built" = "$profile" ] || { echo "error: $host prepared unexpected profile: $built" >&2; return 1; }
+  remote "$host" test -f "$profile/activate-rs" || return 1
+  remote "$host" test -f "$profile/deploy-rs-activate" || return 1
+  observed=$(remote "$host" "$system/sw/bin/nixos-version" --configuration-revision) || return 1
+  jq -n --arg host "$host" --arg revision "$observed" --arg systemPath "$system" \
+    --arg profilePath "$built" --arg outcome prepared \
+    '{host: $host, revision: $revision, systemPath: $systemPath, profilePath: $profilePath, outcome: $outcome}' \
+    > "$preparation/result-$host.json"
+  [ "$observed" = "$revision" ] || { echo "error: $host prepared revision $observed, expected $revision" >&2; return 1; }
+  jq '.deployment' "$preparation/$host.json" > "$preparation/$host/deploy.json"
+  printf '%s\n' '{ outputs = { self }: { deploy = builtins.fromJSON (builtins.readFile ./deploy.json); }; }' \
+    > "$preparation/$host/flake.nix"
 }
 
 if [ "$requested_host" = all ]; then
@@ -473,6 +539,7 @@ else
 fi
 
 revision=$(git rev-parse HEAD)
+source="git+file://$repo?rev=$revision"
 if ! ci_passed; then
   notify ":warning: fleet deployment deferred: CI has not passed for main ${revision:0:8}"
   echo "CI has not passed for main $revision; no host was changed" >&2
@@ -481,13 +548,36 @@ fi
 printf '%s\n' "$revision" > "$state/target-revision"
 
 current_system=$(nix eval --impure --raw --expr builtins.currentSystem)
+preparation=$(mktemp -d "$state/preparation-$revision.XXXXXX")
+printf '%s\n' "$preparation" > "$state/latest-preparation"
+for host in "${hosts[@]}"; do
+  jq -n --arg host "$host" --arg revision "$revision" \
+    '{host: $host, revision: $revision, systemPath: null, profilePath: null, outcome: "not_attempted"}' \
+    > "$preparation/result-$host.json"
+done
 preflight_log="$state/preflight.log"
 if ! nix build ".#checks.$current_system.deploy-schema" --no-link > "$preflight_log" 2>&1 \
-  || ! preflight_hosts "${hosts[@]}" >> "$preflight_log" 2>&1; then
+  || ! capture_hosts >> "$preflight_log" 2>&1; then
   failure_reason="deployment preflight failed"
   notify_failure ":warning: fleet deployment aborted before activation (${revision:0:8})" "$preflight_log"
   exit 1
 fi
+
+for host in "${hosts[@]}"; do
+  # Each captured deployment has its own flake, so activation never rereads main.
+  mkdir -p "$preparation/$host"
+  if ! prepare_host "$host" > "$preparation/prepare-$host.log" 2>&1; then
+    jq '.outcome = "failed"' "$preparation/result-$host.json" > "$preparation/result-$host.tmp"
+    mv "$preparation/result-$host.tmp" "$preparation/result-$host.json"
+    failure_reason="preparation of $host failed"
+    streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
+    printf '%s\n' "$streak" > "$state/rollback-streak"
+    touch "$state/PAUSE"
+    notify_failure ":warning: fleet preparation failed at $host (${revision:0:8}); no activation started; automation PAUSED" "$preparation/prepare-$host.log"
+    exit 1
+  fi
+  container_units_json[$host]=$(jq -c '.containerUnits' "$preparation/$host.json")
+done
 
 declare -A before_generation
 deferred=()
@@ -516,7 +606,7 @@ deploy_one() {
     return 2
   fi
 
-  activity_gate=$(nix eval --json ".#nixosConfigurations.$host.config.modules.fleet-update.activityGate") || {
+  activity_gate=$(jq -r '.activityGate' "$preparation/$host.json") || {
     fail "could not evaluate the activity gate for $host"
     return 1
   }
@@ -562,7 +652,7 @@ deploy_one() {
   # The build and activation output is the only record of why this failed, and
   # it has to outlive the transient unit, so keep it beside the other state.
   # pipefail propagates deploy-rs' own status through tee.
-  if ! deploy ".#$host" --skip-checks 2>&1 | tee "$failure_log"; then
+  if ! deploy "$preparation/$host#$host" --skip-checks 2>&1 | tee "$failure_log"; then
     fail "build or activation of $host failed"
     return 1
   fi
