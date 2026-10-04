@@ -52,10 +52,23 @@
           spawn = command;
         };
         spawn = command: { spawn = command; };
+        # Moonshine's Desktop stream boots a nested niri with this same
+        # config. Its sockets belong to the stream, so importing them into
+        # the login session's user manager would poison the real desktop.
+        sessionEnv = pkgs.writeShellApplication {
+          name = "niri-session-env";
+          runtimeInputs = [ pkgs.systemd ];
+          text = ''
+            if [ -z "''${MOONSHINE_CLIENT_WIDTH:-}" ]; then
+              exec systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP NIRI_SOCKET
+            fi
+          '';
+        };
       in
       {
         home.packages = with pkgs; [
           ndrop
+          sessionEnv
 
           (writeShellApplication {
             name = "record";
@@ -160,7 +173,7 @@
             };
             debug.honor-xdg-activation-with-invalid-serial = { };
 
-            spawn-sh-at-startup = "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP NIRI_SOCKET";
+            spawn-sh-at-startup = "niri-session-env";
 
             binds = {
               "Mod+Return" = titledSpawn "Terminal" [ "foot" ];
@@ -465,6 +478,14 @@
         };
 
         services.wpaperd.enable = true;
+
+        # The Moonshine Desktop stream has no $TERMINAL and a minimal PATH,
+        # so pin the terminal fuzzel uses for console entries. Same HOME as
+        # the login session, so this also applies locally.
+        xdg.configFile."fuzzel/fuzzel.ini".text = ''
+          [main]
+          terminal = ${lib.getExe pkgs.foot} -e
+        '';
       };
   };
 }
