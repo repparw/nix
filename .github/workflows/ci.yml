@@ -30,7 +30,7 @@ jobs:
           - group: lightweight
             checks: formatting sops-files change-detection agent-docs check-flake-file deploy-schema ci-workflow
           - group: configuration
-            checks: generated-shellcheck fleet-cli service-definitions host-persistence btrfs-health fleet-failed-units
+            checks: generated-shellcheck fleet-cli service-definitions host-persistence btrfs-health fleet-failed-units hermes-auxiliary-routing
     steps:
       - name: Verify dispatched revision
         if: github.event_name == 'workflow_dispatch'

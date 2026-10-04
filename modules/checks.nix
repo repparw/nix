@@ -115,6 +115,11 @@
           );
         in
         {
+          hermes-auxiliary-routing =
+            (pkgs.callPackage ./_packages/hermes-agent.nix {
+              upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
+            }).tests.auxiliary-routing;
+
           btrfs-health =
             let
               script = pkgs.writeText "btrfs-health-root.sh" inputs.self.nixosConfigurations.alpha.config.systemd.services.btrfs-health-root.script;
