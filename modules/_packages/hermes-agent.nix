@@ -1,11 +1,17 @@
 {
   lib,
   callPackage,
+  nodejs_24,
   python312,
   runCommand,
   upstream,
 }:
 let
+  # Hermes accepts Node >=22.22.0; npm 12 accepts Node ^24.15.0.
+  # Node 26 currently fails on ARM (NixOS/nixpkgs#568974).
+  nodejs =
+    assert lib.versionAtLeast nodejs_24.version "24.15.0";
+    nodejs_24;
   # Append the code patch after the workspace overlay creates hermes-agent.
   # Keep lock metadata unpatched so evaluating another host needs no build.
   patchedPythonSet =
@@ -34,6 +40,17 @@ let
               result = callPackage pythonPath pythonArgs;
             in
             if result ? mkVirtualEnv then patchedPythonSet result else result;
+        }
+        // lib.optionalAttrs (builtins.baseNameOf path == "lib.nix") {
+          nodejs_26 = nodejs;
+          callPackage =
+            npmPath: npmArgs:
+            callPackage npmPath (
+              npmArgs
+              // lib.optionalAttrs (builtins.baseNameOf npmPath == "npm-12-0-2.nix") {
+                nodejs_26 = nodejs;
+              }
+            );
         }
       );
   };
