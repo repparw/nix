@@ -108,7 +108,7 @@
           # Desktop stream: nested niri plus a kiosk launcher loop. Vicinae
           # cannot serve the stream (its daemon is bound to the login
           # session's display), so fuzzel -- a plain Wayland client --
-          # opens whenever the streamed workspace is empty. It is already
+          # opens whenever the nested compositor has no windows. It is already
           # focused when it appears, so typing filters immediately with no
           # Mod key and no lost first character. Phone-friendly by design.
           moonshine-desktop = pkgs.writeShellApplication {

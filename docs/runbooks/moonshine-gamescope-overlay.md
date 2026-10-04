@@ -42,8 +42,8 @@ cannot serve that session: its daemon is bound to the login session's
 display, so `Mod+Space` in the stream would open the launcher on the
 physical monitor at home, invisible to the client.
 
-Instead the wrapper keeps a daemon-less `fuzzel` open whenever the streamed
-workspace is empty (auto-open on connect, reopen after the last window
+Instead the wrapper keeps a daemon-less `fuzzel` open whenever the nested
+compositor has no windows (auto-open on connect, reopen after the last window
 closes). It is already focused, so typing filters immediately with no Mod
 key -- the phone-friendly path. `fuzzel`'s terminal for console entries is
 pinned in `modules/aspects/gui/niri.nix` (`fuzzel/fuzzel.ini`), because the
