@@ -236,6 +236,7 @@
               pkgs.restic
               pkgs.jq
               pkgs.curl
+              pkgs.gawk
             ];
             environment = {
               RCLONE_CONFIG = config.sops.templates."rclone.conf".path;
