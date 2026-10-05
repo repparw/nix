@@ -254,8 +254,9 @@
                 source /run/secrets/hermes-env
                 host=$(cat /etc/hostname)
                 repo="rclone:gd-crypt:restic/$host"
+                rclone_remote="gd-crypt:restic/$host"
 
-                size_json=$(rclone size "$repo" --json)
+                size_json=$(rclone size "$rclone_remote" --json)
                 bytes=$(jq -r .bytes <<<"$size_json")
                 objects=$(jq -r .count <<<"$size_json")
                 gib=$(awk -v b="$bytes" 'BEGIN{printf "%.1f", b/1073741824}')

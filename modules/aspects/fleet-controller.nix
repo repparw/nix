@@ -64,10 +64,10 @@
 
           reboot_required_local() {
             local booted built
-            if ! booted=$(readlink /run/booted-system/{initrd,kernel,kernel-modules} 2>/dev/null); then
+            if ! booted=$(readlink -f /run/booted-system/{initrd,kernel,kernel-modules} 2>/dev/null); then
               return 2
             fi
-            if ! built=$(readlink /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules} 2>/dev/null); then
+            if ! built=$(readlink -f /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules} 2>/dev/null); then
               return 2
             fi
             [ "$booted" != "$built" ]
@@ -75,8 +75,8 @@
 
           reboot_required_epsilon() {
             remote_epsilon bash -s <<'EOF'
-          booted=$(readlink /run/booted-system/{initrd,kernel,kernel-modules} 2>/dev/null) || exit 2
-          built=$(readlink /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules} 2>/dev/null) || exit 2
+          booted=$(readlink -f /run/booted-system/{initrd,kernel,kernel-modules} 2>/dev/null) || exit 2
+          built=$(readlink -f /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules} 2>/dev/null) || exit 2
           [ "$booted" != "$built" ]
           EOF
           }
