@@ -24,13 +24,14 @@
         environment.systemPackages = [ pkgs.bitwarden-desktop ];
 
         # The desktop app persists via Electron safeStorage (libsecret),
-        # so pin the keyring Niri already defaults on. Under SDDM
+        # so pin the keyring Niri already defaults on. Note the SDDM PAM
+        # service only includes the login stack
+        # (security.pam.services.sddm has useDefaultRules = false), so
+        # there is no separate SDDM keyring hook to enable. Under SDDM
         # autologin no password is presented, so the login keyring still
-        # starts locked; the SDDM PAM hook only helps password logins.
-        # Helium keeps --password-store=basic (see browser.nix) and is
-        # unaffected by that locked keyring.
+        # starts locked; Helium keeps --password-store=basic (see
+        # browser.nix) and is unaffected by that locked keyring.
         services.gnome.gnome-keyring.enable = true;
-        security.pam.services.sddm.enableGnomeKeyring = true;
       };
 
     homeManager =
