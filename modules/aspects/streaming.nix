@@ -266,22 +266,40 @@ in
         ];
         text = ''
           ssh_tv() {
-            ssh -o BatchMode=yes -o ConnectTimeout=5 -o RequestTTY=force tv "$@"
+            ssh -o BatchMode=yes -o ConnectTimeout=5 -o LogLevel=ERROR -o RequestTTY=force tv "$@"
+          }
+
+          # Journal every phase with a millisecond offset. Without this the run
+          # is a single silent systemd start/stop pair, so a missed press, an
+          # unresolved node and a slow TV launch are indistinguishable.
+          start_ts=$(date +%s.%N)
+          log() {
+            awk -v a="$start_ts" -v b="$(date +%s.%N)" -v m="$*" \
+              'BEGIN { printf "[%7.3fs] %s\n", b - a, m }' >&2
           }
 
           # The 2.4GHz dongle re-enumerates as 2dc8:310a whenever the controller
           # powers on, including from a wall charger, so enumeration alone cannot
           # tell charging from playing. xpad maps 0x310a as a plain Xbox 360 pad
           # and reports no battery state, so the only distinguishing signal is
-          # real button input. by-id survives re-enumeration and the
-          # -event-joystick suffix keeps the sibling keyboard and mouse nodes
-          # out of the way.
+          # real button input.
+          #
+          # Match on the USB ids, not the product name: the same controller
+          # enumerates as "8BitDo IDLE" while powered down and only as "8BitDo
+          # Ultimate 2C Wireless Controller" when active, so a name glob misses
+          # it and wait_button then times out silently. by-id survives
+          # re-enumeration and the -event-joystick suffix keeps the sibling
+          # keyboard and mouse nodes out of the way.
           joystick_node() {
-            local node
-            for node in /dev/input/by-id/*Ultimate_2C*event-joystick; do
+            local node event
+            for node in /dev/input/by-id/*event-joystick; do
               [ -e "$node" ] || continue
-              printf '%s\n' "$node"
-              return 0
+              event="$(basename "$(readlink -f "$node")")"
+              if [ "$(cat "/sys/class/input/$event/device/id/vendor" 2>/dev/null)" = 2dc8 ] &&
+                [ "$(cat "/sys/class/input/$event/device/id/product" 2>/dev/null)" = 310a ]; then
+                printf '%s\n' "$node"
+                return 0
+              fi
             done
             return 1
           }
@@ -291,9 +309,10 @@ in
             deadline=$((SECONDS + $1))
             while :; do
               node="$(joystick_node)" && break
-              [ "$SECONDS" -lt "$deadline" ] || return 1
+              [ "$SECONDS" -lt "$deadline" ] || { log "no 2dc8:310a joystick node appeared"; return 1; }
               sleep 0.2
             done
+            log "joystick node resolved: $node"
             # grep -m1 closes the pipe on the first button press, which kills
             # evtest with SIGPIPE; pipefail would turn that into a failed gate.
             local status
@@ -302,6 +321,11 @@ in
               grep -qm1 -E 'type 1 \(EV_KEY\), code [0-9]+ \([^)]*\), value 1'
             status=$?
             set -o pipefail
+            if [ "$status" = 0 ]; then
+              log "button press seen"
+            else
+              log "no button press within ''${1}s"
+            fi
             return "$status"
           }
 
@@ -319,7 +343,47 @@ in
             return 1
           }
 
-          wait_button 30 || exit 0
+          wait_button 30 || { log "no press; exiting without action"; exit 0; }
+
+          if moonshine_streaming; then
+            log "live stream detected; leaving the session alone"
+            exit 0
+          fi
+
+          tv_on=0
+          if power="$(ssh_tv 'luna-send -n 1 -w 3000 -f luna://com.webos.service.tvpower/power/getPowerState "{}"' 2>/dev/null)"; then
+            if jq -e '.state == "Active"' >/dev/null <<<"$power"; then
+              tv_on=1
+            fi
+          fi
+          log "tv power: $([ "$tv_on" -eq 1 ] && echo on || echo off)"
+
+          if [ "$tv_on" -eq 1 ]; then
+            # webOS only delivers launch params on a cold start: a lingering
+            # Moonlight is re-foregrounded via webOSRelaunch with params
+            # dropped, landing on the app picker instead of Steam. Close first
+            # (a failed close just means it was not running), then launch.
+            log "branch: tv (cold-launch Moonlight)"
+            ssh_tv ${lib.escapeShellArg closeRemote} >/dev/null 2>&1 || true
+            sleep 1
+            ssh_tv ${lib.escapeShellArg launchRemote} >/dev/null
+            log "branch: tv done"
+            exit 0
+          fi
+
+          session_unlocked || { log "no unlocked seat session; exiting"; exit 0; }
+          [ -n "''${WAYLAND_DISPLAY:-}" ] || { log "no wayland display; exiting"; exit 0; }
+
+          # Already on the desk inside a Steam game: the button press is input
+          # to that game, not a request to relaunch anything. Steam spawns a
+          # `reaper SteamLaunch AppId=...` child for a running (or launching)
+          # game; plain Big Picture has none, and still gets focus + raise.
+          if pgrep -f "reaper SteamLaunch" >/dev/null; then
+            log "steam game already running on the desk; leaving it alone"
+            exit 0
+          fi
+
+          log "branch: desk"
 
           # Never interrupt a live stream: on controller reconnect the dongle
           # re-enumerates and the button gate above passes (the user is mashing
@@ -347,34 +411,8 @@ in
             grep -q "Starting session streams" <<<"$last"
           }
 
-          moonshine_streaming && exit 0
-
-          tv_on=0
-          if power="$(ssh_tv 'luna-send -n 1 -w 3000 -f luna://com.webos.service.tvpower/power/getPowerState "{}"' 2>/dev/null)"; then
-            if jq -e '.state == "Active"' >/dev/null <<<"$power"; then
-              tv_on=1
-            fi
-          fi
-
-          if [ "$tv_on" -eq 1 ]; then
-            # webOS only delivers launch params on a cold start: a lingering
-            # Moonlight is re-foregrounded via webOSRelaunch with params
-            # dropped, landing on the app picker instead of Steam. Close first
-            # (a failed close just means it was not running), then launch.
-            ssh_tv ${lib.escapeShellArg closeRemote} >/dev/null 2>&1 || true
-            sleep 1
-            ssh_tv ${lib.escapeShellArg launchRemote} >/dev/null
-            exit 0
-          fi
-
-          session_unlocked || exit 0
-          [ -n "''${WAYLAND_DISPLAY:-}" ] || exit 0
-
-          # Already on the desk inside a Steam game: the button press is input
-          # to that game, not a request to relaunch anything. Steam spawns a
-          # `reaper SteamLaunch AppId=...` child for a running (or launching)
-          # game; plain Big Picture has none, and still gets focus + raise.
           if pgrep -f "reaper SteamLaunch" >/dev/null; then
+            log "steam game already running on the desk; leaving it alone"
             exit 0
           fi
 
@@ -389,9 +427,11 @@ in
           # above already ruled out a live stream and a running game, so the
           # only casualty here is a tray/downloading client, which resumes.
           if pgrep -x gamescope >/dev/null; then
+            log "reusing the running gamescope session"
             exec ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
           fi
 
+          log "taking over: stopping desktop steam, starting gamescope"
           ${stopDesktopSteam}
 
           exec ${lib.getExe pkgs.gamescope} --steam -H 1080 -r 162 --adaptive-sync -- \
