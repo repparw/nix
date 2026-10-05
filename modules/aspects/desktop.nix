@@ -10,6 +10,7 @@
       den.aspects.file-manager
       den.aspects.obsidian
       den.aspects.ai._.gui
+      den.aspects.desktop._.bitwarden
     ];
 
     user = _: {

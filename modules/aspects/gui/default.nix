@@ -8,7 +8,6 @@
         niri
         phone
         browser
-        bitwarden
         mpv
         wm
         zathura
