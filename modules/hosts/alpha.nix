@@ -303,11 +303,14 @@
               };
               buprpi = {
                 destination = "${config.modules.services.backupDir}/pi-services/";
-                sources = [ "repparw@${den.hosts.aarch64-linux.pi.serviceAddress}:services/" ];
+                sources = [
+                  "repparw@${den.hosts.aarch64-linux.pi.serviceAddress}:/var/lib/pi-services-backup/current/"
+                ];
                 settings = {
                   archive = true;
                   "copy-links" = true;
-                  delete = true;
+                  "delete-after" = true;
+                  "rsync-path" = "sudo -n pi-services-backup-send";
                 };
               };
             };
