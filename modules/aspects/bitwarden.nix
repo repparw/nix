@@ -23,8 +23,8 @@
         # system-auth unlock would fail to set up.
         environment.systemPackages = [ pkgs.bitwarden-desktop ];
 
-        # The desktop app persists via Electron safeStorage (libsecret),
-        # so pin the keyring Niri already defaults on. Note the SDDM PAM
+        # Bitwarden's Linux credential storage uses the Secret Service API
+        # (via oo7), so pin the keyring Niri already defaults on. Note the SDDM PAM
         # service only includes the login stack
         # (security.pam.services.sddm has useDefaultRules = false), so
         # there is no separate SDDM keyring hook to enable. Under SDDM
@@ -46,7 +46,10 @@
             PartOf = [ "graphical-session.target" ];
           };
           Service = {
-            ExecStart = "${pkgs.bitwarden-desktop}/bin/bitwarden";
+            # Bitwarden treats system startup specially: --autostart suppresses
+            # the normal interactive launch window and starts it as a background
+            # browser-integration broker instead.
+            ExecStart = "${pkgs.bitwarden-desktop}/bin/bitwarden --autostart";
             Restart = "on-failure";
             RestartSec = 5;
           };
