@@ -254,7 +254,9 @@ in
       launch = pkgs.writeShellApplication {
         name = "8bitdo-tv-moonlight";
         runtimeInputs = [
+          pkgs.coreutils
           pkgs.evtest
+          pkgs.gawk
           pkgs.jq
           pkgs.niri
           pkgs.openssh
@@ -323,15 +325,26 @@ in
           # re-enumerates and the button gate above passes (the user is mashing
           # buttons), but their input is already flowing to the game. This is
           # checked before any branch, because both the TV relaunch and the
-          # desk focus/launch would tear down an in-progress session. The
-          # journal session state machine is precise: the latest terminal
-          # line is either streams starting (active) or stopped+waiting (idle).
-          # No lines (never streamed since boot) fails open to launching.
+          # desk focus/launch would tear down an in-progress session.
+          #
+          # The journal alone cannot be trusted: a crashed or killed daemon
+          # leaves a stale "Starting session streams" with no matching
+          # "stopped" line behind, which would block every launch until the
+          # next reboot. So require the daemon to be running and only consider
+          # session lines at or after its start. Within those, the state
+          # machine is exact: the latest terminal line is either streams
+          # starting (active) or stopped+waiting (idle). No lines at all fails
+          # open to launching.
           moonshine_streaming() {
-            journalctl -u moonshine --no-pager -n 1000 2>/dev/null |
+            local since last
+            systemctl is-active --quiet moonshine || return 1
+            since=$(date -d "$(systemctl show moonshine -p ActiveEnterTimestamp --value 2>/dev/null)" +%s 2>/dev/null) || return 1
+            last=$(journalctl -u moonshine --no-pager -o short-unix -n 2000 2>/dev/null |
+              awk -v s="$since" '$1 >= s' |
               grep -E "session::manager: (Starting session streams|Session stopped (by user|unexpectedly))" |
-              tail -n 1 |
-              grep -q "Starting session streams"
+              tail -n 1) || return 1
+            [ -n "$last" ] || return 1
+            grep -q "Starting session streams" <<<"$last"
           }
 
           moonshine_streaming && exit 0
