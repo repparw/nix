@@ -206,9 +206,12 @@ in every build job.
 The lock workflow uses the built-in `GITHUB_TOKEN`. Its permissions are
 Contents write for the lock branch, Pull requests write for the PR, and Actions
 write for dispatching CI. No separate token or repository secret is needed.
-The repository must allow GitHub Actions to create and merge pull requests.
-No approval is synthesized: the workflow merges only its own lock-only branch
-after the exact candidate CI succeeds and the original main SHA is unchanged.
+The repository must allow GitHub Actions to create pull requests and update
+`main`. No approval is synthesized: after exact candidate CI succeeds, the
+workflow creates a merge commit whose first parent is the validated main SHA and
+whose second parent is the validated lock PR head. It publishes that commit with
+a lease pinned to the original main SHA, so checking the base and updating main
+are one compare-and-swap operation.
 
 Run `gh workflow run lock-update.yml` after this workflow and CI's
 `workflow_dispatch` support reach main. GitHub requires the dispatched workflow
@@ -231,14 +234,19 @@ request failure is reported, and a retry checks GitHub before dispatching.
 If an unchanged commit already has a failed or canceled run, rerun that CI run
 explicitly after diagnosing it; the nightly updater does not repeat it.
 
-A successful lock-branch gate is the merge condition. Immediately after the
-merge, the updater dispatches `ci.yml` on `main` with the exact merged SHA and
-waits for that run as well. This explicit post-merge dispatch is required
-because a merge performed with the workflow's `GITHUB_TOKEN` does not reliably
-emit a new push workflow. Pi accepts either a successful push CI or this guarded
-main dispatch, but only when its branch and head SHA exactly match the revision
-being deployed. PR runs and lock-branch dispatches never satisfy the deployment
-gate.
+A successful lock-branch gate is the merge condition. The final publication is
+an atomic compare-and-swap: if `main` changes after validation but before the
+push, the lease rejects the merge and the PR remains for the next refresh. The
+merge commit retains the validated PR head as a parent, so GitHub can recognize
+the PR as merged without a separate non-atomic merge API call.
+
+Immediately after a successful publication, the updater dispatches `ci.yml` on
+`main` with the exact merged SHA and waits for that run as well. This explicit
+post-merge dispatch is required because a `GITHUB_TOKEN`-authored push does not
+reliably emit another workflow. Pi accepts either a successful push CI or this
+guarded main dispatch, but only when its branch and head SHA exactly match the
+revision being deployed. PR runs and lock-branch dispatches never satisfy the
+deployment gate.
 
 The lock workflow has its own concurrency group and one branch. Pi's pause
 flag affects deployment only. Applying this configuration removes the old
