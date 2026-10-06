@@ -22,7 +22,7 @@ jobs:
         with:
           ref: main
       - uses: DeterminateSystems/nix-installer-action@v22
-      - name: Update, validate, and merge the lock PR
+      - name: Update, validate, and publish the lock PR
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -106,7 +106,7 @@ jobs:
 
           if [ -z "$pr" ]; then
             url=$(gh pr create --base main --head "$branch" --title 'flake.lock: Update' \
-              --body 'Update flake inputs. The updater explicitly validates this exact lock commit, auto-merges it if main is unchanged, then explicitly validates the resulting exact main revision before the fleet deployer may consume it.')
+              --body 'Update flake inputs. The updater explicitly validates this exact lock commit, then atomically fast-forwards main to that same validated SHA if main is unchanged.')
             pr=${url##*/}
           fi
 
@@ -134,23 +134,14 @@ jobs:
             exit 1
           fi
 
-          # Make base validation and publication one compare-and-swap operation.
-          # The merge commit contains the validated PR head as a parent, so GitHub
-          # recognizes the PR as merged, while the lease makes any concurrent main
-          # movement reject the push instead of silently changing the merge base.
-          git switch --detach "$main_sha"
-          git merge --no-ff -m "flake.lock: Update (#$pr)" "$revision"
-          merged_sha=$(git rev-parse HEAD)
-          if ! git push "--force-with-lease=refs/heads/main:$main_sha" origin "HEAD:refs/heads/main"; then
-            echo 'main changed before the atomic lock merge; leaving the validated PR open for refresh.' >&2
+          # Publish the exact CI-validated commit with a compare-and-swap.
+          # Because revision is a direct child of main_sha, this is a fast-forward
+          # when main is unchanged. The lease rejects any concurrent main movement.
+          if ! git push "--force-with-lease=refs/heads/main:$main_sha" origin "$revision:refs/heads/main"; then
+            echo 'main changed before the atomic lock fast-forward; leaving the validated PR open for refresh.' >&2
             exit 1
           fi
-          if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$merged_sha" ]; then
-            echo 'Atomic lock merge push succeeded but main does not point at the expected merge commit.' >&2
+          if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$revision" ]; then
+            echo 'Atomic lock fast-forward succeeded but main does not point at the validated revision.' >&2
             exit 1
           fi
-
-          # A GITHUB_TOKEN-authored push does not reliably emit another workflow.
-          # Dispatch CI explicitly and bind it to the exact new main.
-          gh workflow run ci.yml --ref main -f expected_sha="$merged_sha"
-          wait_for_ci main "$merged_sha" >/dev/null
