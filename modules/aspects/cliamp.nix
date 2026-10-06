@@ -11,14 +11,14 @@ in
       nixpkgs.overlays = [
         (final: prev: {
           cliamp = prev.cliamp.overrideAttrs (old: {
-            version = "2.0.1-session-attach-b9aa7d9";
+            version = "2.0.1-session-attach-55ecd36";
             src = final.fetchFromGitHub {
               owner = "ryanrpj";
               repo = "cliamp";
-              rev = "b9aa7d94a9eb3f8c9439708f531ac6df756bdbff";
-              hash = "sha256-C1WQQi7Bif3SsZwkDx+EVdOkE5OygXJG7q/rUiBtKBo=";
+              rev = "55ecd36798bca8dd51a942d85503f91e37ab96f7";
+              hash = "sha256-87nEQ3Ay0u4stGoc3ShPX+z0zVhaTUCuQo72oZTVNT4=";
             };
-            vendorHash = "sha256-d/ENFm9b1DkIir1lz50VVX1pvuQpwPUVlA5XOC7Jj5o=";
+            vendorHash = "sha256-cKMGAVLRs6FwX9Gqq6wj11OPwK1TsTuVMR7uwI6Mwfg=";
           });
         })
       ];
