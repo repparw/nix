@@ -49,9 +49,10 @@ always-on host: it runs the LAN HTTPS edge for Jellyfin and Home Assistant,
 plus fleet-health and the deploy-rs controller. Authelia, Miniflux, and
 Glance live on epsilon.
 
-It is the fleet's deployment controller. GitHub Actions opens lock update PRs.
-After merge and successful CI on the exact main commit, pi stages that revision
-through epsilon, idle alpha, and finally pi with deploy-rs.
+It is the fleet's deployment controller. GitHub Actions opens lock update PRs,
+validates their exact lock commit, and auto-merges them when main has not moved.
+After exact-main CI succeeds, pi stages that revision through epsilon, idle
+alpha, and finally pi with deploy-rs.
 
 - Traefik (:80/:443) fronts `jellyfin.repparw.com` on the LAN and
   `home.repparw.com` locally. Jellyfin's backend is alpha's published port.

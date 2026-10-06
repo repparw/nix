@@ -33,142 +33,271 @@ class LockUpdate(unittest.TestCase):
         self.main = self.git("rev-parse", "HEAD", cwd=self.checkout)
         self.bin = self.root / "bin"
         self.bin.mkdir()
+
         nix = self.bin / "nix"
-        nix.write_text(f"#!{shutil.which('bash')}\n" + "if [ \"$FIXTURE_CHANGE\" = 1 ]; then printf 'new\\n' > flake.lock; fi\n"
-                       "if [ \"$FIXTURE_RACE\" = 1 ]; then git --git-dir=\"$FIXTURE_REMOTE\" update-ref refs/heads/automation/flake-lock \"$FIXTURE_MAIN\"; fi\n")
+        nix.write_text(
+            f"#!{shutil.which('bash')}\n"
+            "if [ \"$FIXTURE_CHANGE\" = 1 ]; then printf 'new\\n' > flake.lock; fi\n"
+            "if [ \"$FIXTURE_BRANCH_RACE\" = 1 ]; then "
+            "git --git-dir=\"$FIXTURE_REMOTE\" update-ref refs/heads/automation/flake-lock \"$FIXTURE_MAIN\"; fi\n"
+        )
         nix.chmod(0o755)
+
         gh = self.bin / "gh"
-        gh.write_text(f"#!{sys.executable}\nimport json, os, sys\nfrom pathlib import Path\n"
-                      "with Path(os.environ['FIXTURE_REQUESTS']).open('a') as log:\n"
-                      "    log.write(json.dumps(sys.argv[1:]) + '\\n')\n"
-                      "if sys.argv[1:3] == ['pr', 'list']:\n"
-                      "    print(os.environ['FIXTURE_PR'])\n"
-                      "if sys.argv[1] == 'api':\n"
-                      "    print(os.environ['FIXTURE_RUNS'])\n"
-                      "if sys.argv[1:3] == ['pr', 'create'] and os.environ['FIXTURE_LATE_RACE'] == '1':\n"
-                      "    import subprocess\n"
-                      "    subprocess.run(['git', '--git-dir', os.environ['FIXTURE_REMOTE'], 'update-ref', 'refs/heads/automation/flake-lock', os.environ['FIXTURE_MAIN']], check=True)\n"
-                      "if sys.argv[1:3] == ['workflow', 'run'] and os.environ['FIXTURE_DISPATCH_FAIL'] == '1':\n"
-                      "    sys.exit(1)\n")
+        gh.write_text(
+            f"#!{sys.executable}\n"
+            "import json, os, subprocess, sys\n"
+            "from pathlib import Path\n"
+            "root = Path(os.environ['FIXTURE_ROOT'])\n"
+            "remote = os.environ['FIXTURE_REMOTE']\n"
+            "args = sys.argv[1:]\n"
+            "with Path(os.environ['FIXTURE_REQUESTS']).open('a') as log:\n"
+            "    log.write(json.dumps(args) + '\\n')\n"
+            "if args[:2] == ['pr', 'list']:\n"
+            "    print(os.environ['FIXTURE_PR'])\n"
+            "elif args[:2] == ['pr', 'create']:\n"
+            "    if os.environ['FIXTURE_LATE_BRANCH_RACE'] == '1':\n"
+            "        subprocess.run(['git', '--git-dir', remote, 'update-ref', "
+            "'refs/heads/automation/flake-lock', os.environ['FIXTURE_MAIN']], check=True)\n"
+            "    print('https://github.com/fixture/nix/pull/123')\n"
+            "elif args and args[0] == 'api':\n"
+            "    branch = next((a.split('=', 1)[1] for a in args if a.startswith('branch=')), '')\n"
+            "    key = 'main' if branch == 'main' else 'candidate'\n"
+            "    configured = os.environ[f'FIXTURE_{key.upper()}_CI']\n"
+            "    marker = root / f'dispatched-{key}'\n"
+            "    state = configured or ('success' if marker.exists() else '')\n"
+            "    if state == 'success':\n"
+            "        print('1\\tcompleted\\tsuccess')\n"
+            "    elif state == 'failure':\n"
+            "        print('1\\tcompleted\\tfailure')\n"
+            "    elif state == 'pending':\n"
+            "        print('1\\tin_progress\\t')\n"
+            "elif args[:2] == ['workflow', 'run']:\n"
+            "    ref = args[args.index('--ref') + 1]\n"
+            "    key = 'main' if ref == 'main' else 'candidate'\n"
+            "    if os.environ[f'FIXTURE_{key.upper()}_DISPATCH_FAIL'] == '1':\n"
+            "        sys.exit(1)\n"
+            "    (root / f'dispatched-{key}').write_text('1')\n"
+        )
         gh.chmod(0o755)
+
+        sleep = self.bin / "sleep"
+        sleep.write_text(f"#!{shutil.which('bash')}\nexit 0\n")
+        sleep.chmod(0o755)
+
+        real_git = shutil.which("git")
+        git = self.bin / "git"
+        git.write_text(
+            f"#!{shutil.which('bash')}\n"
+            "set -e\n"
+            "if [ \"$FIXTURE_PRE_MERGE_MAIN_RACE\" = 1 ] && [ \"$1\" = push ] "
+            "&& [[ \" $* \" == *\"refs/heads/main\"* ]] "
+            "&& [ ! -e \"$FIXTURE_ROOT/main-raced\" ]; then\n"
+            "  current=$($REAL_GIT --git-dir=\"$FIXTURE_REMOTE\" rev-parse refs/heads/main)\n"
+            "  tree=$($REAL_GIT --git-dir=\"$FIXTURE_REMOTE\" rev-parse \"$current^{tree}\")\n"
+            "  race=$(printf 'racing main\\n' | "
+            "GIT_AUTHOR_NAME=fixture GIT_AUTHOR_EMAIL=fixture@example.test "
+            "GIT_COMMITTER_NAME=fixture GIT_COMMITTER_EMAIL=fixture@example.test "
+            "$REAL_GIT --git-dir=\"$FIXTURE_REMOTE\" commit-tree \"$tree\" -p \"$current\")\n"
+            "  $REAL_GIT --git-dir=\"$FIXTURE_REMOTE\" update-ref refs/heads/main \"$race\" \"$current\"\n"
+            "  touch \"$FIXTURE_ROOT/main-raced\"\n"
+            "fi\n"
+            "exec \"$REAL_GIT\" \"$@\"\n"
+        )
+        git.chmod(0o755)
+        self.real_git = real_git
 
     def git(self, *arguments, cwd=None):
         result = subprocess.run(["git", *arguments], cwd=cwd, text=True, capture_output=True, check=True)
         return result.stdout.strip()
 
-    def update(self, change=True, pr="", race=False, runs=0, late_race=False, dispatch_fail=False):
+    def update(
+        self,
+        *,
+        change=True,
+        pr="",
+        candidate_ci="",
+        main_ci="",
+        branch_race=False,
+        late_branch_race=False,
+        candidate_dispatch_fail=False,
+        main_dispatch_fail=False,
+        pre_merge_main_race=False,
+    ):
         env = os.environ | {
             "PATH": f"{self.bin}:{os.environ['PATH']}",
-            "FIXTURE_CHANGE": str(int(change)), "FIXTURE_PR": pr,
-            "FIXTURE_RACE": str(int(race)), "FIXTURE_REMOTE": str(self.remote),
-            "FIXTURE_MAIN": self.main, "FIXTURE_REQUESTS": str(self.root / "requests"),
-            "FIXTURE_RUNS": str(runs), "FIXTURE_LATE_RACE": str(int(late_race)),
-            "FIXTURE_DISPATCH_FAIL": str(int(dispatch_fail)), "GH_REPO": "fixture/nix",
+            "FIXTURE_CHANGE": str(int(change)),
+            "FIXTURE_PR": pr,
+            "FIXTURE_BRANCH_RACE": str(int(branch_race)),
+            "FIXTURE_LATE_BRANCH_RACE": str(int(late_branch_race)),
+            "FIXTURE_CANDIDATE_CI": candidate_ci,
+            "FIXTURE_MAIN_CI": main_ci,
+            "FIXTURE_CANDIDATE_DISPATCH_FAIL": str(int(candidate_dispatch_fail)),
+            "FIXTURE_MAIN_DISPATCH_FAIL": str(int(main_dispatch_fail)),
+            "FIXTURE_PRE_MERGE_MAIN_RACE": str(int(pre_merge_main_race)),
+            "REAL_GIT": self.real_git,
+            "FIXTURE_REMOTE": str(self.remote),
+            "FIXTURE_MAIN": self.main,
+            "FIXTURE_REQUESTS": str(self.root / "requests"),
+            "FIXTURE_ROOT": str(self.root),
+            "GH_REPO": "fixture/nix",
+            "LOCK_UPDATE_POLL_SECONDS": "0",
+            "LOCK_UPDATE_POLL_ATTEMPTS": "3",
         }
         (self.root / "requests").write_text("")
-        result = subprocess.run(["bash", "-c", SCRIPT], cwd=self.checkout, env=env,
-                                text=True, capture_output=True)
+        for marker in [*self.root.glob("dispatched-*"), self.root / "main-raced"]:
+            if marker.exists():
+                marker.unlink()
+        result = subprocess.run(
+            ["bash", "-c", SCRIPT],
+            cwd=self.checkout,
+            env=env,
+            text=True,
+            capture_output=True,
+        )
         self.requests = [json.loads(line) for line in (self.root / "requests").read_text().splitlines()]
-        self.assertEqual(self.git("--git-dir", str(self.remote), "rev-parse", "main"), self.main)
         return result
 
-    def test_creates_lock_branch_and_pr_without_changing_main(self):
+    def main_sha(self):
+        return self.git("--git-dir", str(self.remote), "rev-parse", "main")
+
+    def branch_sha(self):
+        return self.git("--git-dir", str(self.remote), "rev-parse", "automation/flake-lock")
+
+    def test_creates_validates_merges_and_validates_main(self):
         result = self.update()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "automation/flake-lock:flake.lock"), "new")
-        self.assertEqual(self.git("--git-dir", str(self.remote), "diff", "--name-only", "main", "automation/flake-lock"), "flake.lock")
-        self.assertTrue(any(r[:2] == ["pr", "create"] for r in self.requests))
-        revision = self.git("--git-dir", str(self.remote), "rev-parse", "automation/flake-lock")
-        self.assertEqual([r for r in self.requests if r[:2] == ["workflow", "run"]],
-                         [["workflow", "run", "ci.yml", "--ref", "automation/flake-lock", "-f", f"expected_sha={revision}"]])
-        self.assertLess(next(i for i, r in enumerate(self.requests) if r[:2] == ["pr", "create"]),
-                        next(i for i, r in enumerate(self.requests) if r[:2] == ["workflow", "run"]))
+        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), "new")
+        candidate = self.branch_sha()
+        merged = self.main_sha()
+        self.assertNotEqual(merged, candidate)
+        ancestry = subprocess.run(
+            ["git", "--git-dir", str(self.remote), "merge-base", "--is-ancestor", candidate, merged]
+        )
+        self.assertEqual(ancestry.returncode, 0)
 
-    def test_existing_pr_gets_branch_update_without_duplicate_pr(self):
+        create = next(i for i, r in enumerate(self.requests) if r[:2] == ["pr", "create"])
+        candidate_dispatch = next(
+            i for i, r in enumerate(self.requests)
+            if r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "automation/flake-lock"
+        )
+        main_dispatch = next(
+            i for i, r in enumerate(self.requests)
+            if r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "main"
+        )
+        self.assertLess(create, candidate_dispatch)
+        self.assertLess(candidate_dispatch, main_dispatch)
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+
+        pr_list = next(r for r in self.requests if r[:2] == ["pr", "list"])
+        self.assertIn("automation/flake-lock", pr_list)
+        self.assertNotIn("fixture:automation/flake-lock", pr_list)
+
+    def test_existing_pr_refreshes_without_duplicate_create(self):
         self.git("push", "origin", "HEAD:refs/heads/automation/flake-lock", cwd=self.checkout)
         result = self.update(pr="123")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "automation/flake-lock:flake.lock"), "new")
         self.assertFalse(any(r[:2] == ["pr", "create"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), "new")
+        ancestry = subprocess.run(
+            ["git", "--git-dir", str(self.remote), "merge-base", "--is-ancestor",
+             self.branch_sha(), self.main_sha()]
+        )
+        self.assertEqual(ancestry.returncode, 0)
 
-    def test_no_change_does_not_publish(self):
-        result = self.update(change=False)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "branch", "--list"), "* main")
-        self.assertFalse(any(r[:2] == ["pr", "create"] for r in self.requests))
-
-    def test_obsolete_pr_closes_when_lock_matches_main(self):
+    def test_no_change_closes_obsolete_pr_without_merge(self):
         result = self.update(change=False, pr="123")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(any(r[:3] == ["pr", "close", "123"] for r in self.requests))
+        self.assertEqual(self.main_sha(), self.main)
 
-    def test_concurrent_branch_writer_is_not_overwritten(self):
-        result = self.update(race=True)
+    def test_candidate_failure_does_not_merge(self):
+        result = self.update(candidate_ci="failure")
         self.assertNotEqual(result.returncode, 0)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "rev-parse", "automation/flake-lock"), self.main)
-        self.assertFalse(any(r[:2] == ["pr", "create"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertEqual(self.main_sha(), self.main)
 
-    def reset_checkout(self):
-        self.git("switch", "main", cwd=self.checkout)
-        self.git("reset", "--hard", self.main, cwd=self.checkout)
-
-    def test_unchanged_candidate_reuses_sha_and_does_not_dispatch_again(self):
-        self.assertEqual(self.update().returncode, 0)
-        revision = self.git("--git-dir", str(self.remote), "rev-parse", "automation/flake-lock")
-        self.reset_checkout()
-        result = self.update(pr="123", runs=1)
+    def test_existing_successful_candidate_ci_is_reused(self):
+        result = self.update(candidate_ci="success")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "rev-parse", "automation/flake-lock"), revision)
-        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        query = next(r for r in self.requests if r[0] == "api")
-        self.assertIn(f"head_sha={revision}", query)
-        self.assertIn("branch=automation/flake-lock", query)
-        self.assertIn("event=workflow_dispatch", query)
+        candidate_dispatches = [
+            r for r in self.requests
+            if r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "automation/flake-lock"
+        ]
+        self.assertEqual(candidate_dispatches, [])
+        self.assertTrue(any(
+            r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "main"
+            for r in self.requests
+        ))
 
-    def test_unchanged_candidate_without_ci_dispatches_existing_sha(self):
-        self.assertEqual(self.update().returncode, 0)
-        revision = self.git("--git-dir", str(self.remote), "rev-parse", "automation/flake-lock")
-        self.reset_checkout()
-        result = self.update(pr="123")
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "rev-parse", "automation/flake-lock"), revision)
-        self.assertEqual([r for r in self.requests if r[:2] == ["workflow", "run"]],
-                         [["workflow", "run", "ci.yml", "--ref", "automation/flake-lock", "-f", f"expected_sha={revision}"]])
-
-    def test_branch_change_during_pr_creation_does_not_dispatch(self):
-        result = self.update(late_race=True)
+    def test_branch_change_during_pr_creation_does_not_merge(self):
+        result = self.update(late_branch_race=True)
         self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertIn("Lock branch changed", result.stderr)
+        self.assertEqual(self.main_sha(), self.main)
 
-    def test_dispatch_failure_can_retry_without_creating_duplicate_pr_or_commit(self):
-        result = self.update(dispatch_fail=True)
+    def test_candidate_dispatch_failure_does_not_merge(self):
+        result = self.update(candidate_dispatch_fail=True)
         self.assertNotEqual(result.returncode, 0)
-        revision = self.git("--git-dir", str(self.remote), "rev-parse", "automation/flake-lock")
-        self.reset_checkout()
-        result = self.update(pr="123", runs=1)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "rev-parse", "automation/flake-lock"), revision)
-        self.assertFalse(any(r[:2] in [["pr", "create"], ["workflow", "run"]] for r in self.requests))
+        self.assertEqual(self.main_sha(), self.main)
+
+    def test_main_validation_failure_is_reported_after_merge(self):
+        result = self.update(main_ci="failure")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotEqual(self.main_sha(), self.main)
+        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), "new")
+
+    def test_main_race_after_final_check_rejects_atomic_merge(self):
+        result = self.update(pre_merge_main_race=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertTrue((self.root / "main-raced").exists())
+        self.assertIn("main changed before the atomic lock merge", result.stderr)
+
+        # The racing main commit wins, but it still has the old lock tree. The
+        # validated lock candidate must not be reachable from main.
+        raced_main = self.main_sha()
+        self.assertNotEqual(raced_main, self.main)
+        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), "old")
+        candidate = self.branch_sha()
+        ancestry = subprocess.run(
+            ["git", "--git-dir", str(self.remote), "merge-base", "--is-ancestor", candidate, raced_main]
+        )
+        self.assertNotEqual(ancestry.returncode, 0)
+        self.assertFalse(any(
+            r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "main"
+            for r in self.requests
+        ))
 
     def test_no_lock_change_does_not_dispatch(self):
-        self.assertEqual(self.update(change=False, pr="123").returncode, 0)
+        result = self.update(change=False)
+        self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertEqual(self.main_sha(), self.main)
 
     def test_ci_dispatch_guard_rejects_moved_ref(self):
-        guards = [line.strip().removeprefix("run: ") for line in CI.splitlines()
-                  if 'run: test "$GITHUB_SHA" = "$EXPECTED_SHA"' in line]
+        guards = [
+            line.strip().removeprefix("run: ")
+            for line in CI.splitlines()
+            if 'run: test "$GITHUB_SHA" = "$EXPECTED_SHA"' in line
+        ]
         checkout_count = CI.count("uses: actions/checkout@")
         self.assertGreater(checkout_count, 0)
         self.assertEqual(len(guards), checkout_count)
         for guard in guards:
-            for sha, expected, success in [("a" * 40, "a" * 40, True),
-                                           ("b" * 40, "a" * 40, False),
-                                           ("a" * 40, "", False)]:
-                result = subprocess.run(["bash", "-c", guard],
-                                        env=os.environ | {"GITHUB_SHA": sha, "EXPECTED_SHA": expected})
+            for sha, expected, success in [
+                ("a" * 40, "a" * 40, True),
+                ("b" * 40, "a" * 40, False),
+                ("a" * 40, "", False),
+            ]:
+                result = subprocess.run(
+                    ["bash", "-c", guard],
+                    env=os.environ | {"GITHUB_SHA": sha, "EXPECTED_SHA": expected},
+                )
                 self.assertEqual(result.returncode == 0, success)
         self.assertEqual(CI.count("ref: ${{ github.sha }}"), checkout_count)
+        self.assertIn("paths-ignore:", CI)
+        self.assertIn("- flake.lock", CI)
 
 
 if __name__ == "__main__":

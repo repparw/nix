@@ -139,13 +139,17 @@ decrypt it.
 Lock maintenance runs in GitHub Actions; deployment runs on pi:
 
 - `.github/workflows/lock-update.yml` runs daily at 04:15 UTC or through
-  `workflow_dispatch`. It opens or refreshes `automation/flake-lock` as a PR.
-  It never pushes main or activates a host.
+  `workflow_dispatch`. It opens or refreshes `automation/flake-lock`, explicitly
+  dispatches `ci.yml` for that exact lock commit, and auto-merges only when the
+  candidate is still lock-only and `main` has not moved. It then explicitly
+  dispatches CI for the exact resulting `main` revision. It never activates a
+  host.
 - `fleet-deploy.timer` runs daily at 05:30 in the controller's timezone.
-  It snapshots current `origin/main` and requires a successful push run of
-  `ci.yml` for that exact commit before evaluation or activation.
-  Missing, pending, failed, or unavailable CI results defer deployment without
-  changing the rollback streak. The next scheduled run retries current main.
+  It snapshots current `origin/main` and requires a successful exact-SHA
+  `ci.yml` run on `main`, either from a normal push or the updater's guarded
+  `workflow_dispatch`, before evaluation or activation. Missing, pending,
+  failed, or unavailable CI results defer deployment without changing the
+  rollback streak. The next scheduled run retries current main.
 - Preparation captures the same immutable Git revision for every selected
   host, evaluates each configuration sequentially, then builds and pins each
   deploy-rs profile on its target. It verifies the built system's revision
@@ -202,9 +206,12 @@ in every build job.
 The lock workflow uses the built-in `GITHUB_TOKEN`. Its permissions are
 Contents write for the lock branch, Pull requests write for the PR, and Actions
 write for dispatching CI. No separate token or repository secret is needed.
-The repository must allow GitHub Actions to create pull requests. Its current
-`can_approve_pull_request_reviews` setting is enabled; the workflow never
-approves or merges a PR.
+The repository must allow GitHub Actions to create pull requests and update
+`main`. No approval is synthesized: after exact candidate CI succeeds, the
+workflow creates a merge commit whose first parent is the validated main SHA and
+whose second parent is the validated lock PR head. It publishes that commit with
+a lease pinned to the original main SHA, so checking the base and updating main
+are one compare-and-swap operation.
 
 Run `gh workflow run lock-update.yml` after this workflow and CI's
 `workflow_dispatch` support reach main. GitHub requires the dispatched workflow
@@ -213,9 +220,10 @@ workflow relies on; see [GitHub's workflow triggering rules](https://docs.github
 
 After publishing the lock branch and opening or updating its PR, the updater
 explicitly dispatches `ci.yml` on `automation/flake-lock` with the expected head
-SHA. Both CI jobs verify that SHA before checking out the event's immutable
+SHA. Every CI job verifies that SHA before checking out the event's immutable
 `github.sha`. A branch change during dispatch fails that check rather than
-validating a different commit.
+validating a different commit. Lock-only PR events are ignored to avoid the
+approval-required duplicate run produced for bot-authored PRs.
 
 An unchanged lock tree on the same main parent reuses the existing commit.
 The updater checks for an existing dispatched run on that branch and SHA before
@@ -226,12 +234,19 @@ request failure is reported, and a retry checks GitHub before dispatching.
 If an unchanged commit already has a failed or canceled run, rerun that CI run
 explicitly after diagnosing it; the nightly updater does not repeat it.
 
-Review the lock commit's dispatched `gate` and `persistence-vm` results before
-merging. Bot PR events may also create approval-required runs; approving those
-is unnecessary for the explicit dispatch and can start duplicate PR checks.
-Deployment still requires a successful **push** CI run for the exact merged
-main commit. A lock-branch dispatch, or even a manual dispatch on main, cannot
-satisfy that separate deployment gate.
+A successful lock-branch gate is the merge condition. The final publication is
+an atomic compare-and-swap: if `main` changes after validation but before the
+push, the lease rejects the merge and the PR remains for the next refresh. The
+merge commit retains the validated PR head as a parent, so GitHub can recognize
+the PR as merged without a separate non-atomic merge API call.
+
+Immediately after a successful publication, the updater dispatches `ci.yml` on
+`main` with the exact merged SHA and waits for that run as well. This explicit
+post-merge dispatch is required because a `GITHUB_TOKEN`-authored push does not
+reliably emit another workflow. Pi accepts either a successful push CI or this
+guarded main dispatch, but only when its branch and head SHA exactly match the
+revision being deployed. PR runs and lock-branch dispatches never satisfy the
+deployment gate.
 
 The lock workflow has its own concurrency group and one branch. Pi's pause
 flag affects deployment only. Applying this configuration removes the old
