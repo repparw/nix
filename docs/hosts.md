@@ -50,9 +50,10 @@ plus fleet-health and the deploy-rs controller. Authelia, Miniflux, and
 Glance live on epsilon.
 
 It is the fleet's deployment controller. GitHub Actions opens lock update PRs,
-validates their exact lock commit, and auto-merges them when main has not moved.
-After exact-main CI succeeds, pi stages that revision through epsilon, idle
-alpha, and finally pi with deploy-rs.
+validates their exact lock commit, and atomically fast-forwards main to that
+same SHA when main has not moved. Pi then reuses that exact successful CI result
+while staging the revision through epsilon, idle alpha, and finally pi with
+deploy-rs.
 
 - Traefik (:80/:443) fronts `jellyfin.repparw.com` on the LAN and
   `home.repparw.com` locally. Jellyfin's backend is alpha's published port.
