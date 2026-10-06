@@ -10,7 +10,7 @@ import tempfile
 import unittest
 
 WORKFLOW = Path(sys.argv.pop(1)).read_text()
-CI = Path(sys.argv.pop(1)).read_text()
+CI = Path(sys.argv.pop(1)).read_text()\nVALIDATION = (Path(sys.argv[1]).read_text() if len(sys.argv) > 1 else CI)
 UPDATE = WORKFLOW.split("        run: |\n", 1)[1]
 SCRIPT = "\n".join(line.removeprefix("          ") for line in UPDATE.splitlines())
 
@@ -258,10 +258,10 @@ class LockUpdate(unittest.TestCase):
     def test_ci_dispatch_guard_rejects_moved_ref(self):
         guards = [
             line.strip().removeprefix("run: ")
-            for line in CI.splitlines()
+            for line in VALIDATION.splitlines()
             if 'run: test "$GITHUB_SHA" = "$EXPECTED_SHA"' in line
         ]
-        checkout_count = CI.count("uses: actions/checkout@")
+        checkout_count = VALIDATION.count("uses: actions/checkout@")
         self.assertGreater(checkout_count, 0)
         self.assertEqual(len(guards), checkout_count)
         for guard in guards:
@@ -275,7 +275,7 @@ class LockUpdate(unittest.TestCase):
                     env=os.environ | {"GITHUB_SHA": sha, "EXPECTED_SHA": expected},
                 )
                 self.assertEqual(result.returncode == 0, success)
-        self.assertEqual(CI.count("ref: ${{ github.sha }}"), checkout_count)
+        self.assertEqual(VALIDATION.count("ref: ${{ github.sha }}"), checkout_count)
         self.assertIn("paths-ignore:", CI)
         self.assertIn("- flake.lock", CI)
 
