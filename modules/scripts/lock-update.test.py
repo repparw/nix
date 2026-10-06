@@ -117,11 +117,9 @@ class LockUpdate(unittest.TestCase):
         change=True,
         pr="",
         candidate_ci="",
-        main_ci="",
         branch_race=False,
         late_branch_race=False,
         candidate_dispatch_fail=False,
-        main_dispatch_fail=False,
         pre_merge_main_race=False,
     ):
         env = os.environ | {
@@ -131,9 +129,9 @@ class LockUpdate(unittest.TestCase):
             "FIXTURE_BRANCH_RACE": str(int(branch_race)),
             "FIXTURE_LATE_BRANCH_RACE": str(int(late_branch_race)),
             "FIXTURE_CANDIDATE_CI": candidate_ci,
-            "FIXTURE_MAIN_CI": main_ci,
+            "FIXTURE_MAIN_CI": "",
             "FIXTURE_CANDIDATE_DISPATCH_FAIL": str(int(candidate_dispatch_fail)),
-            "FIXTURE_MAIN_DISPATCH_FAIL": str(int(main_dispatch_fail)),
+            "FIXTURE_MAIN_DISPATCH_FAIL": "0",
             "FIXTURE_PRE_MERGE_MAIN_RACE": str(int(pre_merge_main_race)),
             "REAL_GIT": self.real_git,
             "FIXTURE_REMOTE": str(self.remote),
@@ -164,29 +162,23 @@ class LockUpdate(unittest.TestCase):
     def branch_sha(self):
         return self.git("--git-dir", str(self.remote), "rev-parse", "automation/flake-lock")
 
-    def test_creates_validates_merges_and_validates_main(self):
+    def test_creates_validates_and_fast_forwards_main_to_same_sha(self):
         result = self.update()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), "new")
-        candidate = self.branch_sha()
-        merged = self.main_sha()
-        self.assertNotEqual(merged, candidate)
-        ancestry = subprocess.run(
-            ["git", "--git-dir", str(self.remote), "merge-base", "--is-ancestor", candidate, merged]
-        )
-        self.assertEqual(ancestry.returncode, 0)
+        self.assertEqual(self.main_sha(), self.branch_sha())
 
         create = next(i for i, r in enumerate(self.requests) if r[:2] == ["pr", "create"])
-        candidate_dispatch = next(
-            i for i, r in enumerate(self.requests)
+        candidate_dispatches = [
+            (i, r) for i, r in enumerate(self.requests)
             if r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "automation/flake-lock"
-        )
-        main_dispatch = next(
-            i for i, r in enumerate(self.requests)
-            if r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "main"
-        )
-        self.assertLess(create, candidate_dispatch)
-        self.assertLess(candidate_dispatch, main_dispatch)
+        ]
+        self.assertEqual(len(candidate_dispatches), 1)
+        self.assertLess(create, candidate_dispatches[0][0])
+        self.assertFalse(any(
+            r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "main"
+            for r in self.requests
+        ))
         self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
 
         pr_list = next(r for r in self.requests if r[:2] == ["pr", "list"])
@@ -200,11 +192,7 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["pr", "create"] for r in self.requests))
         self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), "new")
-        ancestry = subprocess.run(
-            ["git", "--git-dir", str(self.remote), "merge-base", "--is-ancestor",
-             self.branch_sha(), self.main_sha()]
-        )
-        self.assertEqual(ancestry.returncode, 0)
+        self.assertEqual(self.main_sha(), self.branch_sha())
 
     def test_no_change_closes_obsolete_pr_without_merge(self):
         result = self.update(change=False, pr="123")
@@ -226,10 +214,8 @@ class LockUpdate(unittest.TestCase):
             if r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "automation/flake-lock"
         ]
         self.assertEqual(candidate_dispatches, [])
-        self.assertTrue(any(
-            r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "main"
-            for r in self.requests
-        ))
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertEqual(self.main_sha(), self.branch_sha())
 
     def test_branch_change_during_pr_creation_does_not_merge(self):
         result = self.update(late_branch_race=True)
@@ -242,17 +228,11 @@ class LockUpdate(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.main_sha(), self.main)
 
-    def test_main_validation_failure_is_reported_after_merge(self):
-        result = self.update(main_ci="failure")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertNotEqual(self.main_sha(), self.main)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), "new")
-
     def test_main_race_after_final_check_rejects_atomic_merge(self):
         result = self.update(pre_merge_main_race=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertTrue((self.root / "main-raced").exists())
-        self.assertIn("main changed before the atomic lock merge", result.stderr)
+        self.assertIn("main changed before the atomic lock fast-forward", result.stderr)
 
         # The racing main commit wins, but it still has the old lock tree. The
         # validated lock candidate must not be reachable from main.
