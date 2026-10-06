@@ -1,0 +1,120 @@
+# Host checks evaluate configurations with package stubs, not native closures.
+name: revision-validation
+on:
+  workflow_call:
+    inputs:
+      expected_sha:
+        description: Exact commit expected for this validation
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: checks (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: lightweight
+            checks: formatting sops-files change-detection agent-docs check-flake-file deploy-schema ci-workflow
+          - group: configuration
+            checks: generated-shellcheck fleet-cli service-definitions host-persistence btrfs-health fleet-failed-units hermes-auxiliary-routing
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Run attributed checks
+        env:
+          CI_CHECKS: ${{ matrix.checks }}
+        run: bash .github/scripts/run-checks.sh
+      - name: Upload check logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checks-${{ matrix.group }}
+          path: ci-logs/
+          if-no-files-found: ignore
+
+  host-eval:
+    name: host-eval (${{ matrix.host }}, stubbed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [alpha, pi, epsilon]
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Evaluate host with stubs
+        env:
+          CI_CHECKS: ${{ matrix.host }}
+        run: bash .github/scripts/run-checks.sh
+      - name: Upload evaluation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-eval-${{ matrix.host }}
+          path: ci-logs/
+          if-no-files-found: ignore
+
+  persistence-vm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+        with:
+          kvm: true
+      - name: Exercise persistence in disposable VMs
+        env:
+          CI_CHECKS: host-persistence-vm
+        run: bash .github/scripts/run-checks.sh
+      - name: Upload VM logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: persistence-vm
+          path: ci-logs/
+          if-no-files-found: ignore
+
+  gate:
+    if: always()
+    needs: [checks, host-eval, persistence-vm]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every validation group
+        env:
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          HOSTS_RESULT: ${{ needs.host-eval.result }}
+          PERSISTENCE_RESULT: ${{ needs.persistence-vm.result }}
+        run: |
+          for result in "$CHECKS_RESULT" "$HOSTS_RESULT" "$PERSISTENCE_RESULT"; do
+            test "$result" = success || exit 1
+          done
