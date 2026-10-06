@@ -16,13 +16,13 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
         with:
           ref: main
       - uses: DeterminateSystems/nix-installer-action@v22
-      - name: Update the lock PR
+      - name: Update, validate, and merge the lock PR
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -30,19 +30,65 @@ jobs:
         run: |
           set -euo pipefail
           branch=automation/flake-lock
+          poll_seconds=${LOCK_UPDATE_POLL_SECONDS:-15}
+          poll_attempts=${LOCK_UPDATE_POLL_ATTEMPTS:-160}
+
+          latest_ci() {
+            local ref="$1" sha="$2"
+            gh api --method GET "repos/$GH_REPO/actions/workflows/ci.yml/runs" \
+              -f branch="$ref" -f head_sha="$sha" -f event=workflow_dispatch \
+              --jq '.workflow_runs | sort_by(.run_number) | last // empty | [.id, .status, (.conclusion // "")] | @tsv'
+          }
+
+          wait_for_ci() {
+            local ref="$1" sha="$2" row run_id status conclusion attempt=0
+            while [ "$attempt" -lt "$poll_attempts" ]; do
+              row=$(latest_ci "$ref" "$sha")
+              if [ -n "$row" ]; then
+                IFS=$'\t' read -r run_id status conclusion <<< "$row"
+                if [ "$status" = completed ]; then
+                  if [ "$conclusion" = success ]; then
+                    printf '%s\n' "$run_id"
+                    return 0
+                  fi
+                  echo "CI run $run_id for $ref@$sha concluded $conclusion" >&2
+                  return 1
+                fi
+              elif [ "$ref" = main ] \
+                && [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$sha" ]; then
+                echo "main moved before exact merged-main CI became visible" >&2
+                return 1
+              fi
+              attempt=$((attempt + 1))
+              sleep "$poll_seconds"
+            done
+            echo "timed out waiting for CI on $ref@$sha" >&2
+            return 1
+          }
+
+          ensure_ci() {
+            local ref="$1" sha="$2"
+            if [ -z "$(latest_ci "$ref" "$sha")" ]; then
+              gh workflow run ci.yml --ref "$ref" -f expected_sha="$sha"
+            fi
+            wait_for_ci "$ref" "$sha" >/dev/null
+          }
+
           main_sha=$(git rev-parse HEAD)
           expected=$(git ls-remote --heads origin "$branch" | cut -f1)
           if [ -n "$expected" ]; then
             git fetch --no-tags origin "$expected"
           fi
+
           nix flake update
-          pr=$(gh pr list --head "${GH_REPO%%/*}:$branch" --base main --state open --json number --jq '.[0].number // empty')
+          pr=$(gh pr list --head "$branch" --base main --state open --json number --jq '.[0].number // empty')
           if git diff --quiet -- flake.lock; then
             if [ -n "$pr" ]; then
               gh pr close "$pr" --comment 'The current lock matches main; no update remains.'
             fi
             exit 0
           fi
+
           git add flake.lock
           desired_tree=$(git write-tree)
           if [ -n "$expected" ] \
@@ -57,17 +103,42 @@ jobs:
             revision=$(git rev-parse HEAD)
             git push "--force-with-lease=refs/heads/$branch:$expected" origin "HEAD:refs/heads/$branch"
           fi
+
           if [ -z "$pr" ]; then
-            gh pr create --base main --head "$branch" --title 'flake.lock: Update' \
-              --body 'Update flake inputs. Explicitly dispatched CI checks the lock commit; deployment separately requires successful push CI on merged main.'
+            url=$(gh pr create --base main --head "$branch" --title 'flake.lock: Update' \
+              --body 'Update flake inputs. The updater explicitly validates this exact lock commit, auto-merges it if main is unchanged, then explicitly validates the resulting exact main revision before the fleet deployer may consume it.')
+            pr=${url##*/}
           fi
+
           if [ "$(git ls-remote --heads origin "$branch" | cut -f1)" != "$revision" ]; then
             echo 'Lock branch changed before CI dispatch; retry the lock workflow.' >&2
             exit 1
           fi
-          runs=$(gh api --method GET "repos/$GH_REPO/actions/workflows/ci.yml/runs" \
-            -f branch="$branch" -f head_sha="$revision" -f event=workflow_dispatch \
-            --jq '.workflow_runs | length')
-          if [ "$runs" -eq 0 ]; then
-            gh workflow run ci.yml --ref "$branch" -f expected_sha="$revision"
+          if [ "$(git diff --name-only "$main_sha" "$revision")" != flake.lock ]; then
+            echo 'Lock candidate contains changes outside flake.lock; refusing automatic merge.' >&2
+            exit 1
           fi
+
+          ensure_ci "$branch" "$revision"
+
+          if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$main_sha" ]; then
+            echo 'main changed while lock CI was running; leaving the validated PR for the next refresh.' >&2
+            exit 1
+          fi
+          if [ "$(git ls-remote --heads origin "$branch" | cut -f1)" != "$revision" ]; then
+            echo 'Lock branch changed after CI; refusing automatic merge.' >&2
+            exit 1
+          fi
+
+          gh pr merge "$pr" --squash --match-head-commit "$revision"
+
+          merged_sha=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ -z "$merged_sha" ] || [ "$merged_sha" = "$main_sha" ]; then
+            echo 'Lock PR reported merged but main did not advance.' >&2
+            exit 1
+          fi
+
+          # Merges performed with GITHUB_TOKEN do not reliably emit a push
+          # workflow. Dispatch CI explicitly and bind it to the exact new main.
+          gh workflow run ci.yml --ref main -f expected_sha="$merged_sha"
+          wait_for_ci main "$merged_sha" >/dev/null
