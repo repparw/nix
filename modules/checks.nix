@@ -320,7 +320,7 @@
                 python3 ${./scripts/fleet-update-notifications.test.py} ${./scripts/fleet-update.sh}
                 python3 ${./scripts/fleet-update.test.py} ${./scripts/fleet-update.sh}
                 python3 ${./scripts/pi-generation-retention.test.py} ${./scripts/pi-generation-retention.py}
-                python3 ${./scripts/lock-update.test.py} ${inputs.self}/.github/workflows/lock-update.yml ${inputs.self}/.github/workflows/ci.yml
+                python3 ${./scripts/lock-update.test.py} ${inputs.self}/.github/workflows/lock-update.yml ${inputs.self}/.github/workflows/ci.yml ${inputs.self}/.github/workflows/revision-validation.yml
                 touch $out
               '';
 
