@@ -450,13 +450,18 @@ ci_passed() {
   runs=$(curl --fail --silent --show-error --max-time 30 \
     -H 'Accept: application/vnd.github+json' \
     -H 'X-GitHub-Api-Version: 2022-11-28' \
-    "https://api.github.com/repos/repparw/nix/actions/workflows/ci.yml/runs?head_sha=$revision&branch=main&per_page=100") || return 1
+    "https://api.github.com/repos/repparw/nix/actions/workflows/ci.yml/runs?head_sha=$revision&per_page=100") || return 1
   jq -e --arg revision "$revision" '
     [.workflow_runs[]
       | select(
           .head_sha == $revision
-          and .head_branch == "main"
-          and (.event == "push" or .event == "workflow_dispatch")
+          and (
+            (.event == "push" and .head_branch == "main")
+            or (
+              .event == "workflow_dispatch"
+              and (.head_branch == "main" or .head_branch == "automation/flake-lock")
+            )
+          )
         )]
     | sort_by(.run_number) | last
     | .status == "completed" and .conclusion == "success"
