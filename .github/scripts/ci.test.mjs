@@ -7,7 +7,8 @@ import test from 'node:test';
 
 const root = resolve(import.meta.dirname, '../..');
 const workflow = readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8');
-const gate = workflow.match(/      - name: Require every check group[\s\S]*?        run: \|\n([\s\S]*)$/)[1].replace(/^          /gm, '');
+const validation = readFileSync(join(root, '.github/workflows/revision-validation.yml'), 'utf8');
+const gate = validation.match(/      - name: Require every validation group[\s\S]*?        run: \|\n([\s\S]*)$/)[1].replace(/^          /gm, '');
 
 test('the actual aggregate command accepts only three successful dependencies', () => {
   for (const checks of ['success', 'failure', 'skipped', 'cancelled', '']) {
@@ -20,14 +21,14 @@ test('the actual aggregate command accepts only three successful dependencies', 
       }
     }
   }
-  assert.match(workflow, /gate:\n    if: always\(\)\n    needs: \[checks, host-eval, persistence-vm\]/);
+  assert.match(validation, /gate:\n    if: always\(\)\n    needs: \[checks, host-eval, persistence-vm\]/);
 });
 
 test('every checkout job verifies dispatch SHA before checking out the workflow SHA', () => {
-  const jobs = workflow.split(/^  [a-z-]+:\n/gm).slice(1).filter(job => job.includes('actions/checkout'));
+  const jobs = validation.split(/^  [a-z-]+:\n/gm).slice(1).filter(job => job.includes('actions/checkout'));
   assert.equal(jobs.length, 3);
   for (const job of jobs) {
-    assert.match(job, /if: github.event_name == 'workflow_dispatch'/);
+    assert.match(job, /if: inputs.expected_sha != ''/);
     assert.match(job, /EXPECTED_SHA: \$\{\{ inputs.expected_sha \}\}/);
     assert.ok(job.indexOf('test "$GITHUB_SHA" = "$EXPECTED_SHA"') < job.indexOf('actions/checkout'));
     assert.match(job, /ref: \$\{\{ github.sha \}\}/);
@@ -40,6 +41,10 @@ test('every checkout job verifies dispatch SHA before checking out the workflow 
     }
   }
   assert.match(workflow, /github.event_name == 'pull_request' && github.event.pull_request.number/);
+  assert.match(workflow, /uses: \.\/\.github\/workflows\/revision-validation\.yml/);
+  assert.match(workflow, /expected_sha: \$\{\{ github\.event_name == 'workflow_dispatch' && inputs\.expected_sha \|\| '' \}\}/);
+  assert.match(validation, /workflow_call:/);
+  assert.match(validation, /expected_sha:[\s\S]*required: false[\s\S]*type: string/);
   assert.match(workflow, /cancel-in-progress: \$\{\{ github.event_name != 'push' \}\}/);
   assert.match(workflow, /\|\| github.run_id/);
 });
