@@ -89,6 +89,8 @@ jobs:
             exit 0
           fi
 
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add flake.lock
           desired_tree=$(git write-tree)
           if [ -n "$expected" ] \
@@ -96,8 +98,6 @@ jobs:
             && [ "$(git rev-parse "$expected^{tree}")" = "$desired_tree" ]; then
             revision=$expected
           else
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git switch -C "$branch"
             git commit -m 'flake.lock: Update'
             revision=$(git rev-parse HEAD)
@@ -129,16 +129,28 @@ jobs:
             echo 'Lock branch changed after CI; refusing automatic merge.' >&2
             exit 1
           fi
-
-          gh pr merge "$pr" --squash --match-head-commit "$revision"
-
-          merged_sha=$(git ls-remote origin refs/heads/main | cut -f1)
-          if [ -z "$merged_sha" ] || [ "$merged_sha" = "$main_sha" ]; then
-            echo 'Lock PR reported merged but main did not advance.' >&2
+          if [ "$(git rev-parse "$revision^")" != "$main_sha" ]; then
+            echo 'Validated lock candidate is no longer based on the expected main revision.' >&2
             exit 1
           fi
 
-          # Merges performed with GITHUB_TOKEN do not reliably emit a push
-          # workflow. Dispatch CI explicitly and bind it to the exact new main.
+          # Make base validation and publication one compare-and-swap operation.
+          # The merge commit contains the validated PR head as a parent, so GitHub
+          # recognizes the PR as merged, while the lease makes any concurrent main
+          # movement reject the push instead of silently changing the merge base.
+          git switch --detach "$main_sha"
+          git merge --no-ff -m "flake.lock: Update (#$pr)" "$revision"
+          merged_sha=$(git rev-parse HEAD)
+          if ! git push "--force-with-lease=refs/heads/main:$main_sha" origin "HEAD:refs/heads/main"; then
+            echo 'main changed before the atomic lock merge; leaving the validated PR open for refresh.' >&2
+            exit 1
+          fi
+          if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$merged_sha" ]; then
+            echo 'Atomic lock merge push succeeded but main does not point at the expected merge commit.' >&2
+            exit 1
+          fi
+
+          # A GITHUB_TOKEN-authored push does not reliably emit another workflow.
+          # Dispatch CI explicitly and bind it to the exact new main.
           gh workflow run ci.yml --ref main -f expected_sha="$merged_sha"
           wait_for_ci main "$merged_sha" >/dev/null
