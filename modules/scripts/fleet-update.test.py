@@ -141,7 +141,7 @@ class Deployment(unittest.TestCase):
     def test_ci_missing_pending_failed_wrong_sha_and_pr_do_not_activate(self):
         fixtures = [[], [run(status="in_progress", conclusion=None)], [run(conclusion="failure")],
                     [run(head_sha="c" * 40)], [run(event="pull_request")], [run(event="schedule")],
-                    [run(event="workflow_dispatch", head_branch="automation/flake-lock")],
+                    [run(event="workflow_dispatch", head_branch="feature")],
                     [run(head_branch="automation/flake-lock")],
                     [run(), run(2, status="queued", conclusion=None)]]
         for runs in fixtures:
@@ -156,6 +156,14 @@ class Deployment(unittest.TestCase):
 
     def test_exact_main_workflow_dispatch_allows_deploy(self):
         result = self.deploy(ci={"workflow_runs": [run(event="workflow_dispatch")]})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"],
+                         ["epsilon", "alpha", "pi"])
+
+    def test_exact_lock_candidate_dispatch_allows_deploy_after_fast_forward(self):
+        result = self.deploy(ci={"workflow_runs": [
+            run(event="workflow_dispatch", head_branch="automation/flake-lock")
+        ]})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"],
                          ["epsilon", "alpha", "pi"])
