@@ -121,6 +121,24 @@ sources. `rsync-job-buptohdd` handles Pictures and Documents separately and
 protects those two state subtrees. Restore staged offsite state beneath the
 user's home, rather than to its original `/var/lib` staging path.
 
+Alpha's `rsync-job-buprpi` pulls Pi's private services export at
+`/var/lib/pi-services-backup/current`. The fixed `pi-services-backup-send`
+helper prepares the export through the existing `repparw` SSH connection,
+then drops privileges before sending it. It accepts only this job's sender
+arguments. SQLite files are exported transactionally; historical service
+trees are retained. Only the obsolete `dns/listener.conf` and
+`dns/resolved.conf` links are excluded. Links into `/nix/store` and
+`dns/hosts` pointing to `/etc/hosts` are allowed. Other external links and
+dangling links abort preparation. Existing source ownership and modes
+remain unchanged; SQLite may create journal sidecars owned like their
+source database.
+
+Preparation publishes a new generation only after every file succeeds and
+holds its lock until rsync exits. `--delete-after` inhibits destination
+deletion if a source error occurs. Restore exported files to their service
+paths with the required service ownership; the export's owner is the
+backup account.
+
 Daily jobs exclude reproducible caches, container runtime mounts and swap.
 Retention is 7d/4w/12m with a 5% data check each run. The pi/epsilon live backups are
 not automatically consistent database exports.

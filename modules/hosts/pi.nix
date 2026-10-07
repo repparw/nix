@@ -7,6 +7,7 @@
     includes = [
       den.aspects.fleet-unit-state
       den.aspects.backup
+      den.aspects.pi-services-backup
       den.aspects.persistence
       den.aspects.service-host
       den.aspects.nixos-services._.automations
