@@ -10,7 +10,8 @@ import tempfile
 import unittest
 
 WORKFLOW = Path(sys.argv.pop(1)).read_text()
-CI = Path(sys.argv.pop(1)).read_text()\nVALIDATION = (Path(sys.argv[1]).read_text() if len(sys.argv) > 1 else CI)
+CI = Path(sys.argv.pop(1)).read_text()
+VALIDATION = Path(sys.argv.pop(1)).read_text() if len(sys.argv) > 1 else CI
 UPDATE = WORKFLOW.split("        run: |\n", 1)[1]
 SCRIPT = "\n".join(line.removeprefix("          ") for line in UPDATE.splitlines())
 
