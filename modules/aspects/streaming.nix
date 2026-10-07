@@ -48,7 +48,57 @@ in
 
           # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
           # to gamescope; nixpkgs disables it by default.
-          gamescopeHdr = pkgs.gamescope.override { enableWsi = true; };
+          #
+          # gamescope's vendored vkroots predates misyltoad/vkroots#17: it resolves
+          # every queue with legacy vkGetDeviceQueue, which the spec requires
+          # clients to replace with vkGetDeviceQueue2 whenever the queue was
+          # created with non-zero flags. Those queues come back VK_NULL_HANDLE,
+          # hit AssignDispatchTable assert and abort the process, so games using
+          # VK_KHR_internally_synchronized_queues (every libplacebo app since Mesa
+          # 26.1) or protected queues die as soon as the WSI layer loads. That is
+          # the "overlay only opens sometimes" symptom: the layer aborts mid-game.
+          #
+          # ValveSoftware/gamescope#2261 tracks this. Both halves are still
+          # pending - the vkroots fix is unmerged and gamescope still vendors the
+          # April 2024 snapshot - so carry it here.
+          #
+          # Applied by substitution rather than as a patch file on purpose. The
+          # previous overlay patch used line-number hunks and wedged five nightly
+          # deploy cycles when gamescope moved underneath it. Each --replace-fail
+          # must find its anchor, so a gamescope bump that reshapes the file now
+          # fails the build loudly instead.
+          # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
+          # to gamescope; nixpkgs disables it by default.
+          #
+          # gamescope's vendored vkroots predates misyltoad/vkroots#17: it resolves
+          # every queue with legacy vkGetDeviceQueue, which the spec requires
+          # clients to replace with vkGetDeviceQueue2 whenever the queue was
+          # created with non-zero flags. Those queues come back VK_NULL_HANDLE,
+          # hit the assert in AssignDispatchTable and abort the process, so games
+          # using VK_KHR_internally_synchronized_queues (every libplacebo app
+          # since Mesa 26.1) or protected queues die as soon as the WSI layer
+          # loads. That is the "overlay only opens sometimes" symptom: the layer
+          # aborts mid-game. ValveSoftware/gamescope#2261 tracks this; the vkroots
+          # fix is still unmerged and gamescope still vendors the April 2024
+          # snapshot, so carry it here.
+          #
+          # Patched with single-line substitutions on purpose. The previous
+          # overlay patch used line-number hunks and wedged five nightly deploy
+          # cycles when gamescope moved underneath it. --replace-fail makes a
+          # gamescope bump that reshapes these lines fail the build loudly, and
+          # keeping the fix inline avoids a helper the amalgamated vkroots.h has
+          # nowhere to declare.
+          gamescopeHdr = (pkgs.gamescope.override { enableWsi = true; }).overrideAttrs (old: {
+            postPatch = (old.postPatch or "") + ''
+              substituteInPlace subprojects/vkroots/vkroots.h --replace-fail \
+                'deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, j, &queue);' \
+                'if (queueInfo.flags) { VkDeviceQueueInfo2 q2; q2.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2; q2.pNext = nullptr; q2.flags = queueInfo.flags; q2.queueFamilyIndex = queueInfo.queueFamilyIndex; q2.queueIndex = j; deviceDispatch->GetDeviceQueue2(device, &q2, &queue); } else deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, j, &queue);'
+
+              substituteInPlace subprojects/vkroots/vkroots.h --replace-fail \
+                'deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, i, &queue);' \
+                'if (queueInfo.flags) { VkDeviceQueueInfo2 q2; q2.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2; q2.pNext = nullptr; q2.flags = queueInfo.flags; q2.queueFamilyIndex = queueInfo.queueFamilyIndex; q2.queueIndex = i; deviceDispatch->GetDeviceQueue2(device, &q2, &queue); } else deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, i, &queue);'
+            '';
+          });
 
           # Run Steam through Gamescope so Moonshine always captures one stable HDR
           # surface. Steam's overlay does not composite with gamescope-wsi; that is
