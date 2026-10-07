@@ -72,15 +72,17 @@
               h=''${MOONSHINE_CLIENT_HEIGHT:-1080}
               rate=''${MOONSHINE_CLIENT_FRAMERATE:-60}
 
-              # The moonshine-wsi Vulkan layer breaks gamescope (a compositor, not
-              # a game): it redirects swapchains into Moonshine's WSI path. Games
-              # inside gamescope present to gamescope's own compositor, and
-              # gamescope presents to Moonshine as a plain Wayland client, so the
-              # layer is not needed here. Disable it for the whole gamescope session
-              # (DISABLE_* takes precedence over the ENABLE_MOONSHINE_WSI=1 that
-              # Moonshine sets on the environment).
-              export DISABLE_MOONSHINE_WSI=1
-              unset ENABLE_MOONSHINE_WSI
+              # Moonshine's Vulkan WSI layer is installed where the loader scans
+              # (the system profile share dir, on XDG_DATA_DIRS), so games pick
+              # it up and present their swapchains straight to the Moonshine
+              # compositor instead of being captured and colour-converted. The
+              # layer used to be disabled here on the belief that it breaks
+              # gamescope, but gamescope presents to Moonshine as a Wayland
+              # client either way, and nothing had ever confirmed the layer was
+              # even loading. Enabling it is what makes that testable.
+              # Moonshine sets ENABLE_MOONSHINE_WSI=1 itself; DISABLE_* takes
+              # precedence over it, so it must stay unset.
+              unset DISABLE_MOONSHINE_WSI
 
               # Steam Overlay only hooks X11 windows, while gamescope-wsi bypasses
               # Xwayland for game swapchains, so the overlay is not expected to
