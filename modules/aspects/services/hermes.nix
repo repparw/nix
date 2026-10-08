@@ -40,6 +40,14 @@
           uid = 327680;
         };
 
+        sops.secrets."arr-api-keys" = {
+          # Kept in its own valid SOPS document so this branch can be refreshed
+          # without rewriting the newer Hermes provider-secret document.
+          sopsFile = ../../../secrets/hermes-arr.sops.yaml;
+          # Tools run as hermes (container UID 345), not container root.
+          uid = 327680 + 345;
+        };
+
         containers.hermes = servicesLib.mkContainer {
           inherit cfg;
           name = "hermes";
@@ -69,6 +77,10 @@
             };
             "/run/secrets/hermes-llm-env" = {
               hostPath = config.sops.secrets."hermes-llm-env".path;
+              isReadOnly = true;
+            };
+            "/run/secrets/arr-api-keys" = {
+              hostPath = config.sops.secrets."arr-api-keys".path;
               isReadOnly = true;
             };
           };
@@ -117,6 +129,13 @@
                     name = "notifications";
                   };
                 };
+                # Keep cron on the free Nous model independently of the
+                # interactive GPT-6.1 Sol default. The configured fallback
+                # chain still applies if the cron primary fails.
+                settings.cron = {
+                  model = "stepfun/step-3.7-flash:free";
+                  model_provider = "nous";
+                };
                 settings.tool_loop_guardrails = {
                   hard_stop_enabled = true;
                   hard_stop_after = {
@@ -125,6 +144,7 @@
                   };
                 };
                 extraPackages = with pkgs; [
+                  curl
                   ffmpeg
                   nodejs
                   ripgrep
