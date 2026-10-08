@@ -363,14 +363,23 @@ in
               sleep 0.2
             done
             log "joystick node resolved: $node"
-            # grep -m1 closes the pipe on the first button press, which kills
-            # evtest with SIGPIPE; pipefail would turn that into a failed gate.
-            local status
-            set +o pipefail
-            timeout "$1" evtest "$node" 2>&1 |
-              grep -qm1 -E 'type 1 \(EV_KEY\), code [0-9]+ \([^)]*\), value 1'
-            status=$?
-            set -o pipefail
+            local status=1 event_fd reader line remaining
+            local press='type 1 \(EV_KEY\), code [0-9]+ \([^)]*\), value 1$'
+            remaining=$((deadline - SECONDS))
+            [ "$remaining" -gt 0 ] || return 1
+            # Stop the reader explicitly: exiting grep does not unblock evtest's
+            # next device read, and Bash waits for every process in a pipeline.
+            exec {event_fd}< <(exec timeout "$remaining" stdbuf -oL evtest "$node" 2>&1)
+            reader=$!
+            while IFS= read -r -u "$event_fd" line; do
+              if [[ "$line" =~ $press ]]; then
+                status=0
+                break
+              fi
+            done
+            kill "$reader" 2>/dev/null || true
+            wait "$reader" 2>/dev/null || true
+            exec {event_fd}<&-
             if [ "$status" = 0 ]; then
               log "button press seen"
             else
@@ -392,6 +401,33 @@ in
             done < <(loginctl list-sessions --no-legend)
             return 1
           }
+
+          # Never interrupt a live stream: on controller reconnect the dongle
+          # re-enumerates and the button gate above passes (the user is mashing
+          # buttons), but their input is already flowing to the game. This is
+          # checked before any branch, because both the TV relaunch and the
+          # desk focus/launch would tear down an in-progress session.
+          #
+          # The journal alone cannot be trusted: a crashed or killed daemon
+          # leaves a stale "Starting session streams" with no matching
+          # "stopped" line behind, which would block every launch until the
+          # next reboot. So require the daemon to be running and only consider
+          # session lines at or after its start. Within those, the state
+          # machine is exact: the latest terminal line is either streams
+          # starting (active) or stopped+waiting (idle). No lines at all fails
+          # open to launching.
+          moonshine_streaming() {
+            local since last
+            systemctl is-active --quiet moonshine || return 1
+            since=$(date -d "$(systemctl show moonshine -p ActiveEnterTimestamp --value 2>/dev/null)" +%s 2>/dev/null) || return 1
+            last=$(journalctl -u moonshine --no-pager -o short-unix --since "@$since" \
+              --grep "session::manager: (Starting session streams|Session stopped (by user|unexpectedly))" -n 1 2>/dev/null |
+              awk -v s="$since" '$1 >= s' |
+              tail -n 1) || return 1
+            [ -n "$last" ] || return 1
+            grep -q "Starting session streams" <<<"$last"
+          }
+
 
           wait_button 30 || { log "no press; exiting without action"; exit 0; }
 
@@ -435,36 +471,6 @@ in
 
           log "branch: desk"
 
-          # Never interrupt a live stream: on controller reconnect the dongle
-          # re-enumerates and the button gate above passes (the user is mashing
-          # buttons), but their input is already flowing to the game. This is
-          # checked before any branch, because both the TV relaunch and the
-          # desk focus/launch would tear down an in-progress session.
-          #
-          # The journal alone cannot be trusted: a crashed or killed daemon
-          # leaves a stale "Starting session streams" with no matching
-          # "stopped" line behind, which would block every launch until the
-          # next reboot. So require the daemon to be running and only consider
-          # session lines at or after its start. Within those, the state
-          # machine is exact: the latest terminal line is either streams
-          # starting (active) or stopped+waiting (idle). No lines at all fails
-          # open to launching.
-          moonshine_streaming() {
-            local since last
-            systemctl is-active --quiet moonshine || return 1
-            since=$(date -d "$(systemctl show moonshine -p ActiveEnterTimestamp --value 2>/dev/null)" +%s 2>/dev/null) || return 1
-            last=$(journalctl -u moonshine --no-pager -o short-unix -n 2000 2>/dev/null |
-              awk -v s="$since" '$1 >= s' |
-              grep -E "session::manager: (Starting session streams|Session stopped (by user|unexpectedly))" |
-              tail -n 1) || return 1
-            [ -n "$last" ] || return 1
-            grep -q "Starting session streams" <<<"$last"
-          }
-
-          if pgrep -f "reaper SteamLaunch" >/dev/null; then
-            log "steam game already running on the desk; leaving it alone"
-            exit 0
-          fi
 
           niri msg action focus-monitor DP-1 >/dev/null
 
