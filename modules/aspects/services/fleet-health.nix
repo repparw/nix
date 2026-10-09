@@ -197,7 +197,7 @@ in
                         fi
 
                         sweep_units() {
-                          local host="$1" current previous unit recovering="" prefix="unit-failed:$1:" previous_file="$state_dir/.failed-units-$1"
+                          local host="$1" current previous unit alert recovering="" prefix="unit-failed:$1:" previous_file="$state_dir/.failed-units-$1"
                           if [ "$host" = "$HOSTNAME" ]; then
                             prefix="unit-failed:"
                             previous_file="$state_dir/.failed-units"
@@ -221,6 +221,17 @@ in
                           fi
                           ok "host-units:$host"
                           previous=$(cat "$previous_file" 2>/dev/null || true)
+                          for alert in "$state_dir/.$prefix"*.msgid; do
+                            [ -f "$alert" ] || continue
+                            unit="''${alert##*/}"
+                            unit="''${unit#."$prefix"}"
+                            unit="''${unit%.msgid}"
+                            if [ "$host" = "$HOSTNAME" ]; then
+                              case "$unit" in alpha:* | epsilon:*) continue ;; esac
+                            fi
+                            previous+=$'\n'"$unit"
+                          done
+                          previous=$(printf '%s\n' "$previous" | sed '/^$/d' | sort -u)
                           for unit in $previous; do
                             if ! printf '%s\n' "$current" | grep -xF -e "$unit" >/dev/null; then
                               ok "$prefix$unit"
