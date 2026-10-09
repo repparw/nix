@@ -98,3 +98,28 @@ Before switching:
    and `ENABLE_VK_LAYER_VALVE_steam_overlay_1=1`.
 5. The stream is HDR end to end. Shift+Tab opening the overlay is not a valid
    check on this path.
+
+## Game frame-time logging
+
+The Moonshine Steam launcher enables MangoHud logging inside games. It keeps
+the HUD hidden and leaves Gamescope and the Moonshine compositor unwrapped.
+Steam, steamwebhelper and Heroic are blacklisted; child games inherit the
+logger configuration. Both 64-bit and 32-bit MangoHud libraries carry the
+small workaround for [MangoHud #1782](https://github.com/flightlessmango/MangoHud/issues/1782),
+which otherwise prevents automatic logging while the HUD is hidden.
+
+Logging starts one second after the game's rendering hook initializes and
+records every presented frame until the game exits or logging is toggled off.
+There is no frame cap configured by the logger. CSVs are written under
+`~/.local/state/moonshine/frame-times`. At session launch, logs older than
+seven days are removed, then the oldest logs are removed until the directory
+is at most 256 MiB. A running capture can exceed that retention target.
+MangoHud also retains samples in the game process for its summary; memory use
+grows with capture length.
+
+These timings observe game presentation through MangoHud's Vulkan/OpenGL
+hooks. They do not measure encoded stream delivery, client pacing, or the
+game engine's simulation time. Functional verification uses a small renderer;
+it does not establish zero overhead in every game. Check a game CSV and HDR
+after changing the launcher, and compare equivalent game scenes before
+attributing a performance difference to logging.

@@ -100,6 +100,48 @@ in
             '';
           });
 
+          # Hidden automatic logging never starts in MangoHud 0.8.4 because it
+          # skips the update that starts the logger. flightlessmango/MangoHud#1782.
+          withHiddenLogging =
+            package:
+            package.overrideAttrs (old: {
+              postPatch = (old.postPatch or "") + ''
+                substituteInPlace src/overlay.cpp --replace-fail \
+                  'if (!get_params()->no_display || logger->is_active())' \
+                  'if (!get_params()->no_display || logger->is_active() || (get_params()->autostart_log && !logger->autostart_init))'
+              '';
+            });
+          mangohudLogging = withHiddenLogging (
+            pkgs.mangohud.override {
+              pkgsi686Linux = pkgs.pkgsi686Linux // {
+                mangohud = withHiddenLogging pkgs.pkgsi686Linux.mangohud;
+              };
+            }
+          );
+          moonshine-steam-game-session = pkgs.writeShellApplication {
+            name = "moonshine-steam-game-session";
+            runtimeInputs = [
+              mangohudLogging
+              pkgs.coreutils
+              pkgs.findutils
+              config.programs.steam.package
+            ];
+            text = ''
+              log_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/moonshine/frame-times"
+              mkdir -p "$log_dir"
+              find "$log_dir" -maxdepth 1 -type f -name '*.csv' -mtime +7 -delete
+              total_bytes=$(du -sb "$log_dir" | cut -f1)
+              while IFS= read -r -d $'\0' entry; do
+                (( total_bytes > 268435456 )) || break
+                read -r _mtime bytes path <<< "$entry"
+                rm -- "$path"
+                total_bytes=$((total_bytes - bytes))
+              done < <(find "$log_dir" -maxdepth 1 -type f -name '*.csv' -printf '%T@ %s %p\0' | sort -zn)
+              export MANGOHUD_CONFIG="preset=0,no_display,autostart_log=1,log_duration=0,log_interval=0,output_folder=$log_dir,blacklist=steam+steamwebhelper+heroic"
+              exec mangohud steam -tenfoot
+            '';
+          };
+
           # Run Steam through Gamescope so Moonshine always captures one stable HDR
           # surface. Steam's overlay does not composite with gamescope-wsi; that is
           # ValveSoftware/gamescope#1537, still open, and the local PoC that
@@ -157,7 +199,7 @@ in
                 --dev-bind / / \
                 --tmpfs /mnt/seagate \
                 --tmpfs /home/containers/media/seagate \
-                -- steam -tenfoot
+                -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
             '';
           };
           # Desktop stream: nested niri plus a kiosk launcher loop. Vicinae
@@ -231,6 +273,8 @@ in
         in
         {
           config = {
+            programs.steam.extraPackages = [ mangohudLogging ];
+
             services.moonshine = {
               enable = true;
               user = sessionUser;
