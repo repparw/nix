@@ -152,11 +152,11 @@ An HTTP response alone does not verify conversation history.
 
 The read-only Alpha audit found these values. Re-run the audit for current counts.
 
-| Database | File size | Sessions or threads | Messages | Free pages |
-| --- | ---: | ---: | ---: | ---: |
-| T3 `state.sqlite` | 3.95 GiB | 589 | 32,432 | 0 |
-| Live `opencode.db` | 2.22 GiB | 260 | 11,513 | 0 |
-| Older `opencode-stable.db` | 2.70 GiB | 1,501 | 70,274 | 0 |
+| Database                   | File size | Sessions or threads | Messages | Free pages |
+| -------------------------- | --------: | ------------------: | -------: | ---------: |
+| T3 `state.sqlite`          |  3.95 GiB |                 589 |   32,432 |          0 |
+| Live `opencode.db`         |  2.22 GiB |                 260 |   11,513 |          0 |
+| Older `opencode-stable.db` |  2.70 GiB |               1,501 |   70,274 |          0 |
 
 All 1,501 older OpenCode sessions, 70,274 messages, and 275,565 parts had IDs
 absent from the live database. Two older session IDs remained referenced by T3.
