@@ -115,6 +115,15 @@
           );
         in
         {
+          coredump-collector =
+            pkgs.runCommand "check-coredump-collector" { nativeBuildInputs = [ pkgs.python3 ]; }
+              ''
+                cp -r ${./aspects/services/coredump-watch} source
+                chmod -R u+w source
+                python3 -m unittest discover -s source -v
+                touch $out
+              '';
+
           hermes-auxiliary-routing =
             (pkgs.callPackage ./_packages/hermes-agent.nix {
               upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
