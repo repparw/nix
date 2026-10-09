@@ -10,7 +10,6 @@
       mcp
       opencode
       personal-skills
-      pocock-skills
       pstack
       t3code-connect
       t3code
