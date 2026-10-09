@@ -15,6 +15,23 @@ let
     serviceUrl = name: servicesLib.serviceUrl cfg config name;
   };
   credentialsDir = "/run/credentials/authelia-main.service";
+  # pnpm 12.9 changed the dependency output: nixpkgs issue #571789.
+  # Only repair the known aarch64 hash; a corrected upstream hash retires this.
+  autheliaPackage =
+    if
+      pkgs.stdenv.hostPlatform.system == "aarch64-linux"
+      && pkgs.authelia.version == "4.39.28"
+      && pkgs.authelia.web.pnpmDeps.outputHash == "sha256-B/Au9YICuRM6+J4DojFbXf2IEWC+j1jRsU68nn08Puk="
+    then
+      pkgs.authelia.override {
+        authelia-web = pkgs.authelia.web.overrideAttrs (old: {
+          pnpmDeps = old.pnpmDeps.overrideAttrs {
+            outputHash = "sha256-YUInqRclRdnMzxfJKuVdXwKaRzJd9sFu16dxCAgVJI8=";
+          };
+        });
+      }
+    else
+      pkgs.authelia;
   secretNames = {
     JWT_SECRET = "jwtSecret";
     OIDC_HMAC_SECRET = "oidcHmacSecret";
@@ -82,6 +99,7 @@ in
 
       services.authelia.instances.main = {
         enable = true;
+        package = autheliaPackage;
         secrets = {
           jwtSecretFile = "/run/secrets/authelia/JWT_SECRET";
           storageEncryptionKeyFile = "/run/secrets/authelia/STORAGE_ENCRYPTION_KEY";
