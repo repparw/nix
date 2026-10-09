@@ -19,8 +19,10 @@
       let
         cfg = config.modules.services;
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
+        crashTriage = import ./hermes-crash/_package.nix { inherit pkgs; };
       in
       {
+        environment.systemPackages = [ crashTriage.ingest ];
         users.groups.hermes.gid = 345;
         users.users.repparw.extraGroups = [ "hermes" ];
 
@@ -67,6 +69,14 @@
             "--restrict-address-families=AF_NETLINK"
           ];
           bindMounts = {
+            "/var/lib/hermes/.hermes/scripts/crash_triage_cron.py" = {
+              hostPath = toString crashTriage.gate;
+              isReadOnly = true;
+            };
+            "/var/lib/hermes/.hermes/scripts/crash_triage_enroll.py" = {
+              hostPath = toString crashTriage.enroll;
+              isReadOnly = true;
+            };
             "/var/lib/hermes" = {
               hostPath = "/home/repparw/services/hermes";
               isReadOnly = false;
