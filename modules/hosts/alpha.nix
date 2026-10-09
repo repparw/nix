@@ -73,6 +73,9 @@
           ".local/share/voxtype/meetings/"
           ".local/share/shadPS4/savedata/"
           ".local/share/shadPS4/keys.json"
+          ".config/bbport-launcher/"
+          ".local/share/bbport-test/data/bbport.ini"
+          ".local/share/bbport-test/data/user/"
         ];
         homeDatabases = [
           ".config/codex/goals_1.sqlite"
