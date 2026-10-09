@@ -402,6 +402,11 @@ in
         config = {
           modules.coredump-watch.script = coredumpsScript;
 
+          programs.ssh.knownHosts.hermes-crash-intake = lib.mkIf cfg.enable {
+            hostNames = [ config.modules.services.hostSshAddresses.epsilon ];
+            publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINE+UZW7+eImXJ4pM8P0onKRk9hNnEcJeBCpSv+GhPRy";
+          };
+
           systemd.services.fleet-health-coredumps = lib.mkIf cfg.enable {
             description = "Queue new coredumps for Hermes investigation";
             after = [
@@ -412,7 +417,7 @@ in
             environment = {
               HOSTNAME = config.networking.hostName;
               MUTE_JSON = builtins.toJSON cfg.mute;
-              HERMES_TARGET = "root@${config.modules.services.hostAddresses.epsilon}";
+              HERMES_TARGET = "root@${config.modules.services.hostSshAddresses.epsilon}";
               HERMES_SSH_IDENTITY = "/home/repparw/.ssh/id_ed25519";
             };
             serviceConfig = {
