@@ -109,6 +109,9 @@ def ingest(home, raw):
     if os.geteuid() == 0:
         if owner.st_uid == 0:
             raise ValueError("Hermes home must have an unprivileged owner")
+        # Enter before dropping privileges: private ancestors may be inaccessible.
+        os.chdir(home)
+        home = Path(".")
         os.setgroups([])
         os.setgid(owner.st_gid)
         os.setuid(owner.st_uid)

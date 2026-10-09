@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location("triage", Path(__file__).with_name("triage.py"))
 triage = importlib.util.module_from_spec(spec)
@@ -23,6 +24,26 @@ def event(identity="a", **changes):
 
 
 class CrashTriageTests(unittest.TestCase):
+    def test_private_ancestor_does_not_prevent_unprivileged_inbox_writes(self):
+        previous = Path.cwd()
+        parent = self.home / "private"
+        parent.mkdir()
+        home = parent / "hermes"
+        home.mkdir()
+        def lose_access(_uid):
+            parent.chmod(0)
+        try:
+            with patch.object(triage.os, "geteuid", return_value=0), \
+                    patch.object(triage.os, "setgroups"), \
+                    patch.object(triage.os, "setgid"), \
+                    patch.object(triage.os, "setuid", side_effect=lose_access):
+                result = triage.ingest(home, json.dumps(event()).encode())
+            self.assertEqual(result, {"event_id": "a" * 64})
+            self.assertTrue(Path("crash/inbox/" + "a" * 64 + ".json").is_file())
+        finally:
+            parent.chmod(0o700)
+            os.chdir(previous)
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.home = Path(self.temporary.name)
