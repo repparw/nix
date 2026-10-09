@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import re
+import secrets
 import sys
 import tempfile
 import time
@@ -109,6 +110,9 @@ def ingest(home, raw):
     if os.geteuid() == 0:
         if owner.st_uid == 0:
             raise ValueError("Hermes home must have an unprivileged owner")
+        # Enter before dropping privileges: private ancestors may be inaccessible.
+        os.chdir(home)
+        home = Path(".")
         os.setgroups([])
         os.setgid(owner.st_gid)
         os.setuid(owner.st_uid)
@@ -121,7 +125,10 @@ def ingest(home, raw):
     destination = inbox / (event["event_id"] + ".json")
     receipt = receipts / destination.name
     canonical = json.dumps(event, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
-    fd, temporary = tempfile.mkstemp(prefix=".ingest-", dir=inbox)
+    # mkstemp expands dir to an absolute path, losing the entered-directory
+    # access across private ancestors after the UID change.
+    temporary = inbox / (".ingest-" + secrets.token_hex(16))
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
         with os.fdopen(fd, "wb") as stream:
             stream.write(canonical)
