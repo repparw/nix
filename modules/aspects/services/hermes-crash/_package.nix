@@ -3,7 +3,7 @@
   knownWaits ? { },
 }:
 let
-  source = ./triage.py;
+  source = pkgs.writeText "hermes-crash-triage.py" (builtins.readFile ./triage.py);
   knownWaitsFile = pkgs.writeText "hermes-crash-known-waits.json" (builtins.toJSON knownWaits);
 in
 {
@@ -20,7 +20,7 @@ in
     sys.argv = [${builtins.toJSON (toString source)}, "gate", "--known-waits", ${builtins.toJSON (toString knownWaitsFile)}]
     runpy.run_path(${builtins.toJSON (toString source)}, run_name="__main__")
   '';
-  enroll = ./enroll.py;
+  enroll = pkgs.writeText "crash_triage_enroll.py" (builtins.readFile ./enroll.py);
   check =
     pkgs.runCommand "check-hermes-crash-triage"
       {
