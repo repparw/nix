@@ -372,68 +372,19 @@ in
 
         coredumpsScript = pkgs.writeShellApplication {
           name = "coredump-watch";
-          runtimeInputs = with pkgs; [
-            curl
-            (mkDiscordNotify pkgs)
-            jq
-            gawk
-            gnused
-            coreutils
-            systemd
+          runtimeInputs = [
+            pkgs.python3
+            pkgs.openssh
+            pkgs.systemd
           ];
           text = ''
-            state_dir="''${STATE_DIRECTORY:-/var/lib/fleet-health}"
-            mkdir -p "$state_dir"
-            marker="$state_dir/.coredumps-since"
-            now=$(date +%s)
-
-            if [ ! -e "$marker" ]; then
-              printf '%s\n' "$now" > "$marker"
-              echo "coredumps: baseline set, nothing reported"
-              exit 0
-            fi
-
-            since=$(cat "$marker")
-            printf '%s\n' "$now" > "$marker"
-
-            MUTE_JSON="''${MUTE_JSON:-[]}"
-            entries=$(coredumpctl list --json=short --no-pager --since="@$since" 2>/dev/null || echo "[]")
-
-            report=$(printf '%s' "$entries" | jq -r --argjson mute "$MUTE_JSON" '
-              [ .[]
-                | select(.exe != null and .exe != "")
-                | { base: (.exe | split("/") | last), sig: (.sig // "unknown") } ]
-              | map(select((.base as $b | $mute | index($b)) | not))
-              | sort_by(.base, .sig)
-              | group_by([.base, .sig])
-              | map("\(length)x \(.[0].base) (sig \(.[0].sig))")
-              | .[]' 2>/dev/null || true)
-
-            count=$(printf '%s\n' "$report" | grep -c . || true)
-            if [ "$count" -gt 0 ]; then
-              body=":warning: coredumps: $count new crash kind(s) on $HOSTNAME"
-              while IFS= read -r line; do
-                body+=$'\n'"• $line"
-              done <<< "$report"
-              discord-notify post "$body" || true
-            else
-              echo "coredumps: nothing new"
-            fi
-
-            muted=$(printf '%s' "$entries" | jq -r --argjson mute "$MUTE_JSON" '
-              [ .[]
-                | select(.exe != null and .exe != "")
-                | (.exe | split("/") | last)
-                | select(. as $b | $mute | index($b)) ] | length' 2>/dev/null || echo 0)
-            if [ "$muted" -gt 0 ]; then
-              echo "coredumps: $muted muted crash(es) suppressed"
-            fi
+            exec python3 ${./coredump-watch/collector.py}
           '';
         };
       in
       {
         options.modules.coredump-watch = {
-          enable = lib.mkEnableOption "coredump surfacing to Discord (host-local; needs a persistent journal, so keep it off pi)";
+          enable = lib.mkEnableOption "coredump triage through Hermes (requires a persistent journal)";
 
           mute = lib.mkOption {
             type = lib.types.listOf lib.types.str;
@@ -451,8 +402,13 @@ in
         config = {
           modules.coredump-watch.script = coredumpsScript;
 
+          programs.ssh.knownHosts.hermes-crash-intake = lib.mkIf cfg.enable {
+            hostNames = [ config.modules.services.hostSshAddresses.epsilon ];
+            publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINE+UZW7+eImXJ4pM8P0onKRk9hNnEcJeBCpSv+GhPRy";
+          };
+
           systemd.services.fleet-health-coredumps = lib.mkIf cfg.enable {
-            description = "Surface new coredumps to Discord";
+            description = "Queue new coredumps for Hermes investigation";
             after = [
               "network-online.target"
               "multi-user.target"
@@ -460,8 +416,9 @@ in
             wants = [ "network-online.target" ];
             environment = {
               HOSTNAME = config.networking.hostName;
-              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
               MUTE_JSON = builtins.toJSON cfg.mute;
+              HERMES_TARGET = "root@${config.modules.services.hostSshAddresses.epsilon}";
+              HERMES_SSH_IDENTITY = "/home/repparw/.ssh/id_ed25519";
             };
             serviceConfig = {
               Type = "oneshot";
