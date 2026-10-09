@@ -115,6 +115,8 @@
           );
         in
         {
+          hermes-crash-triage = (import ./aspects/services/hermes-crash/_package.nix { inherit pkgs; }).check;
+
           coredump-collector =
             pkgs.runCommand "check-coredump-collector" { nativeBuildInputs = [ pkgs.python3 ]; }
               ''
