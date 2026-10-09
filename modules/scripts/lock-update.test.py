@@ -16,6 +16,17 @@ UPDATE = WORKFLOW.split("        run: |\n", 1)[1]
 SCRIPT = "\n".join(line.removeprefix("          ") for line in UPDATE.splitlines())
 
 
+def lock_fixture(revision):
+    return json.dumps({
+        "root": "root",
+        "nodes": {
+            "root": {"inputs": {"nixpkgs": "nixpkgs_3", "home-manager": "home-manager_2"}},
+            "nixpkgs_3": {"locked": {"rev": revision}},
+            "home-manager_2": {"locked": {"rev": "home-manager"}},
+        },
+    })
+
+
 class LockUpdate(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -27,7 +38,7 @@ class LockUpdate(unittest.TestCase):
         self.git("clone", str(self.remote), str(self.checkout))
         self.git("config", "user.name", "fixture", cwd=self.checkout)
         self.git("config", "user.email", "fixture@example.test", cwd=self.checkout)
-        (self.checkout / "flake.lock").write_text("old\n")
+        (self.checkout / "flake.lock").write_text(lock_fixture("old"))
         self.git("add", "flake.lock", cwd=self.checkout)
         self.git("commit", "-m", "fixture", cwd=self.checkout)
         self.git("push", "origin", "main", cwd=self.checkout)
@@ -35,10 +46,11 @@ class LockUpdate(unittest.TestCase):
         self.bin = self.root / "bin"
         self.bin.mkdir()
 
+        (self.root / "next.lock").write_text(lock_fixture("new"))
         nix = self.bin / "nix"
         nix.write_text(
             f"#!{shutil.which('bash')}\n"
-            "if [ \"$FIXTURE_CHANGE\" = 1 ]; then printf 'new\\n' > flake.lock; fi\n"
+            "if [ \"$FIXTURE_CHANGE\" = 1 ]; then cp \"$FIXTURE_ROOT/next.lock\" flake.lock; fi\n"
             "if [ \"$FIXTURE_BRANCH_RACE\" = 1 ]; then "
             "git --git-dir=\"$FIXTURE_REMOTE\" update-ref refs/heads/automation/flake-lock \"$FIXTURE_MAIN\"; fi\n"
         )
@@ -116,6 +128,7 @@ class LockUpdate(unittest.TestCase):
         self,
         *,
         change=True,
+        event="workflow_dispatch",
         pr="",
         candidate_ci="",
         branch_race=False,
@@ -140,6 +153,7 @@ class LockUpdate(unittest.TestCase):
             "FIXTURE_REQUESTS": str(self.root / "requests"),
             "FIXTURE_ROOT": str(self.root),
             "GH_REPO": "fixture/nix",
+            "GITHUB_EVENT_NAME": event,
             "LOCK_UPDATE_POLL_SECONDS": "0",
             "LOCK_UPDATE_POLL_ATTEMPTS": "3",
         }
@@ -166,7 +180,7 @@ class LockUpdate(unittest.TestCase):
     def test_creates_validates_and_fast_forwards_main_to_same_sha(self):
         result = self.update()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), "new")
+        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), lock_fixture("new"))
         self.assertEqual(self.main_sha(), self.branch_sha())
 
         create = next(i for i, r in enumerate(self.requests) if r[:2] == ["pr", "create"])
@@ -192,8 +206,23 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(any(r[:2] == ["pr", "create"] for r in self.requests))
         self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
-        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), "new")
+        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), lock_fixture("new"))
         self.assertEqual(self.main_sha(), self.branch_sha())
+
+    def test_scheduled_secondary_change_closes_pr_without_publishing(self):
+        updated = json.loads(lock_fixture("old"))
+        updated["nodes"]["secondary"] = {"locked": {"rev": "new"}}
+        (self.root / "next.lock").write_text(json.dumps(updated))
+        result = self.update(event="schedule", pr="123")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual([r[:3] for r in self.requests], [["pr", "list", "--head"], ["pr", "close", "123"]])
+        self.assertEqual(self.main_sha(), self.main)
+
+    def test_scheduled_primary_change_validates_and_publishes(self):
+        result = self.update(event="schedule")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.main_sha(), self.branch_sha())
+        self.assertNotEqual(self.main_sha(), self.main)
 
     def test_no_change_closes_obsolete_pr_without_merge(self):
         result = self.update(change=False, pr="123")
@@ -239,7 +268,7 @@ class LockUpdate(unittest.TestCase):
         # validated lock candidate must not be reachable from main.
         raced_main = self.main_sha()
         self.assertNotEqual(raced_main, self.main)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), "old")
+        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), lock_fixture("old"))
         candidate = self.branch_sha()
         ancestry = subprocess.run(
             ["git", "--git-dir", str(self.remote), "merge-base", "--is-ancestor", candidate, raced_main]
