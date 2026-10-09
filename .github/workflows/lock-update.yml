@@ -80,11 +80,27 @@ jobs:
             git fetch --no-tags origin "$expected"
           fi
 
+          primary_inputs() {
+            jq -cS '. as $lock | .nodes[.root].inputs
+              | {nixpkgs, "home-manager": .["home-manager"]}
+              | map_values($lock.nodes[.].locked)' flake.lock
+          }
+
+          primary_before=$(primary_inputs)
           nix flake update
           pr=$(gh pr list --head "$branch" --base main --state open --json number --jq '.[0].number // empty')
           if git diff --quiet -- flake.lock; then
             if [ -n "$pr" ]; then
               gh pr close "$pr" --comment 'The current lock matches main; no update remains.'
+            fi
+            exit 0
+          fi
+
+          if [ "$GITHUB_EVENT_NAME" = schedule ] \
+            && [ "$primary_before" = "$(primary_inputs)" ]; then
+            echo 'Neither nixpkgs nor home-manager changed; defer other input updates.'
+            if [ -n "$pr" ]; then
+              gh pr close "$pr" --comment 'Scheduled updates wait for a nixpkgs or home-manager change. Other input updates will be included then; manual dispatch bypasses this gate.'
             fi
             exit 0
           fi
