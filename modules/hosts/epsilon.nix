@@ -20,7 +20,12 @@
       den.aspects.nixos-services._.paperless
     ];
     nixos =
-      { config, pkgs, ... }:
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
       {
         imports = [ ../_services/glance.nix ];
 
@@ -40,6 +45,20 @@
           "/home/containers/config"
           "/var/lib/ddclient"
         ];
+        # Tmpfs-root landing (phase 2): mirrors the pi landing (#180 + #182).
+        # /persist is the former ext4 root partition; the initrd
+        # check-persistence-state guard verifies the prepared identity before
+        # activation. /nix is a directory on the backing volume and is bound
+        # into place via fileSystems below (neededForBoot: the store must be
+        # visible to the initrd before activation).
+        modules.persistence.enable = true;
+        modules.persistence.mutableAccounts = true;
+        # The aspect's random-seed symlink cannot transition on this host: /
+        # and /persist are the same filesystem during the migration, so the
+        # live symlink would point at itself (ELOOP) and fail every deploy-rs
+        # switch. The seed is regenerated per boot instead; directory binds
+        # are unaffected. Revisit if the backing volume ever splits from /.
+        environment.persistence."/persist".files = lib.mkForce [ ];
 
         environment.persistence."/persist".directories = [
           {
@@ -75,6 +94,13 @@
             device = "nodev";
           };
         };
+        # The store bind must be up before the initrd activation script runs,
+        # mirroring the aspect's sysroot-var-lib-nixos wiring.
+        boot.initrd.systemd.services.initrd-nixos-activation = {
+          requires = [ "sysroot-nix.mount" ];
+          after = [ "sysroot-nix.mount" ];
+        };
+
         boot.initrd.availableKernelModules = [
           "virtio_scsi"
           "virtio_pci"
@@ -82,9 +108,27 @@
         ];
 
         fileSystems = {
+          # Root is volatile; the former ext4 root partition is /persist (see
+          # the phase-1 mounts below). Impermanence binds the prepared state
+          # back into place at boot after check-persistence-state verifies it.
           "/" = {
-            device = "/dev/disk/by-partuuid/daa9a574-99f0-449e-b43a-463650870efb";
-            fsType = "ext4";
+            device = "tmpfs";
+            fsType = "tmpfs";
+            options = [
+              "x-initrd.mount"
+              "mode=0755"
+              "size=50%"
+            ];
+          };
+
+          # The store lives on the backing volume (single-disk VM); expose it
+          # in the initrd so activation can resolve the system closure.
+          "/nix" = {
+            device = "/persist/nix";
+            fsType = "none";
+            options = [ "bind" ];
+            neededForBoot = true;
+            depends = [ "/persist" ];
           };
 
           # Backing store for host persistence (phase 1 of the tmpfs-root

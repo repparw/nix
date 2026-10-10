@@ -7,35 +7,24 @@ let
   hosts = inputs.self.nixosConfigurations;
   persistenceMounts =
     config: lib.filter (mount: lib.hasPrefix "/persist/" mount.what) config.systemd.mounts;
-  # Epsilon keeps the aspect probes on a persistence-disabled base: the
-  # overlay proves the generated wiring, the unprepared probe proves the
-  # refusal paths. Pi's base configuration is itself the enabled state and is
-  # verified directly below.
-  prepared =
+  pi = hosts.pi.config;
+  epsilon = hosts.epsilon.config;
+  piMounts = persistenceMounts pi;
+  epsilonMounts = persistenceMounts epsilon;
+  # The unprepared probe proves the refusal paths on a persistence-disabled
+  # base: pi and epsilon now carry prepared /persist volumes and enabled
+  # persistence in their base configurations, so the boot flag is forced off
+  # to reproduce the "unprepared backing volume" state.
+  unprepared =
     (hosts.epsilon.extendModules {
       modules = [
         {
           modules.persistence.enable = true;
-          modules.persistence.mutableAccounts = true;
-          fileSystems."/persist" = {
-            device = lib.mkForce "/dev/disk/by-label/persistence-test";
-            fsType = lib.mkForce "ext4";
-            neededForBoot = lib.mkForce true;
-          };
+          modules.persistence.mutableAccounts = lib.mkForce false;
         }
-      ];
-    }).config;
-  unprepared =
-    (hosts.epsilon.extendModules {
-      modules = [
-        { modules.persistence.enable = true; }
-        # Keep the "unprepared backing volume" spirit now that epsilon carries
-        # a prepared /persist: force its boot flag off for this probe.
         { fileSystems."/persist".neededForBoot = lib.mkForce false; }
       ];
     }).config;
-  pi = hosts.pi.config;
-  piMounts = persistenceMounts pi;
   piResult =
     assert pi.modules.persistence.enable;
     assert pi.modules.persistence.mutableAccounts;
@@ -86,37 +75,54 @@ let
       earlySopsKey = builtins.head pi.sops.age.sshKeyPaths;
     };
   epsilonResult =
-    let
-      normal = hosts.epsilon.config;
-      mounts = persistenceMounts prepared;
-    in
-    assert !normal.modules.persistence.enable;
-    assert !normal.modules.persistence.mutableAccounts;
-    assert !normal.environment.persistence."/persist".enable;
-    assert persistenceMounts normal == [ ];
+    assert epsilon.modules.persistence.enable;
+    assert epsilon.modules.persistence.mutableAccounts;
+    assert epsilon.environment.persistence."/persist".enable;
     assert
-      normal.fileSystems."/persist".device
+      epsilon.fileSystems."/persist".device
       == "/dev/disk/by-partuuid/daa9a574-99f0-449e-b43a-463650870efb";
-    assert normal.fileSystems."/persist".neededForBoot;
-    assert normal.fileSystems."/boot".device == "/persist/boot";
-    assert normal.fileSystems."/boot".fsType == "none";
-    assert !normal.fileSystems."/boot".neededForBoot;
-    assert lib.elem "bind" normal.fileSystems."/boot".options;
-    assert normal.sops.age.sshKeyPaths == [ "/etc/ssh/ssh_host_ed25519_key" ];
-    assert prepared.fileSystems."/".fsType == normal.fileSystems."/".fsType;
-    assert prepared.sops.age.sshKeyPaths == [ "/persist/etc/ssh/ssh_host_ed25519_key" ];
-    assert lib.any (mount: mount.where == "/etc" && mount.what == "/persist/etc") mounts;
+    assert epsilon.fileSystems."/persist".neededForBoot;
+    assert epsilon.fileSystems."/".device == "tmpfs";
+    assert epsilon.fileSystems."/".fsType == "tmpfs";
+    assert epsilon.fileSystems."/".neededForBoot;
+    assert lib.elem "x-initrd.mount" epsilon.fileSystems."/".options;
+    assert lib.elem "mode=0755" epsilon.fileSystems."/".options;
+    assert lib.elem "size=50%" epsilon.fileSystems."/".options;
+    assert epsilon.fileSystems."/nix".device == "/persist/nix";
+    assert epsilon.fileSystems."/nix".neededForBoot;
+    assert lib.elem "bind" epsilon.fileSystems."/nix".options;
+    assert lib.elem "/persist" epsilon.fileSystems."/nix".depends;
+    assert epsilon.fileSystems."/boot".device == "/persist/boot";
+    assert lib.elem "bind" epsilon.fileSystems."/boot".options;
+    assert !epsilon.fileSystems."/boot".neededForBoot;
+    assert epsilon.sops.age.sshKeyPaths == [ "/persist/etc/ssh/ssh_host_ed25519_key" ];
+    assert lib.any (mount: mount.where == "/etc" && mount.what == "/persist/etc") epsilonMounts;
+    assert lib.any (mount: mount.where == "/home/repparw") epsilonMounts;
+    assert lib.any (mount: mount.where == "/var/log") epsilonMounts;
+    assert lib.any (mount: mount.where == "/var/lib/ddclient") epsilonMounts;
+    assert lib.elem "sysroot-nix.mount"
+      epsilon.boot.initrd.systemd.services.initrd-nixos-activation.requires;
+    assert lib.elem "sysroot-var-lib-nixos.mount"
+      epsilon.boot.initrd.systemd.services.initrd-nixos-activation.requires;
     assert lib.elem "sysroot-etc.mount"
-      prepared.boot.initrd.systemd.services.initrd-nixos-activation.requires;
+      epsilon.boot.initrd.systemd.services.initrd-nixos-activation.requires;
     assert lib.elem "initrd-nixos-activation.service"
-      prepared.boot.initrd.systemd.services.check-persistence-state.requiredBy;
+      epsilon.boot.initrd.systemd.services.check-persistence-state.requiredBy;
     assert lib.any (
       mount: mount.where == "/sysroot/var/lib/nixos" && mount.what == "/sysroot/persist/var/lib/nixos"
-    ) prepared.boot.initrd.systemd.mounts;
-    assert lib.any (mount: mount.where == "/home/repparw") mounts;
-    assert normal.users.mutableUsers;
-    assert normal.modules.backup.hostRecovery.enable;
-    assert lib.all (path: lib.elem path normal.services.restic.backups.offsite.paths) [
+    ) epsilon.boot.initrd.systemd.mounts;
+    assert lib.any (entry: entry.directory or null == "/var/log") (
+      epsilon.environment.persistence."/persist".directories
+    );
+    assert lib.any (entry: entry.directory or null == "/var/lib/ddclient") (
+      epsilon.environment.persistence."/persist".directories
+    );
+    # Same same-fs landmine as pi: the random-seed symlink must stay absent
+    # during the migration; see modules/hosts/epsilon.nix.
+    assert epsilon.environment.persistence."/persist".files == [ ];
+    assert epsilon.users.mutableUsers;
+    assert epsilon.modules.backup.hostRecovery.enable;
+    assert lib.all (path: lib.elem path epsilon.services.restic.backups.offsite.paths) [
       "/etc"
       "/boot"
       "/root"
@@ -124,21 +130,22 @@ let
       "/var/lib/nixos"
       "/var/lib/nixos-containers"
     ];
-    assert lib.elem "/home/repparw/.swapfile" normal.services.restic.backups.offsite.exclude;
-    assert lib.elem "/var/lib/nixos-containers/*/nix" normal.services.restic.backups.offsite.exclude;
-    assert lib.all (assertion: assertion.assertion) prepared.assertions;
+    assert lib.elem "/home/repparw/.swapfile" epsilon.services.restic.backups.offsite.exclude;
+    assert lib.elem "/var/lib/nixos-containers/*/nix" epsilon.services.restic.backups.offsite.exclude;
+    assert lib.all (assertion: assertion.assertion) epsilon.assertions;
     {
-      disabledByDefault = true;
-      persistentMounts = map (mount: mount.where) mounts;
-      earlySopsKey = builtins.head prepared.sops.age.sshKeyPaths;
+      disabledByDefault = false;
+      tmpfsRoot = true;
+      persistentMounts = map (mount: mount.where) epsilonMounts;
+      earlySopsKey = builtins.head epsilon.sops.age.sshKeyPaths;
     };
 in
 assert !(hosts.alpha.config.modules ? persistence);
 assert !hosts.alpha.config.modules.backup.hostRecovery.enable;
 assert lib.elem "/boot/firmware" pi.services.restic.backups.offsite.paths;
-assert lib.elem "/boot/efi" hosts.epsilon.config.services.restic.backups.offsite.paths;
+assert lib.elem "/boot/efi" epsilon.services.restic.backups.offsite.paths;
 assert
-  hosts.epsilon.config.modules.services.definitions.paperless.backup.path
+  epsilon.modules.services.definitions.paperless.backup.path
   == "/home/containers/config/paper/export";
 assert lib.any (
   assertion: !assertion.assertion && lib.hasPrefix "Host persistence requires" assertion.message
