@@ -150,7 +150,6 @@ in
             name = "moonshine-steam";
             runtimeInputs = [
               gamescopeHdr
-              pkgs.bubblewrap
               pkgs.procps
               config.programs.steam.package
             ];
@@ -184,22 +183,14 @@ in
               # appear. See ValveSoftware/gamescope#1537.
               unset DISABLE_GAMESCOPE_WSI
 
-              # bwrap sits INSIDE gamescope, not outside: gamescope spawns its own
-              # Xwayland, and inside bwrap's user namespace the root-owned
-              # /tmp/.X11-unix appears owned by "nobody", which wlroots rejects
-              # (segfault). Here gamescope sets up Xwayland outside the sandbox
-              # and only the Steam child is sandboxed. The sandbox masks the
-              # Seagate automounts: Steam stats every mount at startup (drive
-              # enumeration) and Proton maps them as DOS drives (verified with
-              # strace 2026-09-05), which would otherwise spin up the idle disk
-              # on every launch. Overlay diagnostic 2026-09-06: removing this
-              # sandbox did not restore the overlay, so the sandbox is exonerated.
+              # Disk masking (spinning automounts under /mnt and the media
+              # portal) lives in programs.steam.package extraBwrapArgs
+              # (gaming.nix): the FHS sandbox already runs Steam under
+              # bubblewrap, so no outer sandbox is needed here. Keep the
+              # game session a direct child of gamescope, which sets up its
+              # own Xwayland.
               gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
-              exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- bwrap \
-                --dev-bind / / \
-                --tmpfs /mnt/seagate \
-                --tmpfs /home/containers/media/seagate \
-                -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
+              exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
             '';
           };
           # Desktop stream: nested niri plus a kiosk launcher loop. Vicinae

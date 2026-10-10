@@ -66,16 +66,14 @@ The working Gamescope invocation, with a 4K output and a 1080p game:
 
 ```sh
 gamescope --steam -f -b -W 3840 -H 2160 -w 3840 -h 2160 -r 60 \
-  --hdr-enabled -- bwrap --dev-bind / / \
-  --tmpfs /mnt/seagate --tmpfs /home/containers/media/seagate -- \
-  steam -tenfoot
+  --hdr-enabled -- moonshine-steam-game-session
 ```
 
-`bwrap` stays inside Gamescope. Gamescope creates Xwayland outside the user
-namespace; inside bwrap's namespace the root-owned `/tmp/.X11-unix` looks owned
-by `nobody`, which wlroots rejects with a segfault. The sandbox exists to mask
-the Seagate automounts, which Steam otherwise stats at startup and Proton maps
-as DOS drives.
+Disk masking (spinning automounts under `/mnt` and the media portal, which
+Steam otherwise stats at startup and Proton maps as DOS drives) lives in
+`programs.steam.package` `extraBwrapArgs` (`modules/aspects/gaming.nix`):
+the FHS sandbox already runs Steam under bubblewrap, so no outer sandbox
+sits inside Gamescope anymore.
 
 Required in the game process: `ENABLE_GAMESCOPE_WSI=1` and
 `ENABLE_VK_LAYER_VALVE_steam_overlay_1=1`, with `DISABLE_MOONSHINE_WSI=1` set.
