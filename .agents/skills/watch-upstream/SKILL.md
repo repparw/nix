@@ -15,7 +15,7 @@ A change is blocked on an upstream landing. Both halves are yours:
 State three things back to the human for correction:
 
 - **Workaround**: exact file paths and lines of what stands in for upstream.
-- **Upstream event**: the precise observable condition meaning "landed" (a raw URL returns 200 on the pinned branch, or a PR's `merged_at` plus the pin containing the merge commit).
+- **Upstream event**: the precise observable condition meaning "landed" (a raw URL returns 200 on the pinned branch, or a PR's `merged_at` plus ancestry proof that the pin contains the merge commit).
 - **Completion actions**: everything that becomes possible once landed, as mechanical edits.
 
 Never collapse `waiting-unstable` and `waiting-pin`: the former cannot be
@@ -23,6 +23,30 @@ fixed by the next lock update, while the latter can. State the input,
 authoritative branch, channel and pin predicates, workaround paths, and
 completion action in the issue. If no upstream PR exists, use a release or
 source predicate; do not invent a PR number.
+
+### Proving a pin contains the fix
+
+When the landing event is a merged PR, prove containment with the comparison's
+`merge_base_commit.sha` equal to the PR's `merge_commit_sha`. The `status` field
+is not a substitute: GitHub reports `identical` when the pin equals the merge
+commit exactly, so a `status == "ahead"` test alone waits forever in that case.
+Accept both `ahead` and `identical`, and fail closed when the comparison is
+unavailable — never let an API error read as "landed". A `diverged` comparison
+already rejects correctly, so the ancestry assertion is what makes the
+accepting cases trustworthy rather than merely different.
+
+This holds for squash and merge commits alike. Nixpkgs merge commits carry two
+parents, while home-manager squash-merges to a single-parent commit on the base
+branch; in both cases `merge_commit_sha` is a real commit on the branch and
+compares as an ancestor. Verified against nixpkgs and home-manager merges.
+
+Ancestry is the preferred predicate, but it is not always available: a
+rebase-merged PR or a fix that landed by another route may leave the pin
+without a traceable commit. Only then fall back to a semantic predicate that
+the selected package's source or behavior demonstrably carries the fix. Never
+treat a version number as proof on its own — a release is sufficient only when
+that specific release is known to contain the fix, and a fallback loose enough
+to retire a workaround prematurely is worse than waiting.
 
 Restructure first if needed: vendored code gets its own file/provide included by single lines from every consumer, so completion is `git rm` plus deleting include lines, never regex surgery.
 
@@ -43,7 +67,7 @@ flake's pin has landed it.
 
 Every watcher must satisfy all five:
 
-1. **Quiet while waiting**: not-ready prints one line, exits 0. Non-zero there pollutes journals.
+1. **Quiet while waiting**: not-ready prints one line, exits 0. Non-zero there pollutes journals. The wait is decided by ancestry — accept `merge_base_commit.sha == merge_commit_sha` under either `ahead` or `identical`, and treat an unavailable comparison as not-ready rather than landed.
 2. **Idempotent**: detect "already done" and disable the timer instead of redoing work.
 3. **Narrow writes**: stage only files the unblock owns. Detection and gating run in a pristine worktree from `origin/main` and must not read the working copy; only steps that mutate the local checkout (the convenience pull) may check for a dirty tree, and they stay guarded so dirt merely skips them.
 4. **Gate before pushing**: after detection, run what breaks if you guessed wrong (flake update then eval every host; build the unpatched package). Gate failure means revert local state untouched, exit non-zero, notify. Detection alone is not permission to act.
@@ -55,7 +79,7 @@ Bash/awk only; python3 is not on systemd's default PATH. Gotchas: gawk treats `-
 
 Run the script once by hand (expect the not-ready path), confirm `list-timers` shows the next fire. Report: what is watched, the condition, what happens automatically, where logs live (`journalctl --user -u <name>`), and that the probe survives restarts.
 
-Reference implementations (machine-local, in `~/.local/bin/`): `watch-t3code-title-fix.sh`, `watch-tasks-org.sh`, `watch-qbittorrent.sh`, `watch-t3code-server.sh`, `watch-t3code-split.sh`, `watch-moonshine-pr227.sh`.
+Reference implementations (machine-local, in `~/.local/bin/`): `watch-qbittorrent.sh`, `watch-t3code-server.sh`, `watch-t3code-split.sh`, `watch-moonshine-pr227.sh`, `watch-nautilus-module.sh`. The last already accepts both `ahead` and `identical`; none yet assert `merge_base_commit`, so treat the ancestry check above as a contract those examples have not yet met.
 
 ## Dropping a watcher
 
