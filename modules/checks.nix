@@ -209,6 +209,23 @@
                 touch $out
               '';
 
+          free-model-watch =
+            pkgs.runCommand "check-free-model-watch"
+              {
+                nativeBuildInputs = with pkgs; [
+                  python3
+                  bash
+                  coreutils
+                  jq
+                  gnused
+                  gnugrep
+                ];
+              }
+              ''
+                python ${./_tests/free-model-watch.py} ${inputs.self.nixosConfigurations.alpha.config.modules.free-model-watch.script}/bin/free-model-watch
+                touch $out
+              '';
+
           ci-workflow =
             pkgs.runCommand "check-ci-workflow"
               {
