@@ -411,11 +411,13 @@ in
             return 1
           }
 
-          # Never interrupt a live stream: on controller reconnect the dongle
-          # re-enumerates and the button gate above passes (the user is mashing
-          # buttons), but their input is already flowing to the game. This is
-          # checked before any branch, because both the TV relaunch and the
-          # desk focus/launch would tear down an in-progress session.
+          # Guard the desk branch only: with the TV off, a live stream means
+          # the button input is already flowing to the game (on controller
+          # reconnect the dongle re-enumerates and the button gate above
+          # passes while the user is mashing buttons), and a desk takeover
+          # would tear the session down. The TV branch is deliberately
+          # exempt: with the TV on the button is a relaunch request, and the
+          # close+relaunch doubles as recovery for a wedged stream.
           #
           # The journal alone cannot be trusted: a crashed or killed daemon
           # leaves a stale "Starting session streams" with no matching
@@ -440,11 +442,11 @@ in
 
           wait_button 30 || { log "no press; exiting without action"; exit 0; }
 
-          if moonshine_streaming; then
-            log "live stream detected; leaving the session alone"
-            exit 0
-          fi
-
+          # First path: the TV wins whenever it is on. This runs before the
+          # stream guard and before any desk-session gating, so a button
+          # press relaunches Moonlight even with a moonshine session live
+          # (the close+relaunch is the recovery for a wedged stream) and
+          # even with the desk session unlocked.
           tv_on=0
           if power="$(ssh_tv 'luna-send -n 1 -w 3000 -f luna://com.webos.service.tvpower/power/getPowerState "{}"' 2>/dev/null)"; then
             if jq -e '.state == "Active"' >/dev/null <<<"$power"; then
@@ -463,6 +465,11 @@ in
             sleep 1
             ssh_tv ${lib.escapeShellArg launchRemote} >/dev/null
             log "branch: tv done"
+            exit 0
+          fi
+
+          if moonshine_streaming; then
+            log "live stream detected; leaving the session alone"
             exit 0
           fi
 
