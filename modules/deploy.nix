@@ -74,6 +74,11 @@ let
       # config resolves the option defaults the script is built from. Lazy
       # read: the fixed-point materializes before the package value is forced.
       controllerConfig = inputs.self.nixosConfigurations.pi.config;
+      # The event parser is a store path substituted into the script text. It
+      # cannot be discovered next to the executable: writeShellApplication
+      # embeds only this script, so a runtime search of the store bin
+      # directory would find nothing.
+      packageEvent = ./scripts/package-update-event.py;
     in
     pkgs.writeShellApplication {
       name = "fleet-update";
@@ -86,6 +91,7 @@ let
         jq
         nix
         openssh
+        python3
         systemd
         util-linux
       ];
@@ -97,6 +103,7 @@ let
             "@FLEET_EPSILON_ADDRESS@"
             "@FLEET_DOMAIN@"
             "@FLEET_DISCORD_CHANNEL@"
+            "@PACKAGE_EVENT_SCRIPT@"
           ]
           [
             deployBase.nodes.alpha.hostname
@@ -104,6 +111,7 @@ let
             deployBase.nodes.epsilon.hostname
             controllerConfig.modules.services.domain
             controllerConfig.modules.services.discordChannelId
+            (toString packageEvent)
           ]
           (builtins.readFile ./scripts/fleet-update.sh);
     };
