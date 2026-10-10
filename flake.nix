@@ -37,7 +37,10 @@
       url = "github:oxcl/nix-flake-helium-browser";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    hermes-agent.url = "github:NousResearch/hermes-agent/v2026.8.19";
+    hermes-agent = {
+      url = "github:NousResearch/hermes-agent/v2026.8.19";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
