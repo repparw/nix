@@ -499,14 +499,18 @@ in
           log "taking over: stopping desktop steam, starting gamescope"
           ${stopDesktopSteam}
 
-          # Start gamescope + steam for Big Picture
+          # Foreground, not exec: the tail below has to run once the session
+          # ends, and exec would replace this script with gamescope.
           ${lib.getExe pkgs.gamescope} --steam -H 1080 -r 162 --adaptive-sync -- \
-            ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf &
-          gamescope_pid=$!
-          wait $gamescope_pid || true
+            ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf || true
 
-          # Auto-restore: relaunch steam silently so the tray repopulates and downloads resume
-          ${lib.getExe osConfig.programs.steam.package} -silent
+          # Revive the tray client through its own unit. Doing it here would
+          # keep this service active forever - the udev rule re-triggers it on
+          # every controller re-enumeration and a start on an already active
+          # unit is a no-op, so the button would go dead - and would place the
+          # client in this service's cgroup, where the next stop kills it.
+          log "session ended; restoring desktop steam"
+          systemctl --user start steam-tray
         '';
       };
     in
@@ -524,6 +528,24 @@ in
         Service = {
           Type = "exec";
           ExecStart = lib.getExe launch;
+        };
+      };
+
+      # On-demand tray client, deliberately not WantedBy anything: it exists to
+      # revive the desktop Steam that a Big Picture takeover shut down, so it
+      # is started by the launcher above rather than at login. A separate unit
+      # because restoring it inline would pin the launcher active and put the
+      # client in its cgroup. No Restart=, so quitting the tray stays honoured;
+      # a crash is recovered by the next takeover instead.
+      systemd.user.services.steam-tray = {
+        Unit = {
+          Description = "Desktop Steam (tray)";
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
+        };
+        Service = {
+          Type = "simple";
+          ExecStart = "${lib.getExe osConfig.programs.steam.package} -silent";
         };
       };
     };
