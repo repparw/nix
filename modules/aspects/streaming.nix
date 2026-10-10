@@ -502,12 +502,8 @@ in
           # Start gamescope + steam for Big Picture
           ${lib.getExe pkgs.gamescope} --steam -H 1080 -r 162 --adaptive-sync -- \
             ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf &
-          local gamescope_pid=$!
-          local steam_pid=$!
-
-          # Wait for both to finish
+          gamescope_pid=$!
           wait $gamescope_pid || true
-          wait $steam_pid || true
 
           # Auto-restore: relaunch steam silently so the tray repopulates and downloads resume
           ${lib.getExe osConfig.programs.steam.package} -silent
