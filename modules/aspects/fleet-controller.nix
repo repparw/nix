@@ -25,6 +25,20 @@
       cfg = config.modules.services;
       apexUrl = "https://${cfg.domain}/";
       minifluxHealth = servicesLib.publicHealthUrl cfg config "miniflux";
+      packageDelivery = pkgs.writeShellApplication {
+        name = "fleet-package-deliver";
+        runtimeInputs = with pkgs; [
+          coreutils
+          jq
+          openssh
+          util-linux
+        ];
+        text =
+          builtins.replaceStrings
+            [ "@FLEET_EPSILON_ADDRESS@" ]
+            [ config.modules.fleet-update.targetAddresses.epsilon ]
+            (builtins.readFile ../scripts/package-update-deliver.sh);
+      };
       headlessReboot = pkgs.writeShellApplication {
         name = "fleet-headless-reboot";
         runtimeInputs = with pkgs; [
@@ -288,6 +302,25 @@
           OnCalendar = "*-*-* 05:30:00";
           Persistent = true;
           RandomizedDelaySec = "10min";
+        };
+      };
+
+      systemd.services.fleet-package-deliver = {
+        description = "Deliver durable fleet package events to Hermes";
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          StateDirectory = "auto-update";
+          TimeoutStartSec = "5min";
+          ExecStart = lib.getExe packageDelivery;
+        };
+      };
+      systemd.timers.fleet-package-deliver = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "2min";
+          OnUnitInactiveSec = "5min";
         };
       };
 

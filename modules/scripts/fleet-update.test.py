@@ -77,6 +77,8 @@ elif name == 'ssh':
         print(f'/nix/store/{host}-profile-26.11')
     elif command[0] == 'nixos-version':
         print(revision if current == 'new' else 'b' * 40)
+    elif command[0] == 'nix' and command[1] == 'store':
+        print("mesa: 26.2.2 ⟶ 26.2.4, 2.1 MiB")
     elif command[0] == 'readlink':
         print(f'/nix/store/{host}-{current}')
     elif command[0] == 'systemctl' and command[1] == 'is-system-running':
@@ -89,6 +91,13 @@ elif name == 'ssh':
         if config.get('rollback_failure') == host:
             sys.exit(1)
         (root / host).write_text('old')
+    elif 'hermes-package-ingest' in command[0]:
+        if config.get('hermes_down'):
+            sys.exit(255)
+        payload = json.loads(sys.stdin.read())
+        with (root / "received").open("a") as received:
+            received.write(json.dumps(payload) + "\n")
+        print(json.dumps({"event_id": "wrong" if config.get("wrong_ack") else payload["event_id"]}))
 '''
 
 
@@ -111,10 +120,12 @@ class Deployment(unittest.TestCase):
         stub.chmod(0o755)
         for name in ["git", "df", "curl", "nix", "deploy", "ssh", "sleep"]:
             (self.bin / name).symlink_to(stub)
+        (self.bin / "python3").symlink_to(sys.executable)
         self.script = self.root / "fleet-update"
         script = SOURCE.replace("/run/secrets/hermes-env", str(self.root / "missing-secret"))
         for host in ["alpha", "pi", "epsilon"]:
             script = script.replace(f"@FLEET_{host.upper()}_ADDRESS@", host)
+        script = script.replace("@PACKAGE_EVENT_SCRIPT@", str(Path(__file__).with_name("package-update-event.py")))
         self.script.write_text("set -euo pipefail\n" + script)
 
     def deploy(self, ci=None, arguments=None, **config):
@@ -308,7 +319,64 @@ class Deployment(unittest.TestCase):
         evidence = Path((self.state / 'latest-preparation').read_text().strip())
         self.assertIn('preparation build failed', (evidence / 'prepare-alpha.log').read_text())
         self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text())['outcome'], 'failed')
-        self.assertEqual(json.loads((evidence / 'result-pi.json').read_text())['outcome'], 'not_attempted')
+
+    def ingested(self):
+        return [c for c in self.calls if c[0] == "ssh" and "hermes-package-ingest" in " ".join(c)]
+
+    def outbox(self):
+        directory = self.state / "package-events"
+        return sorted(directory.glob("*.json")) if directory.exists() else []
+
+    def deliver(self, **config):
+        (self.root / "config").write_text(json.dumps(config))
+        script = self.root / "deliver"
+        source = Path(__file__).with_name("package-update-deliver.sh").read_text().replace("@FLEET_EPSILON_ADDRESS@", "epsilon")
+        script.write_text("set -euo pipefail\n" + source)
+        env = os.environ | {"PATH": f"{self.bin}:{os.environ['PATH']}", "FIXTURE": str(self.root), "FLEET_UPDATE_STATE": str(self.state), "FLEET_DEPLOY_KEY": str(self.script)}
+        result = subprocess.run(["bash", str(script)], env=env, text=True, capture_output=True)
+        self.calls = [json.loads(line) for line in (self.root / "calls").read_text().splitlines()]
+        return result
+
+    def test_full_convergence_enqueues_before_cleanup_without_transport(self):
+        result = self.deploy()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(self.outbox()), 3)
+        self.assertEqual(self.ingested(), [])
+        self.assertEqual(list(self.state.glob("reached-*")), [])
+        self.assertEqual({json.loads(path.read_text())["host"] for path in self.outbox()}, {"alpha", "pi", "epsilon"})
+        self.assertEqual(self.deliver().returncode, 0)
+        self.assertEqual(len(self.ingested()), 3)
+        self.assertEqual(self.outbox(), [])
+
+    def test_deferred_convergence_queues_only_reached_hosts(self):
+        result = self.deploy(busy_alpha=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual({json.loads(path.read_text())["host"] for path in self.outbox()}, {"pi", "epsilon"})
+        self.assertEqual(self.ingested(), [])
+
+    def test_intake_unavailability_retains_exact_bytes_for_independent_retry(self):
+        self.assertEqual(self.deploy().returncode, 0)
+        before = {path.name: path.read_bytes() for path in self.outbox()}
+        self.assertEqual(self.deliver(hermes_down=True).returncode, 0)
+        self.assertEqual(before, {path.name: path.read_bytes() for path in self.outbox()})
+        self.assertEqual(self.deliver().returncode, 0)
+        self.assertEqual(self.outbox(), [])
+        received = [json.loads(line) for line in (self.root / "received").read_text().splitlines()]
+        self.assertEqual(sorted(received, key=lambda event: event["host"]), sorted([json.loads(value) for value in before.values()], key=lambda event: event["host"]))
+
+    def test_wrong_ack_retains_events(self):
+        self.assertEqual(self.deploy().returncode, 0)
+        self.assertEqual(self.deliver(wrong_ack=True).returncode, 0)
+        self.assertEqual(len(self.outbox()), 3)
+
+    def test_pending_events_retry_without_deploy_even_when_paused(self):
+        self.assertEqual(self.deploy().returncode, 0)
+        (self.state / "PAUSE").touch()
+        (self.root / "calls").unlink()
+        self.assertEqual(self.deliver().returncode, 0)
+        self.assertEqual(self.outbox(), [])
+        self.assertEqual(len(self.ingested()), 3)
+        self.assertFalse(any(call[0] in ("git", "nix", "deploy") for call in self.calls))
 
     def test_inconsistent_prepared_revision_stops_before_any_activation(self):
         result = self.deploy(inconsistent_revision='pi')

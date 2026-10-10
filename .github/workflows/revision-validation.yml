@@ -28,7 +28,7 @@ jobs:
           - group: lightweight
             checks: formatting sops-files change-detection agent-docs check-flake-file deploy-schema ci-workflow
           - group: configuration
-            checks: generated-shellcheck fleet-cli service-definitions host-persistence btrfs-health fleet-failed-units hermes-auxiliary-routing pi-services-export coredump-collector hermes-crash-triage
+            checks: generated-shellcheck fleet-cli service-definitions host-persistence btrfs-health fleet-failed-units hermes-auxiliary-routing pi-services-export coredump-collector hermes-crash-triage hermes-package-triage
     steps:
       - name: Verify requested revision
         if: inputs.expected_sha != ''
