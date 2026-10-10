@@ -71,12 +71,12 @@ each implicit choice fails silently in one direction or the other: defaulting to
 doing its work, and defaulting to `--run` lets a manual verification publish for
 real. Requiring the flag makes a missed unit edit a visible usage error instead.
 
-| Invocation             | Behavior                                  |
-| ---------------------- | ----------------------------------------- |
-| `<name>.sh --check`    | Read-only inspection                      |
-| `<name>.sh --run`      | Normal autonomous operation               |
-| `<name>.sh`            | Print usage, exit nonzero                 |
-| `<name>.sh --anything` | Print usage, exit nonzero                 |
+| Invocation             | Behavior                    |
+| ---------------------- | --------------------------- |
+| `<name>.sh --check`    | Read-only inspection        |
+| `<name>.sh --run`      | Normal autonomous operation |
+| `<name>.sh`            | Print usage, exit nonzero   |
+| `<name>.sh --anything` | Print usage, exit nonzero   |
 
 `--check` shares one code path with `--run` for detection; only completion is
 gated. A separately implemented check-mode predicate drifts from the real one
@@ -108,7 +108,7 @@ Bash/awk only; python3 is not on systemd's default PATH. Gotchas: gawk treats `-
 
 ## Verify armed, report
 
-Verify with `--check` by hand (expect the not-ready path), confirm `list-timers` shows the next fire. Never invoke a watcher without a mode to test it: a ready watcher would publish for real. Report: what is watched, the condition, what happens automatically, where logs live (`journalctl --user -u <name>`), and that the probe survives restarts.
+Verify with `--check` by hand (inspect the reported readiness), confirm `list-timers` shows the next fire. Never use `--run` merely to test readiness, because it may publish when the completion conditions are satisfied. Report: what is watched, the condition, what happens automatically, where logs live (`journalctl --user -u <name>`), and that the probe survives restarts.
 
 Reference implementations (machine-local, in `~/.local/bin/`): `watch-qbittorrent.sh`, `watch-t3code-server.sh`, `watch-t3code-split.sh`, `watch-moonshine-pr227.sh`, `watch-nautilus-module.sh`. `watch-nautilus-module.sh`, `watch-t3code-connect.sh`, and `watch-tasks-org.sh` already assert `merge_base_commit` ancestry; none yet take an explicit mode, so treat the mode contract above as unmet by every current example.
 
@@ -117,7 +117,7 @@ Reference implementations (machine-local, in `~/.local/bin/`): `watch-qbittorren
 When the upstream event is permanently satisfied (branch merged and gone, workaround removed on `origin/main`, tracking issue closed), retire the probe instead of leaving a disabled timer behind:
 
 1. **Confirm done on origin, not the worktree**: branch gone (`ls-remote --heads origin <branch>` empty), workaround files absent from `origin/main`, issue closed. Local checkout state is irrelevant.
-2. **Run the script by hand**: expect its idempotent disarm path (disable timer, prune worktree), exit 0. This doubles as proof the disarm branch works.
+2. **Run the script with `--check` first**: verify completion has already occurred without side effects. Then invoke `--run` to exercise its idempotent disarm path (disable timer, prune worktree), exit 0. This doubles as proof the disarm branch works.
 3. **Remove the dead units**: `rm ~/.config/systemd/user/<name>.{timer,service}`, `systemctl --user daemon-reload`, confirm gone via `list-timers` and `is-enabled`.
 4. **Decide the script's fate**: keep it if cited above as a reference implementation; otherwise delete `~/.local/bin/<name>.sh` and drop it from the reference list.
 5. **Grep for stragglers**: repo, `~/.local/bin`, and the unit dir for the watcher name; update any docs or issues that still point at it.
