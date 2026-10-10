@@ -9,7 +9,6 @@
       codex
       mcp
       opencode
-      personal-skills
       pstack
       t3code-connect
       t3code

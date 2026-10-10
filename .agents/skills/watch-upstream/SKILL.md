@@ -55,7 +55,7 @@ Bash/awk only; python3 is not on systemd's default PATH. Gotchas: gawk treats `-
 
 Run the script once by hand (expect the not-ready path), confirm `list-timers` shows the next fire. Report: what is watched, the condition, what happens automatically, where logs live (`journalctl --user -u <name>`), and that the probe survives restarts.
 
-Reference implementations (machine-local): `watch-t3code-title-fix.sh`, `watch-tasks-org.sh`, `watch-qbittorrent.sh`, `watch-t3code-server.sh`, `watch-t3code-split.sh`.
+Reference implementations (machine-local, in `~/.local/bin/`): `watch-t3code-title-fix.sh`, `watch-tasks-org.sh`, `watch-qbittorrent.sh`, `watch-t3code-server.sh`, `watch-t3code-split.sh`, `watch-moonshine-pr227.sh`.
 
 ## Dropping a watcher
 
