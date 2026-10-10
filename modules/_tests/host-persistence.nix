@@ -27,7 +27,12 @@ let
     }).config;
   unprepared =
     (hosts.epsilon.extendModules {
-      modules = [ { modules.persistence.enable = true; } ];
+      modules = [
+        { modules.persistence.enable = true; }
+        # Keep the "unprepared backing volume" spirit now that epsilon carries
+        # a prepared /persist: force its boot flag off for this probe.
+        { fileSystems."/persist".neededForBoot = lib.mkForce false; }
+      ];
     }).config;
   pi = hosts.pi.config;
   piMounts = persistenceMounts pi;
@@ -89,7 +94,14 @@ let
     assert !normal.modules.persistence.mutableAccounts;
     assert !normal.environment.persistence."/persist".enable;
     assert persistenceMounts normal == [ ];
-    assert !(normal.fileSystems ? "/persist");
+    assert
+      normal.fileSystems."/persist".device
+      == "/dev/disk/by-partuuid/daa9a574-99f0-449e-b43a-463650870efb";
+    assert normal.fileSystems."/persist".neededForBoot;
+    assert normal.fileSystems."/boot".device == "/persist/boot";
+    assert normal.fileSystems."/boot".fsType == "none";
+    assert !normal.fileSystems."/boot".neededForBoot;
+    assert lib.elem "bind" normal.fileSystems."/boot".options;
     assert normal.sops.age.sshKeyPaths == [ "/etc/ssh/ssh_host_ed25519_key" ];
     assert prepared.fileSystems."/".fsType == normal.fileSystems."/".fsType;
     assert prepared.sops.age.sshKeyPaths == [ "/persist/etc/ssh/ssh_host_ed25519_key" ];

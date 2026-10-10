@@ -87,6 +87,23 @@
             fsType = "ext4";
           };
 
+          # Backing store for host persistence (phase 1 of the tmpfs-root
+          # migration): the existing ext4 root, mounted at /persist while /
+          # stays ext4. Proves the mount deploys before impermanence is
+          # enabled in phase 2; mirrors the pi landing (#178).
+          "/persist" = {
+            device = "/dev/disk/by-partuuid/daa9a574-99f0-449e-b43a-463650870efb";
+            fsType = "ext4";
+            neededForBoot = true;
+          };
+
+          "/boot" = {
+            device = "/persist/boot";
+            fsType = "none";
+            options = [ "bind" ];
+            depends = [ "/persist" ];
+          };
+
           "/boot/efi" = {
             device = "/dev/disk/by-uuid/4DD2-903D";
             fsType = "vfat";
