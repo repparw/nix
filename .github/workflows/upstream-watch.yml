@@ -17,13 +17,35 @@ jobs:
   watch:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      candidate: ${{ steps.prep.outputs.candidate }}
+      branch: ${{ steps.prep.outputs.branch }}
     steps:
       - uses: actions/checkout@v7
         with:
           ref: main
       - name: Watch upstream and prepare cleanup candidates
+        id: prep
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         shell: bash
         run: bash .github/scripts/upstream-watch.sh
+
+  # The cleanup PR removes a hash workaround that a native aarch64 build
+  # originally caught (PR #168). Green config checks alone do not prove the
+  # original failure is gone, so build the unpatched package natively on an
+  # ARM64 runner before the PR is considered validated.
+  build-gate:
+    needs: watch
+    if: needs.watch.outputs.candidate != ''
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.watch.outputs.branch }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Build the unpatched aarch64 Authelia package
+        shell: bash
+        run: nix build --no-link --print-out-paths ".#nixosConfigurations.epsilon.pkgs.authelia"

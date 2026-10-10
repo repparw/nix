@@ -44,7 +44,34 @@ PIN=$(jq -r '.nodes.root.inputs.nixpkgs as $k | .nodes[$k].locked.rev' flake.loc
 contains_merge "$MERGE" "$PIN" \
   || waiting "waiting-pin: nixos-unstable $CHANNEL_REV carries #$PR_NUM, but main pins $PIN which predates it"
 
-# Ready. Prepare the cleanup candidate from the checked-out main.
+# Ready. Reuse an existing candidate before creating one: each scheduled run
+# must not recreate the commit and force-push the branch, which would overwrite
+# intentional reviewer edits and redispatch CI. An open PR that still
+# represents the cleanup is left untouched; one that no longer does needs a
+# human, and is never automatically overwritten.
+pr=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+if [ -n "$pr" ]; then
+  remote_tip=$(git ls-remote --heads origin "$BRANCH" | cut -f1)
+  if [ -z "$remote_tip" ]; then
+    echo "PR #$pr is open but its branch is gone; needs human attention" >&2
+    exit 1
+  fi
+  git fetch --quiet origin "$BRANCH"
+  branch_module=$(git show "FETCH_HEAD:$MODULE" 2>/dev/null || true)
+  if grep -qF "$STALE_HASH" <<<"$branch_module" || grep -q 'autheliaPackage' <<<"$branch_module"; then
+    echo "PR #$pr branch no longer represents the cleanup; refusing to overwrite; needs human attention" >&2
+    exit 1
+  fi
+  ci_state=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$remote_tip" \
+    --json conclusion,status --limit 5 \
+    | jq -r '[.[] | select(.status == "completed")][0].conclusion // "pending"')
+  if [ "$ci_state" = "success" ]; then
+    waiting "waiting-merge: PR #$pr already open with the cleanup; CI green on $(echo "$remote_tip" | cut -c1-10)"
+  fi
+  waiting "waiting-ci: PR #$pr already open with the cleanup; CI ${ci_state} on $(echo "$remote_tip" | cut -c1-10)"
+fi
+
+# No candidate exists yet. Prepare one from the checked-out main.
 MAIN_SHA=$(git rev-parse HEAD)
 git config user.name 'github-actions[bot]'
 git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -137,4 +164,7 @@ gh workflow run ci.yml --ref "$BRANCH" -f expected_sha="$REVISION"
   echo "- nixos-unstable: $CHANNEL_REV, pin: $PIN"
   echo "- CI dispatched on the candidate; merge needs human review"
 } >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+if [ -n "${GITHUB_OUTPUT:-}" ]; then
+  printf 'candidate=%s\nbranch=%s\n' "$REVISION" "$BRANCH" >> "$GITHUB_OUTPUT"
+fi
 printf 'done: PR #%s prepared at %s; CI dispatched\n' "$pr" "$REVISION"
