@@ -96,6 +96,17 @@
         };
         # The store bind must be up before the initrd activation script runs,
         # mirroring the aspect's sysroot-var-lib-nixos wiring.
+        boot.initrd.systemd.mounts = [
+          {
+            where = "/sysroot/nix";
+            what = "/sysroot/persist/nix";
+            type = "none";
+            options = [ "bind" ];
+            requires = [ "sysroot-persist.mount" ];
+            after = [ "sysroot-persist.mount" ];
+            wantedBy = [ "initrd-fs.target" ];
+          }
+        ];
         boot.initrd.systemd.services.initrd-nixos-activation = {
           requires = [ "sysroot-nix.mount" ];
           after = [ "sysroot-nix.mount" ];
@@ -121,15 +132,13 @@
             ];
           };
 
-          # The store lives on the backing volume (single-disk VM); expose it
-          # in the initrd so activation can resolve the system closure.
-          "/nix" = {
-            device = "/persist/nix";
-            fsType = "none";
-            options = [ "bind" ];
-            neededForBoot = true;
-            depends = [ "/persist" ];
-          };
+          # The store lives on the backing volume (single-disk VM). It is
+          # exposed via an initrd mount below, NOT a fileSystems entry: a
+          # fileSystems."/nix" declaration makes the GRUB generator treat
+          # /nix as a separate store filesystem and write kernel paths
+          # without the /nix prefix, which leaves every menu entry unable
+          # to load its kernel (recovered manually via the GRUB shell,
+          # ~/impermanence-pi-test/evidence/).
 
           # Backing store for host persistence (phase 1 of the tmpfs-root
           # migration): the existing ext4 root, mounted at /persist while /

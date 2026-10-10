@@ -88,10 +88,13 @@ let
     assert lib.elem "x-initrd.mount" epsilon.fileSystems."/".options;
     assert lib.elem "mode=0755" epsilon.fileSystems."/".options;
     assert lib.elem "size=50%" epsilon.fileSystems."/".options;
-    assert epsilon.fileSystems."/nix".device == "/persist/nix";
-    assert epsilon.fileSystems."/nix".neededForBoot;
-    assert lib.elem "bind" epsilon.fileSystems."/nix".options;
-    assert lib.elem "/persist" epsilon.fileSystems."/nix".depends;
+    # No fileSystems entry for /nix: a separate store declaration makes the
+    # GRUB generator write kernel paths without the /nix prefix, breaking
+    # every menu entry. The store bind is an initrd mount instead.
+    assert !(epsilon.fileSystems ? "/nix");
+    assert lib.any (
+      mount: mount.where == "/sysroot/nix" && mount.what == "/sysroot/persist/nix"
+    ) epsilon.boot.initrd.systemd.mounts;
     assert epsilon.fileSystems."/boot".device == "/persist/boot";
     assert lib.elem "bind" epsilon.fileSystems."/boot".options;
     assert !epsilon.fileSystems."/boot".neededForBoot;
