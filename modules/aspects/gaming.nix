@@ -25,7 +25,6 @@
                 "--tmpfs /mnt"
                 "--tmpfs /home/containers/media"
                 "--tmpfs /run/media"
-                "--tmpfs /media"
               ];
             };
           };
