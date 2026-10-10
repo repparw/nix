@@ -53,27 +53,6 @@ in
           # every queue with legacy vkGetDeviceQueue, which the spec requires
           # clients to replace with vkGetDeviceQueue2 whenever the queue was
           # created with non-zero flags. Those queues come back VK_NULL_HANDLE,
-          # hit AssignDispatchTable assert and abort the process, so games using
-          # VK_KHR_internally_synchronized_queues (every libplacebo app since Mesa
-          # 26.1) or protected queues die as soon as the WSI layer loads. That is
-          # the "overlay only opens sometimes" symptom: the layer aborts mid-game.
-          #
-          # ValveSoftware/gamescope#2261 tracks this. Both halves are still
-          # pending - the vkroots fix is unmerged and gamescope still vendors the
-          # April 2024 snapshot - so carry it here.
-          #
-          # Applied by substitution rather than as a patch file on purpose. The
-          # previous overlay patch used line-number hunks and wedged five nightly
-          # deploy cycles when gamescope moved underneath it. Each --replace-fail
-          # must find its anchor, so a gamescope bump that reshapes the file now
-          # fails the build loudly instead.
-          # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
-          # to gamescope; nixpkgs disables it by default.
-          #
-          # gamescope's vendored vkroots predates misyltoad/vkroots#17: it resolves
-          # every queue with legacy vkGetDeviceQueue, which the spec requires
-          # clients to replace with vkGetDeviceQueue2 whenever the queue was
-          # created with non-zero flags. Those queues come back VK_NULL_HANDLE,
           # hit the assert in AssignDispatchTable and abort the process, so games
           # using VK_KHR_internally_synchronized_queues (every libplacebo app
           # since Mesa 26.1) or protected queues die as soon as the WSI layer
