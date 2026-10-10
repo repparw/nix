@@ -183,12 +183,7 @@ in
               # appear. See ValveSoftware/gamescope#1537.
               unset DISABLE_GAMESCOPE_WSI
 
-              # Disk masking (spinning automounts under /mnt and the media
-              # portal) lives in programs.steam.package extraBwrapArgs
-              # (gaming.nix): the FHS sandbox already runs Steam under
-              # bubblewrap, so no outer sandbox is needed here. Keep the
-              # game session a direct child of gamescope, which sets up its
-              # own Xwayland.
+              # Disk masking lives in the steam package (gaming.nix), so no sandbox here.
               gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
               exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
             '';

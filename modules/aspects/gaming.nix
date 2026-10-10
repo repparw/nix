@@ -19,12 +19,7 @@
             enable = true;
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
-            # Steam stats every mount at startup (drive enumeration) and
-            # Proton maps them as DOS drives, which spins up the idle
-            # automount disks. The FHS sandbox already runs Steam under
-            # bubblewrap, so mask the disk mountpoints there: every launch
-            # path (desktop, desk Big Picture, Moonshine) flows through this
-            # package. Only the boot NVMe stays visible as a real disk.
+            # Hide idle disks from Steam (it stats every mount at startup).
             package = pkgs.steam.override {
               extraBwrapArgs = [
                 "--tmpfs /mnt"
@@ -43,9 +38,7 @@
           (heroic.override {
             extraPkgs = pkgs': with pkgs'; [ mangohud ];
           })
-          # Escape hatch for Steam Storage moves and backup/restore against
-          # the masked disks: shut down the masked instance first
-          # (single-instance Steam), run this, then relaunch masked Steam.
+          # Unmasked Steam for Storage moves/backups; stop masked Steam first.
           (writeShellScriptBin "steam-with-storage" ''
             exec ${pkgs.steam}/bin/steam "$@"
           '')
