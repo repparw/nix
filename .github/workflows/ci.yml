@@ -11,6 +11,11 @@ on:
         description: Exact commit expected at the dispatched ref
         required: true
         type: string
+      build_arm_authelia:
+        description: Build the unpatched aarch64 Authelia package natively
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -24,3 +29,4 @@ jobs:
     uses: ./.github/workflows/revision-validation.yml
     with:
       expected_sha: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_sha || '' }}
+      build_arm_authelia: ${{ github.event_name == 'workflow_dispatch' && inputs.build_arm_authelia || false }}

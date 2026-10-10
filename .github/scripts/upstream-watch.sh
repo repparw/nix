@@ -71,7 +71,16 @@ if [ -n "$pr" ]; then
   waiting "waiting-ci: PR #$pr already open with the cleanup; CI ${ci_state} on $(echo "$remote_tip" | cut -c1-10)"
 fi
 
-# No candidate exists yet. Prepare one from the checked-out main.
+# No candidate exists yet. Fail closed on a pre-existing branch without an
+# open PR: a partial earlier run or a closed PR may have left it behind.
+# Never overwrite it — a human decides whether to reopen or delete.
+remote_tip=$(git ls-remote --heads origin "$BRANCH" | cut -f1)
+if [ -n "$remote_tip" ]; then
+  echo "Branch $BRANCH exists without an open cleanup PR (tip ${remote_tip:0:10}); refusing to overwrite; needs human attention" >&2
+  exit 1
+fi
+
+# Prepare one from the checked-out main.
 MAIN_SHA=$(git rev-parse HEAD)
 git config user.name 'github-actions[bot]'
 git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -128,16 +137,9 @@ bump), so the guard in #168 still matches after the fix and would force
 the stale sha256-YUInq... hash."
 REVISION=$(git rev-parse HEAD)
 
-# Publish the candidate: force-with-lease only against the branch's observed
-# remote tip; never overwrite an unexpected remote state.
-remote_tip=$(git ls-remote --heads origin "$BRANCH" | cut -f1)
-if [ "$remote_tip" != "$REVISION" ]; then
-  if [ -n "$remote_tip" ]; then
-    git push "--force-with-lease=refs/heads/$BRANCH:$remote_tip" origin "HEAD:refs/heads/$BRANCH"
-  else
-    git push origin "HEAD:refs/heads/$BRANCH"
-  fi
-fi
+# Publish the candidate. The branch is guaranteed absent (checked above); if
+# one appears between check and push, the push fails closed.
+git push origin "HEAD:refs/heads/$BRANCH"
 
 pr=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
 if [ -z "$pr" ]; then
@@ -155,7 +157,10 @@ Left in place the guard would still match and force the stale hash, so removal i
 fi
 
 # GITHUB_TOKEN pushes do not trigger workflows; dispatch CI on the exact SHA.
-gh workflow run ci.yml --ref "$BRANCH" -f expected_sha="$REVISION"
+# The opt-in ARM build is part of the candidate's required validation: the
+# dispatched run's overall gate fails if the unpatched aarch64 package does
+# not build, so a green result establishes the original failure is gone.
+gh workflow run ci.yml --ref "$BRANCH" -f expected_sha="$REVISION" -f build_arm_authelia=true
 
 {
   echo "### upstream-watch: cleanup candidate prepared"
