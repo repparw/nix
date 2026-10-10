@@ -15,6 +15,8 @@ Hermes reads the private inbox at `/var/lib/hermes/.hermes/crash/inbox`. The nat
 
 The scheduled agent has web research tools only. It checks primary upstream sources and sends a Discord report only for a concrete operator action or an outage that needs attention. Routine findings and confirmed upstream waits remain silent. The existing Wine mute remains in the collector.
 
+A matching library or subsystem is not sufficient evidence for a diagnosis. Security reports require a verified affected build and evidence of the specific trigger. Harmless process-exit crashes and optional patches awaiting upstream review normally remain silent. If one case warrants a report, the agent omits unrelated unresolved cases and reports only the verified finding, impact, required action, and primary source.
+
 Crash events exclude arguments, environment variables, and core memory. Stack frames are normalized and bounded. Treat the event files as private diagnostic data.
 
 ## Inspect the producer

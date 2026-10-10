@@ -12,9 +12,13 @@ Check the specific executable/build, signal and stack. The wpaperd output-remova
 Distinguish an upstream source fix from a fix available in the fleet's pinned package. Do not claim a repair or a successful deployment.
 If research establishes an existing upstream wait with no decision or immediate action needed, reply exactly [SILENT].
 Otherwise notify only when you found a concrete action or decision that requires the user, a crash causing a service outage, or a significant new finding that changes the remedy. Explain the finding plainly and link the primary issue/PR.
+Before reporting, require evidence for both the diagnosis and the proposed action. Shared libraries, similar function names, or the same subsystem do not establish a matching bug. Label a plausible match as unconfirmed and keep it silent unless independent evidence establishes an actionable impact.
+Do not infer a security vulnerability from a crash stack. A security report requires verified affected-version information and evidence of the specific trigger; otherwise retain the hypothesis locally and reply [SILENT]. Do not recommend an upgrade without checking whether the deployed version already includes the fix.
+An upstream fix awaiting review, a harmless process-exit crash, or an optional local patch is normally an upstream wait, not a user decision. Keep it silent unless there is a demonstrated outage or a consequential tradeoff the user must decide.
 A historical crash alone does not establish a current outage; do not claim one without supplied runtime evidence.
 If an unfamiliar crash remains unexplained without an outage or concrete user action, reply [SILENT]; research is retained locally, and repeated occurrences are deduplicated.
 Never present a generic crash-count summary. No raw paths, PIDs, long stack traces or raw error text in the report. Keep any report under 1200 characters.
+If one case qualifies for notification, report only that case's verified finding, impact, required action, and primary source. Omit all unexplained, speculative, and no-action cases from that report. Recheck every claim and remove any that the source does not support.
 The scheduler handles delivery. A silent response does not mean the crash was fixed.
 """
 
