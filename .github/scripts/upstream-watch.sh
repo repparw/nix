@@ -40,98 +40,25 @@ pin_for() {
   jq -r --arg k "$1" '.nodes.root.inputs[$k] as $n | .nodes[$n].locked.rev' flake.lock
 }
 
-# Readiness report for every PR-based upstream wait. Detection is shared and
-# read-only; completions stay with their current owners until the Authelia
-# pilot proves the autonomous publication lifecycle. Every watcher is
-# classified: repo-only completions migrate to CI, host-owned ones (runtime,
-# GPU, SSH) stay with the fleet.
-pr_watchers=(
-  "authelia-pnpm-hash|NixOS/nixpkgs|572207|nixpkgs|pr-ancestry|active pilot: prepares the cleanup PR"
-  "t3code-connect|NixOS/nixpkgs|555921|nixpkgs|pr-ancestry|repo-only completion"
-  "t3code-split|NixOS/nixpkgs|555814|nixpkgs|pr-ancestry|repo + ARM builder completion"
-  "tasks-org|NixOS/nixpkgs|518221|nixpkgs|pr-ancestry|repo-only completion"
-  "nautilus-module|NixOS/nixpkgs|319535|nixpkgs|pr-ancestry|notify-only, never auto-edits"
-  "t3code-server|nix-community/home-manager|9695|home-manager|pr-ancestry|repo-only completion"
-  "cliamp-hm-module|nix-community/home-manager|9842|home-manager|pr-ancestry|repo-only completion"
-  "moonshine-pr227|hgaiser/moonshine|227|nixpkgs|package-source|host-owned completion (runtime + deploy)"
-)
-summary="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+# Detectors share the exact checked-out pins. Other cleanup recipes remain
+# dry-run-only until the live Authelia pilot completes its cutover gates.
+readiness=$(python3 .github/scripts/upstream-readiness.py --json)
+printf '%s\n' "$readiness" | jq -r 'to_entries[] | "\(.key): \(.value)"'
 {
-  echo "### upstream-watch readiness"
-  echo "| watcher | upstream | status | completion owner |"
-  echo "| --- | --- | --- | --- |"
-} >> "$summary"
-# Ancestry evaluated from a captured comparison, so an API failure reads as
-# unavailable rather than masquerading as merged-not-pinned.
-ancestry_true() { # $1 = comparison JSON, $2 = merge commit
-  [ "$(jq -r --arg m "$2" 'if ((.status == "ahead" or .status == "identical") and .merge_base_commit.sha == $m) then "true" else "false" end' <<<"$1" 2>/dev/null)" = "true" ]
-}
-for w in "${pr_watchers[@]}"; do
-  IFS='|' read -r name repo pr input predicate note <<<"$w"
-  pr_json=$(api "repos/$repo/pulls/$pr" 2>/dev/null || true)
-  if [ -z "$pr_json" ]; then
-    status="unavailable (PR API error; treated as not-ready)"
-  elif [ "$(jq -r '.merged // "false"' <<<"$pr_json" 2>/dev/null)" != "true" ]; then
-    status="waiting-upstream ($repo#$pr open)"
-  else
-    merge_sha=$(jq -r '.merge_commit_sha // empty' <<<"$pr_json" 2>/dev/null || true)
-    pin=$(pin_for "$input" 2>/dev/null || true)
-    if [ -z "$merge_sha" ] || [ -z "$pin" ]; then
-      status="unavailable (comparison error; treated as not-ready)"
-    elif [ "$predicate" = "package-source" ]; then
-      # A merge commit from the upstream repo shares no Git history with a
-      # nixpkgs revision, so ancestry runs against the release tag the pin
-      # ships instead.
-      pkg_version=$(api "repos/NixOS/nixpkgs/contents/pkgs/by-name/mo/moonshine/package.nix?ref=$pin" 2>/dev/null \
-        | jq -r '.content // empty' | base64 -d 2>/dev/null \
-        | sed -n 's/^  version = "\([^"]*\)";.*/\1/p' || true)
-      tag_compare=""
-      if [ -n "$pkg_version" ]; then
-        tag_compare=$(api "repos/$repo/compare/$merge_sha...v$pkg_version" 2>/dev/null || true)
-      fi
-      if [ -z "$pkg_version" ]; then
-        status="unavailable (package version unreadable; treated as not-ready)"
-      elif [ -z "$tag_compare" ]; then
-        status="unavailable (tag comparison error; treated as not-ready)"
-      elif ancestry_true "$tag_compare" "$merge_sha"; then
-        status="PINNED-READY (nixpkgs ships moonshine $pkg_version containing the fix)"
-      else
-        status="merged-not-pinned (pin ships moonshine $pkg_version without the fix)"
-      fi
-    else
-      compare_json=$(api "repos/$repo/compare/$merge_sha...$pin" 2>/dev/null || true)
-      if [ -z "$compare_json" ]; then
-        status="unavailable (comparison error; treated as not-ready)"
-      elif ancestry_true "$compare_json" "$merge_sha"; then
-        status="PINNED-READY ($repo#$pr in pin)"
-      else
-        status="merged-not-pinned (pin predates merge)"
-      fi
-    fi
-  fi
-  printf '  %s: %s — %s\n' "$name" "$status" "$note"
-  echo "| $name | $repo#$pr | $status | $note |" >> "$summary"
-done
-# Not yet PR-based: release/version/runtime predicates and their owners.
-for w in \
-  "qbittorrent|release-based (PR #24055 in a release)|CI detector pending" \
-  "wpaperd-fix|release carrying wpaperd@442b962|CI detector pending" \
-  "voxtype-graphical|version-based (graphical-session fix)|CI detector pending" \
-  "cliamp-attach|upstream CLI capability check|CI detector pending" \
-  "gamescope-vkroots|package-source ancestry + build with enableWsi|CI-eligible, detector pending" \
-  "sonarr-jellyfin|runtime: running service version on alpha|host-owned"
-do
-  IFS='|' read -r name note owner <<<"$w"
-  printf '  %s: %s — %s\n' "$name" "$note" "$owner"
-  echo "| $name | — | $note | $owner |" >> "$summary"
-done
+  echo '### upstream-watch readiness'
+  echo '| watcher | status | publication |'
+  echo '| --- | --- | --- |'
+  jq -r 'to_entries[] | "| \(.key) | \(.value) | pilot only; other recipes prepared |"' <<<"$readiness"
+} >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
 
 # Idempotent: judge completion on the checked-out main, never a working copy.
 if ! grep -qF "$STALE_HASH" "$MODULE"; then
   waiting "already done: $MODULE carries no override"
 fi
 
-api "repos/NixOS/nixpkgs/pulls/$PR_NUM" | jq -e '.merged == true' >/dev/null \
+pr_state=$(api "repos/NixOS/nixpkgs/pulls/$PR_NUM") \
+  || waiting "unavailable: cannot inspect upstream PR; treated as not-ready"
+jq -e '.merged == true' <<<"$pr_state" >/dev/null \
   || waiting "waiting-upstream: NixOS/nixpkgs#$PR_NUM is not merged"
 
 CHANNEL_REV=$(api repos/NixOS/nixpkgs/commits/nixos-unstable | jq -er .sha) \
@@ -238,12 +165,12 @@ REVISION=$(git rev-parse HEAD)
 
 # Publish the candidate. The branch is guaranteed absent (checked above); if
 # one appears between check and push, the push fails closed.
-git push origin "HEAD:refs/heads/$BRANCH"
+git push --force-with-lease="refs/heads/$BRANCH:" origin "HEAD:refs/heads/$BRANCH"
 
 pr=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
 if [ -z "$pr" ]; then
   url=$(gh pr create --base main --head "$BRANCH" \
-    --title "Retire Epsilon Authelia pnpm hash override" \
+    --title "fix(authelia): retire ARM pnpm hash override" \
     --body "Removes the workaround from #168.
 
 - Upstream fix: NixOS/nixpkgs#$PR_NUM (merge ${MERGE}), fixing issue #571789

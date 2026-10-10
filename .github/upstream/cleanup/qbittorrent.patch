@@ -1,0 +1,23 @@
+diff --git a/modules/aspects/services/arr.nix b/modules/aspects/services/arr.nix
+index db8501add..33f73e69a 100644
+--- a/modules/aspects/services/arr.nix
++++ b/modules/aspects/services/arr.nix
+@@ -190,18 +190,6 @@
+           qbittorrent = {
+             mediaBind = false;
+             extraConfig = {
+-              nixpkgs.overlays = [
+-                (final: prev: {
+-                  qbittorrent-nox = prev.qbittorrent-nox.overrideAttrs (old: {
+-                    patches = (old.patches or [ ]) ++ [
+-                      (prev.fetchpatch {
+-                        url = "https://patch-diff.githubusercontent.com/raw/qbittorrent/qBittorrent/pull/24055.patch";
+-                        hash = "sha256-XW4ZnyaxBuIb3kny12+T/uTQOFIOVnBRV9qc1AWy6MY=";
+-                      })
+-                    ];
+-                  });
+-                })
+-              ];
+               services.qbittorrent.group = "media";
+               users.groups.media.gid = 900;
+               systemd.services.qbittorrent.preStart = lib.mkBefore ''
