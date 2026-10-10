@@ -36,7 +36,6 @@ files instead of copying module contents.
 - [Update rollback](runbooks/update-rollback.md)
 - [Fleet health, offsite backups, and upgrade reports](runbooks/fleet-operations.md)
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
-- [Moonshine HDR Gamescope streaming](runbooks/moonshine-gamescope-overlay.md)
 - [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Prune t3code and opencode databases](runbooks/prune-t3code-opencode-dbs.md)
 - [Restore service backups](runbooks/restore-service-backups.md)

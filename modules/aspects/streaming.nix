@@ -53,27 +53,6 @@ in
           # every queue with legacy vkGetDeviceQueue, which the spec requires
           # clients to replace with vkGetDeviceQueue2 whenever the queue was
           # created with non-zero flags. Those queues come back VK_NULL_HANDLE,
-          # hit AssignDispatchTable assert and abort the process, so games using
-          # VK_KHR_internally_synchronized_queues (every libplacebo app since Mesa
-          # 26.1) or protected queues die as soon as the WSI layer loads. That is
-          # the "overlay only opens sometimes" symptom: the layer aborts mid-game.
-          #
-          # ValveSoftware/gamescope#2261 tracks this. Both halves are still
-          # pending - the vkroots fix is unmerged and gamescope still vendors the
-          # April 2024 snapshot - so carry it here.
-          #
-          # Applied by substitution rather than as a patch file on purpose. The
-          # previous overlay patch used line-number hunks and wedged five nightly
-          # deploy cycles when gamescope moved underneath it. Each --replace-fail
-          # must find its anchor, so a gamescope bump that reshapes the file now
-          # fails the build loudly instead.
-          # HDR needs gamescope's own WSI layer so clients can present HDR surfaces
-          # to gamescope; nixpkgs disables it by default.
-          #
-          # gamescope's vendored vkroots predates misyltoad/vkroots#17: it resolves
-          # every queue with legacy vkGetDeviceQueue, which the spec requires
-          # clients to replace with vkGetDeviceQueue2 whenever the queue was
-          # created with non-zero flags. Those queues come back VK_NULL_HANDLE,
           # hit the assert in AssignDispatchTable and abort the process, so games
           # using VK_KHR_internally_synchronized_queues (every libplacebo app
           # since Mesa 26.1) or protected queues die as soon as the WSI layer
@@ -150,7 +129,6 @@ in
             name = "moonshine-steam";
             runtimeInputs = [
               gamescopeHdr
-              pkgs.bubblewrap
               pkgs.procps
               config.programs.steam.package
             ];
@@ -184,22 +162,9 @@ in
               # appear. See ValveSoftware/gamescope#1537.
               unset DISABLE_GAMESCOPE_WSI
 
-              # bwrap sits INSIDE gamescope, not outside: gamescope spawns its own
-              # Xwayland, and inside bwrap's user namespace the root-owned
-              # /tmp/.X11-unix appears owned by "nobody", which wlroots rejects
-              # (segfault). Here gamescope sets up Xwayland outside the sandbox
-              # and only the Steam child is sandboxed. The sandbox masks the
-              # Seagate automounts: Steam stats every mount at startup (drive
-              # enumeration) and Proton maps them as DOS drives (verified with
-              # strace 2026-09-05), which would otherwise spin up the idle disk
-              # on every launch. Overlay diagnostic 2026-09-06: removing this
-              # sandbox did not restore the overlay, so the sandbox is exonerated.
+              # Disk masking lives in the steam package (gaming.nix), so no sandbox here.
               gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
-              exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- bwrap \
-                --dev-bind / / \
-                --tmpfs /mnt/seagate \
-                --tmpfs /home/containers/media/seagate \
-                -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
+              exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
             '';
           };
           # Desktop stream: nested niri plus a kiosk launcher loop. Vicinae

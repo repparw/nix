@@ -19,6 +19,14 @@
             enable = true;
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
+            # Hide idle disks from Steam (it stats every mount at startup).
+            package = pkgs.steam.override {
+              extraBwrapArgs = [
+                "--tmpfs /mnt"
+                "--tmpfs /home/containers/media"
+                "--tmpfs /run/media"
+              ];
+            };
           };
 
           gamemode.enable = true;
@@ -29,6 +37,10 @@
           (heroic.override {
             extraPkgs = pkgs': with pkgs'; [ mangohud ];
           })
+          # Unmasked Steam for Storage moves/backups; stop masked Steam first.
+          (writeShellScriptBin "steam-with-storage" ''
+            exec ${pkgs.steam}/bin/steam "$@"
+          '')
         ];
 
         services.udev.extraRules = ''
