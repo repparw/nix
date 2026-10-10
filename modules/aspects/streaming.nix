@@ -192,6 +192,20 @@ in
               exec ${gamescopeHdr}/bin/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
             '';
           };
+          # Moonshine runs this as ExecStopPost on the session's transient unit,
+          # whose environment is built by Moonshine itself and does not promise
+          # DBUS_SESSION_BUS_ADDRESS. So pin it before starting the user unit:
+          # without it systemctl --user silently talks to no bus and the restore
+          # never happens.
+          steam-restore-trigger = pkgs.writeShellApplication {
+            name = "steam-restore-trigger";
+            runtimeInputs = [ pkgs.systemd ];
+            text = ''
+              export DBUS_SESSION_BUS_ADDRESS="''${DBUS_SESSION_BUS_ADDRESS:-unix:path=''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/bus}"
+              exec systemctl --user start steam-tray
+            '';
+          };
+
           # Desktop stream: nested niri plus a kiosk launcher loop. Vicinae
           # cannot serve the stream (its daemon is bound to the login
           # session's display), so fuzzel -- a plain Wayland client --
@@ -286,6 +300,13 @@ in
                     title = "Steam Big Picture";
                     boxart = "${moonshine-boxart}/steam.png";
                     command = [ "${moonshine-steam}/bin/moonshine-steam" ];
+                    # moonshine-steam runs stopDesktopSteam, so the tray client
+                    # it kills has to come back when the session ends. Moonshine
+                    # runs post_command as ExecStopPost on the session's own
+                    # transient unit, so it covers every teardown - a client
+                    # disconnect and an app exit alike - and needs no process
+                    # left running to watch for it.
+                    post_command = [ [ "${steam-restore-trigger}/bin/steam-restore-trigger" ] ];
                     stdout = "journal";
                     stderr = "journal";
                   }
@@ -528,20 +549,20 @@ in
         '';
       };
 
-      # Moonshine kills its app process on disconnect -- its graceful stop
-      # times out after 2s and then it takes the whole process group, so a
-      # tail appended to the app script never runs. Follow the daemon's
-      # journal instead: the manager emits exactly one terminal line per
-      # session, which is the same signal the launcher already reads.
+      # Guarded launcher for the tray client. Moonshine's post_command starts
+      # this unit when a session ends, so the hold has to live here rather than
+      # there: it must not block the transient session unit's stop job, but it
+      # does have to outlast a relaunch before deciding.
       #
-      # A stop line alone is not permission to restore. Relaunching from the
-      # TV, or pressing the button with the TV on, produces a stop followed by
-      # a start, and reviving the tray in that window would only have the next
-      # session's stopDesktopSteam kill it again, stalling that session for as
-      # long as steam takes to shut down. So hold briefly, confirm no session
-      # came back, and do nothing at all if steam somehow survived.
-      steam-restore-watcher = pkgs.writeShellApplication {
-        name = "steam-restore-watcher";
+      # A relaunch from the TV, or a button press with the TV on, produces a
+      # session stop immediately followed by a session start. Restoring in that
+      # window would only have the next session's stopDesktopSteam kill it
+      # again and stall that session for as long as steam takes to shut down.
+      # Ten seconds is longer than the TV close+relaunch gap, so a relaunch has
+      # logged "Starting session streams" by the time this runs, and the guard
+      # simply leaves the unit inactive.
+      steam-tray-launch = pkgs.writeShellApplication {
+        name = "steam-tray-launch";
         runtimeInputs = [
           pkgs.coreutils
           pkgs.gnugrep
@@ -552,37 +573,28 @@ in
         ];
         text = ''
           log() {
-            printf 'steam-restore-watcher: %s\n' "$*" >&2
+            printf 'steam-tray: %s\n' "$*" >&2
           }
 
           ${moonshineStreaming}
 
-          journalctl -u moonshine -f -n 0 --no-pager \
-            --grep 'Session stopped (by user|unexpectedly)' |
-            while IFS= read -r _line; do
-              log "session stopped; holding before restore"
-              sleep 10
-              if moonshine_streaming; then
-                log "a session came back; leaving steam alone"
-                continue
-              fi
-              if pgrep -x steam >/dev/null; then
-                log "steam already running; nothing to restore"
-                continue
-              fi
-              log "restoring desktop steam"
-              systemctl --user start steam-tray
-            done
+          sleep 10
+
+          if moonshine_streaming; then
+            log "a session is live; leaving desktop steam alone"
+            exit 0
+          fi
+          if pgrep -x steam >/dev/null; then
+            log "desktop steam already running; nothing to restore"
+            exit 0
+          fi
+          log "restoring desktop steam"
+          exec ${lib.getExe osConfig.programs.steam.package} -silent
         '';
       };
     in
     {
-      home.packages = [
-        launch
-        # Exposed so the restore path can be exercised by hand instead of
-        # waiting for a stream to end.
-        steam-restore-watcher
-      ];
+      home.packages = [ launch ];
 
       systemd.user.services."8bitdo-tv-moonlight" = {
         Unit = {
@@ -598,32 +610,13 @@ in
         };
       };
 
-      # Long-lived for the whole graphical session: Moonshine is a single
-      # daemon and sessions come and go inside it, so there is no unit stop to
-      # hang this off. Restart= recovers a dead journalctl follower.
-      systemd.user.services.steam-restore-watcher = {
-        Unit = {
-          Description = "Revive desktop Steam after a Moonshine stream ends";
-          After = [ "graphical-session.target" ];
-          PartOf = [ "graphical-session.target" ];
-        };
-        Service = {
-          Type = "simple";
-          ExecStart = lib.getExe steam-restore-watcher;
-          Restart = "on-failure";
-          RestartSec = 5;
-        };
-        Install = {
-          WantedBy = [ "graphical-session.target" ];
-        };
-      };
-
       # On-demand tray client, deliberately not WantedBy anything: it exists to
-      # revive the desktop Steam that a Big Picture takeover shut down, so it
-      # is started by the launcher above rather than at login. A separate unit
-      # because restoring it inline would pin the launcher active and put the
-      # client in its cgroup. No Restart=, so quitting the tray stays honoured;
-      # a crash is recovered by the next takeover instead.
+      # revive the desktop Steam that a session shut down, so it is started by
+      # Moonshine's post_command or by the launcher above rather than at login.
+      # A separate unit because restoring it inline would pin the caller active
+      # and, in the launcher's case, put the client in its cgroup. No Restart=,
+      # so quitting the tray stays honoured; a crash is recovered by the next
+      # session end.
       systemd.user.services.steam-tray = {
         Unit = {
           Description = "Desktop Steam (tray)";
@@ -632,7 +625,7 @@ in
         };
         Service = {
           Type = "simple";
-          ExecStart = "${lib.getExe osConfig.programs.steam.package} -silent";
+          ExecStart = lib.getExe steam-tray-launch;
         };
       };
     };
