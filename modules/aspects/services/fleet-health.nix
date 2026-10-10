@@ -734,4 +734,173 @@ in
         };
       };
   };
+
+  den.aspects.nixos-services.provides.free-model-watch = {
+    nixos =
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
+      let
+        cfg = config.modules.free-model-watch;
+
+        freeModelWatch = pkgs.writeShellApplication {
+          name = "free-model-watch";
+          runtimeInputs = with pkgs; [
+            curl
+            jq
+            coreutils
+            gnugrep
+            gnused
+            (mkDiscordNotify pkgs)
+          ];
+          text = ''
+            state_dir="''${STATE_DIRECTORY:-/var/lib/free-model-watch}"
+            mkdir -p "$state_dir"
+
+            opencode_url="''${OPENCODE_MODELS_URL:-https://opencode.ai/zen/v1/models}"
+            nous_url="''${NOUS_MODELS_URL:-https://portal.nousresearch.com/api/nous/recommended-models}"
+
+            fetch_opencode() {
+              curl -fsS -m 20 "$opencode_url" 2>/dev/null |
+                jq -r '.data[]?.id | select(endswith("-free"))' 2>/dev/null |
+                sed '/^[[:space:]]*$/d' | LC_ALL=C sort -u || true
+            }
+
+            fetch_nous() {
+              curl -fsS -m 20 "$nous_url" 2>/dev/null |
+                jq -r '.freeRecommendedModels[]?.modelName' 2>/dev/null |
+                sed '/^[[:space:]]*$/d' | LC_ALL=C sort -u || true
+            }
+
+            # Bounded so one churny catalog cannot blow past Discord's
+            # per-message limit.
+            compact() {
+              sed '/^[[:space:]]*$/d' | sed -n '1,8p' | tr '\n' ' ' |
+                sed 's/[[:space:]]*$//; s/[[:space:]]\{1,\}/, /g' | cut -c 1-400
+            }
+
+            parts=""
+            changed=0
+
+            # Snapshots only move into place after a successful announcement:
+            # a Discord outage must not swallow the change, and the failed
+            # unit is paged through the fleet-health sweep.
+            stage=$(mktemp -d "$state_dir/.stage.XXXXXX")
+            trap 'rm -rf "$stage"' EXIT
+
+            record_source() {
+              local name="$1" current="$2"
+              local state_file previous added removed part
+              state_file="$state_dir/$name.list"
+              if [ -z "$current" ]; then
+                echo "free-model-watch: $name catalog unavailable; keeping the previous snapshot" >&2
+                return 0
+              fi
+              if [ ! -f "$state_file" ]; then
+                printf '%s\n' "$current" > "$state_file"
+                echo "free-model-watch: $name baseline recorded ($(printf '%s\n' "$current" | grep -c .) models)"
+                return 0
+              fi
+              previous=$(sed '/^[[:space:]]*$/d' "$state_file" | LC_ALL=C sort -u)
+              added=$(comm -13 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')
+              removed=$(comm -23 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')
+              if [ -z "$added" ] && [ -z "$removed" ]; then
+                echo "free-model-watch: $name unchanged"
+                return 0
+              fi
+              printf '%s\n' "$current" > "$stage/$name.list"
+              part="• $name:"
+              if [ -n "$added" ]; then
+                part="$part new: $(printf '%s\n' "$added" | compact)"
+              fi
+              if [ -n "$removed" ]; then
+                if [ -n "$added" ]; then
+                  part="$part;"
+                fi
+                part="$part gone: $(printf '%s\n' "$removed" | compact)"
+              fi
+              parts="$parts
+            $part"
+              changed=1
+            }
+
+            record_source "opencode-free" "$(fetch_opencode)"
+            record_source "nous-free" "$(fetch_nous)"
+
+            if [ "$changed" = 0 ]; then
+              echo "free-model-watch: no free-model catalog change"
+              exit 0
+            fi
+
+            if [ -f "$state_dir/.free-models.msgid" ]; then
+              previous_mid=$(cat "$state_dir/.free-models.msgid")
+              if discord-notify delete "$previous_mid"; then
+                rm -f "$state_dir/.free-models.msgid"
+              fi
+            fi
+
+            if ! mid=$(discord-notify post ":eyes: free-model catalog changed on $HOSTNAME$parts") || [ -z "$mid" ]; then
+              echo "free-model-watch: announcing the catalog change failed; snapshots kept" >&2
+              exit 1
+            fi
+
+            for staged in "$stage"/*.list; do
+              [ -f "$staged" ] || continue
+              mv "$staged" "$state_dir/"
+            done
+            printf '%s\n' "$mid" > "$state_dir/.free-models.msgid"
+            echo "free-model-watch: catalog change posted ($mid)"
+
+            exit 0
+          '';
+        };
+      in
+      {
+        options.modules.free-model-watch = {
+          enable = lib.mkEnableOption "Discord notification when the OpenCode/Nous free-model catalogs change";
+
+          interval = lib.mkOption {
+            type = lib.types.str;
+            default = "*-*-* 00/2:17:00";
+            description = "systemd OnCalendar for the free-model-watch timer";
+          };
+
+          script = lib.mkOption {
+            type = lib.types.package;
+            readOnly = true;
+            description = "free-model-watch package";
+          };
+        };
+
+        config = {
+          modules.free-model-watch.script = freeModelWatch;
+
+          systemd.services.free-model-watch = lib.mkIf cfg.enable {
+            description = "Notify Discord when free-tier model catalogs change";
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            environment = {
+              HOSTNAME = config.networking.hostName;
+              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
+            };
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = lib.getExe freeModelWatch;
+              StateDirectory = "free-model-watch";
+            };
+          };
+
+          systemd.timers.free-model-watch = lib.mkIf cfg.enable {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = cfg.interval;
+              Persistent = true;
+            };
+          };
+        };
+      };
+  };
 }

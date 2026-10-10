@@ -18,6 +18,7 @@
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.disk-watch
       den.aspects.nixos-services._.reboot-watch
+      den.aspects.nixos-services._.free-model-watch
       den.aspects.deploy-target
     ];
 
@@ -176,6 +177,8 @@
             }
           ];
         };
+
+        modules.free-model-watch.enable = true;
 
         boot = {
           initrd = {
