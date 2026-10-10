@@ -499,8 +499,18 @@ in
           log "taking over: stopping desktop steam, starting gamescope"
           ${stopDesktopSteam}
 
-          exec ${lib.getExe pkgs.gamescope} --steam -H 1080 -r 162 --adaptive-sync -- \
-            ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
+          # Start gamescope + steam for Big Picture
+          ${lib.getExe pkgs.gamescope} --steam -H 1080 -r 162 --adaptive-sync -- \
+            ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf &
+          local gamescope_pid=$!
+          local steam_pid=$!
+
+          # Wait for both to finish
+          wait $gamescope_pid || true
+          wait $steam_pid || true
+
+          # Auto-restore: relaunch steam silently so the tray repopulates and downloads resume
+          ${lib.getExe osConfig.programs.steam.package} -silent
         '';
       };
     in
