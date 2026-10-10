@@ -106,9 +106,11 @@ in
                   http home-assistant ${servicesLib.serviceUrl cfg config name} ""
                   http home https://${fqdn}/ "" --resolve ${fqdn}:443:127.0.0.1''
               else if service.healthcheck != null then
-                "            remote ${name} ${servicesLib.publicHealthUrl cfg config name} 200"
+                "            remote \"${service.host} epsilon\" ${name} ${
+                              servicesLib.publicHealthUrl cfg config name
+                            } 200"
               else
-                "            remote ${name} ${servicesLib.serviceUrl cfg config name}/ \"\""
+                "            remote ${service.host} ${name} ${servicesLib.serviceUrl cfg config name}/ \"\""
             )
             (
               lib.sort (a: b: a < b) (
@@ -157,6 +159,7 @@ in
                         fi
 
                         failures=0
+                        declare -A unavailable_hosts=()
 
                         fail() {
                           local n="$1" detail="$2" count mid
@@ -211,6 +214,7 @@ in
                               -o BatchMode=yes -o IdentitiesOnly=yes \
                               -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 \
                               "root@$2" fleet-unit-snapshot); then
+                              unavailable_hosts["$host"]=1
                               fail "host-units:$host" "SSH failed-unit snapshot unavailable"
                               return 0
                             fi
@@ -271,11 +275,19 @@ in
                         }
 
                         remote() {
-                          [ "$local_only" = 1 ] || http "$@"
+                          local hosts="$1" name="$2" host; shift
+                          [ "$local_only" = 1 ] && return 0
+                          for host in $hosts; do
+                            if [ "''${unavailable_hosts[$host]:-0}" = 1 ]; then
+                              ok "http:$name"
+                              return 0
+                            fi
+                          done
+                          http "$@"
                         }
 
             ${vhostProbes}
-                        remote apex https://${cfg.domain}/ 200
+                        remote epsilon apex https://${cfg.domain}/ 200
 
                         if [ "$strict" = 1 ]; then
                           [ "$failures" -eq 0 ]
