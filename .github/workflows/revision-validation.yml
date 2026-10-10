@@ -43,6 +43,13 @@ jobs:
         env:
           CI_CHECKS: ${{ matrix.checks }}
         run: bash .github/scripts/run-checks.sh
+      - name: Test upstream watcher predicates and pilot lifecycle
+        if: matrix.group == 'lightweight'
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 .github/scripts/upstream-readiness.test.py
+          python3 .github/scripts/upstream-pilot.test.py
       - name: Upload check logs
         if: always()
         uses: actions/upload-artifact@v4

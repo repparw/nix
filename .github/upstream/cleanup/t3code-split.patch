@@ -1,0 +1,198 @@
+diff --git a/modules/aspects/ai/t3code-connect.nix b/modules/aspects/ai/t3code-connect.nix
+index 9ac0bb60e..d25ff64d5 100644
+--- a/modules/aspects/ai/t3code-connect.nix
++++ b/modules/aspects/ai/t3code-connect.nix
+@@ -1,38 +1,30 @@
++{ den, ... }:
+ {
+-  den,
+-  ...
+-}:
+-{
+-  den.aspects.ai.provides.t3code-connect = {
+-    nixos =
+-      { config, lib, ... }:
+-      {
+-        # Desktop-only integration (.env for the Electron app, launcher
+-        # entry): headless hosts use the stock binary so the package keeps
+-        # substituting from the binary cache instead of rebuilding locally.
+-        nixpkgs.overlays = lib.mkIf (config.modules.desktop.enable or false) [
+-          (final: prev: {
+-            t3code = prev.t3code.override {
+-              t3code-unwrapped = prev.t3code.unwrapped.overrideAttrs (old: {
+-                postPatch = (old.postPatch or "") + ''
+-                  cp .env.example .env
+-                '';
+-                desktopItems = (old.desktopItems or [ ]) ++ [
+-                  (final.makeDesktopItem {
+-                    name = "t3code";
+-                    desktopName = "T3 Code (Alpha)";
+-                    exec = "t3code-desktop %U";
+-                    terminal = false;
+-                    icon = "t3code";
+-                    startupWMClass = "t3code";
+-                    categories = [ "Development" ];
+-                    mimeTypes = [ "x-scheme-handler/t3code" ];
+-                  })
+-                ];
+-              });
+-            };
+-          })
+-        ];
+-      };
+-  };
++  den.aspects.ai.provides.t3code-connect.nixos =
++    { config, lib, ... }:
++    {
++      nixpkgs.overlays = lib.mkIf (config.modules.desktop.enable or false) [
++        (final: prev: {
++          t3code = final.t3code-desktop;
++          t3code-desktop =
++            (prev.t3code-desktop.override {
++              t3code-cli = prev.t3code-cli.override {
++                t3code-unwrapped = prev.t3code-cli.unwrapped.overrideAttrs (old: {
++                  postPatch = (old.postPatch or "") + ''
++                    cp .env.example .env
++                  '';
++                });
++              };
++            }).overrideAttrs (old: {
++              postBuild = (old.postBuild or "") + ''
++                entry="$out/share/applications/t3code.desktop"
++                cp --remove-destination --no-preserve=mode "$entry" "$out/share/applications/t3code-connect.desktop"
++                rm "$entry"
++                mv "$out/share/applications/t3code-connect.desktop" "$entry"
++                printf '%s\n' 'MimeType=x-scheme-handler/t3code;' >> "$entry"
++              '';
++            });
++        })
++      ];
++    };
+ }
+diff --git a/modules/aspects/ai/t3code-headless.nix b/modules/aspects/ai/t3code-headless.nix
+new file mode 100644
+index 000000000..c63d9fb63
+--- /dev/null
++++ b/modules/aspects/ai/t3code-headless.nix
+@@ -0,0 +1,8 @@
++{ den, ... }:
++{
++  den.aspects.ai.provides.t3code-headless.homeManager =
++    { pkgs, ... }:
++    {
++      programs.t3code.package = pkgs.t3code-cli;
++    };
++}
+diff --git a/modules/aspects/ai/t3code-split.nix b/modules/aspects/ai/t3code-split.nix
+deleted file mode 100644
+index 54fe75815..000000000
+--- a/modules/aspects/ai/t3code-split.nix
++++ /dev/null
+@@ -1,64 +0,0 @@
+-{ den, ... }:
+-{
+-  # Stopgap for nixpkgs#555814 (split t3code into t3code-desktop and
+-  # t3code-cli): headless hosts need only `t3 serve`, but overrideAttrs on
+-  # unwrapped busts the binary cache and the full rebuild needs gigabytes of
+-  # scratch that pi's 40G /nix cannot spare. Copy the prebuilt server tree
+-  # out of the substituted binary instead: no Electron, no desktop launcher,
+-  # no local pnpm build. Completion: git rm this file, pin
+-  # programs.t3code.package to pkgs.t3code-cli on pi (see watch-t3code-split).
+-  den.aspects.ai.provides.t3code-split = {
+-    nixos = {
+-      nixpkgs.overlays = [
+-        (final: prev: {
+-          t3code-server = prev.stdenv.mkDerivation {
+-            pname = "t3code-server";
+-            inherit (prev.t3code.unwrapped) version;
+-            dontUnpack = true;
+-            # The server tree must not reference the full bundle (that would
+-            # drag Electron and the desktop tree back into the closure).
+-            disallowedRequisites = [ prev.t3code.unwrapped ];
+-            nativeBuildInputs = with prev; [
+-              installShellFiles
+-              makeBinaryWrapper
+-            ];
+-            meta = {
+-              description = "T3 Code server without the Electron desktop app";
+-              mainProgram = "t3";
+-            };
+-            installPhase = ''
+-              runHook preInstall
+-
+-              mkdir -p $out/bin
+-              cp --recursive --no-preserve=mode ${prev.t3code.unwrapped}/libexec $out/libexec
+-              rm -rf $out/libexec/t3code/apps/desktop
+-              find $out/libexec/t3code -xtype l -delete
+-              makeWrapper ${prev.lib.getExe prev.nodejs} $out/bin/t3 \
+-                --add-flags "$out/libexec/t3code/apps/server/dist/bin.mjs" \
+-                --prefix PATH : "${
+-                  prev.lib.makeBinPath [
+-                    prev.codex
+-                    prev.gh
+-                    prev.git
+-                  ]
+-                }"
+-
+-              runHook postInstall
+-            '';
+-            postInstall = prev.lib.optionalString (prev.stdenv.buildPlatform.canExecute prev.stdenv.hostPlatform) ''
+-              for shell in bash fish zsh; do
+-                installShellCompletion --cmd t3 --"$shell" <("$out/bin/t3" --completions "$shell")
+-              done
+-            '';
+-          };
+-        })
+-      ];
+-    };
+-
+-    homeManager =
+-      { pkgs, ... }:
+-      {
+-        programs.t3code.package = pkgs.t3code-server;
+-      };
+-  };
+-}
+diff --git a/modules/aspects/ai/t3code.nix b/modules/aspects/ai/t3code.nix
+index 4c6a0ad28..df284587e 100644
+--- a/modules/aspects/ai/t3code.nix
++++ b/modules/aspects/ai/t3code.nix
+@@ -29,6 +29,7 @@ in
+         home.sessionVariables = connectEnvironment;
+ 
+         programs.t3code.enable = true;
++        programs.t3code.package = lib.mkDefault pkgs.t3code-desktop;
+ 
+         # t3code keeps custom themes in Electron/browser localStorage and only
+         # imports them through the UI (Settings -> Appearance -> Add a theme).
+@@ -121,7 +122,7 @@ in
+           };
+           Service = {
+             # Follow programs.t3code.package (pi pins the server-only build).
+-            ExecStart = "${config.programs.t3code.package}/bin/t3 serve --mode web";
++            ExecStart = "${pkgs.t3code-cli}/bin/t3 serve --mode web";
+             Restart = "always";
+             RestartSec = 5;
+             Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") connectEnvironment) ++ [
+diff --git a/modules/entities.nix b/modules/entities.nix
+index 8373fca99..83af86c5e 100644
+--- a/modules/entities.nix
++++ b/modules/entities.nix
+@@ -21,7 +21,7 @@
+         users.repparw.aspect = {
+           includes = [
+             den.aspects.repparw
+-            den.aspects.ai._.t3code-split
++            den.aspects.ai._.t3code-headless
+           ];
+         };
+       };
+@@ -31,7 +31,7 @@
+         users.repparw.aspect = {
+           includes = [
+             den.aspects.repparw
+-            den.aspects.ai._.t3code-split
++            den.aspects.ai._.t3code-headless
+           ];
+         };
+       };

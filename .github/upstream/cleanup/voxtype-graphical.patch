@@ -1,0 +1,34 @@
+diff --git a/modules/aspects/ai/default.nix b/modules/aspects/ai/default.nix
+index b4a886311..0235024b0 100644
+--- a/modules/aspects/ai/default.nix
++++ b/modules/aspects/ai/default.nix
+@@ -17,7 +17,6 @@
+     provides.gui.includes = with den.aspects.ai._; [
+       dictation
+       speech
+-      voxtype-graphical-workaround
+     ];
+   };
+ }
+diff --git a/modules/aspects/ai/voxtype-graphical-workaround.nix b/modules/aspects/ai/voxtype-graphical-workaround.nix
+deleted file mode 100644
+index 024672ee9..000000000
+--- a/modules/aspects/ai/voxtype-graphical-workaround.nix
++++ /dev/null
+@@ -1,16 +0,0 @@
+-{ den, ... }:
+-{
+-  den.aspects.ai.provides.voxtype-graphical-workaround = {
+-    homeManager =
+-      { lib, ... }:
+-      {
+-        systemd.user.services.voxtype = {
+-          Unit = {
+-            PartOf = [ "graphical-session.target" ];
+-            After = [ "graphical-session.target" ];
+-          };
+-          Install.WantedBy = lib.mkForce [ "graphical-session.target" ];
+-        };
+-      };
+-  };
+-}

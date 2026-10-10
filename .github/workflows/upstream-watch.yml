@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: main
+      - uses: DeterminateSystems/nix-installer-action@v22
       - name: Watch upstream and prepare cleanup candidates
         env:
           GH_TOKEN: ${{ github.token }}
