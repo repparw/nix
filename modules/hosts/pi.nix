@@ -37,6 +37,12 @@
         modules.backup.hostRecovery.enable = true;
         modules.backup.hostRecovery.quiesceUnits = [ "container@homeassistant.service" ];
         modules.backup.hostRecovery.capturePaths = [ "/home/repparw/services/hass" ];
+        # Tmpfs-root landing (phase 2): proven twice by the standalone trial in
+        # ~/impermanence-pi-test/evidence (thread dd50ec1a). /persist is the
+        # former SD root partition; the initrd check-persistence-state guard
+        # verifies the prepared identity before activation.
+        modules.persistence.enable = true;
+        modules.persistence.mutableAccounts = true;
         modules.backup.paths = [
           "/home/containers/config"
           "/var/lib/auto-update"
@@ -55,6 +61,10 @@
           }
           {
             directory = "/var/lib/bluetooth";
+            mode = "0700";
+          }
+          {
+            directory = "/var/lib/host-recovery";
             mode = "0700";
           }
         ];
@@ -139,13 +149,16 @@
         };
 
         fileSystems = {
+          # Root is volatile; the former SD root partition is /persist (see
+          # the phase-1 mounts below). Impermanence binds the prepared state
+          # back into place at boot after check-persistence-state verifies it.
           "/" = {
-            device = "/dev/disk/by-partuuid/2178694e-02";
-            fsType = "ext4";
+            device = "tmpfs";
+            fsType = "tmpfs";
             options = [
-              "defaults"
-              "noatime"
-              "commit=60"
+              "x-initrd.mount"
+              "mode=0755"
+              "size=50%"
             ];
           };
 
