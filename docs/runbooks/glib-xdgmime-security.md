@@ -9,7 +9,7 @@ tags: [glib, security, nixpkgs, workaround]
 
 # GLib MIME parser security backport
 
-The pinned GLib 2.88.3 tarball contains an out-of-bounds write in the little-endian MIME magic byte-swap parser. Its package patches do not include the fix. The fleet overlay applies upstream [commit ca75aff83af9875](https://github.com/GNOME/glib/commit/ca75aff83af9875ea2ad2bfbe48a85dfd99c2ce5), which corrects byte offsets for both values and masks. The patch URL and content hash are pinned.
+The pinned GLib 2.88.3 tarball contains an out-of-bounds write in the little-endian MIME magic byte-swap parser. Its package patches do not include the fix. The overlay applies to fleet hosts and their registered service containers. It applies upstream [commit ca75aff83af9875](https://github.com/GNOME/glib/commit/ca75aff83af9875ea2ad2bfbe48a85dfd99c2ce5), which corrects byte offsets for both values and masks. The patch URL and content hash are pinned.
 
 An isolated AddressSanitizer parser test with a four-byte value and a two-byte word size reproduces the heap-buffer-overflow in the original tarball. The same input passes after the upstream patch. This establishes the missing parser fix. It does not establish that the historical Nautilus alias-table crash used this trigger.
 
