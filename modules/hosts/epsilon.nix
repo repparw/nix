@@ -101,7 +101,7 @@
             where = "/sysroot/nix";
             what = "/sysroot/persist/nix";
             type = "none";
-            options = [ "bind" ];
+            options = "bind";
             requires = [ "sysroot-persist.mount" ];
             after = [ "sysroot-persist.mount" ];
             wantedBy = [ "initrd-fs.target" ];
