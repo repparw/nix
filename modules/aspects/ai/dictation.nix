@@ -152,16 +152,13 @@
                 "en"
                 "es"
               ];
-              translate = false;
               initial_prompt = "NixOS, Nixpkgs, Home Manager, flakes, FlakeHub, sops-nix, dendritic, den, Niri, Voxtype, Wayland.";
             };
             audio.feedback.enabled = true;
+            audio.duck_media = true;
             audio.max_duration_secs = 120;
             output.notification.on_transcription = false;
             text = {
-              filter_filler_words = true;
-              replacements = { };
-              smart_auto_submit = false;
               spoken_punctuation = true;
             };
             vad = {
@@ -169,13 +166,11 @@
               backend = "energy";
             };
             osd = {
-              enabled = true;
               frontend = "quickshell";
               layout = "wide";
               frame = {
                 background = "none";
                 border = "none";
-                glow = true;
                 halo = false;
               };
               visual.layers = [
@@ -183,7 +178,6 @@
                   type = "pulse";
                   source = "rms";
                   color = c.base0D;
-                  order = 0;
                   x = 0.03;
                   y = 0.08;
                   width = 0.94;
@@ -194,7 +188,6 @@
                 }
                 {
                   type = "waveform";
-                  source = "peak";
                   color = c.base0C;
                   order = 10;
                   x = 0.03;
@@ -214,6 +207,7 @@
               wl-clipboard
               wtype
               quickshell
+              pulseaudio # pactl for Voxtype media ducking
               pkgs.voxtype-vulkan
             ]
           );
