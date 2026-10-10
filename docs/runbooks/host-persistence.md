@@ -41,6 +41,10 @@ persistent until their contents have been classified and independently tested.
 
 Pi's deployment controller had a `PAUSE` flag during the audit. Losing it would
 change deployment behavior. Preserve it with the controller's remaining state.
+Hosts with recovery backups enabled also retain `/var/lib/host-recovery`.
+Epsilon retains `/var/lib/credential-remediation`: its existing Authelia and
+Traefik service drop-ins run credential refresh helpers from that directory.
+Preserving `/etc` without those helpers prevents both services from starting.
 `/var/lib/nixos` must be mounted before user allocation to keep the UID/GID map
 consistent with the owners of persistent files.
 

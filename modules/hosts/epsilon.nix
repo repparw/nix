@@ -61,6 +61,10 @@
 
         environment.persistence."/persist".directories = [
           {
+            directory = "/var/lib/credential-remediation";
+            mode = "0700";
+          }
+          {
             directory = "/home/repparw";
             user = "repparw";
             group = "users";

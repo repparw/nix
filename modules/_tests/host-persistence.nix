@@ -57,6 +57,7 @@ let
     assert pi.environment.persistence."/persist".files == [ ];
     assert pi.users.mutableUsers;
     assert pi.modules.backup.hostRecovery.enable;
+    assert lib.any (mount: mount.where == "/var/lib/host-recovery") piMounts;
     assert lib.all (path: lib.elem path pi.services.restic.backups.offsite.paths) [
       "/etc"
       "/boot"
@@ -130,6 +131,8 @@ let
     assert epsilon.environment.persistence."/persist".files == [ ];
     assert epsilon.users.mutableUsers;
     assert epsilon.modules.backup.hostRecovery.enable;
+    assert lib.any (mount: mount.where == "/var/lib/host-recovery") epsilonMounts;
+    assert lib.any (mount: mount.where == "/var/lib/credential-remediation") epsilonMounts;
     assert lib.all (path: lib.elem path epsilon.services.restic.backups.offsite.paths) [
       "/etc"
       "/boot"

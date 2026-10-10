@@ -63,10 +63,6 @@
             directory = "/var/lib/bluetooth";
             mode = "0700";
           }
-          {
-            directory = "/var/lib/host-recovery";
-            mode = "0700";
-          }
         ];
         # The aspect's random-seed symlink cannot transition on this host: /
         # and /persist are the same filesystem during the migration, so the
