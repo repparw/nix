@@ -1,0 +1,24 @@
+name: pr-title
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  conventional-title:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Validate the squash commit title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # The lock updater's subject is also exempt in the local commit hook.
+          if test "$PR_TITLE" = 'flake.lock: Update'; then
+            exit 0
+          fi
+          printf '%s\n' "$PR_TITLE" | nix shell --inputs-from . nixpkgs#convco --command convco check --from-stdin

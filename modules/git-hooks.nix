@@ -84,7 +84,12 @@
 
       devShells.default = pkgs.mkShell {
         nativeBuildInputs = [ config.pre-commit.settings.package ];
-        shellHook = config.pre-commit.installationScript;
+        shellHook = ''
+          ${config.pre-commit.installationScript}
+          if repo_hooks_common_dir="$(${pkgs.lib.getExe pkgs.git} rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then
+            ${pkgs.lib.getExe pkgs.git} config --local core.hooksPath "$repo_hooks_common_dir/hooks"
+          fi
+        '';
       };
     };
 }
