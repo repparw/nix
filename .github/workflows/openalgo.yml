@@ -1,0 +1,19 @@
+name: openalgo-package
+
+on:
+  pull_request:
+    paths:
+      - modules/openalgo.nix
+      - flake.nix
+      - flake.lock
+      - .github/workflows/openalgo.yml
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - run: nix build .#openalgo --print-build-logs
