@@ -1,5 +1,6 @@
 { den, lib, ... }:
 let
+  # Temporary until nix-community/home-manager#9842 merges and HM input bumps past it
   hmCliampModule = builtins.fetchurl {
     url = "https://raw.githubusercontent.com/rachitvrma/home-manager/d1faef32f5e6ab3cb34ada5e030cbceb52307775/modules/programs/cliamp.nix";
     sha256 = "sha256-gtDq3a/wH7LQTGb5NuFTVQyrHURyaDv8+57MGYoRT6w=";
@@ -10,6 +11,7 @@ in
     nixos = { ... }: {
       nixpkgs.overlays = [
         (final: prev: {
+          # Temporary until bjarneo/cliamp#453 merges and nixpkgs bumps past it
           cliamp = prev.cliamp.overrideAttrs (old: {
             version = "2.0.1-session-attach-55ecd36";
             src = final.fetchFromGitHub {
