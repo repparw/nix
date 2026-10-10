@@ -17,7 +17,6 @@
     provides.gui.includes = with den.aspects.ai._; [
       dictation
       speech
-      voxtype-graphical-workaround
     ];
   };
 }
