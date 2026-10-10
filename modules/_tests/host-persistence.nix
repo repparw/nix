@@ -88,10 +88,18 @@ let
     assert lib.elem "x-initrd.mount" epsilon.fileSystems."/".options;
     assert lib.elem "mode=0755" epsilon.fileSystems."/".options;
     assert lib.elem "size=50%" epsilon.fileSystems."/".options;
-    assert epsilon.fileSystems."/nix".device == "/persist/nix";
-    assert epsilon.fileSystems."/nix".neededForBoot;
-    assert lib.elem "bind" epsilon.fileSystems."/nix".options;
-    assert lib.elem "/persist" epsilon.fileSystems."/nix".depends;
+    # The initrd owns the /nix bind. GRUB must resolve the backing
+    # filesystem, or its runtime mount detection emits /store/... paths.
+    assert !(epsilon.fileSystems ? "/nix");
+    assert lib.any (
+      mount:
+      mount.where == "/sysroot/nix"
+      && mount.what == "/sysroot/persist/nix"
+      && mount.options == "bind"
+      && lib.elem "sysroot-persist.mount" mount.requires
+      && lib.elem "initrd-fs.target" mount.wantedBy
+    ) epsilon.boot.initrd.systemd.mounts;
+    assert epsilon.boot.loader.grub.storePath == "/persist/nix/store";
     assert epsilon.fileSystems."/boot".device == "/persist/boot";
     assert lib.elem "bind" epsilon.fileSystems."/boot".options;
     assert !epsilon.fileSystems."/boot".neededForBoot;

@@ -48,9 +48,8 @@
         # Tmpfs-root landing (phase 2): mirrors the pi landing (#180 + #182).
         # /persist is the former ext4 root partition; the initrd
         # check-persistence-state guard verifies the prepared identity before
-        # activation. /nix is a directory on the backing volume and is bound
-        # into place via fileSystems below (neededForBoot: the store must be
-        # visible to the initrd before activation).
+        # activation. /nix is on the backing volume and is bound into the
+        # new root in initrd, before activation.
         modules.persistence.enable = true;
         modules.persistence.mutableAccounts = true;
         # The aspect's random-seed symlink cannot transition on this host: /
@@ -92,10 +91,26 @@
             efiSupport = true;
             efiInstallAsRemovable = true;
             device = "nodev";
+            # install-grub.pl detects mounts from /proc/self/mountinfo.
+            # /nix is a bind mount after boot, so the default storePath
+            # would generate /store/... entries instead of /nix/store/....
+            # Resolve the store through its actual backing filesystem.
+            storePath = "/persist/nix/store";
           };
         };
         # The store bind must be up before the initrd activation script runs,
         # mirroring the aspect's sysroot-var-lib-nixos wiring.
+        boot.initrd.systemd.mounts = [
+          {
+            where = "/sysroot/nix";
+            what = "/sysroot/persist/nix";
+            type = "none";
+            options = "bind";
+            requires = [ "sysroot-persist.mount" ];
+            after = [ "sysroot-persist.mount" ];
+            wantedBy = [ "initrd-fs.target" ];
+          }
+        ];
         boot.initrd.systemd.services.initrd-nixos-activation = {
           requires = [ "sysroot-nix.mount" ];
           after = [ "sysroot-nix.mount" ];
@@ -121,15 +136,8 @@
             ];
           };
 
-          # The store lives on the backing volume (single-disk VM); expose it
-          # in the initrd so activation can resolve the system closure.
-          "/nix" = {
-            device = "/persist/nix";
-            fsType = "none";
-            options = [ "bind" ];
-            neededForBoot = true;
-            depends = [ "/persist" ];
-          };
+          # /nix is mounted early in initrd, not via fileSystems.
+          # The explicit GRUB storePath above handles its bind mount.
 
           # Backing store for host persistence (phase 1 of the tmpfs-root
           # migration): the existing ext4 root, mounted at /persist while /
