@@ -15,16 +15,21 @@ let
           modules.persistence.enable = true;
           modules.persistence.mutableAccounts = true;
           fileSystems."/persist" = {
-            device = "/dev/disk/by-label/persistence-test";
-            fsType = "ext4";
-            neededForBoot = true;
+            device = lib.mkForce "/dev/disk/by-label/persistence-test";
+            fsType = lib.mkForce "ext4";
+            neededForBoot = lib.mkForce true;
           };
         }
       ];
     }).config;
   unprepared =
     (hosts.pi.extendModules {
-      modules = [ { modules.persistence.enable = true; } ];
+      modules = [
+        { modules.persistence.enable = true; }
+        # Keep the "unprepared backing volume" spirit now that pi carries a
+        # prepared /persist: force its boot flag off for this probe.
+        { fileSystems."/persist".neededForBoot = lib.mkForce false; }
+      ];
     }).config;
   verifyHost =
     host:
@@ -37,7 +42,7 @@ let
     assert !normal.modules.persistence.mutableAccounts;
     assert !normal.environment.persistence."/persist".enable;
     assert persistenceMounts normal == [ ];
-    assert !(normal.fileSystems ? "/persist");
+    assert (normal.fileSystems ? "/persist") == (host == "pi");
     assert normal.sops.age.sshKeyPaths == [ "/etc/ssh/ssh_host_ed25519_key" ];
     assert enabled.fileSystems."/".fsType == normal.fileSystems."/".fsType;
     assert enabled.sops.age.sshKeyPaths == [ "/persist/etc/ssh/ssh_host_ed25519_key" ];
