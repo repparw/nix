@@ -1,7 +1,14 @@
 name: upstream-watch
 on:
-  schedule:
-    - cron: '23 */2 * * *'
+  push:
+    branches: [main]
+    paths:
+      - flake.lock
+
+  workflow_run:
+    workflows: [lock-update]
+    types: [completed]
+
   workflow_dispatch:
 
 permissions:
