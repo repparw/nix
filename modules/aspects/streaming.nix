@@ -457,24 +457,36 @@ in
             return 1
           }
 
-          # Guard the desk branch only, and it must run after the TV branch:
-          # with the TV off, a live stream means the button input is already
-          # flowing to the game (on controller reconnect the dongle
-          # re-enumerates and the button gate above passes while the user is
-          # mashing buttons), and a desk takeover would tear the session down.
-          # The TV branch is deliberately exempt: with the TV on the button is
-          # a relaunch request, and the close+relaunch doubles as recovery for
-          # a wedged stream.
-          ${moonshineStreaming}
-
-
+          # Never interrupt a live session. On controller reconnect the dongle
+          # re-enumerates, which alone starts this service, and the power-on
+          # press clears the button gate while the user is mid-game and their
+          # input is already flowing to that game. So this has to run before
+          # every branch: a close+relaunch in the TV branch restarts the video
+          # stream even when Moonshine keeps the compositor and app up, which
+          # is a visible blip in a session nobody asked to touch.
+          #
+          # Recovering a genuinely wedged stream is then two steps - quit the
+          # app on the TV, or wait out stream.timeout, and the next press
+          # works. That trade was deliberate: the old TV-first ordering could
+          # only ever restart the stream, never the wedged app, and it cost a
+          # blink on every controller return from out of range.
+          #
+          # Checked after the press rather than before it, so the arming window
+          # stays useful: a session that ends before the press still gets the
+          # launch it would have had.
           wait_button 30 || { log "no press; exiting without action"; exit 0; }
 
-          # First path: the TV wins whenever it is on. This runs before the
-          # stream guard and before any desk-session gating, so a button
-          # press relaunches Moonlight even with a moonshine session live
-          # (the close+relaunch is the recovery for a wedged stream) and
-          # even with the desk session unlocked.
+          ${moonshineStreaming}
+
+          if moonshine_streaming; then
+            log "live stream detected; leaving the session alone"
+            exit 0
+          fi
+
+          # First path: the TV wins whenever it is on. A session cannot be live
+          # by this point, so a relaunch is a request for one rather than an
+          # interruption, and the desk-session gating below never gets a chance
+          # to matter while the TV is up.
           tv_on=0
           if power="$(ssh_tv 'luna-send -n 1 -w 3000 -f luna://com.webos.service.tvpower/power/getPowerState "{}"' 2>/dev/null)"; then
             if jq -e '.state == "Active"' >/dev/null <<<"$power"; then
@@ -493,11 +505,6 @@ in
             sleep 1
             ssh_tv ${lib.escapeShellArg launchRemote} >/dev/null
             log "branch: tv done"
-            exit 0
-          fi
-
-          if moonshine_streaming; then
-            log "live stream detected; leaving the session alone"
             exit 0
           fi
 
