@@ -7,6 +7,11 @@ on:
         description: Exact commit expected for this validation
         required: false
         type: string
+      build_arm_authelia:
+        description: Build the unpatched aarch64 Authelia package natively
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -103,9 +108,31 @@ jobs:
           path: ci-logs/
           if-no-files-found: ignore
 
+  # Opt-in: the cleanup PR removes a hash workaround that a native aarch64
+  # build originally caught (PR #168). Config checks and stubbed host evals
+  # alone do not prove the original failure is gone, so the candidate that
+  # removes the workaround must build the unpatched package natively.
+  arm-authelia-build:
+    name: arm-build (authelia, native)
+    if: inputs.build_arm_authelia
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Build the unpatched aarch64 Authelia package
+        run: nix build --no-link --print-out-paths ".#nixosConfigurations.epsilon.pkgs.authelia"
+
   gate:
     if: always()
-    needs: [checks, host-eval, persistence-vm]
+    needs: [checks, host-eval, persistence-vm, arm-authelia-build]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -114,7 +141,10 @@ jobs:
           CHECKS_RESULT: ${{ needs.checks.result }}
           HOSTS_RESULT: ${{ needs.host-eval.result }}
           PERSISTENCE_RESULT: ${{ needs.persistence-vm.result }}
+          ARM_RESULT: ${{ needs.arm-authelia-build.result }}
         run: |
           for result in "$CHECKS_RESULT" "$HOSTS_RESULT" "$PERSISTENCE_RESULT"; do
             test "$result" = success || exit 1
           done
+          # The ARM build is opt-in: skipped is acceptable, failure is not.
+          test "$ARM_RESULT" = success || test "$ARM_RESULT" = skipped || exit 1

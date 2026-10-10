@@ -10,23 +10,26 @@ const workflow = readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8');
 const validation = readFileSync(join(root, '.github/workflows/revision-validation.yml'), 'utf8');
 const gate = validation.match(/      - name: Require every validation group[\s\S]*?        run: \|\n([\s\S]*)$/)[1].replace(/^          /gm, '');
 
-test('the actual aggregate command accepts only three successful dependencies', () => {
+test('the aggregate requires three successes and treats the opt-in arm build skip as acceptable', () => {
   for (const checks of ['success', 'failure', 'skipped', 'cancelled', '']) {
     for (const hosts of ['success', 'failure', 'skipped', 'cancelled', '']) {
       for (const persistence of ['success', 'failure', 'skipped', 'cancelled', '']) {
-        const result = spawnSync('bash', ['-e', '-c', gate], {
-          env: { ...process.env, CHECKS_RESULT: checks, HOSTS_RESULT: hosts, PERSISTENCE_RESULT: persistence },
-        });
-        assert.equal(result.status === 0, [checks, hosts, persistence].every(value => value === 'success'));
+        for (const arm of ['success', 'skipped', 'failure', 'cancelled', '']) {
+          const result = spawnSync('bash', ['-e', '-c', gate], {
+            env: { ...process.env, CHECKS_RESULT: checks, HOSTS_RESULT: hosts, PERSISTENCE_RESULT: persistence, ARM_RESULT: arm },
+          });
+          assert.equal(result.status === 0,
+            [checks, hosts, persistence].every(value => value === 'success') && (arm === 'success' || arm === 'skipped'));
+        }
       }
     }
   }
-  assert.match(validation, /gate:\n    if: always\(\)\n    needs: \[checks, host-eval, persistence-vm\]/);
+  assert.match(validation, /gate:\n    if: always\(\)\n    needs: \[checks, host-eval, persistence-vm, arm-authelia-build\]/);
 });
 
 test('every checkout job verifies dispatch SHA before checking out the workflow SHA', () => {
   const jobs = validation.split(/^  [a-z-]+:\n/gm).slice(1).filter(job => job.includes('actions/checkout'));
-  assert.equal(jobs.length, 3);
+  assert.equal(jobs.length, 4);
   for (const job of jobs) {
     assert.match(job, /if: inputs.expected_sha != ''/);
     assert.match(job, /EXPECTED_SHA: \$\{\{ inputs.expected_sha \}\}/);
