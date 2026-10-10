@@ -37,10 +37,6 @@
           (heroic.override {
             extraPkgs = pkgs': with pkgs'; [ mangohud ];
           })
-          # Unmasked Steam for Storage moves/backups; stop masked Steam first.
-          (writeShellScriptBin "steam-with-storage" ''
-            exec ${pkgs.steam}/bin/steam "$@"
-          '')
         ];
 
         services.udev.extraRules = ''
