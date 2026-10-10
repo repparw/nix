@@ -100,7 +100,8 @@ let
       && lib.elem "sysroot-persist.mount" mount.requires
       && lib.elem "initrd-fs.target" mount.wantedBy
     ) epsilon.boot.initrd.systemd.mounts;
-    assert epsilon.boot.loader.grub.storePath == "/persist/nix/store";
+    assert epsilon.boot.loader.grub.copyKernels;
+    assert (lib.head epsilon.boot.loader.grub.mirroredBoots).path == "/persist/boot";
     assert epsilon.fileSystems."/boot".device == "/persist/boot";
     assert lib.elem "bind" epsilon.fileSystems."/boot".options;
     assert !epsilon.fileSystems."/boot".neededForBoot;
