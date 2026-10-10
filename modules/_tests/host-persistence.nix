@@ -57,6 +57,10 @@ let
     assert lib.any (entry: entry.directory or null == "/var/lib/host-recovery") (
       pi.environment.persistence."/persist".directories
     );
+    # The random-seed symlink entry is deliberately absent on pi: with / and
+    # /persist on one filesystem it would be self-referential (ELOOP) and
+    # break every live switch; see modules/hosts/pi.nix.
+    assert pi.environment.persistence."/persist".files == [ ];
     assert pi.users.mutableUsers;
     assert pi.modules.backup.hostRecovery.enable;
     assert lib.all (path: lib.elem path pi.services.restic.backups.offsite.paths) [

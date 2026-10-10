@@ -68,6 +68,12 @@
             mode = "0700";
           }
         ];
+        # The aspect's random-seed symlink cannot transition on this host: /
+        # and /persist are the same filesystem during the migration, so the
+        # live symlink would point at itself (ELOOP) and fail every deploy-rs
+        # switch. The seed is regenerated per boot instead; directory binds
+        # are unaffected. Revisit if the backing volume ever splits from /.
+        environment.persistence."/persist".files = lib.mkForce [ ];
 
         users.users.repparw = {
           uid = 1000;
