@@ -106,7 +106,9 @@ in
                   http home-assistant ${servicesLib.serviceUrl cfg config name} ""
                   http home https://${fqdn}/ "" --resolve ${fqdn}:443:127.0.0.1''
               else if service.healthcheck != null then
-                "            remote ${service.host} ${name} ${servicesLib.publicHealthUrl cfg config name} 200"
+                "            remote \"${service.host} epsilon\" ${name} ${
+                              servicesLib.publicHealthUrl cfg config name
+                            } 200"
               else
                 "            remote ${service.host} ${name} ${servicesLib.serviceUrl cfg config name}/ \"\""
             )
@@ -273,12 +275,14 @@ in
                         }
 
                         remote() {
-                          local host="$1" name="$2"; shift
+                          local hosts="$1" name="$2" host; shift
                           [ "$local_only" = 1 ] && return 0
-                          if [ "''${unavailable_hosts[$host]:-0}" = 1 ]; then
-                            ok "http:$name"
-                            return 0
-                          fi
+                          for host in $hosts; do
+                            if [ "''${unavailable_hosts[$host]:-0}" = 1 ]; then
+                              ok "http:$name"
+                              return 0
+                            fi
+                          done
                           http "$@"
                         }
 
