@@ -17,6 +17,31 @@ let
       done
     fi
   '';
+
+  # Whether a Moonshine stream is live right now. Shared by the 8bitdo
+  # launcher, which must not take over the desk mid-session, and by the
+  # restore watcher, which must not revive the tray under a fresh session.
+  #
+  # The journal alone cannot be trusted: a crashed or killed daemon leaves a
+  # stale "Starting session streams" with no matching "stopped" line behind,
+  # which would report a phantom stream forever. So require the daemon to be
+  # running and only consider session lines at or after its start. Within
+  # those, the state machine is exact: the latest terminal line is either
+  # streams starting (active) or stopped+waiting (idle). No lines at all
+  # fails open.
+  moonshineStreaming = ''
+    moonshine_streaming() {
+      local since last
+      systemctl is-active --quiet moonshine || return 1
+      since=$(date -d "$(systemctl show moonshine -p ActiveEnterTimestamp --value 2>/dev/null)" +%s 2>/dev/null) || return 1
+      last=$(journalctl -u moonshine --no-pager -o short-unix --since "@$since" \
+        --grep "session::manager: (Starting session streams|Session stopped (by user|unexpectedly))" -n 1 2>/dev/null |
+        awk -v s="$since" '$1 >= s' |
+        tail -n 1) || return 1
+      [ -n "$last" ] || return 1
+      grep -q "Starting session streams" <<<"$last"
+    }
+  '';
 in
 {
   den.aspects.streaming.provides.to-hosts =
@@ -411,33 +436,15 @@ in
             return 1
           }
 
-          # Guard the desk branch only: with the TV off, a live stream means
-          # the button input is already flowing to the game (on controller
-          # reconnect the dongle re-enumerates and the button gate above
-          # passes while the user is mashing buttons), and a desk takeover
-          # would tear the session down. The TV branch is deliberately
-          # exempt: with the TV on the button is a relaunch request, and the
-          # close+relaunch doubles as recovery for a wedged stream.
-          #
-          # The journal alone cannot be trusted: a crashed or killed daemon
-          # leaves a stale "Starting session streams" with no matching
-          # "stopped" line behind, which would block every launch until the
-          # next reboot. So require the daemon to be running and only consider
-          # session lines at or after its start. Within those, the state
-          # machine is exact: the latest terminal line is either streams
-          # starting (active) or stopped+waiting (idle). No lines at all fails
-          # open to launching.
-          moonshine_streaming() {
-            local since last
-            systemctl is-active --quiet moonshine || return 1
-            since=$(date -d "$(systemctl show moonshine -p ActiveEnterTimestamp --value 2>/dev/null)" +%s 2>/dev/null) || return 1
-            last=$(journalctl -u moonshine --no-pager -o short-unix --since "@$since" \
-              --grep "session::manager: (Starting session streams|Session stopped (by user|unexpectedly))" -n 1 2>/dev/null |
-              awk -v s="$since" '$1 >= s' |
-              tail -n 1) || return 1
-            [ -n "$last" ] || return 1
-            grep -q "Starting session streams" <<<"$last"
-          }
+          # Guard the desk branch only, and it must run after the TV branch:
+          # with the TV off, a live stream means the button input is already
+          # flowing to the game (on controller reconnect the dongle
+          # re-enumerates and the button gate above passes while the user is
+          # mashing buttons), and a desk takeover would tear the session down.
+          # The TV branch is deliberately exempt: with the TV on the button is
+          # a relaunch request, and the close+relaunch doubles as recovery for
+          # a wedged stream.
+          ${moonshineStreaming}
 
 
           wait_button 30 || { log "no press; exiting without action"; exit 0; }
@@ -520,9 +527,62 @@ in
           systemctl --user start steam-tray
         '';
       };
+
+      # Moonshine kills its app process on disconnect -- its graceful stop
+      # times out after 2s and then it takes the whole process group, so a
+      # tail appended to the app script never runs. Follow the daemon's
+      # journal instead: the manager emits exactly one terminal line per
+      # session, which is the same signal the launcher already reads.
+      #
+      # A stop line alone is not permission to restore. Relaunching from the
+      # TV, or pressing the button with the TV on, produces a stop followed by
+      # a start, and reviving the tray in that window would only have the next
+      # session's stopDesktopSteam kill it again, stalling that session for as
+      # long as steam takes to shut down. So hold briefly, confirm no session
+      # came back, and do nothing at all if steam somehow survived.
+      steam-restore-watcher = pkgs.writeShellApplication {
+        name = "steam-restore-watcher";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gnugrep
+          pkgs.gawk
+          pkgs.procps
+          pkgs.systemd
+          osConfig.programs.steam.package
+        ];
+        text = ''
+          log() {
+            printf 'steam-restore-watcher: %s\n' "$*" >&2
+          }
+
+          ${moonshineStreaming}
+
+          journalctl -u moonshine -f -n 0 --no-pager \
+            --grep 'Session stopped (by user|unexpectedly)' |
+            while IFS= read -r _line; do
+              log "session stopped; holding before restore"
+              sleep 10
+              if moonshine_streaming; then
+                log "a session came back; leaving steam alone"
+                continue
+              fi
+              if pgrep -x steam >/dev/null; then
+                log "steam already running; nothing to restore"
+                continue
+              fi
+              log "restoring desktop steam"
+              systemctl --user start steam-tray
+            done
+        '';
+      };
     in
     {
-      home.packages = [ launch ];
+      home.packages = [
+        launch
+        # Exposed so the restore path can be exercised by hand instead of
+        # waiting for a stream to end.
+        steam-restore-watcher
+      ];
 
       systemd.user.services."8bitdo-tv-moonlight" = {
         Unit = {
@@ -535,6 +595,26 @@ in
         Service = {
           Type = "exec";
           ExecStart = lib.getExe launch;
+        };
+      };
+
+      # Long-lived for the whole graphical session: Moonshine is a single
+      # daemon and sessions come and go inside it, so there is no unit stop to
+      # hang this off. Restart= recovers a dead journalctl follower.
+      systemd.user.services.steam-restore-watcher = {
+        Unit = {
+          Description = "Revive desktop Steam after a Moonshine stream ends";
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
+        };
+        Service = {
+          Type = "simple";
+          ExecStart = lib.getExe steam-restore-watcher;
+          Restart = "on-failure";
+          RestartSec = 5;
+        };
+        Install = {
+          WantedBy = [ "graphical-session.target" ];
         };
       };
 
