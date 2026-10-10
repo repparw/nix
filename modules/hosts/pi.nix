@@ -154,6 +154,30 @@
             fsType = "vfat";
           };
 
+          # Backing store for host persistence (phase 1 of the tmpfs-root
+          # migration): the existing SD ext4 root, mounted at /persist while
+          # / stays ext4. Proves the mount deploys cleanly before
+          # impermanence is enabled in phase 2. Layout mirrors the trial
+          # configuration that booted twice with PASS (evidence in
+          # ~/impermanence-pi-test/evidence, thread dd50ec1a).
+          "/persist" = {
+            device = "/dev/disk/by-partuuid/2178694e-02";
+            fsType = "ext4";
+            neededForBoot = true;
+            options = [
+              "defaults"
+              "noatime"
+              "commit=60"
+            ];
+          };
+
+          "/boot" = {
+            device = "/persist/boot";
+            fsType = "none";
+            options = [ "bind" ];
+            depends = [ "/persist" ];
+          };
+
           "/home/repparw" = {
             device = "/dev/disk/by-partuuid/7fd52c5b-02";
             fsType = "ext4";
