@@ -57,6 +57,7 @@ let
     assert pi.environment.persistence."/persist".files == [ ];
     assert pi.users.mutableUsers;
     assert pi.modules.backup.hostRecovery.enable;
+    assert lib.any (mount: mount.where == "/var/lib/host-recovery") piMounts;
     assert lib.all (path: lib.elem path pi.services.restic.backups.offsite.paths) [
       "/etc"
       "/boot"
@@ -99,7 +100,8 @@ let
       && lib.elem "sysroot-persist.mount" mount.requires
       && lib.elem "initrd-fs.target" mount.wantedBy
     ) epsilon.boot.initrd.systemd.mounts;
-    assert epsilon.boot.loader.grub.storePath == "/persist/nix/store";
+    assert epsilon.boot.loader.grub.copyKernels;
+    assert (lib.head epsilon.boot.loader.grub.mirroredBoots).path == "/persist/boot";
     assert epsilon.fileSystems."/boot".device == "/persist/boot";
     assert lib.elem "bind" epsilon.fileSystems."/boot".options;
     assert !epsilon.fileSystems."/boot".neededForBoot;
@@ -130,6 +132,8 @@ let
     assert epsilon.environment.persistence."/persist".files == [ ];
     assert epsilon.users.mutableUsers;
     assert epsilon.modules.backup.hostRecovery.enable;
+    assert lib.any (mount: mount.where == "/var/lib/host-recovery") epsilonMounts;
+    assert lib.any (mount: mount.where == "/var/lib/credential-remediation") epsilonMounts;
     assert lib.all (path: lib.elem path epsilon.services.restic.backups.offsite.paths) [
       "/etc"
       "/boot"

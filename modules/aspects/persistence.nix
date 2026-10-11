@@ -58,6 +58,12 @@
               mode = "0750";
             }
           ]
+          ++ lib.optionals (config.modules.backup.hostRecovery.enable or false) [
+            {
+              directory = "/var/lib/host-recovery";
+              mode = "0700";
+            }
+          ]
           ++ lib.optionals config.services.timesyncd.enable [
             {
               directory = "/var/lib/systemd/timesync";

@@ -61,6 +61,10 @@
 
         environment.persistence."/persist".directories = [
           {
+            directory = "/var/lib/credential-remediation";
+            mode = "0700";
+          }
+          {
             directory = "/home/repparw";
             user = "repparw";
             group = "users";
@@ -91,11 +95,16 @@
             efiSupport = true;
             efiInstallAsRemovable = true;
             device = "nodev";
-            # install-grub.pl detects mounts from /proc/self/mountinfo.
-            # /nix is a bind mount after boot, so the default storePath
-            # would generate /store/... entries instead of /nix/store/....
-            # Resolve the store through its actual backing filesystem.
-            storePath = "/persist/nix/store";
+            # Both store aliases become bind mounts after boot. Copy boot
+            # assets to /boot so GRUB never derives paths from those mounts.
+            copyKernels = true;
+            mirroredBoots = lib.mkForce [
+              {
+                devices = [ "nodev" ];
+                path = "/persist/boot";
+                efiSysMountPoint = "/boot/efi";
+              }
+            ];
           };
         };
         # The store bind must be up before the initrd activation script runs,
