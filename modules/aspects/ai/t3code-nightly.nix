@@ -29,6 +29,7 @@
                   prev.lib.makeBinPath [
                     prev.git
                     prev.gh
+                    prev.codex
                   ]
                 }"
 

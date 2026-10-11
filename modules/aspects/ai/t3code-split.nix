@@ -37,6 +37,7 @@
                 --add-flags "$out/libexec/t3code/apps/server/dist/bin.mjs" \
                 --prefix PATH : "${
                   prev.lib.makeBinPath [
+                    prev.codex
                     prev.gh
                     prev.git
                   ]
