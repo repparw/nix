@@ -114,20 +114,16 @@
                 };
                 settings.fallback_providers = [
                   {
+                    provider = "nous";
+                    model = "stepfun/step-5-preview:free";
+                  }
+                  {
                     provider = "opencode-free";
                     model = "space-bunny-free";
                   }
                   {
                     provider = "opencode-free";
                     model = "muse-spark-1.3-contributor-free";
-                  }
-                  {
-                    provider = "nous";
-                    model = "meituan/longcat-2.0:free";
-                  }
-                  {
-                    provider = "nous";
-                    model = "stepfun/step-3.7-flash:free";
                   }
                 ];
                 settings.display.credits_notices = false;
@@ -143,7 +139,7 @@
                 # interactive GPT-6.1 Sol default. The configured fallback
                 # chain still applies if the cron primary fails.
                 settings.cron = {
-                  model = "stepfun/step-3.7-flash:free";
+                  model = "stepfun/step-5-preview:free";
                   model_provider = "nous";
                 };
                 settings.tool_loop_guardrails = {
