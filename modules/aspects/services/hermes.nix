@@ -20,9 +20,13 @@
         cfg = config.modules.services;
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         crashTriage = import ./hermes-crash/_package.nix { inherit pkgs; };
+        packageTriage = import ./hermes-package/_package.nix { inherit pkgs; };
       in
       {
-        environment.systemPackages = [ crashTriage.ingest ];
+        environment.systemPackages = [
+          crashTriage.ingest
+          packageTriage.ingest
+        ];
         users.groups.hermes.gid = 345;
         users.users.repparw.extraGroups = [ "hermes" ];
 
@@ -75,6 +79,14 @@
             };
             "/var/lib/hermes/.hermes/scripts/crash_triage_enroll.py" = {
               hostPath = toString crashTriage.enroll;
+              isReadOnly = true;
+            };
+            "/var/lib/hermes/.hermes/scripts/package_triage_cron.py" = {
+              hostPath = toString packageTriage.gate;
+              isReadOnly = true;
+            };
+            "/var/lib/hermes/.hermes/scripts/package_triage_enroll.py" = {
+              hostPath = toString packageTriage.enroll;
               isReadOnly = true;
             };
             "/var/lib/hermes" = {

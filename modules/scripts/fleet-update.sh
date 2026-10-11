@@ -14,6 +14,23 @@ lock_wait=0
 requested_host=all
 host_selected=0
 state="${FLEET_UPDATE_STATE:-/var/lib/auto-update}"
+# Substituted at build time from the Nix store by modules/deploy.nix.
+package_event="@PACKAGE_EVENT_SCRIPT@"
+
+enqueue_package_events() {
+  local host entry
+  mkdir -p "$package_outbox" 2>/dev/null || return 0
+  chmod 0700 "$package_outbox" 2>/dev/null || return 0
+  for host in "$@"; do
+    [ -s "$state/diff-$host.txt" ] || continue
+    entry="$package_outbox/$revision-$host.json"
+    # A pending entry already carries the serialized event; reuse it so a
+    # retry cannot produce a new identity under the same host/revision.
+    [ -s "$entry" ] && continue
+    python3 "$package_event" "$host" "$revision" "$state/diff-$host.txt" --outbox-entry "$entry" >/dev/null 2>&1 || continue
+  done
+}
+
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --force) force=1 ;;
@@ -58,6 +75,7 @@ if [ "$force" = 1 ] && [ "$host_selected" = 0 ]; then
   exit 2
 fi
 mkdir -p "$state"
+package_outbox="$state/package-events"
 exec 9>"${FLEET_UPDATE_LOCK:-/run/fleet-update.lock}"
 if [ "$lock_wait" -gt 0 ]; then
   if ! flock -w "$lock_wait" 9; then
@@ -688,6 +706,7 @@ deploy_one() {
   # success signal. Diffs surface on failure only.
 }
 
+
 for host in "${hosts[@]}"; do
   rc=0
   deploy_one "$host" || rc=$?
@@ -743,6 +762,15 @@ if [ -n "$failure_host" ]; then
   exit 1
 fi
 
+# Hosts that converged on this revision, captured before rollback-root
+# cleanup removes the markers. This is the event-eligibility record; the
+# rollback markers are not durable deployment history.
+converged=()
+for host in "${hosts[@]}"; do
+  [ -e "$state/reached-$revision-$host" ] && converged+=("$host")
+done
+
+enqueue_package_events "${converged[@]}" || true
 printf '0\n' > "$state/rollback-streak"
 if [ "$requested_host" = all ]; then
   if [ "${#deferred[@]}" = 0 ]; then
