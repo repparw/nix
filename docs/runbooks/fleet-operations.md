@@ -239,7 +239,10 @@ workflow relies on; see [GitHub's workflow triggering rules](https://docs.github
 
 After publishing the lock branch and opening or updating its PR, the updater
 explicitly dispatches `ci.yml` on `automation/flake-lock` with the expected head
-SHA. Every CI job verifies that SHA before checking out the event's immutable
+SHA, and `pr-title.yml` with that SHA and the PR number. Title validation reads
+the current PR title and rejects a changed head or closed PR. Both
+`validate / gate` and `conventional-title` must succeed before publication.
+Every CI job verifies that SHA before checking out the event's immutable
 `github.sha`. A branch change during dispatch fails that check rather than
 validating a different commit. Lock-only PR events are ignored to avoid the
 approval-required duplicate run produced for bot-authored PRs.
