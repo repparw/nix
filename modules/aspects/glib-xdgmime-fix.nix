@@ -1,9 +1,14 @@
-{ ... }:
+{ inputs, ... }:
 {
   den.aspects.glib-xdgmime-fix.nixos =
     { config, lib, ... }:
     let
       overlay = final: prev: {
+        # swtpm is only an install-test tool for TPM2-TSS, not a runtime input.
+        # Keep that fixture stock so the MIME patch does not rebuild systemd.
+        tpm2-tss = prev.tpm2-tss.override {
+          swtpm = inputs.nixpkgs.legacyPackages.${prev.stdenv.buildPlatform.system}.swtpm;
+        };
         # Remove after the pinned GLib carries upstream ca75aff83af9875.
         glib =
           assert lib.assertMsg (
