@@ -121,10 +121,6 @@
                     provider = "opencode-free";
                     model = "space-bunny-free";
                   }
-                  {
-                    provider = "opencode-free";
-                    model = "muse-spark-1.3-contributor-free";
-                  }
                 ];
                 settings.display.credits_notices = false;
                 settings.platforms.discord = {
