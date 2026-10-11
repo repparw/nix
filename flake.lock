@@ -71,7 +71,7 @@
     "cursor-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1791607179,
+        "lastModified": 1791607180,
         "narHash": "sha256-Rxc5mywyFL01pUMyIB26Ag1ICGUlwQn2rzXbSuuawKA=",
         "owner": "cursor",
         "repo": "plugins",
