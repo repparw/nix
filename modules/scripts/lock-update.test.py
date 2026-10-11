@@ -74,6 +74,9 @@ class LockUpdate(unittest.TestCase):
             "'refs/heads/automation/flake-lock', os.environ['FIXTURE_MAIN']], check=True)\n"
             "    print('https://github.com/fixture/nix/pull/123')\n"
             "elif args and args[0] == 'api':\n"
+            "    if any('pr-title.yml/runs' in arg for arg in args):\n"
+            "        if (root / 'dispatched-title').exists(): print('2')\n"
+            "        sys.exit(0)\n"
             "    branch = next((a.split('=', 1)[1] for a in args if a.startswith('branch=')), '')\n"
             "    key = 'main' if branch == 'main' else 'candidate'\n"
             "    configured = os.environ[f'FIXTURE_{key.upper()}_CI']\n"
@@ -87,10 +90,12 @@ class LockUpdate(unittest.TestCase):
             "        print('1\\tin_progress\\t')\n"
             "elif args[:2] == ['workflow', 'run']:\n"
             "    ref = args[args.index('--ref') + 1]\n"
-            "    key = 'main' if ref == 'main' else 'candidate'\n"
+            "    key = 'title' if args[2] == 'pr-title.yml' else ('main' if ref == 'main' else 'candidate')\n"
             "    if os.environ[f'FIXTURE_{key.upper()}_DISPATCH_FAIL'] == '1':\n"
             "        sys.exit(1)\n"
             "    (root / f'dispatched-{key}').write_text('1')\n"
+            "elif args[:2] == ['run', 'watch']:\n"
+            "    sys.exit(1 if os.environ['FIXTURE_TITLE_CI'] == 'failure' else 0)\n"
         )
         gh.chmod(0o755)
 
@@ -131,6 +136,7 @@ class LockUpdate(unittest.TestCase):
         event="workflow_dispatch",
         pr="",
         candidate_ci="",
+        title_ci="success",
         branch_race=False,
         late_branch_race=False,
         candidate_dispatch_fail=False,
@@ -143,6 +149,8 @@ class LockUpdate(unittest.TestCase):
             "FIXTURE_BRANCH_RACE": str(int(branch_race)),
             "FIXTURE_LATE_BRANCH_RACE": str(int(late_branch_race)),
             "FIXTURE_CANDIDATE_CI": candidate_ci,
+            "FIXTURE_TITLE_CI": title_ci,
+            "FIXTURE_TITLE_DISPATCH_FAIL": "0",
             "FIXTURE_MAIN_CI": "",
             "FIXTURE_CANDIDATE_DISPATCH_FAIL": str(int(candidate_dispatch_fail)),
             "FIXTURE_MAIN_DISPATCH_FAIL": "0",
@@ -188,7 +196,8 @@ class LockUpdate(unittest.TestCase):
             (i, r) for i, r in enumerate(self.requests)
             if r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "automation/flake-lock"
         ]
-        self.assertEqual(len(candidate_dispatches), 1)
+        self.assertEqual(len(candidate_dispatches), 2)
+        self.assertEqual({request[2] for _, request in candidate_dispatches}, {"ci.yml", "pr-title.yml"})
         self.assertLess(create, candidate_dispatches[0][0])
         self.assertFalse(any(
             r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "main"
@@ -241,11 +250,19 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         candidate_dispatches = [
             r for r in self.requests
-            if r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "automation/flake-lock"
+            if r[:3] == ["workflow", "run", "ci.yml"] and r[r.index("--ref") + 1] == "automation/flake-lock"
         ]
         self.assertEqual(candidate_dispatches, [])
-        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        title_dispatches = [r for r in self.requests if r[:3] == ["workflow", "run", "pr-title.yml"]]
+        self.assertEqual(len(title_dispatches), 1)
+        self.assertIn("pull_request_number=123", title_dispatches[0])
+        self.assertIn("expected_sha=" + self.branch_sha(), title_dispatches[0])
         self.assertEqual(self.main_sha(), self.branch_sha())
+
+    def test_title_failure_does_not_publish_validated_lock(self):
+        result = self.update(title_ci="failure")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.main_sha(), self.main)
 
     def test_branch_change_during_pr_creation_does_not_merge(self):
         result = self.update(late_branch_race=True)
