@@ -135,7 +135,22 @@ jobs:
             exit 1
           fi
 
+          gh workflow run pr-title.yml --ref "$branch" -f pull_request_number="$pr" -f expected_sha="$revision"
           ensure_ci "$branch" "$revision"
+
+          title_run=
+          for ((attempt=0; attempt<poll_attempts; attempt++)); do
+            title_run=$(gh api --method GET "repos/$GH_REPO/actions/workflows/pr-title.yml/runs" \
+              -f branch="$branch" -f head_sha="$revision" -f event=workflow_dispatch \
+              --jq '.workflow_runs | sort_by(.run_number) | last // empty | .id')
+            if [ -n "$title_run" ]; then break; fi
+            sleep "$poll_seconds"
+          done
+          if [ -z "$title_run" ]; then
+            echo 'Timed out waiting for the exact lock PR title check.' >&2
+            exit 1
+          fi
+          gh run watch "$title_run" --exit-status
 
           if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$main_sha" ]; then
             echo 'main changed while lock CI was running; leaving the validated PR for the next refresh.' >&2
