@@ -87,13 +87,18 @@
 
             systemd.services = {
               archisteamfarm = {
-                serviceConfig.LoadCredential = "steamPassword:/run/secrets/steamPassword";
+                serviceConfig.LoadCredential = [
+                  "steamPassword:/run/secrets/steamPassword"
+                  "steamUsername:/run/secrets/steamUsername"
+                ];
                 preStart = lib.mkAfter ''
                   [ -e plugins ] && chmod -R u+w plugins && rm -rf plugins
                   cp -rs ${freepackages}/lib/FreePackages plugins/
-                  cp config/repparw.json config/repparw.json.tmp
-                  ${pkgs.replace-secret}/bin/replace-secret '#steamUsername#' /run/secrets/steamUsername config/repparw.json.tmp
-                  mv -f config/repparw.json.tmp config/repparw.json
+                  botConfig=$(mktemp config/.repparw.XXXXXX)
+                  trap 'rm -f "$botConfig"' EXIT
+                  cp --no-preserve=mode config/repparw.json "$botConfig"
+                  ${pkgs.replace-secret}/bin/replace-secret '#steamUsername#' "$CREDENTIALS_DIRECTORY/steamUsername" "$botConfig"
+                  mv -f "$botConfig" config/repparw.json
                 '';
               };
             };
