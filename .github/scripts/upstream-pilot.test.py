@@ -56,7 +56,7 @@ elif args[:2] == ['pr', 'list']:
 elif args[:2] == ['pr', 'create']:
     (state/'pr').touch(); print('https://github.com/repparw/nix/pull/500')
 elif args[:2] == ['run', 'list']:
-    print(json.dumps([{'status': 'completed', 'conclusion': 'failure' if mode == 'ci-failed' else 'success'}]))
+    print(json.dumps([{'status': 'completed', 'conclusion': 'failure' if ((mode == 'ci-failed' and 'ci.yml' in args) or (mode == 'title-failed' and 'pr-title.yml' in args)) else 'success'}]))
 elif args[:2] == ['workflow', 'run']:
     pass
 else: sys.exit(2)
@@ -89,14 +89,16 @@ else: sys.exit(2)
         self.assertIn('waiting-merge', second.stdout)
         self.assertEqual(self.git('rev-parse', 'fix/authelia-drop-pnpm-hash-override'), candidate)
         dispatches = [call for call in self.calls() if call[:2] == ['workflow', 'run']]
-        self.assertEqual(len(dispatches), 1)
+        self.assertEqual(len(dispatches), 2)
+        self.assertEqual({call[2] for call in dispatches}, {"ci.yml", "pr-title.yml"})
         self.assertIn('expected_sha='+candidate, dispatches[0])
-        self.assertIn('build_arm_authelia=true', dispatches[0])
+        self.assertIn('build_arm_authelia=true', next(call for call in dispatches if call[2] == 'ci.yml'))
+        self.assertIn('pull_request_number=500', next(call for call in dispatches if call[2] == 'pr-title.yml'))
         self.git('merge', '--ff-only', candidate)
         complete = self.run_pilot()
         self.assertEqual(complete.returncode, 0, complete.stderr)
         self.assertIn('already done', complete.stdout)
-        self.assertEqual(len([call for call in self.calls() if call[:2] == ['workflow', 'run']]), 1)
+        self.assertEqual(len([call for call in self.calls() if call[:2] == ['workflow', 'run']]), 2)
 
     def test_failed_candidate_ci_stays_pending_without_overwrite(self):
         self.assertEqual(self.run_pilot().returncode, 0)
@@ -106,7 +108,16 @@ else: sys.exit(2)
         self.assertEqual(failed.returncode, 0, failed.stderr)
         self.assertIn('CI failure', failed.stdout)
         self.assertEqual(self.git('rev-parse', 'fix/authelia-drop-pnpm-hash-override'), candidate)
-        self.assertEqual(len([call for call in self.calls() if call[:2] == ['workflow', 'run']]), 1)
+        self.assertEqual(len([call for call in self.calls() if call[:2] == ['workflow', 'run']]), 2)
+
+    def test_failed_title_check_cannot_report_ready_to_merge(self):
+        self.assertEqual(self.run_pilot().returncode, 0)
+        self.git('switch', 'main')
+        failed = self.run_pilot('title-failed')
+        self.assertEqual(failed.returncode, 0, failed.stderr)
+        self.assertIn('title check failure', failed.stdout)
+        self.assertNotIn('waiting-merge', failed.stdout)
+        self.assertEqual(len([call for call in self.calls() if call[:2] == ['workflow', 'run']]), 2)
 
     def test_waiting_and_unavailable_never_publish(self):
         for mode in ('upstream-open', 'pin-behind', 'api-error'):

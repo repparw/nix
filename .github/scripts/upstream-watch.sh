@@ -91,6 +91,12 @@ if [ -n "$pr" ]; then
   ci_state=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$remote_tip" \
     --json conclusion,status --limit 5 \
     | jq -r '[.[] | select(.status == "completed")][0].conclusion // "pending"')
+  title_state=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow pr-title.yml --commit "$remote_tip" \
+    --json conclusion,status --limit 1 \
+    | jq -r '.[0] | if .status == "completed" then .conclusion else "pending" end')
+  if [ "$title_state" != success ]; then
+    waiting "waiting-ci: PR #$pr title check $title_state on $(echo "$remote_tip" | cut -c1-10)"
+  fi
   if [ "$ci_state" = "success" ]; then
     waiting "waiting-merge: PR #$pr already open with the cleanup; CI green on $(echo "$remote_tip" | cut -c1-10)"
   fi
@@ -186,6 +192,7 @@ fi
 # The opt-in ARM build is part of the candidate's required validation: the
 # dispatched run's overall gate fails if the unpatched aarch64 package does
 # not build, so a green result establishes the original failure is gone.
+gh workflow run pr-title.yml --ref "$BRANCH" -f pull_request_number="$pr" -f expected_sha="$REVISION"
 gh workflow run ci.yml --ref "$BRANCH" -f expected_sha="$REVISION" -f build_arm_authelia=true
 
 {
