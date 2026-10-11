@@ -121,8 +121,8 @@
                   "/run/secrets/hermes-llm-env"
                 ];
                 settings.model = {
-                  provider = "openai-codex";
-                  default = "gpt-6.1-sol";
+                  provider = "nous";
+                  default = "openai/gpt-6.1-sol";
                 };
                 settings.fallback_providers = [
                   {
