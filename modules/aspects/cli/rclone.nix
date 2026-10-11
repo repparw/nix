@@ -128,6 +128,9 @@
               mounts."" = {
                 enable = true;
                 mountPoint = "${cloudDir}/claro";
+                options = {
+                  exclude = "crypt/";
+                };
               };
             };
           };
