@@ -44,7 +44,6 @@ files instead of copying module contents.
 
 ## Fixes
 
-- [GLib MIME parser security backport](runbooks/glib-xdgmime-security.md)
 - [Tweaks](tweaks.md)
 - [Troubleshooting](troubleshooting.md)
 
