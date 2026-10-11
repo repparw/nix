@@ -15,7 +15,6 @@
         nix-index
         nixvim
         nixpkgs
-        glib-xdgmime-fix
         nix
         system
       ];
