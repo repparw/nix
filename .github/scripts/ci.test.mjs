@@ -10,26 +10,43 @@ const workflow = readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8');
 const validation = readFileSync(join(root, '.github/workflows/revision-validation.yml'), 'utf8');
 const gate = validation.match(/      - name: Require every validation group[\s\S]*?        run: \|\n([\s\S]*)$/)[1].replace(/^          /gm, '');
 
-test('the aggregate requires three successes and treats the opt-in arm build skip as acceptable', () => {
-  for (const checks of ['success', 'failure', 'skipped', 'cancelled', '']) {
-    for (const hosts of ['success', 'failure', 'skipped', 'cancelled', '']) {
-      for (const persistence of ['success', 'failure', 'skipped', 'cancelled', '']) {
-        for (const arm of ['success', 'skipped', 'failure', 'cancelled', '']) {
-          const result = spawnSync('bash', ['-e', '-c', gate], {
-            env: { ...process.env, CHECKS_RESULT: checks, HOSTS_RESULT: hosts, PERSISTENCE_RESULT: persistence, ARM_RESULT: arm },
-          });
-          assert.equal(result.status === 0,
-            [checks, hosts, persistence].every(value => value === 'success') && (arm === 'success' || arm === 'skipped'));
-        }
-      }
-    }
-  }
-  assert.match(validation, /gate:\n    if: always\(\)\n    needs: \[checks, host-eval, persistence-vm, arm-authelia-build\]/);
+test('the aggregate respects only classifier-authorized skips', () => {
+  const runGate = (overrides = {}) => spawnSync('bash', ['-e', '-c', gate], {
+    env: {
+      ...process.env,
+      CHANGES_RESULT: 'success',
+      CHECKS_RESULT: 'success',
+      HOSTS_RESULT: 'success',
+      PERSISTENCE_RESULT: 'success',
+      ARM_RESULT: 'skipped',
+      HOSTS_ENABLED: 'true',
+      PERSISTENCE_ENABLED: 'true',
+      BUILD_ARM: 'false',
+      ...overrides,
+    },
+  }).status === 0;
+  assert.equal(runGate(), true);
+  assert.equal(runGate({ HOSTS_ENABLED: 'false', HOSTS_RESULT: 'skipped', PERSISTENCE_ENABLED: 'false', PERSISTENCE_RESULT: 'skipped' }), true);
+  assert.equal(runGate({ PERSISTENCE_ENABLED: 'false', PERSISTENCE_RESULT: 'skipped' }), true);
+  assert.equal(runGate({ BUILD_ARM: 'true', ARM_RESULT: 'success' }), true);
+  for (const env of [
+    { CHANGES_RESULT: 'failure' }, { CHECKS_RESULT: 'failure' },
+    { HOSTS_ENABLED: 'true', HOSTS_RESULT: 'skipped' },
+    { HOSTS_ENABLED: 'false', HOSTS_RESULT: 'success' },
+    { HOSTS_ENABLED: 'unknown' },
+    { PERSISTENCE_ENABLED: 'true', PERSISTENCE_RESULT: 'skipped' },
+    { PERSISTENCE_ENABLED: 'false', PERSISTENCE_RESULT: 'success' },
+    { PERSISTENCE_ENABLED: 'unknown' },
+    { ARM_RESULT: 'failure' }, { BUILD_ARM: 'true', ARM_RESULT: 'skipped' },
+  ]) assert.equal(runGate(env), false, JSON.stringify(env));
+  assert.match(validation, /gate:\n    if: always\(\)\n    needs: \[changes, checks, host-eval, persistence-vm, arm-authelia-build\]/);
+  assert.match(validation, /matrix: \$\{\{ fromJSON\(needs.changes.outputs.check_matrix\) \}\}/);
+  assert.match(validation, /if: needs.changes.outputs.run_persistence_vm == 'true'/);
 });
 
 test('every checkout job verifies dispatch SHA before checking out the workflow SHA', () => {
   const jobs = validation.split(/^  [a-z-]+:\n/gm).slice(1).filter(job => job.includes('actions/checkout'));
-  assert.equal(jobs.length, 4);
+  assert.equal(jobs.length, 5);
   for (const job of jobs) {
     assert.match(job, /if: inputs.expected_sha != ''/);
     assert.match(job, /EXPECTED_SHA: \$\{\{ inputs.expected_sha \}\}/);
