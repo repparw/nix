@@ -147,6 +147,39 @@ class FreeModelWatch(unittest.TestCase):
         self.assertIn("no free-model catalog change", result.stdout)
         self.assertEqual([line for line in self.actions() if line.startswith(("post", "delete"))], [])
 
+    def test_catalog_diff_uses_the_snapshot_collation(self):
+        for locale in ("C", "en_US.UTF-8"):
+            with self.subTest(locale=locale):
+                self.env["LC_ALL"] = locale
+                sorted_names = subprocess.run(
+                    ["sort"], input="Z:free\na:free\n", env=self.env,
+                    capture_output=True, text=True, check=True,
+                )
+                self.assertEqual(
+                    sorted_names.stdout,
+                    "Z:free\na:free\n" if locale == "C" else "a:free\nZ:free\n",
+                )
+                self.env["STATE_DIRECTORY"] = str(self.root / locale)
+                self.calls.write_text("")
+                self.fixture("nous", {"freeRecommendedModels": [
+                    {"modelName": name} for name in ("Z:free", "a:free")
+                ]})
+                baseline = self.run_watch()
+                self.assertEqual(baseline.returncode, 0, baseline.stderr)
+                self.fixture("nous", {"freeRecommendedModels": [
+                    {"modelName": name} for name in ("Z:free", "b:free")
+                ]})
+                result = self.run_watch()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                posts = [line for line in self.actions() if line.startswith("post ")]
+                self.assertEqual(len(posts), 1)
+                self.assertIn("new: b:free; gone: a:free", posts[0])
+                self.assertNotIn("Z:free", posts[0])
+                self.assertEqual(
+                    (Path(self.env["STATE_DIRECTORY"]) / "nous-free.list").read_text(),
+                    "Z:free\nb:free\n",
+                )
+
     def test_large_catalog_change_keeps_the_notification_bounded(self):
         self.fixture("opencode", OPENCODE)
         self.fixture("nous", NOUS)

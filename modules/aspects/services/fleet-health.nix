@@ -817,8 +817,8 @@ in
                 return 0
               fi
               previous=$(sed '/^[[:space:]]*$/d' "$state_file" | LC_ALL=C sort -u)
-              added=$(comm -13 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')
-              removed=$(comm -23 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')
+              added=$(LC_ALL=C comm -13 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')
+              removed=$(LC_ALL=C comm -23 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')
               if [ -z "$added" ] && [ -z "$removed" ]; then
                 echo "free-model-watch: $name unchanged"
                 return 0
