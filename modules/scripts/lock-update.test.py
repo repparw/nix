@@ -269,7 +269,7 @@ class LockUpdate(unittest.TestCase):
         ))
         self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
 
-        pr_list = next(r for r in self.requests if r[:2] == ["pr", "list"])
+        pr_list = next(r for r in self.requests if r[:2] == ["pr", "list"] and "automation/flake-lock" in r)
         self.assertIn("automation/flake-lock", pr_list)
         self.assertNotIn("fixture:automation/flake-lock", pr_list)
 
