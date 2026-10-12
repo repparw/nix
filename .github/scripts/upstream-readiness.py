@@ -29,6 +29,7 @@ WORKAROUNDS = {
     "wpaperd-fix": ("modules/aspects/gui/wpaperd-output-removal-race.patch", None),
     "voxtype-graphical": ("modules/aspects/ai/voxtype-graphical-workaround.nix", None),
     "gamescope-vkroots": ("modules/aspects/streaming.nix", "queueInfo.flags) { VkDeviceQueueInfo2"),
+    "t3code-nightly-v2": ("modules/aspects/ai/t3code-nightly.nix", None),
 }
 
 
@@ -93,7 +94,57 @@ def gamescope_fixed():
     return flagged_queues_fixed((Path(result.stdout.strip()) / "vkroots.h").read_text())
 
 
+
+# Alpha's temporary nightly server remains local-owned until stable v2 is
+# deployed and verified. CI only checks immutable release/package evidence.
+T3CODE_V2_COMMIT = "de343914273eceb852a1d1d739cd1d38df7796ee"
+T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
+
+
+def t3code_stable_tag(package_revision):
+    text = source("NixOS/nixpkgs", T3CODE_UNWRAPPED, package_revision)
+    tag = source_ref(text)
+    # Never treat a nightly, preview, non-semver, or arbitrary revision as a
+    # stable packaged release. This also rejects unexpected package shapes.
+    return tag if re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) else None
+
+
+def t3code_nightly_v2_status(lock):
+    upstream = "pingdotgg/t3code"
+    latest = api(f"repos/{upstream}/releases/latest")
+    if not isinstance(latest, dict) or not isinstance(latest.get("tag_name"), str):
+        raise ValueError("cannot identify latest stable T3 Code release")
+    tag = latest["tag_name"]
+    if latest.get("draft") is not False or latest.get("prerelease") is not False:
+        raise ValueError("latest stable release is not verified")
+    if not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag):
+        raise ValueError("unexpected stable release tag")
+    if not contains(upstream, T3CODE_V2_COMMIT, tag):
+        return "waiting-upstream"
+
+    channel = api("repos/NixOS/nixpkgs/commits/nixos-unstable")
+    channel_revision = channel["sha"]
+    if not re.fullmatch(r"[a-f0-9]{40}", channel_revision):
+        raise ValueError("invalid channel revision")
+    channel_tag = t3code_stable_tag(channel_revision)
+    if not channel_tag or not contains(upstream, T3CODE_V2_COMMIT, channel_tag):
+        return "waiting-unstable"
+
+    pinned_tag = t3code_stable_tag(pin(lock, "nixpkgs"))
+    if not pinned_tag or not contains(upstream, T3CODE_V2_COMMIT, pinned_tag):
+        return "merged-not-pinned"
+
+    # Pin tags also need an actual, non-prerelease GitHub release. Tag
+    # ancestry alone could otherwise accept a manually published preview.
+    release = api(f"repos/{upstream}/releases/tags/{pinned_tag}")
+    if (release.get("tag_name") != pinned_tag or
+            release.get("draft") is not False or release.get("prerelease") is not False):
+        raise ValueError("pinned T3 Code release is not stable")
+    return "PINNED-READY"
+
 def detect(name, lock):
+    if name == "t3code-nightly-v2":
+        return t3code_nightly_v2_status(lock)
     if name in PR_WAITS:
         repo, number, input_name = PR_WAITS[name]
         pr = api(f"repos/{repo}/pulls/{number}")

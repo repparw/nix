@@ -67,6 +67,57 @@ class Readiness(unittest.TestCase):
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")
             detect.assert_not_called()
 
+
+    def test_t3code_nightly_v2_release_channel_and_pin_gates(self):
+        stable = 'version = "0.0.46"; tag = "v0.0.46";'
+        outdated = 'version = "0.0.45"; tag = "v0.0.45";'
+        released = {"tag_name": "v0.0.46", "draft": False, "prerelease": False}
+        def run(eligible, channel=stable, pinned=stable, verified=True):
+            def api(endpoint):
+                if endpoint.endswith("/releases/latest"):
+                    return released
+                if endpoint.endswith("/commits/nixos-unstable"):
+                    return {"sha": "a" * 40}
+                if "/releases/tags/" in endpoint:
+                    return released if verified else {**released, "prerelease": True}
+                raise AssertionError(endpoint)
+            def source(repository, path, revision):
+                self.assertEqual(path, watch.T3CODE_UNWRAPPED)
+                return channel if revision == "a" * 40 else pinned
+            with patch.object(watch, "api", side_effect=api), patch.object(
+                watch, "source", side_effect=source
+            ), patch.object(
+                watch, "contains", side_effect=lambda _repo, _fix, tag: tag in eligible
+            ):
+                return watch.detect("t3code-nightly-v2", LOCK)
+
+        self.assertEqual(run(set()), "waiting-upstream")
+        self.assertEqual(run({"v0.0.46"}, channel=outdated), "waiting-unstable")
+        self.assertEqual(run({"v0.0.46"}, pinned=outdated), "merged-not-pinned")
+        self.assertEqual(run({"v0.0.46"}), "PINNED-READY")
+        with self.assertRaises(ValueError):
+            run({"v0.0.46"}, verified=False)
+
+    def test_t3code_nightly_v2_never_accepts_a_prerelease_or_malformed_metadata(self):
+        stable = 'version = "0.0.46"; tag = "v0.0.46";'
+        with patch.object(watch, "api", return_value={
+            "tag_name": "v0.0.46-nightly.20261012.3021",
+            "draft": False, "prerelease": False
+        }):
+            with self.assertRaises(ValueError):
+                watch.detect("t3code-nightly-v2", LOCK)
+        with patch.object(watch, "source", return_value=stable):
+            self.assertEqual(watch.t3code_stable_tag("pin"), "v0.0.46")
+        for package in ['version = "0.0.46"; tag = "v0.0.46-preview";',
+                        'version = "0.0.46-nightly"; tag = "v0.0.46-nightly";']:
+            with patch.object(watch, "source", return_value=package):
+                self.assertIsNone(watch.t3code_stable_tag("pin"))
+
+    def test_t3code_nightly_v2_missing_upstream_metadata_fails_closed(self):
+        with patch.object(watch, "api", return_value={}):
+            with self.assertRaises(ValueError):
+                watch.detect("t3code-nightly-v2", LOCK)
+
     def test_cleanup_recipes_are_well_formed_and_narrow(self):
         root = Path(__file__).resolve().parents[2]
         for recipe in sorted((root / '.github/upstream/cleanup').glob('*.patch')):

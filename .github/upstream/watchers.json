@@ -77,5 +77,16 @@
   "sonarr-jellyfin": {
     "mode": "host-owned",
     "input": "nixpkgs"
+  },
+  "t3code-nightly-v2": {
+    "mode": "host-owned",
+    "input": "nixpkgs",
+    "owner": "alpha-user-timer",
+    "validation": [
+      "stable-v2-release",
+      "unstable-package",
+      "pinned-package",
+      "alpha-runtime-proof"
+    ]
   }
 }

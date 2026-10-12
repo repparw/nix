@@ -66,3 +66,17 @@ The existing `upstream-watch` post-lock pilot remains responsible for normal
 read-only readiness and completion on `main`. This PR does not turn on other
 publishers or disable local timers. When Authelia's live cutover is proven, the
 remaining post-lock cleanup policies can be activated individually.
+
+## T3 Code nightly-v2 (read-only, #209)
+
+The `t3code-nightly-v2` detector tracks a stable, non-prerelease T3 Code
+release containing orchestrator-v2 merge `de343914`, the corresponding
+`nixos-unstable` package source, and the root Nixpkgs pin. The check uses
+exact tag ancestry and verifies the pinned tag against a stable GitHub Release.
+Statuses are `waiting-upstream`, `waiting-unstable`,
+`merged-not-pinned`, and `PINNED-READY` (or unavailable on API errors).
+
+This is detection only. The Alpha `watch-t3code-nightly-v2.timer` retains
+publication and runtime completion ownership until stable v2 is deployed and
+verified; protect `statev2.sqlite` and never restart active conversations as
+part of readiness checks. The existing #209 issue tracks retirement.
