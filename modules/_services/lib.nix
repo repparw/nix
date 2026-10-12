@@ -23,7 +23,7 @@ let
       echo "discord-notify: DISCORD_CHANNEL_ID not set" >&2
       exit 1
     fi
-    api="https://discord.com/api/v10/channels/''$DISCORD_CHANNEL_ID/messages"
+    api="https://discord.com/api/v10/channels/$DISCORD_CHANNEL_ID/messages"
 
     case "$cmd" in
       post)
