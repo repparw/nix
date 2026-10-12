@@ -330,7 +330,7 @@ in
                     title = "Steam Big Picture";
                     boxart = "${moonshine-boxart}/steam.png";
                     command = [
-                      (if config.modules.streaming.steamCapture == "native" then moonshine-steam-native else moonshine-steam)
+                      (lib.getExe (if config.modules.streaming.steamCapture == "native" then moonshine-steam-native else moonshine-steam))
                     ];
                     # moonshine-steam runs stopDesktopSteam, so the tray client
                     # it kills has to come back when the session ends. Moonshine
