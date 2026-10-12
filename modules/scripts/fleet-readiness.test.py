@@ -153,7 +153,7 @@ class Readiness(unittest.TestCase):
         self.assertIn("unavailable", event["detail"])
         missing_401 = self.root / "sonarr-missing-401"
         result = self.run_probe(missing_401, watcher="sonarr-jellyfin",
-                                response="version=4.0.20.3014\\nlog_read=true\\n")
+                                response="version=4.0.20.3014" + chr(10) + "log_read=true" + chr(10))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.events(missing_401)[0]["status"], "waiting")
 
