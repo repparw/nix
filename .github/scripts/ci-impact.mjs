@@ -28,6 +28,10 @@ const affectsPersistence = path =>
   path.startsWith('modules/_tests/host-persistence') ||
   path.startsWith('.github/scripts/ci-impact');
 
+// A rename can remove a persistence input even when the new name is unrelated.
+export const changedPaths = files =>
+  files.flatMap(file => [file.filename, file.previous_filename].filter(Boolean));
+
 export function classifyChanges(paths, eventName = 'pull_request') {
   // All non-PR revisions retain the full safety net, including the lock updater's
   // exact-SHA dispatches and updates landing directly on main.
@@ -73,7 +77,7 @@ function detect() {
     if (!Array.isArray(comparison.files) || comparison.files.length >= 300 ||
         (typeof comparison.total_files === 'number' && comparison.total_files > comparison.files.length))
       return full('comparison truncated');
-    return classifyChanges(comparison.files.map(f => f.filename));
+    return classifyChanges(changedPaths(comparison.files));
   } catch (error) {
     console.warn('Change detection failed; running full validation:', error);
     return full('comparison parsing failed');

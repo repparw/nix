@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { classifyChanges } from './ci-impact.mjs';
+import { changedPaths, classifyChanges } from './ci-impact.mjs';
 
 function verify(paths, { hosts, vm, groups }) {
   const result = classifyChanges(paths);
@@ -30,6 +30,19 @@ test('persistence, recovery, boot and CI infrastructure changes run the VM', () 
     '.github/scripts/ci-impact.mjs']) {
     verify([path], { hosts: true, vm: true, groups: both });
   }
+});
+
+test('renames trigger checks for both the old and new file paths', () => {
+  verify(changedPaths([{
+    filename: 'modules/aspects/renamed.nix',
+    previous_filename: 'modules/aspects/persistence.nix',
+    status: 'renamed',
+  }]), { hosts: true, vm: true, groups: both });
+  verify(changedPaths([{
+    filename: 'docs/renamed.md',
+    previous_filename: 'modules/aspects/ai/codex.nix',
+    status: 'renamed',
+  }]), { hosts: true, vm: false, groups: both });
 });
 
 test('mixed diffs use the most conservative classification', () => {
