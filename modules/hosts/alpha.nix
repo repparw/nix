@@ -205,6 +205,13 @@
 
         modules.free-model-watch.enable = true;
 
+        # Moonshine #93 native-capture test (branch
+        # t3/test-moonshine-native-capture-no-gamescope): stream Steam Big
+        # Picture without Gamescope so games present through moonshine-wsi.
+        # Revert to the default ("gamescope") if the HDR/DX11 black screen
+        # reproduces on 0.16.1.
+        modules.streaming.steamCapture = "native";
+
         boot = {
           kernelPackages = pkgs.linuxPackages_latest;
           initrd = {

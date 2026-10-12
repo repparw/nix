@@ -159,6 +159,37 @@ in
               exec ${pkgs.gamescope}/bin/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
             '';
           };
+
+          # Native capture path, selected by modules.streaming.steamCapture =
+          # "native": no Gamescope. Games present through the moonshine-wsi
+          # layer straight to the Moonshine compositor, which removes
+          # Gamescope's compositor overhead and should restore the Steam
+          # overlay (game windows are plain Xwayland windows again). Whether
+          # this avoids the hgaiser/moonshine#93 black screen on 0.16.1 on
+          # the RX 6700 XT is exactly what the toggle exists to test, so the
+          # gamescope wrapper above stays the default and stays available.
+          moonshine-steam-native = pkgs.writeShellApplication {
+            name = "moonshine-steam-native";
+            runtimeInputs = [
+              pkgs.procps
+              config.programs.steam.package
+            ];
+            text = ''
+              ${stopDesktopSteam}
+
+              # Moonshine's Vulkan WSI layer must stay discoverable for the
+              # native path (same loader reasoning as the gamescope wrapper).
+              # Gamescope's share dir is deliberately absent: there is no
+              # gamescope session here for its WSI layers to talk to.
+              export XDG_DATA_DIRS="${config.services.moonshine.package}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+              # Moonshine sets ENABLE_MOONSHINE_WSI=1 itself; DISABLE_* takes
+              # precedence over it, so it must stay unset.
+              unset DISABLE_MOONSHINE_WSI
+
+              exec ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
+            '';
+          };
           # Moonshine runs this as ExecStopPost on the session's transient unit,
           # whose environment is built by Moonshine itself and does not promise
           # DBUS_SESSION_BUS_ADDRESS. So pin it before starting the user unit:
@@ -243,6 +274,21 @@ in
           };
         in
         {
+          # Capture backend for the "Steam Big Picture" app. "gamescope" is
+          # the hgaiser/moonshine#93 workaround (Steam wrapped in Gamescope at
+          # the client's resolution); "native" launches Steam directly under
+          # the Moonshine compositor so games present through the
+          # moonshine-wsi layer without a nested compositor. Defaults to the
+          # proven gamescope path; set per host while testing.
+          options.modules.streaming.steamCapture = lib.mkOption {
+            type = lib.types.enum [
+              "gamescope"
+              "native"
+            ];
+            default = "gamescope";
+            description = "How the Steam Big Picture stream captures game frames.";
+          };
+
           config = {
             # Share HDR and the vkroots queue fix with every Gamescope launch.
             nixpkgs.overlays = [
@@ -283,7 +329,9 @@ in
                   {
                     title = "Steam Big Picture";
                     boxart = "${moonshine-boxart}/steam.png";
-                    command = [ "${moonshine-steam}/bin/moonshine-steam" ];
+                    command = [
+                      (if config.modules.streaming.steamCapture == "native" then moonshine-steam-native else moonshine-steam)
+                    ];
                     # moonshine-steam runs stopDesktopSteam, so the tray client
                     # it kills has to come back when the session ends. Moonshine
                     # runs post_command as ExecStopPost on the session's own
