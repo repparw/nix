@@ -223,12 +223,16 @@ status_for() {
 record_transition() {
   local watcher="$1" status="$2" detail="$3" evidence="$4"
   local last_file="$state/readiness/last-$watcher.json"
-  local previous timestamp event_id tmp message event
+  local previous previous_since timestamp event_id tmp message event
   previous=$(jq -r '.status // ""' "$last_file" 2>/dev/null || echo "")
+  previous_since=$(jq -r '.since_us // 0' "$last_file" 2>/dev/null || echo 0)
   [ "$status" = "$previous" ] && return 0
   timestamp=$(date +%s%6N)
-  event_id=$(jq -jrn --arg w "$watcher" --arg s "$status" --arg d "$detail" \
-    '([$w, $s, $d] | join("\u0000"))' | sha256sum | cut -d' ' -f1)
+  # A later cycle back to the same status/detail is a new transition. Include
+  # the previous *committed* status timestamp, not this attempt's clock, so
+  # replay after an enqueue-before-status-write crash keeps the same ID.
+  event_id=$(jq -jrn --arg w "$watcher" --arg s "$status" --arg d "$detail" --arg prev "$previous_since" \
+    '([$w, $s, $d, $prev] | join("\u0000"))' | sha256sum | cut -d' ' -f1)
   if [ "$status" = "ready" ]; then
     message=$(printf ':white_check_mark: readiness %s: ready — %s' "$watcher" "$detail")
   else
