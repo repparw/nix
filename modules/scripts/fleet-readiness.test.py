@@ -219,9 +219,8 @@ class Readiness(unittest.TestCase):
         events = {event["watcher"]: event for event in self.events(state)}
         self.assertEqual(sorted(events), ["moonshine-pr227-runtime", "sonarr-jellyfin"])
         self.assertEqual(events["sonarr-jellyfin"]["status"], "ready")
-        # Missing keys evaluate to their defaults, so the same fixture reads
-        # as a cleared Moonshine runtime rather than an error.
-        self.assertEqual(events["moonshine-pr227-runtime"]["status"], "ready")
+        # A response for Sonarr is not positive evidence about Moonshine.
+        self.assertEqual(events["moonshine-pr227-runtime"]["status"], "waiting")
 
     def test_events_carry_complete_protocol(self):
         self.setUpProbe()
