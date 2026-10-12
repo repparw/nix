@@ -6,7 +6,8 @@
 # Sonarr log gate, Moonshine's PR227 test-build drop-ins, its candidate GC
 # root, and stream activity. This probe evaluates those predicates over SSH,
 # stores each watcher's status durably, and enqueues an event only when the
-# status changes. A separate deliverer posts queued events to Discord on its
+# status changes. Delivery is at-least-once, not exactly-once across unknown
+# outcomes of a Discord POST. A separate deliverer posts queued events to Discord on its
 # own timer, so delivery is independent of deployment success and neither a
 # probe failure nor a delivery failure loses a transition.
 #
