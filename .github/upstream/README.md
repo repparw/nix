@@ -41,3 +41,28 @@ build verification, and does not require a GPU or Alpha runtime test.
 
 Run `python3 .github/scripts/upstream-readiness.test.py` for detector fixtures,
 and `python3 .github/scripts/upstream-pilot.test.py` for the pilot lifecycle.
+
+## Lock candidate planner (Authelia pilot only)
+
+`upstream-plan.py plan --old BASE --candidate CANDIDATE` runs **before** the lock
+updater publishes to main. Watcher contracts live in `watchers.json`.
+Only Authelia has `mode=atomic`; independent watchers remain detection-only,
+with their prepared cleanup patches and local publication owners unchanged.
+
+If the candidate Nixpkgs pin contains the Authelia fix and `nixos-unstable`
+contains it too, the updater applies the narrowly validated Authelia removal,
+then publishes a stable `automation/atomic-authelia-pnpm-hash` branch and a
+review-required **combined lock + cleanup PR**. It dispatches exact-SHA CI with
+native ARM Authelia enabled, and **never fast-forwards main automatically**.
+Repeat runs leave the combined PR and branch unchanged, even when new upstream
+pins are available. A dangling branch, malformed cleanup or unavailable API
+blocks publication rather than overwriting human changes or publishing a
+potentially incompatible pin.
+
+If the atomic predicate is negative, the original lock-only CI and compare-and-
+swap fast-forward remain unchanged. If ancestry is unavailable, or a candidate
+contains the fix before the authoritative channel, publication fails closed.
+The existing `upstream-watch` post-lock pilot remains responsible for normal
+read-only readiness and completion on `main`. This PR does not turn on other
+publishers or disable local timers. When Authelia's live cutover is proven, the
+remaining post-lock cleanup policies can be activated individually.
