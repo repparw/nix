@@ -50,6 +50,7 @@ jobs:
         run: |
           python3 .github/scripts/upstream-readiness.test.py
           python3 .github/scripts/upstream-pilot.test.py
+          python3 .github/scripts/upstream-plan.test.py
       - name: Upload check logs
         if: always()
         uses: actions/upload-artifact@v4
