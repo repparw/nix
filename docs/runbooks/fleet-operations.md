@@ -312,7 +312,7 @@ evaluated by `fleet-readiness-probe` on Pi over the deployment SSH key. A
 status change appends one fsynced event to `/var/lib/auto-update/readiness-events/`;
 `fleet-readiness-deliver` (every 5 min, like `fleet-package-deliver`) posts
 queued events to Discord and removes an entry only after a successful post, so
-a failed delivery is retried without duplicating. The probe also runs
+a failed delivery is retried; an ambiguous Discord POST timeout may duplicate a post. The probe also runs
 best-effort after each Alpha convergence and never affects the deployment
 outcome; an unreachable Alpha keeps the previous status instead of fabricating
 a transition. Alpha's own watcher timers stay armed and remain the completion
