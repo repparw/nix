@@ -287,7 +287,7 @@ in
             set markjumpnoisy false
             set modeindicatormodes.ignore false
             set theme midnight
-            set editorcmd foot nvim
+            set editorcmd xdg-terminal-exec -- nvim
             set smoothscroll true
             set tabsort mru
 
