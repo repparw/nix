@@ -20,9 +20,12 @@
       {
         home.packages = [ launcher ];
         xdg.configFile = {
-          "opencode-v2/opencode/opencode.json".text = builtins.toJSON (
-            config.programs.opencode.settings // { plugin = [ ]; }
-          );
+          "opencode-v2/opencode/opencode.json".source =
+            pkgs.runCommandLocal "opencode-v2-config.json" { nativeBuildInputs = [ pkgs.jq ]; }
+              ''
+                jq 'del(."$schema") | .plugin = []' \
+                  ${config.xdg.configFile."opencode/opencode.json".source} > "$out"
+              '';
           "opencode-v2/opencode/plugins/nous-live.ts".source = ./opencode-plugins/nous-live-v2.ts;
           "opencode-v2/opencode/skills".source =
             config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/opencode/skills";

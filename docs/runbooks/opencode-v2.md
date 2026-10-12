@@ -30,6 +30,10 @@ and `account.json` in the private backup; neither belongs in Git or the Nix
 store. Seed the separate v2 data directory from the current database backup
 and copies of those credential files.
 
+If v2 has already started, stop its writers and back up its namespace before
+seeding. Use a fresh namespace if it contains v2 history. Replace an empty
+auto-created database only after confirming that it has no sessions.
+
 An older `opencode-stable.db` may also contain history. Back it up and rehearse
 it separately. Do not overwrite the current database with it or combine the
 two based only on their filenames.
