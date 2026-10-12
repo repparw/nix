@@ -18,10 +18,12 @@ SONARR_NO_PROCESS = "version=\nlog_read=true\nunauthorized=false\n"
 WAITING_MOONSHINE = (
     "runtime_override=true\npersistent_override=false\ncandidate_root=true\n"
     "stream_active=true\nrunning_exe=/nix/store/candidate/bin/moonshine\n"
+    "generated_exe=/nix/store/candidate/bin/moonshine\nservice_active=true\n"
 )
 READY_MOONSHINE = (
     "runtime_override=false\npersistent_override=false\ncandidate_root=false\n"
     "stream_active=false\nrunning_exe=/nix/store/upstream/bin/moonshine\n"
+    "generated_exe=/nix/store/upstream/bin/moonshine\nservice_active=true\n"
 )
 
 SSH_STUB = """\
@@ -138,6 +140,31 @@ class Readiness(unittest.TestCase):
         events = self.events(state2)
         self.assertEqual(events[0]["status"], "waiting")
         self.assertIn("process not found", events[0]["message"])
+
+
+    def test_sonarr_unreadable_log_cannot_be_ready(self):
+        self.setUpProbe()
+        state = self.root / "sonarr-missing-log"
+        response = "version=4.0.20.3014\nlog_read=false\nunauthorized=false\n"
+        result = self.run_probe(state, watcher="sonarr-jellyfin", response=response)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        event = self.events(state)[0]
+        self.assertEqual(event["status"], "waiting")
+        self.assertIn("unavailable", event["detail"])
+
+    def test_moonshine_ready_requires_running_generated_binary(self):
+        self.setUpProbe()
+        broken = [
+            READY_MOONSHINE.replace("service_active=true", "service_active=false"),
+            READY_MOONSHINE.replace("running_exe=/nix/store/upstream", "running_exe="),
+            READY_MOONSHINE.replace("generated_exe=/nix/store/upstream", "generated_exe=/nix/store/other"),
+            READY_MOONSHINE.replace("generated_exe=/nix/store/upstream/bin/moonshine\n", ""),
+        ]
+        for i, response in enumerate(broken):
+            state = self.root / f"moonshine-bad-{i}"
+            result = self.run_probe(state, watcher="moonshine-pr227-runtime", response=response)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(self.events(state)[0]["status"], "waiting")
 
     def test_unavailable_keeps_previous_status_and_resumes(self):
         self.setUpProbe()
