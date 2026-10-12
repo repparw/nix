@@ -30,3 +30,23 @@ jobs:
     with:
       expected_sha: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_sha || '' }}
       build_arm_authelia: ${{ github.event_name == 'workflow_dispatch' && inputs.build_arm_authelia || false }}
+
+  # Disposable forced probe; only exists on the unmerged test branch.
+  # Exercise the original aarch64 packaging failure with the upstream fix
+  # without changing the fleet's production flake.lock or claiming the
+  # nixos-unstable rollout has completed.
+  forced-authelia-arm-probe:
+    name: fixed-upstream Authelia (native ARM, isolated probe)
+    if: github.event_name == 'pull_request' && github.head_ref == 'test/authelia-upstream-arm-20261011'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Build unpatched aarch64 Authelia using the upstream fix commit
+        run: >
+          nix build --no-link --print-out-paths
+          --override-input nixpkgs github:NixOS/nixpkgs/6b157b9637b15f44d1f07065cdfd681166014455
+          ".#nixosConfigurations.epsilon.pkgs.authelia"
