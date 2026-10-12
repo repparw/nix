@@ -263,6 +263,24 @@ class Readiness(unittest.TestCase):
         self.assertEqual(len((self.fix / "discord-calls").read_text().splitlines()), 1,
                          "the retried post must happen exactly once")
 
+    def test_three_undelivered_transitions_remain_distinct_and_ordered(self):
+        self.setUpProbe()
+        state = self.root / "cycle"
+        for response in (WAITING_SONARR, READY_SONARR, WAITING_SONARR):
+            result = self.run_probe(state, watcher="sonarr-jellyfin", response=response)
+            self.assertEqual(result.returncode, 0, result.stderr)
+        events = self.events(state)
+        self.assertEqual([event["status"] for event in events], ["waiting", "ready", "waiting"])
+        self.assertEqual(len({event["event_id"] for event in events}), 3)
+        result = self.run_deliver(state)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        calls = (self.fix / "discord-calls").read_text().splitlines()
+        self.assertEqual(len(calls), 3)
+        self.assertIn("4.0.19.2979", calls[0])
+        self.assertIn("4.0.20.3014", calls[1])
+        self.assertIn("4.0.19.2979", calls[2])
+        self.assertEqual(list((state / "readiness-events").glob("*.json")), [])
+
     def test_deliverer_skips_malformed_entries_without_posting(self):
         state = self.root / "state"
         (state / "readiness-events").mkdir(parents=True)
