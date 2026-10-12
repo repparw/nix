@@ -74,7 +74,8 @@ def validate(name, architecture):
     elif name == "cliamp-hm-module":
         settings = evaluate("alpha.config.home-manager.users.repparw.programs.cliamp.settings")
         require(settings == {"theme": "", "repeat": "Off", "shuffle": True, "provider": "spotify",
-                             "spotify": {"client_id": "e79bc2a7d7f44a9e9153c0a5121ee0ce", "bitrate": 320}},
+                             "spotify": {"client_id": "e79bc2a7d7f44a9e9153c0a5121ee0ce", "bitrate": 320},
+                             "ytmusic": {"cookies_from": "chrome:~/.config/net.imput.helium/Default"}},
                 "cliamp settings changed")
         service = unit("alpha", "cliamp")
         require("cliamp" in service["Service"]["ExecStart"] and "daemon" in service["Service"]["ExecStart"],
