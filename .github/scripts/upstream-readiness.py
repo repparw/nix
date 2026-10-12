@@ -84,7 +84,7 @@ def gamescope_fixed():
     # Run only unpack + package patches. Use raw pkgs.gamescope, without the
     # repository's gamescopeHdr postPatch. No GPU, activation, or lock mutation.
     expression = '''let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT");
-    g = f.nixosConfigurations.alpha.pkgs.gamescope.override { enableWsi = true; };
+    g = f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope.override { enableWsi = true; };
     in g.overrideAttrs (_: { pname = "gamescope-upstream-source-check";
       configurePhase = "true"; buildPhase = "true"; doCheck = false;
       installPhase = "mkdir -p $out; cp subprojects/vkroots/vkroots.h $out/vkroots.h";

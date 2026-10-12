@@ -29,6 +29,7 @@
     "cleanup": "tasks-org.patch"
   },
   "nautilus-module": {
+    "issue": 225,
     "mode": "notify-only",
     "input": "nixpkgs"
   },
@@ -71,6 +72,7 @@
     ]
   },
   "moonshine-pr227": {
+    "issue": 147,
     "mode": "host-owned",
     "input": "nixpkgs"
   },
@@ -79,6 +81,7 @@
     "input": "nixpkgs"
   },
   "t3code-nightly-v2": {
+    "issue": 209,
     "mode": "host-owned",
     "input": "nixpkgs",
     "owner": "alpha-user-timer",

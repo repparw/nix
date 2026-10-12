@@ -14,6 +14,10 @@ on:
         required: false
         type: boolean
         default: false
+      upstream_watcher:
+        description: Independent cleanup requiring package validation
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -28,3 +32,4 @@ jobs:
     with:
       expected_sha: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_sha || '' }}
       build_arm_authelia: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_arm_authelia) || (github.event_name == 'pull_request' && github.head_ref == 'automation/atomic-authelia-pnpm-hash') }}
+      upstream_watcher: ${{ github.event_name == 'workflow_dispatch' && inputs.upstream_watcher || (startsWith(github.head_ref, 'automation/upstream-') && github.head_ref) || '' }}

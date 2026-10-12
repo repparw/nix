@@ -12,6 +12,9 @@ on:
         required: false
         type: boolean
         default: false
+      upstream_watcher:
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -69,6 +72,7 @@ jobs:
           python3 .github/scripts/upstream-readiness.test.py
           python3 .github/scripts/upstream-pilot.test.py
           python3 .github/scripts/upstream-plan.test.py
+          python3 .github/scripts/upstream-publish.test.py
       - name: Upload check logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -161,9 +165,35 @@ jobs:
           nix build --rebuild --no-link --print-out-paths ".#nixosConfigurations.epsilon.pkgs.authelia.web.pnpmDeps"
           nix build --no-link --print-out-paths ".#nixosConfigurations.epsilon.pkgs.authelia"
 
+  upstream-package-build:
+    name: upstream-package (${{ matrix.architecture }}, native)
+    if: inputs.upstream_watcher != ''
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(contains(inputs.upstream_watcher, 't3code-split') && '[{"architecture":"x86","runner":"ubuntu-latest"},{"architecture":"arm","runner":"ubuntu-24.04-arm"}]' || '[{"architecture":"x86","runner":"ubuntu-latest"}]') }}
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Verify actual upstream package and generated behavior
+        env:
+          WATCHER: ${{ inputs.upstream_watcher }}
+          ARCHITECTURE: ${{ matrix.architecture }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/upstream-validate.py "${WATCHER#automation/upstream-}" --architecture "$ARCHITECTURE"
+
   gate:
     if: always()
-    needs: [changes, checks, host-eval, persistence-vm, arm-authelia-build]
+    needs: [changes, checks, host-eval, persistence-vm, arm-authelia-build, upstream-package-build]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -177,6 +207,8 @@ jobs:
           HOSTS_RESULT: ${{ needs.host-eval.result }}
           PERSISTENCE_RESULT: ${{ needs.persistence-vm.result }}
           ARM_RESULT: ${{ needs.arm-authelia-build.result }}
+          UPSTREAM_WATCHER: ${{ inputs.upstream_watcher }}
+          UPSTREAM_RESULT: ${{ needs.upstream-package-build.result }}
         run: |
           test "$CHANGES_RESULT" = success || exit 1
           test "$CHECKS_RESULT" = success || exit 1
@@ -196,4 +228,9 @@ jobs:
             test "$ARM_RESULT" = success
           else
             test "$ARM_RESULT" = success || test "$ARM_RESULT" = skipped
+          fi
+          if test -n "$UPSTREAM_WATCHER"; then
+            test "$UPSTREAM_RESULT" = success
+          else
+            test "$UPSTREAM_RESULT" = skipped
           fi

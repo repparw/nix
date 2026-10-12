@@ -1,0 +1,5 @@
+ts	phase	decision	why	evidence	result
+2026-10-12T17:49:26Z	inventory	Use current main registry and already-landed T3 detector	Avoid duplicating merged work; preserve existing lock planner ownership	c980f8533; .github/upstream/watchers.json	15 watcher contracts inventoried
+2026-10-12T17:51:03Z	topology	Keep CI detection and runtime completion as distinct contract fields	Hosted CI cannot assume access to private running services; missing host evidence must remain pending	.github/upstream/watchers.json; watch-sonarr-jellyfin.sh	CI publisher and runtime adapter need verification
+2026-10-12T18:05:13Z	detector	Inspect raw pinned Gamescope instead of Alpha overlay	A shared overlay made the previous detector see its own workaround	baseline PINNED-READY; corrected raw source merged-not-pinned	False readiness fixed; cleanup recipe refreshed
+2026-10-12T18:05:13Z	publication	Reconstruct complete candidate tree before reuse	Reverse apply checks accept arbitrary deletion text	upstream-publish.test.py changed-recipe fixture failed before fix and passed after	Six real Git lifecycle fixtures pass; no branch overwrite or repeated dispatch
