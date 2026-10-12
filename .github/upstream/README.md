@@ -60,7 +60,6 @@ deployment. Until the replacement is verified on Pi, Alpha's
 `watch-moonshine-pr227` and `watch-sonarr-jellyfin` timers remain armed and
 stay the completion owners.
 
-
 Gamescope inspects `inputs.nixpkgs.legacyPackages`, bypassing repository
 overlays. Alpha's patched package cannot establish upstream readiness. Its
 cleanup retains WSI, removes only the queue workaround, and builds with
