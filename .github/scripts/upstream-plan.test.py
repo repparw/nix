@@ -63,7 +63,7 @@ class PlanTests(unittest.TestCase):
         planner.remove_authelia(self.module)
         content = self.module.read_text()
         self.assertNotIn("autheliaPackage", content)
-        self.assertIn("package = pkgs.authelia;", content)
+        self.assertIn("services.authelia.instances.main = {", content)
         with self.assertRaises(ValueError):
             planner.remove_authelia(self.module)
 
