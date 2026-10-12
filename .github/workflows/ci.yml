@@ -45,6 +45,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Rebuild original pnpm dependency derivation (not just a cached binary)
+        run: >
+          nix build --rebuild --no-link --print-out-paths
+          --override-input nixpkgs github:NixOS/nixpkgs/6b157b9637b15f44d1f07065cdfd681166014455
+          ".#nixosConfigurations.epsilon.pkgs.authelia.web.pnpmDeps"
       - name: Build unpatched aarch64 Authelia using the upstream fix commit
         run: >
           nix build --no-link --print-out-paths
