@@ -3,9 +3,9 @@
 #
 # Runs on its own timer, independent of deployment success and of the probe:
 # entries leave the queue only after discord-notify accepts the post, so a
-# failed delivery leaves the exact bytes queued for the next cycle. Epsilon
-# or network unavailability therefore delays a transition notification but
-# never loses or duplicates it.
+# failed delivery leaves the exact bytes queued for the next cycle. The queue
+# provides at-least-once delivery: a network timeout after Discord accepts a
+# message may cause a retry and duplicate post. No exactly-once API exists here.
 
 state="${FLEET_UPDATE_STATE:-/var/lib/auto-update}"
 outbox="$state/readiness-events"
