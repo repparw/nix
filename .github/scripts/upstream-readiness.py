@@ -80,19 +80,17 @@ def flagged_queues_fixed(header):
     return len(bodies) >= 2 and all("VkDeviceQueueInfo2" in body and "GetDeviceQueue2(" in body for body, _ in bodies)
 
 
-def gamescope_fixed(revision):
-    # Inspect the raw pinned nixpkgs source after only nixpkgs' own patches:
-    # building a host's pkgs would carry the repository's vkroots overlay and
-    # prove the workaround instead of the fix. No GPU, activation, or lock
-    # mutation.
-    expression = f'''let f = builtins.getFlake "github:NixOS/nixpkgs/{revision}";
-    g = f.legacyPackages.x86_64-linux.gamescope.override {{ enableWsi = true; }};
-    in g.overrideAttrs (_: {{ pname = "gamescope-upstream-source-check";
+def gamescope_fixed():
+    # Run only unpack + package patches. Use raw pkgs.gamescope, without the
+    # repository's gamescopeHdr postPatch. No GPU, activation, or lock mutation.
+    expression = '''let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT");
+    g = f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope.override { enableWsi = true; };
+    in g.overrideAttrs (_: { pname = "gamescope-upstream-source-check";
       configurePhase = "true"; buildPhase = "true"; doCheck = false;
       installPhase = "mkdir -p $out; cp subprojects/vkroots/vkroots.h $out/vkroots.h";
-      fixupPhase = "true"; }})'''
+      fixupPhase = "true"; })'''
     import os
-    result = subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--print-out-paths", "--expr", expression], capture_output=True, text=True, timeout=900, check=True)
+    result = subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--print-out-paths", "--expr", expression], env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, capture_output=True, text=True, timeout=900, check=True)
     return flagged_queues_fixed((Path(result.stdout.strip()) / "vkroots.h").read_text())
 
 
@@ -145,6 +143,12 @@ def t3code_nightly_v2_status(lock):
     return "PINNED-READY"
 
 def detect(name, lock):
+    if name == "opencode-v2":
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("release_readiness", ROOT / ".github/scripts/upstream-release-readiness.py")
+        detector = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(detector)
+        return detector.inspect(name, lock)["status"]
     if name == "t3code-nightly-v2":
         return t3code_nightly_v2_status(lock)
     if name in PR_WAITS:
@@ -171,7 +175,7 @@ def detect(name, lock):
         module = source("nix-community/home-manager", "modules/services/voxtype.nix", pin(lock, "home-manager"))
         fixed = all(re.search(rf"\b{option}\s*=\s*\[\s*\"graphical-session.target\"", module) for option in ("PartOf", "After", "WantedBy"))
     elif name == "gamescope-vkroots":
-        fixed = gamescope_fixed(pin(lock, "nixpkgs"))
+        fixed = gamescope_fixed()
     elif name == "sonarr-jellyfin":
         return "host-owned: inspect running Sonarr on Alpha"
     else:
@@ -197,8 +201,7 @@ def main():
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     lock = json.loads((ROOT / "flake.lock").read_text())
-    # One shared registry owns watcher IDs and lifecycle policy; readiness
-    # remains read-only for everything except the existing Authelia pilot.
+    # The registry owns watcher IDs and lifecycle policy. Detection never writes.
     registry = json.loads((ROOT / ".github/upstream/watchers.json").read_text())
     results = {name: inspect(name, lock) for name in registry}
     if args.json:

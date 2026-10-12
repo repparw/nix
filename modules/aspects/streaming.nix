@@ -184,6 +184,7 @@ in
             runtimeInputs = [
               pkgs.coreutils
               pkgs.foot
+              pkgs.xdg-terminal-exec
               pkgs.fuzzel
               pkgs.gnugrep
               pkgs.gnused

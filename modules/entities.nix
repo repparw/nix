@@ -11,6 +11,7 @@
           den.aspects.streaming
           den.aspects.cliamp
           den.aspects.ai._.t3code-nightly
+          den.aspects.ai._.opencode-v2
         ];
       };
     };
