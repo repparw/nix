@@ -8,6 +8,7 @@ import test from 'node:test';
 const root = resolve(import.meta.dirname, '../..');
 const workflow = readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8');
 const validation = readFileSync(join(root, '.github/workflows/revision-validation.yml'), 'utf8');
+const upstreamWatch = readFileSync(join(root, '.github/workflows/upstream-watch.yml'), 'utf8');
 const gate = validation.match(/      - name: Require every validation group[\s\S]*?        run: \|\n([\s\S]*)$/)[1].replace(/^          /gm, '');
 
 test('the aggregate respects only classifier-authorized skips', () => {
@@ -67,6 +68,13 @@ test('every checkout job verifies dispatch SHA before checking out the workflow 
   assert.match(validation, /expected_sha:[\s\S]*required: false[\s\S]*type: string/);
   assert.match(workflow, /cancel-in-progress: \$\{\{ github.event_name != 'push' \}\}/);
   assert.match(workflow, /\|\| github.run_id/);
+});
+
+test('all host evaluations share one runner, and failed lock updates do not wake the watcher', () => {
+  assert.match(validation, /name: host-eval \(fleet, stubbed\)/);
+  assert.match(validation, /CI_CHECKS: alpha pi epsilon/);
+  assert.doesNotMatch(validation, /matrix:\\n        host: \[alpha, pi, epsilon\]/);
+  assert.match(upstreamWatch, /if: github.event_name != 'workflow_run' \|\| github.event.workflow_run.conclusion == 'success'/);
 });
 
 function runChecks(names) {

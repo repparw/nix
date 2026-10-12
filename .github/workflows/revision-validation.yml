@@ -80,13 +80,9 @@ jobs:
   host-eval:
     needs: changes
     if: needs.changes.outputs.run_hosts == 'true'
-    name: host-eval (${{ matrix.host }}, stubbed)
+    name: host-eval (fleet, stubbed)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        host: [alpha, pi, epsilon]
     steps:
       - name: Verify requested revision
         if: inputs.expected_sha != ''
@@ -97,15 +93,15 @@ jobs:
         with:
           ref: ${{ github.sha }}
       - uses: DeterminateSystems/nix-installer-action@v22
-      - name: Evaluate host with stubs
+      - name: Evaluate all hosts with stubs
         env:
-          CI_CHECKS: ${{ matrix.host }}
+          CI_CHECKS: alpha pi epsilon
         run: bash .github/scripts/run-checks.sh
       - name: Upload evaluation logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: host-eval-${{ matrix.host }}
+          name: host-eval-fleet
           path: ci-logs/
           if-no-files-found: ignore
           retention-days: 14

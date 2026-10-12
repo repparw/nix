@@ -241,7 +241,7 @@
               ''
                 cd ${inputs.self}
                 node --test .github/scripts/ci.test.mjs .github/scripts/ci-impact.test.mjs
-                actionlint -shellcheck= .github/workflows/ci.yml .github/workflows/revision-validation.yml .github/workflows/pr-title.yml
+                actionlint -shellcheck= .github/workflows/ci.yml .github/workflows/revision-validation.yml .github/workflows/pr-title.yml .github/workflows/upstream-watch.yml
                 touch $out
               '';
 
