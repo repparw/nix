@@ -74,6 +74,17 @@ class PlanTests(unittest.TestCase):
             planner.remove_authelia(self.module)
         self.assertEqual(before, self.module.read_text())
 
+    def test_registry_ids_match_readiness_detectors(self):
+        spec = importlib.util.spec_from_file_location(
+            "upstream_readiness", ROOT / ".github/scripts/upstream-readiness.py")
+        readiness = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(readiness)
+        expected = set(readiness.PR_WAITS) | {
+            "qbittorrent", "wpaperd-fix", "voxtype-graphical", "cliamp-attach",
+            "gamescope-vkroots", "moonshine-pr227", "sonarr-jellyfin",
+        }
+        self.assertEqual(set(self.registry), expected)
+
     def test_registry_explicitly_limits_publication(self):
         self.assertEqual([k for k,v in self.registry.items() if v["mode"] == "atomic"],
                          ["authelia-pnpm-hash"])
