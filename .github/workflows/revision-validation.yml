@@ -73,6 +73,7 @@ jobs:
           python3 .github/scripts/upstream-pilot.test.py
           python3 .github/scripts/upstream-plan.test.py
           python3 .github/scripts/upstream-publish.test.py
+          python3 .github/scripts/upstream-release-readiness.test.py
       - name: Upload check logs
         if: always()
         uses: actions/upload-artifact@v4

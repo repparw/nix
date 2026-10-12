@@ -175,7 +175,7 @@ def probe_revision(repository, revision, tested_commit):
         if version_tuple(chosen["version"]) >= version_tuple(TESTED_VERSION):
             if chosen["source_repo"] != UPSTREAM:
                 raise ValueError(f"unknown package source {chosen['source_repo']!r} for a v2 claim")
-            real_v2 = contains(repository, tested_commit, chosen["ref"])
+            real_v2 = contains(UPSTREAM, tested_commit, chosen["ref"])
     return {
         "revision": revision,
         "attr": chosen and chosen["attr"],
@@ -286,8 +286,8 @@ def inspect(name, lock):
     try:
         evidence = opencode_v2_evidence(lock, overlay_present=(ROOT / OVERLAY_MARKER).exists())
         if evidence["status"] == READY and not evidence["overlay"]["present"]:
-            # The overlay is gone and the pin itself packages real v2, so the
-            # migration is finished. A merged PR alone can never reach this.
+            # The package workaround is absent and the pin packages real v2.
+            # Fleet runtime verification is a separate completion requirement.
             evidence["status"] = "completed"
         return evidence
     except (subprocess.SubprocessError, OSError, ValueError, KeyError, TypeError) as error:

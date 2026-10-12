@@ -57,6 +57,8 @@ class Detector(unittest.TestCase):
             if endpoint == f"repos/NixOS/nixpkgs/branches/{BRANCH}":
                 return {"commit": {"sha": channel_rev}}
             if "/compare/" in endpoint:
+                if not endpoint.startswith(f"repos/{watch.UPSTREAM}/compare/"):
+                    raise AssertionError(f"package source ancestry must use {watch.UPSTREAM}: {endpoint}")
                 ref = endpoint.rsplit("...", 1)[1]
                 status = {"v2.0.26": "identical", "v2.0.27": "ahead", "v2.0.25": "behind"}.get(ref, "diverged")
                 return {"status": status, "merge_base_commit": {"sha": TESTED_COMMIT if status != "diverged" else "d" * 40}}

@@ -143,6 +143,12 @@ def t3code_nightly_v2_status(lock):
     return "PINNED-READY"
 
 def detect(name, lock):
+    if name == "opencode-v2":
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("release_readiness", ROOT / ".github/scripts/upstream-release-readiness.py")
+        detector = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(detector)
+        return detector.inspect(name, lock)["status"]
     if name == "t3code-nightly-v2":
         return t3code_nightly_v2_status(lock)
     if name in PR_WAITS:
@@ -195,8 +201,7 @@ def main():
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     lock = json.loads((ROOT / "flake.lock").read_text())
-    # One shared registry owns watcher IDs and lifecycle policy; readiness
-    # remains read-only for everything except the existing Authelia pilot.
+    # The registry owns watcher IDs and lifecycle policy. Detection never writes.
     registry = json.loads((ROOT / ".github/upstream/watchers.json").read_text())
     results = {name: inspect(name, lock) for name in registry}
     if args.json:

@@ -35,6 +35,10 @@ jobs:
         with:
           ref: main
       - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Install pinned upstream PR lookup tool
+        run: |
+          nh_path=$(nix build --no-link --print-out-paths --no-update-lock-file .#nixosConfigurations.alpha.pkgs.nh)
+          echo "$nh_path/bin" >> "$GITHUB_PATH"
       - name: Inspect upstream readiness
         id: readiness
         env:

@@ -1,4 +1,9 @@
 {
+  "opencode-v2": {
+    "issue": 229,
+    "mode": "notify-only",
+    "input": "nixpkgs"
+  },
   "authelia-pnpm-hash": {
     "mode": "atomic",
     "input": "nixpkgs",

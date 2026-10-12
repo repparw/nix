@@ -4,6 +4,11 @@
 successful lock publication, after manual lock merges, and on manual dispatch.
 The lock updater owns input changes.
 
+The registry includes the stable T3 orchestrator-v2 gate and the
+[OpenCode v2 package detector](opencode-release-watch.md). Readiness notices
+go to #209 and #229 respectively. Package readiness does not complete either
+fleet runtime migration.
+
 Authelia retains its atomic lock planner and pilot publisher. Independent
 `post-lock` contracts publish separate review-required PRs using the recipes
 in `cleanup/`. Each candidate starts at the same checked-out main revision.
