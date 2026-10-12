@@ -143,7 +143,7 @@ class LockUpdate(unittest.TestCase):
             "elif args[:2] == ['workflow', 'run']:\n"
             "    ref = args[args.index('--ref') + 1]\n"
             "    key = ('atomic-title' if args[2] == 'pr-title.yml' else 'atomic') if ref == 'automation/atomic-authelia-pnpm-hash' else ('title' if args[2] == 'pr-title.yml' else ('main' if ref == 'main' else 'candidate'))\n"
-            "    if os.environ[f'FIXTURE_{key.upper()}_DISPATCH_FAIL'] == '1':\n"
+            "    if os.environ[f'FIXTURE_{key.upper().replace(chr(45), chr(95))}_DISPATCH_FAIL'] == '1':\n"
             "        sys.exit(1)\n"
             "    (root / f'dispatched-{key}').write_text('1')\n"
             "elif args[:2] == ['run', 'watch']:\n"
