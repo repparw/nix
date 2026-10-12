@@ -144,8 +144,10 @@ def main():
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     lock = json.loads((ROOT / "flake.lock").read_text())
-    names = [*PR_WAITS, "qbittorrent", "wpaperd-fix", "voxtype-graphical", "cliamp-attach", "gamescope-vkroots", "moonshine-pr227", "sonarr-jellyfin"]
-    results = {name: inspect(name, lock) for name in names}
+    # One shared registry owns watcher IDs and lifecycle policy; readiness
+    # remains read-only for everything except the existing Authelia pilot.
+    registry = json.loads((ROOT / ".github/upstream/watchers.json").read_text())
+    results = {name: inspect(name, lock) for name in registry}
     if args.json:
         print(json.dumps(results, sort_keys=True))
     else:

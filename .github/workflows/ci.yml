@@ -27,4 +27,4 @@ jobs:
     uses: ./.github/workflows/revision-validation.yml
     with:
       expected_sha: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_sha || '' }}
-      build_arm_authelia: ${{ github.event_name == 'workflow_dispatch' && inputs.build_arm_authelia || false }}
+      build_arm_authelia: ${{ (github.event_name == 'workflow_dispatch' && inputs.build_arm_authelia) || (github.event_name == 'pull_request' && github.head_ref == 'automation/atomic-authelia-pnpm-hash') }}

@@ -118,7 +118,65 @@ jobs:
             return 1
           }
 
+          # Reconcile an already published atomic branch without editing it.
+          # Bot-created PRs do not emit normal pull_request workflows, so
+          # dispatches may need recovery after a partial workflow failure.
+          reconcile_atomic_ci() {
+            local pr="$1" sha="$2" title_runs ci_runs id status arm_jobs found=0 pending=0
+            title_runs=$(gh api --method GET "repos/$GH_REPO/actions/workflows/pr-title.yml/runs" \
+              -f branch="$atomic_branch" -f head_sha="$sha" -f event=workflow_dispatch \
+              --jq '[.workflow_runs[].id] | length') || return 1
+            if [ "$title_runs" -eq 0 ]; then
+              gh workflow run pr-title.yml --ref "$atomic_branch" \
+                -f pull_request_number="$pr" -f expected_sha="$sha" || return 1
+            fi
+
+            ci_runs=$(gh api --method GET "repos/$GH_REPO/actions/workflows/ci.yml/runs" \
+              -f branch="$atomic_branch" -f head_sha="$sha" -f event=workflow_dispatch \
+              --jq '.workflow_runs[].id') || return 1
+            for id in $ci_runs; do
+              status=$(gh api "repos/$GH_REPO/actions/runs/$id" --jq .status) || return 1
+              arm_jobs=$(gh api "repos/$GH_REPO/actions/runs/$id/jobs?per_page=100" \
+                --jq '[.jobs[] | select(.name | contains("arm-build (authelia, native)")) | select(.conclusion != "skipped")] | length') || return 1
+              if [ "$arm_jobs" -gt 0 ]; then
+                found=1
+                result=$(gh api "repos/$GH_REPO/actions/runs/$id" --jq '.conclusion // ""') || return 1
+                if [ "$status" = completed ] && [ "$result" != success ]; then
+                  echo "Atomic CI $id concluded $result on $sha; requires review." >&2
+                  return 1
+                fi
+                break
+              fi
+              # GitHub may not have published the job list yet.
+              if [ "$status" != completed ]; then pending=1; fi
+            done
+            if [ "$found" -eq 0 ]; then
+              if [ "$pending" -eq 1 ]; then
+                echo "Atomic CI for $sha is starting; cannot yet verify ARM job. Retry reconciliation." >&2
+                return 1
+              fi
+              gh workflow run ci.yml --ref "$atomic_branch" \
+                -f expected_sha="$sha" -f build_arm_authelia=true || return 1
+            fi
+            echo "Atomic PR #$pr: exact-SHA title and ARM validation dispatched or present at $sha"
+          }
+
           main_sha=$(git rev-parse HEAD)
+          # A manually reviewed combined candidate owns publication until it
+          # merges or is explicitly closed. Never rewrite or stack onto it.
+          atomic_branch=automation/atomic-authelia-pnpm-hash
+          atomic_pr=$(gh pr list --head "$atomic_branch" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$atomic_pr" ]; then
+            remote_tip=$(git ls-remote --heads origin "$atomic_branch" | cut -f1)
+            pr_tip=$(gh pr view "$atomic_pr" --json headRefOid --jq .headRefOid)
+            if [ -z "$remote_tip" ] || [ "$remote_tip" != "$pr_tip" ]; then
+              echo "Atomic PR #$atomic_pr branch missing or diverged; requires human review." >&2
+              exit 1
+            fi
+            reconcile_atomic_ci "$atomic_pr" "$remote_tip"
+            echo "Atomic cleanup PR #$atomic_pr owns the next lock publication; refusing to compete."
+            exit 0
+          fi
           expected=$(git ls-remote --heads origin "$branch" | cut -f1)
           if [ -n "$expected" ]; then
             git fetch --no-tags origin "$expected"
@@ -148,6 +206,62 @@ jobs:
             fi
             exit 0
           fi
+
+          # Inspect the proposed pin BEFORE any publication to main. Other
+          # watchers are read-only here; only an atomic contract may divert.
+          plan=$(python3 .github/scripts/upstream-plan.py plan \
+            --old <(git show "$main_sha:flake.lock") --candidate flake.lock)
+          printf '%s\n' "$plan" | jq -r '"watcher plan: \(.action) (\(.reason))"'
+          case "$(jq -r .action <<<"$plan")" in
+            normal) ;;
+            blocked)
+              echo "Refusing to publish a potentially incompatible lock: $(jq -r .reason <<<"$plan")" >&2
+              exit 1
+              ;;
+            atomic-review)
+              # A stable separate branch, not the updater's routinely
+              # refreshed lock-only branch. Manual review is mandatory.
+              existing=$(git ls-remote --heads origin "$atomic_branch" | cut -f1)
+              if [ -n "$existing" ]; then
+                echo "Atomic branch $atomic_branch already exists without an open PR; refusing overwrite." >&2
+                exit 1
+              fi
+              python3 .github/scripts/upstream-plan.py apply --id authelia-pnpm-hash
+              git config user.name 'github-actions[bot]'
+              git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+              git switch -c "$atomic_branch"
+              git add -- flake.lock modules/_services/authelia.nix
+              changed=$(git diff --cached --name-only)
+              expected_paths=$(printf '%s\n' flake.lock modules/_services/authelia.nix)
+              if [ "$changed" != "$expected_paths" ]; then
+                echo "Atomic cleanup candidate changed unexpected files: $changed" >&2
+                exit 1
+              fi
+              git commit -m 'fix(authelia): retire pnpm override with updated lock'
+              revision=$(git rev-parse HEAD)
+              if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$main_sha" ]; then
+                echo 'main advanced during atomic candidate preparation; refusing to publish stale branch.' >&2
+                exit 1
+              fi
+              git push "--force-with-lease=refs/heads/$atomic_branch:" origin "HEAD:refs/heads/$atomic_branch"
+              url=$(gh pr create --base main --head "$atomic_branch" \
+                --title 'fix(authelia): retire pnpm override with updated lock' \
+                --body "Atomic lock+cleanup candidate. Nixpkgs fix #572207 is present in this candidate's lock and nixos-unstable. The existing ARM hash workaround becomes incompatible. No auto-merge: review after exact-SHA CI (including the native ARM build). Local watcher ownership is unchanged.")
+              atomic_pr=${url##*/}
+              reconcile_atomic_ci "$atomic_pr" "$revision"
+              # Close the now-obsolete lock-only PR only after combined
+              # publication and CI dispatch succeed.
+              if [ -n "$pr" ]; then
+                gh pr close "$pr" --comment "Superseded by atomic lock+Authelia candidate #$atomic_pr; manual review required."
+              fi
+              echo "Created atomic PR #$atomic_pr at $revision; exact-SHA CI and ARM build dispatched."
+              exit 0
+              ;;
+            *)
+              echo "Unknown watcher plan; fail closed." >&2
+              exit 1
+              ;;
+          esac
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'

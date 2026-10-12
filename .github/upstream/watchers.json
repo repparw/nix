@@ -1,0 +1,81 @@
+{
+  "authelia-pnpm-hash": {
+    "mode": "atomic",
+    "input": "nixpkgs",
+    "predicate": "nixpkgs-commit-and-channel",
+    "fix_commit": "6b157b9637b15f44d1f07065cdfd681166014455",
+    "cleanup": "authelia-override",
+    "validation": [
+      "host-eval",
+      "native-arm-authelia"
+    ]
+  },
+  "t3code-connect": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "t3code-connect.patch"
+  },
+  "t3code-split": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "t3code-split.patch",
+    "validation": [
+      "native-arm-cli"
+    ]
+  },
+  "tasks-org": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "tasks-org.patch"
+  },
+  "nautilus-module": {
+    "mode": "notify-only",
+    "input": "nixpkgs"
+  },
+  "t3code-server": {
+    "mode": "post-lock",
+    "input": "home-manager",
+    "cleanup": "t3code-server.patch"
+  },
+  "cliamp-hm-module": {
+    "mode": "post-lock",
+    "input": "home-manager",
+    "cleanup": "cliamp-hm-module.patch"
+  },
+  "qbittorrent": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "qbittorrent.patch"
+  },
+  "wpaperd-fix": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "wpaperd-fix.patch"
+  },
+  "voxtype-graphical": {
+    "mode": "completed",
+    "input": "home-manager"
+  },
+  "cliamp-attach": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "cliamp-attach.patch"
+  },
+  "gamescope-vkroots": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "gamescope-vkroots.patch",
+    "validation": [
+      "source",
+      "wsi-build"
+    ]
+  },
+  "moonshine-pr227": {
+    "mode": "host-owned",
+    "input": "nixpkgs"
+  },
+  "sonarr-jellyfin": {
+    "mode": "host-owned",
+    "input": "nixpkgs"
+  }
+}

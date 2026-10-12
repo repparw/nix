@@ -68,6 +68,7 @@ jobs:
         run: |
           python3 .github/scripts/upstream-readiness.test.py
           python3 .github/scripts/upstream-pilot.test.py
+          python3 .github/scripts/upstream-plan.test.py
       - name: Upload check logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -155,8 +156,10 @@ jobs:
         with:
           ref: ${{ github.sha }}
       - uses: DeterminateSystems/nix-installer-action@v22
-      - name: Build the unpatched aarch64 Authelia package
-        run: nix build --no-link --print-out-paths ".#nixosConfigurations.epsilon.pkgs.authelia"
+      - name: Rebuild pnpm dependencies and build unpatched Authelia on ARM
+        run: |
+          nix build --rebuild --no-link --print-out-paths ".#nixosConfigurations.epsilon.pkgs.authelia.web.pnpmDeps"
+          nix build --no-link --print-out-paths ".#nixosConfigurations.epsilon.pkgs.authelia"
 
   gate:
     if: always()
