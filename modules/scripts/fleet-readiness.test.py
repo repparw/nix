@@ -151,6 +151,11 @@ class Readiness(unittest.TestCase):
         event = self.events(state)[0]
         self.assertEqual(event["status"], "waiting")
         self.assertIn("unavailable", event["detail"])
+        missing_401 = self.root / "sonarr-missing-401"
+        result = self.run_probe(missing_401, watcher="sonarr-jellyfin",
+                                response="version=4.0.20.3014\\nlog_read=true\\n")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.events(missing_401)[0]["status"], "waiting")
 
     def test_moonshine_ready_requires_running_generated_binary(self):
         self.setUpProbe()
