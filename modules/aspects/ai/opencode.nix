@@ -12,6 +12,12 @@
           config: async (cfg: any) => {
             const p = cfg.provider?.["nous-portal"]
             if (!p) return
+            // Portal synthesized `:free` routes (stepfun/*, upstage/*) reject
+            // requests without a `user=` tag ("missing user tag"). Model
+            // options land in providerOptions, and @ai-sdk/openai-compatible
+            // forwards unknown keys like `tags` into the request body.
+            const userTag: string | undefined = p.options?.nousUserTag
+            if (userTag) delete p.options.nousUserTag
             try {
               const authPath = join(homedir(), ".local/share/opencode/auth.json")
               const raw = await readFile(authPath, "utf8")
@@ -29,7 +35,12 @@
               const free = data.filter((m) => /:free$/i.test(m.id ?? ""))
               const picked = free.length > 0 ? free : data
               p.models = Object.fromEntries(
-                picked.map((m) => [m.id, { name: m.name ?? m.id }]),
+                picked.map((m) => [
+                  m.id,
+                  userTag
+                    ? { name: m.name ?? m.id, options: { tags: [userTag] } }
+                    : { name: m.name ?? m.id },
+                ]),
               )
             } catch {
             }
@@ -257,6 +268,9 @@
               name = "Nous Portal";
               options = {
                 baseURL = "https://inference-api.nousresearch.com/v1";
+                # Free-tier routes require a `user=` tag; nous-live.ts strips
+                # this key from options and injects it into request bodies.
+                nousUserTag = "user=ubritos@gmail.com";
               };
             };
             orcarouter = {

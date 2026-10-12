@@ -10,6 +10,7 @@
           den.aspects.gaming
           den.aspects.streaming
           den.aspects.cliamp
+          den.aspects.ai._.t3code-nightly
         ];
       };
     };
@@ -22,6 +23,7 @@
           includes = [
             den.aspects.repparw
             den.aspects.ai._.t3code-split
+            den.aspects.ai._.t3code-nightly
           ];
         };
       };
@@ -32,6 +34,7 @@
           includes = [
             den.aspects.repparw
             den.aspects.ai._.t3code-split
+            den.aspects.ai._.t3code-nightly
           ];
         };
       };
