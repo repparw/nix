@@ -16,7 +16,6 @@ host_selected=0
 state="${FLEET_UPDATE_STATE:-/var/lib/auto-update}"
 # Substituted at build time from the Nix store by modules/deploy.nix.
 package_event="@PACKAGE_EVENT_SCRIPT@"
-readiness_probe="@READINESS_PROBE@"
 
 enqueue_package_events() {
   local host entry
@@ -772,12 +771,11 @@ for host in "${hosts[@]}"; do
 done
 
 enqueue_package_events "${converged[@]}" || true
-# Runtime readiness evidence for host-owned upstream waits (Sonarr/Jellyfin,
-# Moonshine PR227) freshly after Alpha converges. Best-effort and
-# non-blocking: a probe failure never affects the deployment outcome, and
-# the periodic fleet-readiness-probe timer covers skipped or failed runs.
+# Request the same Pi-managed systemd unit as the periodic timer. --no-block
+# returns without waiting for network/SSH, so readiness never holds up deploy.
+# Failures remain best-effort; the periodic timer retries independently.
 if [[ " ${converged[*]:-} " == *" alpha "* ]]; then
-  "$readiness_probe" --state "$state" > "$state/readiness-probe.log" 2>&1 || true
+  systemctl --no-block start fleet-readiness-probe.service >/dev/null 2>&1 || true
 fi
 printf '0\n' > "$state/rollback-streak"
 if [ "$requested_host" = all ]; then
