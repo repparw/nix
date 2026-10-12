@@ -424,6 +424,11 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual([r[2] for r in self.requests if r[:2] == ["workflow", "run"]], ["ci.yml"])
         self.assertIn("build_arm_authelia=true", next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]))
 
+    def test_lock_publisher_shell_is_parseable(self):
+        # Workflow YAML checks alone do not parse the embedded bash script.
+        result = subprocess.run(["bash", "-n"], input=SCRIPT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_ci_dispatch_guard_rejects_moved_ref(self):
         guards = [
             line.strip().removeprefix("run: ")
