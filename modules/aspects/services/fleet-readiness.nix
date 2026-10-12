@@ -42,73 +42,55 @@
         };
       in
       {
-        options.modules.fleet-readiness = {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = false;
-            description = ''
-              Whether this host runs the fleet readiness probe and deliverer.
-              Only the deployment controller (Pi) needs it.
-            '';
-          };
-          probe = lib.mkOption {
-            type = lib.types.package;
-            readOnly = true;
-            description = ''
-              The readiness probe executable. Shared with the fleet-update
-              post-activation hook so both triggers run one implementation.
-            '';
-          };
+        options.modules.fleet-readiness.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Whether this host runs the fleet readiness probe and deliverer.
+            Only the deployment controller (Pi) needs it.
+          '';
         };
 
-        config = lib.mkMerge [
-          {
-            # Defined outside the enable gate: the fleet-update post-activation
-            # hook (modules/deploy.nix) reads the executable from the
-            # controller's configuration on every host's evaluation.
-            modules.fleet-readiness.probe = probe;
-          }
-          (lib.mkIf config.modules.fleet-readiness.enable {
-            systemd.services.fleet-readiness-probe = {
-              description = "Probe Alpha runtime readiness for host-owned upstream waits";
-              after = [ "network-online.target" ];
-              wants = [ "network-online.target" ];
-              restartIfChanged = false;
-              serviceConfig = {
-                Type = "oneshot";
-                StateDirectory = "auto-update";
-                TimeoutStartSec = "5min";
-                ExecStart = lib.getExe probe;
-              };
+        config = lib.mkIf config.modules.fleet-readiness.enable {
+          systemd.services.fleet-readiness-probe = {
+            description = "Probe Alpha runtime readiness for host-owned upstream waits";
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            restartIfChanged = false;
+            serviceConfig = {
+              Type = "oneshot";
+              StateDirectory = "auto-update";
+              TimeoutStartSec = "5min";
+              ExecStart = lib.getExe probe;
             };
-            systemd.timers.fleet-readiness-probe = {
-              wantedBy = [ "timers.target" ];
-              timerConfig = {
-                OnBootSec = "10min";
-                OnUnitInactiveSec = "2h";
-              };
+          };
+          systemd.timers.fleet-readiness-probe = {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "10min";
+              OnUnitInactiveSec = "2h";
             };
+          };
 
-            systemd.services.fleet-readiness-deliver = {
-              description = "Deliver durable fleet readiness events to Discord";
-              after = [ "network-online.target" ];
-              wants = [ "network-online.target" ];
-              serviceConfig = {
-                Type = "oneshot";
-                StateDirectory = "auto-update";
-                TimeoutStartSec = "5min";
-                ExecStart = lib.getExe deliver;
-              };
+          systemd.services.fleet-readiness-deliver = {
+            description = "Deliver durable fleet readiness events to Discord";
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            serviceConfig = {
+              Type = "oneshot";
+              StateDirectory = "auto-update";
+              TimeoutStartSec = "5min";
+              ExecStart = lib.getExe deliver;
             };
-            systemd.timers.fleet-readiness-deliver = {
-              wantedBy = [ "timers.target" ];
-              timerConfig = {
-                OnBootSec = "2min";
-                OnUnitInactiveSec = "5min";
-              };
+          };
+          systemd.timers.fleet-readiness-deliver = {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "2min";
+              OnUnitInactiveSec = "5min";
             };
-          })
-        ];
+          };
+        };
       };
   };
 }
