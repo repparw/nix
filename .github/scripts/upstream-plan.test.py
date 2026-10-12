@@ -56,7 +56,9 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(self.evaluate(channel=unavailable)["action"], "blocked")
 
     def test_completed_workaround_never_diverts(self):
-        self.module.write_text("services.authelia.instances.main.package = pkgs.authelia;\n")
+        before = self.module.read_text()
+        self.module.write_text(before.replace(planner.AUTHELIA_OVERRIDE, "").replace(
+            planner.AUTHELIA_CONSUMER, planner.AUTHELIA_REPLACEMENT))
         self.assertEqual(self.evaluate()["action"], "normal")
 
     def test_cleanup_narrow_idempotence_fail_closed(self):
@@ -64,6 +66,7 @@ class PlanTests(unittest.TestCase):
         content = self.module.read_text()
         self.assertNotIn("autheliaPackage", content)
         self.assertIn("services.authelia.instances.main = {", content)
+        self.assertIn(planner.AUTHELIA_REPLACEMENT, content)
         with self.assertRaises(ValueError):
             planner.remove_authelia(self.module)
 
@@ -73,6 +76,33 @@ class PlanTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             planner.remove_authelia(self.module)
         self.assertEqual(before, self.module.read_text())
+
+    def test_renamed_override_is_never_considered_completed(self):
+        original = self.module.read_text()
+        self.module.write_text(original.replace("autheliaPackage", "renamedAuthelia"))
+        self.assertEqual(self.evaluate()["action"], "blocked")
+        self.assertIn("unrecognized", self.evaluate()["reason"])
+        self.assertEqual(original.count(planner.AUTHELIA_STALE_HASH), 1)
+
+    def test_same_length_override_mutation_is_rejected(self):
+        original = self.module.read_text()
+        altered = original.replace('pkgs.authelia.version == "4.39.28"',
+                                   'pkgs.authelia.version == "4.39.27"')
+        self.assertEqual(len(original), len(altered))
+        self.module.write_text(altered)
+        self.assertEqual(self.evaluate()["action"], "blocked")
+        with self.assertRaises(ValueError):
+            planner.remove_authelia(self.module)
+        self.assertEqual(self.module.read_text(), altered)
+
+    def test_missing_module_must_fail_closed(self):
+        self.module.unlink()
+        self.assertEqual(self.evaluate()["action"], "blocked")
+
+    def test_stale_override_matters_even_if_nixpkgs_pin_unchanged(self):
+        # A previously published (already-fixed) pin must not bypass cleanup
+        # on the next lock update involving only unrelated inputs.
+        self.assertEqual(self.evaluate(old="new", new="new")["action"], "atomic-review")
 
     def test_registry_ids_match_readiness_detectors(self):
         spec = importlib.util.spec_from_file_location(
