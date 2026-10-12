@@ -79,10 +79,6 @@ let
       # embeds only this script, so a runtime search of the store bin
       # directory would find nothing.
       packageEvent = ./scripts/package-update-event.py;
-      # The readiness probe is owned by the controller aspect. Reusing its
-      # built executable keeps the post-activation hook and the periodic
-      # fleet-readiness-probe timer on one implementation and one state.
-      readinessProbe = lib.getExe controllerConfig.modules.fleet-readiness.probe;
     in
     pkgs.writeShellApplication {
       name = "fleet-update";
@@ -108,7 +104,6 @@ let
             "@FLEET_DOMAIN@"
             "@FLEET_DISCORD_CHANNEL@"
             "@PACKAGE_EVENT_SCRIPT@"
-            "@READINESS_PROBE@"
           ]
           [
             deployBase.nodes.alpha.hostname
@@ -117,7 +112,6 @@ let
             controllerConfig.modules.services.domain
             controllerConfig.modules.services.discordChannelId
             (toString packageEvent)
-            readinessProbe
           ]
           (builtins.readFile ./scripts/fleet-update.sh);
     };
