@@ -13,7 +13,9 @@ outbox="$state/readiness-events"
 exec 9>"$outbox/.delivery.lock"
 flock -n 9 || exit 0
 
-for entry in "$outbox"/*.json; do
+# Preserve transition chronology even if multiple events accumulate during
+# a Discord outage. Hash-based queue filenames have no chronological order.
+while IFS= read -r entry; do
   [ -f "$entry" ] || continue
   # Skip anything that is not a well-formed readiness event rather than
   # posting it or deleting it: a malformed entry needs human inspection.
@@ -26,4 +28,11 @@ for entry in "$outbox"/*.json; do
   if discord-notify post "$message" >/dev/null 2>&1; then
     rm -f "$entry"
   fi
-done
+done < <(
+  for pending in "$outbox"/*.json; do
+    [ -f "$pending" ] || continue
+    ts=$(jq -r '.timestamp_us // empty' "$pending" 2>/dev/null || true)
+    [[ "$ts" =~ ^[0-9]+$ ]] || continue
+    printf '%020d\t%s\n' "$ts" "$pending"
+  done | sort -k1,1n | cut -f2-
+)
