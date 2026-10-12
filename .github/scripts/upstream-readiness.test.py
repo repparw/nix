@@ -62,6 +62,34 @@ class Readiness(unittest.TestCase):
         self.assertFalse(watch.flagged_queues_fixed(site))
         self.assertTrue(watch.flagged_queues_fixed(site + site))
 
+    def test_gamescope_checks_raw_pin_without_repository_overlays(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            (output / 'vkroots.h').write_text('void GetDeviceQueue2();')
+            with patch.object(watch.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, directory)) as run:
+                self.assertFalse(watch.gamescope_fixed())
+            expression = run.call_args.args[0][-1]
+            self.assertIn('f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope', expression)
+            self.assertNotIn('nixosConfigurations', expression)
+
+    def test_gamescope_uses_unoverlaid_root_nixpkgs_input(self):
+        # Regression for the false PINNED-READY when using Alpha's overlay.
+        captured = {}
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory)
+            (out / "vkroots.h").write_text(
+                "deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, j, &queue);"
+            )
+            def fake_run(command, **kwargs):
+                captured["expression"] = command[command.index("--expr") + 1]
+                captured["env"] = kwargs["env"]
+                return subprocess.CompletedProcess(command, 0, f"{out}\n", "")
+            with patch.object(watch.subprocess, "run", side_effect=fake_run):
+                self.assertFalse(watch.gamescope_fixed())
+        self.assertIn("f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope", captured["expression"])
+        self.assertNotIn("nixosConfigurations", captured["expression"])
+        self.assertEqual(captured["env"]["UPSTREAM_WATCH_ROOT"], str(watch.ROOT))
+
     def test_completed_reads_checked_out_tree(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(watch, "ROOT", Path(directory)), patch.object(watch, "detect") as detect:
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")
