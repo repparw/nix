@@ -146,9 +146,10 @@ version=$(ps -eo args | grep '[S]onarr -nobrowser' | grep -oE 'sonarr-[0-9]+\.[0
 log_read=false
 unauthorized=false
 if [ -r /home/containers/config/sonarr/logs/sonarr.txt ]; then
-  log_read=true
-  count=$(tail -n 300 /home/containers/config/sonarr/logs/sonarr.txt 2>/dev/null | grep -c "401:Unauthorized") || count=0
-  [ "$count" -gt 0 ] && unauthorized=true
+  if recent=$(tail -n 300 /home/containers/config/sonarr/logs/sonarr.txt 2>/dev/null); then
+    log_read=true
+    if grep -q "401:Unauthorized" <<<"$recent"; then unauthorized=true; fi
+  fi
 fi
 printf 'version=%s\n' "$version"
 printf 'log_read=%s\n' "$log_read"
