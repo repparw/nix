@@ -3,6 +3,74 @@
   pkgs,
 }:
 let
+  # Shared Discord poster for fleet services. Reads the bot token and channel
+  # from the sops-provided hermes-env; `post` prints the message id on
+  # success and fails otherwise, so callers can keep retryable state.
+  discordNotifyText = ''
+    if [ "$#" -lt 1 ]; then
+      echo "usage: discord-notify post <content> | delete <message-id>" >&2
+      exit 2
+    fi
+    cmd="$1"; shift
+
+    # shellcheck disable=SC1091
+    source /run/secrets/hermes-env
+    if [ -z "''${DISCORD_BOT_TOKEN:-}" ]; then
+      echo "discord-notify: DISCORD_BOT_TOKEN missing (hermes-env unreadable?)" >&2
+      exit 1
+    fi
+    if [ -z "''${DISCORD_CHANNEL_ID:-}" ]; then
+      echo "discord-notify: DISCORD_CHANNEL_ID not set" >&2
+      exit 1
+    fi
+    api="https://discord.com/api/v10/channels/''$DISCORD_CHANNEL_ID/messages"
+
+    case "$cmd" in
+      post)
+        content="''${1:-}"
+        resp=$(curl -s -m 15 -w '\n%{http_code}' -X POST \
+          -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d "$(jq -n --arg c "$content" '{content: $c}')" "$api" || true)
+        code=$(printf '%s' "$resp" | tail -n 1)
+        mid=$(printf '%s' "$resp" | sed '$d' | jq -r '.id // empty' 2>/dev/null || true)
+        if [ -n "$mid" ]; then
+          echo "discord-notify: posted msg $mid (http $code)" >&2
+          printf '%s' "$mid"
+        else
+          echo "discord-notify: POST failed (http $code)" >&2
+          exit 1
+        fi
+        ;;
+      delete)
+        id="''${1:-}"
+        code=$(curl -s -m 15 -o /dev/null -w '%{http_code}' -X DELETE \
+          -H "Authorization: Bot $DISCORD_BOT_TOKEN" "$api/messages/$id" || echo curl-fail)
+        case "$code" in
+          200 | 204)
+            echo "discord-notify: deleted msg $id (http $code)" >&2
+            ;;
+          # 404 Unknown Message means the message is already gone, which is the
+          # state the caller asked for. Treating it as retryable pinned the
+          # msgid file forever: every probe re-attempted a deletion that can
+          # never succeed. Exiting zero lets the caller clear its own state.
+          # A 5xx or a transport failure stays retryable, because the message
+          # may well still be there.
+          404)
+            echo "discord-notify: msg $id already absent (http 404), treating as cleared" >&2
+            ;;
+          *)
+            echo "discord-notify: DELETE failed: msg $id http=$code (msgid kept for retry)" >&2
+            exit 1
+            ;;
+        esac
+        ;;
+      *)
+        echo "usage: discord-notify post <content> | delete <message-id>" >&2
+        exit 2
+        ;;
+    esac
+  '';
   serviceUrl =
     cfg: hostConfig: name:
     let
@@ -37,6 +105,18 @@ let
 in
 {
   inherit serviceUrl publicHealthUrl;
+
+  mkDiscordNotify =
+    pkgs_:
+    pkgs_.writeShellApplication {
+      name = "discord-notify";
+      runtimeInputs = with pkgs_; [
+        curl
+        jq
+        gnused
+      ];
+      text = discordNotifyText;
+    };
 
   serviceHosts =
     cfg:

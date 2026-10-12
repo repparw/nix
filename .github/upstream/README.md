@@ -39,6 +39,16 @@ and safe runtime-override removal are verified. Sonarr/Jellyfin depends on the
 running service version and remains host-owned. Gamescope needs source and
 build verification, and does not require a GPU or Alpha runtime test.
 
+The runtime predicates of the host-owned watchers moved to Pi: the
+`fleet-readiness-probe` service evaluates the running Sonarr version, the
+Sonarr log gate, Moonshine's PR227 test-build drop-ins, its candidate GC root
+and stream activity over SSH, enqueues a durable event per status change, and
+`fleet-readiness-deliver` posts queued events to Discord on an independent
+timer. It also runs after each Alpha convergence, non-blocking for the
+deployment. Until the replacement is verified on Pi, Alpha's
+`watch-moonshine-pr227` and `watch-sonarr-jellyfin` timers remain armed and
+stay the completion owners.
+
 Run `python3 .github/scripts/upstream-readiness.test.py` for detector fixtures,
 and `python3 .github/scripts/upstream-pilot.test.py` for the pilot lifecycle.
 
