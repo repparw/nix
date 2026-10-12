@@ -44,6 +44,15 @@ in
               client_id = "e79bc2a7d7f44a9e9153c0a5121ee0ce";
               bitrate = 320;
             };
+
+            # Cookie-backed YouTube Music. The interactive wizard cannot run:
+            # programs.cliamp.settings owns config.toml as a read-only HM
+            # symlink, so provider keys must be declared here. Helium is a
+            # Chromium fork, so yt-dlp reads its profile through the chrome
+            # name plus path; "~" is expanded by yt-dlp.
+            ytmusic = {
+              cookies_from = "chrome:~/.config/net.imput.helium/Default";
+            };
           };
           systemd.enable = true;
         };
