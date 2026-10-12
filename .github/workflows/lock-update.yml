@@ -228,6 +228,42 @@ jobs:
               fi
               python3 .github/scripts/upstream-plan.py apply --id authelia-pnpm-hash
               git config user.name 'github-actions[bot]'
+              git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+              git switch -c "$atomic_branch"
+              git add -- flake.lock modules/_services/authelia.nix
+              changed=$(git diff --cached --name-only)
+              expected_paths=$(printf '%s\n' flake.lock modules/_services/authelia.nix)
+              if [ "$changed" != "$expected_paths" ]; then
+                echo "Atomic cleanup candidate changed unexpected files: $changed" >&2
+                exit 1
+              fi
+              git commit -m 'fix(authelia): retire pnpm override with updated lock'
+              revision=$(git rev-parse HEAD)
+              if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$main_sha" ]; then
+                echo 'main advanced during atomic candidate preparation; refusing to publish stale branch.' >&2
+                exit 1
+              fi
+              git push "--force-with-lease=refs/heads/$atomic_branch:" origin "HEAD:refs/heads/$atomic_branch"
+              url=$(gh pr create --base main --head "$atomic_branch" \
+                --title 'fix(authelia): retire pnpm override with updated lock' \
+                --body "Atomic lock+cleanup candidate. Nixpkgs fix #572207 is present in this candidate's lock and nixos-unstable. The existing ARM hash workaround becomes incompatible. No auto-merge: review after exact-SHA CI (including the native ARM build). Local watcher ownership is unchanged.")
+              atomic_pr=${url##*/}
+              reconcile_atomic_ci "$atomic_pr" "$revision"
+              # Close the now-obsolete lock-only PR only after combined
+              # publication and CI dispatch succeed.
+              if [ -n "$pr" ]; then
+                gh pr close "$pr" --comment "Superseded by atomic lock+Authelia candidate #$atomic_pr; manual review required."
+              fi
+              echo "Created atomic PR #$atomic_pr at $revision; exact-SHA CI and ARM build dispatched."
+              exit 0
+              ;;
+            *)
+              echo "Unknown watcher plan; fail closed." >&2
+              exit 1
+              ;;
+          esac
+
+          git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add flake.lock
           desired_tree=$(git write-tree)
