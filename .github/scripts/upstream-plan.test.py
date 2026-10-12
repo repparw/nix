@@ -112,6 +112,7 @@ class PlanTests(unittest.TestCase):
         expected = set(readiness.PR_WAITS) | {
             "qbittorrent", "wpaperd-fix", "voxtype-graphical", "cliamp-attach",
             "gamescope-vkroots", "moonshine-pr227", "sonarr-jellyfin",
+            "t3code-nightly-v2",
         }
         self.assertEqual(set(self.registry), expected)
 
