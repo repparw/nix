@@ -81,7 +81,7 @@ version_at_least() {
 sonarr_status() {
   local version unauthorized log_read need=4.0.20.3014
   version=$(jq -r '.version // ""' <<<"$1")
-  unauthorized=$(jq -r '.unauthorized // "false"' <<<"$1")
+  unauthorized=$(jq -r '.unauthorized // ""' <<<"$1")
   log_read=$(jq -r '.log_read // "false"' <<<"$1")
   if [ -z "$version" ]; then
     printf 'waiting\tsonarr process not found\n'
@@ -97,6 +97,10 @@ sonarr_status() {
   fi
   if [ "$unauthorized" = "true" ]; then
     printf 'waiting\tsonarr %s running; 401 in recent sonarr log\n' "$version"
+    return 0
+  fi
+  if [ "$unauthorized" != "false" ]; then
+    printf 'waiting\tsonarr %s running; log 401 check unavailable\n' "$version"
     return 0
   fi
   printf 'ready\tsonarr %s running; no 401 in recent sonarr log\n' "$version"
