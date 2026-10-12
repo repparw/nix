@@ -78,15 +78,20 @@ version_at_least() {
 # logs nothing on success, so readiness is the absence of 401s in recent log
 # volume.
 sonarr_status() {
-  local version unauthorized need=4.0.20.3014
+  local version unauthorized log_read need=4.0.20.3014
   version=$(jq -r '.version // ""' <<<"$1")
   unauthorized=$(jq -r '.unauthorized // "false"' <<<"$1")
+  log_read=$(jq -r '.log_read // "false"' <<<"$1")
   if [ -z "$version" ]; then
     printf 'waiting\tsonarr process not found\n'
     return 0
   fi
   if ! version_at_least "$version" "$need"; then
     printf 'waiting\tsonarr %s running, need >= %s\n' "$version" "$need"
+    return 0
+  fi
+  if [ "$log_read" != "true" ]; then
+    printf 'waiting\tsonarr %s running; recent-log evidence unavailable\n' "$version"
     return 0
   fi
   if [ "$unauthorized" = "true" ]; then
@@ -101,18 +106,23 @@ sonarr_status() {
 # package is what runs. Stream activity stays informational evidence; the
 # Alpha watcher owns the removal itself.
 moonshine_status() {
-  local runtime persistent root active exe
-  runtime=$(jq -r '.runtime_override // "false"' <<<"$1")
-  persistent=$(jq -r '.persistent_override // "false"' <<<"$1")
-  root=$(jq -r '.candidate_root // "false"' <<<"$1")
-  active=$(jq -r '.stream_active // "false"' <<<"$1")
+  local runtime persistent root active exe generated active_service
+  runtime=$(jq -r '.runtime_override // ""' <<<"$1")
+  persistent=$(jq -r '.persistent_override // ""' <<<"$1")
+  root=$(jq -r '.candidate_root // ""' <<<"$1")
+  active=$(jq -r '.stream_active // ""' <<<"$1")
   exe=$(jq -r '.running_exe // ""' <<<"$1")
-  if [ "$runtime" = "false" ] && [ "$persistent" = "false" ] && [ "$root" = "false" ]; then
+  generated=$(jq -r '.generated_exe // ""' <<<"$1")
+  active_service=$(jq -r '.service_active // ""' <<<"$1")
+  if [ "$runtime" = "false" ] && [ "$persistent" = "false" ] && [ "$root" = "false" ] \
+    && [ "$active_service" = "true" ] && [[ "$exe" == /nix/store/* ]] \
+    && [ "$generated" = "$exe" ]; then
     printf 'ready\tPR227 test build absent from Alpha runtime (moonshine %s)\n' "${exe:-unknown}"
     return 0
   fi
-  printf 'waiting\tPR227 test override present (runtime=%s persistent=%s root=%s stream_active=%s exe=%s)\n' \
-    "$runtime" "$persistent" "$root" "$active" "${exe:-unknown}"
+  printf 'waiting\tPR227 runtime not verified (runtime=%s persistent=%s root=%s stream_active=%s service_active=%s exe=%s expected=%s)\n' \
+    "${runtime:-unknown}" "${persistent:-unknown}" "${root:-unknown}" "${active:-unknown}" \
+    "${active_service:-unknown}" "${exe:-unknown}" "${generated:-unknown}"
 }
 
 # Collect evidence from Alpha as key=value lines and canonicalize to JSON.
@@ -165,7 +175,17 @@ printf 'runtime_override=%s\n' "$runtime"
 printf 'persistent_override=%s\n' "$persistent"
 printf 'candidate_root=%s\n' "$root"
 printf 'stream_active=%s\n' "$active"
+# Verify the active process against the executable in the generated service.
+# Missing service or ambiguous binary identity must never report ready.
+generated=""
+config_exec=$(systemctl show moonshine.service -p ExecStart --value 2>/dev/null || true)
+if [[ "$config_exec" =~ path=([^\ ;]+) ]]; then
+  generated=$(readlink -f "${BASH_REMATCH[1]}" 2>/dev/null || true)
+fi
+systemctl is-active --quiet moonshine.service && service_active=true || service_active=false
 printf 'running_exe=%s\n' "$exe"
+printf 'generated_exe=%s\n' "$generated"
+printf 'service_active=%s\n' "$service_active"
 REMOTE
 ) || return 1
       ;;
