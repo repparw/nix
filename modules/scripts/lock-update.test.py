@@ -74,6 +74,21 @@ class LockUpdate(unittest.TestCase):
             "'refs/heads/automation/flake-lock', os.environ['FIXTURE_MAIN']], check=True)\n"
             "    print('https://github.com/fixture/nix/pull/123')\n"
             "elif args and args[0] == 'api':\n"
+            "    endpoint = next(arg for arg in args if arg.startswith('repos/'))\n"
+            "    sha = subprocess.check_output(['git', '--git-dir', remote, 'rev-parse', 'automation/flake-lock'], text=True).strip()\n"
+            "    if '/pulls/' in endpoint:\n"
+            "        print(json.dumps({'state': 'open', 'head': {'repo': {'full_name': 'fixture/nix'}, 'ref': 'automation/flake-lock', 'sha': 'wrong' if os.environ['FIXTURE_WRONG_PR_HEAD'] == '1' else sha}, 'base': {'ref': 'main'}}))\n"
+            "        sys.exit(0)\n"
+            "    if endpoint.endswith('/approve'):\n"
+            "        if os.environ['FIXTURE_APPROVAL_FAIL'] == '1': sys.exit(1)\n"
+            "        (root / ('approved-' + endpoint.split('/')[-2])).write_text('1')\n"
+            "        sys.exit(0)\n"
+            "    if 'event=pull_request' in args:\n"
+            "        workflow = 'pr-title.yml' if 'pr-title.yml/runs' in endpoint else 'ci.yml'\n"
+            "        run = 12 if workflow == 'pr-title.yml' else 11\n"
+            "        conclusion = os.environ['FIXTURE_PR_CI'] if (root / f'approved-{run}').exists() else 'action_required'\n"
+            "        print(json.dumps({'id': run, 'status': 'completed', 'conclusion': conclusion, 'head_sha': sha, 'head_branch': 'automation/flake-lock', 'event': 'pull_request', 'path': '.github/workflows/' + ('other.yml' if os.environ['FIXTURE_WRONG_RUN_PATH'] == '1' else workflow)}))\n"
+            "        sys.exit(0)\n"
             "    if any('pr-title.yml/runs' in arg for arg in args):\n"
             "        if (root / 'dispatched-title').exists(): print('2')\n"
             "        sys.exit(0)\n"
@@ -141,6 +156,10 @@ class LockUpdate(unittest.TestCase):
         late_branch_race=False,
         candidate_dispatch_fail=False,
         pre_merge_main_race=False,
+        approval_fail=False,
+        wrong_pr_head=False,
+        wrong_run_path=False,
+        pr_ci="success",
     ):
         env = os.environ | {
             "PATH": f"{self.bin}:{os.environ['PATH']}",
@@ -155,6 +174,10 @@ class LockUpdate(unittest.TestCase):
             "FIXTURE_CANDIDATE_DISPATCH_FAIL": str(int(candidate_dispatch_fail)),
             "FIXTURE_MAIN_DISPATCH_FAIL": "0",
             "FIXTURE_PRE_MERGE_MAIN_RACE": str(int(pre_merge_main_race)),
+            "FIXTURE_APPROVAL_FAIL": str(int(approval_fail)),
+            "FIXTURE_WRONG_PR_HEAD": str(int(wrong_pr_head)),
+            "FIXTURE_WRONG_RUN_PATH": str(int(wrong_run_path)),
+            "FIXTURE_PR_CI": pr_ci,
             "REAL_GIT": self.real_git,
             "FIXTURE_REMOTE": str(self.remote),
             "FIXTURE_MAIN": self.main,
@@ -166,7 +189,7 @@ class LockUpdate(unittest.TestCase):
             "LOCK_UPDATE_POLL_ATTEMPTS": "3",
         }
         (self.root / "requests").write_text("")
-        for marker in [*self.root.glob("dispatched-*"), self.root / "main-raced"]:
+        for marker in [*self.root.glob("dispatched-*"), *self.root.glob("approved-*"), self.root / "main-raced"]:
             if marker.exists():
                 marker.unlink()
         result = subprocess.run(
@@ -279,7 +302,7 @@ class LockUpdate(unittest.TestCase):
         result = self.update(pre_merge_main_race=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertTrue((self.root / "main-raced").exists())
-        self.assertIn("main changed before the atomic lock fast-forward", result.stderr)
+        self.assertIn("Atomic lock fast-forward was rejected", result.stderr)
 
         # The racing main commit wins, but it still has the old lock tree. The
         # validated lock candidate must not be reachable from main.
@@ -302,6 +325,35 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertEqual(self.main_sha(), self.main)
 
+    def test_approves_both_required_pr_runs_before_publishing(self):
+        result = self.update()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        approvals = [r for r in self.requests if r[0] == "api" and any(a.endswith('/approve') for a in r)]
+        self.assertEqual(len(approvals), 2)
+        self.assertEqual(self.main_sha(), self.branch_sha())
+
+    def test_approval_failure_cannot_publish_despite_successful_dispatches(self):
+        result = self.update(approval_fail=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.main_sha(), self.main)
+
+    def test_normal_pr_failure_cannot_publish_despite_successful_dispatches(self):
+        result = self.update(pr_ci="failure")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.main_sha(), self.main)
+
+    def test_stale_pr_cannot_be_approved(self):
+        result = self.update(wrong_pr_head=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.main_sha(), self.main)
+        self.assertFalse(any(r[0] == "api" and any(a.endswith('/approve') for a in r) for r in self.requests))
+
+    def test_unexpected_workflow_cannot_be_approved(self):
+        result = self.update(wrong_run_path=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.main_sha(), self.main)
+        self.assertFalse(any(r[0] == "api" and any(a.endswith('/approve') for a in r) for r in self.requests))
+
     def test_ci_dispatch_guard_rejects_moved_ref(self):
         guards = [
             line.strip().removeprefix("run: ")
@@ -323,8 +375,8 @@ class LockUpdate(unittest.TestCase):
                 )
                 self.assertEqual(result.returncode == 0, success)
         self.assertEqual(VALIDATION.count("ref: ${{ github.sha }}"), checkout_count)
-        self.assertIn("paths-ignore:", CI)
-        self.assertIn("- flake.lock", CI)
+        self.assertIn("  pull_request:", CI)
+        self.assertNotIn("paths-ignore:", CI)
 
 
 if __name__ == "__main__":

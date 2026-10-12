@@ -74,6 +74,50 @@ jobs:
             wait_for_ci "$ref" "$sha" >/dev/null
           }
 
+          verify_lock_pr() {
+            if [ "$(git ls-remote --heads origin "$branch" | cut -f1)" != "$revision" ] \
+              || [ "$(git diff --name-only "$main_sha" "$revision")" != flake.lock ]; then
+              echo 'Lock candidate changed or contains other files; refusing workflow approval.' >&2
+              return 1
+            fi
+            gh api "repos/$GH_REPO/pulls/$pr" | jq -e \
+              --arg repo "$GH_REPO" --arg branch "$branch" --arg sha "$revision" \
+              '.state == "open" and .head.repo.full_name == $repo
+               and .head.ref == $branch and .head.sha == $sha and .base.ref == "main"' >/dev/null
+          }
+
+          wait_for_pr_workflow() {
+            local workflow="$1" row run_id status conclusion approved='' attempt=0
+            while [ "$attempt" -lt "$poll_attempts" ]; do
+              row=$(gh api --method GET "repos/$GH_REPO/actions/workflows/$workflow/runs" \
+                -f branch="$branch" -f head_sha="$revision" -f event=pull_request \
+                --jq ".workflow_runs | map(select(.pull_requests | any(.number == $pr))) | sort_by(.run_number) | last // empty")
+              if [ -n "$row" ]; then
+                jq -e --arg sha "$revision" --arg branch "$branch" --arg workflow "$workflow" \
+                  '.head_sha == $sha and .head_branch == $branch and .event == "pull_request"
+                   and .path == (".github/workflows/" + $workflow)' <<< "$row" >/dev/null
+                run_id=$(jq -r .id <<< "$row")
+                status=$(jq -r .status <<< "$row")
+                conclusion=$(jq -r '.conclusion // ""' <<< "$row")
+                if [ "$conclusion" = action_required ]; then
+                  if [ "$approved" != "$run_id" ]; then
+                    verify_lock_pr
+                    gh api --method POST "repos/$GH_REPO/actions/runs/$run_id/approve" >/dev/null
+                    approved=$run_id
+                  fi
+                elif [ "$status" = completed ]; then
+                  if [ "$conclusion" = success ]; then return 0; fi
+                  echo "Required PR workflow $workflow run $run_id concluded $conclusion" >&2
+                  return 1
+                fi
+              fi
+              attempt=$((attempt + 1))
+              sleep "$poll_seconds"
+            done
+            echo "Timed out waiting for required PR workflow $workflow on $revision" >&2
+            return 1
+          }
+
           main_sha=$(git rev-parse HEAD)
           expected=$(git ls-remote --heads origin "$branch" | cut -f1)
           if [ -n "$expected" ]; then
@@ -152,6 +196,12 @@ jobs:
           fi
           gh run watch "$title_run" --exit-status
 
+          # Dispatched checks do not enter the PR's protection rollup. Approve
+          # only this verified lock candidate's normal CI and title runs.
+          verify_lock_pr
+          wait_for_pr_workflow ci.yml
+          wait_for_pr_workflow pr-title.yml
+
           if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$main_sha" ]; then
             echo 'main changed while lock CI was running; leaving the validated PR for the next refresh.' >&2
             exit 1
@@ -169,7 +219,7 @@ jobs:
           # Because revision is a direct child of main_sha, this is a fast-forward
           # when main is unchanged. The lease rejects any concurrent main movement.
           if ! git push "--force-with-lease=refs/heads/main:$main_sha" origin "$revision:refs/heads/main"; then
-            echo 'main changed before the atomic lock fast-forward; leaving the validated PR open for refresh.' >&2
+            echo 'Atomic lock fast-forward was rejected by branch protection or concurrent main movement; leaving the PR open.' >&2
             exit 1
           fi
           if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$revision" ]; then
