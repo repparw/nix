@@ -50,6 +50,9 @@ class LockUpdate(unittest.TestCase):
         module = self.checkout / "modules/_services/authelia.nix"
         module.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(REPO / ".github/upstream/fixtures/authelia-before.nix.txt", module)
+        # Nix-store source fixtures are read-only; a real Git checkout is writable.
+        # Exercise the atomic cleanup against checkout-like permissions.
+        module.chmod(0o644)
         (self.checkout / "flake.lock").write_text(lock_fixture("old"))
         self.git("add", ".", cwd=self.checkout)
         self.git("commit", "-m", "fixture", cwd=self.checkout)
