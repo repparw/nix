@@ -16,6 +16,12 @@ AUTHELIA_MODULE = ROOT / "modules/_services/authelia.nix"
 AUTHELIA_MARKER = "autheliaPackage"
 AUTHELIA_STALE_HASH = "sha256-YUInqRclRdnMzxfJKuVdXwKaRzJd9sFu16dxCAgVJI8"
 
+# Keep this exact. A changed override must be reviewed instead of rewritten by
+# automation, even if the line count and surrounding markers still match.
+AUTHELIA_OVERRIDE = "  # pnpm 12.9 changed the dependency output: nixpkgs issue #571789.\n  # Only repair the known aarch64 hash; a corrected upstream hash retires this.\n  autheliaPackage =\n    if\n      pkgs.stdenv.hostPlatform.system == \"aarch64-linux\"\n      && pkgs.authelia.version == \"4.39.28\"\n      && pkgs.authelia.web.pnpmDeps.outputHash == \"sha256-B/Au9YICuRM6+J4DojFbXf2IEWC+j1jRsU68nn08Puk=\"\n    then\n      pkgs.authelia.override {\n        authelia-web = pkgs.authelia.web.overrideAttrs (old: {\n          pnpmDeps = old.pnpmDeps.overrideAttrs {\n            outputHash = \"sha256-YUInqRclRdnMzxfJKuVdXwKaRzJd9sFu16dxCAgVJI8=\";\n          };\n        });\n      }\n    else\n      pkgs.authelia;\n"
+AUTHELIA_CONSUMER = "        package = autheliaPackage;"
+AUTHELIA_REPLACEMENT = "        package = pkgs.authelia;"
+
 
 def pin(lock, name):
     node = lock["nodes"]["root"]["inputs"][name]
@@ -50,10 +56,24 @@ def plan(old, candidate, registry, module, contains_fn=contains, api_fn=api):
         # An additional atomic publisher needs its own safe cleanup handler.
         raise ValueError("unexpected atomic watcher")
     item = registry["authelia-pnpm-hash"]
-    if not module.exists() or AUTHELIA_MARKER not in module.read_text():
+    if not module.exists():
+        return {"action": "blocked", "atomic": [], "reason": "Authelia module missing"}
+    content = module.read_text()
+    if AUTHELIA_MARKER not in content:
+        # Require positive evidence for the real service declaration. A renamed
+        # variable or an otherwise altered hash override cannot be assumed done.
+        leftover = (
+            AUTHELIA_STALE_HASH,
+            "pnpmDeps = old.pnpmDeps.overrideAttrs",
+            "authelia-web = pkgs.authelia.web.overrideAttrs",
+        )
+        if any(token in content for token in leftover):
+            return {"action": "blocked", "atomic": [], "reason": "unrecognized Authelia override survives"}
+        if "services.authelia.instances.main = {" not in content:
+            return {"action": "blocked", "atomic": [], "reason": "Authelia service declaration missing"}
         return {"action": "normal", "atomic": [], "reason": "Authelia workaround already removed"}
-    if pin(old, "nixpkgs") == pin(candidate, "nixpkgs"):
-        return {"action": "normal", "atomic": [], "reason": "Nixpkgs pin unchanged"}
+    if content.count(AUTHELIA_OVERRIDE) != 1 or content.count(AUTHELIA_CONSUMER) != 1:
+        return {"action": "blocked", "atomic": [], "reason": "Authelia override shape changed"}
     try:
         fixed = contains_fn(item["fix_commit"], pin(candidate, "nixpkgs"))
     except (OSError, ValueError, subprocess.SubprocessError, KeyError, TypeError):
@@ -74,26 +94,15 @@ def plan(old, candidate, registry, module, contains_fn=contains, api_fn=api):
 
 
 def remove_authelia(module):
-    """Apply only the exact cleanup shape verified by the live pilot."""
-    lines = module.read_text().splitlines(keepends=True)
-    def line_numbers(needle):
-        return [i for i, line in enumerate(lines) if needle in line]
-    starts = line_numbers("  # pnpm 12.9 changed the dependency output: nixpkgs issue #571789.")
-    ends = [i for i, line in enumerate(lines) if line.strip() == "pkgs.authelia;"]
-    consumers = line_numbers("        package = autheliaPackage;")
-    if len(starts) != 1 or len(ends) != 1 or len(consumers) != 1:
-        raise ValueError("Authelia override shape changed")
-    start, end, consumer = starts[0], ends[0], consumers[0]
-    if start >= end or end >= consumer or "  autheliaPackage =" not in "".join(lines[start:start+4]):
-        raise ValueError("Authelia override ordering changed")
-    if end - start + 2 != 18:
-        raise ValueError("unexpected Authelia cleanup size")
-    result = "".join(line for i, line in enumerate(lines)
-                     if not start <= i <= end and i != consumer)
+    """Remove only the byte-for-byte known override, leaving explicit package selection."""
+    content = module.read_text()
+    if content.count(AUTHELIA_OVERRIDE) != 1 or content.count(AUTHELIA_CONSUMER) != 1:
+        raise ValueError("Authelia override differs from reviewed fixture")
+    result = content.replace(AUTHELIA_OVERRIDE, "", 1).replace(
+        AUTHELIA_CONSUMER, AUTHELIA_REPLACEMENT, 1)
     if AUTHELIA_STALE_HASH in result or AUTHELIA_MARKER in result:
         raise ValueError("Authelia override survived cleanup")
     module.write_text(result)
-
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
