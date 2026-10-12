@@ -62,6 +62,28 @@ class Readiness(unittest.TestCase):
         self.assertFalse(watch.flagged_queues_fixed(site))
         self.assertTrue(watch.flagged_queues_fixed(site + site))
 
+    def test_gamescope_inspects_raw_pinned_source_not_the_host_overlay(self):
+        # A host's pkgs carry the repository's vkroots overlay, so building
+        # from one would prove the workaround instead of the fix (observed:
+        # a false PINNED-READY while vkroots#17 was still unmerged).
+        captured = {}
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory)
+            (out / "vkroots.h").write_text(
+                "deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, j, &queue);"
+            )
+
+            def fake_run(command, **kwargs):
+                captured["expression"] = command[command.index("--expr") + 1]
+                return subprocess.CompletedProcess(command, 0, f"{out}\n", "")
+
+            with patch.object(watch.subprocess, "run", side_effect=fake_run):
+                self.assertFalse(watch.gamescope_fixed("nix-pin"))
+        self.assertIn('builtins.getFlake "github:NixOS/nixpkgs/nix-pin"', captured["expression"])
+        self.assertIn("legacyPackages", captured["expression"])
+        self.assertNotIn("nixosConfigurations", captured["expression"])
+        self.assertNotIn("UPSTREAM_WATCH_ROOT", captured["expression"])
+
     def test_completed_reads_checked_out_tree(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(watch, "ROOT", Path(directory)), patch.object(watch, "detect") as detect:
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")

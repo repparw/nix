@@ -80,17 +80,19 @@ def flagged_queues_fixed(header):
     return len(bodies) >= 2 and all("VkDeviceQueueInfo2" in body and "GetDeviceQueue2(" in body for body, _ in bodies)
 
 
-def gamescope_fixed():
-    # Run only unpack + package patches. Use raw pkgs.gamescope, without the
-    # repository's gamescopeHdr postPatch. No GPU, activation, or lock mutation.
-    expression = '''let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT");
-    g = f.nixosConfigurations.alpha.pkgs.gamescope.override { enableWsi = true; };
-    in g.overrideAttrs (_: { pname = "gamescope-upstream-source-check";
+def gamescope_fixed(revision):
+    # Inspect the raw pinned nixpkgs source after only nixpkgs' own patches:
+    # building a host's pkgs would carry the repository's vkroots overlay and
+    # prove the workaround instead of the fix. No GPU, activation, or lock
+    # mutation.
+    expression = f'''let f = builtins.getFlake "github:NixOS/nixpkgs/{revision}";
+    g = f.legacyPackages.x86_64-linux.gamescope.override {{ enableWsi = true; }};
+    in g.overrideAttrs (_: {{ pname = "gamescope-upstream-source-check";
       configurePhase = "true"; buildPhase = "true"; doCheck = false;
       installPhase = "mkdir -p $out; cp subprojects/vkroots/vkroots.h $out/vkroots.h";
-      fixupPhase = "true"; })'''
+      fixupPhase = "true"; }})'''
     import os
-    result = subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--print-out-paths", "--expr", expression], env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, capture_output=True, text=True, timeout=900, check=True)
+    result = subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--print-out-paths", "--expr", expression], capture_output=True, text=True, timeout=900, check=True)
     return flagged_queues_fixed((Path(result.stdout.strip()) / "vkroots.h").read_text())
 
 
@@ -169,7 +171,7 @@ def detect(name, lock):
         module = source("nix-community/home-manager", "modules/services/voxtype.nix", pin(lock, "home-manager"))
         fixed = all(re.search(rf"\b{option}\s*=\s*\[\s*\"graphical-session.target\"", module) for option in ("PartOf", "After", "WantedBy"))
     elif name == "gamescope-vkroots":
-        fixed = gamescope_fixed()
+        fixed = gamescope_fixed(pin(lock, "nixpkgs"))
     elif name == "sonarr-jellyfin":
         return "host-owned: inspect running Sonarr on Alpha"
     else:
