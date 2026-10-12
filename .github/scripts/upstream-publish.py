@@ -57,6 +57,13 @@ def publish(name, spec, repo):
     sha = remote.split()[0] if remote else None
     if prs and (len(prs) != 1 or not sha or prs[0]["headRefOid"] != sha):
         raise ValueError("open PR and remote branch disagree")
+    if not prs:
+        # Check before branch creation, including a closed PR whose branch was
+        # deleted. Rejected candidates must not recreate an orphan branch.
+        previous = gh_json("pr", "list", "--repo", repo, "--head", branch,
+                           "--state", "closed", "--json", "number")
+        if previous:
+            raise ValueError("branch belongs to a closed PR; needs review")
     with tempfile.TemporaryDirectory(prefix="upstream-candidate-") as directory:
         candidate = Path(directory) / "checkout"
         if sha:
@@ -94,11 +101,6 @@ def publish(name, spec, repo):
                 number = prs[0]["number"]
             else:
                 # This also recovers a published branch whose PR creation failed.
-                # Never reopen a closed PR or reuse a rejected branch.
-                previous = gh_json("pr", "list", "--repo", repo, "--head", branch,
-                                   "--state", "closed", "--json", "number")
-                if previous:
-                    raise ValueError("branch belongs to a closed PR; needs review")
                 body = Path(directory) / "body.md"
                 body.write_text(f"Retires the {name} workaround after the upstream fix reached "
                                 "the flake's checked-out pin.\n\n"

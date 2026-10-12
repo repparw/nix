@@ -131,6 +131,16 @@ class Publication(unittest.TestCase):
         self.assertTrue(failed)
         self.assertFalse(self.prs)
 
+    def test_closed_pr_with_deleted_branch_stays_deleted(self):
+        self.publish()
+        self.git("push", "--quiet", "origin", "--delete", "automation/upstream-fixture")
+        self.prs = []
+        self.closed = [{"number": 42}]
+        with self.assertRaises(ValueError):
+            self.publish()
+        self.assertEqual(self.git("ls-remote", "--heads", "origin", "automation/upstream-fixture"), "")
+        self.assertEqual(len(self.dispatches), 2)
+
     def test_one_conflict_does_not_block_other_watchers(self):
         registry = {"broken": {"mode": "post-lock", "cleanup": "missing.patch"},
                     "fixture": self.contract}

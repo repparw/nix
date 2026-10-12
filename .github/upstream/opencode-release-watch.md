@@ -9,7 +9,7 @@ detector never mutates pins, timers, services, or the lock.
 
 ## Readiness rule
 
-Readiness requires the *real* upstream v2 package source (`anomalyco/opencode`)
+Readiness requires the _real_ upstream v2 package source (`anomalyco/opencode`)
 at or after the tested `v2.0.26` tag — proven by exact tag-commit ancestry —
 packaged by both:
 
@@ -26,14 +26,14 @@ The separate T3 detector verifies stable GitHub Release metadata.
 
 ## Statuses
 
-| Status              | Meaning                                                                   |
-| ------------------- | ------------------------------------------------------------------------- |
-| `waiting-upstream`  | tested tag untagged upstream, or no packaging PR merged                   |
-| `waiting-unstable`  | a packaging PR merged but the channel still lacks real v2                 |
-| `merged-not-pinned` | channel packages real v2, root pin does not                                |
-| `PINNED-READY`      | channel and pin both package real v2 >= tested                             |
-| `completed`         | overlay absent from the tree and the pin packages real v2                  |
-| `unavailable (...)` | transport, parser, or unknown-source failure — always fails closed         |
+| Status              | Meaning                                                            |
+| ------------------- | ------------------------------------------------------------------ |
+| `waiting-upstream`  | tested tag untagged upstream, or no packaging PR merged            |
+| `waiting-unstable`  | a packaging PR merged but the channel still lacks real v2          |
+| `merged-not-pinned` | channel packages real v2, root pin does not                        |
+| `PINNED-READY`      | channel and pin both package real v2 >= tested                     |
+| `completed`         | overlay absent from the tree and the pin packages real v2          |
+| `unavailable (...)` | transport, parser, or unknown-source failure — always fails closed |
 
 `completed` describes the package workaround and pin only. Native builds and
 fleet runtime verification remain separate requirements for closing #229.
