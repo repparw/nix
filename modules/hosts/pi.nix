@@ -13,6 +13,7 @@
       den.aspects.nixos-services._.automations
       den.aspects.nixos-services._.homeassistant
       den.aspects.nixos-services._.fleet-health
+      den.aspects.nixos-services._.fleet-readiness
       den.aspects.fleet-controller
       den.aspects.pi-generation-retention
       den.aspects.lan-edge
@@ -37,6 +38,10 @@
         modules.backup.hostRecovery.enable = true;
         modules.backup.hostRecovery.quiesceUnits = [ "container@homeassistant.service" ];
         modules.backup.hostRecovery.capturePaths = [ "/home/repparw/services/hass" ];
+        # Pi is the deployment controller: it probes the runtime readiness of
+        # host-owned upstream waits (Sonarr/Jellyfin, Moonshine PR227) after
+        # each Alpha convergence and on its own timer.
+        modules.fleet-readiness.enable = true;
         # Tmpfs-root landing (phase 2): proven twice by the standalone trial in
         # ~/impermanence-pi-test/evidence (thread dd50ec1a). /persist is the
         # former SD root partition; the initrd check-persistence-state guard
