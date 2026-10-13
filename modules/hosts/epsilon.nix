@@ -32,6 +32,11 @@
       {
         imports = [ ../_services/glance.nix ];
 
+        nix.settings = {
+          max-jobs = 1;
+          cores = 1;
+        };
+
         sops.secrets.repparwPasswordHash = {
           sopsFile = ../../secrets/users-epsilon.sops.yaml;
           key = "repparwPasswordHash";
