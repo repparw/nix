@@ -98,6 +98,9 @@ elif name == 'ssh':
         with (root / "received").open("a") as received:
             received.write(json.dumps(payload) + "\n")
         print(json.dumps({"event_id": "wrong" if config.get("wrong_ack") else payload["event_id"]}))
+elif name == 'systemctl':
+    if config.get('readiness_failure'):
+        sys.exit(1)
 '''
 
 
@@ -118,7 +121,7 @@ class Deployment(unittest.TestCase):
         stub = self.bin / "stub"
         stub.write_text(f"#!{sys.executable}\n" + STUB)
         stub.chmod(0o755)
-        for name in ["git", "df", "curl", "nix", "deploy", "ssh", "sleep"]:
+        for name in ["git", "df", "curl", "nix", "deploy", "ssh", "sleep", "systemctl"]:
             (self.bin / name).symlink_to(stub)
         (self.bin / "python3").symlink_to(sys.executable)
         self.script = self.root / "fleet-update"
@@ -323,6 +326,9 @@ class Deployment(unittest.TestCase):
     def ingested(self):
         return [c for c in self.calls if c[0] == "ssh" and "hermes-package-ingest" in " ".join(c)]
 
+    def probes(self):
+        return [c for c in self.calls if c[0] == "systemctl" and "fleet-readiness-probe.service" in c]
+
     def outbox(self):
         directory = self.state / "package-events"
         return sorted(directory.glob("*.json")) if directory.exists() else []
@@ -347,6 +353,22 @@ class Deployment(unittest.TestCase):
         self.assertEqual(self.deliver().returncode, 0)
         self.assertEqual(len(self.ingested()), 3)
         self.assertEqual(self.outbox(), [])
+
+    def test_alpha_convergence_triggers_readiness_probe_once(self):
+        result = self.deploy()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.probes(), [["systemctl", "--no-block", "start", "fleet-readiness-probe.service"]])
+
+    def test_deferred_alpha_skips_readiness_probe(self):
+        result = self.deploy(busy_alpha=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.probes(), [])
+
+    def test_readiness_probe_failure_does_not_fail_deployment(self):
+        result = self.deploy(readiness_failure=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(self.probes()), 1)
+        self.assertEqual({json.loads(path.read_text())["host"] for path in self.outbox()}, {"alpha", "pi", "epsilon"})
 
     def test_deferred_convergence_queues_only_reached_hosts(self):
         result = self.deploy(busy_alpha=True)

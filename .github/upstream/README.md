@@ -50,6 +50,16 @@ while retaining their runtime completion checks. Sonarr/Jellyfin depends on
 the running service version and remains host-owned. Their local timers remain
 active until the fleet CI adapter is deployed and verified.
 
+The runtime predicates of the host-owned watchers moved to Pi: the
+`fleet-readiness-probe` service evaluates the running Sonarr version, the
+Sonarr log gate, Moonshine's PR227 test-build drop-ins, its candidate GC root
+and stream activity over SSH, enqueues a durable event per status change, and
+`fleet-readiness-deliver` posts queued events to Discord on an independent
+timer. It also runs after each Alpha convergence, non-blocking for the
+deployment. Until the replacement is verified on Pi, Alpha's
+`watch-moonshine-pr227` and `watch-sonarr-jellyfin` timers remain armed and
+stay the completion owners.
+
 Gamescope inspects `inputs.nixpkgs.legacyPackages`, bypassing repository
 overlays. Alpha's patched package cannot establish upstream readiness. Its
 cleanup retains WSI, removes only the queue workaround, and builds with
