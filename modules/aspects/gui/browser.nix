@@ -5,6 +5,15 @@
   ...
 }:
 let
+  heliumExtensionIds = [
+    "lmeddoobegbaiopohmpmmobpnpjifpii"
+    "nngceckbapebfimnlniiiahkandclblb"
+    "mnjggcdmjocbbbhaepdhchncahnbgone"
+    "enamippconapkdmgfgjchkhakpfinmaj"
+    "bnomihfieiccainjcjblhegjgglakjdd"
+    "dbepggeogbaibhgnhhndojpepiihcmeb"
+  ];
+
   allOpenInExtensionIds = [
     "lmeddoobegbaiopohmpmmobpnpjifpii"
     "mjoebkkejejidnkfdekpbooceogbapnf"
@@ -62,6 +71,12 @@ in
         "chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
           BrowserSignin = 0;
           PasswordManagerEnabled = false;
+          ExtensionSettings = lib.genAttrs heliumExtensionIds (_: {
+            installation_mode = "normal_installed";
+            # Helium rewrites this Web Store URL to its extension proxy. The
+            # Google URL bypasses that rewrite and stalls policy installs.
+            update_url = "https://update-url-to-be-replaced.qjz9zk";
+          });
         };
       };
     };
