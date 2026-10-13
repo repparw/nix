@@ -5,15 +5,6 @@
   ...
 }:
 let
-  heliumExtensionIds = [
-    "lmeddoobegbaiopohmpmmobpnpjifpii"
-    "nngceckbapebfimnlniiiahkandclblb"
-    "mnjggcdmjocbbbhaepdhchncahnbgone"
-    "enamippconapkdmgfgjchkhakpfinmaj"
-    "bnomihfieiccainjcjblhegjgglakjdd"
-    "dbepggeogbaibhgnhhndojpepiihcmeb"
-  ];
-
   allOpenInExtensionIds = [
     "lmeddoobegbaiopohmpmmobpnpjifpii"
     "mjoebkkejejidnkfdekpbooceogbapnf"
@@ -71,8 +62,6 @@ in
         "chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
           BrowserSignin = 0;
           PasswordManagerEnabled = false;
-
-          ExtensionInstallForcelist = heliumExtensionIds;
         };
       };
     };
