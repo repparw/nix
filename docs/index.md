@@ -38,7 +38,7 @@ files instead of copying module contents.
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
 - [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Prune t3code and opencode databases](runbooks/prune-t3code-opencode-dbs.md)
-- [Test OpenCode v2 alongside v1](runbooks/opencode-v2.md)
+- [Migrate the fleet to OpenCode v2](runbooks/opencode-v2.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
 - [Back up and restore a complete host](runbooks/host-recovery.md)
 - [Prepare pi and epsilon for persistent state](runbooks/host-persistence.md)

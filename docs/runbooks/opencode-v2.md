@@ -1,17 +1,22 @@
 ---
 type: Runbook
-title: Test OpenCode v2 alongside v1
+title: Migrate the fleet to OpenCode v2
 description: Isolated OpenCode v2 package, provider, data migration, and rollback boundaries.
 when: Read before trying OpenCode v2 or replacing the v1 provider.
 resource: modules/aspects/ai/opencode-v2.nix
 tags: [opencode, migration, ai, t3code, backups]
 ---
 
-# Test OpenCode v2 alongside v1
+# Migrate the fleet to OpenCode v2
 
-Alpha includes the `opencode-v2` aspect. It installs `opencode2` and adds an
-`OpenCode 2` T3 provider. V1 keeps its binary, web service, and provider ID.
-T3 starts and authenticates the v2 server through the separate launcher.
+Alpha, Pi, and Epsilon include `opencode-v2-primary`. The `opencode` command
+uses the isolated v2 launcher, and the existing T3 `opencode` provider ID
+selects v2. T3 starts and authenticates its server. The old port-4096 web
+service is disabled. The separate trial provider entry is disabled after the
+canonical provider takes over; active rehearsal tasks retain their own instance.
+
+The disabled `OpenCode 1 rollback` provider retains the v1 binary path. The
+original databases remain in the v1 data directory.
 
 V2 uses separate XDG roots named `opencode-v2`. Its database is
 `~/.local/share/opencode-v2/opencode/opencode.db`, and its generated configuration
@@ -59,6 +64,11 @@ writers and take a fresh backup before a final replacement.
 Rollback means selecting the retained v1 provider and data. Never point v1 at
 a migrated v2 database, and never overwrite v2 data with a v1 backup after new
 v2 work has begun.
+
+Enable the rollback provider and start its retained binary on port 4096, or
+restore the previous system generation. Its database directory remains separate
+from v2. A rollback cannot include new v2 conversations without a supported
+export and import procedure.
 
 The temporary source package is taken from Nixpkgs PR #569770 at commit
 `3a37a0e661f12c9946354a39c754dd8eb3b3e501`, with source and dependency hashes
