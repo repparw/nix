@@ -1,5 +1,5 @@
 ---
-type: Research
+type: Research Note
 title: Hermes decision-gate pilot
 description: Measurement-first experiment for reducing repeated Hermes investigations without suppressing important events.
 when: Before adding model routing or workflow-learning to Hermes intake.
@@ -11,7 +11,7 @@ tags: [hermes, automation, evaluation, triage]
 
 ## Decision
 
-Do not install AgentRun or add an LLM classifier yet. Existing crash intake already fingerprints and suppresses repeated occurrences, and the change-detection service already performs deterministic extraction. First measure what *actually* wakes Hermes unnecessarily. Preserve current notification, delivery, and retry semantics.
+Do not install AgentRun or add an LLM classifier yet. Existing crash intake already fingerprints and suppresses repeated occurrences, and the change-detection service already performs deterministic extraction. First measure what _actually_ wakes Hermes unnecessarily. Preserve current notification, delivery, and retry semantics.
 
 ## Scope and baseline
 
@@ -26,7 +26,7 @@ Record the denominator and observation period. Never claim savings from a run th
 
 ## Proposed shadow-only gate
 
-For each already-admitted *new* fingerprint, produce a versioned decision record with: fingerprint identifier, rule version, evidence category, route (`research` / `defer` / `operator-review`), and reason code. Run in **shadow mode**: compute the proposed route but continue the existing Hermes investigation unchanged. No changes to delivery, inbox consumption, receipts, or Discord notification.
+For each already-admitted _new_ fingerprint, produce a versioned decision record with: fingerprint identifier, rule version, evidence category, route (`research` / `defer` / `operator-review`), and reason code. Run in **shadow mode**: compute the proposed route but continue the existing Hermes investigation unchanged. No changes to delivery, inbox consumption, receipts, or Discord notification.
 
 Initially use deterministic rules only. Any uncertain case routes to research. Do not use a general-purpose model to decide whether security or operational events can be discarded.
 
