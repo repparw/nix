@@ -121,6 +121,24 @@ sources. `rsync-job-buptohdd` handles Pictures and Documents separately and
 protects those two state subtrees. Restore staged offsite state beneath the
 user's home, rather than to its original `/var/lib` staging path.
 
+Alpha's `rsync-job-buprpi` pulls Pi's private services export at
+`/var/lib/pi-services-backup/current`. The fixed `pi-services-backup-send`
+helper prepares the export through the existing `repparw` SSH connection,
+then drops privileges before sending it. It accepts only this job's sender
+arguments. SQLite files are exported transactionally; historical service
+trees are retained. Only the obsolete `dns/listener.conf` and
+`dns/resolved.conf` links are excluded. Links into `/nix/store` and
+`dns/hosts` pointing to `/etc/hosts` are allowed. Other external links and
+dangling links abort preparation. Existing source ownership and modes
+remain unchanged; SQLite may create journal sidecars owned like their
+source database.
+
+Preparation publishes a new generation only after every file succeeds and
+holds its lock until rsync exits. `--delete-after` inhibits destination
+deletion if a source error occurs. Restore exported files to their service
+paths with the required service ownership; the export's owner is the
+backup account.
+
 Daily jobs exclude reproducible caches, container runtime mounts and swap.
 Retention is 7d/4w/12m with a 5% data check each run. The pi/epsilon live backups are
 not automatically consistent database exports.
@@ -139,13 +157,17 @@ decrypt it.
 Lock maintenance runs in GitHub Actions; deployment runs on pi:
 
 - `.github/workflows/lock-update.yml` runs daily at 04:15 UTC or through
-  `workflow_dispatch`. It opens or refreshes `automation/flake-lock` as a PR.
-  It never pushes main or activates a host.
+  `workflow_dispatch`. It opens or refreshes `automation/flake-lock`, explicitly
+  dispatches `ci.yml` for that exact lock commit, and publishes that same
+  validated commit to `main` only when the candidate is still lock-only and
+  `main` has not moved. It never activates a host.
 - `fleet-deploy.timer` runs daily at 05:30 in the controller's timezone.
-  It snapshots current `origin/main` and requires a successful push run of
-  `ci.yml` for that exact commit before evaluation or activation.
-  Missing, pending, failed, or unavailable CI results defer deployment without
-  changing the rollback streak. The next scheduled run retries current main.
+  It snapshots current `origin/main` and requires a successful exact-SHA
+  `ci.yml` run for that commit: either a normal push/main dispatch, or the
+  updater's guarded `automation/flake-lock` dispatch for the exact SHA that was
+  atomically fast-forwarded to `main`. Missing, pending, failed, or unavailable
+  CI results defer deployment without changing the rollback streak. The next
+  scheduled run retries current main.
 - Preparation captures the same immutable Git revision for every selected
   host, evaluates each configuration sequentially, then builds and pins each
   deploy-rs profile on its target. It verifies the built system's revision
@@ -202,9 +224,13 @@ in every build job.
 The lock workflow uses the built-in `GITHUB_TOKEN`. Its permissions are
 Contents write for the lock branch, Pull requests write for the PR, and Actions
 write for dispatching CI. No separate token or repository secret is needed.
-The repository must allow GitHub Actions to create pull requests. Its current
-`can_approve_pull_request_reviews` setting is enabled; the workflow never
-approves or merges a PR.
+The repository must allow GitHub Actions to create pull requests and update
+`main`. No approval is synthesized: after exact candidate CI succeeds, the
+workflow requires that candidate to be a direct child of the validated main SHA
+and then fast-forwards `main` to that exact candidate with a lease pinned to the
+original main SHA. The CI-validated commit and the commit later deployed are
+therefore identical, while base validation and publication remain one
+compare-and-swap operation.
 
 Run `gh workflow run lock-update.yml` after this workflow and CI's
 `workflow_dispatch` support reach main. GitHub requires the dispatched workflow
@@ -213,9 +239,13 @@ workflow relies on; see [GitHub's workflow triggering rules](https://docs.github
 
 After publishing the lock branch and opening or updating its PR, the updater
 explicitly dispatches `ci.yml` on `automation/flake-lock` with the expected head
-SHA. Both CI jobs verify that SHA before checking out the event's immutable
+SHA, and `pr-title.yml` with that SHA and the PR number. Title validation reads
+the current PR title and rejects a changed head or closed PR. Both
+`validate / gate` and `conventional-title` must succeed before publication.
+Every CI job verifies that SHA before checking out the event's immutable
 `github.sha`. A branch change during dispatch fails that check rather than
-validating a different commit.
+validating a different commit. Lock-only PR events are ignored to avoid the
+approval-required duplicate run produced for bot-authored PRs.
 
 An unchanged lock tree on the same main parent reuses the existing commit.
 The updater checks for an existing dispatched run on that branch and SHA before
@@ -226,12 +256,17 @@ request failure is reported, and a retry checks GitHub before dispatching.
 If an unchanged commit already has a failed or canceled run, rerun that CI run
 explicitly after diagnosing it; the nightly updater does not repeat it.
 
-Review the lock commit's dispatched `gate` and `persistence-vm` results before
-merging. Bot PR events may also create approval-required runs; approving those
-is unnecessary for the explicit dispatch and can start duplicate PR checks.
-Deployment still requires a successful **push** CI run for the exact merged
-main commit. A lock-branch dispatch, or even a manual dispatch on main, cannot
-satisfy that separate deployment gate.
+A successful lock-branch gate is the publication condition. The updater then
+fast-forwards `main` directly to the validated candidate SHA with an atomic
+compare-and-swap. If `main` changes after validation but before the push, the
+lease rejects publication and the PR remains for the next refresh. There is no
+synthetic merge commit and no second CI run: the SHA validated on
+`automation/flake-lock` is the exact SHA that becomes `main`.
+
+Pi accepts that successful guarded lock-branch dispatch for the exact current
+`main` SHA, as well as successful push or manual-main CI for the same SHA.
+Pull-request runs and dispatches for unrelated branches never satisfy the
+deployment gate.
 
 The lock workflow has its own concurrency group and one branch. Pi's pause
 flag affects deployment only. Applying this configuration removes the old
@@ -267,6 +302,21 @@ Failure handling:
   timed-out probe can clear before the next attempt.
 - Boot-level regressions remain a rescue-console problem; re-imaging the pi
   from a cloned SD of the last known-good system is the final recovery path.
+
+### Runtime readiness probe (`fleet-readiness-probe.timer`, every 2 h)
+
+Host-owned upstream waits whose predicates need Alpha's runtime state — the
+running Sonarr build version and its Jellyfin-push log gate, plus Moonshine's
+PR227 test-build drop-ins, candidate GC root and stream activity — are
+evaluated by `fleet-readiness-probe` on Pi over the deployment SSH key. A
+status change appends one fsynced event to `/var/lib/auto-update/readiness-events/`;
+`fleet-readiness-deliver` (every 5 min, like `fleet-package-deliver`) posts
+queued events to Discord and removes an entry only after a successful post, so
+a failed delivery is retried; an ambiguous Discord POST timeout may duplicate a post. The probe also runs
+best-effort after each Alpha convergence and never affects the deployment
+outcome; an unreachable Alpha keeps the previous status instead of fabricating
+a transition. Alpha's own watcher timers stay armed and remain the completion
+owners until this replacement is verified; the probe only reports evidence.
 
 ### Reading a deploy failure alert
 

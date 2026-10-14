@@ -75,6 +75,9 @@
           };
           extraConfig = {
             networking.firewall.allowedTCPPorts = [ service.port ];
+            # The host copies resolv.conf as host root before nspawn starts.
+            # A fixed user namespace cannot update that unmapped file.
+            services.resolved.enable = true;
 
             services.paperless = {
               enable = true;

@@ -21,7 +21,7 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "linuxserver";
     repo = "docker-mods";
-    rev = "radarr-striptracks";
+    rev = "c7db5ea19ad6ba8ada1708f54616c9ea801af5a1";
     hash = "sha256-nkGVyPY/tqgZ4SVc2NC/BGAEukhHxicZP7dJn1wOqb8=";
   };
 
@@ -72,7 +72,7 @@ stdenv.mkDerivation rec {
   '';
 
   passthru.updateScript = nix-update-script {
-    extraArgs = [ "--version=branch" ];
+    extraArgs = [ "--version=branch=radarr-striptracks" ];
   };
 
   meta = with lib; {

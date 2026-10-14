@@ -1,5 +1,6 @@
 { den, lib, ... }:
 let
+  # Temporary until nix-community/home-manager#9842 merges and HM input bumps past it
   hmCliampModule = builtins.fetchurl {
     url = "https://raw.githubusercontent.com/rachitvrma/home-manager/d1faef32f5e6ab3cb34ada5e030cbceb52307775/modules/programs/cliamp.nix";
     sha256 = "sha256-gtDq3a/wH7LQTGb5NuFTVQyrHURyaDv8+57MGYoRT6w=";
@@ -10,15 +11,16 @@ in
     nixos = { ... }: {
       nixpkgs.overlays = [
         (final: prev: {
+          # Temporary until bjarneo/cliamp#453 merges and nixpkgs bumps past it
           cliamp = prev.cliamp.overrideAttrs (old: {
-            version = "2.0.1-session-attach-b9aa7d9";
+            version = "2.0.1-session-attach-55ecd36";
             src = final.fetchFromGitHub {
               owner = "ryanrpj";
               repo = "cliamp";
-              rev = "b9aa7d94a9eb3f8c9439708f531ac6df756bdbff";
-              hash = "sha256-C1WQQi7Bif3SsZwkDx+EVdOkE5OygXJG7q/rUiBtKBo=";
+              rev = "55ecd36798bca8dd51a942d85503f91e37ab96f7";
+              hash = "sha256-87nEQ3Ay0u4stGoc3ShPX+z0zVhaTUCuQo72oZTVNT4=";
             };
-            vendorHash = "sha256-d/ENFm9b1DkIir1lz50VVX1pvuQpwPUVlA5XOC7Jj5o=";
+            vendorHash = "sha256-cKMGAVLRs6FwX9Gqq6wj11OPwK1TsTuVMR7uwI6Mwfg=";
           });
         })
       ];
@@ -41,6 +43,15 @@ in
             spotify = {
               client_id = "e79bc2a7d7f44a9e9153c0a5121ee0ce";
               bitrate = 320;
+            };
+
+            # Cookie-backed YouTube Music. The interactive wizard cannot run:
+            # programs.cliamp.settings owns config.toml as a read-only HM
+            # symlink, so provider keys must be declared here. Helium is a
+            # Chromium fork, so yt-dlp reads its profile through the chrome
+            # name plus path; "~" is expanded by yt-dlp.
+            ytmusic = {
+              cookies_from = "chrome:~/.config/net.imput.helium/Default";
             };
           };
           systemd.enable = true;

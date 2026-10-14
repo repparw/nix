@@ -16,13 +16,13 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
         with:
           ref: main
       - uses: DeterminateSystems/nix-installer-action@v22
-      - name: Update the lock PR
+      - name: Update, validate, and publish the lock PR
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -30,19 +30,241 @@ jobs:
         run: |
           set -euo pipefail
           branch=automation/flake-lock
+          poll_seconds=${LOCK_UPDATE_POLL_SECONDS:-15}
+          poll_attempts=${LOCK_UPDATE_POLL_ATTEMPTS:-160}
+
+          latest_ci() {
+            local ref="$1" sha="$2"
+            gh api --method GET "repos/$GH_REPO/actions/workflows/ci.yml/runs" \
+              -f branch="$ref" -f head_sha="$sha" -f event=workflow_dispatch \
+              --jq '.workflow_runs | sort_by(.run_number) | last // empty | [.id, .status, (.conclusion // "")] | @tsv'
+          }
+
+          wait_for_ci() {
+            local ref="$1" sha="$2" row run_id status conclusion attempt=0
+            while [ "$attempt" -lt "$poll_attempts" ]; do
+              row=$(latest_ci "$ref" "$sha")
+              if [ -n "$row" ]; then
+                IFS=$'\t' read -r run_id status conclusion <<< "$row"
+                if [ "$status" = completed ]; then
+                  if [ "$conclusion" = success ]; then
+                    printf '%s\n' "$run_id"
+                    return 0
+                  fi
+                  echo "CI run $run_id for $ref@$sha concluded $conclusion" >&2
+                  return 1
+                fi
+              elif [ "$ref" = main ] \
+                && [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$sha" ]; then
+                echo "main moved before exact merged-main CI became visible" >&2
+                return 1
+              fi
+              attempt=$((attempt + 1))
+              sleep "$poll_seconds"
+            done
+            echo "timed out waiting for CI on $ref@$sha" >&2
+            return 1
+          }
+
+          ensure_ci() {
+            local ref="$1" sha="$2"
+            if [ -z "$(latest_ci "$ref" "$sha")" ]; then
+              gh workflow run ci.yml --ref "$ref" -f expected_sha="$sha"
+            fi
+            wait_for_ci "$ref" "$sha" >/dev/null
+          }
+
+          verify_lock_pr() {
+            if [ "$(git ls-remote --heads origin "$branch" | cut -f1)" != "$revision" ] \
+              || [ "$(git diff --name-only "$main_sha" "$revision")" != flake.lock ]; then
+              echo 'Lock candidate changed or contains other files; refusing workflow approval.' >&2
+              return 1
+            fi
+            gh api "repos/$GH_REPO/pulls/$pr" | jq -e \
+              --arg repo "$GH_REPO" --arg branch "$branch" --arg sha "$revision" \
+              '.state == "open" and .head.repo.full_name == $repo
+               and .head.ref == $branch and .head.sha == $sha and .base.ref == "main"' >/dev/null
+          }
+
+          wait_for_pr_workflow() {
+            local workflow="$1" row run_id status conclusion approved='' attempt=0
+            while [ "$attempt" -lt "$poll_attempts" ]; do
+              row=$(gh api --method GET "repos/$GH_REPO/actions/workflows/$workflow/runs" \
+                -f branch="$branch" -f head_sha="$revision" -f event=pull_request \
+                --jq ".workflow_runs | map(select(.pull_requests | any(.number == $pr))) | sort_by(.run_number) | last // empty")
+              if [ -n "$row" ]; then
+                jq -e --arg sha "$revision" --arg branch "$branch" --arg workflow "$workflow" \
+                  '.head_sha == $sha and .head_branch == $branch and .event == "pull_request"
+                   and .path == (".github/workflows/" + $workflow)' <<< "$row" >/dev/null
+                run_id=$(jq -r .id <<< "$row")
+                status=$(jq -r .status <<< "$row")
+                conclusion=$(jq -r '.conclusion // ""' <<< "$row")
+                if [ "$conclusion" = action_required ]; then
+                  if [ "$approved" != "$run_id" ]; then
+                    verify_lock_pr
+                    gh api --method POST "repos/$GH_REPO/actions/runs/$run_id/approve" >/dev/null
+                    approved=$run_id
+                  fi
+                elif [ "$status" = completed ]; then
+                  if [ "$conclusion" = success ]; then return 0; fi
+                  echo "Required PR workflow $workflow run $run_id concluded $conclusion" >&2
+                  return 1
+                fi
+              fi
+              attempt=$((attempt + 1))
+              sleep "$poll_seconds"
+            done
+            echo "Timed out waiting for required PR workflow $workflow on $revision" >&2
+            return 1
+          }
+
+          # Reconcile an already published atomic branch without editing it.
+          # Bot-created PRs do not emit normal pull_request workflows, so
+          # dispatches may need recovery after a partial workflow failure.
+          reconcile_atomic_ci() {
+            local pr="$1" sha="$2" title_runs ci_runs id status arm_jobs found=0 pending=0
+            title_runs=$(gh api --method GET "repos/$GH_REPO/actions/workflows/pr-title.yml/runs" \
+              -f branch="$atomic_branch" -f head_sha="$sha" -f event=workflow_dispatch \
+              --jq '[.workflow_runs[].id] | length') || return 1
+            if [ "$title_runs" -eq 0 ]; then
+              gh workflow run pr-title.yml --ref "$atomic_branch" \
+                -f pull_request_number="$pr" -f expected_sha="$sha" || return 1
+            fi
+
+            ci_runs=$(gh api --method GET "repos/$GH_REPO/actions/workflows/ci.yml/runs" \
+              -f branch="$atomic_branch" -f head_sha="$sha" -f event=workflow_dispatch \
+              --jq '.workflow_runs[].id') || return 1
+            for id in $ci_runs; do
+              status=$(gh api "repos/$GH_REPO/actions/runs/$id" --jq .status) || return 1
+              arm_jobs=$(gh api "repos/$GH_REPO/actions/runs/$id/jobs?per_page=100" \
+                --jq '[.jobs[] | select(.name | contains("arm-build (authelia, native)")) | select(.conclusion != "skipped")] | length') || return 1
+              if [ "$arm_jobs" -gt 0 ]; then
+                found=1
+                result=$(gh api "repos/$GH_REPO/actions/runs/$id" --jq '.conclusion // ""') || return 1
+                if [ "$status" = completed ] && [ "$result" != success ]; then
+                  echo "Atomic CI $id concluded $result on $sha; requires review." >&2
+                  return 1
+                fi
+                break
+              fi
+              # GitHub may not have published the job list yet.
+              if [ "$status" != completed ]; then pending=1; fi
+            done
+            if [ "$found" -eq 0 ]; then
+              if [ "$pending" -eq 1 ]; then
+                echo "Atomic CI for $sha is starting; cannot yet verify ARM job. Retry reconciliation." >&2
+                return 1
+              fi
+              gh workflow run ci.yml --ref "$atomic_branch" \
+                -f expected_sha="$sha" -f build_arm_authelia=true || return 1
+            fi
+            echo "Atomic PR #$pr: exact-SHA title and ARM validation dispatched or present at $sha"
+          }
+
           main_sha=$(git rev-parse HEAD)
+          # A manually reviewed combined candidate owns publication until it
+          # merges or is explicitly closed. Never rewrite or stack onto it.
+          atomic_branch=automation/atomic-authelia-pnpm-hash
+          atomic_pr=$(gh pr list --head "$atomic_branch" --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$atomic_pr" ]; then
+            remote_tip=$(git ls-remote --heads origin "$atomic_branch" | cut -f1)
+            pr_tip=$(gh pr view "$atomic_pr" --json headRefOid --jq .headRefOid)
+            if [ -z "$remote_tip" ] || [ "$remote_tip" != "$pr_tip" ]; then
+              echo "Atomic PR #$atomic_pr branch missing or diverged; requires human review." >&2
+              exit 1
+            fi
+            reconcile_atomic_ci "$atomic_pr" "$remote_tip"
+            echo "Atomic cleanup PR #$atomic_pr owns the next lock publication; refusing to compete."
+            exit 0
+          fi
           expected=$(git ls-remote --heads origin "$branch" | cut -f1)
           if [ -n "$expected" ]; then
             git fetch --no-tags origin "$expected"
           fi
+
+          primary_inputs() {
+            jq -cS '. as $lock | .nodes[.root].inputs
+              | {nixpkgs, "home-manager": .["home-manager"]}
+              | map_values($lock.nodes[.].locked)' flake.lock
+          }
+
+          primary_before=$(primary_inputs)
           nix flake update
-          pr=$(gh pr list --head "${GH_REPO%%/*}:$branch" --base main --state open --json number --jq '.[0].number // empty')
+          pr=$(gh pr list --head "$branch" --base main --state open --json number --jq '.[0].number // empty')
           if git diff --quiet -- flake.lock; then
             if [ -n "$pr" ]; then
               gh pr close "$pr" --comment 'The current lock matches main; no update remains.'
             fi
             exit 0
           fi
+
+          if [ "$GITHUB_EVENT_NAME" = schedule ] \
+            && [ "$primary_before" = "$(primary_inputs)" ]; then
+            echo 'Neither nixpkgs nor home-manager changed; defer other input updates.'
+            if [ -n "$pr" ]; then
+              gh pr close "$pr" --comment 'Scheduled updates wait for a nixpkgs or home-manager change. Other input updates will be included then; manual dispatch bypasses this gate.'
+            fi
+            exit 0
+          fi
+
+          # Inspect the proposed pin BEFORE any publication to main. Other
+          # watchers are read-only here; only an atomic contract may divert.
+          plan=$(python3 .github/scripts/upstream-plan.py plan \
+            --old <(git show "$main_sha:flake.lock") --candidate flake.lock)
+          printf '%s\n' "$plan" | jq -r '"watcher plan: \(.action) (\(.reason))"'
+          case "$(jq -r .action <<<"$plan")" in
+            normal) ;;
+            blocked)
+              echo "Refusing to publish a potentially incompatible lock: $(jq -r .reason <<<"$plan")" >&2
+              exit 1
+              ;;
+            atomic-review)
+              # A stable separate branch, not the updater's routinely
+              # refreshed lock-only branch. Manual review is mandatory.
+              existing=$(git ls-remote --heads origin "$atomic_branch" | cut -f1)
+              if [ -n "$existing" ]; then
+                echo "Atomic branch $atomic_branch already exists without an open PR; refusing overwrite." >&2
+                exit 1
+              fi
+              python3 .github/scripts/upstream-plan.py apply --id authelia-pnpm-hash
+              git config user.name 'github-actions[bot]'
+              git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+              git switch -c "$atomic_branch"
+              git add -- flake.lock modules/_services/authelia.nix
+              changed=$(git diff --cached --name-only)
+              expected_paths=$(printf '%s\n' flake.lock modules/_services/authelia.nix)
+              if [ "$changed" != "$expected_paths" ]; then
+                echo "Atomic cleanup candidate changed unexpected files: $changed" >&2
+                exit 1
+              fi
+              git commit -m 'fix(authelia): retire pnpm override with updated lock'
+              revision=$(git rev-parse HEAD)
+              if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$main_sha" ]; then
+                echo 'main advanced during atomic candidate preparation; refusing to publish stale branch.' >&2
+                exit 1
+              fi
+              git push "--force-with-lease=refs/heads/$atomic_branch:" origin "HEAD:refs/heads/$atomic_branch"
+              url=$(gh pr create --base main --head "$atomic_branch" \
+                --title 'fix(authelia): retire pnpm override with updated lock' \
+                --body "Atomic lock+cleanup candidate. Nixpkgs fix #572207 is present in this candidate's lock and nixos-unstable. The existing ARM hash workaround becomes incompatible. No auto-merge: review after exact-SHA CI (including the native ARM build). Local watcher ownership is unchanged.")
+              atomic_pr=${url##*/}
+              reconcile_atomic_ci "$atomic_pr" "$revision"
+              # Close the now-obsolete lock-only PR only after combined
+              # publication and CI dispatch succeed.
+              if [ -n "$pr" ]; then
+                gh pr close "$pr" --comment "Superseded by atomic lock+Authelia candidate #$atomic_pr; manual review required."
+              fi
+              echo "Created atomic PR #$atomic_pr at $revision; exact-SHA CI and ARM build dispatched."
+              exit 0
+              ;;
+            *)
+              echo "Unknown watcher plan; fail closed." >&2
+              exit 1
+              ;;
+          esac
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add flake.lock
           desired_tree=$(git write-tree)
           if [ -n "$expected" ] \
@@ -50,24 +272,71 @@ jobs:
             && [ "$(git rev-parse "$expected^{tree}")" = "$desired_tree" ]; then
             revision=$expected
           else
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             git switch -C "$branch"
             git commit -m 'flake.lock: Update'
             revision=$(git rev-parse HEAD)
             git push "--force-with-lease=refs/heads/$branch:$expected" origin "HEAD:refs/heads/$branch"
           fi
+
           if [ -z "$pr" ]; then
-            gh pr create --base main --head "$branch" --title 'flake.lock: Update' \
-              --body 'Update flake inputs. Explicitly dispatched CI checks the lock commit; deployment separately requires successful push CI on merged main.'
+            url=$(gh pr create --base main --head "$branch" --title 'flake.lock: Update' \
+              --body 'Update flake inputs. The updater explicitly validates this exact lock commit, then atomically fast-forwards main to that same validated SHA if main is unchanged.')
+            pr=${url##*/}
           fi
+
           if [ "$(git ls-remote --heads origin "$branch" | cut -f1)" != "$revision" ]; then
             echo 'Lock branch changed before CI dispatch; retry the lock workflow.' >&2
             exit 1
           fi
-          runs=$(gh api --method GET "repos/$GH_REPO/actions/workflows/ci.yml/runs" \
-            -f branch="$branch" -f head_sha="$revision" -f event=workflow_dispatch \
-            --jq '.workflow_runs | length')
-          if [ "$runs" -eq 0 ]; then
-            gh workflow run ci.yml --ref "$branch" -f expected_sha="$revision"
+          if [ "$(git diff --name-only "$main_sha" "$revision")" != flake.lock ]; then
+            echo 'Lock candidate contains changes outside flake.lock; refusing automatic merge.' >&2
+            exit 1
+          fi
+
+          gh workflow run pr-title.yml --ref "$branch" -f pull_request_number="$pr" -f expected_sha="$revision"
+          ensure_ci "$branch" "$revision"
+
+          title_run=
+          for ((attempt=0; attempt<poll_attempts; attempt++)); do
+            title_run=$(gh api --method GET "repos/$GH_REPO/actions/workflows/pr-title.yml/runs" \
+              -f branch="$branch" -f head_sha="$revision" -f event=workflow_dispatch \
+              --jq '.workflow_runs | sort_by(.run_number) | last // empty | .id')
+            if [ -n "$title_run" ]; then break; fi
+            sleep "$poll_seconds"
+          done
+          if [ -z "$title_run" ]; then
+            echo 'Timed out waiting for the exact lock PR title check.' >&2
+            exit 1
+          fi
+          gh run watch "$title_run" --exit-status
+
+          # Dispatched checks do not enter the PR's protection rollup. Approve
+          # only this verified lock candidate's normal CI and title runs.
+          verify_lock_pr
+          wait_for_pr_workflow ci.yml
+          wait_for_pr_workflow pr-title.yml
+
+          if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$main_sha" ]; then
+            echo 'main changed while lock CI was running; leaving the validated PR for the next refresh.' >&2
+            exit 1
+          fi
+          if [ "$(git ls-remote --heads origin "$branch" | cut -f1)" != "$revision" ]; then
+            echo 'Lock branch changed after CI; refusing automatic merge.' >&2
+            exit 1
+          fi
+          if [ "$(git rev-parse "$revision^")" != "$main_sha" ]; then
+            echo 'Validated lock candidate is no longer based on the expected main revision.' >&2
+            exit 1
+          fi
+
+          # Publish the exact CI-validated commit with a compare-and-swap.
+          # Because revision is a direct child of main_sha, this is a fast-forward
+          # when main is unchanged. The lease rejects any concurrent main movement.
+          if ! git push "--force-with-lease=refs/heads/main:$main_sha" origin "$revision:refs/heads/main"; then
+            echo 'Atomic lock fast-forward was rejected by branch protection or concurrent main movement; leaving the PR open.' >&2
+            exit 1
+          fi
+          if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$revision" ]; then
+            echo 'Atomic lock fast-forward succeeded but main does not point at the validated revision.' >&2
+            exit 1
           fi

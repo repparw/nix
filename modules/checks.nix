@@ -115,6 +115,19 @@
           );
         in
         {
+          hermes-crash-triage = (import ./aspects/services/hermes-crash/_package.nix { inherit pkgs; }).check;
+          hermes-package-triage =
+            (import ./aspects/services/hermes-package/_package.nix { inherit pkgs; }).check;
+
+          coredump-collector =
+            pkgs.runCommand "check-coredump-collector" { nativeBuildInputs = [ pkgs.python3 ]; }
+              ''
+                cp -r ${./aspects/services/coredump-watch} source
+                chmod -R u+w source
+                python3 -m unittest discover -s source -v
+                touch $out
+              '';
+
           hermes-auxiliary-routing =
             (pkgs.callPackage ./_packages/hermes-agent.nix {
               upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
@@ -198,6 +211,23 @@
                 touch $out
               '';
 
+          free-model-watch =
+            pkgs.runCommand "check-free-model-watch"
+              {
+                nativeBuildInputs = with pkgs; [
+                  python3
+                  bash
+                  coreutils
+                  jq
+                  gnused
+                  gnugrep
+                ];
+              }
+              ''
+                python ${./_tests/free-model-watch.py} ${inputs.self.nixosConfigurations.alpha.config.modules.free-model-watch.script}/bin/free-model-watch
+                touch $out
+              '';
+
           ci-workflow =
             pkgs.runCommand "check-ci-workflow"
               {
@@ -210,8 +240,8 @@
               }
               ''
                 cd ${inputs.self}
-                node --test .github/scripts/ci.test.mjs
-                actionlint -shellcheck= .github/workflows/ci.yml
+                node --test .github/scripts/ci.test.mjs .github/scripts/ci-impact.test.mjs
+                actionlint -shellcheck= .github/workflows/ci.yml .github/workflows/revision-validation.yml .github/workflows/pr-title.yml .github/workflows/upstream-watch.yml
                 touch $out
               '';
 
@@ -318,9 +348,11 @@
                 fi
 
                 python3 ${./scripts/fleet-update-notifications.test.py} ${./scripts/fleet-update.sh}
-                python3 ${./scripts/fleet-update.test.py} ${./scripts/fleet-update.sh}
+                python3 ${./scripts}/fleet-update.test.py ${./scripts/fleet-update.sh}
+                python3 ${./scripts/fleet-readiness.test.py} ${./scripts/fleet-readiness-probe.sh} ${./scripts/fleet-readiness-deliver.sh}
                 python3 ${./scripts/pi-generation-retention.test.py} ${./scripts/pi-generation-retention.py}
-                python3 ${./scripts/lock-update.test.py} ${inputs.self}/.github/workflows/lock-update.yml ${inputs.self}/.github/workflows/ci.yml
+                python3 ${./scripts/package-update-event.test.py} ${./scripts/package-update-event.py}
+                python3 ${./scripts/lock-update.test.py} ${inputs.self}/.github/workflows/lock-update.yml ${inputs.self}/.github/workflows/ci.yml ${inputs.self}/.github/workflows/revision-validation.yml
                 touch $out
               '';
 

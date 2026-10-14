@@ -18,6 +18,7 @@
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.disk-watch
       den.aspects.nixos-services._.reboot-watch
+      den.aspects.nixos-services._.free-model-watch
       den.aspects.deploy-target
     ];
 
@@ -52,12 +53,13 @@
           ".config/codex/skills/"
           ".config/codex/plugins/"
           ".config/codex/goals_1.sqlite"
-          ".config/net.imput.helium/Default/Preferences"
-          ".config/net.imput.helium/Default/Secure Preferences"
-          ".config/net.imput.helium/Default/History"
-          ".config/net.imput.helium/Default/Login Data"
-          ".config/net.imput.helium/Default/Login Data For Account"
-          ".config/net.imput.helium/Default/Sessions/"
+          # Whole Helium profile: extension state (Vimium exclusions,
+          # DeArrow, ImprovedTube) lives in per-extension LevelDB dirs that
+          # would otherwise need enumerating, and update wipes have proven
+          # that guessing the file list loses data. The sqlite files are
+          # still staged consistently via homeDatabases below, and
+          # homeStateExcludes prunes caches and telemetry.
+          ".config/net.imput.helium/"
           ".config/fish/fish_variables"
           ".config/mpv/watch_later"
           ".config/Raspberry Pi/Raspberry Pi Imager.conf"
@@ -73,6 +75,9 @@
           ".local/share/voxtype/meetings/"
           ".local/share/shadPS4/savedata/"
           ".local/share/shadPS4/keys.json"
+          ".config/bbport-launcher/"
+          ".local/share/bbport-test/data/bbport.ini"
+          ".local/share/bbport-test/data/user/"
         ];
         homeDatabases = [
           ".config/codex/goals_1.sqlite"
@@ -80,6 +85,28 @@
           ".config/net.imput.helium/Default/Login Data"
           ".config/net.imput.helium/Default/Login Data For Account"
           ".local/share/vicinae/vicinae.db"
+        ];
+        # Regenerable caches and telemetry inside the Helium profile. The
+        # leading slash anchors each pattern to the ./ marker that the
+        # rsync --relative source paths carry (verified: excludes apply
+        # below the anchor, and other homeState entries are untouched).
+        homeStateExcludes = map (dir: "/.config/net.imput.helium/${dir}") [
+          "Default/Service Worker/CacheStorage"
+          "Default/Service Worker/ScriptCache"
+          "Default/GPUCache"
+          "Default/DawnWebGPUCache"
+          "Default/DawnGraphiteCache"
+          "GPUPersistentCache"
+          "GrShaderCache"
+          "ShaderCache"
+          "GraphiteDawnCache"
+          "component_crx_cache"
+          "extensions_crx_cache"
+          "CertificateRevocation"
+          "Dictionaries"
+          "segmentation_platform"
+          "DeferredBrowserMetrics"
+          "Variations"
         ];
         stateRoot = "/var/lib/home-state-backup";
         # Each consumer has its own staging tree. A failed export never replaces
@@ -99,7 +126,9 @@
           temporary=$(mktemp -d "${stateRoot}/.prepare-$1.XXXXXX")
           trap 'rm -rf "$temporary"' EXIT
           mkdir -p "$temporary/.config" "$temporary/.local"
-          rsync --archive --relative --ignore-missing-args -- \
+          rsync --archive --relative --ignore-missing-args \
+            ${lib.concatMapStringsSep " " (e: "--exclude=${lib.escapeShellArg e}") homeStateExcludes} \
+            -- \
             ${
               lib.escapeShellArgs (
                 map (p: "${home}/./${p}") (lib.filter (p: !(lib.elem p homeDatabases)) homeState)
@@ -174,7 +203,10 @@
           ];
         };
 
+        modules.free-model-watch.enable = true;
+
         boot = {
+          kernelPackages = pkgs.linuxPackages_latest;
           initrd = {
             systemd.enable = true;
             availableKernelModules = [
@@ -303,11 +335,14 @@
               };
               buprpi = {
                 destination = "${config.modules.services.backupDir}/pi-services/";
-                sources = [ "repparw@${den.hosts.aarch64-linux.pi.serviceAddress}:services/" ];
+                sources = [
+                  "repparw@${den.hosts.aarch64-linux.pi.serviceAddress}:/var/lib/pi-services-backup/current/"
+                ];
                 settings = {
                   archive = true;
                   "copy-links" = true;
-                  delete = true;
+                  "delete-after" = true;
+                  "rsync-path" = "sudo -n pi-services-backup-send";
                 };
               };
             };

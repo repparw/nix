@@ -74,6 +74,23 @@ test('invalid snapshot cannot clear previous alerts', () => {
   } finally { f.cleanup(); }
 });
 
+test('orphaned alert IDs recover from a healthy snapshot without a prior unit list', () => {
+  const f = fixture(); try {
+    writeFileSync(join(f.state, '.unit-failed:old.service.msgid'), 'old-local');
+    writeFileSync(join(f.state, '.unit-failed:alpha:old.service.msgid'), 'old-alpha');
+    f.set('alpha-error', '');
+    f.sweep();
+    assert.equal(existsSync(join(f.state, '.unit-failed:old.service.msgid')), false);
+    assert.equal(existsSync(join(f.state, '.unit-failed:alpha:old.service.msgid')), true);
+    assert.match(f.messages(), /delete\|old-local/);
+    assert.doesNotMatch(f.messages(), /delete\|old-alpha/);
+    rmSync(join(f.root, 'alpha-error'));
+    f.sweep();
+    assert.equal(existsSync(join(f.state, '.unit-failed:alpha:old.service.msgid')), false);
+    assert.match(f.messages(), /delete\|old-alpha/);
+  } finally { f.cleanup(); }
+});
+
 test('local sweep preserves existing Pi alert keys and --local skips remote hosts', () => {
   const f = fixture(); try {
     f.set('pi', 'local.service\n'); f.set('alpha-error', '');

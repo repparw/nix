@@ -19,6 +19,14 @@
             enable = true;
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
+            # Hide idle disks from Steam (it stats every mount at startup).
+            package = pkgs.steam.override {
+              extraBwrapArgs = [
+                "--tmpfs /mnt"
+                "--tmpfs /home/containers/media"
+                "--tmpfs /run/media"
+              ];
+            };
           };
 
           gamemode.enable = true;
@@ -45,7 +53,20 @@
       {
         home.file.".local/share/Steam/compatibilitytools.d/GE-Proton".source =
           pkgs.proton-ge-bin.steamcompattool;
-        home.packages = with pkgs; [ shadps4 ];
+        home.file.".local/bin/bbport" = {
+          executable = true;
+          text = ''
+            #!/usr/bin/env bash
+            set -euo pipefail
+            cd ${lib.escapeShellArg "${config.home.homeDirectory}/.local/share/bbport-test"}
+            case "''${1:-play}" in
+              play) exec nix-shell --impure shell-local.nix --run 'exec python3 launcher/bbport_launcher.py --play' ;;
+              launcher) exec nix-shell --impure shell-local.nix --run 'exec python3 launcher/bbport_launcher.py' ;;
+              build) exec nix-shell --impure shell-local.nix --run 'exec bash build.sh --test' ;;
+              *) echo 'Usage: bbport [play|launcher|build]' >&2; exit 1 ;;
+            esac
+          '';
+        };
         programs.sm64ex = lib.mkIf (builtins.pathExists sm64Baserom) {
           enable = true;
           region = "us";
