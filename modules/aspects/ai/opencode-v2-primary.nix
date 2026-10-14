@@ -10,36 +10,27 @@
         ...
       }:
       let
-        launcher = config.programs.t3code.userSettings.providerInstances.opencode-v2.config.binaryPath;
+        launcher = pkgs.writeShellScriptBin "opencode2" ''
+          export XDG_DATA_HOME=${lib.escapeShellArg "${config.xdg.dataHome}/opencode-v2"}
+          export XDG_CONFIG_HOME=${lib.escapeShellArg "${config.xdg.configHome}/opencode-v2"}
+          export XDG_CACHE_HOME=${lib.escapeShellArg "${config.xdg.cacheHome}/opencode-v2"}
+          export XDG_STATE_HOME=${lib.escapeShellArg "${config.xdg.stateHome}/opencode-v2"}
+          exec ${pkgs.opencode-v2}/bin/opencode2 "$@"
+        '';
       in
       {
+        home.packages = [ launcher ];
         programs.opencode = {
           package = pkgs.writeShellScriptBin "opencode" ''
             exec ${lib.escapeShellArg launcher} "$@"
           '';
           web.enable = lib.mkForce false;
         };
-        programs.t3code.userSettings.providerInstances = {
-          opencode = {
-            displayName = "OpenCode 2";
-            config = {
-              binaryPath = lib.mkForce launcher;
-              serverUrl = lib.mkForce "";
-            };
-          };
-          opencode-v2 = {
-            enabled = lib.mkForce false;
-            config.enabled = lib.mkForce false;
-          };
-          opencode-v1 = {
-            driver = "opencode";
-            displayName = "OpenCode 1 rollback";
-            enabled = false;
-            config = {
-              enabled = false;
-              binaryPath = "${pkgs.opencode}/bin/opencode";
-              serverUrl = "http://127.0.0.1:4096";
-            };
+        programs.t3code.userSettings.providerInstances.opencode = {
+          displayName = "OpenCode 2";
+          config = {
+            binaryPath = lib.mkForce launcher;
+            serverUrl = lib.mkForce "";
           };
         };
       };

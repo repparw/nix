@@ -12,11 +12,11 @@ tags: [opencode, migration, ai, t3code, backups]
 Alpha, Pi, and Epsilon include `opencode-v2-primary`. The `opencode` command
 uses the isolated v2 launcher, and the existing T3 `opencode` provider ID
 selects v2. T3 starts and authenticates its server. The old port-4096 web
-service is disabled. The separate trial provider entry is disabled after the
-canonical provider takes over; active rehearsal tasks retain their own instance.
+service is disabled.
 
-The disabled `OpenCode 1 rollback` provider retains the v1 binary path. The
-original databases remain in the v1 data directory.
+A single T3 provider instance is registered: `opencode`, enabled, pointing at
+the v2 launcher. There is no separate v2 instance and no v1 rollback instance.
+Rollback is generation-level: restore the previous system generation.
 
 V2 uses separate XDG roots named `opencode-v2`. Its database is
 `~/.local/share/opencode-v2/opencode/opencode.db`, and its generated configuration
@@ -61,14 +61,11 @@ provider selection while testing new v2 work. A v1 turn still running after a
 snapshot can append history that is absent from the v2 copy. Quiesce those
 writers and take a fresh backup before a final replacement.
 
-Rollback means selecting the retained v1 provider and data. Never point v1 at
-a migrated v2 database, and never overwrite v2 data with a v1 backup after new
-v2 work has begun.
-
-Enable the rollback provider and start its retained binary on port 4096, or
-restore the previous system generation. Its database directory remains separate
-from v2. A rollback cannot include new v2 conversations without a supported
-export and import procedure.
+Rollback means restoring the previous system generation. Never point the v1
+binary at a migrated v2 database, and never overwrite v2 data with a v1 backup
+after new v2 work has begun. The v1 data directory remains separate from v2, so
+a rollback cannot include new v2 conversations without a supported export and
+import procedure.
 
 The temporary source package is taken from Nixpkgs PR #569770 at commit
 `3a37a0e661f12c9946354a39c754dd8eb3b3e501`, with source and dependency hashes
