@@ -12,7 +12,8 @@ tags: [impermanence, persistence, pi, epsilon, recovery, backups]
 The `persistence` aspect imports nix-community/impermanence and records the
 persistence inventory. Pi and epsilon explicitly enable it with
 `modules.persistence.mutableAccounts = true` and a tmpfs root. Their former
-root filesystems provide `/persist`. Alpha does not include the aspect.
+root filesystems provide `/persist`. Alpha includes a disabled inventory;
+see [alpha's migration draft](alpha-impermanence.md).
 
 The module options still default to `false`. Including the aspect alone does
 not create persistence mounts, move files, reset root, or change boot storage.
@@ -189,7 +190,9 @@ the daily offsite job does not create a fresh stopped-service checkpoint.
 ## Alpha later
 
 The shared identity policy, service-state inventory and container tests apply
-to alpha. Its host aspect does not include persistence in this stage.
+to alpha. Its host includes the disabled `alpha-persistence` aspect. The
+[alpha migration runbook](alpha-impermanence.md) records its proposed backing
+layout and the recovery prerequisites for a separate first-boot change.
 
 The live mount audit found `/home`, `/nix` and service data inside root subvolume
 `@`; an `@home` subvolume exists but is not mounted at `/home`. Root rollback
@@ -226,7 +229,7 @@ option for alpha only after its data is separated from the root subvolume.
 `checks.<system>.host-persistence` evaluates the enabled pi and epsilon
 layouts, explicit mutable-account consent, early UID/GID and SOPS ordering,
 backup coverage, pi's separate home mount, epsilon's persistent boot and store
-mounts, and alpha's exclusion. It also checks that invalid backing-storage and
+mounts, and alpha's disabled defaults. It also checks that invalid backing-storage and
 mutable-account settings fail configuration assertions.
 
 `checks.x86_64-linux.host-persistence-vm` boots the actual persistence module
