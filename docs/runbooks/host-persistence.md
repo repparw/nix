@@ -1,8 +1,8 @@
 ---
 type: Runbook
 title: Prepare pi and epsilon for persistent state
-description: Staged persistence declarations, filesystem audit findings, and prerequisites for disposable host roots.
-when: Read before enabling host persistence, changing the persistence inventory, or preparing an impermanence migration.
+description: Current persistence layout, filesystem audit findings, and recovery requirements for pi and epsilon.
+when: Read before changing host persistence, updating its inventory, or reviewing persistence and recovery checks.
 resource: modules/aspects/persistence.nix
 tags: [impermanence, persistence, pi, epsilon, recovery, backups]
 ---
@@ -10,21 +10,26 @@ tags: [impermanence, persistence, pi, epsilon, recovery, backups]
 # Prepare pi and epsilon for persistent state
 
 The `persistence` aspect imports nix-community/impermanence and records the
-initial persistence inventory. Pi and epsilon include it. Alpha does not.
-`modules.persistence.enable` defaults to `false`: including the aspect does
+persistence inventory. Pi and epsilon explicitly enable it with
+`modules.persistence.mutableAccounts = true` and a tmpfs root. Their former
+root filesystems provide `/persist`. Alpha does not include the aspect.
+
+The module options still default to `false`. Including the aspect alone does
 not create persistence mounts, move files, reset root, or change boot storage.
+See the [pi](../../modules/hosts/pi.nix) and
+[epsilon](../../modules/hosts/epsilon.nix) host declarations for the current layout.
 
 Enabling requires a separately prepared `/persist` filesystem marked
 `neededForBoot`. Before activation, an initrd guard checks the backing machine ID, SSH key,
 UID/GID state directory, account database when requested, and a
 `.host-persistence-ready` marker containing the host name. This rejects an
 empty or unprepared volume; it does not prove every application was copied
-correctly. **Do not enable it on the existing layouts.** Live migration remains
-pending: the available recovery access is SSH only.
+correctly. Preparing storage and proving rescue access remain prerequisites
+for any new host migration or storage-layout change.
 
-When enabled, pi's existing home filesystem becomes required in the initrd
-and loses `nofail`, so a missing NVMe cannot silently become an empty HA/user
-data directory. Its normal, disabled configuration keeps the current options.
+Pi's existing home filesystem is required in the initrd and has no `nofail`
+option. A missing NVMe therefore prevents normal boot instead of exposing
+an empty Home Assistant or user data directory.
 
 ## Initial inventory
 
@@ -137,11 +142,15 @@ User lingering is already declared in Nix. Epsilon's old dhcpcd lease and DUID
 files are inactive: the current configuration uses networkd and disables
 dhcpcd. Pi's radio block state is retained alongside its Bluetooth pairings.
 
-The retained old root filesystem in a future tmpfs-root trial can keep archive
-paths accessible beneath `/persist` without exposing them at their old paths.
-Do not add deletion or repartitioning to that trial.
+The former root filesystem keeps archive paths accessible beneath `/persist`
+without exposing them at their old paths. Review those archives separately
+before deleting data or repartitioning storage.
 
 ## Storage and recovery prerequisites
+
+The following checklist records the original migration prerequisites. Pi and
+epsilon now declare the tmpfs-root layout in their host configurations. Recheck
+these requirements before a new migration or a change to backing storage.
 
 1. Complete a [full pi backup and isolated restore](host-recovery.md). Daily
    backup scope now includes identity, account files, whole homes, container
@@ -167,7 +176,7 @@ Do not add deletion or repartitioning to that trial.
    volume must fail closed rather than allow empty HA state on a missing disk.
    Write the readiness marker only after copying and verifying the backing
    data, and retain a bootable known-good disk or rescue console. **SSH alone
-   cannot recover a failed initrd. Do not perform the live root migration.**
+   cannot recover a failed initrd.**
 6. Once rescue access and restoration are proven, trial pi, then epsilon.
    Keep the root-layout change outside automatic fleet deployment. An ordinary
    generation rollback cannot reverse a repartition or restore missing data.
@@ -213,9 +222,11 @@ option for alpha only after its data is separated from the root subvolume.
 - [Impermanence SOPS ordering report](https://github.com/nix-community/impermanence/issues/294)
 - [Preservation permission/ordering report](https://github.com/nix-community/preservation/issues/24)
 
-`checks.<system>.host-persistence` evaluates disabled defaults, explicit
-mutable-account consent, early UID/GID and SOPS ordering, backup coverage,
-pi's separate home mount, epsilon's home persistence and alpha's exclusion.
+`checks.<system>.host-persistence` evaluates the enabled pi and epsilon
+layouts, explicit mutable-account consent, early UID/GID and SOPS ordering,
+backup coverage, pi's separate home mount, epsilon's persistent boot and store
+mounts, and alpha's exclusion. It also checks that invalid backing-storage and
+mutable-account settings fail configuration assertions.
 
 `checks.x86_64-linux.host-persistence-vm` boots the actual persistence module
 with a tmpfs root and ext4 backing disk. It uses disposable credentials and
@@ -229,8 +240,12 @@ checks:
 - failed boot with missing storage or an unprepared backing volume, followed
   by repair of the VM disk offline and a successful boot.
 
-CI runs that VM separately from the evaluation gate. This is a synthetic x86
-recovery test, not a boot of pi/epsilon's real service images or production data.
+CI selects the VM job for changes that affect persistence. When selected, the
+VM job must succeed before the aggregate `gate` passes; other changes skip it.
+Configuration checks must also pass. The VM covers shared persistence and recovery behavior that
+configuration evaluation cannot prove. It does not exercise T3 Code history
+migrations. This is a synthetic x86 recovery test, not a boot of pi or epsilon
+with their real service images, bootloader layouts, or production data.
 
 See the [configuration verification skill](../../.agents/skills/verify-nixos-config/SKILL.md)
 and [fleet operations runbook](fleet-operations.md) for the separate build,

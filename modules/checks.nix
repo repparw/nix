@@ -214,6 +214,7 @@
           free-model-watch =
             pkgs.runCommand "check-free-model-watch"
               {
+                LOCALE_ARCHIVE = "${pkgs.glibcLocales}/lib/locale/locale-archive";
                 nativeBuildInputs = with pkgs; [
                   python3
                   bash
