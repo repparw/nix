@@ -71,8 +71,12 @@ in
         "chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
           BrowserSignin = 0;
           PasswordManagerEnabled = false;
-
-          ExtensionInstallForcelist = heliumExtensionIds;
+          ExtensionSettings = lib.genAttrs heliumExtensionIds (_: {
+            installation_mode = "normal_installed";
+            # Helium rewrites this Web Store URL to its extension proxy. The
+            # Google URL bypasses that rewrite and stalls policy installs.
+            update_url = "https://update-url-to-be-replaced.qjz9zk";
+          });
         };
       };
     };
@@ -287,7 +291,7 @@ in
             set markjumpnoisy false
             set modeindicatormodes.ignore false
             set theme midnight
-            set editorcmd foot nvim
+            set editorcmd xdg-terminal-exec -- nvim
             set smoothscroll true
             set tabsort mru
 

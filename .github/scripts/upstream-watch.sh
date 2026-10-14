@@ -42,13 +42,17 @@ pin_for() {
 
 # Detectors share the exact checked-out pins. Other cleanup recipes remain
 # dry-run-only until the live Authelia pilot completes its cutover gates.
-readiness=$(python3 .github/scripts/upstream-readiness.py --json)
+if [ -n "${UPSTREAM_READINESS_FILE:-}" ]; then
+  readiness=$(cat "$UPSTREAM_READINESS_FILE")
+else
+  readiness=$(python3 .github/scripts/upstream-readiness.py --json)
+fi
 printf '%s\n' "$readiness" | jq -r 'to_entries[] | "\(.key): \(.value)"'
 {
   echo '### upstream-watch readiness'
   echo '| watcher | status | publication |'
   echo '| --- | --- | --- |'
-  jq -r 'to_entries[] | "| \(.key) | \(.value) | pilot only; other recipes prepared |"' <<<"$readiness"
+  jq -r 'to_entries[] | "| \(.key) | \(.value) | per watcher registry |"' <<<"$readiness"
 } >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
 
 # Idempotent: judge completion on the checked-out main, never a working copy.

@@ -31,9 +31,9 @@
               if (!res.ok) return
               const json: any = await res.json()
               const data: any[] = json.data ?? json ?? []
-              if (!Array.isArray(data) || data.length === 0) return
+              if (!Array.isArray(data)) return
               const free = data.filter((m) => /:free$/i.test(m.id ?? ""))
-              const picked = free.length > 0 ? free : data
+              const picked = free
               p.models = Object.fromEntries(
                 picked.map((m) => [
                   m.id,
