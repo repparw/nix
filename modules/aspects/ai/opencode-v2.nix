@@ -8,17 +8,7 @@
     ];
     homeManager =
       { config, pkgs, ... }:
-      let
-        launcher = pkgs.writeShellScriptBin "opencode2" ''
-          export XDG_DATA_HOME=${pkgs.lib.escapeShellArg "${config.xdg.dataHome}/opencode-v2"}
-          export XDG_CONFIG_HOME=${pkgs.lib.escapeShellArg "${config.xdg.configHome}/opencode-v2"}
-          export XDG_CACHE_HOME=${pkgs.lib.escapeShellArg "${config.xdg.cacheHome}/opencode-v2"}
-          export XDG_STATE_HOME=${pkgs.lib.escapeShellArg "${config.xdg.stateHome}/opencode-v2"}
-          exec ${pkgs.opencode-v2}/bin/opencode2 "$@"
-        '';
-      in
       {
-        home.packages = [ launcher ];
         xdg.configFile = {
           "opencode-v2/opencode/opencode.json".source =
             pkgs.runCommandLocal "opencode-v2-config.json" { nativeBuildInputs = [ pkgs.jq ]; }
@@ -31,16 +21,6 @@
             config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/opencode/skills";
           "opencode-v2/opencode/AGENTS.md".source =
             config.lib.file.mkOutOfStoreSymlink "${config.xdg.configHome}/opencode/AGENTS.md";
-        };
-        programs.t3code.userSettings.providerInstances.opencode-v2 = {
-          driver = "opencode";
-          displayName = "OpenCode 2";
-          enabled = true;
-          config = {
-            enabled = true;
-            binaryPath = "${launcher}/bin/opencode2";
-            serverUrl = "";
-          };
         };
       };
   };
