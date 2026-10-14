@@ -31,7 +31,7 @@ def main():
     if jobs:
         job = update_job(jobs[0]["id"], fields)
     else:
-        job = create_job(schedule="every 1w", **fields)
+        job = create_job(schedule="every 7d", **fields)
     print(json.dumps({"id": job["id"], "name": job["name"]}))
 
 
