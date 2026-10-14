@@ -1,0 +1,196 @@
+--- a/agent/auxiliary_client.py
++++ b/agent/auxiliary_client.py
+@@ -5387,6 +5387,8 @@
+     failed_provider: str,
+     task: str = None,
+     reason: str = "payment error",
++    *,
++    main_runtime: Optional[Dict[str, Any]] = None,
+ ) -> Tuple[Optional[Any], Optional[str], str]:
+     """Try alternative providers after a payment/credit or connection error.
+ 
+@@ -5400,7 +5402,9 @@
+     skip = failed_provider.lower().strip()
+     # Also skip Step-1 main-provider path if it maps to the same backend.
+     # (e.g. main_provider="openrouter" → skip "openrouter" in chain)
+-    main_provider = _read_main_provider()
++    main_provider = _normalize_main_runtime(main_runtime).get("provider") or _read_main_provider()
++    if not _discovery_chain_allowed(main_provider, task):
++        return None, None, ""
+     skip_labels = {skip}
+     if main_provider and main_provider.lower() in skip:
+         skip_labels.add(main_provider.lower())
+@@ -5883,6 +5887,17 @@
+     )
+     return client
+ 
++def _discovery_chain_allowed(main_provider: str, task: Optional[str] = None) -> bool:
++    """Only unconfigured installs may discover providers outside their fallback policy."""
++    if (main_provider or "").strip().lower() in {"", "auto"}:
++        return True
++    logger.warning(
++        "Auxiliary %s: selected provider %s and configured fallbacks are unavailable; "
++        "refusing to discover another provider.", task or "call", main_provider,
++    )
++    return False
++
++
+ def _resolve_auto_route(
+     main_runtime: Optional[Dict[str, Any]] = None,
+     task: Optional[str] = None,
+@@ -6055,6 +6070,9 @@
+     if fb_client is not None:
+         return fb_client, fb_model, fb_label
+ 
++    if not _discovery_chain_allowed(main_provider, task):
++        return None, None, ""
++
+     # ── Step 3: aggregator / fallback chain ──────────────────────────────
+     tried = []
+     for label, try_fn in _get_provider_chain():
+@@ -7287,6 +7305,7 @@
+         #   5. Stop
+         main_provider = str(runtime.get("provider") or _read_main_provider())
+         main_model = str(runtime.get("model") or _read_main_model())
++        selected_main_provider = main_provider
+         if main_provider.strip().lower() == "moa":
+             # MoA virtual provider: main_model is a preset NAME, and every
+             # capability probe below (_PROVIDERS_WITHOUT_VISION,
+@@ -7305,32 +7324,10 @@
+                 runtime["api_key"] = ""
+                 runtime["api_mode"] = ""
+         if main_provider and main_provider not in {"auto", "", "moa"}:
+-            # A provider-specific vision default wins over the user's chat model:
+-            # static overrides (xiaomi/zai) and catalog-backed discovery (the
+-            # DeepInfra profile hook) both yield a *known* vision-capable model,
+-            # whereas the pinned chat model is usually NOT multimodal (e.g. the
+-            # DeepSeek-V4-Flash default) and _main_model_supports_vision can't be
+-            # trusted to catch that. Only fall back to the chat model when no
+-            # provider default is available (catalog unreachable).
+-            provider_vision_default = _resolve_provider_vision_default(main_provider)
+-            vision_model = provider_vision_default or main_model
+-            if main_provider == "nous":
+-                # Nous resolves its vision model from the Portal's tier-aware
+-                # recommended-models slots inside _try_nous(vision=True).
+-                # Passing the chat model here overrides that pick, so a
+-                # text-only chat default (e.g. a `:free` chat SKU) receives the
+-                # image and the upstream rejects it with a 404. Only an
+-                # explicit auxiliary.vision.model may override the Portal.
+-                sync_client, default_model = _resolve_strict_vision_backend(
+-                    main_provider, resolved_model or provider_vision_default
+-                )
+-                if sync_client is not None:
+-                    logger.info(
+-                        "Vision auto-detect: using main provider %s (%s)",
+-                        main_provider, default_model or resolved_model or main_model,
+-                    )
+-                    return _finalize(main_provider, sync_client, default_model)
+-            elif main_provider in _PROVIDERS_WITHOUT_VISION:
++            # Keep automatic vision on the selected model. A dedicated model
++            # can be chosen explicitly through auxiliary.vision.model.
++            vision_model = resolved_model or main_model
++            if main_provider in _PROVIDERS_WITHOUT_VISION:
+                 # Kimi Coding Plan's /coding endpoint (Anthropic Messages wire)
+                 # does not accept image input — Kimi's own docs say "Current
+                 # model does not support image input, switch to a model with
+@@ -7405,6 +7402,18 @@
+                     return _finalize(
+                         main_provider, rpc_client, rpc_model or vision_model)
+ 
++        fb_client, fb_model, fb_label = _try_configured_fallback_chain(
++            "vision", main_provider or "auto", reason="main provider unavailable")
++        if fb_client is None:
++            fb_client, fb_model, fb_label = _try_main_fallback_chain(
++                "vision", main_provider or "auto", reason="main provider unavailable")
++        if fb_client is not None:
++            if async_mode:
++                fb_client, fb_model = _to_async_client(fb_client, fb_model, is_vision=True)
++            return _fallback_provider_from_label(fb_label), fb_client, fb_model
++        if not _discovery_chain_allowed(selected_main_provider, "vision"):
++            return None, None, None
++
+         # Fall back through aggregators (uses their dedicated vision model,
+         # not the user's main model) when main provider has no client.
+         for candidate in _VISION_AUTO_PROVIDER_ORDER:
+@@ -9382,17 +9391,6 @@
+             async_mode=False,
+             main_runtime=main_runtime,
+         )
+-        if client is None and resolved_provider != "auto" and not resolved_base_url:
+-            logger.warning(
+-                "Vision provider %s unavailable, falling back to auto vision backends",
+-                resolved_provider,
+-            )
+-            effective_provider, client, final_model = resolve_vision_provider_client(
+-                provider="auto",
+-                model=resolved_model,
+-                async_mode=False,
+-                main_runtime=main_runtime,
+-            )
+         if client is None:
+             raise RuntimeError(
+                 f"No LLM provider configured for task={task} provider={resolved_provider}. "
+@@ -10003,7 +10001,7 @@
+                         task, resolved_provider or "auto", reason=reason)
+                 if fb_client is None:
+                     fb_client, fb_model, fb_label = _try_payment_fallback(
+-                        resolved_provider, task, reason=reason)
++                        resolved_provider, task, reason=reason, main_runtime=main_runtime)
+             else:
+                 fb_client, fb_model, fb_label = _try_configured_fallback_chain(
+                     task, resolved_provider or "auto", reason=reason,
+@@ -10029,8 +10027,11 @@
+                 # The candidate had a stale/unrefreshable credential and was
+                 # quarantined — walk the discovery chain once more; unhealthy
+                 # entries are skipped so the next viable candidate serves.
+-                fb_client, fb_model, fb_label = _try_payment_fallback(
+-                    resolved_provider, task, reason="stale fallback credential")
++                if is_auto:
++                    fb_client, fb_model, fb_label = _try_payment_fallback(
++                        resolved_provider, task, reason="stale fallback credential", main_runtime=main_runtime)
++                else:
++                    fb_client, fb_model, fb_label = None, None, ""
+                 if fb_client is not None:
+                     _record_route_info(
+                         route_info, _fallback_provider_from_label(fb_label), fb_model
+@@ -10205,17 +10206,6 @@
+             async_mode=True,
+             main_runtime=main_runtime,
+         )
+-        if client is None and resolved_provider != "auto" and not resolved_base_url:
+-            logger.warning(
+-                "Vision provider %s unavailable, falling back to auto vision backends",
+-                resolved_provider,
+-            )
+-            effective_provider, client, final_model = resolve_vision_provider_client(
+-                provider="auto",
+-                model=resolved_model,
+-                async_mode=True,
+-                main_runtime=main_runtime,
+-            )
+         if client is None:
+             raise RuntimeError(
+                 f"No LLM provider configured for task={task} provider={resolved_provider}. "
+@@ -10701,7 +10691,7 @@
+                         task, resolved_provider or "auto", reason=reason)
+                 if fb_client is None:
+                     fb_client, fb_model, fb_label = _try_payment_fallback(
+-                        resolved_provider, task, reason=reason)
++                        resolved_provider, task, reason=reason, main_runtime=main_runtime)
+             else:
+                 fb_client, fb_model, fb_label = _try_configured_fallback_chain(
+                     task, resolved_provider or "auto", reason=reason,
+@@ -10732,8 +10722,11 @@
+                     return fb_resp
+                 # Stale/unrefreshable candidate credential — quarantined; walk
+                 # the discovery chain once more (unhealthy entries skipped).
+-                fb_client, fb_model, fb_label = _try_payment_fallback(
+-                    resolved_provider, task, reason="stale fallback credential")
++                if is_auto:
++                    fb_client, fb_model, fb_label = _try_payment_fallback(
++                        resolved_provider, task, reason="stale fallback credential", main_runtime=main_runtime)
++                else:
++                    fb_client, fb_model, fb_label = None, None, ""
+                 if fb_client is not None:
+                     async_fb, async_fb_model = _to_async_client(
+                         fb_client, fb_model or "", is_vision=(task == "vision")

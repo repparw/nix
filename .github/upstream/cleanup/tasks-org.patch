@@ -1,0 +1,30 @@
+diff --git a/modules/aspects/gui/apps.nix b/modules/aspects/gui/apps.nix
+index c8a446ad1..4ea3e1673 100644
+--- a/modules/aspects/gui/apps.nix
++++ b/modules/aspects/gui/apps.nix
+@@ -2,12 +2,6 @@
+   den,
+   ...
+ }:
+-let
+-  tasksOrgPackage = builtins.fetchurl {
+-    url = "https://raw.githubusercontent.com/NixOS/nixpkgs/68e19592a6d35b03cb050e499d051cff6f8c9539/pkgs/by-name/ta/tasks-org/package.nix";
+-    sha256 = "sha256-ROHXY5AJiH9B1iarpvCKinvIpAr4HuXXdIcjIwnHq1I=";
+-  };
+-in
+ {
+   flake-file.inputs.nixcord = {
+     url = "github:FlameFlag/nixcord";
+@@ -17,12 +11,6 @@ in
+     nixos =
+       { pkgs, ... }:
+       {
+-        nixpkgs.overlays = [
+-          (final: _prev: {
+-            tasks-org = final.callPackage tasksOrgPackage { };
+-          })
+-        ];
+-
+         programs = {
+           gnome-disks.enable = true;
+         };

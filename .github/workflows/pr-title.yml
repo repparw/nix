@@ -1,0 +1,47 @@
+name: pr-title
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: Pull request whose current title is validated
+        required: true
+        type: string
+      expected_sha:
+        description: Exact pull request head commit
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  conventional-title:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Validate the squash commit title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ inputs.pull_request_number }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if test "$GITHUB_EVENT_NAME" = workflow_dispatch; then
+            test "$GITHUB_SHA" = "$EXPECTED_SHA"
+            gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
+              --json title,headRefOid,state > "$RUNNER_TEMP/pr-title.json"
+            test "$(jq -r .headRefOid "$RUNNER_TEMP/pr-title.json")" = "$EXPECTED_SHA"
+            test "$(jq -r .state "$RUNNER_TEMP/pr-title.json")" = OPEN
+            PR_TITLE=$(jq -r .title "$RUNNER_TEMP/pr-title.json")
+          fi
+          # The lock updater's subject is also exempt in the local commit hook.
+          if test "$PR_TITLE" = 'flake.lock: Update'; then
+            exit 0
+          fi
+          printf '%s\n' "$PR_TITLE" | nix shell --inputs-from . nixpkgs#convco --command convco check --from-stdin

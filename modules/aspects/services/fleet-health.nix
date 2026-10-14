@@ -4,70 +4,8 @@
   ...
 }:
 let
-  discordNotifyText = ''
-    if [ $# -lt 1 ]; then
-      echo "usage: discord-notify post <content> | delete <message-id>" >&2
-      exit 2
-    fi
-    cmd="$1"; shift
-
-    # shellcheck disable=SC1091
-    source /run/secrets/hermes-env
-    if [ -z "''${DISCORD_BOT_TOKEN:-}" ]; then
-      echo "discord-notify: DISCORD_BOT_TOKEN missing (hermes-env unreadable?)" >&2
-      exit 1
-    fi
-    if [ -z "''${DISCORD_CHANNEL_ID:-}" ]; then
-      echo "discord-notify: DISCORD_CHANNEL_ID not set" >&2
-      exit 1
-    fi
-    api="https://discord.com/api/v10/channels/$DISCORD_CHANNEL_ID/messages"
-
-    case "$cmd" in
-      post)
-        content="''${1:-}"
-        resp=$(curl -s -m 15 -w '\n%{http_code}' -X POST \
-          -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d "$(jq -n --arg c "$content" '{content: $c}')" "$api" || true)
-        code=$(printf '%s' "$resp" | tail -n 1)
-        mid=$(printf '%s' "$resp" | sed '$d' | jq -r '.id // empty' 2>/dev/null || true)
-        if [ -n "$mid" ]; then
-          echo "discord-notify: posted msg $mid (http $code)" >&2
-          printf '%s' "$mid"
-        else
-          echo "discord-notify: POST failed (http $code)" >&2
-          exit 1
-        fi
-        ;;
-      delete)
-        id="''${1:-}"
-        code=$(curl -s -m 15 -o /dev/null -w '%{http_code}' -X DELETE \
-          -H "Authorization: Bot $DISCORD_BOT_TOKEN" "$api/messages/$id" || echo curl-fail)
-        if [ "$code" = 204 ] || [ "$code" = 200 ]; then
-          echo "discord-notify: deleted msg $id (http $code)" >&2
-        else
-          echo "discord-notify: DELETE failed: msg $id http=$code (msgid kept for retry)" >&2
-          exit 1
-        fi
-        ;;
-      *)
-        echo "usage: discord-notify post <content> | delete <message-id>" >&2
-        exit 2
-        ;;
-    esac
-  '';
-
-  mkDiscordNotify =
-    pkgs_:
-    pkgs_.writeShellApplication {
-      name = "discord-notify";
-      runtimeInputs = with pkgs_; [
-        curl
-        jq
-      ];
-      text = discordNotifyText;
-    };
+  # Shared with the other fleet services through modules/_services/lib.nix.
+  mkDiscordNotify = (import ../../_services/lib.nix { inherit lib pkgs; }).mkDiscordNotify;
 in
 {
   den.aspects.nixos-services.provides.fleet-health = {
@@ -94,9 +32,11 @@ in
                   http home-assistant ${servicesLib.serviceUrl cfg config name} ""
                   http home https://${fqdn}/ "" --resolve ${fqdn}:443:127.0.0.1''
               else if service.healthcheck != null then
-                "            remote ${name} ${servicesLib.publicHealthUrl cfg config name} 200"
+                "            remote \"${service.host} epsilon\" ${name} ${
+                              servicesLib.publicHealthUrl cfg config name
+                            } 200"
               else
-                "            remote ${name} ${servicesLib.serviceUrl cfg config name}/ \"\""
+                "            remote ${service.host} ${name} ${servicesLib.serviceUrl cfg config name}/ \"\""
             )
             (
               lib.sort (a: b: a < b) (
@@ -114,6 +54,10 @@ in
             gnused
             coreutils
             systemd
+            openssh
+            util-linux
+            gnugrep
+            config.modules.fleet-unit-state.snapshot
           ];
           text = ''
                         usage="usage: fleet-health-probe [--strict] [--local]"
@@ -135,7 +79,13 @@ in
                         mkdir -p "$state_dir"
 
 
+                        if [ "$strict" != 1 ]; then
+                          exec 9>"$state_dir/.probe.lock"
+                          flock 9
+                        fi
+
                         failures=0
+                        declare -A unavailable_hosts=()
 
                         fail() {
                           local n="$1" detail="$2" count mid
@@ -147,7 +97,7 @@ in
                           printf '%s\n' "$count" > "$state_dir/$n"
                           if [ "$count" -ge 2 ] && [ ! -e "$state_dir/.$n.msgid" ]; then
                             mid=$(discord-notify post ":red_circle: DOWN $HOSTNAME $n ($detail)" || true)
-                            [ -n "$mid" ] && printf '%s\n' "$mid" > "$state_dir/.$n.msgid"
+                            [ -z "$mid" ] || printf '%s\n' "$mid" > "$state_dir/.$n.msgid"
                           fi
                         }
 
@@ -175,21 +125,68 @@ in
                           ok "unit:restic-backups-offsite"
                         fi
 
-                        if [ "$strict" != 1 ]; then
-                          # systemd prefixes failed rows with a bullet on newer
-                          # versions; extract real unit names by their suffix.
-                          failed_cur=$(systemctl list-units --state=failed --no-legend --no-pager 2>/dev/null \
-                            | grep -oE '[a-zA-Z0-9@._\\-]+\.(service|timer|mount|path|scope|socket|target)' \
-                            | sort -u || true)
-                          failed_prev=$(cat "$state_dir/.failed-units" 2>/dev/null || true)
+                        sweep_units() {
+                          local host="$1" current previous unit alert recovering="" prefix="unit-failed:$1:" previous_file="$state_dir/.failed-units-$1"
+                          if [ "$host" = "$HOSTNAME" ]; then
+                            prefix="unit-failed:"
+                            previous_file="$state_dir/.failed-units"
+                            if ! current=$(fleet-unit-snapshot); then
+                              fail "host-units:$host" "failed-unit snapshot unavailable"
+                              return 0
+                            fi
+                          else
+                            if ! current=$(timeout 30 ssh \
+                              -i /home/repparw/.ssh/id_ed25519 \
+                              -o BatchMode=yes -o IdentitiesOnly=yes \
+                              -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 \
+                              "root@$2" fleet-unit-snapshot); then
+                              unavailable_hosts["$host"]=1
+                              fail "host-units:$host" "SSH failed-unit snapshot unavailable"
+                              return 0
+                            fi
+                          fi
+                          if printf '%s\n' "$current" | grep -vE '^$|^[a-zA-Z0-9@._:\\-]+\.(service|timer|mount|path|scope|socket|target|automount|slice|device|swap)$' >/dev/null; then
+                            fail "host-units:$host" "invalid failed-unit snapshot"
+                            return 0
+                          fi
+                          ok "host-units:$host"
+                          previous=$(cat "$previous_file" 2>/dev/null || true)
+                          for alert in "$state_dir/.$prefix"*.msgid; do
+                            [ -f "$alert" ] || continue
+                            unit="''${alert##*/}"
+                            unit="''${unit#."$prefix"}"
+                            unit="''${unit%.msgid}"
+                            if [ "$host" = "$HOSTNAME" ]; then
+                              case "$unit" in alpha:* | epsilon:*) continue ;; esac
+                            fi
+                            previous+=$'\n'"$unit"
+                          done
+                          previous=$(printf '%s\n' "$previous" | sed '/^$/d' | sort -u)
+                          for unit in $previous; do
+                            if ! printf '%s\n' "$current" | grep -xF -e "$unit" >/dev/null; then
+                              ok "$prefix$unit"
+                              if [ -e "$state_dir/.$prefix$unit.msgid" ]; then
+                                recovering+="$unit"$'\n'
+                              fi
+                            fi
+                          done
+                          for unit in $current; do
+                            fail "$prefix$unit" "systemd failure or retained job failure"
+                          done
+                          printf '%s\n' "$current" "$recovering" | sed '/^$/d' | sort -u > "$previous_file"
+                        }
 
-                          for u in $failed_prev; do
-                            printf '%s\n' "$failed_cur" | grep -qxF -e "$u" || ok "unit-failed:$u"
-                          done
-                          for u in $failed_cur; do
-                            fail "unit-failed:$u" "systemd failed state"
-                          done
-                          printf '%s\n' "$failed_cur" > "$state_dir/.failed-units"
+                        if [ "$strict" != 1 ]; then
+                          sweep_units "$HOSTNAME"
+                          if [ "$local_only" != 1 ]; then
+                            ${lib.concatMapStringsSep "\n"
+                              (host: "sweep_units ${lib.escapeShellArg host} ${lib.escapeShellArg cfg.hostAddresses.${host}}")
+                              [
+                                "alpha"
+                                "epsilon"
+                              ]
+                            }
+                          fi
                         fi
 
                         http() {
@@ -204,11 +201,19 @@ in
                         }
 
                         remote() {
-                          [ "$local_only" = 1 ] || http "$@"
+                          local hosts="$1" name="$2" host; shift
+                          [ "$local_only" = 1 ] && return 0
+                          for host in $hosts; do
+                            if [ "''${unavailable_hosts[$host]:-0}" = 1 ]; then
+                              ok "http:$name"
+                              return 0
+                            fi
+                          done
+                          http "$@"
                         }
 
             ${vhostProbes}
-                        remote apex https://${cfg.domain}/ 200
+                        remote epsilon apex https://${cfg.domain}/ 200
 
                         if [ "$strict" = 1 ]; then
                           [ "$failures" -eq 0 ]
@@ -305,68 +310,19 @@ in
 
         coredumpsScript = pkgs.writeShellApplication {
           name = "coredump-watch";
-          runtimeInputs = with pkgs; [
-            curl
-            (mkDiscordNotify pkgs)
-            jq
-            gawk
-            gnused
-            coreutils
-            systemd
+          runtimeInputs = [
+            pkgs.python3
+            pkgs.openssh
+            pkgs.systemd
           ];
           text = ''
-            state_dir="''${STATE_DIRECTORY:-/var/lib/fleet-health}"
-            mkdir -p "$state_dir"
-            marker="$state_dir/.coredumps-since"
-            now=$(date +%s)
-
-            if [ ! -e "$marker" ]; then
-              printf '%s\n' "$now" > "$marker"
-              echo "coredumps: baseline set, nothing reported"
-              exit 0
-            fi
-
-            since=$(cat "$marker")
-            printf '%s\n' "$now" > "$marker"
-
-            MUTE_JSON="''${MUTE_JSON:-[]}"
-            entries=$(coredumpctl list --json=short --no-pager --since="@$since" 2>/dev/null || echo "[]")
-
-            report=$(printf '%s' "$entries" | jq -r --argjson mute "$MUTE_JSON" '
-              [ .[]
-                | select(.exe != null and .exe != "")
-                | { base: (.exe | split("/") | last), sig: (.sig // "unknown") } ]
-              | map(select((.base as $b | $mute | index($b)) | not))
-              | sort_by(.base, .sig)
-              | group_by([.base, .sig])
-              | map("\(length)x \(.[0].base) (sig \(.[0].sig))")
-              | .[]' 2>/dev/null || true)
-
-            count=$(printf '%s\n' "$report" | grep -c . || true)
-            if [ "$count" -gt 0 ]; then
-              body=":warning: coredumps: $count new crash kind(s) on $HOSTNAME"
-              while IFS= read -r line; do
-                body+=$'\n'"• $line"
-              done <<< "$report"
-              discord-notify post "$body" || true
-            else
-              echo "coredumps: nothing new"
-            fi
-
-            muted=$(printf '%s' "$entries" | jq -r --argjson mute "$MUTE_JSON" '
-              [ .[]
-                | select(.exe != null and .exe != "")
-                | (.exe | split("/") | last)
-                | select(. as $b | $mute | index($b)) ] | length' 2>/dev/null || echo 0)
-            if [ "$muted" -gt 0 ]; then
-              echo "coredumps: $muted muted crash(es) suppressed"
-            fi
+            exec python3 ${./coredump-watch/collector.py}
           '';
         };
       in
       {
         options.modules.coredump-watch = {
-          enable = lib.mkEnableOption "coredump surfacing to Discord (host-local; needs a persistent journal, so keep it off pi)";
+          enable = lib.mkEnableOption "coredump triage through Hermes (requires a persistent journal)";
 
           mute = lib.mkOption {
             type = lib.types.listOf lib.types.str;
@@ -384,8 +340,13 @@ in
         config = {
           modules.coredump-watch.script = coredumpsScript;
 
+          programs.ssh.knownHosts.hermes-crash-intake = lib.mkIf cfg.enable {
+            hostNames = [ config.modules.services.hostSshAddresses.epsilon ];
+            publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINE+UZW7+eImXJ4pM8P0onKRk9hNnEcJeBCpSv+GhPRy";
+          };
+
           systemd.services.fleet-health-coredumps = lib.mkIf cfg.enable {
-            description = "Surface new coredumps to Discord";
+            description = "Queue new coredumps for Hermes investigation";
             after = [
               "network-online.target"
               "multi-user.target"
@@ -393,8 +354,9 @@ in
             wants = [ "network-online.target" ];
             environment = {
               HOSTNAME = config.networking.hostName;
-              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
               MUTE_JSON = builtins.toJSON cfg.mute;
+              HERMES_TARGET = "root@${config.modules.services.hostSshAddresses.epsilon}";
+              HERMES_SSH_IDENTITY = "/home/repparw/.ssh/id_ed25519";
             };
             serviceConfig = {
               Type = "oneshot";
@@ -701,6 +663,175 @@ in
           };
 
           systemd.timers.reboot-watch = lib.mkIf cfg.enable {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = cfg.interval;
+              Persistent = true;
+            };
+          };
+        };
+      };
+  };
+
+  den.aspects.nixos-services.provides.free-model-watch = {
+    nixos =
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
+      let
+        cfg = config.modules.free-model-watch;
+
+        freeModelWatch = pkgs.writeShellApplication {
+          name = "free-model-watch";
+          runtimeInputs = with pkgs; [
+            curl
+            jq
+            coreutils
+            gnugrep
+            gnused
+            (mkDiscordNotify pkgs)
+          ];
+          text = ''
+            state_dir="''${STATE_DIRECTORY:-/var/lib/free-model-watch}"
+            mkdir -p "$state_dir"
+
+            opencode_url="''${OPENCODE_MODELS_URL:-https://opencode.ai/zen/v1/models}"
+            nous_url="''${NOUS_MODELS_URL:-https://portal.nousresearch.com/api/nous/recommended-models}"
+
+            fetch_opencode() {
+              curl -fsS -m 20 "$opencode_url" 2>/dev/null |
+                jq -r '.data[]?.id | select(endswith("-free"))' 2>/dev/null |
+                sed '/^[[:space:]]*$/d' | LC_ALL=C sort -u || true
+            }
+
+            fetch_nous() {
+              curl -fsS -m 20 "$nous_url" 2>/dev/null |
+                jq -r '.freeRecommendedModels[]?.modelName' 2>/dev/null |
+                sed '/^[[:space:]]*$/d' | LC_ALL=C sort -u || true
+            }
+
+            # Bounded so one churny catalog cannot blow past Discord's
+            # per-message limit.
+            compact() {
+              sed '/^[[:space:]]*$/d' | sed -n '1,8p' | tr '\n' ' ' |
+                sed 's/[[:space:]]*$//; s/[[:space:]]\{1,\}/, /g' | cut -c 1-400
+            }
+
+            parts=""
+            changed=0
+
+            # Snapshots only move into place after a successful announcement:
+            # a Discord outage must not swallow the change, and the failed
+            # unit is paged through the fleet-health sweep.
+            stage=$(mktemp -d "$state_dir/.stage.XXXXXX")
+            trap 'rm -rf "$stage"' EXIT
+
+            record_source() {
+              local name="$1" current="$2"
+              local state_file previous added removed part
+              state_file="$state_dir/$name.list"
+              if [ -z "$current" ]; then
+                echo "free-model-watch: $name catalog unavailable; keeping the previous snapshot" >&2
+                return 0
+              fi
+              if [ ! -f "$state_file" ]; then
+                printf '%s\n' "$current" > "$state_file"
+                echo "free-model-watch: $name baseline recorded ($(printf '%s\n' "$current" | grep -c .) models)"
+                return 0
+              fi
+              previous=$(sed '/^[[:space:]]*$/d' "$state_file" | LC_ALL=C sort -u)
+              added=$(comm -13 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')
+              removed=$(comm -23 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')
+              if [ -z "$added" ] && [ -z "$removed" ]; then
+                echo "free-model-watch: $name unchanged"
+                return 0
+              fi
+              printf '%s\n' "$current" > "$stage/$name.list"
+              part="• $name:"
+              if [ -n "$added" ]; then
+                part="$part new: $(printf '%s\n' "$added" | compact)"
+              fi
+              if [ -n "$removed" ]; then
+                if [ -n "$added" ]; then
+                  part="$part;"
+                fi
+                part="$part gone: $(printf '%s\n' "$removed" | compact)"
+              fi
+              parts="$parts
+            $part"
+              changed=1
+            }
+
+            record_source "opencode-free" "$(fetch_opencode)"
+            record_source "nous-free" "$(fetch_nous)"
+
+            if [ "$changed" = 0 ]; then
+              echo "free-model-watch: no free-model catalog change"
+              exit 0
+            fi
+
+            if [ -f "$state_dir/.free-models.msgid" ]; then
+              previous_mid=$(cat "$state_dir/.free-models.msgid")
+              if discord-notify delete "$previous_mid"; then
+                rm -f "$state_dir/.free-models.msgid"
+              fi
+            fi
+
+            if ! mid=$(discord-notify post ":eyes: free-model catalog changed on $HOSTNAME$parts") || [ -z "$mid" ]; then
+              echo "free-model-watch: announcing the catalog change failed; snapshots kept" >&2
+              exit 1
+            fi
+
+            for staged in "$stage"/*.list; do
+              [ -f "$staged" ] || continue
+              mv "$staged" "$state_dir/"
+            done
+            printf '%s\n' "$mid" > "$state_dir/.free-models.msgid"
+            echo "free-model-watch: catalog change posted ($mid)"
+
+            exit 0
+          '';
+        };
+      in
+      {
+        options.modules.free-model-watch = {
+          enable = lib.mkEnableOption "Discord notification when the OpenCode/Nous free-model catalogs change";
+
+          interval = lib.mkOption {
+            type = lib.types.str;
+            default = "*-*-* 00/2:17:00";
+            description = "systemd OnCalendar for the free-model-watch timer";
+          };
+
+          script = lib.mkOption {
+            type = lib.types.package;
+            readOnly = true;
+            description = "free-model-watch package";
+          };
+        };
+
+        config = {
+          modules.free-model-watch.script = freeModelWatch;
+
+          systemd.services.free-model-watch = lib.mkIf cfg.enable {
+            description = "Notify Discord when free-tier model catalogs change";
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            environment = {
+              HOSTNAME = config.networking.hostName;
+              DISCORD_CHANNEL_ID = config.modules.services.discordChannelId;
+            };
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = lib.getExe freeModelWatch;
+              StateDirectory = "free-model-watch";
+            };
+          };
+
+          systemd.timers.free-model-watch = lib.mkIf cfg.enable {
             wantedBy = [ "timers.target" ];
             timerConfig = {
               OnCalendar = cfg.interval;

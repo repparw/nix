@@ -39,21 +39,16 @@
             coreutils
             gawk
             gnugrep
-            gnused
           ];
           script = ''
             set -eu
 
-            usage="$(btrfs filesystem usage ${root})"
+            usage="$(btrfs filesystem usage -b ${root})"
 
-            unallocated_gib="$(
-              printf '%s\n' "$usage" |
-                awk '/Unallocated:/ { getline; print $NF }' |
-                sed 's/GiB$//'
-            )"
+            unallocated_bytes="$(printf '%s\n' "$usage" | awk '/^[[:space:]]*Device unallocated:/ { print $3 }')"
             metadata_pct="$(
               printf '%s\n' "$usage" |
-                awk '/Metadata,DUP:/ {
+                awk '/^Metadata,DUP:/ {
                   sub(/^.*\(/, "", $0)
                   sub(/%\).*$/, "", $0)
                   print $0
@@ -61,13 +56,26 @@
             )"
             global_reserve_used="$(
               printf '%s\n' "$usage" |
-                awk '/Global reserve:/ { print $NF }'
+                awk '/Global reserve:/ {
+                  sub(/^.*\(used: /, "", $0)
+                  sub(/\).*$/, "", $0)
+                  print $0
+                }'
             )"
+
+            for value in "$unallocated_bytes" "$metadata_pct" "$global_reserve_used"; do
+              if ! printf '%s\n' "$value" | grep -Eq '^[0-9]+([.][0-9]+)?$'; then
+                echo "cannot parse root btrfs allocation health from byte-mode usage" >&2
+                exit 1
+              fi
+            done
 
             failed=0
 
-            if awk "BEGIN { exit !($unallocated_gib < ${toString minUnallocatedGiB}) }"; then
-              echo "root btrfs unallocated space is low: ''${unallocated_gib} GiB < ${toString minUnallocatedGiB} GiB"
+            if awk "BEGIN { exit !($unallocated_bytes < ${
+              toString (minUnallocatedGiB * 1024 * 1024 * 1024)
+            }) }"; then
+              echo "root btrfs unallocated space is low: ''${unallocated_bytes} bytes < ${toString minUnallocatedGiB} GiB"
               failed=1
             fi
 
@@ -77,7 +85,7 @@
             fi
 
             reserve_count_file="$STATE_DIRECTORY/global-reserve-count"
-            if [ "$global_reserve_used" = "0.00B" ]; then
+            if awk "BEGIN { exit !($global_reserve_used == 0) }"; then
               printf '0\n' > "$reserve_count_file"
             else
               count=0

@@ -19,7 +19,9 @@ Check issues before implementing a local workaround. For merged pull requests, v
 For configuration changes or pre-deployment checks, use
 [verify-nixos-config](.agents/skills/verify-nixos-config/SKILL.md). For
 running-fleet inspection or an authorized activation, use
-[fleet-operations](.agents/skills/fleet-operations/SKILL.md).
+[fleet-operations](.agents/skills/fleet-operations/SKILL.md). For an external
+change blocked on an upstream input, use
+[watch-upstream](.agents/skills/watch-upstream/SKILL.md).
 
 ### Issue tracker
 
