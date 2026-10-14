@@ -105,7 +105,6 @@
       [
         arr
         jellyfin
-        matrizApi
       ]
       ++ [
         den.aspects.service-host
