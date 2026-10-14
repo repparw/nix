@@ -32,6 +32,22 @@
                 };
               };
 
+              avantreeStable = {
+                "monitor.bluez.rules" = [
+                  {
+                    matches = [
+                      { "device.name" = "bluez_card.00_1D_43_A0_14_D8"; }
+                    ];
+                    actions.update-props = {
+                      "bluez5.roles" = [
+                        "a2dp_sink"
+                        "a2dp_source"
+                      ];
+                    };
+                  }
+                ];
+              };
+
               bluetoothDefault = {
                 "monitor.bluez.rules" = [
                   {
