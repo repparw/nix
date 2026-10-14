@@ -21,9 +21,17 @@ inside root subvolume `@` on UUID `51c5e80b-e22e-4d62-a3e2-ebb531deb05b`.
 The existing `@home` subvolume is not mounted at `/home`; do not assume it
 contains the current home. The ESP is independently mounted at `/boot`.
 
-HDD and Seagate media are mounted below `/home/containers/media` from separate
-disks. Keep those filesystem declarations and their existing bind mounts.
-Preserve numeric owners, ACLs, extended attributes, and container UID mappings.
+HDD and Seagate are outside the migration scope. Do not format, repartition,
+move data, change ownership, alter mount declarations, or place migration
+backups on either disk. Preserve their existing filesystem and bind-mount
+declarations exactly.
+
+Their media is mounted below `/home/containers/media`. Exclude `/mnt/hdd`,
+`/mnt/seagate`, and the media bind-mount trees from migration scans, copies,
+and recovery backups. Persisting `/home` must not copy the mounted media into
+`/persist/home`; reuse the NVMe-backed home and preserve the existing nested
+mounts. Preserve numeric owners, ACLs, extended attributes, and container UID
+mappings for the NVMe state.
 
 Prowlarr retains its live database in its container root. Its exported backup
 directory is not the whole live database. Keep `/var/lib/nixos-containers`
@@ -80,8 +88,9 @@ No part of this draft mounts the backing filesystem or switches the root.
 2. Expand alpha's recovery coverage and prove an isolated restore. Its current
    offsite backup is a small home-state allowlist; it omits OAuth credentials,
    most of the home, complete container roots, and host identity. Persistence
-   declarations are not backups. Do not enable broad offsite backup blindly:
-   decide how to cover the large download and media trees first.
+   declarations are not backups. Scope this recovery work to NVMe state and
+   exclude the HDD, Seagate, and their media bind mounts explicitly. Do not
+   broaden or redirect backup jobs onto either disk as part of this migration.
 3. Verify independently usable rescue media and local console access. Keep
    the current Btrfs-root boot entry and its store closure as a recovery path.
    SSH cannot recover an initrd that failed to mount the NVMe.
