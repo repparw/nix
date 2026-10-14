@@ -25,6 +25,20 @@
       cfg = config.modules.services;
       apexUrl = "https://${cfg.domain}/";
       minifluxHealth = servicesLib.publicHealthUrl cfg config "miniflux";
+      packageDelivery = pkgs.writeShellApplication {
+        name = "fleet-package-deliver";
+        runtimeInputs = with pkgs; [
+          coreutils
+          jq
+          openssh
+          util-linux
+        ];
+        text =
+          builtins.replaceStrings
+            [ "@FLEET_EPSILON_ADDRESS@" ]
+            [ config.modules.fleet-update.targetAddresses.epsilon ]
+            (builtins.readFile ../scripts/package-update-deliver.sh);
+      };
       headlessReboot = pkgs.writeShellApplication {
         name = "fleet-headless-reboot";
         runtimeInputs = with pkgs; [
@@ -64,10 +78,10 @@
 
           reboot_required_local() {
             local booted built
-            if ! booted=$(readlink /run/booted-system/{initrd,kernel,kernel-modules} 2>/dev/null); then
+            if ! booted=$(readlink -f /run/booted-system/{initrd,kernel,kernel-modules} 2>/dev/null); then
               return 2
             fi
-            if ! built=$(readlink /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules} 2>/dev/null); then
+            if ! built=$(readlink -f /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules} 2>/dev/null); then
               return 2
             fi
             [ "$booted" != "$built" ]
@@ -75,8 +89,8 @@
 
           reboot_required_epsilon() {
             remote_epsilon bash -s <<'EOF'
-          booted=$(readlink /run/booted-system/{initrd,kernel,kernel-modules} 2>/dev/null) || exit 2
-          built=$(readlink /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules} 2>/dev/null) || exit 2
+          booted=$(readlink -f /run/booted-system/{initrd,kernel,kernel-modules} 2>/dev/null) || exit 2
+          built=$(readlink -f /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules} 2>/dev/null) || exit 2
           [ "$booted" != "$built" ]
           EOF
           }
@@ -252,34 +266,8 @@
         };
       };
 
-      systemd.services.fleet-promote = {
-        description = "Validate and publish a flake.lock candidate";
-        after = [ "network-online.target" ];
-        wants = [ "network-online.target" ];
-        restartIfChanged = false;
-        serviceConfig = {
-          Type = "oneshot";
-          WorkingDirectory = "/var/lib/auto-update";
-          StateDirectory = "auto-update";
-          TimeoutStartSec = "120min";
-        };
-        script = ''
-          exec ${lib.getExe config.modules.fleet-update.package} \
-            promote --state /var/lib/auto-update
-        '';
-      };
-
-      systemd.timers.fleet-promote = {
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = "*-*-* 04:15:00";
-          Persistent = true;
-          RandomizedDelaySec = "10min";
-        };
-      };
-
       systemd.services.fleet-deploy = {
-        description = "Launch convergence on the approved main revision";
+        description = "Launch convergence on main after successful CI";
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
         restartIfChanged = false;
@@ -314,6 +302,25 @@
           OnCalendar = "*-*-* 05:30:00";
           Persistent = true;
           RandomizedDelaySec = "10min";
+        };
+      };
+
+      systemd.services.fleet-package-deliver = {
+        description = "Deliver durable fleet package events to Hermes";
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          StateDirectory = "auto-update";
+          TimeoutStartSec = "5min";
+          ExecStart = lib.getExe packageDelivery;
+        };
+      };
+      systemd.timers.fleet-package-deliver = {
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "2min";
+          OnUnitInactiveSec = "5min";
         };
       };
 

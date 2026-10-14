@@ -83,6 +83,7 @@ scheduled service before completing the bootstrap.
    rclone bisync \
      "$HOME/Documents/obsidian" \
      'obsidian-rs-crypt:' \
+     --workdir "${XDG_STATE_HOME:-$HOME/.local/state}/rclone/obsidian-bisync" \
      --resync-mode path1 \
      --filters-file "$HOME/.config/rclone/obsidian-bisync.filter" \
      --check-access \
@@ -90,6 +91,56 @@ scheduled service before completing the bootstrap.
      --dry-run \
      -vv
    ```
+
+## Recover missing listings or migrate the work directory
+
+Bisync's prior listings are required state, not disposable cache. The service
+uses `${XDG_STATE_HOME:-$HOME/.local/state}/rclone/obsidian-bisync` explicitly.
+Manual bisync commands must use the same `--workdir`, paths, and filter file.
+The old default was `~/.cache/rclone/bisync`; cache cleanup can remove its
+history. See the [upstream bisync manual](https://rclone.org/bisync/).
+
+Before activating this work-directory change, pause edits and stop the timer
+and service as in the bootstrap procedure. Save the old work directory alongside
+both vault snapshots. Do not copy a live lock or treat unrelated listing pairs
+as a valid baseline.
+
+If the old work directory contains the matching, valid Path1/Path2 listings,
+copy its contents into the new state directory while the service is stopped.
+Stop if the destination already exists; inspect it before choosing a baseline:
+
+```bash
+workdir="${XDG_STATE_HOME:-$HOME/.local/state}/rclone/obsidian-bisync"
+umask 077
+mkdir -p "$(dirname "$workdir")"
+mkdir -m 0700 "$workdir" &&
+  cp -a "$HOME/.cache/rclone/bisync/." "$workdir/"
+```
+
+Inspect locks and failed-run artifacts before copying. Preserve the original
+state and snapshots until a normal incremental run succeeds and representative
+files from both sides have been checked.
+
+If either matching listing is missing, `--recover` cannot reconstruct the lost
+baseline from nothing. Follow the bootstrap snapshot, decryption, staging,
+comparison, and reconciliation steps. Preserve both versions of differing
+files before choosing the canonical local content. Preview the documented
+`--resync-mode path1` command with the explicit new work directory. Only after
+reviewing its operations, run it without `--dry-run`. Never add `--resync` to
+the scheduled service or choose newer timestamps as a substitute for reviewing
+unsynced changes.
+
+After resync, start the service once without resync flags and inspect its
+journal. Confirm a successful incremental run, matching listings in the new
+work directory, and preserved representative local-only and remote-only files.
+Then restart the timer:
+
+```bash
+systemctl --user start obsidian-bisync.timer
+```
+
+A dry run alone does not establish the baseline. Keep the issue open until the
+real incremental run and file-preservation checks pass.
 
 ## Operation
 
@@ -112,5 +163,5 @@ systemctl --user stop obsidian-bisync.timer
 systemctl --user stop obsidian-bisync.service
 ```
 
-Inspect the journal and `~/.cache/rclone/bisync` state before restoring either
+Inspect the journal and the explicit bisync work directory before restoring either
 snapshot. Do not run a resync blindly.

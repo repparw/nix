@@ -1,119 +1,167 @@
 ---
 type: Runbook
-title: Prune t3code and opencode Databases
-description: Reclaim space from the t3code state DB and opencode session DB without losing chat history.
-when: Read when ~/.t3/userdata or ~/.local/share/opencode grows to multiple GB, or SQLite lock errors appear under concurrent access.
-resource: modules/aspects/ai/t3code.nix
+title: Audit and reclaim T3 Code and OpenCode database space
+description: Inspect SQLite usage and preserve conversation history before choosing a cleanup operation.
+when: Read when ~/.t3/userdata or ~/.local/share/opencode grows, or SQLite lock errors appear under concurrent access.
+resource: modules/scripts/audit-agent-dbs.py
 tags: [runbook, maintenance, t3code, opencode, sqlite]
 ---
 
-# Prune t3code and opencode Databases
+# Audit and reclaim T3 Code and OpenCode database space
 
-t3code (`modules/aspects/ai/t3code.nix`) and the shared opencode server both
-store data in SQLite files that grow without bound. Neither application has a
-time-based retention mechanism as of t3code 0.0.33 / opencode 1.18.18. The
-bloat is almost entirely internal event-sourcing duplicates; actual chat
-history is small by comparison.
+Audit the installed schema and database ownership before choosing what to remove.
+A filename, an old modification time, or an archived session does not prove that
+its history is disposable. Preserve active sessions and history that has not
+been reviewed.
 
-## Data layout
+## 1. Identify the databases and their owners
 
-| Path                                         | Contents                                                                  | History?                                                                        |
-| -------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `~/.t3/userdata/state.sqlite`                | `orchestration_events` (append-only event store), projections, receipts   | Conversations live in `projection_thread_messages` (~30 MB); events are replays |
-| `~/.local/share/opencode/opencode-stable.db` | `event` table (streaming-update replays), plus `session`/`message`/`part` | Chat history is `message` + `part`; `event` rows are duplicates                 |
-| `~/.t3/userdata/logs/provider/`              | Per-thread provider logs named `events.<thread-uuid>.log`                 | No                                                                              |
-| `~/.t3/userdata/server-runtime.json`         | Lease file proving which process owns port 3773                           | No                                                                              |
+Run these commands from the repository with Python 3, SQLite, and `fuser`
+available. If needed, enter a shell using the repository's pinned inputs:
 
-What t3code cleans up on its own: deleting a thread cascades to projection
-tables and attachments, and the `ProviderSessionReaper` evicts live in-memory
-sessions idle for 30 minutes. What it never cleans up: `orchestration_events`,
-`orchestration_command_receipts`, provider logs, and opencode's `event` table.
-
-## Known upstream issue
-
-Running the desktop app while `t3code-web.service` owns the state directory
-spawns a second embedded backend against the same SQLite file and causes
-`database is locked` errors. Track pingdotgg/t3code issues #6097 (no desktop
-attach-to-server mode exists; verified in 0.0.33) and PR #6098 (startup
-preflight). Until resolved, use the web UI at `http://127.0.0.1:3773` instead
-of the desktop app, or launch the desktop with a separate `T3CODE_HOME`.
-
-## Procedure
-
-### 1. Stop the services
-
-```console
-$ systemctl --user stop t3code-web.service opencode-web.service
+```sh
+nix shell --inputs-from . nixpkgs#python3 nixpkgs#sqlite nixpkgs#psmisc
+python3 modules/scripts/audit-agent-dbs.py
+fuser -v -- "$HOME/.t3/userdata/state.sqlite" \
+  "$HOME/.t3/userdata/state.sqlite-wal" \
+  "$HOME/.local/share/opencode/opencode.db" \
+  "$HOME/.local/share/opencode/opencode.db-wal" \
+  "$HOME/.local/share/opencode/opencode-stable.db"
 ```
 
-Writes must be quiesced before deleting rows or vacuuming.
+The audit opens existing files in SQLite read-only mode, reads a consistent
+transaction per database, and prints counts rather than titles or conversation
+bodies. Each database has a 30-second SQL work limit. Missing files remain
+missing. An unfamiliar schema or interrupted query produces a nonzero exit
+status; investigate before using partial results. SQLite may create its normal
+WAL coordination files for read-only connections. Do not use `immutable=1` on a
+live database, because that can ignore current WAL contents.
 
-### 2. Delete dead weight (no history impact)
+Check other users' processes if `fuser` reports insufficient permissions. No
+visible file owner is not proof that a database is obsolete.
 
-```console
-$ rm -f ~/.t3/userdata/state.sqlite.bak ~/.local/share/opencode/opencode.db
-$ find ~/.t3/userdata/logs -type f -mtime +7 -delete
+On Alpha on 2026-10-08, OpenCode 1.18.34 held `opencode.db` open. The older
+`opencode-stable.db` held separate history. Keep both until the archived history
+has been exported or reviewed. Inspect actual schemas before writing queries:
+
+```sh
+sqlite3 -readonly "$HOME/.t3/userdata/state.sqlite" '.schema'
+sqlite3 -readonly "$HOME/.local/share/opencode/opencode.db" '.schema'
+sqlite3 -readonly "$HOME/.local/share/opencode/opencode-stable.db" '.schema'
 ```
 
-`opencode.db` is the abandoned pre-"stable" database; confirm it has not been
-modified recently (`ls -la`) before deleting.
+## 2. Review candidates without deleting rows
 
-### 3. Prune old event-store rows (keeps all chat text)
+The audit reports old and empty sessions as review candidates. Neither category
+means that deletion is safe. Check the application's session list for ongoing
+work, child sessions, and useful history. T3 can still refer to provider sessions
+in either OpenCode database through `projection_thread_sessions.provider_session_id`.
 
-Keep a 30-day window of replay events; rendered threads stay complete because
-they read from projections/message tables:
+Use read-only ID comparisons to check whether the older database contains
+sessions missing from the live database:
 
-```console
-$ sqlite3 ~/.t3/userdata/state.sqlite \
-    "DELETE FROM orchestration_events WHERE occurred_at < datetime('now','-30 days');"
+```sh
+sqlite3 -readonly "$HOME/.local/share/opencode/opencode.db" <<'SQL'
+PRAGMA query_only = ON;
+ATTACH DATABASE 'file:/home/repparw/.local/share/opencode/opencode-stable.db?mode=ro' AS old;
+SELECT count(*) AS sessions_missing_from_live
+FROM old.session s
+WHERE NOT EXISTS (SELECT 1 FROM main.session n WHERE n.id = s.id);
+SQL
 ```
 
-```console
-$ sqlite3 ~/.local/share/opencode/opencode-stable.db \
-    "DELETE FROM event
-     WHERE type IN ('message.part.updated.1','message.updated.1')
-       AND json_extract(data,'$.sessionID') IN (
-         SELECT id FROM session
-         WHERE time_updated < (strftime('%s','now','-30 days') * 1000));"
+Adjust the absolute archive path for another user. Matching session IDs alone
+do not prove that every message or part matches. Compare those records too
+before treating a database as a duplicate.
+
+For reviewed unwanted sessions, use the application's supported delete action.
+Archiving a session preserves history and may reclaim no space. Check child
+sessions and provider references before deleting a parent. Keep the old database
+if the installed application cannot safely export or remove its sessions.
+
+Do not delete `orchestration_events`, command receipts, or OpenCode `event` rows
+with raw SQL based only on age. T3 0.0.44 reads orchestration events in migrations
+and approval reconstruction. Rendered messages remaining in projection tables
+does not establish that replay or recovery still works. A future event-retention
+procedure needs version-specific upstream support and restore verification.
+
+## 3. Back up before maintenance
+
+Use SQLite's backup command to include committed WAL contents in a consistent
+snapshot. A plain copy of a live database can omit recent changes. Keep backups
+private because they contain conversation history and application credentials.
+For example, back up T3 and verify the resulting database:
+
+```sh
+umask 077
+backup_dir="$HOME/backups/agent-dbs-$(date -u +%Y%m%dT%H%M%SZ)"
+mkdir -p "$backup_dir"
+sqlite3 -readonly "$HOME/.t3/userdata/state.sqlite" \
+  ".backup \"$backup_dir/state.sqlite\""
+sqlite3 -readonly "$backup_dir/state.sqlite" 'PRAGMA quick_check;'
 ```
 
-Optional, if the activity feed in old threads matters less than space:
+Expect `ok`. Repeat for each OpenCode database before modifying it. Check that
+the backup has the same relevant session and message counts as the snapshot you
+intend to preserve. Record its path and keep enough free disk space for both the
+backup and any SQLite rebuild. Use the [service backup restore runbook](restore-service-backups.md)
+when testing recovery. Do not remove the only backup because its filename ends
+in `.bak`.
 
-```console
-$ sqlite3 ~/.t3/userdata/state.sqlite \
-    "DELETE FROM projection_thread_activities WHERE created_at < datetime('now','-90 days');"
+## 4. Reclaim pages only when the audit finds free pages
+
+`reusable_bytes` reports SQLite pages already available for reuse inside the
+file. Those pages are the initial estimate for space that a vacuum can reclaim.
+If the count is zero, a large file alone does not justify a vacuum. A checkpoint
+can still truncate a WAL after writers stop.
+
+During maintenance downtime, stop the services and any standalone desktop or
+CLI process that owns the same databases:
+
+```sh
+systemctl --user stop t3code-web.service opencode-web.service
 ```
 
-Check the column list with `.schema` first; schema names have changed between
-versions.
+Repeat the ownership check from step 1. Do not continue while another process
+has a database or its WAL open. For each confirmed database, checkpoint first.
+Run `VACUUM` only after a reviewed deletion or a nonzero free-page count:
 
-### 4. Vacuum and checkpoint
-
-Both operations take about a minute per GB:
-
-```console
-$ sqlite3 ~/.t3/userdata/state.sqlite "VACUUM; PRAGMA wal_checkpoint(TRUNCATE);"
-$ sqlite3 ~/.local/share/opencode/opencode-stable.db "VACUUM; PRAGMA wal_checkpoint(TRUNCATE);"
+```sh
+sqlite3 "$HOME/.t3/userdata/state.sqlite" 'PRAGMA wal_checkpoint(TRUNCATE);'
+# Optional, if there are free pages and enough temporary disk space:
+sqlite3 "$HOME/.t3/userdata/state.sqlite" 'VACUUM; PRAGMA quick_check;'
 ```
 
-### 5. Restart and verify
+Repeat only for the OpenCode database that needs maintenance. Do not unlink WAL
+or SHM files by hand. SQLite manages those files.
 
-```console
-$ systemctl --user start opencode-web.service t3code-web.service
-$ curl -sf http://127.0.0.1:4096/ >/dev/null && echo opencode ok
-$ curl -sf http://127.0.0.1:3773/api/auth/session >/dev/null && echo t3 ok
+## 5. Restart and check history
+
+```sh
+systemctl --user start opencode-web.service t3code-web.service
+curl -fsS http://127.0.0.1:4096/ >/dev/null
+curl -fsS http://127.0.0.1:3773/api/auth/session >/dev/null
+python3 modules/scripts/audit-agent-dbs.py
 ```
 
-Then spot-check that recent thread titles still resolve:
+Open several preserved sessions, including an older session and a recent one.
+Confirm that messages load and that an intended resumable session can resume.
+An HTTP response alone does not verify conversation history.
 
-```console
-$ sqlite3 -readonly ~/.t3/userdata/state.sqlite \
-    "SELECT substr(title,1,60) FROM projection_threads ORDER BY rowid DESC LIMIT 5;"
-```
+## Audit on 2026-10-08
 
-## Results from August 2026
+The read-only Alpha audit found these values. Re-run the audit for current counts.
 
-Deleted 420k orchestration events and 37k opencode replay events plus backups
-and stale logs. `state.sqlite` went 3.4 GB → 2.3 GB, `opencode-stable.db`
-3.65 GB → 2.58 GB, and `~/.t3/userdata/logs` 723 MB → ~30 MB. Expect regrowth
-on the same order within weeks of heavy agent use; re-run as needed.
+| Database                   | File size | Sessions or threads | Messages | Free pages |
+| -------------------------- | --------: | ------------------: | -------: | ---------: |
+| T3 `state.sqlite`          |  3.95 GiB |                 589 |   32,432 |          0 |
+| Live `opencode.db`         |  2.22 GiB |                 260 |   11,513 |          0 |
+| Older `opencode-stable.db` |  2.70 GiB |               1,501 |   70,274 |          0 |
+
+All 1,501 older OpenCode sessions, 70,274 messages, and 275,565 parts had IDs
+absent from the live database. Two older session IDs remained referenced by T3.
+The live OpenCode database had no empty sessions. The older database had three
+empty sessions without children or T3 references; those remain unreviewed
+candidates. T3 had ten threads without messages, which also require review of
+their other state. No database or conversation rows were deleted. No vacuum
+was warranted by the free-page counts.

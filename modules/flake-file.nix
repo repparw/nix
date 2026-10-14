@@ -7,6 +7,7 @@ _: {
           nixfmt
           deadnix
           prettier
+          shellcheck
         ];
         settings = {
           on-unmatched = "info";
@@ -27,6 +28,11 @@ _: {
             command = "prettier";
             options = [ "--write" ];
             includes = [ "*.md" ];
+          };
+          formatter.shellcheck = {
+            command = "shellcheck";
+            type = "diagnostic";
+            includes = [ "*.sh" ];
           };
         };
       };

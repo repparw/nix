@@ -24,6 +24,9 @@ in
       let
         hasStylix = config.lib ? stylix;
         c = config.lib.stylix.colors.withHashtag;
+        providerEnvironment = connectEnvironment // {
+          CODEX_HOME = config.home.sessionVariables.CODEX_HOME;
+        };
       in
       {
         home.sessionVariables = connectEnvironment;
@@ -126,7 +129,7 @@ in
         # pi's server-only package override.
         systemd.user.services.t3code.Service = {
           Restart = lib.mkForce "always";
-          Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") connectEnvironment) ++ [
+          Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [
             "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
           ];
         };

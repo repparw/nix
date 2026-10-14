@@ -52,10 +52,23 @@
           spawn = command;
         };
         spawn = command: { spawn = command; };
+        # Moonshine's Desktop stream boots a nested niri with this same
+        # config. Its sockets belong to the stream, so importing them into
+        # the login session's user manager would poison the real desktop.
+        sessionEnv = pkgs.writeShellApplication {
+          name = "niri-session-env";
+          runtimeInputs = [ pkgs.systemd ];
+          text = ''
+            if [ -z "''${MOONSHINE_CLIENT_WIDTH:-}" ]; then
+              exec systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP NIRI_SOCKET
+            fi
+          '';
+        };
       in
       {
         home.packages = with pkgs; [
           ndrop
+          sessionEnv
 
           (writeShellApplication {
             name = "record";
@@ -160,10 +173,10 @@
             };
             debug.honor-xdg-activation-with-invalid-serial = { };
 
-            spawn-sh-at-startup = "systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP NIRI_SOCKET";
+            spawn-sh-at-startup = "niri-session-env";
 
             binds = {
-              "Mod+Return" = titledSpawn "Terminal" [ "foot" ];
+              "Mod+Return" = titledSpawn "Terminal" [ "xdg-terminal-exec" ];
               "Mod+W" = titledAction "Close Window" "close-window";
               "Mod+Space" = titledSpawn "App Launcher" [
                 "vicinae"
@@ -171,7 +184,6 @@
               ];
               "Mod+Shift+Space" = titledSpawn "Browser" [ "firefox" ];
 
-              "Mod+A" = titledSpawn "Anki" [ "anki" ];
               "Mod+B" = titledSpawn "Bluetooth Toggle" [ "bttoggle" ];
               "Mod+C" = titledSpawn "WhatsApp" [
                 "ndrop"
@@ -198,9 +210,9 @@
                 "kdeconnect-send-clipboard"
               ];
               "Mod+E" = titledSpawn "File Manager (Terminal)" [
-                "foot"
-                "--app-id"
-                "filemanager"
+                "xdg-terminal-exec"
+                "--app-id=filemanager"
+                "--"
                 "fish"
                 "-ic"
                 "yazi"
@@ -211,16 +223,16 @@
               "Mod+Ctrl+F" = titledAction "Toggle Focus Floating" "switch-focus-between-floating-and-tiling";
               "Mod+G" = titledSpawn "T3 Code" [ "t3code-desktop" ];
               "Mod+M" = titledSpawn "cliamp" [
-                "foot"
-                "--app-id"
-                "cliamp"
+                "xdg-terminal-exec"
+                "--app-id=cliamp"
+                "--"
                 "cliamp"
                 "attach"
               ];
               "Mod+N" = titledSpawn "Notes (Neovim)" [
-                "foot"
-                "--app-id"
-                "notes"
+                "xdg-terminal-exec"
+                "--app-id=notes"
+                "--"
                 "sh"
                 "-c"
                 "cd \"$HOME/Documents/obsidian\" && note=\"$(find . -type f -name '*.md' -not -path './.git/*' -not -path './.obsidian/*' -not -path './.trash/*' -printf '%T@ %p\\n' | sort -nr | head -n1 | cut -d' ' -f2-)\" && exec nvim -- \"$note\""
@@ -231,7 +243,8 @@
                 "SDL_RENDER_DRIVER=opengl scrcpy --tcpip=192.168.0.32 -S"
               ];
               "Mod+T" = titledSpawn "Top" [
-                "foot"
+                "xdg-terminal-exec"
+                "--"
                 "fish"
                 "-ic"
                 "top"
@@ -282,20 +295,23 @@
                 spawn-sh = "loginctl lock-session && sleep 3 && niri msg action power-off-monitors";
               };
               "Mod+U" = titledSpawn "Update System" [
-                "foot"
+                "xdg-terminal-exec"
                 "--hold"
+                "--"
                 "fish"
                 "-ic"
                 "nrsu"
               ];
               "Mod+R" = titledSpawn "Raspberry Pi" [
-                "foot"
+                "xdg-terminal-exec"
+                "--"
                 "fish"
                 "-ic"
                 "rpi"
               ];
               "Mod+Alt+R" = titledSpawn "VPS" [
-                "foot"
+                "xdg-terminal-exec"
+                "--"
                 "fish"
                 "-ic"
                 "eps"
@@ -466,6 +482,14 @@
         };
 
         services.wpaperd.enable = true;
+
+        # The Moonshine Desktop stream has no $TERMINAL and a minimal PATH,
+        # so pin the terminal fuzzel uses for console entries. Same HOME as
+        # the login session, so this also applies locally.
+        xdg.configFile."fuzzel/fuzzel.ini".text = ''
+          [main]
+          terminal = ${lib.getExe pkgs.xdg-terminal-exec} --
+        '';
       };
   };
 }

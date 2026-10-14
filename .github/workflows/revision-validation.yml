@@ -1,0 +1,237 @@
+# Host checks evaluate configurations with package stubs, not native closures.
+name: revision-validation
+on:
+  workflow_call:
+    inputs:
+      expected_sha:
+        description: Exact commit expected for this validation
+        required: false
+        type: string
+      build_arm_authelia:
+        description: Build the unpatched aarch64 Authelia package natively
+        required: false
+        type: boolean
+        default: false
+      upstream_watcher:
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      check_matrix: ${{ steps.impact.outputs.check_matrix }}
+      run_hosts: ${{ steps.impact.outputs.run_hosts }}
+      run_persistence_vm: ${{ steps.impact.outputs.run_persistence_vm }}
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - name: Detect affected validation
+        id: impact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .github/scripts/ci-impact.mjs
+
+  checks:
+    needs: changes
+    name: checks (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.changes.outputs.check_matrix) }}
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Run attributed checks
+        env:
+          CI_CHECKS: ${{ matrix.checks }}
+        run: bash .github/scripts/run-checks.sh
+      - name: Test upstream watcher predicates and pilot lifecycle
+        if: matrix.group == 'lightweight'
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          python3 .github/scripts/upstream-readiness.test.py
+          python3 .github/scripts/upstream-pilot.test.py
+          python3 .github/scripts/upstream-plan.test.py
+          python3 .github/scripts/upstream-publish.test.py
+          python3 .github/scripts/upstream-release-readiness.test.py
+      - name: Upload check logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checks-${{ matrix.group }}
+          path: ci-logs/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  host-eval:
+    needs: changes
+    if: needs.changes.outputs.run_hosts == 'true'
+    name: host-eval (fleet, stubbed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Evaluate all hosts with stubs
+        env:
+          CI_CHECKS: alpha pi epsilon
+        run: bash .github/scripts/run-checks.sh
+      - name: Upload evaluation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-eval-fleet
+          path: ci-logs/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  persistence-vm:
+    needs: changes
+    if: needs.changes.outputs.run_persistence_vm == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+        with:
+          kvm: true
+      - name: Exercise persistence in disposable VMs
+        env:
+          CI_CHECKS: host-persistence-vm
+        run: bash .github/scripts/run-checks.sh
+      - name: Upload VM logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: persistence-vm
+          path: ci-logs/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # Opt-in: the cleanup PR removes a hash workaround that a native aarch64
+  # build originally caught (PR #168). Config checks and stubbed host evals
+  # alone do not prove the original failure is gone, so the candidate that
+  # removes the workaround must build the unpatched package natively.
+  arm-authelia-build:
+    name: arm-build (authelia, native)
+    if: inputs.build_arm_authelia
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Rebuild pnpm dependencies and build unpatched Authelia on ARM
+        run: |
+          nix build --rebuild --no-link --print-out-paths ".#nixosConfigurations.epsilon.pkgs.authelia.web.pnpmDeps"
+          nix build --no-link --print-out-paths ".#nixosConfigurations.epsilon.pkgs.authelia"
+
+  upstream-package-build:
+    name: upstream-package (${{ matrix.architecture }}, native)
+    if: inputs.upstream_watcher != ''
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(contains(inputs.upstream_watcher, 't3code-split') && '[{"architecture":"x86","runner":"ubuntu-latest"},{"architecture":"arm","runner":"ubuntu-24.04-arm"}]' || '[{"architecture":"x86","runner":"ubuntu-latest"}]') }}
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Verify actual upstream package and generated behavior
+        env:
+          WATCHER: ${{ inputs.upstream_watcher }}
+          ARCHITECTURE: ${{ matrix.architecture }}
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/upstream-validate.py "${WATCHER#automation/upstream-}" --architecture "$ARCHITECTURE"
+
+  gate:
+    if: always()
+    needs: [changes, checks, host-eval, persistence-vm, arm-authelia-build, upstream-package-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every validation group
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          HOSTS_ENABLED: ${{ needs.changes.outputs.run_hosts }}
+          PERSISTENCE_ENABLED: ${{ needs.changes.outputs.run_persistence_vm }}
+          BUILD_ARM: ${{ inputs.build_arm_authelia }}
+          HOSTS_RESULT: ${{ needs.host-eval.result }}
+          PERSISTENCE_RESULT: ${{ needs.persistence-vm.result }}
+          ARM_RESULT: ${{ needs.arm-authelia-build.result }}
+          UPSTREAM_WATCHER: ${{ inputs.upstream_watcher }}
+          UPSTREAM_RESULT: ${{ needs.upstream-package-build.result }}
+        run: |
+          test "$CHANGES_RESULT" = success || exit 1
+          test "$CHECKS_RESULT" = success || exit 1
+          case "$HOSTS_ENABLED" in
+            true) test "$HOSTS_RESULT" = success || exit 1 ;;
+            false) test "$HOSTS_RESULT" = skipped || exit 1 ;;
+            *) exit 1 ;;
+          esac
+          case "$PERSISTENCE_ENABLED" in
+            true) test "$PERSISTENCE_RESULT" = success || exit 1 ;;
+            false) test "$PERSISTENCE_RESULT" = skipped || exit 1 ;;
+            *) exit 1 ;;
+          esac
+          # An explicitly requested native ARM build must pass; otherwise
+          # it may be skipped, but must never fail.
+          if test "$BUILD_ARM" = true; then
+            test "$ARM_RESULT" = success
+          else
+            test "$ARM_RESULT" = success || test "$ARM_RESULT" = skipped
+          fi
+          if test -n "$UPSTREAM_WATCHER"; then
+            test "$UPSTREAM_RESULT" = success
+          else
+            test "$UPSTREAM_RESULT" = skipped
+          fi

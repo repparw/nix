@@ -41,6 +41,15 @@ persistent until their contents have been classified and independently tested.
 
 Pi's deployment controller had a `PAUSE` flag during the audit. Losing it would
 change deployment behavior. Preserve it with the controller's remaining state.
+Hosts with recovery backups enabled also retain `/var/lib/host-recovery`.
+Epsilon retains `/var/lib/credential-remediation`: its existing Authelia and
+Traefik service drop-ins run credential refresh helpers from that directory.
+Preserving `/etc` without those helpers prevents both services from starting.
+Epsilon's GRUB copies kernels and initrds to `/boot/kernels`. Both runtime
+store aliases become bind mounts after a tmpfs-root boot; GRUB's mount-based
+store path calculation would otherwise generate paths missing `/nix/store`.
+GRUB accesses `/boot` through the backing path `/persist/boot` for the same
+reason. See [Nixpkgs issue #309912](https://github.com/NixOS/nixpkgs/issues/309912).
 `/var/lib/nixos` must be mounted before user allocation to keep the UID/GID map
 consistent with the owners of persistent files.
 

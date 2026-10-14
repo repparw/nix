@@ -291,7 +291,7 @@ in
               else
                 echo 'automation: active'
               fi
-              for state_file in candidate target-revision deployed-revision rollback-streak; do
+              for state_file in target-revision deployed-revision rollback-streak; do
                 if [ -r "/var/lib/auto-update/$state_file" ]; then
                   printf '%s: ' "$state_file"
                   cat "/var/lib/auto-update/$state_file"

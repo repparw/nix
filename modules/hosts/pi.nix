@@ -5,15 +5,20 @@
 {
   den.aspects.pi = {
     includes = [
+      den.aspects.fleet-unit-state
       den.aspects.backup
+      den.aspects.pi-services-backup
       den.aspects.persistence
       den.aspects.service-host
       den.aspects.nixos-services._.automations
       den.aspects.nixos-services._.homeassistant
       den.aspects.nixos-services._.fleet-health
+      den.aspects.nixos-services._.fleet-readiness
       den.aspects.fleet-controller
+      den.aspects.pi-generation-retention
       den.aspects.lan-edge
       den.aspects.deploy-target
+      den.aspects.passwordless-sudo
     ];
 
     nixos =
@@ -33,6 +38,16 @@
         modules.backup.hostRecovery.enable = true;
         modules.backup.hostRecovery.quiesceUnits = [ "container@homeassistant.service" ];
         modules.backup.hostRecovery.capturePaths = [ "/home/repparw/services/hass" ];
+        # Pi is the deployment controller: it probes the runtime readiness of
+        # host-owned upstream waits (Sonarr/Jellyfin, Moonshine PR227) after
+        # each Alpha convergence and on its own timer.
+        modules.fleet-readiness.enable = true;
+        # Tmpfs-root landing (phase 2): proven twice by the standalone trial in
+        # ~/impermanence-pi-test/evidence (thread dd50ec1a). /persist is the
+        # former SD root partition; the initrd check-persistence-state guard
+        # verifies the prepared identity before activation.
+        modules.persistence.enable = true;
+        modules.persistence.mutableAccounts = true;
         modules.backup.paths = [
           "/home/containers/config"
           "/var/lib/auto-update"
@@ -54,6 +69,12 @@
             mode = "0700";
           }
         ];
+        # The aspect's random-seed symlink cannot transition on this host: /
+        # and /persist are the same filesystem during the migration, so the
+        # live symlink would point at itself (ELOOP) and fail every deploy-rs
+        # switch. The seed is regenerated per boot instead; directory binds
+        # are unaffected. Revisit if the backing volume ever splits from /.
+        environment.persistence."/persist".files = lib.mkForce [ ];
 
         users.users.repparw = {
           uid = 1000;
@@ -135,9 +156,34 @@
         };
 
         fileSystems = {
+          # Root is volatile; the former SD root partition is /persist (see
+          # the phase-1 mounts below). Impermanence binds the prepared state
+          # back into place at boot after check-persistence-state verifies it.
           "/" = {
+            device = "tmpfs";
+            fsType = "tmpfs";
+            options = [
+              "x-initrd.mount"
+              "mode=0755"
+              "size=50%"
+            ];
+          };
+
+          "/boot/firmware" = {
+            device = "/dev/disk/by-partuuid/2178694e-01";
+            fsType = "vfat";
+          };
+
+          # Backing store for host persistence (phase 1 of the tmpfs-root
+          # migration): the existing SD ext4 root, mounted at /persist while
+          # / stays ext4. Proves the mount deploys cleanly before
+          # impermanence is enabled in phase 2. Layout mirrors the trial
+          # configuration that booted twice with PASS (evidence in
+          # ~/impermanence-pi-test/evidence, thread dd50ec1a).
+          "/persist" = {
             device = "/dev/disk/by-partuuid/2178694e-02";
             fsType = "ext4";
+            neededForBoot = true;
             options = [
               "defaults"
               "noatime"
@@ -145,9 +191,11 @@
             ];
           };
 
-          "/boot/firmware" = {
-            device = "/dev/disk/by-partuuid/2178694e-01";
-            fsType = "vfat";
+          "/boot" = {
+            device = "/persist/boot";
+            fsType = "none";
+            options = [ "bind" ];
+            depends = [ "/persist" ];
           };
 
           "/home/repparw" = {
