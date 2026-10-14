@@ -323,8 +323,6 @@ in
             ${lib.optionalString (
               osConfig.modules.services.domain or null != null
             ) "seturl jellyfin.${osConfig.modules.services.domain} modeindicator false"}
-
-            autocmd DocStart tradingview.com mode ignore
           '';
         };
         programs = {
