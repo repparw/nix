@@ -31,16 +31,6 @@
             enabled = lib.mkForce false;
             config.enabled = lib.mkForce false;
           };
-          opencode-v1 = {
-            driver = "opencode";
-            displayName = "OpenCode 1 rollback";
-            enabled = false;
-            config = {
-              enabled = false;
-              binaryPath = "${pkgs.opencode}/bin/opencode";
-              serverUrl = "http://127.0.0.1:4096";
-            };
-          };
         };
       };
   };

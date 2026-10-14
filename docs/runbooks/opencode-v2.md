@@ -9,6 +9,15 @@ tags: [opencode, migration, ai, t3code, backups]
 
 # Migrate the fleet to OpenCode v2
 
+> Retired 2026-10-14: migration verified complete (v2 live on all hosts,
+> v1 database backed up with integrity `ok` to
+> `/mnt/hdd/backup/opencode-v1-retired-2026-10-14/`). The v1 rollback
+> provider entry is removed; the live v1 data directory was moved aside to
+> `~/.local/share/opencode-v1-retired-20261014/`. Of 495 v1 sessions, 15
+> exist only in the archive (13 ephemeral T3 helper sessions plus "Fix
+> duplicate opencodev2 providers in alpha" and "Live option chain prices
+> issue"). The rollback procedure below is retained for reference only.
+
 Alpha, Pi, and Epsilon include `opencode-v2-primary`. The `opencode` command
 uses the isolated v2 launcher, and the existing T3 `opencode` provider ID
 selects v2. T3 starts and authenticates its server. The old port-4096 web
