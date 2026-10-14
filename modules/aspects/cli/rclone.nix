@@ -72,6 +72,13 @@
                 user = "ubritos@gmail.com";
               };
               secrets.pass = osConfig.sops.secrets.rcloneNextcloud.path;
+              mounts."" = {
+                enable = true;
+                mountPoint = "${cloudDir}/nextcloud";
+                options = {
+                  exclude = "crypt/";
+                };
+              };
             };
 
             union = {
@@ -128,6 +135,9 @@
               mounts."" = {
                 enable = true;
                 mountPoint = "${cloudDir}/claro";
+                options = {
+                  exclude = "crypt/";
+                };
               };
             };
           };
