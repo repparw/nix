@@ -1,0 +1,24 @@
+diff --git a/modules/aspects/cliamp.nix b/modules/aspects/cliamp.nix
+index 6d40bd86d..80a963a65 100644
+--- a/modules/aspects/cliamp.nix
++++ b/modules/aspects/cliamp.nix
+@@ -1,11 +1,4 @@
+ { den, lib, ... }:
+-let
+-  # Temporary until nix-community/home-manager#9842 merges and HM input bumps past it
+-  hmCliampModule = builtins.fetchurl {
+-    url = "https://raw.githubusercontent.com/rachitvrma/home-manager/d1faef32f5e6ab3cb34ada5e030cbceb52307775/modules/programs/cliamp.nix";
+-    sha256 = "sha256-gtDq3a/wH7LQTGb5NuFTVQyrHURyaDv8+57MGYoRT6w=";
+-  };
+-in
+ {
+   den.aspects.cliamp = {
+     nixos = { ... }: {
+@@ -27,7 +20,6 @@ in
+ 
+       services.pipewire.alsa.enable = lib.mkDefault true;
+ 
+-      home-manager.sharedModules = [ hmCliampModule ];
+     };
+ 
+     homeManager =

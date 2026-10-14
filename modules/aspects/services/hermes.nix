@@ -19,8 +19,14 @@
       let
         cfg = config.modules.services;
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
+        crashTriage = import ./hermes-crash/_package.nix { inherit pkgs; };
+        packageTriage = import ./hermes-package/_package.nix { inherit pkgs; };
       in
       {
+        environment.systemPackages = [
+          crashTriage.ingest
+          packageTriage.ingest
+        ];
         users.groups.hermes.gid = 345;
         users.users.repparw.extraGroups = [ "hermes" ];
 
@@ -29,6 +35,23 @@
         sops.secrets."hermes-env" = {
           sopsFile = ../../../secrets/hermes.sops.yaml;
           uid = 327680;
+        };
+
+        # Agent LLM/tool keys only. `hermes-env` stays fleet-wide because
+        # fleet-update, backup, and fleet-health source it for the Discord
+        # token; this secret is declared here so only epsilon (the Hermes
+        # host) decrypts provider keys.
+        sops.secrets."hermes-llm-env" = {
+          sopsFile = ../../../secrets/hermes.sops.yaml;
+          uid = 327680;
+        };
+
+        sops.secrets."arr-api-keys" = {
+          # Kept in its own valid SOPS document so this branch can be refreshed
+          # without rewriting the newer Hermes provider-secret document.
+          sopsFile = ../../../secrets/hermes-arr.sops.yaml;
+          # Tools run as hermes (container UID 345), not container root.
+          uid = 327680 + 345;
         };
 
         containers.hermes = servicesLib.mkContainer {
@@ -50,12 +73,36 @@
             "--restrict-address-families=AF_NETLINK"
           ];
           bindMounts = {
+            "/var/lib/hermes/.hermes/scripts/crash_triage_cron.py" = {
+              hostPath = toString crashTriage.gate;
+              isReadOnly = true;
+            };
+            "/var/lib/hermes/.hermes/scripts/crash_triage_enroll.py" = {
+              hostPath = toString crashTriage.enroll;
+              isReadOnly = true;
+            };
+            "/var/lib/hermes/.hermes/scripts/package_triage_cron.py" = {
+              hostPath = toString packageTriage.gate;
+              isReadOnly = true;
+            };
+            "/var/lib/hermes/.hermes/scripts/package_triage_enroll.py" = {
+              hostPath = toString packageTriage.enroll;
+              isReadOnly = true;
+            };
             "/var/lib/hermes" = {
               hostPath = "/home/repparw/services/hermes";
               isReadOnly = false;
             };
             "/run/secrets/hermes-env" = {
               hostPath = config.sops.secrets."hermes-env".path;
+              isReadOnly = true;
+            };
+            "/run/secrets/hermes-llm-env" = {
+              hostPath = config.sops.secrets."hermes-llm-env".path;
+              isReadOnly = true;
+            };
+            "/run/secrets/arr-api-keys" = {
+              hostPath = config.sops.secrets."arr-api-keys".path;
               isReadOnly = true;
             };
           };
@@ -66,26 +113,27 @@
 
               services.hermes-agent = {
                 enable = true;
-                package = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
-                environmentFiles = [ "/run/secrets/hermes-env" ];
+                package = pkgs.callPackage ../../_packages/hermes-agent.nix {
+                  upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
+                };
+                environmentFiles = [
+                  "/run/secrets/hermes-env"
+                  "/run/secrets/hermes-llm-env"
+                ];
                 settings.model = {
-                  provider = "nous";
-                  default = "meituan/longcat-2.0:free";
+                  provider = "openai-codex";
+                  default = "gpt-6.1-sol";
                 };
                 settings.fallback_providers = [
                   {
                     provider = "nous";
-                    model = "stepfun/step-3.7-flash:free";
+                    model = "stepfun/step-5-preview:free";
                   }
                   {
-                    # authFile is store-path typed, so it cannot point
-                    # at a /run/secrets runtime path without leaking the token
-                    # into the Nix store.
-                    provider = "openai-codex";
-                    model = "gpt-5.6-sol";
+                    provider = "opencode-free";
+                    model = "space-bunny-free";
                   }
                 ];
-                settings.reasoning_overrides."gpt-5.6-sol" = "medium";
                 settings.display.credits_notices = false;
                 settings.platforms.discord = {
                   enabled = true;
@@ -95,6 +143,13 @@
                     name = "notifications";
                   };
                 };
+                # Keep cron on the free Nous model independently of the
+                # interactive GPT-6.1 Sol default. The configured fallback
+                # chain still applies if the cron primary fails.
+                settings.cron = {
+                  model = "stepfun/step-5-preview:free";
+                  model_provider = "nous";
+                };
                 settings.tool_loop_guardrails = {
                   hard_stop_enabled = true;
                   hard_stop_after = {
@@ -103,6 +158,7 @@
                   };
                 };
                 extraPackages = with pkgs; [
+                  curl
                   ffmpeg
                   nodejs
                   ripgrep

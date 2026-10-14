@@ -4,6 +4,31 @@
 }:
 {
   den.aspects.ai.provides.t3code-connect = {
+    homeManager =
+      {
+        config,
+        lib,
+        osConfig,
+        pkgs,
+        ...
+      }:
+      let
+        launcher = pkgs.writeShellScript "t3code-desktop" ''
+          export CODEX_HOME=${lib.escapeShellArg config.home.sessionVariables.CODEX_HOME}
+          exec ${lib.getExe' config.programs.t3code.package "t3code-desktop"} "$@"
+        '';
+      in
+      {
+        xdg.desktopEntries.t3code = lib.mkIf (osConfig.modules.desktop.enable or false) {
+          name = "T3 Code (Alpha)";
+          exec = "${launcher} %U";
+          icon = "t3code";
+          settings.StartupWMClass = "t3code";
+          categories = [ "Development" ];
+          mimeType = [ "x-scheme-handler/t3code" ];
+        };
+      };
+
     nixos =
       { config, lib, ... }:
       {

@@ -6,6 +6,7 @@
 {
   den.aspects.alpha = {
     includes = [
+      den.aspects.fleet-unit-state
       den.aspects.backup
       den.aspects.btrfs-maintenance
       den.aspects.gaming
@@ -17,6 +18,7 @@
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.disk-watch
       den.aspects.nixos-services._.reboot-watch
+      den.aspects.nixos-services._.free-model-watch
       den.aspects.deploy-target
     ];
 
@@ -28,18 +30,147 @@
         modulesPath,
         ...
       }:
+      let
+        home = config.users.users.repparw.home;
+        # Single source of truth for small irreplaceable home state, kept on
+        # HDD (rsync jobs below) and offsite (restic paths). Everything else
+        # is nix-declared, OAuth/session (re-login), or regenerable cache.
+        # sops/age/keys.txt deliberately excluded: HDD + manual only.
+        homeState = [
+          ".config/moonshine/"
+          ".config/kdeconnect/"
+          ".config/vicinae/settings.json"
+          ".config/unity3d/"
+          ".config/Wasteland3/"
+          ".config/Loop_Hero/"
+          ".config/Zelda64Recompiled/"
+          ".config/godot/"
+          ".config/vesktop/settings.json"
+          ".config/vesktop/settings/"
+          ".config/ZapZap/"
+          ".config/Moonlight Game Streaming Project/"
+          ".config/codex/config.toml"
+          ".config/codex/skills/"
+          ".config/codex/plugins/"
+          ".config/codex/goals_1.sqlite"
+          # Whole Helium profile: extension state (Vimium exclusions,
+          # DeArrow, ImprovedTube) lives in per-extension LevelDB dirs that
+          # would otherwise need enumerating, and update wipes have proven
+          # that guessing the file list loses data. The sqlite files are
+          # still staged consistently via homeDatabases below, and
+          # homeStateExcludes prunes caches and telemetry.
+          ".config/net.imput.helium/"
+          ".config/fish/fish_variables"
+          ".config/mpv/watch_later"
+          ".config/Raspberry Pi/Raspberry Pi Imager.conf"
+          ".local/share/vicinae/vicinae.db"
+          ".local/share/vicinae/metadata.json"
+          ".local/share/vicinae/script-metadata.json"
+          ".local/share/fish/fish_history"
+          ".local/share/tmux/resurrect/"
+          ".local/state/nvim/undo/"
+          ".local/state/nvim/shada"
+          ".local/state/nvim/file_frecency.bin"
+          ".local/state/nvim/avante/"
+          ".local/share/voxtype/meetings/"
+          ".local/share/shadPS4/savedata/"
+          ".local/share/shadPS4/keys.json"
+          ".config/bbport-launcher/"
+          ".local/share/bbport-test/data/bbport.ini"
+          ".local/share/bbport-test/data/user/"
+        ];
+        homeDatabases = [
+          ".config/codex/goals_1.sqlite"
+          ".config/net.imput.helium/Default/History"
+          ".config/net.imput.helium/Default/Login Data"
+          ".config/net.imput.helium/Default/Login Data For Account"
+          ".local/share/vicinae/vicinae.db"
+        ];
+        # Regenerable caches and telemetry inside the Helium profile. The
+        # leading slash anchors each pattern to the ./ marker that the
+        # rsync --relative source paths carry (verified: excludes apply
+        # below the anchor, and other homeState entries are untouched).
+        homeStateExcludes = map (dir: "/.config/net.imput.helium/${dir}") [
+          "Default/Service Worker/CacheStorage"
+          "Default/Service Worker/ScriptCache"
+          "Default/GPUCache"
+          "Default/DawnWebGPUCache"
+          "Default/DawnGraphiteCache"
+          "GPUPersistentCache"
+          "GrShaderCache"
+          "ShaderCache"
+          "GraphiteDawnCache"
+          "component_crx_cache"
+          "extensions_crx_cache"
+          "CertificateRevocation"
+          "Dictionaries"
+          "segmentation_platform"
+          "DeferredBrowserMetrics"
+          "Variations"
+        ];
+        stateRoot = "/var/lib/home-state-backup";
+        # Each consumer has its own staging tree. A failed export never replaces
+        # its previous tree, and ExecStartPre/backupPrepareCommand abort the job.
+        prepareHomeState = pkgs.writeShellScript "prepare-home-state" ''
+          set -euo pipefail
+          export PATH=${
+            lib.makeBinPath [
+              pkgs.coreutils
+              pkgs.rsync
+              pkgs.sqlite
+            ]
+          }
+          test -d ${lib.escapeShellArg home}
+          case "$1" in hdd|offsite) ;; *) exit 1 ;; esac
+          destination=${stateRoot}/$1
+          temporary=$(mktemp -d "${stateRoot}/.prepare-$1.XXXXXX")
+          trap 'rm -rf "$temporary"' EXIT
+          mkdir -p "$temporary/.config" "$temporary/.local"
+          rsync --archive --relative --ignore-missing-args \
+            ${lib.concatMapStringsSep " " (e: "--exclude=${lib.escapeShellArg e}") homeStateExcludes} \
+            -- \
+            ${
+              lib.escapeShellArgs (
+                map (p: "${home}/./${p}") (lib.filter (p: !(lib.elem p homeDatabases)) homeState)
+              )
+            } \
+            "$temporary/"
+          ${lib.concatMapStringsSep "\n" (p: ''
+            if [ -f ${lib.escapeShellArg "${home}/${p}"} ]; then
+              mkdir -p "$temporary/${builtins.dirOf p}"
+              sqlite3 ${lib.escapeShellArg "${home}/${p}"} \
+                '.timeout 10000' ".backup '$temporary/${p}'"
+              chmod --reference=${lib.escapeShellArg "${home}/${p}"} "$temporary/${p}"
+              chown --reference=${lib.escapeShellArg "${home}/${p}"} "$temporary/${p}"
+            fi
+          '') homeDatabases}
+          if [ "$1" = hdd ]; then
+            rsync --archive --relative --ignore-missing-args -- \
+              ${lib.escapeShellArg "${home}/./.config/sops/age/keys.txt"} "$temporary/"
+          fi
+          rm -rf "$destination"
+          mv "$temporary" "$destination"
+        '';
+      in
       {
         imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
+
+        modules.fleet-unit-state.retainedJobs = [
+          "btrfs-health-root"
+          "btrfs-scrub@"
+          "jellyfin-backup"
+        ];
 
         modules.backup = {
           paths = [
             "/home/containers/backup"
             "/home/repparw/Pictures"
             "/home/repparw/Documents"
+            "${stateRoot}/offsite/.config"
+            "${stateRoot}/offsite/.local"
           ];
           excludes = [
             "${config.users.users.repparw.home}/.config/heroic/**"
-            "${config.users.users.repparw.home}/.config/clipse/**"
             "${config.users.users.repparw.home}/Documents/Memorias/**"
           ];
         };
@@ -72,7 +203,10 @@
           ];
         };
 
+        modules.free-model-watch.enable = true;
+
         boot = {
+          kernelPackages = pkgs.linuxPackages_latest;
           initrd = {
             systemd.enable = true;
             availableKernelModules = [
@@ -175,7 +309,24 @@
                 sources = [
                   "${config.users.users.repparw.home}/Pictures"
                   "${config.users.users.repparw.home}/Documents"
-                  "${config.users.users.repparw.home}/.config"
+                ];
+                settings = {
+                  archive = true;
+                  delete = true;
+                  # Protect the allowlist jobs' output (same dest root).
+                  exclude = [
+                    "/.config/"
+                    "/.local/"
+                  ];
+                };
+              };
+              # Sync complete staged subtrees: --delete now prunes removed
+              # allowlist leaves and the legacy whole-.config contents too.
+              bupstate = {
+                destination = "/mnt/hdd/backup";
+                sources = [
+                  "${stateRoot}/hdd/.config"
+                  "${stateRoot}/hdd/.local"
                 ];
                 settings = {
                   archive = true;
@@ -184,15 +335,34 @@
               };
               buprpi = {
                 destination = "${config.modules.services.backupDir}/pi-services/";
-                sources = [ "pi:services/" ];
+                sources = [
+                  "repparw@${den.hosts.aarch64-linux.pi.serviceAddress}:/var/lib/pi-services-backup/current/"
+                ];
                 settings = {
                   archive = true;
                   "copy-links" = true;
-                  delete = true;
+                  "delete-after" = true;
+                  "rsync-path" = "sudo -n pi-services-backup-send";
                 };
               };
             };
           };
+        };
+
+        systemd.services.rsync-job-bupstate.serviceConfig = {
+          StateDirectory = "home-state-backup";
+          StateDirectoryMode = "0700";
+          ExecStartPre = "${prepareHomeState} hdd";
+        };
+        systemd.services.restic-backups-offsite.serviceConfig = {
+          StateDirectory = "home-state-backup";
+          StateDirectoryMode = "0700";
+        };
+        services.restic.backups.offsite.backupPrepareCommand = "${prepareHomeState} offsite";
+        # Use the account that owns the destination and has SSH access to pi.
+        systemd.services.rsync-job-buprpi.serviceConfig = {
+          User = lib.mkForce "repparw";
+          Group = lib.mkForce config.users.users.repparw.group;
         };
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl

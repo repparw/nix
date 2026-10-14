@@ -71,8 +71,12 @@ in
         "chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
           BrowserSignin = 0;
           PasswordManagerEnabled = false;
-
-          ExtensionInstallForcelist = heliumExtensionIds;
+          ExtensionSettings = lib.genAttrs heliumExtensionIds (_: {
+            installation_mode = "normal_installed";
+            # Helium rewrites this Web Store URL to its extension proxy. The
+            # Google URL bypasses that rewrite and stalls policy installs.
+            update_url = "https://update-url-to-be-replaced.qjz9zk";
+          });
         };
       };
     };
@@ -117,6 +121,7 @@ in
           let
             shimScript = pkgs.writeShellApplication {
               name = "helium-shim";
+              runtimeInputs = [ pkgs.coreutils ];
               text = ''
                 args=()
                 for arg in "$@"; do
@@ -127,6 +132,35 @@ in
                 done
                 if [ -n "''${NIXOS_OZONE_WL:-}" ] && [ -n "''${WAYLAND_DISPLAY:-}" ]; then
                   args+=(--ozone-platform-hint=auto)
+                fi
+
+                # Chromium's encrypted-pref validation can decide the profile
+                # was tampered with and reset every extension on a version
+                # jump (Helium #1978, upstream crrev 7763038; hit live on the
+                # 0.18.3.1 -> 0.19.2.1 update: all Local/Sync Extension
+                # Settings were re-created empty on first launch, while
+                # unprotected data like History survived). The macOS fix does
+                # not cover Linux, so snapshot the extension storage before
+                # the first launch of each new version. If a wipe strikes,
+                # restore with:
+                #   rsync -a "$XDG_STATE_HOME/helium-extension-snapshots/pre-<version>/" \
+                #     "$HOME/.config/net.imput.helium/Default/"
+                snapshotRoot="''${XDG_STATE_HOME:-$HOME/.local/state}/helium-extension-snapshots"
+                marker="$snapshotRoot/launched-version"
+                defaultDir="$HOME/.config/net.imput.helium/Default"
+                if [ "$(cat "$marker" 2>/dev/null)" != "${base.name}" ]; then
+                  dest="$snapshotRoot/pre-${base.name}"
+                  if [ ! -d "$dest" ]; then
+                    mkdir -p "$dest"
+                    for dir in "Local Extension Settings" "Sync Extension Settings"; do
+                      if [ -d "$defaultDir/$dir" ]; then
+                        cp -a "$defaultDir/$dir" "$dest/"
+                      fi
+                    done
+                  fi
+                  # Keep only the three most recent pre-update snapshots.
+                  find "$snapshotRoot" -maxdepth 1 -name 'pre-*' -type d | sort -r | tail -n +4 | xargs -r rm -rf
+                  printf '%s' "${base.name}" > "$marker"
                 fi
                 exec ${base}/bin/helium "''${args[@]}"
               '';
@@ -257,7 +291,7 @@ in
             set markjumpnoisy false
             set modeindicatormodes.ignore false
             set theme midnight
-            set editorcmd foot nvim
+            set editorcmd xdg-terminal-exec -- nvim
             set smoothscroll true
             set tabsort mru
 

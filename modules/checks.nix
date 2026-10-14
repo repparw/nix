@@ -115,8 +115,135 @@
           );
         in
         {
+          hermes-crash-triage = (import ./aspects/services/hermes-crash/_package.nix { inherit pkgs; }).check;
+          hermes-package-triage =
+            (import ./aspects/services/hermes-package/_package.nix { inherit pkgs; }).check;
+
+          coredump-collector =
+            pkgs.runCommand "check-coredump-collector" { nativeBuildInputs = [ pkgs.python3 ]; }
+              ''
+                cp -r ${./aspects/services/coredump-watch} source
+                chmod -R u+w source
+                python3 -m unittest discover -s source -v
+                touch $out
+              '';
+
+          hermes-auxiliary-routing =
+            (pkgs.callPackage ./_packages/hermes-agent.nix {
+              upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
+            }).tests.auxiliary-routing;
+
+          btrfs-health =
+            let
+              script = pkgs.writeText "btrfs-health-root.sh" inputs.self.nixosConfigurations.alpha.config.systemd.services.btrfs-health-root.script;
+            in
+            pkgs.runCommand "check-btrfs-health"
+              {
+                nativeBuildInputs = with pkgs; [
+                  nodejs
+                  bash
+                  coreutils
+                  gawk
+                  gnugrep
+                  shellcheck
+                ];
+              }
+              ''
+                shellcheck --shell=bash ${script}
+                node ${./_tests/btrfs-health.mjs} ${script}
+                touch $out
+              '';
+
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
+
+          fleet-failed-units =
+            let
+              expectedJobs = {
+                alpha = [
+                  "restic-backups-offsite"
+                  "btrfs-health-root"
+                  "btrfs-scrub@"
+                  "jellyfin-backup"
+                  "rsync-job-buprpi"
+                ];
+                pi = [ "restic-backups-offsite" ];
+                epsilon = [ "restic-backups-offsite" ];
+              };
+              retainedJobsHaveHooks = lib.all (
+                host:
+                lib.all (
+                  job:
+                  lib.hasInfix "/fleet-unit-record %n"
+                    inputs.self.nixosConfigurations.${host}.config.systemd.units."${job}.service".text
+                ) expectedJobs.${host}
+              ) (lib.attrNames expectedJobs);
+              collectorsAreInstalled = lib.all (
+                host:
+                let
+                  config = inputs.self.nixosConfigurations.${host}.config;
+                in
+                lib.elem config.modules.fleet-unit-state.snapshot config.environment.systemPackages
+              ) (lib.attrNames expectedJobs);
+              probe = pkgs.writeText "fleet-health-probe-test.sh" (
+                builtins.unsafeDiscardStringContext inputs.self.nixosConfigurations.pi.config.modules.fleet-health.probe.text
+              );
+            in
+            assert retainedJobsHaveHooks;
+            assert collectorsAreInstalled;
+            pkgs.runCommand "check-fleet-failed-units"
+              {
+                nativeBuildInputs = with pkgs; [
+                  nodejs
+                  bash
+                  coreutils
+                  findutils
+                  gawk
+                  gnugrep
+                  util-linux
+                ];
+                FLEET_HEALTH_PROBE = probe;
+                FLEET_UNIT_SOURCE = ./aspects/fleet-unit-state;
+                TEST_BASH = "${pkgs.bash}/bin/bash";
+              }
+              ''
+                node --test ${./_tests/fleet-failed-units.mjs}
+                touch $out
+              '';
+
+          free-model-watch =
+            pkgs.runCommand "check-free-model-watch"
+              {
+                nativeBuildInputs = with pkgs; [
+                  python3
+                  bash
+                  coreutils
+                  jq
+                  gnused
+                  gnugrep
+                ];
+              }
+              ''
+                python ${./_tests/free-model-watch.py} ${inputs.self.nixosConfigurations.alpha.config.modules.free-model-watch.script}/bin/free-model-watch
+                touch $out
+              '';
+
+          ci-workflow =
+            pkgs.runCommand "check-ci-workflow"
+              {
+                nativeBuildInputs = [
+                  pkgs.nodejs
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.actionlint
+                ];
+              }
+              ''
+                cd ${inputs.self}
+                node --test .github/scripts/ci.test.mjs .github/scripts/ci-impact.test.mjs
+                actionlint -shellcheck= .github/workflows/ci.yml .github/workflows/revision-validation.yml .github/workflows/pr-title.yml .github/workflows/upstream-watch.yml
+                touch $out
+              '';
 
           formatting =
             pkgs.runCommand "check-formatting"
@@ -132,14 +259,12 @@
                 touch $out
               '';
 
-          shellcheck =
-            pkgs.runCommand "check-shellcheck"
+          generated-shellcheck =
+            pkgs.runCommand "check-generated-shellcheck"
               {
                 nativeBuildInputs = [ pkgs.shellcheck ];
               }
               ''
-                cd ${inputs.self}
-                find . \( -name '*.sh' -o -name '.envrc' \) -type f -exec shellcheck {} +
                 ${generatedShellChecks}
                 touch $out
               '';
@@ -188,6 +313,10 @@
                 nativeBuildInputs = [
                   fleetCli
                   pkgs.jq
+                  pkgs.python3
+                  pkgs.bash
+                  pkgs.git
+                  pkgs.util-linux
                 ];
               }
               ''
@@ -218,6 +347,12 @@
                   exit 1
                 fi
 
+                python3 ${./scripts/fleet-update-notifications.test.py} ${./scripts/fleet-update.sh}
+                python3 ${./scripts}/fleet-update.test.py ${./scripts/fleet-update.sh}
+                python3 ${./scripts/fleet-readiness.test.py} ${./scripts/fleet-readiness-probe.sh} ${./scripts/fleet-readiness-deliver.sh}
+                python3 ${./scripts/pi-generation-retention.test.py} ${./scripts/pi-generation-retention.py}
+                python3 ${./scripts/package-update-event.test.py} ${./scripts/package-update-event.py}
+                python3 ${./scripts/lock-update.test.py} ${inputs.self}/.github/workflows/lock-update.yml ${inputs.self}/.github/workflows/ci.yml ${inputs.self}/.github/workflows/revision-validation.yml
                 touch $out
               '';
 

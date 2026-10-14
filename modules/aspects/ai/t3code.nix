@@ -24,6 +24,9 @@ in
       let
         hasStylix = config.lib ? stylix;
         c = config.lib.stylix.colors.withHashtag;
+        providerEnvironment = connectEnvironment // {
+          CODEX_HOME = config.home.sessionVariables.CODEX_HOME;
+        };
       in
       {
         home.sessionVariables = connectEnvironment;
@@ -124,7 +127,7 @@ in
             ExecStart = "${config.programs.t3code.package}/bin/t3 serve --mode web";
             Restart = "always";
             RestartSec = 5;
-            Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") connectEnvironment) ++ [
+            Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [
               "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
             ];
           };
