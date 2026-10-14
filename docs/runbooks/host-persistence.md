@@ -240,8 +240,9 @@ checks:
 - failed boot with missing storage or an unprepared backing volume, followed
   by repair of the VM disk offline and a successful boot.
 
-CI requires the VM job and configuration checks to succeed before its aggregate
-`gate` passes. The VM covers shared persistence and recovery behavior that
+CI selects the VM job for changes that affect persistence. When selected, the
+VM job must succeed before the aggregate `gate` passes; other changes skip it.
+Configuration checks must also pass. The VM covers shared persistence and recovery behavior that
 configuration evaluation cannot prove. It does not exercise T3 Code history
 migrations. This is a synthetic x86 recovery test, not a boot of pi or epsilon
 with their real service images, bootloader layouts, or production data.
