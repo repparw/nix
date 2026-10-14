@@ -184,7 +184,6 @@ in
                     {
                       type = "markets";
                       hide-header = true;
-                      chart-link-template = "https://www.tradingview.com/chart/?symbol={SYMBOL}";
                       markets = [
                         {
                           symbol = "SPY";
