@@ -12,6 +12,9 @@
 
         hardware.bluetooth.enable = true;
 
+        # Required by home-manager's dconf module for the blueman settings below.
+        programs.dconf.enable = true;
+
         services = {
           blueman.enable = true;
           pipewire = {
@@ -83,8 +86,32 @@
       };
 
     homeManager =
-      { pkgs, ... }:
+      { pkgs, lib, ... }:
       {
+        dconf.settings."org/blueman/general" = {
+          plugin-list = [ "!ConnectionNotifier" ];
+        };
+
+        # Blueman's AutoConnect plugin pages every device listed here once a
+        # minute, so the buds (40:5E:F6:CD:0D:CD / 40:5E:F6:CD:0E:F0) are left
+        # out on purpose.
+        dconf.settings."org/blueman/plugins/autoconnect" = {
+          services =
+            map
+              (
+                addr:
+                lib.hm.gvariant.mkTuple [
+                  addr
+                  "00000000-0000-0000-0000-000000000000"
+                ]
+              )
+              [
+                "EF:61:5B:0A:3C:30"
+                "F8:4E:17:E6:22:D2"
+                "00:1D:43:A0:14:D8"
+              ];
+        };
+
         home.packages = with pkgs; [
           pwvucontrol
 

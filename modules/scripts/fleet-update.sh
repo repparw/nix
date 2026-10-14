@@ -771,6 +771,12 @@ for host in "${hosts[@]}"; do
 done
 
 enqueue_package_events "${converged[@]}" || true
+# Request the same Pi-managed systemd unit as the periodic timer. --no-block
+# returns without waiting for network/SSH, so readiness never holds up deploy.
+# Failures remain best-effort; the periodic timer retries independently.
+if [[ " ${converged[*]:-} " == *" alpha "* ]]; then
+  systemctl --no-block start fleet-readiness-probe.service >/dev/null 2>&1 || true
+fi
 printf '0\n' > "$state/rollback-streak"
 if [ "$requested_host" = all ]; then
   if [ "${#deferred[@]}" = 0 ]; then

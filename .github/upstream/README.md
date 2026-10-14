@@ -1,25 +1,35 @@
 # Upstream watcher migration
 
-`upstream-watch.yml` inspects the current `main` pins after lock publication,
-manual lock merges, and manual dispatch. The lock updater owns input changes.
+`upstream-watch.yml` inspects the current `main` pins every two hours, after
+successful lock publication, after manual lock merges, and on manual dispatch.
+The lock updater owns input changes.
 
-The Authelia watcher is the only active CI publisher. All other detectors are
-read-only. Their cleanup patches in `cleanup/` preserve the prepared migrations
-from drafts #29, #30 and #32 and the remaining local watchers. `git apply
---check` must pass against the exact candidate base before a cleanup is used.
-A patch conflict requires review, never a fuzzy edit or forced application.
+The registry includes the stable T3 orchestrator-v2 gate and the
+[OpenCode v2 package detector](opencode-release-watch.md). Readiness notices
+go to #209 and #229 respectively. Package readiness does not complete either
+fleet runtime migration.
 
-Before transferring publication authority from a local timer, verify the live
-Authelia lifecycle: create the expected cleanup PR, pass candidate-SHA CI with
-the native ARM build, reuse the PR without modifying its branch or repeating
-CI, merge it, then observe completion on `main`. A waiting-path run and fixture
-tests do not satisfy this gate. Until then, keep the existing local publication
-owners and the three prepared draft PRs. After cutover, close replaced drafts
-and disable each local timer when its CI replacement becomes active.
+Authelia retains its atomic lock planner and pilot publisher. Independent
+`post-lock` contracts publish separate review-required PRs using the recipes
+in `cleanup/`. Each candidate starts at the same checked-out main revision.
+`git apply --check` must pass before publication. A conflict requires review.
+One failed recipe does not prevent other watchers from processing.
 
-For each future cleanup candidate, evaluate every host without updating the
-lock. Build the actual upstream package, not the package stubs in configuration
-checks, and dispatch CI on its exact SHA. Package-specific gates:
+The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
+the exact expected candidate tree before reusing an existing branch, preserves
+its SHA, and dispatches only missing checks. This also recovers interruptions
+between branch publication, PR creation, and dispatch. A changed or previously
+closed candidate requires review. It never merges a PR or overwrites a branch.
+
+Before disabling a local timer, verify its replacement's live CI run and all
+of that watcher's completion checks. Fixtures prove the publication algorithm,
+but do not prove a production cleanup or runtime cutover. Close replaced drafts
+only after their replacement candidates pass validation.
+
+Candidate CI evaluates every host without updating the lock. The required
+aggregate also includes actual package builds and generated behavior checks
+from `upstream-validate.py`. T3 split candidates use native x86 and ARM jobs.
+The package-specific gates are:
 
 | Watcher           | Additional verification                                                                                   |
 | ----------------- | --------------------------------------------------------------------------------------------------------- |
@@ -34,10 +44,66 @@ checks, and dispatch CI on its exact SHA. Package-specific gates:
 | voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                               |
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true        |
 
-Nautilus is notify-only. Moonshine keeps host-owned completion until deployment
-and safe runtime-override removal are verified. Sonarr/Jellyfin depends on the
-running service version and remains host-owned. Gamescope needs source and
-build verification, and does not require a GPU or Alpha runtime test.
+Nautilus is notify-only. Ready notifications use tracked issues and durable
+comment markers to avoid repeats. Moonshine and T3 receive readiness notices
+while retaining their runtime completion checks. Sonarr/Jellyfin depends on
+the running service version and remains host-owned. Their local timers remain
+active until the fleet CI adapter is deployed and verified.
+
+The runtime predicates of the host-owned watchers moved to Pi: the
+`fleet-readiness-probe` service evaluates the running Sonarr version, the
+Sonarr log gate, Moonshine's PR227 test-build drop-ins, its candidate GC root
+and stream activity over SSH, enqueues a durable event per status change, and
+`fleet-readiness-deliver` posts queued events to Discord on an independent
+timer. It also runs after each Alpha convergence, non-blocking for the
+deployment. Until the replacement is verified on Pi, Alpha's
+`watch-moonshine-pr227` and `watch-sonarr-jellyfin` timers remain armed and
+stay the completion owners.
+
+Gamescope inspects `inputs.nixpkgs.legacyPackages`, bypassing repository
+overlays. Alpha's patched package cannot establish upstream readiness. Its
+cleanup retains WSI, removes only the queue workaround, and builds with
+`enableWsi=true`. It requires no GPU or Alpha runtime test.
 
 Run `python3 .github/scripts/upstream-readiness.test.py` for detector fixtures,
-and `python3 .github/scripts/upstream-pilot.test.py` for the pilot lifecycle.
+`python3 .github/scripts/upstream-pilot.test.py` for the Authelia pilot, and
+`python3 .github/scripts/upstream-publish.test.py` for independent publication,
+interruption recovery, drift rejection, and notification deduplication.
+
+## Lock candidate planner (Authelia pilot only)
+
+`upstream-plan.py plan --old BASE --candidate CANDIDATE` runs **before** the lock
+updater publishes to main. Watcher contracts live in `watchers.json`.
+Only Authelia has `mode=atomic`; independent watchers publish through the
+separate post-lock sweep.
+
+If the candidate Nixpkgs pin contains the Authelia fix and `nixos-unstable`
+contains it too, the updater applies the narrowly validated Authelia removal,
+then publishes a stable `automation/atomic-authelia-pnpm-hash` branch and a
+review-required **combined lock + cleanup PR**. It dispatches exact-SHA CI with
+native ARM Authelia enabled, and **never fast-forwards main automatically**.
+Repeat runs leave the combined PR and branch unchanged, even when new upstream
+pins are available. A dangling branch, malformed cleanup or unavailable API
+blocks publication rather than overwriting human changes or publishing a
+potentially incompatible pin.
+
+If the atomic predicate is negative, the original lock-only CI and compare-and-
+swap fast-forward remain unchanged. If ancestry is unavailable, or a candidate
+contains the fix before the authoritative channel, publication fails closed.
+The existing Authelia post-lock pilot remains responsible for its readiness
+and completion on `main` when the planner did not combine the cleanup with a
+lock update. Independent cleanup candidates retain their own validation gates.
+
+## T3 Code nightly-v2 (read-only, #209)
+
+The `t3code-nightly-v2` detector tracks a stable, non-prerelease T3 Code
+release containing orchestrator-v2 merge `de343914`, the corresponding
+`nixos-unstable` package source, and the root Nixpkgs pin. The check uses
+exact tag ancestry and verifies the pinned tag against a stable GitHub Release.
+Statuses are `waiting-upstream`, `waiting-unstable`,
+`merged-not-pinned`, and `PINNED-READY` (or unavailable on API errors).
+
+CI posts a deduplicated readiness notice to #209. The Alpha
+`watch-t3code-nightly-v2.timer` retains runtime completion ownership until the
+fleet CI adapter is verified. Protect `statev2.sqlite` and preserve active
+conversations during a cutover.

@@ -303,6 +303,21 @@ Failure handling:
 - Boot-level regressions remain a rescue-console problem; re-imaging the pi
   from a cloned SD of the last known-good system is the final recovery path.
 
+### Runtime readiness probe (`fleet-readiness-probe.timer`, every 2 h)
+
+Host-owned upstream waits whose predicates need Alpha's runtime state — the
+running Sonarr build version and its Jellyfin-push log gate, plus Moonshine's
+PR227 test-build drop-ins, candidate GC root and stream activity — are
+evaluated by `fleet-readiness-probe` on Pi over the deployment SSH key. A
+status change appends one fsynced event to `/var/lib/auto-update/readiness-events/`;
+`fleet-readiness-deliver` (every 5 min, like `fleet-package-deliver`) posts
+queued events to Discord and removes an entry only after a successful post, so
+a failed delivery is retried; an ambiguous Discord POST timeout may duplicate a post. The probe also runs
+best-effort after each Alpha convergence and never affects the deployment
+outcome; an unreachable Alpha keeps the previous status instead of fabricating
+a transition. Alpha's own watcher timers stay armed and remain the completion
+owners until this replacement is verified; the probe only reports evidence.
+
 ### Reading a deploy failure alert
 
 The rollback alert carries the reason, so the alert is usually enough to
