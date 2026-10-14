@@ -1,5 +1,7 @@
 name: upstream-watch
 on:
+  schedule:
+    - cron: '17 */2 * * *'
   push:
     branches: [main]
     paths:
@@ -15,6 +17,7 @@ permissions:
   contents: write
   pull-requests: write
   actions: write
+  issues: write
 
 concurrency:
   group: upstream-watch
@@ -22,6 +25,9 @@ concurrency:
 
 jobs:
   watch:
+    # A failed lock-update has published nothing; only a successful update or
+    # an explicit/main-branch event can require cleanup publication.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -29,9 +35,28 @@ jobs:
         with:
           ref: main
       - uses: DeterminateSystems/nix-installer-action@v22
-      - name: Watch upstream and prepare cleanup candidates
+      - name: Install pinned upstream PR lookup tool
+        run: |
+          nh_path=$(nix build --no-link --print-out-paths --no-update-lock-file .#nixosConfigurations.alpha.pkgs.nh)
+          echo "$nh_path/bin" >> "$GITHUB_PATH"
+      - name: Inspect upstream readiness
+        id: readiness
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/upstream-readiness.py --json > "$RUNNER_TEMP/upstream-readiness.json"
+      - name: Publish the atomic Authelia pilot
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          UPSTREAM_READINESS_FILE: ${{ runner.temp }}/upstream-readiness.json
         shell: bash
-        run: bash .github/scripts/upstream-watch.sh
+        run: |
+          upstream_main_sha=$(git rev-parse HEAD)
+          trap 'git switch --detach "$upstream_main_sha"' EXIT
+          bash .github/scripts/upstream-watch.sh
+      - name: Publish independent cleanup candidates and readiness notifications
+        if: always() && !cancelled() && steps.readiness.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: python3 .github/scripts/upstream-publish.py --readiness "$RUNNER_TEMP/upstream-readiness.json"
