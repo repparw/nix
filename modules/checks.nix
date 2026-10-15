@@ -165,7 +165,6 @@
                   "btrfs-health-root"
                   "btrfs-scrub@"
                   "jellyfin-backup"
-                  "rsync-job-buprpi"
                 ];
                 pi = [ "restic-backups-offsite" ];
                 epsilon = [ "restic-backups-offsite" ];
@@ -341,14 +340,6 @@
                 fi
                 if fleet backup status nope >/dev/null 2>&1; then
                   echo "fleet backup status accepted an invalid argument" >&2
-                  exit 1
-                fi
-                if fleet backup run not-a-host >/dev/null 2>&1; then
-                  echo "fleet backup run accepted an unknown host" >&2
-                  exit 1
-                fi
-                if fleet backup run alpha epsilon >/dev/null 2>&1; then
-                  echo "fleet backup run accepted extra arguments" >&2
                   exit 1
                 fi
                 if fleet debug not-a-host >/dev/null 2>&1; then

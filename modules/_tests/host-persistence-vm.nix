@@ -240,7 +240,7 @@ pkgs.testers.runNixOSTest {
         machine.succeed("systemctl stop restic-backups-offsite.timer")
         machine.wait_until_succeeds("systemctl show restic-backups-offsite.service -p ActiveState --value | grep -qx inactive")
         machine.succeed("systemctl show restic-backups-offsite.service -p Result --value | grep -qx success")
-        machine.succeed("fleet backup run")
+        machine.succeed("systemctl start --wait restic-backups-offsite.service")
         machine.succeed(restic + "dump latest /var/lib/backup-exports/offsite.json | ${pkgs.jq}/bin/jq -e '.exports[\"native-scheduled\"].status == \"complete\"'")
         machine.succeed(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 2'")
         snapshot = machine.succeed(restic + "snapshots --latest 1 --json | ${pkgs.jq}/bin/jq -r '.[0].id'").strip()
@@ -264,13 +264,13 @@ pkgs.testers.runNixOSTest {
     with subtest("Failed, unchanged, stale and empty exports upload an explicitly incomplete snapshot"):
         for count, mode in enumerate(["fail", "noop", "stale", "empty"], start=3):
             machine.succeed("touch /run/export-" + mode)
-            machine.fail("fleet backup run")
+            machine.fail("systemctl start --wait restic-backups-offsite.service")
             machine.succeed(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == " + str(count) + "'")
             machine.succeed(restic + "dump latest /var/lib/backup-exports/offsite.json | ${pkgs.jq}/bin/jq -e '.status == \"incomplete\" and .exports[\"test-service\"].status == \"failed\"'")
             machine.succeed(restic + "dump latest /var/lib/backup-exports/offsite.json | ${pkgs.jq}/bin/jq -e '.exports[\"zz-independent\"].status == \"complete\"'")
             machine.succeed(restic + "dump latest /var/lib/test-service/independent/state.txt")
             machine.succeed("rm /run/export-" + mode)
-        machine.succeed("fleet backup run alpha")
+        machine.succeed("systemctl start --wait restic-backups-offsite.service")
         machine.succeed(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 3'")
         machine.succeed(restic + "dump latest /var/lib/backup-exports/offsite.json | ${pkgs.jq}/bin/jq -e '.status == \"complete\"'")
 

@@ -31,12 +31,6 @@ let
   };
 in
 {
-  modules.backup.exports.miniflux = {
-    unit = "miniflux-backup.service";
-    machine = "miniflux";
-    path = service.backup.path;
-    pattern = "miniflux-backup-*.sql.gz";
-  };
   containers.miniflux = servicesLib.mkContainer {
     inherit cfg;
     name = "miniflux";

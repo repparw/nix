@@ -31,7 +31,6 @@
           runtimeInputs = [
             pkgs.curl
             pkgs.jq
-            pkgs.unzip
             pkgs.coreutils
           ];
           text = ''
@@ -50,19 +49,13 @@
             esac
             archive=${lib.escapeShellArg service.backup.path}/"$filename"
             test -s "$archive"
-            unzip -tqq "$archive"
-            echo "native Jellyfin backup verified: $filename"
+            echo "native Jellyfin backup created: $filename"
           '';
         };
       in
       {
         config = lib.mkMerge [
           {
-            modules.backup.exports.jellyfin = {
-              unit = "jellyfin-backup.service";
-              path = service.backup.path;
-              pattern = "jellyfin-backup-*.zip";
-            };
             sops.secrets.jellyfinBackupKey = {
               sopsFile = ../../../secrets/jellyfin.sops.yaml;
               owner = "root";

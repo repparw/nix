@@ -41,16 +41,6 @@ in
           usage = "fleet health probe [--strict] [--local]";
           implementation = ''cmd_health_probe "$@"'';
         };
-        backup-run = {
-          path = [
-            "backup"
-            "run"
-          ];
-          description = "Refresh exports and run the same offsite backup service as the scheduled timer";
-          scope = "host";
-          usage = "fleet backup run [host]";
-          implementation = ''cmd_backup_run "$@"'';
-        };
         backup-status = {
           path = [
             "backup"
@@ -335,22 +325,6 @@ in
               -o StrictHostKeyChecking=accept-new \
               -o ConnectTimeout=10 \
               "root@$controller_address" fleet-health-probe "$@"
-          }
-
-          cmd_backup_run() {
-            [ "$#" -le 1 ] || { usage_error backup run; return $?; }
-            local target local_host
-            local_host=$(hostname)
-            target="''${1:-$local_host}"
-            if ! host_address "$target" >/dev/null; then
-              echo "unknown fleet host: $target" >&2
-              return 2
-            fi
-            if [ "$target" = "$local_host" ]; then
-              systemctl start --wait restic-backups-offsite.service
-            else
-              ssh_host "$target" systemctl start --wait restic-backups-offsite.service
-            fi
           }
 
           cmd_backup_status() {

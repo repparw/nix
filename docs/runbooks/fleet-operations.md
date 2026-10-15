@@ -105,12 +105,11 @@ manually only acknowledges the failure; it does not establish backup success.
 Run the same offsite operation as the timer, including export preparation:
 
 ```sh
-sudo fleet backup run
-fleet backup run epsilon
+sudo systemctl start --wait restic-backups-offsite.service
+ssh root@epsilon systemctl start --wait restic-backups-offsite.service
 ```
 
-The local command requires permission to start system services. A named remote
-host uses the existing root SSH connection. The command waits for
+The command requires permission to start system services. It waits for
 `restic-backups-offsite.service` and returns its failure status. Inspect its
 journal after a failure; `fleet backup status` reports the resulting service
 state.
@@ -118,8 +117,8 @@ state.
 Before Restic starts, registered export units run synchronously. Each unit must
 succeed and create or refresh a nonempty matching artifact within its declared
 maximum age, one hour by default. A unit that leaves its output unchanged marks
-the run incomplete, as does stale output, missing output, or a failed unit. Other exporters
-still run and Restic uploads the available data, including
+the run incomplete, as does stale output, missing output, or a failed unit. Other
+exporters still run and Restic uploads the available data, including
 `/var/lib/backup-exports/offsite.json` with each export's outcome. After upload,
 the service returns failure for an incomplete run and skips pruning, preserving
 previous snapshots. Inspect the manifest when selecting a snapshot to restore;
@@ -127,14 +126,14 @@ an uploaded snapshot alone does not establish complete application coverage.
 Independent timers for these enrolled export units are disabled so scheduled
 and manual runs use the same sequence. App-managed Arr schedules remain enabled.
 
-| Export               | Producer and validation                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------ |
-| Arr apps             | Native daily schedules, nonempty scheduled archive within 26 hours                         |
-| Jellyfin             | Native `Backup/Create` API, required response path, and ZIP integrity check                |
-| Miniflux             | Container `pg_dump`, gzip integrity check, and atomic publication                          |
-| Paperless            | Container's native `document_exporter`, including its normal service stop/restart behavior |
-| Pi services on alpha | Existing transactional SQLite staging and rsync, checked through the export manifest       |
-| Alpha home state     | SQLite `.backup` staging through `home-state-backup-offsite.service`                       |
+| Export           | Producer and validation                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------ |
+| Arr apps         | Native daily schedules, nonempty scheduled archive within 26 hours                         |
+| Jellyfin         | Native `Backup/Create` API, required response path, and nonempty output                    |
+| Miniflux         | Container `pg_dump`, gzip integrity check, and atomic publication                          |
+| Paperless        | Container's native `document_exporter`, including its normal service stop/restart behavior |
+| Pi services      | Pi-owned transactional SQLite staging, checked through its export manifest                 |
+| Alpha home state | SQLite `.backup` staging through `home-state-backup-offsite.service`                       |
 
 Sonarr, Radarr, Prowlarr and Bazarr use their own scheduled native backups.
 Restic does not trigger them or manage their archive retention. It requires a
@@ -176,25 +175,24 @@ sources. `rsync-job-buptohdd` handles Pictures and Documents separately and
 protects those two state subtrees. Restore staged offsite state beneath the
 user's home, rather than to its original `/var/lib` staging path.
 
-Alpha's `rsync-job-buprpi` pulls Pi's private services export at
-`/var/lib/pi-services-backup/current`. The fixed `pi-services-backup-send`
-helper prepares the export through the existing `repparw` SSH connection,
-then drops privileges before sending it. It accepts only this job's sender
-arguments. SQLite files are exported transactionally; historical service
-trees are retained. Only the obsolete `dns/listener.conf` and
-`dns/resolved.conf` links are excluded. Links into `/nix/store` and
-`dns/hosts` pointing to `/etc/hosts` are allowed. Other external links and
-dangling links abort preparation. Existing source ownership and modes
-remain unchanged; SQLite may create journal sidecars owned like their
-source database.
+Pi prepares its private service export through `pi-services-backup.service`.
+SQLite files are exported transactionally, then a new generation is published
+only after every file succeeds. Historical service trees are retained. Only the
+obsolete `dns/listener.conf` and `dns/resolved.conf` links are excluded. Links
+into `/nix/store` and `dns/hosts` pointing to `/etc/hosts` are allowed; other
+external links and dangling links abort preparation. Source ownership and modes
+remain unchanged; SQLite may create journal sidecars owned like their source
+database. Restore exported files with the required service ownership.
 
-Preparation publishes a new generation only after every file succeeds and
-holds its lock until rsync exits. `--delete-after` inhibits destination
-deletion if a source error occurs. Restore exported files to their service
-paths with the required service ownership; the export's owner is the
-backup account.
+Pi backs up `/var/lib/pi-services-backup`, including the real generation tree
+behind the `current` symlink. Alpha no longer pulls or refreshes this export.
+Existing copies on alpha are retained as historical data; this change does not
+delete backup artifacts.
 
-Daily jobs exclude reproducible caches, container runtime mounts and swap.
+Each host composes its checklist through `provides.backup` and `includes` in
+`modules/hosts/{alpha,pi,epsilon}.nix`. The shared backup aspect executes these
+registrations and reports completeness without choosing service ownership.
+
 Retention is 7d/4w/12m with a 5% data check each run. The pi/epsilon live backups are
 not automatically consistent database exports.
 

@@ -7,7 +7,7 @@
   den.aspects.alpha = {
     includes = [
       den.aspects.fleet-unit-state
-      den.aspects.backup
+      den.aspects.alpha._.backup
       den.aspects.btrfs-maintenance
       den.aspects.gaming
       den.aspects.logid
@@ -21,6 +21,31 @@
       den.aspects.nixos-services._.free-model-watch
       den.aspects.deploy-target
     ];
+
+    provides.backup = {
+      includes = [ den.aspects.backup ];
+      nixos = { config, ... }: {
+        modules.backup.exports = {
+          alpha-home = {
+            unit = "home-state-backup-offsite.service";
+            path = "/var/lib/home-state-backup/offsite";
+            pattern = ".export-complete";
+          };
+          jellyfin = {
+            unit = "jellyfin-backup.service";
+            path = config.modules.services.definitions.jellyfin.backup.path;
+            pattern = "jellyfin-backup-*.zip";
+          };
+        }
+        // lib.genAttrs [ "sonarr" "radarr" "prowlarr" "bazarr" ] (name: {
+          path =
+            config.modules.services.definitions.${name}.backup.path
+            + lib.optionalString (name != "bazarr") "/scheduled";
+          pattern = "${name}_backup_*.zip";
+          maxAgeSeconds = 26 * 60 * 60;
+        });
+      };
+    };
 
     nixos =
       {
@@ -162,11 +187,6 @@
         ];
 
         modules.backup = {
-          exports.pi-services = {
-            unit = "rsync-job-buprpi.service";
-            path = "${config.modules.services.backupDir}/pi-services";
-            pattern = ".pi-services-export.json";
-          };
           paths = [
             "/home/containers/backup"
             "/home/repparw/Pictures"
@@ -338,43 +358,21 @@
                   delete = true;
                 };
               };
-              buprpi = {
-                destination = "${config.modules.services.backupDir}/pi-services/";
-                sources = [
-                  "repparw@${den.hosts.aarch64-linux.pi.serviceAddress}:/var/lib/pi-services-backup/current/"
-                ];
-                settings = {
-                  archive = true;
-                  "copy-links" = true;
-                  "delete-after" = true;
-                  "rsync-path" = "sudo -n pi-services-backup-send";
-                };
-              };
+
             };
           };
         };
 
-        systemd.timers.rsync-job-buprpi.enable = false;
         systemd.services.rsync-job-bupstate.serviceConfig = {
           StateDirectory = "home-state-backup";
           StateDirectoryMode = "0700";
           ExecStartPre = "${prepareHomeState} hdd";
-        };
-        modules.backup.exports.alpha-home = {
-          unit = "home-state-backup-offsite.service";
-          path = "${stateRoot}/offsite";
-          pattern = ".export-complete";
         };
         systemd.services.home-state-backup-offsite.serviceConfig = {
           Type = "oneshot";
           StateDirectory = "home-state-backup";
           StateDirectoryMode = "0700";
           ExecStart = "${prepareHomeState} offsite";
-        };
-        # Use the account that owns the destination and has SSH access to pi.
-        systemd.services.rsync-job-buprpi.serviceConfig = {
-          User = lib.mkForce "repparw";
-          Group = lib.mkForce config.users.users.repparw.group;
         };
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl

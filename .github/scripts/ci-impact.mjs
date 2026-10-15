@@ -22,8 +22,8 @@ const documentationOnly = path =>
 const affectsPersistence = path =>
   ['flake.nix', 'flake.lock', 'modules/checks.nix', 'modules/entities.nix',
     'modules/aspects/persistence.nix', 'modules/aspects/backup.nix', 'modules/aspects/host-backup.nix',
-    'modules/scripts/prepare-backup-exports.py', 'modules/aspects/cli/fleet.nix',
-    'modules/aspects/services/arr-backup.nix', 'modules/_tests/backup-exports.py',
+    'modules/scripts/prepare-backup-exports.py', 'modules/aspects/pi-services-backup.nix',
+    'modules/_tests/backup-exports.py',
     'modules/aspects/nix.nix', 'modules/aspects/nixpkgs.nix',
     'modules/hosts/pi.nix', 'modules/hosts/epsilon.nix',
     '.github/workflows/ci.yml', '.github/workflows/revision-validation.yml'].includes(path) ||
