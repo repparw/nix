@@ -20,11 +20,6 @@
         lib,
         ...
       }:
-      let
-        sshAddresses = lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) (
-          lib.concatMapAttrs (_system: hosts: hosts) den.hosts
-        );
-      in
       {
 
         programs = {
