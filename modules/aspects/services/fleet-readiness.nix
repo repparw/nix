@@ -35,14 +35,10 @@
           runtimeInputs = with pkgs; [
             coreutils
             jq
-            (servicesLib.mkDiscordNotify pkgs)
+            (servicesLib.mkDiscordNotify pkgs config.modules.services.discordChannelId)
             util-linux
           ];
-          text =
-            builtins.replaceStrings
-              [ "@FLEET_DISCORD_CHANNEL@" ]
-              [ (lib.escapeShellArg config.modules.services.discordChannelId) ]
-              (builtins.readFile ../../scripts/fleet-readiness-deliver.sh);
+          text = builtins.readFile ../../scripts/fleet-readiness-deliver.sh;
         };
       in
       {

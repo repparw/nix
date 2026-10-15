@@ -48,7 +48,7 @@ in
           name = "fleet-health-probe";
           runtimeInputs = with pkgs; [
             curl
-            (mkDiscordNotify pkgs)
+            (mkDiscordNotify pkgs config.modules.services.discordChannelId)
             jq
             gawk
             gnused
@@ -392,7 +392,7 @@ in
           name = "disk-watch";
           runtimeInputs = with pkgs; [
             curl
-            (mkDiscordNotify pkgs)
+            (mkDiscordNotify pkgs config.modules.services.discordChannelId)
             jq
             gawk
             gnugrep
@@ -599,7 +599,7 @@ in
           name = "reboot-watch";
           runtimeInputs = with pkgs; [
             curl
-            (mkDiscordNotify pkgs)
+            (mkDiscordNotify pkgs config.modules.services.discordChannelId)
             jq
             coreutils
           ];
@@ -692,7 +692,7 @@ in
             coreutils
             gnugrep
             gnused
-            (mkDiscordNotify pkgs)
+            (mkDiscordNotify pkgs config.modules.services.discordChannelId)
           ];
           text = ''
             state_dir="''${STATE_DIRECTORY:-/var/lib/free-model-watch}"
