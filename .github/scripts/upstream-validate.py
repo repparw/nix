@@ -101,6 +101,23 @@ def validate(name, architecture):
         attribute = {"tasks-org": "alpha.pkgs.tasks-org", "wpaperd-fix": "alpha.pkgs.wpaperd",
                      "qbittorrent": "alpha.config.containers.qbittorrent.config.services.qbittorrent.package"}[name]
         build(attribute)
+    elif name == "moonshine-pr227":
+        # The candidate removes the declarative test-build aspect: the
+        # generated unit must select the unpatched upstream package, the
+        # reload-guard source predicate must hold (the same one readiness
+        # used), and the unpatched package must build.
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("readiness", ROOT / ".github/scripts/upstream-readiness.py")
+        detector = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(detector)
+        lock = json.loads((ROOT / "flake.lock").read_text())
+        revision = detector.pin(lock, "nixpkgs")
+        require(detector.moonshine_reload_guard("hgaiser/moonshine", revision),
+                "pinned upstream Moonshine lacks the reload guard")
+        package = evaluate("alpha.config.services.moonshine.package.outPath")
+        require(package == evaluate("alpha.pkgs.moonshine.outPath"),
+                "Alpha must select the unpatched upstream Moonshine")
+        build("alpha.pkgs.moonshine")
     else:
         raise ValueError(f"no package validation for {name}")
 

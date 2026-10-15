@@ -75,10 +75,15 @@ elif name == 'ssh':
             print('error: preparation build failed', file=sys.stderr)
             sys.exit(1)
         print(f'/nix/store/{host}-profile-26.11')
+    elif command[0] == 'nom' and command[1] == 'build':
+        if config.get('prepare_failure') == host:
+            print('error: preparation build failed', file=sys.stderr)
+            sys.exit(1)
+        print(f'/nix/store/{host}-profile-26.11')
     elif command[0] == 'nixos-version':
         print(revision if current == 'new' else 'b' * 40)
-    elif command[0] == 'nix' and command[1] == 'store':
-        print("mesa: 26.2.2 ⟶ 26.2.4, 2.1 MiB")
+    elif command[0] == 'nvd' and command[1] == 'diff':
+        print("[U.]  #01  mesa  26.2.2 -> 26.2.4")
     elif command[0] == 'readlink':
         print(f'/nix/store/{host}-{current}')
     elif command[0] == 'systemctl' and command[1] == 'is-system-running':

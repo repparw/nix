@@ -100,18 +100,17 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha256-umhEz5um90EiBHvVZzQw+HoBFO088ZI1g7Ost9BUxhM=";
   };
 
-  postPatch =
-    ''
-      substituteInPlace packages/script/src/index.ts \
-        --replace-fail \
-        'throw new Error(`This script requires bun@''${expectedBunVersionRange}' \
-        'console.warn(`Warning: This script requires bun@''${expectedBunVersionRange}'
-    ''
-    # Avoid requiring prettier just to format the schema JSON
-    + ''
-      substituteInPlace packages/cli/script/schema.ts \
-        --replace-fail 'import { format } from "prettier"' 'const format = (s: string) => JSON.stringify(JSON.parse(s), null, 2)'
-    '';
+  postPatch = ''
+    substituteInPlace packages/script/src/index.ts \
+      --replace-fail \
+      'throw new Error(`This script requires bun@''${expectedBunVersionRange}' \
+      'console.warn(`Warning: This script requires bun@''${expectedBunVersionRange}'
+  ''
+  # Avoid requiring prettier just to format the schema JSON
+  + ''
+    substituteInPlace packages/cli/script/schema.ts \
+      --replace-fail 'import { format } from "prettier"' 'const format = (s: string) => JSON.stringify(JSON.parse(s), null, 2)'
+  '';
 
   nativeBuildInputs = [
     bun

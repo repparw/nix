@@ -172,6 +172,25 @@
               enable = true;
               openFirewall = true;
             };
+            # Prowlarr is the only Arr container that opts out of
+            # mkServarrContainer, so it misses the media group the others get.
+            # The servarr module runs it as DynamicUser, and systemd recycles
+            # the allocated gid once the unit stops, so pinning Group= to the
+            # static media group is what keeps the bind-mounted Backups tree
+            # writable across restarts. The systemd property is set directly
+            # because the prowlarr module exposes no group option.
+            # Directory modes only (2775): a recursive mode would set the exec
+            # bit on the stored zips/db.
+            extraConfig = {
+              users.groups.media.gid = 900;
+              systemd.services.prowlarr.serviceConfig.Group = "media";
+              systemd.services.prowlarr.serviceConfig.UMask = lib.mkForce "0002";
+              systemd.tmpfiles.rules = [
+                "d /var/lib/private/prowlarr/Backups 2775 root media -"
+                "d /var/lib/private/prowlarr/Backups/scheduled 2775 root media -"
+                "d /var/lib/private/prowlarr/Backups/manual 2775 root media -"
+              ];
+            };
             forwardPorts = [
               {
                 protocol = "tcp";

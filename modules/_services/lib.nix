@@ -104,7 +104,7 @@ in
   inherit serviceUrl publicHealthUrl;
 
   mkDiscordNotify =
-    pkgs_:
+    pkgs_: channel:
     pkgs_.writeShellApplication {
       name = "discord-notify";
       runtimeInputs = with pkgs_; [
@@ -112,7 +112,11 @@ in
         jq
         gnused
       ];
-      text = discordNotifyText;
+      # The channel id is public repository configuration, while the bot
+      # token comes from the hermes-env secret. Exported before the script
+      # sources that secret: hosts whose secret omits DISCORD_CHANNEL_ID
+      # (pi) still post, and a secret that carries the key still wins.
+      text = "export DISCORD_CHANNEL_ID=" + lib.escapeShellArg channel + "\n" + discordNotifyText;
     };
 
   serviceHosts =

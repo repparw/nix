@@ -72,60 +72,6 @@
             "linking.role-based.duck-level" = 0.25;
             "node.restore-default-targets" = false;
           };
-          "node.rules" = [
-            {
-              matches = [
-                {
-                  "application.name" = "ZapZap";
-                  "media.class" = "Audio/Source";
-                }
-              ];
-              actions = {
-                "update-props" = {
-                  "media.role" = "Speech";
-                  "node.pause-on-idle" = false;
-                };
-              };
-            }
-          ];
-        };
-
-        extraConfig.pipewire-pulse."99-zapzap-media-role" = {
-          # ZapZap is a QtWebEngine wrapper, so tagging the process with
-          # PULSE_PROP_media.role also tags its notification sounds. Let the
-          # browser classify media streams and only promote actual music/video
-          # streams to Speech; Notification streams stay out of ducking.
-          "stream.rules" = [
-            {
-              matches = [
-                {
-                  "application.name" = "ZapZap";
-                  "media.role" = "Movie";
-                }
-                {
-                  "application.name" = "ZapZap";
-                  "media.role" = "Music";
-                }
-                {
-                  "application.name" = "ZapZap";
-                  "media.role" = "video";
-                }
-                {
-                  "application.name" = "ZapZap";
-                  "media.role" = "music";
-                }
-                {
-                  "application.name" = "ZapZap";
-                  "media.class" = "Audio/Source";
-                }
-              ];
-              actions = {
-                "update-props" = {
-                  "media.role" = "Speech";
-                };
-              };
-            }
-          ];
         };
       };
     };

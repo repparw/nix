@@ -10,6 +10,26 @@
 
   perSystem =
     { config, pkgs, ... }:
+    let
+      worktreeBootstrap = pkgs.writeShellScript "nix-worktree-bootstrap" ''
+        # Managed by modules/git-hooks.nix: worktree bootstrap
+        set -euo pipefail
+        if [ "''${3:-0}" != 1 ] || [ ! -f flake.nix ] || [ -f .pre-commit-config.yaml ]; then
+          exit 0
+        fi
+
+        while IFS= read -r variable; do
+          unset "$variable"
+        done < <(${pkgs.lib.getExe pkgs.git} rev-parse --local-env-vars)
+
+        echo "Initializing Nix worktree Git hooks in $PWD" >&2
+        if ! ${pkgs.lib.getExe pkgs.nix} develop --no-update-lock-file --command true; then
+          echo "Worktree created, but hook setup failed. Retry: nix develop --no-update-lock-file --command true" >&2
+          exit 1
+        fi
+        test -f .pre-commit-config.yaml
+      '';
+    in
     {
       pre-commit = {
         settings = {
@@ -88,6 +108,12 @@
           ${config.pre-commit.installationScript}
           if repo_hooks_common_dir="$(${pkgs.lib.getExe pkgs.git} rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then
             ${pkgs.lib.getExe pkgs.git} config --local core.hooksPath "$repo_hooks_common_dir/hooks"
+            repo_post_checkout="$repo_hooks_common_dir/hooks/post-checkout"
+            if { [ ! -e "$repo_post_checkout" ] && [ ! -L "$repo_post_checkout" ]; } || ${pkgs.lib.getExe pkgs.gnugrep} -qFx '# Managed by modules/git-hooks.nix: worktree bootstrap' "$repo_post_checkout"; then
+              ${pkgs.lib.getExe' pkgs.nix "nix-store"} --add-root "$repo_post_checkout" --indirect --realise ${worktreeBootstrap} >/dev/null
+            else
+              echo "Preserving existing post-checkout hook: $repo_post_checkout" >&2
+            fi
           fi
         '';
       };

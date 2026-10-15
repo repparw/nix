@@ -47,7 +47,7 @@ in
           name = "fleet-health-probe";
           runtimeInputs = with pkgs; [
             curl
-            (mkDiscordNotify pkgs)
+            (mkDiscordNotify pkgs config.modules.services.discordChannelId)
             jq
             gawk
             gnused
@@ -391,7 +391,7 @@ in
           name = "disk-watch";
           runtimeInputs = with pkgs; [
             curl
-            (mkDiscordNotify pkgs)
+            (mkDiscordNotify pkgs config.modules.services.discordChannelId)
             jq
             gawk
             gnugrep
@@ -598,7 +598,7 @@ in
           name = "reboot-watch";
           runtimeInputs = with pkgs; [
             curl
-            (mkDiscordNotify pkgs)
+            (mkDiscordNotify pkgs config.modules.services.discordChannelId)
             jq
             coreutils
           ];
@@ -691,9 +691,21 @@ in
             coreutils
             gnugrep
             gnused
-            (mkDiscordNotify pkgs)
+            (mkDiscordNotify pkgs config.modules.services.discordChannelId)
           ];
           text = ''
+            # The catalogues are plain text names that get sorted, diffed and
+            # re-read, so the collation must be pinned here instead of being
+            # inherited from the unit. systemd hands services the host locale
+            # (alpha: LANG=en_IE.UTF-8, LC_MONETARY=es_AR.UTF-8, no LC_ALL), and
+            # comm validates its inputs against LC_COLLATE: a snapshot recorded
+            # in C order then reads as "not in sorted order" (en_IE orders
+            # nemotron-3.5-... before nemotron-3-...), comm exits 1 and, with
+            # pipefail + errexit, so does the whole service -- every run, with
+            # the snapshot never moving. LC_ALL is not part of the locale
+            # environment, so this has to be set by the script itself.
+            export LC_ALL=C
+
             state_dir="''${STATE_DIRECTORY:-/var/lib/free-model-watch}"
             mkdir -p "$state_dir"
 
@@ -741,6 +753,8 @@ in
                 echo "free-model-watch: $name baseline recorded ($(printf '%s\n' "$current" | grep -c .) models)"
                 return 0
               fi
+              # Both sides must be collated the same way; LC_ALL=C is pinned for
+              # the script and repeated here so the pair stays correct on its own.
               previous=$(sed '/^[[:space:]]*$/d' "$state_file" | LC_ALL=C sort -u)
               added=$(LC_ALL=C comm -13 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')
               removed=$(LC_ALL=C comm -23 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')
