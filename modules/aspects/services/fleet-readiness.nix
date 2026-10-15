@@ -38,7 +38,11 @@
             (servicesLib.mkDiscordNotify pkgs)
             util-linux
           ];
-          text = builtins.readFile ../../scripts/fleet-readiness-deliver.sh;
+          text =
+            builtins.replaceStrings
+              [ "@FLEET_DISCORD_CHANNEL@" ]
+              [ (lib.escapeShellArg config.modules.services.discordChannelId) ]
+              (builtins.readFile ../../scripts/fleet-readiness-deliver.sh);
         };
       in
       {
