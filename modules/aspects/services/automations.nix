@@ -114,7 +114,6 @@
         defaultWatchersFile = pkgs.writeText "change-detection-default-watchers.json" (
           builtins.toJSON defaultWatchers
         );
-        discordWebhookFile = config.sops.secrets.discordWebhook.path;
         changeDetectionScript = pkgs.writeText "change-detection.mjs" (
           builtins.readFile ./automations/change-detection.mjs
         );
@@ -125,17 +124,11 @@
             pkgs.curl
           ];
           text = ''
-            node ${changeDetectionScript} ${watchersFile} ${stateDir}/change-detection-state.json "$CREDENTIALS_DIRECTORY/discordWebhook" ${defaultWatchersFile}
+            node ${changeDetectionScript} ${watchersFile} ${stateDir}/change-detection-state.json ${defaultWatchersFile}
           '';
         };
       in
       {
-        sops.secrets.discordWebhook = {
-          sopsFile = ../../../secrets/automations.sops.yaml;
-          owner = "root";
-          mode = "0400";
-        };
-
         systemd.tmpfiles.rules = [
           "d ${stateDir} 0750 root root - -"
         ];
@@ -148,12 +141,16 @@
               exit 1
             fi
           '';
-          serviceConfig = {
-            Type = "oneshot";
-            LoadCredential = "discordWebhook:${discordWebhookFile}";
-          };
+          serviceConfig.Type = "oneshot";
           path = [ pkgs.nodejs ];
-          script = lib.getExe changeDetection;
+          # Posts through the fleet bot identity (token + channel), like every
+          # other watcher, instead of a per-aspect webhook.
+          script = ''
+            # shellcheck disable=SC1091
+            source /run/secrets/hermes-env
+            export DISCORD_BOT_TOKEN DISCORD_CHANNEL_ID=${config.modules.services.discordChannelId}
+            ${lib.getExe changeDetection}
+          '';
         };
 
         systemd.timers.change-detection = {
