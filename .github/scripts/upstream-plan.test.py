@@ -2,6 +2,7 @@
 """Focused tests for lock candidate atomic plan and fail-closed cleanup."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -147,6 +148,24 @@ class PlanTests(unittest.TestCase):
         self.assertNotIn("patchPhase =", expression)
         self.assertEqual(run.call_args.kwargs["env"]["UPSTREAM_WATCH_ROOT"],
                          str(planner.ROOT))
+
+    @unittest.skipUnless(os.environ.get("NIX_PROBE_SMOKE") == "1",
+                         "requires the CI Nix installer and flake inputs")
+    def test_real_nix_evaluation_of_probe_attributes(self):
+        # No package compilation: .drvPath forces evaluation of the exact
+        # overridden derivation used by nix_build_ok for each fleet package.
+        for watcher, attribute in planner.APPLY_COUPLED_PROBES.items():
+            with self.subTest(watcher=watcher):
+                expression = f"({planner.nix_probe_expression(attribute)}).drvPath"
+                result = subprocess.run(
+                    ["nix", "eval", "--impure", "--raw", "--no-write-lock-file",
+                     "--expr", expression],
+                    env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)},
+                    capture_output=True, text=True, timeout=600,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr[-1500:])
+                self.assertTrue(result.stdout.strip().endswith(".drv"),
+                                result.stdout)
 
     def test_unknown_ancestry_must_not_auto_publish(self):
         def unavailable(*_):

@@ -57,10 +57,9 @@ def contains(commit, revision):
     return data["status"] in ("ahead", "identical") and base["sha"] == commit
 
 
-def nix_build_ok(attribute):
-    # Evaluate an expression rather than treating a Nix function application
-    # as part of a flake installable name. Use the actual fleet package.
-    expression = (
+def nix_probe_expression(attribute):
+    # Shared verbatim by the compatibility build and real Nix eval smoke tests.
+    return (
         'let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT"); '
         f'in (f.{attribute}).overrideAttrs (_: {{ '
         'configurePhase = "true"; buildPhase = "true"; '
@@ -68,6 +67,10 @@ def nix_build_ok(attribute):
         'installPhase = "mkdir -p $out; touch $out/probed"; '
         'fixupPhase = "true"; })'
     )
+
+
+def nix_build_ok(attribute):
+    expression = nix_probe_expression(attribute)
     result = subprocess.run(
         ["nix", "build", "--impure", "--no-link", "--no-write-lock-file",
          "--print-out-paths", "--expr", expression],
