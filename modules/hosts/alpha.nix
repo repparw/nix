@@ -8,6 +8,7 @@
     includes = [
       den.aspects.fleet-unit-state
       den.aspects.backup
+      den.aspects.alpha-persistence
       den.aspects.btrfs-maintenance
       den.aspects.gaming
       den.aspects.logid
