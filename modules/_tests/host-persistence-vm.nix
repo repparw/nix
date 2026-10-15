@@ -67,7 +67,10 @@ let
     };
     services.openssh.enable = true;
     networking.hostName = "alpha";
-    modules.backup.retentionArgs = [ ];
+    modules.backup.retentionArgs = [
+      "--keep-last 2"
+      "--keep-tag vm-recovery-source"
+    ];
     modules.backup.exports.test-service = {
       unit = "test-service-export.service";
       path = "/var/lib/test-service/export";
@@ -234,6 +237,8 @@ pkgs.testers.runNixOSTest {
         machine.succeed("fleet backup run")
         machine.succeed(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 2'")
         snapshot = machine.succeed(restic + "snapshots --latest 1 --json | ${pkgs.jq}/bin/jq -r '.[0].id'").strip()
+        machine.succeed(restic + "tag --add vm-recovery-source " + snapshot)
+        snapshot = machine.succeed(restic + "snapshots --tag vm-recovery-source --json | ${pkgs.jq}/bin/jq -r '.[0].id'").strip()
         machine.succeed("mkdir -m 0700 /restored")
         machine.succeed(restic + "restore --verify " + snapshot + " --target /restored")
         machine.succeed("cmp -s /etc/shadow /restored/etc/shadow; cmp -s /etc/ssh/ssh_host_ed25519_key /restored/etc/ssh/ssh_host_ed25519_key")
@@ -259,7 +264,7 @@ pkgs.testers.runNixOSTest {
             machine.succeed(restic + "dump latest /var/lib/test-service/independent/state.txt")
             machine.succeed("rm /run/export-" + mode)
         machine.succeed("fleet backup run alpha")
-        machine.succeed(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 7'")
+        machine.succeed(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 3'")
         machine.succeed(restic + "dump latest /var/lib/backup-exports/offsite.json | ${pkgs.jq}/bin/jq -e '.status == \"complete\"'")
 
     with subtest("One-file-system follows same-device binds and skips other devices unless explicit"):
