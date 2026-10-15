@@ -21,6 +21,8 @@
                 };
                 boot.loader.grub.enable = lib.mkForce false;
                 boot.loader.generic-extlinux-compatible.enable = lib.mkForce true;
+                sdImage.nixPathRegistrationFile = "/persist/nix-path-registration";
+                sdImage.expandOnBoot = false;
                 systemd.timers.fleet-deploy.enable = false;
                 systemd.timers.fleet-alpha-retry.enable = false;
                 modules.persistence.mutableAccounts = lib.mkForce false;
