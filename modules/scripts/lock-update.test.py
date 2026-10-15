@@ -53,7 +53,9 @@ class LockUpdate(unittest.TestCase):
             dst.chmod(0o644)
         module = self.checkout / "modules/_services/authelia.nix"
         module.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(REPO / ".github/upstream/fixtures/authelia-before.nix.txt", module)
+        # Main has already retired Authelia; fixture must reproduce that
+        # otherwise a ready qBittorrent cleanup would also select Authelia.
+        module.write_text("services.authelia.instances.main = {\n  package = pkgs.authelia;\n};\n")
         # A fixture registry: one apply-coupled watcher whose workaround file,
         # cleanup recipe, and readiness endpoints the fake gh can answer.
         registry = {
@@ -108,7 +110,11 @@ class LockUpdate(unittest.TestCase):
             "    log.write(json.dumps(args) + '\\n')\n"
             "if args[:2] == ['pr', 'list']:\n"
             "    atomic = 'automation/atomic-cleanup' in args\n"
-            "    print('123' if (root/'atomic-pr').exists() else '' if atomic else os.environ['FIXTURE_PR'])\n"
+            "    if '--state' in args and args[args.index('--state') + 1] == 'merged':\n"
+            "        tip = subprocess.check_output(['git', '--git-dir', remote, 'rev-parse', 'automation/atomic-cleanup'], text=True).strip()\n"
+            "        print(tip if (root/'atomic-merged').exists() else '')\n"
+            "    else:\n"
+            "        print('123' if (root/'atomic-pr').exists() else '' if atomic else os.environ['FIXTURE_PR'])\n"
             "elif args[:2] == ['pr', 'create']:\n"
             "    if 'automation/atomic-cleanup' in args:\n"
             "        (root/'atomic-pr').write_text('123')\n"
@@ -117,8 +123,13 @@ class LockUpdate(unittest.TestCase):
             "'refs/heads/automation/flake-lock', os.environ['FIXTURE_MAIN']], check=True)\n"
             "    print('https://github.com/fixture/nix/pull/123')\n"
             "elif args[:2] == ['pr', 'view']:\n"
-            "    sha = subprocess.check_output(['git','--git-dir',remote,'rev-parse','automation/atomic-cleanup'], text=True).strip()\n"
-            "    print(sha)\n"
+            "    if 'autoMergeRequest' in args:\n"
+            "        print('true' if (root/'auto-merged').exists() else 'false')\n"
+            "    else:\n"
+            "        sha = subprocess.check_output(['git','--git-dir',remote,'rev-parse','automation/atomic-cleanup'], text=True).strip()\n"
+            "        print(sha)\n"
+            "elif args[:2] == ['pr', 'merge']:\n"
+            "    (root/'auto-merged').write_text('1')\n"
             "elif args and args[0] == 'api':\n"
             "    endpoint = next(arg for arg in args if arg.startswith('repos/'))\n"
             "    if '/compare/' in endpoint:\n"
@@ -461,6 +472,72 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual([r[2] for r in self.requests if r[:2] == ["workflow", "run"]], ["ci.yml"])
         self.assertIn("upstream_watcher=qbittorrent",
                       next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]))
+
+    def test_recovery_fetches_candidate_in_fresh_checkout(self):
+        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+        self.assertNotEqual(first.returncode, 0)
+        fresh = self.root / "fresh"
+        self.git("clone", "--single-branch", "--branch", "main",
+                 str(self.remote), str(fresh))
+        self.git("config", "user.name", "fixture", cwd=fresh)
+        self.git("config", "user.email", "fixture@example.test", cwd=fresh)
+        # Unlike the first checkout this one has never fetched the atomic tip.
+        self.checkout = fresh
+        second = self.update(change=False)
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertTrue(any(r[:3] == ["workflow", "run", "ci.yml"]
+                            for r in self.requests))
+        self.assertTrue(any(r[:2] == ["pr", "merge"] for r in self.requests))
+
+    def test_merged_atomic_branch_is_safely_retired(self):
+        first = self.update(atomic_ready=True)
+        self.assertEqual(first.returncode, 0, first.stderr)
+        tip = self.git("--git-dir", str(self.remote), "rev-parse",
+                       "automation/atomic-cleanup")
+        # Simulate GitHub merging the candidate without deleting its branch.
+        self.git("--git-dir", str(self.remote), "update-ref",
+                 "refs/heads/main", tip, self.main)
+        (self.root / "atomic-merged").write_text("1")
+        (self.root / "atomic-pr").unlink()
+        self.git("switch", "main", cwd=self.checkout)
+        self.git("pull", "--ff-only", cwd=self.checkout)
+        self.main = tip
+        second = self.update(change=False)
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertFalse(subprocess.run(
+            ["git", "--git-dir", str(self.remote), "show-ref", "--verify",
+             "refs/heads/automation/atomic-cleanup"],
+            capture_output=True).returncode == 0)
+
+    def test_unmerged_atomic_branch_must_not_be_deleted(self):
+        first = self.update(atomic_ready=True)
+        self.assertEqual(first.returncode, 0, first.stderr)
+        (self.root / "atomic-pr").unlink()
+        self.git("switch", "main", cwd=self.checkout)
+        second = self.update(change=False)
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn("Unowned atomic branch", second.stderr)
+        self.assertTrue(self.git("--git-dir", str(self.remote), "rev-parse",
+                                 "automation/atomic-cleanup"))
+
+    def test_authelia_candidate_is_manual_and_runs_native_arm(self):
+        module = self.checkout / "modules/_services/authelia.nix"
+        shutil.copy(REPO / ".github/upstream/fixtures/authelia-before.nix.txt", module)
+        module.chmod(0o644)
+        self.git("add", ".", cwd=self.checkout)
+        self.git("commit", "-m", "restore Authelia fixture", cwd=self.checkout)
+        self.git("push", "origin", "main", cwd=self.checkout)
+        self.main = self.git("rev-parse", "HEAD", cwd=self.checkout)
+        result = self.update(atomic_ready=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        dispatch = next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]
+                        and r[r.index("--ref") + 1] == "automation/atomic-cleanup")
+        self.assertIn("build_arm_authelia=true", dispatch)
+        self.assertIn("upstream_watcher=qbittorrent", dispatch)
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        text = self.git("--git-dir", str(self.remote), "show",
+                        "automation/atomic-cleanup:modules/_services/authelia.nix")
+        self.assertNotIn("autheliaPackage", text)
 
     def test_lock_publisher_shell_is_parseable(self):
         # Workflow YAML checks alone do not parse the embedded bash script.
