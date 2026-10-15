@@ -180,6 +180,37 @@ class FreeModelWatch(unittest.TestCase):
                     "Z:free\nb:free\n",
                 )
 
+    def test_ambient_host_locale_cannot_break_the_diff(self):
+        """The unit inherits the host locale without LC_ALL (alpha runs with
+        LANG=en_IE.UTF-8, LC_MONETARY=es_AR.UTF-8), while every snapshot is
+        recorded in C order. comm settles "sorted" using the collation of the
+        locale it is handed, so under a host locale a C-collated snapshot is
+        reported as "not in sorted order" and the service fails every run."""
+
+        for lang in ("en_IE.UTF-8", "en_US.UTF-8", "es_AR.UTF-8"):
+            with self.subTest(lang=lang):
+                for var in ("LC_ALL", "LC_COLLATE", "LANGUAGE"):
+                    self.env.pop(var, None)
+                self.env["LANG"] = lang
+                self.env["LC_MONETARY"] = "es_AR.UTF-8"
+                self.env["STATE_DIRECTORY"] = str(self.root / f"ambient-{lang}")
+                self.calls.write_text("")
+                self.fixture("opencode", {"data": [{"id": name} for name in ("Z-free", "a-free", "b-free")]})
+                baseline = self.run_watch()
+                self.assertEqual(baseline.returncode, 0, baseline.stderr)
+                self.fixture("opencode", {"data": [{"id": name} for name in ("Z-free", "b-free")]})
+                result = self.run_watch()
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertNotIn("not in sorted order", result.stderr)
+                posts = [line for line in self.actions() if line.startswith("post ")]
+                self.assertEqual(len(posts), 1)
+                self.assertIn("gone: a-free", posts[0])
+                self.assertNotIn("Z-free", posts[0])
+                self.assertEqual(
+                    (Path(self.env["STATE_DIRECTORY"]) / "opencode-free.list").read_text(),
+                    "Z-free\nb-free\n",
+                )
+
     def test_large_catalog_change_keeps_the_notification_bounded(self):
         self.fixture("opencode", OPENCODE)
         self.fixture("nous", NOUS)
