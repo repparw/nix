@@ -15,26 +15,26 @@ import {
 
 const noop = () => {};
 
+const fixtureDiscord = { token: "fixture-token", channelId: "fixture-channel" };
+
 function fixture(t, watchers, state, defaultWatchers) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "change-detection-test-"));
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const watchersPath = path.join(directory, "watchers.json");
   const defaultWatchersPath = path.join(directory, "default-watchers.json");
   const statePath = path.join(directory, "state.json");
-  const discordWebhookPath = path.join(directory, "webhook");
   fs.writeFileSync(watchersPath, JSON.stringify(watchers));
   if (defaultWatchers !== undefined) {
     fs.writeFileSync(defaultWatchersPath, JSON.stringify(defaultWatchers));
   }
-  fs.writeFileSync(discordWebhookPath, "https://discord.example/webhook\n");
   if (state !== undefined) fs.writeFileSync(statePath, JSON.stringify(state));
   const files = {
     directory,
     watchersPath,
     statePath,
-    discordWebhookPath,
   };
   if (defaultWatchers !== undefined) files.defaultWatchersPath = defaultWatchersPath;
+  files.discord = fixtureDiscord;
   return files;
 }
 
@@ -186,7 +186,7 @@ test("stable object keys prevent notifications caused only by property order", a
     },
     log: noop,
   });
-  assert.equal(calls, 1, "an unchanged value must not call the webhook");
+  assert.equal(calls, 1, "an unchanged value must not notify Discord");
 });
 
 test("initial state is atomic, private, and does not notify", async (t) => {
@@ -362,7 +362,7 @@ test("termination releases the state lock", async (t) => {
     await runChangeDetection({
       watchersPath: ${JSON.stringify(files.watchersPath)},
       statePath: ${JSON.stringify(files.statePath)},
-      discordWebhookPath: ${JSON.stringify(files.discordWebhookPath)},
+      discord: ${JSON.stringify(fixtureDiscord)},
       fetchImpl: async () => new Promise(() => {}),
       handleSignals: true,
     });
@@ -413,7 +413,7 @@ test("failed fetches and notifications never commit partial state", async (t) =>
           : response("version: new"),
       log: noop,
     }),
-    /webhook returned HTTP 503/,
+    /Discord returned HTTP 503/,
   );
   assert.equal(
     JSON.parse(fs.readFileSync(changedFiles.statePath)).watchers.release.current,

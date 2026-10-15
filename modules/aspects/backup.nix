@@ -248,11 +248,11 @@
             };
             script =
               let
-                channelId = config.modules.services.discordChannelId;
+                discordNotify =
+                  (import ../_services/lib.nix { inherit lib pkgs; }).mkDiscordNotify pkgs
+                    config.modules.services.discordChannelId;
               in
               ''
-                # shellcheck disable=SC1091
-                source /run/secrets/hermes-env
                 host=$(cat /etc/hostname)
                 repo="rclone:gd-crypt:restic/$host"
                 rclone_remote="gd-crypt:restic/$host"
@@ -264,11 +264,8 @@
 
                 snaps=$(RESTIC_REPOSITORY="$repo" ${lib.getExe pkgs.restic} snapshots --json | jq length)
 
-                curl -s -m 15 -X POST \
-                  -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-                  -H "Content-Type: application/json" \
-                  -d "$(jq -n --arg c "*$host* offsite: ''${gib} GiB across $snaps snapshots ($objects objects)" '{content: $c}')" \
-                  "https://discord.com/api/v10/channels/${channelId}/messages" >/dev/null || true
+                ${lib.getExe discordNotify} post \
+                  "*$host* offsite: ''${gib} GiB across $snaps snapshots ($objects objects)" >/dev/null || true
               '';
           };
 
