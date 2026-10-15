@@ -159,7 +159,7 @@ class LockUpdate(unittest.TestCase):
             "            if (root/'wrong-atomic-manifest').exists():\n"
             "                runs.append({'id': 22, 'display_title': (root/'wrong-atomic-manifest').read_text()})\n"
             "            print(json.dumps({'workflow_runs': runs}))\n"
-            "        sys.exit(0)\n
+            "        sys.exit(0)\n"
             "    sha = subprocess.check_output(['git', '--git-dir', remote, 'rev-parse', 'automation/flake-lock'], text=True).strip()\n"
             "    if '/pulls/' in endpoint:\n"
             "        print(json.dumps({'state': 'open', 'head': {'repo': {'full_name': 'fixture/nix'}, 'ref': 'automation/flake-lock', 'sha': 'wrong' if os.environ['FIXTURE_WRONG_PR_HEAD'] == '1' else sha}, 'base': {'ref': 'main'}}))\n"
