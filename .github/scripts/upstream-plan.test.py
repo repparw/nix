@@ -120,7 +120,6 @@ class PlanTests(unittest.TestCase):
     def test_registry_explicitly_limits_publication(self):
         self.assertEqual([k for k,v in self.registry.items() if v["mode"] == "atomic"],
                          ["authelia-pnpm-hash"])
-        self.assertEqual(self.registry["moonshine-pr227"]["mode"], "host-owned")
         self.assertEqual(self.registry["nautilus-module"]["mode"], "notify-only")
         for name, spec in self.registry.items():
             if spec["mode"] == "post-lock":

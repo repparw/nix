@@ -23,21 +23,25 @@ health.
 Use the discovered `fleet` commands for runtime inspection. The current
 surface includes health probing, offsite backup status, and bounded host debug
 bundles. Prefer `fleet debug <host>` over ad-hoc SSH command collections so the
-same diagnostic contract works locally and remotely.
+same diagnostic contract works locally and remotely. Local-tree updates go
+through the plain nix CLI and deploy-rs (`--dry-activate` to review); the
+controller-side deploy transaction is the only automated path.
 
 Inspection commands are read-only. Report unreachable hosts and unavailable
 state rather than silently treating missing evidence as healthy.
 
 ## Activation boundary
 
-`fleet update` delegates to the shared `host-update` manual path and can switch
-the local host. Run it only when the user has authorized activation. Do not use
-it as part of `verify-nixos-config`.
+Local-tree activations go through the plain nix CLI and deploy-rs directly
+(`nix run .#deploy-rs -- .#<host> --dry-activate` to review). Run them only
+when the user has authorized activation. Do not use them as part of
+`verify-nixos-config`.
 
 The controller-side production deployment transaction remains the separate
-`fleet-update` command documented in the
+`fleet-update deploy` command documented in the
 [fleet runbook](../../../docs/runbooks/fleet-operations.md). Do not substitute
-`fleet update` for `fleet-update deploy`; they intentionally have different
+a local deploy-rs activation for `fleet-update deploy`; they intentionally
+have different
 roles.
 
 ## Report
