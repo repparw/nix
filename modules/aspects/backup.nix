@@ -14,7 +14,14 @@
         exportReport = "/var/lib/backup-exports/offsite.json";
         backup = config.services.restic.backups.offsite;
         resticCommand = lib.escapeShellArgs (
-          [ (lib.getExe backup.package) ]
+          lib.optionals backup.inhibitsSleep [
+            "${pkgs.systemd}/bin/systemd-inhibit"
+            "--mode=block"
+            "--who=restic"
+            "--what=sleep"
+            "--why=Scheduled backup offsite"
+          ]
+          ++ [ (lib.getExe backup.package) ]
           ++ lib.concatMap (option: [
             "-o"
             option
