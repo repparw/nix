@@ -43,6 +43,7 @@ class Publication(unittest.TestCase):
         self.runs = {}
         self.dispatches = []
         self.comments = []
+        self.automerges = []
         original = publisher.run
 
         def execute(*arguments, cwd=None, env=None):
@@ -56,13 +57,19 @@ class Publication(unittest.TestCase):
                 self.prs = [{"number": 42, "headRefOid": sha}]
                 return "https://github.com/fixture/repo/pull/42"
             if args[:2] == ["run", "list"]:
-                return json.dumps(self.runs.get(args[args.index("--workflow") + 1], []))
+                commit = args[args.index("--commit") + 1] if "--commit" in args else None
+                recorded = self.runs.get(args[args.index("--workflow") + 1], [])
+                return json.dumps([r for r in recorded if commit is None or r["headSha"] == commit])
             if args[:2] == ["workflow", "run"]:
                 self.dispatches.append(args)
-                self.runs[args[2]] = [{"headSha": self.prs[0]["headRefOid"]}]
+                expected = args[[i for i, a in enumerate(args) if a.startswith("expected_sha=")][0]].split("=", 1)[1]
+                self.runs[args[2]] = self.runs.get(args[2], []) + [{"headSha": expected}]
                 return ""
             if args[0] == "api":
                 return json.dumps([self.comments])
+            if args[:2] == ["pr", "merge"]:
+                self.automerges.append(args)
+                return ""
             if args[:2] == ["issue", "comment"]:
                 self.comments.append({"body": Path(args[args.index("--body-file") + 1]).read_text()})
                 return ""
@@ -104,6 +111,56 @@ class Publication(unittest.TestCase):
         self.prs = []
         self.assertEqual(self.publish()["sha"], first["sha"])
         self.assertEqual(len(self.dispatches), 2)
+
+    def test_publish_arms_automerge(self):
+        first = self.publish()
+        self.assertEqual(first["status"], "automerge-armed")
+        self.assertEqual(self.automerges, [["pr", "merge", "42", "--repo", "fixture/repo", "--squash", "--auto"]])
+        # Re-arming an already-armed candidate stays a success.
+        self.assertEqual(self.publish(), first)
+
+    def test_stale_candidate_refreshes_onto_current_main(self):
+        first = self.publish()
+        (self.root / "modules/unrelated.nix").write_text("later\n")
+        self.git("add", ".")
+        self.git("commit", "--quiet", "-m", "main moved on")
+        self.git("push", "--quiet", "origin", "main")
+        second = self.publish()
+        self.assertNotEqual(second["sha"], first["sha"])
+        tip = self.git("ls-remote", "--heads", "origin", "automation/upstream-fixture").split()[0]
+        self.assertEqual(tip, second["sha"])
+        self.git("fetch", "--quiet", "origin",
+                 f"+refs/heads/automation/upstream-fixture:refs/remotes/origin/automation/upstream-fixture")
+        self.assertEqual(self.git("show", f"{second['sha']}:modules/fixture.nix"), "keep")
+        self.assertEqual(self.git("show", f"{second['sha']}:modules/unrelated.nix"), "later")
+        self.assertEqual(self.prs[0]["number"], 42, "the open PR must be reused")
+        self.assertEqual(len(self.automerges), 2)
+        self.assertEqual(len(self.dispatches), 4)
+        for invocation in self.dispatches[-2:]:
+            self.assertIn(f"expected_sha={second['sha']}", invocation)
+
+    def test_tampered_candidate_requires_review(self):
+        first = self.publish()
+        # Simulate a human edit on the candidate branch: the tip no longer
+        # equals the recipe applied to its parent.
+        candidate_sha = first["sha"]
+        clone = Path(self.temporary.name) / "tamper"
+        subprocess.run(["git", "clone", "--quiet", "--reference", str(self.root),
+                        str(self.remote), str(clone), "--branch", "automation/upstream-fixture"], check=True)
+        (clone / "modules/fixture.nix").write_text("keep\nworkaround\nextra\n")
+        subprocess.run(["git", "-C", str(clone), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(clone), "-c", "user.name=T", "-c", "user.email=t@t",
+                        "-c", "core.hooksPath=/dev/null", "commit", "--quiet",
+                        "--amend", "-m", "tampered"], check=True)
+        subprocess.run(["git", "-C", str(clone), "push", "--quiet", "--force", "origin",
+                        "automation/upstream-fixture"], check=True)
+        with self.assertRaises(ValueError):
+            self.publish()
+        self.assertEqual(
+            self.git("ls-remote", "--heads", "origin", "automation/upstream-fixture").split()[0],
+            subprocess.run(["git", "-C", str(clone), "rev-parse", "HEAD"], check=True,
+                           capture_output=True, text=True).stdout.strip(),
+            "the tampered tip must not be overwritten")
 
     def test_changed_recipe_refuses_to_overwrite(self):
         first = self.publish()

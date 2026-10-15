@@ -35,7 +35,7 @@
           runtimeInputs = with pkgs; [
             coreutils
             jq
-            (servicesLib.mkDiscordNotify pkgs)
+            (servicesLib.mkDiscordNotify pkgs config.modules.services.discordChannelId)
             util-linux
           ];
           text = builtins.readFile ../../scripts/fleet-readiness-deliver.sh;

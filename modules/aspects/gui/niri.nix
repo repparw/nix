@@ -186,11 +186,9 @@
 
               "Mod+B" = titledSpawn "Bluetooth Toggle" [ "bttoggle" ];
               "Mod+C" = titledSpawn "WhatsApp" [
-                "ndrop"
-                "-F"
-                "-c"
-                "zapzap"
-                "zapzap"
+                "webapp"
+                "whatsapp"
+                "https://web.whatsapp.com"
               ];
               "Mod+D" = {
                 _props = {

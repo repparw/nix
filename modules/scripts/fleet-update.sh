@@ -105,10 +105,9 @@ notify() {
     -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" >/dev/null || true
 }
 
-# nix store diff-closures emits ANSI color codes even when piped (verified:
-# `nix store diff-closures a b | cat -v` shows ^[[31;1m). Discord eats the
-# ESC byte and renders the bare `[31;1m` fragments, so scrub control
-# sequences before the diff reaches a message or an attachment.
+# nvd writes plain output when piped (colors are tty-gated), but keep the
+# scrub as defense-in-depth: Discord eats an ESC byte and renders the bare
+# `[31;1m` fragments if a future nvd ever colors non-interactively.
 strip_ansi() {
   awk 'BEGIN { esc = sprintf("%c", 27) } { gsub(esc "\\[[0-9;?]*[A-Za-z]", ""); gsub(/\r/, ""); print }'
 }
@@ -544,7 +543,7 @@ prepare_host() {
   store="ssh-ng://root@$(host_address "$host")"
   NIX_SSHOPTS="${ssh_options[*]}" nix copy -s --to "$store" --derivation "$drv" || return 1
   remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || return 1
-  built=$(remote "$host" nix build "$drv^out" --out-link /nix/var/nix/gcroots/fleet-update/prepared --print-out-paths) || return 1
+  built=$(remote "$host" nom build "$drv^out" --out-link /nix/var/nix/gcroots/fleet-update/prepared --print-out-paths) || return 1
   [ "$built" = "$profile" ] || { echo "error: $host prepared unexpected profile: $built" >&2; return 1; }
   remote "$host" test -f "$profile/activate-rs" || return 1
   remote "$host" test -f "$profile/deploy-rs-activate" || return 1
@@ -695,7 +694,7 @@ deploy_one() {
   fi
 
   after_generation=$(remote "$host" readlink /run/current-system)
-  remote "$host" nix store diff-closures "${before_generation[$host]}" "$after_generation" \
+  remote "$host" nvd diff "${before_generation[$host]}" "$after_generation" \
     > "$state/diff-$host.txt" || true
   if [ -s "$state/diff-$host.txt" ]; then
     strip_ansi < "$state/diff-$host.txt" > "$state/diff-$host.tmp" \

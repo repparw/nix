@@ -26,6 +26,7 @@ jobs:
     outputs:
       check_matrix: ${{ steps.impact.outputs.check_matrix }}
       run_hosts: ${{ steps.impact.outputs.run_hosts }}
+      run_neovim: ${{ steps.impact.outputs.run_neovim }}
       run_persistence_vm: ${{ steps.impact.outputs.run_persistence_vm }}
     steps:
       - name: Verify requested revision
@@ -112,6 +113,35 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  neovim-build:
+    needs: changes
+    if: needs.changes.outputs.run_neovim == 'true'
+    name: neovim-build (alpha, native)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Build the host-selected Neovim closure
+        env:
+          CI_CHECKS: host-neovim
+        run: bash .github/scripts/run-checks.sh
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-neovim
+          path: ci-logs/
+          if-no-files-found: ignore
+          retention-days: 14
+
   persistence-vm:
     needs: changes
     if: needs.changes.outputs.run_persistence_vm == 'true'
@@ -194,7 +224,7 @@ jobs:
 
   gate:
     if: always()
-    needs: [changes, checks, host-eval, persistence-vm, arm-authelia-build, upstream-package-build]
+    needs: [changes, checks, neovim-build, host-eval, persistence-vm, arm-authelia-build, upstream-package-build]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -202,6 +232,8 @@ jobs:
         env:
           CHANGES_RESULT: ${{ needs.changes.result }}
           CHECKS_RESULT: ${{ needs.checks.result }}
+          NEOVIM_ENABLED: ${{ needs.changes.outputs.run_neovim }}
+          NEOVIM_RESULT: ${{ needs.neovim-build.result }}
           HOSTS_ENABLED: ${{ needs.changes.outputs.run_hosts }}
           PERSISTENCE_ENABLED: ${{ needs.changes.outputs.run_persistence_vm }}
           BUILD_ARM: ${{ inputs.build_arm_authelia }}
@@ -213,6 +245,11 @@ jobs:
         run: |
           test "$CHANGES_RESULT" = success || exit 1
           test "$CHECKS_RESULT" = success || exit 1
+          case "$NEOVIM_ENABLED" in
+            true) test "$NEOVIM_RESULT" = success || exit 1 ;;
+            false) test "$NEOVIM_RESULT" = skipped || exit 1 ;;
+            *) exit 1 ;;
+          esac
           case "$HOSTS_ENABLED" in
             true) test "$HOSTS_RESULT" = success || exit 1 ;;
             false) test "$HOSTS_RESULT" = skipped || exit 1 ;;
