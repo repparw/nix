@@ -16,10 +16,17 @@ in `cleanup/`. Each candidate starts at the same checked-out main revision.
 One failed recipe does not prevent other watchers from processing.
 
 The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
-the exact expected candidate tree before reusing an existing branch, preserves
-its SHA, and dispatches only missing checks. This also recovers interruptions
-between branch publication, PR creation, and dispatch. A changed or previously
-closed candidate requires review. It never merges a PR or overwrites a branch.
+the exact expected candidate tree before reusing an existing branch and
+dispatches only missing checks. This also recovers interruptions between
+branch publication, PR creation, and dispatch.
+
+Candidates are merge-automated: GitHub merges exactly when the required
+checks pass and the branch is current with main (strict up-to-date). When
+main advances first, the publisher re-applies the recipe onto the new main
+and revalidates — but only when the branch tip is provably its own earlier
+candidate (the recipe applied to its parent); a tampered or changed
+candidate requires review, and a recipe that no longer applies fails
+closed. Nothing is merged with pending or failed checks.
 
 Before disabling a local timer, verify its replacement's live CI run and all
 of that watcher's completion checks. Fixtures prove the publication algorithm,
