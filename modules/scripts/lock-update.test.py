@@ -48,6 +48,9 @@ class LockUpdate(unittest.TestCase):
             dst = self.checkout / path
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(REPO / path, dst)
+            # Nix-store source fixtures are read-only; the disposable checkout
+            # must be writable for the fixture registry and atomic cleanup.
+            dst.chmod(0o644)
         module = self.checkout / "modules/_services/authelia.nix"
         module.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(REPO / ".github/upstream/fixtures/authelia-before.nix.txt", module)
