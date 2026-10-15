@@ -21,7 +21,6 @@
             pkgs.sqlite
           ];
           text = ''
-            # Accept only the sender contract emitted by the fleet's rsync job.
             [ "$#" = 5 ] && [ "$1" = --server ] && [ "$2" = --sender ] \
               && [ "$4" = . ] && [ "$5" = ${lib.escapeShellArg "${state}/current/"} ] \
               || { echo "unsupported Pi backup sender command" >&2; exit 2; }

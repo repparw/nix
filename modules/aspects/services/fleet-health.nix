@@ -4,7 +4,6 @@
   ...
 }:
 let
-  # Shared with the other fleet services through modules/_services/lib.nix.
   mkDiscordNotify = (import ../../_services/lib.nix { inherit lib pkgs; }).mkDiscordNotify;
 in
 {

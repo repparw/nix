@@ -101,7 +101,6 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   postPatch =
-    # Relax Bun version check to be a warning instead of an error
     ''
       substituteInPlace packages/script/src/index.ts \
         --replace-fail \

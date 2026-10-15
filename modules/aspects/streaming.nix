@@ -18,7 +18,7 @@ let
     fi
   '';
 
-  # Whether a Moonshine stream is live right now. Shared by the 8bitdo
+  # Shared by the 8bitdo
   # launcher, which must not take over the desk mid-session, and by the
   # restore watcher, which must not revive the tray under a fresh session.
   #
@@ -140,11 +140,7 @@ in
               # Moonshine's Vulkan WSI layer is installed where the loader scans
               # (the system profile share dir, on XDG_DATA_DIRS), so games pick
               # it up and present their swapchains straight to the Moonshine
-              # compositor instead of being captured and colour-converted. The
-              # layer used to be disabled here on the belief that it breaks
-              # gamescope, but gamescope presents to Moonshine as a Wayland
-              # client either way, and nothing had ever confirmed the layer was
-              # even loading. Enabling it is what makes that testable.
+              # compositor instead of being captured and colour-converted.
               # Moonshine sets ENABLE_MOONSHINE_WSI=1 itself; DISABLE_* takes
               # precedence over it, so it must stay unset.
               unset DISABLE_MOONSHINE_WSI
@@ -173,12 +169,8 @@ in
             '';
           };
 
-          # Desktop stream: nested niri plus a kiosk launcher loop. Vicinae
-          # cannot serve the stream (its daemon is bound to the login
-          # session's display), so fuzzel -- a plain Wayland client --
-          # opens whenever the nested compositor has no windows. It is already
-          # focused when it appears, so typing filters immediately with no
-          # Mod key and no lost first character. Phone-friendly by design.
+          # Vicinae cannot serve the stream (its daemon is bound to the login
+          # session's display), so fuzzel is used instead.
           moonshine-desktop = pkgs.writeShellApplication {
             name = "moonshine-desktop";
             runtimeInputs = [
@@ -212,8 +204,6 @@ in
               tail -n +1 -f "$work/niri.log" &
               tail_pid=$!
 
-              # niri prints its exact IPC socket on startup; capture it
-              # instead of guessing, then derive the Wayland display from it.
               sock=""
               for _ in $(seq 1 200); do
                 sock="$(grep -Eo '/run/user/[0-9]+/niri\.wayland-[^[:space:]"]+\.sock' "$work/niri.log" 2>/dev/null | head -n 1 || true)"
@@ -245,7 +235,6 @@ in
         in
         {
           config = {
-            # Share HDR and the vkroots queue fix with every Gamescope launch.
             nixpkgs.overlays = [
               (_final: prev: {
                 gamescope = (prev.gamescope.override { enableWsi = true; }).overrideAttrs (old: {
@@ -359,9 +348,6 @@ in
             ssh -o BatchMode=yes -o ConnectTimeout=5 -o LogLevel=ERROR -o RequestTTY=force tv "$@"
           }
 
-          # Journal every phase with a millisecond offset. Without this the run
-          # is a single silent systemd start/stop pair, so a missed press, an
-          # unresolved node and a slow TV launch are indistinguishable.
           start_ts=$(date +%s.%N)
           log() {
             awk -v a="$start_ts" -v b="$(date +%s.%N)" -v m="$*" \
@@ -468,10 +454,6 @@ in
             exit 0
           fi
 
-          # First path: the TV wins whenever it is on. A session cannot be live
-          # by this point, so a relaunch is a request for one rather than an
-          # interruption, and the desk-session gating below never gets a chance
-          # to matter while the TV is up.
           tv_on=0
           if power="$(ssh_tv 'luna-send -n 1 -w 3000 -f luna://com.webos.service.tvpower/power/getPowerState "{}"' 2>/dev/null)"; then
             if jq -e '.state == "Active"' >/dev/null <<<"$power"; then
@@ -602,10 +584,7 @@ in
         };
       };
 
-      # Tray client revived by Moonshine's post_command, the 8bitdo launcher,
-      # and now also started with the graphical session at login, so the
-      # desktop client exists without needing a prior stream. A separate unit
-      # because restoring it inline would pin the caller active and, in the
+      # A separate unit because restoring it inline would pin the caller active and, in the
       # launcher's case, put the client in its cgroup. The launch script keeps
       # its own guards (live-stream hold, already-running check), so a boot
       # start alongside those paths stays safe. No Restart=, so quitting the

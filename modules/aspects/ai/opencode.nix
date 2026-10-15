@@ -149,7 +149,6 @@
           provider = {
             opencode = {
               blacklist = [
-                # https://opencode.ai/docs/zen/
                 "gpt-5-codex"
                 "gpt-5.1-codex"
                 "gpt-5.1-codex-max"
