@@ -17,6 +17,8 @@ test('the aggregate respects only classifier-authorized skips', () => {
       ...process.env,
       CHANGES_RESULT: 'success',
       CHECKS_RESULT: 'success',
+      NEOVIM_ENABLED: 'true',
+      NEOVIM_RESULT: 'success',
       HOSTS_RESULT: 'success',
       PERSISTENCE_RESULT: 'success',
       ARM_RESULT: 'skipped',
@@ -29,12 +31,16 @@ test('the aggregate respects only classifier-authorized skips', () => {
     },
   }).status === 0;
   assert.equal(runGate(), true);
+  assert.equal(runGate({ NEOVIM_ENABLED: 'false', NEOVIM_RESULT: 'skipped' }), true);
   assert.equal(runGate({ HOSTS_ENABLED: 'false', HOSTS_RESULT: 'skipped', PERSISTENCE_ENABLED: 'false', PERSISTENCE_RESULT: 'skipped' }), true);
   assert.equal(runGate({ PERSISTENCE_ENABLED: 'false', PERSISTENCE_RESULT: 'skipped' }), true);
   assert.equal(runGate({ BUILD_ARM: 'true', ARM_RESULT: 'success' }), true);
   assert.equal(runGate({ UPSTREAM_WATCHER: 'tasks-org', UPSTREAM_RESULT: 'success' }), true);
   for (const env of [
     { CHANGES_RESULT: 'failure' }, { CHECKS_RESULT: 'failure' },
+    ...['failure', 'cancelled', 'skipped'].map(NEOVIM_RESULT => ({ NEOVIM_RESULT })),
+    { NEOVIM_ENABLED: 'false', NEOVIM_RESULT: 'success' },
+    { NEOVIM_ENABLED: 'unknown' },
     { HOSTS_ENABLED: 'true', HOSTS_RESULT: 'skipped' },
     { HOSTS_ENABLED: 'false', HOSTS_RESULT: 'success' },
     { HOSTS_ENABLED: 'unknown' },
@@ -46,14 +52,14 @@ test('the aggregate respects only classifier-authorized skips', () => {
     { UPSTREAM_WATCHER: 'tasks-org', UPSTREAM_RESULT: 'failure' },
     { UPSTREAM_RESULT: 'failure' },
   ]) assert.equal(runGate(env), false, JSON.stringify(env));
-  assert.match(validation, /gate:\n    if: always\(\)\n    needs: \[changes, checks, host-eval, persistence-vm, arm-authelia-build, upstream-package-build\]/);
+  assert.match(validation, /gate:\n    if: always\(\)\n    needs: \[changes, checks, neovim-build, host-eval, persistence-vm, arm-authelia-build, upstream-package-build\]/);
   assert.match(validation, /matrix: \$\{\{ fromJSON\(needs.changes.outputs.check_matrix\) \}\}/);
   assert.match(validation, /if: needs.changes.outputs.run_persistence_vm == 'true'/);
 });
 
 test('every checkout job verifies dispatch SHA before checking out the workflow SHA', () => {
   const jobs = validation.split(/^  [a-z-]+:\n/gm).slice(1).filter(job => job.includes('actions/checkout'));
-  assert.equal(jobs.length, 6);
+  assert.equal(jobs.length, 7);
   for (const job of jobs) {
     assert.match(job, /if: inputs.expected_sha != ''/);
     assert.match(job, /EXPECTED_SHA: \$\{\{ inputs.expected_sha \}\}/);
