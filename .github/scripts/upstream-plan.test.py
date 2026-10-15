@@ -30,12 +30,19 @@ class PlanTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def evaluate(self, old="old", new="new", ancestry=None, channel=None):
+    def evaluate(self, old="old", new="new", ancestry=None, channel=None,
+                 readiness=None, probe=None, build_probe=True):
         if ancestry is None:
             ancestry = lambda commit, rev: rev in ("new", "channel")
         if channel is None:
             channel = lambda url: {"sha": "channel"}
-        return planner.plan(lock(old), lock(new), self.registry, self.module, ancestry, channel)
+        if readiness is None:
+            readiness = lambda name: "waiting-upstream"
+        if probe is None:
+            probe = lambda attribute: (True, "")
+        return planner.plan(lock(old), lock(new), self.registry, self.module,
+                            ancestry, channel, readiness_fn=readiness,
+                            probe_fn=probe, build_probe=build_probe)
 
     def test_normal_when_nixpkgs_pin_unchanged(self):
         self.assertEqual(self.evaluate(old="old", new="old")["action"], "normal")
@@ -48,6 +55,48 @@ class PlanTests(unittest.TestCase):
         result = self.evaluate(ancestry=lambda _c, rev: rev == "new")
         self.assertEqual(result["action"], "blocked")
         self.assertIn("nixos-unstable", result["reason"])
+
+    def test_apply_coupled_ready_diverts_the_lock(self):
+        def readiness(name):
+            return "PINNED-READY" if name == "qbittorrent" else "waiting-upstream"
+        result = self.evaluate(readiness=readiness)
+        self.assertEqual(result["action"], "atomic-review")
+        self.assertIn("qbittorrent", result["atomic"])
+        self.assertNotIn("gamescope-vkroots", result["atomic"])
+
+    def test_apply_coupled_unavailable_blocks_the_lock(self):
+        result = self.evaluate(readiness=lambda name: "unavailable (CalledProcessError)")
+        self.assertEqual(result["action"], "blocked")
+        self.assertIn("unavailable", result["reason"])
+
+    def test_apply_coupled_probe_failure_blocks_the_lock(self):
+        # Not ready, but the pin moved and the workaround no longer applies:
+        # publishing the lock would break the fleet's build.
+        result = self.evaluate(probe=lambda attribute: (False, "patch does not apply"))
+        self.assertEqual(result["action"], "blocked")
+        self.assertIn("no longer applies", result["reason"])
+
+    def test_apply_coupled_probe_pass_keeps_normal_publication(self):
+        result = self.evaluate(ancestry=lambda *_: False, probe=lambda attribute: (True, ""))
+        self.assertEqual(result["action"], "normal")
+
+    def test_pin_unchanged_never_probes(self):
+        def explode(attribute):
+            raise AssertionError("compatibility probe must run only when the pin moved")
+        self.assertEqual(self.evaluate(old="old", new="old", probe=explode)["action"], "normal")
+
+    def test_completed_apply_coupled_skips_probe_and_divert(self):
+        result = self.evaluate(ancestry=lambda *_: False,
+                               readiness=lambda name: "completed",
+                               probe=lambda attribute: (False, "must not run"))
+        self.assertEqual(result["action"], "normal")
+
+    def test_apply_coupled_probe_runs_only_for_the_flagged_three(self):
+        seen = []
+        self.evaluate(probe=lambda attribute: (seen.append(attribute), (True, ""))[1])
+        self.assertEqual(sorted(seen), sorted(["nixosConfigurations.alpha.pkgs.qbittorrent-nox",
+                                               "nixosConfigurations.alpha.pkgs.gamescope",
+                                               "nixosConfigurations.alpha.pkgs.moonshine-pr227"]))
 
     def test_unknown_ancestry_must_not_auto_publish(self):
         def unavailable(*_):

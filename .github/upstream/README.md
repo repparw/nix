@@ -83,11 +83,20 @@ Run `python3 .github/scripts/upstream-readiness.test.py` for detector fixtures,
 `python3 .github/scripts/upstream-publish.test.py` for independent publication,
 interruption recovery, drift rejection, and notification deduplication.
 
-## Lock candidate planner (Authelia pilot only)
+## Lock candidate planner (apply-coupled cleanups)
 
 `upstream-plan.py plan --old BASE --candidate CANDIDATE` runs **before** the lock
 updater publishes to main. Watcher contracts live in `watchers.json`.
-Only Authelia has `mode=atomic`; independent watchers publish through the
+Watchers with `coupling: apply` (qbittorrent, gamescope-vkroots,
+moonshine-pr227) break the moment the candidate pin carries their fix — or any
+context-shifting bump of their package — so their cleanup rides the lock
+candidate instead of racing the post-lock sweep. Readiness runs against the
+candidate tree; `PINNED-READY` diverts publication into a combined atomic
+candidate. A watcher that is not ready but whose package the pin moved gets a
+stubbed-phase compatibility build; failure blocks the lock, and so does an
+unavailable readiness API. The Authelia pilot keeps its byte-exact handler and
+stays human-reviewed; the apply-coupled candidates arm auto-merge under the
+#265 policy. Independent watchers without the flag publish through the
 separate post-lock sweep.
 
 If the candidate Nixpkgs pin contains the Authelia fix and `nixos-unstable`
