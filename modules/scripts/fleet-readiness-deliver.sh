@@ -7,11 +7,6 @@
 # provides at-least-once delivery: a network timeout after Discord accepts a
 # message may cause a retry and duplicate post. No exactly-once API exists here.
 
-# The channel id is public repository configuration (fleet-update already
-# carries it); Pi's hermes-env secret holds only the bot token. Exported
-# before discord-notify runs; its hermes-env source cannot unset it.
-export DISCORD_CHANNEL_ID="@FLEET_DISCORD_CHANNEL@"
-
 state="${FLEET_UPDATE_STATE:-/var/lib/auto-update}"
 outbox="$state/readiness-events"
 [ -d "$outbox" ] || exit 0
