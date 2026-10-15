@@ -93,15 +93,16 @@ context-shifting bump of their package — so their cleanup rides the lock
 candidate instead of racing the post-lock sweep. Readiness runs against the
 candidate tree; `PINNED-READY` diverts publication into a combined atomic
 candidate. A watcher that is not ready but whose package the pin moved gets a
-stubbed-phase compatibility build; failure blocks the lock, and so does an
-unavailable readiness API. The Authelia pilot keeps its byte-exact handler and
-stays human-reviewed; the apply-coupled candidates arm auto-merge under the
-#265 policy. Independent watchers without the flag publish through the
-separate post-lock sweep.
+stubbed-phase compatibility build of the actual fleet package; failure blocks
+the lock, and so does an unavailable readiness API. The Authelia pilot keeps
+its byte-exact cleanup handler and native ARM validation, and any combined
+candidate containing Authelia remains human-reviewed. Other apply-coupled
+candidates arm auto-merge under the #265 policy. Independent watchers without
+the flag publish through the separate post-lock sweep.
 
 If the candidate Nixpkgs pin contains the Authelia fix and `nixos-unstable`
 contains it too, the updater applies the narrowly validated Authelia removal,
-then publishes a stable `automation/atomic-authelia-pnpm-hash` branch and a
+then publishes a stable `automation/atomic-cleanup` branch and a
 review-required **combined lock + cleanup PR**. It dispatches exact-SHA CI with
 native ARM Authelia enabled, and **never fast-forwards main automatically**.
 Repeat runs leave the combined PR and branch unchanged, even when new upstream
