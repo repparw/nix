@@ -15,7 +15,11 @@
         # One Heroic build for the desktop launcher and the Steam sandbox:
         # the sandbox copy is what non-Steam shortcuts actually execute.
         heroicWithMangohud = pkgs.heroic.override {
-          extraPkgs = pkgs': with pkgs'; [ mangohud ];
+          extraPkgs =
+            pkgs': with pkgs'; [
+              mangohud
+              gamemode
+            ];
         };
       in
       {
@@ -26,7 +30,8 @@
             enable = true;
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
-            # Hide idle disks from Steam (it stats every mount at startup).
+            # Hide the media library from Steam's startup mount scan.
+            # Keep /mnt visible: Heroic games and Wine prefixes live there.
             # /run/media is deliberately not masked: bwrap cannot create that
             # mountpoint under root-owned /run, and the directory only exists
             # when udiskie happened to mount removable media since boot, which
@@ -34,7 +39,6 @@
             # harmless for Steam to see.
             package = pkgs.steam.override {
               extraBwrapArgs = [
-                "--tmpfs /mnt"
                 "--tmpfs /home/containers/media"
               ];
             };
