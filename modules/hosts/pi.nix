@@ -170,7 +170,7 @@
           };
 
           "/boot/firmware" = {
-            device = "/dev/disk/by-partuuid/2178694e-01";
+            device = "/dev/disk/by-label/FIRMWARE";
             fsType = "vfat";
           };
 
@@ -181,7 +181,7 @@
           # configuration that booted twice with PASS (evidence in
           # ~/impermanence-pi-test/evidence, thread dd50ec1a).
           "/persist" = {
-            device = "/dev/disk/by-partuuid/2178694e-02";
+            device = "/dev/disk/by-label/NIXOS_SD";
             fsType = "ext4";
             neededForBoot = true;
             options = [

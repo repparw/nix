@@ -177,9 +177,7 @@ Lock maintenance runs in GitHub Actions; deployment runs on pi:
   activating or rolling back a host.
 - Activation attempts epsilon, alpha, then pi using the captured profiles.
   Alpha can be deferred by the
-  activity gate; Pi reports its snapshot as unavailable until its collector is
-  installed. For the initial collector rollout, use an authorized
-  `--host all --force` deployment or activate both remote hosts first. Each
+  activity gate. Each
   activated host passes health checks before the next proceeds, including hosts
   already on that revision.
 - `fleet-alpha-retry.timer` runs daily at 07:00 in the controller's timezone.
@@ -269,10 +267,6 @@ Pi accepts that successful guarded lock-branch dispatch for the exact current
 `main` SHA, as well as successful push or manual-main CI for the same SHA.
 Pull-request runs and dispatches for unrelated branches never satisfy the
 deployment gate.
-
-The lock workflow has its own concurrency group and one branch. Pi's pause
-flag affects deployment only. Applying this configuration removes the old
-`fleet-promote` service and timer; existing pause and rollback state remain.
 Older controllers used rollback roots named by commit. After a verified full
 rollout, inspect `/nix/var/nix/gcroots/fleet-update/` on each host and remove
 obsolete commit roots. Keep `previous` while a rollout or recovery is pending.
@@ -417,6 +411,5 @@ systemd-boot layout already satisfies this).
 
 ## Related
 
-- [Deploy NixOS to the Raspberry Pi](deploy-pi-nixos.md)
 - [Update rollback](update-rollback.md)
 - [Troubleshooting](../troubleshooting.md)

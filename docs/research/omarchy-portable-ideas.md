@@ -500,7 +500,7 @@ GitHub citations reference `basecamp/omarchy` at HEAD (`4.0.0.alpha`).[^version]
 
 [^auto-upgrade-aspect]: `modules/aspects/auto-upgrade.nix` (`system.autoUpgrade`; was included by no host — unused mechanism, deleted after this research)
 
-[^deploy-pi]: `docs/runbooks/deploy-pi-nixos.md`
+[^deploy-pi]: Former `docs/runbooks/deploy-pi-nixos.md` (Debian-to-NixOS migration and reinstall; removed after the mirror-SD backup became the recovery path — see `docs/runbooks/host-recovery.md`)
 
 [^den-docs]: `docs/architecture/den-aspect-composition.md`
 

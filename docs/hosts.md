@@ -62,10 +62,9 @@ deploy-rs.
 
 It boots through the Raspberry Pi firmware and generic-extlinux-compatible
 loader (linuxPackages_latest, with the `pcie_brcmstb` module in the initrd
-so stage-1 enumerates the NVMe), with home, store, and swap on the NVMe
-volume and activation via the repo flake. The SD card runs the official
-NixOS aarch64 sd-image layout; see the
-[deployment runbook](runbooks/deploy-pi-nixos.md).
+so stage-1 enumerates the NVMe), with a tmpfs root backed by `/persist` on
+the SD card and home, store, and swap on the NVMe volume. A mirror SD backup
+is the primary recovery path; see the [host recovery runbook](runbooks/host-recovery.md).
 
 Source: `modules/hosts/pi.nix`
 
