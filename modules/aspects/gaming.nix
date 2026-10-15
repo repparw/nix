@@ -30,8 +30,11 @@
             enable = true;
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
-            # Hide the media library from Steam's startup mount scan.
-            # Keep /mnt visible: Heroic games and Wine prefixes live there.
+            # Hide the media library and the spinning-rust mounts from
+            # Steam's startup mount scan (it stats every mount and Proton
+            # maps them as DOS drives, waking idle disks). Games and prefixes
+            # that live under /mnt run through the Heroic GUI instead, whose
+            # launches are native and see the real mounts.
             # /run/media is deliberately not masked: bwrap cannot create that
             # mountpoint under root-owned /run, and the directory only exists
             # when udiskie happened to mount removable media since boot, which
@@ -39,6 +42,7 @@
             # harmless for Steam to see.
             package = pkgs.steam.override {
               extraBwrapArgs = [
+                "--tmpfs /mnt"
                 "--tmpfs /home/containers/media"
               ];
             };
