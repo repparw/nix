@@ -2,6 +2,7 @@
 """Focused tests for lock candidate atomic plan and fail-closed cleanup."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -94,9 +95,77 @@ class PlanTests(unittest.TestCase):
     def test_apply_coupled_probe_runs_only_for_the_flagged_three(self):
         seen = []
         self.evaluate(probe=lambda attribute: (seen.append(attribute), (True, ""))[1])
-        self.assertEqual(sorted(seen), sorted(["nixosConfigurations.alpha.pkgs.qbittorrent-nox",
+        self.assertEqual(sorted(seen), sorted(["nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package",
                                                "nixosConfigurations.alpha.pkgs.gamescope",
                                                "nixosConfigurations.alpha.pkgs.moonshine-pr227"]))
+
+    def test_completed_authelia_does_not_discard_ready_cleanup(self):
+        planner.remove_authelia(self.module)
+        result = self.evaluate(readiness=lambda name: "PINNED-READY" if name == "qbittorrent"
+                               else "waiting-upstream",
+                               ancestry=lambda *_: False)
+        self.assertEqual(result["action"], "atomic-review")
+        self.assertEqual(result["atomic"], ["qbittorrent"])
+
+    def test_completed_authelia_can_batch_all_three(self):
+        planner.remove_authelia(self.module)
+        result = self.evaluate(readiness=lambda _: "PINNED-READY")
+        self.assertEqual(result["atomic"],
+                         ["gamescope-vkroots", "moonshine-pr227", "qbittorrent"])
+
+    def test_unchanged_pin_skips_readiness(self):
+        def explode(_):
+            raise AssertionError("readiness must not run without a nixpkgs change")
+        result = self.evaluate(old="new", new="new", readiness=explode,
+                               ancestry=lambda *_: False)
+        self.assertEqual(result["action"], "normal")
+
+    def test_default_readiness_runs_once_for_three_watchers(self):
+        selected = []
+        def statuses(names):
+            selected.append(names)
+            return {name: "waiting-upstream" for name in names}
+        with patch.object(planner, "_candidate_readiness", side_effect=statuses):
+            planner.plan(lock("old"), lock("new"), self.registry, self.module,
+                         contains_fn=lambda *_: False,
+                         probe_fn=lambda _: (True, ""))
+        self.assertEqual(selected, [["qbittorrent", "gamescope-vkroots",
+                                     "moonshine-pr227"]])
+
+    def test_real_probe_constructs_nix_expression_and_preserves_patch_phase(self):
+        class Done:
+            returncode = 0
+            stderr = ""
+        with patch.object(planner.subprocess, "run", return_value=Done()) as run:
+            ok, _ = planner.nix_build_ok(planner.APPLY_COUPLED_PROBES["qbittorrent"])
+        self.assertTrue(ok)
+        args = run.call_args.args[0]
+        self.assertIn("--expr", args)
+        self.assertIn("--impure", args)
+        expression = args[args.index("--expr") + 1]
+        self.assertIn("containers.qbittorrent.config.services.qbittorrent.package", expression)
+        self.assertIn("overrideAttrs", expression)
+        self.assertNotIn("patchPhase =", expression)
+        self.assertEqual(run.call_args.kwargs["env"]["UPSTREAM_WATCH_ROOT"],
+                         str(planner.ROOT))
+
+    @unittest.skipUnless(os.environ.get("NIX_PROBE_SMOKE") == "1",
+                         "requires the CI Nix installer and flake inputs")
+    def test_real_nix_evaluation_of_probe_attributes(self):
+        # No package compilation: .drvPath forces evaluation of the exact
+        # overridden derivation used by nix_build_ok for each fleet package.
+        for watcher, attribute in planner.APPLY_COUPLED_PROBES.items():
+            with self.subTest(watcher=watcher):
+                expression = f"({planner.nix_probe_expression(attribute)}).drvPath"
+                result = subprocess.run(
+                    ["nix", "eval", "--impure", "--raw", "--no-write-lock-file",
+                     "--expr", expression],
+                    env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)},
+                    capture_output=True, text=True, timeout=600,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr[-1500:])
+                self.assertTrue(result.stdout.strip().endswith(".drv"),
+                                result.stdout)
 
     def test_unknown_ancestry_must_not_auto_publish(self):
         def unavailable(*_):
