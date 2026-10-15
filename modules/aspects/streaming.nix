@@ -245,7 +245,6 @@ in
               })
             ];
 
-
             services.moonshine = {
               enable = true;
               user = sessionUser;
