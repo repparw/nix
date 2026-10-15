@@ -16,59 +16,99 @@ def transitions(*lines):
 
 class ParserTests(unittest.TestCase):
     def test_version_transition_extracted(self):
-        for arrow in ("→", "⟶"):
-            with self.subTest(arrow=arrow):
-                packages = mod.parse_diff(transitions(
-                    f"mesa: 26.2.2 {arrow} 26.2.4, 2.1 MiB",
-                    f"irrelevant-other: 1.0 {arrow} 2.0",
-                ))
-                self.assertEqual(packages, [{"name": "mesa", "from": "26.2.2", "to": "26.2.4"}])
-
-    def test_comma_separated_names_keep_first_relevant(self):
         packages = mod.parse_diff(transitions(
-            "firefox, firefox-unwrapped: 150.0 ⟶ 151.0, 3.0 MiB",
+            "[U.]  #01  mesa  26.2.2 -> 26.2.4",
+            "[U.]  #02  irrelevant-other  1.0 -> 2.0",
         ))
-        self.assertEqual(packages, [{"name": "firefox", "from": "150.0", "to": "151.0"}])
+        self.assertEqual(packages, [{"name": "mesa", "from": "26.2.2", "to": "26.2.4"}])
 
-    def test_additions_and_removals_omitted(self):
+    def test_multi_output_versions_kept_verbatim(self):
         packages = mod.parse_diff(transitions(
-            "steam: ∅ ⟶ ε",
-            "oldpkg: 1.0 ⟶ ∅",
+            "[U*]  #03  mesa  2.1.6, 2.1.6-drivers, 2.1.6-man -> 2.1.8, 2.1.8-drivers, 2.1.8-man",
+        ))
+        self.assertEqual(packages, [{
+            "name": "mesa",
+            "from": "2.1.6, 2.1.6-drivers, 2.1.6-man",
+            "to": "2.1.8, 2.1.8-drivers, 2.1.8-man",
+        }])
+
+    def test_added_and_removed_sections_skipped(self):
+        packages = mod.parse_diff(transitions(
+            "Version changes:",
+            "Added packages:",
+            "[A.]  #1  avantreeStable.conf  <none>",
+            "Removed packages:",
+            "[R.]  #1  activatable-nixos-system-alpha  26.11.20261010.6510408",
+            "Closure size: 3387 -> 3382 (416 paths added, 421 paths removed, delta -5, disk usage -482.1MiB).",
         ))
         self.assertEqual(packages, [])
 
-    def test_size_only_rebuilds_omitted(self):
+    def test_none_only_transition_skipped(self):
         packages = mod.parse_diff(transitions(
-            "mesa: 2.1 MiB",
-            "chromium: 900.0 KiB",
+            "[C.]  #09  opencode  <none> -> <none>",
         ))
         self.assertEqual(packages, [])
 
-    def test_epsilon_version_maps_to_empty(self):
+    def test_none_version_maps_to_empty(self):
         packages = mod.parse_diff(transitions(
-            "moonshine: ε ⟶ 0.16.1",
+            "[U.]  #05  moonshine  <none> -> 0.16.1",
         ))
         self.assertEqual(packages, [{"name": "moonshine", "from": "", "to": "0.16.1"}])
 
     def test_prefix_matches_and_others_do_not(self):
         packages = mod.parse_diff(transitions(
-            "nix-2.31: 2.31.0 ⟶ 2.31.1",
-            "nixos-system-alpha: 26.11.a ⟶ 26.11.b",
+            "[U.]  #01  nix-2.31  2.31.0 -> 2.31.1",
+            "[U.]  #02  nixos-system-alpha  26.11.a -> 26.11.b",
         ))
         self.assertEqual([p["name"] for p in packages], ["nix-2.31"])
 
     def test_kernel_and_nix_names_match_without_matching_nixos(self):
-        packages = mod.parse_diff(transitions("linux: 6.16 ⟶ 6.17", "nix: 2.31 ⟶ 2.32", "nixos-system-alpha: old ⟶ new"))
+        packages = mod.parse_diff(transitions(
+            "[U.]  #01  linux  6.16 -> 6.17",
+            "[U.]  #02  nix  2.31 -> 2.32",
+            "[U.]  #03  nixos-system-alpha  old -> new",
+        ))
         self.assertEqual([item["name"] for item in packages], ["linux", "nix"])
 
     def test_cap_at_32_packages(self):
-        lines = [f"mesa-pkg{i}: 1 ⟶ 2" for i in range(40)]
+        lines = [f"[U.]  #{i:02d}  mesa-pkg{i}  1 -> 2" for i in range(40)]
         self.assertEqual(len(mod.parse_diff(transitions(*lines))), 32)
+
+    def test_real_alpha_deploy_diff(self):
+        # Verbatim shape from the 2026-10-14 alpha deploy; nothing in that
+        # particular diff hits the triage tiers, so nothing is extracted.
+        diff = transitions(
+            "<<< /nix/var/nix/profiles/system-2785-link",
+            ">>> /run/current-system",
+            "Version changes:",
+            "[U.]  #07  nixos-system-alpha  26.11.20261010.6510408, "
+            "26.11.20261010.6510408-activate-path, 26.11.20261010.6510408-activate-rs "
+            "-> 26.11.20261011.7fd4004",
+            "[U.]  #13  typescript-language-server  5.3.0 -> 6.0.2",
+            "Added packages:",
+            "[A.]  #2  ps-procps  4.0.7",
+            "Removed packages:",
+            "[R.]  #2  deploy-rs  0-unstable-2026-09-14",
+            "Closure size: 3387 -> 3382 (416 paths added, 421 paths removed, delta -5, disk usage -482.1MiB).",
+        )
+        self.assertEqual(mod.parse_diff(diff), [])
+
+    def test_real_alpha_deploy_diff_extracts_triaged(self):
+        # Same diff shape with a triaged package present.
+        diff = transitions(
+            "Version changes:",
+            "[U.]  #07  nixos-system-alpha  old -> new",
+            "[U.]  #14  steam  1.0.80 -> 1.0.81",
+            "Closure size: 3387 -> 3382 (delta -5).",
+        )
+        self.assertEqual(mod.parse_diff(diff), [
+            {"name": "steam", "from": "1.0.80", "to": "1.0.81"},
+        ])
 
 
 class EventTests(unittest.TestCase):
     def test_event_shape_and_deterministic_id(self):
-        diff = transitions("mesa: 26.2.2 ⟶ 26.2.4")
+        diff = transitions("[U.]  #01  mesa  26.2.2 -> 26.2.4")
         import contextlib
         import tempfile
         original = sys.argv
@@ -97,7 +137,7 @@ class EventTests(unittest.TestCase):
         from unittest.mock import patch
         with tempfile.TemporaryDirectory() as directory:
             diff = Path(directory) / "diff"
-            diff.write_text("mesa: 26.2.2 ⟶ 26.2.4\n")
+            diff.write_text("[U.]  #01  mesa  26.2.2 -> 26.2.4\n")
             queued = Path(directory) / "outbox" / "event.json"
             argv = ["package-update-event.py", "alpha", "a" * 40, str(diff), "--outbox-entry", str(queued)]
             with patch.object(sys, "argv", argv), patch.object(mod.time, "time", return_value=100), contextlib.redirect_stdout(io.StringIO()):

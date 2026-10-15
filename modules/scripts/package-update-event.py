@@ -1,4 +1,4 @@
-"""Parse a stripped nix store diff-closures report into a package-update event.
+"""Parse a stripped nvd diff report into a package-update event.
 
 Emits one protocol-v1 JSON event on standard output containing only the
 targeted version metadata Hermes triages: relevant packages with a real
@@ -11,15 +11,18 @@ import argparse
 import hashlib
 import json
 import os
-import tempfile
-from pathlib import Path
 import re
 import sys
+import tempfile
 import time
+from pathlib import Path
 
-TRANSITIONS = ("→", "⟶")  # Nix output varies by version.
-EMPTY = "∅"  # U+2205: path absent on one side
-MISSING = "ε"  # U+03B5: path present without version metadata
+# nvd lines: "[U.]  #01  name  1.0 -> 2.0" - marker, index, name, transition.
+# <none> marks a path without version metadata; multi-output drv versions
+# stay comma-separated on each side of the arrow.
+MARKER = re.compile(r"^\[[A-Z*.]+\]\s+#\d+\s+(\S+)\s+(.+)$")
+ARROW = " -> "
+NONE = "<none>"
 
 # Relevant packages by closure-name prefix, from the fleet's triage tiers.
 RELEVANT = (
@@ -35,36 +38,33 @@ def relevant(name):
     return any(name == prefix or name.startswith(prefix + "-") for prefix in RELEVANT)
 
 
-def strip_size(text):
-    # Drop the trailing size delta nix appends after a comma.
-    return text.rsplit(",", 1)[0].strip() if "," in text else text.strip()
-
-
 def parse_diff(diff):
     packages = []
     seen = set()
     for line in diff.splitlines():
-        line = line.strip()
-        head, separator, tail = line.partition(": ")
-        transition = next((arrow for arrow in TRANSITIONS if arrow in tail), None)
-        if not separator or transition is None:
+        match = MARKER.match(line.strip())
+        if match is None:
             continue
-        old, _, new = tail.partition(transition)
-        old = strip_size(old)
-        new = strip_size(new)
-        # Multiple paths can share one transition; keep the first relevant one.
-        for name in (part.strip() for part in head.split(",")):
-            if not name or name in seen or not relevant(name):
-                continue
-            if old == EMPTY or new == EMPTY:
-                continue  # path addition or removal, not a version transition
-            packages.append({
-                "name": name,
-                "from": "" if old == MISSING else old,
-                "to": "" if new == MISSING else new,
-            })
-            seen.add(name)
-            break
+        name, transition = match.group(1), match.group(2)
+        old, separator, new = transition.partition(ARROW)
+        if not separator:
+            # Added/Removed package sections and the closure-size line carry
+            # no version transition; additions and removals are omitted.
+            continue
+        # <none> = a path without version metadata on that side; keep the
+        # remaining versions verbatim (multi-output lists stay comma-joined).
+        old = ", ".join(part.strip() for part in old.replace(NONE, "").split(",") if part.strip())
+        new = ", ".join(part.strip() for part in new.replace(NONE, "").split(",") if part.strip())
+        if not relevant(name) or name in seen:
+            continue
+        if not old and not new:
+            continue  # pure path addition or removal, not a version transition
+        packages.append({
+            "name": name,
+            "from": old,
+            "to": new,
+        })
+        seen.add(name)
         if len(packages) >= 32:
             break
     return packages
