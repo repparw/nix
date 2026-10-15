@@ -106,28 +106,31 @@ sonarr_status() {
   printf 'ready\tsonarr %s running; no 401 in recent sonarr log\n' "$version"
 }
 
-# Runtime completion condition for the Moonshine PR227 retirement: the exact
-# test-build drop-ins and the candidate GC root are gone, so the upstream
-# package is what runs. Stream activity stays informational evidence; the
-# Alpha watcher owns the removal itself.
+# Runtime readiness evidence for the Moonshine PR227 wait: the external
+# test-build drop-ins and candidate GC root are gone AND the running binary
+# matches the executable the generated unit selects. This is "runtime
+# matches config" evidence: while the declarative test-build aspect is
+# enabled, the matching binary is intentionally the test build; retirement
+# of the test build itself is the cleanup candidate's deployment.
 moonshine_status() {
-  local runtime persistent root active exe generated active_service
+  local runtime persistent root active exe generated generated_binary active_service
   runtime=$(jq -r '.runtime_override // ""' <<<"$1")
   persistent=$(jq -r '.persistent_override // ""' <<<"$1")
   root=$(jq -r '.candidate_root // ""' <<<"$1")
   active=$(jq -r '.stream_active // ""' <<<"$1")
   exe=$(jq -r '.running_exe // ""' <<<"$1")
   generated=$(jq -r '.generated_exe // ""' <<<"$1")
+  generated_binary=$(jq -r '.generated_binary // ""' <<<"$1")
   active_service=$(jq -r '.service_active // ""' <<<"$1")
   if [ "$runtime" = "false" ] && [ "$persistent" = "false" ] && [ "$root" = "false" ] \
     && [ "$active_service" = "true" ] && [[ "$exe" == /nix/store/* ]] \
-    && [ "$generated" = "$exe" ]; then
-    printf 'ready\tPR227 test build absent from Alpha runtime (moonshine %s)\n' "${exe:-unknown}"
+    && [ "$generated_binary" = "$exe" ]; then
+    printf 'ready\tAlpha Moonshine runtime matches its generated unit; external PR227 overrides absent (moonshine %s)\n' "$exe"
     return 0
   fi
   printf 'waiting\tPR227 runtime not verified (runtime=%s persistent=%s root=%s stream_active=%s service_active=%s exe=%s expected=%s)\n' \
     "${runtime:-unknown}" "${persistent:-unknown}" "${root:-unknown}" "${active:-unknown}" \
-    "${active_service:-unknown}" "${exe:-unknown}" "${generated:-unknown}"
+    "${active_service:-unknown}" "${exe:-unknown}" "${generated_binary:-${generated:-unknown}}"
 }
 
 # Collect evidence from Alpha as key=value lines and canonicalize to JSON.
@@ -181,16 +184,25 @@ printf 'runtime_override=%s\n' "$runtime"
 printf 'persistent_override=%s\n' "$persistent"
 printf 'candidate_root=%s\n' "$root"
 printf 'stream_active=%s\n' "$active"
-# Verify the active process against the executable in the generated service.
+# Verify the active process against the executable the generated service
+# ultimately runs. The generated Moonshine unit execs a moonshine-server
+# wrapper that in turn execs the real binary, so readiness compares the
+# running process with that final binary, not with the wrapper script.
 # Missing service or ambiguous binary identity must never report ready.
 generated=""
+generated_binary=""
 config_exec=$(systemctl show moonshine.service -p ExecStart --value 2>/dev/null || true)
 if [[ "$config_exec" =~ path=([^\ ;]+) ]]; then
   generated=$(readlink -f "${BASH_REMATCH[1]}" 2>/dev/null || true)
 fi
+if [ -n "$generated" ] && [ -r "$generated" ] && grep -q '^exec /nix/store/' "$generated" 2>/dev/null; then
+  generated_binary=$(sed -n 's|^exec \(/nix/store/[^ ]*/bin/moonshine\)\([ ].*\)\?$|\1|p' "$generated" | head -n1)
+fi
+[ -n "$generated_binary" ] || generated_binary=$generated
 systemctl is-active --quiet moonshine.service && service_active=true || service_active=false
 printf 'running_exe=%s\n' "$exe"
 printf 'generated_exe=%s\n' "$generated"
+printf 'generated_binary=%s\n' "$generated_binary"
 printf 'service_active=%s\n' "$service_active"
 REMOTE
 ) || return 1
