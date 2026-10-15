@@ -115,39 +115,45 @@ host uses the existing root SSH connection. The command waits for
 journal after a failure; `fleet backup status` reports the resulting service
 state.
 
-Before Restic starts, registered export units run synchronously. Each must
+Before Restic starts, registered export units run synchronously. Each unit must
 succeed and create or refresh a nonempty matching artifact within its declared
-maximum age, one hour by default. An unchanged recent file, stale output,
-missing output, or exporter failure marks the run incomplete. Other exporters
+maximum age, one hour by default. A unit that leaves its output unchanged marks
+the run incomplete, as does stale output, missing output, or a failed unit. Other exporters
 still run and Restic uploads the available data, including
 `/var/lib/backup-exports/offsite.json` with each export's outcome. After upload,
 the service returns failure for an incomplete run and skips pruning, preserving
 previous snapshots. Inspect the manifest when selecting a snapshot to restore;
 an uploaded snapshot alone does not establish complete application coverage.
-Independent timers
-for these enrolled exports are disabled so scheduled and manual runs use the
-same sequence.
+Independent timers for these enrolled export units are disabled so scheduled
+and manual runs use the same sequence. App-managed Arr schedules remain enabled.
 
 | Export               | Producer and validation                                                                    |
 | -------------------- | ------------------------------------------------------------------------------------------ |
+| Arr apps             | Native daily schedules, nonempty scheduled archive within 26 hours                         |
 | Jellyfin             | Native `Backup/Create` API, required response path, and ZIP integrity check                |
 | Miniflux             | Container `pg_dump`, gzip integrity check, and atomic publication                          |
 | Paperless            | Container's native `document_exporter`, including its normal service stop/restart behavior |
 | Pi services on alpha | Existing transactional SQLite staging and rsync, checked through the export manifest       |
 | Alpha home state     | SQLite `.backup` staging through `home-state-backup-offsite.service`                       |
 
-Sonarr, Radarr, and Prowlarr producers request the native `Backup` command,
-wait for completion, and verify a fresh manual ZIP plus its exported SQLite
-database. Bazarr uses its separate queued native backup endpoint; HTTP success
-alone is insufficient. Its producer waits for a fresh ZIP and requires both
-`config.yaml` and a valid `bazarr.db`. These units run inside the real app
-containers and read their existing API credentials without logging them.
-Starting a container alone does not request a new application backup.
-After verification, adapter-created archives move into a private `fleet`
-subdirectory under the native backup directory. Only adapter archives older
-than 28 days are removed, after a new valid export exists. User manual and
-scheduled archives remain untouched. Ambiguous output is reported as a failure
-and preserved rather than enrolled for automatic deletion.
+Sonarr, Radarr, Prowlarr and Bazarr use their own scheduled native backups.
+Restic does not trigger them or manage their archive retention. It requires a
+nonempty matching archive no older than 26 hours, including during manual runs;
+unchanged recent archives are accepted. Servarr checks only `Backups/scheduled`,
+so a manual archive cannot hide a broken native schedule. Bazarr writes to its
+configured backup directory. This gate checks freshness and size, not ZIP or
+SQLite integrity; use native restore validation when selecting an archive.
+
+The live app settings on alpha were changed through their settings APIs:
+Sonarr/Radarr/Prowlarr `backupInterval=1`, `backupRetention=28`; Bazarr
+`backup.frequency=Daily`, `backup.hour=0`, `backup.retention=28`.
+Bazarr runs at midnight ahead of Restic's 01:00–01:15 window. Servarr exposes an
+interval in days, without a configurable backup hour; its task's last execution
+anchors the next daily run. These settings persist in the app databases/config,
+not Nix environment variables. After a fresh app install or restore, check these
+settings and the native task's next execution. An app that is stopped cannot
+export; missing or stale archives make the offsite run incomplete while other
+data still uploads.
 
 Restic over rclone to `gd-crypt:restic/<hostname>`. Covers:
 

@@ -81,6 +81,11 @@ let
       path = "/var/lib/test-service/independent";
       pattern = "*.txt";
     };
+    modules.backup.exports.native-scheduled = {
+      path = "/var/lib/test-service/scheduled";
+      pattern = "*.zip";
+      maxAgeSeconds = 26 * 60 * 60;
+    };
     systemd.services.independent-export = {
       serviceConfig.Type = "oneshot";
       path = [ pkgs.coreutils ];
@@ -229,12 +234,14 @@ pkgs.testers.runNixOSTest {
     with subtest("Backup restoration preserves identity, accounts, database and file metadata"):
         machine.succeed("echo test-only-restic-password > /run/restic-password; chmod 0600 /run/restic-password")
         restic = "RESTIC_PASSWORD_FILE=/run/restic-password restic -r /persist/test-repository "
+        machine.succeed("mkdir -p /var/lib/test-service/scheduled; echo native-scheduled > /var/lib/test-service/scheduled/app.zip")
         machine.succeed("systemctl start restic-backups-offsite.timer")
         machine.wait_until_succeeds(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 1'")
         machine.succeed("systemctl stop restic-backups-offsite.timer")
         machine.wait_until_succeeds("systemctl show restic-backups-offsite.service -p ActiveState --value | grep -qx inactive")
         machine.succeed("systemctl show restic-backups-offsite.service -p Result --value | grep -qx success")
         machine.succeed("fleet backup run")
+        machine.succeed(restic + "dump latest /var/lib/backup-exports/offsite.json | ${pkgs.jq}/bin/jq -e '.exports[\"native-scheduled\"].status == \"complete\"'")
         machine.succeed(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 2'")
         snapshot = machine.succeed(restic + "snapshots --latest 1 --json | ${pkgs.jq}/bin/jq -r '.[0].id'").strip()
         machine.succeed(restic + "tag --add vm-recovery-source " + snapshot)

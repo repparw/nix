@@ -1,4 +1,4 @@
-"""Refresh declared native exports before the generated offsite Restic job."""
+"""Prepare exports and check native scheduled artifacts before offsite Restic."""
 
 import fnmatch
 import json
@@ -41,16 +41,21 @@ def prepare(exports, report_path):
     report = {"startedAt": int(time.time()), "exports": {}, "status": "complete"}
     for name, spec in exports.items():
         try:
-            before = artifacts(spec)
-            command = ["systemctl", "--wait"]
-            if spec["machine"] is not None:
-                command += ["--machine", spec["machine"]]
-            command += ["start", spec["unit"]]
-            print(f"Preparing backup export: {name}", flush=True)
-            subprocess.run(command, check=True)
-            refreshed = artifacts(spec).difference(before)
-            if not refreshed:
-                raise RuntimeError("exporter produced no new or refreshed nonempty artifact within maxAgeSeconds")
+            if spec["unit"] is None:
+                refreshed = artifacts(spec)
+                if not refreshed:
+                    raise RuntimeError("no nonempty scheduled artifact within maxAgeSeconds")
+            else:
+                before = artifacts(spec)
+                command = ["systemctl", "--wait"]
+                if spec["machine"] is not None:
+                    command += ["--machine", spec["machine"]]
+                command += ["start", spec["unit"]]
+                print(f"Preparing backup export: {name}", flush=True)
+                subprocess.run(command, check=True)
+                refreshed = artifacts(spec).difference(before)
+                if not refreshed:
+                    raise RuntimeError("exporter produced no new or refreshed nonempty artifact within maxAgeSeconds")
             report["exports"][name] = {"status": "complete", "artifacts": sorted(item[0] for item in refreshed)}
             print(f"Verified fresh backup export: {name}", flush=True)
         except (OSError, subprocess.CalledProcessError, RuntimeError) as error:

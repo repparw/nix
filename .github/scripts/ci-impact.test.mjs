@@ -25,7 +25,7 @@ test('persistence, recovery, boot and CI infrastructure changes run the VM', () 
   for (const path of ['modules/aspects/persistence.nix', 'modules/_tests/host-persistence-vm.nix',
     'modules/_tests/host-persistence.nix', 'modules/aspects/host-backup.nix',
     'modules/scripts/prepare-backup-exports.py', 'modules/aspects/cli/fleet.nix',
-    'modules/aspects/services/arr-backup.nix', 'modules/scripts/native-arr-backup.py', 'modules/_tests/native-arr-backup.py',
+    'modules/aspects/services/arr-backup.nix', 'modules/_tests/backup-exports.py',
     'modules/aspects/backup.nix', 'modules/hosts/pi.nix', 'modules/hosts/epsilon.nix',
     'modules/entities.nix', 'flake.lock', 'flake.nix', 'modules/checks.nix',
     '.github/workflows/ci.yml', '.github/workflows/revision-validation.yml',

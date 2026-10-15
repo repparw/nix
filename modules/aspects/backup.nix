@@ -50,12 +50,16 @@
             description = "Restic forget arguments, applied only after a complete export and successful upload.";
           };
           exports = lib.mkOption {
-            description = "Native export units refreshed and checked before the scheduled or manual offsite backup.";
+            description = "Native exports prepared or checked for freshness before the scheduled or manual offsite backup.";
             default = { };
             type = lib.types.attrsOf (
               lib.types.submodule {
                 options = {
-                  unit = lib.mkOption { type = lib.types.str; };
+                  unit = lib.mkOption {
+                    type = lib.types.nullOr lib.types.str;
+                    default = null;
+                    description = "Export unit to run, or null to check artifacts produced by the app scheduler.";
+                  };
                   machine = lib.mkOption {
                     type = lib.types.nullOr lib.types.str;
                     default = null;
@@ -66,7 +70,7 @@
                   maxAgeSeconds = lib.mkOption {
                     type = lib.types.ints.positive;
                     default = 3600;
-                    description = "Maximum artifact age after a successful export; at least one artifact must also be new or refreshed.";
+                    description = "Maximum artifact age. When unit is set, at least one artifact must also be new or refreshed.";
                   };
                 };
               }
@@ -249,4 +253,13 @@
         };
     };
   };
+  perSystem = { pkgs, ... }: {
+    checks.backup-exports =
+      pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; }
+        ''
+          PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
+          touch "$out"
+        '';
+  };
+
 }
