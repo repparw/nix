@@ -30,6 +30,7 @@ WORKAROUNDS = {
     "voxtype-graphical": ("modules/aspects/ai/voxtype-graphical-workaround.nix", None),
     "gamescope-vkroots": ("modules/aspects/streaming.nix", "queueInfo.flags) { VkDeviceQueueInfo2"),
     "t3code-nightly-v2": ("modules/aspects/ai/t3code-nightly.nix", None),
+    "moonshine-pr227": ("modules/aspects/moonshine-pr227-test.nix", None),
 }
 
 
@@ -92,6 +93,44 @@ def gamescope_fixed():
     import os
     result = subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--print-out-paths", "--expr", expression], env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, capture_output=True, text=True, timeout=900, check=True)
     return flagged_queues_fixed((Path(result.stdout.strip()) / "vkroots.h").read_text())
+
+
+def unit_removed_block(application_rs):
+    # Port of the watcher's awk guard: extract the brace-matched block after
+    # `if id == unit_name` and require the current-state recheck inside it.
+    start = application_rs.find("if id == unit_name")
+    if start == -1:
+        return ""
+    depth = 0
+    begun = False
+    for index in range(application_rs.find("{", start), len(application_rs)):
+        character = application_rs[index]
+        if character == "{":
+            depth += 1
+            begun = True
+        elif character == "}":
+            depth -= 1
+            if begun and depth == 0:
+                return application_rs[start:index + 1]
+    return ""
+
+
+def moonshine_reload_guard(repo, revision):
+    # Mirrors the watch-moonshine-pr227 source gate (issue #147): the held
+    # commits fence plus a UnitRemoved handler that rechecks the current
+    # application state before tearing it down. A differently-implemented
+    # equivalent keeps the status at waiting-source for human review.
+    package_text = source("NixOS/nixpkgs", "pkgs/by-name/mo/moonshine/package.nix", revision)
+    ref = source_ref(package_text)
+    require_all = (
+        ("moonshine-core/src/session/compositor/mod.rs", "mod held_commits;"),
+        ("moonshine-core/src/session/compositor/handlers.rs", "held_commits::hold_until_rendered"),
+        ("moonshine-core/src/session/compositor/held_commits.rs", "DMA_BUF_IOCTL_EXPORT_SYNC_FILE"),
+    )
+    for path, marker in require_all:
+        if marker not in source(repo, path, ref):
+            return False
+    return "current_unit_state" in unit_removed_block(source(repo, "moonshine-core/src/session/application.rs", ref))
 
 
 
@@ -158,12 +197,23 @@ def detect(name, lock):
             return "waiting-upstream"
         return "PINNED-READY" if contains(repo, pr["merge_commit_sha"], pin(lock, input_name)) else "merged-not-pinned"
     revision = pin(lock, "nixpkgs")
-    if name in ("qbittorrent", "moonshine-pr227"):
-        repo, number, package = {"qbittorrent": ("qbittorrent/qBittorrent", 24055, "qbittorrent"), "moonshine-pr227": ("hgaiser/moonshine", 227, "moonshine")}[name]
+    if name == "qbittorrent":
+        repo, number, package = "qbittorrent/qBittorrent", 24055, "qbittorrent"
         pr = api(f"repos/{repo}/pulls/{number}")
         if not pr.get("merged"):
             return "waiting-upstream"
         return "PINNED-READY" if package_contains(package, repo, pr["merge_commit_sha"], revision) else "merged-not-pinned"
+    if name == "moonshine-pr227":
+        repo, number, package = "hgaiser/moonshine", 227, "moonshine"
+        pr = api(f"repos/{repo}/pulls/{number}")
+        if not pr.get("merged"):
+            return "waiting-upstream"
+        if not package_contains(package, repo, pr["merge_commit_sha"], revision):
+            return "merged-not-pinned"
+        # The alpha test build also carries the local reload guard; retiring
+        # it before upstream implements equivalent behavior would reintroduce
+        # the reload disconnect. Require the exact guarded source.
+        return "PINNED-READY" if moonshine_reload_guard(repo, revision) else "waiting-source"
     if name == "wpaperd-fix":
         fixed = package_contains("wpaperd", "danyspin97/wpaperd", "442b962df717dfb6e3d86a3a4bfd1111882323b8", revision)
     elif name == "cliamp-attach":

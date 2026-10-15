@@ -43,17 +43,23 @@ The package-specific gates are:
 | wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                               |
 | voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                               |
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true        |
+| moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds |
 
 Nautilus is notify-only. Ready notifications use tracked issues and durable
-comment markers to avoid repeats. Moonshine and T3 receive readiness notices
-while retaining their runtime completion checks. Sonarr/Jellyfin depends on
+comment markers to avoid repeats. T3 receives readiness notices while
+retaining its runtime completion checks. Sonarr/Jellyfin depends on
 the running service version and remains host-owned. Their local timers remain
 active until the fleet CI adapter is deployed and verified.
 
-The runtime predicates of the host-owned watchers moved to Pi: the
+The Moonshine PR227 test build is declarative alpha config
+(`modules/aspects/moonshine-pr227-test.nix`, #147): the generated unit
+selects the test package, so activation and rollback belong to deploy-rs and
+the `waiting-source` predicate requires the pinned upstream source to carry
+the UnitRemoved reload guard before the cleanup candidate may publish. The
+runtime predicates of the host-owned watchers moved to Pi: the
 `fleet-readiness-probe` service evaluates the running Sonarr version, the
-Sonarr log gate, Moonshine's PR227 test-build drop-ins, its candidate GC root
-and stream activity over SSH, enqueues a durable event per status change, and
+Sonarr log gate, and Moonshine's runtime-vs-generated-unit match over SSH,
+enqueues a durable event per status change, and
 `fleet-readiness-deliver` posts queued events to Discord on an independent
 timer. It also runs after each Alpha convergence, non-blocking for the
 deployment. Until the replacement is verified on Pi, Alpha's
