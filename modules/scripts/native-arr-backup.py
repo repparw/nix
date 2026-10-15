@@ -9,7 +9,6 @@ import sqlite3
 import sys
 import tempfile
 import time
-import uuid
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 from zipfile import BadZipFile, ZipFile
@@ -110,12 +109,16 @@ def create_backup(config):
             if len(refreshed) != 1 or path in before:
                 raise RuntimeError("ambiguous native backup output; preserving all manual archives")
             managed = Path(config["managedDir"])
+            if managed.is_symlink():
+                raise RuntimeError("managed backup directory must not be a symlink")
             managed.mkdir(mode=0o700, parents=True, exist_ok=True)
-            destination = managed / f"{config['app']}_backup_fleet_{uuid.uuid4().hex}.zip"
+            destination = managed / path.name
+            if destination.exists():
+                raise RuntimeError("managed archive already exists; preserving both backups")
             path.rename(destination)
             os.utime(destination, None)
             cutoff = time.time() - 28 * 86400
-            for previous in managed.glob(f"{config['app']}_backup_fleet_*.zip"):
+            for previous in managed.glob(config["pattern"]):
                 if previous.is_symlink() or not previous.is_file():
                     continue
                 if previous.stat().st_mtime < cutoff:

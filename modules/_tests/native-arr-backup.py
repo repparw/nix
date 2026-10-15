@@ -180,9 +180,9 @@ class NativeBackupTest(unittest.TestCase):
     def test_retention_only_removes_old_adapter_archives_after_success(self):
         managed = self.output.parent / "fleet"
         managed.mkdir()
-        old = managed / "sonarr_backup_fleet_old.zip"
+        old = managed / "sonarr_backup_old.zip"
         old.write_bytes(b"old adapter backup")
-        recent = managed / "sonarr_backup_fleet_recent.zip"
+        recent = managed / "sonarr_backup_recent.zip"
         recent.write_bytes(b"recent adapter backup")
         manual = self.output / "sonarr_backup_user.zip"
         manual.write_bytes(b"user manual backup")
@@ -197,8 +197,20 @@ class NativeBackupTest(unittest.TestCase):
         self.assertFalse(old.exists())
         self.assertEqual(recent.read_bytes(), b"recent adapter backup")
         self.assertEqual(manual.read_bytes(), b"user manual backup")
-        self.assertEqual(len(list(managed.glob("sonarr_backup_fleet_*.zip"))), 2)
+        self.assertEqual(len(list(managed.glob("sonarr_backup_*.zip"))), 2)
+        self.assertTrue((managed / "sonarr_backup_test.zip").exists())
         self.assertFalse((self.output / "sonarr_backup_test.zip").exists())
+
+    def test_existing_managed_archive_is_never_overwritten(self):
+        managed = self.output.parent / "fleet"
+        managed.mkdir()
+        existing = managed / "sonarr_backup_test.zip"
+        existing.write_bytes(b"previous managed archive")
+        result = self.run_adapter()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("preserving both backups", result.stderr)
+        self.assertEqual(existing.read_bytes(), b"previous managed archive")
+        self.assertTrue((self.output / "sonarr_backup_test.zip").exists())
 
 
 if __name__ == "__main__":
