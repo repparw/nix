@@ -20,10 +20,9 @@ const documentationOnly = path =>
 // boot/storage changes and tooling that could affect how it is evaluated.
 const affectsPersistence = path =>
   ['flake.nix', 'flake.lock', 'modules/checks.nix', 'modules/entities.nix',
-    'modules/aspects/persistence.nix', 'modules/aspects/backup.nix',
+    'modules/aspects/persistence.nix', 'modules/aspects/backup.nix', 'modules/aspects/host-backup.nix',
     'modules/aspects/nix.nix', 'modules/aspects/nixpkgs.nix',
     'modules/hosts/pi.nix', 'modules/hosts/epsilon.nix',
-    'modules/scripts/host-recovery.sh',
     '.github/workflows/ci.yml', '.github/workflows/revision-validation.yml'].includes(path) ||
   path.startsWith('modules/_tests/host-persistence') ||
   path.startsWith('.github/scripts/ci-impact');

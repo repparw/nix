@@ -143,9 +143,9 @@ Daily jobs exclude reproducible caches, container runtime mounts and swap.
 Retention is 7d/4w/12m with a 5% data check each run. The pi/epsilon live backups are
 not automatically consistent database exports.
 
-For a full pi checkpoint, including the Nix store and a stopped-HA archive,
-and a verified restore into a fresh directory, use the
-[host recovery runbook](host-recovery.md). Never restore over live paths while
+For a native Restic restore into a fresh directory, use the
+[host recovery runbook](host-recovery.md). It also describes the limits of daily
+backup scope and how to inspect legacy checkpoints. Never restore over live paths while
 testing recovery. Backup scope changes apply after deployment.
 
 Adding a new host's key to a secrets file:
