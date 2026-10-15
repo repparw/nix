@@ -145,15 +145,21 @@ class LockUpdate(unittest.TestCase):
             "        import base64\n"
             "        body = b'rev = \"fix\";'\n"
             "        print(json.dumps({'content': base64.b64encode(body).decode()})); sys.exit(0)\n"
-            "    if 'actions/runs/21/jobs' in endpoint:\n"
-            "        print('1' if (root/'dispatched-atomic').exists() else '0'); sys.exit(0)\n"
-            "    if 'actions/runs/21' in endpoint:\n"
+            "    if 'actions/runs/21/jobs' in endpoint or 'actions/runs/22/jobs' in endpoint:\n"
+            "        print('1'); sys.exit(0)\n"
+            "    if 'actions/runs/21' in endpoint or 'actions/runs/22' in endpoint:\n"
             "        print('success' if '.conclusion' in args else 'completed'); sys.exit(0)\n"
             "    if 'branch=automation/atomic-cleanup' in args:\n"
             "        if 'pr-title.yml/runs' in endpoint:\n"
             "            print('1' if (root/'dispatched-atomic-title').exists() else '0')\n"
-            "        elif 'ci.yml/runs' in endpoint and (root/'dispatched-atomic').exists(): print('21')\n"
-            "        sys.exit(0)\n"
+            "        elif 'ci.yml/runs' in endpoint:\n"
+            "            runs = []\n"
+            "            if (root/'dispatched-atomic').exists():\n"
+            "                runs.append({'id': 21, 'display_title': (root/'atomic-manifest').read_text()})\n"
+            "            if (root/'wrong-atomic-manifest').exists():\n"
+            "                runs.append({'id': 22, 'display_title': (root/'wrong-atomic-manifest').read_text()})\n"
+            "            print(json.dumps({'workflow_runs': runs}))\n"
+            "        sys.exit(0)\n
             "    sha = subprocess.check_output(['git', '--git-dir', remote, 'rev-parse', 'automation/flake-lock'], text=True).strip()\n"
             "    if '/pulls/' in endpoint:\n"
             "        print(json.dumps({'state': 'open', 'head': {'repo': {'full_name': 'fixture/nix'}, 'ref': 'automation/flake-lock', 'sha': 'wrong' if os.environ['FIXTURE_WRONG_PR_HEAD'] == '1' else sha}, 'base': {'ref': 'main'}}))\n"
@@ -188,7 +194,13 @@ class LockUpdate(unittest.TestCase):
             "    if os.environ[f'FIXTURE_{key.upper().replace(chr(45), chr(95))}_DISPATCH_FAIL'] == '1':\n"
             "        sys.exit(1)\n"
             "    (root / f'dispatched-{key}').write_text('1')\n"
-            "elif args[:2] == ['run', 'watch']:\n"
+            "    if key == 'atomic':\n"
+            "        items = [a.split('=', 1) for a in args if '=' in a]\n"
+            "        params = dict(items)\n"
+            "        (root/'atomic-manifest').write_text('validate sha=' + params['expected_sha'] +\n"
+            "            ' watchers=' + params.get('upstream_watcher', 'none') +\n"
+            "            ' arm=' + params.get('build_arm_authelia', 'false'))\n"
+            "elif args[:2] == ['run', 'watch']:\n
             "    sys.exit(1 if os.environ['FIXTURE_TITLE_CI'] == 'failure' else 0)\n"
         )
         gh.chmod(0o755)
@@ -538,6 +550,43 @@ class LockUpdate(unittest.TestCase):
         text = self.git("--git-dir", str(self.remote), "show",
                         "automation/atomic-cleanup:modules/_services/authelia.nix")
         self.assertNotIn("autheliaPackage", text)
+
+    def test_recovery_rejects_successful_ci_for_wrong_watcher_manifest(self):
+        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+        self.assertNotEqual(first.returncode, 0)
+        tip = self.git("--git-dir", str(self.remote), "rev-parse",
+                       "automation/atomic-cleanup")
+        # A successful manual workflow dispatch at the right SHA can validate
+        # a different watcher. It must not count for this candidate.
+        (self.root / "wrong-atomic-manifest").write_text(
+            f"validate sha={tip} watchers=moonshine-pr227 arm=false")
+        self.git("switch", "main", cwd=self.checkout)
+        second = self.update(change=False)
+        self.assertEqual(second.returncode, 0, second.stderr)
+        dispatched = [r for r in self.requests if r[:3] ==
+                      ["workflow", "run", "ci.yml"]]
+        self.assertEqual(len(dispatched), 1)
+        self.assertIn("upstream_watcher=qbittorrent", dispatched[0])
+        self.assertFalse(any("actions/runs/22/jobs" in str(r) for r in self.requests))
+
+    def test_recovery_rejects_successful_ci_for_wrong_arm_flag(self):
+        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+        self.assertNotEqual(first.returncode, 0)
+        tip = self.git("--git-dir", str(self.remote), "rev-parse",
+                       "automation/atomic-cleanup")
+        (self.root / "wrong-atomic-manifest").write_text(
+            f"validate sha={tip} watchers=qbittorrent arm=true")
+        self.git("switch", "main", cwd=self.checkout)
+        second = self.update(change=False)
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertTrue(any(r[:3] == ["workflow", "run", "ci.yml"]
+                            for r in self.requests))
+
+    def test_ci_run_name_includes_exact_dispatch_inputs(self):
+        self.assertIn("run-name: >-", CI)
+        self.assertIn("inputs.expected_sha", CI)
+        self.assertIn("inputs.upstream_watcher", CI)
+        self.assertIn("inputs.build_arm_authelia", CI)
 
     def test_lock_publisher_shell_is_parseable(self):
         # Workflow YAML checks alone do not parse the embedded bash script.
