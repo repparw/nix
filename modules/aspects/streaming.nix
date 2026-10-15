@@ -602,13 +602,14 @@ in
         };
       };
 
-      # On-demand tray client, deliberately not WantedBy anything: it exists to
-      # revive the desktop Steam that a session shut down, so it is started by
-      # Moonshine's post_command or by the launcher above rather than at login.
-      # A separate unit because restoring it inline would pin the caller active
-      # and, in the launcher's case, put the client in its cgroup. No Restart=,
-      # so quitting the tray stays honoured; a crash is recovered by the next
-      # session end.
+      # Tray client revived by Moonshine's post_command, the 8bitdo launcher,
+      # and now also started with the graphical session at login, so the
+      # desktop client exists without needing a prior stream. A separate unit
+      # because restoring it inline would pin the caller active and, in the
+      # launcher's case, put the client in its cgroup. The launch script keeps
+      # its own guards (live-stream hold, already-running check), so a boot
+      # start alongside those paths stays safe. No Restart=, so quitting the
+      # tray stays honoured; a crash is recovered by the next session end.
       systemd.user.services.steam-tray = {
         Unit = {
           Description = "Desktop Steam (tray)";
@@ -618,6 +619,9 @@ in
         Service = {
           Type = "simple";
           ExecStart = lib.getExe steam-tray-launch;
+        };
+        Install = {
+          WantedBy = [ "graphical-session.target" ];
         };
       };
     };
