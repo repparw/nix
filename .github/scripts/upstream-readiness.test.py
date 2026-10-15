@@ -30,6 +30,29 @@ class Readiness(unittest.TestCase):
         with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), patch.object(watch, "contains", return_value=False):
             self.assertEqual(watch.detect("tasks-org", LOCK), "merged-not-pinned")
 
+    def test_moonshine_requires_reload_guard_before_ready(self):
+        # PR227 merged and pinned is not enough: the pinned source must also
+        # carry the reload guard, or the test build must be retained.
+        files = {
+            "pkgs/by-name/mo/moonshine/package.nix": 'version = "0.16.1"; tag = "v${finalAttrs.version}";',
+            "moonshine-core/src/session/compositor/mod.rs": "mod held_commits;",
+            "moonshine-core/src/session/compositor/handlers.rs": "held_commits::hold_until_rendered",
+            "moonshine-core/src/session/compositor/held_commits.rs": "DMA_BUF_IOCTL_EXPORT_SYNC_FILE",
+            "moonshine-core/src/session/application.rs": "fn handle() { if id == unit_name { let s = current_unit_state(); } }",
+        }
+        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
+                patch.object(watch, "package_contains", return_value=True), \
+                patch.object(watch, "source", side_effect=lambda repo, path, ref: files[path]):
+            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "PINNED-READY")
+        unguarded = dict(files, **{"moonshine-core/src/session/application.rs": "fn handle() { if id == unit_name { teardown(); } }"})
+        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
+                patch.object(watch, "package_contains", return_value=True), \
+                patch.object(watch, "source", side_effect=lambda repo, path, ref: unguarded[path]):
+            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "waiting-source")
+        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
+                patch.object(watch, "package_contains", return_value=False):
+            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "merged-not-pinned")
+
     def test_unavailable_does_not_become_completed_or_ready(self):
         with patch.object(watch, "detect", side_effect=subprocess.CalledProcessError(1, "gh")):
             self.assertEqual(watch.inspect("nautilus-module", LOCK), "unavailable (CalledProcessError)")

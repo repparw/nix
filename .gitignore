@@ -3,3 +3,6 @@ result*
 .pre-commit-config.yaml
 .direnv/
 plans/
+__pycache__/
+*.pyc
+*.pyo

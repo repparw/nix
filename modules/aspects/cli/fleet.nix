@@ -68,13 +68,6 @@ in
           usage = "fleet debug [host]";
           implementation = ''cmd_debug "$@"'';
         };
-        update = {
-          path = [ "update" ];
-          description = "Run the shared host-update manual update path";
-          scope = "host";
-          usage = "fleet update [host-update arguments]";
-          implementation = ''cmd_update "$@"'';
-        };
       };
 
       specs = lib.mapAttrsToList (_: spec: spec) commandSpecs;
@@ -317,10 +310,6 @@ in
             else
               echo 'controller state: not present'
             fi
-            if [ -r /tmp/host-update-diff.txt ]; then
-              echo '--- /tmp/host-update-diff.txt (tail) ---'
-              tail -n 40 /tmp/host-update-diff.txt
-            fi
           }
 
           cmd_commands() {
@@ -414,14 +403,6 @@ in
             fi
           }
 
-          cmd_update() {
-            if ! command -v host-update >/dev/null 2>&1; then
-              echo 'host-update is not in PATH; run fleet update as the configured operator user' >&2
-              return 127
-            fi
-            exec host-update "$@"
-          }
-
           # Internal entry points keep local and SSH execution on the same
           # implementation without exposing these helpers through discovery.
           case "''${1-}" in
@@ -461,7 +442,11 @@ in
 
       config = {
         modules.fleet-cli.package = fleet;
-        environment.systemPackages = [ fleet ];
+        environment.systemPackages = [
+          fleet
+          pkgs.nix-output-monitor
+          pkgs.nvd
+        ];
       };
     };
 }

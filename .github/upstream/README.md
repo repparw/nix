@@ -16,10 +16,17 @@ in `cleanup/`. Each candidate starts at the same checked-out main revision.
 One failed recipe does not prevent other watchers from processing.
 
 The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
-the exact expected candidate tree before reusing an existing branch, preserves
-its SHA, and dispatches only missing checks. This also recovers interruptions
-between branch publication, PR creation, and dispatch. A changed or previously
-closed candidate requires review. It never merges a PR or overwrites a branch.
+the exact expected candidate tree before reusing an existing branch and
+dispatches only missing checks. This also recovers interruptions between
+branch publication, PR creation, and dispatch.
+
+Candidates are merge-automated: GitHub merges exactly when the required
+checks pass and the branch is current with main (strict up-to-date). When
+main advances first, the publisher re-applies the recipe onto the new main
+and revalidates — but only when the branch tip is provably its own earlier
+candidate (the recipe applied to its parent); a tampered or changed
+candidate requires review, and a recipe that no longer applies fails
+closed. Nothing is merged with pending or failed checks.
 
 Before disabling a local timer, verify its replacement's live CI run and all
 of that watcher's completion checks. Fixtures prove the publication algorithm,
@@ -31,29 +38,35 @@ aggregate also includes actual package builds and generated behavior checks
 from `upstream-validate.py`. T3 split candidates use native x86 and ARM jobs.
 The package-specific gates are:
 
-| Watcher           | Additional verification                                                                                   |
-| ----------------- | --------------------------------------------------------------------------------------------------------- |
-| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme  |
-| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop |
-| t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy         |
-| tasks-org         | Build the upstream Tasks.org package                                                                      |
-| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                              |
-| cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                        |
-| cliamp-attach     | Build upstream cliamp and verify both attach and quit in its help output                                  |
-| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                               |
-| voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                               |
-| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true        |
+| Watcher           | Additional verification                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------- |
+| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme         |
+| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop        |
+| t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy                |
+| tasks-org         | Build the upstream Tasks.org package                                                                             |
+| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                     |
+| cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                               |
+| cliamp-attach     | Build upstream cliamp and verify both attach and quit in its help output                                         |
+| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                      |
+| voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                      |
+| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true               |
+| moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds |
 
 Nautilus is notify-only. Ready notifications use tracked issues and durable
-comment markers to avoid repeats. Moonshine and T3 receive readiness notices
-while retaining their runtime completion checks. Sonarr/Jellyfin depends on
+comment markers to avoid repeats. T3 receives readiness notices while
+retaining its runtime completion checks. Sonarr/Jellyfin depends on
 the running service version and remains host-owned. Their local timers remain
 active until the fleet CI adapter is deployed and verified.
 
-The runtime predicates of the host-owned watchers moved to Pi: the
+The Moonshine PR227 test build is declarative alpha config
+(`modules/aspects/moonshine-pr227-test.nix`, #147): the generated unit
+selects the test package, so activation and rollback belong to deploy-rs and
+the `waiting-source` predicate requires the pinned upstream source to carry
+the UnitRemoved reload guard before the cleanup candidate may publish. The
+runtime predicates of the host-owned watchers moved to Pi: the
 `fleet-readiness-probe` service evaluates the running Sonarr version, the
-Sonarr log gate, Moonshine's PR227 test-build drop-ins, its candidate GC root
-and stream activity over SSH, enqueues a durable event per status change, and
+Sonarr log gate, and Moonshine's runtime-vs-generated-unit match over SSH,
+enqueues a durable event per status change, and
 `fleet-readiness-deliver` posts queued events to Discord on an independent
 timer. It also runs after each Alpha convergence, non-blocking for the
 deployment. Until the replacement is verified on Pi, Alpha's

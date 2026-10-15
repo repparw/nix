@@ -18,12 +18,14 @@ SONARR_NO_PROCESS = "version=\nlog_read=true\nunauthorized=false\n"
 WAITING_MOONSHINE = (
     "runtime_override=true\npersistent_override=false\ncandidate_root=true\n"
     "stream_active=true\nrunning_exe=/nix/store/candidate/bin/moonshine\n"
-    "generated_exe=/nix/store/candidate/bin/moonshine\nservice_active=true\n"
+    "generated_exe=/nix/store/candidate-wrapper/bin/moonshine-server\n"
+    "generated_binary=/nix/store/candidate/bin/moonshine\nservice_active=true\n"
 )
 READY_MOONSHINE = (
     "runtime_override=false\npersistent_override=false\ncandidate_root=false\n"
     "stream_active=false\nrunning_exe=/nix/store/upstream/bin/moonshine\n"
-    "generated_exe=/nix/store/upstream/bin/moonshine\nservice_active=true\n"
+    "generated_exe=/nix/store/upstream-wrapper/bin/moonshine-server\n"
+    "generated_binary=/nix/store/upstream/bin/moonshine\nservice_active=true\n"
 )
 
 SSH_STUB = """\
@@ -162,14 +164,28 @@ class Readiness(unittest.TestCase):
         broken = [
             READY_MOONSHINE.replace("service_active=true", "service_active=false"),
             READY_MOONSHINE.replace("running_exe=/nix/store/upstream", "running_exe="),
-            READY_MOONSHINE.replace("generated_exe=/nix/store/upstream", "generated_exe=/nix/store/other"),
-            READY_MOONSHINE.replace("generated_exe=/nix/store/upstream/bin/moonshine\n", ""),
+            READY_MOONSHINE.replace("generated_binary=/nix/store/upstream", "generated_binary=/nix/store/other"),
+            READY_MOONSHINE.replace("generated_binary=/nix/store/upstream/bin/moonshine\n", ""),
         ]
         for i, response in enumerate(broken):
             state = self.root / f"moonshine-bad-{i}"
             result = self.run_probe(state, watcher="moonshine-pr227-runtime", response=response)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(self.events(state)[0]["status"], "waiting")
+
+    def test_moonshine_ready_is_config_match_not_test_build_absence(self):
+        # While the declarative test-build aspect is enabled, the generated
+        # unit intentionally selects the test package; the probe reports
+        # ready because the runtime matches config and no external override
+        # remains — not because the test build is gone.
+        self.setUpProbe()
+        state = self.root / "moonshine-config-match"
+        self.run_probe(state, watcher="moonshine-pr227-runtime", response=READY_MOONSHINE.replace(
+            "/nix/store/upstream/bin/moonshine", "/nix/store/test-build/bin/moonshine"
+        ))
+        event = self.events(state)[0]
+        self.assertEqual(event["status"], "ready")
+        self.assertIn("runtime matches its generated unit", event["message"])
 
     def test_unavailable_keeps_previous_status_and_resumes(self):
         self.setUpProbe()
@@ -214,7 +230,7 @@ class Readiness(unittest.TestCase):
         self.run_probe(state, watcher="moonshine-pr227-runtime", response=READY_MOONSHINE)
         events = self.events(state)
         self.assertEqual(events[1]["status"], "ready")
-        self.assertIn("absent from Alpha runtime", events[1]["message"])
+        self.assertIn("runtime matches its generated unit", events[1]["message"])
 
     def test_full_pass_covers_both_watchers(self):
         self.setUpProbe()

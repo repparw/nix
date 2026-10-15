@@ -33,9 +33,11 @@ runtime work and discover capabilities from `fleet commands --json` instead
 of copying this command surface into prose. Configuration verification remains
 a separate pre-activation procedure in `verify-nixos-config`.
 
-`fleet update` delegates to the interactive `host-update` path for the local
-tree. It is deliberately distinct from the controller-side `fleet-update`
-transaction below, which deploys a main revision after successful CI.
+Local-tree updates happen through the plain nix CLI (`nix build` the
+toplevel, `nix run .#deploy-rs -- .#<host> --dry-activate` to review,
+deploy-rs or `nixos-rebuild` to switch); the controller-side
+`fleet-update` transaction below deploys a main revision after successful
+CI.
 
 ## Fleet health (`fleet-health.timer`, every 5 min)
 
@@ -410,8 +412,9 @@ It keeps the exact-main push CI gate, serialization, health checks, and rollback
 
 Alpha's interactive `Mod+U` asks the pi controller to run
 `fleet-update deploy --host alpha --force`: it bypasses the activity gate
-and `PAUSE` but keeps the exact-commit CI gate, health checks, and rollback. The separate
-`host-update` command remains for building and reviewing a local tree by hand.
+and `PAUSE` but keeps the exact-commit CI gate, health checks, and rollback.
+Local-tree reviews use the nix CLI directly
+(`nix run .#deploy-rs -- .#<host> --dry-activate`).
 
 ## Pi store retention
 

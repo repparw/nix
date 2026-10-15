@@ -47,7 +47,6 @@
           ".config/godot/"
           ".config/vesktop/settings.json"
           ".config/vesktop/settings/"
-          ".config/ZapZap/"
           ".config/Moonlight Game Streaming Project/"
           ".config/codex/config.toml"
           ".config/codex/skills/"

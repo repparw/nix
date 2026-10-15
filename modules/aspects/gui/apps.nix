@@ -41,7 +41,6 @@ in
         home.packages = with pkgs; [
           godot
           tasks-org
-          zapzap
         ];
 
         gtk.enable = true;

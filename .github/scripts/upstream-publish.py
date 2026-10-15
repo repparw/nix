@@ -43,6 +43,26 @@ def dispatch_missing(repo, branch, sha, number, watcher):
         run(*arguments)
 
 
+def arm_automerge(repo, number):
+    # GitHub merges the candidate exactly when the required checks pass and
+    # the branch is current with main (strict up-to-date protection). A
+    # repeat request on an already-armed candidate is not an error.
+    try:
+        run("gh", "pr", "merge", str(number), "--repo", repo, "--squash", "--auto")
+    except subprocess.CalledProcessError as error:
+        output = (error.stdout or "") + (error.stderr or "")
+        if "already" not in output.lower():
+            raise ValueError(f"auto-merge request failed: {output.strip()[:200]}") from None
+
+
+def expected_tree(candidate, base, patch):
+    # The exact tree the recipe produces when applied to `base`.
+    environment = {**os.environ, "GIT_INDEX_FILE": str(candidate.parent / f"expected-index-{base[:8]}")}
+    run("git", "read-tree", base, cwd=candidate, env=environment)
+    run("git", "apply", "--cached", str(patch), cwd=candidate, env=environment)
+    return run("git", "write-tree", cwd=candidate, env=environment)
+
+
 def publish(name, spec, repo):
     if not re.fullmatch(r"[a-z0-9-]+", name):
         raise ValueError("invalid watcher id")
@@ -73,15 +93,34 @@ def publish(name, spec, repo):
             run("git", "worktree", "add", "--detach", str(candidate), "HEAD")
         try:
             if sha:
-                # Reconstruct the expected tree. Reverse-checking a deletion
-                # patch alone would accept any text inserted by its reverse.
-                environment = {**os.environ, "GIT_INDEX_FILE": str(Path(directory) / "expected-index")}
-                run("git", "read-tree", "HEAD^", cwd=candidate, env=environment)
-                run("git", "apply", "--cached", "--check", str(patch), cwd=candidate, env=environment)
-                run("git", "apply", "--cached", str(patch), cwd=candidate, env=environment)
-                expected = run("git", "write-tree", cwd=candidate, env=environment)
-                if expected != run("git", "rev-parse", "HEAD^{tree}", cwd=candidate):
-                    raise ValueError("candidate differs from the exact cleanup recipe")
+                # The candidate must equal the recipe applied to current main.
+                # An automation-authored tip that predates a main advance is
+                # refreshed onto main and revalidated; anything else needs
+                # review, and is never overwritten.
+                run("git", "fetch", "--quiet", "origin", "refs/heads/main", cwd=candidate)
+                main_sha = run("git", "rev-parse", "FETCH_HEAD", cwd=candidate)
+                branch_tree = run("git", "rev-parse", "HEAD^{tree}", cwd=candidate)
+                main_expected = expected_tree(candidate, main_sha, patch)
+                if branch_tree != main_expected:
+                    tip_expected = expected_tree(candidate, "HEAD^", patch)
+                    single = run("git", "rev-list", "--count", "HEAD^..HEAD", cwd=candidate)
+                    if branch_tree != tip_expected or single != "1":
+                        raise ValueError("candidate differs from the exact cleanup recipe")
+                    run("git", "checkout", "--quiet", "--detach", main_sha, cwd=candidate)
+                    run("git", "apply", "--check", str(patch), cwd=candidate)
+                    run("git", "apply", str(patch), cwd=candidate)
+                    changed = set(run("git", "diff", "--name-only", cwd=candidate).splitlines())
+                    if changed != paths:
+                        raise ValueError("cleanup changed unexpected paths")
+                    run("git", "add", "--", *sorted(paths), cwd=candidate)
+                    run("git", "-c", "user.name=github-actions[bot]", "-c",
+                        "user.email=41898282+github-actions[bot]@users.noreply.github.com",
+                        "-c", "core.hooksPath=/dev/null", "commit", "-m",
+                        f"fix(upstream): retire {name} workaround", cwd=candidate)
+                    refreshed = run("git", "rev-parse", "HEAD", cwd=candidate)
+                    run("git", "push", f"--force-with-lease=refs/heads/{branch}:{sha}",
+                        "origin", f"HEAD:refs/heads/{branch}", cwd=candidate)
+                    sha = refreshed
             else:
                 run("git", "apply", "--check", str(patch), cwd=candidate)
                 run("git", "apply", str(patch), cwd=candidate)
@@ -107,13 +146,16 @@ def publish(name, spec, repo):
                                 f"Cleanup recipe: `.github/upstream/cleanup/{patch.name}`.\n"
                                 f"Candidate: `{sha}`.\n\n"
                                 "CI validates the exact revision, evaluates the fleet, and runs "
-                                "the package-specific checks. Review is required before merging.\n")
+                                "the package-specific checks. Auto-merge fires when the required "
+                                "checks pass and main has not moved; a stale or changed candidate "
+                                "requires review.\n")
                 url = run("gh", "pr", "create", "--repo", repo, "--base", "main",
                           "--head", branch, "--title", f"fix(upstream): retire {name} workaround",
                           "--body-file", str(body))
                 number = int(url.rsplit("/", 1)[1])
             dispatch_missing(repo, branch, sha, number, name)
-            return {"pr": number, "sha": sha, "status": "waiting-ci-or-review"}
+            arm_automerge(repo, number)
+            return {"pr": number, "sha": sha, "status": "automerge-armed"}
         finally:
             run("git", "worktree", "remove", "--force", str(candidate))
 
