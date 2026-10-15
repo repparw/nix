@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 const lightweight = 'formatting sops-files change-detection agent-docs check-flake-file deploy-schema ci-workflow';
-const configuration = 'generated-shellcheck fleet-cli service-definitions host-persistence btrfs-health fleet-failed-units hermes-auxiliary-routing pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage';
+const configuration = 'generated-shellcheck fleet-cli service-definitions host-persistence native-arr-backup btrfs-health fleet-failed-units hermes-auxiliary-routing pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage';
 
 const full = reason => ({
   runNeovim: true,
@@ -22,6 +22,8 @@ const documentationOnly = path =>
 const affectsPersistence = path =>
   ['flake.nix', 'flake.lock', 'modules/checks.nix', 'modules/entities.nix',
     'modules/aspects/persistence.nix', 'modules/aspects/backup.nix', 'modules/aspects/host-backup.nix',
+    'modules/scripts/prepare-backup-exports.py', 'modules/aspects/cli/fleet.nix',
+    'modules/aspects/services/arr-backup.nix', 'modules/scripts/native-arr-backup.py', 'modules/_tests/native-arr-backup.py',
     'modules/aspects/nix.nix', 'modules/aspects/nixpkgs.nix',
     'modules/hosts/pi.nix', 'modules/hosts/epsilon.nix',
     '.github/workflows/ci.yml', '.github/workflows/revision-validation.yml'].includes(path) ||

@@ -236,8 +236,13 @@ checks:
 - a real `passwd` change across activation, reboot and abrupt restart;
 - stable SSH key, machine ID, SOPS decryption and UID allocation;
 - application data, timer stamps and deployment pause state;
-- native Restic backup and isolated restore, including identity, SOPS,
-  SQLite, ownership, modes, ACLs, xattrs, and legacy recovery artifacts;
+- the generated offsite timer and `fleet backup run` sharing export preparation
+  and native Restic backup, with failed, unchanged, stale, and empty exports
+  producing an explicitly incomplete snapshot and failed service result while
+  an independent export still reaches the snapshot;
+- isolated restoration of the actual SQLite export, identity, SOPS, ownership,
+  modes, ACLs, xattrs, and legacy recovery artifacts, followed by root reset and
+  another restore from the same snapshot;
 - `--one-file-system` traversal of same-device binds, exclusion of nested
   filesystems on other devices, and restoration when those roots are explicit;
 - failed boot with missing storage or an unprepared backing volume, followed

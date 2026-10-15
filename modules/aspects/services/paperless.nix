@@ -26,6 +26,12 @@
         service = cfg.definitions.paperless;
       in
       {
+        modules.backup.exports.paperless = {
+          unit = "paperless-exporter.service";
+          machine = "paperless";
+          path = service.backup.path;
+          pattern = "manifest.json";
+        };
         # Host-decrypted state dir for the container bind mount. Owned by the
         # mapped container user (see privateUsers below), not root: the
         # module's in-container tmpfiles cannot chown across an unmapped
@@ -85,7 +91,7 @@
               address = "0.0.0.0";
               exporter = {
                 enable = true;
-                onCalendar = "*-*-7,14,21,28 03:45:00";
+                onCalendar = null;
                 settings = {
                   "no-archive" = true;
                   "no-thumbnail" = true;

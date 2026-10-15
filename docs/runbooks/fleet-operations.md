@@ -100,18 +100,65 @@ manually only acknowledges the failure; it does not establish backup success.
 
 ## Offsite backups (`restic-backups-offsite.timer`, daily 01:00–01:15)
 
+Run the same offsite operation as the timer, including export preparation:
+
+```sh
+sudo fleet backup run
+fleet backup run epsilon
+```
+
+The local command requires permission to start system services. A named remote
+host uses the existing root SSH connection. The command waits for
+`restic-backups-offsite.service` and returns its failure status. Inspect its
+journal after a failure; `fleet backup status` reports the resulting service
+state.
+
+Before Restic starts, registered export units run synchronously. Each must
+succeed and create or refresh a nonempty matching artifact within its declared
+maximum age, one hour by default. An unchanged recent file, stale output,
+missing output, or exporter failure marks the run incomplete. Other exporters
+still run and Restic uploads the available data, including
+`/var/lib/backup-exports/offsite.json` with each export's outcome. After upload,
+the service returns failure for an incomplete run and skips pruning, preserving
+previous snapshots. Inspect the manifest when selecting a snapshot to restore;
+an uploaded snapshot alone does not establish complete application coverage.
+Independent timers
+for these enrolled exports are disabled so scheduled and manual runs use the
+same sequence.
+
+| Export               | Producer and validation                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| Jellyfin             | Native `Backup/Create` API, required response path, and ZIP integrity check                |
+| Miniflux             | Container `pg_dump`, gzip integrity check, and atomic publication                          |
+| Paperless            | Container's native `document_exporter`, including its normal service stop/restart behavior |
+| Pi services on alpha | Existing transactional SQLite staging and rsync, checked through the export manifest       |
+| Alpha home state     | SQLite `.backup` staging through `home-state-backup-offsite.service`                       |
+
+Sonarr, Radarr, and Prowlarr producers request the native `Backup` command,
+wait for completion, and verify a fresh manual ZIP plus its exported SQLite
+database. Bazarr uses its separate queued native backup endpoint; HTTP success
+alone is insufficient. Its producer waits for a fresh ZIP and requires both
+`config.yaml` and a valid `bazarr.db`. These units run inside the real app
+containers and read their existing API credentials without logging them.
+Starting a container alone does not request a new application backup.
+After verification, adapter-created archives move into a private `fleet`
+subdirectory under the native backup directory. Only adapter archives older
+than 28 days are removed, after a new valid export exists. User manual and
+scheduled archives remain untouched. Ambiguous output is reported as a failure
+and preserved rather than enrolled for automatic deletion.
+
 Restic over rclone to `gd-crypt:restic/<hostname>`. Covers:
 
 - pi/epsilon: `/etc`, `/boot`, `/root`, the whole `/home/repparw`, container
   configuration and roots, NixOS account allocation state, timers and recovery
   metadata. Pi also includes deployment/health controller and Bluetooth/radio
   state; epsilon includes ddclient state. See the host declarations and
-  `modules/aspects/backup.nix` for the complete paths and exclusions.
+  `modules/aspects/host-backup.nix` for the shared paths and exclusions.
 - alpha: `/home/containers/backup`, Pictures, Documents (Memorias excluded),
   and the small home-state allowlist in `modules/hosts/alpha.nix`. SQLite
   databases are exported with `.backup` into a private staging tree under
   `/var/lib/home-state-backup/offsite` before restic runs. Missing optional
-  entries are skipped; an export failure aborts the backup. Age keys are
+  entries are skipped; an export failure marks the backup incomplete. Age keys are
   included only in the HDD staging tree, never in the offsite tree.
 
 Alpha's `rsync-job-bupstate` mirrors its separately prepared HDD staging tree

@@ -3,6 +3,7 @@
   pkgs,
 }:
 let
+  backup = (import ../aspects/backup.nix { den = null; }).den.aspects.backup.nixos;
   persistence = (import ../aspects/persistence.nix { inherit inputs; }).den.aspects.persistence.nixos;
   # Disposable test credentials, generated in the build sandbox. No production
   # key, password or SOPS file is used by this VM.
@@ -24,9 +25,10 @@ let
         printf 'password: "%s"\n' "$hash" > secret.yaml
         sops --encrypt --age "$recipient" --input-type yaml --output-type yaml secret.yaml > "$out/secret.yaml"
       '';
-  common = { config, ... }: {
+  common = { config, lib, ... }: {
     imports = [
       persistence
+      backup
       inputs.sops-nix.nixosModules.sops
     ];
     modules.persistence = {
@@ -64,11 +66,61 @@ let
       hashedPasswordFile = config.sops.secrets.bootstrap.path;
     };
     services.openssh.enable = true;
-    services.restic.backups.persistence-test = {
+    networking.hostName = "alpha";
+    modules.backup.retentionArgs = [ ];
+    modules.backup.exports.test-service = {
+      unit = "test-service-export.service";
+      path = "/var/lib/test-service/export";
+      pattern = "*.db";
+    };
+    modules.backup.exports.zz-independent = {
+      unit = "independent-export.service";
+      path = "/var/lib/test-service/independent";
+      pattern = "*.txt";
+    };
+    systemd.services.independent-export = {
+      serviceConfig.Type = "oneshot";
+      path = [ pkgs.coreutils ];
+      script = ''
+        mkdir -p /var/lib/test-service/independent
+        date --iso-8601=ns > /var/lib/test-service/independent/state.txt
+      '';
+    };
+    systemd.services.test-service-export = {
+      unitConfig.StartLimitIntervalSec = 0;
+      serviceConfig.Type = "oneshot";
+      path = [
+        pkgs.coreutils
+        pkgs.sqlite
+      ];
+      script = ''
+        test ! -e /run/export-fail
+        if test -e /run/export-noop; then exit 0; fi
+        mkdir -p /var/lib/test-service/export/manual
+        if test -e /run/export-stale; then
+          touch -d '2 days ago' /var/lib/test-service/export/manual/data.db
+          exit 0
+        fi
+        if test -e /run/export-empty; then
+          : > /var/lib/test-service/export/manual/data.db
+          exit 0
+        fi
+        sqlite3 /var/lib/test-service/data.db ".backup '/var/lib/test-service/export/manual/data.db'"
+      '';
+    };
+    systemd.services.restic-backups-offsite.unitConfig.StartLimitIntervalSec = 0;
+    systemd.timers.restic-backups-offsite.wantedBy = lib.mkForce [ ];
+    services.restic.backups.offsite = {
       repository = "/persist/test-repository";
       passwordFile = "/run/restic-password";
       initialize = true;
-      timerConfig = null;
+      timerConfig = {
+        OnActiveSec = "1s";
+      };
+      exclude = [
+        "/var/lib/test-service/data.db"
+        "/var/lib/test-service/data.db-*"
+      ];
       extraBackupArgs = [ "--one-file-system" ];
       paths = [
         "/etc"
@@ -81,6 +133,7 @@ let
       ];
     };
     environment.systemPackages = [
+      inputs.self.nixosConfigurations.alpha.config.modules.fleet-cli.package
       pkgs.sops
       pkgs.ssh-to-age
       pkgs.restic
@@ -173,7 +226,13 @@ pkgs.testers.runNixOSTest {
     with subtest("Backup restoration preserves identity, accounts, database and file metadata"):
         machine.succeed("echo test-only-restic-password > /run/restic-password; chmod 0600 /run/restic-password")
         restic = "RESTIC_PASSWORD_FILE=/run/restic-password restic -r /persist/test-repository "
-        machine.succeed("systemctl start restic-backups-persistence-test.service")
+        machine.succeed("systemctl start restic-backups-offsite.timer")
+        machine.wait_until_succeeds(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 1'")
+        machine.succeed("systemctl stop restic-backups-offsite.timer")
+        machine.wait_until_succeeds("systemctl show restic-backups-offsite.service -p ActiveState --value | grep -qx inactive")
+        machine.succeed("systemctl show restic-backups-offsite.service -p Result --value | grep -qx success")
+        machine.succeed("fleet backup run")
+        machine.succeed(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 2'")
         snapshot = machine.succeed(restic + "snapshots --latest 1 --json | ${pkgs.jq}/bin/jq -r '.[0].id'").strip()
         machine.succeed("mkdir -m 0700 /restored")
         machine.succeed(restic + "restore --verify " + snapshot + " --target /restored")
@@ -182,12 +241,26 @@ pkgs.testers.runNixOSTest {
         machine.succeed("test $(stat -c %u:%g /restored/home/repparw/state) = $(stat -c %u:%g /home/repparw/state)")
         machine.succeed("getfattr --only-values -n user.recovery /restored/home/repparw/state | grep -qx preserved")
         machine.succeed("getfacl -cp /home/repparw/state > /run/acl-before; getfacl -cp /restored/home/repparw/state > /run/acl-after; cmp -s /run/acl-before /run/acl-after")
-        assert machine.succeed("sqlite3 /restored/var/lib/test-service/data.db 'pragma integrity_check; select value from state;'").strip() == "ok\n42"
+        assert machine.succeed("sqlite3 /restored/var/lib/test-service/export/manual/data.db 'pragma integrity_check; select value from state;'").strip() == "ok\n42"
 
+        machine.fail("test -e /restored/var/lib/test-service/data.db")
         machine.succeed("cmp -s /var/lib/host-recovery/checkpoint /restored/var/lib/host-recovery/checkpoint")
         machine.succeed("cmp -s /var/lib/auto-update/PAUSE /restored/var/lib/auto-update/PAUSE; test -e /restored/var/lib/systemd/timers/stamp-test.timer")
         machine.succeed("umask 077; ssh-to-age -private-key -i /restored/etc/ssh/ssh_host_ed25519_key > /run/restored-age-key")
         machine.succeed("SOPS_AGE_KEY_FILE=/run/restored-age-key sops --decrypt ${fixture}/secret.yaml > /dev/null")
+
+    with subtest("Failed, unchanged, stale and empty exports upload an explicitly incomplete snapshot"):
+        for count, mode in enumerate(["fail", "noop", "stale", "empty"], start=3):
+            machine.succeed("touch /run/export-" + mode)
+            machine.fail("fleet backup run")
+            machine.succeed(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == " + str(count) + "'")
+            machine.succeed(restic + "dump latest /var/lib/backup-exports/offsite.json | ${pkgs.jq}/bin/jq -e '.status == \"incomplete\" and .exports[\"test-service\"].status == \"failed\"'")
+            machine.succeed(restic + "dump latest /var/lib/backup-exports/offsite.json | ${pkgs.jq}/bin/jq -e '.exports[\"zz-independent\"].status == \"complete\"'")
+            machine.succeed(restic + "dump latest /var/lib/test-service/independent/state.txt")
+            machine.succeed("rm /run/export-" + mode)
+        machine.succeed("fleet backup run alpha")
+        machine.succeed(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 7'")
+        machine.succeed(restic + "dump latest /var/lib/backup-exports/offsite.json | ${pkgs.jq}/bin/jq -e '.status == \"complete\"'")
 
     with subtest("One-file-system follows same-device binds and skips other devices unless explicit"):
         machine.succeed("mkdir -p /home/repparw/same-device /home/repparw/other-device /persist/nested-state")
@@ -201,13 +274,21 @@ pkgs.testers.runNixOSTest {
         machine.succeed(restic + "restore --verify latest --target /run/explicit-restore")
         machine.succeed("cmp -s /home/repparw/other-device/state /run/explicit-restore/home/repparw/other-device/state")
 
-    with subtest("Abrupt restart retains completed password and state writes"):
-        machine.succeed("sync")
+    with subtest("A root reset retains persistent state and permits restoring the exported offsite payload"):
+        machine.succeed("echo ephemeral > /after-backup-ephemeral; sync")
         machine.crash()
         machine.start()
         machine.wait_for_unit("multi-user.target")
         machine.succeed("getent shadow repparw | cut -d: -f2 > /run/actual-password; cmp -s /persist/expected-password /run/actual-password")
         machine.succeed("test -e /var/lib/auto-update/PAUSE; test -s /run/secrets-for-users/bootstrap")
+        machine.fail("test -e /after-backup-ephemeral")
+        machine.fail("test -e /restored")
+        machine.succeed("echo test-only-restic-password > /run/restic-password; chmod 0600 /run/restic-password")
+        machine.succeed("mkdir -m 0700 /restored-after-reset")
+        machine.succeed(restic + "restore --verify " + snapshot + " --target /restored-after-reset")
+        machine.succeed("cmp -s /etc/ssh/ssh_host_ed25519_key /restored-after-reset/etc/ssh/ssh_host_ed25519_key; cmp -s /etc/shadow /restored-after-reset/etc/shadow")
+        assert machine.succeed("sqlite3 /restored-after-reset/var/lib/test-service/export/manual/data.db 'pragma integrity_check; select value from state;'").strip() == "ok\n42"
+        machine.fail("test -e /restored-after-reset/var/lib/test-service/data.db")
 
     with subtest("Missing backing storage prevents normal boot"):
         missing.start()

@@ -110,7 +110,7 @@
         ];
         stateRoot = "/var/lib/home-state-backup";
         # Each consumer has its own staging tree. A failed export never replaces
-        # its previous tree, and ExecStartPre/backupPrepareCommand abort the job.
+        # its previous tree.
         prepareHomeState = pkgs.writeShellScript "prepare-home-state" ''
           set -euo pipefail
           export PATH=${
@@ -148,6 +148,7 @@
             rsync --archive --relative --ignore-missing-args -- \
               ${lib.escapeShellArg "${home}/./.config/sops/age/keys.txt"} "$temporary/"
           fi
+          date --iso-8601=ns > "$temporary/.export-complete"
           rm -rf "$destination"
           mv "$temporary" "$destination"
         '';
@@ -162,6 +163,11 @@
         ];
 
         modules.backup = {
+          exports.pi-services = {
+            unit = "rsync-job-buprpi.service";
+            path = "${config.modules.services.backupDir}/pi-services";
+            pattern = ".pi-services-export.json";
+          };
           paths = [
             "/home/containers/backup"
             "/home/repparw/Pictures"
@@ -349,16 +355,23 @@
           };
         };
 
+        systemd.timers.rsync-job-buprpi.enable = false;
         systemd.services.rsync-job-bupstate.serviceConfig = {
           StateDirectory = "home-state-backup";
           StateDirectoryMode = "0700";
           ExecStartPre = "${prepareHomeState} hdd";
         };
-        systemd.services.restic-backups-offsite.serviceConfig = {
+        modules.backup.exports.alpha-home = {
+          unit = "home-state-backup-offsite.service";
+          path = "${stateRoot}/offsite";
+          pattern = ".export-complete";
+        };
+        systemd.services.home-state-backup-offsite.serviceConfig = {
+          Type = "oneshot";
           StateDirectory = "home-state-backup";
           StateDirectoryMode = "0700";
+          ExecStart = "${prepareHomeState} offsite";
         };
-        services.restic.backups.offsite.backupPrepareCommand = "${prepareHomeState} offsite";
         # Use the account that owns the destination and has SSH access to pi.
         systemd.services.rsync-job-buprpi.serviceConfig = {
           User = lib.mkForce "repparw";
