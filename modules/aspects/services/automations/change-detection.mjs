@@ -7,7 +7,6 @@ import { promisify } from "node:util";
 
 const MAX_WATCHERS_FILE_BYTES = 1024 * 1024;
 const MAX_STATE_FILE_BYTES = 8 * 1024 * 1024;
-const MAX_WEBHOOK_FILE_BYTES = 16 * 1024;
 const DEFAULT_MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 const MAX_RESPONSE_BYTES = 16 * 1024 * 1024;
 const MAX_WATCHERS = 1000;
@@ -541,20 +540,24 @@ function replaceLiteral(template, token, value) {
   return template.replaceAll(token, () => String(value));
 }
 
-async function notifyDiscord(webhookPath, content, fetchImpl) {
-  const webhookUrl = readUtf8File(
-    webhookPath,
-    MAX_WEBHOOK_FILE_BYTES,
-    "Discord webhook file",
-  ).trim();
-  validateHttpUrl(webhookUrl, "Discord webhook");
-  const response = await fetchImpl(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: "automations", content }),
-  });
+async function notifyDiscord(discord, content, fetchImpl) {
+  const { token, channelId } = discord ?? {};
+  if (!token || !channelId) {
+    throw new Error("Discord bot token and channel id are required");
+  }
+  const response = await fetchImpl(
+    `https://discord.com/api/v10/channels/${channelId}/messages`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bot ${token}`,
+      },
+      body: JSON.stringify({ content }),
+    },
+  );
   if (!response.ok) {
-    throw new Error(`Discord webhook returned HTTP ${response.status}`);
+    throw new Error(`Discord returned HTTP ${response.status}`);
   }
 }
 
@@ -562,7 +565,7 @@ export async function runChangeDetection({
   watchersPath,
   defaultWatchersPath,
   statePath,
-  discordWebhookPath,
+  discord,
   fetchImpl = globalThis.fetch,
   now = () => new Date(),
   log = console.log,
@@ -665,7 +668,7 @@ export async function runChangeDetection({
           );
         }
 
-        await notifyDiscord(discordWebhookPath, content, fetchImpl);
+        await notifyDiscord(discord, content, fetchImpl);
         log(
           `${watcher.slug}: changed from ${previousDisplay ?? previousKey} to ${currentDisplay}`,
         );
@@ -685,17 +688,22 @@ export async function runChangeDetection({
 }
 
 export async function main(args = process.argv.slice(2)) {
-  const [watchersPath, statePath, discordWebhookPath, defaultWatchersPath] = args;
-  if (!watchersPath || !statePath || !discordWebhookPath) {
+  const [watchersPath, statePath, defaultWatchersPath] = args;
+  const discord = {
+    token: process.env.DISCORD_BOT_TOKEN,
+    channelId: process.env.DISCORD_CHANNEL_ID,
+  };
+  if (!watchersPath || !statePath || !discord.token || !discord.channelId) {
     throw new Error(
-      "usage: change-detection <watchers.json> <state.json> <discord-webhook-file> [default-watchers.json]",
+      "usage: change-detection <watchers.json> <state.json> [default-watchers.json] "
+        + "(DISCORD_BOT_TOKEN and DISCORD_CHANNEL_ID must be set)",
     );
   }
   return runChangeDetection({
     watchersPath,
     defaultWatchersPath,
     statePath,
-    discordWebhookPath,
+    discord,
     handleSignals: true,
   });
 }
