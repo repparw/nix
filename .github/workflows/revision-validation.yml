@@ -217,10 +217,16 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v22
       - name: Verify actual upstream package and generated behavior
         env:
-          WATCHER: ${{ inputs.upstream_watcher }}
+          WATCHERS: ${{ inputs.upstream_watcher }}
           ARCHITECTURE: ${{ matrix.architecture }}
           GH_TOKEN: ${{ github.token }}
-        run: python3 .github/scripts/upstream-validate.py "${WATCHER#automation/upstream-}" --architecture "$ARCHITECTURE"
+        run: |
+          # A dispatch may bundle several apply-coupled cleanups; validate
+          # each in turn. Branch-triggered runs carry a single watcher name.
+          list="${WATCHERS#automation/upstream-}"
+          for watcher in $(printf '%s' "$list" | tr ',' ' '); do
+            python3 .github/scripts/upstream-validate.py "$watcher" --architecture "$ARCHITECTURE"
+          done
 
   gate:
     if: always()

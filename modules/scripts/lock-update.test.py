@@ -43,13 +43,38 @@ class LockUpdate(unittest.TestCase):
         # The real lock updater invokes this planner from the checkout, not
         # the test runner's source tree. Carry the production implementation
         # and exact fixture into every disposable repository.
-        for path in (".github/scripts/upstream-plan.py", ".github/upstream/watchers.json"):
+        for path in (".github/scripts/upstream-plan.py", ".github/scripts/upstream-readiness.py",
+                     ".github/upstream/watchers.json"):
             dst = self.checkout / path
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(REPO / path, dst)
+            # Nix-store source fixtures are read-only; the disposable checkout
+            # must be writable for the fixture registry and atomic cleanup.
+            dst.chmod(0o644)
         module = self.checkout / "modules/_services/authelia.nix"
         module.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(REPO / ".github/upstream/fixtures/authelia-before.nix.txt", module)
+        # A fixture registry: one apply-coupled watcher whose workaround file,
+        # cleanup recipe, and readiness endpoints the fake gh can answer.
+        registry = {
+            "authelia-pnpm-hash": {"mode": "atomic", "input": "nixpkgs",
+                                   "fix_commit": "fix", "cleanup": "authelia-override"},
+            "qbittorrent": {"mode": "post-lock", "input": "nixpkgs",
+                                "cleanup": "fixture-cleanup.patch", "coupling": "apply"},
+        }
+        (self.checkout / ".github/upstream/watchers.json").write_text(json.dumps(registry, indent=2))
+        # The fixture id must be a real readiness detector, and the file must
+        # carry that detector's workaround marker (or inspect reports completed).
+        workaround = self.checkout / "modules/aspects/services/arr.nix"
+        workaround.parent.mkdir(parents=True, exist_ok=True)
+        workaround.write_text("keep\nqbittorrent-nox.overrideAttrs\nworkaround\n")
+        recipe = self.checkout / ".github/upstream/cleanup/fixture-cleanup.patch"
+        recipe.parent.mkdir(parents=True, exist_ok=True)
+        recipe.write_text(
+            "diff --git a/modules/aspects/services/arr.nix b/modules/aspects/services/arr.nix\n"
+            "--- a/modules/aspects/services/arr.nix\n"
+            "+++ b/modules/aspects/services/arr.nix\n"
+            "@@ -1,3 +1 @@\n keep\n-qbittorrent-nox.overrideAttrs\n-workaround\n")
         # Nix-store source fixtures are read-only; a real Git checkout is writable.
         # Exercise the atomic cleanup against checkout-like permissions.
         module.chmod(0o644)
@@ -82,17 +107,17 @@ class LockUpdate(unittest.TestCase):
             "with Path(os.environ['FIXTURE_REQUESTS']).open('a') as log:\n"
             "    log.write(json.dumps(args) + '\\n')\n"
             "if args[:2] == ['pr', 'list']:\n"
-            "    atomic = 'automation/atomic-authelia-pnpm-hash' in args\n"
+            "    atomic = 'automation/atomic-cleanup' in args\n"
             "    print('123' if (root/'atomic-pr').exists() else '' if atomic else os.environ['FIXTURE_PR'])\n"
             "elif args[:2] == ['pr', 'create']:\n"
-            "    if 'automation/atomic-authelia-pnpm-hash' in args:\n"
+            "    if 'automation/atomic-cleanup' in args:\n"
             "        (root/'atomic-pr').write_text('123')\n"
             "    elif os.environ['FIXTURE_LATE_BRANCH_RACE'] == '1':\n"
             "        subprocess.run(['git', '--git-dir', remote, 'update-ref', "
             "'refs/heads/automation/flake-lock', os.environ['FIXTURE_MAIN']], check=True)\n"
             "    print('https://github.com/fixture/nix/pull/123')\n"
             "elif args[:2] == ['pr', 'view']:\n"
-            "    sha = subprocess.check_output(['git','--git-dir',remote,'rev-parse','automation/atomic-authelia-pnpm-hash'], text=True).strip()\n"
+            "    sha = subprocess.check_output(['git','--git-dir',remote,'rev-parse','automation/atomic-cleanup'], text=True).strip()\n"
             "    print(sha)\n"
             "elif args and args[0] == 'api':\n"
             "    endpoint = next(arg for arg in args if arg.startswith('repos/'))\n"
@@ -103,11 +128,17 @@ class LockUpdate(unittest.TestCase):
             "        sys.exit(0)\n"
             "    if endpoint.endswith('/commits/nixos-unstable'):\n"
             "        print(json.dumps({'sha':'channel'})); sys.exit(0)\n"
+            "    if '/pulls/24055' in endpoint:\n"
+            "        print(json.dumps({'merged': True, 'merge_commit_sha': 'fix'})); sys.exit(0)\n"
+            "    if '/contents/' in endpoint:\n"
+            "        import base64\n"
+            "        body = b'rev = \"fix\";'\n"
+            "        print(json.dumps({'content': base64.b64encode(body).decode()})); sys.exit(0)\n"
             "    if 'actions/runs/21/jobs' in endpoint:\n"
             "        print('1' if (root/'dispatched-atomic').exists() else '0'); sys.exit(0)\n"
             "    if 'actions/runs/21' in endpoint:\n"
             "        print('success' if '.conclusion' in args else 'completed'); sys.exit(0)\n"
-            "    if 'branch=automation/atomic-authelia-pnpm-hash' in args:\n"
+            "    if 'branch=automation/atomic-cleanup' in args:\n"
             "        if 'pr-title.yml/runs' in endpoint:\n"
             "            print('1' if (root/'dispatched-atomic-title').exists() else '0')\n"
             "        elif 'ci.yml/runs' in endpoint and (root/'dispatched-atomic').exists(): print('21')\n"
@@ -142,7 +173,7 @@ class LockUpdate(unittest.TestCase):
             "        print('1\\tin_progress\\t')\n"
             "elif args[:2] == ['workflow', 'run']:\n"
             "    ref = args[args.index('--ref') + 1]\n"
-            "    key = ('atomic-title' if args[2] == 'pr-title.yml' else 'atomic') if ref == 'automation/atomic-authelia-pnpm-hash' else ('title' if args[2] == 'pr-title.yml' else ('main' if ref == 'main' else 'candidate'))\n"
+            "    key = ('atomic-title' if args[2] == 'pr-title.yml' else 'atomic') if ref == 'automation/atomic-cleanup' else ('title' if args[2] == 'pr-title.yml' else ('main' if ref == 'main' else 'candidate'))\n"
             "    if os.environ[f'FIXTURE_{key.upper().replace(chr(45), chr(95))}_DISPATCH_FAIL'] == '1':\n"
             "        sys.exit(1)\n"
             "    (root / f'dispatched-{key}').write_text('1')\n"
@@ -398,34 +429,38 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.main_sha(), self.main)
         self.assertFalse(any(r[0] == "api" and any(a.endswith('/approve') for a in r) for r in self.requests))
 
-    def test_atomic_candidate_requires_review_and_never_auto_approves(self):
+    def test_atomic_candidate_carries_cleanup_and_arms_automerge(self):
         result = self.update(atomic_ready=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.main_sha(), self.main)
-        atomic = self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-authelia-pnpm-hash")
-        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "automation/atomic-authelia-pnpm-hash:flake.lock"), lock_fixture("new"))
-        module = self.git("--git-dir", str(self.remote), "show", "automation/atomic-authelia-pnpm-hash:modules/_services/authelia.nix")
-        self.assertNotIn("autheliaPackage", module)
-        self.assertIn("package = pkgs.authelia;", module)
+        self.assertEqual(self.main_sha(), self.main, "GitHub merges the armed candidate, not this workflow")
+        atomic = self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-cleanup")
+        self.assertEqual(self.git("--git-dir", str(self.remote), "show", "automation/atomic-cleanup:flake.lock"), lock_fixture("new"))
+        arr = self.git("--git-dir", str(self.remote), "show", "automation/atomic-cleanup:modules/aspects/services/arr.nix")
+        self.assertEqual(arr, "keep")
         self.assertEqual(
             {r[2] for r in self.requests if r[:2] == ["workflow", "run"]
-             and r[r.index("--ref") + 1] == "automation/atomic-authelia-pnpm-hash"},
+             and r[r.index("--ref") + 1] == "automation/atomic-cleanup"},
             {"ci.yml", "pr-title.yml"},
         )
+        ci_dispatch = next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]
+                           and r[r.index("--ref") + 1] == "automation/atomic-cleanup")
+        self.assertIn("upstream_watcher=qbittorrent", ci_dispatch)
         self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r) for r in self.requests))
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--auto" in r for r in self.requests),
+                        "the atomic candidate must be merge-automated")
 
     def test_interrupted_atomic_dispatch_retries_without_rewriting_branch(self):
         first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
         self.assertNotEqual(first.returncode, 0)
-        original = self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-authelia-pnpm-hash")
+        original = self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-cleanup")
         self.git("switch", "main", cwd=self.checkout)
         second = self.update(change=False)
         self.assertEqual(second.returncode, 0, second.stderr)
         self.assertEqual(self.main_sha(), self.main)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-authelia-pnpm-hash"), original)
+        self.assertEqual(self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-cleanup"), original)
         self.assertEqual([r[2] for r in self.requests if r[:2] == ["workflow", "run"]], ["ci.yml"])
-        self.assertIn("build_arm_authelia=true", next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]))
+        self.assertIn("upstream_watcher=qbittorrent",
+                      next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]))
 
     def test_lock_publisher_shell_is_parseable(self):
         # Workflow YAML checks alone do not parse the embedded bash script.
