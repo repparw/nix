@@ -8,7 +8,7 @@
         i18n.extraLocaleSettings.LC_MONETARY = "es_AR.UTF-8";
 
         time.timeZone = "America/Argentina/Buenos_Aires";
-        # Chromium/QtWebEngine apps (e.g. zapzap/WhatsApp) show UTC times unless
+        # Chromium apps (e.g. Helium webapps) show UTC times unless
         # TZ is explicitly exported, even with correct /etc/localtime.
         environment.variables.TZ = config.time.timeZone;
 
