@@ -78,8 +78,14 @@
   },
   "moonshine-pr227": {
     "issue": 147,
-    "mode": "host-owned",
-    "input": "nixpkgs"
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "moonshine-pr227.patch",
+    "validation": [
+      "source-guard",
+      "package-build",
+      "generated-unit"
+    ]
   },
   "sonarr-jellyfin": {
     "mode": "host-owned",

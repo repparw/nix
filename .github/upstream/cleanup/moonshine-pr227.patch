@@ -1,0 +1,436 @@
+diff --git a/modules/_packages/moonshine-pr227/default.nix b/modules/_packages/moonshine-pr227/default.nix
+deleted file mode 100644
+index bca8cfe5..00000000
+--- a/modules/_packages/moonshine-pr227/default.nix
++++ /dev/null
+@@ -1,23 +0,0 @@
+-# Temporary alpha-only test build tracking #147. Carries upstream PR227 plus
+-# the local reload guard so the running service behaves exactly like the
+-# drop-in experiment it replaces. Retire via the moonshine-pr227 cleanup
+-# candidate once the pinned upstream source contains both; do not rebase
+-# these patches onto a moved Moonshine version — publish the cleanup instead.
+-{
+-  moonshine,
+-}:
+-
+-moonshine.overrideAttrs (old: {
+-  pname = "moonshine-pr227-reload-fix";
+-  patches = (old.patches or [ ]) ++ [
+-    ./upstream-227.patch
+-    ./reload-fix.patch
+-  ];
+-  # The validated test build ran the moonshine-core test suite; keep it as
+-  # part of the package so every rebuild re-proves the guard.
+-  doCheck = true;
+-  cargoTestFlags = [
+-    "-p"
+-    "moonshine-core"
+-  ];
+-})
+diff --git a/modules/_packages/moonshine-pr227/reload-fix.patch b/modules/_packages/moonshine-pr227/reload-fix.patch
+deleted file mode 100644
+index 0fc70c22..00000000
+--- a/modules/_packages/moonshine-pr227/reload-fix.patch
++++ /dev/null
+@@ -1,19 +0,0 @@
+---- a/moonshine-core/src/session/application.rs
+-+++ b/moonshine-core/src/session/application.rs
+-@@ -484,7 +484,15 @@
+- 					.deserialize()
+- 					.map_err(|e| tracing::error!("Failed to deserialize UnitRemoved signal: {e}"))?;
+- 				if id == unit_name {
+--					return Ok("removed".to_string());
+-+					// Reloading systemd emits UnitRemoved even for running units.
+-+					match current_unit_state(conn, unit_path).await {
+-+						Ok(state) => {
+-+							if let Some(state) = terminal_state(state.as_str()) {
+-+								return Ok(state.to_string());
+-+							}
+-+						},
+-+						Err(()) => return Ok("removed".to_string()),
+-+					}
+- 				}
+- 			},
+- 		}
+diff --git a/modules/_packages/moonshine-pr227/upstream-227.patch b/modules/_packages/moonshine-pr227/upstream-227.patch
+deleted file mode 100644
+index d024114b..00000000
+--- a/modules/_packages/moonshine-pr227/upstream-227.patch
++++ /dev/null
+@@ -1,317 +0,0 @@
+-diff --git a/moonshine-core/src/session/compositor/color_management.rs b/moonshine-core/src/session/compositor/color_management.rs
+-index c26b6e83..65ba9ab9 100644
+---- a/moonshine-core/src/session/compositor/color_management.rs
+-+++ b/moonshine-core/src/session/compositor/color_management.rs
+-@@ -26,6 +26,7 @@ use smithay::reexports::wayland_protocols::wp::color_representation::v1::server:
+- };
+- use smithay::reexports::wayland_server::protocol::wl_surface::WlSurface;
+- use smithay::reexports::wayland_server::{Client, DataInit, Dispatch, DisplayHandle, GlobalDispatch, New, Resource};
+-+use smithay::wayland::compositor::{Cacheable, with_states};
+- 
+- use crate::session::compositor::frame::{FrameColorSpace, HdrMetadata};
+- use crate::session::compositor::state::MoonshineCompositor;
+-@@ -230,10 +231,24 @@ impl SwapchainColor {
+- 	}
+- }
+- 
+-+/// A surface's `wp_color_management` image description. It is double-buffered
+-+/// with the rest of the surface state, so it takes effect with the commit that
+-+/// carries it and not with whichever commit is applied next.
+-+#[derive(Debug, Default, Clone, Copy)]
+-+struct SurfaceImageDescription(Option<ImageDescription>);
+-+
+-+impl Cacheable for SurfaceImageDescription {
+-+	fn commit(&mut self, _dh: &DisplayHandle) -> Self {
+-+		*self
+-+	}
+-+
+-+	fn merge_into(self, into: &mut Self, _dh: &DisplayHandle) {
+-+		*into = self;
+-+	}
+-+}
+-+
+- /// Tracks per-surface color space declarations.
+- pub(crate) struct ColorManagementState {
+--	/// Pending image description per surface (applied on next commit).
+--	pending: HashMap<WlSurface, Option<ImageDescription>>,
+- 	/// Current (committed) image description per surface.
+- 	current: HashMap<WlSurface, ImageDescription>,
+- 	/// Current image description per surface from gamescope/moonshine swapchain.
+-@@ -255,7 +270,6 @@ impl ColorManagementState {
+- 			);
+- 
+- 		Self {
+--			pending: HashMap::new(),
+- 			current: HashMap::new(),
+- 			gamescope_current: HashMap::new(),
+- 			hdr,
+-@@ -269,7 +283,7 @@ impl ColorManagementState {
+- 			color_space = ?desc.to_frame_color_space(),
+- 			"set_pending"
+- 		);
+--		self.pending.insert(surface.clone(), Some(desc));
+-+		Self::set_pending_description(surface, Some(desc));
+- 	}
+- 
+- 	/// Gamescope: `swapchain_feedback` carries the color space only.
+-@@ -333,37 +347,46 @@ impl ColorManagementState {
+- 
+- 	/// Clear the pending image description (from `unset_image_description`).
+- 	pub fn unset_pending(&mut self, surface: &WlSurface) {
+--		self.pending.insert(surface.clone(), None);
+-+		Self::set_pending_description(surface, None);
+-+	}
+-+
+-+	fn set_pending_description(surface: &WlSurface, desc: Option<ImageDescription>) {
+-+		// The color management object outlives its surface and is inert after it.
+-+		if surface.is_alive() {
+-+			with_states(surface, |states| {
+-+				states.cached_state.get::<SurfaceImageDescription>().pending().0 = desc;
+-+			});
+-+		}
+- 	}
+- 
+--	/// Apply pending state on surface commit.
+-+	/// Apply the image description of the commit that was just applied.
+- 	pub fn commit(&mut self, surface: &WlSurface) {
+--		// Apply wp_color_management pending state.
+--		if let Some(pending) = self.pending.remove(surface) {
+--			match pending {
+--				Some(desc) => {
+--					// Some clients (e.g. Forza Horizon via vkd3d-proton)
+--					// re-set an identical description every frame; log only
+--					// actual changes to keep debug output readable.
+--					let prev = self.current.insert(surface.clone(), desc);
+--					if prev != Some(desc) {
+--						tracing::debug!(
+--							surface_id = ?surface.id(),
+--							color_space = ?desc.to_frame_color_space(),
+--							num_current = self.current.len(),
+--							"commit: inserting into current"
+--						);
+--					}
+--				},
+--				None => {
+--					if self.current.remove(surface).is_some() {
+--						tracing::debug!(
+--							surface_id = ?surface.id(),
+--							"commit: removing from current"
+--						);
+--					}
+--				},
+--			}
+-+		let committed = with_states(surface, |states| {
+-+			states.cached_state.get::<SurfaceImageDescription>().current().0
+-+		});
+-+		match committed {
+-+			Some(desc) => {
+-+				// Some clients (e.g. Forza Horizon via vkd3d-proton)
+-+				// re-set an identical description every frame; log only
+-+				// actual changes to keep debug output readable.
+-+				let prev = self.current.insert(surface.clone(), desc);
+-+				if prev != Some(desc) {
+-+					tracing::debug!(
+-+						surface_id = ?surface.id(),
+-+						color_space = ?desc.to_frame_color_space(),
+-+						num_current = self.current.len(),
+-+						"commit: inserting into current"
+-+					);
+-+				}
+-+			},
+-+			None => {
+-+				if self.current.remove(surface).is_some() {
+-+					tracing::debug!(
+-+						surface_id = ?surface.id(),
+-+						"commit: removing from current"
+-+					);
+-+				}
+-+			},
+- 		}
+- 	}
+- 
+-@@ -458,7 +481,6 @@ impl ColorManagementState {
+- 
+- 	/// Clean up tracking for a destroyed surface.
+- 	pub fn surface_destroyed(&mut self, surface: &WlSurface) {
+--		self.pending.remove(surface);
+- 		self.current.remove(surface);
+- 		self.gamescope_current.remove(surface);
+- 	}
+-diff --git a/moonshine-core/src/session/compositor/handlers.rs b/moonshine-core/src/session/compositor/handlers.rs
+-index 12fa1325..2fa236ee 100644
+---- a/moonshine-core/src/session/compositor/handlers.rs
+-+++ b/moonshine-core/src/session/compositor/handlers.rs
+-@@ -23,7 +23,9 @@ use smithay::reexports::wayland_server::protocol::wl_seat::WlSeat;
+- use smithay::reexports::wayland_server::protocol::wl_surface::WlSurface;
+- use smithay::utils::{Logical, Point, Rectangle, Serial};
+- use smithay::wayland::buffer::BufferHandler;
+--use smithay::wayland::compositor::{CompositorClientState, CompositorHandler, CompositorState, is_sync_subsurface};
+-+use smithay::wayland::compositor::{
+-+	CompositorClientState, CompositorHandler, CompositorState, add_pre_commit_hook, is_sync_subsurface,
+-+};
+- use smithay::wayland::dmabuf::{DmabufGlobal, DmabufHandler, DmabufState, ImportNotifier};
+- use smithay::wayland::output::OutputHandler;
+- use smithay::wayland::pointer_constraints::{ConstraintRemove, PointerConstraintsHandler, with_pointer_constraint};
+-@@ -42,6 +44,7 @@ use smithay::wayland::seat::WaylandFocus;
+- use smithay::xwayland::XWaylandClientData;
+- 
+- use crate::session::compositor::focus::{KeyboardFocusTarget, WindowFlags, WindowMetadata, get_window_priority_key};
+-+use crate::session::compositor::held_commits;
+- use crate::session::compositor::state::{ClientState, MoonshineCompositor};
+- 
+- // ---------------------------------------------------------------------------
+-@@ -360,6 +363,10 @@ impl CompositorHandler for MoonshineCompositor {
+- 		unreachable!("Client has neither ClientState nor XWaylandClientData");
+- 	}
+- 
+-+	fn new_surface(&mut self, surface: &WlSurface) {
+-+		add_pre_commit_hook::<Self, _>(surface, held_commits::hold_until_rendered);
+-+	}
+-+
+- 	fn commit(&mut self, surface: &WlSurface) {
+- 		// Mark the screen as dirty so the next timer tick renders and sends a frame.
+- 		self.screen_dirty = true;
+-diff --git a/moonshine-core/src/session/compositor/held_commits.rs b/moonshine-core/src/session/compositor/held_commits.rs
+-new file mode 100644
+-index 00000000..cbf24c4f
+---- /dev/null
+-+++ b/moonshine-core/src/session/compositor/held_commits.rs
+-@@ -0,0 +1,126 @@
+-+//! Holding client commits until their buffer is rendered.
+-+//!
+-+//! A client may commit a DMA-BUF while its GPU is still drawing into it. The
+-+//! kernel tracks that work as fences on the buffer. The pre-commit hook here
+-+//! takes a snapshot of the write fences at commit time and blocks the commit
+-+//! until they have signaled, so a frame is only captured once the client has
+-+//! finished drawing it.
+-+//!
+-+//! Fences added after the commit are left out on purpose. Drivers attach them
+-+//! for later work that never touches the committed frame (amdgpu marks every
+-+//! buffer a submission lists as written), so following the buffer's live state
+-+//! holds a commit long after its own rendering finished.
+-+
+-+use std::os::fd::{AsRawFd, BorrowedFd, FromRawFd, OwnedFd};
+-+
+-+use smithay::reexports::calloop::generic::Generic;
+-+use smithay::reexports::calloop::{Interest, Mode, PostAction};
+-+use smithay::reexports::wayland_server::protocol::wl_surface::WlSurface;
+-+use smithay::reexports::wayland_server::{DisplayHandle, Resource};
+-+use smithay::wayland::compositor::{
+-+	Barrier, BufferAssignment, CompositorHandler, SurfaceAttributes, add_blocker, with_states,
+-+};
+-+use smithay::wayland::dmabuf::get_dmabuf;
+-+
+-+use crate::session::compositor::state::MoonshineCompositor;
+-+
+-+/// Pre-commit hook: hold the commit until its buffer is rendered.
+-+pub(crate) fn hold_until_rendered(state: &mut MoonshineCompositor, _: &DisplayHandle, surface: &WlSurface) {
+-+	let dmabuf = with_states(surface, |states| {
+-+		match states.cached_state.get::<SurfaceAttributes>().pending().buffer.as_ref() {
+-+			Some(BufferAssignment::NewBuffer(buffer)) => get_dmabuf(buffer).ok().cloned(),
+-+			_ => None,
+-+		}
+-+	});
+-+	let Some(dmabuf) = dmabuf else {
+-+		return;
+-+	};
+-+
+-+	// One blocker for each plane still being written; the commit applies once
+-+	// all of them are released.
+-+	for fence in dmabuf.handles().filter_map(export_pending) {
+-+		let blocker = Barrier::new(false);
+-+		let source = Generic::new(fence, Interest::READ, Mode::OneShot);
+-+		let inserted = state.handle.insert_source(source, {
+-+			let (blocker, surface) = (blocker.clone(), surface.clone());
+-+			move |_, _, state| {
+-+				blocker.signal();
+-+				release(state, &surface);
+-+				Ok(PostAction::Remove)
+-+			}
+-+		});
+-+		if inserted.is_ok() {
+-+			add_blocker(surface, blocker);
+-+		}
+-+	}
+-+}
+-+
+-+/// Apply a commit whose blocker has cleared.
+-+fn release(state: &mut MoonshineCompositor, surface: &WlSurface) {
+-+	let Some(client) = surface.client() else {
+-+		return;
+-+	};
+-+	let dh = state.display_handle.clone();
+-+	state.client_compositor_state(&client).blocker_cleared(state, &dh);
+-+	// Applying the commit releases the buffer it replaced. A client waiting
+-+	// for that buffer would otherwise idle until the next tick.
+-+	let _ = state.display_handle.flush_clients();
+-+}
+-+
+-+// TODO: Smithay's `Dmabuf::generate_blocker` polls the buffer itself, so it
+-+// also waits for the later fences. A snapshot like this one belongs there.
+-+
+-+/// The write fences a DMA-BUF plane carries right now, as a sync file that
+-+/// becomes readable once they have all signaled.
+-+///
+-+/// `None` if they already have, or if the kernel cannot export them (before
+-+/// 6.0). The commit is then not held.
+-+fn export_pending(plane: BorrowedFd<'_>) -> Option<OwnedFd> {
+-+	#[repr(C)]
+-+	struct ExportSyncFile {
+-+		flags: u32,
+-+		fd: i32,
+-+	}
+-+	/// `DMA_BUF_SYNC_READ` — not exposed by `libc`. Selects the fences a
+-+	/// reader of the buffer has to wait for.
+-+	const SYNC_READ: u32 = 1;
+-+	/// `DMA_BUF_IOCTL_EXPORT_SYNC_FILE`, that is
+-+	/// `_IOWR('b', 2, struct dma_buf_export_sync_file)` — not exposed by `libc`.
+-+	const EXPORT_SYNC_FILE: u64 = 0xC008_6202;
+-+
+-+	// A readable buffer has no write pending. That is the usual case, and it
+-+	// needs no export. If the poll fails, the export decides.
+-+	let mut poll = libc::pollfd {
+-+		fd: plane.as_raw_fd(),
+-+		events: libc::POLLIN,
+-+		revents: 0,
+-+	};
+-+	// SAFETY: `poll` points at one valid `pollfd`.
+-+	if unsafe { libc::poll(&mut poll, 1, 0) } == 1 {
+-+		return None;
+-+	}
+-+
+-+	let mut request = ExportSyncFile {
+-+		flags: SYNC_READ,
+-+		fd: -1,
+-+	};
+-+	// SAFETY: `plane` is an open fd and `request` matches the ioctl's argument layout.
+-+	let exported = unsafe { libc::ioctl(plane.as_raw_fd(), EXPORT_SYNC_FILE as _, &mut request) } == 0;
+-+	// SAFETY: the ioctl succeeded, so `request.fd` is a new fd owned by this process.
+-+	exported.then(|| unsafe { OwnedFd::from_raw_fd(request.fd) })
+-+}
+-+
+-+#[cfg(test)]
+-+mod tests {
+-+	use super::*;
+-+	use std::os::fd::AsFd;
+-+	use std::os::unix::net::UnixStream;
+-+
+-+	#[test]
+-+	fn plane_whose_fences_cannot_be_exported_is_not_waited_for() {
+-+		// A socket with nothing to read polls like a buffer that is still being
+-+		// written, and rejects the export like a kernel before 6.0 does.
+-+		let (plane, _peer) = UnixStream::pair().unwrap();
+-+		assert!(export_pending(plane.as_fd()).is_none());
+-+	}
+-+}
+-diff --git a/moonshine-core/src/session/compositor/mod.rs b/moonshine-core/src/session/compositor/mod.rs
+-index 29791828..6217f53a 100644
+---- a/moonshine-core/src/session/compositor/mod.rs
+-+++ b/moonshine-core/src/session/compositor/mod.rs
+-@@ -10,6 +10,7 @@ mod focus;
+- pub(crate) mod frame;
+- mod gamescope_swapchain;
+- mod handlers;
+-+mod held_commits;
+- pub(crate) mod input;
+- mod protocols;
+- mod scaling;
+diff --git a/modules/aspects/moonshine-pr227-test.nix b/modules/aspects/moonshine-pr227-test.nix
+deleted file mode 100644
+index 6364de55..00000000
+--- a/modules/aspects/moonshine-pr227-test.nix
++++ /dev/null
+@@ -1,41 +0,0 @@
+-{
+-  den,
+-  lib,
+-  ...
+-}:
+-{
+-  # Temporary alpha-only Moonshine test build tracking #147 (upstream PR227
+-  # plus the local reload guard). This replaces the external
+-  # 91-pr227-test.conf drop-ins and candidate GC root with reviewed config:
+-  # the generated unit selects the test package directly, deploy-rs owns
+-  # activation and rollback, and retirement is the moonshine-pr227 cleanup
+-  # candidate (CI-published once the pinned upstream source carries PR227
+-  # and the UnitRemoved reload guard). Keep behavior identical to the
+-  # drop-in it replaces: same package, same environment.
+-  den.aspects.moonshine-pr227-test.nixos =
+-    {
+-      lib,
+-      pkgs,
+-      ...
+-    }:
+-    {
+-      nixpkgs.overlays = [
+-        (final: prev: {
+-          moonshine-pr227 = final.callPackage ../_packages/moonshine-pr227 {
+-            moonshine = prev.moonshine;
+-          };
+-        })
+-      ];
+-
+-      services.moonshine.package = pkgs.moonshine-pr227;
+-
+-      # Environment parity with the retired drop-in: the user session bus
+-      # and runtime dir the test build expects, plus the experiment's
+-      # stream-pipeline debug logging.
+-      systemd.services.moonshine.environment = {
+-        XDG_RUNTIME_DIR = "/run/user/1000";
+-        DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/user/1000/bus";
+-        MOONSHINE_LOG = lib.mkForce "moonshine=info,moonshine_core::session::stream::video::pipeline=debug";
+-      };
+-    };
+-}
+diff --git a/modules/entities.nix b/modules/entities.nix
+index 5b1a5f1b..b8970e71 100644
+--- a/modules/entities.nix
++++ b/modules/entities.nix
+@@ -10,7 +10,6 @@
+           den.aspects.gaming
+           den.aspects.streaming
+           den.aspects.cliamp
+-          den.aspects.moonshine-pr227-test
+           den.aspects.ai._.t3code-nightly
+           den.aspects.ai._.opencode-v2-primary
+         ];
