@@ -79,6 +79,12 @@ jobs:
             -k test_real_nix_evaluation_of_probe_attributes
           python3 .github/scripts/upstream-publish.test.py
           python3 .github/scripts/upstream-release-readiness.test.py
+          # Exercise recovery fixtures before the longer fleet-cli derivation.
+          # This also catches malformed Python mock strings early.
+          python3 modules/scripts/lock-update.test.py \
+            .github/workflows/lock-update.yml \
+            .github/workflows/ci.yml \
+            .github/workflows/revision-validation.yml
       - name: Upload check logs
         if: always()
         uses: actions/upload-artifact@v4

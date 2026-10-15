@@ -200,7 +200,7 @@ class LockUpdate(unittest.TestCase):
             "        (root/'atomic-manifest').write_text('validate sha=' + params['expected_sha'] +\n"
             "            ' watchers=' + params.get('upstream_watcher', 'none') +\n"
             "            ' arm=' + params.get('build_arm_authelia', 'false'))\n"
-            "elif args[:2] == ['run', 'watch']:\n
+            "elif args[:2] == ['run', 'watch']:\n"
             "    sys.exit(1 if os.environ['FIXTURE_TITLE_CI'] == 'failure' else 0)\n"
         )
         gh.chmod(0o755)
