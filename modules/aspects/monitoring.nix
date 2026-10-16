@@ -24,6 +24,59 @@
         ];
       };
 
+      # Ship the host's systemd journal to the central Loki instance.
+      # Entries already sent persist on Epsilon across Pi reboots even
+      # though the Pi journal remains volatile.
+      services.alloy = {
+        enable = true;
+        extraFlags = [
+          "--server.http.listen-addr=127.0.0.1:12345"
+          "--disable-reporting"
+        ];
+      };
+
+      environment.etc."alloy/config.alloy".text = ''
+        // Journald metadata is internal until explicitly promoted to labels.
+        // Keep labels low-cardinality (never PID, cursor, command line).
+        loki.relabel "journal" {
+          forward_to = []
+
+          rule {
+            source_labels = ["__journal__systemd_unit"]
+            target_label  = "unit"
+          }
+          rule {
+            source_labels = ["__journal_priority_keyword"]
+            target_label  = "level"
+          }
+          rule {
+            source_labels = ["__journal_syslog_identifier"]
+            target_label  = "identifier"
+          }
+        }
+
+        loki.source.journal "host" {
+          forward_to    = [loki.secretfilter.journal.receiver]
+          relabel_rules = loki.relabel.journal.rules
+          labels        = { host = "${config.networking.hostName}", source = "journald" }
+          max_age       = "12h"
+        }
+
+        // Redact common leaked credentials. This is best-effort, not
+        // proof that arbitrary sensitive content cannot be collected.
+        loki.secretfilter "journal" {
+          forward_to    = [loki.write.epsilon.receiver]
+          redact_percent = 100
+        }
+
+        loki.write "epsilon" {
+          endpoint {
+            url                 = "http://${if isCollector then "127.0.0.1" else epsilon}:3100/loki/api/v1/push"
+            max_backoff_retries = 0
+          }
+        }
+      '';
+
       systemd.tmpfiles.rules = [
         "d /var/lib/node-exporter/textfile 0755 root root - -"
       ];
@@ -80,6 +133,55 @@
           ];
         };
 
+        # Single-process Loki with local TSDB index and chunk storage.
+        # Retention is time-based, not a hard size cap.
+        services.loki = {
+          enable = true;
+          configuration = {
+            auth_enabled = false; # Private WireGuard peers plus localhost only.
+            server = {
+              http_listen_address = "0.0.0.0";
+              http_listen_port = 3100;
+            };
+            common = {
+              path_prefix = "/var/lib/loki";
+              ring = {
+                instance_addr = "127.0.0.1";
+                kvstore.store = "inmemory";
+              };
+              replication_factor = 1;
+            };
+            schema_config.configs = [
+              {
+                from = "2024-01-01";
+                store = "tsdb";
+                object_store = "filesystem";
+                schema = "v13";
+                index = {
+                  prefix = "index_";
+                  period = "24h";
+                };
+              }
+            ];
+            storage_config.filesystem.directory = "/var/lib/loki/chunks";
+            limits_config = {
+              retention_period = "168h"; # 7 days
+              max_query_lookback = "168h";
+            };
+            compactor = {
+              working_directory = "/var/lib/loki/compactor";
+              retention_enabled = true;
+              delete_request_store = "filesystem";
+            };
+          };
+        };
+
+        # Loki has no authentication in single-tenant mode. Only the
+        # private home tunnel and these two source hosts may ingest.
+        networking.firewall.extraInputRules = ''
+          iifname "wg-home" ip saddr { ${cfg.hostAddresses.pi}, ${cfg.hostAddresses.alpha} } tcp dport 3100 accept comment "private fleet Alloy to Loki"
+        '';
+
         services.grafana = {
           enable = true;
           openFirewall = false;
@@ -118,6 +220,15 @@
                   isDefault = true;
                   editable = false;
                 }
+                {
+                  name = "Loki";
+                  type = "loki";
+                  access = "proxy";
+                  url = "http://127.0.0.1:3100";
+                  uid = "fleet-loki";
+                  isDefault = false;
+                  editable = false;
+                }
               ];
             };
             dashboards.settings = {
@@ -149,6 +260,12 @@
             directory = "/var/lib/grafana";
             user = "grafana";
             group = "grafana";
+            mode = "0750";
+          }
+          {
+            directory = "/var/lib/loki";
+            user = "loki";
+            group = "loki";
             mode = "0750";
           }
           {
