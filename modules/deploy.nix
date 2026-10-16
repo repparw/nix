@@ -91,6 +91,7 @@ let
         gawk
         jq
         nix
+        nix-output-monitor
         openssh
         python3
         systemd
