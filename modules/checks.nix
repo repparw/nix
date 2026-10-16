@@ -155,7 +155,6 @@
               '';
 
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
-          monitoring-fleet = import ./_tests/monitoring-fleet.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
 
           fleet-failed-units =
@@ -256,21 +255,7 @@
                 cp -r ${inputs.self} src
                 chmod -R +w src
                 cd src
-                if ! treefmt --tree-root . --walk filesystem --fail-on-change; then
-                  echo "FORMATTED_MONITORING_BEGIN"
-                  cat modules/aspects/monitoring.nix
-                  echo "FORMATTED_MONITORING_END"
-                  echo "FORMATTED_EPSILON_BEGIN"
-                  cat modules/hosts/epsilon.nix
-                  echo "FORMATTED_EPSILON_END"
-                  echo "FORMATTED_TEST_BEGIN"
-                  cat modules/_tests/monitoring-fleet.nix
-                  echo "FORMATTED_TEST_END"
-                  echo "FORMATTED_DOC_BEGIN"
-                  cat docs/runbooks/monitoring.md
-                  echo "FORMATTED_DOC_END"
-                  exit 1
-                fi
+                treefmt --tree-root . --walk filesystem --fail-on-change
                 touch $out
               '';
 

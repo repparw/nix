@@ -43,8 +43,8 @@ independent monitoring of Epsilon, and an acceptable resolution/clear policy.
 - Textfile metrics can be published to `/var/lib/fleet-metrics/textfile`.
 - Prometheus keeps 30 days of metrics with a 3 GB storage retention limit.
   Loki keeps 7 days of filesystem-backed TSDB log chunks and has a global
-  ingestion limit of 0.02 MB/s with a 1 MB burst. This is an *ingress
-  budget*, **not a strict on-disk quota**: sustained peak writes correspond
+  ingestion limit of 0.02 MB/s with a 1 MB burst. This is an _ingress
+  budget_, **not a strict on-disk quota**: sustained peak writes correspond
   to approximately 12 GiB over a week before index/compactor overhead.
 - Epsilon runs the existing **disk-watch** script every 5 minutes for
   `/persist` (warning at 70%, critical at 85%) and sends Discord alerts
@@ -53,9 +53,8 @@ independent monitoring of Epsilon, and an acceptable resolution/clear policy.
 - Epsilon uses explicit `/persist` binds for Loki, Prometheus and Grafana,
   including Grafana encryption credentials. The monitoring data is not yet
   copied to the offsite restic repository.
-- Only *host* journald entries are collected by this initial pipeline.
+- Only _host_ journald entries are collected by this initial pipeline.
   Individual systemd-nspawn container journals require separate collection.
-
 
 ## Pi volatile journal preservation
 
@@ -139,8 +138,8 @@ before expecting browser access.
    typical and high journal load before deploying broadly. Reduce/filter
    inputs if needed.
 10. Reboot Epsilon, confirm previous metrics, Loki log history, and Grafana
-   login persist, and confirm incoming remote-write samples resume from all
-   three Alloy agents. Verify the old Discord alerts still work.
+    login persist, and confirm incoming remote-write samples resume from all
+    three Alloy agents. Verify the old Discord alerts still work.
 
 **Security:** no unauthenticated Prometheus or Loki API endpoints should
 be reachable from the public internet. Prometheus listens on all IPv4

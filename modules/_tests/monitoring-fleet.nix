@@ -4,7 +4,11 @@
   pkgs,
 }:
 let
-  hosts = [ "alpha" "pi" "epsilon" ];
+  hosts = [
+    "alpha"
+    "pi"
+    "epsilon"
+  ];
   cfg = host: inputs.self.nixosConfigurations.${host}.config;
   alloyConfig = host: (cfg host).environment.etc."alloy/config.alloy".text;
   alphaMounts = [
@@ -16,21 +20,33 @@ let
   allAgents = lib.all (host: (cfg host).services.alloy.enable) hosts;
   receiverTargets =
     (cfg "epsilon").modules.monitoring.agent.receiverHost == "127.0.0.1"
-    && lib.all (
-      host:
-      (cfg host).modules.monitoring.agent.receiverHost
-      == (cfg host).modules.services.hostAddresses.epsilon
-    ) [ "alpha" "pi" ];
+    &&
+      lib.all
+        (
+          host:
+          (cfg host).modules.monitoring.agent.receiverHost == (cfg host)
+          .modules.services.hostAddresses.epsilon
+        )
+        [
+          "alpha"
+          "pi"
+        ];
   centralizedServer =
     (cfg "epsilon").services.prometheus.enable
     && (cfg "epsilon").services.loki.enable
     && (cfg "epsilon").services.grafana.enable
-    && lib.all (
-      host:
-      !(cfg host).services.prometheus.enable
-      && !(cfg host).services.loki.enable
-      && !(cfg host).services.grafana.enable
-    ) [ "alpha" "pi" ];
+    &&
+      lib.all
+        (
+          host:
+          !(cfg host).services.prometheus.enable
+          && !(cfg host).services.loki.enable
+          && !(cfg host).services.grafana.enable
+        )
+        [
+          "alpha"
+          "pi"
+        ];
   selfTelemetry = lib.all (
     host:
     lib.hasInfix ''prometheus.scrape "alloy"'' (alloyConfig host)

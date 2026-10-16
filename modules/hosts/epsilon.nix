@@ -75,7 +75,11 @@
           enable = true;
           interval = "*:0/5";
           mounts = [
-            { mount = "/persist"; warn = 70; crit = 85; }
+            {
+              mount = "/persist";
+              warn = 70;
+              crit = 85;
+            }
           ];
         };
 

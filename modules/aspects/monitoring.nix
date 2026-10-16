@@ -15,8 +15,10 @@
         "/run/credentials"
         "/var/lib/docker"
         "/var/lib/containers/storage"
-      ] ++ cfg.extraExcludedMounts;
-      excludedMountsRegex = "^(" + lib.concatStringsSep "|" (map lib.escapeRegex excludedMounts) + ")($|/)";
+      ]
+      ++ cfg.extraExcludedMounts;
+      excludedMountsRegex =
+        "^(" + lib.concatStringsSep "|" (map lib.escapeRegex excludedMounts) + ")($|/)";
     in
     {
       options.modules.monitoring.agent = {
@@ -33,104 +35,104 @@
       };
 
       config = {
-      # Ship the host's systemd journal to the central Loki instance.
-      # Entries already sent persist on Epsilon across Pi reboots even
-      # though the Pi journal remains volatile.
-      services.alloy = {
-        enable = true;
-        extraFlags = [ "--disable-reporting" ];
-      };
+        # Ship the host's systemd journal to the central Loki instance.
+        # Entries already sent persist on Epsilon across Pi reboots even
+        # though the Pi journal remains volatile.
+        services.alloy = {
+          enable = true;
+          extraFlags = [ "--disable-reporting" ];
+        };
 
-      environment.etc."alloy/config.alloy".text = ''
-        // The same Alloy process collects node_exporter metrics. This
-        // exporter is internal to Alloy, so no per-host metrics port is open.
-        prometheus.exporter.unix "node" {
-          enable_collectors = ["systemd"]
+        environment.etc."alloy/config.alloy".text = ''
+          // The same Alloy process collects node_exporter metrics. This
+          // exporter is internal to Alloy, so no per-host metrics port is open.
+          prometheus.exporter.unix "node" {
+            enable_collectors = ["systemd"]
 
-          systemd {
-            enable_restarts = true
-            start_time     = true
+            systemd {
+              enable_restarts = true
+              start_time     = true
+            }
+
+            textfile {
+              directory = "/var/lib/fleet-metrics/textfile"
+            }
+
+            filesystem {
+              mount_points_exclude = "${excludedMountsRegex}"
+            }
           }
 
-          textfile {
-            directory = "/var/lib/fleet-metrics/textfile"
+          prometheus.scrape "node" {
+            targets         = prometheus.exporter.unix.node.targets
+            forward_to      = [prometheus.remote_write.epsilon.receiver]
+            job_name        = "node"
+            scrape_interval = "30s"
           }
 
-          filesystem {
-            mount_points_exclude = "${excludedMountsRegex}"
+          // Alloy's own /metrics exposes local scrape, remote-write and
+          // Loki pipeline counters. Scrape over loopback; no public agent API.
+          prometheus.scrape "alloy" {
+            targets         = [{ "__address__" = "127.0.0.1:12345" }]
+            forward_to      = [prometheus.remote_write.epsilon.receiver]
+            job_name        = "alloy"
+            scrape_interval = "30s"
           }
-        }
 
-        prometheus.scrape "node" {
-          targets         = prometheus.exporter.unix.node.targets
-          forward_to      = [prometheus.remote_write.epsilon.receiver]
-          job_name        = "node"
-          scrape_interval = "30s"
-        }
+          prometheus.remote_write "epsilon" {
+            external_labels = { host = "${config.networking.hostName}" }
 
-        // Alloy's own /metrics exposes local scrape, remote-write and
-        // Loki pipeline counters. Scrape over loopback; no public agent API.
-        prometheus.scrape "alloy" {
-          targets         = [{ "__address__" = "127.0.0.1:12345" }]
-          forward_to      = [prometheus.remote_write.epsilon.receiver]
-          job_name        = "alloy"
-          scrape_interval = "30s"
-        }
-
-        prometheus.remote_write "epsilon" {
-          external_labels = { host = "${config.networking.hostName}" }
-
-          endpoint {
-            url = "http://${cfg.receiverHost}:9090/api/v1/write"
+            endpoint {
+              url = "http://${cfg.receiverHost}:9090/api/v1/write"
+            }
           }
-        }
 
-        // Journald metadata is internal until explicitly promoted to labels.
-        // Keep labels low-cardinality (never PID, cursor, command line).
-        loki.relabel "journal" {
-          forward_to = []
+          // Journald metadata is internal until explicitly promoted to labels.
+          // Keep labels low-cardinality (never PID, cursor, command line).
+          loki.relabel "journal" {
+            forward_to = []
 
-          rule {
-            source_labels = ["__journal__systemd_unit"]
-            target_label  = "unit"
+            rule {
+              source_labels = ["__journal__systemd_unit"]
+              target_label  = "unit"
+            }
+            rule {
+              source_labels = ["__journal_priority_keyword"]
+              target_label  = "level"
+            }
+            rule {
+              source_labels = ["__journal_syslog_identifier"]
+              target_label  = "identifier"
+            }
           }
-          rule {
-            source_labels = ["__journal_priority_keyword"]
-            target_label  = "level"
+
+          loki.source.journal "host" {
+            forward_to    = [loki.secretfilter.journal.receiver]
+            relabel_rules = loki.relabel.journal.rules
+            labels        = { host = "${config.networking.hostName}", source = "journald" }
+            max_age       = "12h"
           }
-          rule {
-            source_labels = ["__journal_syslog_identifier"]
-            target_label  = "identifier"
+
+          // Redact common leaked credentials. This is best-effort, not
+          // proof that arbitrary sensitive content cannot be collected.
+          loki.secretfilter "journal" {
+            forward_to    = [loki.write.epsilon.receiver]
+            redact_percent = 100
           }
-        }
 
-        loki.source.journal "host" {
-          forward_to    = [loki.secretfilter.journal.receiver]
-          relabel_rules = loki.relabel.journal.rules
-          labels        = { host = "${config.networking.hostName}", source = "journald" }
-          max_age       = "12h"
-        }
-
-        // Redact common leaked credentials. This is best-effort, not
-        // proof that arbitrary sensitive content cannot be collected.
-        loki.secretfilter "journal" {
-          forward_to    = [loki.write.epsilon.receiver]
-          redact_percent = 100
-        }
-
-        loki.write "epsilon" {
-          endpoint {
-            url                 = "http://${cfg.receiverHost}:3100/loki/api/v1/push"
-            max_backoff_retries = 0
+          loki.write "epsilon" {
+            endpoint {
+              url                 = "http://${cfg.receiverHost}:3100/loki/api/v1/push"
+              max_backoff_retries = 0
+            }
           }
-        }
-      '';
+        '';
 
-      # Writers of future fleet-specific .prom gauges use this shared
-      # directory, independent of the telemetry agent implementation.
-      systemd.tmpfiles.rules = [
-        "d /var/lib/fleet-metrics/textfile 0755 root root - -"
-      ];
+        # Writers of future fleet-specific .prom gauges use this shared
+        # directory, independent of the telemetry agent implementation.
+        systemd.tmpfiles.rules = [
+          "d /var/lib/fleet-metrics/textfile 0755 root root - -"
+        ];
       };
     };
 
