@@ -99,12 +99,16 @@
             };
             bindMounts =
               lib.optionalAttrs mediaBind {
-                "/data/hdd" = {
-                  hostPath = "${cfg.mediaPortalDir}/hdd";
-                  isReadOnly = false;
-                };
-                "/data/seagate" = {
-                  hostPath = "${cfg.mediaPortalDir}/seagate";
+                # Bind the portal PARENT, not its automount submounts. The
+                # recursive bind shares the autofs instances with the
+                # container: reads keep the media mounts alive, and when the
+                # containers are idle the submounts expire and unmount inside
+                # the running container, so the disks can spin down without
+                # stopping anything. Binding the submounts directly pins the
+                # filesystem and turns every idle expiry into a container
+                # stop - see f99a21793.
+                "/data" = {
+                  hostPath = cfg.mediaPortalDir;
                   isReadOnly = false;
                 };
               }
@@ -128,10 +132,10 @@
               hostPath = "${cfg.configDir}/${name}";
               isReadOnly = false;
             };
-            "/data/torrents" = {
-              hostPath = "${cfg.rootDir}/torrents";
-              isReadOnly = false;
-            };
+            # /data/torrents comes from the parent portal bind once the host
+            # dir lives at mediaPortalDir/torrents. Do not add a nested bind
+            # here: a bind whose target sits inside the parent bind's tree is
+            # what f99a21793 had to flatten away.
           };
         };
       in
@@ -255,8 +259,10 @@
                 hostPath = "${cfg.configDir}/qbittorrent";
                 isReadOnly = false;
               };
+              # Flat bind of the torrents dir inside the portal tree; not
+              # nested under a parent media bind (see mkServarrContainer).
               "/data/torrents" = {
-                hostPath = "${cfg.rootDir}/torrents";
+                hostPath = "${cfg.mediaPortalDir}/torrents";
                 isReadOnly = false;
               };
             };
