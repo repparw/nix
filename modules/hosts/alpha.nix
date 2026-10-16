@@ -345,8 +345,6 @@
                   ];
                 };
               };
-              # Sync complete staged subtrees: --delete now prunes removed
-              # allowlist leaves and the legacy whole-.config contents too.
               bupstate = {
                 destination = "/mnt/hdd/backup";
                 sources = [

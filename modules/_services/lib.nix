@@ -3,9 +3,6 @@
   pkgs,
 }:
 let
-  # Shared Discord poster for fleet services. Reads the bot token and channel
-  # from the sops-provided hermes-env; `post` prints the message id on
-  # success and fails otherwise, so callers can keep retryable state.
   discordNotifyText = ''
     if [ "$#" -lt 1 ]; then
       echo "usage: discord-notify post <content> | delete <message-id>" >&2

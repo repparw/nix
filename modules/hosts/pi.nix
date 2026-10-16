@@ -53,10 +53,6 @@
         # host-owned upstream waits (Sonarr/Jellyfin, Moonshine PR227) after
         # each Alpha convergence and on its own timer.
         modules.fleet-readiness.enable = true;
-        # Tmpfs-root landing (phase 2): proven twice by the standalone trial in
-        # ~/impermanence-pi-test/evidence (thread dd50ec1a). /persist is the
-        # former SD root partition; the initrd check-persistence-state guard
-        # verifies the prepared identity before activation.
         modules.persistence.enable = true;
         modules.persistence.mutableAccounts = true;
         modules.backup.paths = [
@@ -139,8 +135,6 @@
         services.journald.settings.Journal = {
           Storage = "volatile";
           RuntimeMaxUse = "50M";
-          # Preserve the host's existing cap drop-in. Storage is volatile, so
-          # SystemMaxUse is currently dormant; RuntimeMaxUse remains active.
           SystemMaxUse = "64M";
         };
 
@@ -167,9 +161,6 @@
         };
 
         fileSystems = {
-          # Root is volatile; the former SD root partition is /persist (see
-          # the phase-1 mounts below). Impermanence binds the prepared state
-          # back into place at boot after check-persistence-state verifies it.
           "/" = {
             device = "tmpfs";
             fsType = "tmpfs";
@@ -185,12 +176,6 @@
             fsType = "vfat";
           };
 
-          # Backing store for host persistence (phase 1 of the tmpfs-root
-          # migration): the existing SD ext4 root, mounted at /persist while
-          # / stays ext4. Proves the mount deploys cleanly before
-          # impermanence is enabled in phase 2. Layout mirrors the trial
-          # configuration that booted twice with PASS (evidence in
-          # ~/impermanence-pi-test/evidence, thread dd50ec1a).
           "/persist" = {
             device = "/dev/disk/by-label/NIXOS_SD";
             fsType = "ext4";
