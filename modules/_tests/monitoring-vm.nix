@@ -213,6 +213,7 @@ pkgs.testers.runNixOSTest {
         server.succeed("systemctl start loki")
         server.wait_until_succeeds("curl -fsS http://127.0.0.1:3101/ready")
         retry(lambda _last: len(logs(outage_marker)) > 0, timeout_seconds=120)
+        retry(lambda _last: len(prom('loki_write_batch_retries_total{host="pi",job="alloy",exported_host="10.5.5.3:3100"} > 0')) == 1, timeout_seconds=120)
 
     with subtest("shipped volatile journal survives client reboot"):
         client.shutdown()

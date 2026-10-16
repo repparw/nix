@@ -102,7 +102,8 @@
           // Alloy's own /metrics exposes local scrape, remote-write and
           // Loki pipeline counters. Scrape over loopback; no public agent API.
           prometheus.scrape "alloy" {
-            targets         = [{ "__address__" = "127.0.0.1:12345" }]
+            targets         = [{ "__address__" = "127.0.0.1:12345", "host" = "${config.networking.hostName}" }]
+            honor_labels    = false
             forward_to      = [prometheus.remote_write.epsilon.receiver]
             job_name        = "alloy"
             scrape_interval = "30s"
