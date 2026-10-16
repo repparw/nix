@@ -151,12 +151,12 @@ pkgs.testers.runNixOSTest {
         if timestamp is not None:
             params["time"] = timestamp
         url = "http://127.0.0.1:9091/api/v1/query?" + urllib.parse.urlencode(params)
-        return json.loads(server.succeed("curl -fsS " + shlex.quote(url)))["data"]["result"]
+        return json.loads(server.succeed("curl -fsS --max-time 30 " + shlex.quote(url)))["data"]["result"]
 
     def logs(marker):
         params = {"query": '{host="pi"} |= "' + marker + '"', "limit": 50}
         url = "http://127.0.0.1:3101/loki/api/v1/query_range?" + urllib.parse.urlencode(params)
-        values = json.loads(server.succeed("curl -fsS " + shlex.quote(url)))["data"]["result"]
+        values = json.loads(server.succeed("curl -fsS --max-time 30 " + shlex.quote(url)))["data"]["result"]
         return [line for stream in values for _, line in stream["values"]]
 
     start_all()
@@ -192,14 +192,14 @@ pkgs.testers.runNixOSTest {
     with subtest("remote write, journal redaction, and datasource provisioning"):
         client.succeed("printf 'monitoring_fixture_value 42\\n' > /var/lib/fleet-metrics/textfile/test.prom")
         client.wait_until_succeeds("curl -fsS http://127.0.0.1:12345/metrics")
-        retry(lambda: len(prom('node_uname_info{host="pi"}')) == 1, timeout_seconds=120)
-        retry(lambda: len(prom('up{job="alloy",host="pi"} == 1')) == 1, timeout_seconds=120)
-        retry(lambda: len(prom('monitoring_fixture_value{host="pi"} == 42')) == 1, timeout_seconds=120)
+        retry(lambda _last: len(prom('node_uname_info{host="pi"}')) == 1, timeout_seconds=120)
+        retry(lambda _last: len(prom('up{job="alloy",host="pi"} == 1')) == 1, timeout_seconds=120)
+        retry(lambda _last: len(prom('monitoring_fixture_value{host="pi"} == 42')) == 1, timeout_seconds=120)
         timestamp = server.succeed("date +%s").strip()
         marker = "monitoring-journal-" + secrets.token_hex(6)
         fake_token = "ghp_" + secrets.token_hex(18)
         client.succeed("logger -t monitoring-fixture " + shlex.quote(marker + " " + fake_token))
-        retry(lambda: len(logs(marker)) > 0, timeout_seconds=90)
+        retry(lambda _last: len(logs(marker)) > 0, timeout_seconds=90)
         assert all(fake_token not in line for line in logs(marker))
         server.succeed("curl -fsS -H 'Host: metrics.example.test' --user \"admin:$(cat /var/lib/grafana/admin-password)\" http://127.0.0.1:3001/api/datasources | jq -e 'length == 2 and any(.[]; .uid == \"fleet-prom\") and any(.[]; .uid == \"fleet-loki\")'")
         client.fail("systemctl is-active mnt-hdd.mount")
@@ -212,7 +212,7 @@ pkgs.testers.runNixOSTest {
         client.sleep(5)
         server.succeed("systemctl start loki")
         server.wait_until_succeeds("curl -fsS http://127.0.0.1:3101/ready")
-        retry(lambda: len(logs(outage_marker)) > 0, timeout_seconds=120)
+        retry(lambda _last: len(logs(outage_marker)) > 0, timeout_seconds=120)
 
     with subtest("shipped volatile journal survives client reboot"):
         client.shutdown()

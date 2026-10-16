@@ -201,7 +201,7 @@ pkgs.runCommand "check-monitoring-fleet"
   ''
     ${lib.concatMapStringsSep "\n" (
       host:
-      "alloy validate --stability.level=experimental ${pkgs.writeText "alloy-${host}.alloy" (alloyConfig host)}"
+      "alloy validate ${lib.escapeShellArgs (lib.filter (lib.hasPrefix "--stability.level=") (cfg host).services.alloy.extraFlags)} ${pkgs.writeText "alloy-${host}.alloy" (alloyConfig host)}"
     ) hosts}
     loki -verify-config -config.file=${lokiConfiguration}
     promtool test rules ${queryTests}
