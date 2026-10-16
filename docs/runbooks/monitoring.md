@@ -69,9 +69,12 @@ do not make the Loki API public.
 
 ## First-time login
 
-Grafana generates its own 32-byte random admin password in
-`/var/lib/grafana/admin-password` on the first service start. It is not
-placed in Git or the Nix store. After activating Epsilon:
+Grafana generates a random admin password in
+`/var/lib/grafana/admin-password` and a separate encryption secret in
+`/var/lib/grafana/secret-key` on first start. Neither value is placed
+in Git or the Nix store. Both files persist across Epsilon reboots.
+Never regenerate or rotate the secret key casually: existing encrypted
+Grafana data depends on it. After activating Epsilon:
 
 ```sh
 ssh root@epsilon 'cat /var/lib/grafana/admin-password'

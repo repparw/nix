@@ -197,6 +197,7 @@
               # File provider keeps the password out of the Nix store. The
               # first-start secret is generated below and persisted on disk.
               admin_password = "$__file{/var/lib/grafana/admin-password}";
+              secret_key = "$__file{/var/lib/grafana/secret-key}";
               cookie_secure = true;
               disable_gravatar = true;
             };
@@ -247,9 +248,14 @@
         };
 
         systemd.services.grafana.preStart = lib.mkBefore ''
+          # These values MUST remain stable when Epsilon reboots. Grafana's
+          # secret key encrypts stored datasource and session secrets.
+          umask 077
           if [ ! -s /var/lib/grafana/admin-password ]; then
-            umask 077
             ${pkgs.coreutils}/bin/head -c 32 /dev/urandom | ${pkgs.coreutils}/bin/base64 -w0 > /var/lib/grafana/admin-password
+          fi
+          if [ ! -s /var/lib/grafana/secret-key ]; then
+            ${pkgs.coreutils}/bin/head -c 48 /dev/urandom | ${pkgs.coreutils}/bin/base64 -w0 > /var/lib/grafana/secret-key
           fi
         '';
 
