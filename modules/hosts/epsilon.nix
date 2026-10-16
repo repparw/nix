@@ -14,7 +14,7 @@
       den.aspects.fleet-unit-state
       den.aspects.deploy-target
       den.aspects.passwordless-sudo
-      den.aspects.backup
+      den.aspects.epsilon._.backup
       den.aspects.persistence
       den.aspects.service-host
       den.aspects.nixos-services._.edge
@@ -22,6 +22,25 @@
       den.aspects.nixos-services._.archisteamfarm
       den.aspects.nixos-services._.paperless
     ];
+    provides.backup = {
+      includes = [ den.aspects.host-backup ];
+      nixos = { config, ... }: {
+        modules.backup.exports = {
+          miniflux = {
+            unit = "miniflux-backup.service";
+            machine = "miniflux";
+            path = config.modules.services.definitions.miniflux.backup.path;
+            pattern = "miniflux-backup-*.sql.gz";
+          };
+          paperless = {
+            unit = "paperless-exporter.service";
+            machine = "paperless";
+            path = config.modules.services.definitions.paperless.backup.path;
+            pattern = "manifest.json";
+          };
+        };
+      };
+    };
     nixos =
       {
         config,
@@ -48,16 +67,10 @@
 
         modules.services.bridgePrefix = "10.231.137";
 
-        modules.backup.hostRecovery.enable = true;
         modules.backup.paths = [
           "/home/containers/config"
           "/var/lib/ddclient"
         ];
-        # Tmpfs-root landing (phase 2): mirrors the pi landing (#180 + #182).
-        # /persist is the former ext4 root partition; the initrd
-        # check-persistence-state guard verifies the prepared identity before
-        # activation. /nix is on the backing volume and is bound into the
-        # new root in initrd, before activation.
         modules.persistence.enable = true;
         modules.persistence.mutableAccounts = true;
         # The aspect's random-seed symlink cannot transition on this host: /
@@ -115,8 +128,6 @@
             ];
           };
         };
-        # The store bind must be up before the initrd activation script runs,
-        # mirroring the aspect's sysroot-var-lib-nixos wiring.
         boot.initrd.systemd.mounts = [
           {
             where = "/sysroot/nix";
@@ -140,9 +151,6 @@
         ];
 
         fileSystems = {
-          # Root is volatile; the former ext4 root partition is /persist (see
-          # the phase-1 mounts below). Impermanence binds the prepared state
-          # back into place at boot after check-persistence-state verifies it.
           "/" = {
             device = "tmpfs";
             fsType = "tmpfs";
@@ -153,13 +161,6 @@
             ];
           };
 
-          # /nix is mounted early in initrd, not via fileSystems.
-          # The explicit GRUB storePath above handles its bind mount.
-
-          # Backing store for host persistence (phase 1 of the tmpfs-root
-          # migration): the existing ext4 root, mounted at /persist while /
-          # stays ext4. Proves the mount deploys before impermanence is
-          # enabled in phase 2; mirrors the pi landing (#178).
           "/persist" = {
             device = "/dev/disk/by-partuuid/daa9a574-99f0-449e-b43a-463650870efb";
             fsType = "ext4";

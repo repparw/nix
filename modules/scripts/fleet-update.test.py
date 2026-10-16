@@ -75,11 +75,9 @@ elif name == 'ssh':
             print('error: preparation build failed', file=sys.stderr)
             sys.exit(1)
         print(f'/nix/store/{host}-profile-26.11')
-    elif command[0] == 'nom' and command[1] == 'build':
-        if config.get('prepare_failure') == host:
-            print('error: preparation build failed', file=sys.stderr)
-            sys.exit(1)
-        print(f'/nix/store/{host}-profile-26.11')
+    elif command[0] == 'nom':
+        print('bash: nom: command not found', file=sys.stderr)
+        sys.exit(127)
     elif command[0] == 'nixos-version':
         print(revision if current == 'new' else 'b' * 40)
     elif command[0] == 'nvd' and command[1] == 'diff':
@@ -103,6 +101,8 @@ elif name == 'ssh':
         with (root / "received").open("a") as received:
             received.write(json.dumps(payload) + "\n")
         print(json.dumps({"event_id": "wrong" if config.get("wrong_ack") else payload["event_id"]}))
+elif name == 'nom':
+    sys.stderr.write(sys.stdin.read())
 elif name == 'systemctl':
     if config.get('readiness_failure'):
         sys.exit(1)
@@ -126,7 +126,7 @@ class Deployment(unittest.TestCase):
         stub = self.bin / "stub"
         stub.write_text(f"#!{sys.executable}\n" + STUB)
         stub.chmod(0o755)
-        for name in ["git", "df", "curl", "nix", "deploy", "ssh", "sleep", "systemctl"]:
+        for name in ["git", "df", "curl", "nix", "deploy", "ssh", "sleep", "systemctl", "nom"]:
             (self.bin / name).symlink_to(stub)
         (self.bin / "python3").symlink_to(sys.executable)
         self.script = self.root / "fleet-update"

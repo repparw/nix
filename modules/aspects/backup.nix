@@ -3,24 +3,78 @@
   den.aspects.backup = {
     includes = [ den.aspects.backup._.restic ];
     nixos =
-      { lib, ... }:
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
+      let
+        exports = config.modules.backup.exports;
+        exportReport = "/var/lib/backup-exports/offsite.json";
+        backup = config.services.restic.backups.offsite;
+        resticCommand = lib.escapeShellArgs (
+          lib.optionals backup.inhibitsSleep [
+            "${pkgs.systemd}/bin/systemd-inhibit"
+            "--mode=block"
+            "--who=restic"
+            "--what=sleep"
+            "--why=Scheduled backup offsite"
+          ]
+          ++ [ (lib.getExe backup.package) ]
+          ++ lib.concatMap (option: [
+            "-o"
+            option
+          ]) backup.extraOptions
+        );
+        prepareExports = pkgs.writeShellApplication {
+          name = "prepare-offsite-exports";
+          runtimeInputs = [
+            pkgs.python3
+            pkgs.systemd
+          ];
+          text = ''
+            exec python3 ${../scripts/prepare-backup-exports.py} ${pkgs.writeText "backup-exports.json" (builtins.toJSON exports)} ${exportReport}
+          '';
+        };
+      in
       {
         options.modules.backup = {
-          hostRecovery.enable = lib.mkEnableOption "host identity, account, home and container recovery backups";
-          hostRecovery.package = lib.mkOption {
-            type = lib.types.package;
-            readOnly = true;
-            description = "Full filesystem checkpoint and isolated restore verification command.";
-          };
-          hostRecovery.quiesceUnits = lib.mkOption {
+          retentionArgs = lib.mkOption {
             type = lib.types.listOf lib.types.str;
-            default = [ ];
-            description = "Running application units stopped only for an explicit full --quiesce checkpoint.";
+            default = [
+              "--keep-daily 7"
+              "--keep-weekly 4"
+              "--keep-monthly 12"
+            ];
+            description = "Restic forget arguments, applied only after a complete export and successful upload.";
           };
-          hostRecovery.capturePaths = lib.mkOption {
-            type = lib.types.listOf lib.types.str;
-            default = [ ];
-            description = "Application paths archived while quiesceUnits are stopped, before an offsite transfer.";
+          exports = lib.mkOption {
+            description = "Native exports prepared or checked for freshness before the scheduled or manual offsite backup.";
+            default = { };
+            type = lib.types.attrsOf (
+              lib.types.submodule {
+                options = {
+                  unit = lib.mkOption {
+                    type = lib.types.nullOr lib.types.str;
+                    default = null;
+                    description = "Export unit to run, or null to check artifacts produced by the app scheduler.";
+                  };
+                  machine = lib.mkOption {
+                    type = lib.types.nullOr lib.types.str;
+                    default = null;
+                    description = "Nspawn machine containing the export unit, or null for a host unit.";
+                  };
+                  path = lib.mkOption { type = lib.types.str; };
+                  pattern = lib.mkOption { type = lib.types.str; };
+                  maxAgeSeconds = lib.mkOption {
+                    type = lib.types.ints.positive;
+                    default = 3600;
+                    description = "Maximum artifact age. When unit is set, at least one artifact must also be new or refreshed.";
+                  };
+                };
+              }
+            );
           };
           paths = lib.mkOption {
             description = "Directories the offsite restic job covers on this host.";
@@ -41,6 +95,23 @@
             default = [ ];
           };
         };
+        config.systemd.services.restic-backups-offsite.preStart = lib.mkIf (exports != { }) (
+          lib.mkBefore "${lib.getExe prepareExports}\n"
+        );
+        config.systemd.services.restic-backups-offsite.postStart = lib.mkIf (exports != { }) ''
+          ${lib.getExe pkgs.python3} ${../scripts/prepare-backup-exports.py} --check ${exportReport}
+          ${lib.optionalString (config.modules.backup.retentionArgs != [ ]) ''
+            ${resticCommand} unlock
+            ${resticCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
+          ''}
+        '';
+        config.systemd.services.restic-backups-offsite.serviceConfig = lib.mkIf (exports != { }) {
+          StateDirectory = [ "backup-exports" ];
+          StateDirectoryMode = "0700";
+        };
+        config.services.restic.backups.offsite.paths = lib.mkIf (exports != { }) (
+          lib.mkAfter [ exportReport ]
+        );
       };
 
     provides.restic = {
@@ -58,104 +129,8 @@
               bcfg.repository
             else
               "rclone:gd-crypt:restic/${config.networking.hostName}";
-          fullPaths = lib.attrNames (
-            lib.filterAttrs (
-              _: fs:
-              lib.elem fs.fsType [
-                "ext4"
-                "vfat"
-                "btrfs"
-                "xfs"
-              ]
-            ) config.fileSystems
-          );
-          fullExcludes = [
-            "/proc"
-            "/sys"
-            "/dev"
-            "/run"
-            "/tmp"
-            "/var/tmp"
-            "/var/cache/restic-backups-offsite"
-          ]
-          ++ map (swap: swap.device) config.swapDevices
-          ++ map (path: "/var/lib/nixos-containers/*/${path}") [
-            "nix"
-            "proc"
-            "sys"
-            "dev"
-            "run"
-            "tmp"
-          ];
-          recoveryPackage = pkgs.writeShellApplication {
-            name = "host-recovery";
-            runtimeInputs = [
-              pkgs.coreutils
-              pkgs.findutils
-              pkgs.util-linux
-              pkgs.systemd
-              pkgs.restic
-              pkgs.rclone
-              pkgs.jq
-              pkgs.sops
-              pkgs.ssh-to-age
-              pkgs.sqlite
-              pkgs.gnutar
-            ];
-            text = ''
-              export RESTIC_REPOSITORY="''${RESTIC_REPOSITORY:-${repository}}"
-              export RESTIC_PASSWORD_FILE="''${RESTIC_PASSWORD_FILE:-${config.sops.secrets.resticPassword.path}}"
-              export RCLONE_CONFIG="''${RCLONE_CONFIG:-${config.sops.templates."rclone.conf".path}}"
-              export RESTIC_CACHE_DIR="''${RESTIC_CACHE_DIR:-/var/cache/restic-backups-offsite}"
-              export RECOVERY_PATHS_FILE=${pkgs.writeText "recovery-filesystems" (lib.concatLines fullPaths)}
-              export RECOVERY_EXCLUDES_FILE=${pkgs.writeText "recovery-excludes" (lib.concatLines fullExcludes)}
-              export RECOVERY_UNITS_FILE=${pkgs.writeText "recovery-quiesce-units" (lib.concatLines bcfg.hostRecovery.quiesceUnits)}
-              export RECOVERY_CAPTURE_PATHS_FILE=${pkgs.writeText "recovery-capture-paths" (lib.concatLines bcfg.hostRecovery.capturePaths)}
-              export RECOVERY_BOOTSTRAP_FILE=${config.sops.secrets.repparwPasswordHash.sopsFile}
-              ${builtins.readFile ../scripts/host-recovery.sh}
-            '';
-          };
         in
         {
-          environment.systemPackages = lib.optional bcfg.hostRecovery.enable recoveryPackage;
-          modules.backup = lib.mkIf bcfg.hostRecovery.enable {
-            hostRecovery.package = recoveryPackage;
-            paths = [
-              "/etc"
-              "/boot"
-              "/root"
-              "/home/repparw"
-              "/var/lib/nixos"
-              "/var/lib/nixos-containers"
-              "/var/lib/systemd/timers"
-              "/var/lib/host-recovery"
-            ]
-            # --one-file-system stops at nested boot mounts. Include firmware
-            # and EFI filesystems explicitly as well as /boot on the root disk.
-            ++ lib.filter (path: lib.hasPrefix "/boot/" path) fullPaths
-            ++ lib.optional config.services.traefik.enable "/var/lib/traefik";
-            excludes = [
-              "**/.cache/**"
-              "**/node_modules/**"
-              "**/.direnv/**"
-              "**/__pycache__/**"
-              "/home/repparw/.swapfile"
-              "/home/repparw/.local/share/Trash/**"
-            ]
-            ++ map (path: "/var/lib/nixos-containers/*/${path}") [
-              "nix"
-              "proc"
-              "sys"
-              "dev"
-              "run"
-              "tmp"
-            ];
-          };
-
-          systemd.tmpfiles.rules = lib.mkIf bcfg.hostRecovery.enable [
-            "d /var/lib/host-recovery 0700 root root -"
-          ];
-
           sops.secrets = {
             resticPassword = {
               sopsFile = ../../secrets/backup.sops.yaml;
@@ -197,7 +172,6 @@
             initialize = true;
             inhibitsSleep = true;
             paths = bcfg.paths;
-            extraBackupArgs = lib.optionals bcfg.hostRecovery.enable [ "--one-file-system" ];
             exclude = [
               "**/cache/**"
               "**/Cache/**"
@@ -214,11 +188,7 @@
             extraOptions = [
               "rclone.program=${lib.getExe pkgs.rclone}"
             ];
-            pruneOpts = [
-              "--keep-daily 7"
-              "--keep-weekly 4"
-              "--keep-monthly 12"
-            ];
+            pruneOpts = lib.optionals (bcfg.exports == { }) bcfg.retentionArgs;
             checkOpts = [ "--read-data-subset=5%" ];
             timerConfig = {
               OnCalendar = "*-*-* 01:00:00";
@@ -280,4 +250,13 @@
         };
     };
   };
+  perSystem = { pkgs, ... }: {
+    checks.backup-exports =
+      pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; }
+        ''
+          PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
+          touch "$out"
+        '';
+  };
+
 }

@@ -1,112 +1,100 @@
 ---
 type: Runbook
-title: Back up and restore a complete host
-description: Full filesystem checkpoints and isolated restore verification before changing pi or epsilon boot storage.
-when: Read before a root migration, taking a complete pi backup, or testing offsite host recovery.
+title: Restore host state from offsite backups
+description: Inspect and restore pi or epsilon state with native Restic, independently of persistence.
+when: Read before testing an offsite host restore or changing pi or epsilon boot storage.
 resource: modules/aspects/backup.nix
 tags: [runbook, recovery, backups, pi, epsilon, impermanence]
 ---
 
-# Back up and restore a complete host
+# Restore host state from offsite backups
 
-Live root migration is pending because recovery access is SSH only. Complete
-the backup and restore rehearsal first; a successful rehearsal does not make
-a failed initrd recoverable over SSH.
+Use native Restic to inspect and restore the daily offsite snapshots. The
+manual `host-recovery` command has been retired. Existing snapshots and local
+`/var/lib/host-recovery` artifacts remain intact and covered by daily backups.
 
-## Scope and consistency
+## Inspect scope and consistency
 
-The `host-recovery` command is available on pi and epsilon after deploying
-`modules.backup.hostRecovery.enable`. It can also be built and copied as a
-standalone package without activating a generation:
+Before a storage change, inspect the evaluated job and the live mount layout:
 
 ```sh
-nix build .#nixosConfigurations.pi.config.modules.backup.hostRecovery.package --no-link --print-out-paths
+nix eval .#nixosConfigurations.pi.config.services.restic.backups.offsite.paths --json
+nix eval .#nixosConfigurations.pi.config.services.restic.backups.offsite.exclude --json
+findmnt
 ```
 
-`full` backs up each declared ext4, vfat, btrfs or xfs filesystem separately
-with `--one-file-system`. Compare the generated `recovery-filesystems` list
-against `findmnt` before using it on a changed layout: undeclared disks and
-other filesystem types require explicit handling. On pi this covers `/`,
-`/nix`, `/home/repparw` and `/boot/firmware`, including `/boot` on the root
-filesystem, the complete Nix store, caches and old migration archives.
-Pseudo-filesystems, runtime/temporary directories, Restic's cache, swap and
-duplicate container runtime/Nix mounts are excluded. Daily backups have a
-smaller scope and also exclude reproducible caches. They explicitly include
-the separate firmware/EFI mounts so `--one-file-system` does not skip those
-boot files.
+Pi and epsilon include the `host-backup` aspect. It supplies identity and account
+files under `/etc`, `/root`, the whole user home, container roots, NixOS UID
+allocation, timer stamps, legacy recovery artifacts, and Traefik state.
+Host-specific additions cover bound application state and controller state.
+Alpha keeps its separate, narrower policy with prepared application backups.
 
-This is a full file backup, not a raw disk image or atomic whole-system
-snapshot. The helper records partition tables, filesystem IDs, mount layout,
-current/booted system paths and an identity/account checksum manifest under
-root-only `/var/lib/host-recovery`. It also includes the encrypted host
-password bootstrap file. It does not copy unmounted partitions or partition
-boot sectors. Recreate pi's 8 GiB swap file rather than restoring swap contents.
+Daily jobs use `--one-file-system`. Restic compares device IDs: it traverses
+same-device bind mounts but skips nested filesystems on other devices unless
+they are explicit backup roots. Each configured path is its own root, so the
+bind-mounted `/etc`, homes, and container state are included. Nested firmware
+and EFI partitions are included explicitly alongside `/boot`. Compare the
+configured paths with `findmnt` whenever the layout changes.
 
-On pi, `full --quiesce` stops Home Assistant, archives its complete state with
-numeric ownership, modes, ACLs, xattrs and symlinks, compares that archive with
-the stopped source, and restarts HA **before the offsite upload**. Failure
-cleanup also attempts to restart previously running units. `capture` makes
-only the local archive and metadata. HACS and mutable integrations remain
-part of the archive. The ordinary live HA files may change during upload;
-use the separate archive for database-consistent HA recovery.
+Persistence and offsite coverage are separate policies. `/persist` itself is
+not a backup root: undeclared archives beneath it, `/nix/store`, and persistent
+paths outside the configured job remain outside daily scope. Restic does not
+follow symlinks to add their targets. Daily jobs exclude reproducible caches,
+container runtime mounts, and swap. Do not interpret a successful daily job as
+a full-disk image or an atomic application snapshot.
 
-Epsilon has no quiesced application paths configured yet. Its full backup
-preserves live files, but database recovery still requires native exports or
-a separate stopped-service checkpoint. Do not interpret its checkpoint tag
-alone as proof that every database is consistent.
+Use native application backups or exports for consistent database restoration.
+The [scheduled offsite operation](fleet-operations.md) refreshes its registered
+native producers before upload; `fleet backup run [host]` runs that same path.
+Other live pi and epsilon filesystem copies do not stop databases. Old
+`application-state.tar` checkpoints, when present, describe their capture time;
+this change does not refresh them. See [Restore service backups](restore-service-backups.md).
+Before repartitioning or discarding state beyond daily scope, make and verify
+an independent checkpoint of that state and preserve the boot layout.
 
-## Capture and inspect
+## Restore into an isolated directory
 
-Run as root with the generated package (or its absolute store path):
+Run as root on a host with the existing rendered backup credentials. Set
+`SNAPSHOT_ID` to a completed snapshot's hexadecimal ID from `restic snapshots`.
+For example, inspect pi's repository from epsilon:
 
 ```sh
-systemd-run --unit=host-recovery-full --property=Type=oneshot \
-  --property=TimeoutStartSec=2d host-recovery full --quiesce
-systemctl status host-recovery-full.service
-journalctl -u host-recovery-full.service
+export RESTIC_REPOSITORY=rclone:gd-crypt:restic/pi
+export RESTIC_PASSWORD_FILE=/run/secrets/resticPassword
+export RCLONE_CONFIG=/run/secrets/rendered/rclone.conf
+restic snapshots
+restic ls "$SNAPSHOT_ID"
+umask 077
+RESTORE_DIR=$(mktemp -d /var/tmp/host-restore.XXXXXX)
+restic restore --verify "$SNAPSHOT_ID" --target "$RESTORE_DIR"
 ```
 
-The helper holds the fleet update lock to prevent deployment during capture
-and upload. Allow substantial time for the first transfer. Confirm HA is
-active after the local capture. Require successful unit completion and save
-the exact snapshot ID from Restic's JSON summary; a progress report or uploaded
-packs without a completed snapshot do not prove a usable backup. Treat logs
-as private because Restic can include user file paths.
+Confirm the rendered credential paths against the host's evaluated job before
+use. If Restic or rclone is absent from the rescue environment, provide both
+with `nix shell nixpkgs#restic nixpkgs#rclone`. Never print the password or
+rendered rclone configuration. Logs and restored trees contain private data.
+Require a successful restore exit and keep the isolated tree for inspection.
 
-Use the existing rendered rclone configuration and Restic password file;
-never print either. The package defaults to its host's repository. Environment
-overrides `RESTIC_REPOSITORY`, `RESTIC_PASSWORD_FILE`, `RCLONE_CONFIG` and
-`RESTIC_CACHE_DIR` support recovery using another machine's credentials.
-
-## Rehearse restoration off-host
-
-Use epsilon's existing backup credentials to restore a pi snapshot into a
-fresh directory on epsilon, with enough free space for the entire tree and
-the extracted HA checkpoint. No production path is replaced. For example,
-with `SNAPSHOT_ID` set to the completed snapshot's hexadecimal ID:
+Check restored account files, SSH identity, application exports, and numeric
+ownership before considering a real restore. When restoring old checkpoints,
+verify the identity manifest from the restored root and the application manifest
+from its artifact directory, without printing the recorded hashes:
 
 ```sh
-RESTIC_REPOSITORY=rclone:gd-crypt:restic/pi \
-  host-recovery restore-check "$SNAPSHOT_ID"
+(cd "$RESTORE_DIR"; sha256sum --check --quiet var/lib/host-recovery/identity.sha256)
+(cd "$RESTORE_DIR/var/lib/host-recovery"; sha256sum --check --quiet application-state.sha256)
 ```
 
-The command performs a full `restic restore --verify`, checks the restored
-identity/account manifest without printing hashes, converts the restored SSH
-key into a temporary Age identity, and decrypts the restored bootstrap
-ciphertext to `/dev/null`. It removes that temporary identity on exit.
+Run each check only when its manifest exists. Extract a stopped-application archive into
+a separate directory with numeric ownership, ACLs, and xattrs preserved.
+Check SQLite integrity and use the application's native restore validation.
+These checks do not prove external-device connectivity or interactive login.
 
-If present, the HA archive is checksum-verified and extracted separately from
-the live file copy, preserving ownership and metadata. HA's database must
-exist and pass SQLite `integrity_check`. A successful exit reports which
-checks passed and retains the root-only `/var/tmp/host-recovery-restore.*`
-tree for inspection. A failed check also leaves the tree for diagnosis.
-Do not publish it, copy its private keys into the repository, or mistake a
-successful database check for a test of external devices or OIDC login.
-
-Before an eventual real restore, use rescue access, reconcile disk layout and
-firmware requirements, restore state with numeric ownership and attributes,
-and verify the old boot path works. Only then prepare the persistence mounts.
-Do not run partition-table restoration commands against a running host.
+Before a real restore, use rescue access, reconcile disks and firmware, restore
+state with its numeric ownership and attributes, and verify the boot path.
+A successful offsite rehearsal does not make a failed initrd recoverable over
+SSH. Never restore over live paths during a rehearsal or apply partition tables
+to a running host. Recreate swap rather than restoring its contents.
 
 ## Recovery after losing the whole fleet
 

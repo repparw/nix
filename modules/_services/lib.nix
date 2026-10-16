@@ -3,9 +3,6 @@
   pkgs,
 }:
 let
-  # Shared Discord poster for fleet services. Reads the bot token and channel
-  # from the sops-provided hermes-env; `post` prints the message id on
-  # success and fails otherwise, so callers can keep retryable state.
   discordNotifyText = ''
     if [ "$#" -lt 1 ]; then
       echo "usage: discord-notify post <content> | delete <message-id>" >&2
@@ -233,7 +230,7 @@ in
       owner ? null,
       group ? owner,
       retention ? 7,
-      onCalendar ? "daily",
+      onCalendar ? null,
       randomizedDelaySec ? "30min",
       serviceConfig ? { },
     }:
@@ -272,13 +269,15 @@ in
         wantedBy = [ ];
       };
 
-      systemd.timers."${name}-backup" = {
-        description = "Run ${description} backup";
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = onCalendar;
-          Persistent = true;
-          RandomizedDelaySec = randomizedDelaySec;
+      systemd.timers = lib.optionalAttrs (onCalendar != null) {
+        "${name}-backup" = {
+          description = "Run ${description} backup";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = onCalendar;
+            Persistent = true;
+            RandomizedDelaySec = randomizedDelaySec;
+          };
         };
       };
     };

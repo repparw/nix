@@ -56,7 +56,6 @@ let
     # break every live switch; see modules/hosts/pi.nix.
     assert pi.environment.persistence."/persist".files == [ ];
     assert pi.users.mutableUsers;
-    assert pi.modules.backup.hostRecovery.enable;
     assert lib.any (mount: mount.where == "/var/lib/host-recovery") piMounts;
     assert lib.all (path: lib.elem path pi.services.restic.backups.offsite.paths) [
       "/etc"
@@ -65,6 +64,10 @@ let
       "/home/repparw"
       "/var/lib/nixos"
       "/var/lib/nixos-containers"
+      "/var/lib/systemd/timers"
+      "/var/lib/host-recovery"
+      "/home/containers/config"
+      "/var/lib/traefik"
     ];
     assert lib.elem "/home/repparw/.swapfile" pi.services.restic.backups.offsite.exclude;
     assert lib.elem "/var/lib/nixos-containers/*/nix" pi.services.restic.backups.offsite.exclude;
@@ -131,7 +134,6 @@ let
     # during the migration; see modules/hosts/epsilon.nix.
     assert epsilon.environment.persistence."/persist".files == [ ];
     assert epsilon.users.mutableUsers;
-    assert epsilon.modules.backup.hostRecovery.enable;
     assert lib.any (mount: mount.where == "/var/lib/host-recovery") epsilonMounts;
     assert lib.any (mount: mount.where == "/var/lib/credential-remediation") epsilonMounts;
     assert lib.all (path: lib.elem path epsilon.services.restic.backups.offsite.paths) [
@@ -141,6 +143,10 @@ let
       "/home/repparw"
       "/var/lib/nixos"
       "/var/lib/nixos-containers"
+      "/var/lib/systemd/timers"
+      "/var/lib/host-recovery"
+      "/home/containers/config"
+      "/var/lib/traefik"
     ];
     assert lib.elem "/home/repparw/.swapfile" epsilon.services.restic.backups.offsite.exclude;
     assert lib.elem "/var/lib/nixos-containers/*/nix" epsilon.services.restic.backups.offsite.exclude;
@@ -153,7 +159,18 @@ let
     };
 in
 assert !(hosts.alpha.config.modules ? persistence);
-assert !hosts.alpha.config.modules.backup.hostRecovery.enable;
+assert !(hosts.alpha.options.modules.backup ? hostRecovery);
+assert hosts.alpha.config.services.restic.backups.offsite.extraBackupArgs == [ ];
+assert lib.all (
+  host:
+  !(lib.any (p: (p.meta.mainProgram or "") == "host-recovery") host.config.environment.systemPackages)
+) (lib.attrValues hosts);
+assert lib.all
+  (config: config.services.restic.backups.offsite.extraBackupArgs == [ "--one-file-system" ])
+  [
+    pi
+    epsilon
+  ];
 assert lib.elem "/boot/firmware" pi.services.restic.backups.offsite.paths;
 assert lib.elem "/boot/efi" epsilon.services.restic.backups.offsite.paths;
 assert

@@ -158,7 +158,6 @@ in
                       fi
                     done
                   fi
-                  # Keep only the three most recent pre-update snapshots.
                   find "$snapshotRoot" -maxdepth 1 -name 'pre-*' -type d | sort -r | tail -n +4 | xargs -r rm -rf
                   printf '%s' "${base.name}" > "$marker"
                 fi
