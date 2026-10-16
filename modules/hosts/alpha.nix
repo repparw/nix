@@ -7,7 +7,7 @@
   den.aspects.alpha = {
     includes = [
       den.aspects.fleet-unit-state
-      den.aspects.backup
+      den.aspects.alpha._.backup
       den.aspects.btrfs-maintenance
       den.aspects.gaming
       den.aspects.logid
@@ -21,6 +21,31 @@
       den.aspects.nixos-services._.free-model-watch
       den.aspects.deploy-target
     ];
+
+    provides.backup = {
+      includes = [ den.aspects.backup ];
+      nixos = { config, ... }: {
+        modules.backup.exports = {
+          alpha-home = {
+            unit = "home-state-backup-offsite.service";
+            path = "/var/lib/home-state-backup/offsite";
+            pattern = ".export-complete";
+          };
+          jellyfin = {
+            unit = "jellyfin-backup.service";
+            path = config.modules.services.definitions.jellyfin.backup.path;
+            pattern = "jellyfin-backup-*.zip";
+          };
+        }
+        // lib.genAttrs [ "sonarr" "radarr" "prowlarr" "bazarr" ] (name: {
+          path =
+            config.modules.services.definitions.${name}.backup.path
+            + lib.optionalString (name != "bazarr") "/scheduled";
+          pattern = "${name}_backup_*.zip";
+          maxAgeSeconds = 26 * 60 * 60;
+        });
+      };
+    };
 
     nixos =
       {
@@ -109,7 +134,7 @@
         ];
         stateRoot = "/var/lib/home-state-backup";
         # Each consumer has its own staging tree. A failed export never replaces
-        # its previous tree, and ExecStartPre/backupPrepareCommand abort the job.
+        # its previous tree.
         prepareHomeState = pkgs.writeShellScript "prepare-home-state" ''
           set -euo pipefail
           export PATH=${
@@ -147,6 +172,7 @@
             rsync --archive --relative --ignore-missing-args -- \
               ${lib.escapeShellArg "${home}/./.config/sops/age/keys.txt"} "$temporary/"
           fi
+          date --iso-8601=ns > "$temporary/.export-complete"
           rm -rf "$destination"
           mv "$temporary" "$destination"
         '';
@@ -332,18 +358,7 @@
                   delete = true;
                 };
               };
-              buprpi = {
-                destination = "${config.modules.services.backupDir}/pi-services/";
-                sources = [
-                  "repparw@${den.hosts.aarch64-linux.pi.serviceAddress}:/var/lib/pi-services-backup/current/"
-                ];
-                settings = {
-                  archive = true;
-                  "copy-links" = true;
-                  "delete-after" = true;
-                  "rsync-path" = "sudo -n pi-services-backup-send";
-                };
-              };
+
             };
           };
         };
@@ -353,15 +368,11 @@
           StateDirectoryMode = "0700";
           ExecStartPre = "${prepareHomeState} hdd";
         };
-        systemd.services.restic-backups-offsite.serviceConfig = {
+        systemd.services.home-state-backup-offsite.serviceConfig = {
+          Type = "oneshot";
           StateDirectory = "home-state-backup";
           StateDirectoryMode = "0700";
-        };
-        services.restic.backups.offsite.backupPrepareCommand = "${prepareHomeState} offsite";
-        # Use the account that owns the destination and has SSH access to pi.
-        systemd.services.rsync-job-buprpi.serviceConfig = {
-          User = lib.mkForce "repparw";
-          Group = lib.mkForce config.users.users.repparw.group;
+          ExecStart = "${prepareHomeState} offsite";
         };
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl
