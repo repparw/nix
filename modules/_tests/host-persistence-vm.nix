@@ -24,30 +24,6 @@ let
         printf 'password: "%s"\n' "$hash" > secret.yaml
         sops --encrypt --age "$recipient" --input-type yaml --output-type yaml secret.yaml > "$out/secret.yaml"
       '';
-  recovery = pkgs.writeShellApplication {
-    name = "host-recovery";
-    runtimeInputs = with pkgs; [
-      coreutils
-      findutils
-      util-linux
-      systemd
-      restic
-      rclone
-      jq
-      sops
-      ssh-to-age
-      sqlite
-      gnutar
-    ];
-    text = ''
-      export RECOVERY_PATHS_FILE=${pkgs.writeText "test-backup-paths" "/etc\n/home/repparw\n/var/lib/nixos\n/var/lib/test-service\n/var/lib/auto-update\n/var/lib/host-recovery\n"}
-      export RECOVERY_EXCLUDES_FILE=${pkgs.writeText "test-backup-excludes" ""}
-      export RECOVERY_UNITS_FILE=${pkgs.writeText "test-backup-units" "recovery-test-writer.service\n"}
-      export RECOVERY_CAPTURE_PATHS_FILE=${pkgs.writeText "test-capture-paths" "/home/repparw/services/hass\n"}
-      export RECOVERY_BOOTSTRAP_FILE=${fixture}/secret.yaml
-      ${builtins.readFile ../scripts/host-recovery.sh}
-    '';
-  };
   common = { config, ... }: {
     imports = [
       persistence
@@ -88,16 +64,25 @@ let
       hashedPasswordFile = config.sops.secrets.bootstrap.path;
     };
     services.openssh.enable = true;
-    systemd.services.recovery-test-writer = {
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStart = "${pkgs.coreutils}/bin/true";
-      };
+    services.restic.backups.persistence-test = {
+      repository = "/persist/test-repository";
+      passwordFile = "/run/restic-password";
+      initialize = true;
+      timerConfig = null;
+      extraBackupArgs = [ "--one-file-system" ];
+      paths = [
+        "/etc"
+        "/home/repparw"
+        "/var/lib/nixos"
+        "/var/lib/test-service"
+        "/var/lib/auto-update"
+        "/var/lib/host-recovery"
+        "/var/lib/systemd/timers"
+      ];
     };
     environment.systemPackages = [
-      recovery
+      pkgs.sops
+      pkgs.ssh-to-age
       pkgs.restic
       pkgs.sqlite
       pkgs.acl
@@ -155,7 +140,6 @@ pkgs.testers.runNixOSTest {
   };
   testScript = ''
     import os
-    import re
     import subprocess
 
     machine.start(allow_reboot=True)
@@ -170,6 +154,7 @@ pkgs.testers.runNixOSTest {
     machine.succeed("sqlite3 /var/lib/test-service/data.db 'create table state(value); insert into state values (42);'")
     machine.succeed("setfattr -n user.recovery -v preserved /home/repparw/state; setfacl -m u:nobody:r /home/repparw/state")
     machine.succeed("touch /var/lib/systemd/timers/stamp-test.timer; echo ephemeral > /should-disappear")
+    machine.succeed("echo legacy-checkpoint > /var/lib/host-recovery/checkpoint")
 
     with subtest("A real passwd update survives activation and reboot"):
         machine.succeed("printf 'Changed-Test-Only-9876!\\nChanged-Test-Only-9876!\\n' | passwd repparw")
@@ -188,24 +173,33 @@ pkgs.testers.runNixOSTest {
     with subtest("Backup restoration preserves identity, accounts, database and file metadata"):
         machine.succeed("echo test-only-restic-password > /run/restic-password; chmod 0600 /run/restic-password")
         restic = "RESTIC_PASSWORD_FILE=/run/restic-password restic -r /persist/test-repository "
-        machine.succeed(restic + "init")
-        machine.succeed("mkdir -p /home/repparw/services/hass; cp /var/lib/test-service/data.db /home/repparw/services/hass/home-assistant_v2.db")
-        helper = "RESTIC_REPOSITORY=/persist/test-repository RESTIC_PASSWORD_FILE=/run/restic-password host-recovery "
-        machine.succeed(helper + "full --quiesce > /run/backup-result")
-        machine.succeed("systemctl is-active --quiet recovery-test-writer.service; test -s /var/lib/host-recovery/application-state.tar")
+        machine.succeed("systemctl start restic-backups-persistence-test.service")
         snapshot = machine.succeed(restic + "snapshots --latest 1 --json | ${pkgs.jq}/bin/jq -r '.[0].id'").strip()
-        result = machine.succeed(helper + "restore-check " + snapshot)
-        assert "Restored HA database integrity_check passed." in result
-        restored_match = re.search(r"Restored files retained at (\S+)", result)
-        assert restored_match is not None
-        restored = restored_match.group(1)
-        machine.succeed("ln -s " + restored + " /restored")
+        machine.succeed("mkdir -m 0700 /restored")
+        machine.succeed(restic + "restore --verify " + snapshot + " --target /restored")
         machine.succeed("cmp -s /etc/shadow /restored/etc/shadow; cmp -s /etc/ssh/ssh_host_ed25519_key /restored/etc/ssh/ssh_host_ed25519_key")
         machine.succeed("test $(stat -c %a /restored/etc/shadow) = $(stat -c %a /etc/shadow)")
         machine.succeed("test $(stat -c %u:%g /restored/home/repparw/state) = $(stat -c %u:%g /home/repparw/state)")
         machine.succeed("getfattr --only-values -n user.recovery /restored/home/repparw/state | grep -qx preserved")
         machine.succeed("getfacl -cp /home/repparw/state > /run/acl-before; getfacl -cp /restored/home/repparw/state > /run/acl-after; cmp -s /run/acl-before /run/acl-after")
         assert machine.succeed("sqlite3 /restored/var/lib/test-service/data.db 'pragma integrity_check; select value from state;'").strip() == "ok\n42"
+
+        machine.succeed("cmp -s /var/lib/host-recovery/checkpoint /restored/var/lib/host-recovery/checkpoint")
+        machine.succeed("cmp -s /var/lib/auto-update/PAUSE /restored/var/lib/auto-update/PAUSE; test -e /restored/var/lib/systemd/timers/stamp-test.timer")
+        machine.succeed("umask 077; ssh-to-age -private-key -i /restored/etc/ssh/ssh_host_ed25519_key > /run/restored-age-key")
+        machine.succeed("SOPS_AGE_KEY_FILE=/run/restored-age-key sops --decrypt ${fixture}/secret.yaml > /dev/null")
+
+    with subtest("One-file-system follows same-device binds and skips other devices unless explicit"):
+        machine.succeed("mkdir -p /home/repparw/same-device /home/repparw/other-device /persist/nested-state")
+        machine.succeed("echo bind-data > /persist/nested-state/state; mount --bind /persist/nested-state /home/repparw/same-device")
+        machine.succeed("mount -t tmpfs tmpfs /home/repparw/other-device; echo other-data > /home/repparw/other-device/state")
+        machine.succeed(restic + "backup --one-file-system /home/repparw")
+        machine.succeed(restic + "restore --verify latest --target /run/parent-restore")
+        machine.succeed("cmp -s /home/repparw/same-device/state /run/parent-restore/home/repparw/same-device/state")
+        machine.fail("test -e /run/parent-restore/home/repparw/other-device/state")
+        machine.succeed(restic + "backup --one-file-system /home/repparw /home/repparw/other-device")
+        machine.succeed(restic + "restore --verify latest --target /run/explicit-restore")
+        machine.succeed("cmp -s /home/repparw/other-device/state /run/explicit-restore/home/repparw/other-device/state")
 
     with subtest("Abrupt restart retains completed password and state writes"):
         machine.succeed("sync")
