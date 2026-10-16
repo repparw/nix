@@ -44,7 +44,9 @@ container runtime mounts, and swap. Do not interpret a successful daily job as
 a full-disk image or an atomic application snapshot.
 
 Use native application backups or exports for consistent database restoration.
-The live pi and epsilon filesystem copies do not stop databases. Old
+The [scheduled offsite operation](fleet-operations.md) refreshes its registered
+native producers before upload; `fleet backup run [host]` runs that same path.
+Other live pi and epsilon filesystem copies do not stop databases. Old
 `application-state.tar` checkpoints, when present, describe their capture time;
 this change does not refresh them. See [Restore service backups](restore-service-backups.md).
 Before repartitioning or discarding state beyond daily scope, make and verify

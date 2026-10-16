@@ -233,7 +233,7 @@ in
       owner ? null,
       group ? owner,
       retention ? 7,
-      onCalendar ? "daily",
+      onCalendar ? null,
       randomizedDelaySec ? "30min",
       serviceConfig ? { },
     }:
@@ -272,13 +272,15 @@ in
         wantedBy = [ ];
       };
 
-      systemd.timers."${name}-backup" = {
-        description = "Run ${description} backup";
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = onCalendar;
-          Persistent = true;
-          RandomizedDelaySec = randomizedDelaySec;
+      systemd.timers = lib.optionalAttrs (onCalendar != null) {
+        "${name}-backup" = {
+          description = "Run ${description} backup";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = onCalendar;
+            Persistent = true;
+            RandomizedDelaySec = randomizedDelaySec;
+          };
         };
       };
     };
