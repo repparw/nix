@@ -97,7 +97,6 @@ public vhosts with Authelia SSO. Installed in place via nixos-infect
 
 It is the first stage of the fleet's deploy-rs update, before alpha and then pi.
 
-
 Source: `modules/hosts/epsilon.nix`
 
 ## Persistence and backups
@@ -107,7 +106,6 @@ mutable-account policy persists `/etc`; host state and service exports also
 have offsite backups. Local persistence alone does not provide offsite recovery.
 See the [host persistence runbook](runbooks/host-persistence.md) and
 [host recovery runbook](runbooks/host-recovery.md).
-
 
 ## Related
 
