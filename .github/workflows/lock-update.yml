@@ -118,6 +118,171 @@ jobs:
             return 1
           }
 
+          # Recipe paths (without the lock) for a comma-separated watcher list.
+          atomic_recipe_paths() {
+            local watcher
+            for watcher in ${1//,/ }; do
+              if [ "$watcher" = authelia-pnpm-hash ]; then
+                printf '%s\n' modules/_services/authelia.nix
+              else
+                git apply --numstat ".github/upstream/cleanup/$(jq -r --arg w "$watcher" \
+                  '.[$w].cleanup' .github/upstream/watchers.json)" | awk '{print $3}'
+              fi
+            done | sort -u
+          }
+
+          # Trusted-candidate check mirroring verify_lock_pr for the atomic
+          # branch: approve only this verified candidate's own CI and title
+          # runs. Globals: atomic_pr, atomic_revision, atomic_base,
+          # atomic_watchers, atomic_branch.
+          verify_atomic_pr() {
+            local want
+            want=$(printf '%s\n' flake.lock $(atomic_recipe_paths "$atomic_watchers") | sort)
+            if [ "$(git ls-remote --heads origin "$atomic_branch" | cut -f1)" != "$atomic_revision" ] \
+              || [ "$(git diff --name-only "$atomic_base" "$atomic_revision" | sort)" != "$want" ]; then
+              echo 'Atomic candidate changed or contains unexpected files; refusing workflow approval.' >&2
+              return 1
+            fi
+            gh api "repos/$GH_REPO/pulls/$atomic_pr" | jq -e \
+              --arg repo "$GH_REPO" --arg branch "$atomic_branch" --arg sha "$atomic_revision" \
+              '.state == "open" and .head.repo.full_name == $repo
+               and .head.ref == $branch and .head.sha == $sha and .base.ref == "main"' >/dev/null
+          }
+
+          wait_for_atomic_pr_workflow() {
+            local workflow="$1" row run_id status conclusion approved='' attempt=0
+            while [ "$attempt" -lt "$poll_attempts" ]; do
+              row=$(gh api --method GET "repos/$GH_REPO/actions/workflows/$workflow/runs" \
+                -f branch="$atomic_branch" -f head_sha="$atomic_revision" -f event=pull_request \
+                --jq ".workflow_runs | map(select(.pull_requests | any(.number == $atomic_pr))) | sort_by(.run_number) | last // empty")
+              if [ -n "$row" ]; then
+                jq -e --arg sha "$atomic_revision" --arg branch "$atomic_branch" --arg workflow "$workflow" \
+                  '.head_sha == $sha and .head_branch == $branch and .event == "pull_request"
+                   and .path == (".github/workflows/" + $workflow)' <<< "$row" >/dev/null
+                run_id=$(jq -r .id <<< "$row")
+                status=$(jq -r .status <<< "$row")
+                conclusion=$(jq -r '.conclusion // ""' <<< "$row")
+                if [ "$conclusion" = action_required ]; then
+                  if [ "$approved" != "$run_id" ]; then
+                    verify_atomic_pr
+                    gh api --method POST "repos/$GH_REPO/actions/runs/$run_id/approve" >/dev/null
+                    approved=$run_id
+                  fi
+                elif [ "$status" = completed ]; then
+                  if [ "$conclusion" = success ]; then return 0; fi
+                  echo "Required atomic PR workflow $workflow run $run_id concluded $conclusion" >&2
+                  return 1
+                fi
+              fi
+              attempt=$((attempt + 1))
+              sleep "$poll_seconds"
+            done
+            echo "Timed out waiting for required atomic PR workflow $workflow on $atomic_revision" >&2
+            return 1
+          }
+
+          approve_atomic_checks() {
+            wait_for_atomic_pr_workflow ci.yml
+            wait_for_atomic_pr_workflow pr-title.yml
+          }
+
+          # Prove the published tip is automation's own earlier candidate: a
+          # single commit whose non-lock changes equal the recipe applied to
+          # its parent. A tampered or changed candidate needs a human and is
+          # never overwritten, rearmed, or approved. Globals in:
+          # atomic_revision, atomic_base, atomic_watchers.
+          verify_atomic_recipe() {
+            local single names want scratch watcher patch path
+            single=$(git rev-list --count "$atomic_revision^..$atomic_revision")
+            if [ "$single" != 1 ]; then
+              echo "Atomic tip is not a single candidate commit; requires human review." >&2
+              return 1
+            fi
+            want=$(printf '%s\n' flake.lock $(atomic_recipe_paths "$atomic_watchers") | sort)
+            names=$(git diff --name-only "$atomic_base" "$atomic_revision" | sort)
+            if [ "$names" != "$want" ]; then
+              echo "Atomic tip touches unexpected paths; requires human review." >&2
+              return 1
+            fi
+            # Reproduce the recipe on the tip's parent and compare every
+            # cleanup path byte-for-byte with the published tip.
+            scratch=$(mktemp -d "${TMPDIR:-/tmp}/atomic-verify-XXXXXXXX")
+            git worktree add --quiet --detach "$scratch" "$atomic_base"
+            for watcher in ${atomic_watchers//,/ }; do
+              if [ "$watcher" = authelia-pnpm-hash ]; then
+                python3 .github/scripts/upstream-plan.py apply --id "$watcher" \
+                  --module "$scratch/modules/_services/authelia.nix" \
+                || { git worktree remove --force "$scratch"; return 1; }
+              else
+                patch="$(git rev-parse --show-toplevel)/.github/upstream/cleanup/$(jq -r --arg w "$watcher" \
+                  '.[$w].cleanup' .github/upstream/watchers.json)"
+                git -C "$scratch" apply --check "$patch" \
+                && git -C "$scratch" apply "$patch" \
+                || { git worktree remove --force "$scratch"; return 1; }
+              fi
+            done
+            for path in $(atomic_recipe_paths "$atomic_watchers"); do
+              if ! git show "$atomic_revision:$path" | cmp -s - "$scratch/$path"; then
+                echo "Atomic tip differs from the exact cleanup recipe; requires human review." >&2
+                git worktree remove --force "$scratch"
+                return 1
+              fi
+            done
+            git worktree remove --force "$scratch"
+          }
+
+          # Re-plan and re-apply the atomic recipe onto the new main after it
+          # advanced first. The caller proves tip ownership first; anything
+          # else needs a human and is never overwritten. Updates the
+          # atomic_revision and atomic_base globals. $1 is the new main SHA.
+          refresh_atomic_candidate() {
+            local new_main="$1" want scratch watcher rebuilt plan watchers
+            want=$(printf '%s\n' flake.lock $(atomic_recipe_paths "$atomic_watchers") | sort)
+            # Rebuild the candidate on the new main in this checkout: the
+            # planner's readiness probe evaluates this tree's lock.
+            git fetch --no-tags --quiet origin refs/heads/main
+            git switch --quiet --detach "$new_main"
+            nix flake update
+            if git diff --quiet -- flake.lock; then
+              echo "Lock is unchanged on the new main; the stale atomic branch requires human review." >&2
+              return 1
+            fi
+            plan=$(python3 .github/scripts/upstream-plan.py plan \
+              --old <(git show "$new_main:flake.lock") --candidate flake.lock \
+              --module "$PWD/modules/_services/authelia.nix")
+            printf '%s\n' "$plan" | jq -r '"watcher re-plan: \(.action) (\(.reason))"'
+            watchers=$(jq -r '.atomic | join(",")' <<<"$plan" 2>/dev/null || true)
+            if [ "$(jq -r .action <<<"$plan")" != atomic ] \
+              || [ "$(jq -r .automerge <<<"$plan")" != true ] \
+              || [ "$watchers" != "$atomic_watchers" ]; then
+              echo "Atomic re-plan diverged on the new main; requires human review." >&2
+              return 1
+            fi
+            for watcher in ${atomic_watchers//,/ }; do
+              python3 .github/scripts/upstream-plan.py apply --id "$watcher" \
+                --registry .github/upstream/watchers.json || return 1
+            done
+            git add -- flake.lock $(atomic_recipe_paths "$atomic_watchers")
+            if [ "$(git diff --cached --name-only | sort)" != "$want" ]; then
+              echo "Refreshed atomic candidate changed unexpected files; requires human review." >&2
+              return 1
+            fi
+            git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              -c core.hooksPath=/dev/null commit --quiet -m \
+              "fix(upstream): retire apply-coupled workarounds with updated lock ($atomic_watchers)"
+            rebuilt=$(git rev-parse HEAD)
+            if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$new_main" ]; then
+              echo 'main advanced during atomic refresh; refusing to publish.' >&2
+              return 1
+            fi
+            git push --quiet "--force-with-lease=refs/heads/$atomic_branch:$atomic_revision" \
+              origin "$rebuilt:refs/heads/$atomic_branch"
+            atomic_revision=$rebuilt
+            atomic_base=$new_main
+            echo "Refreshed atomic candidate onto ${new_main:0:10} at ${rebuilt:0:10}."
+          }
+
           # Reconcile an already published atomic branch without editing it.
           # Bot-created PRs do not emit normal pull_request workflows, so
           # dispatches may need recovery after a partial workflow failure.
@@ -194,21 +359,25 @@ jobs:
               fi
               gh workflow run ci.yml "${ci_args[@]}" || return 1
             fi
-            if [ "$arm_authelia" = false ]; then
-              # Recovery must also re-arm auto-merge if an earlier invocation
-              # stopped between CI dispatch and the merge request.
-              local armed
-              armed=$(gh pr view "$pr" --json autoMergeRequest --jq '.autoMergeRequest != null') || return 1
-              if [ "$armed" != true ]; then
-                gh pr merge "$pr" --repo "$GH_REPO" --squash --auto || return 1
-              fi
+            # Recovery must also re-arm auto-merge if an earlier invocation
+            # stopped between CI dispatch and the merge request. GitHub merges
+            # exactly when the required checks pass and the branch is strict
+            # up-to-date; nothing merges with pending or failed checks. Every
+            # combined candidate automerges under the #265 policy, including
+            # ones carrying Authelia: the registry checker is the sole landing
+            # decision and CI runs the native ARM Authelia build plus host evals.
+            local armed
+            armed=$(gh pr view "$pr" --json autoMergeRequest --jq '.autoMergeRequest != null') || return 1
+            if [ "$armed" != true ]; then
+              gh pr merge "$pr" --repo "$GH_REPO" --squash --auto || return 1
             fi
             echo "Atomic PR #$pr: exact-SHA title and package validation dispatched or present at $sha"
           }
 
           main_sha=$(git rev-parse HEAD)
-          # A manually reviewed combined candidate owns publication until it
-          # merges or is explicitly closed. Never rewrite or stack onto it.
+          # A combined atomic candidate owns publication until it merges or is
+          # explicitly closed. It merge-automates under the #265 policy: exact
+          # checks plus strict up-to-date. Never rewrite or stack onto it.
           atomic_branch=automation/atomic-cleanup
           atomic_pr=$(gh pr list --head "$atomic_branch" --base main --state open --json number --jq '.[0].number // empty')
           if [ -n "$atomic_pr" ]; then
@@ -218,7 +387,29 @@ jobs:
               echo "Atomic PR #$atomic_pr branch missing or diverged; requires human review." >&2
               exit 1
             fi
-            reconcile_atomic_ci "$atomic_pr" "$remote_tip"
+            git fetch --no-tags --quiet origin "refs/heads/$atomic_branch"
+            if [ "$(git rev-parse FETCH_HEAD)" != "$remote_tip" ]; then
+              echo "Atomic branch moved during recovery; refusing dispatch." >&2
+              exit 1
+            fi
+            atomic_revision=$remote_tip
+            atomic_base=$(git rev-parse "$atomic_revision^") || {
+              echo "Atomic tip has no parent; requires human review." >&2
+              exit 1
+            }
+            atomic_watchers=$(git show -s --format=%s "$atomic_revision" | sed -n 's/.*updated lock (\([^)]*\)).*/\1/p')
+            if [ -z "$atomic_watchers" ]; then
+              echo "Cannot recover atomic watcher list; requires human review." >&2
+              exit 1
+            fi
+            live_main=$(git ls-remote origin refs/heads/main | cut -f1)
+            verify_atomic_recipe || exit 1
+            if [ "$atomic_base" != "$live_main" ]; then
+              echo "main advanced to ${live_main:0:10}; re-applying the atomic recipe onto it."
+              refresh_atomic_candidate "$live_main" || exit 1
+            fi
+            reconcile_atomic_ci "$atomic_pr" "$atomic_revision" "$atomic_watchers"
+            approve_atomic_checks
             echo "Atomic cleanup PR #$atomic_pr owns the next lock publication; refusing to compete."
             exit 0
           fi
@@ -277,11 +468,16 @@ jobs:
               echo "Refusing to publish a potentially incompatible lock: $(jq -r .reason <<<"$plan")" >&2
               exit 1
               ;;
-            atomic-review)
+            atomic)
               # A stable separate branch, not the updater's routinely
               # refreshed lock-only branch. Every planned apply-coupled
               # cleanup rides this candidate; per-watcher validation runs in
-              # CI and auto-merge fires only when green and current (#265).
+              # CI and auto-merge fires only when green and current (#265),
+              # including candidates carrying Authelia.
+              jq -e '.automerge == true' <<<"$plan" >/dev/null || {
+                echo "Atomic plan is not merge-automated; fail closed." >&2
+                exit 1
+              }
               existing=$(git ls-remote --heads origin "$atomic_branch" | cut -f1)
               if [ -n "$existing" ]; then
                 echo "Atomic branch $atomic_branch already exists without an open PR; refusing overwrite." >&2
@@ -294,14 +490,7 @@ jobs:
               for watcher in $(jq -r '.atomic[]' <<<"$plan"); do
                 python3 .github/scripts/upstream-plan.py apply --id "$watcher" --registry .github/upstream/watchers.json
               done
-              recipe_paths=$(for watcher in $(jq -r '.atomic[]' <<<"$plan"); do
-                if [ "$watcher" = authelia-pnpm-hash ]; then
-                  printf '%s\n' modules/_services/authelia.nix
-                else
-                  git apply --numstat ".github/upstream/cleanup/$(jq -r --arg w "$watcher" \
-                    '.[$w].cleanup' .github/upstream/watchers.json)" | awk '{print $3}'
-                fi
-              done | sort -u)
+              recipe_paths=$(atomic_recipe_paths "$watcher_list")
               git add -- flake.lock $recipe_paths
               changed=$(git diff --cached --name-only | sort)
               expected_paths=$(printf '%s\n' flake.lock $recipe_paths | sort)
@@ -316,15 +505,15 @@ jobs:
                 exit 1
               fi
               git push "--force-with-lease=refs/heads/$atomic_branch:" origin "HEAD:refs/heads/$atomic_branch"
-              merge_policy="Auto-merge fires only after exact-SHA CI is green and main is current."
-              if [[ ",$watcher_list," == *",authelia-pnpm-hash,"* ]]; then
-                merge_policy="Manual review required, including a native ARM Authelia build."
-              fi
               url=$(gh pr create --base main --head "$atomic_branch" \
                 --title 'fix(upstream): retire apply-coupled workarounds with updated lock' \
-                --body "Atomic lock+cleanup candidate for: $watcher_list. Each included watcher is ready on this candidate pin. $merge_policy")
+                --body "Atomic lock+cleanup candidate for: $watcher_list. Each included watcher is ready on this candidate pin. Auto-merge fires only after exact-SHA CI is green and main is current, including the native ARM Authelia build when applicable.")
               atomic_pr=${url##*/}
+              atomic_revision=$revision
+              atomic_base=$main_sha
+              atomic_watchers=$watcher_list
               reconcile_atomic_ci "$atomic_pr" "$revision" "$watcher_list"
+              approve_atomic_checks
               # Close the now-obsolete lock-only PR only after combined
               # publication and CI dispatch succeed.
               if [ -n "$pr" ]; then

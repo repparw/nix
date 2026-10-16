@@ -95,18 +95,26 @@ candidate tree; `PINNED-READY` diverts publication into a combined atomic
 candidate. A watcher that is not ready but whose package the pin moved gets a
 stubbed-phase compatibility build of the actual fleet package; failure blocks
 the lock, and so does an unavailable readiness API. The Authelia pilot keeps
-its byte-exact cleanup handler and native ARM validation, and any combined
-candidate containing Authelia remains human-reviewed. Other apply-coupled
-candidates arm auto-merge under the #265 policy. Independent watchers without
+its byte-exact cleanup handler and native ARM validation, and every combined
+candidate merge-automates under the #265 policy: the registry checker is the
+sole landing decision and the cleanup is declarative. Independent watchers without
 the flag publish through the separate post-lock sweep.
 
 If the candidate Nixpkgs pin contains the Authelia fix and `nixos-unstable`
 contains it too, the updater applies the narrowly validated Authelia removal,
 then publishes a stable `automation/atomic-cleanup` branch and a
-review-required **combined lock + cleanup PR**. It dispatches exact-SHA CI with
-native ARM Authelia enabled, and **never fast-forwards main automatically**.
-Repeat runs leave the combined PR and branch unchanged, even when new upstream
-pins are available. A dangling branch, malformed cleanup or unavailable API
+**combined lock + cleanup PR**. It dispatches exact-SHA CI with
+native ARM Authelia enabled, and arms auto-merge: GitHub merges exactly when
+the required checks pass and the branch is strict up-to-date with main, never
+with pending or failed checks. When main advances first, the updater re-plans
+and re-applies the recipe onto the new main and revalidates — but only when
+the existing branch tip is provably its own earlier candidate (the recipe
+applied to its parent); a tampered or changed candidate requires review and
+is never overwritten. Repeat runs reuse the combined PR and branch without
+overwriting human edits or repeating successful CI, dispatching only missing
+checks on the exact SHA. Enforced PR checks on the automation branch are
+approved the same way as trusted lock updates, after verifying the exact
+candidate. A dangling branch, malformed cleanup or unavailable API
 blocks publication rather than overwriting human changes or publishing a
 potentially incompatible pin.
 
