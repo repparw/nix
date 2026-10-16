@@ -11,39 +11,29 @@
       let
         source = "${config.users.users.repparw.home}/services";
         state = "/var/lib/pi-services-backup";
-        sender = pkgs.writeShellApplication {
-          name = "pi-services-backup-send";
+        prepare = pkgs.writeShellApplication {
+          name = "pi-services-backup";
           runtimeInputs = [
-            pkgs.coreutils
-            pkgs.util-linux
-            pkgs.rsync
             pkgs.python3
             pkgs.sqlite
           ];
           text = ''
-            [ "$#" = 5 ] && [ "$1" = --server ] && [ "$2" = --sender ] \
-              && [ "$4" = . ] && [ "$5" = ${lib.escapeShellArg "${state}/current/"} ] \
-              || { echo "unsupported Pi backup sender command" >&2; exit 2; }
-            case "$3" in
-              -lLogDtpre.LsfxCIvu|-nlLogDtpre.LsfxCIvu) ;;
-              *) echo "unsupported Pi backup sender flags" >&2; exit 2 ;;
-            esac
-            [ "$(id -u)" = 0 ] || { echo "Pi backup preparation requires root" >&2; exit 1; }
-            umask 077
-            exec 9>/run/pi-services-backup.lock
-            flock -w 1200 9
-            install -d -m 0711 -o root -g root ${state}
-            backup_uid=$(id -u repparw)
-            backup_gid=$(id -g repparw)
-            python3 ${../scripts/pi-services-export.py} \
-              ${lib.escapeShellArg source} ${state} "$backup_uid" "$backup_gid"
-            # The inherited lock keeps this generation stable until rsync exits.
-            exec setpriv --reuid="$backup_uid" --regid="$backup_gid" --clear-groups rsync "$@"
+            exec python3 ${../scripts/pi-services-export.py} \
+              ${lib.escapeShellArg source} ${state} 0 0
           '';
         };
       in
       {
-        environment.systemPackages = [ sender ];
+        systemd.services.pi-services-backup = {
+          description = "Prepare consistent Pi service exports for offsite backup";
+          serviceConfig = {
+            Type = "oneshot";
+            StateDirectory = "pi-services-backup";
+            StateDirectoryMode = "0700";
+            UMask = "0077";
+            ExecStart = lib.getExe prepare;
+          };
+        };
       };
   };
   perSystem = { pkgs, ... }: {

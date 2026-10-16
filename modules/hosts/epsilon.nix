@@ -14,7 +14,7 @@
       den.aspects.fleet-unit-state
       den.aspects.deploy-target
       den.aspects.passwordless-sudo
-      den.aspects.backup
+      den.aspects.epsilon._.backup
       den.aspects.persistence
       den.aspects.service-host
       den.aspects.nixos-services._.edge
@@ -22,6 +22,25 @@
       den.aspects.nixos-services._.archisteamfarm
       den.aspects.nixos-services._.paperless
     ];
+    provides.backup = {
+      includes = [ den.aspects.host-backup ];
+      nixos = { config, ... }: {
+        modules.backup.exports = {
+          miniflux = {
+            unit = "miniflux-backup.service";
+            machine = "miniflux";
+            path = config.modules.services.definitions.miniflux.backup.path;
+            pattern = "miniflux-backup-*.sql.gz";
+          };
+          paperless = {
+            unit = "paperless-exporter.service";
+            machine = "paperless";
+            path = config.modules.services.definitions.paperless.backup.path;
+            pattern = "manifest.json";
+          };
+        };
+      };
+    };
     nixos =
       {
         config,
@@ -48,7 +67,6 @@
 
         modules.services.bridgePrefix = "10.231.137";
 
-        modules.backup.hostRecovery.enable = true;
         modules.backup.paths = [
           "/home/containers/config"
           "/var/lib/ddclient"

@@ -165,7 +165,6 @@
                   "btrfs-health-root"
                   "btrfs-scrub@"
                   "jellyfin-backup"
-                  "rsync-job-buprpi"
                 ];
                 pi = [ "restic-backups-offsite" ];
                 epsilon = [ "restic-backups-offsite" ];

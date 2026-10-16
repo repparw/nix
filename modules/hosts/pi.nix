@@ -6,8 +6,7 @@
   den.aspects.pi = {
     includes = [
       den.aspects.fleet-unit-state
-      den.aspects.backup
-      den.aspects.pi-services-backup
+      den.aspects.pi._.backup
       den.aspects.persistence
       den.aspects.service-host
       den.aspects.nixos-services._.automations
@@ -20,6 +19,21 @@
       den.aspects.deploy-target
       den.aspects.passwordless-sudo
     ];
+
+    provides.backup = {
+      includes = [
+        den.aspects.host-backup
+        den.aspects.pi-services-backup
+      ];
+      nixos = {
+        modules.backup.exports.pi-services = {
+          unit = "pi-services-backup.service";
+          path = "/var/lib/pi-services-backup/current";
+          pattern = ".pi-services-export.json";
+        };
+        modules.backup.paths = [ "/var/lib/pi-services-backup" ];
+      };
+    };
 
     nixos =
       {
@@ -35,9 +49,6 @@
           neededForUsers = true;
         };
 
-        modules.backup.hostRecovery.enable = true;
-        modules.backup.hostRecovery.quiesceUnits = [ "container@homeassistant.service" ];
-        modules.backup.hostRecovery.capturePaths = [ "/home/repparw/services/hass" ];
         # Pi is the deployment controller: it probes the runtime readiness of
         # host-owned upstream waits (Sonarr/Jellyfin, Moonshine PR227) after
         # each Alpha convergence and on its own timer.

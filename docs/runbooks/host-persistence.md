@@ -46,7 +46,8 @@ persistent until their contents have been classified and independently tested.
 
 Pi's deployment controller had a `PAUSE` flag during the audit. Losing it would
 change deployment behavior. Preserve it with the controller's remaining state.
-Hosts with recovery backups enabled also retain `/var/lib/host-recovery`.
+Pi and epsilon retain `/var/lib/host-recovery` artifacts from the retired
+manual tool. Their offsite backup policy is owned by the `host-backup` aspect.
 Epsilon retains `/var/lib/credential-remediation`: its existing Authelia and
 Traefik service drop-ins run credential refresh helpers from that directory.
 Preserving `/etc` without those helpers prevents both services from starting.
@@ -152,12 +153,11 @@ The following checklist records the original migration prerequisites. Pi and
 epsilon now declare the tmpfs-root layout in their host configurations. Recheck
 these requirements before a new migration or a change to backing storage.
 
-1. Complete a [full pi backup and isolated restore](host-recovery.md). Daily
-   backup scope now includes identity, account files, whole homes, container
-   roots and controller state on pi/epsilon. Daily jobs exclude reproducible
-   caches and swap; the explicit full backup also includes `/nix/store` and
-   caches, excluding runtime/temporary files and swap. Scope changes take
-   effect only after normal deployment.
+1. Complete an [isolated offsite restore](host-recovery.md). Daily backup
+   scope includes identity, account files, whole homes, container roots, and
+   controller state on pi/epsilon. Daily jobs exclude reproducible caches and
+   swap. Preserve an independent checkpoint of any additional state before
+   changing or discarding it. Scope changes take effect after deployment.
 2. Verify recovery credentials outside the fleet. The personal recovery Age
    recipient derives from alpha's user SSH key. SSH key copies are reported
    in Bitwarden; test the matching retrieved private key as described in the
@@ -182,8 +182,9 @@ these requirements before a new migration or a change to backing storage.
    generation rollback cannot reverse a repartition or restore missing data.
 
 Paperless's registry export path now matches its actual `paper/export` mount.
-Raw live database copies still require database-consistent restoration;
-pi's full checkpoint includes a separate HA archive made with HA stopped.
+Raw live database copies still require database-consistent restoration.
+Legacy HA archives, when present, reflect their original stopped-service capture;
+the daily offsite job does not create a fresh stopped-service checkpoint.
 
 ## Alpha later
 
@@ -235,8 +236,15 @@ checks:
 - a real `passwd` change across activation, reboot and abrupt restart;
 - stable SSH key, machine ID, SOPS decryption and UID allocation;
 - application data, timer stamps and deployment pause state;
-- the recovery helper's stopped-writer archive, encrypted backup and isolated
-  restore, including identity, SOPS, SQLite, ownership, modes, ACLs and xattrs;
+- the generated offsite timer and `fleet backup run` sharing export preparation
+  and native Restic backup, with failed, unchanged, stale, and empty exports
+  producing an explicitly incomplete snapshot and failed service result while
+  an independent export still reaches the snapshot;
+- isolated restoration of the actual SQLite export, identity, SOPS, ownership,
+  modes, ACLs, xattrs, and legacy recovery artifacts, followed by root reset and
+  another restore from the same snapshot;
+- `--one-file-system` traversal of same-device binds, exclusion of nested
+  filesystems on other devices, and restoration when those roots are explicit;
 - failed boot with missing storage or an unprepared backing volume, followed
   by repair of the VM disk offline and a successful boot.
 
