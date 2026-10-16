@@ -1,11 +1,5 @@
 { den, ... }:
 {
-  # Pi-managed runtime readiness evidence for host-owned upstream waits
-  # (Sonarr/Jellyfin, Moonshine PR227). The probe evaluates the runtime
-  # predicates on Alpha over SSH and enqueues a durable event per status
-  # change; the deliverer posts queued events to Discord on an independent
-  # timer. Alpha's own watcher timers remain the completion owners until
-  # this replacement is verified; see .github/upstream/README.md.
   den.aspects.nixos-services.provides.fleet-readiness = {
     nixos =
       {
