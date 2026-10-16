@@ -7,15 +7,7 @@ resource: modules/aspects/audio.nix
 tags: [research, audio, music-assistant, esp32]
 ---
 
-# Multi-room audio hardware
-
-These are planning notes, not a verified inventory or installation record. The
-2026-10-16 documentation audit did not validate the board revisions, prices,
-firmware settings, or Music Assistant UI steps below. The repository's
-[audio aspect](../../modules/aspects/audio.nix) configures desktop Bluetooth
-and PipeWire; it does not establish the state of external speaker hardware.
-
-## Physical and hardware notes
+### Physical & Hardware Takeaways
 
 - **Form Factor & Enclosure:** The Louder-ESP32 matches Raspberry Pi 4 dimensions. It mounts inside a standard $3 plastic Pi 4 case (pass the speaker leads through the side GPIO slot) and velcros/tapes directly to the back of one speaker cabinet, leaving zero desktop clutter.
 - **Power Supply Details:**
@@ -28,7 +20,7 @@ and PipeWire; it does not establish the state of external speaker hardware.
 
 ---
 
-## Audio and system notes
+### Audio & System Architecture Takeaways
 
 - **Hardware Longevity:** Passive speakers have no digital components or capacitors tied to proprietary cloud servers—they last decades. If Wi-Fi standards change or the board fails, replace only the ~$25 ESP32 module.
 - **Acoustic Superiority:** At the ~$140–$180 price point, passive bookshelf speakers (Micca MB42X, Neumi BS5) have larger wooden cabinets, dedicated crossovers, and better driver damping than comparably priced mono smart speakers.
@@ -36,7 +28,7 @@ and PipeWire; it does not establish the state of external speaker hardware.
 
 ---
 
-## Proposed parts and assembly
+### Final Checklist for Ordering & Assembly
 
 1. **Board:** Sonocotta Louder ESP32-S3 (Built-in antenna, or Pro if you want USB-C PD power).
 2. **Case:** Raspberry Pi 4 standard plastic/acrylic enclosure.
