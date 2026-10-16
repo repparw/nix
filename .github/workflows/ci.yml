@@ -1,4 +1,8 @@
 name: ci
+# GitHub exposes this as workflow_runs[].display_title. Recovery verifies
+# the exact requested package validations before reusing an existing run.
+run-name: >-
+  validate sha=${{ inputs.expected_sha || 'none' }} watchers=${{ inputs.upstream_watcher || 'none' }} arm=${{ inputs.build_arm_authelia && 'true' || 'false' }}
 on:
   push:
     branches: [main]

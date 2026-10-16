@@ -97,12 +97,9 @@ fi
 
 api="https://discord.com/api/v10/channels/@FLEET_DISCORD_CHANNEL@/messages"
 notify() {
-  [ -r /run/secrets/hermes-env ] || return 0
-  # shellcheck disable=SC1091
-  source /run/secrets/hermes-env
-  curl -sS -m 15 -X POST -H "Authorization: Bot $DISCORD_BOT_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "$(jq -n --arg c "$1" '{content: $c}')" "$api" >/dev/null || true
+  # Simple content posts share the fleet's discord-notify; the multipart
+  # failure reports below keep their own curl because they attach files.
+  discord-notify post "$1" >/dev/null 2>&1 || true
 }
 
 # nvd writes plain output when piped (colors are tty-gated), but keep the
