@@ -25,7 +25,7 @@
       };
 
       systemd.tmpfiles.rules = [
-        "d /var/lib/node-exporter/textfile 0755 node-exporter node-exporter - -"
+        "d /var/lib/node-exporter/textfile 0755 root root - -"
       ];
 
       networking.firewall.extraInputRules = lib.mkIf (!isCollector) ''
@@ -105,6 +105,7 @@
             };
           };
           provision = {
+            enable = true;
             datasources.settings = {
               apiVersion = 1;
               datasources = [

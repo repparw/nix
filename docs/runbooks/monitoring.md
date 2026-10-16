@@ -53,8 +53,9 @@ before expecting browser access.
 
 ## Rollout and checks
 
-1. Deploy Alpha and Pi exporters first, then Epsilon. The Epsilon
-   collector can run with two temporarily DOWN scrape targets during rollout.
+1. The staged deployment pipeline activates Epsilon before Alpha and Pi;
+   its collector can temporarily report the other two scrape targets DOWN.
+   That is expected during initial rollout and must not gate deployment.
 2. On Epsilon, check `systemctl status prometheus grafana prometheus-node-exporter`.
    Check `curl -fsS http://127.0.0.1:9090/-/ready` and
    `curl -fsS http://127.0.0.1:3001/api/health`.
@@ -76,8 +77,17 @@ before expecting browser access.
 **Security:** no unauthenticated Prometheus or exporter endpoints should
 be reachable from the public internet. The Grafana `/api/health` path
 is intentionally unauthenticated for fleet-health; other Grafana routes
-must enforce Authelia. Treat Graphana local admin as a second login layer.
+must enforce Authelia. Treat Grafana local admin as a second login layer.
 No new automatic notifications are enabled in this phase.
+
+## Alternatives
+
+The collector and node exporters are deliberately independent of Grafana.
+Before migrating the legacy alerting system, evaluate Beszel for a simpler
+all-in-one host/systemd monitoring experience and Perses for a GitOps-focused
+Prometheus frontend. A move away from Grafana should not require replacing
+the collectors or historical metrics backend. Leave this PR as a draft until
+metrics collection and frontend choice have both been evaluated.
 
 ## Next migration
 
