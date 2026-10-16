@@ -17,36 +17,45 @@ independent monitoring of Epsilon, and an acceptable resolution/clear policy.
 
 ## Topology
 
-- **Epsilon** runs Prometheus on TCP 9090 as the remote-write receiver
-  and query engine, Loki on TCP 3100, and Grafana on loopback TCP 3001.
-  Grafana is registered as `metrics.repparw.com` in the service registry,
-  with Traefik routing and Authelia one-factor policy.
-- **Alloy is the only collector on all three hosts.** Its built-in
-  `prometheus.exporter.unix` exposes local CPU/RAM/disk/network/systemd
-  metrics in memory. Alloy scrapes these locally every 30 seconds and pushes
-  them to Epsilon's `/api/v1/write` Prometheus endpoint. It also reads
-  journald and ships log entries to Epsilon's Loki API.
-- Alpha and Pi send telemetry to Epsilon's existing `wg-home` service
-  address. Epsilon's firewall allows inbound TCP **9090 and 3100 only on
-  `wg-home`** from Alpha/Pi's configured source addresses. The public
-  interface has no new allowed ports. Local Epsilon Alloy and Grafana use
-  loopback. Validate source addresses over the tunnel before activation.
-- Prometheus has no cross-host scrape targets or Node Exporter dependencies.
-  The remote-write samples carry the same `host` label and `job="node"`
-  as the earlier pull design; dashboards remain compatible.
-- Alloy's systemd collector includes service restart counts and start times.
-  Fleet-specific textfile metrics can be published as `*.prom` files in
-  `/var/lib/fleet-metrics/textfile` and will be shipped by the same agent.
-- Alloy's metric WAL provides short-lived retry buffering on each host;
-  it is **not persisted** on hosts with tmpfs roots, so power loss or long
-  tunnel outages may lose unsent samples.
-- Prometheus is capped at 30 days and 3 GB. Metric history is local only.
-  Grafana and Prometheus live state is preserved through Epsilon's
-  `/persist` binds, but isn't currently copied to the offsite restic repo.
-- Loki uses 7-day retention with filesystem-backed TSDB and compactor
-  cleanup. There is **no hard byte cap**: disk exhaustion must be monitored.
-  The initial implementation does not automatically ship journal entries
-  generated _inside_ systemd-nspawn containers; those are a follow-up.
+- The **generic Alloy agent** is included through `den.default.includes`, so
+  every NixOS fleet host receives the same journald and Unix exporter pipeline.
+- **Alpha** declares its sleeping-HDD mount exclusions explicitly; Epsilon
+  declares `modules.monitoring.agent.receiverHost = "127.0.0.1"` so its
+  Alloy writes locally. All other hosts use the private Epsilon service
+  address by default.
+- Alloy scrapes the built-in Unix exporter every 30s (CPU, RAM, disk,
+  network, systemd, textfile metrics) and **its own localhost status endpoint**
+  (`127.0.0.1:12345/metrics`). Both jobs forward to the same Prometheus
+  remote-write pipeline. The local Alloy status endpoint is not publicly
+  exposed. Alloy also ships host journal entries to Loki on Epsilon.
+- **Epsilon** runs the Prometheus remote-write receiver on TCP 9090, Loki on
+  TCP 3100 and Grafana on loopback TCP 3001. Grafana is registered as
+  `metrics.repparw.com` through existing Traefik/Authelia auth.
+- Epsilon's firewall permits TCP 9090/3100 only from Alpha/Pi source
+  addresses entering through `wg-home` (and local loopback). Verify the
+  actual source IP on Epsilon before activating, and verify both endpoints
+  cannot be reached through its public interface.
+- The dashboard tracks **three expected hosts** (Alpha, Pi, Epsilon).
+  Separate `absent_over_time(node_uname_info{host="..."}[5m])` checks
+  report 1 when a host stops sending Unix exporter samples rather than
+  relying on disappearing `up` series. These are **display indicators**,
+  not yet Discord alert rules; the existing fleet-health alerts remain.
+- Textfile metrics can be published to `/var/lib/fleet-metrics/textfile`.
+- Prometheus keeps 30 days of metrics with a 3 GB storage retention limit.
+  Loki keeps 7 days of filesystem-backed TSDB log chunks and has a global
+  ingestion limit of 0.02 MB/s with a 1 MB burst. This is an *ingress
+  budget*, **not a strict on-disk quota**: sustained peak writes correspond
+  to approximately 12 GiB over a week before index/compactor overhead.
+- Epsilon runs the existing **disk-watch** script every 5 minutes for
+  `/persist` (warning at 70%, critical at 85%) and sends Discord alerts
+  without depending on Loki/Prometheus/Grafana. Consider hard isolation or
+  filesystem quotas if this early-warning strategy is insufficient.
+- Epsilon uses explicit `/persist` binds for Loki, Prometheus and Grafana,
+  including Grafana encryption credentials. The monitoring data is not yet
+  copied to the offsite restic repository.
+- Only *host* journald entries are collected by this initial pipeline.
+  Individual systemd-nspawn container journals require separate collection.
+
 
 ## Pi volatile journal preservation
 
@@ -104,7 +113,8 @@ before expecting browser access.
    `curl -fsSG http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=node_uname_info' | jq '.data.result[].metric | {host,job,instance}'`.
    Expect one result from each host with `job="node"`. Check that
    `timestamp(node_uname_info{host="pi"})` remains recent. The absence
-   of incoming samples indicates shipping or networking failure.
+   of incoming samples indicates shipping or networking failure. Repeat for
+   `up{job="alloy"}` and inspect Loki/remote-write drop/failure metrics.
 4. Verify `https://metrics.repparw.com` requires Authelia login,
    that Grafana's Prometheus **and Loki** datasources are healthy, and
    the Fleet Overview dashboard shows CPU/memory/disk/network/systemd time series.
@@ -122,7 +132,13 @@ before expecting browser access.
    pre-restart entries remain searchable (but the local volatile journal
    correctly lost them). Interrupt the tunnel and restore it to check
    Alloy retry/dropped-entry logs. Treat persistent errors as blockers.
-8. Reboot Epsilon, confirm previous metrics, Loki log history, and Grafana
+8. Check `systemctl status disk-watch.timer` on Epsilon and evaluate its
+   five-minute run independently of the monitoring stack. Verify the
+   configured thresholds for `/persist`, and that alerts can reach Discord.
+9. Measure Alloy's CPU use with `loki.secretfilter` enabled on Pi under
+   typical and high journal load before deploying broadly. Reduce/filter
+   inputs if needed.
+10. Reboot Epsilon, confirm previous metrics, Loki log history, and Grafana
    login persist, and confirm incoming remote-write samples resume from all
    three Alloy agents. Verify the old Discord alerts still work.
 
@@ -130,7 +146,9 @@ before expecting browser access.
 be reachable from the public internet. Prometheus listens on all IPv4
 interfaces for remote-write and query access, so nftables must strictly
 restrict TCP 9090 to the private WireGuard peers or loopback. Verify this
-before activating it; **do not** set `services.prometheus.openFirewall`. The Grafana `/api/health` path
+before activating it; **do not** set `services.prometheus.openFirewall`.
+The ingestion cap is deliberately restrictive; 429s may drop logs under load,
+so inspect Alloy drop/retry counters and tune only with disk headroom. The Grafana `/api/health` path
 is intentionally unauthenticated for fleet-health; other Grafana routes
 must enforce Authelia. Treat Grafana local admin as a second login layer.
 No new automatic notifications are enabled in this phase.

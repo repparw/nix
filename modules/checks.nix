@@ -155,6 +155,7 @@
               '';
 
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
+          monitoring-fleet = import ./_tests/monitoring-fleet.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
 
           fleet-failed-units =
