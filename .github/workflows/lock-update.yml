@@ -26,12 +26,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          # Dedicated identity for approving approval-gated workflow runs.
+          # The default GITHUB_TOKEN cannot approve runs its own PRs created
+          # (actions: write is not sufficient). Store a fine-grained PAT
+          # (Actions: read+write on repparw/nix) or a GitHub App installation
+          # token with actions:write as LOCK_UPDATE_APPROVAL_TOKEN. Until the
+          # owner adds it, any approval-gated run fails closed with a clear
+          # reason instead of auto-merging.
+          LOCK_UPDATE_APPROVAL_TOKEN: ${{ secrets.LOCK_UPDATE_APPROVAL_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
           branch=automation/flake-lock
           poll_seconds=${LOCK_UPDATE_POLL_SECONDS:-15}
           poll_attempts=${LOCK_UPDATE_POLL_ATTEMPTS:-160}
+          # Approval identity for approval-gated runs. Empty until the owner
+          # stores LOCK_UPDATE_APPROVAL_TOKEN (see the step env above).
+          approval_token="${LOCK_UPDATE_APPROVAL_TOKEN:-}"
 
           latest_ci() {
             local ref="$1" sha="$2"
@@ -74,26 +85,55 @@ jobs:
             wait_for_ci "$ref" "$sha" >/dev/null
           }
 
-          verify_lock_pr() {
-            if [ "$(git ls-remote --heads origin "$branch" | cut -f1)" != "$revision" ] \
-              || [ "$(git diff --name-only "$main_sha" "$revision")" != flake.lock ]; then
-              echo 'Lock candidate changed or contains other files; refusing workflow approval.' >&2
+          # Shared approval identity. The default GITHUB_TOKEN cannot approve
+          # approval-gated workflow runs created by its own PRs, so approval
+          # requires the dedicated token and fails closed without it.
+          approve_workflow_run() {
+            local run_id="$1"
+            if [ -z "$approval_token" ]; then
+              echo "Required workflow run $run_id needs approval but LOCK_UPDATE_APPROVAL_TOKEN is not configured." >&2
+              echo "Add a fine-grained PAT (Actions: read+write on repparw/nix) or an App installation token" >&2
+              echo "with actions:write as that secret; refusing to approve and leaving auto-merge disarmed." >&2
               return 1
             fi
-            gh api "repos/$GH_REPO/pulls/$pr" | jq -e \
-              --arg repo "$GH_REPO" --arg branch "$branch" --arg sha "$revision" \
+            GH_TOKEN="$approval_token" gh api --method POST \
+              "repos/$GH_REPO/actions/runs/$run_id/approve" >/dev/null
+          }
+
+          # Shared tip check for both publishers: the remote branch tip must
+          # equal the verified revision, the open PR must point at that exact
+          # SHA on main, and the base-to-tip file set must match. $1 branch,
+          # $2 base, $3 revision, $4 PR number, $5 expected file list.
+          verify_pr_head() {
+            local vbranch="$1" vbase="$2" vrev="$3" vpr="$4" want="$5"
+            if [ "$(git ls-remote --heads origin "$vbranch" | cut -f1)" != "$vrev" ] \
+              || [ "$(git diff --name-only "$vbase" "$vrev" | sort)" != "$want" ]; then
+              echo "Candidate on $vbranch changed or contains unexpected files; refusing workflow approval." >&2
+              return 1
+            fi
+            gh api "repos/$GH_REPO/pulls/$vpr" | jq -e \
+              --arg repo "$GH_REPO" --arg branch "$vbranch" --arg sha "$vrev" \
               '.state == "open" and .head.repo.full_name == $repo
                and .head.ref == $branch and .head.sha == $sha and .base.ref == "main"' >/dev/null
           }
 
-          wait_for_pr_workflow() {
-            local workflow="$1" row run_id status conclusion approved='' attempt=0
+          verify_lock_pr() {
+            verify_pr_head "$branch" "$main_sha" "$revision" "$pr" flake.lock
+          }
+
+          # Shared required-workflow poller for both publishers. Approves an
+          # approval-gated run only after the shared tip check passes, and
+          # succeeds only when the run completes successfully. $1 workflow,
+          # $2 branch, $3 base, $4 revision, $5 PR number, $6 file list.
+          wait_for_pr_checks() {
+            local workflow="$1" wbranch="$2" wbase="$3" wrev="$4" wpr="$5" want="$6"
+            local row run_id status conclusion approved='' attempt=0
             while [ "$attempt" -lt "$poll_attempts" ]; do
               row=$(gh api --method GET "repos/$GH_REPO/actions/workflows/$workflow/runs" \
-                -f branch="$branch" -f head_sha="$revision" -f event=pull_request \
-                --jq ".workflow_runs | map(select(.pull_requests | any(.number == $pr))) | sort_by(.run_number) | last // empty")
+                -f branch="$wbranch" -f head_sha="$wrev" -f event=pull_request \
+                --jq ".workflow_runs | map(select(.pull_requests | any(.number == $wpr))) | sort_by(.run_number) | last // empty")
               if [ -n "$row" ]; then
-                jq -e --arg sha "$revision" --arg branch "$branch" --arg workflow "$workflow" \
+                jq -e --arg sha "$wrev" --arg branch "$wbranch" --arg workflow "$workflow" \
                   '.head_sha == $sha and .head_branch == $branch and .event == "pull_request"
                    and .path == (".github/workflows/" + $workflow)' <<< "$row" >/dev/null
                 run_id=$(jq -r .id <<< "$row")
@@ -101,21 +141,36 @@ jobs:
                 conclusion=$(jq -r '.conclusion // ""' <<< "$row")
                 if [ "$conclusion" = action_required ]; then
                   if [ "$approved" != "$run_id" ]; then
-                    verify_lock_pr
-                    gh api --method POST "repos/$GH_REPO/actions/runs/$run_id/approve" >/dev/null
+                    verify_pr_head "$wbranch" "$wbase" "$wrev" "$wpr" "$want"
+                    approve_workflow_run "$run_id"
                     approved=$run_id
                   fi
                 elif [ "$status" = completed ]; then
                   if [ "$conclusion" = success ]; then return 0; fi
-                  echo "Required PR workflow $workflow run $run_id concluded $conclusion" >&2
+                  echo "Required PR workflow $workflow run $run_id concluded $conclusion on $wrev." >&2
                   return 1
                 fi
               fi
               attempt=$((attempt + 1))
               sleep "$poll_seconds"
             done
-            echo "Timed out waiting for required PR workflow $workflow on $revision" >&2
+            echo "Timed out waiting for required PR workflow $workflow on $wrev" >&2
             return 1
+          }
+
+          wait_for_lock_pr_workflow() {
+            wait_for_pr_checks "$1" "$branch" "$main_sha" "$revision" "$pr" flake.lock
+          }
+
+          wait_for_atomic_pr_workflow() {
+            local want
+            want=$(printf '%s\n' flake.lock $(atomic_recipe_paths "$atomic_watchers") | sort)
+            wait_for_pr_checks "$1" "$atomic_branch" "$atomic_base" "$atomic_revision" "$atomic_pr" "$want"
+          }
+
+          approve_lock_checks() {
+            wait_for_lock_pr_workflow ci.yml
+            wait_for_lock_pr_workflow pr-title.yml
           }
 
           # Recipe paths (without the lock) for a comma-separated watcher list.
@@ -131,54 +186,13 @@ jobs:
             done | sort -u
           }
 
-          # Trusted-candidate check mirroring verify_lock_pr for the atomic
-          # branch: approve only this verified candidate's own CI and title
-          # runs. Globals: atomic_pr, atomic_revision, atomic_base,
-          # atomic_watchers, atomic_branch.
+          # Trusted-candidate check for the atomic branch: approve only this
+          # verified candidate's own CI and title runs. Globals: atomic_pr,
+          # atomic_revision, atomic_base, atomic_watchers, atomic_branch.
           verify_atomic_pr() {
             local want
             want=$(printf '%s\n' flake.lock $(atomic_recipe_paths "$atomic_watchers") | sort)
-            if [ "$(git ls-remote --heads origin "$atomic_branch" | cut -f1)" != "$atomic_revision" ] \
-              || [ "$(git diff --name-only "$atomic_base" "$atomic_revision" | sort)" != "$want" ]; then
-              echo 'Atomic candidate changed or contains unexpected files; refusing workflow approval.' >&2
-              return 1
-            fi
-            gh api "repos/$GH_REPO/pulls/$atomic_pr" | jq -e \
-              --arg repo "$GH_REPO" --arg branch "$atomic_branch" --arg sha "$atomic_revision" \
-              '.state == "open" and .head.repo.full_name == $repo
-               and .head.ref == $branch and .head.sha == $sha and .base.ref == "main"' >/dev/null
-          }
-
-          wait_for_atomic_pr_workflow() {
-            local workflow="$1" row run_id status conclusion approved='' attempt=0
-            while [ "$attempt" -lt "$poll_attempts" ]; do
-              row=$(gh api --method GET "repos/$GH_REPO/actions/workflows/$workflow/runs" \
-                -f branch="$atomic_branch" -f head_sha="$atomic_revision" -f event=pull_request \
-                --jq ".workflow_runs | map(select(.pull_requests | any(.number == $atomic_pr))) | sort_by(.run_number) | last // empty")
-              if [ -n "$row" ]; then
-                jq -e --arg sha "$atomic_revision" --arg branch "$atomic_branch" --arg workflow "$workflow" \
-                  '.head_sha == $sha and .head_branch == $branch and .event == "pull_request"
-                   and .path == (".github/workflows/" + $workflow)' <<< "$row" >/dev/null
-                run_id=$(jq -r .id <<< "$row")
-                status=$(jq -r .status <<< "$row")
-                conclusion=$(jq -r '.conclusion // ""' <<< "$row")
-                if [ "$conclusion" = action_required ]; then
-                  if [ "$approved" != "$run_id" ]; then
-                    verify_atomic_pr
-                    gh api --method POST "repos/$GH_REPO/actions/runs/$run_id/approve" >/dev/null
-                    approved=$run_id
-                  fi
-                elif [ "$status" = completed ]; then
-                  if [ "$conclusion" = success ]; then return 0; fi
-                  echo "Required atomic PR workflow $workflow run $run_id concluded $conclusion" >&2
-                  return 1
-                fi
-              fi
-              attempt=$((attempt + 1))
-              sleep "$poll_seconds"
-            done
-            echo "Timed out waiting for required atomic PR workflow $workflow on $atomic_revision" >&2
-            return 1
+            verify_pr_head "$atomic_branch" "$atomic_base" "$atomic_revision" "$atomic_pr" "$want"
           }
 
           approve_atomic_checks() {
@@ -186,18 +200,164 @@ jobs:
             wait_for_atomic_pr_workflow pr-title.yml
           }
 
-          # Prove the published tip is automation's own earlier candidate: a
-          # single commit whose non-lock changes equal the recipe applied to
-          # its parent. A tampered or changed candidate needs a human and is
-          # never overwritten, rearmed, or approved. Globals in:
-          # atomic_revision, atomic_base, atomic_watchers.
-          verify_atomic_recipe() {
-            local single names want scratch watcher patch path
-            single=$(git rev-list --count "$atomic_revision^..$atomic_revision")
-            if [ "$single" != 1 ]; then
-              echo "Atomic tip is not a single candidate commit; requires human review." >&2
+          # Trustworthy provenance for the published atomic candidate. The
+          # updater is stateless across cron ticks, so the tip it published
+          # is recorded in a dedicated state ref plus a PR-body trailer; a
+          # recovered tip must equal the recorded SHA byte-for-byte.
+          provenance_ref=automation/atomic-cleanup-provenance
+
+          write_atomic_provenance() {
+            # $1 is the expected current state-ref tip (empty when creating).
+            local expect="${1:-}" record dir new_prov origin_url
+            origin_url=$(git remote get-url origin)
+            record=$(jq -n -c --arg base "$atomic_base" --arg sha "$atomic_revision" \
+              --arg watchers "$atomic_watchers" \
+              --arg lock "$(git rev-parse "$atomic_revision:flake.lock")" \
+              '{base: $base, sha: $sha, watchers: $watchers, lock: $lock}')
+            dir=$(mktemp -d "${TMPDIR:-/tmp}/atomic-prov-XXXXXXXX")
+            git init --quiet "$dir"
+            printf '%s\n' "$record" > "$dir/provenance.json"
+            git -C "$dir" add provenance.json
+            git -C "$dir" -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              -c core.hooksPath=/dev/null commit --quiet -m \
+              "atomic provenance $atomic_revision"
+            new_prov=$(git -C "$dir" rev-parse HEAD)
+            git -C "$dir" remote add origin "$origin_url"
+            git -C "$dir" push --quiet \
+              "--force-with-lease=refs/heads/$provenance_ref:$expect" \
+              origin "$new_prov:refs/heads/$provenance_ref"
+            rm -rf "$dir"
+            echo "Recorded atomic provenance $atomic_revision on $provenance_ref."
+          }
+
+          atomic_trailer() {
+            # $1 base, $2 sha, $3 watchers.
+            printf '<!-- atomic-provenance base=%s sha=%s watchers=%s -->' "$1" "$2" "$3"
+          }
+
+          publish_atomic_trailer() {
+            # Mirror the provenance SHA in the PR body for auditability; the
+            # state ref stays authoritative. Rewrites the previous trailer.
+            local body trailer
+            body=$(gh pr view "$atomic_pr" --repo "$GH_REPO" --json body --jq .body)
+            trailer=$(atomic_trailer "$atomic_base" "$atomic_revision" "$atomic_watchers")
+            body=$(printf '%s\n' "$body" | grep -v 'atomic-provenance base=' || true)
+            body=$(printf '%s\n%s\n%s' "$body" '' "$trailer")
+            gh pr edit "$atomic_pr" --repo "$GH_REPO" --body "$body"
+          }
+
+          # Prove the recovered tip is exactly the candidate automation
+          # published: provenance SHA, recorded base, single-commit ancestry,
+          # and lock bytes must all match. Globals in: atomic_revision,
+          # atomic_base, atomic_watchers. Sets prov_ref_tip for later
+          # lease-guarded provenance updates.
+          verify_atomic_provenance() {
+            local ref_tip record parent count lock_obj
+            ref_tip=$(git ls-remote --heads origin "$provenance_ref" | cut -f1)
+            if [ -z "$ref_tip" ]; then
+              echo "Atomic provenance ref $provenance_ref is missing; requires human review." >&2
               return 1
             fi
+            git fetch --no-tags --quiet origin "refs/heads/$provenance_ref" || return 1
+            record=$(git show "FETCH_HEAD:provenance.json") || return 1
+            prov_base=$(jq -r .base <<<"$record")
+            prov_sha=$(jq -r .sha <<<"$record")
+            prov_watchers=$(jq -r .watchers <<<"$record")
+            prov_lock=$(jq -r .lock <<<"$record")
+            prov_ref_tip=$ref_tip
+            if [ -z "$prov_base" ] || [ "$prov_base" = null ] \
+              || [ -z "$prov_sha" ] || [ "$prov_sha" = null ]; then
+              echo "Atomic provenance record is malformed; requires human review." >&2
+              return 1
+            fi
+            if [ "$prov_sha" != "$atomic_revision" ]; then
+              echo "Atomic tip $atomic_revision is not the published candidate $prov_sha; requires human review." >&2
+              return 1
+            fi
+            if [ "$prov_base" != "$atomic_base" ] || [ "$prov_watchers" != "$atomic_watchers" ]; then
+              echo "Atomic tip ancestry or watcher set differs from provenance; requires human review." >&2
+              return 1
+            fi
+            if [ "$(git rev-list --parents -n 1 "$atomic_revision" | wc -w)" != 2 ]; then
+              echo "Atomic tip is not a single-parent commit; requires human review." >&2
+              return 1
+            fi
+            parent=$(git rev-parse "$atomic_revision^")
+            if [ "$parent" != "$prov_base" ]; then
+              echo "Atomic tip parent $parent is not the recorded base $prov_base; requires human review." >&2
+              return 1
+            fi
+            count=$(git rev-list --count "$prov_base..$atomic_revision")
+            if [ "$count" != 1 ]; then
+              echo "Atomic tip is not a single commit on the recorded base; requires human review." >&2
+              return 1
+            fi
+            lock_obj=$(git rev-parse "$atomic_revision:flake.lock")
+            if [ "$lock_obj" != "$prov_lock" ]; then
+              echo "Atomic lock bytes differ from provenance; requires human review." >&2
+              return 1
+            fi
+          }
+
+          # Re-run the planner on the recovered candidate lock in the exact
+          # publication context (pre-cleanup tree, candidate lock) and fail
+          # closed on any mismatch. A lockfile-only amendment that keeps the
+          # cleanups byte-identical still diverts or blocks here. Globals in:
+          # atomic_base, atomic_revision, atomic_watchers.
+          verify_atomic_plan() {
+            local old_lock backup plan watchers
+            old_lock=$(mktemp "${TMPDIR:-/tmp}/atomic-old-XXXXXXXX.lock")
+            backup=$(mktemp "${TMPDIR:-/tmp}/atomic-tree-XXXXXXXX.lock")
+            git show "$atomic_base:flake.lock" > "$old_lock"
+            cp flake.lock "$backup"
+            git show "$atomic_revision:flake.lock" > flake.lock
+            plan=$(python3 .github/scripts/upstream-plan.py plan \
+              --old "$old_lock" --candidate flake.lock)
+            cp "$backup" flake.lock
+            rm -f "$old_lock" "$backup"
+            printf '%s\n' "$plan" | jq -r '"watcher re-plan: \(.action) (\(.reason))"'
+            watchers=$(jq -r '.atomic | join(",")' <<<"$plan" 2>/dev/null || true)
+            if [ "$(jq -r .action <<<"$plan")" != atomic ] \
+              || [ "$(jq -r .automerge <<<"$plan")" != true ] \
+              || [ "$watchers" != "$atomic_watchers" ]; then
+              echo "Atomic re-plan diverged on the recovered lock; requires human review." >&2
+              return 1
+            fi
+          }
+
+          verify_atomic_trailer() {
+            # Cross-check the PR-body mirror when present. An absent trailer
+            # (owner-edited body) only warns; the state ref stays decisive.
+            local body trailer_sha
+            body=$(gh pr view "$atomic_pr" --repo "$GH_REPO" --json body --jq .body) || return 1
+            trailer_sha=$(printf '%s\n' "$body" | sed -n 's/.*atomic-provenance base=.* sha=\([^ ]*\).*/\1/p' | tail -n 1)
+            if [ -n "$trailer_sha" ] && [ "$trailer_sha" != "$atomic_revision" ]; then
+              echo "Atomic PR body provenance points at $trailer_sha, not $atomic_revision; requires human review." >&2
+              return 1
+            fi
+          }
+
+          # Arm GitHub auto-merge only after every other verification is
+          # green. GitHub still merges exactly when the required checks pass
+          # and the branch is strict up-to-date; this only permits it.
+          arm_atomic_automerge() {
+            local armed
+            armed=$(gh pr view "$atomic_pr" --json autoMergeRequest --jq '.autoMergeRequest != null')
+            if [ "$armed" != true ]; then
+              gh pr merge "$atomic_pr" --repo "$GH_REPO" --squash --auto
+            fi
+          }
+
+          # Prove the published tip carries exactly the planned recipe: the
+          # file set must match and every cleanup must equal the recipe
+          # applied to the tip's parent, byte-for-byte. Single-commit
+          # ancestry on the recorded base is proven separately by
+          # verify_atomic_provenance. A tampered or changed candidate needs
+          # a human and is never overwritten, rearmed, or approved.
+          # Globals in: atomic_revision, atomic_base, atomic_watchers.
+          verify_atomic_recipe() {
+            local names want scratch watcher patch path
             want=$(printf '%s\n' flake.lock $(atomic_recipe_paths "$atomic_watchers") | sort)
             names=$(git diff --name-only "$atomic_base" "$atomic_revision" | sort)
             if [ "$names" != "$want" ]; then
@@ -280,14 +440,61 @@ jobs:
               origin "$rebuilt:refs/heads/$atomic_branch"
             atomic_revision=$rebuilt
             atomic_base=$new_main
+            # The rebuilt tip is automation's new published candidate: move
+            # provenance with it under lease, then mirror the trailer.
+            write_atomic_provenance "$prov_ref_tip" || exit 1
+            publish_atomic_trailer || exit 1
             echo "Refreshed atomic candidate onto ${new_main:0:10} at ${rebuilt:0:10}."
+          }
+
+          # Wait for the exact-SHA dispatched validation of one manifest to
+          # succeed. Succeeds only on completed success; pending runs and
+          # timeouts fail so the caller retries without arming auto-merge.
+          wait_for_atomic_dispatch() {
+            local sha="$1" manifest="$2" required="$3" attempt=0
+            local ci_runs id status result pkg_jobs
+            while [ "$attempt" -lt "$poll_attempts" ]; do
+              ci_runs=$(gh api --method GET "repos/$GH_REPO/actions/workflows/ci.yml/runs" \
+                -f branch="$atomic_branch" -f head_sha="$sha" -f event=workflow_dispatch \
+                -f per_page=100 | jq -r --arg manifest "$manifest" \
+                  '.workflow_runs[] | select(.display_title == $manifest) | .id') || return 1
+              for id in $ci_runs; do
+                status=$(gh api "repos/$GH_REPO/actions/runs/$id" --jq .status) || return 1
+                pkg_jobs=$(gh api "repos/$GH_REPO/actions/runs/$id/jobs?per_page=100" \
+                  --jq '[.jobs[] | select((.name | contains("upstream-package")) or (.name | contains("arm-build (authelia"))) | select(.conclusion != "skipped")] | length') || return 1
+                if [ "$pkg_jobs" -ge "$required" ]; then
+                  result=$(gh api "repos/$GH_REPO/actions/runs/$id" --jq '.conclusion // ""') || return 1
+                  if [ "$status" = completed ]; then
+                    if [ "$result" = success ]; then
+                      echo "Atomic exact-SHA validation $id succeeded on $sha."
+                      return 0
+                    fi
+                    echo "Atomic CI $id concluded $result on $sha; requires review." >&2
+                    return 1
+                  fi
+                  break
+                elif [ "$status" = completed ]; then
+                  echo "Atomic CI $id completed without the required package jobs on $sha; requires review." >&2
+                  return 1
+                fi
+              done
+              attempt=$((attempt + 1))
+              sleep "$poll_seconds"
+            done
+            echo "Timed out waiting for atomic exact-SHA validation on $sha." >&2
+            return 1
           }
 
           # Reconcile an already published atomic branch without editing it.
           # Bot-created PRs do not emit normal pull_request workflows, so
           # dispatches may need recovery after a partial workflow failure.
+          # Dispatches missing exact-SHA validation and waits until it is
+          # green. Never arms auto-merge: the caller arms only after the
+          # required PR checks are approved as well, and the merge itself is
+          # gated by the required PR CI (which includes the native ARM build
+          # and bundled package validations for atomic candidates).
           reconcile_atomic_ci() {
-            local pr="$1" sha="$2" watchers="${3:-}" title_runs ci_runs id status pkg_jobs found=0 pending=0
+            local pr="$1" sha="$2" watchers="${3:-}" title_runs ci_runs
             local watcher upstream_watchers='' arm_authelia=false required_jobs=0 manifest
             if [ -z "$watchers" ]; then
               # ls-remote does not fetch the object. Recover only from the
@@ -330,26 +537,7 @@ jobs:
               -f branch="$atomic_branch" -f head_sha="$sha" -f event=workflow_dispatch \
               -f per_page=100 | jq -r --arg manifest "$manifest" \
                 '.workflow_runs[] | select(.display_title == $manifest) | .id') || return 1
-            for id in $ci_runs; do
-              status=$(gh api "repos/$GH_REPO/actions/runs/$id" --jq .status) || return 1
-              pkg_jobs=$(gh api "repos/$GH_REPO/actions/runs/$id/jobs?per_page=100" \
-                --jq '[.jobs[] | select((.name | contains("upstream-package")) or (.name | contains("arm-build (authelia"))) | select(.conclusion != "skipped")] | length') || return 1
-              if [ "$pkg_jobs" -ge "$required_jobs" ]; then
-                found=1
-                result=$(gh api "repos/$GH_REPO/actions/runs/$id" --jq '.conclusion // ""') || return 1
-                if [ "$status" = completed ] && [ "$result" != success ]; then
-                  echo "Atomic CI $id concluded $result on $sha; requires review." >&2
-                  return 1
-                fi
-                break
-              fi
-              if [ "$status" != completed ]; then pending=1; fi
-            done
-            if [ "$found" -eq 0 ]; then
-              if [ "$pending" -eq 1 ]; then
-                echo "Atomic CI for $sha is starting; cannot yet verify package validation. Retry reconciliation." >&2
-                return 1
-              fi
+            if [ -z "$ci_runs" ]; then
               local ci_args=(--ref "$atomic_branch" -f expected_sha="$sha")
               if [ -n "$upstream_watchers" ]; then
                 ci_args+=(-f upstream_watcher="$upstream_watchers")
@@ -359,19 +547,7 @@ jobs:
               fi
               gh workflow run ci.yml "${ci_args[@]}" || return 1
             fi
-            # Recovery must also re-arm auto-merge if an earlier invocation
-            # stopped between CI dispatch and the merge request. GitHub merges
-            # exactly when the required checks pass and the branch is strict
-            # up-to-date; nothing merges with pending or failed checks. Every
-            # combined candidate automerges under the #265 policy, including
-            # ones carrying Authelia: the registry checker is the sole landing
-            # decision and CI runs the native ARM Authelia build plus host evals.
-            local armed
-            armed=$(gh pr view "$pr" --json autoMergeRequest --jq '.autoMergeRequest != null') || return 1
-            if [ "$armed" != true ]; then
-              gh pr merge "$pr" --repo "$GH_REPO" --squash --auto || return 1
-            fi
-            echo "Atomic PR #$pr: exact-SHA title and package validation dispatched or present at $sha"
+            wait_for_atomic_dispatch "$sha" "$manifest" "$required_jobs"
           }
 
           main_sha=$(git rev-parse HEAD)
@@ -393,23 +569,35 @@ jobs:
               exit 1
             fi
             atomic_revision=$remote_tip
-            atomic_base=$(git rev-parse "$atomic_revision^") || {
-              echo "Atomic tip has no parent; requires human review." >&2
+            if [ "$(git rev-list --parents -n 1 "$atomic_revision" | wc -w)" != 2 ]; then
+              echo "Atomic tip has no single parent; requires human review." >&2
               exit 1
-            }
+            fi
+            atomic_base=$(git rev-parse "$atomic_revision^")
             atomic_watchers=$(git show -s --format=%s "$atomic_revision" | sed -n 's/.*updated lock (\([^)]*\)).*/\1/p')
             if [ -z "$atomic_watchers" ]; then
               echo "Cannot recover atomic watcher list; requires human review." >&2
               exit 1
             fi
-            live_main=$(git ls-remote origin refs/heads/main | cut -f1)
+            # A candidate is merge-eligible only when its exact SHA,
+            # ownership, watcher manifest, required validation results, and
+            # current base are ALL verified. Provenance first: any tip this
+            # automation did not publish fails closed here, including a
+            # lockfile-only amendment that keeps the cleanups byte-identical.
+            verify_atomic_provenance || exit 1
             verify_atomic_recipe || exit 1
+            verify_atomic_trailer || exit 1
+            live_main=$(git ls-remote origin refs/heads/main | cut -f1)
+            git fetch --no-tags --quiet origin refs/heads/main || exit 1
             if [ "$atomic_base" != "$live_main" ]; then
               echo "main advanced to ${live_main:0:10}; re-applying the atomic recipe onto it."
               refresh_atomic_candidate "$live_main" || exit 1
+            else
+              verify_atomic_plan || exit 1
             fi
-            reconcile_atomic_ci "$atomic_pr" "$atomic_revision" "$atomic_watchers"
-            approve_atomic_checks
+            reconcile_atomic_ci "$atomic_pr" "$atomic_revision" "$atomic_watchers" || exit 1
+            approve_atomic_checks || exit 1
+            arm_atomic_automerge || exit 1
             echo "Atomic cleanup PR #$atomic_pr owns the next lock publication; refusing to compete."
             exit 0
           fi
@@ -426,6 +614,12 @@ jobs:
             fi
             git push "--force-with-lease=refs/heads/$atomic_branch:$stale_tip" \
               origin ":refs/heads/$atomic_branch"
+            # Retire the provenance record with the branch it describes.
+            prov_tip=$(git ls-remote --heads origin "$provenance_ref" | cut -f1)
+            if [ -n "$prov_tip" ]; then
+              git push "--force-with-lease=refs/heads/$provenance_ref:$prov_tip" \
+                origin ":refs/heads/$provenance_ref"
+            fi
           fi
           expected=$(git ls-remote --heads origin "$branch" | cut -f1)
           if [ -n "$expected" ]; then
@@ -483,6 +677,10 @@ jobs:
                 echo "Atomic branch $atomic_branch already exists without an open PR; refusing overwrite." >&2
                 exit 1
               fi
+              if [ -n "$(git ls-remote --heads origin "$provenance_ref" | cut -f1)" ]; then
+                echo "Atomic provenance ref $provenance_ref already exists; refusing overwrite." >&2
+                exit 1
+              fi
               git config user.name 'github-actions[bot]'
               git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
               git switch -c "$atomic_branch"
@@ -505,15 +703,25 @@ jobs:
                 exit 1
               fi
               git push "--force-with-lease=refs/heads/$atomic_branch:" origin "HEAD:refs/heads/$atomic_branch"
-              url=$(gh pr create --base main --head "$atomic_branch" \
+              # PRs created with the dedicated token run the normal required
+              # workflows without the approval gate; without it the default
+              # token keeps current behavior and approvals fail closed.
+              create_token="${approval_token:-$GH_TOKEN}"
+              url=$(GH_TOKEN="$create_token" gh pr create --base main --head "$atomic_branch" \
                 --title 'fix(upstream): retire apply-coupled workarounds with updated lock' \
-                --body "Atomic lock+cleanup candidate for: $watcher_list. Each included watcher is ready on this candidate pin. Auto-merge fires only after exact-SHA CI is green and main is current, including the native ARM Authelia build when applicable.")
+                --body "$(printf '%s\n\n%s' "Atomic lock+cleanup candidate for: $watcher_list. Each included watcher is ready on this candidate pin. Auto-merge fires only after exact-SHA CI is green and main is current, including the native ARM Authelia build when applicable." \
+                  "$(atomic_trailer "$main_sha" "$revision" "$watcher_list")")")
               atomic_pr=${url##*/}
               atomic_revision=$revision
               atomic_base=$main_sha
               atomic_watchers=$watcher_list
-              reconcile_atomic_ci "$atomic_pr" "$revision" "$watcher_list"
-              approve_atomic_checks
+              write_atomic_provenance "" || exit 1
+              # Exact-SHA validation must be green, then required PR checks
+              # approved, and only then may auto-merge arm. The merge itself
+              # stays gated by the required PR CI.
+              reconcile_atomic_ci "$atomic_pr" "$revision" "$watcher_list" || exit 1
+              approve_atomic_checks || exit 1
+              arm_atomic_automerge || exit 1
               # Close the now-obsolete lock-only PR only after combined
               # publication and CI dispatch succeed.
               if [ -n "$pr" ]; then
@@ -544,7 +752,8 @@ jobs:
           fi
 
           if [ -z "$pr" ]; then
-            url=$(gh pr create --base main --head "$branch" --title 'flake.lock: Update' \
+            create_token="${approval_token:-$GH_TOKEN}"
+            url=$(GH_TOKEN="$create_token" gh pr create --base main --head "$branch" --title 'flake.lock: Update' \
               --body 'Update flake inputs. The updater explicitly validates this exact lock commit, then atomically fast-forwards main to that same validated SHA if main is unchanged.')
             pr=${url##*/}
           fi
@@ -578,8 +787,7 @@ jobs:
           # Dispatched checks do not enter the PR's protection rollup. Approve
           # only this verified lock candidate's normal CI and title runs.
           verify_lock_pr
-          wait_for_pr_workflow ci.yml
-          wait_for_pr_workflow pr-title.yml
+          approve_lock_checks
 
           if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$main_sha" ]; then
             echo 'main changed while lock CI was running; leaving the validated PR for the next refresh.' >&2

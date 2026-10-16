@@ -103,20 +103,33 @@ the flag publish through the separate post-lock sweep.
 If the candidate Nixpkgs pin contains the Authelia fix and `nixos-unstable`
 contains it too, the updater applies the narrowly validated Authelia removal,
 then publishes a stable `automation/atomic-cleanup` branch and a
-**combined lock + cleanup PR**. It dispatches exact-SHA CI with
+**combined lock + PR**. It dispatches exact-SHA CI with
 native ARM Authelia enabled, and arms auto-merge: GitHub merges exactly when
 the required checks pass and the branch is strict up-to-date with main, never
-with pending or failed checks. When main advances first, the updater re-plans
+with pending or failed checks. The required PR CI itself runs the native ARM
+Authelia build (and the bundled package validations) for atomic candidates,
+so the build result gates the merge directly rather than relying on the
+updater waiting. When main advances first, the updater re-plans
 and re-applies the recipe onto the new main and revalidates — but only when
 the existing branch tip is provably its own earlier candidate (the recipe
 applied to its parent); a tampered or changed candidate requires review and
 is never overwritten. Repeat runs reuse the combined PR and branch without
 overwriting human edits or repeating successful CI, dispatching only missing
 checks on the exact SHA. Enforced PR checks on the automation branch are
-approved the same way as trusted lock updates, after verifying the exact
-candidate. A dangling branch, malformed cleanup or unavailable API
+approved with a dedicated approval token (`LOCK_UPDATE_APPROVAL_TOKEN`: a
+fine-grained PAT with Actions read+write on this repo, or an App installation
+token with actions:write), after verifying the exact
+candidate. A candidate is merge-eligible only when its exact SHA, ownership,
+watcher manifest, required validation results, and current base are ALL
+verified. Publication records trustworthy provenance (a state ref plus a
+PR-body trailer); any recovered tip that is not the published SHA — including
+a lockfile-only amendment that keeps the cleanups byte-identical — fails
+closed, and the planner re-run on the recovered lock is the backstop against
+forged provenance. A dangling branch, malformed cleanup or unavailable API
 blocks publication rather than overwriting human changes or publishing a
-potentially incompatible pin.
+potentially incompatible pin. Until the owner stores the approval token, any
+approval-gated run fails closed with a message naming the secret instead of
+arming auto-merge.
 
 If the atomic predicate is negative, the original lock-only CI and compare-and-
 swap fast-forward remain unchanged. If ancestry is unavailable, or a candidate

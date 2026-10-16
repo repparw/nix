@@ -33,6 +33,11 @@ Reuse an existing cleanup PR without overwriting reviewer changes or repeating
 successful CI. Judge completion on current `main`, never a mutable checkout.
 Combined atomic lock+cleanup candidates merge-automate under the #265 policy
 once exact-SHA CI is green and the branch is strict up-to-date with main.
+The required PR CI itself runs the native ARM build and bundled package
+validations for atomic candidates. A candidate is merge-eligible only when
+its exact SHA, ownership, watcher manifest, required validation results, and
+current base are ALL verified; approvals need the LOCK_UPDATE_APPROVAL_TOKEN
+secret (fail closed without it).
 
 The live Authelia pilot owns CI publication until its full lifecycle passes:
 expected cleanup PR, green exact-SHA CI including the native ARM package,

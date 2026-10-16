@@ -118,13 +118,21 @@ class LockUpdate(unittest.TestCase):
             "elif args[:2] == ['pr', 'create']:\n"
             "    if 'automation/atomic-cleanup' in args:\n"
             "        (root/'atomic-pr').write_text('124')\n"
+            "        if '--body' in args:\n"
+            "            (root/'atomic-body').write_text(args[args.index('--body') + 1])\n"
             "    elif os.environ['FIXTURE_LATE_BRANCH_RACE'] == '1':\n"
             "        subprocess.run(['git', '--git-dir', remote, 'update-ref', "
             "'refs/heads/automation/flake-lock', os.environ['FIXTURE_MAIN']], check=True)\n"
             "    print('https://github.com/fixture/nix/pull/124' if 'automation/atomic-cleanup' in args else 'https://github.com/fixture/nix/pull/123')\n"
+            "elif args[:2] == ['pr', 'edit']:\n"
+            "    if '--body' in args:\n"
+            "        (root/'atomic-body').write_text(args[args.index('--body') + 1])\n"
             "elif args[:2] == ['pr', 'view']:\n"
             "    if 'autoMergeRequest' in args:\n"
             "        print('true' if (root/'auto-merged').exists() else 'false')\n"
+            "    elif 'body' in args:\n"
+            "        body = root/'atomic-body'\n"
+            "        print(body.read_text() if body.exists() else '')\n"
             "    else:\n"
             "        sha = subprocess.check_output(['git','--git-dir',remote,'rev-parse','automation/atomic-cleanup'], text=True).strip()\n"
             "        print(sha)\n"
@@ -133,8 +141,11 @@ class LockUpdate(unittest.TestCase):
             "elif args and args[0] == 'api':\n"
             "    endpoint = next(arg for arg in args if arg.startswith('repos/'))\n"
             "    if '/compare/' in endpoint:\n"
-            "        fix = endpoint.split('/compare/')[1].split('...')[0]\n"
-            "        ready = os.environ['FIXTURE_ATOMIC_READY'] == '1'\n"
+            "        parts = endpoint.split('/compare/')[1].split('...')\n"
+            "        fix = parts[0]\n"
+            "        revision = parts[1].split('?')[0] if len(parts) > 1 else ''\n"
+            "        pinned = os.environ['FIXTURE_ATOMIC_READY'] == '1' or (root/'atomic-pr').exists()\n"
+            "        ready = pinned and (revision == fix or revision in ('new', 'channel'))\n"
             "        print(json.dumps({'status': 'ahead' if ready else 'behind', 'merge_base_commit': {'sha': fix}}))\n"
             "        sys.exit(0)\n"
             "    if endpoint.endswith('/commits/nixos-unstable'):\n"
@@ -143,11 +154,27 @@ class LockUpdate(unittest.TestCase):
             "        print(json.dumps({'merged': True, 'merge_commit_sha': 'fix'})); sys.exit(0)\n"
             "    if '/contents/' in endpoint:\n"
             "        import base64\n"
-            "        body = b'rev = \"fix\";'\n"
+            "        ref = endpoint.split('ref=')[1].split('&')[0] if 'ref=' in endpoint else ''\n"
+            "        pinned = os.environ['FIXTURE_ATOMIC_READY'] == '1' or (root/'atomic-pr').exists()\n"
+            "        body = b'rev = \"fix\";' if (pinned and ref in ('new', 'channel')) else b'rev = \"other\";'\n"
             "        print(json.dumps({'content': base64.b64encode(body).decode()})); sys.exit(0)\n"
-            "    if 'actions/runs/21/jobs' in endpoint or 'actions/runs/22/jobs' in endpoint:\n"
+            "    if 'actions/runs/21/jobs' in endpoint:\n"
+            "        manifest = (root/'atomic-manifest').read_text() if (root/'atomic-manifest').exists() else ''\n"
+            "        watchers = next((t.split('=', 1)[1] for t in manifest.split() if t.startswith('watchers=')), 'none')\n"
+            "        arm = next((t.split('=', 1)[1] for t in manifest.split() if t.startswith('arm=')), 'false')\n"
+            "        print(str((1 if watchers != 'none' else 0) + (1 if arm == 'true' else 0)))\n"
+            "        sys.exit(0)\n"
+            "    if 'actions/runs/22/jobs' in endpoint:\n"
             "        print('1'); sys.exit(0)\n"
-            "    if 'actions/runs/21' in endpoint or 'actions/runs/22' in endpoint:\n"
+            "    if 'actions/runs/21' in endpoint:\n"
+            "        state = os.environ['FIXTURE_ATOMIC_CI']\n"
+            "        want_conclusion = any('.conclusion' in a for a in args)\n"
+            "        if state == 'pending':\n"
+            "            print('' if want_conclusion else 'in_progress'); sys.exit(0)\n"
+            "        if state == 'failure':\n"
+            "            print('failure' if want_conclusion else 'completed'); sys.exit(0)\n"
+            "        print('success' if want_conclusion else 'completed'); sys.exit(0)\n"
+            "    if 'actions/runs/22' in endpoint:\n"
             "        print('success' if '.conclusion' in args else 'completed'); sys.exit(0)\n"
             "    if 'branch=automation/atomic-cleanup' in args:\n"
             "        if 'event=pull_request' in args:\n"
@@ -252,8 +279,9 @@ class LockUpdate(unittest.TestCase):
         git.chmod(0o755)
         self.real_git = real_git
 
-    def git(self, *arguments, cwd=None):
-        result = subprocess.run(["git", *arguments], cwd=cwd, text=True, capture_output=True, check=True)
+    def git(self, *arguments, cwd=None, env=None):
+        result = subprocess.run(["git", *arguments], cwd=cwd, text=True, capture_output=True, check=True,
+                                env=(os.environ | env) if env else None)
         return result.stdout.strip()
 
     def update(
@@ -275,6 +303,8 @@ class LockUpdate(unittest.TestCase):
         atomic_ready=False,
         atomic_dispatch_fail=False,
         atomic_wrong_head=False,
+        atomic_ci="success",
+        approval_token="dummy-secret",
     ):
         env = os.environ | {
             "PATH": f"{self.bin}:{os.environ['PATH']}",
@@ -296,7 +326,9 @@ class LockUpdate(unittest.TestCase):
             "FIXTURE_WRONG_RUN_PATH": str(int(wrong_run_path)),
             "FIXTURE_PR_CI": pr_ci,
             "FIXTURE_ATOMIC_READY": str(int(atomic_ready)),
+            "FIXTURE_ATOMIC_CI": atomic_ci,
             "FIXTURE_ATOMIC_TITLE_DISPATCH_FAIL": "0",
+            "LOCK_UPDATE_APPROVAL_TOKEN": approval_token,
             "REAL_GIT": self.real_git,
             "FIXTURE_REMOTE": str(self.remote),
             "FIXTURE_MAIN": self.main,
@@ -566,6 +598,11 @@ class LockUpdate(unittest.TestCase):
             ["git", "--git-dir", str(self.remote), "show-ref", "--verify",
              "refs/heads/automation/atomic-cleanup"],
             capture_output=True).returncode == 0)
+        self.assertFalse(subprocess.run(
+            ["git", "--git-dir", str(self.remote), "show-ref", "--verify",
+             "refs/heads/automation/atomic-cleanup-provenance"],
+            capture_output=True).returncode == 0,
+            "retirement must delete the provenance record with the branch")
 
     def test_unmerged_atomic_branch_must_not_be_deleted(self):
         first = self.update(atomic_ready=True)
@@ -638,6 +675,13 @@ class LockUpdate(unittest.TestCase):
         self.assertTrue(any(r[:2] == ["pr", "merge"] and "--auto" in r for r in self.requests))
         self.assertTrue((self.root / "approved-31").exists())
         self.assertTrue((self.root / "approved-32").exists())
+        record = json.loads(self.git(
+            "--git-dir", str(self.remote), "show",
+            "automation/atomic-cleanup-provenance:provenance.json"))
+        self.assertEqual(record["sha"], refreshed)
+        self.assertEqual(record["base"], new_main)
+        self.assertIn(refreshed, (self.root / "atomic-body").read_text(),
+                      "the PR-body trailer must move with the refreshed tip")
 
     def test_tampered_atomic_tip_fails_closed(self):
         first = self.update(atomic_ready=True)
@@ -711,11 +755,212 @@ class LockUpdate(unittest.TestCase):
         self.assertTrue(any(r[:3] == ["workflow", "run", "ci.yml"]
                             for r in self.requests))
 
+    def test_recovery_blocks_while_atomic_validation_pending(self):
+        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+        self.assertNotEqual(first.returncode, 0)
+        self.git("switch", "main", cwd=self.checkout)
+        # An in-progress exact-SHA run must not arm auto-merge: the merge
+        # itself stays gated until the required validation (including the
+        # native ARM build in PR CI) is green.
+        second = self.update(change=False, atomic_ci="pending")
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn("Timed out waiting for atomic exact-SHA validation", second.stderr)
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests),
+                         "pending validation must never arm auto-merge")
+
+    def test_failed_atomic_validation_never_arms_automerge(self):
+        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+        self.assertNotEqual(first.returncode, 0)
+        self.git("switch", "main", cwd=self.checkout)
+        second = self.update(change=False, atomic_ci="failure")
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn("requires review", second.stderr)
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests),
+                         "failed validation must never arm auto-merge")
+        self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
+                              for r in self.requests),
+                         "failed validation must not approve PR checks either")
+
+    def test_lockfile_only_amendment_rejected(self):
+        first = self.update(atomic_ready=True)
+        self.assertEqual(first.returncode, 0, first.stderr)
+        original = self.atomic_sha()
+        # Amend only flake.lock, keeping every cleanup byte-identical.
+        self.git("fetch", "--quiet", "origin", "automation/atomic-cleanup", cwd=self.checkout)
+        self.git("switch", "--quiet", "--detach", "FETCH_HEAD", cwd=self.checkout)
+        lock = json.loads((self.checkout / "flake.lock").read_text())
+        lock["nodes"]["nixpkgs_3"]["locked"]["rev"] = "evil"
+        (self.checkout / "flake.lock").write_text(json.dumps(lock))
+        self.git("add", "flake.lock", cwd=self.checkout)
+        self.git("commit", "--quiet", "--amend", "--no-edit", cwd=self.checkout)
+        tampered = self.git("rev-parse", "HEAD", cwd=self.checkout)
+        self.assertNotEqual(tampered, original)
+        self.git("push", "--quiet", "--force", "origin",
+                 "HEAD:refs/heads/automation/atomic-cleanup", cwd=self.checkout)
+        self.git("switch", "--quiet", "main", cwd=self.checkout)
+        second = self.update()
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn("requires human review", second.stderr)
+        self.assertEqual(self.atomic_sha(), tampered,
+                         "the tampered tip must not be overwritten")
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        # Provenance still points at the published candidate, not the tamper.
+        record = json.loads(self.git(
+            "--git-dir", str(self.remote), "show",
+            "automation/atomic-cleanup-provenance:provenance.json", cwd=self.checkout))
+        self.assertEqual(record["sha"], original)
+
+    def test_forged_provenance_lock_rejected_by_replan(self):
+        # An attacker with write access forges a consistent provenance record
+        # and PR-body trailer for a lock-tampered tip. The independent
+        # planner re-run on the recovered lock is the backstop: it must
+        # diverge and fail closed.
+        first = self.update(atomic_ready=True)
+        self.assertEqual(first.returncode, 0, first.stderr)
+        self.git("fetch", "--quiet", "origin", "automation/atomic-cleanup", cwd=self.checkout)
+        self.git("switch", "--quiet", "--detach", "FETCH_HEAD", cwd=self.checkout)
+        lock = json.loads((self.checkout / "flake.lock").read_text())
+        lock["nodes"]["nixpkgs_3"]["locked"]["rev"] = "evil"
+        (self.checkout / "flake.lock").write_text(json.dumps(lock))
+        self.git("add", "flake.lock", cwd=self.checkout)
+        self.git("commit", "--quiet", "--amend", "--no-edit", cwd=self.checkout)
+        tampered = self.git("rev-parse", "HEAD", cwd=self.checkout)
+        self.git("push", "--quiet", "--force", "origin",
+                 "HEAD:refs/heads/automation/atomic-cleanup", cwd=self.checkout)
+        base = self.git("rev-parse", f"{tampered}^", cwd=self.checkout)
+        lock_blob = self.git("rev-parse", f"{tampered}:flake.lock", cwd=self.checkout)
+        prov_dir = self.root / "forged-prov"
+        prov_repo = prov_dir / "repo"
+        prov_dir.mkdir()
+        self.git("init", "--quiet", str(prov_repo))
+        (prov_repo / "provenance.json").write_text(json.dumps({
+            "base": base, "sha": tampered,
+            "watchers": "qbittorrent", "lock": lock_blob}))
+        self.git("add", "provenance.json", cwd=prov_repo)
+        self.git("-c", "user.name=fixture", "-c", "user.email=fixture@example.test",
+                 "commit", "--quiet", "-m", "forged", cwd=prov_repo)
+        forged = self.git("rev-parse", "HEAD", cwd=prov_repo)
+        self.git("push", "--quiet", "--force", str(self.remote),
+                 f"{forged}:refs/heads/automation/atomic-cleanup-provenance",
+                 cwd=prov_repo)
+        (self.root / "atomic-body").write_text(
+            f"forged\n\n<!-- atomic-provenance base={base} sha={tampered} watchers=qbittorrent -->")
+        self.git("switch", "--quiet", "main", cwd=self.checkout)
+        second = self.update()
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn("re-plan diverged", second.stderr)
+        self.assertEqual(self.atomic_sha(), tampered,
+                         "the forged tip must not be overwritten")
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+
+    def test_identical_tree_new_sha_rejected(self):
+        # A stacked commit that reapplies the legitimate cleanup
+        # byte-for-byte still changes the SHA: never auto-merged.
+        first = self.update(atomic_ready=True)
+        self.assertEqual(first.returncode, 0, first.stderr)
+        original = self.atomic_sha()
+        self.git("fetch", "--quiet", "origin", "automation/atomic-cleanup", cwd=self.checkout)
+        self.git("switch", "--quiet", "--detach", "FETCH_HEAD", cwd=self.checkout)
+        self.git("commit", "--quiet", "--amend", "--no-edit", cwd=self.checkout,
+                 env={"GIT_COMMITTER_DATE": "2000-01-01T00:00:00+00:00"})
+        restacked = self.git("rev-parse", "HEAD", cwd=self.checkout)
+        self.assertNotEqual(restacked, original)
+        self.assertEqual(
+            self.git("rev-parse", f"{restacked}^{{tree}}", cwd=self.checkout),
+            self.git("rev-parse", f"{original}^{{tree}}", cwd=self.checkout),
+            "fixture must keep the tree identical")
+        self.git("push", "--quiet", "--force", "origin",
+                 "HEAD:refs/heads/automation/atomic-cleanup", cwd=self.checkout)
+        self.git("switch", "--quiet", "main", cwd=self.checkout)
+        second = self.update()
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn("requires human review", second.stderr)
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+
+    def test_approval_failure_never_arms_atomic_automerge(self):
+        # Approvals run before arming: a failed approval must leave
+        # auto-merge disarmed even though exact-SHA validation is green.
+        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+        self.assertNotEqual(first.returncode, 0)
+        self.git("switch", "main", cwd=self.checkout)
+        second = self.update(change=False, approval_fail=True)
+        self.assertNotEqual(second.returncode, 0)
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests),
+                         "failed approval must never arm auto-merge")
+
+    def test_missing_approval_token_fails_closed_with_guidance(self):
+        # Without LOCK_UPDATE_APPROVAL_TOKEN an approval-gated run cannot be
+        # approved by the default token. The flow must name the secret and
+        # leave auto-merge disarmed instead of failing cryptically.
+        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+        self.assertNotEqual(first.returncode, 0)
+        self.git("switch", "main", cwd=self.checkout)
+        second = self.update(change=False, approval_token="")
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn("LOCK_UPDATE_APPROVAL_TOKEN", second.stderr)
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests),
+                         "missing approval identity must never arm auto-merge")
+        self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
+                              for r in self.requests),
+                         "missing approval identity must not attempt approval")
+
+    def test_creation_records_provenance(self):
+        result = self.update(atomic_ready=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        tip = self.atomic_sha()
+        record = json.loads(self.git(
+            "--git-dir", str(self.remote), "show",
+            "automation/atomic-cleanup-provenance:provenance.json"))
+        self.assertEqual(record["sha"], tip)
+        self.assertEqual(record["base"], self.main)
+        self.assertEqual(record["watchers"], "qbittorrent")
+        self.assertEqual(record["lock"], self.git(
+            "--git-dir", str(self.remote), "rev-parse", f"{tip}:flake.lock"))
+        body = (self.root / "atomic-body").read_text()
+        self.assertIn(f"sha={tip}", body)
+
+    def test_missing_provenance_fails_closed(self):
+        first = self.update(atomic_ready=True)
+        self.assertEqual(first.returncode, 0, first.stderr)
+        tip = self.atomic_sha()
+        self.git("--git-dir", str(self.remote), "update-ref", "-d",
+                 "refs/heads/automation/atomic-cleanup-provenance")
+        self.git("switch", "main", cwd=self.checkout)
+        second = self.update(change=False)
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn("provenance", second.stderr.lower())
+        self.assertEqual(self.atomic_sha(), tip,
+                         "the candidate must not be overwritten")
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+
     def test_ci_run_name_includes_exact_dispatch_inputs(self):
         self.assertIn("run-name: >-", CI)
         self.assertIn("inputs.expected_sha", CI)
         self.assertIn("inputs.upstream_watcher", CI)
         self.assertIn("inputs.build_arm_authelia", CI)
+
+    def test_ci_requires_native_arm_for_atomic_prs(self):
+        # The required PR CI itself must run the native ARM Authelia build
+        # for atomic candidates, so the merge gate includes it.
+        self.assertIn("github.head_ref == 'automation/atomic-cleanup'", CI)
+        self.assertIn("build_arm_authelia", CI)
+
+    def test_stale_atomic_branch_condition_removed(self):
+        self.assertNotIn("automation/atomic-authelia-pnpm-hash", CI,
+                         "the stale single-use branch must not gate validation")
+
+    def test_atomic_sentinel_drives_package_validation(self):
+        # Atomic PRs carry the sentinel; the validation job resolves the
+        # bundled watchers (minus Authelia, covered by the ARM build) from
+        # the exact candidate commit so the required gate includes them.
+        self.assertIn("automation/atomic-cleanup", CI)
+        self.assertIn("automation/atomic-cleanup", VALIDATION)
+        self.assertIn("updated lock", VALIDATION)
+        self.assertIn("authelia-pnpm-hash", VALIDATION)
 
     def test_lock_publisher_shell_is_parseable(self):
         # Workflow YAML checks alone do not parse the embedded bash script.
