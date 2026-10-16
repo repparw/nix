@@ -384,6 +384,32 @@ test("termination releases the state lock", async (t) => {
   assert.equal(fs.existsSync(`${files.statePath}.lock`), false);
 });
 
+test("oversized Discord messages are truncated instead of rejected", async (t) => {
+  const files = fixture(t, [regexWatcher()], {
+    watchers: { release: { current: "old", currentKey: "old" } },
+  });
+  const posts = [];
+  await runChangeDetection({
+    ...files,
+    fetchImpl: async (_url, options = {}) => {
+      if (options.method === "POST") {
+        posts.push(JSON.parse(options.body));
+        return response();
+      }
+      return response("version: " + "x".repeat(4000));
+    },
+    log: noop,
+  });
+  assert.equal(posts.length, 1);
+  assert.ok(posts[0].content.length <= 2000, posts[0].content.length);
+  assert.match(posts[0].content, /…$/);
+  assert.equal(
+    JSON.parse(fs.readFileSync(files.statePath)).watchers.release.current,
+    "x".repeat(4000),
+    "the truncation must not corrupt the stored value",
+  );
+});
+
 test("failed fetches and notifications never commit partial state", async (t) => {
   const watchers = [regexWatcher({ slug: "first" }), regexWatcher({ slug: "second" })];
   const files = fixture(t, watchers, { watchers: {} });

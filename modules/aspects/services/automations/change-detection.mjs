@@ -540,6 +540,16 @@ function replaceLiteral(template, token, value) {
   return template.replaceAll(token, () => String(value));
 }
 
+const DISCORD_MESSAGE_LIMIT = 2000;
+
+function truncateForDiscord(content) {
+  // Discord rejects anything over 2000 characters with HTTP 400; keep the
+  // head plus an explicit truncation marker.
+  return content.length > DISCORD_MESSAGE_LIMIT
+    ? content.slice(0, DISCORD_MESSAGE_LIMIT - 1) + "…"
+    : content;
+}
+
 async function notifyDiscord(discord, content, fetchImpl) {
   const { token, channelId } = discord ?? {};
   if (!token || !channelId) {
@@ -553,7 +563,7 @@ async function notifyDiscord(discord, content, fetchImpl) {
         "Content-Type": "application/json",
         Authorization: `Bot ${token}`,
       },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content: truncateForDiscord(content) }),
     },
   );
   if (!response.ok) {
