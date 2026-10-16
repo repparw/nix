@@ -20,21 +20,30 @@ independent monitoring of Epsilon, and an acceptable resolution/clear policy.
 - The **generic Alloy agent** is included through `den.default.includes`, so
   every NixOS fleet host receives the same journald and Unix exporter pipeline.
 - **Alpha** declares its sleeping-HDD mount exclusions explicitly; Epsilon
-  declares `modules.monitoring.agent.receiverHost = "127.0.0.1"` so its
-  Alloy writes locally. All other hosts use the private Epsilon service
-  address by default.
+  configures its Alloy to write to loopback ports 9091/3101. Alpha and Pi
+  use Epsilon's private address and separate SOPS credentials, delivered
+  to Alloy through systemd `LoadCredential`.
 - Alloy scrapes the built-in Unix exporter every 30s (CPU, RAM, disk,
   network, systemd, textfile metrics) and **its own localhost status endpoint**
   (`127.0.0.1:12345/metrics`). Both jobs forward to the same Prometheus
   remote-write pipeline. The local Alloy status endpoint is not publicly
   exposed. Alloy also ships host journal entries to Loki on Epsilon.
-- **Epsilon** runs the Prometheus remote-write receiver on TCP 9090, Loki on
-  TCP 3100 and Grafana on loopback TCP 3001. Grafana is registered as
+- **Epsilon** runs Prometheus on loopback TCP 9091, Loki on loopback TCP
+  3101 and Grafana on loopback TCP 3001. Grafana is registered as
   `metrics.repparw.com` through existing Traefik/Authelia auth.
-- Epsilon's firewall permits TCP 9090/3100 only from Alpha/Pi source
-  addresses entering through `wg-home` (and local loopback). Verify the
-  actual source IP on Epsilon before activating, and verify both endpoints
-  cannot be reached through its public interface.
+- Traefik exposes only authenticated POST ingestion routes on TCP 9090
+  (`/api/v1/write`) and 3100 (`/loki/api/v1/push`). Query and admin routes
+  stay local. The firewall permits those ports only through `wg-home`
+  from `10.5.5.1`: packet inspection verified that the home router SNATs
+  both Alpha and Pi to that address. Per-host credentials distinguish
+  authorized agents from other traffic behind the same gateway.
+- Credentials are encrypted in `monitoring-alpha.sops.yaml`,
+  `monitoring-pi.sops.yaml`, and `monitoring-server.sops.yaml`. Each agent
+  file is decryptable only by its host and the recovery key; only Epsilon
+  and the recovery key can decrypt the receiver's bcrypt password file.
+  To rotate one agent, update its password and the matching receiver hash,
+  deploy the receiver, then that agent. Never put passwords in Alloy's
+  generated configuration or command-line arguments.
 - The dashboard tracks **three expected hosts** (Alpha, Pi, Epsilon).
   Separate `absent_over_time(node_uname_info{host="..."}[5m])` checks
   report 1 when a host stops sending Unix exporter samples rather than
@@ -72,7 +81,8 @@ and persisting its `/var/log/journal` separately, using storage quotas.
 Do not rely on Loki as the sole copy of crucial evidence.
 
 Alloy applies best-effort secret masking to host-journal lines before
-transmission. The Loki backend may still contain sensitive personal data and
+transmission. The pinned Alloy version classifies `loki.secretfilter` as
+experimental, so its service explicitly enables that stability level. The Loki backend may still contain sensitive personal data and
 unrecognized secrets. Keep `metrics.repparw.com` access admin-only;
 do not make the Loki API public.
 
@@ -100,14 +110,17 @@ before expecting browser access.
 
 1. Deploy Epsilon's receivers first, then Alpha/Pi's Alloy agents.
    Cross-host uploads will fail until the Epsilon WireGuard route,
-   source-address filtering, and endpoint services are working.
+   source-address filtering, credentials, and endpoint services are working.
 2. On Epsilon, check `systemctl status prometheus grafana loki alloy`.
-   Check `curl -fsS http://127.0.0.1:9090/-/ready`,
-   `curl -fsS http://127.0.0.1:3100/ready`, and
-   `curl -fsS http://127.0.0.1:3001/api/health`.
+   Check `curl -fsS http://127.0.0.1:9091/-/ready`,
+   `curl -fsS http://127.0.0.1:3101/ready`, and
+   `curl -fsS http://127.0.0.1:3001/api/health -H 'Host: metrics.repparw.com'`.
+   Check `traefik.service`; an unauthenticated POST to either private
+   ingestion route must return 401. Authenticated agents must upload
+   successfully, while query routes on those ports return 404.
 3. Query Prometheus's **metrics API**, not its targets API (the server
    does not scrape remote hosts):
-   `curl -fsSG http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=node_uname_info' | jq '.data.result[].metric | {host,job,instance}'`.
+   `curl -fsSG http://127.0.0.1:9091/api/v1/query --data-urlencode 'query=node_uname_info' | jq '.data.result[].metric | {host,job,instance}'`.
    Expect one result from each host with `job="node"`. Check that
    `timestamp(node_uname_info{host="pi"})` remains recent. The absence
    of incoming samples indicates shipping or networking failure. Repeat for
@@ -139,17 +152,33 @@ before expecting browser access.
     login persist, and confirm incoming remote-write samples resume from all
     three Alloy agents. Verify the old Discord alerts still work.
 
-**Security:** no unauthenticated Prometheus or Loki API endpoints should
-be reachable from the public internet. Prometheus listens on all IPv4
-interfaces for remote-write and query access, so nftables must strictly
-restrict TCP 9090 to the private WireGuard peers or loopback. Verify this
-before activating it; **do not** set `services.prometheus.openFirewall`.
+**Security:** Loki and Prometheus listen on loopback. Their ingestion proxy
+requires per-host credentials and WireGuard source filtering. Verify both
+public-interface rejection and private authentication before activation;
+**do not** set `services.prometheus.openFirewall`. The HTTP ingestion routes
+rely on WireGuard for encryption between the home router and Epsilon.
 Loki has no hard size quota. Monitor actual persistent volume usage and
 Alloy ingestion errors before deciding whether a dedicated filesystem
 budget is necessary. The Grafana `/api/health` path is intentionally
 unauthenticated for fleet-health; other Grafana routes
 must enforce Authelia. Treat Grafana local admin as a second login layer.
 No new automatic notifications are enabled in this phase.
+
+## Automated verification
+
+`nix build .#checks.x86_64-linux.monitoring-fleet --no-link` evaluates all
+three host configurations, validates their actual Alloy and Loki files
+with the pinned binaries, and exercises dashboard queries with Promtool.
+This check runs in the required configuration CI group.
+
+`nix build .#checks.x86_64-linux.monitoring-vm --no-link` runs an isolated
+two-machine integration test. It checks authenticated ingestion, wrong and
+missing credentials, private/public firewall boundaries, blocked query
+routes, log redaction, metrics, excluded automounts, outage retries, and
+history/credential preservation across client and server reboots. It uses
+test credentials and does not connect to or activate production hosts.
+Run this explicitly when changing the telemetry pipeline; it is not part
+of the default CI group.
 
 ## Alternatives
 

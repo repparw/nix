@@ -10,8 +10,15 @@ function verify(paths, { hosts, vm, groups }) {
 }
 
 const both = ['lightweight', 'configuration'];
-test('documentation-only PRs still run lightweight validation', () => {
-  verify(['docs/runbooks/host-persistence.md', 'README.md'], { hosts: false, vm: false, groups: ['lightweight'] });
+test('documentation-only PRs select only formatting and documentation checks', () => {
+  for (const paths of [['docs/runbooks/host-persistence.md', 'README.md'],
+    ['docs/research/audio.md'], ['.github/upstream/README.md']]) {
+    const result = classifyChanges(paths);
+    assert.equal(result.runHosts, false);
+    assert.equal(result.runNeovim, false);
+    assert.equal(result.runPersistenceVm, false);
+    assert.deepEqual(result.checkMatrix.include, [{ group: 'documentation', checks: 'formatting agent-docs' }]);
+  }
 });
 
 test('unrelated service, AI and GUI changes do not run the persistence VM', () => {

@@ -166,7 +166,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (host) (rate(node_network_receive_bytes_total{device=~\"eth0|wg-home\"}[5m]))",
+          "expr": "sum by (host) (rate(node_network_receive_bytes_total{device!~\"lo|ve-.*|veth.*|br-.*|docker.*\"}[5m]))",
           "legendFormat": "{{host}}",
           "interval": ""
         }
@@ -204,7 +204,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (host) (rate(node_network_transmit_bytes_total{device=~\"eth0|wg-home\"}[5m]))",
+          "expr": "sum by (host) (rate(node_network_transmit_bytes_total{device!~\"lo|ve-.*|veth.*|br-.*|docker.*\"}[5m]))",
           "legendFormat": "{{host}}",
           "interval": ""
         }
@@ -295,19 +295,19 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "absent_over_time(node_uname_info{host=\"alpha\"}[5m]) or vector(0)",
+          "expr": "absent_over_time(node_uname_info{host=\"alpha\"}[5m]) or on() vector(0)",
           "legendFormat": "alpha",
           "interval": ""
         },
         {
           "refId": "B",
-          "expr": "absent_over_time(node_uname_info{host=\"pi\"}[5m]) or vector(0)",
+          "expr": "absent_over_time(node_uname_info{host=\"pi\"}[5m]) or on() vector(0)",
           "legendFormat": "pi",
           "interval": ""
         },
         {
           "refId": "C",
-          "expr": "absent_over_time(node_uname_info{host=\"epsilon\"}[5m]) or vector(0)",
+          "expr": "absent_over_time(node_uname_info{host=\"epsilon\"}[5m]) or on() vector(0)",
           "legendFormat": "epsilon",
           "interval": ""
         }
