@@ -46,15 +46,15 @@ independent monitoring of Epsilon, and an acceptable resolution/clear policy.
 - Loki uses 7-day retention with filesystem-backed TSDB and compactor
   cleanup. There is **no hard byte cap**: disk exhaustion must be monitored.
   The initial implementation does not automatically ship journal entries
-  generated *inside* systemd-nspawn containers; those are a follow-up.
+  generated _inside_ systemd-nspawn containers; those are a follow-up.
 
 ## Pi volatile journal preservation
 
 Pi retains its existing `Storage=volatile`, 50 MB runtime journal limit,
 and tmpfs root. Alloy tails this journal in near real time, sends the
 entries over the private tunnel to Loki on Epsilon, and Loki persists them
-on Epsilon's `/persist` volume for 7 days. This means logs *successfully
-ingested* before Pi restarts remain searchable in Grafana after reboot.
+on Epsilon's `/persist` volume for 7 days. This means logs _successfully
+ingested_ before Pi restarts remain searchable in Grafana after reboot.
 
 This is **best effort**, not an archival or lossless journaling system:
 outages of Epsilon, the tunnel, Alloy, or Pi itself can prevent shipping.

@@ -93,7 +93,9 @@
 
         loki.write "epsilon" {
           endpoint {
-            url                 = "http://${if isCollector then "127.0.0.1" else epsilon}:3100/loki/api/v1/push"
+            url                 = "http://${
+              if isCollector then "127.0.0.1" else epsilon
+            }:3100/loki/api/v1/push"
             max_backoff_retries = 0
           }
         }
@@ -123,7 +125,12 @@
     };
 
     nixos =
-      { config, lib, pkgs, ... }:
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
       let
         cfg = config.modules.services;
         dashboardDir = pkgs.runCommand "fleet-grafana-dashboards" { } ''

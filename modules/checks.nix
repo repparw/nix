@@ -255,16 +255,7 @@
                 cp -r ${inputs.self} src
                 chmod -R +w src
                 cd src
-                # Temporary CI diagnostics; removed after canonical formatting.
-                if ! treefmt --tree-root . --walk filesystem --fail-on-change; then
-                  echo "FORMATTED_NIX_BEGIN"
-                  cat modules/aspects/monitoring.nix
-                  echo "FORMATTED_NIX_END"
-                  echo "FORMATTED_MD_BEGIN"
-                  cat docs/runbooks/monitoring.md
-                  echo "FORMATTED_MD_END"
-                  exit 1
-                fi
+                treefmt --tree-root . --walk filesystem --fail-on-change
                 touch $out
               '';
 
