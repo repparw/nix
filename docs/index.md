@@ -36,7 +36,7 @@ files instead of copying module contents.
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
 - [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
-- [Back up and restore a complete host](runbooks/host-recovery.md)
+- [Restore host state from offsite backups](runbooks/host-recovery.md)
 - [Prepare pi and epsilon for persistent state](runbooks/host-persistence.md)
 
 ## Fixes

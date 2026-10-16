@@ -57,8 +57,7 @@
               directory = "/var/lib/fail2ban";
               mode = "0750";
             }
-          ]
-          ++ lib.optionals (config.modules.backup.hostRecovery.enable or false) [
+            # Retain checkpoints made by the retired manual recovery tool.
             {
               directory = "/var/lib/host-recovery";
               mode = "0700";

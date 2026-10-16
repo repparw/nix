@@ -14,7 +14,7 @@
       den.aspects.fleet-unit-state
       den.aspects.deploy-target
       den.aspects.passwordless-sudo
-      den.aspects.backup
+      den.aspects.host-backup
       den.aspects.persistence
       den.aspects.service-host
       den.aspects.nixos-services._.edge
@@ -48,7 +48,6 @@
 
         modules.services.bridgePrefix = "10.231.137";
 
-        modules.backup.hostRecovery.enable = true;
         modules.backup.paths = [
           "/home/containers/config"
           "/var/lib/ddclient"
