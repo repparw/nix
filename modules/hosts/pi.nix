@@ -6,6 +6,7 @@
   den.aspects.pi = {
     includes = [
       den.aspects.fleet-unit-state
+      den.aspects.monitoring._.agent
       den.aspects.pi._.backup
       den.aspects.persistence
       den.aspects.service-host

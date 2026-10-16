@@ -12,6 +12,7 @@
   den.aspects.epsilon = {
     includes = [
       den.aspects.fleet-unit-state
+      den.aspects.monitoring._.server
       den.aspects.deploy-target
       den.aspects.passwordless-sudo
       den.aspects.epsilon._.backup

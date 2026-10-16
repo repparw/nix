@@ -7,6 +7,7 @@
   den.aspects.alpha = {
     includes = [
       den.aspects.fleet-unit-state
+      den.aspects.monitoring._.agent
       den.aspects.alpha._.backup
       den.aspects.btrfs-maintenance
       den.aspects.gaming
