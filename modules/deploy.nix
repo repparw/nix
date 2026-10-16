@@ -74,6 +74,7 @@ let
       # config resolves the option defaults the script is built from. Lazy
       # read: the fixed-point materializes before the package value is forced.
       controllerConfig = inputs.self.nixosConfigurations.pi.config;
+      servicesLib = import ./_services/lib.nix { inherit lib pkgs; };
       # The event parser is a store path substituted into the script text. It
       # cannot be discovered next to the executable: writeShellApplication
       # embeds only this script, so a runtime search of the store bin
@@ -94,6 +95,7 @@ let
         python3
         systemd
         util-linux
+        (servicesLib.mkDiscordNotify pkgs controllerConfig.modules.services.discordChannelId)
       ];
       text =
         builtins.replaceStrings

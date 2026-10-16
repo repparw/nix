@@ -51,7 +51,8 @@
   "qbittorrent": {
     "mode": "post-lock",
     "input": "nixpkgs",
-    "cleanup": "qbittorrent.patch"
+    "cleanup": "qbittorrent.patch",
+    "coupling": "apply"
   },
   "wpaperd-fix": {
     "mode": "post-lock",
@@ -74,7 +75,8 @@
     "validation": [
       "source",
       "wsi-build"
-    ]
+    ],
+    "coupling": "apply"
   },
   "moonshine-pr227": {
     "issue": 147,
@@ -85,7 +87,8 @@
       "source-guard",
       "package-build",
       "generated-unit"
-    ]
+    ],
+    "coupling": "apply"
   },
   "sonarr-jellyfin": {
     "mode": "host-owned",
