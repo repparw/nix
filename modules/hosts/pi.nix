@@ -172,12 +172,12 @@
           };
 
           "/boot/firmware" = {
-            device = "/dev/disk/by-partuuid/2178694e-01";
+            device = "/dev/disk/by-label/FIRMWARE";
             fsType = "vfat";
           };
 
           "/persist" = {
-            device = "/dev/disk/by-partuuid/2178694e-02";
+            device = "/dev/disk/by-label/NIXOS_SD";
             fsType = "ext4";
             neededForBoot = true;
             options = [

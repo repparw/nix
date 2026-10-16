@@ -9,14 +9,10 @@ tags: [runbook, recovery, updates, pi, alpha, epsilon, deploy-rs]
 
 # Update Rollback
 
-GitHub Actions opens lock update PRs. Pi's independent 05:30 consumer requires
-successful CI for exact current main, then prepares every selected host before
-activating epsilon, idle alpha, and finally pi. Preparation failures pause
-automation before activation starts and retain preparation evidence.
-Pi's 07:00 alpha retry uses the same CI gate.
-
-Full pipeline detail lives in the
-[fleet operations runbook](fleet-operations.md).
+Pi's 05:30 consumer requires successful CI for exact current main, then
+prepares every selected host before activating epsilon, idle alpha, and
+finally pi; pi's 07:00 retry covers a deferred alpha. Full pipeline detail
+lives in the [fleet operations runbook](fleet-operations.md).
 
 ## Automatic rollback
 

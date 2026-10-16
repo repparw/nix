@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
 const lightweight = 'formatting sops-files change-detection agent-docs check-flake-file deploy-schema ci-workflow';
-const configuration = 'generated-shellcheck fleet-cli service-definitions host-persistence backup-exports btrfs-health fleet-failed-units hermes-auxiliary-routing pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage';
+const configuration = 'generated-shellcheck fleet-cli service-definitions host-persistence pi-image-configuration backup-exports btrfs-health fleet-failed-units hermes-auxiliary-routing pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage';
 
 const full = reason => ({
   runNeovim: true,
@@ -21,7 +21,7 @@ const documentationOnly = path =>
 // boot/storage changes and tooling that could affect how it is evaluated.
 const affectsPersistence = path =>
   ['flake.nix', 'flake.lock', 'modules/checks.nix', 'modules/entities.nix',
-    'modules/aspects/persistence.nix', 'modules/aspects/backup.nix', 'modules/aspects/host-backup.nix',
+    'modules/pi-image.nix', 'modules/aspects/persistence.nix', 'modules/aspects/backup.nix', 'modules/aspects/host-backup.nix',
     'modules/scripts/prepare-backup-exports.py', 'modules/aspects/pi-services-backup.nix',
     'modules/_tests/backup-exports.py',
     'modules/aspects/nix.nix', 'modules/aspects/nixpkgs.nix',

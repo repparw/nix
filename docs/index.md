@@ -30,9 +30,7 @@ files instead of copying module contents.
 ## Runbooks
 
 - [Add and maintain change-detection watchers](runbooks/change-detection-watchers.md)
-- [Migrate Home Assistant custom components](runbooks/homeassistant-custom-components.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
-- [Deploy NixOS to the Raspberry Pi](runbooks/deploy-pi-nixos.md)
 - [Update rollback](runbooks/update-rollback.md)
 - [Fleet health, offsite backups, and upgrade reports](runbooks/fleet-operations.md)
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
