@@ -73,7 +73,6 @@
         # Independent of Grafana/Loki/Prometheus, including when the disk is full.
         modules.disk-watch = {
           enable = true;
-          interval = "*:0/5";
           mounts = [
             {
               mount = "/persist";

@@ -42,14 +42,12 @@ independent monitoring of Epsilon, and an acceptable resolution/clear policy.
   not yet Discord alert rules; the existing fleet-health alerts remain.
 - Textfile metrics can be published to `/var/lib/fleet-metrics/textfile`.
 - Prometheus keeps 30 days of metrics with a 3 GB storage retention limit.
-  Loki keeps 7 days of filesystem-backed TSDB log chunks and has a global
-  ingestion limit of 0.02 MB/s with a 1 MB burst. This is an _ingress
-  budget_, **not a strict on-disk quota**: sustained peak writes correspond
-  to approximately 12 GiB over a week before index/compactor overhead.
-- Epsilon runs the existing **disk-watch** script every 5 minutes for
+  Loki keeps 7 days of filesystem-backed TSDB log chunks. Neither Loki
+  retention nor its default ingestion limits enforce a disk-space quota.
+- Epsilon runs the existing **disk-watch** script every 15 minutes for
   `/persist` (warning at 70%, critical at 85%) and sends Discord alerts
-  without depending on Loki/Prometheus/Grafana. Consider hard isolation or
-  filesystem quotas if this early-warning strategy is insufficient.
+  without depending on Loki/Prometheus/Grafana. Consider filesystem quotas
+  or a dedicated volume if monitoring data ever warrants hard isolation.
 - Epsilon uses explicit `/persist` binds for Loki, Prometheus and Grafana,
   including Grafana encryption credentials. The monitoring data is not yet
   copied to the offsite restic repository.
@@ -132,7 +130,7 @@ before expecting browser access.
    correctly lost them). Interrupt the tunnel and restore it to check
    Alloy retry/dropped-entry logs. Treat persistent errors as blockers.
 8. Check `systemctl status disk-watch.timer` on Epsilon and evaluate its
-   five-minute run independently of the monitoring stack. Verify the
+   fifteen-minute run independently of the monitoring stack. Verify the
    configured thresholds for `/persist`, and that alerts can reach Discord.
 9. Measure Alloy's CPU use with `loki.secretfilter` enabled on Pi under
    typical and high journal load before deploying broadly. Reduce/filter
@@ -146,9 +144,10 @@ be reachable from the public internet. Prometheus listens on all IPv4
 interfaces for remote-write and query access, so nftables must strictly
 restrict TCP 9090 to the private WireGuard peers or loopback. Verify this
 before activating it; **do not** set `services.prometheus.openFirewall`.
-The ingestion cap is deliberately restrictive; 429s may drop logs under load,
-so inspect Alloy drop/retry counters and tune only with disk headroom. The Grafana `/api/health` path
-is intentionally unauthenticated for fleet-health; other Grafana routes
+Loki has no hard size quota. Monitor actual persistent volume usage and
+Alloy ingestion errors before deciding whether a dedicated filesystem
+budget is necessary. The Grafana `/api/health` path is intentionally
+unauthenticated for fleet-health; other Grafana routes
 must enforce Authelia. Treat Grafana local admin as a second login layer.
 No new automatic notifications are enabled in this phase.
 

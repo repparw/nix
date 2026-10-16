@@ -217,11 +217,6 @@
             limits_config = {
               retention_period = "168h"; # 7 days
               max_query_lookback = "168h";
-              # Small three-host fleet: cap incoming logs well below Loki's
-              # permissive defaults. 0.02 MB/s is ~12 GiB in seven days
-              # at sustained max throughput (not a strict on-disk quota).
-              ingestion_rate_mb = 0.02;
-              ingestion_burst_size_mb = 1;
             };
             compactor = {
               working_directory = "/var/lib/loki/compactor";

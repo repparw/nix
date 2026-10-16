@@ -60,6 +60,7 @@ let
   epsilonDiskWatch =
     (cfg "epsilon").modules.disk-watch.enable
     && lib.any (entry: entry.mount == "/persist") (cfg "epsilon").modules.disk-watch.mounts
+    && (cfg "epsilon").modules.disk-watch.interval == "*:0/15"
     && (cfg "epsilon").systemd.timers ? disk-watch;
 in
 assert allAgents;
