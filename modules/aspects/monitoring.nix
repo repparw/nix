@@ -1,7 +1,7 @@
 { den, ... }:
 {
-  # A host-side collector. Only Epsilon may scrape it; no exporter port is
-  # opened by the NixOS exporter module's broad openFirewall switch.
+  # Alloy replaces node_exporter: it scrapes its built-in Unix exporter
+  # locally, sends samples to Prometheus, and ships journald to Loki.
   den.aspects.monitoring.provides.agent.nixos =
     { config, lib, ... }:
     let
@@ -9,21 +9,6 @@
       epsilon = config.modules.services.hostAddresses.epsilon;
     in
     {
-      services.prometheus.exporters.node = {
-        enable = true;
-        port = 9100;
-        listenAddress = if isCollector then "127.0.0.1" else "0.0.0.0";
-        openFirewall = false;
-        enabledCollectors = [ "systemd" "textfile" ];
-        extraFlags = [
-          "--collector.textfile.directory=/var/lib/node-exporter/textfile"
-        ] ++ lib.optionals (config.networking.hostName == "alpha") [
-          # Override upstream's default exclusion to add sleeping HDD
-          # automounts. Statfs on these mountpoints can wake the disks.
-          "--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/credentials/.+|var/lib/docker/.+|var/lib/containers/storage/.+|mnt/hdd|mnt/seagate|home/containers/media/hdd|home/containers/media/seagate)(/|$)"
-        ];
-      };
-
       # Ship the host's systemd journal to the central Loki instance.
       # Entries already sent persist on Epsilon across Pi reboots even
       # though the Pi journal remains volatile.
@@ -36,6 +21,43 @@
       };
 
       environment.etc."alloy/config.alloy".text = ''
+        // The same Alloy process collects node_exporter metrics. This
+        // exporter is internal to Alloy, so no per-host metrics port is open.
+        prometheus.exporter.unix "node" {
+          enable_collectors = ["systemd"]
+
+          systemd {
+            enable_restarts = true
+            start_time     = true
+          }
+
+          textfile {
+            directory = "/var/lib/fleet-metrics/textfile"
+          }
+
+          ${lib.optionalString (config.networking.hostName == "alpha") ''
+            // Avoid statfs on autofs portals and sleeping HDD mounts.
+            filesystem {
+              mount_points_exclude = "^/(dev|proc|sys|run/credentials/.+|var/lib/docker/.+|var/lib/containers/storage/.+|mnt/hdd|mnt/seagate|home/containers/media/hdd|home/containers/media/seagate)($|/)"
+            }
+          ''}
+        }
+
+        prometheus.scrape "node" {
+          targets         = prometheus.exporter.unix.node.targets
+          forward_to      = [prometheus.remote_write.epsilon.receiver]
+          job_name        = "node"
+          scrape_interval = "30s"
+        }
+
+        prometheus.remote_write "epsilon" {
+          external_labels = { host = "${config.networking.hostName}" }
+
+          endpoint {
+            url = "http://${if isCollector then "127.0.0.1" else epsilon}:9090/api/v1/write"
+          }
+        }
+
         // Journald metadata is internal until explicitly promoted to labels.
         // Keep labels low-cardinality (never PID, cursor, command line).
         loki.relabel "journal" {
@@ -77,13 +99,11 @@
         }
       '';
 
+      # Writers of future fleet-specific .prom gauges use this shared
+      # directory, independent of the telemetry agent implementation.
       systemd.tmpfiles.rules = [
-        "d /var/lib/node-exporter/textfile 0755 root root - -"
+        "d /var/lib/fleet-metrics/textfile 0755 root root - -"
       ];
-
-      networking.firewall.extraInputRules = lib.mkIf (!isCollector) ''
-        iifname "eth0" ip saddr ${epsilon} tcp dport 9100 accept comment "epsilon prometheus scrape"
-      '';
     };
 
   # Epsilon is the independent collector: it remains online when the home
@@ -114,22 +134,16 @@
       {
         services.prometheus = {
           enable = true;
-          listenAddress = "127.0.0.1";
+          # Prometheus is only a TSDB/query/receiver, not the fleet scraper.
+          # The firewall permits remote-write from the two home hosts only
+          # via WireGuard; Grafana and Epsilon's Alloy use loopback.
+          listenAddress = "0.0.0.0";
           port = 9090;
           stateDir = "prometheus2";
           retentionTime = "30d";
-          extraFlags = [ "--storage.tsdb.retention.size=3GB" ];
-          globalConfig.scrape_interval = "30s";
-          scrapeConfigs = [
-            {
-              job_name = "node";
-              static_configs = map (host: {
-                targets = [
-                  "${if host == "epsilon" then "127.0.0.1" else cfg.hostAddresses.${host}}:9100"
-                ];
-                labels.host = host;
-              }) [ "alpha" "pi" "epsilon" ];
-            }
+          extraFlags = [
+            "--storage.tsdb.retention.size=3GB"
+            "--web.enable-remote-write-receiver"
           ];
         };
 
@@ -176,10 +190,11 @@
           };
         };
 
-        # Loki has no authentication in single-tenant mode. Only the
-        # private home tunnel and these two source hosts may ingest.
+        # Neither Loki nor the Prometheus receiver authenticates requests.
+        # Both are reachable only from the two home hosts over WireGuard
+        # (plus local loopback); never open them on the public interface.
         networking.firewall.extraInputRules = ''
-          iifname "wg-home" ip saddr { ${cfg.hostAddresses.pi}, ${cfg.hostAddresses.alpha} } tcp dport 3100 accept comment "private fleet Alloy to Loki"
+          iifname "wg-home" ip saddr { ${cfg.hostAddresses.pi}, ${cfg.hostAddresses.alpha} } tcp dport { 9090, 3100 } accept comment "private Alloy telemetry ingestion"
         '';
 
         services.grafana = {
