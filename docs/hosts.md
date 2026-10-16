@@ -20,7 +20,7 @@ streaming, and backup behavior. Since the edge migrations it is not a
 public entrypoint: epsilon terminates the public vhosts, and pi fronts
 alpha's published service backends over the LAN.
 
-Alpha is the final stage of deploy-rs fleet updates and is activated only when
+The fleet deployment order is epsilon, alpha, then pi. Alpha is activated only when
 every local graphical user session is idle, locked, or no longer active. This
 policy also defers for block-mode systemd sleep inhibitors, so a remote game or
 media stream remains active even when the physical session is locked. It
@@ -95,10 +95,19 @@ public vhosts with Authelia SSO. Installed in place via nixos-infect
 - Offsite restic covers its stateful edge services under
   `gd-crypt:restic/epsilon`.
 
-It is the first stage of the fleet's deploy-rs update, limiting blast radius
-before the home controller and desktop are activated.
+It is the first stage of the fleet's deploy-rs update, before alpha and then pi.
+
 
 Source: `modules/hosts/epsilon.nix`
+
+## Persistence and backups
+
+Pi and epsilon use tmpfs roots with durable state under `/persist`. Their
+mutable-account policy persists `/etc`; host state and service exports also
+have offsite backups. Local persistence alone does not provide offsite recovery.
+See the [host persistence runbook](runbooks/host-persistence.md) and
+[host recovery runbook](runbooks/host-recovery.md).
+
 
 ## Related
 

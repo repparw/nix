@@ -7,9 +7,17 @@ resource: modules/aspects/audio.nix
 tags: [research, audio, music-assistant, home-assistant]
 ---
 
-### System Implementation Specification: Louder ESP32-S3 Endpoint
+# Multi-room audio Music Assistant proposal
 
-#### 1. Hardware Architecture & Pinout
+These are planning notes, not a verified inventory or installation record. The
+2026-10-16 documentation audit did not validate the board revisions, prices,
+firmware settings, or Music Assistant UI steps below. The repository's
+[audio aspect](../../modules/aspects/audio.nix) configures desktop Bluetooth
+and PipeWire; it does not establish the state of external speaker hardware.
+
+## Proposed Louder ESP32-S3 setup
+
+### 1. Hardware Architecture & Pinout
 
 - **Processor / Board:** Sonocotta Louder ESP32-S3 (ESP32-S3-WROOM-1 module, 8MB PSRAM, 16MB Flash).
 - **Audio Subsystem:** Texas Instruments TAS5805M Class-D Amplifier / I2S DAC.
@@ -18,7 +26,7 @@ tags: [research, audio, music-assistant, home-assistant]
 
 ---
 
-#### 2. Firmware Flashing & Hardware Configuration
+### 2. Firmware Flashing & Hardware Configuration
 
 1. Flash **Squeezelite-ESP32** using the Sonocotta Web Flasher / ESP Web Tools targeting the `TAS5805M` build profile.
 2. Join the AP (`Squeezelite-XXXX`), configure the local 2.4 GHz Wi-Fi credentials, and assign a static DHCP lease.
@@ -29,7 +37,7 @@ tags: [research, audio, music-assistant, home-assistant]
 
 ---
 
-#### 3. Music Assistant & Spotify Connect Configuration
+### 3. Music Assistant & Spotify Connect Configuration
 
 1. In Home Assistant, open **Music Assistant** > **Settings** > **Player Providers** and verify **Slimproto (Squeezebox)** is active.
 2. Confirm the Louder ESP32 entity auto-discovers as `media_player.mass_living_room_speakers`.
@@ -41,7 +49,7 @@ tags: [research, audio, music-assistant, home-assistant]
 
 ---
 
-#### 4. Home Assistant Master Volume Automation
+### 4. Home Assistant Master Volume Automation
 
 Add this automation to `automations.yaml` to enforce a software ceiling on the room master entity:
 
@@ -66,7 +74,7 @@ automation:
 
 ---
 
-#### 5. Verification Checklist
+### 5. Verification Checklist
 
 - [ ] Verify Squeezelite-ESP32 connects to the Slimproto server port (`3483` / `9000`).
 - [ ] Trigger playback from Jellyfin in Music Assistant to confirm gapless FLAC decoding.

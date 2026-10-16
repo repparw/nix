@@ -22,27 +22,19 @@ tags:
 
 Research date: 2026-09-01.
 
-## Scope
+## Status and scope
 
-Omarchy is DHH's opinionated Arch Linux + Hyprland distribution ("omakase
-computing": a single blessed golden path, everything configured, nothing
-asked).[^welcome] This note reads the full manual (51 sections) end to end,
-verifies the ideas that matter against the actual `basecamp/omarchy` source at
-HEAD (version `4.0.0.alpha`),[^version] and asks, idea by idea, what could port
-to this repo — a den-aspect NixOS flake running a small fleet: `pi` (LAN edge
-and the single flake.lock writer), `alpha` (desktop consumer host), `beta`
-(parked), and `epsilon` (aarch64 VPS edge that took over apex/authelia/glance/
-miniflux and hermes in the phase-2 cutover; it runs no auto-update pipeline
-yet).[^epsilon][^hosts] Note: `docs/hosts.md` does not document epsilon and
-still says pi fronts every vhost — it is stale relative to the cutover
-comments in `modules/hosts/pi.nix`.[^hosts]
+This is a historical research note from 2026-09-01. The repository comparisons
+and proposed integrations below describe the update design at that time.
 
-The repo already has a strong update story: pi runs a nightly
-bump→probe→backup→build→push-lock→switch→soak→rollback pipeline, alpha pulls
-pi's lock with health gates, a soak, rollback, and a circuit breaker, and the
-stated invariant is "origin/main's flake.lock always equals the pin production
-converged on".[^fleet-ops][^alpha] Many Omarchy ideas collide with that and
-lose; a few fill real gaps.
+The current update path uses GitHub Actions for lock updates and validation.
+Pi deploys CI-green main through epsilon, alpha, then pi, using one controller
+lock, host health checks, and rollback. Pi no longer writes the lockfile.
+Use the [host profiles](../hosts.md) and
+[fleet operations runbook](../runbooks/fleet-operations.md) for current behavior.
+
+The Omarchy analysis below records the original source review and proposals.
+It is not a current implementation checklist.
 
 ## Ideas and verdicts
 
@@ -60,7 +52,7 @@ same update — an explicit agent skill (`agents/skills/migrations.md`) tells AI
 agents how to author them.[^migrations-skill] There are 103 shipped migrations
 on HEAD.[^tree]
 
-What this repo does today. Nothing equivalent. Nix makes _configuration_
+Repository baseline at research time. Nothing equivalent. Nix makes _configuration_
 switches atomic and rollbackable, but the fleet has mutable state that
 upgrades do not touch: nspawn container configs under `/home/containers/config`,
 restic repo layout, Discord webhook plumbing, automations state
@@ -100,7 +92,7 @@ explicit escape hatch (`OMARCHY_ALLOW_DIRECT_PACMAN=1`), pointing them back to
 `omarchy update`.[^pacman-guard] Post-update, `omarchy-update-analyze-logs`
 scans the transcript for anomalies.[^update-bin]
 
-What this repo does today. The unattended path is strong (pi pipeline, alpha
+Repository baseline at research time. The unattended path is strong (pi pipeline, alpha
 gated flip), but the _manual_ path is raw: `nh os switch` or
 `nixos-rebuild switch` straight from the repo, and easy to run without the
 gates from an interactive shell.[^fleet-ops][^runbook-rollback] One correction
@@ -163,7 +155,7 @@ your desktop looks like, never what it runs; `~/.config/omarchy/themed/*.tpl`
 templates let users theme apps Omarchy does not know, using `{{ color0 }}`
 placeholders.[^themes-manual][^theme-making][^tree-themes]
 
-What this repo does today. Stylix already plays the "one palette → all apps"
+Repository baseline at research time. Stylix already plays the "one palette → all apps"
 role — arguably Omarchy's `colors.toml` is a hand-rolled base16 engine. But the
 theme is hardcoded as a single choice in the aspect: `tokyodark-terminal.yaml`
 plus one pinned, dimmed Stalenhag wallpaper, with fonts and cursor fixed in
@@ -191,7 +183,7 @@ explicitly frames the CLI as the interface for AI agents working on the
 system.[^cli-manual] The 444 `bin/` scripts are the implementation behind both
 the menu and the CLI.[^tree]
 
-What this repo does today. Helpers exist but are scattered and ad hoc:
+Repository baseline at research time. Helpers exist but are scattered and ad hoc:
 `clip2qr` and `hotswap` as `writeShellApplication`s in the scripts aspect, the
 fleet-health probe binary, the auto-update script embedded in
 `modules/hosts/alpha.nix`, operator controls documented as raw `ssh pi`
@@ -217,7 +209,7 @@ What Omarchy does. Well-defined lifecycle events expose hook directories
 `omarchy hook install` to wire a script in; executables in the directory run
 at the event.[^dotfiles-manual]
 
-What this repo does today. Promotion and deployment are separate scheduled
+Repository baseline at research time. Promotion and deployment are separate scheduled
 transactions, but fleet policy, soak, rollback, and Discord notification still
 live in one controller script. There is no sanctioned way to attach behavior
 at lifecycle points without editing it.[^alpha]
@@ -249,7 +241,7 @@ handful of plain files, making Omarchy a base image for VMs and fleet
 machines; a `defer-provisioning` variant installs with no personal data at
 all for handing machines to other people.[^unattended-manual][^getting-started]
 
-What this repo does today. New-host onboarding is procedural: the pi deploy
+Repository baseline at research time. New-host onboarding is procedural: the pi deploy
 runbook (SD image + flake activation), an in-repo authorized-keys location,
 and sops age keys per host — but nothing that turns "blank machine" into
 "fleet member" without someone walking through the steps by
@@ -275,7 +267,7 @@ What Omarchy does. `Update > Firmware` (backed by `omarchy-update-firmware`)
 runs `fwupd` against the Linux Vendor Firmware Service on demand, noting that
 some firmware only applies at reboot.[^updates-manual][^update-bin]
 
-What this repo does today. Nothing manages firmware; the fleet keeps current
+Repository baseline at research time. Nothing manages firmware; the fleet keeps current
 via flake bumps only, and a stale SSD/dock/dock-controller firmware is an
 invisible failure class.
 
@@ -332,7 +324,7 @@ gets a "Process crashed" notification which, when clicked, hands the core
 dump to the default AI agent with a diagnose-crash skill; per-program muting
 exists for known-noisy crashes.[^ai-manual]
 
-What this repo does today. Fleet-health probes detect _services_ being down
+Repository baseline at research time. Fleet-health probes detect _services_ being down
 (HTTP surfaces, unit states) but say nothing about processes crashing
 elsewhere — a silently-restarting user service or repeated coredumps on alpha
 is invisible until something else fails.[^fleet-ops]
@@ -360,7 +352,7 @@ restarts before rebooting); and an _FAQ_ of one-answer questions, including a
 "how do I remove all the extra software" escape hatch that deletes the whole
 opinionated layer in one action.[^tweaks-manual][^troubleshooting-manual][^faq-manual]
 
-What this repo does today. Docs are excellent for _procedures_ (runbooks with
+Repository baseline at research time. Docs are excellent for _procedures_ (runbooks with
 frontmatter routing, agent guidance) and _architecture_, but scattered for
 _small_ knowledge: the traefik SNI probe gotcha lives inside
 `fleet-operations.md`, resize/scale fixes would live in host files, and there
@@ -382,7 +374,7 @@ What Omarchy does. `Super + Ctrl + PrtScr` selects a screen region, tesseract
 extracts the text, and the result lands on the clipboard; dictation is
 Voxtype with push-to-talk and a toggle binding.[^ocr-manual]
 
-What this repo does today. Dictation is already ahead of Omarchy: the repo
+Repository baseline at research time. Dictation is already ahead of Omarchy: the repo
 runs Voxtype declaratively with a pinned version and a whole research note on
 closing the Wispr Flow gap.[^wispr-note][^dictation] There is no OCR
 extraction helper, but the pattern for one exists — `clip2qr` is exactly this

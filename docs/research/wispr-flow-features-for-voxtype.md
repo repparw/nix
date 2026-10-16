@@ -1,7 +1,7 @@
 ---
 type: Research Note
 title: Wispr Flow Features Worth Bringing to Voxtype
-description: Source-backed comparison of current Wispr Flow features with the repository's local Voxtype setup.
+description: Historical Wispr Flow comparison with an updated local Voxtype baseline.
 when: Read when evaluating or planning Voxtype dictation improvements.
 resource: modules/aspects/ai/dictation.nix
 tags: [dictation, voxtype, wispr-flow, speech]
@@ -13,11 +13,15 @@ Research date: 2026-07-12.
 
 ## Scope and current baseline
 
-The repository pins Voxtype `v0.7.5` with its Vulkan package, the Whisper `base`
-model, English and Spanish, audio feedback, the GTK4 layer-shell OSD, a toggle
-shortcut, MPRIS media pause (built into Voxtype), and transcription
-notifications disabled. The comparison below focuses on features that improve everyday
-dictation while preserving the setup's local-first character.
+The comparison was researched on 2026-07-12. The external product claims and
+upstream feature descriptions below retain that research context.
+
+The current [dictation aspect](../../modules/aspects/ai/dictation.nix) selects
+`pkgs.voxtype-vulkan`, Whisper `small`, English and Spanish, audio feedback,
+media ducking, a Quickshell OSD, and a toggle shortcut. Transcription
+notifications are disabled. Spoken punctuation is already enabled explicitly.
+The aspect also configures an initial prompt and energy-based voice activity
+detection. Package versions follow the flake's resolved Nixpkgs input.
 
 Wispr Flow's distinguishing layer is not speech recognition alone. Its official
 description emphasizes post-processing: self-correction, filler removal,
@@ -28,9 +32,9 @@ recovery.[^flow-features][^why-flow]
 
 ### 1. Enable Voxtype's existing cleanup controls
 
-**Recommendation: do first.** Enable `text.filter_filler_words`,
-`text.spoken_punctuation`, and `text.smart_auto_submit` explicitly in the
-dictation aspect.
+Spoken punctuation is implemented in the current aspect. Filler filtering and
+voice submit remain candidates for explicit configuration; verify their
+behavior against the resolved Voxtype package before enabling them.
 
 - Wispr removes filler words, infers punctuation, formats lists, and understands
   corrections such as “2… actually 3.”[^flow-features]
@@ -39,7 +43,7 @@ dictation aspect.
   spoken “submit” before pressing Enter.[^voxtype-text]
 - Explicit configuration documents the intended behavior and protects it from
   upstream default changes. Spoken punctuation and voice submit are opt-in;
-  filler filtering is currently on by default.
+  the researched release enabled filler filtering by default.
 
 This yields immediate parity for filler cleanup and explicit punctuation. It
 does **not** provide Wispr's semantic course correction (“Tuesday—actually

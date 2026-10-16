@@ -7,12 +7,12 @@ Hosts:
 
 - `alpha`: desktop workstation with backend services, gaming, streaming, and
   backups.
-- `pi`: Raspberry Pi 5 home server and public edge (Traefik, Authelia,
-  ddclient, Glance, miniflux, ArchisteamFarm, change-detection, Hermes) with
-  declarative nspawn containers.
+- `pi`: Raspberry Pi 5 home server with Home Assistant, the LAN HTTPS edge,
+  fleet monitoring, and the deployment controller.
+- `epsilon`: aarch64 VPS with the public HTTPS edge, Authelia, Miniflux,
+  Glance, Hermes, ArchiSteamFarm, and Paperless in nspawn containers.
 
-`beta` is parked: its host attachment is commented out in
-`modules/aspects/repparw.nix` pending laptop hardware.
+`beta` is parked: `modules/entities.nix` has no host entry for the laptop.
 
 ## Commands
 
