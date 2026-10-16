@@ -250,7 +250,7 @@
     },
     {
       "id": 7,
-      "title": "Scrape targets",
+      "title": "Missing host telemetry (1 = missing)",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -264,7 +264,22 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
+          "unit": "short",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
         },
         "overrides": []
       },
@@ -280,8 +295,20 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "up{job=\"node\"}",
-          "legendFormat": "{{host}}",
+          "expr": "absent_over_time(node_uname_info{host=\"alpha\"}[5m]) or vector(0)",
+          "legendFormat": "alpha",
+          "interval": ""
+        },
+        {
+          "refId": "B",
+          "expr": "absent_over_time(node_uname_info{host=\"pi\"}[5m]) or vector(0)",
+          "legendFormat": "pi",
+          "interval": ""
+        },
+        {
+          "refId": "C",
+          "expr": "absent_over_time(node_uname_info{host=\"epsilon\"}[5m]) or vector(0)",
+          "legendFormat": "epsilon",
           "interval": ""
         }
       ]

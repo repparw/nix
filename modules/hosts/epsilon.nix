@@ -13,6 +13,7 @@
     includes = [
       den.aspects.fleet-unit-state
       den.aspects.monitoring._.server
+      den.aspects.nixos-services._.disk-watch
       den.aspects.deploy-target
       den.aspects.passwordless-sudo
       den.aspects.epsilon._.backup
@@ -67,6 +68,16 @@
         users.users.repparw.hashedPasswordFile = config.sops.secrets.repparwPasswordHash.path;
 
         modules.services.bridgePrefix = "10.231.137";
+        modules.monitoring.agent.receiverHost = "127.0.0.1";
+
+        # Independent of Grafana/Loki/Prometheus, including when the disk is full.
+        modules.disk-watch = {
+          enable = true;
+          interval = "*:0/5";
+          mounts = [
+            { mount = "/persist"; warn = 70; crit = 85; }
+          ];
+        };
 
         modules.backup.paths = [
           "/home/containers/config"
