@@ -65,7 +65,7 @@ test('every checkout job verifies dispatch SHA before checking out the workflow 
     assert.match(job, /if: inputs.expected_sha != ''/);
     assert.match(job, /EXPECTED_SHA: \$\{\{ inputs.expected_sha \}\}/);
     assert.ok(job.indexOf('test "$GITHUB_SHA" = "$EXPECTED_SHA"') < job.indexOf('actions/checkout'));
-    assert.match(job, /ref: \$\{\{ github.sha \}\}/);
+    assert.match(job, /ref: \$\{\{ (github.event.pull_request.head.sha \|\| )?github.sha \}\}/);
     const guard = job.match(/run: (test "\$GITHUB_SHA" = "\$EXPECTED_SHA")/)[1];
     for (const expected of ['reviewed-head', 'stale-head', '']) {
       const result = spawnSync('bash', ['-e', '-c', guard], {
@@ -136,5 +136,48 @@ test('docs-only PRs skip the workflow watcher tests but code changes retain them
   assert.equal(runsWatcher(['docs/hosts.md', 'README.md']), false);
   for (const path of ['.github/scripts/upstream-plan.py', '.github/workflows/revision-validation.yml', 'flake.lock']) {
     assert.equal(runsWatcher([path]), true, path);
+  }
+});
+
+test('atomic package validation reads the PR head and includes bundled ARM validation', () => {
+  const job = validation.split('  upstream-package-build:')[1].split('\n  gate:')[0];
+  assert.match(job, /ref: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/);
+  assert.match(job, /contains\(inputs.upstream_watcher, 't3code-split'\) \|\| inputs.upstream_watcher == 'automation\/atomic-cleanup'/);
+  assert.match(job, /"architecture":"arm","runner":"ubuntu-24.04-arm"/);
+  const script = job.split('        run: |\n')[1].replace(/^          /gm, '');
+  const directory = mkdtempSync(join(tmpdir(), 'atomic-package-test-'));
+  try {
+    const run = (cmd, args) => {
+      const result = spawnSync(cmd, args, { cwd: directory, encoding: 'utf8' });
+      assert.equal(result.status, 0, result.stderr);
+      return result.stdout.trim();
+    };
+    run('git', ['init', '-b', 'main']);
+    run('git', ['config', 'user.name', 'fixture']);
+    run('git', ['config', 'user.email', 'fixture@example.test']);
+    run('git', ['commit', '--allow-empty', '-m', 'base']);
+    run('git', ['switch', '-c', 'candidate']);
+    run('git', ['commit', '--allow-empty', '-m', 'fix(upstream): updated lock (authelia-pnpm-hash,t3code-split,qbittorrent)']);
+    const head = run('git', ['rev-parse', 'HEAD']);
+    run('git', ['switch', 'main']);
+    run('git', ['merge', '--no-ff', 'candidate', '-m', 'Merge candidate into main']);
+    mkdirSync(join(directory, 'bin'));
+    const bash = spawnSync('bash', ['-c', 'command -v bash'], { encoding: 'utf8' }).stdout.trim();
+    writeFileSync(join(directory, 'bin/python3'), `#!${bash}\nprintf '%s\\n' "$*" >> calls\n`, { mode: 0o755 });
+    const validate = architecture => spawnSync('bash', ['-euo', 'pipefail', '-c', script], {
+      cwd: directory, encoding: 'utf8',
+      env: { ...process.env, PATH: `${join(directory, 'bin')}:${process.env.PATH}`, WATCHERS: 'automation/atomic-cleanup', ARCHITECTURE: architecture },
+    });
+    assert.notEqual(validate('x86').status, 0, 'a synthetic merge message must fail closed');
+    run('git', ['checkout', '--detach', head]);
+    assert.equal(validate('x86').status, 0);
+    assert.equal(validate('arm').status, 0);
+    assert.deepEqual(readFileSync(join(directory, 'calls'), 'utf8').trim().split('\n'), [
+      '.github/scripts/upstream-validate.py t3code-split --architecture x86',
+      '.github/scripts/upstream-validate.py qbittorrent --architecture x86',
+      '.github/scripts/upstream-validate.py t3code-split --architecture arm',
+    ]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
   }
 });
