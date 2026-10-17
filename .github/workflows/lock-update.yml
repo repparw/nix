@@ -338,15 +338,15 @@ jobs:
             fi
           }
 
-          # Arm GitHub auto-merge only after every other verification is
-          # green. GitHub still merges exactly when the required checks pass
-          # and the branch is strict up-to-date; this only permits it.
-          arm_atomic_automerge() {
-            local armed
-            armed=$(gh pr view "$atomic_pr" --json autoMergeRequest --jq '.autoMergeRequest != null')
-            if [ "$armed" != true ]; then
-              gh pr merge "$atomic_pr" --repo "$GH_REPO" --squash --auto
+          # Merge the validated head immediately; never authorize a later tip.
+          merge_atomic_candidate() {
+            verify_atomic_pr || return 1
+            if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$atomic_base" ]; then
+              echo "main advanced after atomic validation; retry on the new base." >&2
+              return 1
             fi
+            gh pr merge "$atomic_pr" --repo "$GH_REPO" --squash \
+              --match-head-commit "$atomic_revision"
           }
 
           # Prove the published tip carries exactly the planned recipe: the
@@ -489,7 +489,7 @@ jobs:
           # Bot-created PRs do not emit normal pull_request workflows, so
           # dispatches may need recovery after a partial workflow failure.
           # Dispatches missing exact-SHA validation and waits until it is
-          # green. Never arms auto-merge: the caller arms only after the
+          # green. Never merges: the caller merges only after the
           # required PR checks are approved as well, and the merge itself is
           # gated by the required PR CI (which includes the native ARM build
           # and bundled package validations for atomic candidates).
@@ -557,6 +557,8 @@ jobs:
           atomic_branch=automation/atomic-cleanup
           atomic_pr=$(gh pr list --head "$atomic_branch" --base main --state open --json number --jq '.[0].number // empty')
           if [ -n "$atomic_pr" ]; then
+            # Disarm legacy requests before inspecting or revalidating a tip.
+            gh pr merge "$atomic_pr" --repo "$GH_REPO" --disable-auto || exit 1
             remote_tip=$(git ls-remote --heads origin "$atomic_branch" | cut -f1)
             pr_tip=$(gh pr view "$atomic_pr" --json headRefOid --jq .headRefOid)
             if [ -z "$remote_tip" ] || [ "$remote_tip" != "$pr_tip" ]; then
@@ -597,7 +599,7 @@ jobs:
             fi
             reconcile_atomic_ci "$atomic_pr" "$atomic_revision" "$atomic_watchers" || exit 1
             approve_atomic_checks || exit 1
-            arm_atomic_automerge || exit 1
+            merge_atomic_candidate || exit 1
             echo "Atomic cleanup PR #$atomic_pr owns the next lock publication; refusing to compete."
             exit 0
           fi
@@ -666,7 +668,7 @@ jobs:
               # A stable separate branch, not the updater's routinely
               # refreshed lock-only branch. Every planned apply-coupled
               # cleanup rides this candidate; per-watcher validation runs in
-              # CI and auto-merge fires only when green and current (#265),
+              # CI and merging happens only when green and current (#265),
               # including candidates carrying Authelia.
               jq -e '.automerge == true' <<<"$plan" >/dev/null || {
                 echo "Atomic plan is not merge-automated; fail closed." >&2
@@ -709,7 +711,7 @@ jobs:
               create_token="${approval_token:-$GH_TOKEN}"
               url=$(GH_TOKEN="$create_token" gh pr create --base main --head "$atomic_branch" \
                 --title 'fix(upstream): retire apply-coupled workarounds with updated lock' \
-                --body "$(printf '%s\n\n%s' "Atomic lock+cleanup candidate for: $watcher_list. Each included watcher is ready on this candidate pin. Auto-merge fires only after exact-SHA CI is green and main is current, including the native ARM Authelia build when applicable." \
+                --body "$(printf '%s\n\n%s' "Atomic lock+cleanup candidate for: $watcher_list. Each included watcher is ready on this candidate pin. Merging happens only after exact-SHA CI is green and main is current, including the native ARM Authelia build when applicable." \
                   "$(atomic_trailer "$main_sha" "$revision" "$watcher_list")")")
               atomic_pr=${url##*/}
               atomic_revision=$revision
@@ -717,11 +719,11 @@ jobs:
               atomic_watchers=$watcher_list
               write_atomic_provenance "" || exit 1
               # Exact-SHA validation must be green, then required PR checks
-              # approved, and only then may auto-merge arm. The merge itself
+              # approved, and only then may the exact head merge. The merge itself
               # stays gated by the required PR CI.
               reconcile_atomic_ci "$atomic_pr" "$revision" "$watcher_list" || exit 1
               approve_atomic_checks || exit 1
-              arm_atomic_automerge || exit 1
+              merge_atomic_candidate || exit 1
               # Close the now-obsolete lock-only PR only after combined
               # publication and CI dispatch succeed.
               if [ -n "$pr" ]; then

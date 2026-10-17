@@ -218,7 +218,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(contains(inputs.upstream_watcher, 't3code-split') && '[{"architecture":"x86","runner":"ubuntu-latest"},{"architecture":"arm","runner":"ubuntu-24.04-arm"}]' || '[{"architecture":"x86","runner":"ubuntu-latest"}]') }}
+        include: ${{ fromJSON((contains(inputs.upstream_watcher, 't3code-split') || inputs.upstream_watcher == 'automation/atomic-cleanup') && '[{"architecture":"x86","runner":"ubuntu-latest"},{"architecture":"arm","runner":"ubuntu-24.04-arm"}]' || '[{"architecture":"x86","runner":"ubuntu-latest"}]') }}
     steps:
       - name: Verify requested revision
         if: inputs.expected_sha != ''
@@ -227,7 +227,7 @@ jobs:
         run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: DeterminateSystems/nix-installer-action@v22
       - name: Verify actual upstream package and generated behavior
         env:
@@ -244,6 +244,10 @@ jobs:
           list="$WATCHERS"
           if [ "$list" = automation/atomic-cleanup ]; then
             list=$(git log -1 --format=%s | sed -n 's/.*updated lock (\([^)]*\)).*/\1/p' | tr ',' ' ')
+            if [ -z "$list" ]; then
+              echo "Cannot infer atomic watchers from the candidate head." >&2
+              exit 1
+            fi
             list=$(printf '%s\n' $list | grep -v '^authelia-pnpm-hash$' || true | tr '\n' ' ')
           else
             list="${list#automation/upstream-}"
@@ -253,6 +257,10 @@ jobs:
             exit 0
           fi
           for watcher in $(printf '%s' "$list" | tr ',' ' '); do
+            # Only the split CLI cleanup has an additional ARM validator.
+            if [ "$ARCHITECTURE" = arm ] && [ "$watcher" != t3code-split ]; then
+              continue
+            fi
             python3 .github/scripts/upstream-validate.py "$watcher" --architecture "$ARCHITECTURE"
           done
 
