@@ -38,20 +38,20 @@ aggregate also includes actual package builds and generated behavior checks
 from `upstream-validate.py`. T3 split candidates use native x86 and ARM jobs.
 The package-specific gates are:
 
-| Watcher           | Additional verification                                                                                          |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------- |
-| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme         |
-| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop        |
-| t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy                |
+| Watcher           | Additional verification                                                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme                                |
+| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop                               |
+| t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy                                       |
 | t3code-stable010  | Generated units serve the root-pin package (Alpha stock, Pi/Epsilon split server) with the version assertion; Alpha's x86 t3code builds |
-| tasks-org         | Build the upstream Tasks.org package                                                                             |
-| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                     |
-| cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                               |
-| cliamp-attach     | Build upstream cliamp and verify both attach and quit in its help output                                         |
-| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                      |
-| voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                      |
-| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true               |
-| moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds |
+| tasks-org         | Build the upstream Tasks.org package                                                                                                    |
+| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                                            |
+| cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                                                      |
+| cliamp-attach     | Build upstream cliamp and verify both attach and quit in its help output                                                                |
+| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
+| voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                                             |
+| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
+| moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
 
 Nautilus is notify-only. Ready notifications use tracked issues and durable
 comment markers to avoid repeats. T3 receives readiness notices while
