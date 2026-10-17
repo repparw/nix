@@ -56,8 +56,8 @@ The package-specific gates are:
 Nautilus is notify-only. Ready notifications use tracked issues and durable
 comment markers to avoid repeats. T3 receives readiness notices while
 retaining its runtime completion checks. Sonarr/Jellyfin depends on
-the running service version and remains host-owned. Their local timers remain
-active until the fleet CI adapter is deployed and verified.
+the running service version and remains host-owned; its local timer is
+retired in favor of the verified Pi adapter below.
 
 The Moonshine PR227 test build is declarative alpha config
 (`modules/aspects/moonshine-pr227-test.nix`, #147): the generated unit
@@ -70,9 +70,22 @@ Sonarr log gate, and Moonshine's runtime-vs-generated-unit match over SSH,
 enqueues a durable event per status change, and
 `fleet-readiness-deliver` posts queued events to Discord on an independent
 timer. It also runs after each Alpha convergence, non-blocking for the
-deployment. Until the replacement is verified on Pi, Alpha's
-`watch-moonshine-pr227` and `watch-sonarr-jellyfin` timers remain armed and
-stay the completion owners.
+deployment. The replacement is verified on Pi (durable per-watcher states
+plus a drained event queue), so Alpha's `watch-moonshine-pr227` and
+`watch-sonarr-jellyfin` timers are disarmed; their units and scripts remain
+on Alpha and only Sonarr completion itself deletes them. The Sonarr/Jellyfin
+completion action moved with it: the deliverer runs Alpha's one-shot watch
+service after Discord accepts a delivered `sonarr-jellyfin` `ready` event.
+Notification and action are acknowledged separately: once a post is
+accepted, its acknowledgment is persisted and retry cycles re-run only the
+action, so an unreachable Alpha or a failing action never re-posts the
+notification. Completion is verified against Alpha's manager, not the
+start's exit code: the outcome is terminal only when the manager reports
+the completion-owned units not-found (the watcher self-deletes them once
+the scan drop and restart succeed); a start that gated out, a regressed
+pre-gate run, or silence from the transport keeps the event queued for
+retry, so the weekly Jellyfin scan drop cannot be orphaned by the
+retirement.
 
 Gamescope inspects `inputs.nixpkgs.legacyPackages`, bypassing repository
 overlays. Alpha's patched package cannot establish upstream readiness. Its
