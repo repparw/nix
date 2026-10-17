@@ -96,34 +96,52 @@ index bc30d8bc..00000000
 -      };
 -  };
 -}
+diff --git a/modules/aspects/ai/t3code.nix b/modules/aspects/ai/t3code.nix
+index 04460250..e2cf1b6f 100644
+--- a/modules/aspects/ai/t3code.nix
++++ b/modules/aspects/ai/t3code.nix
+@@ -33,6 +33,16 @@ in
+ 
+         programs.t3code.enable = true;
+ 
++        # Removing the bridging overlay must not silently downgrade
++        # statev2.sqlite to an older stable server if the nixpkgs pin is
++        # still behind.
++        assertions = [
++          {
++            assertion = lib.versionAtLeast config.programs.t3code.package.version "0.1.0";
++            message = "T3 Code stable V2 requires t3code >= 0.1.0 in the nixpkgs pin.";
++          }
++        ];
++
+         # t3code keeps custom themes in Electron/browser localStorage and only
+         # imports them through the UI (Settings -> Appearance -> Add a theme).
+         # Derive an importable theme file from the stylix palette and install
 diff --git a/modules/entities.nix b/modules/entities.nix
-index a7027b46..14ed4c4a 100644
+index a7027b46..7fd4d5fb 100644
 --- a/modules/entities.nix
 +++ b/modules/entities.nix
-@@ -11,7 +11,7 @@
+@@ -11,7 +11,6 @@
            den.aspects.streaming
            den.aspects.cliamp
            den.aspects.moonshine-pr227-test
 -          den.aspects.ai._.t3code-stable010
-+          den.aspects.ai._.t3code-nightly
          ];
        };
      };
-@@ -24,7 +24,7 @@
+@@ -24,7 +23,6 @@
            includes = [
              den.aspects.repparw
              den.aspects.ai._.t3code-split
 -            den.aspects.ai._.t3code-stable010
-+            den.aspects.ai._.t3code-nightly
            ];
          };
        };
-@@ -35,7 +35,7 @@
+@@ -35,7 +33,6 @@
            includes = [
              den.aspects.repparw
              den.aspects.ai._.t3code-split
 -            den.aspects.ai._.t3code-stable010
-+            den.aspects.ai._.t3code-nightly
            ];
          };
        };
