@@ -160,7 +160,12 @@ def plan(old, candidate, registry, module, contains_fn=contains, api_fn=api,
                         "reason": "candidate includes fix before nixos-unstable; requires manual review"}
             atomic_names.append("authelia-pnpm-hash")
     if atomic_names:
-        return {"action": "atomic-review", "atomic": sorted(atomic_names),
+        # The combined candidate merge-automates under the #265 policy:
+        # GitHub merges exactly when the required checks pass and the
+        # branch is strict up-to-date with main. The registry checker is
+        # the sole landing decision; the cleanup is declarative.
+        return {"action": "atomic", "atomic": sorted(atomic_names),
+                "automerge": True,
                 "reason": "candidate requires coupled lock and cleanup publication"}
     return {"action": "normal", "atomic": [], "reason": "no atomic cleanup required"}
 

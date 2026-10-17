@@ -186,6 +186,8 @@ jobs:
   # build originally caught (PR #168). Config checks and stubbed host evals
   # alone do not prove the original failure is gone, so the candidate that
   # removes the workaround must build the unpatched package natively.
+  # ci.yml enables this for every automation/atomic-cleanup PR, so the
+  # required gate includes the ARM result before auto-merge can land it.
   arm-authelia-build:
     name: arm-build (authelia, native)
     if: inputs.build_arm_authelia
@@ -208,6 +210,8 @@ jobs:
 
   upstream-package-build:
     name: upstream-package (${{ matrix.architecture }}, native)
+    # The automation/atomic-cleanup sentinel resolves inside the job: every
+    # atomic PR's required gate includes its bundled package validations.
     if: inputs.upstream_watcher != ''
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 90
@@ -233,7 +237,21 @@ jobs:
         run: |
           # A dispatch may bundle several apply-coupled cleanups; validate
           # each in turn. Branch-triggered runs carry a single watcher name.
-          list="${WATCHERS#automation/upstream-}"
+          # Atomic-cleanup PRs carry the sentinel instead: the bundled
+          # watchers (minus Authelia, covered by the native ARM build plus
+          # host evals) resolve from the exact candidate commit message, so
+          # the required gate includes every bundled package validation.
+          list="$WATCHERS"
+          if [ "$list" = automation/atomic-cleanup ]; then
+            list=$(git log -1 --format=%s | sed -n 's/.*updated lock (\([^)]*\)).*/\1/p' | tr ',' ' ')
+            list=$(printf '%s\n' $list | grep -v '^authelia-pnpm-hash$' || true | tr '\n' ' ')
+          else
+            list="${list#automation/upstream-}"
+          fi
+          if [ -z "$(printf '%s' "$list" | tr -d ' ')" ]; then
+            echo "No package-validated watchers in this atomic candidate; ARM and host evals cover it."
+            exit 0
+          fi
           for watcher in $(printf '%s' "$list" | tr ',' ' '); do
             python3 .github/scripts/upstream-validate.py "$watcher" --architecture "$ARCHITECTURE"
           done

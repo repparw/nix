@@ -52,16 +52,38 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(self.evaluate(ancestry=lambda *_: False)["action"], "normal")
 
     def test_ready_only_with_pin_and_channel(self):
-        self.assertEqual(self.evaluate()["action"], "atomic-review")
+        result = self.evaluate()
+        self.assertEqual(result["action"], "atomic")
+        self.assertTrue(result["automerge"])
+        self.assertEqual(result["atomic"], ["authelia-pnpm-hash"])
+        blocked = self.evaluate(ancestry=lambda _c, rev: rev == "new")
+        self.assertEqual(blocked["action"], "blocked")
+        self.assertIn("nixos-unstable", blocked["reason"])
+        self.assertNotIn("automerge", blocked)
+
+    def test_atomic_candidate_is_automerge_armed(self):
+        # The human-review gate is retired: a combined candidate carrying
+        # Authelia merge-automates under the #265 policy. The registry
+        # checker is the sole landing decision.
+        result = self.evaluate()
+        self.assertEqual(result["action"], "atomic")
+        self.assertTrue(result["automerge"])
+        self.assertIn("authelia-pnpm-hash", result["atomic"])
+
+    def test_fix_before_channel_stays_blocked_not_armed(self):
+        # A candidate that contains the fix before nixos-unstable is an
+        # evidence anomaly, not a policy review: it must stay blocked.
         result = self.evaluate(ancestry=lambda _c, rev: rev == "new")
         self.assertEqual(result["action"], "blocked")
         self.assertIn("nixos-unstable", result["reason"])
+        self.assertNotIn("automerge", result)
 
     def test_apply_coupled_ready_diverts_the_lock(self):
         def readiness(name):
             return "PINNED-READY" if name == "qbittorrent" else "waiting-upstream"
         result = self.evaluate(readiness=readiness)
-        self.assertEqual(result["action"], "atomic-review")
+        self.assertEqual(result["action"], "atomic")
+        self.assertTrue(result["automerge"])
         self.assertIn("qbittorrent", result["atomic"])
         self.assertNotIn("gamescope-vkroots", result["atomic"])
 
@@ -104,7 +126,8 @@ class PlanTests(unittest.TestCase):
         result = self.evaluate(readiness=lambda name: "PINNED-READY" if name == "qbittorrent"
                                else "waiting-upstream",
                                ancestry=lambda *_: False)
-        self.assertEqual(result["action"], "atomic-review")
+        self.assertEqual(result["action"], "atomic")
+        self.assertTrue(result["automerge"])
         self.assertEqual(result["atomic"], ["qbittorrent"])
 
     def test_completed_authelia_can_batch_all_three(self):
@@ -167,6 +190,36 @@ class PlanTests(unittest.TestCase):
                 self.assertTrue(result.stdout.strip().endswith(".drv"),
                                 result.stdout)
 
+    def test_override_shape_changed_blocks_with_reason(self):
+        original = self.module.read_text()
+        self.module.write_text(original.replace(
+            planner.AUTHELIA_CONSUMER,
+            planner.AUTHELIA_CONSUMER + "\n" + planner.AUTHELIA_CONSUMER))
+        result = self.evaluate()
+        self.assertEqual(result["action"], "blocked")
+        self.assertIn("Authelia override shape changed", result["reason"])
+        self.assertNotIn("automerge", result)
+
+    def test_leftover_override_without_marker_blocks(self):
+        original = self.module.read_text()
+        self.module.write_text(original.replace("autheliaPackage", "renamedAuthelia"))
+        result = self.evaluate()
+        self.assertEqual(result["action"], "blocked")
+        self.assertIn("unrecognized Authelia override survives", result["reason"])
+        self.assertNotIn("automerge", result)
+
+    def test_unavailable_ancestry_blocks_without_arming(self):
+        def unavailable(*_):
+            raise subprocess.CalledProcessError(1, "gh")
+        candidate = self.evaluate(ancestry=unavailable)
+        self.assertEqual(candidate["action"], "blocked")
+        self.assertIn("candidate pin ancestry unavailable", candidate["reason"])
+        self.assertNotIn("automerge", candidate)
+        channel = self.evaluate(channel=unavailable)
+        self.assertEqual(channel["action"], "blocked")
+        self.assertIn("channel ancestry unavailable", channel["reason"])
+        self.assertNotIn("automerge", channel)
+
     def test_unknown_ancestry_must_not_auto_publish(self):
         def unavailable(*_):
             raise subprocess.CalledProcessError(1, "gh")
@@ -220,7 +273,7 @@ class PlanTests(unittest.TestCase):
     def test_stale_override_matters_even_if_nixpkgs_pin_unchanged(self):
         # A previously published (already-fixed) pin must not bypass cleanup
         # on the next lock update involving only unrelated inputs.
-        self.assertEqual(self.evaluate(old="new", new="new")["action"], "atomic-review")
+        self.assertEqual(self.evaluate(old="new", new="new")["action"], "atomic")
 
     def test_registry_ids_match_readiness_detectors(self):
         spec = importlib.util.spec_from_file_location(
@@ -231,6 +284,7 @@ class PlanTests(unittest.TestCase):
             "qbittorrent", "wpaperd-fix", "voxtype-graphical", "cliamp-attach",
             "gamescope-vkroots", "moonshine-pr227", "sonarr-jellyfin",
             "t3code-nightly-v2",
+            "t3code-stable010",
             "opencode-v2",
         }
         self.assertEqual(set(self.registry), expected)

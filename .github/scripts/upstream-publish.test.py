@@ -162,6 +162,45 @@ class Publication(unittest.TestCase):
                            capture_output=True, text=True).stdout.strip(),
             "the tampered tip must not be overwritten")
 
+    def test_stacked_commit_requires_review(self):
+        self.publish()
+        # A second commit on top of the candidate, even with an otherwise
+        # clean tree, is not provably the recipe applied to its parent: the
+        # recipe no longer re-applies onto the tip's parent, so publication
+        # fails closed instead of overwriting the branch.
+        clone = Path(self.temporary.name) / "stack"
+        subprocess.run(["git", "clone", "--quiet", "--reference", str(self.root),
+                        str(self.remote), str(clone), "--branch", "automation/upstream-fixture"], check=True)
+        (clone / "modules/extra.nix").write_text("human\n")
+        subprocess.run(["git", "-C", str(clone), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(clone), "-c", "user.name=T", "-c", "user.email=t@t",
+                        "-c", "core.hooksPath=/dev/null", "commit", "--quiet",
+                        "-m", "human fixup"], check=True)
+        subprocess.run(["git", "-C", str(clone), "push", "--quiet", "origin",
+                        "automation/upstream-fixture"], check=True)
+        stacked = self.git("ls-remote", "--heads", "origin", "automation/upstream-fixture").split()[0]
+        self.prs[0]["headRefOid"] = stacked
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.publish()
+        self.assertEqual(self.git("ls-remote", "--heads", "origin", "automation/upstream-fixture").split()[0],
+                         stacked)
+        self.assertEqual(len(self.automerges), 1)
+
+    def test_conflicting_main_advance_fails_closed(self):
+        first = self.publish()
+        # Main reworks the patched lines, so the recipe matches neither the
+        # new main nor the stale tip's parent reconstruction.
+        (self.root / "modules/fixture.nix").write_text("keep\nreworked\n")
+        self.git("add", ".")
+        self.git("commit", "--quiet", "-m", "main moved on")
+        self.git("push", "--quiet", "origin", "main")
+        # The recipe no longer applies to the new main: the stale candidate
+        # must be left alone for review, never force-updated.
+        with self.assertRaises(subprocess.CalledProcessError):
+            self.publish()
+        self.assertEqual(self.git("ls-remote", "--heads", "origin", "automation/upstream-fixture").split()[0], first["sha"])
+        self.assertEqual(len(self.automerges), 1)
+
     def test_changed_recipe_refuses_to_overwrite(self):
         first = self.publish()
         self.recipe.write_text(self.recipe.read_text().replace("-workaround", "-different"))
