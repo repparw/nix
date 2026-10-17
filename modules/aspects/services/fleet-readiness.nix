@@ -29,10 +29,15 @@
           runtimeInputs = with pkgs; [
             coreutils
             jq
-            (servicesLib.mkDiscordNotify pkgs config.modules.services.discordChannelId)
+            openssh
             util-linux
+            (servicesLib.mkDiscordNotify pkgs config.modules.services.discordChannelId)
           ];
-          text = builtins.readFile ../../scripts/fleet-readiness-deliver.sh;
+          text =
+            builtins.replaceStrings
+              [ "@FLEET_ALPHA_ADDRESS@" ]
+              [ (lib.escapeShellArg config.modules.fleet-update.targetAddresses.alpha) ]
+              (builtins.readFile ../../scripts/fleet-readiness-deliver.sh);
         };
       in
       {

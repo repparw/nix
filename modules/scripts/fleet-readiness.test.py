@@ -30,6 +30,18 @@ READY_MOONSHINE = (
 
 SSH_STUB = """\
 #!/bin/sh
+case "$*" in
+  *"watch-sonarr-jellyfin.service"*)
+    printf '%s\\n' "$(printf '%s' "$*" | tr '\\n' ' ')" >> "$FIXTURE/ssh-completion-calls"
+    if [ -f "$FIXTURE/ssh-completion-gone" ]; then
+      echo "t3-clean"
+      exit 0
+    fi
+    if [ -f "$FIXTURE/ssh-completion-fails" ]; then
+      exit 1
+    fi
+    exit 0;;
+esac
 if [ -f "$FIXTURE/ssh-fail" ]; then
   echo "ssh: connection refused" >&2
   exit 255
@@ -82,11 +94,15 @@ class Readiness(unittest.TestCase):
 
     def run_deliver(self, state):
         script = self.root / "deliver"
-        script.write_text(DELIVER_SOURCE)
+        script.write_text(DELIVER_SOURCE.replace("@FLEET_ALPHA_ADDRESS@", "alpha-fixture"))
         return subprocess.run(
             ["bash", str(script)], env=self.env | {"FLEET_UPDATE_STATE": str(state)},
             text=True, capture_output=True,
         )
+
+    def completion_calls(self):
+        path = self.fix / "ssh-completion-calls"
+        return len(path.read_text().splitlines()) if path.exists() else 0
 
     def events(self, state):
         events = [json.loads(p.read_text()) for p in (state / "readiness-events").glob("*.json")]
@@ -311,6 +327,67 @@ class Readiness(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(list((state / "readiness-events").glob("*.json"))), 2)
         self.assertFalse((self.fix / "discord-calls").exists())
+
+    def test_delivered_ready_event_runs_alpha_completion(self):
+        # Alpha's sonarr timer is retired: the deliverer owns the completion
+        # action now, strictly after Discord accepts the post.
+        self.setUpProbe()
+        state = self.root / "state"
+        result = self.run_probe(state, watcher="sonarr-jellyfin", response=READY_SONARR)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        result = self.run_deliver(state)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.completion_calls(), 1, "a ready transition must run Alpha's completion one-shot")
+        self.assertIn("start watch-sonarr-jellyfin.service", (self.fix / "ssh-completion-calls").read_text())
+        self.assertEqual(len(list((state / "readiness-events").glob("*.json"))), 0)
+        self.assertEqual((self.fix / "discord-calls").read_text().count("post"), 1)
+
+    def test_failed_completion_leaves_event_queued_for_retry(self):
+        self.setUpProbe()
+        state = self.root / "state"
+        self.run_probe(state, watcher="sonarr-jellyfin", response=READY_SONARR)
+        (self.fix / "ssh-completion-fails").write_text("1")
+        result = self.run_deliver(state)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.completion_calls(), 1)
+        self.assertEqual(len(list((state / "readiness-events").glob("*.json"))), 1,
+                         "a failed action must keep the event queued")
+        (self.fix / "ssh-completion-fails").unlink()
+        (self.fix / "discord-calls").unlink(missing_ok=True)
+        result = self.run_deliver(state)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.completion_calls(), 2, "the next cycle must retry notification and action")
+        self.assertEqual(len(list((state / "readiness-events").glob("*.json"))), 0)
+
+    def test_self_deleted_unit_is_terminal_clean(self):
+        self.setUpProbe()
+        state = self.root / "state"
+        self.run_probe(state, watcher="sonarr-jellyfin", response=READY_SONARR)
+        (self.fix / "ssh-completion-gone").write_text("1")
+        result = self.run_deliver(state)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.completion_calls(), 1, "the remote classification runs before any start")
+        self.assertEqual(len(list((state / "readiness-events").glob("*.json"))), 0)
+
+    def test_completion_fires_only_for_ready_sonarr_transitions(self):
+        self.setUpProbe()
+        state = self.root / "state"
+        self.run_probe(state, watcher="sonarr-jellyfin", response=WAITING_SONARR)
+        self.run_probe(state, watcher="moonshine-pr227-runtime", response=READY_MOONSHINE)
+        result = self.run_deliver(state)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.completion_calls(), 0, "waiting and Moonshine events must not run the action")
+        self.assertEqual(len(list((state / "readiness-events").glob("*.json"))), 0)
+
+    def test_failed_post_blocks_completion_attempt(self):
+        self.setUpProbe()
+        state = self.root / "state"
+        self.run_probe(state, watcher="sonarr-jellyfin", response=READY_SONARR)
+        (self.fix / "discord-fails").write_text("1")
+        result = self.run_deliver(state)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.completion_calls(), 0, "the action must trail the accepted notification")
+        self.assertEqual(len(list((state / "readiness-events").glob("*.json"))), 1)
 
 
 if __name__ == "__main__":

@@ -11,9 +11,11 @@
 # own timer, so delivery is independent of deployment success and neither a
 # probe failure nor a delivery failure loses a transition.
 #
-# The Alpha timers stay armed and remain the completion owners until this
-# replacement is verified; the probe reports evidence and performs no
-# completion action.
+# The Alpha timers are retired: the probe reports evidence and performs no
+# completion action, while Sonarr/Jellyfin's completion action moved to the
+# deliverer (it runs Alpha's one-shot after Discord accepts the ready
+# event). Moonshine needs no runtime completion action: its retirement is a
+# declarative cleanup candidate.
 #
 # Triggers: the fleet-readiness-probe timer and a best-effort call from
 # fleet-update deploy after Alpha converges. A nonblocking flock serializes
