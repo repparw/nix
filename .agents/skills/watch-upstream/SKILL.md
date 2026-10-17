@@ -5,43 +5,44 @@ description: Track an upstream fix in this flake's inputs, prepare validated cle
 
 # Watch upstream
 
-Use the repository's `.github/workflows/upstream-watch.yml`. GitHub Actions
-owns detection and repository cleanup candidates. `lock-update.yml` owns lock
-publication, and Pi owns fleet deployment. Host-owned completion stays local
-when it needs running-service state or safe runtime-override removal.
+GitHub Actions owns detection and cleanup publication. Watcher contracts live
+in `.github/upstream/watchers.json`; `upstream-watch.yml` runs detection,
+`lock-update.yml` owns lock publication and the atomic planner, and Pi owns
+fleet deployment plus runtime readiness probes for host-owned watchers.
+[The migration contract](../../../.github/upstream/README.md) is the source of
+truth for publication policy and per-watcher gates.
 
-Before adding a watcher, identify the workaround paths, selected input,
-precise source or ancestry predicate, cleanup edits, package build gates, and
-completion owner in its GitHub issue. Follow
-[the migration contract](../../../.github/upstream/README.md).
+Before adding a watcher, record its workaround paths, selected input, precise
+source or ancestry predicate, cleanup edits, build gates, and completion owner
+in its GitHub issue, then declare the contract in `watchers.json`.
 
-Add detection to `.github/scripts/upstream-readiness.py`. Detectors inspect
-only the checked-out `main` pins and never update the lock or publish. Distinguish
-upstream waiting, merged but unpinned, pinned ready, unavailable, and completed.
-An unavailable API or build must fail closed. A version or release date alone
-never proves a fix. For ancestry, require `merge_base_commit.sha` to equal the
-fix commit, accepting `ahead` and `identical`. If commit ancestry cannot prove
-the fix, verify the exact selected source or behavior instead.
+Add detection to `.github/scripts/upstream-readiness.py`. Detectors read the
+checked-out `main` pins, never publish, and fail closed when evidence is
+unavailable. Distinguish waiting, merged-not-pinned, pinned-ready, and
+completed. A version or release date alone never proves a fix: require commit
+ancestry (`merge_base_commit.sha` equals the fix commit) or verify the exact
+selected source or behavior.
 
-Prepare narrow, deterministic cleanup recipes under `.github/upstream/cleanup/`.
-Require `git apply --check` against the exact candidate base. Preserve unrelated
-configuration. A conflict needs review; never force an old patch onto changed
-code. Evaluate every affected host, inspect generated units where applicable,
-and build the real package rather than relying on stubbed configuration checks.
-Dispatch CI on the candidate SHA because bot-token pushes do not start it.
-Reuse an existing cleanup PR without overwriting reviewer changes or repeating
-successful CI. Judge completion on current `main`, never a mutable checkout.
+Cleanup recipes live in `.github/upstream/cleanup/`. Keep them narrow:
+`git apply --check` must pass against the exact candidate base, unrelated
+configuration is preserved, and a conflict requires review rather than a
+forced patch. Evaluate every affected host and its generated units, and gate
+on the real package builds in `upstream-validate.py`, not configuration
+stubs. Reuse an existing cleanup PR without overwriting reviewer changes.
+Dispatch CI on the exact SHA; bot-token pushes do not start workflows. Judge
+completion on current `main`, never a mutable checkout. Combined atomic
+lock+cleanup candidates merge-automate under the #265 policy once exact-SHA
+CI is green and the branch is strict up-to-date with main; eligibility
+re-verifies exact SHA, ownership, watcher manifest, required validations,
+and base, and approvals fail closed without `LOCK_UPDATE_APPROVAL_TOKEN`.
 
-The live Authelia pilot owns CI publication until its full lifecycle passes:
-expected cleanup PR, green exact-SHA CI including the native ARM package,
-subsequent PR reuse without writes or redispatch, merge, and observed completion
-on `main`. Fixture tests and a successful waiting run are supporting evidence,
-not this cutover gate. Keep other prepared recipes dry-run-only and local timers
-in charge until then. Transfer each publication owner once, then disable its
-local timer and close replaced draft PRs. Register every worked PR in T3 Code.
-
-Run both watcher test scripts named in the migration contract. For runtime
-inspection or deployment, use fleet-operations. Retire a host-owned watcher only
-when the issue's runtime completion condition is proven. In particular, do not
-remove Moonshine's test override while a stream is active or before its tested
-fix is present in the deployed package.
+CI publication is the standing owner; Authelia's combined candidate is the
+first atomic firing and merge-automates under the same #265 policy — the
+retired human-review gate is not restored for it. Before disabling a local
+timer, verify its replacement's live CI run and all completion checks —
+fixtures and waiting runs are supporting evidence, not the cutover gate.
+Close replaced drafts only after their replacement validates in production.
+Retire a host-owned watcher only when the issue's runtime completion
+condition is proven. Run the watcher test scripts named in the migration
+contract; for runtime inspection or deployment, use fleet-operations.
+Register every worked PR in T3 Code.
