@@ -30,6 +30,7 @@ WORKAROUNDS = {
     "voxtype-graphical": ("modules/aspects/ai/voxtype-graphical-workaround.nix", None),
     "gamescope-vkroots": ("modules/aspects/streaming.nix", "queueInfo.flags) { VkDeviceQueueInfo2"),
     "t3code-nightly-v2": ("modules/aspects/ai/t3code-nightly.nix", None),
+    "t3code-stable010": ("modules/aspects/ai/t3code-stable010.nix", None),
     "moonshine-pr227": ("modules/aspects/moonshine-pr227-test.nix", None),
 }
 
@@ -189,6 +190,10 @@ def detect(name, lock):
         spec.loader.exec_module(detector)
         return detector.inspect(name, lock)["status"]
     if name == "t3code-nightly-v2":
+        return t3code_nightly_v2_status(lock)
+    if name == "t3code-stable010":
+        # The bridging overlay is droppable under the same gate as the
+        # nightly cutover: a stable V2 release carrying the root pin.
         return t3code_nightly_v2_status(lock)
     if name in PR_WAITS:
         repo, number, input_name = PR_WAITS[name]
