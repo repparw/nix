@@ -137,7 +137,16 @@ class LockUpdate(unittest.TestCase):
             "        sha = subprocess.check_output(['git','--git-dir',remote,'rev-parse','automation/atomic-cleanup'], text=True).strip()\n"
             "        print(sha)\n"
             "elif args[:2] == ['pr', 'merge']:\n"
-            "    (root/'auto-merged').write_text('1')\n"
+            "    if '--disable-auto' in args:\n"
+            "        if (root/'disable-fails').exists(): sys.exit(1)\n"
+            "        (root/'auto-merged').unlink(missing_ok=True)\n"
+            "    else:\n"
+            "        if (root/'replace-before-merge').exists():\n"
+            "            subprocess.run(['git', '--git-dir', remote, 'update-ref', 'refs/heads/automation/atomic-cleanup', os.environ['FIXTURE_MAIN']], check=True)\n"
+            "        tip = subprocess.check_output(['git', '--git-dir', remote, 'rev-parse', 'automation/atomic-cleanup'], text=True).strip()\n"
+            "        if '--match-head-commit' not in args or args[args.index('--match-head-commit') + 1] != tip: sys.exit(1)\n"
+            "        if '--auto' in args: sys.exit(1)\n"
+            "        (root/'auto-merged').write_text(tip)\n"
             "elif args and args[0] == 'api':\n"
             "    endpoint = next(arg for arg in args if arg.startswith('repos/'))\n"
             "    if '/compare/' in endpoint:\n"
@@ -400,7 +409,7 @@ class LockUpdate(unittest.TestCase):
             r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "main"
             for r in self.requests
         ))
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
         pr_list = next(r for r in self.requests if r[:2] == ["pr", "list"] and "automation/flake-lock" in r)
         self.assertIn("automation/flake-lock", pr_list)
@@ -411,7 +420,7 @@ class LockUpdate(unittest.TestCase):
         result = self.update(pr="123")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(any(r[:2] == ["pr", "create"] for r in self.requests))
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), lock_fixture("new"))
         self.assertEqual(self.main_sha(), self.branch_sha())
 
@@ -439,7 +448,7 @@ class LockUpdate(unittest.TestCase):
     def test_candidate_failure_does_not_merge(self):
         result = self.update(candidate_ci="failure")
         self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
         self.assertEqual(self.main_sha(), self.main)
 
     def test_existing_successful_candidate_ci_is_reused(self):
@@ -528,10 +537,10 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.main_sha(), self.main)
         self.assertFalse(any(r[0] == "api" and any(a.endswith('/approve') for a in r) for r in self.requests))
 
-    def test_atomic_candidate_carries_cleanup_and_arms_automerge(self):
+    def test_atomic_candidate_carries_cleanup_and_merges_exact_head(self):
         result = self.update(atomic_ready=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.main_sha(), self.main, "GitHub merges the armed candidate, not this workflow")
+        self.assertEqual(self.main_sha(), self.main, "The fixture records the GitHub merge request separately")
         atomic = self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-cleanup")
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", "automation/atomic-cleanup:flake.lock"), lock_fixture("new"))
         arr = self.git("--git-dir", str(self.remote), "show", "automation/atomic-cleanup:modules/aspects/services/arr.nix")
@@ -547,8 +556,39 @@ class LockUpdate(unittest.TestCase):
         approvals = [r for r in self.requests if r[0] == "api" and any(a.endswith("/approve") for a in r)]
         self.assertEqual(len(approvals), 2,
                          "enforced atomic checks need approval like trusted lock updates")
-        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--auto" in r for r in self.requests),
+        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests),
                         "the atomic candidate must be merge-automated")
+
+    def test_failed_required_atomic_pr_checks_prevent_merge(self):
+        result = self.update(atomic_ready=True, pr_ci="failure")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any("--match-head-commit" in r for r in self.requests))
+        self.assertFalse((self.root / "auto-merged").exists())
+
+    def test_head_replaced_at_merge_is_rejected(self):
+        (self.root / "replace-before-merge").touch()
+        result = self.update(atomic_ready=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.main_sha(), self.main)
+        self.assertFalse((self.root / "auto-merged").exists())
+        merge = next(r for r in self.requests if "--match-head-commit" in r)
+        self.assertNotEqual(merge[merge.index("--match-head-commit") + 1], self.atomic_sha())
+
+    def test_recovery_disarms_before_rejecting_untrusted_candidate(self):
+        self.assertEqual(self.update(atomic_ready=True).returncode, 0)
+        self.git("--git-dir", str(self.remote), "update-ref", "-d",
+                 "refs/heads/automation/atomic-cleanup-provenance")
+        result = self.update(change=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.root / "auto-merged").exists())
+        self.assertEqual(self.requests[1], ["pr", "merge", "124", "--repo", "fixture/nix", "--disable-auto"])
+
+    def test_failed_disarm_stops_recovery(self):
+        self.assertEqual(self.update(atomic_ready=True).returncode, 0)
+        (self.root / "disable-fails").touch()
+        result = self.update(change=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(self.requests), 2)
 
     def test_interrupted_atomic_dispatch_retries_without_rewriting_branch(self):
         first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
@@ -577,7 +617,7 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(second.returncode, 0, second.stderr)
         self.assertTrue(any(r[:3] == ["workflow", "run", "ci.yml"]
                             for r in self.requests))
-        self.assertTrue(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_merged_atomic_branch_is_safely_retired(self):
         first = self.update(atomic_ready=True)
@@ -615,7 +655,7 @@ class LockUpdate(unittest.TestCase):
         self.assertTrue(self.git("--git-dir", str(self.remote), "rev-parse",
                                  "automation/atomic-cleanup"))
 
-    def test_authelia_candidate_arms_automerge_and_runs_native_arm(self):
+    def test_authelia_candidate_merges_exact_head_and_runs_native_arm(self):
         self.restore_authelia()
         result = self.update(atomic_ready=True)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -623,9 +663,8 @@ class LockUpdate(unittest.TestCase):
                         and r[r.index("--ref") + 1] == "automation/atomic-cleanup")
         self.assertIn("build_arm_authelia=true", dispatch)
         self.assertIn("upstream_watcher=qbittorrent", dispatch)
-        # The human-review gate is retired: Authelia-carrying candidates arm
-        # auto-merge under the #265 policy and approve enforced checks.
-        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--auto" in r for r in self.requests))
+        # Authelia candidates approve enforced checks before exact-head merging.
+        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests))
         approvals = [r for r in self.requests if r[0] == "api" and any(a.endswith("/approve") for a in r)]
         self.assertEqual(len(approvals), 2)
         text = self.git("--git-dir", str(self.remote), "show",
@@ -649,7 +688,7 @@ class LockUpdate(unittest.TestCase):
         message = self.git("--git-dir", str(self.remote), "log", "-1", "--format=%s", tip)
         self.assertIn("authelia-pnpm-hash,qbittorrent", message)
         new_main = self.advance_main()
-        # Force the re-arm path so the refresh visibly re-arms automerge.
+        # Clear the prior successful merge request before refreshing.
         (self.root / "auto-merged").unlink()
         second = self.update(atomic_ready=True)
         self.assertEqual(second.returncode, 0, second.stderr)
@@ -667,12 +706,12 @@ class LockUpdate(unittest.TestCase):
         self.assertNotIn("autheliaPackage", authelia)
         # The existing PR is reused, not recreated.
         self.assertFalse(any(r[:2] == ["pr", "create"] for r in self.requests))
-        # Fresh exact-SHA CI on the rebuilt tip, then re-armed automerge.
+        # Fresh exact-SHA CI on the rebuilt tip, then an exact-head merge.
         dispatches = [r for r in self.requests if r[:2] == ["workflow", "run"]]
         self.assertEqual({r[2] for r in dispatches}, {"ci.yml", "pr-title.yml"})
         for invocation in dispatches:
             self.assertIn(f"expected_sha={refreshed}", invocation)
-        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--auto" in r for r in self.requests))
+        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests))
         self.assertTrue((self.root / "approved-31").exists())
         self.assertTrue((self.root / "approved-32").exists())
         record = json.loads(self.git(
@@ -702,7 +741,7 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.atomic_sha(), tampered,
                          "the tampered tip must not be overwritten")
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_stacked_atomic_commit_fails_closed(self):
         first = self.update(atomic_ready=True)
@@ -722,7 +761,7 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.atomic_sha(), stacked,
                          "the changed candidate must not be overwritten")
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_recovery_rejects_successful_ci_for_wrong_watcher_manifest(self):
         first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
@@ -765,7 +804,7 @@ class LockUpdate(unittest.TestCase):
         second = self.update(change=False, atomic_ci="pending")
         self.assertNotEqual(second.returncode, 0)
         self.assertIn("Timed out waiting for atomic exact-SHA validation", second.stderr)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests),
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests),
                          "pending validation must never arm auto-merge")
 
     def test_failed_atomic_validation_never_arms_automerge(self):
@@ -775,7 +814,7 @@ class LockUpdate(unittest.TestCase):
         second = self.update(change=False, atomic_ci="failure")
         self.assertNotEqual(second.returncode, 0)
         self.assertIn("requires review", second.stderr)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests),
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests),
                          "failed validation must never arm auto-merge")
         self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
                               for r in self.requests),
@@ -804,7 +843,7 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.atomic_sha(), tampered,
                          "the tampered tip must not be overwritten")
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
         # Provenance still points at the published candidate, not the tamper.
         record = json.loads(self.git(
             "--git-dir", str(self.remote), "show",
@@ -853,7 +892,7 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.atomic_sha(), tampered,
                          "the forged tip must not be overwritten")
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_identical_tree_new_sha_rejected(self):
         # A stacked commit that reapplies the legitimate cleanup
@@ -878,7 +917,7 @@ class LockUpdate(unittest.TestCase):
         self.assertNotEqual(second.returncode, 0)
         self.assertIn("requires human review", second.stderr)
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_approval_failure_never_arms_atomic_automerge(self):
         # Approvals run before arming: a failed approval must leave
@@ -888,7 +927,7 @@ class LockUpdate(unittest.TestCase):
         self.git("switch", "main", cwd=self.checkout)
         second = self.update(change=False, approval_fail=True)
         self.assertNotEqual(second.returncode, 0)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests),
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests),
                          "failed approval must never arm auto-merge")
 
     def test_missing_approval_token_fails_closed_with_guidance(self):
@@ -901,7 +940,7 @@ class LockUpdate(unittest.TestCase):
         second = self.update(change=False, approval_token="")
         self.assertNotEqual(second.returncode, 0)
         self.assertIn("LOCK_UPDATE_APPROVAL_TOKEN", second.stderr)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests),
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests),
                          "missing approval identity must never arm auto-merge")
         self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
                               for r in self.requests),
@@ -935,7 +974,7 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.atomic_sha(), tip,
                          "the candidate must not be overwritten")
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        self.assertFalse(any(r[:2] == ["pr", "merge"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_ci_run_name_includes_exact_dispatch_inputs(self):
         self.assertIn("run-name: >-", CI)
@@ -987,7 +1026,8 @@ class LockUpdate(unittest.TestCase):
                     env=os.environ | {"GITHUB_SHA": sha, "EXPECTED_SHA": expected},
                 )
                 self.assertEqual(result.returncode == 0, success)
-        self.assertEqual(VALIDATION.count("ref: ${{ github.sha }}"), checkout_count)
+        self.assertEqual(VALIDATION.count("ref: ${{ github.sha }}"), checkout_count - 1)
+        self.assertEqual(VALIDATION.count("ref: ${{ github.event.pull_request.head.sha || github.sha }}"), 1)
         self.assertIn("  pull_request:", CI)
         self.assertNotIn("paths-ignore:", CI)
 

@@ -235,6 +235,7 @@
                   pkgs.nodejs
                   pkgs.bash
                   pkgs.coreutils
+                  pkgs.git
                   pkgs.actionlint
                 ];
               }
