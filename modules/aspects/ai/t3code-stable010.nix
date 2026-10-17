@@ -1,13 +1,13 @@
 { den, ... }:
 {
   # Bridging pin for nixpkgs#575132 (t3code 0.0.45 -> 0.1.0): serve stable
-  # orchestrator-V2 0.1.0 from the upstream release archive so Alpha's
-  # Android/web clients on the stable channel can connect before the root
-  # Nixpkgs pin packages 0.1.0. Same prebuilt-archive shape as
-  # t3code-nightly.nix: no local pnpm build, no Electron, no desktop tree.
-  # Completion: once 0.1.0 (or newer) reaches the root Nixpkgs pin, delete
-  # this file and its alpha include; the PR #285 version assertion then
-  # owns the retirement gate (issue #209).
+  # orchestrator-V2 0.1.0 from the upstream release archive so fleet clients
+  # on the stable channel can connect before the root Nixpkgs pin packages
+  # 0.1.0. Same prebuilt-archive shape as t3code-nightly.nix: no local
+  # pnpm build, no Electron, no desktop tree. Completion: once 0.1.0 (or
+  # newer) reaches the root Nixpkgs pin, delete this file and its entity
+  # includes; the PR #285 version assertion then owns the retirement gate
+  # (issue #209; upstream watcher t3code-stable010).
   den.aspects.ai.provides.t3code-stable010 = {
     nixos = {
       nixpkgs.overlays = [
@@ -79,8 +79,12 @@
     homeManager =
       { lib, pkgs, ... }:
       {
-        # Alpha-only bridge (see entities.nix). The desktop client package
-        # stays on the root pin, as it did with the nightly server.
+        # Mirrors t3code-nightly.nix so every fleet host that included the
+        # nightly keeps the same shape: x86 desktops stay on the root pin
+        # (mkIf), aarch64 hosts pick up the pinned server package.
+        programs.t3code.package = lib.mkIf pkgs.stdenv.hostPlatform.isAarch64 (
+          lib.mkForce pkgs.t3code-stable010
+        );
         systemd.user.services.t3code-web.Service.ExecStart =
           lib.mkForce "${pkgs.t3code-stable010}/bin/t3 serve --mode web";
       };
