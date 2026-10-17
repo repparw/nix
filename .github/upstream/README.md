@@ -38,19 +38,20 @@ aggregate also includes actual package builds and generated behavior checks
 from `upstream-validate.py`. T3 split candidates use native x86 and ARM jobs.
 The package-specific gates are:
 
-| Watcher           | Additional verification                                                                                          |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------- |
-| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme         |
-| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop        |
-| t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy                |
-| tasks-org         | Build the upstream Tasks.org package                                                                             |
-| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                     |
-| cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                               |
-| cliamp-attach     | Build upstream cliamp and verify both attach and quit in its help output                                         |
-| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                      |
-| voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                      |
-| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true               |
-| moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds |
+| Watcher           | Additional verification                                                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme                                |
+| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop                               |
+| t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy                                       |
+| t3code-stable010  | Generated units serve the root-pin package (Alpha stock, Pi/Epsilon split server) with the version assertion; Alpha's x86 t3code builds |
+| tasks-org         | Build the upstream Tasks.org package                                                                                                    |
+| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                                            |
+| cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                                                      |
+| cliamp-attach     | Build upstream cliamp and verify both attach and quit in its help output                                                                |
+| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
+| voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                                             |
+| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
+| moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
 
 Nautilus is notify-only. Ready notifications use tracked issues and durable
 comment markers to avoid repeats. T3 receives readiness notices while
@@ -95,20 +96,41 @@ candidate tree; `PINNED-READY` diverts publication into a combined atomic
 candidate. A watcher that is not ready but whose package the pin moved gets a
 stubbed-phase compatibility build of the actual fleet package; failure blocks
 the lock, and so does an unavailable readiness API. The Authelia pilot keeps
-its byte-exact cleanup handler and native ARM validation, and any combined
-candidate containing Authelia remains human-reviewed. Other apply-coupled
-candidates arm auto-merge under the #265 policy. Independent watchers without
+its byte-exact cleanup handler and native ARM validation, and every combined
+candidate merge-automates under the #265 policy: the registry checker is the
+sole landing decision and the cleanup is declarative. Independent watchers without
 the flag publish through the separate post-lock sweep.
 
 If the candidate Nixpkgs pin contains the Authelia fix and `nixos-unstable`
 contains it too, the updater applies the narrowly validated Authelia removal,
 then publishes a stable `automation/atomic-cleanup` branch and a
-review-required **combined lock + cleanup PR**. It dispatches exact-SHA CI with
-native ARM Authelia enabled, and **never fast-forwards main automatically**.
-Repeat runs leave the combined PR and branch unchanged, even when new upstream
-pins are available. A dangling branch, malformed cleanup or unavailable API
+**combined lock + PR**. It dispatches exact-SHA CI with
+native ARM Authelia enabled, and arms auto-merge: GitHub merges exactly when
+the required checks pass and the branch is strict up-to-date with main, never
+with pending or failed checks. The required PR CI itself runs the native ARM
+Authelia build (and the bundled package validations) for atomic candidates,
+so the build result gates the merge directly rather than relying on the
+updater waiting. When main advances first, the updater re-plans
+and re-applies the recipe onto the new main and revalidates — but only when
+the existing branch tip is provably its own earlier candidate (the recipe
+applied to its parent); a tampered or changed candidate requires review and
+is never overwritten. Repeat runs reuse the combined PR and branch without
+overwriting human edits or repeating successful CI, dispatching only missing
+checks on the exact SHA. Enforced PR checks on the automation branch are
+approved with a dedicated approval token (`LOCK_UPDATE_APPROVAL_TOKEN`: a
+fine-grained PAT with Actions read+write on this repo, or an App installation
+token with actions:write), after verifying the exact
+candidate. A candidate is merge-eligible only when its exact SHA, ownership,
+watcher manifest, required validation results, and current base are ALL
+verified. Publication records trustworthy provenance (a state ref plus a
+PR-body trailer); any recovered tip that is not the published SHA — including
+a lockfile-only amendment that keeps the cleanups byte-identical — fails
+closed, and the planner re-run on the recovered lock is the backstop against
+forged provenance. A dangling branch, malformed cleanup or unavailable API
 blocks publication rather than overwriting human changes or publishing a
-potentially incompatible pin.
+potentially incompatible pin. Until the owner stores the approval token, any
+approval-gated run fails closed with a message naming the secret instead of
+arming auto-merge.
 
 If the atomic predicate is negative, the original lock-only CI and compare-and-
 swap fast-forward remain unchanged. If ancestry is unavailable, or a candidate
@@ -130,3 +152,28 @@ CI posts a deduplicated readiness notice to #209. The Alpha
 `watch-t3code-nightly-v2.timer` retains runtime completion ownership until the
 fleet CI adapter is verified. Protect `statev2.sqlite` and preserve active
 conversations during a cutover.
+
+## T3 Code stable 0.1.0 bridge (#288, #289)
+
+The `t3code-stable010` watcher retires the bridging overlay that serves
+stable 0.1.0 from the upstream release archive ahead of nixpkgs#575132. Its
+detector reuses the nightly-v2 `PINNED-READY` gate: only a stable
+orchestrator-v2 release carrying the root Nixpkgs pin may drop the bridge,
+because an earlier drop downgrades Alpha to V1 0.0.45 and breaks Android/web
+clients. The post-lock cleanup is the complete cutover: it deletes the
+bridge aspect, removes its entity includes so every host serves the
+root-pin package (Alpha stock, Pi/Epsilon the `t3code-split` server-only
+build), and arms the `t3code >= 0.1.0` version assertion in `t3code.nix`
+that keeps a pin regression from silently downgrading `statev2.sqlite`.
+A cleanup that conflicts with edited modules fails closed for review.
+Candidate validation requires the `PINNED-READY` pin, checks every
+generated `t3code-web` unit against the root-pin package, and builds
+Alpha's x86 `t3code`. The nightly aspect is already retired: no entity
+included it after #288, and deleting the file completes the
+`t3code-nightly-v2` detector through the `WORKAROUNDS` path contract
+(draft #285 was superseded by this cleanup). Watcher-id retirement for
+both `t3code-nightly-v2` and `t3code-stable010` in `watchers.json` stays
+a human merge-time chore; Alpha's `watch-t3code-nightly-v2.timer` keeps
+runtime completion ownership until its issue-gate proof lands. Protect
+`statev2.sqlite` and preserve active conversations while the bridge is
+dropped.

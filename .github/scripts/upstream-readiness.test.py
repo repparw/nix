@@ -169,6 +169,15 @@ class Readiness(unittest.TestCase):
             with self.assertRaises(ValueError):
                 watch.detect("t3code-nightly-v2", LOCK)
 
+    def test_t3code_stable010_reuses_the_nightly_v2_gate(self):
+        for status in ("waiting-upstream", "merged-not-pinned", "PINNED-READY"):
+            with patch.object(watch, "t3code_nightly_v2_status", return_value=status) as gate:
+                self.assertEqual(watch.detect("t3code-stable010", LOCK), status)
+                gate.assert_called_once_with(LOCK)
+        with patch.object(watch, "t3code_nightly_v2_status", side_effect=ValueError("boom")):
+            with self.assertRaises(ValueError):
+                watch.detect("t3code-stable010", LOCK)
+
     def test_cleanup_recipes_are_well_formed_and_narrow(self):
         root = Path(__file__).resolve().parents[2]
         for recipe in sorted((root / '.github/upstream/cleanup').glob('*.patch')):
