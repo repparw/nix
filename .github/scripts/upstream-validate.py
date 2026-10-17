@@ -119,20 +119,29 @@ def validate(name, architecture):
                 "Alpha must select the unpatched upstream Moonshine")
         build("alpha.pkgs.moonshine")
     elif name == "t3code-stable010":
-        # The candidate removes the bridging aspect: every host must fall
-        # back to the nightly server package in the generated unit, and
-        # pi/epsilon must select it as their program package again.
+        # The candidate completes the direct cutover: the bridging aspect
+        # is gone, the version assertion guards the pin, and every host
+        # serves the root-pin package (Alpha stock, Pi/Epsilon the split
+        # server-only build).
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("readiness", ROOT / ".github/scripts/upstream-readiness.py")
+        detector = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(detector)
+        lock = json.loads((ROOT / "flake.lock").read_text())
+        require(detector.t3code_nightly_v2_status(lock) == "PINNED-READY",
+                "root pin must carry a stable orchestrator-v2 release")
         for host in ("alpha", "pi", "epsilon"):
             service = unit(host, "t3code-web")
             require("--mode web" in service["Service"]["ExecStart"], "missing web arguments")
-            nightly = evaluate(f"{host}.pkgs.t3code-nightly.outPath")
-            require(service["Service"]["ExecStart"].startswith(nightly + "/bin/t3 "),
-                    f"{host} must fall back to the nightly server")
-        for host in ("pi", "epsilon"):
             package = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.outPath")
-            require(package == evaluate(f"{host}.pkgs.t3code-nightly.outPath"),
-                    f"{host} must select the nightly package")
-        build("alpha.pkgs.t3code-nightly")
+            require(service["Service"]["ExecStart"].startswith(package + "/bin/t3 "),
+                    f"{host} must serve the root-pin package")
+        version = command("nix", "eval", "--raw", "--no-update-lock-file",
+                          ".#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.t3code.package.version")
+        match = re.match(r"(\d+)\.(\d+)\.(\d+)", version)
+        require(match and tuple(int(part) for part in match.groups()) >= (0, 1, 0),
+                f"pinned t3code {version} is below 0.1.0")
+        build("alpha.config.home-manager.users.repparw.programs.t3code.package")
     else:
         raise ValueError(f"no package validation for {name}")
 

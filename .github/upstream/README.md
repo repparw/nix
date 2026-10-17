@@ -38,20 +38,20 @@ aggregate also includes actual package builds and generated behavior checks
 from `upstream-validate.py`. T3 split candidates use native x86 and ARM jobs.
 The package-specific gates are:
 
-| Watcher           | Additional verification                                                                                          |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------- |
-| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme         |
-| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop        |
-| t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy                |
-| t3code-stable010  | Generated units fall back to the nightly package on every host; Alpha's x86 nightly builds                       |
-| tasks-org         | Build the upstream Tasks.org package                                                                             |
-| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                     |
-| cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                               |
-| cliamp-attach     | Build upstream cliamp and verify both attach and quit in its help output                                         |
-| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                      |
-| voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                      |
-| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true               |
-| moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds |
+| Watcher           | Additional verification                                                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme                                |
+| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop                               |
+| t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy                                       |
+| t3code-stable010  | Generated units serve the root-pin package (Alpha stock, Pi/Epsilon split server) with the version assertion; Alpha's x86 t3code builds |
+| tasks-org         | Build the upstream Tasks.org package                                                                                                    |
+| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                                            |
+| cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                                                      |
+| cliamp-attach     | Build upstream cliamp and verify both attach and quit in its help output                                                                |
+| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
+| voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                                             |
+| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
+| moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
 
 Nautilus is notify-only. Ready notifications use tracked issues and durable
 comment markers to avoid repeats. T3 receives readiness notices while
@@ -160,10 +160,20 @@ stable 0.1.0 from the upstream release archive ahead of nixpkgs#575132. Its
 detector reuses the nightly-v2 `PINNED-READY` gate: only a stable
 orchestrator-v2 release carrying the root Nixpkgs pin may drop the bridge,
 because an earlier drop downgrades Alpha to V1 0.0.45 and breaks Android/web
-clients. The post-lock cleanup restores the `t3code-nightly` includes for
-Alpha, Pi and Epsilon, returning the fleet to the pre-bridge workload; the
-human cutover (#285) then removes the nightly and asserts the pin version.
-A cleanup that conflicts with an earlier cutover fails closed for review.
-Candidate validation keeps every generated `t3code-web` unit on the nightly
-package and builds Alpha's x86 nightly. Protect `statev2.sqlite` and
-preserve active conversations while the bridge is dropped.
+clients. The post-lock cleanup is the complete cutover: it deletes the
+bridge aspect, removes its entity includes so every host serves the
+root-pin package (Alpha stock, Pi/Epsilon the `t3code-split` server-only
+build), and arms the `t3code >= 0.1.0` version assertion in `t3code.nix`
+that keeps a pin regression from silently downgrading `statev2.sqlite`.
+A cleanup that conflicts with edited modules fails closed for review.
+Candidate validation requires the `PINNED-READY` pin, checks every
+generated `t3code-web` unit against the root-pin package, and builds
+Alpha's x86 `t3code`. The nightly aspect is already retired: no entity
+included it after #288, and deleting the file completes the
+`t3code-nightly-v2` detector through the `WORKAROUNDS` path contract
+(draft #285 was superseded by this cleanup). Watcher-id retirement for
+both `t3code-nightly-v2` and `t3code-stable010` in `watchers.json` stays
+a human merge-time chore; Alpha's `watch-t3code-nightly-v2.timer` keeps
+runtime completion ownership until its issue-gate proof lands. Protect
+`statev2.sqlite` and preserve active conversations while the bridge is
+dropped.
