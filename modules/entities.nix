@@ -23,7 +23,7 @@
           includes = [
             den.aspects.repparw
             den.aspects.ai._.t3code-split
-            ];
+          ];
         };
       };
 
@@ -33,7 +33,7 @@
           includes = [
             den.aspects.repparw
             den.aspects.ai._.t3code-split
-            ];
+          ];
         };
       };
     };
