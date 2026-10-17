@@ -118,6 +118,21 @@ def validate(name, architecture):
         require(package == evaluate("alpha.pkgs.moonshine.outPath"),
                 "Alpha must select the unpatched upstream Moonshine")
         build("alpha.pkgs.moonshine")
+    elif name == "t3code-stable010":
+        # The candidate removes the bridging aspect: every host must fall
+        # back to the nightly server package in the generated unit, and
+        # pi/epsilon must select it as their program package again.
+        for host in ("alpha", "pi", "epsilon"):
+            service = unit(host, "t3code-web")
+            require("--mode web" in service["Service"]["ExecStart"], "missing web arguments")
+            nightly = evaluate(f"{host}.pkgs.t3code-nightly.outPath")
+            require(service["Service"]["ExecStart"].startswith(nightly + "/bin/t3 "),
+                    f"{host} must fall back to the nightly server")
+        for host in ("pi", "epsilon"):
+            package = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.outPath")
+            require(package == evaluate(f"{host}.pkgs.t3code-nightly.outPath"),
+                    f"{host} must select the nightly package")
+        build("alpha.pkgs.t3code-nightly")
     else:
         raise ValueError(f"no package validation for {name}")
 

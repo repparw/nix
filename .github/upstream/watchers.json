@@ -105,5 +105,15 @@
       "pinned-package",
       "alpha-runtime-proof"
     ]
+  },
+  "t3code-stable010": {
+    "issue": 289,
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "t3code-stable010.patch",
+    "validation": [
+      "generated-unit",
+      "package-build"
+    ]
   }
 }

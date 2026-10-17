@@ -43,6 +43,7 @@ The package-specific gates are:
 | t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme         |
 | t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop        |
 | t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy                |
+| t3code-stable010  | Generated units fall back to the nightly package on every host; Alpha's x86 nightly builds                       |
 | tasks-org         | Build the upstream Tasks.org package                                                                             |
 | qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                     |
 | cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                               |
@@ -151,3 +152,18 @@ CI posts a deduplicated readiness notice to #209. The Alpha
 `watch-t3code-nightly-v2.timer` retains runtime completion ownership until the
 fleet CI adapter is verified. Protect `statev2.sqlite` and preserve active
 conversations during a cutover.
+
+## T3 Code stable 0.1.0 bridge (#288, #289)
+
+The `t3code-stable010` watcher retires the bridging overlay that serves
+stable 0.1.0 from the upstream release archive ahead of nixpkgs#575132. Its
+detector reuses the nightly-v2 `PINNED-READY` gate: only a stable
+orchestrator-v2 release carrying the root Nixpkgs pin may drop the bridge,
+because an earlier drop downgrades Alpha to V1 0.0.45 and breaks Android/web
+clients. The post-lock cleanup restores the `t3code-nightly` includes for
+Alpha, Pi and Epsilon, returning the fleet to the pre-bridge workload; the
+human cutover (#285) then removes the nightly and asserts the pin version.
+A cleanup that conflicts with an earlier cutover fails closed for review.
+Candidate validation keeps every generated `t3code-web` unit on the nightly
+package and builds Alpha's x86 nightly. Protect `statev2.sqlite` and
+preserve active conversations while the bridge is dropped.
