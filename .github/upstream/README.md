@@ -117,16 +117,21 @@ The existing Authelia post-lock pilot remains responsible for its readiness
 and completion on `main` when the planner did not combine the cleanup with a
 lock update. Independent cleanup candidates retain their own validation gates.
 
-## T3 Code nightly-v2 (read-only, #209)
+## T3 Code stable V2 cutover (#209)
 
-The `t3code-nightly-v2` detector tracks a stable, non-prerelease T3 Code
-release containing orchestrator-v2 merge `de343914`, the corresponding
-`nixos-unstable` package source, and the root Nixpkgs pin. The check uses
-exact tag ancestry and verifies the pinned tag against a stable GitHub Release.
-Statuses are `waiting-upstream`, `waiting-unstable`,
-`merged-not-pinned`, and `PINNED-READY` (or unavailable on API errors).
+The nightly override is retired after T3 Code 0.1.0 or newer reaches
+the root Nixpkgs pin and the host-owned runtime cutover is verified. The
+shared T3 Code Home Manager aspect asserts a minimum stable version to
+prevent accidentally deploying an older V1 server against the V2 state.
 
-CI posts a deduplicated readiness notice to #209. The Alpha
-`watch-t3code-nightly-v2.timer` retains runtime completion ownership until the
-fleet CI adapter is verified. Protect `statev2.sqlite` and preserve active
-conversations during a cutover.
+Alpha keeps the desktop package and the existing `t3code-web.service`;
+Pi and Epsilon continue using the temporary headless package from
+`t3code-split.nix` until nixpkgs#555814 lands. This PR does not adopt
+either upstream service module or change the desktop's saved
+`Local environment` preference.
+
+Before merging, verify the stable release includes orchestrator V2,
+run host evaluation and native ARM package validation, back up
+`~/.t3/userdata` (especially `statev2.sqlite`), and confirm the
+running service reconnects without losing active threads. This PR is
+draft-only until those checks are complete.
