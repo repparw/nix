@@ -33,16 +33,18 @@ runtime work and discover capabilities from `fleet commands --json` instead
 of copying this command surface into prose. Configuration verification remains
 a separate pre-activation procedure in `verify-nixos-config`.
 
-`fleet update` delegates to the interactive `host-update` path for the local
-tree. It is deliberately distinct from the controller-side `fleet-update`
-transaction below, which deploys a main revision after successful CI.
+Local-tree updates happen through the plain nix CLI (`nix build` the
+toplevel, `nix run .#deploy-rs -- .#<host> --dry-activate` to review,
+deploy-rs or `nixos-rebuild` to switch); the controller-side
+`fleet-update` transaction below deploys a main revision after successful
+CI.
 
 ## Fleet health (`fleet-health.timer`, every 5 min)
 
 Probes every systemd unit that matters plus every HTTP surface across the
 fleet: the pi and epsilon services (traefik, authelia, HA, hermes, glance, ASF,
 and miniflux), the apex, rss, and paper vhosts, and alpha's published
-backends (jellyfin, qbit, bazarr, prowlarr, radarr, sonarr, finance).
+backends (jellyfin, qbit, bazarr, prowlarr, radarr, sonarr).
 
 - Two consecutive failures post `DOWN name (detail)` as a new message;
   recovery deletes that message (no `UP` post — the channel only shows
@@ -100,18 +102,70 @@ manually only acknowledges the failure; it does not establish backup success.
 
 ## Offsite backups (`restic-backups-offsite.timer`, daily 01:00–01:15)
 
+Run the same offsite operation as the timer, including export preparation:
+
+```sh
+sudo systemctl start --wait restic-backups-offsite.service
+ssh root@epsilon systemctl start --wait restic-backups-offsite.service
+```
+
+The command requires permission to start system services. It waits for
+`restic-backups-offsite.service` and returns its failure status. Inspect its
+journal after a failure; `fleet backup status` reports the resulting service
+state.
+
+Before Restic starts, registered export units run synchronously. Each unit must
+succeed and create or refresh a nonempty matching artifact within its declared
+maximum age, one hour by default. A unit that leaves its output unchanged marks
+the run incomplete, as does stale output, missing output, or a failed unit. Other
+exporters still run and Restic uploads the available data, including
+`/var/lib/backup-exports/offsite.json` with each export's outcome. After upload,
+the service returns failure for an incomplete run and skips pruning, preserving
+previous snapshots. Inspect the manifest when selecting a snapshot to restore;
+an uploaded snapshot alone does not establish complete application coverage.
+Independent timers for these enrolled export units are disabled so scheduled
+and manual runs use the same sequence. App-managed Arr schedules remain enabled.
+
+| Export           | Producer and validation                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------ |
+| Arr apps         | Native daily schedules, nonempty scheduled archive within 26 hours                         |
+| Jellyfin         | Native `Backup/Create` API, required response path, and nonempty output                    |
+| Miniflux         | Container `pg_dump`, gzip integrity check, and atomic publication                          |
+| Paperless        | Container's native `document_exporter`, including its normal service stop/restart behavior |
+| Pi services      | Pi-owned transactional SQLite staging, checked through its export manifest                 |
+| Alpha home state | SQLite `.backup` staging through `home-state-backup-offsite.service`                       |
+
+Sonarr, Radarr, Prowlarr and Bazarr use their own scheduled native backups.
+Restic does not trigger them or manage their archive retention. It requires a
+nonempty matching archive no older than 26 hours, including during manual runs;
+unchanged recent archives are accepted. Servarr checks only `Backups/scheduled`,
+so a manual archive cannot hide a broken native schedule. Bazarr writes to its
+configured backup directory. This gate checks freshness and size, not ZIP or
+SQLite integrity; use native restore validation when selecting an archive.
+
+The live app settings on alpha were changed through their settings APIs:
+Sonarr/Radarr/Prowlarr `backupInterval=1`, `backupRetention=28`; Bazarr
+`backup.frequency=Daily`, `backup.hour=0`, `backup.retention=28`.
+Bazarr runs at midnight ahead of Restic's 01:00–01:15 window. Servarr exposes an
+interval in days, without a configurable backup hour; its task's last execution
+anchors the next daily run. These settings persist in the app databases/config,
+not Nix environment variables. After a fresh app install or restore, check these
+settings and the native task's next execution. An app that is stopped cannot
+export; missing or stale archives make the offsite run incomplete while other
+data still uploads.
+
 Restic over rclone to `gd-crypt:restic/<hostname>`. Covers:
 
 - pi/epsilon: `/etc`, `/boot`, `/root`, the whole `/home/repparw`, container
   configuration and roots, NixOS account allocation state, timers and recovery
   metadata. Pi also includes deployment/health controller and Bluetooth/radio
   state; epsilon includes ddclient state. See the host declarations and
-  `modules/aspects/backup.nix` for the complete paths and exclusions.
+  `modules/aspects/host-backup.nix` for the shared paths and exclusions.
 - alpha: `/home/containers/backup`, Pictures, Documents (Memorias excluded),
   and the small home-state allowlist in `modules/hosts/alpha.nix`. SQLite
   databases are exported with `.backup` into a private staging tree under
   `/var/lib/home-state-backup/offsite` before restic runs. Missing optional
-  entries are skipped; an export failure aborts the backup. Age keys are
+  entries are skipped; an export failure marks the backup incomplete. Age keys are
   included only in the HDD staging tree, never in the offsite tree.
 
 Alpha's `rsync-job-bupstate` mirrors its separately prepared HDD staging tree
@@ -121,31 +175,30 @@ sources. `rsync-job-buptohdd` handles Pictures and Documents separately and
 protects those two state subtrees. Restore staged offsite state beneath the
 user's home, rather than to its original `/var/lib` staging path.
 
-Alpha's `rsync-job-buprpi` pulls Pi's private services export at
-`/var/lib/pi-services-backup/current`. The fixed `pi-services-backup-send`
-helper prepares the export through the existing `repparw` SSH connection,
-then drops privileges before sending it. It accepts only this job's sender
-arguments. SQLite files are exported transactionally; historical service
-trees are retained. Only the obsolete `dns/listener.conf` and
-`dns/resolved.conf` links are excluded. Links into `/nix/store` and
-`dns/hosts` pointing to `/etc/hosts` are allowed. Other external links and
-dangling links abort preparation. Existing source ownership and modes
-remain unchanged; SQLite may create journal sidecars owned like their
-source database.
+Pi prepares its private service export through `pi-services-backup.service`.
+SQLite files are exported transactionally, then a new generation is published
+only after every file succeeds. Historical service trees are retained. Only the
+obsolete `dns/listener.conf` and `dns/resolved.conf` links are excluded. Links
+into `/nix/store` and `dns/hosts` pointing to `/etc/hosts` are allowed; other
+external links and dangling links abort preparation. Source ownership and modes
+remain unchanged; SQLite may create journal sidecars owned like their source
+database. Restore exported files with the required service ownership.
 
-Preparation publishes a new generation only after every file succeeds and
-holds its lock until rsync exits. `--delete-after` inhibits destination
-deletion if a source error occurs. Restore exported files to their service
-paths with the required service ownership; the export's owner is the
-backup account.
+Pi backs up `/var/lib/pi-services-backup`, including the real generation tree
+behind the `current` symlink. Alpha no longer pulls or refreshes this export.
+Existing copies on alpha are retained as historical data; this change does not
+delete backup artifacts.
 
-Daily jobs exclude reproducible caches, container runtime mounts and swap.
+Each host composes its checklist through `provides.backup` and `includes` in
+`modules/hosts/{alpha,pi,epsilon}.nix`. The shared backup aspect executes these
+registrations and reports completeness without choosing service ownership.
+
 Retention is 7d/4w/12m with a 5% data check each run. The pi/epsilon live backups are
 not automatically consistent database exports.
 
-For a full pi checkpoint, including the Nix store and a stopped-HA archive,
-and a verified restore into a fresh directory, use the
-[host recovery runbook](host-recovery.md). Never restore over live paths while
+For a native Restic restore into a fresh directory, use the
+[host recovery runbook](host-recovery.md). It also describes the limits of daily
+backup scope and how to inspect legacy checkpoints. Never restore over live paths while
 testing recovery. Backup scope changes apply after deployment.
 
 Adding a new host's key to a secrets file:
@@ -175,9 +228,7 @@ Lock maintenance runs in GitHub Actions; deployment runs on pi:
   activating or rolling back a host.
 - Activation attempts epsilon, alpha, then pi using the captured profiles.
   Alpha can be deferred by the
-  activity gate; Pi reports its snapshot as unavailable until its collector is
-  installed. For the initial collector rollout, use an authorized
-  `--host all --force` deployment or activate both remote hosts first. Each
+  activity gate. Each
   activated host passes health checks before the next proceeds, including hosts
   already on that revision.
 - `fleet-alpha-retry.timer` runs daily at 07:00 in the controller's timezone.
@@ -267,10 +318,6 @@ Pi accepts that successful guarded lock-branch dispatch for the exact current
 `main` SHA, as well as successful push or manual-main CI for the same SHA.
 Pull-request runs and dispatches for unrelated branches never satisfy the
 deployment gate.
-
-The lock workflow has its own concurrency group and one branch. Pi's pause
-flag affects deployment only. Applying this configuration removes the old
-`fleet-promote` service and timer; existing pause and rollback state remain.
 Older controllers used rollback roots named by commit. After a verified full
 rollout, inspect `/nix/var/nix/gcroots/fleet-update/` on each host and remove
 obsolete commit roots. Keep `previous` while a rollout or recovery is pending.
@@ -302,6 +349,21 @@ Failure handling:
   timed-out probe can clear before the next attempt.
 - Boot-level regressions remain a rescue-console problem; re-imaging the pi
   from a cloned SD of the last known-good system is the final recovery path.
+
+### Runtime readiness probe (`fleet-readiness-probe.timer`, every 2 h)
+
+Host-owned upstream waits whose predicates need Alpha's runtime state — the
+running Sonarr build version and its Jellyfin-push log gate, plus Moonshine's
+PR227 test-build drop-ins, candidate GC root and stream activity — are
+evaluated by `fleet-readiness-probe` on Pi over the deployment SSH key. A
+status change appends one fsynced event to `/var/lib/auto-update/readiness-events/`;
+`fleet-readiness-deliver` (every 5 min, like `fleet-package-deliver`) posts
+queued events to Discord and removes an entry only after a successful post, so
+a failed delivery is retried; an ambiguous Discord POST timeout may duplicate a post. The probe also runs
+best-effort after each Alpha convergence and never affects the deployment
+outcome; an unreachable Alpha keeps the previous status instead of fabricating
+a transition. Alpha's own watcher timers stay armed and remain the completion
+owners until this replacement is verified; the probe only reports evidence.
 
 ### Reading a deploy failure alert
 
@@ -348,8 +410,9 @@ It keeps the exact-main push CI gate, serialization, health checks, and rollback
 
 Alpha's interactive `Mod+U` asks the pi controller to run
 `fleet-update deploy --host alpha --force`: it bypasses the activity gate
-and `PAUSE` but keeps the exact-commit CI gate, health checks, and rollback. The separate
-`host-update` command remains for building and reviewing a local tree by hand.
+and `PAUSE` but keeps the exact-commit CI gate, health checks, and rollback.
+Local-tree reviews use the nix CLI directly
+(`nix run .#deploy-rs -- .#<host> --dry-activate`).
 
 ## Pi store retention
 
@@ -399,6 +462,5 @@ systemd-boot layout already satisfies this).
 
 ## Related
 
-- [Deploy NixOS to the Raspberry Pi](deploy-pi-nixos.md)
 - [Update rollback](update-rollback.md)
 - [Troubleshooting](../troubleshooting.md)

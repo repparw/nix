@@ -20,8 +20,12 @@ let
     text = ''
       set -euo pipefail
       path="${backupDir}/miniflux-backup-$(date --iso-8601=seconds).sql.gz"
+      temporary=$(mktemp "${backupDir}/.miniflux-backup.XXXXXX")
+      trap 'rm -f "$temporary"' EXIT
       pg_dump --dbname='postgres:///miniflux' --format=plain --no-owner \
-        | gzip -9 > "$path"
+        | gzip -9 > "$temporary"
+      gzip --test "$temporary"
+      mv "$temporary" "$path"
       echo "backup created: $path"
     '';
   };

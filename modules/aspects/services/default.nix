@@ -105,7 +105,6 @@
       [
         arr
         jellyfin
-        matrizApi
       ]
       ++ [
         den.aspects.service-host
@@ -187,7 +186,7 @@
             "d ${cfg.mediaPortalDir} 0755 root root - -"
             "d ${cfg.mediaPortalDir}/hdd 0755 root root - -"
             "d ${cfg.mediaPortalDir}/seagate 0755 root root - -"
-            "d ${cfg.rootDir}/torrents 2770 root media - -"
+            "d ${cfg.mediaPortalDir}/torrents 2770 root media - -"
           ];
         };
       };

@@ -4,32 +4,63 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+import { classifyChanges } from './ci-impact.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
 const workflow = readFileSync(join(root, '.github/workflows/ci.yml'), 'utf8');
 const validation = readFileSync(join(root, '.github/workflows/revision-validation.yml'), 'utf8');
+const upstreamWatch = readFileSync(join(root, '.github/workflows/upstream-watch.yml'), 'utf8');
 const gate = validation.match(/      - name: Require every validation group[\s\S]*?        run: \|\n([\s\S]*)$/)[1].replace(/^          /gm, '');
 
-test('the aggregate requires three successes and treats the opt-in arm build skip as acceptable', () => {
-  for (const checks of ['success', 'failure', 'skipped', 'cancelled', '']) {
-    for (const hosts of ['success', 'failure', 'skipped', 'cancelled', '']) {
-      for (const persistence of ['success', 'failure', 'skipped', 'cancelled', '']) {
-        for (const arm of ['success', 'skipped', 'failure', 'cancelled', '']) {
-          const result = spawnSync('bash', ['-e', '-c', gate], {
-            env: { ...process.env, CHECKS_RESULT: checks, HOSTS_RESULT: hosts, PERSISTENCE_RESULT: persistence, ARM_RESULT: arm },
-          });
-          assert.equal(result.status === 0,
-            [checks, hosts, persistence].every(value => value === 'success') && (arm === 'success' || arm === 'skipped'));
-        }
-      }
-    }
-  }
-  assert.match(validation, /gate:\n    if: always\(\)\n    needs: \[checks, host-eval, persistence-vm, arm-authelia-build\]/);
+test('the aggregate respects only classifier-authorized skips', () => {
+  const runGate = (overrides = {}) => spawnSync('bash', ['-e', '-c', gate], {
+    env: {
+      ...process.env,
+      CHANGES_RESULT: 'success',
+      CHECKS_RESULT: 'success',
+      NEOVIM_ENABLED: 'true',
+      NEOVIM_RESULT: 'success',
+      HOSTS_RESULT: 'success',
+      PERSISTENCE_RESULT: 'success',
+      ARM_RESULT: 'skipped',
+      HOSTS_ENABLED: 'true',
+      PERSISTENCE_ENABLED: 'true',
+      BUILD_ARM: 'false',
+      UPSTREAM_WATCHER: '',
+      UPSTREAM_RESULT: 'skipped',
+      ...overrides,
+    },
+  }).status === 0;
+  assert.equal(runGate(), true);
+  assert.equal(runGate({ NEOVIM_ENABLED: 'false', NEOVIM_RESULT: 'skipped' }), true);
+  assert.equal(runGate({ HOSTS_ENABLED: 'false', HOSTS_RESULT: 'skipped', PERSISTENCE_ENABLED: 'false', PERSISTENCE_RESULT: 'skipped' }), true);
+  assert.equal(runGate({ PERSISTENCE_ENABLED: 'false', PERSISTENCE_RESULT: 'skipped' }), true);
+  assert.equal(runGate({ BUILD_ARM: 'true', ARM_RESULT: 'success' }), true);
+  assert.equal(runGate({ UPSTREAM_WATCHER: 'tasks-org', UPSTREAM_RESULT: 'success' }), true);
+  for (const env of [
+    { CHANGES_RESULT: 'failure' }, { CHECKS_RESULT: 'failure' },
+    ...['failure', 'cancelled', 'skipped'].map(NEOVIM_RESULT => ({ NEOVIM_RESULT })),
+    { NEOVIM_ENABLED: 'false', NEOVIM_RESULT: 'success' },
+    { NEOVIM_ENABLED: 'unknown' },
+    { HOSTS_ENABLED: 'true', HOSTS_RESULT: 'skipped' },
+    { HOSTS_ENABLED: 'false', HOSTS_RESULT: 'success' },
+    { HOSTS_ENABLED: 'unknown' },
+    { PERSISTENCE_ENABLED: 'true', PERSISTENCE_RESULT: 'skipped' },
+    { PERSISTENCE_ENABLED: 'false', PERSISTENCE_RESULT: 'success' },
+    { PERSISTENCE_ENABLED: 'unknown' },
+    { ARM_RESULT: 'failure' }, { BUILD_ARM: 'true', ARM_RESULT: 'skipped' },
+    { UPSTREAM_WATCHER: 'tasks-org', UPSTREAM_RESULT: 'skipped' },
+    { UPSTREAM_WATCHER: 'tasks-org', UPSTREAM_RESULT: 'failure' },
+    { UPSTREAM_RESULT: 'failure' },
+  ]) assert.equal(runGate(env), false, JSON.stringify(env));
+  assert.match(validation, /gate:\n    if: always\(\)\n    needs: \[changes, checks, neovim-build, host-eval, persistence-vm, arm-authelia-build, upstream-package-build\]/);
+  assert.match(validation, /matrix: \$\{\{ fromJSON\(needs.changes.outputs.check_matrix\) \}\}/);
+  assert.match(validation, /if: needs.changes.outputs.run_persistence_vm == 'true'/);
 });
 
 test('every checkout job verifies dispatch SHA before checking out the workflow SHA', () => {
   const jobs = validation.split(/^  [a-z-]+:\n/gm).slice(1).filter(job => job.includes('actions/checkout'));
-  assert.equal(jobs.length, 4);
+  assert.equal(jobs.length, 7);
   for (const job of jobs) {
     assert.match(job, /if: inputs.expected_sha != ''/);
     assert.match(job, /EXPECTED_SHA: \$\{\{ inputs.expected_sha \}\}/);
@@ -50,6 +81,13 @@ test('every checkout job verifies dispatch SHA before checking out the workflow 
   assert.match(validation, /expected_sha:[\s\S]*required: false[\s\S]*type: string/);
   assert.match(workflow, /cancel-in-progress: \$\{\{ github.event_name != 'push' \}\}/);
   assert.match(workflow, /\|\| github.run_id/);
+});
+
+test('all host evaluations share one runner, and failed lock updates do not wake the watcher', () => {
+  assert.match(validation, /name: host-eval \(fleet, stubbed\)/);
+  assert.match(validation, /CI_CHECKS: alpha pi epsilon/);
+  assert.doesNotMatch(validation, /matrix:\\n        host: \[alpha, pi, epsilon\]/);
+  assert.match(upstreamWatch, /if: github.event_name != 'workflow_run' \|\| github.event.workflow_run.conclusion == 'success'/);
 });
 
 function runChecks(names) {
@@ -88,5 +126,15 @@ test('all successful checks pass and invalid or empty selections cannot pass sil
     const result = runChecks(names);
     assert.notEqual(result.status, 0);
     assert.equal(result.calls, '');
+  }
+});
+
+
+test('docs-only PRs skip the workflow watcher tests but code changes retain them', () => {
+  const watcherGroup = validation.match(/name: Test upstream watcher predicates and pilot lifecycle\n\s+if: matrix.group == '([^']+)'/)[1];
+  const runsWatcher = paths => classifyChanges(paths).checkMatrix.include.some(g => g.group === watcherGroup);
+  assert.equal(runsWatcher(['docs/hosts.md', 'README.md']), false);
+  for (const path of ['.github/scripts/upstream-plan.py', '.github/workflows/revision-validation.yml', 'flake.lock']) {
+    assert.equal(runsWatcher([path]), true, path);
   }
 });

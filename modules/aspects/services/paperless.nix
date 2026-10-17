@@ -56,9 +56,6 @@
           # silently revokes the container user's write access to its own
           # data dir (Django system check fails, boot loops, no READY).
           # Container paperless (315) becomes host 393531.
-          # ONE-TIME MIGRATION: existing files under configDir/paper must be
-          # chowned once on the host:
-          #   sudo chown -R 393531:393531 /home/containers/config/paper
           privateUsers = 393216;
           forwardPorts = [
             {
@@ -85,7 +82,7 @@
               address = "0.0.0.0";
               exporter = {
                 enable = true;
-                onCalendar = "*-*-7,14,21,28 03:45:00";
+                onCalendar = null;
                 settings = {
                   "no-archive" = true;
                   "no-thumbnail" = true;

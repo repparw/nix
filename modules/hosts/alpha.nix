@@ -7,7 +7,7 @@
   den.aspects.alpha = {
     includes = [
       den.aspects.fleet-unit-state
-      den.aspects.backup
+      den.aspects.alpha._.backup
       den.aspects.btrfs-maintenance
       den.aspects.gaming
       den.aspects.logid
@@ -21,6 +21,31 @@
       den.aspects.nixos-services._.free-model-watch
       den.aspects.deploy-target
     ];
+
+    provides.backup = {
+      includes = [ den.aspects.backup ];
+      nixos = { config, ... }: {
+        modules.backup.exports = {
+          alpha-home = {
+            unit = "home-state-backup-offsite.service";
+            path = "/var/lib/home-state-backup/offsite";
+            pattern = ".export-complete";
+          };
+          jellyfin = {
+            unit = "jellyfin-backup.service";
+            path = config.modules.services.definitions.jellyfin.backup.path;
+            pattern = "jellyfin-backup-*.zip";
+          };
+        }
+        // lib.genAttrs [ "sonarr" "radarr" "prowlarr" "bazarr" ] (name: {
+          path =
+            config.modules.services.definitions.${name}.backup.path
+            + lib.optionalString (name != "bazarr") "/scheduled";
+          pattern = "${name}_backup_*.zip";
+          maxAgeSeconds = 26 * 60 * 60;
+        });
+      };
+    };
 
     nixos =
       {
@@ -47,18 +72,18 @@
           ".config/godot/"
           ".config/vesktop/settings.json"
           ".config/vesktop/settings/"
-          ".config/ZapZap/"
           ".config/Moonlight Game Streaming Project/"
           ".config/codex/config.toml"
           ".config/codex/skills/"
           ".config/codex/plugins/"
           ".config/codex/goals_1.sqlite"
-          ".config/net.imput.helium/Default/Preferences"
-          ".config/net.imput.helium/Default/Secure Preferences"
-          ".config/net.imput.helium/Default/History"
-          ".config/net.imput.helium/Default/Login Data"
-          ".config/net.imput.helium/Default/Login Data For Account"
-          ".config/net.imput.helium/Default/Sessions/"
+          # Whole Helium profile: extension state (Vimium exclusions,
+          # DeArrow, ImprovedTube) lives in per-extension LevelDB dirs that
+          # would otherwise need enumerating, and update wipes have proven
+          # that guessing the file list loses data. The sqlite files are
+          # still staged consistently via homeDatabases below, and
+          # homeStateExcludes prunes caches and telemetry.
+          ".config/net.imput.helium/"
           ".config/fish/fish_variables"
           ".config/mpv/watch_later"
           ".config/Raspberry Pi/Raspberry Pi Imager.conf"
@@ -85,9 +110,31 @@
           ".config/net.imput.helium/Default/Login Data For Account"
           ".local/share/vicinae/vicinae.db"
         ];
+        # Regenerable caches and telemetry inside the Helium profile. The
+        # leading slash anchors each pattern to the ./ marker that the
+        # rsync --relative source paths carry (verified: excludes apply
+        # below the anchor, and other homeState entries are untouched).
+        homeStateExcludes = map (dir: "/.config/net.imput.helium/${dir}") [
+          "Default/Service Worker/CacheStorage"
+          "Default/Service Worker/ScriptCache"
+          "Default/GPUCache"
+          "Default/DawnWebGPUCache"
+          "Default/DawnGraphiteCache"
+          "GPUPersistentCache"
+          "GrShaderCache"
+          "ShaderCache"
+          "GraphiteDawnCache"
+          "component_crx_cache"
+          "extensions_crx_cache"
+          "CertificateRevocation"
+          "Dictionaries"
+          "segmentation_platform"
+          "DeferredBrowserMetrics"
+          "Variations"
+        ];
         stateRoot = "/var/lib/home-state-backup";
         # Each consumer has its own staging tree. A failed export never replaces
-        # its previous tree, and ExecStartPre/backupPrepareCommand abort the job.
+        # its previous tree.
         prepareHomeState = pkgs.writeShellScript "prepare-home-state" ''
           set -euo pipefail
           export PATH=${
@@ -103,7 +150,9 @@
           temporary=$(mktemp -d "${stateRoot}/.prepare-$1.XXXXXX")
           trap 'rm -rf "$temporary"' EXIT
           mkdir -p "$temporary/.config" "$temporary/.local"
-          rsync --archive --relative --ignore-missing-args -- \
+          rsync --archive --relative --ignore-missing-args \
+            ${lib.concatMapStringsSep " " (e: "--exclude=${lib.escapeShellArg e}") homeStateExcludes} \
+            -- \
             ${
               lib.escapeShellArgs (
                 map (p: "${home}/./${p}") (lib.filter (p: !(lib.elem p homeDatabases)) homeState)
@@ -123,6 +172,7 @@
             rsync --archive --relative --ignore-missing-args -- \
               ${lib.escapeShellArg "${home}/./.config/sops/age/keys.txt"} "$temporary/"
           fi
+          date --iso-8601=ns > "$temporary/.export-complete"
           rm -rf "$destination"
           mv "$temporary" "$destination"
         '';
@@ -295,8 +345,6 @@
                   ];
                 };
               };
-              # Sync complete staged subtrees: --delete now prunes removed
-              # allowlist leaves and the legacy whole-.config contents too.
               bupstate = {
                 destination = "/mnt/hdd/backup";
                 sources = [
@@ -308,18 +356,7 @@
                   delete = true;
                 };
               };
-              buprpi = {
-                destination = "${config.modules.services.backupDir}/pi-services/";
-                sources = [
-                  "repparw@${den.hosts.aarch64-linux.pi.serviceAddress}:/var/lib/pi-services-backup/current/"
-                ];
-                settings = {
-                  archive = true;
-                  "copy-links" = true;
-                  "delete-after" = true;
-                  "rsync-path" = "sudo -n pi-services-backup-send";
-                };
-              };
+
             };
           };
         };
@@ -329,15 +366,11 @@
           StateDirectoryMode = "0700";
           ExecStartPre = "${prepareHomeState} hdd";
         };
-        systemd.services.restic-backups-offsite.serviceConfig = {
+        systemd.services.home-state-backup-offsite.serviceConfig = {
+          Type = "oneshot";
           StateDirectory = "home-state-backup";
           StateDirectoryMode = "0700";
-        };
-        services.restic.backups.offsite.backupPrepareCommand = "${prepareHomeState} offsite";
-        # Use the account that owns the destination and has SSH access to pi.
-        systemd.services.rsync-job-buprpi.serviceConfig = {
-          User = lib.mkForce "repparw";
-          Group = lib.mkForce config.users.users.repparw.group;
+          ExecStart = "${prepareHomeState} offsite";
         };
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl

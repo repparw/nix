@@ -30,6 +30,29 @@ class Readiness(unittest.TestCase):
         with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), patch.object(watch, "contains", return_value=False):
             self.assertEqual(watch.detect("tasks-org", LOCK), "merged-not-pinned")
 
+    def test_moonshine_requires_reload_guard_before_ready(self):
+        # PR227 merged and pinned is not enough: the pinned source must also
+        # carry the reload guard, or the test build must be retained.
+        files = {
+            "pkgs/by-name/mo/moonshine/package.nix": 'version = "0.16.1"; tag = "v${finalAttrs.version}";',
+            "moonshine-core/src/session/compositor/mod.rs": "mod held_commits;",
+            "moonshine-core/src/session/compositor/handlers.rs": "held_commits::hold_until_rendered",
+            "moonshine-core/src/session/compositor/held_commits.rs": "DMA_BUF_IOCTL_EXPORT_SYNC_FILE",
+            "moonshine-core/src/session/application.rs": "fn handle() { if id == unit_name { let s = current_unit_state(); } }",
+        }
+        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
+                patch.object(watch, "package_contains", return_value=True), \
+                patch.object(watch, "source", side_effect=lambda repo, path, ref: files[path]):
+            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "PINNED-READY")
+        unguarded = dict(files, **{"moonshine-core/src/session/application.rs": "fn handle() { if id == unit_name { teardown(); } }"})
+        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
+                patch.object(watch, "package_contains", return_value=True), \
+                patch.object(watch, "source", side_effect=lambda repo, path, ref: unguarded[path]):
+            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "waiting-source")
+        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
+                patch.object(watch, "package_contains", return_value=False):
+            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "merged-not-pinned")
+
     def test_unavailable_does_not_become_completed_or_ready(self):
         with patch.object(watch, "detect", side_effect=subprocess.CalledProcessError(1, "gh")):
             self.assertEqual(watch.inspect("nautilus-module", LOCK), "unavailable (CalledProcessError)")
@@ -62,10 +85,98 @@ class Readiness(unittest.TestCase):
         self.assertFalse(watch.flagged_queues_fixed(site))
         self.assertTrue(watch.flagged_queues_fixed(site + site))
 
+    def test_gamescope_checks_raw_pin_without_repository_overlays(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            (output / 'vkroots.h').write_text('void GetDeviceQueue2();')
+            with patch.object(watch.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, directory)) as run:
+                self.assertFalse(watch.gamescope_fixed())
+            expression = run.call_args.args[0][-1]
+            self.assertIn('f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope', expression)
+            self.assertNotIn('nixosConfigurations', expression)
+
+    def test_gamescope_uses_unoverlaid_root_nixpkgs_input(self):
+        # Regression for the false PINNED-READY when using Alpha's overlay.
+        captured = {}
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory)
+            (out / "vkroots.h").write_text(
+                "deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, j, &queue);"
+            )
+            def fake_run(command, **kwargs):
+                captured["expression"] = command[command.index("--expr") + 1]
+                captured["env"] = kwargs["env"]
+                return subprocess.CompletedProcess(command, 0, f"{out}\n", "")
+            with patch.object(watch.subprocess, "run", side_effect=fake_run):
+                self.assertFalse(watch.gamescope_fixed())
+        self.assertIn("f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope", captured["expression"])
+        self.assertNotIn("nixosConfigurations", captured["expression"])
+        self.assertEqual(captured["env"]["UPSTREAM_WATCH_ROOT"], str(watch.ROOT))
+
     def test_completed_reads_checked_out_tree(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(watch, "ROOT", Path(directory)), patch.object(watch, "detect") as detect:
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")
             detect.assert_not_called()
+
+
+    def test_t3code_nightly_v2_release_channel_and_pin_gates(self):
+        stable = 'version = "0.0.46"; tag = "v0.0.46";'
+        outdated = 'version = "0.0.45"; tag = "v0.0.45";'
+        released = {"tag_name": "v0.0.46", "draft": False, "prerelease": False}
+        def run(eligible, channel=stable, pinned=stable, verified=True):
+            def api(endpoint):
+                if endpoint.endswith("/releases/latest"):
+                    return released
+                if endpoint.endswith("/commits/nixos-unstable"):
+                    return {"sha": "a" * 40}
+                if "/releases/tags/" in endpoint:
+                    return released if verified else {**released, "prerelease": True}
+                raise AssertionError(endpoint)
+            def source(repository, path, revision):
+                self.assertEqual(path, watch.T3CODE_UNWRAPPED)
+                return channel if revision == "a" * 40 else pinned
+            with patch.object(watch, "api", side_effect=api), patch.object(
+                watch, "source", side_effect=source
+            ), patch.object(
+                watch, "contains", side_effect=lambda _repo, _fix, tag: tag in eligible
+            ):
+                return watch.detect("t3code-nightly-v2", LOCK)
+
+        self.assertEqual(run(set()), "waiting-upstream")
+        self.assertEqual(run({"v0.0.46"}, channel=outdated), "waiting-unstable")
+        self.assertEqual(run({"v0.0.46"}, pinned=outdated), "merged-not-pinned")
+        self.assertEqual(run({"v0.0.46"}), "PINNED-READY")
+        with self.assertRaises(ValueError):
+            run({"v0.0.46"}, verified=False)
+
+    def test_t3code_nightly_v2_never_accepts_a_prerelease_or_malformed_metadata(self):
+        stable = 'version = "0.0.46"; tag = "v0.0.46";'
+        with patch.object(watch, "api", return_value={
+            "tag_name": "v0.0.46-nightly.20261012.3021",
+            "draft": False, "prerelease": False
+        }):
+            with self.assertRaises(ValueError):
+                watch.detect("t3code-nightly-v2", LOCK)
+        with patch.object(watch, "source", return_value=stable):
+            self.assertEqual(watch.t3code_stable_tag("pin"), "v0.0.46")
+        for package in ['version = "0.0.46"; tag = "v0.0.46-preview";',
+                        'version = "0.0.46-nightly"; tag = "v0.0.46-nightly";']:
+            with patch.object(watch, "source", return_value=package):
+                self.assertIsNone(watch.t3code_stable_tag("pin"))
+
+    def test_t3code_nightly_v2_missing_upstream_metadata_fails_closed(self):
+        with patch.object(watch, "api", return_value={}):
+            with self.assertRaises(ValueError):
+                watch.detect("t3code-nightly-v2", LOCK)
+
+    def test_t3code_stable010_reuses_the_nightly_v2_gate(self):
+        for status in ("waiting-upstream", "merged-not-pinned", "PINNED-READY"):
+            with patch.object(watch, "t3code_nightly_v2_status", return_value=status) as gate:
+                self.assertEqual(watch.detect("t3code-stable010", LOCK), status)
+                gate.assert_called_once_with(LOCK)
+        with patch.object(watch, "t3code_nightly_v2_status", side_effect=ValueError("boom")):
+            with self.assertRaises(ValueError):
+                watch.detect("t3code-stable010", LOCK)
 
     def test_cleanup_recipes_are_well_formed_and_narrow(self):
         root = Path(__file__).resolve().parents[2]

@@ -18,7 +18,7 @@ let
     fi
   '';
 
-  # Whether a Moonshine stream is live right now. Shared by the 8bitdo
+  # Shared by the 8bitdo
   # launcher, which must not take over the desk mid-session, and by the
   # restore watcher, which must not revive the tray under a fresh session.
   #
@@ -71,45 +71,28 @@ in
               > $out/heroic.png
           '';
 
-          # Hidden automatic logging never starts in MangoHud 0.8.4 because it
-          # skips the update that starts the logger. flightlessmango/MangoHud#1782.
-          withHiddenLogging =
-            package:
-            package.overrideAttrs (old: {
-              postPatch = (old.postPatch or "") + ''
-                substituteInPlace src/overlay.cpp --replace-fail \
-                  'if (!get_params()->no_display || logger->is_active())' \
-                  'if (!get_params()->no_display || logger->is_active() || (get_params()->autostart_log && !logger->autostart_init))'
-              '';
-            });
-          mangohudLogging = withHiddenLogging (
-            pkgs.mangohud.override {
-              pkgsi686Linux = pkgs.pkgsi686Linux // {
-                mangohud = withHiddenLogging pkgs.pkgsi686Linux.mangohud;
-              };
-            }
-          );
+          # SteamOS session switching is not available on the Niri host.
+          # Treat Steam's session/power requests as leaving the isolated stream,
+          # never as permission to power off or replace the host desktop.
+          steam-session-select = pkgs.writeShellApplication {
+            name = "steamos-session-select";
+            runtimeInputs = [ config.programs.steam.package ];
+            text = ''
+              echo "moonshine: SteamOS session request: $*" >&2
+              exec steam -shutdown
+            '';
+          };
+
           moonshine-steam-game-session = pkgs.writeShellApplication {
             name = "moonshine-steam-game-session";
             runtimeInputs = [
-              mangohudLogging
-              pkgs.coreutils
-              pkgs.findutils
+              steam-session-select
               config.programs.steam.package
             ];
             text = ''
-              log_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/moonshine/frame-times"
-              mkdir -p "$log_dir"
-              find "$log_dir" -maxdepth 1 -type f -name '*.csv' -mtime +7 -delete
-              total_bytes=$(du -sb "$log_dir" | cut -f1)
-              while IFS= read -r -d $'\0' entry; do
-                (( total_bytes > 268435456 )) || break
-                read -r _mtime bytes path <<< "$entry"
-                rm -- "$path"
-                total_bytes=$((total_bytes - bytes))
-              done < <(find "$log_dir" -maxdepth 1 -type f -name '*.csv' -printf '%T@ %s %p\0' | sort -zn)
-              export MANGOHUD_CONFIG="preset=0,no_display,autostart_log=1,log_duration=0,log_interval=0,output_folder=$log_dir,blacklist=steam+steamwebhelper+heroic"
-              exec mangohud steam -tenfoot
+              # Trial SteamOS mode. The compatibility helper is scoped to this
+              # stream; the normal Niri desktop Steam session is unchanged.
+              exec steam -steamos3 -tenfoot
             '';
           };
 
@@ -140,11 +123,7 @@ in
               # Moonshine's Vulkan WSI layer is installed where the loader scans
               # (the system profile share dir, on XDG_DATA_DIRS), so games pick
               # it up and present their swapchains straight to the Moonshine
-              # compositor instead of being captured and colour-converted. The
-              # layer used to be disabled here on the belief that it breaks
-              # gamescope, but gamescope presents to Moonshine as a Wayland
-              # client either way, and nothing had ever confirmed the layer was
-              # even loading. Enabling it is what makes that testable.
+              # compositor instead of being captured and colour-converted.
               # Moonshine sets ENABLE_MOONSHINE_WSI=1 itself; DISABLE_* takes
               # precedence over it, so it must stay unset.
               unset DISABLE_MOONSHINE_WSI
@@ -173,17 +152,14 @@ in
             '';
           };
 
-          # Desktop stream: nested niri plus a kiosk launcher loop. Vicinae
-          # cannot serve the stream (its daemon is bound to the login
-          # session's display), so fuzzel -- a plain Wayland client --
-          # opens whenever the nested compositor has no windows. It is already
-          # focused when it appears, so typing filters immediately with no
-          # Mod key and no lost first character. Phone-friendly by design.
+          # Vicinae cannot serve the stream (its daemon is bound to the login
+          # session's display), so fuzzel is used instead.
           moonshine-desktop = pkgs.writeShellApplication {
             name = "moonshine-desktop";
             runtimeInputs = [
               pkgs.coreutils
               pkgs.foot
+              pkgs.xdg-terminal-exec
               pkgs.fuzzel
               pkgs.gnugrep
               pkgs.gnused
@@ -211,8 +187,6 @@ in
               tail -n +1 -f "$work/niri.log" &
               tail_pid=$!
 
-              # niri prints its exact IPC socket on startup; capture it
-              # instead of guessing, then derive the Wayland display from it.
               sock=""
               for _ in $(seq 1 200); do
                 sock="$(grep -Eo '/run/user/[0-9]+/niri\.wayland-[^[:space:]"]+\.sock' "$work/niri.log" 2>/dev/null | head -n 1 || true)"
@@ -244,7 +218,6 @@ in
         in
         {
           config = {
-            # Share HDR and the vkroots queue fix with every Gamescope launch.
             nixpkgs.overlays = [
               (_final: prev: {
                 gamescope = (prev.gamescope.override { enableWsi = true; }).overrideAttrs (old: {
@@ -260,8 +233,6 @@ in
                 });
               })
             ];
-
-            programs.steam.extraPackages = [ mangohudLogging ];
 
             services.moonshine = {
               enable = true;
@@ -358,9 +329,6 @@ in
             ssh -o BatchMode=yes -o ConnectTimeout=5 -o LogLevel=ERROR -o RequestTTY=force tv "$@"
           }
 
-          # Journal every phase with a millisecond offset. Without this the run
-          # is a single silent systemd start/stop pair, so a missed press, an
-          # unresolved node and a slow TV launch are indistinguishable.
           start_ts=$(date +%s.%N)
           log() {
             awk -v a="$start_ts" -v b="$(date +%s.%N)" -v m="$*" \
@@ -467,10 +435,6 @@ in
             exit 0
           fi
 
-          # First path: the TV wins whenever it is on. A session cannot be live
-          # by this point, so a relaunch is a request for one rather than an
-          # interruption, and the desk-session gating below never gets a chance
-          # to matter while the TV is up.
           tv_on=0
           if power="$(ssh_tv 'luna-send -n 1 -w 3000 -f luna://com.webos.service.tvpower/power/getPowerState "{}"' 2>/dev/null)"; then
             if jq -e '.state == "Active"' >/dev/null <<<"$power"; then
@@ -601,13 +565,11 @@ in
         };
       };
 
-      # On-demand tray client, deliberately not WantedBy anything: it exists to
-      # revive the desktop Steam that a session shut down, so it is started by
-      # Moonshine's post_command or by the launcher above rather than at login.
-      # A separate unit because restoring it inline would pin the caller active
-      # and, in the launcher's case, put the client in its cgroup. No Restart=,
-      # so quitting the tray stays honoured; a crash is recovered by the next
-      # session end.
+      # A separate unit because restoring it inline would pin the caller active and, in the
+      # launcher's case, put the client in its cgroup. The launch script keeps
+      # its own guards (live-stream hold, already-running check), so a boot
+      # start alongside those paths stays safe. No Restart=, so quitting the
+      # tray stays honoured; a crash is recovered by the next session end.
       systemd.user.services.steam-tray = {
         Unit = {
           Description = "Desktop Steam (tray)";
@@ -617,6 +579,9 @@ in
         Service = {
           Type = "simple";
           ExecStart = lib.getExe steam-tray-launch;
+        };
+        Install = {
+          WantedBy = [ "graphical-session.target" ];
         };
       };
     };

@@ -6,10 +6,10 @@
 {
   den.aspects.ai = {
     includes = with den.aspects.ai._; [
-      codex
       mcp
       opencode
       pstack
+      skills
       t3code-connect
       t3code
     ];

@@ -165,7 +165,6 @@
                   "btrfs-health-root"
                   "btrfs-scrub@"
                   "jellyfin-backup"
-                  "rsync-job-buprpi"
                 ];
                 pi = [ "restic-backups-offsite" ];
                 epsilon = [ "restic-backups-offsite" ];
@@ -214,6 +213,7 @@
           free-model-watch =
             pkgs.runCommand "check-free-model-watch"
               {
+                LOCALE_ARCHIVE = "${pkgs.glibcLocales}/lib/locale/locale-archive";
                 nativeBuildInputs = with pkgs; [
                   python3
                   bash
@@ -240,8 +240,8 @@
               }
               ''
                 cd ${inputs.self}
-                node --test .github/scripts/ci.test.mjs
-                actionlint -shellcheck= .github/workflows/ci.yml
+                node --test .github/scripts/ci.test.mjs .github/scripts/ci-impact.test.mjs
+                actionlint -shellcheck= .github/workflows/ci.yml .github/workflows/revision-validation.yml .github/workflows/pr-title.yml .github/workflows/upstream-watch.yml
                 touch $out
               '';
 
@@ -349,6 +349,7 @@
 
                 python3 ${./scripts/fleet-update-notifications.test.py} ${./scripts/fleet-update.sh}
                 python3 ${./scripts}/fleet-update.test.py ${./scripts/fleet-update.sh}
+                python3 ${./scripts/fleet-readiness.test.py} ${./scripts/fleet-readiness-probe.sh} ${./scripts/fleet-readiness-deliver.sh}
                 python3 ${./scripts/pi-generation-retention.test.py} ${./scripts/pi-generation-retention.py}
                 python3 ${./scripts/package-update-event.test.py} ${./scripts/package-update-event.py}
                 python3 ${./scripts/lock-update.test.py} ${inputs.self}/.github/workflows/lock-update.yml ${inputs.self}/.github/workflows/ci.yml ${inputs.self}/.github/workflows/revision-validation.yml

@@ -30,16 +30,13 @@ files instead of copying module contents.
 ## Runbooks
 
 - [Add and maintain change-detection watchers](runbooks/change-detection-watchers.md)
-- [Migrate Home Assistant custom components](runbooks/homeassistant-custom-components.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
-- [Deploy NixOS to the Raspberry Pi](runbooks/deploy-pi-nixos.md)
 - [Update rollback](runbooks/update-rollback.md)
 - [Fleet health, offsite backups, and upgrade reports](runbooks/fleet-operations.md)
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
 - [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
-- [Prune t3code and opencode databases](runbooks/prune-t3code-opencode-dbs.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
-- [Back up and restore a complete host](runbooks/host-recovery.md)
+- [Restore host state from offsite backups](runbooks/host-recovery.md)
 - [Prepare pi and epsilon for persistent state](runbooks/host-persistence.md)
 
 ## Fixes

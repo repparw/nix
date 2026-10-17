@@ -121,8 +121,8 @@
                   "/run/secrets/hermes-llm-env"
                 ];
                 settings.model = {
-                  provider = "openai-codex";
-                  default = "gpt-6.1-sol";
+                  provider = "nous";
+                  default = "openai/gpt-6.1-sol";
                 };
                 settings.fallback_providers = [
                   {
@@ -143,9 +143,6 @@
                     name = "notifications";
                   };
                 };
-                # Keep cron on the free Nous model independently of the
-                # interactive GPT-6.1 Sol default. The configured fallback
-                # chain still applies if the cron primary fails.
                 settings.cron = {
                   model = "stepfun/step-5-preview:free";
                   model_provider = "nous";

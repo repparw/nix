@@ -28,7 +28,11 @@
         jellyfinBackupKeyFile = config.sops.secrets.jellyfinBackupKey.path;
         createBackup = pkgs.writeShellApplication {
           name = "jellyfin-create-backup";
-          runtimeInputs = [ pkgs.curl ];
+          runtimeInputs = [
+            pkgs.curl
+            pkgs.jq
+            pkgs.coreutils
+          ];
           text = ''
             set -euo pipefail
             key=$(cat ${jellyfinBackupKeyFile})
@@ -37,13 +41,15 @@
               -H "Content-Type: application/json" \
               -d '{}' \
               ${servicesLib.serviceUrl cfg config "jellyfin"}/Backup/Create)
-            echo "$response"
-            path=$(echo "$response" | sed -n 's/.*"Path":"\([^"]*\)".*/\1/p')
-            if [ -n "$path" ]; then
-              echo "backup created: $path"
-            else
-              echo "warning: could not parse backup path from response" >&2
-            fi
+            path=$(jq -er '.Path | strings | select(length > 0)' <<< "$response")
+            filename=$(basename "$path")
+            case "$filename" in
+              jellyfin-backup-*.zip) ;;
+              *) echo "unexpected Jellyfin backup response" >&2; exit 1 ;;
+            esac
+            archive=${lib.escapeShellArg service.backup.path}/"$filename"
+            test -s "$archive"
+            echo "native Jellyfin backup created: $filename"
           '';
         };
       in

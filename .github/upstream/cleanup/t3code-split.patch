@@ -157,7 +157,8 @@ diff --git a/modules/aspects/ai/t3code.nix b/modules/aspects/ai/t3code.nix
 index 4c6a0ad28..df284587e 100644
 --- a/modules/aspects/ai/t3code.nix
 +++ b/modules/aspects/ai/t3code.nix
-@@ -29,6 +29,7 @@ in
+@@ -28,8 +28,9 @@ in
+       {
          home.sessionVariables = connectEnvironment;
  
          programs.t3code.enable = true;
@@ -165,7 +166,9 @@ index 4c6a0ad28..df284587e 100644
  
          # t3code keeps custom themes in Electron/browser localStorage and only
          # imports them through the UI (Settings -> Appearance -> Add a theme).
-@@ -121,7 +122,7 @@ in
+         # Derive an importable theme file from the stylix palette and install
+@@ -120,9 +121,9 @@ in
+             After = [ "network.target" ];
            };
            Service = {
              # Follow programs.t3code.package (pi pins the server-only build).
@@ -174,25 +177,30 @@ index 4c6a0ad28..df284587e 100644
              Restart = "always";
              RestartSec = 5;
              Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") connectEnvironment) ++ [
+               "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
 diff --git a/modules/entities.nix b/modules/entities.nix
-index 8373fca99..83af86c5e 100644
+index 05483f660..dfc0d0029 100644
 --- a/modules/entities.nix
 +++ b/modules/entities.nix
-@@ -21,7 +21,7 @@
+@@ -21,9 +21,9 @@
+         sshAddress = "146.181.42.97";
          users.repparw.aspect = {
            includes = [
              den.aspects.repparw
 -            den.aspects.ai._.t3code-split
 +            den.aspects.ai._.t3code-headless
+             den.aspects.ai._.t3code-nightly
            ];
          };
        };
-@@ -31,7 +31,7 @@
+@@ -32,9 +32,9 @@
+         serviceAddress = "192.168.0.4";
          users.repparw.aspect = {
            includes = [
              den.aspects.repparw
 -            den.aspects.ai._.t3code-split
 +            den.aspects.ai._.t3code-headless
+             den.aspects.ai._.t3code-nightly
            ];
          };
        };
