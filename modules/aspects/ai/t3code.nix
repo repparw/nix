@@ -127,6 +127,8 @@ in
             ExecStart = "${config.programs.t3code.package}/bin/t3 serve --mode web";
             Restart = "always";
             RestartSec = 5;
+            # A competing T3 server exits 78 when ~/.t3 is already owned.
+            RestartPreventExitStatus = 78;
             Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [
               "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
             ];
