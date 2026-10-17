@@ -81,13 +81,12 @@
           # DeArrow, ImprovedTube) lives in per-extension LevelDB dirs that
           # would otherwise need enumerating, and update wipes have proven
           # that guessing the file list loses data. The sqlite files are
-          # still staged consistently via homeDatabases below, and
-          # homeStateExcludes prunes caches and telemetry.
+          # staged as raw copies with their sidecars, and homeStateExcludes
+          # prunes caches and telemetry.
           ".config/net.imput.helium/"
           ".config/fish/fish_variables"
           ".config/mpv/watch_later"
           ".config/Raspberry Pi/Raspberry Pi Imager.conf"
-          ".local/share/vicinae/vicinae.db"
           ".local/share/vicinae/metadata.json"
           ".local/share/vicinae/script-metadata.json"
           ".local/share/fish/fish_history"
@@ -103,18 +102,12 @@
           ".local/share/bbport-test/data/bbport.ini"
           ".local/share/bbport-test/data/user/"
         ];
-        homeDatabases = [
-          ".config/codex/goals_1.sqlite"
-          ".config/net.imput.helium/Default/History"
-          ".config/net.imput.helium/Default/Login Data"
-          ".config/net.imput.helium/Default/Login Data For Account"
-          ".local/share/vicinae/vicinae.db"
-        ];
         # Regenerable caches and telemetry inside the Helium profile. The
         # leading slash anchors each pattern to the ./ marker that the
         # rsync --relative source paths carry (verified: excludes apply
         # below the anchor, and other homeState entries are untouched).
         homeStateExcludes = map (dir: "/.config/net.imput.helium/${dir}") [
+          "Default/History*"
           "Default/Service Worker/CacheStorage"
           "Default/Service Worker/ScriptCache"
           "Default/GPUCache"
@@ -141,7 +134,6 @@
             lib.makeBinPath [
               pkgs.coreutils
               pkgs.rsync
-              pkgs.sqlite
             ]
           }
           test -d ${lib.escapeShellArg home}
@@ -153,21 +145,8 @@
           rsync --archive --relative --ignore-missing-args \
             ${lib.concatMapStringsSep " " (e: "--exclude=${lib.escapeShellArg e}") homeStateExcludes} \
             -- \
-            ${
-              lib.escapeShellArgs (
-                map (p: "${home}/./${p}") (lib.filter (p: !(lib.elem p homeDatabases)) homeState)
-              )
-            } \
+            ${lib.escapeShellArgs (map (p: "${home}/./${p}") homeState)} \
             "$temporary/"
-          ${lib.concatMapStringsSep "\n" (p: ''
-            if [ -f ${lib.escapeShellArg "${home}/${p}"} ]; then
-              mkdir -p "$temporary/${builtins.dirOf p}"
-              sqlite3 ${lib.escapeShellArg "${home}/${p}"} \
-                '.timeout 10000' ".backup '$temporary/${p}'"
-              chmod --reference=${lib.escapeShellArg "${home}/${p}"} "$temporary/${p}"
-              chown --reference=${lib.escapeShellArg "${home}/${p}"} "$temporary/${p}"
-            fi
-          '') homeDatabases}
           if [ "$1" = hdd ]; then
             rsync --archive --relative --ignore-missing-args -- \
               ${lib.escapeShellArg "${home}/./.config/sops/age/keys.txt"} "$temporary/"
