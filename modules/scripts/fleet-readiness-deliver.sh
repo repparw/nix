@@ -11,14 +11,16 @@
 # Jellyfin, self-delete the watch units) belonged to Alpha's
 # watch-sonarr-jellyfin timer, which is retired now that this replacement is
 # verified on Pi. The action rides delivery: a delivered sonarr-jellyfin
-# ready transition starts Alpha's one-shot watch service after Discord
-# accepts the post. The remote script gates on its own runtime conditions,
-# stays idempotent, and self-deletes its units on success; a missing unit is
-# terminal clean, not a retryable failure. A failed action leaves the event
-# queued, so the next cycle retries notification and action together
-# (at-least-once for both; duplicates possible on a lost ack). The probe
-# itself never acts, so Moonshine and Sonarr transitions stay observational
-# until this hook and the timers cannot orphan the Jellyfin cutover.
+# ready transition runs Alpha's one-shot watch service after Discord accepts
+# the post. The notification and the action are acknowledged separately:
+# once a post is accepted, its acknowledgment is persisted, so a retrying
+# cycle re-runs only the action and an ordinary action failure never
+# re-posts the notification (a crash between the accepted post and its
+# recorded acknowledgment can still duplicate once). The remote script gates
+# on its own runtime conditions and self-deletes its units only after the
+# cutover succeeds, so completion is confirmed by Alpha's manager no longer
+# finding the units — a start that merely returned success, a regressed
+# pre-gate run, or an unreachable Alpha keeps the event queued.
 
 state="${FLEET_UPDATE_STATE:-/var/lib/auto-update}"
 outbox="$state/readiness-events"
@@ -29,31 +31,62 @@ deploy_key="${FLEET_DEPLOY_KEY:-/home/repparw/.ssh/id_ed25519}"
 exec 9>"$outbox/.delivery.lock"
 flock -n 9 || exit 0
 
-# Run Alpha's completion one-shot over SSH. Mirror the probe's transport
-# (same deploy key, BatchMode, host-key policy and connect timeout). `cat`
-# and `cat`'s remote transport cannot distinguish a deleted unit from an
-# unreachable host, so the remote script classifies the outcome itself:
-# an absent unit is terminal clean (Alpha self-deletes on success), a
-# transport or start failure is a retryable error, and only start success
-# without a clean verdict counts as completion.
 complete_sonarr_jellyfin() {
-  local raw rc=0
+  # Run over the probe's transport (same deploy key, BatchMode, heredoc
+  # stdin, host-key policy). The marker positional argument tags the
+  # completion transport for tooling; bash -s ignores it. Outcomes:
+  #   t3-clean       -> Alpha's manager reports the units not-found/masked:
+  #                     the cutover already finished: terminal
+  #   t3-done        -> the watch service ran and self-deleted its units:
+  #                     completed this cycle
+  #   t3-pending     -> the manager answered, the watcher ran or refused,
+  #                     but the units remain: retry later
+  #   t3-unavailable -> the manager answered nothing: retry
+  # Transport failures (empty output, unreachable host) are also retries:
+  # never infer a finished cutover from silence.
+  local raw
   raw=$(timeout 320 ssh -i "$deploy_key" -o BatchMode=yes -o IdentitiesOnly=yes \
     -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 \
-    "root@$alpha" bash -c '
-      if systemctl --user -M repparw@.host show watch-sonarr-jellyfin.service -p Id >/dev/null 2>&1; then
-        systemctl --user -M repparw@.host start watch-sonarr-jellyfin.service
-      else
-        echo t3-clean
-      fi' 2>/dev/null) || rc=$?
+    "root@$alpha" bash -s fleet-readiness-completion 2>/dev/null <<'REMOTE'
+load_state=$(systemctl --user -M repparw@.host show watch-sonarr-jellyfin.service -p LoadState 2>/dev/null)
+if [ -z "$load_state" ]; then
+  echo t3-unavailable
+  exit 1
+fi
+case "$load_state" in
+  LoadState=not-found | LoadState=masked)
+    echo t3-clean
+    ;;
+  *)
+    if ! systemctl --user -M repparw@.host start watch-sonarr-jellyfin.service >/dev/null 2>&1; then
+      echo t3-pending
+      exit 1
+    fi
+    # The one-shot starts synchronously: when it gated out without the
+    # cutover (regressed conditions, lost sudo timestamp), the units remain
+    # and the outcome is pending rather than done.
+    after=$(systemctl --user -M repparw@.host show watch-sonarr-jellyfin.service -p LoadState 2>/dev/null)
+    if [ "$after" = "LoadState=not-found" ] || [ "$after" = "LoadState=masked" ]; then
+      echo t3-done
+    else
+      echo t3-pending
+      exit 1
+    fi
+    ;;
+esac
+REMOTE
+) || true
   case "$raw" in
-    *t3-clean*) return 0 ;;
+    *t3-clean* | *t3-done*) return 0 ;;
   esac
-  return "$rc"
+  return 1
 }
 
 # Preserve transition chronology even if multiple events accumulate during
 # a Discord outage. Hash-based queue filenames have no chronological order.
+# Each entry may carry an adjacent "<name>.json.posted" companion recording
+# that discord-notify already accepted its message; the companion matches no
+# delivery glob, so it never sees a re-post and dies with its entry.
 while IFS= read -r entry; do
   [ -f "$entry" ] || continue
   # Skip anything that is not a well-formed readiness event rather than
@@ -63,16 +96,25 @@ while IFS= read -r entry; do
     and (.status == "ready" or .status == "waiting")
     and (.message | type == "string" and length > 0)' "$entry" >/dev/null 2>&1 || continue
   message=$(jq -r '.message' "$entry")
+  ack="$entry.posted"
+  if [ -f "$ack" ]; then
+    # Already accepted in an earlier cycle: retry only what comes next.
+    :
+  elif [ ! -f "$entry" ]; then
+    continue
   # discord-notify prints the message id on success and fails otherwise.
-  if discord-notify post "$message" >/dev/null 2>&1; then
-    # Failing the completion action keeps the entry queued: the next cycle
-    # re-posts (possibly a duplicate) and retries the action.
-    if [ "$(jq -r '.watcher // ""' "$entry")" = sonarr-jellyfin ] \
-      && [ "$(jq -r '.status // ""' "$entry")" = ready ]; then
-      complete_sonarr_jellyfin || continue
-    fi
-    rm -f "$entry"
+  elif discord-notify post "$message" >/dev/null 2>&1; then
+    : >"$ack" || continue
+  else
+    continue
   fi
+  # Failing the completion action keeps the entry queued: the next cycle
+  # retries only the action; the notification stays acknowledged.
+  if [ "$(jq -r '.watcher // ""' "$entry")" = sonarr-jellyfin ] \
+    && [ "$(jq -r '.status // ""' "$entry")" = ready ]; then
+    complete_sonarr_jellyfin || continue
+  fi
+  rm -f "$entry" "$ack"
 done < <(
   for pending in "$outbox"/*.json; do
     [ -f "$pending" ] || continue

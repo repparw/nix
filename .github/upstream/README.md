@@ -76,9 +76,15 @@ plus a drained event queue), so Alpha's `watch-moonshine-pr227` and
 on Alpha and only Sonarr completion itself deletes them. The Sonarr/Jellyfin
 completion action moved with it: the deliverer runs Alpha's one-shot watch
 service after Discord accepts a delivered `sonarr-jellyfin` `ready` event.
-A failed action leaves the event queued, at-least-once delivery retries
-notification and action together, and a missing unit counts as terminal
-clean, so the weekly Jellyfin scan drop cannot be orphaned by the
+Notification and action are acknowledged separately: once a post is
+accepted, its acknowledgment is persisted and retry cycles re-run only the
+action, so an unreachable Alpha or a failing action never re-posts the
+notification. Completion is verified against Alpha's manager, not the
+start's exit code: the outcome is terminal only when the manager reports
+the completion-owned units not-found (the watcher self-deletes them once
+the scan drop and restart succeed); a start that gated out, a regressed
+pre-gate run, or silence from the transport keeps the event queued for
+retry, so the weekly Jellyfin scan drop cannot be orphaned by the
 retirement.
 
 Gamescope inspects `inputs.nixpkgs.legacyPackages`, bypassing repository
