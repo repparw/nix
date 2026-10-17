@@ -33,6 +33,15 @@ in
 
         programs.t3code.enable = true;
 
+        # Removing the nightly must not silently downgrade statev2.sqlite to
+        # an older stable server if the nixpkgs pin is still behind.
+        assertions = [
+          {
+            assertion = lib.versionAtLeast config.programs.t3code.package.version "0.1.0";
+            message = "T3 Code stable V2 requires t3code >= 0.1.0 in the nixpkgs pin.";
+          }
+        ];
+
         # t3code keeps custom themes in Electron/browser localStorage and only
         # imports them through the UI (Settings -> Appearance -> Add a theme).
         # Derive an importable theme file from the stylix palette and install
