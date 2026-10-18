@@ -21,6 +21,19 @@
               gamemode
             ];
         };
+
+        # Steam launches every Heroic shortcut with
+        # SDL_GAMECONTROLLER_IGNORE_DEVICES set to every pad it knows about,
+        # including the physical one. Its virtual pad never reaches a
+        # Heroic-spawned Proton game, so the game ends up with no controller
+        # at all (2026-10-18). Neutralize the inherited list for
+        # Steam-launched runs only; a Heroic started from the desktop keeps
+        # its environment untouched.
+        heroicSteam = pkgs.runCommand "heroic-steam" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
+          mkdir -p $out/bin
+          makeWrapper ${heroicWithMangohud}/bin/heroic $out/bin/heroic \
+            --run 'if [ "''${SteamClientLaunch:-}" = 1 ]; then export SDL_GAMECONTROLLER_IGNORE_DEVICES=0xdead/0xbeef; fi'
+        '';
       in
       {
         boot.kernelModules = [ "ntsync" ];
@@ -55,7 +68,7 @@
             # entry dies silently before exec (2026-10-14: Control Resonant,
             # SM64, and Sekiro were all silent no-ops from Big Picture).
             extraPackages = [
-              heroicWithMangohud
+              heroicSteam
               pkgs.gamemode
             ];
           };
