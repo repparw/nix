@@ -219,7 +219,7 @@
               "Mod+F" = titledAction "Fullscreen" "maximize-window-to-edges";
               "Mod+Alt+F" = titledAction "Toggle Floating" "toggle-window-floating";
               "Mod+Ctrl+F" = titledAction "Toggle Focus Floating" "switch-focus-between-floating-and-tiling";
-              "Mod+G" = titledSpawn "T3 Code" [ "t3code-desktop" ];
+              "Mod+G" = titledSpawn "T3 Code" [ "t3code-desktop-connect" ];
               "Mod+M" = titledSpawn "cliamp" [
                 "xdg-terminal-exec"
                 "--app-id=cliamp"
