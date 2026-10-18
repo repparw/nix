@@ -20,8 +20,7 @@
             ];
         };
 
-        # Steam-launched Heroic games need the virtual controller; desktop
-        # Heroic launches keep their inherited environment unchanged.
+        # Clear Steam's inherited controller hide list for Heroic launches.
         heroicSteam = pkgs.runCommand "heroic-steam" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
           mkdir -p $out/bin
           makeWrapper ${heroicWithMangohud}/bin/heroic $out/bin/heroic \
@@ -37,7 +36,7 @@
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
             # Avoid Steam's mount scan waking idle disks. Keep /run/media
-            # visible: masking it can fail when the mountpoint exists.
+            # visible: masking it fails when the mountpoint is absent.
             package = pkgs.steam.override {
               extraBwrapArgs = [
                 "--tmpfs /mnt"
