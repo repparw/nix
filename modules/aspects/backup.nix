@@ -95,9 +95,13 @@
             default = [ ];
           };
         };
-        config.systemd.services.restic-backups-offsite.preStart = lib.mkIf (exports != { }) (
-          lib.mkBefore "${lib.getExe prepareExports}\n"
-        );
+        # Clear stale locks (interrupted manual runs) before the module's
+        # post-start check demands an exclusive lock; the forget unlock runs
+        # too late to help there (observed 2026-10-18 on pi).
+        config.systemd.services.restic-backups-offsite.preStart = lib.mkMerge [
+          (lib.mkIf (exports != { }) (lib.mkBefore "${lib.getExe prepareExports}\n"))
+          (lib.mkAfter "${resticCommand} unlock\n")
+        ];
         config.systemd.services.restic-backups-offsite.postStart = lib.mkIf (exports != { }) ''
           ${lib.getExe pkgs.python3} ${../scripts/prepare-backup-exports.py} --check ${exportReport}
           ${lib.optionalString (config.modules.backup.retentionArgs != [ ]) ''
