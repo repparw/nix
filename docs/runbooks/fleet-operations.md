@@ -162,9 +162,10 @@ Restic over rclone to `gd-crypt:restic/<hostname>`. Covers:
   state; epsilon includes ddclient state. See the host declarations and
   `modules/aspects/host-backup.nix` for the shared paths and exclusions.
 - alpha: `/home/containers/backup`, Pictures, Documents (Memorias excluded),
-  and the small home-state allowlist in `modules/hosts/alpha.nix`. SQLite
-  databases are exported with `.backup` into a private staging tree under
-  `/var/lib/home-state-backup/offsite` before restic runs. Missing optional
+  and the small home-state allowlist in `modules/hosts/alpha.nix`, staged
+  into a private tree under `/var/lib/home-state-backup/offsite` before
+  restic runs. SQLite files are staged as raw copies, not as `.backup`
+  exports. Missing optional
   entries are skipped; an export failure marks the backup incomplete. Age keys are
   included only in the HDD staging tree, never in the offsite tree.
 
