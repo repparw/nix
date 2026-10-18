@@ -143,6 +143,10 @@ let
 in
 assert (cfg "epsilon").services.grafana.settings.server.http_addr == "127.0.0.1";
 assert !(cfg "epsilon").services.grafana.openFirewall;
+assert (cfg "epsilon").services.grafana.settings."auth.proxy".enabled;
+assert (cfg "epsilon").services.grafana.settings."auth.proxy".header_name == "Remote-User";
+assert (cfg "epsilon").services.grafana.settings."auth.proxy".whitelist == "127.0.0.1,::1";
+assert (cfg "epsilon").services.grafana.settings.auth.disable_login_form;
 assert lib.all (port: !(builtins.elem port (cfg "epsilon").networking.firewall.allowedTCPPorts)) [
   9090
   3100

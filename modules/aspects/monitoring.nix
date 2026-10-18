@@ -341,6 +341,20 @@
                 root_url = "https://metrics.${cfg.domain}/";
                 enforce_domain = true;
               };
+              auth.disable_login_form = true;
+              "auth.proxy" = {
+                enabled = true;
+                header_name = "Remote-User";
+                header_property = "username";
+                auto_sign_up = true;
+                whitelist = "127.0.0.1,::1";
+                headers = "Name:Remote-Name Email:Remote-Email";
+                enable_login_token = false;
+              };
+              users = {
+                allow_sign_up = false;
+                auto_assign_org_role = "Admin";
+              };
               security = {
                 # File provider keeps the password out of the Nix store. The
                 # first-start secret is generated below and persisted on disk.

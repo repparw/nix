@@ -86,9 +86,15 @@ experimental, so its service explicitly enables that stability level. The Loki b
 unrecognized secrets. Keep `metrics.repparw.com` access admin-only;
 do not make the Loki API public.
 
-## First-time login
+## Login
 
-Grafana generates a random admin password in
+Sign in through Authelia. Traefik forwards the authenticated username, name and
+email to Grafana, which accepts these identity headers only from loopback.
+The existing ingress policy permits only Authelia members of `admins`; their
+Grafana accounts receive the organization Admin role. Grafana hides its own
+login form and requires proxy authentication on each request.
+
+For local recovery, Grafana generates a random admin password in
 `/var/lib/grafana/admin-password` and a separate encryption secret in
 `/var/lib/grafana/secret-key` on first start. Neither value is placed
 in Git or the Nix store. Both files persist across Epsilon reboots.
@@ -99,8 +105,8 @@ Grafana data depends on it. After activating Epsilon:
 ssh root@epsilon 'cat /var/lib/grafana/admin-password'
 ```
 
-Authenticate through Authelia first, then sign in to Grafana as `admin`
-with this password. Rotate it in Grafana if desired; the first-start file
+The local `admin` account remains available through the loopback API for
+recovery. Rotate it in Grafana if desired; the first-start file
 is **not** a declarative password reset for an existing Grafana database.
 Do not post either password in an issue or CI log. Verify the
 `metrics.repparw.com` DNS record / wildcard points to the public edge
@@ -161,7 +167,7 @@ Loki has no hard size quota. Monitor actual persistent volume usage and
 Alloy ingestion errors before deciding whether a dedicated filesystem
 budget is necessary. The Grafana `/api/health` path is intentionally
 unauthenticated for fleet-health; other Grafana routes
-must enforce Authelia. Treat Grafana local admin as a second login layer.
+must enforce Authelia. Treat Grafana local admin as a loopback-only recovery account.
 No new automatic notifications are enabled in this phase.
 
 ## Automated verification

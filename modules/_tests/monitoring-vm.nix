@@ -189,6 +189,12 @@ pkgs.testers.runNixOSTest {
         client.fail("curl -sS -o /dev/null --connect-timeout 2 --max-time 3 http://10.5.5.3:3001/api/health")
         client.fail("curl -sS -o /dev/null --connect-timeout 2 --max-time 3 http://10.5.5.3:12345/metrics")
 
+    with subtest("Grafana trusts the loopback identity proxy without a second login"):
+        server.succeed("curl -fsS -H 'Host: metrics.example.test' -H 'Remote-User: fixture-admin' -H 'Remote-Name: Fixture Admin' -H 'Remote-Email: fixture@example.test' http://127.0.0.1:3001/api/user | jq -e '.login == \"fixture-admin\" and .name == \"Fixture Admin\" and .email == \"fixture@example.test\"'")
+        server.succeed("curl -fsS -H 'Host: metrics.example.test' -H 'Remote-User: fixture-admin' http://127.0.0.1:3001/api/user/orgs | jq -e 'any(.[]; .role == \"Admin\")'")
+        server.succeed("test $(curl -s -o /dev/null -w '%{http_code}' -H 'Host: metrics.example.test' http://127.0.0.1:3001/api/user) = 401")
+        server.succeed("test $(curl -s -o /dev/null -w '%{http_code}' --interface 10.5.5.3 -H 'Host: metrics.example.test' -H 'Remote-User: spoofed' http://127.0.0.1:3001/api/user) = 401")
+
     with subtest("remote write, journal redaction, and datasource provisioning"):
         client.succeed("printf 'monitoring_fixture_value 42\\n' > /var/lib/fleet-metrics/textfile/test.prom")
         client.wait_until_succeeds("curl -fsS http://127.0.0.1:12345/metrics")
