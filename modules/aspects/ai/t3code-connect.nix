@@ -41,7 +41,17 @@
       };
 
     nixos =
-      { config, lib, ... }:
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
+      let
+        t3codeUnwrapped = import ../../../packages/t3code-unwrapped-0.1.0.nix (
+          builtins.intersectAttrs (builtins.functionArgs (import ../../../packages/t3code-unwrapped-0.1.0.nix)) pkgs
+        );
+      in
       {
         # Desktop-only integration (.env for the Electron app): headless
         # hosts use the stock binary so the package keeps
@@ -49,7 +59,7 @@
         nixpkgs.overlays = lib.mkIf (config.modules.desktop.enable or false) [
           (_: prev: {
             t3code = prev.t3code.override {
-              t3code-unwrapped = prev.t3code.unwrapped.overrideAttrs (old: {
+              t3code-unwrapped = t3codeUnwrapped.overrideAttrs (old: {
                 postPatch = (old.postPatch or "") + ''
                   cp .env.example .env
                 '';
