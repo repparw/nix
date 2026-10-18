@@ -69,6 +69,10 @@
         ];
 
         services.udev.extraRules = ''
+          # The Deck-8 macropad's system keys are misclassified as a joystick;
+          # Wine exposes it ahead of the gamepad and Sekiro ignores controller input.
+          SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="Churrosoft Deck-8 System Control", ENV{ID_INPUT_JOYSTICK}=""
+
           # 8BitDo Ultimate 2C Wireless - remove kernel deadzone and fuzz for Hall effect sticks
           # https://web.archive.org/web/20260508175350/https://old.reddit.com/r/linux_gaming/comments/1t75mmu/why_your_tmrhall_effect_sticks_might_feel_off_on/okmje9v/
           ATTRS{idVendor}=="2dc8", ATTRS{idProduct}=="310a", RUN+="${pkgs.linuxConsoleTools}/bin/evdev-joystick --evdev /dev/input/%k --deadzone 0 --fuzz 0"
