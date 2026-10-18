@@ -12,18 +12,14 @@
       { pkgs, ... }:
       let
         # Steam shortcuts resolve Heroic inside Steam's FHS environment.
-        heroicWithMangohud = pkgs.heroic.override {
-          extraPkgs =
-            pkgs': with pkgs'; [
-              mangohud
-              gamemode
-            ];
+        heroicWithGamemode = pkgs.heroic.override {
+          extraPkgs = pkgs': [ pkgs'.gamemode ];
         };
 
         # Clear Steam's inherited controller hide list for Heroic launches.
         heroicSteam = pkgs.runCommand "heroic-steam" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
           mkdir -p $out/bin
-          makeWrapper ${heroicWithMangohud}/bin/heroic $out/bin/heroic \
+          makeWrapper ${heroicWithGamemode}/bin/heroic $out/bin/heroic \
             --run 'if [ "''${SteamClientLaunch:-}" = 1 ]; then export SDL_GAMECONTROLLER_IGNORE_DEVICES=0xdead/0xbeef; fi'
         '';
       in
@@ -55,7 +51,7 @@
           gamescope.enable = true;
         };
         environment.systemPackages = with pkgs; [
-          heroicWithMangohud
+          heroicWithGamemode
         ];
 
         services.udev.extraRules = ''
