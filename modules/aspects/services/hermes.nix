@@ -130,8 +130,12 @@
                     model = "stepfun/step-5-preview:free";
                   }
                   {
-                    provider = "opencode-free";
-                    model = "space-bunny-free";
+                    provider = "nous";
+                    model = "meituan/longcat-2.5-preview:free";
+                  }
+                  {
+                    provider = "nous";
+                    model = "stepfun/step-3.7-flash:free";
                   }
                 ];
                 settings.display.credits_notices = false;

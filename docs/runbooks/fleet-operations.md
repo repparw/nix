@@ -114,6 +114,11 @@ The command requires permission to start system services. It waits for
 journal after a failure; `fleet backup status` reports the resulting service
 state.
 
+Interrupted manual restic commands can leave a stale repository lock that
+fails the post-upload check; each run now clears stale locks before backing
+up, and `restic unlock` run in the service's environment removes one
+manually.
+
 Before Restic starts, registered export units run synchronously. Each unit must
 succeed and create or refresh a nonempty matching artifact within its declared
 maximum age, one hour by default. A unit that leaves its output unchanged marks
