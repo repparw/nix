@@ -12,8 +12,8 @@ let
   cfg = host: inputs.self.nixosConfigurations.${host}.config;
   alloyConfig = host: (cfg host).environment.etc."alloy/config.alloy".text;
   # Evaluate the opt-in branch without requiring live Cloud secrets in CI.
-  cloudCfg = (
-    inputs.self.nixosConfigurations.pi.extendModules {
+  cloudCfg =
+    (inputs.self.nixosConfigurations.pi.extendModules {
       modules = [
         {
           modules.monitoring.agent.cloud = {
@@ -26,8 +26,7 @@ let
           };
         }
       ];
-    }
-  ).config;
+    }).config;
   cloudAlloy = cloudCfg.environment.etc."alloy/config.alloy".text;
   alphaMounts = [
     "/mnt/hdd"
@@ -215,13 +214,12 @@ assert lib.hasInfix ''prometheus.scrape "node_cloud"'' cloudAlloy;
 assert lib.hasInfix ''prometheus.scrape "alloy_cloud"'' cloudAlloy;
 assert lib.hasInfix ''prometheus.remote_write "grafana_cloud"'' cloudAlloy;
 assert lib.hasInfix ''loki.write "grafana_cloud"'' cloudAlloy;
-assert lib.hasInfix
-  "loki.write.epsilon.receiver, loki.write.grafana_cloud.receiver"
-  cloudAlloy;
-assert cloudCfg.systemd.services.alloy.serviceConfig.LoadCredential == [
-  "ingestion-password:/run/secrets/monitoring-agent-password"
-  "grafana-cloud-token:/run/secrets/fixture-cloud-token"
-];
+assert lib.hasInfix "loki.write.epsilon.receiver, loki.write.grafana_cloud.receiver" cloudAlloy;
+assert
+  cloudCfg.systemd.services.alloy.serviceConfig.LoadCredential == [
+    "ingestion-password:/run/secrets/monitoring-agent-password"
+    "grafana-cloud-token:/run/secrets/fixture-cloud-token"
+  ];
 assert receiverTargets;
 assert centralizedServer;
 assert selfTelemetry;
