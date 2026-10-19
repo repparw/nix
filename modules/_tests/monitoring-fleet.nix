@@ -11,6 +11,11 @@ let
   ];
   cfg = host: inputs.self.nixosConfigurations.${host}.config;
   alloyConfig = host: (cfg host).environment.etc."alloy/config.alloy".text;
+  scrapeBlock =
+    name: text:
+    builtins.head (
+      lib.splitString "\n}" (builtins.elemAt (lib.splitString ''prometheus.scrape "${name}" {'' text) 1)
+    );
   cloudFixture = signal: {
     url =
       if signal == "metrics" then
@@ -233,7 +238,42 @@ assert lib.all (
   in
   lib.hasInfix ''prometheus.remote_write "epsilon"'' text
   && lib.hasInfix ''loki.write "epsilon"'' text
-  && lib.hasInfix ''scrape_interval = "30s"'' text
+  &&
+    lib.all
+      (
+        name:
+        let
+          block = scrapeBlock name text;
+        in
+        lib.hasInfix ''scrape_interval = "30s"'' block
+        && lib.hasInfix "forward_to      = [prometheus.remote_write.epsilon.receiver]" block
+        && !(lib.hasInfix "prometheus.remote_write.cloud.receiver" block)
+      )
+      [
+        "node"
+        "alloy"
+      ]
+  && (
+    if variant.modules.monitoring.agent.cloud.metrics == null then
+      !(lib.hasInfix ''prometheus.scrape "node_cloud"'' text)
+      && !(lib.hasInfix ''prometheus.scrape "alloy_cloud"'' text)
+    else
+      lib.all
+        (
+          name:
+          let
+            block = scrapeBlock "${name}_cloud" text;
+          in
+          lib.hasInfix ''scrape_interval = "60s"'' block
+          && lib.hasInfix "forward_to      = [prometheus.remote_write.cloud.receiver]" block
+          && lib.hasInfix ''job_name        = "${name}"'' block
+          && !(lib.hasInfix "prometheus.remote_write.epsilon.receiver" block)
+        )
+        [
+          "node"
+          "alloy"
+        ]
+  )
   &&
     lib.all
       (

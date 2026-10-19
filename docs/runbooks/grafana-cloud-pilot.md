@@ -45,21 +45,21 @@ modules.monitoring.agent.cloud.logs = {
 };
 ```
 
-**Logs remain disabled until reviewed.** Our `loki.secretfilter` is best-effort and host journald can include private data. If desired, introduce Cloud-specific filtering before enabling this writer.
+Cloud logs use the existing native `loki.secretfilter` pipeline before either destination receives entries. Enable logs with a separate write token. Redaction covers known credential patterns; it does not remove arbitrary private message content.
 
 ## Safe deployment and verification
 
 1. Keep Epsilon's receivers and all current fleet-health, disk-watch, backup, deploy readiness and Discord alerts. Deploy Cloud **metrics** to Epsilon alone, and confirm Cloud Explore has recent `node_uname_info{host="epsilon"}` samples. Confirm local Epsilon Prometheus still ingests normally.
-2. Add Pi, then Alpha. Verify three host labels in Cloud, compare dashboards, watch Cloud active-series/DPM usage, and ensure no authentication/429 errors in `journalctl -u alloy`. Initial scrapes remain 30s so measurements are comparable; later adjust the Cloud path without silently changing local sampling.
+2. Add Pi, then Alpha. Verify three host labels in Cloud, compare dashboards, watch Cloud active-series/DPM usage, and ensure no authentication/429 errors in `journalctl -u alloy`. Cloud scrapes run every 60s while local scrapes remain at 30s. The separate scrape jobs preserve the same `node` and `alloy` job labels in both backends.
 3. Run an intentional Cloud write failure or credential rejection test; the Epsilon writer must remain healthy. Separately test missing host telemetry without disabling existing fleet checks.
-4. Only after a privacy review, optionally add logs host by host. Compare log usage/retention and ensure failures at the Cloud writer do not prevent local Loki ingestion.
+4. Add logs host by host using native secret redaction. Compare log usage/retention and ensure failures at the Cloud writer do not prevent local Loki ingestion.
 5. Revert by setting `modules.monitoring.agent.cloud.metrics` and/or `logs` to `null`. Do not remove Epsilon backend until independent alert parity has been demonstrated.
 
 The repository checks exercise metrics-only, logs-only, and combined Cloud configuration with the pinned Alloy validator. The monitoring VM uses unreachable HTTPS fixtures to check separate buffers and continued Epsilon ingestion, plus HTTPS redirect/bookmark behavior and the local health exception. These checks do not establish real Cloud credentials, delivery, quotas, dashboard access, or alert notifications.
 
-Import `modules/aspects/monitoring/fleet-overview.json` into the Cloud stack after ingestion works. Before import, replace every Prometheus datasource UID `fleet-prom` with the actual Cloud Prometheus datasource UID from the stack's Connections page. Replace `fleet-loki` only if Cloud logs have passed review and are enabled. Keep the local dashboard file unchanged. Confirm each host and panel in Cloud, and record the dashboard URL in the rollout evidence.
+Import `modules/aspects/monitoring/fleet-overview.json` into the Cloud stack after ingestion works. Before import, replace every Prometheus datasource UID `fleet-prom` with the actual Cloud Prometheus datasource UID from the stack's Connections page. If Cloud logs are enabled, replace `fleet-loki` with the actual Cloud Loki datasource UID. Keep the local dashboard file unchanged. Confirm each host and panel in Cloud, and record the dashboard URL in the rollout evidence.
 
-Record the observed active series and samples per minute in Cloud's usage view against the account's actual Free limits. Compare those with local `prometheus_remote_storage_*` counters and Cloud HTTP 401/429 responses before expanding to another host. Keep both scrape jobs at 30s during this comparison.
+Record the observed active series and samples per minute in Cloud's usage view against the account's actual Free limits. Compare those with local `prometheus_remote_storage_*` counters and Cloud HTTP 401/429 responses before expanding to another host. Keep the independent Cloud scrape jobs at 60s and the local jobs at 30s during this comparison.
 
 ## Independent Cloud alerts
 
@@ -84,7 +84,7 @@ References: [Alloy remote write](https://grafana.com/docs/alloy/latest/reference
 
 A redirect is _not_ a custom Grafana Cloud domain: users opening `https://metrics.repparw.com` receive a 302 to the real Cloud stack URL, and the browser then uses that `*.grafana.net` hostname. Use the **default Grafana Cloud Portal login** at the Cloud stack: it already supports GitHub/Google social sign-in for Cloud Portal members, without separate stack-level OAuth client configuration. Do not add Authelia at the redirect layer; it does not protect users arriving at the Cloud URL directly. Keep Cloud stack membership and permissions restricted. A publicly reachable redirect does **not** enable anonymous Grafana access.
 
-**Default:** `modules.monitoring.server.cloudRedirectUrl = null;` — the existing local Grafana remains reachable through Authelia. Once access, metrics, dashboards, cloud-side alerts, firing/resolution, and external outage detection are verified, opt into the redirect on Epsilon. Logs may remain disabled pending the privacy review:
+**Default:** `modules.monitoring.server.cloudRedirectUrl = null;` — the existing local Grafana remains reachable through Authelia. Once access, metrics, dashboards, cloud-side alerts, firing/resolution, and external outage detection are verified, opt into the redirect on Epsilon. Logs can be enabled independently with their own token:
 
 ```nix
 modules.monitoring.server.cloudRedirectUrl = "https://<stack>.grafana.net";

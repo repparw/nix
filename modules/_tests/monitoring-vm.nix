@@ -151,6 +151,8 @@ pkgs.testers.runNixOSTest {
       services.journald.settings.Journal = {
         Storage = "volatile";
         RuntimeMaxUse = "50M";
+        # Keep the outage burst in the journal without serial-console throttling.
+        ForwardToConsole = lib.mkForce false;
       };
       modules.monitoring.agent.extraExcludedMounts = [ "/mnt/hdd" ];
       systemd.mounts = [

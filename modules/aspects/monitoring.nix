@@ -19,10 +19,6 @@
       ++ cfg.extraExcludedMounts;
       cloudMetricsEnabled = cfg.cloud.metrics != null;
       cloudLogsEnabled = cfg.cloud.logs != null;
-      metricsReceivers = lib.concatStringsSep ", " (
-        [ "prometheus.remote_write.epsilon.receiver" ]
-        ++ lib.optional cloudMetricsEnabled "prometheus.remote_write.cloud.receiver"
-      );
       logsReceivers = lib.concatStringsSep ", " (
         [ "loki.write.epsilon.receiver" ] ++ lib.optional cloudLogsEnabled "loki.write.cloud.receiver"
       );
@@ -82,12 +78,12 @@
           metrics = lib.mkOption {
             type = lib.types.nullOr cloudDestinationType;
             default = null;
-            description = "Optional independent Cloud metrics mirror; Epsilon remains configured.";
+            description = "Optional independent Cloud metrics destination scraped every 60s; Epsilon stays at 30s.";
           };
           logs = lib.mkOption {
             type = lib.types.nullOr cloudDestinationType;
             default = null;
-            description = "Optional independent Cloud logs mirror; audit journal privacy first.";
+            description = "Optional independent Cloud logs mirror using the native secret redaction pipeline.";
           };
         };
         extraExcludedMounts = lib.mkOption {
@@ -140,7 +136,7 @@
 
           prometheus.scrape "node" {
             targets         = prometheus.exporter.unix.node.targets
-            forward_to      = [${metricsReceivers}]
+            forward_to      = [prometheus.remote_write.epsilon.receiver]
             job_name        = "node"
             scrape_interval = "30s"
           }
@@ -150,7 +146,7 @@
           prometheus.scrape "alloy" {
             targets         = [{ "__address__" = "127.0.0.1:12345", "host" = "${config.networking.hostName}" }]
             honor_labels    = false
-            forward_to      = [${metricsReceivers}]
+            forward_to      = [prometheus.remote_write.epsilon.receiver]
             job_name        = "alloy"
             scrape_interval = "30s"
           }
@@ -165,6 +161,23 @@
           }
 
           ${lib.optionalString cloudMetricsEnabled ''
+            // Scrape Cloud separately to control its samples per minute
+            // without reducing Epsilon's local collection frequency.
+            prometheus.scrape "node_cloud" {
+              targets         = prometheus.exporter.unix.node.targets
+              forward_to      = [prometheus.remote_write.cloud.receiver]
+              job_name        = "node"
+              scrape_interval = "60s"
+            }
+
+            prometheus.scrape "alloy_cloud" {
+              targets         = [{ "__address__" = "127.0.0.1:12345", "host" = "${config.networking.hostName}" }]
+              honor_labels    = false
+              forward_to      = [prometheus.remote_write.cloud.receiver]
+              job_name        = "alloy"
+              scrape_interval = "60s"
+            }
+
             // A separate writer keeps a Cloud outage from replacing Epsilon's WAL.
             prometheus.remote_write "cloud" {
               external_labels = { host = "${config.networking.hostName}" }
