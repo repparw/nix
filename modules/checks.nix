@@ -260,7 +260,16 @@
                 cp -r ${inputs.self} src
                 chmod -R +w src
                 cd src
-                treefmt --tree-root . --walk filesystem --fail-on-change
+                # Temporary diagnostic: report the exact formatting difference.
+                cp modules/_tests/monitoring-fleet.nix /tmp/monitoring-fleet.before.nix
+                cp docs/runbooks/grafana-cloud-trial.md /tmp/grafana-cloud-trial.before.md
+                if ! treefmt --tree-root . --walk filesystem --fail-on-change; then
+                  echo "=== Nix formatter diff ==="
+                  diff -u /tmp/monitoring-fleet.before.nix modules/_tests/monitoring-fleet.nix || true
+                  echo "=== Markdown formatter diff ==="
+                  diff -u /tmp/grafana-cloud-trial.before.md docs/runbooks/grafana-cloud-trial.md || true
+                  exit 1
+                fi
                 touch $out
               '';
 
