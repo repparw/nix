@@ -14,6 +14,7 @@
       den.aspects.editors
       den.aspects.tmux
       den.aspects.git
+      den.aspects.git-updater
       den.aspects.ssh
       den.aspects.secrets
       den.aspects.ai

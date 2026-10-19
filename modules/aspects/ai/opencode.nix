@@ -55,6 +55,7 @@
           rmdir "$old" 2>/dev/null || true
         '';
         xdg.configFile."opencode/plugins/nous-live.ts".source = ./opencode-plugins/nous-live-v2.ts;
+        xdg.configFile."opencode/plugins/explabs-free.ts".source = ./opencode-plugins/explabs-free.ts;
         programs.opencode = {
           package = pkgs.writeShellScriptBin "opencode" ''
             exec ${lib.escapeShellArg launcher} "$@"
@@ -150,6 +151,16 @@
               };
             };
             provider = {
+              explabs = {
+                npm = "@ai-sdk/openai-compatible";
+                name = "Experiential Labs";
+                options.baseURL = "https://api.experientiallabs.ai/api/v1";
+                models = {
+                  "deepseek-v4.1-flash" = {
+                    name = "DeepSeek V4.1 Flash";
+                  };
+                };
+              };
               opencode = {
                 blacklist = [
                   # https://opencode.ai/docs/zen/
@@ -303,7 +314,12 @@
         };
       };
   };
-  perSystem = { pkgs, ... }: {
+  perSystem = { config, pkgs, ... }: {
     packages.opencode-v2 = pkgs.callPackage ../../_packages/opencode-v2.nix { };
+    checks.explabs-free-provider = pkgs.runCommand "check-explabs-free-provider" { } ''
+      ${pkgs.nodejs}/bin/node ${../../_tests/explabs-free-provider.mjs} \
+        ${config.packages.opencode-v2}/bin/opencode2 ${./opencode-plugins/explabs-free.ts}
+      touch $out
+    '';
   };
 }
