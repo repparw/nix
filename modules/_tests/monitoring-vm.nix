@@ -256,7 +256,8 @@ pkgs.testers.runNixOSTest {
         client.succeed("test -d /var/lib/alloy/loki.write.cloud/wal")
         client.succeed("printf 'monitoring_fixture_value 43\\n' > /var/lib/fleet-metrics/textfile/test.prom")
         cloud_outage_marker = "cloud-outage-" + secrets.token_hex(6)
-        client.succeed("for i in $(seq 1 400); do logger -t cloud-outage " + shlex.quote("x" * 4096) + "; done; logger -t cloud-outage " + shlex.quote(cloud_outage_marker))
+        # Exceed Alloy's default 10 MiB send queue while Cloud is down.
+        client.succeed("for i in $(seq 1 4000); do printf '%s\\n' " + shlex.quote("x" * 4096) + "; done | logger --size 8192 -t cloud-outage; logger -t cloud-outage " + shlex.quote(cloud_outage_marker))
         retry(lambda _last: len(logs(cloud_outage_marker)) > 0, timeout_seconds=120)
         retry(lambda _last: len(prom('monitoring_fixture_value{host="pi"} == 43')) == 1, timeout_seconds=120)
 
