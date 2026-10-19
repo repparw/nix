@@ -199,6 +199,9 @@ assert receiverTargets;
 assert centralizedServer;
 assert selfTelemetry;
 assert cloudDisabledByDefault;
+assert (cfg "epsilon").modules.monitoring.server.cloudRedirectUrl == null;
+assert (cfg "epsilon").services.traefik.dynamicConfigOptions.http.routers.grafana.middlewares == [ "authelia" ];
+assert !(builtins.hasAttr "grafana-cloud-redirect" (cfg "epsilon").services.traefik.dynamicConfigOptions.http.middlewares);
 assert alphaExclusions;
 assert epsilonDiskWatch;
 pkgs.runCommand "check-monitoring-fleet"
