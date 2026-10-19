@@ -9,14 +9,16 @@ tags: [monitoring, grafana, cloud, alloy, alerting]
 
 # Parallel Grafana Cloud pilot
 
+Grafana Cloud Free is the intended permanent backend after the pilot passes. Keep Epsilon's stack in place throughout validation; retire it only in a separate, evidence-backed cleanup PR.
+
 **Opt-in per host and signal.** Without `modules.monitoring.agent.cloud.metrics` or `logs`, Epsilon's existing Prometheus, Loki, Grafana, ingestion proxy, SOPS credentials, and alerting are unchanged. Cloud targets use separate Alloy writers. **Neither Cloud target is enabled by merging the PR.**
 
 ## Prerequisites
 
 1. Create a Grafana Cloud Free stack. Obtain the **exact metrics remote-write URL / instance ID**, and optionally the **Loki push URL / instance ID**, from the Cloud Portal. No endpoints/IDs are guessed.
 2. Generate narrowly scoped Cloud Access Policy tokens (`metrics:write` for metrics, `logs:write` for logs); use separate or host-scoped tokens where practical.
-3. Encrypt each host's token with the existing SOPS workflow and reference its runtime path using `config.sops.secrets.<name>.path`. Use the correct host's `.sops.yaml` recipients. **Never embed actual tokens in Nix expressions, the generated Alloy config or CI.**
-4. Enable the metrics mirror first, on Epsilon only. Example of a host NixOS module *after* provisioning its encrypted SOPS file:
+3. Encrypt each host's token with the existing SOPS workflow in `secrets/grafana-cloud-<host>.sops.yaml` and reference its runtime path using `config.sops.secrets.<name>.path`. The matching `.sops.yaml` rules select that host and recovery recipients only. Use separate per-host write tokens so revocation can be isolated. **Never embed actual tokens in Nix expressions, the generated Alloy config or CI.**
+4. Enable the metrics mirror first, on Epsilon only. Example of a host NixOS module _after_ provisioning its encrypted SOPS file:
 
 ```nix
 sops.secrets.grafana-cloud-metrics-token = {
@@ -53,15 +55,22 @@ modules.monitoring.agent.cloud.logs = {
 4. Only after a privacy review, optionally add logs host by host. Compare log usage/retention and ensure failures at the Cloud writer do not prevent local Loki ingestion.
 5. Revert by setting `modules.monitoring.agent.cloud.metrics` and/or `logs` to `null`. Do not remove Epsilon backend until independent alert parity has been demonstrated.
 
+The repository checks exercise metrics-only, logs-only, and combined Cloud configuration with the pinned Alloy validator. The monitoring VM uses unreachable HTTPS fixtures to check separate buffers and continued Epsilon ingestion, plus HTTPS redirect/bookmark behavior and the local health exception. These checks do not establish real Cloud credentials, delivery, quotas, dashboard access, or alert notifications.
+
+Import `modules/aspects/monitoring/fleet-overview.json` into the Cloud stack after ingestion works. Before import, replace every Prometheus datasource UID `fleet-prom` with the actual Cloud Prometheus datasource UID from the stack's Connections page. Replace `fleet-loki` only if Cloud logs have passed review and are enabled. Keep the local dashboard file unchanged. Confirm each host and panel in Cloud, and record the dashboard URL in the rollout evidence.
+
+Record the observed active series and samples per minute in Cloud's usage view against the account's actual Free limits. Compare those with local `prometheus_remote_storage_*` counters and Cloud HTTP 401/429 responses before expanding to another host. Keep both scrape jobs at 30s during this comparison.
+
 ## Independent Cloud alerts
 
-Configure these **in the Cloud Grafana UI** (not created by this Nix module). In Alerting → Notification configuration, add a *Discord* contact point using a Discord channel webhook. Send a test, retain recovery/resolved notifications, and route the pilot to a dedicated channel to avoid duplicate production alerts.
+Configure these **in the Cloud Grafana UI** (not created by this Nix module). In Alerting → Notification configuration, add a _Discord_ contact point using a Discord channel webhook. Send a test, retain recovery/resolved notifications, and route the pilot to a dedicated channel to avoid duplicate production alerts.
 
-Start with three independent Grafana-managed host-absence rules, evaluated every minute:
+Start with two independent Grafana-managed host-absence rules, evaluated every minute:
 
 - **Epsilon:** `absent_over_time(node_uname_info{host="epsilon"}[10m])`
 - **Pi:** `absent_over_time(node_uname_info{host="pi"}[10m])`
-- **Alpha:** `absent_over_time(node_uname_info{host="alpha"}[10m])` (account for intentionally sleeping desktop)
+
+Alpha deliberately shuts down. Add an Alpha rule only after defining its expected uptime schedule or explicit maintenance suppression; do not alert unconditionally on its absence.
 
 Configure explicit No Data and Error behavior and test both firing and resolution. For disk alerts, evaluate `100 * (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes)` after excluding pseudo and ephemeral mounts; start with 70% warning and 85% critical sustained for several minutes. Consider systemd failed-unit and backup freshness alerts after the corresponding metrics are verified.
 
@@ -73,9 +82,9 @@ References: [Alloy remote write](https://grafana.com/docs/alloy/latest/reference
 
 ## metrics.repparw.com redirect after validation
 
-A redirect is *not* a custom Grafana Cloud domain: users opening `https://metrics.repparw.com` receive a 302 to the real Cloud stack URL, and the browser then uses that `*.grafana.net` hostname. Use the **default Grafana Cloud Portal login** at the Cloud stack: it already supports GitHub/Google social sign-in for Cloud Portal members, without separate stack-level OAuth client configuration. Do not add Authelia at the redirect layer; it does not protect users arriving at the Cloud URL directly. Keep Cloud stack membership and permissions restricted. A publicly reachable redirect does **not** enable anonymous Grafana access.
+A redirect is _not_ a custom Grafana Cloud domain: users opening `https://metrics.repparw.com` receive a 302 to the real Cloud stack URL, and the browser then uses that `*.grafana.net` hostname. Use the **default Grafana Cloud Portal login** at the Cloud stack: it already supports GitHub/Google social sign-in for Cloud Portal members, without separate stack-level OAuth client configuration. Do not add Authelia at the redirect layer; it does not protect users arriving at the Cloud URL directly. Keep Cloud stack membership and permissions restricted. A publicly reachable redirect does **not** enable anonymous Grafana access.
 
-**Default:** `modules.monitoring.server.cloudRedirectUrl = null;` — the existing local Grafana remains reachable through Authelia. Once metrics, logs, dashboards, cloud-side alerts, firing/resolution, and external outage detection are verified, opt into the redirect on Epsilon:
+**Default:** `modules.monitoring.server.cloudRedirectUrl = null;` — the existing local Grafana remains reachable through Authelia. Once access, metrics, dashboards, cloud-side alerts, firing/resolution, and external outage detection are verified, opt into the redirect on Epsilon. Logs may remain disabled pending the privacy review:
 
 ```nix
 modules.monitoring.server.cloudRedirectUrl = "https://<stack>.grafana.net";

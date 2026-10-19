@@ -11,6 +11,32 @@ let
   ];
   cfg = host: inputs.self.nixosConfigurations.${host}.config;
   alloyConfig = host: (cfg host).environment.etc."alloy/config.alloy".text;
+  cloudFixture = signal: {
+    url =
+      if signal == "metrics" then
+        "https://metrics.example.test/api/prom/push"
+      else
+        "https://logs.example.test/loki/api/v1/push";
+    username = "fixture-${signal}";
+    tokenFile = "/run/secrets/fixture-${signal}";
+  };
+  cloudConfig =
+    signals:
+    (inputs.self.nixosConfigurations.epsilon.extendModules {
+      modules = [ { modules.monitoring.agent.cloud = lib.genAttrs signals cloudFixture; } ];
+    }).config;
+  cloudVariants = map cloudConfig [
+    [ "metrics" ]
+    [ "logs" ]
+    [
+      "metrics"
+      "logs"
+    ]
+  ];
+  redirectConfig =
+    (inputs.self.nixosConfigurations.epsilon.extendModules {
+      modules = [ { modules.monitoring.server.cloudRedirectUrl = "https://fixture.grafana.net/"; } ];
+    }).config.services.traefik.dynamicConfigOptions.http;
   alphaMounts = [
     "/mnt/hdd"
     "/mnt/seagate"
@@ -199,9 +225,47 @@ assert receiverTargets;
 assert centralizedServer;
 assert selfTelemetry;
 assert cloudDisabledByDefault;
+assert lib.all (
+  variant:
+  let
+    text = variant.environment.etc."alloy/config.alloy".text;
+    credentials = variant.systemd.services.alloy.serviceConfig.LoadCredential;
+  in
+  lib.hasInfix ''prometheus.remote_write "epsilon"'' text
+  && lib.hasInfix ''loki.write "epsilon"'' text
+  && lib.hasInfix ''scrape_interval = "30s"'' text
+  &&
+    lib.all
+      (
+        signal:
+        if variant.modules.monitoring.agent.cloud.${signal} == null then
+          !(lib.hasInfix "grafana-cloud-${signal}-token" text)
+        else
+          lib.hasInfix "/run/credentials/alloy.service/grafana-cloud-${signal}-token" text
+          && builtins.elem "grafana-cloud-${signal}-token:/run/secrets/fixture-${signal}" credentials
+      )
+      [
+        "metrics"
+        "logs"
+      ]
+) cloudVariants;
+assert redirectConfig.routers.grafana.service == "noop@internal";
+assert redirectConfig.routers.grafana.middlewares == [ "grafana-cloud-redirect" ];
+assert redirectConfig.routers.grafana-local-health.service == "grafana";
+assert
+  redirectConfig.routers.grafana-local-health.rule
+  == "Host(`metrics.repparw.com`) && Path(`/api/health`)";
+assert
+  redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.replacement
+  == "https://fixture.grafana.net\${1}";
+assert !redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.permanent;
 assert (cfg "epsilon").modules.monitoring.server.cloudRedirectUrl == null;
-assert (cfg "epsilon").services.traefik.dynamicConfigOptions.http.routers.grafana.middlewares == [ "authelia" ];
-assert !(builtins.hasAttr "grafana-cloud-redirect" (cfg "epsilon").services.traefik.dynamicConfigOptions.http.middlewares);
+assert
+  (cfg "epsilon").services.traefik.dynamicConfigOptions.http.routers.grafana.middlewares
+  == [ "authelia" ];
+assert
+  !(builtins.hasAttr "grafana-cloud-redirect" (cfg "epsilon")
+  .services.traefik.dynamicConfigOptions.http.middlewares);
 assert alphaExclusions;
 assert epsilonDiskWatch;
 pkgs.runCommand "check-monitoring-fleet"
@@ -217,6 +281,13 @@ pkgs.runCommand "check-monitoring-fleet"
       host:
       "alloy validate ${lib.escapeShellArgs (lib.filter (lib.hasPrefix "--stability.level=") (cfg host).services.alloy.extraFlags)} ${pkgs.writeText "alloy-${host}.alloy" (alloyConfig host)}"
     ) hosts}
+    ${lib.concatImapStringsSep "\n" (
+      index: variant:
+      "alloy validate --stability.level=experimental ${
+        pkgs.writeText "alloy-cloud-${toString index}.alloy"
+          variant.environment.etc."alloy/config.alloy".text
+      }"
+    ) cloudVariants}
     loki -verify-config -config.file=${lokiConfiguration}
     promtool test rules ${queryTests}
     touch $out

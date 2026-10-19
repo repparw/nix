@@ -214,6 +214,9 @@
 
           ${lib.optionalString cloudLogsEnabled ''
             loki.write "cloud" {
+              wal {
+                enabled = true
+              }
               endpoint {
                 url = ${builtins.toJSON cfg.cloud.logs.url}
                 basic_auth {
@@ -296,6 +299,30 @@
       }:
       let
         cfg = config.modules.services;
+        # The canonical URL remains local until explicit cutover. Once
+        # redirected, keep an independent local Grafana health endpoint.
+        cloudRedirectConfig = lib.mkIf (config.modules.monitoring.server.cloudRedirectUrl != null) (
+          let
+            origin = lib.removeSuffix "/" config.modules.monitoring.server.cloudRedirectUrl;
+            fqdn = "metrics.${cfg.domain}";
+          in
+          {
+            http.routers.grafana = {
+              service = lib.mkForce "noop@internal";
+              middlewares = lib.mkForce [ "grafana-cloud-redirect" ];
+            };
+            http.routers.grafana-local-health = {
+              rule = "Host(`${fqdn}`) && Path(`/api/health`)";
+              service = "grafana";
+              priority = 100;
+            };
+            http.middlewares.grafana-cloud-redirect.redirectRegex = {
+              regex = "^https?://${lib.escapeRegex fqdn}([/?].*|$)";
+              replacement = origin + "\${1}";
+              permanent = false;
+            };
+          }
+        );
         dashboardDir = pkgs.runCommand "fleet-grafana-dashboards" { } ''
           mkdir -p "$out"
           cp ${./monitoring/fleet-overview.json} "$out/fleet-overview.json"
@@ -322,36 +349,10 @@
 
           assertions = lib.optional (config.modules.monitoring.server.cloudRedirectUrl != null) {
             assertion =
-              builtins.match
-                "https://[A-Za-z0-9-]+[.]grafana[.]net/?"
-                config.modules.monitoring.server.cloudRedirectUrl != null;
+              builtins.match "https://[A-Za-z0-9-]+[.]grafana[.]net/?" config.modules.monitoring.server.cloudRedirectUrl
+              != null;
             message = "modules.monitoring.server.cloudRedirectUrl must be a Grafana Cloud stack HTTPS origin";
           };
-
-          # The canonical URL remains local until explicit cutover. Once
-          # redirected, keep an independent local Grafana health endpoint.
-          services.traefik.dynamicConfigOptions.http = lib.mkIf
-            (config.modules.monitoring.server.cloudRedirectUrl != null)
-            (let
-              origin = lib.removeSuffix "/" config.modules.monitoring.server.cloudRedirectUrl;
-              fqdn = "metrics.${cfg.domain}";
-            in
-            {
-              routers.grafana = {
-                service = lib.mkForce "noop@internal";
-                middlewares = lib.mkForce [ "grafana-cloud-redirect" ];
-              };
-              routers.grafana-local-health = {
-                rule = "Host(`${fqdn}`) && Path(`/api/health`)";
-                service = "grafana";
-                priority = 100;
-              };
-              middlewares.grafana-cloud-redirect.redirectRegex = {
-                regex = "^https?://${lib.escapeRegex fqdn}([/?].*|$)";
-                replacement = origin + "\${1}";
-                permanent = false;
-              };
-            });
 
           services.prometheus = {
             enable = true;
@@ -416,30 +417,35 @@
               monitoring-metrics.address = ":9090";
               monitoring-logs.address = ":3100";
             };
-            dynamicConfigOptions.http = {
-              middlewares.monitoring-auth.basicAuth = {
-                usersFile = config.modules.monitoring.server.usersFile;
-                removeHeader = true;
-              };
-              routers = {
-                monitoring-metrics = {
-                  entryPoints = [ "monitoring-metrics" ];
-                  rule = "Method(`POST`) && Path(`/api/v1/write`)";
-                  middlewares = [ "monitoring-auth" ];
-                  service = "monitoring-metrics";
+            dynamicConfigOptions = lib.mkMerge [
+              {
+                http = {
+                  middlewares.monitoring-auth.basicAuth = {
+                    usersFile = config.modules.monitoring.server.usersFile;
+                    removeHeader = true;
+                  };
+                  routers = {
+                    monitoring-metrics = {
+                      entryPoints = [ "monitoring-metrics" ];
+                      rule = "Method(`POST`) && Path(`/api/v1/write`)";
+                      middlewares = [ "monitoring-auth" ];
+                      service = "monitoring-metrics";
+                    };
+                    monitoring-logs = {
+                      entryPoints = [ "monitoring-logs" ];
+                      rule = "Method(`POST`) && Path(`/loki/api/v1/push`)";
+                      middlewares = [ "monitoring-auth" ];
+                      service = "monitoring-logs";
+                    };
+                  };
+                  services = {
+                    monitoring-metrics.loadBalancer.servers = [ { url = "http://127.0.0.1:9091"; } ];
+                    monitoring-logs.loadBalancer.servers = [ { url = "http://127.0.0.1:3101"; } ];
+                  };
                 };
-                monitoring-logs = {
-                  entryPoints = [ "monitoring-logs" ];
-                  rule = "Method(`POST`) && Path(`/loki/api/v1/push`)";
-                  middlewares = [ "monitoring-auth" ];
-                  service = "monitoring-logs";
-                };
-              };
-              services = {
-                monitoring-metrics.loadBalancer.servers = [ { url = "http://127.0.0.1:9091"; } ];
-                monitoring-logs.loadBalancer.servers = [ { url = "http://127.0.0.1:3101"; } ];
-              };
-            };
+              }
+              cloudRedirectConfig
+            ];
           };
 
           networking.nftables.enable = true;
