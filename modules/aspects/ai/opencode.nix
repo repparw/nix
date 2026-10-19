@@ -155,6 +155,11 @@
                 npm = "@ai-sdk/openai-compatible";
                 name = "Experiential Labs";
                 options.baseURL = "https://api.experientiallabs.ai/api/v1";
+                models = {
+                  "deepseek-v4.1-flash" = {
+                    name = "DeepSeek V4.1 Flash";
+                  };
+                };
               };
               opencode = {
                 blacklist = [
