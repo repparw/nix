@@ -17,6 +17,31 @@
         "/var/lib/containers/storage"
       ]
       ++ cfg.extraExcludedMounts;
+      cloudMetricsEnabled = cfg.cloud.metrics != null;
+      cloudLogsEnabled = cfg.cloud.logs != null;
+      metricsReceivers = lib.concatStringsSep ", " (
+        [ "prometheus.remote_write.epsilon.receiver" ]
+        ++ lib.optional cloudMetricsEnabled "prometheus.remote_write.cloud.receiver"
+      );
+      logsReceivers = lib.concatStringsSep ", " (
+        [ "loki.write.epsilon.receiver" ] ++ lib.optional cloudLogsEnabled "loki.write.cloud.receiver"
+      );
+      cloudDestinationType = lib.types.submodule {
+        options = {
+          url = lib.mkOption {
+            type = lib.types.str;
+            description = "Full Grafana Cloud HTTPS ingestion URL.";
+          };
+          username = lib.mkOption {
+            type = lib.types.str;
+            description = "Grafana Cloud metrics or logs instance ID.";
+          };
+          tokenFile = lib.mkOption {
+            type = lib.types.str;
+            description = "Runtime path to a write-scoped Cloud access-policy token (never its value).";
+          };
+        };
+      };
       basicAuth = lib.optionalString (cfg.authentication != null) ''
         basic_auth {
           username = ${builtins.toJSON cfg.authentication.username}
@@ -53,6 +78,18 @@
           default = null;
           description = "Runtime credential for authenticated private ingestion.";
         };
+        cloud = {
+          metrics = lib.mkOption {
+            type = lib.types.nullOr cloudDestinationType;
+            default = null;
+            description = "Optional independent Cloud metrics mirror; Epsilon remains configured.";
+          };
+          logs = lib.mkOption {
+            type = lib.types.nullOr cloudDestinationType;
+            default = null;
+            description = "Optional independent Cloud logs mirror; audit journal privacy first.";
+          };
+        };
         extraExcludedMounts = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = [ ];
@@ -61,6 +98,15 @@
       };
 
       config = {
+        assertions =
+          lib.optional cloudMetricsEnabled {
+            assertion = lib.hasPrefix "https://" cfg.cloud.metrics.url;
+            message = "modules.monitoring.agent.cloud.metrics.url must use HTTPS";
+          }
+          ++ lib.optional cloudLogsEnabled {
+            assertion = lib.hasPrefix "https://" cfg.cloud.logs.url;
+            message = "modules.monitoring.agent.cloud.logs.url must use HTTPS";
+          };
         # Ship the host's systemd journal to the central Loki instance.
         # Entries already sent persist on Epsilon across Pi reboots even
         # though the Pi journal remains volatile.
@@ -94,7 +140,7 @@
 
           prometheus.scrape "node" {
             targets         = prometheus.exporter.unix.node.targets
-            forward_to      = [prometheus.remote_write.epsilon.receiver]
+            forward_to      = [${metricsReceivers}]
             job_name        = "node"
             scrape_interval = "30s"
           }
@@ -104,7 +150,7 @@
           prometheus.scrape "alloy" {
             targets         = [{ "__address__" = "127.0.0.1:12345", "host" = "${config.networking.hostName}" }]
             honor_labels    = false
-            forward_to      = [prometheus.remote_write.epsilon.receiver]
+            forward_to      = [${metricsReceivers}]
             job_name        = "alloy"
             scrape_interval = "30s"
           }
@@ -117,6 +163,21 @@
               url = "http://${cfg.receiverHost}:${toString cfg.metricsPort}/api/v1/write"
             }
           }
+
+          ${lib.optionalString cloudMetricsEnabled ''
+            // A separate writer keeps a Cloud outage from replacing Epsilon's WAL.
+            prometheus.remote_write "cloud" {
+              external_labels = { host = "${config.networking.hostName}" }
+
+              endpoint {
+                url = ${builtins.toJSON cfg.cloud.metrics.url}
+                basic_auth {
+                  username = ${builtins.toJSON cfg.cloud.metrics.username}
+                  password_file = "/run/credentials/alloy.service/grafana-cloud-metrics-token"
+                }
+              }
+            }
+          ''}
 
           // Journald metadata is internal until explicitly promoted to labels.
           // Keep labels low-cardinality (never PID, cursor, command line).
@@ -147,9 +208,21 @@
           // Redact common leaked credentials. This is best-effort, not
           // proof that arbitrary sensitive content cannot be collected.
           loki.secretfilter "journal" {
-            forward_to    = [loki.write.epsilon.receiver]
+            forward_to    = [${logsReceivers}]
             redact_percent = 100
           }
+
+          ${lib.optionalString cloudLogsEnabled ''
+            loki.write "cloud" {
+              endpoint {
+                url = ${builtins.toJSON cfg.cloud.logs.url}
+                basic_auth {
+                  username = ${builtins.toJSON cfg.cloud.logs.username}
+                  password_file = "/run/credentials/alloy.service/grafana-cloud-logs-token"
+                }
+              }
+            }
+          ''}
 
           loki.write "epsilon" {
             endpoint {
@@ -160,9 +233,12 @@
           }
         '';
 
-        systemd.services.alloy.serviceConfig.LoadCredential = lib.optionals (cfg.authentication != null) [
-          "ingestion-password:${cfg.authentication.passwordFile}"
-        ];
+        systemd.services.alloy.serviceConfig.LoadCredential =
+          lib.optionals (cfg.authentication != null) [
+            "ingestion-password:${cfg.authentication.passwordFile}"
+          ]
+          ++ lib.optional cloudMetricsEnabled "grafana-cloud-metrics-token:${cfg.cloud.metrics.tokenFile}"
+          ++ lib.optional cloudLogsEnabled "grafana-cloud-logs-token:${cfg.cloud.logs.tokenFile}";
 
         # Writers of future fleet-specific .prom gauges use this shared
         # directory, independent of the telemetry agent implementation.
