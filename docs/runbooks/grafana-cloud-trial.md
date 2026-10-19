@@ -42,7 +42,7 @@ a per-host credentials aspect, and SOPS creation rules.
 
 ## Activate host by host
 
-After **all three encrypted files** are present, opt each host into the
+After the **target host's encrypted file** is present, opt that host into the
 `monitoring._.cloud-credentials` aspect. This aspect is deliberately not in
 fleet defaults yet; doing so before the secret files exist would break eval.
 
