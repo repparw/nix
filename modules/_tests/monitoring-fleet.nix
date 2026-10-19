@@ -215,7 +215,9 @@ assert lib.hasInfix ''prometheus.scrape "node_cloud"'' cloudAlloy;
 assert lib.hasInfix ''prometheus.scrape "alloy_cloud"'' cloudAlloy;
 assert lib.hasInfix ''prometheus.remote_write "grafana_cloud"'' cloudAlloy;
 assert lib.hasInfix ''loki.write "grafana_cloud"'' cloudAlloy;
-assert lib.hasInfix "loki.write.epsilon.receiver, loki.write.grafana_cloud.receiver" cloudAlloy;
+assert lib.hasInfix
+  "loki.write.epsilon.receiver, loki.write.grafana_cloud.receiver"
+  cloudAlloy;
 assert cloudCfg.systemd.services.alloy.serviceConfig.LoadCredential == [
   "ingestion-password:/run/secrets/monitoring-agent-password"
   "grafana-cloud-token:/run/secrets/fixture-cloud-token"
