@@ -123,6 +123,12 @@ let
           "alpha"
           "pi"
         ];
+  cloudDisabledByDefault = lib.all (
+    host:
+    (cfg host).modules.monitoring.agent.cloud.metrics == null
+    && (cfg host).modules.monitoring.agent.cloud.logs == null
+    && !(lib.hasInfix "grafana-cloud" (alloyConfig host))
+  ) hosts;
   selfTelemetry = lib.all (
     host:
     lib.hasInfix ''prometheus.scrape "alloy"'' (alloyConfig host)
@@ -192,6 +198,7 @@ assert allAgents;
 assert receiverTargets;
 assert centralizedServer;
 assert selfTelemetry;
+assert cloudDisabledByDefault;
 assert alphaExclusions;
 assert epsilonDiskWatch;
 pkgs.runCommand "check-monitoring-fleet"
