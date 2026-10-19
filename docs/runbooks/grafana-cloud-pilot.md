@@ -70,3 +70,17 @@ Cloud Synthetic Monitoring can probe a public HTTPS service independently of Eps
 This PR does **not** provision a Cloud account, tokens, Grafana service-account alert-management credentials, Discord webhook, or remote alert objects. Those require Cloud onboarding. Existing monitoring remains the source of truth until the pilot is validated.
 
 References: [Alloy remote write](https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.remote_write/), [Alloy Loki write](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.write/), [Cloud Access Policies](https://grafana.com/docs/grafana-cloud/platform/security-and-account-management/security-and-access/authentication-and-permissions/access-policies/), [Cloud alert notifications](https://grafana.com/docs/grafana-cloud/observe-and-act/alert-and-measure-reliability/alerting/configure-notifications/manage-contact-points/).
+
+## metrics.repparw.com redirect after validation
+
+A redirect is *not* a custom Grafana Cloud domain: users opening `https://metrics.repparw.com` receive a 302 to the real Cloud stack URL, and the browser then uses that `*.grafana.net` hostname. Use GitHub/Google or the existing Cloud account login **at the Cloud stack**. Do not add Authelia at the redirect layer; it does not protect users arriving at the Cloud URL directly. Keep Cloud stack membership and permissions restricted. A publicly reachable redirect does **not** enable anonymous Grafana access.
+
+**Default:** `modules.monitoring.server.cloudRedirectUrl = null;` — the existing local Grafana remains reachable through Authelia. Once metrics, logs, dashboards, cloud-side alerts, firing/resolution, and external outage detection are verified, opt into the redirect on Epsilon:
+
+```nix
+modules.monitoring.server.cloudRedirectUrl = "https://<stack>.grafana.net";
+```
+
+Replace the placeholder with the actual Cloud stack HTTPS origin, not an ingestion endpoint. This is a reversible **302**, not a permanent 301. Traefik preserves the request path and query. The unauthenticated Epsilon-local `/api/health` route stays in place for existing fleet-health checks; it is **not** evidence Cloud is healthy. Test root and bookmarked URLs as well as `/api/health` before considering cutover complete.
+
+The Epsilon backend is intended to be **retired** if Cloud meets requirements. In a separate cleanup PR, remove Prometheus, Loki, Grafana, their private ingestion proxy, obsolete secrets and persistence binds. Retain fleet Alloy collection; migrate any local health checks before dropping local Grafana; simplify the URL redirect once it no longer belongs to the Epsilon monitoring server aspect. Deployment readiness checks should remain independent of Cloud.
