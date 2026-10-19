@@ -275,6 +275,20 @@
     };
   };
 
+  # Include explicitly on each host only after its Cloud secret is created.
+  # Keeping this outside fleet defaults leaves the PR safe to deploy as-is.
+  den.aspects.monitoring.provides.cloud-credentials.nixos = { config, ... }: {
+    sops.secrets.grafana-cloud-token = {
+      sopsFile = ../../secrets + "/grafana-cloud-${config.networking.hostName}.sops.yaml";
+      key = "token";
+      restartUnits = [ "alloy.service" ];
+    };
+    modules.monitoring.agent.cloud = {
+      enable = true;
+      tokenFile = config.sops.secrets.grafana-cloud-token.path;
+    };
+  };
+
   den.aspects.monitoring.provides.server-credentials.nixos = { config, ... }: {
     sops.secrets.monitoring-ingestion-users = {
       sopsFile = ../../secrets/monitoring-server.sops.yaml;
