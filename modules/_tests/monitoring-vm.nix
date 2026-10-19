@@ -250,10 +250,15 @@ pkgs.testers.runNixOSTest {
 
     with subtest("Cloud failures retain separate buffers and leave Epsilon ingestion live"):
         client.wait_until_succeeds("journalctl -u alloy --no-pager | grep 'component_id=prometheus.remote_write.cloud' | grep 'connection refused'")
-        client.wait_until_succeeds("journalctl -u alloy --no-pager | grep 'component_id=loki.write.cloud' | grep 'connection refused'")
-        client.succeed("test -d /var/lib/alloy/prometheus.remote_write.cloud/wal")
-        client.succeed("test -d /var/lib/alloy/prometheus.remote_write.epsilon/wal")
-        client.succeed("test -d /var/lib/alloy/loki.write.cloud/wal")
+        retry(lambda _last: any(
+            line.startswith("loki_write_batch_retries_total{")
+            and 'host="127.0.0.1:1"' in line
+            and float(line.split()[-1]) > 0
+            for line in client.succeed("curl -fsS http://127.0.0.1:12345/metrics").splitlines()
+        ), timeout_seconds=60)
+        client.succeed("test -d /var/lib/alloy/data-alloy/prometheus.remote_write.cloud/wal")
+        client.succeed("test -d /var/lib/alloy/data-alloy/prometheus.remote_write.epsilon/wal")
+        client.succeed("test -d /var/lib/alloy/data-alloy/loki.write.cloud/wal")
         client.succeed("printf 'monitoring_fixture_value 43\\n' > /var/lib/fleet-metrics/textfile/test.prom")
         cloud_outage_marker = "cloud-outage-" + secrets.token_hex(6)
         # Exceed Alloy's default 10 MiB send queue while Cloud is down.
