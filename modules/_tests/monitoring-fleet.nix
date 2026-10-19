@@ -11,6 +11,24 @@ let
   ];
   cfg = host: inputs.self.nixosConfigurations.${host}.config;
   alloyConfig = host: (cfg host).environment.etc."alloy/config.alloy".text;
+  # Evaluate the opt-in branch without requiring live Cloud secrets in CI.
+  cloudCfg = (
+    inputs.self.nixosConfigurations.pi.extendModules {
+      modules = [
+        {
+          modules.monitoring.agent.cloud = {
+            enable = true;
+            metricsUrl = "https://metrics.example.invalid/api/prom/push";
+            logsUrl = "https://logs.example.invalid/loki/api/v1/push";
+            metricsUsername = "fixture-metrics-id";
+            logsUsername = "fixture-logs-id";
+            tokenFile = "/run/secrets/fixture-cloud-token";
+          };
+        }
+      ];
+    }
+  ).config;
+  cloudAlloy = cloudCfg.environment.etc."alloy/config.alloy".text;
   alphaMounts = [
     "/mnt/hdd"
     "/mnt/seagate"
@@ -189,6 +207,19 @@ assert
   (cfg "epsilon")
   .services.traefik.dynamicConfigOptions.http.middlewares.monitoring-auth.basicAuth.removeHeader;
 assert allAgents;
+assert !(cfg "pi").modules.monitoring.agent.cloud.enable;
+assert !(cfg "alpha").modules.monitoring.agent.cloud.enable;
+assert !(cfg "epsilon").modules.monitoring.agent.cloud.enable;
+assert cloudCfg.services.alloy.enable;
+assert lib.hasInfix ''prometheus.scrape "node_cloud"'' cloudAlloy;
+assert lib.hasInfix ''prometheus.scrape "alloy_cloud"'' cloudAlloy;
+assert lib.hasInfix ''prometheus.remote_write "grafana_cloud"'' cloudAlloy;
+assert lib.hasInfix ''loki.write "grafana_cloud"'' cloudAlloy;
+assert lib.hasInfix "loki.write.epsilon.receiver, loki.write.grafana_cloud.receiver" cloudAlloy;
+assert cloudCfg.systemd.services.alloy.serviceConfig.LoadCredential == [
+  "ingestion-password:/run/secrets/monitoring-agent-password"
+  "grafana-cloud-token:/run/secrets/fixture-cloud-token"
+];
 assert receiverTargets;
 assert centralizedServer;
 assert selfTelemetry;
@@ -207,6 +238,7 @@ pkgs.runCommand "check-monitoring-fleet"
       host:
       "alloy validate ${lib.escapeShellArgs (lib.filter (lib.hasPrefix "--stability.level=") (cfg host).services.alloy.extraFlags)} ${pkgs.writeText "alloy-${host}.alloy" (alloyConfig host)}"
     ) hosts}
+    alloy validate ${lib.escapeShellArgs (lib.filter (lib.hasPrefix "--stability.level=") cloudCfg.services.alloy.extraFlags)} ${pkgs.writeText "alloy-cloud-test.alloy" cloudAlloy}
     loki -verify-config -config.file=${lokiConfiguration}
     promtool test rules ${queryTests}
     touch $out
