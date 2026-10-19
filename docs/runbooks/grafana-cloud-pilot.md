@@ -73,7 +73,7 @@ References: [Alloy remote write](https://grafana.com/docs/alloy/latest/reference
 
 ## metrics.repparw.com redirect after validation
 
-A redirect is *not* a custom Grafana Cloud domain: users opening `https://metrics.repparw.com` receive a 302 to the real Cloud stack URL, and the browser then uses that `*.grafana.net` hostname. Use GitHub/Google or the existing Cloud account login **at the Cloud stack**. Do not add Authelia at the redirect layer; it does not protect users arriving at the Cloud URL directly. Keep Cloud stack membership and permissions restricted. A publicly reachable redirect does **not** enable anonymous Grafana access.
+A redirect is *not* a custom Grafana Cloud domain: users opening `https://metrics.repparw.com` receive a 302 to the real Cloud stack URL, and the browser then uses that `*.grafana.net` hostname. Use the **default Grafana Cloud Portal login** at the Cloud stack: it already supports GitHub/Google social sign-in for Cloud Portal members, without separate stack-level OAuth client configuration. Do not add Authelia at the redirect layer; it does not protect users arriving at the Cloud URL directly. Keep Cloud stack membership and permissions restricted. A publicly reachable redirect does **not** enable anonymous Grafana access.
 
 **Default:** `modules.monitoring.server.cloudRedirectUrl = null;` — the existing local Grafana remains reachable through Authelia. Once metrics, logs, dashboards, cloud-side alerts, firing/resolution, and external outage detection are verified, opt into the redirect on Epsilon:
 
