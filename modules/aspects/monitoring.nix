@@ -303,6 +303,12 @@
       in
       {
         options.modules.monitoring.server = {
+          # Keep the existing Grafana route during the Cloud pilot.
+          cloudRedirectUrl = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = "Grafana Cloud stack HTTPS origin for an opt-in metrics URL redirect.";
+          };
           usersFile = lib.mkOption {
             type = lib.types.str;
             description = "Runtime htpasswd file with per-host ingestion credentials.";
@@ -313,6 +319,40 @@
           };
         };
         config = {
+
+          assertions = lib.optional (config.modules.monitoring.server.cloudRedirectUrl != null) {
+            assertion =
+              builtins.match
+                "https://[A-Za-z0-9-]+[.]grafana[.]net/?"
+                config.modules.monitoring.server.cloudRedirectUrl != null;
+            message = "modules.monitoring.server.cloudRedirectUrl must be a Grafana Cloud stack HTTPS origin";
+          };
+
+          # The canonical URL remains local until explicit cutover. Once
+          # redirected, keep an independent local Grafana health endpoint.
+          services.traefik.dynamicConfigOptions.http = lib.mkIf
+            (config.modules.monitoring.server.cloudRedirectUrl != null)
+            (let
+              origin = lib.removeSuffix "/" config.modules.monitoring.server.cloudRedirectUrl;
+              fqdn = "metrics.${cfg.domain}";
+            in
+            {
+              routers.grafana = {
+                service = lib.mkForce "noop@internal";
+                middlewares = lib.mkForce [ "grafana-cloud-redirect" ];
+              };
+              routers.grafana-local-health = {
+                rule = "Host(`${fqdn}`) && Path(`/api/health`)";
+                service = "grafana";
+                priority = 100;
+              };
+              middlewares.grafana-cloud-redirect.redirectRegex = {
+                regex = "^https?://${lib.escapeRegex fqdn}([/?].*|$)";
+                replacement = origin + "\${1}";
+                permanent = false;
+              };
+            });
+
           services.prometheus = {
             enable = true;
             listenAddress = "127.0.0.1";
