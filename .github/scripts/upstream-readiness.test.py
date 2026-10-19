@@ -119,6 +119,21 @@ class Readiness(unittest.TestCase):
             detect.assert_not_called()
 
 
+    def test_t3code_cleanup_completion_preserves_permanent_aspects(self):
+        for name in ("t3code-connect", "t3code-split"):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                relative, marker = watch.WORKAROUNDS[name]
+                module = root / relative
+                module.parent.mkdir(parents=True)
+                module.write_text("{ homeManager = {}; }")
+                with patch.object(watch, "ROOT", root), patch.object(watch, "detect") as detect:
+                    self.assertEqual(watch.inspect(name, LOCK), "completed")
+                    detect.assert_not_called()
+                module.write_text(marker)
+                with patch.object(watch, "ROOT", root), patch.object(watch, "detect", return_value="waiting-upstream"):
+                    self.assertEqual(watch.inspect(name, LOCK), "waiting-upstream")
+
     def test_t3code_nightly_v2_release_channel_and_pin_gates(self):
         stable = 'version = "0.0.46"; tag = "v0.0.46";'
         outdated = 'version = "0.0.45"; tag = "v0.0.45";'
@@ -148,6 +163,18 @@ class Readiness(unittest.TestCase):
         self.assertEqual(run({"v0.0.46"}), "PINNED-READY")
         with self.assertRaises(ValueError):
             run({"v0.0.46"}, verified=False)
+
+    def test_t3code_version_detection_survives_the_package_split(self):
+        missing = subprocess.CalledProcessError(1, ["gh"], stderr="HTTP 404: Not Found")
+        with patch.object(watch, "source", side_effect=[missing,
+                          'version = "0.1.0"; tag = "v${finalAttrs.version}";']) as source:
+            self.assertEqual(watch.t3code_stable_tag("pin"), "v0.1.0")
+            self.assertEqual(source.call_args.args[1], "pkgs/by-name/t3/t3code-cli/unwrapped.nix")
+        unavailable = subprocess.CalledProcessError(1, ["gh"], stderr="HTTP 503")
+        with patch.object(watch, "source", side_effect=unavailable) as source:
+            with self.assertRaises(subprocess.CalledProcessError):
+                watch.t3code_stable_tag("pin")
+            self.assertEqual(source.call_count, 1)
 
     def test_t3code_nightly_v2_never_accepts_a_prerelease_or_malformed_metadata(self):
         stable = 'version = "0.0.46"; tag = "v0.0.46";'

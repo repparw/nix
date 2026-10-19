@@ -19,8 +19,8 @@ PR_WAITS = {
 }
 WORKAROUNDS = {
     "authelia-pnpm-hash": ("modules/_services/authelia.nix", "autheliaPackage"),
-    "t3code-connect": ("modules/aspects/ai/t3code-connect.nix", None),
-    "t3code-split": ("modules/aspects/ai/t3code-split.nix", None),
+    "t3code-connect": ("modules/aspects/ai/t3code-connect.nix", "cp .env.example .env"),
+    "t3code-split": ("modules/aspects/ai/t3code-split.nix", "t3code-server ="),
     "tasks-org": ("modules/aspects/gui/apps.nix", "tasksOrgPackage"),
     "t3code-server": ("modules/aspects/ai/t3code.nix", "services.t3code-web"),
     "cliamp-hm-module": ("modules/aspects/cliamp.nix", "hmCliampModule"),
@@ -142,7 +142,12 @@ T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
 
 
 def t3code_stable_tag(package_revision):
-    text = source("NixOS/nixpkgs", T3CODE_UNWRAPPED, package_revision)
+    try:
+        text = source("NixOS/nixpkgs", T3CODE_UNWRAPPED, package_revision)
+    except subprocess.CalledProcessError as error:
+        if "HTTP 404" not in (error.stderr or ""):
+            raise
+        text = source("NixOS/nixpkgs", "pkgs/by-name/t3/t3code-cli/unwrapped.nix", package_revision)
     tag = source_ref(text)
     # Never treat a nightly, preview, non-semver, or arbitrary revision as a
     # stable packaged release. This also rejects unexpected package shapes.
