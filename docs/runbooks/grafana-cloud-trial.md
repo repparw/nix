@@ -46,7 +46,7 @@ After the **target host's encrypted file** is present, opt that host into the
 `monitoring._.cloud-credentials` aspect. This aspect is deliberately not in
 fleet defaults yet; doing so before the secret files exist would break eval.
 
-If Cloud URLs and usernames are shared across the fleet, keep these *public*
+If Cloud URLs and usernames are shared across the fleet, keep these _public_
 configuration values in a common NixOS declaration (for example, alongside
 other `den.default.nixos` settings), not in SOPS:
 
