@@ -56,6 +56,9 @@ def validate(name, architecture):
         desktop = (entries / "share/applications/t3code.desktop").read_text()
         require("x-scheme-handler/t3code" in desktop and "%U" in desktop,
                 "desktop entry must support Connect URLs")
+        defaults = evaluate("alpha.config.home-manager.users.repparw.xdg.mimeApps.defaultApplications")
+        require("t3code.desktop" in defaults.get("x-scheme-handler/t3code", []),
+                "Connect scheme must have a default handler")
         unwrapped = build("alpha.pkgs.t3code-desktop.unwrapped" if split else "alpha.pkgs.t3code.unwrapped")
         # Server bundles include the web client; Electron's main process only
         # embeds the publishable key and delegates relay authentication to it.

@@ -52,6 +52,17 @@
       {
         home.packages = [ launcher ];
 
+        # Browsers resolve URL schemes through GIO, which only consults
+        # `mimeinfo.cache` associations when `mimeapps.list` names a default.
+        # The app's own `xdg-mime default` call is skipped while Electron runs
+        # unpackaged, so declare the handler instead of relying on runtime
+        # registration. Keep it beside the desktop entry so the cleanup patch
+        # leaves the permanent launcher intact.
+        xdg.mimeApps = lib.mkIf (osConfig.modules.desktop.enable or false) {
+          enable = true;
+          defaultApplications."x-scheme-handler/t3code" = "t3code.desktop";
+        };
+
         xdg.desktopEntries.t3code = lib.mkIf (osConfig.modules.desktop.enable or false) {
           name = "T3 Code (Alpha)";
           exec = "t3code-desktop-connect %U";
