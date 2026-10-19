@@ -32,6 +32,9 @@ in
         home.sessionVariables = connectEnvironment;
 
         programs.t3code.enable = true;
+        programs.t3code.package = lib.mkDefault (
+          if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code
+        );
 
         # t3code keeps custom themes in Electron/browser localStorage and only
         # imports them through the UI (Settings -> Appearance -> Add a theme).
@@ -123,8 +126,10 @@ in
             After = [ "network.target" ];
           };
           Service = {
-            # Follow programs.t3code.package (pi pins the server-only build).
-            ExecStart = "${config.programs.t3code.package}/bin/t3 serve --mode web";
+            # Use the upstream CLI after the split; headless hosts select the local split until then.
+            ExecStart = "${
+              if pkgs ? t3code-cli then pkgs.t3code-cli else config.programs.t3code.package
+            }/bin/t3 serve --mode web";
             Restart = "always";
             RestartSec = 5;
             Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [

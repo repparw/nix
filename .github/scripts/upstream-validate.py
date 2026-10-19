@@ -24,7 +24,12 @@ def build(attribute):
 
 
 def unit(host, name):
-    return evaluate(f"{host}.config.home-manager.users.repparw.systemd.user.services.{name}")
+    service = evaluate(f"{host}.config.home-manager.users.repparw.systemd.user.services.{name}")
+    start = service["Service"]["ExecStart"]
+    if isinstance(start, list):
+        require(len(start) == 1, f"{host}/{name} must have exactly one ExecStart")
+        service["Service"]["ExecStart"] = start[0]
+    return service
 
 
 def require(condition, message):
@@ -44,17 +49,22 @@ def validate(name, architecture):
                     f"{host} CLI closure contains Electron")
         return
     if name == "t3code-connect":
-        package = build("alpha.pkgs.t3code-desktop")
-        desktop = (package / "share/applications/t3code.desktop").read_text()
+        split = json.loads(command("nix", "eval", "--json", "--no-update-lock-file",
+                                   ".#nixosConfigurations.alpha.pkgs", "--apply", "p: p ? t3code-cli"))
+        package = build("alpha.pkgs.t3code-desktop" if split else "alpha.pkgs.t3code")
+        entries = build("alpha.config.home-manager.users.repparw.home.path")
+        desktop = (entries / "share/applications/t3code.desktop").read_text()
         require("x-scheme-handler/t3code" in desktop and "%U" in desktop,
                 "desktop entry must support Connect URLs")
-        unwrapped = build("alpha.pkgs.t3code-cli.unwrapped")
-        # Inspect the built server and desktop bundles, not the source .env file.
+        unwrapped = build("alpha.pkgs.t3code-desktop.unwrapped" if split else "alpha.pkgs.t3code.unwrapped")
+        # Server bundles include the web client; Electron's main process only
+        # embeds the publishable key and delegates relay authentication to it.
         values = ("pk_live_Y2xlcmsudDMuY29kZXMk", "t3-relay", "hzxSgY2cH10sDU2r", "https://relay.t3.codes")
-        for area in ("server", "desktop"):
-            files = list(unwrapped.glob(f"libexec/**/apps/{area}/**/*.mjs")) + list(unwrapped.glob(f"libexec/**/apps/{area}/**/*.js"))
+        for area, expected in (("server", values), ("desktop", values[:1])):
+            files = [path for path in (unwrapped / f"libexec/t3code/apps/{area}").rglob("*")
+                     if path.suffix in (".mjs", ".js", ".cjs") and "node_modules" not in path.parts]
             text = "\n".join(path.read_text(errors="replace") for path in files)
-            require(all(value in text for value in values), f"Connect identifiers missing in {area} bundle")
+            require(all(value in text for value in expected), f"Connect identifiers missing in {area} bundle")
     elif name == "t3code-split":
         package = build("alpha.config.home-manager.users.repparw.programs.t3code.package")
         require(str(package) == evaluate("alpha.pkgs.t3code-desktop.outPath"),
@@ -134,8 +144,11 @@ def validate(name, architecture):
             service = unit(host, "t3code-web")
             require("--mode web" in service["Service"]["ExecStart"], "missing web arguments")
             package = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.outPath")
-            require(service["Service"]["ExecStart"].startswith(package + "/bin/t3 "),
-                    f"{host} must serve the root-pin package")
+            has_cli = json.loads(command("nix", "eval", "--json", "--no-update-lock-file",
+                                         f".#nixosConfigurations.{host}.pkgs", "--apply", "p: p ? t3code-cli"))
+            cli = evaluate(f"{host}.pkgs.t3code-cli.outPath") if has_cli else package
+            require(service["Service"]["ExecStart"].startswith(cli + "/bin/t3 "),
+                    f"{host} must serve the selected CLI")
         version = command("nix", "eval", "--raw", "--no-update-lock-file",
                           ".#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.t3code.package.version")
         match = re.match(r"(\d+)\.(\d+)\.(\d+)", version)
