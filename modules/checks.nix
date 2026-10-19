@@ -258,17 +258,9 @@
               ''
                 export HOME=$(mktemp -d)
                 cp -r ${inputs.self} src
-                # treefmt's --fail-on-change can flag identical rewrites solely
-                # because a formatter touched the file's mtime. Compare bytes
-                # instead: real formatting changes still fail with a useful diff.
-                cp -r ${inputs.self} unformatted
                 chmod -R +w src
                 cd src
-                treefmt --tree-root . --walk filesystem
-                if ! diff -ru --no-dereference ../unformatted .; then
-                  echo "Formatting changed tracked source content." >&2
-                  exit 1
-                fi
+                treefmt --tree-root . --walk filesystem --fail-on-change
                 touch $out
               '';
 
