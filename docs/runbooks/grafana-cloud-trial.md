@@ -98,9 +98,9 @@ and redeploy. Epsilon's ingestion is not dependent on Cloud.
 
 ## Alerts during the trial
 
-Grafana Git Sync manages **dashboards and folders, not alert rules, data
-sources or contact points**. Do not couple alert management to dashboard
-Git Sync. Same Grafana-managed alert rules can be configured on both instances:
+Grafana Git Sync manages dashboards and folders only. It does not manage
+alert rules, data sources, or contact points. Do not couple alert management
+to dashboard Git Sync. Same Grafana-managed alert rules can be configured on both instances:
 evaluate against the local Prometheus/Loki datasource on Epsilon and the Cloud
 datasource on Cloud. Configure separate Discord contact points; duplicate
 notifications are acceptable during the evaluation. Test explicit FIRING and
@@ -113,8 +113,8 @@ fleet-health, backup/reboot-watch, Discord and deploy-rs safety checks
 until alert parity and recovery paths are proven.
 
 For reproducible alerts later, use Grafana alert provisioning APIs or the
-Grafana Terraform provider, with **the same rules parameterized by datasource
-UID and instance credentials** for the two Grafana instances. Manage API
+Grafana Terraform provider. Use shared rule definitions parameterized by
+instance-specific datasource UIDs and credentials. Manage API
 tokens through a secret mechanism; alerting Terraform state must be kept
 private. If Cloud becomes the sole backend, discontinue local alert
 provisioning instead of maintaining permanent duplication.
