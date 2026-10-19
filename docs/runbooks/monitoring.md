@@ -195,6 +195,10 @@ Prometheus frontend. A move away from Grafana should not require replacing
 the collectors or historical metrics/logging backends. Leave this PR as a draft until
 metrics collection and frontend choice have both been evaluated.
 
+## Parallel Grafana Cloud pilot
+
+A Cloud pilot can run alongside Epsilon without changing its receiving services. See [Grafana Cloud parallel pilot](grafana-cloud-pilot.md) for optional Alloy routing, SOPS token setup, privacy safeguards, and Cloud-side alerts. Existing fleet and deployment alerts remain active.
+
 ## Next migration
 
 Use Alloy's Unix exporter textfile collector for fleet-specific gauges
