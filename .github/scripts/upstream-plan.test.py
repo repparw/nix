@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -296,6 +297,27 @@ class PlanTests(unittest.TestCase):
         for name, spec in self.registry.items():
             if spec["mode"] == "post-lock":
                 self.assertTrue((ROOT / ".github/upstream/cleanup" / spec["cleanup"]).exists(), name)
+
+    def test_t3code_stable010_cleanup_removes_the_version_bridge_and_desktop_recipe(self):
+        files = (
+            "modules/aspects/ai/t3code-stable010.nix",
+            "modules/aspects/ai/t3code.nix",
+            "modules/entities.nix",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            candidate = Path(directory)
+            subprocess.run(["git", "init", "-q"], cwd=candidate, check=True)
+            for relative in files:
+                destination = candidate / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(ROOT / relative, destination)
+
+            cleanup = ROOT / ".github/upstream/cleanup/t3code-stable010.patch"
+            subprocess.run(["git", "apply", "--check", str(cleanup)], cwd=candidate, check=True)
+            subprocess.run(["git", "apply", str(cleanup)], cwd=candidate, check=True)
+
+            self.assertFalse((candidate / files[0]).exists())
+            self.assertNotIn("t3code-stable010", (candidate / files[2]).read_text())
 
 
 if __name__ == "__main__":

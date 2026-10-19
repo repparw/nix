@@ -168,16 +168,21 @@ conversations during a cutover.
 
 ## T3 Code stable 0.1.0 bridge (#288, #289)
 
-The `t3code-stable010` watcher retires the bridging overlay that serves
-stable 0.1.0 from the upstream release archive ahead of nixpkgs#575132. Its
-detector reuses the nightly-v2 `PINNED-READY` gate: only a stable
+The `t3code-stable010` watcher retires the complete 0.1.0 version bridge
+ahead of nixpkgs#575132. The bridge builds the desktop package from the
+existing Nixpkgs recipe with the PR's version, source hash, and pnpm hash;
+ARM hosts use the upstream server archive to avoid building Electron on small
+roots. Its detector reuses the nightly-v2
+`PINNED-READY` gate: only a stable
 orchestrator-v2 release carrying the root Nixpkgs pin may drop the bridge,
 because an earlier drop downgrades Alpha to V1 0.0.45 and breaks Android/web
 clients. The post-lock cleanup is the complete cutover: it deletes the
 bridge aspect, removes its entity includes so every host serves the
 root-pin package (Alpha stock, Pi/Epsilon the `t3code-split` server-only
-build), and arms the `t3code >= 0.1.0` version assertion in `t3code.nix`
-that keeps a pin regression from silently downgrading `statev2.sqlite`.
+build) and arms the `t3code >= 0.1.0`
+version assertion in `t3code.nix` that keeps a pin regression from silently
+downgrading `statev2.sqlite`. The `t3code-split` watcher independently keeps
+the server-only layer until nixpkgs#555814 reaches the pin and removes it.
 A cleanup that conflicts with edited modules fails closed for review.
 Candidate validation requires the `PINNED-READY` pin, checks every
 generated `t3code-web` unit against the root-pin package, and builds
