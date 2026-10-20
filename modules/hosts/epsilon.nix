@@ -227,6 +227,7 @@
           iifname "ve-*" oifname "eth0" accept comment "container internet egress"
           iifname "eth0" oifname "ve-*" ct state established,related accept comment "container internet replies"
           iifname "ve-glance" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept comment "glance monitor checks via home tunnel"
+          iifname "ve-glance" oifname "ve-paperless" ip daddr ${config.containers.paperless.localAddress} tcp dport ${toString config.modules.services.definitions.paperless.port} accept comment "glance paperless monitor check"
           iifname "ve-hermes" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept comment "hermes egress to home (DDNS/state)"
           iifname "wg-home" oifname { "ve-glance", "ve-hermes" } ct state established,related accept comment "container home-tunnel replies"
         '';
