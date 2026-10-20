@@ -7,9 +7,71 @@
       })
     ];
     homeManager =
-      { pkgs, ... }:
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
+      let
+        json5 = pkgs.python3Packages.toPythonApplication pkgs.python3Packages.json5;
+      in
       {
         xdg.configFile."opencode/plugins/nous-live.ts".source = ./opencode-plugins/nous-live-v2.ts;
+        # Compute the opencode provider instance's hidden models at activation
+        # time from the live Zen and OpenRouter catalogs. Everything is hidden
+        # except: endpoints containing "free", OpenRouter's ~latest dynamic
+        # slugs, and nvidia/*. Runs after the module's own $dynamic * $static
+        # merge (which would replace the GUI's hiddenModels array); keeps are
+        # subtracted so re-surfaced models survive later activations. Fails
+        # open: a failed or empty catalog fetch leaves settings.json alone.
+        # The GUI prunes stale entries when it saves.
+        home.activation.t3codeModelHides = lib.hm.dag.entryAfter [ "t3codeSettingsActivation" ] (
+          let
+            jq = lib.getExe pkgs.jq;
+            curl = lib.getExe pkgs.curl;
+            json5Exe = lib.getExe json5;
+          in
+          ''
+            settings="${config.home.homeDirectory}/.t3/userdata/settings.json"
+            if [ ! -e "$settings" ]; then
+              echo '{}' > "$settings"
+            fi
+            hides="[]"
+            keeps="[]"
+            z=$(${curl} -fsS -m 20 https://opencode.ai/inference/v1/models 2>/dev/null \
+              | ${jq} -c '{
+                  hides: [ .data[].id | select(contains("free") | not) | "opencode/" + . ],
+                  keeps: [ .data[].id | select(contains("free")) | "opencode/" + . ]
+                }' 2>/dev/null) || z=
+            if [ -n "''${z:-}" ]; then
+              hides=$(${jq} -nc --argjson a "$hides" --argjson z "$z" '$a + $z.hides') || true
+              keeps=$(${jq} -nc --argjson a "$keeps" --argjson z "$z" '$a + $z.keeps') || true
+            fi
+            o=$(${curl} -fsS -m 30 https://openrouter.ai/api/v1/models 2>/dev/null \
+              | ${jq} -c '{
+                  hides: [ .data[].id | select(((contains("free")) or startswith("~") or startswith("nvidia/")) | not) | "openrouter/" + . ],
+                  keeps: [ .data[].id | select((contains("free")) or startswith("~") or startswith("nvidia/")) | "openrouter/" + . ]
+                }' 2>/dev/null) || o=
+            if [ -n "''${o:-}" ]; then
+              hides=$(${jq} -nc --argjson a "$hides" --argjson o "$o" '$a + $o.hides') || true
+              keeps=$(${jq} -nc --argjson a "$keeps" --argjson o "$o" '$a + $o.keeps') || true
+            fi
+            if [ "$hides" != "[]" ] || [ "$keeps" != "[]" ]; then
+              dynamic="$(${json5Exe} --as-json "$settings")"
+              merged=$(${jq} -n \
+                --argjson dynamic "$dynamic" \
+                --argjson hides "$hides" \
+                --argjson keeps "$keeps" \
+                '$dynamic
+                | .providerModelPreferences.opencode.hiddenModels = (
+                    ((($dynamic.providerModelPreferences.opencode.hiddenModels // []) - $keeps) + $hides)
+                    | unique
+                  )') || exit 1
+              printf '%s\n' "$merged" > "$settings"
+            fi
+          ''
+        );
         programs.opencode = {
           package = pkgs.opencode-v2;
           enable = true;
