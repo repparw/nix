@@ -67,20 +67,24 @@ Record the observed active series and samples per minute in Cloud's usage view a
 
 ## Independent Cloud alerts
 
-Configure these **in the Cloud Grafana UI** (not created by this Nix module). In Alerting → Notification configuration, add an independent _Discord_ contact point using a webhook for a dedicated test channel. Send a test, retain recovery/resolved notifications, and keep this contact point separate from the existing fleet-health Discord path to avoid duplicate production alerts.
+The Cloud stack has one independent Discord contact point, **Grafana Cloud Alerts**, posting to `#notifications` through its own webhook. The webhook URL is a runtime secret: do not commit it, and rotate it if it is exposed. Keep `disableResolveMessage: false` so recovery notifications are sent. The contact point shares the channel with fleet-health messages but not the delivery path.
 
-Start with two independent Grafana-managed host-absence rules, evaluated every minute:
+A notification policy route sends alerts labeled `pilot=grafana-cloud` to that contact point. The route uses `group_by: ["host"]`, a 10s group wait, a 1m group interval, and a 4h repeat interval.
+
+Two Grafana-managed host-absence rules exist in folder **Fleet Cloud Pilot**, group **fleet-cloud-pilot**:
 
 - **Epsilon:** `absent_over_time(node_uname_info{host="epsilon"}[10m])`
 - **Pi:** `absent_over_time(node_uname_info{host="pi"}[10m])`
 
-Alpha deliberately shuts down. Add an Alpha rule only after defining its expected uptime schedule or explicit maintenance suppression; do not alert unconditionally on its absence.
+Both rules are **paused** until the corresponding host is activated, because absence is expected before the first Cloud sample arrives. Do not unpause a rule before its host is live. Alpha deliberately shuts down; add an Alpha rule only after defining its expected uptime schedule or explicit maintenance suppression.
+
+The firing/resolved path was validated with a temporary synthetic rule (`fleet_cloud_probe{test="delivery"}`), which was deleted after a Firing and a Resolved notification were observed. Re-run that check after changing the contact point or notification policy.
 
 Configure explicit No Data and Error behavior and test both firing and resolution. For disk alerts, evaluate `100 * (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes)` after excluding pseudo and ephemeral mounts; start with 70% warning and 85% critical sustained for several minutes. Consider systemd failed-unit and backup freshness alerts after the corresponding metrics are verified.
 
 Cloud Synthetic Monitoring can probe a public HTTPS service independently of Epsilon. Note that `metrics.repparw.com/api/health` is intentionally unauthenticated and checks frontend reachability, **not end-to-end ingestion**.
 
-The repository provisions encrypted per-host write tokens in `secrets/grafana-cloud-*.sops.yaml`. The Cloud account, access policies, Discord webhook, Grafana service-account alert-management credentials, dashboards, and remote alert objects are created manually in the Cloud Portal/UI and are not managed by this Nix module. Existing monitoring remains the source of truth until the pilot is validated.
+The repository provisions encrypted per-host write tokens in `secrets/grafana-cloud-*.sops.yaml`. The Cloud account, access policies, Discord webhook/contact point, notification policy, dashboards, and alert rules are created manually in the Cloud Portal/UI and are not managed by this Nix module. Existing monitoring remains the source of truth until the pilot is validated.
 
 References: [Alloy remote write](https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.remote_write/), [Alloy Loki write](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.write/), [Cloud Access Policies](https://grafana.com/docs/grafana-cloud/platform/security-and-account-management/security-and-access/authentication-and-permissions/access-policies/), [Cloud alert notifications](https://grafana.com/docs/grafana-cloud/observe-and-act/alert-and-measure-reliability/alerting/configure-notifications/manage-contact-points/).
 
