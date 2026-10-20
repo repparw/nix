@@ -151,9 +151,9 @@ in
         // lib.optionalAttrs (service.healthcheck == null) { alt-status-codes = [ 302 ]; }
       )
       (
-        lib.filterAttrs
-          (_: service: service.monitor && service.hostname != null && service.port != null)
-          cfg.definitions
+        lib.filterAttrs (
+          _: service: service.monitor && service.hostname != null && service.port != null
+        ) cfg.definitions
       );
   backupMounts =
     cfg:
