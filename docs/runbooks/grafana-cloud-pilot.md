@@ -69,6 +69,8 @@ Record the observed active series and samples per minute in Cloud's usage view a
 
 The Cloud stack has one independent Discord contact point, **Grafana Cloud Alerts**, posting to `#notifications` through its own webhook. The webhook URL is a runtime secret: do not commit it, and rotate it if it is exposed. Keep `disableResolveMessage: false` so recovery notifications are sent. The contact point shares the channel with fleet-health messages but not the delivery path.
 
+Grafana's Discord notifier sends a new message on resolution; it cannot delete the original firing message. The pilot intentionally keeps that built-in behavior. A self-cleaning relay that stores the Discord message ID per alert fingerprint would be required if firing messages must disappear on resolution.
+
 A notification policy route sends alerts labeled `pilot=grafana-cloud` to that contact point. The route uses `group_by: ["host"]`, a 10s group wait, a 1m group interval, and a 4h repeat interval.
 
 Two Grafana-managed host-absence rules exist in folder **Fleet Cloud Pilot**, group **fleet-cloud-pilot**:
