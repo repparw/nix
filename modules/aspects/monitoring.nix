@@ -58,9 +58,52 @@
           default = [ ];
           description = "Additional literal filesystem mountpoints omitted from Alloy collection.";
         };
+
+        # Opt in per host after installing a runtime credential. The existing
+        # Epsilon receivers remain entirely independent of Grafana Cloud.
+        cloud = {
+          enable = lib.mkEnableOption "parallel Grafana Cloud metrics/logs ingestion";
+          metricsUrl = lib.mkOption {
+            type = lib.types.str;
+            default = "";
+            description = "Full Grafana Cloud Prometheus remote-write HTTPS URL.";
+          };
+          logsUrl = lib.mkOption {
+            type = lib.types.str;
+            default = "";
+            description = "Full Grafana Cloud Loki push HTTPS URL.";
+          };
+          metricsUsername = lib.mkOption {
+            type = lib.types.str;
+            default = "";
+            description = "Grafana Cloud Prometheus instance ID (not a password).";
+          };
+          logsUsername = lib.mkOption {
+            type = lib.types.str;
+            default = "";
+            description = "Grafana Cloud Loki instance ID (not a password).";
+          };
+          tokenFile = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = "Runtime secret containing a metrics:write/logs:write Cloud Access Policy token.";
+          };
+        };
       };
 
       config = {
+        assertions = lib.optionals cfg.cloud.enable [
+          {
+            assertion =
+              lib.hasPrefix "https://" cfg.cloud.metricsUrl
+              && lib.hasPrefix "https://" cfg.cloud.logsUrl
+              && cfg.cloud.metricsUsername != ""
+              && cfg.cloud.logsUsername != ""
+              && cfg.cloud.tokenFile != null;
+            message = "modules.monitoring.agent.cloud requires HTTPS metrics/logs URLs, instance IDs and a runtime tokenFile.";
+          }
+        ];
+
         # Ship the host's systemd journal to the central Loki instance.
         # Entries already sent persist on Epsilon across Pi reboots even
         # though the Pi journal remains volatile.
@@ -118,6 +161,36 @@
             }
           }
 
+          ${lib.optionalString cfg.cloud.enable ''
+            // Independent 60s Cloud scrapes preserve Epsilon's existing 30s
+            // resolution while reducing Cloud data-points-per-minute usage.
+            prometheus.scrape "node_cloud" {
+              targets         = prometheus.exporter.unix.node.targets
+              forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+              job_name        = "node"
+              scrape_interval = "60s"
+            }
+
+            prometheus.scrape "alloy_cloud" {
+              targets         = [{ "__address__" = "127.0.0.1:12345", "host" = "${config.networking.hostName}" }]
+              honor_labels    = false
+              forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+              job_name        = "alloy"
+              scrape_interval = "60s"
+            }
+
+            prometheus.remote_write "grafana_cloud" {
+              external_labels = { host = "${config.networking.hostName}" }
+              endpoint {
+                url = ${builtins.toJSON cfg.cloud.metricsUrl}
+                basic_auth {
+                  username      = ${builtins.toJSON cfg.cloud.metricsUsername}
+                  password_file = "/run/credentials/alloy.service/grafana-cloud-token"
+                }
+              }
+            }
+          ''}
+
           // Journald metadata is internal until explicitly promoted to labels.
           // Keep labels low-cardinality (never PID, cursor, command line).
           loki.relabel "journal" {
@@ -147,7 +220,7 @@
           // Redact common leaked credentials. This is best-effort, not
           // proof that arbitrary sensitive content cannot be collected.
           loki.secretfilter "journal" {
-            forward_to    = [loki.write.epsilon.receiver]
+            forward_to    = [loki.write.epsilon.receiver${lib.optionalString cfg.cloud.enable ", loki.write.grafana_cloud.receiver"}]
             redact_percent = 100
           }
 
@@ -158,11 +231,29 @@
               max_backoff_retries = 0
             }
           }
+
+          ${lib.optionalString cfg.cloud.enable ''
+            // Same filtered journal entries go to Cloud and Epsilon.
+            loki.write "grafana_cloud" {
+              endpoint {
+                url                 = ${builtins.toJSON cfg.cloud.logsUrl}
+                max_backoff_retries = 0
+                basic_auth {
+                  username      = ${builtins.toJSON cfg.cloud.logsUsername}
+                  password_file = "/run/credentials/alloy.service/grafana-cloud-token"
+                }
+              }
+            }
+          ''}
         '';
 
-        systemd.services.alloy.serviceConfig.LoadCredential = lib.optionals (cfg.authentication != null) [
-          "ingestion-password:${cfg.authentication.passwordFile}"
-        ];
+        systemd.services.alloy.serviceConfig.LoadCredential =
+          lib.optionals (cfg.authentication != null) [
+            "ingestion-password:${cfg.authentication.passwordFile}"
+          ]
+          ++ lib.optionals (cfg.cloud.enable && cfg.cloud.tokenFile != null) [
+            "grafana-cloud-token:${cfg.cloud.tokenFile}"
+          ];
 
         # Writers of future fleet-specific .prom gauges use this shared
         # directory, independent of the telemetry agent implementation.
@@ -181,6 +272,20 @@
     modules.monitoring.agent.authentication = {
       username = config.networking.hostName;
       passwordFile = config.sops.secrets.monitoring-agent-password.path;
+    };
+  };
+
+  # Include explicitly on each host only after its Cloud secret is created.
+  # Keeping this outside fleet defaults leaves the PR safe to deploy as-is.
+  den.aspects.monitoring.provides.cloud-credentials.nixos = { config, ... }: {
+    sops.secrets.grafana-cloud-token = {
+      sopsFile = ../../secrets + "/grafana-cloud-${config.networking.hostName}.sops.yaml";
+      key = "token";
+      restartUnits = [ "alloy.service" ];
+    };
+    modules.monitoring.agent.cloud = {
+      enable = true;
+      tokenFile = config.sops.secrets.grafana-cloud-token.path;
     };
   };
 
