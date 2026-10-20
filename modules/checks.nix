@@ -36,8 +36,15 @@
                 ++ lib.optionals (host == "epsilon") [
                   (
                     { lib, pkgs, ... }:
+                    let
+                      # The v0.22.2 module reads package.hermesVenv in its
+                      # activation script; the stub only needs it to evaluate.
+                      hermesStub = mkStub pkgs "hermes-agent";
+                    in
                     {
-                      containers.hermes.config.services.hermes-agent.package = lib.mkForce (mkStub pkgs "hermes-agent");
+                      containers.hermes.config.services.hermes-agent.package = lib.mkForce (
+                        hermesStub // { hermesVenv = hermesStub; }
+                      );
                     }
                   )
                 ]
