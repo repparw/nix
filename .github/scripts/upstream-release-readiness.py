@@ -46,7 +46,7 @@ TESTED_TAG = f"v{TESTED_VERSION}"
 # eventually move v2 into it. Order is the tie-break for equal versions.
 CANDIDATE_ATTRS = ("opencode2", "opencode_2", "opencode")
 PACKAGING_PRS = (569770, 572946)
-OVERLAY_MARKER = Path("modules/_packages/opencode-v2.nix")
+OVERLAY_MARKER = Path("modules/_packages/opencode.nix")
 READY = "PINNED-READY"
 
 _VERSION = re.compile(r'\bversion\s*=\s*"([^"]+)"\s*;')

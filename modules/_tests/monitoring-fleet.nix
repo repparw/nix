@@ -170,7 +170,10 @@ let
     && cloud.metrics.url == "https://prometheus-prod-40-prod-sa-east-1.grafana.net/api/prom/push"
     && cloud.metrics.username == "3689389"
     && cloud.metrics.tokenFile == "/run/secrets/grafana-cloud-write-token"
-    && cloud.logs == null
+    && cloud.logs != null
+    && cloud.logs.url == "https://logs-prod-024.grafana.net/loki/api/v1/push"
+    && cloud.logs.username == "1840359"
+    && cloud.logs.tokenFile == "/run/secrets/grafana-cloud-write-token"
     && lib.hasInfix ''prometheus.remote_write "cloud"'' text
     && lib.hasInfix ''prometheus.scrape "node_cloud"'' text
     && lib.hasInfix ''prometheus.scrape "alloy_cloud"'' text

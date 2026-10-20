@@ -130,28 +130,32 @@ in
     lib.mapAttrsToList
       (
         name: service:
-        if service.healthcheck != null then
-          {
-            title = name;
-            url = "https://${service.hostname}.${cfg.domain}";
-            check-url = publicHealthUrl cfg hostConfig name;
-            timeout = "10s";
-          }
-        else
-          {
-            title = name;
-            url = "https://${service.hostname}.${cfg.domain}";
-            check-url = serviceUrl cfg hostConfig name;
-            timeout = "10s";
-            alt-status-codes = [ 302 ];
-          }
+        let
+          browserUrl = "https://${service.hostname}.${cfg.domain}";
+          # Probe public-facing, unauthenticated services through the same HTTPS
+          # edge used by visitors. Other services use their internal backend
+          # endpoints to avoid mistaking an authentication redirect for health.
+          checkUrl =
+            if service.healthcheck != null then
+              "${browserUrl}${service.healthcheck}"
+            else if service.auth == "bypass" then
+              browserUrl
+            else
+              serviceUrl cfg hostConfig name;
+        in
+        {
+          title = name;
+          url = browserUrl;
+          check-url = checkUrl;
+          timeout = "10s";
+        }
+        // lib.optionalAttrs (service.healthcheck == null) { alt-status-codes = [ 302 ]; }
       )
       (
         lib.filterAttrs (
           _: service: service.monitor && service.hostname != null && service.port != null
         ) cfg.definitions
       );
-
   backupMounts =
     cfg:
     lib.mapAttrs' (

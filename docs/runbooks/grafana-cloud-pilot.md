@@ -11,7 +11,7 @@ tags: [monitoring, grafana, cloud, alloy, alerting]
 
 Grafana Cloud Free is the intended permanent backend after the pilot passes. Keep Epsilon's stack in place throughout validation; retire it only in a separate, evidence-backed cleanup PR.
 
-**Opt-in per host and signal.** Without `modules.monitoring.agent.cloud.metrics` or `logs`, Epsilon's existing Prometheus, Loki, Grafana, ingestion proxy, SOPS credentials, and alerting are unchanged. Cloud targets use separate Alloy writers. The `den.aspects.monitoring._.cloud` aspect enables Cloud **metrics** for Alpha, Pi and Epsilon; Cloud **logs** remain disabled until the journald sensitivity review is complete.
+**Opt-in per host and signal.** Without `modules.monitoring.agent.cloud.metrics` or `logs`, Epsilon's existing Prometheus, Loki, Grafana, ingestion proxy, SOPS credentials, and alerting are unchanged. Cloud targets use separate Alloy writers. The `den.aspects.monitoring._.cloud` aspect enables Cloud metrics and filtered host journald logs for Alpha, Pi and Epsilon.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ Grafana Cloud Free is the intended permanent backend after the pilot passes. Kee
    - Logs: `https://logs-prod-024.grafana.net/loki/api/v1/push`, instance ID `1840359`.
 2. Each host has its own Cloud Access Policy token carrying `metrics:write` and `logs:write`. Host-scoped policies allow isolated revocation.
 3. Encrypt each host's token with the existing SOPS workflow in `secrets/grafana-cloud-<host>.sops.yaml` under the `token` key. The matching `.sops.yaml` rules select that host and recovery recipients only. **Never embed actual tokens in Nix expressions, the generated Alloy config or CI.**
-4. `den.aspects.monitoring._.cloud` defines the runtime credential and enables the metrics mirror on hosts that include it:
+4. `den.aspects.monitoring._.cloud` defines the runtime credential and enables the metrics and logs mirrors on hosts that include it:
 
 ```nix
 den.aspects.monitoring.provides.cloud.nixos = { config, lib, ... }: {
@@ -39,7 +39,7 @@ den.aspects.monitoring.provides.cloud.nixos = { config, lib, ... }: {
 
 The module requires HTTPS and delivers the token to Alloy through systemd `LoadCredential`; the generated Alloy file references the credential file path, not its contents. The aspect is included by Alpha, Pi and Epsilon, but activation remains staged: Epsilon first.
 
-Optional logs (keep disabled until the journald sensitivity review is complete):
+The same aspect enables logs through the approved native secret-filter pipeline:
 
 ```nix
 modules.monitoring.agent.cloud.logs = {

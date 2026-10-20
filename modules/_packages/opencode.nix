@@ -87,7 +87,7 @@ let
     };
 in
 stdenv.mkDerivation (finalAttrs: {
-  pname = "opencode2";
+  pname = "opencode";
   version = "2.0.26";
 
   __structuredAttrs = true;
@@ -170,8 +170,6 @@ stdenv.mkDerivation (finalAttrs: {
       } \\"}
       --set OPENCODE_DISABLE_AUTOUPDATE true
 
-    ln -s opencode $out/bin/opencode2
-
     install -Dm644 cli.json $out/share/cli.json
 
     runHook postInstall
@@ -182,11 +180,6 @@ stdenv.mkDerivation (finalAttrs: {
       --bash <($out/bin/opencode --completions bash) \
       --zsh <($out/bin/opencode --completions zsh) \
       --fish <($out/bin/opencode --completions fish)
-
-    installShellCompletion --cmd opencode2 \
-      --bash <($out/bin/opencode2 --completions bash) \
-      --zsh <($out/bin/opencode2 --completions zsh) \
-      --fish <($out/bin/opencode2 --completions fish)
   '';
 
   dontStrip = true;
@@ -217,7 +210,7 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   meta = {
-    description = "AI coding agent built for the terminal (v2)";
+    description = "AI coding agent built for the terminal";
     homepage = "https://github.com/anomalyco/opencode";
     changelog = "https://github.com/anomalyco/opencode/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.mit;
@@ -232,7 +225,7 @@ stdenv.mkDerivation (finalAttrs: {
       "x86_64-linux"
       "aarch64-darwin"
     ];
-    mainProgram = "opencode2";
+    mainProgram = "opencode";
     priority = 6;
   };
 })

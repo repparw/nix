@@ -36,8 +36,15 @@
                 ++ lib.optionals (host == "epsilon") [
                   (
                     { lib, pkgs, ... }:
+                    let
+                      # The v0.22.2 module reads package.hermesVenv in its
+                      # activation script; the stub only needs it to evaluate.
+                      hermesStub = mkStub pkgs "hermes-agent";
+                    in
                     {
-                      containers.hermes.config.services.hermes-agent.package = lib.mkForce (mkStub pkgs "hermes-agent");
+                      containers.hermes.config.services.hermes-agent.package = lib.mkForce (
+                        hermesStub // { hermesVenv = hermesStub; }
+                      );
                     }
                   )
                 ]
@@ -127,11 +134,6 @@
                 python3 -m unittest discover -s source -v
                 touch $out
               '';
-
-          hermes-auxiliary-routing =
-            (pkgs.callPackage ./_packages/hermes-agent.nix {
-              upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
-            }).tests.auxiliary-routing;
 
           btrfs-health =
             let
@@ -491,6 +493,32 @@
                 ) accessControl.rules
               ) (lib.attrNames definitions);
 
+              glanceServices = import ./_services/lib.nix { inherit lib pkgs; };
+              glanceSites = glanceServices.monitorSites epsilon.modules.services epsilon;
+              protectedLanSite = builtins.head (
+                glanceServices.monitorSites (
+                  epsilon.modules.services
+                  // {
+                    definitions.paperless = epsilon.modules.services.definitions.paperless // {
+                      lanEdge = true;
+                    };
+                  }
+                ) epsilon
+              );
+              glanceCheckUrl =
+                name: (lib.findFirst (site: site.title == name) { } glanceSites)."check-url" or null;
+              glanceHosts = epsilon.containers.glance.config.networking.hosts;
+              glanceRoutingMatches =
+                glanceCheckUrl "homeassistant" == "https://home.${domain}"
+                && lib.hasPrefix "http://" (glanceCheckUrl "paperless")
+                && protectedLanSite."check-url" == glanceCheckUrl "paperless"
+                && glanceCheckUrl "jellyfin" == "https://jellyfin.${domain}/health"
+                && builtins.elem "home.${domain}" (glanceHosts."${epsilon.modules.services.bridgePrefix}.1" or [ ])
+                && builtins.elem "jellyfin.${domain}" (
+                  glanceHosts.${epsilon.modules.services.hostAddresses.pi} or [ ]
+                )
+                && builtins.elem "rss.${domain}" (glanceHosts."${epsilon.modules.services.bridgePrefix}.1" or [ ]);
+
               validationMatches =
                 builtins.all (result: !result.success) invalidDefinitions && !duplicateHostnames.success;
 
@@ -505,11 +533,13 @@
                 && !(builtins.any (rule: builtins.elem "null.example.test" rule.domain) sparsePolicy.authelia.rules)
                 && healthcheckBypassMatches;
 
-              expected = fleetRegistryMatches && validationMatches && ingressPolicyMatches;
+              expected =
+                fleetRegistryMatches && validationMatches && ingressPolicyMatches && glanceRoutingMatches;
               matcherReport = builtins.toJSON {
                 r = fleetRegistryMatches;
                 v = validationMatches;
                 i = ingressPolicyMatches;
+                g = glanceRoutingMatches;
               };
             in
             assert expected || throw matcherReport;

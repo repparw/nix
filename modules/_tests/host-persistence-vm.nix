@@ -236,10 +236,13 @@ pkgs.testers.runNixOSTest {
         restic = "RESTIC_PASSWORD_FILE=/run/restic-password restic -r /persist/test-repository "
         machine.succeed("mkdir -p /var/lib/test-service/scheduled; echo native-scheduled > /var/lib/test-service/scheduled/app.zip")
         machine.succeed("systemctl start restic-backups-offsite.timer")
-        machine.wait_until_succeeds(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 1'")
+        machine.wait_until_succeeds(restic + "snapshots --no-lock --json | ${pkgs.jq}/bin/jq -e 'length == 1'")
         machine.succeed("systemctl stop restic-backups-offsite.timer")
-        machine.wait_until_succeeds("systemctl show restic-backups-offsite.service -p ActiveState --value | grep -qx inactive")
-        machine.succeed("systemctl show restic-backups-offsite.service -p Result --value | grep -qx success")
+        machine.wait_until_succeeds("systemctl show restic-backups-offsite.service -p ActiveState --value | grep -Eq '^(inactive|failed)$'")
+        service_result = machine.succeed("systemctl show restic-backups-offsite.service -p Result --value").strip()
+        if service_result != "success":
+            service_status = machine.succeed("systemctl status --no-pager restic-backups-offsite.service || true")
+            raise AssertionError("restic backup service ended with result " + service_result + ":\n" + service_status)
         machine.succeed("systemctl start --wait restic-backups-offsite.service")
         machine.succeed(restic + "dump latest /var/lib/backup-exports/offsite.json | ${pkgs.jq}/bin/jq -e '.exports[\"native-scheduled\"].status == \"complete\"'")
         machine.succeed(restic + "snapshots --json | ${pkgs.jq}/bin/jq -e 'length == 2'")

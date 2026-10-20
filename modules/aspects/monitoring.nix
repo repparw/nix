@@ -299,8 +299,11 @@
       username = "3689389";
       tokenFile = config.sops.secrets.grafana-cloud-write-token.path;
     };
-    # Cloud log mirroring remains disabled until the journald sensitivity
-    # review is complete. The token already carries logs:write for that step.
+    modules.monitoring.agent.cloud.logs = lib.mkDefault {
+      url = "https://logs-prod-024.grafana.net/loki/api/v1/push";
+      username = "1840359";
+      tokenFile = config.sops.secrets.grafana-cloud-write-token.path;
+    };
   };
 
   # Epsilon is the independent collector: it remains online when the home
