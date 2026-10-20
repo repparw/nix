@@ -5,6 +5,7 @@
 {
   den.aspects.pi = {
     includes = [
+      den.aspects.monitoring._.credentials
       den.aspects.fleet-unit-state
       den.aspects.pi._.backup
       den.aspects.persistence

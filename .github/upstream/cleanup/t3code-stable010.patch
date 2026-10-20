@@ -1,112 +1,67 @@
 diff --git a/modules/aspects/ai/t3code-stable010.nix b/modules/aspects/ai/t3code-stable010.nix
 deleted file mode 100644
-index bc30d8bc..00000000
+index f995de5..0000000
 --- a/modules/aspects/ai/t3code-stable010.nix
 +++ /dev/null
-@@ -1,92 +0,0 @@
+@@ -1,50 +0,0 @@
 -{ den, ... }:
 -{
--  # Bridging pin for nixpkgs#575132 (t3code 0.0.45 -> 0.1.0): serve stable
--  # orchestrator-V2 0.1.0 from the upstream release archive so fleet clients
--  # on the stable channel can connect before the root Nixpkgs pin packages
--  # 0.1.0. Same prebuilt-archive shape as t3code-nightly.nix: no local
--  # pnpm build, no Electron, no desktop tree. Completion: once 0.1.0 (or
--  # newer) reaches the root Nixpkgs pin, delete this file and its entity
--  # includes; the PR #285 version assertion then owns the retirement gate
--  # (issue #209; upstream watcher t3code-stable010).
--  den.aspects.ai.provides.t3code-stable010 = {
--    nixos = {
--      nixpkgs.overlays = [
--        (final: prev: {
--          t3code-stable010 =
--            let
--              releases = {
--                x86_64-linux = {
--                  arch = "x64";
--                  hash = "sha256-93A/8buPYkNYAFizzPLAKrti66S5keJrux2iL0tW2bE=";
+-  den.aspects.ai.provides.t3code-stable010.nixos =
+-    { lib, ... }:
+-    {
+-      # Version only; Connect and the server split have independent lifetimes.
+-      nixpkgs.overlays = lib.mkBefore [
+-        (
+-          final: prev:
+-          let
+-            overrideVersion =
+-              package:
+-              package.overrideAttrs (finalAttrs: {
+-                version = "0.1.0";
+-                src = prev.fetchFromGitHub {
+-                  owner = "pingdotgg";
+-                  repo = "t3code";
+-                  tag = "v${finalAttrs.version}";
+-                  hash = "sha256-P82DqoY1E9wtROwu5Nr7MB/I1PdmZHWXXR4nRa4GWXM=";
 -                };
--                aarch64-linux = {
--                  arch = "arm64";
--                  hash = "sha256-LQd1GpGCUrb6LTgRn+RMUUm2Kk1oSJSvXChT6LKpToE=";
+-                pnpmDeps = prev.fetchPnpmDeps {
+-                  pnpm = prev.pnpm_11;
+-                  inherit (finalAttrs)
+-                    pname
+-                    version
+-                    src
+-                    pnpmWorkspaces
+-                    ;
+-                  fetcherVersion = 4;
+-                  hash = "sha256-oX4tOu20tYO3ci7VvSEL8eFgxAYWp5HlQFSfAWJGJmg=";
 -                };
+-              });
+-          in
+-          if prev ? t3code-cli then
+-            {
+-              t3code-cli = prev.t3code-cli.override {
+-                t3code-unwrapped = overrideVersion prev.t3code-cli.unwrapped;
 -              };
--              release = releases.${prev.stdenv.hostPlatform.system};
--            in
--            prev.stdenv.mkDerivation rec {
--              pname = "t3code-server";
--              version = "0.1.0";
--              src = prev.fetchurl {
--                url = "https://github.com/pingdotgg/t3code/releases/download/v${version}/t3-${version}-linux-${release.arch}.tar.gz";
--                inherit (release) hash;
+-              t3code-desktop = prev.t3code-desktop.override { t3code-cli = final.t3code-cli; };
+-            }
+-          else
+-            {
+-              t3code = prev.t3code.override {
+-                t3code-unwrapped = overrideVersion prev.t3code.unwrapped;
 -              };
--              nativeBuildInputs = with prev; [
--                autoPatchelfHook
--                installShellFiles
--                makeBinaryWrapper
--              ];
--              buildInputs = [ prev.stdenv.cc.cc.lib ];
--              dontStrip = true;
--              installPhase = ''
--                runHook preInstall
--
--                mkdir -p $out/libexec
--                cp -rT . $out/libexec/t3code
--                makeWrapper $out/libexec/t3code/t3 $out/bin/t3 \
--                  --prefix PATH : "${
--                    prev.lib.makeBinPath [
--                      prev.git
--                      prev.gh
--                      prev.codex
--                    ]
--                  }"
--
--                runHook postInstall
--              '';
--              postFixup = ''
--                for shell in bash fish zsh; do
--                  if "$out/bin/t3" --completions "$shell" > ".t3-completions.$shell" 2>/dev/null \
--                    && [ -s ".t3-completions.$shell" ]; then
--                    installShellCompletion --cmd t3 --"$shell" ".t3-completions.$shell"
--                  fi
--                done
--              '';
--              meta = {
--                description = "Pinned T3 Code stable V2 server";
--                homepage = "https://github.com/pingdotgg/t3code";
--                license = prev.lib.licenses.mit;
--                mainProgram = "t3";
--                platforms = builtins.attrNames releases;
--                sourceProvenance = [ prev.lib.sourceTypes.binaryNativeCode ];
--              };
--            };
--        })
+-            }
+-        )
 -      ];
 -    };
--    homeManager =
--      { lib, pkgs, ... }:
--      {
--        # Mirrors t3code-nightly.nix so every fleet host that included the
--        # nightly keeps the same shape: x86 desktops stay on the root pin
--        # (mkIf), aarch64 hosts pick up the pinned server package.
--        programs.t3code.package = lib.mkIf pkgs.stdenv.hostPlatform.isAarch64 (
--          lib.mkForce pkgs.t3code-stable010
--        );
--        systemd.user.services.t3code-web.Service.ExecStart =
--          lib.mkForce "${pkgs.t3code-stable010}/bin/t3 serve --mode web";
--      };
--  };
 -}
 diff --git a/modules/aspects/ai/t3code.nix b/modules/aspects/ai/t3code.nix
-index 04460250..e2cf1b6f 100644
+index e67e636..f4b11bd 100644
 --- a/modules/aspects/ai/t3code.nix
 +++ b/modules/aspects/ai/t3code.nix
-@@ -33,6 +33,16 @@ in
+@@ -36,6 +36,13 @@ in
+           if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code
+         );
  
-         programs.t3code.enable = true;
- 
-+        # Removing the bridging overlay must not silently downgrade
-+        # statev2.sqlite to an older stable server if the nixpkgs pin is
-+        # still behind.
 +        assertions = [
 +          {
 +            assertion = lib.versionAtLeast config.programs.t3code.package.version "0.1.0";
@@ -118,7 +73,7 @@ index 04460250..e2cf1b6f 100644
          # imports them through the UI (Settings -> Appearance -> Add a theme).
          # Derive an importable theme file from the stylix palette and install
 diff --git a/modules/entities.nix b/modules/entities.nix
-index a7027b46..7fd4d5fb 100644
+index a7027b4..7fd4d5f 100644
 --- a/modules/entities.nix
 +++ b/modules/entities.nix
 @@ -11,7 +11,6 @@

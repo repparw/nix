@@ -149,6 +149,10 @@
                 touch $out
               '';
 
+          monitoring-vm = import ./_tests/monitoring-vm.nix { inherit inputs pkgs; };
+
+          monitoring-fleet = import ./_tests/monitoring-fleet.nix { inherit inputs lib pkgs; };
+
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
 

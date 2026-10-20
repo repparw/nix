@@ -71,11 +71,11 @@
     "cursor-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1792120713,
-        "narHash": "sha256-ql2vPKDIHqQxAcxpc2rTnIBv3rlxkE+I4X/Z71mQAoY=",
+        "lastModified": 1792368128,
+        "narHash": "sha256-HVp/celtCLIH/ID9SLG8dECJGr4fzvQXdHu/zrB0/1I=",
         "owner": "cursor",
         "repo": "plugins",
-        "rev": "f713f14203cd6420cec13cd7c55c32d598dbab68",
+        "rev": "8838150c6b4829ea3c01782631213776d86df14a",
         "type": "github"
       },
       "original": {

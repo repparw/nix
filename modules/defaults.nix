@@ -13,6 +13,7 @@
     default = {
       includes = with den.aspects; [
         nix-index
+        monitoring._.agent
         nixvim
         nixpkgs
         nix
