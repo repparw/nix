@@ -59,6 +59,13 @@ retaining its runtime completion checks. Sonarr/Jellyfin depends on
 the running service version and remains host-owned; its local timer is
 retired in favor of the verified Pi adapter below.
 
+`tridactyl-reader` is notify-only for #316. It reads `tridactyl-vim` from the
+pinned `firefox-addons` manifest and checks whether that release tag contains
+tridactyl/tridactyl#5515. Nixpkgs' native messaging host does not determine
+the extension version. CI notifies the issue when the pin is ready. Browser
+verification and removal of Obsidian Reader remain completion steps because
+this checkout has no Obsidian Reader declaration to remove.
+
 The Moonshine PR227 test build is declarative alpha config
 (`modules/aspects/moonshine-pr227-test.nix`, #147): the generated unit
 selects the test package, so activation and rollback belong to deploy-rs and

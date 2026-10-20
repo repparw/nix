@@ -1,4 +1,9 @@
 {
+  "tridactyl-reader": {
+    "issue": 316,
+    "mode": "notify-only",
+    "input": "firefox-addons"
+  },
   "opencode-v2": {
     "issue": 229,
     "mode": "notify-only",

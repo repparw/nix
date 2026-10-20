@@ -188,6 +188,32 @@ def t3code_nightly_v2_status(lock):
     return "PINNED-READY"
 
 def detect(name, lock):
+    if name == "tridactyl-reader":
+        pr = api("repos/tridactyl/tridactyl/pulls/5515")
+        if not pr.get("merged"):
+            return "waiting-upstream"
+        # The browser uses firefox-addons, not Nixpkgs' native messaging host.
+        # Read its selected manifest through Nix; GitHub's contents API omits
+        # the body of this >1 MB generated file.
+        import os
+        expression = '''let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT");
+          input = f.inputs.firefox-addons;
+          addons = builtins.fromJSON (builtins.readFile (input.outPath + "/firefox-addons-generated.json"));
+          in { revision = input.rev;
+            addons = builtins.filter (a: a.pname == "tridactyl-vim") addons; }'''
+        result = subprocess.run(
+            ["nix", "eval", "--impure", "--json", "--no-update-lock-file", "--expr", expression],
+            env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)},
+            capture_output=True, text=True, timeout=120, check=True)
+        selected = json.loads(result.stdout)
+        if selected["revision"] != pin(lock, "firefox-addons") or len(selected["addons"]) != 1:
+            raise ValueError("cannot identify the pinned Tridactyl add-on")
+        addon = selected["addons"][0]
+        version = addon["version"]
+        if (addon["addonId"] != "tridactyl.vim@cmcaine.co.uk" or
+                not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)):
+            raise ValueError("unexpected Tridactyl release metadata")
+        return "PINNED-READY" if contains("tridactyl/tridactyl", pr["merge_commit_sha"], version) else "merged-not-pinned"
     if name == "opencode-v2":
         import importlib.util
         spec = importlib.util.spec_from_file_location("release_readiness", ROOT / ".github/scripts/upstream-release-readiness.py")

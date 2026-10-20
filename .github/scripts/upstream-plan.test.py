@@ -307,6 +307,7 @@ class PlanTests(unittest.TestCase):
             "t3code-nightly-v2",
             "t3code-stable010",
             "opencode-v2",
+            "tridactyl-reader",
         }
         self.assertEqual(set(self.registry), expected)
 
