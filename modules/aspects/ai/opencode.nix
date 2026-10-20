@@ -7,58 +7,11 @@
       })
     ];
     homeManager =
+      { pkgs, ... }:
       {
-        config,
-        lib,
-        pkgs,
-        ...
-      }:
-      let
-        launcherPackage = pkgs.writeShellScriptBin "opencode2" ''
-          exec ${pkgs.opencode-v2}/bin/opencode2 "$@"
-        '';
-        launcher = "${launcherPackage}/bin/opencode2";
-        json5 = pkgs.python3Packages.toPythonApplication pkgs.python3Packages.json5;
-      in
-      {
-        home.packages = [ launcherPackage ];
-        home.activation.t3codeProviderCleanup = lib.hm.dag.entryBefore [ "t3codeSettingsActivation" ] (
-          lib.hm.generators.mkImpureConfigMerger {
-            inherit pkgs;
-            format = "json";
-            empty = "{}";
-            jqOperation = ''
-              $dynamic | del(
-                .providerInstances."opencode-v2",
-                .providerInstances."opencode-v2-trial",
-                .providerInstances."opencode-v1"
-              )
-            '';
-            path = "${config.home.homeDirectory}/.t3/userdata/settings.json";
-            mode = "600";
-            staticSettings = pkgs.writeText "t3code-provider-cleanup" "{}";
-            reader = "${lib.getExe json5} --as-json";
-          }
-        );
-        home.activation.opencodeV2DataPathMigration = lib.hm.dag.entryAfter [ "installPackages" ] ''
-          data_root="$HOME/.local/share"
-          old="$data_root/opencode-v2"
-          new="$data_root/opencode"
-          if [ -d "$old/opencode" ]; then
-            if [ -e "$new" ]; then
-              echo "opencode: both $old and $new exist; leaving $old untouched for manual merge." >&2
-            else
-              mv "$old/opencode" "$new"
-              echo "opencode: moved v2 data namespace onto $new"
-            fi
-          fi
-          rmdir "$old" 2>/dev/null || true
-        '';
         xdg.configFile."opencode/plugins/nous-live.ts".source = ./opencode-plugins/nous-live-v2.ts;
         programs.opencode = {
-          package = pkgs.writeShellScriptBin "opencode" ''
-            exec ${lib.escapeShellArg launcher} "$@"
-          '';
+          package = pkgs.opencode-v2;
           enable = true;
           enableMcpIntegration = true;
           skills = { };
@@ -150,122 +103,6 @@
               };
             };
             provider = {
-              opencode = {
-                blacklist = [
-                  # https://opencode.ai/docs/zen/
-                  "gpt-5-codex"
-                  "gpt-5.1-codex"
-                  "gpt-5.1-codex-max"
-                  "gpt-5.1-codex-mini"
-                  "gpt-5.2-codex"
-                  "claude-opus-4-1"
-                  "claude-sonnet-4"
-                  "claude-haiku-3-5"
-                  "gemini-3-pro"
-                  "minimax-m2.1"
-                  "minimax-m2.5"
-                  "glm-5"
-                  "glm-4.7"
-                  "glm-4.6"
-                  "kimi-k2.5"
-                  "kimi-k2-thinking"
-                  "kimi-k2"
-                  "qwen3-coder-480b"
-                  "gpt-5"
-                  "gpt-5.1"
-                  "gpt-5.2"
-                  "gpt-5.3-codex"
-                  "gpt-5.3-codex-spark"
-                  "gpt-5.4"
-                  "gpt-5.4-pro"
-                  "gpt-5.4-mini"
-                  "gpt-5.4-nano"
-                  "gpt-5.5"
-                  "gpt-5.5-pro"
-                  "claude-sonnet-4-5"
-                  "claude-opus-4-5"
-                  "claude-opus-4-6"
-                  "claude-opus-4-7"
-                  "claude-opus-4-8"
-                  "claude-sonnet-4-6"
-                  "claude-haiku-4-5"
-                  "gpt-5-nano"
-                  "gemini-3-flash"
-                  "gemini-3.1-pro"
-                  "gemini-3.5-flash"
-                  "gemini-3.5-flash-lite"
-                  "gemini-3.6-flash"
-                  "gemini-3.7-flash"
-                  "glm-5.1"
-                  "glm-5.2"
-                  "kimi-k2.6"
-                  "kimi-k2.7-code"
-                  "qwen3.5-plus"
-                  "qwen3.6-plus"
-                  "grok-4.5"
-                  "deepseek-v4-pro"
-                  "deepseek-v4-flash"
-                  "deepseek-v4-flash-vision-exp"
-                ];
-              };
-              opencode-go = {
-                blacklist = [
-                  "minimax-m2.5"
-                  "glm-5.1"
-                  "glm-5.2"
-                  "kimi-k2.6"
-                  "kimi-k2.7-code"
-                  "qwen3.6-plus"
-                  "qwen3.7-max"
-                  "qwen3.7-plus"
-                  "deepseek-v4-pro"
-                  "deepseek-v4-flash"
-                  "deepseek-v4-flash-vision-exp"
-                ];
-              };
-              openrouter = {
-                npm = "@ai-sdk/openai-compatible";
-                name = "OpenRouter";
-                options = {
-                  baseURL = "https://openrouter.ai/api/v1";
-                };
-                whitelist = [
-                  "~z-ai/glm-flash-latest"
-                  "deepseek/deepseek-v4.1-flash"
-                  "openrouter/free"
-                ];
-                models = {
-                  # OpenRouter has no `:z-ai` model-id suffix; `provider.only`
-                  # is the request-body pin. `:floor` sorts by list price and
-                  # admits non-Z.AI providers that match Z.AI's list price.
-                  "~z-ai/glm-flash-latest" = {
-                    name = "GLM Flash Latest (Z.ai)";
-                    options = {
-                      provider = {
-                        only = [ "z-ai" ];
-                      };
-                    };
-                  };
-                  "deepseek/deepseek-v4.1-flash" = {
-                    name = "DeepSeek V4.1 Flash (DeepSeek)";
-                    options = {
-                      provider = {
-                        only = [ "deepseek" ];
-                      };
-                    };
-                  };
-                  # OpenRouter: base slug "openai" does not match tier endpoints;
-                  # `openai/flex` is required.
-                  "openai/gpt-5.6-luna" = {
-                    name = "GPT 5.6 Luna (OpenAI Flex)";
-                    options = {
-                      provider = {
-                        only = [ "openai/flex" ];
-                      };
-                    };
-                  };
-                };
-              };
               nous-portal = {
                 npm = "@ai-sdk/openai-compatible";
                 name = "Nous Portal";
@@ -292,13 +129,6 @@
                 };
               };
             };
-          };
-        };
-        programs.t3code.userSettings.providerInstances.opencode = {
-          displayName = "OpenCode 2";
-          config = {
-            binaryPath = lib.mkForce launcher;
-            serverUrl = lib.mkForce "";
           };
         };
       };
