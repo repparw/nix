@@ -75,14 +75,14 @@ A notification policy route sends alerts labeled `pilot=grafana-cloud` to that c
 
 Two Grafana-managed host-absence rules exist in folder **Fleet Cloud Pilot**, group **fleet-cloud-pilot**:
 
-- **Epsilon:** `absent_over_time(node_uname_info{host="epsilon"}[10m])`
-- **Pi:** `absent_over_time(node_uname_info{host="pi"}[10m])`
+- **Epsilon:** `absent_over_time(node_uname_info{host="epsilon"}[10m]) or on() vector(0)`
+- **Pi:** `absent_over_time(node_uname_info{host="pi"}[10m]) or on() vector(0)`
 
-Both rules are **paused** until the corresponding host is activated, because absence is expected before the first Cloud sample arrives. Do not unpause a rule before its host is live. Alpha deliberately shuts down; add an Alpha rule only after defining its expected uptime schedule or explicit maintenance suppression.
+Keep each absence rule paused until its host sends a fresh Cloud sample, then enable it. The zero fallback represents healthy telemetry explicitly, so an empty healthy result cannot trigger the rule's No Data policy. Alpha deliberately shuts down; add an Alpha rule only after defining its expected uptime schedule or explicit maintenance suppression.
 
 The firing/resolved path was validated with a temporary synthetic rule (`fleet_cloud_probe{test="delivery"}`), which was deleted after a Firing and a Resolved notification were observed. Re-run that check after changing the contact point or notification policy.
 
-Configure explicit No Data and Error behavior and test both firing and resolution. For disk alerts, evaluate `100 * (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes)` after excluding pseudo and ephemeral mounts; start with 70% warning and 85% critical sustained for several minutes. Consider systemd failed-unit and backup freshness alerts after the corresponding metrics are verified.
+Configure explicit No Data and Error behavior and test both firing and resolution. Disk rules use `100 * (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes)` for durable mountpoints. They match disk-watch: warning at 90% and critical at 93%, sustained for five minutes. Warning excludes critical usage. Missing hosts are handled by the absence rules. Consider systemd failed-unit and backup freshness alerts after the corresponding metrics are verified.
 
 Cloud Synthetic Monitoring can probe a public HTTPS service independently of Epsilon. Note that `metrics.repparw.com/api/health` is intentionally unauthenticated and checks frontend reachability, **not end-to-end ingestion**.
 
@@ -94,7 +94,7 @@ References: [Alloy remote write](https://grafana.com/docs/alloy/latest/reference
 
 A redirect is _not_ a custom Grafana Cloud domain: users opening `https://metrics.repparw.com` receive a 302 to the real Cloud stack URL, and the browser then uses that `*.grafana.net` hostname. Use the **default Grafana Cloud Portal login** at the Cloud stack: it already supports GitHub/Google social sign-in for Cloud Portal members, without separate stack-level OAuth client configuration. Do not add Authelia at the redirect layer; it does not protect users arriving at the Cloud URL directly. Keep Cloud stack membership and permissions restricted. A publicly reachable redirect does **not** enable anonymous Grafana access.
 
-**Default:** `modules.monitoring.server.cloudRedirectUrl = null;` — the existing local Grafana remains reachable through Authelia. Once access, metrics, dashboards, cloud-side alerts, firing/resolution, and external outage detection are verified, opt into the redirect on Epsilon. Logs can be enabled independently with their own token:
+The module defaults to `cloudRedirectUrl = null`. Epsilon selects `https://repparw.grafana.net` after Cloud access, ingestion, and alert checks. To restore the local Grafana frontend through Authelia, set the Epsilon option to `null` and deploy.
 
 ```nix
 modules.monitoring.server.cloudRedirectUrl = "https://<stack>.grafana.net";

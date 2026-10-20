@@ -77,6 +77,7 @@
         };
         # Home hosts are SNATed by the WireGuard router.
         modules.monitoring.server.ingestionSources = [ "10.5.5.1" ];
+        modules.monitoring.server.cloudRedirectUrl = "https://repparw.grafana.net";
 
         # Independent of Grafana/Loki/Prometheus, including when the disk is full.
         modules.disk-watch = {

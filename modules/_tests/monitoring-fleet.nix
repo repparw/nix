@@ -46,7 +46,9 @@ let
   ];
   redirectConfig =
     (inputs.self.nixosConfigurations.epsilon.extendModules {
-      modules = [ { modules.monitoring.server.cloudRedirectUrl = "https://fixture.grafana.net/"; } ];
+      modules = [
+        { modules.monitoring.server.cloudRedirectUrl = lib.mkForce "https://fixture.grafana.net/"; }
+      ];
     }).config.services.traefik.dynamicConfigOptions.http;
   alphaMounts = [
     "/mnt/hdd"
@@ -325,13 +327,14 @@ assert
   redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.replacement
   == "https://fixture.grafana.net\${1}";
 assert !redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.permanent;
-assert (cfg "epsilon").modules.monitoring.server.cloudRedirectUrl == null;
+assert (cfg "epsilon").modules.monitoring.server.cloudRedirectUrl == "https://repparw.grafana.net";
 assert
   (cfg "epsilon").services.traefik.dynamicConfigOptions.http.routers.grafana.middlewares
-  == [ "authelia" ];
+  == [ "grafana-cloud-redirect" ];
 assert
-  !(builtins.hasAttr "grafana-cloud-redirect" (cfg "epsilon")
-  .services.traefik.dynamicConfigOptions.http.middlewares);
+  (cfg "epsilon")
+  .services.traefik.dynamicConfigOptions.http.middlewares.grafana-cloud-redirect.redirectRegex.replacement
+  == "https://repparw.grafana.net\${1}";
 assert alphaExclusions;
 assert epsilonDiskWatch;
 pkgs.runCommand "check-monitoring-fleet"
