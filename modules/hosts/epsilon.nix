@@ -126,9 +126,28 @@
           "/var/log"
         ];
 
-        containers.glance.config.networking.hosts = {
-          "${config.containers.glance.localAddress}" = [ config.modules.services.domain ];
-        };
+        # Resolve monitored virtual hosts through their actual HTTPS edges.
+        # The guest retains the normal external URLs as clickable links, but
+        # avoids looping through public DNS/Cloudflare for its own probes.
+        containers.glance.config.networking.hosts =
+          let
+            monitored = lib.attrValues (
+              lib.filterAttrs (
+                _: service: service.monitor && service.hostname != null && service.port != null
+              ) config.modules.services.definitions
+            );
+            fqdnsFor =
+              lanEdge:
+              map (service: "${service.hostname}.${config.modules.services.domain}") (
+                lib.filter (service: service.lanEdge == lanEdge) monitored
+              );
+          in
+          {
+            "${config.containers.glance.localAddress}" = [ config.modules.services.domain ];
+            "${config.modules.services.bridgePrefix}.1" = fqdnsFor false;
+            "${builtins.getAttr config.modules.services.lanEdgeHost config.modules.services.hostAddresses}" =
+              fqdnsFor true;
+          };
         # The removable GRUB entry needs no NVRAM writes, which OCI VMs
         # do not persist across stop/start.
         boot.loader = {
@@ -236,6 +255,7 @@
           iifname "eth0" meta mark 0x484f4d45 tcp dport 443 accept comment "home uplink https"
           iifname "eth0" meta mark 0x484f4d45 tcp dport 22 accept comment "home uplink ssh"
           iifname "eth0" meta mark 0x484f4d45 udp dport 60002 accept comment "home uplink mosh"
+          iifname "ve-glance" ip daddr ${config.modules.services.bridgePrefix}.1 tcp dport 443 accept comment "Glance local HTTPS service probes"
           iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
         '';
         # Home-uplink allowlists cannot take a SOPS value: firewall strings
