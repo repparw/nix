@@ -493,6 +493,18 @@
                 ) accessControl.rules
               ) (lib.attrNames definitions);
 
+              glanceSites = (import ./_services/lib.nix { inherit lib pkgs; }).monitorSites
+                epsilon.modules.services epsilon;
+              glanceCheckUrl = name:
+                (lib.findFirst (site: site.title == name) { } glanceSites)."check-url" or null;
+              glanceHosts = epsilon.containers.glance.config.networking.hosts;
+              glanceRoutingMatches =
+                glanceCheckUrl "homeassistant" == "https://home.${domain}"
+                && glanceCheckUrl "jellyfin" == "https://jellyfin.${domain}/health"
+                && builtins.elem "home.${domain}" (glanceHosts.${epsilon.modules.services.hostAddresses.pi} or [ ])
+                && builtins.elem "jellyfin.${domain}" (glanceHosts.${epsilon.modules.services.hostAddresses.pi} or [ ])
+                && builtins.elem "rss.${domain}" (glanceHosts."${epsilon.modules.services.bridgePrefix}.1" or [ ]);
+
               validationMatches =
                 builtins.all (result: !result.success) invalidDefinitions && !duplicateHostnames.success;
 
@@ -507,11 +519,12 @@
                 && !(builtins.any (rule: builtins.elem "null.example.test" rule.domain) sparsePolicy.authelia.rules)
                 && healthcheckBypassMatches;
 
-              expected = fleetRegistryMatches && validationMatches && ingressPolicyMatches;
+              expected = fleetRegistryMatches && validationMatches && ingressPolicyMatches && glanceRoutingMatches;
               matcherReport = builtins.toJSON {
                 r = fleetRegistryMatches;
                 v = validationMatches;
                 i = ingressPolicyMatches;
+                g = glanceRoutingMatches;
               };
             in
             assert expected || throw matcherReport;
