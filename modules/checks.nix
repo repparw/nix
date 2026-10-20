@@ -255,14 +255,19 @@
           formatting =
             pkgs.runCommand "check-formatting"
               {
-                nativeBuildInputs = [ config.formatter ];
+                nativeBuildInputs = [ config.formatter pkgs.diffutils ];
               }
               ''
                 export HOME=$(mktemp -d)
                 cp -r ${inputs.self} src
                 chmod -R +w src
                 cd src
-                treefmt --tree-root . --walk filesystem --fail-on-change
+                # Include the exact formatting diff in CI failures.
+                cp -r . ../unformatted
+                if ! treefmt --tree-root . --walk filesystem --fail-on-change; then
+                  diff -r -u ../unformatted . || true
+                  exit 1
+                fi
                 touch $out
               '';
 
