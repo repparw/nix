@@ -502,7 +502,7 @@
               glanceRoutingMatches =
                 glanceCheckUrl "homeassistant" == "https://home.${domain}"
                 && glanceCheckUrl "jellyfin" == "https://jellyfin.${domain}/health"
-                && builtins.elem "home.${domain}" (glanceHosts.${epsilon.modules.services.hostAddresses.pi} or [ ])
+                && builtins.elem "home.${domain}" (glanceHosts."${epsilon.modules.services.bridgePrefix}.1" or [ ])
                 && builtins.elem "jellyfin.${domain}" (
                   glanceHosts.${epsilon.modules.services.hostAddresses.pi} or [ ]
                 )
