@@ -138,7 +138,7 @@ in
           checkUrl =
             if service.healthcheck != null then
               "${browserUrl}${service.healthcheck}"
-            else if service.lanEdge || service.auth == "bypass" then
+            else if service.auth == "bypass" then
               browserUrl
             else
               serviceUrl cfg hostConfig name;

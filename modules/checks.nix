@@ -493,14 +493,25 @@
                 ) accessControl.rules
               ) (lib.attrNames definitions);
 
-              glanceSites =
-                (import ./_services/lib.nix { inherit lib pkgs; }).monitorSites epsilon.modules.services
-                  epsilon;
+              glanceServices = import ./_services/lib.nix { inherit lib pkgs; };
+              glanceSites = glanceServices.monitorSites epsilon.modules.services epsilon;
+              protectedLanSite = builtins.head (
+                glanceServices.monitorSites (
+                  epsilon.modules.services
+                  // {
+                    definitions.paperless = epsilon.modules.services.definitions.paperless // {
+                      lanEdge = true;
+                    };
+                  }
+                ) epsilon
+              );
               glanceCheckUrl =
                 name: (lib.findFirst (site: site.title == name) { } glanceSites)."check-url" or null;
               glanceHosts = epsilon.containers.glance.config.networking.hosts;
               glanceRoutingMatches =
                 glanceCheckUrl "homeassistant" == "https://home.${domain}"
+                && lib.hasPrefix "http://" (glanceCheckUrl "paperless")
+                && protectedLanSite."check-url" == glanceCheckUrl "paperless"
                 && glanceCheckUrl "jellyfin" == "https://jellyfin.${domain}/health"
                 && builtins.elem "home.${domain}" (glanceHosts."${epsilon.modules.services.bridgePrefix}.1" or [ ])
                 && builtins.elem "jellyfin.${domain}" (
