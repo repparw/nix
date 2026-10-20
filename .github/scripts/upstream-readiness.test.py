@@ -14,6 +14,41 @@ LOCK = {"nodes": {"root": {"inputs": {"nixpkgs": "np", "home-manager": "hm"}}, "
 
 
 class Readiness(unittest.TestCase):
+    def test_tridactyl_waits_for_the_selected_extension_release(self):
+        lock = {"nodes": {"root": {"inputs": {"firefox-addons": "addons"}},
+                          "addons": {"locked": {"rev": "addon-pin"}}}}
+        selected = {"revision": "addon-pin", "addons": [
+            {"version": "1.25.1", "addonId": "tridactyl.vim@cmcaine.co.uk"}]}
+        merged = {"merged": True, "merge_commit_sha": "fix"}
+        with patch.object(watch, "api", return_value={"merged": False}), \
+                patch.object(watch.subprocess, "run") as run:
+            self.assertEqual(watch.detect("tridactyl-reader", lock), "waiting-upstream")
+            run.assert_not_called()
+        for included, expected in ((False, "merged-not-pinned"), (True, "PINNED-READY")):
+            with self.subTest(included=included), \
+                    patch.object(watch, "api", return_value=merged), \
+                    patch.object(watch.subprocess, "run", return_value=subprocess.CompletedProcess(
+                        [], 0, json.dumps(selected))), \
+                    patch.object(watch, "contains", return_value=included) as contains:
+                self.assertEqual(watch.detect("tridactyl-reader", lock), expected)
+                contains.assert_called_once_with("tridactyl/tridactyl", "fix", "1.25.1")
+
+    def test_tridactyl_rejects_wrong_pin_ambiguous_and_preview_metadata(self):
+        lock = {"nodes": {"root": {"inputs": {"firefox-addons": "addons"}},
+                          "addons": {"locked": {"rev": "addon-pin"}}}}
+        addon = {"version": "1.25.1", "addonId": "tridactyl.vim@cmcaine.co.uk"}
+        for revision, addons in (("wrong-pin", [addon]), ("addon-pin", []),
+                                 ("addon-pin", [addon, addon]),
+                                 ("addon-pin", [{**addon, "version": "1.26.0pre"}]),
+                                 ("addon-pin", [{**addon, "addonId": "other"}])):
+            selected = {"revision": revision, "addons": addons}
+            with self.subTest(selected=selected), \
+                    patch.object(watch, "api", return_value={"merged": True}), \
+                    patch.object(watch.subprocess, "run", return_value=subprocess.CompletedProcess(
+                        [], 0, json.dumps(selected))), patch.object(watch, "contains") as contains:
+                self.assertEqual(watch.inspect("tridactyl-reader", lock), "unavailable (ValueError)")
+                contains.assert_not_called()
+
     def test_ancestry_including_exact_pin_and_wrong_merge_base(self):
         for status, base, expected in [("ahead", "fix", True), ("identical", "fix", True), ("behind", "fix", False), ("diverged", "fix", False), ("ahead", "other", False)]:
             with self.subTest(status=status, base=base), patch.object(watch, "api", return_value={"status": status, "merge_base_commit": {"sha": base}}):
