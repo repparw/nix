@@ -132,14 +132,15 @@
         containers.glance.config.networking.hosts =
           let
             monitored = lib.attrValues (
-              lib.filterAttrs
-                (_: service: service.monitor && service.hostname != null && service.port != null)
-                config.modules.services.definitions
+              lib.filterAttrs (
+                _: service: service.monitor && service.hostname != null && service.port != null
+              ) config.modules.services.definitions
             );
-            fqdnsFor = lanEdge:
-              map
-                (service: "${service.hostname}.${config.modules.services.domain}")
-                (lib.filter (service: service.lanEdge == lanEdge) monitored);
+            fqdnsFor =
+              lanEdge:
+              map (service: "${service.hostname}.${config.modules.services.domain}") (
+                lib.filter (service: service.lanEdge == lanEdge) monitored
+              );
           in
           {
             "${config.containers.glance.localAddress}" = [ config.modules.services.domain ];
