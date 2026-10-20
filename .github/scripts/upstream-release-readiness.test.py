@@ -296,7 +296,7 @@ class Detector(unittest.TestCase):
             [evidence["pin"][key] for key in ("revision", "attr", "version", "source_ref", "real_v2")],
             [PIN_REV, "opencode_2", "2.0.26", "v2.0.26", True],
         )
-        self.assertEqual(evidence["overlay"], {"path": "modules/_packages/opencode-v2.nix", "present": True})
+        self.assertEqual(evidence["overlay"], {"path": "modules/_packages/opencode.nix", "present": True})
 
     def test_unknown_watcher_is_rejected(self):
         with self.assertRaises(ValueError):

@@ -3,7 +3,7 @@
   den.aspects.ai.provides.opencode = {
     nixos.nixpkgs.overlays = [
       (final: _prev: {
-        opencode-v2 = final.callPackage ../../_packages/opencode-v2.nix { };
+        opencode = final.callPackage ../../_packages/opencode.nix { };
       })
     ];
     homeManager =
@@ -17,7 +17,7 @@
         json5 = pkgs.python3Packages.toPythonApplication pkgs.python3Packages.json5;
       in
       {
-        xdg.configFile."opencode/plugins/nous-live.ts".source = ./opencode-plugins/nous-live-v2.ts;
+        xdg.configFile."opencode/plugins/nous-live.ts".source = ./opencode-plugins/nous-live.ts;
         xdg.configFile."opencode/plugins/explabs-free.ts".source = ./opencode-plugins/explabs-free.ts;
         # Compute the opencode provider instance's hidden models at activation
         # time from the live Zen and OpenRouter catalogs. Everything is hidden
@@ -74,7 +74,7 @@
           ''
         );
         programs.opencode = {
-          package = pkgs.opencode-v2;
+          package = pkgs.opencode;
           enable = true;
           enableMcpIntegration = true;
           skills = { };
@@ -207,10 +207,10 @@
       };
   };
   perSystem = { config, pkgs, ... }: {
-    packages.opencode-v2 = pkgs.callPackage ../../_packages/opencode-v2.nix { };
+    packages.opencode = pkgs.callPackage ../../_packages/opencode.nix { };
     checks.explabs-free-provider = pkgs.runCommand "check-explabs-free-provider" { } ''
       ${pkgs.nodejs}/bin/node ${../../_tests/explabs-free-provider.mjs} \
-        ${config.packages.opencode-v2}/bin/opencode2 ${./opencode-plugins/explabs-free.ts}
+        ${config.packages.opencode}/bin/opencode ${./opencode-plugins/explabs-free.ts}
       touch $out
     '';
   };

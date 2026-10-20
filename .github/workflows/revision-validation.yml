@@ -73,10 +73,10 @@ jobs:
           python3 .github/scripts/upstream-readiness.test.py
           python3 .github/scripts/upstream-pilot.test.py
           python3 .github/scripts/upstream-plan.test.py
-          # Test the actual Nix expression and fleet attributes, without
-          # compiling packages. Unit mocks alone missed the invalid installable.
+          # Evaluate fleet attributes and build compatible/incompatible patch
+          # fixtures through the production probe, including version-check hooks.
           NIX_PROBE_SMOKE=1 python3 .github/scripts/upstream-plan.test.py \
-            -k test_real_nix_evaluation_of_probe_attributes
+            -k test_real_nix
           python3 .github/scripts/upstream-publish.test.py
           python3 .github/scripts/upstream-release-readiness.test.py
           # Exercise recovery fixtures before the longer fleet-cli derivation.

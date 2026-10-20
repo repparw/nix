@@ -176,6 +176,25 @@ class PlanTests(unittest.TestCase):
 
     @unittest.skipUnless(os.environ.get("NIX_PROBE_SMOKE") == "1",
                          "requires the CI Nix installer and flake inputs")
+    def test_real_nix_probe_build_accepts_patch_without_compilation(self):
+        fixture = ROOT / ".github/upstream/fixtures/probe"
+        with patch.object(planner, "ROOT", fixture), patch.dict(
+                os.environ, {"UPSTREAM_PROBE_REPO": str(ROOT)}):
+            ok, detail = planner.nix_build_ok("valid")
+        self.assertTrue(ok, detail)
+
+    @unittest.skipUnless(os.environ.get("NIX_PROBE_SMOKE") == "1",
+                         "requires the CI Nix installer and flake inputs")
+    def test_real_nix_probe_build_rejects_incompatible_patch(self):
+        fixture = ROOT / ".github/upstream/fixtures/probe"
+        with patch.object(planner, "ROOT", fixture), patch.dict(
+                os.environ, {"UPSTREAM_PROBE_REPO": str(ROOT)}):
+            ok, detail = planner.nix_build_ok("incompatible")
+        self.assertFalse(ok)
+        self.assertIn("patch", detail.lower())
+
+    @unittest.skipUnless(os.environ.get("NIX_PROBE_SMOKE") == "1",
+                         "requires the CI Nix installer and flake inputs")
     def test_real_nix_evaluation_of_probe_attributes(self):
         # No package compilation: .drvPath forces evaluation of the exact
         # overridden derivation used by nix_build_ok for each fleet package.

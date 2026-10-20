@@ -58,14 +58,13 @@ def contains(commit, revision):
 
 
 def nix_probe_expression(attribute):
-    # Shared verbatim by the compatibility build and real Nix eval smoke tests.
+    # This probe checks source compatibility; binary checks belong to full builds.
     return (
         'let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT"); '
         f'in (f.{attribute}).overrideAttrs (_: {{ '
-        'configurePhase = "true"; buildPhase = "true"; '
-        'doCheck = false; checkPhase = "true"; '
+        'phases = [ "unpackPhase" "patchPhase" "installPhase" ]; '
         'installPhase = "mkdir -p $out; touch $out/probed"; '
-        'fixupPhase = "true"; })'
+        '})'
     )
 
 
