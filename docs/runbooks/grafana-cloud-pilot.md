@@ -18,7 +18,6 @@ Grafana Cloud Free is the intended permanent backend after the pilot passes. Kee
 1. The Grafana Cloud Free stack is `repparw` with these ingestion endpoints:
    - Metrics: `https://prometheus-prod-40-prod-sa-east-1.grafana.net/api/prom/push`, instance ID `3689389`.
    - Logs: `https://logs-prod-024.grafana.net/loki/api/v1/push`, instance ID `1840359`.
-   No endpoints or IDs are guessed.
 2. Each host has its own Cloud Access Policy token carrying `metrics:write` and `logs:write`. Host-scoped policies allow isolated revocation.
 3. Encrypt each host's token with the existing SOPS workflow in `secrets/grafana-cloud-<host>.sops.yaml` under the `token` key. The matching `.sops.yaml` rules select that host and recovery recipients only. **Never embed actual tokens in Nix expressions, the generated Alloy config or CI.**
 4. `den.aspects.monitoring._.cloud` defines the runtime credential and enables the metrics mirror on hosts that include it:
