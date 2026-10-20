@@ -132,12 +132,13 @@ in
         name: service:
         let
           browserUrl = "https://${service.hostname}.${cfg.domain}";
-          # Always use the configured HTTPS entry point for LAN-edge services.
-          # Their backend ports may be reachable only from the Pi reverse proxy.
+          # Probe public-facing, unauthenticated services through the same HTTPS
+          # edge used by visitors. Other services use their internal backend
+          # endpoints to avoid mistaking an authentication redirect for health.
           checkUrl =
             if service.healthcheck != null then
               "${browserUrl}${service.healthcheck}"
-            else if service.lanEdge then
+            else if service.lanEdge || service.auth == "bypass" then
               browserUrl
             else
               serviceUrl cfg hostConfig name;
