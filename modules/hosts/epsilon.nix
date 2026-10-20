@@ -14,6 +14,7 @@
       den.aspects.fleet-unit-state
       den.aspects.monitoring._.server
       den.aspects.monitoring._.server-credentials
+      den.aspects.monitoring._.cloud
       den.aspects.nixos-services._.disk-watch
       den.aspects.deploy-target
       den.aspects.passwordless-sudo

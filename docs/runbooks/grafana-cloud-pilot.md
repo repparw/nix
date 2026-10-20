@@ -11,51 +11,56 @@ tags: [monitoring, grafana, cloud, alloy, alerting]
 
 Grafana Cloud Free is the intended permanent backend after the pilot passes. Keep Epsilon's stack in place throughout validation; retire it only in a separate, evidence-backed cleanup PR.
 
-**Opt-in per host and signal.** Without `modules.monitoring.agent.cloud.metrics` or `logs`, Epsilon's existing Prometheus, Loki, Grafana, ingestion proxy, SOPS credentials, and alerting are unchanged. Cloud targets use separate Alloy writers. **Neither Cloud target is enabled by merging the PR.**
+**Opt-in per host and signal.** Without `modules.monitoring.agent.cloud.metrics` or `logs`, Epsilon's existing Prometheus, Loki, Grafana, ingestion proxy, SOPS credentials, and alerting are unchanged. Cloud targets use separate Alloy writers. The `den.aspects.monitoring._.cloud` aspect enables Cloud **metrics** for Alpha, Pi and Epsilon; Cloud **logs** remain disabled until the journald sensitivity review is complete.
 
 ## Prerequisites
 
-1. Create a Grafana Cloud Free stack. Obtain the **exact metrics remote-write URL / instance ID**, and optionally the **Loki push URL / instance ID**, from the Cloud Portal. No endpoints/IDs are guessed.
-2. Generate narrowly scoped Cloud Access Policy tokens (`metrics:write` for metrics, `logs:write` for logs); use separate or host-scoped tokens where practical.
-3. Encrypt each host's token with the existing SOPS workflow in `secrets/grafana-cloud-<host>.sops.yaml` and reference its runtime path using `config.sops.secrets.<name>.path`. The matching `.sops.yaml` rules select that host and recovery recipients only. Use separate per-host write tokens so revocation can be isolated. **Never embed actual tokens in Nix expressions, the generated Alloy config or CI.**
-4. Enable the metrics mirror first, on Epsilon only. Example of a host NixOS module _after_ provisioning its encrypted SOPS file:
+1. The Grafana Cloud Free stack is `repparw` with these ingestion endpoints:
+   - Metrics: `https://prometheus-prod-40-prod-sa-east-1.grafana.net/api/prom/push`, instance ID `3689389`.
+   - Logs: `https://logs-prod-024.grafana.net/loki/api/v1/push`, instance ID `1840359`.
+   No endpoints or IDs are guessed.
+2. Each host has its own Cloud Access Policy token carrying `metrics:write` and `logs:write`. Host-scoped policies allow isolated revocation.
+3. Encrypt each host's token with the existing SOPS workflow in `secrets/grafana-cloud-<host>.sops.yaml` under the `token` key. The matching `.sops.yaml` rules select that host and recovery recipients only. **Never embed actual tokens in Nix expressions, the generated Alloy config or CI.**
+4. `den.aspects.monitoring._.cloud` defines the runtime credential and enables the metrics mirror on hosts that include it:
 
 ```nix
-sops.secrets.grafana-cloud-metrics-token = {
-  sopsFile = ../../secrets/grafana-cloud-epsilon.sops.yaml;
-  key = "metricsToken";
-  restartUnits = [ "alloy.service" ];
-};
-modules.monitoring.agent.cloud.metrics = {
-  url = "https://prometheus-<stack>.grafana.net/api/prom/push";
-  username = "<metrics-instance-id>";
-  tokenFile = config.sops.secrets.grafana-cloud-metrics-token.path;
+den.aspects.monitoring.provides.cloud.nixos = { config, lib, ... }: {
+  sops.secrets.grafana-cloud-write-token = {
+    sopsFile = ../../secrets + "/grafana-cloud-${config.networking.hostName}.sops.yaml";
+    key = "token";
+    restartUnits = [ "alloy.service" ];
+  };
+  modules.monitoring.agent.cloud.metrics = lib.mkDefault {
+    url = "https://prometheus-prod-40-prod-sa-east-1.grafana.net/api/prom/push";
+    username = "3689389";
+    tokenFile = config.sops.secrets.grafana-cloud-write-token.path;
+  };
 };
 ```
 
-The URLs and instance IDs above are **placeholders**. The module requires HTTPS and delivers the token to Alloy through systemd `LoadCredential`; the generated Alloy file references the credential file path, not its contents.
+The module requires HTTPS and delivers the token to Alloy through systemd `LoadCredential`; the generated Alloy file references the credential file path, not its contents. The aspect is included by Alpha, Pi and Epsilon, but activation remains staged: Epsilon first.
 
-Optional logs (provision a separate SOPS token first):
+Optional logs (keep disabled until the journald sensitivity review is complete):
 
 ```nix
 modules.monitoring.agent.cloud.logs = {
-  url = "https://logs-<region>.grafana.net/loki/api/v1/push";
-  username = "<logs-instance-id>";
-  tokenFile = config.sops.secrets.grafana-cloud-logs-token.path;
+  url = "https://logs-prod-024.grafana.net/loki/api/v1/push";
+  username = "1840359";
+  tokenFile = config.sops.secrets.grafana-cloud-write-token.path;
 };
 ```
 
-Cloud logs use the existing native `loki.secretfilter` pipeline before either destination receives entries. Enable logs with a separate write token. Redaction covers known credential patterns; it does not remove arbitrary private message content.
+Cloud logs use the existing native `loki.secretfilter` pipeline before either destination receives entries. Redaction covers known credential patterns; it does not remove arbitrary private message content.
 
 ## Safe deployment and verification
 
-1. Keep Epsilon's receivers and all current fleet-health, disk-watch, backup, deploy readiness and Discord alerts. Deploy Cloud **metrics** to Epsilon alone, and confirm Cloud Explore has recent `node_uname_info{host="epsilon"}` samples. Confirm local Epsilon Prometheus still ingests normally.
+1. Keep Epsilon's receivers and all current fleet-health, disk-watch, backup, deploy readiness and Discord alerts. The module configures Cloud **metrics** on all three hosts, but activate Epsilon first and confirm Cloud Explore has recent `node_uname_info{host="epsilon"}` samples. Confirm local Epsilon Prometheus still ingests normally.
 2. Add Pi, then Alpha. Verify three host labels in Cloud, compare dashboards, watch Cloud active-series/DPM usage, and ensure no authentication/429 errors in `journalctl -u alloy`. Cloud scrapes run every 60s while local scrapes remain at 30s. The separate scrape jobs preserve the same `node` and `alloy` job labels in both backends.
 3. Run an intentional Cloud write failure or credential rejection test; the Epsilon writer must remain healthy. Separately test missing host telemetry without disabling existing fleet checks.
 4. Add logs host by host using native secret redaction. Compare log usage/retention and ensure failures at the Cloud writer do not prevent local Loki ingestion.
 5. Revert by setting `modules.monitoring.agent.cloud.metrics` and/or `logs` to `null`. Do not remove Epsilon backend until independent alert parity has been demonstrated.
 
-The repository checks exercise metrics-only, logs-only, and combined Cloud configuration with the pinned Alloy validator. The monitoring VM uses unreachable HTTPS fixtures to check separate buffers and continued Epsilon ingestion, plus HTTPS redirect/bookmark behavior and the local health exception. These checks do not establish real Cloud credentials, delivery, quotas, dashboard access, or alert notifications.
+The repository checks exercise metrics-only, logs-only, and combined Cloud configuration with the pinned Alloy validator. The monitoring VM uses unreachable HTTPS fixtures to check separate buffers and continued Epsilon ingestion, plus HTTPS redirect/bookmark behavior and the local health exception. The encrypted per-host tokens are validated separately with a live write probe; the checks do not establish delivery, quotas, dashboard access, or alert notifications.
 
 Import `modules/aspects/monitoring/fleet-overview.json` into the Cloud stack after ingestion works. Before import, replace every Prometheus datasource UID `fleet-prom` with the actual Cloud Prometheus datasource UID from the stack's Connections page. If Cloud logs are enabled, replace `fleet-loki` with the actual Cloud Loki datasource UID. Keep the local dashboard file unchanged. Confirm each host and panel in Cloud, and record the dashboard URL in the rollout evidence.
 
@@ -63,7 +68,7 @@ Record the observed active series and samples per minute in Cloud's usage view a
 
 ## Independent Cloud alerts
 
-Configure these **in the Cloud Grafana UI** (not created by this Nix module). In Alerting → Notification configuration, add a _Discord_ contact point using a Discord channel webhook. Send a test, retain recovery/resolved notifications, and route the pilot to a dedicated channel to avoid duplicate production alerts.
+Configure these **in the Cloud Grafana UI** (not created by this Nix module). In Alerting → Notification configuration, add an independent _Discord_ contact point using a webhook for a dedicated test channel. Send a test, retain recovery/resolved notifications, and keep this contact point separate from the existing fleet-health Discord path to avoid duplicate production alerts.
 
 Start with two independent Grafana-managed host-absence rules, evaluated every minute:
 
@@ -76,7 +81,7 @@ Configure explicit No Data and Error behavior and test both firing and resolutio
 
 Cloud Synthetic Monitoring can probe a public HTTPS service independently of Epsilon. Note that `metrics.repparw.com/api/health` is intentionally unauthenticated and checks frontend reachability, **not end-to-end ingestion**.
 
-This PR does **not** provision a Cloud account, tokens, Grafana service-account alert-management credentials, Discord webhook, or remote alert objects. Those require Cloud onboarding. Existing monitoring remains the source of truth until the pilot is validated.
+The repository provisions encrypted per-host write tokens in `secrets/grafana-cloud-*.sops.yaml`. The Cloud account, access policies, Discord webhook, Grafana service-account alert-management credentials, dashboards, and remote alert objects are created manually in the Cloud Portal/UI and are not managed by this Nix module. Existing monitoring remains the source of truth until the pilot is validated.
 
 References: [Alloy remote write](https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.remote_write/), [Alloy Loki write](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.write/), [Cloud Access Policies](https://grafana.com/docs/grafana-cloud/platform/security-and-account-management/security-and-access/authentication-and-permissions/access-policies/), [Cloud alert notifications](https://grafana.com/docs/grafana-cloud/observe-and-act/alert-and-measure-reliability/alerting/configure-notifications/manage-contact-points/).
 

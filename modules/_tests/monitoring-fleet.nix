@@ -28,7 +28,13 @@ let
   cloudConfig =
     signals:
     (inputs.self.nixosConfigurations.epsilon.extendModules {
-      modules = [ { modules.monitoring.agent.cloud = lib.genAttrs signals cloudFixture; } ];
+      modules = [
+        {
+          modules.monitoring.agent.cloud = lib.genAttrs [ "metrics" "logs" ] (
+            signal: if builtins.elem signal signals then cloudFixture signal else null
+          );
+        }
+      ];
     }).config;
   cloudVariants = map cloudConfig [
     [ "metrics" ]
@@ -154,11 +160,25 @@ let
           "alpha"
           "pi"
         ];
-  cloudDisabledByDefault = lib.all (
+  cloudMetricsEnabled = lib.all (
     host:
-    (cfg host).modules.monitoring.agent.cloud.metrics == null
-    && (cfg host).modules.monitoring.agent.cloud.logs == null
-    && !(lib.hasInfix "grafana-cloud" (alloyConfig host))
+    let
+      cloud = (cfg host).modules.monitoring.agent.cloud;
+      text = alloyConfig host;
+    in
+    cloud.metrics != null
+    && cloud.metrics.url == "https://prometheus-prod-40-prod-sa-east-1.grafana.net/api/prom/push"
+    && cloud.metrics.username == "3689389"
+    && cloud.metrics.tokenFile == "/run/secrets/grafana-cloud-write-token"
+    && cloud.logs == null
+    && lib.hasInfix ''prometheus.remote_write "cloud"'' text
+    && lib.hasInfix ''prometheus.scrape "node_cloud"'' text
+    && lib.hasInfix ''prometheus.scrape "alloy_cloud"'' text
+    && lib.hasInfix ''scrape_interval = "60s"'' (scrapeBlock "node_cloud" text)
+    && lib.hasInfix "forward_to      = [prometheus.remote_write.cloud.receiver]" (
+      scrapeBlock "node_cloud" text
+    )
+    && !(lib.hasInfix "prometheus.remote_write.epsilon.receiver" (scrapeBlock "node_cloud" text))
   ) hosts;
   selfTelemetry = lib.all (
     host:
@@ -213,15 +233,18 @@ assert lib.all
     host:
     (cfg host).modules.monitoring.agent.authentication.username == host
     && lib.hasInfix "password_file" (alloyConfig host)
-    &&
-      (cfg host).systemd.services.alloy.serviceConfig.LoadCredential == [
-        "ingestion-password:/run/secrets/monitoring-agent-password"
-      ]
+    && builtins.elem "ingestion-password:/run/secrets/monitoring-agent-password" (cfg host)
+    .systemd.services.alloy.serviceConfig.LoadCredential
   )
   [
     "alpha"
     "pi"
   ];
+assert lib.all (
+  host:
+  builtins.elem "grafana-cloud-metrics-token:/run/secrets/grafana-cloud-write-token" (cfg host)
+  .systemd.services.alloy.serviceConfig.LoadCredential
+) hosts;
 assert
   (cfg "epsilon")
   .services.traefik.dynamicConfigOptions.http.middlewares.monitoring-auth.basicAuth.removeHeader;
@@ -229,7 +252,7 @@ assert allAgents;
 assert receiverTargets;
 assert centralizedServer;
 assert selfTelemetry;
-assert cloudDisabledByDefault;
+assert cloudMetricsEnabled;
 assert lib.all (
   variant:
   let
