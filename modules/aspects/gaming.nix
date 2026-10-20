@@ -11,26 +11,15 @@
     nixos =
       { pkgs, ... }:
       let
-        # One Heroic build for the desktop launcher and the Steam sandbox:
-        # the sandbox copy is what non-Steam shortcuts actually execute.
-        heroicWithMangohud = pkgs.heroic.override {
-          extraPkgs =
-            pkgs': with pkgs'; [
-              mangohud
-              gamemode
-            ];
+        # Steam shortcuts resolve Heroic inside Steam's FHS environment.
+        heroicWithGamemode = pkgs.heroic.override {
+          extraPkgs = pkgs': [ pkgs'.gamemode ];
         };
 
-        # Steam launches every Heroic shortcut with
-        # SDL_GAMECONTROLLER_IGNORE_DEVICES set to every pad it knows about,
-        # including the physical one. Its virtual pad never reaches a
-        # Heroic-spawned Proton game, so the game ends up with no controller
-        # at all (2026-10-18). Neutralize the inherited list for
-        # Steam-launched runs only; a Heroic started from the desktop keeps
-        # its environment untouched.
+        # Clear Steam's inherited controller hide list for Heroic launches.
         heroicSteam = pkgs.runCommand "heroic-steam" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
           mkdir -p $out/bin
-          makeWrapper ${heroicWithMangohud}/bin/heroic $out/bin/heroic \
+          makeWrapper ${heroicWithGamemode}/bin/heroic $out/bin/heroic \
             --run 'if [ "''${SteamClientLaunch:-}" = 1 ]; then export SDL_GAMECONTROLLER_IGNORE_DEVICES=0xdead/0xbeef; fi'
         '';
       in
@@ -42,30 +31,16 @@
             enable = true;
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
-            # Hide the media library and the spinning-rust mounts from
-            # Steam's startup mount scan (it stats every mount and Proton
-            # maps them as DOS drives, waking idle disks). Games and prefixes
-            # that live under /mnt run through the Heroic GUI instead, whose
-            # launches are native and see the real mounts.
-            # /run/media is deliberately not masked: bwrap cannot create that
-            # mountpoint under root-owned /run, and the directory only exists
-            # when udiskie happened to mount removable media since boot, which
-            # killed steam at launch (2026-10-14). Removable sticks are flash;
-            # harmless for Steam to see.
+            # Avoid Steam's mount scan waking idle disks. Keep /run/media
+            # visible: masking it fails when the mountpoint is absent.
             package = pkgs.steam.override {
               extraBwrapArgs = [
                 "--tmpfs /mnt"
                 "--tmpfs /home/containers/media"
               ];
             };
-            # Heroic's non-Steam shortcuts (nixpkgs PR #569601) resolve
-            # `heroic` by bare name, and Heroic refuses to launch anything
-            # with useGameMode unless `gamemoderun` is on $PATH. Steam's
-            # launch runtime does not carry the system profile, so both must
-            # exist inside the FHS sandbox; extraPackages is the module knob
-            # that merges packages into it. Without them every non-Steam
-            # entry dies silently before exec (2026-10-14: Control Resonant,
-            # SM64, and Sekiro were all silent no-ops from Big Picture).
+            # Non-Steam Heroic shortcuts resolve `heroic` by name and need
+            # `gamemoderun` on PATH, so provide both inside Steam's FHS.
             extraPackages = [
               heroicSteam
               pkgs.gamemode
@@ -76,15 +51,14 @@
           gamescope.enable = true;
         };
         environment.systemPackages = with pkgs; [
-          heroicWithMangohud
+          heroicWithGamemode
         ];
 
         services.udev.extraRules = ''
-          # The Deck-8 macropad's system keys are misclassified as a joystick;
-          # Wine exposes it ahead of the gamepad and Sekiro ignores controller input.
+          # Keep Deck-8 system keys out of joystick discovery.
           SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="Churrosoft Deck-8 System Control", ENV{ID_INPUT_JOYSTICK}=""
 
-          # 8BitDo Ultimate 2C Wireless - remove kernel deadzone and fuzz for Hall effect sticks
+          # Remove the kernel deadzone and fuzz from 8BitDo Hall effect sticks.
           # https://web.archive.org/web/20260508175350/https://old.reddit.com/r/linux_gaming/comments/1t75mmu/why_your_tmrhall_effect_sticks_might_feel_off_on/okmje9v/
           ATTRS{idVendor}=="2dc8", ATTRS{idProduct}=="310a", RUN+="${pkgs.linuxConsoleTools}/bin/evdev-joystick --evdev /dev/input/%k --deadzone 0 --fuzz 0"
         '';
