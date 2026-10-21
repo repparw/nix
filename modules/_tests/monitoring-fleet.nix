@@ -271,6 +271,17 @@ assert lib.all
 assert alphaExclusions;
 assert (cfg "epsilon").modules.disk-watch.enable;
 assert (cfg "pi").systemd.timers ? fleet-health;
+assert lib.all (host: (cfg host).systemd.timers ? fleet-health-metrics) hosts;
+assert lib.all (
+  host: lib.hasInfix "node_systemd_unit_state;(inactive|activating|deactivating)" (alloyConfig host)
+) hosts;
+assert
+  (lib.findFirst (disk: disk.mount == "/persist") null
+    (cfg "epsilon").modules.monitoring.health.disks
+  ).crit == 85;
+assert
+  (lib.findFirst (disk: disk.mount == "/mnt/hdd") null (cfg "alpha").modules.monitoring.health.disks)
+  .sleeping;
 assert lib.all (
   variant:
   let
@@ -294,6 +305,7 @@ pkgs.runCommand "check-monitoring-fleet"
     nativeBuildInputs = [
       pkgs.grafana-alloy
       pkgs.prometheus.cli
+      pkgs.python3
     ];
   }
   ''
@@ -309,5 +321,6 @@ pkgs.runCommand "check-monitoring-fleet"
       }"
     ) cloudVariants}
     promtool test rules ${queryTests}
+    PYTHONDONTWRITEBYTECODE=1 python3 ${./fleet-health-metrics.py} ${../scripts/fleet-health-metrics.py} ${../aspects/monitoring/health-alerts.json}
     touch $out
   ''

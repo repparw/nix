@@ -1,0 +1,143 @@
+[
+  {
+    "uid": "fleet_cloud_units",
+    "title": "Failed fleet jobs or services",
+    "expr": "fleet_failed_units",
+    "pending": "2m",
+    "severity": "critical",
+    "brief": "{{ printf \"%.0f\" $values.B.Value }} failed job(s) or service(s).",
+    "recovery": "Services and retained jobs recovered."
+  },
+  {
+    "uid": "fleet_cloud_required_unit",
+    "title": "Required service stopped",
+    "expr": "1 - fleet_required_unit_active",
+    "pending": "3m",
+    "severity": "critical",
+    "brief": "Required unit {{ $labels.name }} is stopped.",
+    "recovery": "Unit {{ $labels.name }} is active again."
+  },
+  {
+    "uid": "fleet_cloud_http",
+    "title": "Service health probe failed",
+    "expr": "(1 - probe_success) or (fleet_service_probe_expected unless on(host,service) probe_success)",
+    "pending": "3m",
+    "severity": "critical",
+    "brief": "{{ $labels.service }} health check failed from Pi.",
+    "recovery": "{{ $labels.service }} health check recovered."
+  },
+  {
+    "uid": "fleet_cloud_disk_warning",
+    "title": "Disk space warning",
+    "expr": "(fleet_disk_used_percent >= bool fleet_disk_warning_percent) * (fleet_disk_used_percent < bool fleet_disk_critical_percent)",
+    "pending": "5m",
+    "severity": "warning",
+    "brief": "Disk {{ $labels.mountpoint }} \u00b7 {{ printf \"%.0f\" $values.D.Value }}% used (limit {{ printf \"%.0f\" $values.E.Value }}%).",
+    "recovery": "Disk {{ $labels.mountpoint }} \u00b7 {{ printf \"%.0f\" $values.D.Value }}% used.",
+    "valueExpr": "fleet_disk_used_percent",
+    "thresholdExpr": "fleet_disk_warning_percent"
+  },
+  {
+    "uid": "fleet_cloud_disk_critical",
+    "title": "Disk space critical",
+    "expr": "fleet_disk_used_percent >= bool fleet_disk_critical_percent",
+    "pending": "5m",
+    "severity": "critical",
+    "brief": "Disk {{ $labels.mountpoint }} \u00b7 {{ printf \"%.0f\" $values.D.Value }}% used (limit {{ printf \"%.0f\" $values.E.Value }}%).",
+    "recovery": "Disk {{ $labels.mountpoint }} \u00b7 {{ printf \"%.0f\" $values.D.Value }}% used.",
+    "valueExpr": "fleet_disk_used_percent",
+    "thresholdExpr": "fleet_disk_critical_percent"
+  },
+  {
+    "uid": "fleet_cloud_disk_missing",
+    "title": "Required filesystem missing",
+    "expr": "1 - fleet_disk_mounted{sleeping=\"false\"}",
+    "pending": "3m",
+    "severity": "critical",
+    "brief": "Required filesystem {{ $labels.mountpoint }} is not mounted.",
+    "recovery": "Filesystem {{ $labels.mountpoint }} is mounted again."
+  },
+  {
+    "uid": "fleet_cloud_btrfs_warning",
+    "title": "Btrfs allocation pressure",
+    "expr": "(fleet_btrfs_metadata_used_percent >= bool 85) * (fleet_btrfs_unallocated_bytes < bool 10737418240) * (fleet_btrfs_unallocated_bytes >= bool 2147483648)",
+    "pending": "5m",
+    "severity": "warning",
+    "brief": "Btrfs {{ $labels.mountpoint }} metadata is crowded and allocation headroom is low.",
+    "recovery": "Btrfs {{ $labels.mountpoint }} allocation pressure cleared."
+  },
+  {
+    "uid": "fleet_cloud_btrfs_critical",
+    "title": "Btrfs allocation critical",
+    "expr": "fleet_btrfs_unallocated_bytes < bool 2147483648",
+    "pending": "5m",
+    "severity": "critical",
+    "brief": "Btrfs {{ $labels.mountpoint }} has less than 2 GiB unallocated.",
+    "recovery": "Btrfs {{ $labels.mountpoint }} has at least 2 GiB unallocated."
+  },
+  {
+    "uid": "fleet_cloud_backup_stale",
+    "title": "Offsite backup overdue",
+    "expr": "(fleet_backup_last_success_timestamp_seconds > bool 0) * (time() - fleet_backup_last_success_timestamp_seconds > bool 108000) + (fleet_backup_last_success_timestamp_seconds == bool 0) * (time() - fleet_backup_monitoring_since_timestamp_seconds > bool 108000)",
+    "pending": "5m",
+    "severity": "critical",
+    "brief": "No confirmed complete offsite backup within 30 hours.",
+    "recovery": "A complete offsite backup succeeded."
+  },
+  {
+    "uid": "fleet_cloud_export_failed",
+    "title": "Native backup export incomplete",
+    "expr": "1 - fleet_backup_export_complete",
+    "pending": "5m",
+    "severity": "critical",
+    "brief": "Native export {{ $labels.export }} is incomplete or unverified.",
+    "recovery": "Native export {{ $labels.export }} is complete again."
+  },
+  {
+    "uid": "fleet_cloud_reboot",
+    "title": "Reboot required",
+    "expr": "fleet_reboot_required{host=\"alpha\"}",
+    "pending": "15m",
+    "severity": "warning",
+    "brief": "Staged kernel or initrd differs from the running boot.",
+    "recovery": "Booted kernel and initrd match the staged generation."
+  },
+  {
+    "uid": "fleet_cloud_paused",
+    "title": "Fleet deployment automation paused",
+    "expr": "fleet_deployment_paused{host=\"pi\"}",
+    "pending": "2m",
+    "severity": "warning",
+    "brief": "Fleet deployment automation is paused.",
+    "recovery": "Fleet deployment automation resumed."
+  },
+  {
+    "uid": "fleet_cloud_collector_host",
+    "title": "Fleet host facts stale",
+    "expr": "((time() - fleet_health_collection_timestamp_seconds{collector=\"host\"} > bool 180) or (max by(host)(node_uname_info) unless on(host) fleet_health_collection_timestamp_seconds{collector=\"host\"})) and on(host) (time() - max by(host)(timestamp(node_uname_info)) < 120)",
+    "pending": "3m",
+    "severity": "warning",
+    "brief": "Local host collector is missing or stale while Alloy is reporting.",
+    "recovery": "Local health facts are fresh again."
+  },
+  {
+    "uid": "fleet_cloud_collector_disks",
+    "title": "Fleet disks facts stale",
+    "expr": "((time() - fleet_health_collection_timestamp_seconds{collector=\"disks\"} > bool 1800) or (max by(host)(node_uname_info) unless on(host) fleet_health_collection_timestamp_seconds{collector=\"disks\"})) and on(host) (time() - max by(host)(timestamp(node_uname_info)) < 120)",
+    "pending": "3m",
+    "severity": "warning",
+    "brief": "Local disks collector is missing or stale while Alloy is reporting.",
+    "recovery": "Local health facts are fresh again."
+  },
+  {
+    "uid": "fleet_cloud_series_budget",
+    "title": "Cloud metric series near Free limit",
+    "expr": "sum(grafanacloud_instance_active_series) >= bool 9000",
+    "valueExpr": "sum(grafanacloud_instance_active_series)",
+    "datasource": "grafanacloud-usage",
+    "pending": "2m",
+    "severity": "warning",
+    "brief": "{{ printf \"%.0f\" $values.D.Value }} of 10,000 metric series; budget is 9,000.",
+    "recovery": "Active metric series are below 9,000."
+  }
+]

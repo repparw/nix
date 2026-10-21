@@ -119,6 +119,11 @@ test('failed job survives cleared systemd state and clears only after successful
     r = f.run(join(source, 'snapshot.sh')); assert.equal(r.stdout, 'backup.service\nother.service\n');
     f.set('live', '');
     r = f.run(join(source, 'record.sh'), ['backup.service'], { SERVICE_RESULT: 'success' }); assert.equal(r.status, 0, r.stderr);
+    const success = Number(readFileSync(join(f.evidence, '.success', 'backup.service'), 'utf8'));
+    assert.ok(success > 0 && success <= Math.floor(Date.now() / 1000));
+    r = f.run(join(source, 'record.sh'), ['backup.service'], { SERVICE_RESULT: 'exit-code' }); assert.equal(r.status, 0, r.stderr);
+    assert.equal(Number(readFileSync(join(f.evidence, '.success', 'backup.service'), 'utf8')), success);
+    r = f.run(join(source, 'record.sh'), ['backup.service'], { SERVICE_RESULT: 'success' }); assert.equal(r.status, 0, r.stderr);
     r = f.run(join(source, 'snapshot.sh')); assert.equal(r.status, 0, r.stderr); assert.equal(r.stdout, '');
   } finally { f.cleanup(); }
 });
