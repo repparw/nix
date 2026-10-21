@@ -227,20 +227,39 @@ pkgs.testers.runNixOSTest {
         for port in [3001, 9090, 3100]:
             assert not client.succeed(f"ss -H -ltn 'sport = :{port}'").strip()
 
-    with subtest("Cloud outage buffers both signals and recovers without a local receiver"):
+    with subtest("Cloud outage buffers both signals and recovers without restarting Alloy"):
         server.succeed("systemctl stop nginx")
         outage = "cloud-outage-" + secrets.token_hex(6)
         client.succeed("logger -t monitoring-fixture " + shlex.quote(outage))
         client.succeed("printf 'monitoring_fixture_value 43\\n' > /var/lib/fleet-metrics/textfile/test.prom")
-        client.wait_until_succeeds("curl -fsS http://127.0.0.1:12345/metrics | grep '^prometheus_remote_storage_samples_pending{' | grep -v ' 0$'", timeout=150)
+        # A nonempty queue may contain older samples. Wait a whole scrape
+        # interval and prove the unique journal marker reached disk before
+        # restoring the receiver.
+        client.wait_until_succeeds("grep -aFl " + shlex.quote(outage.rsplit("-", 1)[1]) + " /var/lib/alloy/data-alloy/loki.write.cloud/wal/[0-9]* >/dev/null", timeout=90)
+        client.sleep(65)
+        client.wait_until_succeeds("curl -fsS http://127.0.0.1:12345/metrics | grep '^prometheus_remote_storage_samples_pending{' | grep -v ' 0$'", timeout=30)
         client.succeed("test -d /var/lib/alloy/data-alloy/prometheus.remote_write.cloud/wal")
         client.succeed("test -d /var/lib/alloy/data-alloy/loki.write.cloud/wal")
         client.succeed("test ! -e /var/lib/alloy/data-alloy/prometheus.remote_write.epsilon")
+        server.succeed("systemctl start nginx")
+        retry(lambda _last: len(logs(outage)) > 0, timeout_seconds=180)
+        retry(lambda _last: len(prom('monitoring_fixture_value{host="pi"} == 43')) == 1, timeout_seconds=180)
+
+    with subtest("metric WAL and uploaded logs survive a tmpfs-root reboot"):
+        # Unsent log replay across restart is not guaranteed by Alloy; see
+        # grafana/alloy#7112. Verify metric replay and already-uploaded logs.
+        server.succeed("systemctl stop nginx")
+        client.succeed("printf 'monitoring_fixture_value 44\\n' > /var/lib/fleet-metrics/textfile/test.prom")
+        client.sleep(65)
+        client.wait_until_succeeds("curl -fsS http://127.0.0.1:12345/metrics | grep '^prometheus_remote_storage_samples_pending{' | grep -v ' 0$'", timeout=30)
         client.shutdown()
         client.start()
         client.wait_for_unit("alloy.service")
         server.succeed("systemctl start nginx")
-        retry(lambda _last: len(logs(outage)) > 0, timeout_seconds=180)
-        retry(lambda _last: len(prom('monitoring_fixture_value{host="pi"} == 43')) == 1, timeout_seconds=180)
+        # The textfile is volatile: a new scrape emits a stale marker after
+        # reboot. Inspect the range to prove the queued value arrived.
+        retry(lambda _last: len(prom('max_over_time(monitoring_fixture_value{host="pi"}[10m]) == 44')) == 1, timeout_seconds=180)
+        assert logs(marker)
+        assert logs(outage)
   '';
 }

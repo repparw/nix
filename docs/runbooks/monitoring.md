@@ -19,7 +19,7 @@ The default agent aspect collects Unix exporter metrics and host journald. Each 
 - Alloy self-metrics omit histogram buckets to reduce cardinality. Queue, failure, retry, count and sum metrics remain available. Host metrics are unaffected.
 - Alpha excludes sleeping media mountpoints from filesystem collection so monitoring does not wake disks.
 - Host journals pass through native `loki.secretfilter` before upload. Recognized credentials are redacted; arbitrary private content is not. Container journals require separate collection.
-- Metrics and logs have their own write-ahead logs. Logs retry indefinitely through transient failures. Buffering is finite and cannot guarantee delivery through an unlimited outage.
+- Metrics and logs have their own write-ahead logs. Logs retry indefinitely through transient failures. Buffering is finite and cannot guarantee delivery through an unlimited outage. Alloy also has a [known log WAL replay gap](https://github.com/grafana/alloy/issues/7112): unsent entries in an already-marked open segment can be skipped after a restart during an outage. Persisting the directory does not fix this. Do not claim lossless log delivery across that combination of failures.
 - Host-scoped write-only tokens come from `secrets/grafana-cloud-<host>.sops.yaml` through systemd credentials. Neither tokens nor ingestion passwords appear in generated configuration.
 
 ## Dashboard and health checks
@@ -58,4 +58,4 @@ To restore the previous topology, revert the Cloud-only cleanup and build/deploy
 
 ## Verification
 
-`nix build .#checks.x86_64-linux.monitoring-fleet --no-link` validates generated Alloy configuration, Cloud-only host topology, credentials, redirect and retained data mounts. The monitoring VM exercises an isolated HTTPS Cloud fixture: authenticated ingestion, redaction, excluded automounts, histogram filtering, buffering and delivery after a reboot during an outage. The fixture's Prometheus/Loki receivers are test-only.
+`nix build .#checks.x86_64-linux.monitoring-fleet --no-link` validates generated Alloy configuration, Cloud-only host topology, credentials, redirect and retained data mounts. The monitoring VM exercises an isolated HTTPS Cloud fixture: authenticated ingestion, redaction, excluded automounts, histogram filtering, normal outage recovery, and metric replay plus uploaded-log availability after a reboot during an outage. The fixture's Prometheus/Loki receivers are test-only.
