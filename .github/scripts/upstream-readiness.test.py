@@ -14,6 +14,70 @@ LOCK = {"nodes": {"root": {"inputs": {"nixpkgs": "np", "home-manager": "hm"}}, "
 
 
 class Readiness(unittest.TestCase):
+    def fsr_spec(self, commit=None):
+        return patch.object(watch.Path, "read_text", return_value=json.dumps({
+            "fsr4-rdna2": {"baseline_release": "GE-Proton11-11", "support_commit": commit}}))
+
+    def test_fsr_release_notes_only_request_review_never_ready(self):
+        def release(tag, body, **extra):
+            return dict(tag_name=tag, body=body, draft=False, prerelease=False, **extra)
+        releases = [release("GE-Proton11-11", "FSR4 support"),
+                    release("GE-Proton11-12", "Video playback fixes"),
+                    release("GE-Proton11-13", "FSR 4.1 RDNA2 support")]
+        with self.fsr_spec(), patch.object(watch, "api", return_value=releases), \
+                patch.object(watch, "ge_package_contains") as probe:
+            self.assertEqual(watch.detect("fsr4-rdna2", LOCK),
+                             "upstream-review-required:GE-Proton11-13")
+            probe.assert_not_called()
+        releases[-1]["prerelease"] = True
+        with self.fsr_spec(), patch.object(watch, "api", return_value=releases):
+            self.assertEqual(watch.detect("fsr4-rdna2", LOCK), "waiting-upstream")
+        with self.fsr_spec(), patch.object(watch, "api", return_value=[releases[0]] * 100):
+            self.assertEqual(watch.detect("fsr4-rdna2", LOCK), "waiting-upstream")
+
+    def test_fsr_ancestry_gates_channel_and_pin_independently(self):
+        commit = "b" * 40
+        lock = json.loads(json.dumps(LOCK))
+        lock["nodes"]["np"]["original"] = {"ref": "nixos-unstable"}
+        def api(endpoint):
+            if endpoint.endswith("releases/latest"):
+                return {"tag_name": "GE-Proton11-12", "draft": False, "prerelease": False}
+            return {"sha": "a" * 40}
+        for package_results, expected in (([False], "waiting-unstable"),
+                                          ([True, False], "merged-not-pinned"),
+                                          ([True, True], "PINNED-READY")):
+            with self.subTest(expected=expected), self.fsr_spec(commit), \
+                    patch.object(watch, "api", side_effect=api), \
+                    patch.object(watch, "contains", return_value=True), \
+                    patch.object(watch, "ge_package_contains", side_effect=package_results) as probe:
+                self.assertEqual(watch.detect("fsr4-rdna2", lock), expected)
+                self.assertEqual(probe.call_args_list[0].args, ("a" * 40, commit))
+                if len(package_results) == 2:
+                    self.assertEqual(probe.call_args_list[1].args, ("nix-pin", commit))
+        with self.fsr_spec(commit), patch.object(watch, "api", side_effect=api), \
+                patch.object(watch, "contains", return_value=False), \
+                patch.object(watch, "ge_package_contains") as probe:
+            self.assertEqual(watch.detect("fsr4-rdna2", lock), "waiting-upstream")
+            probe.assert_not_called()
+
+    def test_fsr_rejects_unknown_archive_and_unstable_packaged_release(self):
+        archive = ('https://github.com/GloriousEggroll/proton-ge-custom/releases/'
+                   'download/${finalAttrs.version}/${finalAttrs.version}-x86_64.tar.gz')
+        package = 'version = "GE-Proton11-12"; url = "' + archive + '";'
+        with patch.object(watch, "source", return_value=package.replace("github.com", "example.com")):
+            with self.assertRaises(ValueError):
+                watch.ge_package_contains("pin", "b" * 40)
+        with patch.object(watch, "source", return_value=package), patch.object(watch, "api", return_value={
+                "tag_name": "GE-Proton11-12", "draft": False, "prerelease": True}):
+            with self.assertRaises(ValueError):
+                watch.ge_package_contains("pin", "b" * 40)
+
+    def test_fsr_api_errors_and_invalid_evidence_fail_closed(self):
+        for commit, result in (("short", []), (None, [{}]), (None, [{}] * 100)):
+            with self.subTest(commit=commit), self.fsr_spec(commit), \
+                    patch.object(watch, "api", return_value=result):
+                self.assertTrue(watch.inspect("fsr4-rdna2", LOCK).startswith("unavailable"))
+
     def test_tridactyl_waits_for_the_selected_extension_release(self):
         lock = {"nodes": {"root": {"inputs": {"firefox-addons": "addons"}},
                           "addons": {"locked": {"rev": "addon-pin"}}}}
@@ -253,3 +317,4 @@ class Readiness(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

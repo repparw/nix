@@ -1,5 +1,26 @@
 # Upstream watcher migration
 
+## FSR 4.1 on Alpha's RDNA2 GPU (#323)
+
+`fsr4-rdna2` is notify-only. Until a source-reviewed and runtime-tested
+support commit is recorded in `watchers.json`, stable GE-Proton releases
+newer than the recorded baseline with FSR4/RDNA2 changes produce a
+deduplicated `upstream-review-required:<tag>` issue notice. These notices
+are candidates, not compatibility claims. AMD's Windows driver and Vulkan
+announcements alone do not satisfy readiness. Discovery inspects up to 100
+releases and fails closed if that bound is exhausted; advance the baseline
+after reviewing candidates.
+
+After the issue records the actual model, RADV requirements, real package
+build and Alpha game verification (including Steam and Heroic/UMU), set
+`support_commit` to the full reviewed GE-Proton SHA. CI then requires exact
+ancestry in a stable upstream release and in the actual upstream release
+archives packaged by both the root input's channel and root pin. A newer
+version alone never produces `PINNED-READY`. Package layout changes and API
+errors fail closed. Runtime completion and the choice of per-game/global
+FSR activation remain with the issue owner; this watcher has no cleanup or
+global configuration mutation.
+
 `upstream-watch.yml` inspects the current `main` pins every two hours, after
 successful lock publication, after manual lock merges, and on manual dispatch.
 The lock updater owns input changes.
@@ -207,3 +228,4 @@ a human merge-time chore; Alpha's `watch-t3code-nightly-v2.timer` keeps
 runtime completion ownership until its issue-gate proof lands. Protect
 `statev2.sqlite` and preserve active conversations while the bridge is
 dropped.
+
