@@ -52,6 +52,7 @@ let
     "/home/containers/media/seagate"
   ];
   dashboard = builtins.fromJSON (builtins.readFile ../aspects/monitoring/fleet-overview.json);
+  cpuTarget = builtins.head (lib.findFirst (panel: panel.id == 1) null dashboard.panels).targets;
   absentTargets = (lib.findFirst (panel: panel.id == 7) null dashboard.panels).targets;
   networkTargets = lib.filter (
     panel:
@@ -63,6 +64,7 @@ let
   queryTests = pkgs.writeText "monitoring-dashboard-tests.json" (
     builtins.toJSON {
       evaluation_interval = "1m";
+      fuzzy_compare = true;
       tests =
         map
           (missing: {
@@ -89,6 +91,75 @@ let
             "epsilon"
           ]
         ++ [
+          {
+            interval = "1m";
+            input_series =
+              lib.concatMap
+                (
+                  fixture:
+                  map
+                    (mode: {
+                      series = "node_cpu_seconds_total{host=\"${fixture.host}\",cpu=\"0\",job=\"integrations/unix\",mode=\"${mode}\"}";
+                      values = "0+${toString fixture.${mode}}x10";
+                    })
+                    [
+                      "user"
+                      "idle"
+                    ]
+                )
+                [
+                  {
+                    host = "pi";
+                    user = 1;
+                    idle = 65;
+                  }
+                  {
+                    host = "alpha";
+                    user = 30;
+                    idle = 30;
+                  }
+                  {
+                    host = "epsilon";
+                    user = 0;
+                    idle = 60;
+                  }
+                  {
+                    host = "saturated";
+                    user = 60;
+                    idle = 0;
+                  }
+                ]
+              ++ [
+                {
+                  series = "node_cpu_seconds_total{host=\"pi\",cpu=\"0\",job=\"unrelated\",mode=\"user\"}";
+                  values = "0+6000x10";
+                }
+              ];
+            promql_expr_test = [
+              {
+                expr = cpuTarget.expr;
+                eval_time = "6m";
+                exp_samples = [
+                  {
+                    labels = "{host=\"pi\"}";
+                    value = 100.0 / 66.0;
+                  }
+                  {
+                    labels = "{host=\"alpha\"}";
+                    value = 50;
+                  }
+                  {
+                    labels = "{host=\"epsilon\"}";
+                    value = 0;
+                  }
+                  {
+                    labels = "{host=\"saturated\"}";
+                    value = 100;
+                  }
+                ];
+              }
+            ];
+          }
           {
             interval = "1m";
             input_series =
