@@ -122,6 +122,23 @@
           );
         in
         {
+          helium-policy =
+            let
+              script = pkgs.writeText "helium-policy.sh" inputs.self.nixosConfigurations.alpha.config.system.activationScripts.heliumPolicy.text;
+            in
+            pkgs.runCommand "check-helium-policy"
+              {
+                nativeBuildInputs = [
+                  pkgs.python3
+                  pkgs.bash
+                  pkgs.coreutils
+                ];
+              }
+              ''
+                python3 ${./_tests/helium-policy.py} ${script}
+                touch $out
+              '';
+
           hermes-crash-triage = (import ./aspects/services/hermes-crash/_package.nix { inherit pkgs; }).check;
           hermes-package-triage =
             (import ./aspects/services/hermes-package/_package.nix { inherit pkgs; }).check;

@@ -5,8 +5,10 @@
   ...
 }:
 let
+  openInFirefoxId = "lmeddoobegbaiopohmpmmobpnpjifpii";
+
   heliumExtensionIds = [
-    "lmeddoobegbaiopohmpmmobpnpjifpii"
+    openInFirefoxId
     "nngceckbapebfimnlniiiahkandclblb"
     "mnjggcdmjocbbbhaepdhchncahnbgone"
     "enamippconapkdmgfgjchkhakpfinmaj"
@@ -14,27 +16,6 @@ let
     "dbepggeogbaibhgnhhndojpepiihcmeb"
   ];
 
-  allOpenInExtensionIds = [
-    "lmeddoobegbaiopohmpmmobpnpjifpii"
-    "mjoebkkejejidnkfdekpbooceogbapnf"
-    "amojccmdnkdlcjcplmkijeenigbhfbpd"
-    "looohpideggedchhpphemdmppnmdkgfd"
-    "bhfenhhfpcpkknkahnlogooiodcofkjl"
-    "mgmnomlncpmfgelhofilonnecmbdaoia"
-    "bifmfjgpgndemajpeeoiopbeilbaifdo"
-    "ihpiinojhnfhpdmmacgmpoonphhimkaj"
-    "jgpghknlbaljigdhcjimjnkkjniiipmm"
-    "cehiomcamjpnfmemkmpjadaclohoibgo"
-    "balknnpjeohaolphkfhghbaapifbokik"
-    "nfpgfobeckckemhmggkdfjkjaiikadnd"
-    "kjoabfljeghcinlpjhdbdfbcflapkccm"
-    "gkmonffckeeffppchajngpdakfppalfo"
-    "eaicplkoeceoelookkiaeekhodehdhde"
-    "lhplfipknbnglagbgbfogdaihdcekfga"
-    "bffjckjhidlcnenenacdahhpbacpgapo"
-    "oofmnabdpcibefadlibdpnnbglcehfpj"
-    "ocnfecjfebnllnapjjoncgjnnkfmobjc"
-  ];
 in
 {
   flake-file.inputs.firefox-addons = {
@@ -49,26 +30,13 @@ in
   };
 
   den.aspects.gui.provides.browser = {
-    nixos = {
-      nixpkgs.overlays = [
-        inputs.firefox-addons.overlays.default
-        (final: prev: {
-          firefox-addons = final.lib.mapAttrs (
-            name: pkg:
-            pkg.overrideAttrs (old: {
-              meta = old.meta // {
-                license = final.lib.licenses.unfree;
-              };
-            })
-          ) prev.firefox-addons;
-        })
-      ];
-
-      environment.etc = {
+    nixos =
+      { config, pkgs, ... }:
+      let
         # Helium reads platform policies from /etc/chromium (verified via
         # --enable-logging --v=1: config_dir_policy_loader scans
         # /etc/chromium/policies/managed). The /etc/helium path is not read.
-        "chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
+        heliumPolicy = builtins.toJSON {
           BrowserSignin = 0;
           PasswordManagerEnabled = false;
           ExtensionSettings = lib.genAttrs heliumExtensionIds (_: {
@@ -78,8 +46,59 @@ in
             update_url = "https://update-url-to-be-replaced.qjz9zk";
           });
         };
+        # Chromium watches the whole managed-policy directory and re-installs
+        # every policy-managed extension on reload, which deletes their
+        # chrome.storage.local. setup-etc.pl re-creates environment.etc
+        # symlinks on every activation, so keep these files out of
+        # environment.etc and rewrite them only when the bytes change.
+        policyFiles = {
+          "helium-nixos.json" = heliumPolicy;
+        }
+        // lib.optionalAttrs (config.programs.chromium.extraOpts != { }) {
+          "extra.json" = builtins.toJSON config.programs.chromium.extraOpts;
+        };
+      in
+      {
+        nixpkgs.overlays = [
+          inputs.firefox-addons.overlays.default
+          (final: prev: {
+            firefox-addons = final.lib.mapAttrs (
+              name: pkg:
+              pkg.overrideAttrs (old: {
+                meta = old.meta // {
+                  license = final.lib.licenses.unfree;
+                };
+              })
+            ) prev.firefox-addons;
+          })
+        ];
+
+        environment.etc = lib.mkIf (config.programs.chromium.extraOpts != { }) {
+          # programs.chromium regenerates this on every activation; disable the
+          # etc entry so the activation script below can keep it stable.
+          "chromium/policies/managed/extra.json".enable = lib.mkForce false;
+        };
+
+        system.activationScripts.heliumPolicy = {
+          deps = [ "etc" ];
+          text = ''
+            install -d -m 0755 /etc/chromium/policies/managed
+          ''
+          + lib.concatStrings (
+            lib.mapAttrsToList (
+              name: content:
+              let
+                src = pkgs.writeText "chromium-policy-${name}" content;
+              in
+              ''
+                if ! cmp -s ${src} "/etc/chromium/policies/managed/${name}"; then
+                  install -m 0644 ${src} "/etc/chromium/policies/managed/${name}"
+                fi
+              ''
+            ) policyFiles
+          );
+        };
       };
-    };
 
     homeManager =
       {
@@ -92,59 +111,23 @@ in
       let
         openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
-        browserWithoutMimeApps =
-          desktopFile: browser:
-          (pkgs.symlinkJoin {
-            name = "${browser.name}-without-mimeapps";
-            paths = [ browser ];
-            postBuild = ''
-              rm -rf "$out/share/applications"
-              install -Dm644 ${browser}/share/applications/${desktopFile} \
-                "$out/share/applications/${desktopFile}"
-              sed -i '/^MimeType=/d' "$out/share/applications/${desktopFile}"
-            '';
-            inherit (browser) meta;
-          })
-          // {
-            override = args: browserWithoutMimeApps desktopFile (browser.override args);
-          };
-
-        heliumWithoutMimeApps = browserWithoutMimeApps "helium.desktop";
-        heliumBase = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
-        # Upstream bakes '${NIXOS_OZONE_WL:+...}' into a compiled wrapper
-        # that performs no shell expansion, so every launch carries the
-        # inert literal in argv and the intended ozone hint never applies.
-        # Filter the literal here and apply the hint for real when the
-        # session requests Wayland (NIXOS_OZONE_WL=1, see system aspect).
-        heliumShim =
-          base:
+        whatsappLinksToFirefox = pkgs.callPackage ../../_packages/whatsapp-links-to-firefox.nix { };
+        heliumPackage = lib.makeOverridable (
+          {
+            flags ? config.programs.helium.flags,
+          }:
           let
-            shimScript = pkgs.writeShellApplication {
-              name = "helium-shim";
-              runtimeInputs = [ pkgs.coreutils ];
+            base = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium.override {
+              inherit flags;
+            };
+            launcher = pkgs.writeShellApplication {
+              name = "helium";
+              runtimeInputs = [
+                pkgs.coreutils
+                pkgs.findutils
+              ];
               text = ''
-                args=()
-                for arg in "$@"; do
-                  case "$arg" in
-                    *NIXOS_OZONE_WL*) continue ;;
-                    *) args+=("$arg") ;;
-                  esac
-                done
-                if [ -n "''${NIXOS_OZONE_WL:-}" ] && [ -n "''${WAYLAND_DISPLAY:-}" ]; then
-                  args+=(--ozone-platform-hint=auto)
-                fi
-
-                # Chromium's encrypted-pref validation can decide the profile
-                # was tampered with and reset every extension on a version
-                # jump (Helium #1978, upstream crrev 7763038; hit live on the
-                # 0.18.3.1 -> 0.19.2.1 update: all Local/Sync Extension
-                # Settings were re-created empty on first launch, while
-                # unprotected data like History survived). The macOS fix does
-                # not cover Linux, so snapshot the extension storage before
-                # the first launch of each new version. If a wipe strikes,
-                # restore with:
-                #   rsync -a "$XDG_STATE_HOME/helium-extension-snapshots/pre-<version>/" \
-                #     "$HOME/.config/net.imput.helium/Default/"
+                # Preserve extension storage before version changes (Helium #1978).
                 snapshotRoot="''${XDG_STATE_HOME:-$HOME/.local/state}/helium-extension-snapshots"
                 marker="$snapshotRoot/launched-version"
                 defaultDir="$HOME/.config/net.imput.helium/Default"
@@ -161,25 +144,31 @@ in
                   find "$snapshotRoot" -maxdepth 1 -name 'pre-*' -type d | sort -r | tail -n +4 | xargs -r rm -rf
                   printf '%s' "${base.name}" > "$marker"
                 fi
-                exec ${base}/bin/helium "''${args[@]}"
+                exec ${base}/bin/helium "$@"
               '';
             };
           in
-          (pkgs.symlinkJoin {
-            name = "${base.name}-clean-argv";
+          pkgs.symlinkJoin {
+            name = "${base.name}-configured";
             paths = [ base ];
             postBuild = ''
               rm "$out/bin/helium"
-              install -Dm755 ${shimScript}/bin/helium-shim "$out/bin/helium"
+              install -Dm755 ${launcher}/bin/helium "$out/bin/helium"
+              rm -rf "$out/share/applications"
+              install -Dm644 ${base}/share/applications/helium.desktop \
+                "$out/share/applications/helium.desktop"
+              # App-menu launches must use the same snapshot launcher as webapps.
+              sed -i -E '/^MimeType=/d; s|^Exec=[^ ]*/bin/helium|Exec='"$out"'/bin/helium|' \
+                "$out/share/applications/helium.desktop"
             '';
-          })
-          // {
-            override = newArgs: heliumShim (base.override newArgs);
-            meta = base.meta;
-          };
-        helium = heliumShim heliumBase;
-        heliumPackage = heliumWithoutMimeApps helium;
+            inherit (base) meta;
+          }
+        ) { };
         heliumFlags = [
+          # Upstream's wrapper adds an inert '${NIXOS_OZONE_WL:+...}' literal
+          # instead of a real shell expansion, so set the hint here. "auto"
+          # picks Wayland when available and X11 otherwise.
+          "--ozone-platform-hint=auto"
           "--force-renderer-accessibility"
           "--silent-debugger-extension-api"
           # OSCrypt backend must be identical for normal windows and
@@ -190,8 +179,12 @@ in
           # Google/YouTube session cookies on the next start. basic
           # persists without requiring an unlocked login keyring.
           "--password-store=basic"
+          # Unpacked MV3 extension that hands external links clicked in the
+          # WhatsApp web app to Firefox. It has no stored settings, so the
+          # extension-state wipes cannot disable it. See the package for why
+          # the store "Open in Firefox" extension does not cover this.
+          "--load-extension=${whatsappLinksToFirefox}"
         ];
-        heliumForWebapps = heliumPackage.override { flags = heliumFlags; };
         # Helium's user-data-dir on Linux is ~/.config/net.imput.helium
         # (verified: live Default/, SingletonSocket, and crashpad database
         # all live there). NativeMessagingHosts must go under it;
@@ -205,7 +198,7 @@ in
           (pkgs.writeShellApplication {
             name = "webapp";
             runtimeInputs = [
-              heliumForWebapps
+              heliumPackage
               ndrop
             ];
             text = ''
@@ -281,7 +274,10 @@ in
             description = "Node Host for Native Messaging";
             path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
             type = "stdio";
-            allowed_origins = map (id: "chrome-extension://${id}/") allOpenInExtensionIds;
+            allowed_origins = map (id: "chrome-extension://${id}/") [
+              openInFirefoxId
+              whatsappLinksToFirefox.extensionId
+            ];
           };
           ".config/tridactyl/tridactylrc".text = ''
             " General Settings
