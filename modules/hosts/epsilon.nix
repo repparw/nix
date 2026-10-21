@@ -14,6 +14,7 @@
       den.aspects.fleet-unit-state
       den.aspects.monitoring._.server
       den.aspects.monitoring._.server-credentials
+      den.aspects.monitoring._.cloud
       den.aspects.nixos-services._.disk-watch
       den.aspects.deploy-target
       den.aspects.passwordless-sudo
@@ -76,6 +77,7 @@
         };
         # Home hosts are SNATed by the WireGuard router.
         modules.monitoring.server.ingestionSources = [ "10.5.5.1" ];
+        modules.monitoring.server.cloudRedirectUrl = "https://repparw.grafana.net";
 
         # Independent of Grafana/Loki/Prometheus, including when the disk is full.
         modules.disk-watch = {

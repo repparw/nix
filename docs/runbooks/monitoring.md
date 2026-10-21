@@ -195,20 +195,9 @@ Prometheus frontend. A move away from Grafana should not require replacing
 the collectors or historical metrics/logging backends. Leave this PR as a draft until
 metrics collection and frontend choice have both been evaluated.
 
-## Optional Grafana Cloud trial
+## Parallel Grafana Cloud pilot
 
-The Alloy agent can independently dual-write a 60-second metrics scrape and
-the already-filtered host journal stream to Grafana Cloud while Epsilon
-continues receiving its normal 30-second metrics and logs. This is disabled
-by default; no Cloud secrets or account are needed to build this config.
-Follow [the Cloud parallel trial and local setup handoff](grafana-cloud-trial.md)
-to enable hosts gradually and compare both Grafana instances' alerting.
-
-Epsilon's Grafana/Prometheus/Loki backend, local dashboard provisioning and
-receiver credentials are **temporary during the Cloud trial**. If Cloud
-meets the monitoring, retention, privacy and alerting requirements, remove
-these server components in a separate cleanup PR; keep independent deployment
-safety checks.
+A Cloud pilot can run alongside Epsilon without changing its receiving services. See [Grafana Cloud parallel pilot](grafana-cloud-pilot.md) for optional Alloy routing, SOPS token setup, privacy safeguards, and Cloud-side alerts. Existing fleet and deployment alerts remain active.
 
 ## Next migration
 

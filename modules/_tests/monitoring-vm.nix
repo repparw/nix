@@ -67,6 +67,22 @@ pkgs.testers.runNixOSTest {
       modules.monitoring.server = {
         usersFile = toString testUsers;
         ingestionSources = [ "10.5.5.1" ];
+        cloudRedirectUrl = "https://fixture.grafana.net";
+      };
+      services.traefik = {
+        staticConfigOptions.entryPoints.websecure.address = "127.0.0.1:8443";
+        dynamicConfigOptions.http = {
+          routers.grafana = {
+            rule = "Host(`metrics.example.test`)";
+            entryPoints = [ "websecure" ];
+            tls = { };
+          };
+          routers.grafana-local-health = {
+            entryPoints = [ "websecure" ];
+            tls = { };
+          };
+          services.grafana.loadBalancer.servers = [ { url = "http://127.0.0.1:3001"; } ];
+        };
       };
       virtualisation.memorySize = 4096;
       virtualisation.diskImage = null;
@@ -104,6 +120,20 @@ pkgs.testers.runNixOSTest {
         username = "pi";
         passwordFile = toString testPassword;
       };
+      # Unreachable HTTPS fixtures exercise independent Cloud buffers without
+      # external traffic or real credentials. Local ingestion must keep working.
+      modules.monitoring.agent.cloud = {
+        metrics = {
+          url = "https://127.0.0.1:1/api/prom/push";
+          username = "fixture-metrics";
+          tokenFile = toString testPassword;
+        };
+        logs = {
+          url = "https://127.0.0.1:1/loki/api/v1/push";
+          username = "fixture-logs";
+          tokenFile = toString testPassword;
+        };
+      };
       networking.interfaces.eth1.ipv4.addresses = lib.mkForce [
         {
           address = "10.5.5.1";
@@ -121,6 +151,8 @@ pkgs.testers.runNixOSTest {
       services.journald.settings.Journal = {
         Storage = "volatile";
         RuntimeMaxUse = "50M";
+        # Keep the outage burst in the journal without serial-console throttling.
+        ForwardToConsole = lib.mkForce false;
       };
       modules.monitoring.agent.extraExcludedMounts = [ "/mnt/hdd" ];
       systemd.mounts = [
@@ -170,6 +202,13 @@ pkgs.testers.runNixOSTest {
     server.wait_until_succeeds("curl -fsS http://127.0.0.1:12345/metrics")
     server.wait_until_succeeds("curl -fsS http://127.0.0.1:9091/-/ready")
 
+    with subtest("optional Cloud redirect preserves HTTPS bookmarks without authentication"):
+        for path in ["/", "/d/fleet-overview?orgId=1&from=now-1h"]:
+            url = "https://metrics.example.test" + path
+            output = server.succeed("curl -ksS --connect-to metrics.example.test:443:127.0.0.1:8443 -o /dev/null -w '%{http_code} %{redirect_url}' " + shlex.quote(url))
+            assert output == "302 https://fixture.grafana.net" + path, output
+        server.succeed("curl -kfSs --connect-to metrics.example.test:443:127.0.0.1:8443 https://metrics.example.test/api/health | jq -e '.database == \"ok\"'")
+
     with subtest("receiver firewall and local admin endpoints"):
         for port in [3001, 12345, 9091, 3101]:
             listeners = server.succeed(f"ss -H -ltn 'sport = :{port}'")
@@ -210,6 +249,24 @@ pkgs.testers.runNixOSTest {
         server.succeed("curl -fsS -H 'Host: metrics.example.test' --user \"admin:$(cat /var/lib/grafana/admin-password)\" http://127.0.0.1:3001/api/datasources | jq -e 'length == 2 and any(.[]; .uid == \"fleet-prom\") and any(.[]; .uid == \"fleet-loki\")'")
         client.fail("systemctl is-active mnt-hdd.mount")
         client.succeed("test $(systemctl show mnt-hdd.mount -p ActiveEnterTimestampMonotonic --value) = 0")
+
+    with subtest("Cloud failures retain separate buffers and leave Epsilon ingestion live"):
+        client.wait_until_succeeds("journalctl -u alloy --no-pager | grep 'component_id=prometheus.remote_write.cloud' | grep 'connection refused'")
+        retry(lambda _last: any(
+            line.startswith("loki_write_batch_retries_total{")
+            and 'host="127.0.0.1:1"' in line
+            and float(line.split()[-1]) > 0
+            for line in client.succeed("curl -fsS http://127.0.0.1:12345/metrics").splitlines()
+        ), timeout_seconds=60)
+        client.succeed("test -d /var/lib/alloy/data-alloy/prometheus.remote_write.cloud/wal")
+        client.succeed("test -d /var/lib/alloy/data-alloy/prometheus.remote_write.epsilon/wal")
+        client.succeed("test -d /var/lib/alloy/data-alloy/loki.write.cloud/wal")
+        client.succeed("printf 'monitoring_fixture_value 43\\n' > /var/lib/fleet-metrics/textfile/test.prom")
+        cloud_outage_marker = "cloud-outage-" + secrets.token_hex(6)
+        # Exceed Alloy's default 10 MiB send queue while Cloud is down.
+        client.succeed("for i in $(seq 1 4000); do printf '%s\\n' " + shlex.quote("x" * 4096) + "; done | logger --size 8192 -t cloud-outage; logger -t cloud-outage " + shlex.quote(cloud_outage_marker))
+        retry(lambda _last: len(logs(cloud_outage_marker)) > 0, timeout_seconds=120)
+        retry(lambda _last: len(prom('monitoring_fixture_value{host="pi"} == 43')) == 1, timeout_seconds=120)
 
     with subtest("short Loki outage retries without losing the marker"):
         server.succeed("systemctl stop loki")
