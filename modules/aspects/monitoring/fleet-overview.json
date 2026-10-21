@@ -52,7 +52,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "100 * (1 - avg by (host) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))",
+          "expr": "100 * sum by (host) (rate(node_cpu_seconds_total{job=\"integrations/unix\",mode!=\"idle\"}[5m])) / sum by (host) (rate(node_cpu_seconds_total{job=\"integrations/unix\"}[5m]))",
           "legendFormat": "{{host}}",
           "interval": ""
         }

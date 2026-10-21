@@ -24,6 +24,13 @@ The default agent aspect collects Unix exporter metrics and host journald. Each 
 
 ## Dashboard and health checks
 
+CPU used is the non-idle share of total accounted CPU time over five minutes.
+Pi has reported more idle seconds than elapsed time directly in `/proc/stat`,
+which made the previous `100 * (1 - idle rate)` query negative. Normalizing by
+the total counter rate avoids that wall-clock assumption; it does not repair
+the kernel's accounting. The query selects the Unix collector job so unrelated
+CPU series cannot distort the result.
+
 Open [Fleet overview](https://metrics.repparw.com/d/fleet-overview/fleet-overview). Epsilon's Traefik preserves the hostname as a reversible 302 to `https://repparw.grafana.net`, including bookmark paths and queries. Grafana Cloud controls sign-in and membership. There is no local Grafana health exception; `/api/health` redirects to Cloud too.
 
 Glance probes Cloud's unauthenticated `/api/health` directly. The scheduled fleet-health probe also checks that endpoint, but strict deployment readiness and local-only probes exclude it. A Cloud outage must not prevent fleet recovery. This endpoint proves frontend health, not telemetry ingestion.
