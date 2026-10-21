@@ -73,6 +73,10 @@ Grafana's Discord notifier sends a new message on resolution; it cannot delete t
 
 A notification policy route sends alerts labeled `pilot=grafana-cloud` to that contact point. The route uses `group_by: ["host"]`, a 10s group wait, a 1m group interval, and a 4h repeat interval.
 
+Use [the native Discord template](../../modules/aspects/monitoring/discord.tmpl) as the Grafana notification template `fleet.discord`. Set the contact point title to `{{ template "fleet.discord.title" . }}`, its message to `{{ template "fleet.discord.message" . }}`, and enable embed description (`use_embed_description`).
+
+The message contains the host, condition, useful value and one dashboard link. It omits raw labels, expression references and silence URLs. Each rule supplies a `brief` firing annotation and a `recovery` annotation, with `summary` as a fallback. For disks, include the mountpoint and `{{ printf "%.0f" $values.B.Value }}% used`. Keep query A and reduced value B numeric; apply the comparison in condition C so the annotation receives the percentage rather than a Boolean. Preview firing, resolved, missing-host and datasource-error cases using Grafana's native template preview before changing the contact point.
+
 Two Grafana-managed host-absence rules exist in folder **Fleet Cloud Pilot**, group **fleet-cloud-pilot**:
 
 - **Epsilon:** `absent_over_time(node_uname_info{host="epsilon"}[10m]) or on() vector(0)`
@@ -82,7 +86,11 @@ Keep each absence rule paused until its host sends a fresh Cloud sample, then en
 
 The firing/resolved path was validated with a temporary synthetic rule (`fleet_cloud_probe{test="delivery"}`), which was deleted after a Firing and a Resolved notification were observed. Re-run that check after changing the contact point or notification policy.
 
-Configure explicit No Data and Error behavior and test both firing and resolution. Disk rules use `100 * (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes)` for durable mountpoints. They match disk-watch: warning at 90% and critical at 93%, sustained for five minutes. Warning excludes critical usage. Missing hosts are handled by the absence rules. Consider systemd failed-unit and backup freshness alerts after the corresponding metrics are verified.
+Disk, host-absence and series-budget rules use **Keep Last State** for both evaluation errors and No Data. A Cloud query timeout cannot establish a disk threshold violation or host outage. Using Alerting for these errors previously caused false firing/resolved messages across filesystem instances.
+
+A separate **Cloud metrics query availability** rule queries `vector(0)` and uses Grafana's **Error** and **No Data** states. Route its `DatasourceError` and `DatasourceNoData` alerts to Discord using `rulename="Cloud metrics query availability"`, grouped by `datasource_uid`, with a 2m group wait and 4h repeat interval. These notifications report that monitoring is unavailable. Keep independent fleet-health checks running while Cloud cannot evaluate queries.
+
+Disk query A returns `ceil(100 * (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes))` for durable mountpoints. Reduce A to B and use math condition C: `$B >= 90 && $B < 93` for warning, `$B >= 93` for critical, sustained for five minutes. The rounding matches disk-watch. The series-budget rule similarly retains the numeric series count and compares B against 9,800 in C. Missing hosts are handled by the absence rules. Consider systemd failed-unit and backup freshness alerts after the corresponding metrics are verified.
 
 Cloud Synthetic Monitoring can probe a public HTTPS service independently of Epsilon. Note that `metrics.repparw.com/api/health` is intentionally unauthenticated and checks frontend reachability, **not end-to-end ingestion**.
 
