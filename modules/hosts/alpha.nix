@@ -443,6 +443,8 @@
           };
         };
 
+        services.resolved.settings.Resolve.DNSOverTLS = true;
+
         networking.firewall.interfaces.eth0 = {
           allowedTCPPorts = [
             54535
