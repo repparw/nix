@@ -11,19 +11,30 @@
     nixos =
       { pkgs, ... }:
       let
-        # Steam shortcuts resolve Heroic inside Steam's FHS environment.
-        heroicWithGamemode = pkgs.heroic.override {
-          extraPkgs = pkgs': [ pkgs'.gamemode ];
+        # Launcher environments also cover systemd and streamed sessions.
+        # Per-game settings can override this before starting GE-Proton.
+        gamingEnvironment = {
+          PROTON_FSR4_UPGRADE = "1";
         };
 
         # Clear Steam's inherited controller hide list for Heroic launches.
         heroicSteam = pkgs.runCommand "heroic-steam" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
           mkdir -p $out/bin
-          makeWrapper ${heroicWithGamemode}/bin/heroic $out/bin/heroic \
+          makeWrapper ${pkgs.heroic}/bin/heroic $out/bin/heroic \
             --run 'if [ "''${SteamClientLaunch:-}" = 1 ]; then export SDL_GAMECONTROLLER_IGNORE_DEVICES=0xdead/0xbeef; fi'
         '';
       in
       {
+        nixpkgs.overlays = [
+          (_final: prev: {
+            # Cover every Heroic entry point, including Moonshine.
+            heroic = prev.heroic.override {
+              extraPkgs = pkgs': [ pkgs'.gamemode ];
+              extraEnv = gamingEnvironment;
+            };
+          })
+        ];
+
         boot.kernelModules = [ "ntsync" ];
         hardware.xpadneo.enable = true;
         programs = {
@@ -34,6 +45,7 @@
             # Avoid Steam's mount scan waking idle disks. Keep /run/media
             # visible: masking it fails when the mountpoint is absent.
             package = pkgs.steam.override {
+              extraEnv = gamingEnvironment;
               extraBwrapArgs = [
                 "--tmpfs /mnt"
                 "--tmpfs /home/containers/media"
@@ -51,7 +63,7 @@
           gamescope.enable = true;
         };
         environment.systemPackages = with pkgs; [
-          heroicWithGamemode
+          heroic
         ];
 
         services.udev.extraRules = ''
