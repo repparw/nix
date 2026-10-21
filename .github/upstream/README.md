@@ -228,4 +228,3 @@ a human merge-time chore; Alpha's `watch-t3code-nightly-v2.timer` keeps
 runtime completion ownership until its issue-gate proof lands. Protect
 `statev2.sqlite` and preserve active conversations while the bridge is
 dropped.
-
