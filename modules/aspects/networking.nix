@@ -38,13 +38,15 @@ _: {
           nameservers = [
             "1.1.1.1#cloudflare-dns.com"
             "1.0.0.1#cloudflare-dns.com"
+            "9.9.9.9#dns.quad9.net"
           ];
         };
 
         services.resolved = {
           enable = true;
           settings.Resolve = {
-            DNSOverTLS = true;
+            DNSOverTLS = lib.mkDefault false;
+            StaleRetentionSec = "15min";
           };
         };
 
