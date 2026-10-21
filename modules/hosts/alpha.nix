@@ -6,7 +6,6 @@
 {
   den.aspects.alpha = {
     includes = [
-      den.aspects.monitoring._.credentials
       den.aspects.monitoring._.cloud
       den.aspects.fleet-unit-state
       den.aspects.alpha._.backup

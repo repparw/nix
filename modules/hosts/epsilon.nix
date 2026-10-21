@@ -12,8 +12,8 @@
   den.aspects.epsilon = {
     includes = [
       den.aspects.fleet-unit-state
-      den.aspects.monitoring._.server
-      den.aspects.monitoring._.server-credentials
+      den.aspects.monitoring._.dashboard
+      den.aspects.monitoring._.persist
       den.aspects.monitoring._.cloud
       den.aspects.nixos-services._.disk-watch
       den.aspects.deploy-target
@@ -70,15 +70,6 @@
         users.users.repparw.hashedPasswordFile = config.sops.secrets.repparwPasswordHash.path;
 
         modules.services.bridgePrefix = "10.231.137";
-        modules.monitoring.agent = {
-          receiverHost = "127.0.0.1";
-          metricsPort = 9091;
-          logsPort = 3101;
-        };
-        # Home hosts are SNATed by the WireGuard router.
-        modules.monitoring.server.ingestionSources = [ "10.5.5.1" ];
-        modules.monitoring.server.cloudRedirectUrl = "https://repparw.grafana.net";
-
         # Independent of Grafana/Loki/Prometheus, including when the disk is full.
         modules.disk-watch = {
           enable = true;

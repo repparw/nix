@@ -212,6 +212,11 @@ in
                         }
 
             ${vhostProbes}
+                        # Cloud reachability is useful operationally, but must not
+                        # gate deployment readiness or local recovery.
+                        if [ "$strict" != 1 ] && [ "$local_only" != 1 ]; then
+                          http grafana-cloud ${config.modules.monitoring.cloudUrl}/api/health 200
+                        fi
                         remote epsilon apex https://${cfg.domain}/ 200
 
                         if [ "$strict" = 1 ]; then

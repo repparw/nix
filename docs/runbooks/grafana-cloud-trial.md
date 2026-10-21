@@ -9,7 +9,7 @@ tags: [monitoring, grafana-cloud, alloy]
 
 # Grafana Cloud setup
 
-Use [Grafana Cloud parallel pilot](grafana-cloud-pilot.md) for the current
+Use [Grafana Cloud Cloud setup](grafana-cloud-pilot.md) for the current
 configuration, credentials, deployment checks, and Cloud alerts.
 
 The pilot replaces the original combined Cloud switch with independent

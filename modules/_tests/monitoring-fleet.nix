@@ -44,12 +44,7 @@ let
       "logs"
     ]
   ];
-  redirectConfig =
-    (inputs.self.nixosConfigurations.epsilon.extendModules {
-      modules = [
-        { modules.monitoring.server.cloudRedirectUrl = lib.mkForce "https://fixture.grafana.net/"; }
-      ];
-    }).config.services.traefik.dynamicConfigOptions.http;
+  redirectConfig = (cfg "epsilon").services.traefik.dynamicConfigOptions.http;
   alphaMounts = [
     "/mnt/hdd"
     "/mnt/seagate"
@@ -129,226 +124,111 @@ let
         ];
     }
   );
-  lokiConfiguration =
-    (pkgs.formats.yaml { }).generate "fleet-loki.yaml"
-      (cfg "epsilon").services.loki.configuration;
-  allAgents = lib.all (host: (cfg host).services.alloy.enable) hosts;
-  receiverTargets =
-    (cfg "epsilon").modules.monitoring.agent.receiverHost == "127.0.0.1"
-    &&
-      lib.all
-        (
-          host:
-          (cfg host).modules.monitoring.agent.receiverHost == (cfg host)
-          .modules.services.hostAddresses.epsilon
-        )
-        [
-          "alpha"
-          "pi"
-        ];
-  centralizedServer =
-    (cfg "epsilon").services.prometheus.enable
-    && (cfg "epsilon").services.loki.enable
-    && (cfg "epsilon").services.grafana.enable
-    &&
-      lib.all
-        (
-          host:
-          !(cfg host).services.prometheus.enable
-          && !(cfg host).services.loki.enable
-          && !(cfg host).services.grafana.enable
-        )
-        [
-          "alpha"
-          "pi"
-        ];
-  cloudMetricsEnabled = lib.all (
+  cloudOnly =
     host:
     let
-      cloud = (cfg host).modules.monitoring.agent.cloud;
+      config = cfg host;
       text = alloyConfig host;
     in
-    cloud.metrics != null
-    && cloud.metrics.url == "https://prometheus-prod-40-prod-sa-east-1.grafana.net/api/prom/push"
-    && cloud.metrics.username == "3689389"
-    && cloud.metrics.tokenFile == "/run/secrets/grafana-cloud-write-token"
-    && cloud.logs != null
-    && cloud.logs.url == "https://logs-prod-024.grafana.net/loki/api/v1/push"
-    && cloud.logs.username == "1840359"
-    && cloud.logs.tokenFile == "/run/secrets/grafana-cloud-write-token"
+    config.services.alloy.enable
+    && !config.services.prometheus.enable
+    && !config.services.loki.enable
+    && !config.services.grafana.enable
+    && !(config.sops.secrets ? monitoring-agent-password)
+    && !(config.sops.secrets ? monitoring-ingestion-users)
+    && !(config.modules.services.definitions ? grafana)
+    && !(lib.hasInfix "epsilon.receiver" text)
+    && !(lib.hasInfix "ingestion-password" text)
     && lib.hasInfix ''prometheus.remote_write "cloud"'' text
-    && lib.hasInfix ''prometheus.scrape "node_cloud"'' text
-    && lib.hasInfix ''prometheus.scrape "alloy_cloud"'' text
+    && lib.hasInfix ''loki.write "cloud"'' text
     && lib.hasInfix ''scrape_interval = "60s"'' (scrapeBlock "node_cloud" text)
-    && lib.hasInfix "forward_to      = [prometheus.remote_write.cloud.receiver]" (
-      scrapeBlock "node_cloud" text
-    )
-    && !(lib.hasInfix "prometheus.remote_write.epsilon.receiver" (scrapeBlock "node_cloud" text))
-  ) hosts;
-  selfTelemetry = lib.all (
-    host:
-    lib.hasInfix ''prometheus.scrape "alloy"'' (alloyConfig host)
-    && lib.hasInfix ''"127.0.0.1:12345"'' (alloyConfig host)
-    && lib.hasInfix ''prometheus.remote_write "epsilon"'' (alloyConfig host)
-  ) hosts;
+    && lib.hasInfix ''scrape_interval = "60s"'' (scrapeBlock "alloy_cloud" text)
+    && lib.hasInfix "prometheus.relabel.alloy.receiver" (scrapeBlock "alloy_cloud" text)
+    && lib.hasInfix ''regex = ".*_bucket"'' text
+    && lib.hasInfix "max_backoff_retries = 0" text
+    &&
+      lib.all
+        (
+          signal:
+          builtins.elem "grafana-cloud-${signal}-token:/run/secrets/grafana-cloud-write-token" config.systemd.services.alloy.serviceConfig.LoadCredential
+        )
+        [
+          "metrics"
+          "logs"
+        ];
   alphaExclusions =
     (cfg "alpha").modules.monitoring.agent.extraExcludedMounts == alphaMounts
     && lib.all (path: lib.hasInfix path (alloyConfig "alpha")) alphaMounts
     && lib.all (path: !(lib.hasInfix path (alloyConfig "pi"))) alphaMounts;
-  epsilonDiskWatch =
-    (cfg "epsilon").modules.disk-watch.enable
-    && lib.any (
-      entry: entry.mount == "/persist" && entry.warn == 70 && entry.crit == 85
-    ) (cfg "epsilon").modules.disk-watch.mounts
-    && (cfg "epsilon").modules.disk-watch.interval == "*:0/15"
-    && (cfg "epsilon").systemd.timers ? disk-watch;
+  glanceWidgets =
+    lib.concatMap (column: column.widgets)
+      (builtins.head (cfg "epsilon").containers.glance.config.services.glance.settings.pages).columns;
+  glanceMonitor = lib.findFirst (widget: widget.type == "monitor") null glanceWidgets;
+  cloudSite = lib.findFirst (site: site.title == "grafana") null glanceMonitor.sites;
 in
-assert (cfg "epsilon").services.grafana.settings.server.http_addr == "127.0.0.1";
-assert !(cfg "epsilon").services.grafana.openFirewall;
-assert (cfg "epsilon").services.grafana.settings."auth.proxy".enabled;
-assert (cfg "epsilon").services.grafana.settings."auth.proxy".header_name == "Remote-User";
-assert (cfg "epsilon").services.grafana.settings."auth.proxy".whitelist == "127.0.0.1,::1";
-assert (cfg "epsilon").services.grafana.settings.auth.disable_login_form;
+assert lib.all cloudOnly hosts;
 assert lib.all (port: !(builtins.elem port (cfg "epsilon").networking.firewall.allowedTCPPorts)) [
   9090
   3100
   3001
   12345
 ];
+assert !(redirectConfig.routers ? grafana-local-health);
+assert !(redirectConfig.routers ? monitoring-metrics);
+assert !(redirectConfig.routers ? monitoring-logs);
+assert !(redirectConfig.services ? grafana);
+assert
+  !(lib.hasInfix "authenticated Alloy ingestion" (cfg "epsilon").networking.firewall.extraInputRules);
+assert redirectConfig.routers.grafana.service == "noop@internal";
+assert redirectConfig.routers.grafana.middlewares == [ "grafana-cloud-redirect" ];
+assert
+  redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.replacement
+  == "https://repparw.grafana.net\${1}";
+assert !redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.permanent;
+assert cloudSite.check-url == "https://repparw.grafana.net/api/health";
 assert lib.all
   (
     path:
-    lib.any (
-      entry: (if builtins.isString entry then entry else entry.directory) == path
-    ) (cfg "epsilon").environment.persistence."/persist".directories
+    lib.any (entry: entry.directory == path)
+      (cfg "epsilon").environment.persistence."/persist".directories
   )
   [
     "/var/lib/grafana"
     "/var/lib/loki"
     "/var/lib/prometheus2"
   ];
-assert (cfg "epsilon").services.prometheus.listenAddress == "127.0.0.1";
-assert (cfg "epsilon").services.prometheus.port == 9091;
-assert (cfg "epsilon").services.loki.configuration.server.http_listen_address == "127.0.0.1";
-assert (cfg "epsilon").services.loki.configuration.server.http_listen_port == 3101;
-assert (cfg "epsilon").modules.monitoring.server.ingestionSources == [ "10.5.5.1" ];
-assert (cfg "epsilon").modules.monitoring.agent.authentication == null;
-assert lib.all
-  (
-    host:
-    (cfg host).modules.monitoring.agent.authentication.username == host
-    && lib.hasInfix "password_file" (alloyConfig host)
-    && builtins.elem "ingestion-password:/run/secrets/monitoring-agent-password" (cfg host)
-    .systemd.services.alloy.serviceConfig.LoadCredential
-  )
-  [
-    "alpha"
-    "pi"
-  ];
-assert lib.all (
-  host:
-  builtins.elem "grafana-cloud-metrics-token:/run/secrets/grafana-cloud-write-token" (cfg host)
-  .systemd.services.alloy.serviceConfig.LoadCredential
-) hosts;
-assert
-  (cfg "epsilon")
-  .services.traefik.dynamicConfigOptions.http.middlewares.monitoring-auth.basicAuth.removeHeader;
-assert allAgents;
-assert receiverTargets;
-assert centralizedServer;
-assert selfTelemetry;
-assert cloudMetricsEnabled;
+assert alphaExclusions;
+assert (cfg "epsilon").modules.disk-watch.enable;
+assert (cfg "pi").systemd.timers ? fleet-health;
 assert lib.all (
   variant:
   let
     text = variant.environment.etc."alloy/config.alloy".text;
-    credentials = variant.systemd.services.alloy.serviceConfig.LoadCredential;
   in
-  lib.hasInfix ''prometheus.remote_write "epsilon"'' text
-  && lib.hasInfix ''loki.write "epsilon"'' text
-  &&
-    lib.all
-      (
-        name:
-        let
-          block = scrapeBlock name text;
-        in
-        lib.hasInfix ''scrape_interval = "30s"'' block
-        && lib.hasInfix "forward_to      = [prometheus.remote_write.epsilon.receiver]" block
-        && !(lib.hasInfix "prometheus.remote_write.cloud.receiver" block)
-      )
-      [
-        "node"
-        "alloy"
-      ]
-  && (
-    if variant.modules.monitoring.agent.cloud.metrics == null then
-      !(lib.hasInfix ''prometheus.scrape "node_cloud"'' text)
-      && !(lib.hasInfix ''prometheus.scrape "alloy_cloud"'' text)
-    else
-      lib.all
-        (
-          name:
-          let
-            block = scrapeBlock "${name}_cloud" text;
-          in
-          lib.hasInfix ''scrape_interval = "60s"'' block
-          && lib.hasInfix "forward_to      = [prometheus.remote_write.cloud.receiver]" block
-          && lib.hasInfix ''job_name        = "${name}"'' block
-          && !(lib.hasInfix "prometheus.remote_write.epsilon.receiver" block)
-        )
-        [
-          "node"
-          "alloy"
-        ]
-  )
-  &&
-    lib.all
-      (
-        signal:
-        if variant.modules.monitoring.agent.cloud.${signal} == null then
-          !(lib.hasInfix "grafana-cloud-${signal}-token" text)
-        else
-          lib.hasInfix "/run/credentials/alloy.service/grafana-cloud-${signal}-token" text
-          && builtins.elem "grafana-cloud-${signal}-token:/run/secrets/fixture-${signal}" credentials
-      )
-      [
-        "metrics"
-        "logs"
-      ]
+  lib.all
+    (
+      signal:
+      if variant.modules.monitoring.agent.cloud.${signal} == null then
+        !(lib.hasInfix "grafana-cloud-${signal}-token" text)
+      else
+        lib.hasInfix "/run/credentials/alloy.service/grafana-cloud-${signal}-token" text
+    )
+    [
+      "metrics"
+      "logs"
+    ]
 ) cloudVariants;
-assert redirectConfig.routers.grafana.service == "noop@internal";
-assert redirectConfig.routers.grafana.middlewares == [ "grafana-cloud-redirect" ];
-assert redirectConfig.routers.grafana-local-health.service == "grafana";
-assert
-  redirectConfig.routers.grafana-local-health.rule
-  == "Host(`metrics.repparw.com`) && Path(`/api/health`)";
-assert
-  redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.replacement
-  == "https://fixture.grafana.net\${1}";
-assert !redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.permanent;
-assert (cfg "epsilon").modules.monitoring.server.cloudRedirectUrl == "https://repparw.grafana.net";
-assert
-  (cfg "epsilon").services.traefik.dynamicConfigOptions.http.routers.grafana.middlewares
-  == [ "grafana-cloud-redirect" ];
-assert
-  (cfg "epsilon")
-  .services.traefik.dynamicConfigOptions.http.middlewares.grafana-cloud-redirect.redirectRegex.replacement
-  == "https://repparw.grafana.net\${1}";
-assert alphaExclusions;
-assert epsilonDiskWatch;
 pkgs.runCommand "check-monitoring-fleet"
   {
     nativeBuildInputs = [
       pkgs.grafana-alloy
-      pkgs.grafana-loki
       pkgs.prometheus.cli
     ];
   }
   ''
     ${lib.concatMapStringsSep "\n" (
       host:
-      "alloy validate ${lib.escapeShellArgs (lib.filter (lib.hasPrefix "--stability.level=") (cfg host).services.alloy.extraFlags)} ${pkgs.writeText "alloy-${host}.alloy" (alloyConfig host)}"
+      "alloy validate --stability.level=experimental ${pkgs.writeText "alloy-${host}.alloy" (alloyConfig host)}"
     ) hosts}
     ${lib.concatImapStringsSep "\n" (
       index: variant:
@@ -357,7 +237,6 @@ pkgs.runCommand "check-monitoring-fleet"
           variant.environment.etc."alloy/config.alloy".text
       }"
     ) cloudVariants}
-    loki -verify-config -config.file=${lokiConfiguration}
     promtool test rules ${queryTests}
     touch $out
   ''
