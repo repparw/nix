@@ -78,7 +78,7 @@ let
               eval_time = "6m";
               exp_samples = [
                 {
-                  labels = if builtins.elemAt hosts index == missing then "{host=\"${missing}\"}" else "{}";
+                  labels = "{host=\"${builtins.elemAt hosts index}\"}";
                   value = if builtins.elemAt hosts index == missing then 1 else 0;
                 }
               ];
@@ -91,6 +91,31 @@ let
             "epsilon"
           ]
         ++ [
+          {
+            interval = "1m";
+            input_series = [
+              {
+                series = "node_uname_info{host=\"alpha\"}";
+                values = "1+0x3 stale";
+              }
+            ];
+            promql_expr_test =
+              map
+                (minute: {
+                  expr = (builtins.head absentTargets).expr;
+                  eval_time = "${toString minute}m";
+                  exp_samples = [
+                    {
+                      labels = "{host=\"alpha\"}";
+                      value = if minute == 4 then 0 else 1;
+                    }
+                  ];
+                })
+                [
+                  4
+                  10
+                ];
+          }
           {
             interval = "1m";
             input_series =
