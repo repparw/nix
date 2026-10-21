@@ -18,6 +18,7 @@
       }:
       let
         cfg = config.modules.services;
+        freeCronModel = "reflection/beam-1.0-501b-a23b:free";
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         crashTriage = import ./hermes-crash/_package.nix { inherit pkgs; };
         packageTriage = import ./hermes-package/_package.nix { inherit pkgs; };
@@ -127,11 +128,11 @@
                 settings.fallback_providers = [
                   {
                     provider = "nous";
-                    model = "stepfun/step-5-preview:free";
+                    model = freeCronModel;
                   }
                   {
                     provider = "nous";
-                    model = "meituan/longcat-2.5-preview:free";
+                    model = "upstage/solar-mini4:free";
                   }
                   {
                     provider = "nous";
@@ -148,7 +149,7 @@
                   };
                 };
                 settings.cron = {
-                  model = "stepfun/step-5-preview:free";
+                  model = freeCronModel;
                   model_provider = "nous";
                 };
                 settings.tool_loop_guardrails = {
