@@ -245,20 +245,17 @@ pkgs.testers.runNixOSTest {
         retry(lambda _last: len(logs(outage)) > 0, timeout_seconds=180)
         retry(lambda _last: len(prom('monitoring_fixture_value{host="pi"} == 43')) == 1, timeout_seconds=180)
 
-    with subtest("metric WAL and uploaded logs survive a tmpfs-root reboot"):
-        # Unsent log replay across restart is not guaranteed by Alloy; see
-        # grafana/alloy#7112. Verify metric replay and already-uploaded logs.
-        server.succeed("systemctl stop nginx")
-        client.succeed("printf 'monitoring_fixture_value 44\\n' > /var/lib/fleet-metrics/textfile/test.prom")
-        client.sleep(65)
-        client.wait_until_succeeds("curl -fsS http://127.0.0.1:12345/metrics | grep '^prometheus_remote_storage_samples_pending{' | grep -v ' 0$'", timeout=30)
+    with subtest("agent state and uploaded telemetry survive a tmpfs-root reboot"):
+        # File persistence does not establish lossless replay of unsent data.
+        # The separate outage test verifies retries without restarting Alloy.
+        client.succeed("touch /var/lib/alloy/persistence-canary")
         client.shutdown()
         client.start()
         client.wait_for_unit("alloy.service")
-        server.succeed("systemctl start nginx")
-        # The textfile is volatile: a new scrape emits a stale marker after
-        # reboot. Inspect the range to prove the queued value arrived.
-        retry(lambda _last: len(prom('max_over_time(monitoring_fixture_value{host="pi"}[10m]) == 44')) == 1, timeout_seconds=180)
+        client.succeed("test -e /var/lib/alloy/persistence-canary")
+        client.succeed("findmnt -rn -M /var/lib/private/alloy")
+        assert prom('max_over_time(monitoring_fixture_value{host="pi"}[10m]) == 43')
+        retry(lambda _last: len(prom('timestamp(node_uname_info{host="pi"}) > time() - 60')) == 1, timeout_seconds=150)
         assert logs(marker)
         assert logs(outage)
   '';

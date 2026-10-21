@@ -13,7 +13,7 @@ Alpha, Pi and Epsilon run Alloy and send directly to Grafana Cloud. Epsilon no l
 
 ## Collection
 
-The default agent aspect collects Unix exporter metrics and host journald. Each host includes the Cloud credential aspect; Pi and Epsilon also include the persistence aspect so Alloy's queues and journal cursor survive their tmpfs-root reboots.
+The default agent aspect collects Unix exporter metrics and host journald. Each host includes the Cloud credential aspect; Pi and Epsilon also include the persistence aspect so Alloy's state files survive their tmpfs-root reboots. File persistence alone does not establish that every unsent sample or log entry will replay after restart.
 
 - Node and Alloy self-metrics are scraped every 60 seconds. Node exporter supplies the job label `integrations/unix`; Alloy self-metrics use `alloy`.
 - Alloy self-metrics omit histogram buckets to reduce cardinality. Queue, failure, retry, count and sum metrics remain available. Host metrics are unaffected.
@@ -58,4 +58,4 @@ To restore the previous topology, revert the Cloud-only cleanup and build/deploy
 
 ## Verification
 
-`nix build .#checks.x86_64-linux.monitoring-fleet --no-link` validates generated Alloy configuration, Cloud-only host topology, credentials, redirect and retained data mounts. The monitoring VM exercises an isolated HTTPS Cloud fixture: authenticated ingestion, redaction, excluded automounts, histogram filtering, normal outage recovery, and metric replay plus uploaded-log availability after a reboot during an outage. The fixture's Prometheus/Loki receivers are test-only.
+`nix build .#checks.x86_64-linux.monitoring-fleet --no-link` validates generated Alloy configuration, Cloud-only host topology, credentials, redirect and retained data mounts. The monitoring VM exercises an isolated HTTPS Cloud fixture: authenticated ingestion, redaction, excluded automounts, histogram filtering, normal outage recovery, and agent-state plus uploaded-telemetry availability after a reboot. The fixture's Prometheus/Loki receivers are test-only.
