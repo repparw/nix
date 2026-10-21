@@ -113,7 +113,14 @@ in
                       type = "monitor";
                       hide-header = true;
                       title = "Services";
-                      sites = servicesLib.monitorSites cfg config;
+                      sites = servicesLib.monitorSites cfg config ++ [
+                        {
+                          title = "grafana";
+                          url = "${config.modules.monitoring.cloudUrl}/d/fleet-overview/fleet-overview";
+                          check-url = "${config.modules.monitoring.cloudUrl}/api/health";
+                          timeout = "10s";
+                        }
+                      ];
                     }
                     {
                       type = "split-column";

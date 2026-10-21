@@ -29,7 +29,7 @@ files instead of copying module contents.
 
 ## Runbooks
 
-- [Grafana Cloud parallel pilot and cutover](runbooks/grafana-cloud-pilot.md)
+- [Grafana Cloud setup and alerting](runbooks/grafana-cloud-pilot.md)
 - [Add and maintain change-detection watchers](runbooks/change-detection-watchers.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
 - [Update rollback](runbooks/update-rollback.md)
