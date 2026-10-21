@@ -171,9 +171,21 @@ def notify(name, spec, repo, status):
         return {"issue": issue, "status": "already-notified"}
     with tempfile.TemporaryDirectory(prefix="upstream-notify-") as directory:
         body = Path(directory) / "body.md"
-        body.write_text(f"{marker}\nCI detected `{status}` for `{name}` on main. "
+        if name == "fsr4-rdna2" and status.startswith("upstream-review-required:"):
+            tag = status.split(":", 1)[1]
+            if not re.fullmatch(r"GE-Proton[0-9]+-[0-9]+", tag):
+                raise ValueError("invalid GE candidate release")
+            message = (f"{marker}\nGE-Proton has relevant FSR4/RDNA2 release changes: "
+                       f"https://github.com/GloriousEggroll/proton-ge-custom/releases/tag/{tag}\n\n"
+                       "Review the runner, AMD model and RADV requirements and test on Alpha's RX 6700 XT. "
+                       "This is a candidate, not confirmed support or pinned readiness. "
+                       "Record the tested upstream support commit in watchers.json to arm exact-ancestry "
+                       "tracking through the channel and root pin. No global FSR setting was changed.\n")
+        else:
+            message = (f"{marker}\nCI detected `{status}` for `{name}` on main. "
                         "The checked-out pin contains the upstream fix. "
                         "Deployment and runtime completion remain subject to their own checks.\n")
+        body.write_text(message)
         run("gh", "issue", "comment", str(issue), "--repo", repo, "--body-file", str(body))
     return {"issue": issue, "status": "notified"}
 
@@ -189,6 +201,9 @@ def sweep(registry, readiness, repo):
             if status == "PINNED-READY" and spec["mode"] == "post-lock":
                 results[name] = publish(name, spec, repo)
             elif status == "PINNED-READY" and spec["mode"] in ("notify-only", "host-owned"):
+                results[name] = notify(name, spec, repo, status)
+            elif (name == "fsr4-rdna2" and spec["mode"] == "notify-only"
+                  and status.startswith("upstream-review-required:")):
                 results[name] = notify(name, spec, repo, status)
             else:
                 results[name] = {"status": status}
@@ -220,3 +235,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

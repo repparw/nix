@@ -187,7 +187,87 @@ def t3code_nightly_v2_status(lock):
         raise ValueError("pinned T3 Code release is not stable")
     return "PINNED-READY"
 
+GE_UPSTREAM = "GloriousEggroll/proton-ge-custom"
+GE_PACKAGE = "pkgs/by-name/pr/proton-ge-bin/package.nix"
+
+
+def ge_version(tag):
+    match = re.fullmatch(r"GE-Proton([0-9]+)-([0-9]+)", tag)
+    if not match:
+        raise ValueError("unexpected GE stable release tag")
+    return tuple(map(int, match.groups()))
+
+
+def ge_stable_release(release):
+    tag = release["tag_name"]
+    ge_version(tag)
+    if release.get("draft") is not False or release.get("prerelease") is not False:
+        raise ValueError("GE release is not stable")
+    return tag
+
+
+def ge_package_contains(revision, commit):
+    text = source("NixOS/nixpkgs", GE_PACKAGE, revision)
+    match = re.search(r'\bversion\s*=\s*"(GE-Proton[0-9]+-[0-9]+)";', text)
+    # Verify the actual x86_64 upstream archive, not just a version string.
+    archive = ('https://github.com/GloriousEggroll/proton-ge-custom/releases/'
+               'download/${finalAttrs.version}/${finalAttrs.version}-x86_64.tar.gz')
+    if not match or f'url = "{archive}";' not in text:
+        raise ValueError("unknown GE package source")
+    tag = match.group(1)
+    release = api(f"repos/{GE_UPSTREAM}/releases/tags/{tag}")
+    if ge_stable_release(release) != tag:
+        raise ValueError("GE package release mismatch")
+    return contains(GE_UPSTREAM, commit, tag)
+
+
+def fsr4_rdna2_status(lock):
+    spec = json.loads((ROOT / ".github/upstream/watchers.json").read_text())["fsr4-rdna2"]
+    commit = spec.get("support_commit")
+    if commit is None:
+        # Discovery only. Release prose can flag a candidate, never establish
+        # Linux/RDNA2 usability. A reviewed and tested commit arms pin tracking.
+        releases = api(f"repos/{GE_UPSTREAM}/releases?per_page=100")
+        if not isinstance(releases, list) or not releases:
+            raise ValueError("cannot bound GE release discovery")
+        candidates = []
+        reached_baseline = False
+        for release in releases:
+            if release.get("draft") or release.get("prerelease"):
+                continue
+            tag = ge_stable_release(release)
+            if ge_version(tag) <= ge_version(spec["baseline_release"]):
+                reached_baseline = True
+                continue
+            body = release.get("body")
+            if not isinstance(body, str):
+                raise ValueError("missing GE release notes")
+            if re.search(r"\b(?:FSR\s*4(?:\.1)?|RDNA\s*2|RX\s*6[0-9]{3})\b", body, re.I):
+                candidates.append(tag)
+        if len(releases) >= 100 and not reached_baseline:
+            raise ValueError("GE discovery exhausted before baseline")
+        return ("upstream-review-required:" + max(candidates, key=ge_version)
+                if candidates else "waiting-upstream")
+    if not re.fullmatch(r"[a-f0-9]{40}", commit):
+        raise ValueError("support_commit must be a reviewed full SHA")
+    latest = ge_stable_release(api(f"repos/{GE_UPSTREAM}/releases/latest"))
+    if not contains(GE_UPSTREAM, commit, latest):
+        return "waiting-upstream"
+    node = lock["nodes"][lock["nodes"]["root"]["inputs"]["nixpkgs"]]
+    branch = node["original"]["ref"]
+    if not re.fullmatch(r"[a-zA-Z0-9._/-]+", branch):
+        raise ValueError("invalid Nixpkgs channel")
+    channel = api(f"repos/NixOS/nixpkgs/commits/{branch}")["sha"]
+    if not re.fullmatch(r"[a-f0-9]{40}", channel):
+        raise ValueError("invalid Nixpkgs channel revision")
+    if not ge_package_contains(channel, commit):
+        return "waiting-unstable"
+    return "PINNED-READY" if ge_package_contains(pin(lock, "nixpkgs"), commit) else "merged-not-pinned"
+
+
 def detect(name, lock):
+    if name == "fsr4-rdna2":
+        return fsr4_rdna2_status(lock)
     if name == "tridactyl-reader":
         pr = api("repos/tridactyl/tridactyl/pulls/5515")
         if not pr.get("merged"):
@@ -299,3 +379,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

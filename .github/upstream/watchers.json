@@ -1,4 +1,11 @@
 {
+  "fsr4-rdna2": {
+    "issue": 323,
+    "mode": "notify-only",
+    "input": "nixpkgs",
+    "baseline_release": "GE-Proton11-11",
+    "support_commit": null
+  },
   "tridactyl-reader": {
     "issue": 316,
     "mode": "notify-only",
@@ -122,3 +129,4 @@
     ]
   }
 }
+

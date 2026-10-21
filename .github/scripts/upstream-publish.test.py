@@ -87,6 +87,24 @@ class Publication(unittest.TestCase):
     def publish(self):
         return publisher.publish("fixture", self.contract, "fixture/repo")
 
+    def test_fsr_candidates_notify_once_without_claiming_pin_readiness(self):
+        registry = {"fsr4-rdna2": {"mode": "notify-only", "issue": 323}}
+        readiness = {"fsr4-rdna2": "upstream-review-required:GE-Proton11-12"}
+        first, failed = publisher.sweep(registry, readiness, "fixture/repo")
+        self.assertFalse(failed)
+        self.assertEqual(first["fsr4-rdna2"]["status"], "notified")
+        self.assertIn("not confirmed support", self.comments[0]["body"])
+        self.assertNotIn("pin contains the upstream fix", self.comments[0]["body"])
+        second, failed = publisher.sweep(registry, readiness, "fixture/repo")
+        self.assertFalse(failed)
+        self.assertEqual(second["fsr4-rdna2"]["status"], "already-notified")
+        self.assertEqual(len(self.comments), 1)
+        publisher.sweep(registry, {"fsr4-rdna2": "upstream-review-required:GE-Proton11-13"}, "fixture/repo")
+        self.assertEqual(len(self.comments), 2)
+        self.assertEqual(self.prs, [])
+        self.assertEqual(self.dispatches, [])
+
+
     def test_create_reuse_and_exact_sha_dispatch(self):
         first = self.publish()
         self.assertEqual(first["pr"], 42)
@@ -254,3 +272,4 @@ class Publication(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
