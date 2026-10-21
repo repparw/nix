@@ -114,8 +114,8 @@ in
             enabled = true;
             config = {
               enabled = true;
-              binaryPath = "";
-              serverUrl = "http://127.0.0.1:4096";
+              binaryPath = "${config.programs.opencode.package}/bin/opencode";
+              serverUrl = "";
             };
           };
         };
