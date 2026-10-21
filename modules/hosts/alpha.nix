@@ -100,8 +100,8 @@
           ".local/share/shadPS4/savedata/"
           ".local/share/shadPS4/keys.json"
           ".config/bbport-launcher/"
-          ".local/share/bbport-test/data/bbport.ini"
-          ".local/share/bbport-test/data/user/"
+          "Games/bbport/source/data/bbport.ini"
+          "Games/bbport/source/data/user/"
         ];
         # Regenerable caches and telemetry inside the Helium profile. The
         # leading slash anchors each pattern to the ./ marker that the
