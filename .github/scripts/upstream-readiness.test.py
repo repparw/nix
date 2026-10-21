@@ -235,10 +235,27 @@ class Readiness(unittest.TestCase):
         for status in ("waiting-upstream", "merged-not-pinned", "PINNED-READY"):
             with patch.object(watch, "t3code_nightly_v2_status", return_value=status) as gate:
                 self.assertEqual(watch.detect("t3code-stable010", LOCK), status)
-                gate.assert_called_once_with(LOCK)
+                gate.assert_called_once_with(LOCK, minimum_version=watch.T3CODE_STABLE_MIN_VERSION)
         with patch.object(watch, "t3code_nightly_v2_status", side_effect=ValueError("boom")):
             with self.assertRaises(ValueError):
                 watch.detect("t3code-stable010", LOCK)
+
+    def test_t3code_bridge_cleanup_cannot_downgrade_the_installed_release(self):
+        def api(endpoint):
+            if endpoint.endswith("/commits/nixos-unstable"):
+                return {"sha": "a" * 40}
+            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.1"
+            return {"tag_name": tag, "draft": False, "prerelease": False}
+        for channel, pinned, expected in (
+                ("v0.1.0", "v0.1.0", "waiting-unstable"),
+                ("v0.1.1", "v0.1.0", "merged-not-pinned"),
+                ("v0.1.1", "v0.1.1", "PINNED-READY"),
+                ("v0.1.10", "v0.1.10", "PINNED-READY")):
+            with self.subTest(channel=channel, pinned=pinned), \
+                    patch.object(watch, "api", side_effect=api), \
+                    patch.object(watch, "contains", return_value=True), \
+                    patch.object(watch, "t3code_stable_tag", side_effect=[channel, pinned]):
+                self.assertEqual(watch.detect("t3code-stable010", LOCK), expected)
 
     def test_cleanup_recipes_are_well_formed_and_narrow(self):
         root = Path(__file__).resolve().parents[2]

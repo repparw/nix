@@ -138,6 +138,7 @@ def moonshine_reload_guard(repo, revision):
 # Alpha's temporary nightly server remains local-owned until stable v2 is
 # deployed and verified. CI only checks immutable release/package evidence.
 T3CODE_V2_COMMIT = "de343914273eceb852a1d1d739cd1d38df7796ee"
+T3CODE_STABLE_MIN_VERSION = (0, 1, 1)
 T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
 
 
@@ -154,7 +155,7 @@ def t3code_stable_tag(package_revision):
     return tag if re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) else None
 
 
-def t3code_nightly_v2_status(lock):
+def t3code_nightly_v2_status(lock, minimum_version=(0, 0, 0)):
     upstream = "pingdotgg/t3code"
     latest = api(f"repos/{upstream}/releases/latest")
     if not isinstance(latest, dict) or not isinstance(latest.get("tag_name"), str):
@@ -171,12 +172,17 @@ def t3code_nightly_v2_status(lock):
     channel_revision = channel["sha"]
     if not re.fullmatch(r"[a-f0-9]{40}", channel_revision):
         raise ValueError("invalid channel revision")
+    def eligible(tag):
+        return (tag is not None and
+                tuple(map(int, tag[1:].split("."))) >= minimum_version and
+                contains(upstream, T3CODE_V2_COMMIT, tag))
+
     channel_tag = t3code_stable_tag(channel_revision)
-    if not channel_tag or not contains(upstream, T3CODE_V2_COMMIT, channel_tag):
+    if not eligible(channel_tag):
         return "waiting-unstable"
 
     pinned_tag = t3code_stable_tag(pin(lock, "nixpkgs"))
-    if not pinned_tag or not contains(upstream, T3CODE_V2_COMMIT, pinned_tag):
+    if not eligible(pinned_tag):
         return "merged-not-pinned"
 
     # Pin tags also need an actual, non-prerelease GitHub release. Tag
@@ -223,9 +229,8 @@ def detect(name, lock):
     if name == "t3code-nightly-v2":
         return t3code_nightly_v2_status(lock)
     if name == "t3code-stable010":
-        # The bridging overlay is droppable under the same gate as the
-        # nightly cutover: a stable V2 release carrying the root pin.
-        return t3code_nightly_v2_status(lock)
+        # Removing the bridge must not downgrade the installed stable version.
+        return t3code_nightly_v2_status(lock, minimum_version=T3CODE_STABLE_MIN_VERSION)
     if name in PR_WAITS:
         repo, number, input_name = PR_WAITS[name]
         pr = api(f"repos/{repo}/pulls/{number}")
