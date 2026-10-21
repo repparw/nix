@@ -1,0 +1,37 @@
+{{ define "fleet.discord.title" -}}
+{{- $name := index .CommonLabels "alertname" -}}
+{{- if eq (index .CommonAnnotations "grafana_state_reason") "Updated" -}}Alert updated
+{{- else if eq .Status "resolved" -}}
+{{- if eq $name "Disk space critical" -}}Critical cleared
+{{- else if eq $name "Disk space warning" -}}Warning cleared
+{{- else if eq $name "DatasourceError" -}}Monitoring restored
+{{- else if eq $name "DatasourceNoData" -}}Monitoring restored
+{{- else -}}Resolved{{- end -}}
+{{- else -}}
+{{- if eq $name "Disk space critical" -}}Disk critical
+{{- else if eq $name "Disk space warning" -}}Disk warning
+{{- else if eq $name "DatasourceError" -}}Monitoring unavailable
+{{- else if eq $name "DatasourceNoData" -}}Monitoring unavailable
+{{- else if eq (index .CommonLabels "severity") "critical" -}}Critical
+{{- else -}}Warning{{- end -}}
+{{- end -}}
+{{- with index .CommonLabels "host" }} · {{ . }}{{ end -}}
+{{- end }}
+
+{{ define "fleet.discord.detail" -}}
+{{- $name := index .Labels "alertname" -}}
+{{- if eq (index .Annotations "grafana_state_reason") "Updated" -}}Alert configuration updated.
+{{- else if eq $name "DatasourceError" -}}{{ if eq .Status "resolved" }}Metrics queries are working again.{{ else }}Cloud metrics queries are unavailable. Host and disk state are unknown.{{ end }}
+{{- else if eq $name "DatasourceNoData" -}}{{ if eq .Status "resolved" }}Metrics queries return data again.{{ else }}Cloud metrics queries returned no data.{{ end }}
+{{- else if eq .Status "resolved" -}}{{ with index .Annotations "recovery" }}{{ . }}{{ else }}{{ index .Annotations "summary" }}{{ end }}
+{{- else -}}{{ with index .Annotations "brief" }}{{ . }}{{ else }}{{ index .Annotations "summary" }}{{ end }}
+{{- end -}}
+{{- end }}
+
+{{ define "fleet.discord.message" -}}
+{{- range .Alerts.Firing }}{{ template "fleet.discord.detail" . }}
+{{ end -}}
+{{- range .Alerts.Resolved }}{{ if gt (len $.Alerts.Firing) 0 }}Cleared: {{ end }}{{ template "fleet.discord.detail" . }}
+{{ end }}
+[Dashboard](https://metrics.repparw.com/d/fleet-overview/fleet-overview)
+{{- end }}
