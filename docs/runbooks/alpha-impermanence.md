@@ -32,6 +32,53 @@ backups to either disk. Exclude `/mnt/hdd`, `/mnt/seagate`, their media bind
 mounts, and cloud FUSE mounts from capture or copy operations. Persistence bind
 mounts reuse the existing NVMe directories; they do not copy mounted media.
 
+## Approved recovery exclusions
+
+The user approved excluding **verified redownloadable game installations and
+torrent payloads** from the migration recovery copy on October 21. This does
+not authorize deleting or moving those live files. Retain saves, mods,
+configuration, credentials, and torrent/download metadata.
+
+Do not exclude whole `Games`, `steamapps/common`, or torrent directories based
+on their names. Steam depot manifests can identify stock files: compare their
+recorded content hashes with live files, retaining changed and extra files and
+all configuration/state selections. Keep both Steam libraries' `compatdata`,
+`userdata`, Workshop/mods, custom compatibility tools, Heroic prefixes and
+configuration, and standalone game source/save trees unless separately proven
+replaceable. Unavailable manifests leave the corresponding files included.
+
+Keep qBittorrent's complete configuration and `BT_backup` metadata. A torrent
+metadata/size match alone does not establish payload integrity or current
+availability; mismatches, extra files and unverified payloads stay included.
+Any exclusion plan must identify exact files and be revalidated against the
+captured source before use. No broad payload exclusion is installed by this
+draft. The [review-only capture selection](alpha-recovery-selection.json)
+records required sources, preservation rules and exclusions; it is not a
+backup job or an executable Restic exclude file.
+
+The Steam content-hash audit identified 103,826 stock files totaling about
+180 GiB that match installed depot manifests. It retained 34 modified or
+size-mismatched files, configuration/state selections, extra files and content
+with missing manifests (39 installed-depot references had no cached manifest).
+Five separately executed `sha1sum` checks matched the recorded hashes. The
+file-level inventory is saved with mode 0600 under
+`/home/repparw/Downloads/alpha-recovery-2026-10-21/steam-verified.json`.
+This is a point-in-time stock-file inventory, not evidence that an upload or
+restore ran. Revalidate it against the captured source before excluding files.
+
+The refreshed metadata-only accounting found about 469 GiB under `Games`,
+115 GiB of allocated torrent data, and 188 GiB in the rest of the user home.
+These are selection-planning measurements, not unique bytes or an upload-size
+estimate: sparse files, compression, hard links and existing backup chunks
+change the result. Do not add them together to claim a measured backup size.
+
+Epsilon currently has about 145 GiB disk-backed free, while the offsite account
+reports about 330 GiB free. A single full restore tree still does not fit on
+Epsilon even before unverified game state is included. Verify the retained
+manifest and offsite capacity before uploading; use bounded isolated restore
+batches with a coverage manifest if a whole-tree rehearsal cannot fit. Do not
+use Epsilon's tmpfs `/var/tmp` for the restore.
+
 ## Proposed layout
 
 Mount a tmpfs root and reuse the existing NVMe Btrfs `@` subvolume as `/persist`,
@@ -86,7 +133,7 @@ Read-only storage inspection confirmed:
 | Item                      | Observation                                                                                      | Consequence                                                                                                                          |
 | ------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Root and ESP              | NVMe `/dev/nvme0n1p2[/@]` is Btrfs; `/boot` is `/dev/nvme0n1p1`                                  | Home, store and service data remain on the original root.                                                                            |
-| Capacity                  | About 68 GiB free; about 1 MiB unallocated; metadata 77.2% used; global reserve unused           | A second full copy does not fit. Review allocation pressure before a boot-layout change.                                             |
+| Capacity                  | About 124 GiB free; about 1 GiB unallocated; metadata 76.0% used; global reserve unused          | A second full copy does not fit. Review allocation pressure before a boot-layout change.                                             |
 | Device errors             | All five Btrfs device error counters are zero                                                    | No reported device errors; this is not a full integrity or recovery test.                                                            |
 | Other subvolumes          | `@home`, `srv`, `var/lib/machines`, `var/lib/portables`, `tmp`, `var/tmp`, and `.beeshome` exist | Inventory occupied subvolumes explicitly before capture; same-filesystem traversal can skip them. Do not delete them based on names. |
 | Identity and boot entries | Machine ID, shadow and host SSH key present; ten installed boot entries                          | Presence does not prove independent key access or a working rescue/fallback boot.                                                    |
@@ -114,9 +161,8 @@ recovery coverage.
 1. Fix the home-export failure and verify a fresh offsite snapshot and isolated
    restore. Define a complete NVMe recovery manifest and an adequately sized,
    independent disk-backed destination. HDD and Seagate are excluded as both
-   sources and destinations. Any exclusion of installed games, torrents or
-   other home content needs an explicit retention decision; preserve unique
-   saves, mods, credentials and resumable state.
+   sources and destinations. Apply only the approved, verified payload exclusions above. Preserve unique
+   saves, mods, credentials and resumable state; keep unverified content.
 2. Review the Btrfs allocation-health warning. Free space inside allocated
    block groups differs from unallocated device space. Do not run a balance or
    delete data just to silence the check. See the upstream
