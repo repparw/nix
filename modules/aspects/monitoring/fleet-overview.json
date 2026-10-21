@@ -128,15 +128,16 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "100 * (1 - node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\",mountpoint=~\"/|/persist|/nix|/home/repparw\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\",mountpoint=~\"/|/persist|/nix|/home/repparw\"})",
-          "legendFormat": "{{host}} {{mountpoint}}",
+          "expr": "max by (host, device) (100 * (node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\",mountpoint=~\"/|/persist|/nix|/home/repparw\"} - node_filesystem_free_bytes) / (node_filesystem_size_bytes - node_filesystem_free_bytes + node_filesystem_avail_bytes))",
+          "legendFormat": "{{host}} {{device}}",
           "interval": ""
         }
-      ]
+      ],
+      "description": "Used space divided by used plus unprivileged available space, matching df before rounding. Bind mounts on the same host and device are shown once."
     },
     {
       "id": 4,
-      "title": "Network receive (bytes/s)",
+      "title": "Uplink receive (bytes/s)",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -166,15 +167,16 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (host) (rate(node_network_receive_bytes_total{device!~\"lo|ve-.*|veth.*|br-.*|docker.*\"}[5m]))",
+          "expr": "sum by (host) (rate(node_network_receive_bytes_total{device=~\"eth[0-9]+|en.*|wl.*\"}[5m]))",
           "legendFormat": "{{host}}",
           "interval": ""
         }
-      ]
+      ],
+      "description": "Ethernet and Wi-Fi traffic. Excludes loopback, container bridges, WireGuard and IFB traffic-shaping interfaces to avoid counting packets twice."
     },
     {
       "id": 5,
-      "title": "Network transmit (bytes/s)",
+      "title": "Uplink transmit (bytes/s)",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -204,15 +206,16 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (host) (rate(node_network_transmit_bytes_total{device!~\"lo|ve-.*|veth.*|br-.*|docker.*\"}[5m]))",
+          "expr": "sum by (host) (rate(node_network_transmit_bytes_total{device=~\"eth[0-9]+|en.*|wl.*\"}[5m]))",
           "legendFormat": "{{host}}",
           "interval": ""
         }
-      ]
+      ],
+      "description": "Ethernet and Wi-Fi traffic. Excludes loopback, container bridges, WireGuard and IFB traffic-shaping interfaces to avoid counting packets twice."
     },
     {
       "id": 6,
-      "title": "Failed systemd units",
+      "title": "Failed jobs or services",
       "type": "timeseries",
       "datasource": {
         "type": "prometheus",
@@ -242,11 +245,12 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (host) (node_systemd_unit_state{state=\"failed\"})",
+          "expr": "max by (host) (fleet_failed_units) or on(host) sum by (host) (node_systemd_unit_state{state=\"failed\"})",
           "legendFormat": "{{host}}",
           "interval": ""
         }
-      ]
+      ],
+      "description": "Loaded failed units and retained failed job results. Before the host collector was installed, historical samples contain loaded units only."
     },
     {
       "id": 7,

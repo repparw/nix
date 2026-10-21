@@ -53,6 +53,10 @@ let
   ];
   dashboard = builtins.fromJSON (builtins.readFile ../aspects/monitoring/fleet-overview.json);
   cpuTarget = builtins.head (lib.findFirst (panel: panel.id == 1) null dashboard.panels).targets;
+  filesystemTarget =
+    builtins.head
+      (lib.findFirst (panel: panel.id == 3) null dashboard.panels).targets;
+  failuresTarget = builtins.head (lib.findFirst (panel: panel.id == 6) null dashboard.panels).targets;
   absentTargets = (lib.findFirst (panel: panel.id == 7) null dashboard.panels).targets;
   networkTargets = lib.filter (
     panel:
@@ -200,6 +204,9 @@ let
                       "enp6s0"
                       "lo"
                       "veth-fixture"
+                      "ifb-wan"
+                      "wg-home"
+                      "br0"
                     ]
                 )
                 [
@@ -216,6 +223,80 @@ let
                 }
               ];
             }) networkTargets;
+          }
+          {
+            interval = "1m";
+            input_series =
+              lib.concatMap
+                (
+                  mount:
+                  map
+                    (metric: {
+                      series = "node_filesystem_${metric}_bytes{host=\"epsilon\",device=\"/dev/sda1\",fstype=\"ext4\",mountpoint=\"${mount}\"}";
+                      values =
+                        if metric == "size" then
+                          "1000+0x10"
+                        else if metric == "free" then
+                          "500+0x10"
+                        else
+                          "450+0x10";
+                    })
+                    [
+                      "size"
+                      "free"
+                      "avail"
+                    ]
+                )
+                [
+                  "/persist"
+                  "/nix"
+                  "/home/repparw"
+                ];
+            promql_expr_test = [
+              {
+                expr = filesystemTarget.expr;
+                eval_time = "6m";
+                exp_samples = [
+                  {
+                    labels = "{host=\"epsilon\",device=\"/dev/sda1\"}";
+                    value = 100 * 500.0 / 950.0;
+                  }
+                ];
+              }
+            ];
+          }
+          {
+            interval = "1m";
+            input_series = [
+              {
+                series = "fleet_failed_units{host=\"alpha\",job=\"integrations/unix\"}";
+                values = "2+0x10";
+              }
+              {
+                series = "node_systemd_unit_state{host=\"alpha\",name=\"test.service\",state=\"failed\"}";
+                values = "0+0x10";
+              }
+              {
+                series = "node_systemd_unit_state{host=\"pi\",name=\"test.service\",state=\"failed\"}";
+                values = "1+0x10";
+              }
+            ];
+            promql_expr_test = [
+              {
+                expr = failuresTarget.expr;
+                eval_time = "6m";
+                exp_samples = [
+                  {
+                    labels = "{host=\"alpha\"}";
+                    value = 2;
+                  }
+                  {
+                    labels = "{host=\"pi\"}";
+                    value = 1;
+                  }
+                ];
+              }
+            ];
           }
         ];
     }
