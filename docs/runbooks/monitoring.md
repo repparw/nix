@@ -9,7 +9,7 @@ tags: [monitoring, grafana, cloud, alloy, journald]
 
 # Fleet observability
 
-Alpha, Pi and Epsilon run Alloy and send directly to Grafana Cloud. Epsilon no longer runs Prometheus, Loki or Grafana, and no host sends telemetry to Epsilon. Existing fleet-health, disk-watch, backup and deployment checks remain independent.
+Alpha, Pi and Epsilon run Alloy and send directly to Grafana Cloud. Epsilon no longer runs Prometheus, Loki or Grafana, and no host sends telemetry to Epsilon. Cloud owns periodic health alerts. Read-only deployment readiness checks and workflow-specific notifications remain independent.
 
 ## Collection
 
@@ -35,9 +35,9 @@ deployment pause and booted versus staged kernel state. Disk facts update every
 Unmounted media are never accessed; their last observation is retained with its
 timestamp. Btrfs pressure uses filesystem allocation statistics, not device slack.
 
-`modules/aspects/monitoring/health-alerts.json` records the intended Cloud rules.
-Keep the existing Discord alert timers until generated probes and host facts are
-verified live and the corresponding Cloud rules pass firing/recovery tests.
+`modules/aspects/monitoring/health-alerts.json` records the Cloud health rules.
+Each host owns its disk thresholds through `modules.monitoring.health.disks`.
+The former periodic Discord health, disk and reboot senders have been removed.
 Deployment readiness, rollback, Hermes crash analysis and catalog/release notices
 remain separate operational workflows. A backup timestamp is written only after
 the entire job succeeds; export preparation alone is insufficient. Initial backup
@@ -54,7 +54,7 @@ CPU series cannot distort the result.
 
 Open [Fleet overview](https://metrics.repparw.com/d/fleet-overview/fleet-overview). Epsilon's Traefik preserves the hostname as a reversible 302 to `https://repparw.grafana.net`, including bookmark paths and queries. Grafana Cloud controls sign-in and membership. There is no local Grafana health exception; `/api/health` redirects to Cloud too.
 
-Glance probes Cloud's unauthenticated `/api/health` directly. The scheduled fleet-health probe also checks that endpoint, but strict deployment readiness and local-only probes exclude it. A Cloud outage must not prevent fleet recovery. This endpoint proves frontend health, not telemetry ingestion.
+Glance probes Cloud's unauthenticated `/api/health` directly. The read-only fleet health probe also checks that endpoint, but strict deployment readiness and local-only probes exclude it. A Cloud outage must not prevent fleet recovery. This endpoint proves frontend health, not telemetry ingestion.
 
 Use these Cloud Prometheus queries to check ingestion:
 
@@ -65,7 +65,7 @@ count({host=~"alpha|pi|epsilon"})
 prometheus_remote_storage_samples_pending{host=~"alpha|pi|epsilon"}
 ```
 
-Expected hosts are Alpha, Pi and Epsilon. Inspect the timestamp of the most recent sample, not just an old chart. The Free series allowance has limited headroom; the Cloud budget alert fires at 9,800. See [Cloud setup and alerting](grafana-cloud-pilot.md).
+Expected hosts are Alpha, Pi and Epsilon. Inspect the timestamp of the most recent sample, not just an old chart. The Free series allowance has limited headroom; the Cloud budget alert fires at 9,000 active series, using the Cloud usage datasource. See [Cloud setup and alerting](grafana-cloud-pilot.md).
 
 For local delivery diagnostics:
 

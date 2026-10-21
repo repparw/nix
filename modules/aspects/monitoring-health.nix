@@ -94,30 +94,6 @@
         description = "Filesystem thresholds; unmounted sleeping media retain their last observed values without being accessed.";
       };
       config = {
-        modules.monitoring.health.disks = lib.mkDefault (
-          let
-            legacy = lib.attrByPath [ "modules" "disk-watch" "mounts" ] [ ] config;
-            existing = map (disk: disk.mount) legacy;
-            durable =
-              if config.networking.hostName == "alpha" then
-                [ "/" ]
-              else
-                [
-                  "/persist"
-                  "/nix"
-                  "/home/repparw"
-                ];
-          in
-          map (
-            disk:
-            disk // { sleeping = builtins.elem disk.mount config.modules.monitoring.agent.extraExcludedMounts; }
-          ) legacy
-          ++ map (mount: {
-            inherit mount;
-            warn = 90;
-            crit = 93;
-          }) (lib.filter (mount: !(builtins.elem mount existing)) durable)
-        );
         assertions = [
           {
             assertion = lib.all (disk: disk.warn < disk.crit) cfg.disks;

@@ -294,8 +294,11 @@ assert lib.all
     "/var/lib/prometheus2"
   ];
 assert alphaExclusions;
-assert (cfg "epsilon").modules.disk-watch.enable;
-assert (cfg "pi").systemd.timers ? fleet-health;
+assert lib.all (host: !(cfg host).systemd.timers ? fleet-health) hosts;
+assert lib.all (host: !(cfg host).systemd.timers ? disk-watch) hosts;
+assert lib.all (host: !(cfg host).systemd.timers ? reboot-watch) hosts;
+assert !((cfg "pi").systemd.services ? fleet-health-event);
+assert map (disk: disk.mount) (cfg "epsilon").modules.monitoring.health.disks == [ "/persist" ];
 assert lib.all (host: (cfg host).systemd.timers ? fleet-health-metrics) hosts;
 assert lib.all (
   host: lib.hasInfix "node_systemd_unit_state;(inactive|activating|deactivating)" (alloyConfig host)
