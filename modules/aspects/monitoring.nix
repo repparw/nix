@@ -1,5 +1,6 @@
 { den, ... }:
 {
+  den.aspects.monitoring.provides.agent.includes = [ den.aspects.monitoring._.health ];
   # Alloy collects host metrics and filtered journals for Grafana Cloud.
   den.aspects.monitoring.provides.agent.nixos =
     { config, lib, ... }:
@@ -114,9 +115,18 @@
           ${lib.optionalString cloudMetricsEnabled ''
             prometheus.scrape "node_cloud" {
               targets         = prometheus.exporter.unix.node.targets
-              forward_to      = [prometheus.remote_write.cloud.receiver]
+              forward_to      = [prometheus.relabel.node_budget.receiver]
               job_name        = "node"
               scrape_interval = "60s"
+            }
+
+            prometheus.relabel "node_budget" {
+              forward_to = [prometheus.remote_write.cloud.receiver]
+              rule {
+                source_labels = ["__name__", "state"]
+                regex = "node_systemd_unit_state;(inactive|activating|deactivating)"
+                action = "drop"
+              }
             }
 
             prometheus.scrape "alloy_cloud" {
@@ -215,6 +225,14 @@
 
   den.aspects.monitoring.provides.persist.nixos = {
     environment.persistence."/persist".directories = [
+      {
+        directory = "/var/lib/fleet-health-metrics";
+        mode = "0700";
+      }
+      {
+        directory = "/var/lib/backup-exports";
+        mode = "0700";
+      }
       {
         directory = "/var/lib/private/alloy";
         mode = "0755";

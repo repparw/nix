@@ -16,6 +16,7 @@ Alpha, Pi and Epsilon run Alloy and send directly to Grafana Cloud. Epsilon no l
 The default agent aspect collects Unix exporter metrics and host journald. Each host includes the Cloud credential aspect; Pi and Epsilon also include the persistence aspect so Alloy's state files survive their tmpfs-root reboots. File persistence alone does not establish that every unsent sample or log entry will replay after restart.
 
 - Node and Alloy self-metrics are scraped every 60 seconds. Node exporter supplies the job label `integrations/unix`; Alloy self-metrics use `alloy`.
+- Systemd state metrics retain active and failed states. Inactive and transitional variants are dropped before upload to reserve the Free series allowance for health checks.
 - Alloy self-metrics omit histogram buckets to reduce cardinality. Queue, failure, retry, count and sum metrics remain available. Host metrics are unaffected.
 - Alpha excludes sleeping media mountpoints from filesystem collection so monitoring does not wake disks.
 - Host journals pass through native `loki.secretfilter` before upload. Recognized credentials are redacted; arbitrary private content is not. Container journals require separate collection.
@@ -23,6 +24,26 @@ The default agent aspect collects Unix exporter metrics and host journald. Each 
 - Host-scoped write-only tokens come from `secrets/grafana-cloud-<host>.sops.yaml` through systemd credentials. Neither tokens nor ingestion passwords appear in generated configuration.
 
 ## Dashboard and health checks
+
+The health migration uses Alloy's native blackbox exporter on Pi, generated
+from the service registry. Probes do not follow login redirects. Only success,
+duration, HTTP status, certificate expiry and scrape availability are uploaded.
+Host facts are published atomically through the existing Unix textfile collector:
+required units, retained job failures, completed backup timestamps, export status,
+deployment pause and booted versus staged kernel state. Disk facts update every
+15 minutes and preserve each host's configured warning and critical thresholds.
+Unmounted media are never accessed; their last observation is retained with its
+timestamp. Btrfs pressure uses filesystem allocation statistics, not device slack.
+
+`modules/aspects/monitoring/health-alerts.json` records the intended Cloud rules.
+Keep the existing Discord alert timers until generated probes and host facts are
+verified live and the corresponding Cloud rules pass firing/recovery tests.
+Deployment readiness, rollback, Hermes crash analysis and catalog/release notices
+remain separate operational workflows. A backup timestamp is written only after
+the entire job succeeds; export preparation alone is insufficient. Initial backup
+freshness monitoring allows 30 hours for the first confirmed scheduled success.
+Failed jobs and incomplete exports remain independently detectable during that
+initial interval.
 
 CPU used is the non-idle share of total accounted CPU time over five minutes.
 Pi has reported more idle seconds than elapsed time directly in `/proc/stat`,
