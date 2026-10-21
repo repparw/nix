@@ -334,6 +334,7 @@ pkgs.runCommand "check-monitoring-fleet"
       pkgs.grafana-alloy
       pkgs.prometheus.cli
       pkgs.python3
+      pkgs.go
     ];
   }
   ''
@@ -349,6 +350,7 @@ pkgs.runCommand "check-monitoring-fleet"
       }"
     ) cloudVariants}
     promtool test rules ${queryTests}
+    GOCACHE="$TMPDIR/go-cache" GO111MODULE=off go run ${./discord-template.go} ${../aspects/monitoring/discord.tmpl}
     PYTHONDONTWRITEBYTECODE=1 python3 ${./fleet-health-metrics.py} ${../scripts/fleet-health-metrics.py} ${../aspects/monitoring/health-alerts.json}
     touch $out
   ''
