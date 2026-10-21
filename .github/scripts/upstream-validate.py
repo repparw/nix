@@ -141,8 +141,9 @@ def validate(name, architecture):
         detector = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(detector)
         lock = json.loads((ROOT / "flake.lock").read_text())
-        require(detector.t3code_nightly_v2_status(lock) == "PINNED-READY",
-                "root pin must carry a stable orchestrator-v2 release")
+        require(detector.t3code_nightly_v2_status(
+                    lock, minimum_version=detector.T3CODE_STABLE_MIN_VERSION) == "PINNED-READY",
+                "root pin must carry a stable release at least as new as the bridge")
         for host in ("alpha", "pi", "epsilon"):
             service = unit(host, "t3code-web")
             require("--mode web" in service["Service"]["ExecStart"], "missing web arguments")
@@ -155,8 +156,8 @@ def validate(name, architecture):
         version = command("nix", "eval", "--raw", "--no-update-lock-file",
                           ".#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.t3code.package.version")
         match = re.match(r"(\d+)\.(\d+)\.(\d+)", version)
-        require(match and tuple(int(part) for part in match.groups()) >= (0, 1, 0),
-                f"pinned t3code {version} is below 0.1.0")
+        require(match and tuple(int(part) for part in match.groups()) >= detector.T3CODE_STABLE_MIN_VERSION,
+                f"pinned t3code {version} is below the bridge version")
         build("alpha.config.home-manager.users.repparw.programs.t3code.package")
     else:
         raise ValueError(f"no package validation for {name}")

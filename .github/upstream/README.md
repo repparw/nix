@@ -194,20 +194,21 @@ CI posts a deduplicated readiness notice to #209. The Alpha
 fleet CI adapter is verified. Protect `statev2.sqlite` and preserve active
 conversations during a cutover.
 
-## T3 Code stable 0.1.0 bridge (#288, #289)
+## T3 Code stable version bridge (#288, #289)
 
-The `t3code-stable010` watcher retires the complete 0.1.0 version bridge
-ahead of nixpkgs#575132. The bridge builds the desktop package from the
-existing Nixpkgs recipe with the PR's version, source hash, and pnpm hash;
+The `t3code-stable010` watcher retains its original ID and now tracks the
+0.1.1 version bridge. The bridge builds the desktop package from the
+existing Nixpkgs recipe with verified release source and pnpm hashes;
 the same override applies on all architectures. The separate split aspect
 selects the server-only package on Pi and Epsilon. Its detector reuses the nightly-v2
-`PINNED-READY` gate: only a stable
-orchestrator-v2 release carrying the root Nixpkgs pin may drop the bridge,
+`PINNED-READY` gate plus a 0.1.1 minimum: only a stable
+orchestrator-v2 release at least as new as the bridge in the root Nixpkgs
+pin may drop the bridge,
 because an earlier drop downgrades Alpha to V1 0.0.45 and breaks Android/web
 clients. The post-lock cleanup is the complete cutover: it deletes the
 bridge aspect, removes its entity includes so every host serves the
 root-pin package (Alpha stock, Pi/Epsilon the `t3code-split` server-only
-build) and arms the `t3code >= 0.1.0`
+build) and arms the `t3code >= 0.1.1`
 version assertion in `t3code.nix` that keeps a pin regression from silently
 downgrading `statev2.sqlite`. The `t3code-split` watcher independently keeps
 the server-only layer until nixpkgs#555814 reaches the pin, then selects

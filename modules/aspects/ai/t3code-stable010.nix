@@ -10,26 +10,28 @@
           let
             overrideVersion =
               package:
-              package.overrideAttrs (finalAttrs: {
-                version = "0.1.0";
-                src = prev.fetchFromGitHub {
-                  owner = "pingdotgg";
-                  repo = "t3code";
-                  tag = "v${finalAttrs.version}";
-                  hash = "sha256-P82DqoY1E9wtROwu5Nr7MB/I1PdmZHWXXR4nRa4GWXM=";
-                };
-                pnpmDeps = prev.fetchPnpmDeps {
-                  pnpm = prev.pnpm_11;
-                  inherit (finalAttrs)
-                    pname
-                    version
-                    src
-                    pnpmWorkspaces
-                    ;
-                  fetcherVersion = 4;
-                  hash = "sha256-oX4tOu20tYO3ci7VvSEL8eFgxAYWp5HlQFSfAWJGJmg=";
-                };
-              });
+              package.overrideAttrs (
+                finalAttrs: _: {
+                  version = "0.1.1";
+                  src = prev.fetchFromGitHub {
+                    owner = "pingdotgg";
+                    repo = "t3code";
+                    tag = "v${finalAttrs.version}";
+                    hash = "sha256-kIGiC/uCDgRlqt+8/zZ9K48NBuCGJ1TgqW+rpdZgZUQ=";
+                  };
+                  pnpmDeps = prev.fetchPnpmDeps {
+                    pnpm = prev.pnpm_11;
+                    inherit (finalAttrs)
+                      pname
+                      version
+                      src
+                      pnpmWorkspaces
+                      ;
+                    fetcherVersion = 4;
+                    hash = "sha256-witoens1UicKE+SIQCrRk9YtbAVIW5x+2MqDrFh4F0s=";
+                  };
+                }
+              );
           in
           if prev ? t3code-cli then
             {
