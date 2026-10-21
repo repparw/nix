@@ -1,196 +1,137 @@
 ---
 type: Runbook
 title: Prepare alpha for a volatile root
-description: Disabled persistence inventory, proposed backing layout, and prerequisites for alpha's first tmpfs-root boot.
-when: Read before enabling alpha persistence, changing its storage layout, or reviewing its first volatile-root trial.
+description: Disabled persistence inventory, tested Btrfs mount behavior, and outstanding recovery gates for Alpha.
+when: Read before enabling Alpha persistence, changing its storage layout, or reviewing its first volatile-root trial.
 resource: modules/aspects/alpha-persistence.nix
 tags: [alpha, impermanence, persistence, btrfs, recovery, desktop]
 ---
 
 # Prepare alpha for a volatile root
 
-Alpha includes a disabled persistence inventory. Its root remains Btrfs, no
-`/persist` mount is declared, and no files move. Enabling
-`modules.persistence.enable` alone fails assertions. The root-layout change
-and first boot require a separate reviewed configuration and recovery trial.
+Alpha's persistence inventory is disabled. Including it does not move files,
+create `/persist`, or change the Btrfs root. Enabling persistence without a
+prepared backing mount and tmpfs root fails evaluation.
 
-## Current storage
+## First migration scope
 
-The read-only mount audit on 2026-10-14 found `/home`, `/nix`, and service data
-inside root subvolume `@` on UUID `51c5e80b-e22e-4d62-a3e2-ebb531deb05b`.
-The existing `@home` subvolume is not mounted at `/home`; do not assume it
-contains the current home. The ESP is independently mounted at `/boot`.
+Retain the whole `/home`, `/var/lib`, and `/var/log`. This includes projects,
+worktrees, AI credentials/databases, games and saves, container roots,
+virtualization state, desktop device state, and operational records. Do not
+classify unreviewed state as disposable during the first migration. The shared
+aspect also retains `/etc` when mutable-account persistence is requested and
+root's home. See [the inventory](../../modules/aspects/alpha-persistence.nix).
 
-HDD and Seagate are outside the migration scope. Do not format, repartition,
-move data, change ownership, alter mount declarations, or place migration
-backups on either disk. Preserve their existing filesystem and bind-mount
-declarations exactly.
+The previous directory allowlist omitted existing state and duplicated the
+shared `/var/lib/host-recovery` entry. Retaining `/var/lib` avoids both problems;
+shared early mounts for account allocation remain in place.
 
-Their media is mounted below `/home/containers/media`. Exclude `/mnt/hdd`,
-`/mnt/seagate`, and the media bind-mount trees from migration scans, copies,
-and recovery backups. Persisting `/home` must not copy the mounted media into
-`/persist/home`; reuse the NVMe-backed home and preserve the existing nested
-mounts. Preserve numeric owners, ACLs, extended attributes, and container UID
-mappings for the NVMe state.
+HDD and Seagate remain outside this migration. Do not format, repartition,
+move data, change ownership, alter their mount declarations, or write recovery
+backups to either disk. Exclude `/mnt/hdd`, `/mnt/seagate`, their media bind
+mounts, and cloud FUSE mounts from capture or copy operations. Persistence bind
+mounts reuse the existing NVMe directories; they do not copy mounted media.
 
-Prowlarr retains its live database in its container root. Its exported backup
-directory is not the whole live database. Keep `/var/lib/nixos-containers`
-until each container has an independent restart and restore test.
+## Proposed layout
 
-## Initial inventory
+Mount a tmpfs root and reuse the existing NVMe Btrfs `@` subvolume as `/persist`,
+with explicit `subvol=@`. The separate `@home` subvolume is not Alpha's live
+home. Bind `/persist/nix` to `/sysroot/nix` in the systemd initrd before
+`initrd-nixos-activation.service`. Keep the store and database together.
 
-Keep the whole `/home` for the first migration. This preserves credentials,
-Codex and T3 state, projects and worktrees, game saves, user services, container
-configuration, and downloads. A volatile home is a separate project.
+Set `modules.persistence.mutableAccounts = true` to retain complete `/etc`
+before account allocation. SOPS must read the prepared host key directly from
+`/persist/etc/ssh`. Regenerate the random seed rather than installing a symlink
+that becomes self-referential while `/` and `/persist` refer to the same tree.
 
-The shared aspect retains host identity, mutable-account allocation state,
-container roots, root's home, and systemd timer state. The alpha aspect adds
-desktop/network device state, private service state, operational records,
-backup staging, and logs. The declared paths are in
-[alpha-persistence.nix](../../modules/aspects/alpha-persistence.nix).
-Service aspects also contribute their own persistence entries.
+The backing filesystem must be `neededForBoot`. Create the
+`.host-persistence-ready` marker containing `alpha` only after the state and
+recovery checks pass. The initrd guard rejects an absent or unprepared backing
+volume. The existing `@` becomes durable backing state: never reset or delete it.
 
-Set `modules.persistence.mutableAccounts = true` in the later boot candidate
-to retain the complete `/etc`, including local `passwd` changes. It mounts
-before user allocation; SOPS reads the prepared SSH identity directly from
-`/persist/etc/ssh`. The random seed is regenerated per boot, matching the
-same-filesystem transition policy on pi and epsilon.
+This draft declares no production backing mount or tmpfs-root boot candidate.
 
-The remaining `/var/lib` directories include legacy service and virtualization
-trees. The old root must remain accessible under `/persist` while those paths
-are classified. This inventory is a first draft, not a complete filesystem
-audit or proof that omitted state is disposable.
+## Verification
 
-## Proposed backing layout
+`host-persistence` checks the disabled default, unchanged Btrfs root, absence of
+persistence mounts, and refusal to enable an unprepared layout.
 
-Use a tmpfs root and mount the existing `@` subvolume at `/persist`, explicitly
-selecting `subvol=@`. Bind `/persist/nix` into `/sysroot/nix` in the systemd
-initrd before `initrd-nixos-activation.service`, following epsilon's existing
-store-bind ordering. Keep the complete Nix store and database together.
+The disposable `host-persistence-btrfs-vm` uses the actual Alpha inventory and
+shared persistence module. It seeds a Btrfs `@` root and an unrelated `@home`,
+then exercises:
 
-Impermanence then exposes retained `/persist/home`, `/persist/etc`, and the
-other declared paths at their original locations. Reusing the existing
-subvolume avoids copying the whole home or store into alpha's limited free
-space. It does not make the backing state disposable: never reset or delete
-`@` after it becomes `/persist`.
+- Existing home and store-state reuse through `/persist` and the initrd `/nix` bind.
+- A second tmpfs-root boot retaining SSH identity, changed passwords, and home data.
+- A nested simulated media mount that remains separate from the backing home.
+- Refusal to activate after the readiness marker is removed.
 
-The backing mount needs `neededForBoot = true`. Create the
-`.host-persistence-ready` marker containing `alpha` only after the identity,
-account databases, store, homes, and service state have been verified. The
-shared initrd guard rejects an absent or unprepared backing volume.
+The test harness supplies executable Nix store content through its host share.
+This does **not** prove an independently bootable NVMe store, ESP/bootloader
+behavior, persistent-root fallback, physical rescue access, or desktop/container
+application recovery. The existing ext4 persistence VM separately exercises
+missing backing storage and offsite backup/restore behavior.
 
-No part of this draft mounts the backing filesystem or switches the root.
+Run both VM checks and the evaluation check after changing this layout:
 
-## Before the first boot
+```bash
+nix build .#checks.x86_64-linux.host-persistence \
+  .#checks.x86_64-linux.host-persistence-vm \
+  .#checks.x86_64-linux.host-persistence-btrfs-vm --no-link
+```
 
-1. Finish the filesystem and enabled-service inventory. Check desktop login,
-   networking, Bluetooth, printers, virtual machines, games, and media state.
-2. Expand alpha's recovery coverage and prove an isolated restore. Its current
-   offsite backup is a small home-state allowlist; it omits OAuth credentials,
-   most of the home, complete container roots, and host identity. Persistence
-   declarations are not backups. Scope this recovery work to NVMe state and
-   exclude the HDD, Seagate, and their media bind mounts explicitly. Do not
-   broaden or redirect backup jobs onto either disk as part of this migration.
-3. Verify independently usable rescue media and local console access. Keep
-   the current Btrfs-root boot entry and its store closure as a recovery path.
-   SSH cannot recover an initrd that failed to mount the NVMe.
-4. Stop service writers or export databases before taking recovery checkpoints.
-   Retain the original backing data and independently verify ownership and
-   credential readability without printing their contents.
-5. Build and inspect the complete tmpfs-root candidate and its initrd. Test
-   the `/persist` and `/nix` ordering, early account mounts, missing-volume
-   refusal, and readiness-marker refusal in a disposable Btrfs VM first.
-6. Perform a local-console first boot outside automatic fleet deployment.
-   Verify service health, existing passwords, SOPS decryption, desktop login,
-   T3/Codex credentials, and a second reboot. Prove the recovery boot entry
-   before making the candidate the fleet default.
+## Live audit, 2026-10-21
 
-## Recovery preparation analysis, 2026-10-14
+Read-only storage inspection confirmed:
 
-Decision: keep persistence disabled. No backup, restore, snapshot, balance,
-activation, reboot, or disk-layout change was performed during this analysis.
-The media disks were excluded from content scans. Existing mount-table
-metadata was observed by the fleet diagnostic command.
+| Item                      | Observation                                                                                      | Consequence                                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Root and ESP              | NVMe `/dev/nvme0n1p2[/@]` is Btrfs; `/boot` is `/dev/nvme0n1p1`                                  | Home, store and service data remain on the original root.                                                                            |
+| Capacity                  | About 68 GiB free; about 1 MiB unallocated; metadata 77.2% used; global reserve unused           | A second full copy does not fit. Review allocation pressure before a boot-layout change.                                             |
+| Device errors             | All five Btrfs device error counters are zero                                                    | No reported device errors; this is not a full integrity or recovery test.                                                            |
+| Other subvolumes          | `@home`, `srv`, `var/lib/machines`, `var/lib/portables`, `tmp`, `var/tmp`, and `.beeshome` exist | Inventory occupied subvolumes explicitly before capture; same-filesystem traversal can skip them. Do not delete them based on names. |
+| Identity and boot entries | Machine ID, shadow and host SSH key present; ten installed boot entries                          | Presence does not prove independent key access or a working rescue/fallback boot.                                                    |
+| Latest offsite attempt    | October 20 journal reports uploaded data but an incomplete `alpha-home` export                   | Do not treat the service's reset result after activation as proof of a successful backup.                                            |
 
-### Verified state
+The installed home exporter fails on the historical Bloodborne paths under
+`.local/share/bbport-test/data/`. A synthetic reproduction confirmed rsync
+returns `ELOOP` through that intermediate symlink. The draft instead selects
+`Games/bbport/source/data/{bbport.ini,user/}` directly. The generated producer
+passed a synthetic save/config capture and a one-off live NVMe export; its
+completion marker was refreshed and the staged configuration matched the live
+file. The installed scheduled unit still uses the old producer until activation.
+A fresh offsite snapshot and isolated restore of the corrected export remain
+unverified.
 
-| Item | Evidence | Implication |
-| --- | --- | --- |
-| Current and booted root | Both installed fstabs select the NVMe Btrfs `@` subvolume; `/home` is part of that root | Home already survives ordinary reboots. The draft also declares the whole `/home`, but the proposed initrd has not been exercised. |
-| Root capacity | About 78 GiB available for data; only 1,052,672 bytes unallocated; metadata 72.52% used; global reserve unused; device error counters zero | The configured 10 GiB unallocated-space check fails. Investigate allocation pressure before migration; this observation does not establish corruption or an imminent failure. |
-| NVMe tree accounting | `du -sx` reports about 843 GiB for `/home`, 100 GiB for `/nix`, and 16 GiB for `/var/lib` | A second complete copy does not fit on alpha. These are live filesystem-accounting figures, not a measured backup or restore size; compression, shared extents, hard links, and overlapping bind mounts affect them. |
-| Large home categories | Games about 467 GiB; container torrents about 171 GiB | Do not silently classify these as disposable. Saves, mods, unique files, and resumable download state need an explicit retention decision before any recovery exclusion. |
-| Latest daily snapshot | Offsite snapshot `f621dac1`, 2026-10-14 01:01 ART; backup unit completed successfully and its 5% read-data check passed | Covers exported container backups, Documents, Pictures, and selected staged config/local state. It does not prove full host recovery or an isolated application restore. |
-| Credential presence | Host and user SSH identities, account databases, Codex auth, and the user Age file exist; private identity/auth files have mode 0600 | Presence and permissions were checked without reading credential contents. Complete recovery must retain these beyond the current daily allowlist. |
-| Boot entries | Ten systemd-boot entries with readable kernel/initrd artifacts; configuration limit ten | An installed fallback is available, but no recovery boot was tested. Protect a known-good persistent-root generation and its closure from subsequent pruning before a trial. |
-| Local recovery access | User confirms local console; rescue USB not tested; independent SSH/SOPS key stored but not tested | Boot the rescue USB and test the independent key before preparing the first tmpfs boot. |
-| Epsilon restore destination | `/var/tmp` is tmpfs with about 5.7 GiB free; `/persist` has about 77 GiB disk-backed free | Neither is a destination for a complete alpha restore. Do not use the current helper's default `/var/tmp` restore location. |
-| Other NVMe subvolumes | `/srv`, `/var/lib/machines`, and `/var/lib/portables` currently report zero usage; `@home` exists separately and is not the live home | Recheck before capture. Filesystem-boundary exclusions can skip nested Btrfs subvolumes; inventory them explicitly. Do not delete or reuse `@home` based on its name. |
+Earlier October 14 accounting estimated about 843 GiB in `/home`, 100 GiB in
+`/nix`, and 16 GiB in `/var/lib`. These are dated filesystem-accounting figures,
+not a measured backup size; compression, shared extents, nested filesystems,
+and overlapping bind mounts affect them. No full scan was repeated on the media
+disks. The ordinary daily backup remains a narrow allowlist, not full host
+recovery coverage.
 
-Btrfs distinguishes unallocated device space from free space inside allocated
-block groups. See the upstream [filesystem usage documentation](https://btrfs.readthedocs.io/en/latest/btrfs-filesystem.html#subcommand).
-No balance, scrub, cleanup, or alert reset was run to change the observed state.
+## Remaining gates before a production trial
 
-### Existing helper limitations
+1. Fix the home-export failure and verify a fresh offsite snapshot and isolated
+   restore. Define a complete NVMe recovery manifest and an adequately sized,
+   independent disk-backed destination. HDD and Seagate are excluded as both
+   sources and destinations. Any exclusion of installed games, torrents or
+   other home content needs an explicit retention decision; preserve unique
+   saves, mods, credentials and resumable state.
+2. Review the Btrfs allocation-health warning. Free space inside allocated
+   block groups differs from unallocated device space. Do not run a balance or
+   delete data just to silence the check. See the upstream
+   [filesystem usage documentation](https://btrfs.readthedocs.io/en/latest/btrfs-filesystem.html#subcommand).
+3. Test independently usable rescue media and the independently stored recovery
+   key at Alpha's local console. Protect a known-good persistent-root generation
+   and its closure from pruning.
+4. Build a separate boot candidate and test its real store/ESP ordering and
+   fallback to the old persistent-root generation. Both generations share
+   mutable backing state; merely keeping an old boot entry does not prove recovery.
+5. Schedule a local-console first boot outside automatic fleet deployment.
+   Verify desktop login, networking, SOPS, existing passwords, credentials,
+   container/application health, and a second reboot before making it default.
 
-Do not enable the shared full-recovery helper unchanged for alpha. Its
-filesystem list would include `/`, `/boot`, `/mnt/hdd`, and `/mnt/seagate`.
-It also captures partition tables for all disks, assumes a host password
-bootstrap secret that alpha does not declare, and restores into `/var/tmp`.
-Those defaults conflict with this migration's scope or alpha's recovery needs.
-
-A future alpha recovery implementation must explicitly select the NVMe root,
-its retained subvolumes, and ESP; capture only `/dev/nvme0n1` partition metadata;
-and require a disk-backed restore destination with adequate capacity. Account
-recovery must verify the retained passwd/group/shadow databases rather than
-assuming pi/epsilon's bootstrap-secret workflow applies unchanged.
-
-### Required preparation sequence
-
-1. Investigate the existing root-allocation health failure without changing
-   the media disks. Establish a reviewed storage-health plan before taking a
-   new large checkpoint or introducing a boot-layout change.
-2. Choose an independent, adequately sized backup and isolated restore
-   destination. HDD and Seagate are excluded as sources and destinations.
-   Size it using a final recovery manifest and restore requirements. A local
-   Btrfs snapshot may help undo a configuration change, but it is not an
-   independent recovery copy for NVMe loss.
-3. Define an NVMe-only recovery manifest. Include `/etc`, root/user identities,
-   the whole home initially, complete container roots/configuration, and the
-   boot/store metadata needed to return to the persistent-root generation.
-   Explicitly exclude media bind mounts and cloud FUSE mounts; do not follow
-   symlinks onto them. Include occupied nested NVMe subvolumes separately.
-4. Plan application-consistent capture for Jellyfin, Prowlarr, qBittorrent,
-   desktop/browser state, and T3 databases. Current daily SQLite staging is
-   limited to its declared list. Decide which writers need a maintenance
-   window or native export; do not stop production services merely to run
-   this analysis.
-5. Restore the captured state off-host into an isolated disk-backed tree.
-   Verify numeric ownership, ACLs, xattrs, hard links, credential readability,
-   account/identity manifests, and application database checks. Test SOPS
-   decryption using the independently retrieved key with plaintext directed
-   away from logs. Record the snapshot ID and the completed restore evidence.
-6. Boot independently prepared rescue media at alpha's local console. Confirm
-   NVMe/ESP visibility and ability to select the known-good persistent-root
-   boot entry. Avoid mounting or operating on HDD and Seagate for this test.
-7. Complete the disposable Btrfs VM trial, including missing-backing refusal,
-   store/account mount ordering, nested media mount ordering, and fallback to
-   the old persistent-root generation after the candidate has activated.
-   Merely keeping an old entry does not prove fallback: both generations use
-   the same mutable backing tree.
-
-Only after these prerequisites pass should a separate reviewed boot candidate
-and local-console maintenance window be prepared. The existing draft changes
-no root layout and creates no readiness marker.
-
-## Verification scope
-
-`host-persistence` checks that alpha remains disabled, retains its Btrfs root,
-creates no persistence mounts, and rejects enabling without the prepared boot
-layout. The existing persistence VM tests shared identity and recovery
-behavior on ext4. They do not prove this proposed Btrfs layout or alpha's
-desktop and media services survive a volatile-root boot.
-
-See the [shared persistence runbook](host-persistence.md),
-[host recovery runbook](host-recovery.md), and
-[configuration verification skill](../../.agents/skills/verify-nixos-config/SKILL.md).
+No production snapshot, restore, readiness marker, reboot or storage-layout
+change was performed by this draft. The installed NVMe home-export service was retried and failed without replacing
+its prior staging tree. The corrected candidate producer then completed a one-off
+NVMe export through a transient systemd unit. No HDD sync job was run.

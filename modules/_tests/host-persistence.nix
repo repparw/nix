@@ -186,9 +186,7 @@ assert lib.all
     "/var/log"
     "/var/lib/nixos"
     "/var/lib/nixos-containers"
-    "/var/lib/private"
-    "/var/lib/credential-remediation"
-    "/var/lib/alpha-auto-update"
+    "/var/lib"
   ];
 assert lib.any (
   assertion: !assertion.assertion && lib.hasPrefix "Alpha persistence requires" assertion.message
