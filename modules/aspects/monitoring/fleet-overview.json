@@ -295,19 +295,19 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "absent_over_time(node_uname_info{host=\"alpha\"}[5m]) or on() vector(0)",
+          "expr": "absent_over_time(node_uname_info{host=\"alpha\"}[5m]) or on(host) label_replace(vector(0), \"host\", \"alpha\", \"\", \"\")",
           "legendFormat": "alpha",
           "interval": ""
         },
         {
           "refId": "B",
-          "expr": "absent_over_time(node_uname_info{host=\"pi\"}[5m]) or on() vector(0)",
+          "expr": "absent_over_time(node_uname_info{host=\"pi\"}[5m]) or on(host) label_replace(vector(0), \"host\", \"pi\", \"\", \"\")",
           "legendFormat": "pi",
           "interval": ""
         },
         {
           "refId": "C",
-          "expr": "absent_over_time(node_uname_info{host=\"epsilon\"}[5m]) or on() vector(0)",
+          "expr": "absent_over_time(node_uname_info{host=\"epsilon\"}[5m]) or on(host) label_replace(vector(0), \"host\", \"epsilon\", \"\", \"\")",
           "legendFormat": "epsilon",
           "interval": ""
         }
