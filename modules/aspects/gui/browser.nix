@@ -30,73 +30,32 @@ in
   };
 
   den.aspects.gui.provides.browser = {
-    nixos =
-      { config, pkgs, ... }:
-      let
-        # Helium reads platform policies from /etc/chromium (verified via
-        # --enable-logging --v=1: config_dir_policy_loader scans
-        # /etc/chromium/policies/managed). The /etc/helium path is not read.
-        heliumPolicy = builtins.toJSON {
-          BrowserSignin = 0;
-          PasswordManagerEnabled = false;
-          ExtensionSettings = lib.genAttrs heliumExtensionIds (_: {
-            installation_mode = "normal_installed";
-            # Helium rewrites this Web Store URL to its extension proxy. The
-            # Google URL bypasses that rewrite and stalls policy installs.
-            update_url = "https://update-url-to-be-replaced.qjz9zk";
-          });
-        };
-        # Chromium watches the managed-policy directory. setup-etc.pl recreates
-        # environment.etc symlinks on every activation; avoid redundant reloads
-        # by keeping these files stable when their contents have not changed.
-        policyFiles = {
-          "helium-nixos.json" = heliumPolicy;
-        }
-        // lib.optionalAttrs (config.programs.chromium.extraOpts != { }) {
-          "extra.json" = builtins.toJSON config.programs.chromium.extraOpts;
-        };
-      in
-      {
-        nixpkgs.overlays = [
-          inputs.firefox-addons.overlays.default
-          (final: prev: {
-            firefox-addons = final.lib.mapAttrs (
-              name: pkg:
-              pkg.overrideAttrs (old: {
-                meta = old.meta // {
-                  license = final.lib.licenses.unfree;
-                };
-              })
-            ) prev.firefox-addons;
-          })
-        ];
+    nixos = {
+      nixpkgs.overlays = [
+        inputs.firefox-addons.overlays.default
+        (final: prev: {
+          firefox-addons = final.lib.mapAttrs (
+            name: pkg:
+            pkg.overrideAttrs (old: {
+              meta = old.meta // {
+                license = final.lib.licenses.unfree;
+              };
+            })
+          ) prev.firefox-addons;
+        })
+      ];
 
-        environment.etc = lib.mkIf (config.programs.chromium.extraOpts != { }) {
-          # programs.chromium regenerates this on every activation; disable the
-          # etc entry so the activation script below can keep it stable.
-          "chromium/policies/managed/extra.json".enable = lib.mkForce false;
-        };
-
-        system.activationScripts.heliumPolicy = {
-          deps = [ "etc" ];
-          text = ''
-            install -d -m 0755 /etc/chromium/policies/managed
-          ''
-          + lib.concatStrings (
-            lib.mapAttrsToList (
-              name: content:
-              let
-                src = pkgs.writeText "chromium-policy-${name}" content;
-              in
-              ''
-                if ! cmp -s ${src} "/etc/chromium/policies/managed/${name}"; then
-                  install -m 0644 ${src} "/etc/chromium/policies/managed/${name}"
-                fi
-              ''
-            ) policyFiles
-          );
-        };
+      environment.etc."chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
+        BrowserSignin = 0;
+        PasswordManagerEnabled = false;
+        ExtensionSettings = lib.genAttrs heliumExtensionIds (_: {
+          installation_mode = "normal_installed";
+          # Helium rewrites this Web Store URL to its extension proxy. The
+          # Google URL bypasses that rewrite and stalls policy installs.
+          update_url = "https://update-url-to-be-replaced.qjz9zk";
+        });
       };
+    };
 
     homeManager =
       {
@@ -110,52 +69,15 @@ in
         openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
         whatsappLinksToFirefox = pkgs.callPackage ../../_packages/whatsapp-links-to-firefox.nix { };
-        heliumBase = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
-        snapshot = pkgs.writeShellApplication {
-          name = "helium-snapshot";
-          runtimeInputs = [
-            pkgs.coreutils
-            pkgs.findutils
-          ];
-          text = ''
-            # Preserve extension storage before version changes (Helium #1978).
-            snapshotRoot="''${XDG_STATE_HOME:-$HOME/.local/state}/helium-extension-snapshots"
-            marker="$snapshotRoot/launched-version"
-            defaultDir="$HOME/.config/net.imput.helium/Default"
-            if [ "$(cat "$marker" 2>/dev/null)" != "${heliumBase.name}" ]; then
-              dest="$snapshotRoot/pre-${heliumBase.name}"
-              if [ ! -d "$dest" ]; then
-                mkdir -p "$dest"
-                for dir in "Local Extension Settings" "Sync Extension Settings"; do
-                  if [ -d "$defaultDir/$dir" ]; then
-                    cp -a "$defaultDir/$dir" "$dest/"
-                  fi
-                done
-              fi
-              find "$snapshotRoot" -maxdepth 1 -name 'pre-*' -type d | sort -r | tail -n +4 | xargs -r rm -rf
-              printf '%s' "${heliumBase.name}" > "$marker"
-            fi
-          '';
-        };
         heliumPackage =
-          (heliumBase.override { flags = config.programs.helium.flags; }).overrideAttrs
+          (inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium.override {
+            flags = config.programs.helium.flags;
+          }).overrideAttrs
             (old: {
-              nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.makeShellWrapper ];
-              postFixup = (old.postFixup or "") + ''
-                wrapProgramShell "$out/bin/helium" --run ${snapshot}/bin/helium-snapshot
+              postInstall = (old.postInstall or "") + ''
                 sed -i '/^MimeType=/d' "$out/share/applications/helium.desktop"
               '';
             });
-        heliumFlags = [
-          # Upstream's wrapper does not expand NIXOS_OZONE_WL.
-          "--ozone-platform-hint=auto"
-          "--force-renderer-accessibility"
-          "--silent-debugger-extension-api"
-          # All windows share a profile and must use the same encryption backend.
-          "--password-store=basic"
-          "--load-extension=${whatsappLinksToFirefox}"
-        ];
-        heliumConfigDir = ".config/net.imput.helium";
       in
       {
         imports = [ inputs.helium-nix.homeModules.default ];
@@ -185,7 +107,7 @@ in
 
         home.file = {
           ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
-          "${heliumConfigDir}/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
+          ".config/net.imput.helium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
             name = "com.add0n.node";
             description = "Node Host for Native Messaging";
             path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
@@ -399,7 +321,15 @@ in
           helium = {
             enable = true;
             package = heliumPackage;
-            flags = heliumFlags;
+            flags = [
+              # Upstream's wrapper does not expand NIXOS_OZONE_WL.
+              "--ozone-platform-hint=auto"
+              "--force-renderer-accessibility"
+              "--silent-debugger-extension-api"
+              # All windows share a profile and must use the same encryption backend.
+              "--password-store=basic"
+              "--load-extension=${whatsappLinksToFirefox}"
+            ];
           };
         };
       };
