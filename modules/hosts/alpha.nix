@@ -17,8 +17,6 @@
       den.aspects.media-stack
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
-      den.aspects.nixos-services._.disk-watch
-      den.aspects.nixos-services._.reboot-watch
       den.aspects.nixos-services._.free-model-watch
       den.aspects.deploy-target
     ];
@@ -185,28 +183,25 @@
           mute = [ "wine64-preloader" ];
         };
 
-        modules.reboot-watch.enable = true;
-
-        modules.disk-watch = {
-          enable = true;
-          mounts = [
-            {
-              mount = "/";
-              warn = 90;
-              crit = 93;
-            }
-            {
-              mount = "/mnt/hdd";
-              warn = 98;
-              crit = 99;
-            }
-            {
-              mount = "/mnt/seagate";
-              warn = 95;
-              crit = 98;
-            }
-          ];
-        };
+        modules.monitoring.health.disks = [
+          {
+            mount = "/";
+            warn = 90;
+            crit = 93;
+          }
+          {
+            mount = "/mnt/hdd";
+            sleeping = true;
+            warn = 98;
+            crit = 99;
+          }
+          {
+            mount = "/mnt/seagate";
+            sleeping = true;
+            warn = 95;
+            crit = 98;
+          }
+        ];
 
         modules.monitoring.agent.extraExcludedMounts = [
           "/mnt/hdd"

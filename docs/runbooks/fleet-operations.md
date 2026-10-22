@@ -1,7 +1,7 @@
 ---
 type: Runbook
 title: Fleet health, offsite backups, and auto-updates
-description: How fleet-health alerting, offsite restic backups, and the staged deploy-rs updater work — probing, restoring, pausing, and rolling back.
+description: How Cloud health alerting, offsite restic backups, and the staged deploy-rs updater work — probing, restoring, pausing, and rolling back.
 when: Read when a Discord health alert fires, when restoring service state from the offsite repo, or when a staged fleet update deploys, defers, or rolls back.
 resource: modules/deploy.nix
 tags:
@@ -11,7 +11,7 @@ tags:
 # Fleet health, offsite backups, and auto-updates
 
 The pi is the always-on controller. Three systems keep the fleet observable and
-recoverable: fleet-health probes, an offsite restic repo, and a nightly staged
+recoverable: Cloud health alerts, an offsite restic repo, and a nightly staged
 deploy-rs update. All three post to the `#notifications` Discord channel, and
 the monitor posts directly rather than through the hermes container, so it
 still reports when hermes itself is down.
@@ -39,57 +39,35 @@ deploy-rs or `nixos-rebuild` to switch); the controller-side
 `fleet-update` transaction below deploys a main revision after successful
 CI.
 
-## Fleet health (`fleet-health.timer`, every 5 min)
+## Fleet health
 
-Probes every systemd unit that matters plus every HTTP surface across the
-fleet: the pi and epsilon services (traefik, authelia, HA, hermes, glance, ASF,
-and miniflux), the apex, rss, and paper vhosts, and alpha's published
-backends (jellyfin, qbit, bazarr, prowlarr, radarr, sonarr).
+Grafana Cloud evaluates service probes, required systemd units, retained failed
+jobs, disk capacity and Btrfs allocation pressure, backup freshness and export
+completeness, deployment PAUSE, and Alpha's reboot requirement. See
+[Cloud setup and alerting](grafana-cloud-pilot.md) for the rules and notification
+policy. The old periodic/event Discord health, disk and reboot senders are
+removed; Cloud sends both firing and recovery notifications.
 
-- Two consecutive failures post `DOWN name (detail)` as a new message;
-  recovery deletes that message (no `UP` post — the channel only shows
-  what is currently down). Single blips stay silent. If a DOWN message
-  lingers after recovery, check `journalctl -u fleet-health.service` for
-  `POST failed` / `DELETE failed` lines: a failed delete keeps the msgid
-  file for retry on the next run.
-- Oneshot units (restic) are judged by `systemctl is-failed`, not
-  `is-active` — inactive between runs is healthy.
-- State lives in `/var/lib/fleet-health/`. To re-arm an alert while
-  debugging, delete the counter (and `.<check>.msgid`) for that check.
-- A `PAUSE` flag on the updater (`/var/lib/auto-update/PAUSE`) raises an
-  alert of its own, so paused automation never rots silently.
-
-Pi also installs a type-wide systemd `service.d` failure hook. When any
-service exhausts its configured restart policy and enters the failed state,
-the hook starts the normal fleet probe immediately and again after 60 seconds.
-Those two serialized passes use the same counters and Discord messages as the
-timer, reducing persistent service-failure detection to about one minute
-without bypassing the two-strike rule. Existing unit-specific `OnFailure=`
-handlers are additive and continue to run. HTTP and cross-host failures still
-rely on the periodic sweep because they do not emit local systemd failures.
-
-Pi also collects `fleet-unit-snapshot` over root SSH from alpha and epsilon,
-using their configured service addresses and the existing deployment key. Unit
-alerts include the remote hostname, so identically named units remain separate.
-`host-units:<host>` means the snapshot could not be read (including an SSH
-outage), rather than that the host has recovered. Existing unit alerts and the
-last successful snapshot stay intact until that host can be inspected again.
-`--local` skips these SSH sweeps; `--strict` keeps the existing deployment probe
-behavior and does not change failed-unit alert state.
+`fleet health probe` is a read-only diagnostic command. It prints failures and
+returns nonzero when checks fail. `--local` skips cross-host probes;
+`--strict` retains deployment readiness checks, excluding Cloud reachability
+and unrelated retained jobs so an external monitoring outage cannot prevent
+fleet recovery. Neither invocation sends messages or changes alert state.
+Deployment failures, rollback reports, Hermes crash analysis and model/release
+watchers keep their workflow-specific notifications.
 
 All three hosts retain failed offsite backup results; alpha additionally
 retains Btrfs-health/scrub, Jellyfin-backup, and configured rsync job results.
 `ExecStopPost` records failed runs in `/var/lib/fleet-unit-state/<unit>` and
 removes that record only after a successful rerun. Each record contains a
-timestamp and systemd's service result. The directory persists across reboot on the current roots and is declared for
+timestamp and systemd's service result. Successful runs also atomically record
+their timestamp in `.success/<unit>`, which the backup freshness gauge uses. The directory persists across reboot on the current roots and is declared for
 `/persist` when host persistence is enabled, so `systemctl reset-failed` does not
 make an unsuccessful backup look recovered. This is evidence of the most
 recent observed failure, not proof of a fresh or restorable backup: jobs that
 have never run and failures before installing the hook have no retained record.
 
-Roll out the snapshot/recording aspect on alpha and epsilon before activating
-the Pi controller change. Until a remote collector is installed, Pi reports
-that host's snapshot as unavailable. To inspect retained evidence on a host:
+To inspect retained evidence on a host:
 
 ```sh
 sudo fleet-unit-snapshot

@@ -375,8 +375,11 @@ assert lib.all
     "/var/lib/prometheus2"
   ];
 assert alphaExclusions;
-assert (cfg "epsilon").modules.disk-watch.enable;
-assert (cfg "pi").systemd.timers ? fleet-health;
+assert lib.all (host: !(cfg host).systemd.timers ? fleet-health) hosts;
+assert lib.all (host: !(cfg host).systemd.timers ? disk-watch) hosts;
+assert lib.all (host: !(cfg host).systemd.timers ? reboot-watch) hosts;
+assert !((cfg "pi").systemd.services ? fleet-health-event);
+assert map (disk: disk.mount) (cfg "epsilon").modules.monitoring.health.disks == [ "/persist" ];
 assert lib.all (host: (cfg host).systemd.timers ? fleet-health-metrics) hosts;
 assert lib.all (
   host: lib.hasInfix "node_systemd_unit_state;(inactive|activating|deactivating)" (alloyConfig host)
@@ -412,6 +415,7 @@ pkgs.runCommand "check-monitoring-fleet"
       pkgs.grafana-alloy
       pkgs.prometheus.cli
       pkgs.python3
+      pkgs.go
     ];
   }
   ''
@@ -427,6 +431,7 @@ pkgs.runCommand "check-monitoring-fleet"
       }"
     ) cloudVariants}
     promtool test rules ${queryTests}
+    GOCACHE="$TMPDIR/go-cache" GO111MODULE=off go run ${./discord-template.go} ${../aspects/monitoring/discord.tmpl}
     PYTHONDONTWRITEBYTECODE=1 python3 ${./fleet-health-metrics.py} ${../scripts/fleet-health-metrics.py} ${../aspects/monitoring/health-alerts.json}
     touch $out
   ''

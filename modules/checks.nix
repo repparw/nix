@@ -212,6 +212,7 @@
                 TEST_BASH = "${pkgs.bash}/bin/bash";
               }
               ''
+                ${pkgs.shellcheck}/bin/shellcheck -s bash ${probe}
                 node --test ${./_tests/fleet-failed-units.mjs}
                 touch $out
               '';

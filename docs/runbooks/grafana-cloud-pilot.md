@@ -24,7 +24,7 @@ The dashboard source is `modules/aspects/monitoring/fleet-overview.json`. When i
 
 ## Independent Cloud alerts
 
-The Cloud stack has one independent Discord contact point, **Grafana Cloud Alerts**, posting to `#notifications` through its own webhook. The webhook URL is a runtime secret: do not commit it, and rotate it if it is exposed. Keep `disableResolveMessage: false` so recovery notifications are sent. The contact point shares the channel with fleet-health messages but not the delivery path.
+The Cloud stack has one independent Discord contact point, **Grafana Cloud Alerts**, posting to `#notifications` through its own webhook. The webhook URL is a runtime secret: do not commit it, and rotate it if it is exposed. Keep `disableResolveMessage: false` so recovery notifications are sent. The contact point shares the channel with workflow notifications, including deployment reports.
 
 Grafana's Discord notifier sends a new message on resolution; it cannot delete the original firing message. The pilot intentionally keeps that built-in behavior. A self-cleaning relay that stores the Discord message ID per alert fingerprint would be required if firing messages must disappear on resolution.
 
@@ -32,7 +32,7 @@ A notification policy route sends alerts labeled `pilot=grafana-cloud` to that c
 
 Use [the native Discord template](../../modules/aspects/monitoring/discord.tmpl) as the Grafana notification template `fleet.discord`. Set the contact point title to `{{ template "fleet.discord.title" . }}`, its message to `{{ template "fleet.discord.message" . }}`, and enable embed description (`use_embed_description`).
 
-The message contains the host, condition, useful value and one dashboard link. It omits raw labels, expression references and silence URLs. Each rule supplies a `brief` firing annotation and a `recovery` annotation, with `summary` as a fallback. For disks, include the mountpoint and `{{ printf "%.0f" $values.B.Value }}% used`. Keep query A and reduced value B numeric; apply the comparison in condition C so the annotation receives the percentage rather than a Boolean. Preview firing, resolved, missing-host and datasource-error cases using Grafana's native template preview before changing the contact point.
+The message contains the host, condition, useful value and one dashboard link. It omits raw labels, expression references and silence URLs. Each rule supplies a `brief` firing annotation and a `recovery` annotation, with `summary` as a fallback. Disk rules retain the numeric percentage in query D and the configured limit in E; their brief/recovery annotations use those values. Query A evaluates the policy, B reduces it, and C checks `$B > 0`. Preview firing, resolved, missing-host and datasource-error cases using Grafana's native template preview before changing the contact point.
 
 Two Grafana-managed host-absence rules exist in folder **Fleet Cloud Pilot**, group **fleet-cloud-pilot**:
 
@@ -45,12 +45,32 @@ The firing/resolved path was validated with a temporary synthetic rule (`fleet_c
 
 Disk, host-absence and series-budget rules use **Keep Last State** for both evaluation errors and No Data. A Cloud query timeout cannot establish a disk threshold violation or host outage. Using Alerting for these errors previously caused false firing/resolved messages across filesystem instances.
 
-A separate **Cloud metrics query availability** rule queries `vector(0)` and uses Grafana's **Error** and **No Data** states. Route its `DatasourceError` and `DatasourceNoData` alerts to Discord using `rulename="Cloud metrics query availability"`, grouped by `datasource_uid`, with a 2m group wait and 4h repeat interval. These notifications report that monitoring is unavailable. Keep independent fleet-health checks running while Cloud cannot evaluate queries.
+A separate **Cloud metrics query availability** rule queries `vector(0)` and uses Grafana's **Error** and **No Data** states. Route its `DatasourceError` and `DatasourceNoData` alerts to Discord using `rulename="Cloud metrics query availability"`, grouped by `datasource_uid`, with a 2m group wait and 4h repeat interval. These notifications report that monitoring is unavailable. Use `fleet health probe` and local journals to inspect the fleet while Cloud cannot evaluate queries. Periodic health notifications depend on Cloud availability.
 
-Disk query A returns `ceil(100 * (1 - node_filesystem_avail_bytes / node_filesystem_size_bytes))` for durable mountpoints. Reduce A to B and use math condition C: `$B >= 90 && $B < 93` for warning, `$B >= 93` for critical, sustained for five minutes. The rounding matches disk-watch. The series-budget rule similarly retains the numeric series count and compares B against 9,800 in C. Missing hosts are handled by the absence rules. Consider systemd failed-unit and backup freshness alerts after the corresponding metrics are verified.
+The health policy manifest is
+[`health-alerts.json`](../../modules/aspects/monitoring/health-alerts.json).
+It covers failed jobs/services, stopped required units, HTTP probe failure or
+absence, per-host disk thresholds, missing required filesystems, Btrfs allocation
+pressure, overdue offsite backups, incomplete native exports, Alpha's reboot
+requirement, Pi's deployment PAUSE and stale collectors. Disk thresholds come
+from each host's `modules.monitoring.health.disks`; Epsilon monitors its shared
+physical filesystem once at `/persist` with 70/85 percent thresholds. Sleeping
+Alpha disks retain their last mounted observation without being accessed.
+
+Backup freshness requires a successful whole offsite job within 30 hours.
+Initial installation allows 30 hours for the first recorded success; failed-job
+and incomplete-export rules remain independent during that interval. Export
+preparation alone never advances the success timestamp.
+
+The series-budget rule uses `sum(grafanacloud_instance_active_series)` from
+`grafanacloud-usage`, warning at 9,000 against the 10,000 series allowance.
+Instantaneous counts from the application metrics datasource do not represent
+the Cloud activity window. Probe metrics and systemd states are filtered before
+upload; keep the scrape interval at 60 seconds and verify actual usage after
+adding targets or labels.
 
 Cloud Synthetic Monitoring can probe a public HTTPS service independently of Epsilon. Cloud's unauthenticated `/api/health` checks frontend reachability, **not end-to-end ingestion**.
 
-The repository provisions encrypted per-host write tokens in `secrets/grafana-cloud-*.sops.yaml`. The Cloud account, access policies, Discord webhook/contact point, notification policy, dashboards, and alert rules are created manually in the Cloud Portal/UI and are not managed by this Nix module. Existing fleet-health and deployment checks remain independent.
+The repository provisions encrypted per-host write tokens in `secrets/grafana-cloud-*.sops.yaml`. The Cloud account, access policies, Discord webhook/contact point, notification policy, dashboards, and alert rules are created manually in the Cloud Portal/UI and are not managed by this Nix module. Deployment readiness checks remain local and independent of Cloud.
 
 References: [Alloy remote write](https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.remote_write/), [Alloy Loki write](https://grafana.com/docs/alloy/latest/reference/components/loki/loki.write/), [Cloud Access Policies](https://grafana.com/docs/grafana-cloud/platform/security-and-account-management/security-and-access/authentication-and-permissions/access-policies/), [Cloud alert notifications](https://grafana.com/docs/grafana-cloud/observe-and-act/alert-and-measure-reliability/alerting/configure-notifications/manage-contact-points/).
