@@ -3,7 +3,10 @@
   den.aspects.ai.provides.opencode = {
     nixos.nixpkgs.overlays = [
       (final: _prev: {
-        opencode = final.callPackage ../../_packages/opencode.nix { };
+        opencode = final.callPackage ../../_packages/opencode.nix {
+          bun = final.bun-security;
+          bunForInstall = final.bun;
+        };
       })
     ];
     homeManager =
