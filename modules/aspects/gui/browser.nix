@@ -46,11 +46,9 @@ in
             update_url = "https://update-url-to-be-replaced.qjz9zk";
           });
         };
-        # Chromium watches the whole managed-policy directory and re-installs
-        # every policy-managed extension on reload, which deletes their
-        # chrome.storage.local. setup-etc.pl re-creates environment.etc
-        # symlinks on every activation, so keep these files out of
-        # environment.etc and rewrite them only when the bytes change.
+        # Chromium watches the managed-policy directory. setup-etc.pl recreates
+        # environment.etc symlinks on every activation; avoid redundant reloads
+        # by keeping these files stable when their contents have not changed.
         policyFiles = {
           "helium-nixos.json" = heliumPolicy;
         }
