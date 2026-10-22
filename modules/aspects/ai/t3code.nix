@@ -18,8 +18,7 @@ in
       # T3 launches the chrome-headless-shell it downloads at runtime. That is
       # a generic Linux ELF, so NixOS needs the nix-ld interpreter stub before
       # it can run at all; the browser libraries ride on the pin
-      # (NixOS/nixpkgs#575675) or the temporary list in
-      # t3code-browser-libs.nix.
+      # (NixOS/nixpkgs#575675, watcher t3code-browser-libs).
       programs.nix-ld.enable = true;
     };
 

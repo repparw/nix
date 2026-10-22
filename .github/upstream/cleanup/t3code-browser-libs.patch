@@ -1,0 +1,54 @@
+diff --git a/modules/aspects/ai/default.nix w/modules/aspects/ai/default.nix
+index c52dcc7..12a81c5 100644
+--- a/modules/aspects/ai/default.nix
++++ b/modules/aspects/ai/default.nix
+@@ -10,7 +10,6 @@
+       opencode
+       pstack
+       skills
+-      t3code-browser-libs
+       t3code-connect
+       t3code
+     ];
+diff --git a/modules/aspects/ai/t3code-browser-libs.nix w/modules/aspects/ai/t3code-browser-libs.nix
+deleted file mode 100644
+index b023a86..0000000
+--- a/modules/aspects/ai/t3code-browser-libs.nix
++++ /dev/null
+@@ -1,36 +0,0 @@
+-{ den, ... }:
+-{
+-  # T3 downloads chrome-headless-shell at runtime and launches it from the
+-  # server, so build-time ELF fixups in nixpkgs cannot reach it. nix-ld
+-  # supplies the interpreter (see t3code.nix), but not this browser's GTK,
+-  # NSS and GBM libraries. Upstream is adding the library path to the t3code
+-  # wrappers (NixOS/nixpkgs#575675); until the root pin carries that change,
+-  # expose the same set system-wide. Completion: delete this file and its
+-  # include in ai/default.nix (upstream watcher t3code-browser-libs).
+-  den.aspects.ai.provides.t3code-browser-libs = {
+-    nixos =
+-      { pkgs, ... }:
+-      {
+-        programs.nix-ld.libraries = with pkgs; [
+-          alsa-lib
+-          at-spi2-core
+-          dbus
+-          expat
+-          glib
+-          libgbm
+-          libgcc
+-          libx11
+-          libxcb
+-          libxcomposite
+-          libxdamage
+-          libxext
+-          libxfixes
+-          libxkbcommon
+-          libxrandr
+-          nspr
+-          nss
+-          systemdLibs
+-        ];
+-      };
+-  };
+-}
