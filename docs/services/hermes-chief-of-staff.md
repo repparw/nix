@@ -85,6 +85,23 @@ completion. Interruption recovery means reconstructing work from the card and
 checking live workers and artifacts. It does not guarantee a worker survives a
 process crash or an unattended task resumes automatically.
 
+## Worker trust and approval boundary
+
+Delegated workers are trusted execution contexts with inherited coordinator tools.
+A read-only brief is an operating instruction, not capability isolation. Do not
+hand untrusted content to a worker assuming it cannot use terminal, memory, or
+scheduling tools. Per-worker capability restrictions remain a prerequisite for
+broader unattended autonomy. Future routing work must investigate the native
+Hermes API and T3 execution capabilities without weakening this boundary.
+
+The deployed upstream default was `approvals.mode: smart`, which can ask a model
+to approve flagged actions. This PR explicitly selects `manual`; dangerous
+commands that reach the approval gate require a human decision. Cron, one-shot,
+and unattended approval modes remain `deny`, and subagent auto-approval stays
+disabled. These guards are pattern-based safeguards, not a sandbox or a universal
+classifier of production changes. SOUL's authorization policy still applies.
+Existing Discord allowlists, nspawn capabilities, and network isolation remain.
+
 ## Effective routing
 
 The coordinator, routine conversation, research, simple coding, complex

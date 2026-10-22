@@ -126,6 +126,12 @@
                 };
                 # Do not silently downgrade complex work on a provider limit.
                 settings.fallback_providers = [ ];
+                settings.approvals = {
+                  mode = "manual";
+                  cron_mode = "deny";
+                  single_query_mode = "deny";
+                  unattended_mode = "deny";
+                };
                 settings.delegation = {
                   fallback_providers = [ ];
                   max_concurrent_children = 2;
