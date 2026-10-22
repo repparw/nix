@@ -72,24 +72,6 @@ def validate(name, architecture):
         package = build("alpha.config.home-manager.users.repparw.programs.t3code.package")
         require(str(package) == evaluate("alpha.pkgs.t3code-desktop.outPath"),
                 "Alpha must select the upstream desktop package")
-    elif name == "t3code-browser-libs":
-        # The candidate retires the temporary list (issue #327). nix-ld must
-        # keep supplying the interpreter — its module default library set
-        # always remains — while the browser-specific entries are gone and
-        # Alpha's t3code package still builds against the pin.
-        browser_only = ("at-spi2-core", "glib", "mesa-libgbm",
-                        "systemd-minimal-libs", "libxkbcommon")
-        for host in ("alpha", "pi", "epsilon"):
-            require(evaluate(f"{host}.config.programs.nix-ld.enable"),
-                    f"{host} must keep nix-ld enabled")
-            names = json.loads(command(
-                "nix", "eval", "--json", "--no-update-lock-file",
-                f".#nixosConfigurations.{host}.config.programs.nix-ld.libraries",
-                "--apply", "map (l: l.pname or (builtins.parseDrvName l.name).name)"))
-            leftover = set(browser_only) & set(names)
-            require(not leftover,
-                    f"{host} still lists browser libraries: {sorted(leftover)}")
-        build("alpha.config.home-manager.users.repparw.programs.t3code.package")
     elif name == "t3code-server":
         for host in ("alpha", "pi", "epsilon"):
             service = unit(host, "t3code")
