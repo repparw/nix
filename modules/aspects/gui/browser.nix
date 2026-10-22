@@ -112,159 +112,77 @@ in
         openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
         whatsappLinksToFirefox = pkgs.callPackage ../../_packages/whatsapp-links-to-firefox.nix { };
-        heliumPackage = lib.makeOverridable (
-          {
-            flags ? config.programs.helium.flags,
-          }:
-          let
-            base = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium.override {
-              inherit flags;
-            };
-            launcher = pkgs.writeShellApplication {
-              name = "helium";
-              runtimeInputs = [
-                pkgs.coreutils
-                pkgs.findutils
-              ];
-              text = ''
-                # Preserve extension storage before version changes (Helium #1978).
-                snapshotRoot="''${XDG_STATE_HOME:-$HOME/.local/state}/helium-extension-snapshots"
-                marker="$snapshotRoot/launched-version"
-                defaultDir="$HOME/.config/net.imput.helium/Default"
-                if [ "$(cat "$marker" 2>/dev/null)" != "${base.name}" ]; then
-                  dest="$snapshotRoot/pre-${base.name}"
-                  if [ ! -d "$dest" ]; then
-                    mkdir -p "$dest"
-                    for dir in "Local Extension Settings" "Sync Extension Settings"; do
-                      if [ -d "$defaultDir/$dir" ]; then
-                        cp -a "$defaultDir/$dir" "$dest/"
-                      fi
-                    done
+        heliumBase = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
+        snapshot = pkgs.writeShellApplication {
+          name = "helium-snapshot";
+          runtimeInputs = [
+            pkgs.coreutils
+            pkgs.findutils
+          ];
+          text = ''
+            # Preserve extension storage before version changes (Helium #1978).
+            snapshotRoot="''${XDG_STATE_HOME:-$HOME/.local/state}/helium-extension-snapshots"
+            marker="$snapshotRoot/launched-version"
+            defaultDir="$HOME/.config/net.imput.helium/Default"
+            if [ "$(cat "$marker" 2>/dev/null)" != "${heliumBase.name}" ]; then
+              dest="$snapshotRoot/pre-${heliumBase.name}"
+              if [ ! -d "$dest" ]; then
+                mkdir -p "$dest"
+                for dir in "Local Extension Settings" "Sync Extension Settings"; do
+                  if [ -d "$defaultDir/$dir" ]; then
+                    cp -a "$defaultDir/$dir" "$dest/"
                   fi
-                  find "$snapshotRoot" -maxdepth 1 -name 'pre-*' -type d | sort -r | tail -n +4 | xargs -r rm -rf
-                  printf '%s' "${base.name}" > "$marker"
-                fi
-                exec ${base}/bin/helium "$@"
+                done
+              fi
+              find "$snapshotRoot" -maxdepth 1 -name 'pre-*' -type d | sort -r | tail -n +4 | xargs -r rm -rf
+              printf '%s' "${heliumBase.name}" > "$marker"
+            fi
+          '';
+        };
+        heliumPackage =
+          (heliumBase.override { flags = config.programs.helium.flags; }).overrideAttrs
+            (old: {
+              nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.makeShellWrapper ];
+              postFixup = (old.postFixup or "") + ''
+                wrapProgramShell "$out/bin/helium" --run ${snapshot}/bin/helium-snapshot
+                sed -i '/^MimeType=/d' "$out/share/applications/helium.desktop"
               '';
-            };
-          in
-          pkgs.symlinkJoin {
-            name = "${base.name}-configured";
-            paths = [ base ];
-            postBuild = ''
-              rm "$out/bin/helium"
-              install -Dm755 ${launcher}/bin/helium "$out/bin/helium"
-              rm -rf "$out/share/applications"
-              install -Dm644 ${base}/share/applications/helium.desktop \
-                "$out/share/applications/helium.desktop"
-              # App-menu launches must use the same snapshot launcher as webapps.
-              sed -i -E '/^MimeType=/d; s|^Exec=[^ ]*/bin/helium|Exec='"$out"'/bin/helium|' \
-                "$out/share/applications/helium.desktop"
-            '';
-            inherit (base) meta;
-          }
-        ) { };
+            });
         heliumFlags = [
-          # Upstream's wrapper adds an inert '${NIXOS_OZONE_WL:+...}' literal
-          # instead of a real shell expansion, so set the hint here. "auto"
-          # picks Wayland when available and X11 otherwise.
+          # Upstream's wrapper does not expand NIXOS_OZONE_WL.
           "--ozone-platform-hint=auto"
           "--force-renderer-accessibility"
           "--silent-debugger-extension-api"
-          # OSCrypt backend must be identical for normal windows and
-          # --app webapps: they share ~/.config/net.imput.helium, and
-          # Chromium honors the first process's backend. Mixed backends
-          # (basic vs libsecret) rewrite Local State without an
-          # encrypted_key and orphan cookie encryption keys, which drops
-          # Google/YouTube session cookies on the next start. basic
-          # persists without requiring an unlocked login keyring.
+          # All windows share a profile and must use the same encryption backend.
           "--password-store=basic"
-          # Unpacked MV3 extension that hands external links clicked in the
-          # WhatsApp web app to Firefox. It has no stored settings, so the
-          # extension-state wipes cannot disable it. See the package for why
-          # the store "Open in Firefox" extension does not cover this.
           "--load-extension=${whatsappLinksToFirefox}"
         ];
-        # Helium's user-data-dir on Linux is ~/.config/net.imput.helium
-        # (verified: live Default/, SingletonSocket, and crashpad database
-        # all live there). NativeMessagingHosts must go under it;
-        # ~/.config/helium is not read by the browser.
         heliumConfigDir = ".config/net.imput.helium";
       in
       {
         imports = [ inputs.helium-nix.homeModules.default ];
 
         home.packages = [
-          (pkgs.writeShellApplication {
-            name = "webapp";
-            runtimeInputs = [
-              heliumPackage
-              ndrop
-            ];
-            text = ''
-              if [ "$#" -lt 2 ]; then
-                echo "usage: webapp <app-id> <url> [helium args...]" >&2
-                exit 2
-              fi
+          (pkgs.writers.writePython3Bin "webapp" { flakeIgnore = [ "E501" ]; } ''
+            import os
+            import sys
+            from urllib.parse import urlsplit
 
-              app_id="$1"
-              url="$2"
-              shift 2
-
-              # Helium/Chromium on native Wayland ignores --class for --app
-              # windows and exposes a derived app_id of the form
-              # chrome-<host>__<path>-Default (e.g. https://www.youtube.com
-              # becomes chrome-www.youtube.com__-Default, verified via
-              # `niri msg windows`). Derive it so ndrop exact-matches the
-              # existing window instead of spawning a duplicate.
-              # NOTE: --class is intentionally not passed: it is ignored for
-              # --app windows, and when the webapp starts the first browser
-              # process it would mislabel later normal windows with the
-              # webapp name instead of "helium".
-              no_scheme="''${url#https://}"
-              no_scheme="''${no_scheme#http://}"
-              no_scheme="''${no_scheme%%[?#]*}"
-              case "$no_scheme" in
-                */*)
-                  authority="''${no_scheme%%/*}"
-                  path="/''${no_scheme#*/}"
-                  ;;
-                *)
-                  authority="$no_scheme"
-                  path="/"
-                  ;;
-              esac
-
-              # Chromium builds the application name as host + "_" + URL path,
-              # then sanitizes path separators for its Linux desktop/XDG ID.
-              # Keep the leading/trailing path separators: /foo/ must become
-              # __foo_ rather than __foo, otherwise ndrop misses the window.
-              host="''${authority##*@}"
-              case "$host" in
-                \[*\]:*)
-                  host="''${host%%]:*}]"
-                  ;;
-                \[*\])
-                  ;;
-                *:*)
-                  host="''${host%%:*}"
-                  ;;
-              esac
-              host="$(printf '%s' "$host" | tr '[:upper:]' '[:lower:]')"
-
-              if [ -n "$host" ]; then
-                app_name="$(printf '%s_%s' "$host" "$path" | tr '/ ' '__')"
-                chrome_id="chrome-''${app_name}-Default"
-              else
-                chrome_id="$app_id"
-              fi
-
-              exec ndrop -F -c "$chrome_id" \
-                helium \
-                --app="$url" \
-                "$@"
-            '';
-          })
+            if len(sys.argv) < 3:
+                sys.exit("usage: webapp <app-id> <url> [helium args...]")
+            app_id, url, *flags = sys.argv[1:]
+            parsed = urlsplit(url)
+            host = parsed.hostname or ""
+            if ":" in host:
+                host = f"[{host}]"
+            # Native Wayland ignores --class. Match Chromium's derived app ID.
+            app_name = f"{host}_{parsed.path or '/'}".replace("/", "_").replace(" ", "_")
+            chrome_id = f"chrome-{app_name}-Default" if host else app_id
+            os.execv("${ndrop}/bin/ndrop", [
+                "ndrop", "-F", "-c", chrome_id,
+                "${heliumPackage}/bin/helium", f"--app={url}", *flags,
+            ])
+          '')
         ];
 
         home.file = {

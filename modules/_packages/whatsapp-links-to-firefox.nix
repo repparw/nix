@@ -1,20 +1,8 @@
 { runCommand, writeText }:
 
-# Minimal Manifest V3 extension that sends external links clicked inside the
-# WhatsApp web app to Firefox.
-#
-# Why not the store "Open in Firefox" extension? Its source-aware routing
-# (the custom script) is injected as an inline <script> into the page's main
-# world, so WhatsApp's enforced `script-src` CSP (nonce, no 'unsafe-inline')
-# blocks it. Its remaining automatic mode ("reverse") is global to every
-# Helium window, which would also reroute normal browsing. A dedicated
-# extension keeps the effect scoped to web.whatsapp.com and, having no stored
-# settings, is immune to the extension-state wipes.
-#
-# It is loaded unpacked via --load-extension (see heliumFlags in browser.nix).
-# `key` exists only to pin a stable extension id across rebuilds; the native
-# host com.add0n.node checks that exact id in allowed_origins (browser.nix,
-# allowed_origins).
+# The store extension's per-site script is blocked by WhatsApp's CSP; its
+# automatic routing affects all sites. This stateless extension is site-scoped.
+# The manifest key pins the ID allowed by the native host in browser.nix.
 let
   manifest = writeText "manifest.json" (
     builtins.toJSON {
@@ -37,81 +25,26 @@ let
   );
 
   content = writeText "content.js" ''
-    'use strict';
-
-    // WhatsApp's own hosts stay inside Helium. Everything else that is a plain
-    // http(s) link is handed to the background worker, which starts Firefox
-    // through the com.add0n.node native host.
-    const INTERNAL = /(^|\.)whatsapp\.com$/i;
-
     document.addEventListener('click', event => {
-      if (
-        event.button !== 0 ||
-        event.altKey || event.ctrlKey || event.metaKey || event.shiftKey
-      ) {
-        return;
-      }
-
-      const anchor = event.target instanceof Element
-        ? event.target.closest('a[href]')
-        : null;
-      if (!anchor) {
-        return;
-      }
-
-      let url;
-      try {
-        url = new URL(anchor.href);
-      }
-      catch (e) {
-        return;
-      }
-
-      if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-        return;
-      }
-      if (INTERNAL.test(url.hostname)) {
-        return;
-      }
-
+      if (event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null;
+      if (!anchor) return;
+      const url = new URL(anchor.href);
+      if (!['http:', 'https:'].includes(url.protocol) || /(^|\.)whatsapp\.com$/i.test(url.hostname)) return;
       event.preventDefault();
-      event.stopPropagation();
       event.stopImmediatePropagation();
-      chrome.runtime.sendMessage({ cmd: 'open-in-firefox', url: url.href });
+      chrome.runtime.sendMessage({url: url.href});
     }, true);
   '';
 
   worker = writeText "service-worker.js" ''
-    'use strict';
-
-    const NATIVE_HOST = 'com.add0n.node';
-    const FIREFOX = 'firefox';
-
     chrome.runtime.onMessage.addListener(message => {
-      if (!message || message.cmd !== 'open-in-firefox' || typeof message.url !== 'string') {
-        return;
-      }
-
-      chrome.runtime.sendNativeMessage(NATIVE_HOST, {
-        cmd: 'exec',
-        command: FIREFOX,
-        arguments: [ message.url ],
-        properties: {}
-      }, response => {
-        if (chrome.runtime.lastError) {
-          console.warn(
-            'whatsapp-links-to-firefox: native messaging failed:',
-            chrome.runtime.lastError.message
-          );
-        }
-        else if (response && response.code !== 0) {
-          console.warn(
-            'whatsapp-links-to-firefox: firefox exited',
-            response.code,
-            response.stderr
-          );
-        }
-      });
+      if (typeof message?.url !== 'string') return;
+      chrome.runtime.sendNativeMessage('com.add0n.node', {
+        cmd: 'exec', command: 'firefox', arguments: [message.url], properties: {}
+      }).then(response => {
+        if (response?.code) console.warn('Firefox failed:', response.stderr);
+      }).catch(error => console.warn('Firefox native messaging failed:', error));
     });
   '';
 in
