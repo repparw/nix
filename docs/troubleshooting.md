@@ -40,3 +40,13 @@ this page only routes.
   timer.
 - Fix: STANDBY IMMEDIATE guarded by `findmnt`; see
   [Spin down alpha's media HDD](tweaks.md#spin-down-alphas-media-hdd).
+
+## Obsidian vault sync stops
+
+- Inspect `journalctl --user -u obsidian-bisync.service`. The timer, paths, and
+  sync flags are declared in [obsidian.nix](../modules/aspects/obsidian.nix).
+- The listings under `~/.local/state/rclone/obsidian-bisync` are required state,
+  not cache. Before a manual resync, pause edits and stop both the timer and
+  service, preserve the local and remote vault copies and listing state, and
+  reconcile changes using the [bisync recovery guidance](https://rclone.org/bisync/).
+  Verify a normal incremental run before restarting the timer.
