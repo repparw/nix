@@ -14,6 +14,16 @@ LOCK = {"nodes": {"root": {"inputs": {"nixpkgs": "np", "home-manager": "hm"}}, "
 
 
 class Readiness(unittest.TestCase):
+    def test_node_security_requires_node_and_shared_dependency_fixes(self):
+        for results in ([False], [True, False], [True, True, False]):
+            with self.subTest(results=results), patch.object(watch, "contains", side_effect=results):
+                self.assertEqual(watch.detect("nodejs-security", LOCK), "merged-not-pinned")
+        with patch.object(watch, "contains", return_value=True) as probe:
+            self.assertEqual(watch.detect("nodejs-security", LOCK), "PINNED-READY")
+            self.assertEqual(probe.call_count, 3)
+        with patch.object(watch, "contains", side_effect=ValueError("missing ancestry")):
+            self.assertTrue(watch.inspect("nodejs-security", LOCK).startswith("unavailable"))
+
     def fsr_spec(self, commit=None):
         return patch.object(watch.Path, "read_text", return_value=json.dumps({
             "fsr4-rdna2": {"baseline_release": "GE-Proton11-11", "support_commit": commit}}))

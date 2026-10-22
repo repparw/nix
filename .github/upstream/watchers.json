@@ -1,4 +1,14 @@
 {
+  "bun-security": {
+    "issue": 337,
+    "mode": "notify-only",
+    "input": "nixpkgs"
+  },
+  "nodejs-security": {
+    "issue": 337,
+    "mode": "notify-only",
+    "input": "nixpkgs"
+  },
   "fsr4-rdna2": {
     "issue": 323,
     "mode": "notify-only",
