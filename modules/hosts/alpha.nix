@@ -329,6 +329,7 @@
                   exclude = [
                     "/.config/"
                     "/.local/"
+                    "/Games/"
                   ];
                 };
               };
@@ -337,6 +338,7 @@
                 sources = [
                   "${stateRoot}/hdd/.config"
                   "${stateRoot}/hdd/.local"
+                  "${stateRoot}/hdd/Games"
                 ];
                 settings = {
                   archive = true;
