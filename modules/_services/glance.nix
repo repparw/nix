@@ -8,10 +8,6 @@ let
   cfg = config.modules.services;
   servicesLib = import ./lib.nix { inherit lib pkgs; };
   service = cfg.definitions.glance;
-  glanceAssets = pkgs.runCommand "glance-assets" { } ''
-    mkdir -p $out
-    cp ${./glance-favicon.svg} $out/favicon.svg
-  '';
 in
 {
   containers.glance = servicesLib.mkContainer {
@@ -20,7 +16,7 @@ in
     privateUsers = "pick";
     bindMounts = {
       "/assets" = {
-        hostPath = "${glanceAssets}";
+        hostPath = "/home/containers/config/glance/assets";
         isReadOnly = true;
       };
     };
