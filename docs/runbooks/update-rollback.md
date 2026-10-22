@@ -23,7 +23,8 @@ every host reached during this revision, without reverting main. Check the
 controller and retry journals before the next cycle:
 
 ```sh
-journalctl -u fleet-deploy-run -b   # pi transient fleet consumer
+less /var/lib/auto-update/fail-alpha.log  # on Pi; replace alpha with the failed host
+journalctl -u fleet-deploy-run -b   # transient entries may be absent after reboot
 journalctl -u fleet-alpha-retry -b  # pi alpha retry
 ```
 
@@ -42,8 +43,8 @@ extlinux via the Pi firmware.
 
 ## After a rollback
 
-1. Find why the new generation misbehaved (journal, fleet-health
-   counters in `/var/lib/fleet-health/`).
+1. Inspect the per-host failure log, service journal, and retained job
+   records in `/var/lib/fleet-unit-state/`.
 2. Main still records the desired revision. Fix or explicitly revert a bad
    configuration through a PR and wait for CI on the resulting main commit.
    If deployment was paused by the breaker, inspect and resume:

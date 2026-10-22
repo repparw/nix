@@ -1,260 +1,78 @@
 ---
 type: Runbook
-title: Prepare pi and epsilon for persistent state
-description: Current persistence layout, filesystem audit findings, and recovery requirements for pi and epsilon.
+title: Change host persistence
+description: Boot constraints, storage-change prerequisites, and persistence verification.
 when: Read before changing host persistence, updating its inventory, or reviewing persistence and recovery checks.
 resource: modules/aspects/persistence.nix
 tags: [impermanence, persistence, pi, epsilon, recovery, backups]
 ---
 
-# Prepare pi and epsilon for persistent state
+# Change host persistence
 
-The `persistence` aspect imports nix-community/impermanence and records the
-persistence inventory. Pi and epsilon explicitly enable it with
-`modules.persistence.mutableAccounts = true` and a tmpfs root. Their former
-root filesystems provide `/persist`. Alpha does not include the aspect.
+Pi and Epsilon use tmpfs roots backed by `/persist`; Alpha does not enable
+persistence. The inventory and mount ordering live in
+[persistence.nix](../../modules/aspects/persistence.nix), with additions in
+[pi.nix](../../modules/hosts/pi.nix) and [epsilon.nix](../../modules/hosts/epsilon.nix).
 
-The module options still default to `false`. Including the aspect alone does
-not create persistence mounts, move files, reset root, or change boot storage.
-See the [pi](../../modules/hosts/pi.nix) and
-[epsilon](../../modules/hosts/epsilon.nix) host declarations for the current layout.
+## Preserve the boot and identity constraints
 
-Enabling requires a separately prepared `/persist` filesystem marked
-`neededForBoot`. Before activation, an initrd guard checks the backing machine ID, SSH key,
-UID/GID state directory, account database when requested, and a
-`.host-persistence-ready` marker containing the host name. This rejects an
-empty or unprepared volume; it does not prove every application was copied
-correctly. Preparing storage and proving rescue access remain prerequisites
-for any new host migration or storage-layout change.
+- `/persist` must be prepared and marked `neededForBoot`. The initrd requires
+  the host's `.host-persistence-ready` marker, machine ID, SSH key, UID/GID state,
+  and account database before activation. The guard detects unprepared storage,
+  not an incomplete application copy.
+- Both hosts enable `mutableAccounts`, retaining all of `/etc` before user
+  activation. This preserves ordinary password changes. Individual account-file
+  binds cannot accommodate atomic PAM/NixOS replacements
+  ([Impermanence #120](https://github.com/nix-community/impermanence/issues/120)).
+- SOPS reads `/persist/etc/ssh/ssh_host_ed25519_key` during early boot. Preserve
+  that key; a replacement cannot decrypt secrets encrypted to the old identity.
+  `/var/lib/nixos` must be available before allocating users.
+- Pi requires its existing home NVMe in the initrd. Missing storage must stop
+  boot rather than expose empty Home Assistant or user directories.
+- Preserve full `/boot`, not just firmware or EFI partitions. Epsilon's GRUB
+  uses the backing boot path and copied kernels for its persistent store layout.
+- Epsilon retains `/var/lib/credential-remediation`; persisted service drop-ins
+  depend on its helpers. Review that dependency before removing the directory.
 
-Pi's existing home filesystem is required in the initrd and has no `nofail`
-option. A missing NVMe therefore prevents normal boot instead of exposing
-an empty Home Assistant or user data directory.
+Container roots, whole homes, and legacy archives beneath `/persist` remain
+conservative preservation choices. They are not automatically disposable.
+Persistence and offsite backup scope are separate; `/persist` itself is not a
+blanket backup root.
 
-## Initial inventory
+## Prepare a storage change
 
-The initial set is conservative. Container roots and whole homes remain
-persistent until their contents have been classified and independently tested.
+1. Complete an [isolated restore](host-recovery.md). Inventory state outside
+   daily scope and preserve an independent checkpoint before discarding it.
+2. Test recovery credentials retrieved from storage outside the fleet. A restore
+   using another running host does not prove recovery from losing all hosts.
+3. Preserve the actual boot layout and prepare a working rescue boot or console.
+   SSH cannot recover a failed initrd. A generation rollback cannot undo
+   repartitioning or restore missing data.
+4. Quiesce databases or use native exports. Copy state with numeric ownership,
+   modes, ACLs, xattrs, and symlinks intact, including shifted container IDs.
+   Preserve account files and verify password equality without printing hashes.
+5. Verify backing data before writing `.host-persistence-ready` with the host
+   name. Make the root-layout change outside automatic fleet deployment and
+   verify service recovery before trialling another host.
 
-| Scope                                     | Persistent state                                                                                                                                                          |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Shared                                    | `/etc/ssh`, `/etc/machine-id`, `/var/lib/nixos`, `/root`, `/var/lib/nixos-containers`, fail2ban state, Traefik certificates, systemd timer/timesync state and random seed |
-| Pi                                        | `/home/containers/config`, `/var/lib/auto-update`, `/var/lib/fleet-health`, Bluetooth and radio block state                                                               |
-| Pi, existing filesystem                   | The whole `/home/repparw` volume, including HA, user credentials, projects, AI tools and swap; it must be available before activation when persistence is enabled         |
-| Epsilon                                   | `/home/repparw`, `/home/containers/config`, ddclient state and `/var/log`                                                                                                 |
-| Storage design, separate from this module | Full `/nix`, full `/boot`, the firmware/EFI partitions, and `/persist` itself                                                                                             |
+For Alpha, first separate desktop and service state from the root subvolume.
+Its `/home`, `/nix`, and application data currently share root subvolume `@`;
+root rollback would encompass that data. An unmounted `@home` is not proof of
+separation, and Prowlarr keeps live state in its container root.
 
-Pi's deployment controller had a `PAUSE` flag during the audit. Losing it would
-change deployment behavior. Preserve it with the controller's remaining state.
-Pi and epsilon retain `/var/lib/host-recovery` artifacts from the retired
-manual tool. Their offsite backup policy is owned by the `host-backup` aspect.
-Epsilon retains `/var/lib/credential-remediation`: its existing Authelia and
-Traefik service drop-ins run credential refresh helpers from that directory.
-Preserving `/etc` without those helpers prevents both services from starting.
-Epsilon's GRUB copies kernels and initrds to `/boot/kernels`. Both runtime
-store aliases become bind mounts after a tmpfs-root boot; GRUB's mount-based
-store path calculation would otherwise generate paths missing `/nix/store`.
-GRUB accesses `/boot` through the backing path `/persist/boot` for the same
-reason. See [Nixpkgs issue #309912](https://github.com/NixOS/nixpkgs/issues/309912).
-`/var/lib/nixos` must be mounted before user allocation to keep the UID/GID map
-consistent with the owners of persistent files.
+## Verify changes
 
-When enabled, SOPS reads the SSH identity directly from
-`/persist/etc/ssh/ssh_host_ed25519_key`. User-password secrets may be required
-before `/etc/ssh` is mounted. Preserve the identity before booting the new
-layout; generating a replacement key cannot decrypt the old secrets.
+```sh
+nix build .#checks.x86_64-linux.host-persistence --no-link
+nix build .#checks.x86_64-linux.host-persistence-vm --no-link
+```
 
-## Mutable passwords
-
-`users.mutableUsers = true` remains in effect. The SOPS hash is a creation-time
-bootstrap; subsequent `passwd` changes must survive activation and root reset.
-With mutable users, enabling persistence requires the explicit choice
-`modules.persistence.mutableAccounts = true`. This persists **all of `/etc`**,
-including account databases, machine ID and SSH identity, and mounts it before
-user activation. Both persistence options default to false.
-
-This is a conservative first-migration tradeoff: undeclared files in `/etc`
-also survive. Individual account-file bind mounts or symlinks are unsuitable
-because PAM and NixOS replace those files atomically; see
-[Impermanence issue #120](https://github.com/nix-community/impermanence/issues/120).
-Keeping the directory lets ordinary password changes work without custom PAM
-hooks. It does not require that passwords have ever been changed locally.
-`/var/lib/nixos` separately retains UID/GID allocation state.
-
-Before migration, preserve `/etc` with its numeric owners, modes and symlinks.
-Test password equality without printing hashes. Changing the SOPS bootstrap
-later is a separate operation and does not reset the existing password.
-
-The mounted application state already covers HA's registries, pairings,
-history and custom integrations; Authelia's authentication database; Miniflux's
-PostgreSQL cluster and dumps; Paperless's documents/database; ASF's login
-state; and Hermes's conversations, credentials, scheduled work and workspace.
-The retained container roots also cover Authelia and Paperless Redis state.
-Treat disposable container roots as a separate service-by-service migration.
-
-Keep the configured owners and modes, numeric container UID/GID mappings,
-ACLs, extended attributes and symlinks when copying state. Existing directory
-ownership is not repaired automatically by Impermanence. In particular,
-Hermes and Paperless use explicit shifted container users. Quiesce databases
-or use their native backup/export tools for a consistent migration copy.
-
-## Filesystem audit: 2026-09-26
-
-A root-level metadata walk covered every mounted local disk filesystem:
-
-| Host    | Filesystems walked                                           | Unique entries |
-| ------- | ------------------------------------------------------------ | -------------: |
-| Pi      | SD root, NVMe `/nix`, NVMe `/home/repparw`, `/boot/firmware` |        238,728 |
-| Epsilon | ext4 root, `/boot/efi`                                       |        170,572 |
-
-The walks recorded types, owners, modes, sizes, timestamps, paths and symlink
-targets. Both completed without traversal errors. `/nix/store` was excluded
-because it is immutable/reconstructible; `/nix/var` was included. Virtual and
-temporary filesystems (`/proc`, `/sys`, `/dev`, `/run`, tmpfs `/tmp`) were not
-treated as persistent data. Symlinks were recorded rather than followed.
-Service working/state directories and local systemd/cron files were inspected
-separately. No independent local cron or systemd unit files were found beyond
-the known pi journald drop-in.
-
-This is an inventory of a running system, not an atomic snapshot, a review of
-every file's contents, or proof that every application can recover. The raw
-metadata is private evidence and is not committed because it includes user
-paths. No files were removed or services restarted during inspection.
-
-Additional findings beyond the first targeted service audit:
-
-- Epsilon retains `/old-root`, an Ubuntu migration tree (about 2.5 GiB of
-  apparent regular-file data). Its unmounted ext4 `BOOT` partition, `/dev/sda16`,
-  was inspected read-only with `debugfs`; it contains legacy boot assets.
-  Retain these as recovery archives until separately reviewed.
-- Pi has root-owned `HANDOFF-*.md` notes and `/root/nixos-config`. Keeping
-  `/root` initially preserves these operator records as well as SSH trust.
-- Pi retains an old host PostgreSQL cluster, NetworkManager state, old
-  service/container trees, Podman storage, an HA trial copy, and TV/migration
-  backups. These are archive/review candidates, not automatically disposable.
-- Both homes contain GitHub/Google credentials, AI-tool databases, projects
-  and worktrees. Pi additionally has local binaries and device tooling.
-  Keep whole homes for the first root migration.
-- `/srv` and the inspected mount-point directories contained no additional
-  regular-file application data. Generated `/bin`, `/usr`, `/lib`, most of
-  `/etc`, caches and logs do not imply separate application persistence needs.
-
-User lingering is already declared in Nix. Epsilon's old dhcpcd lease and DUID
-files are inactive: the current configuration uses networkd and disables
-dhcpcd. Pi's radio block state is retained alongside its Bluetooth pairings.
-
-The former root filesystem keeps archive paths accessible beneath `/persist`
-without exposing them at their old paths. Review those archives separately
-before deleting data or repartitioning storage.
-
-## Storage and recovery prerequisites
-
-The following checklist records the original migration prerequisites. Pi and
-epsilon now declare the tmpfs-root layout in their host configurations. Recheck
-these requirements before a new migration or a change to backing storage.
-
-1. Complete an [isolated offsite restore](host-recovery.md). Daily backup
-   scope includes identity, account files, whole homes, container roots, and
-   controller state on pi/epsilon. Daily jobs exclude reproducible caches and
-   swap. Preserve an independent checkpoint of any additional state before
-   changing or discarding it. Scope changes take effect after deployment.
-2. Verify recovery credentials outside the fleet. The personal recovery Age
-   recipient derives from alpha's user SSH key. SSH key copies are reported
-   in Bitwarden; test the matching retrieved private key as described in the
-   [recovery runbook](host-recovery.md). A restore using epsilon's credentials
-   proves recovery from losing pi, not from losing the whole fleet.
-3. Use the VM check below for the shared mount/password/recovery behavior.
-   Production service boot, ARM firmware and real disk attachment still need
-   their own trial. The HA component migration and interactive Authelia/HA
-   checks were completed with the declarative cleanup in PR #102.
-4. Preserve the actual boot layout. Pi's extlinux configuration and kernels
-   live under `/boot` on the SD root, outside `/boot/firmware`. Epsilon has
-   `/boot/grub` outside `/boot/efi`. Both need more than their firmware partition.
-5. Prepare the new root layout and an independently usable rescue boot. A
-   tmpfs root can reuse ext4 as backing storage; no Btrfs conversion is needed.
-   Epsilon also needs its existing `/nix` attached to the new root. Pi's home
-   volume must fail closed rather than allow empty HA state on a missing disk.
-   Write the readiness marker only after copying and verifying the backing
-   data, and retain a bootable known-good disk or rescue console. **SSH alone
-   cannot recover a failed initrd.**
-6. Once rescue access and restoration are proven, trial pi, then epsilon.
-   Keep the root-layout change outside automatic fleet deployment. An ordinary
-   generation rollback cannot reverse a repartition or restore missing data.
-
-Paperless's registry export path now matches its actual `paper/export` mount.
-Raw live database copies still require database-consistent restoration.
-Legacy HA archives, when present, reflect their original stopped-service capture;
-the daily offsite job does not create a fresh stopped-service checkpoint.
-
-## Alpha later
-
-The shared identity policy, service-state inventory and container tests apply
-to alpha. Its host aspect does not include persistence in this stage.
-
-The live mount audit found `/home`, `/nix` and service data inside root subvolume
-`@`; an `@home` subvolume exists but is not mounted at `/home`. Root rollback
-would therefore encompass important data. Prowlarr also keeps its live database
-and configuration in its container root; only its backup directory is bound
-out. Resolve those boundaries and inventory desktop state before considering
-alpha's root or home disposal.
-
-## Implementation choice and verification
-
-As of the audit, Impermanence had 1,893 GitHub stars and 36 contributors, with
-the latest default-branch commit dated 2026-01-27. Preservation had 360 stars,
-3 contributors and a latest commit dated 2025-09-09. These are adoption/activity
-signals, not a guarantee of correctness. Both have relevant open ordering
-issues. The flake locks Impermanence as a source-only input, without importing
-its development dependencies.
-
-Preservation uses systemd mounts and tmpfiles and requires a systemd initrd;
-the pinned Nixpkgs already defaults to one. It is a viable smaller alternative,
-but Impermanence has the larger contributor base and more recent activity.
-Hand-written bind mounts would avoid a dependency while leaving path creation,
-ownership and ordering to this repository.
-
-Root reset is a separate choice from either persistence module. A tmpfs root
-fits the ext4 layouts on pi and epsilon without repartitioning. An overlay over
-the existing root retains undeclared dependencies; Btrfs rollback becomes an
-option for alpha only after its data is separated from the root subvolume.
-
-- [Impermanence](https://github.com/nix-community/impermanence)
-- [Preservation](https://github.com/nix-community/preservation)
-- [Impermanence SOPS ordering report](https://github.com/nix-community/impermanence/issues/294)
-- [Preservation permission/ordering report](https://github.com/nix-community/preservation/issues/24)
-
-`checks.<system>.host-persistence` evaluates the enabled pi and epsilon
-layouts, explicit mutable-account consent, early UID/GID and SOPS ordering,
-backup coverage, pi's separate home mount, epsilon's persistent boot and store
-mounts, and alpha's exclusion. It also checks that invalid backing-storage and
-mutable-account settings fail configuration assertions.
-
-`checks.x86_64-linux.host-persistence-vm` boots the actual persistence module
-with a tmpfs root and ext4 backing disk. It uses disposable credentials and
-checks:
-
-- a real `passwd` change across activation, reboot and abrupt restart;
-- stable SSH key, machine ID, SOPS decryption and UID allocation;
-- application data, timer stamps and deployment pause state;
-- the generated offsite timer and `fleet backup run` sharing export preparation
-  and native Restic backup, with failed, unchanged, stale, and empty exports
-  producing an explicitly incomplete snapshot and failed service result while
-  an independent export still reaches the snapshot;
-- isolated restoration of the actual SQLite export, identity, SOPS, ownership,
-  modes, ACLs, xattrs, and legacy recovery artifacts, followed by root reset and
-  another restore from the same snapshot;
-- `--one-file-system` traversal of same-device binds, exclusion of nested
-  filesystems on other devices, and restoration when those roots are explicit;
-- failed boot with missing storage or an unprepared backing volume, followed
-  by repair of the VM disk offline and a successful boot.
-
-CI selects the VM job for changes that affect persistence. When selected, the
-VM job must succeed before the aggregate `gate` passes; other changes skip it.
-Configuration checks must also pass. The VM covers shared persistence and recovery behavior that
-configuration evaluation cannot prove. It does not exercise T3 Code history
-migrations. This is a synthetic x86 recovery test, not a boot of pi or epsilon
-with their real service images, bootloader layouts, or production data.
-
-See the [configuration verification skill](../../.agents/skills/verify-nixos-config/SKILL.md)
-and [fleet operations runbook](fleet-operations.md) for the separate build,
-activation and runtime verification procedures.
+The [evaluation checks](../../modules/_tests/host-persistence.nix) cover inventory,
+account consent, mount ordering, and backup coverage. The
+[VM test](../../modules/_tests/host-persistence-vm.nix) exercises passwords,
+identity, SOPS, application state, incomplete exports, isolated restores, and
+failed-boot recovery. It uses disposable x86 credentials and storage; real ARM
+firmware, production services, device attachment, and interactive logins still
+need their own validation. Use the [verification skill](../../.agents/skills/verify-nixos-config/SKILL.md)
+for builds and the [fleet skill](../../.agents/skills/fleet-operations/SKILL.md)
+for authorized activation.

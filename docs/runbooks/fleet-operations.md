@@ -1,470 +1,165 @@
 ---
 type: Runbook
-title: Fleet health, offsite backups, and auto-updates
-description: How Cloud health alerting, offsite restic backups, and the staged deploy-rs updater work — probing, restoring, pausing, and rolling back.
+title: Fleet health, backups, and deployment
+description: Inspect failures, run backups, deploy main, and maintain storage.
 when: Read when a Discord health alert fires, when restoring service state from the offsite repo, or when a staged fleet update deploys, defers, or rolls back.
 resource: modules/deploy.nix
 tags:
   [runbook, pi, alpha, epsilon, backups, restic, alerting, upgrades, deploy-rs]
 ---
 
-# Fleet health, offsite backups, and auto-updates
+# Fleet health, backups, and deployment
 
-The pi is the always-on controller. Three systems keep the fleet observable and
-recoverable: Cloud health alerts, an offsite restic repo, and a nightly staged
-deploy-rs update. All three post to the `#notifications` Discord channel, and
-the monitor posts directly rather than through the hermes container, so it
-still reports when hermes itself is down.
+Pi is the deployment controller. Agents use the
+[fleet operations skill](../../.agents/skills/fleet-operations/SKILL.md) and
+[configuration verification skill](../../.agents/skills/verify-nixos-config/SKILL.md).
+Discover the installed commands with `fleet commands --json`.
 
-## Fleet CLI and agent discovery
+## Inspect health and retained failures
 
-The generated `fleet` CLI is the operator-facing discovery and inspection
-surface. Its command registry generates dispatch, help, and machine-readable
-metadata from one Nix attrset:
-
-```sh
-fleet --help
-fleet commands --json
-```
-
-Agents should use the
-[fleet-operations skill](../../.agents/skills/fleet-operations/SKILL.md) for
-runtime work and discover capabilities from `fleet commands --json` instead
-of copying this command surface into prose. Configuration verification remains
-a separate pre-activation procedure in `verify-nixos-config`.
-
-Local-tree updates happen through the plain nix CLI (`nix build` the
-toplevel, `nix run .#deploy-rs -- .#<host> --dry-activate` to review,
-deploy-rs or `nixos-rebuild` to switch); the controller-side
-`fleet-update` transaction below deploys a main revision after successful
-CI.
-
-## Fleet health
-
-Grafana Cloud evaluates service probes, required systemd units, retained failed
-jobs, disk capacity and Btrfs allocation pressure, backup freshness and export
-completeness, deployment PAUSE, and Alpha's reboot requirement. See
-[Cloud setup and alerting](grafana-cloud.md) for the rules and notification
-policy. The old periodic/event Discord health, disk and reboot senders are
-removed; Cloud sends both firing and recovery notifications.
-
-`fleet health probe` is a read-only diagnostic command. It prints failures and
-returns nonzero when checks fail. `--local` skips cross-host probes;
-`--strict` retains deployment readiness checks, excluding Cloud reachability
-and unrelated retained jobs so an external monitoring outage cannot prevent
-fleet recovery. Neither invocation sends messages or changes alert state.
-Deployment failures, rollback reports, Hermes crash analysis and model/release
-watchers keep their workflow-specific notifications.
-
-All three hosts retain failed offsite backup results; alpha additionally
-retains Btrfs-health/scrub, Jellyfin-backup, and configured rsync job results.
-`ExecStopPost` records failed runs in `/var/lib/fleet-unit-state/<unit>` and
-removes that record only after a successful rerun. Each record contains a
-timestamp and systemd's service result. Successful runs also atomically record
-their timestamp in `.success/<unit>`, which the backup freshness gauge uses. The directory persists across reboot on the current roots and is declared for
-`/persist` when host persistence is enabled, so `systemctl reset-failed` does not
-make an unsuccessful backup look recovered. This is evidence of the most
-recent observed failure, not proof of a fresh or restorable backup: jobs that
-have never run and failures before installing the hook have no retained record.
-
-To inspect retained evidence on a host:
+Grafana Cloud owns periodic health alerts. See [monitoring](monitoring.md) for
+telemetry diagnostics and [Cloud alert configuration](grafana-cloud.md) for policy.
+`fleet health probe` is read-only; `--strict` checks deployment readiness without
+making Cloud availability or unrelated failed jobs deployment prerequisites.
 
 ```sh
+fleet debug alpha
+fleet backup status
 sudo fleet-unit-snapshot
 sudo ls -l /var/lib/fleet-unit-state
-sudo cat /var/lib/fleet-unit-state/jellyfin-backup.service
 ```
 
-Repair and rerun the underlying job to recover its alert. Removing evidence
-manually only acknowledges the failure; it does not establish backup success.
+Failed scheduled jobs persist in `/var/lib/fleet-unit-state/<unit>` until a
+successful rerun. Success timestamps live in `.success/<unit>`.
+`systemctl reset-failed` does not clear retained evidence. Repair and rerun the
+job; removing its record does not prove recovery. Jobs that have never run
+have no success record.
 
-## Storage maintenance
-
-Nix collects unreferenced store paths during builds when free space falls below
-`min-free`, stopping at `max-free` or when no garbage remains. The defaults are
-3 and 6 GiB. Alpha uses 100 and 130 GiB to reserve build space before its root
-filesystem reaches the disk-warning threshold. This collection preserves GC
-roots. The existing weekly policy still removes generations older than 21 days.
-
-Alpha's daily `btrfs-health-root` job tries reclamation when unallocated space
-falls below 10 GiB. It first releases empty data and metadata chunks. If pressure
-remains, it can relocate at most eight data chunks that are at most 25% occupied.
-That pass requires at least 20 GiB estimated free space, metadata usage below
-97%, and an unused global reserve. The job reads allocation statistics again
-after each pass and retains a failure if the health thresholds remain breached.
-Its work is limited by chunk count rather than killing the balance client on a
-timeout, which could leave the kernel operation running.
-
-Automatic reclamation targets the root filesystem only. It does not wake or
-balance media disks, delete media, or increase the relocation limit after failure.
-
-## Offsite backups (`restic-backups-offsite.timer`, daily 01:00–01:15)
-
-Run the same offsite operation as the timer, including export preparation:
+## Run the scheduled offsite operation
 
 ```sh
 sudo systemctl start --wait restic-backups-offsite.service
-ssh root@epsilon systemctl start --wait restic-backups-offsite.service
+journalctl -u restic-backups-offsite.service -n 100 --no-pager
 ```
 
-The command requires permission to start system services. It waits for
-`restic-backups-offsite.service` and returns its failure status. Inspect its
-journal after a failure; `fleet backup status` reports the resulting service
-state.
+The same service runs on the nightly timer. It prepares registered exports,
+uploads available data, and checks the repository. A failed or stale export
+makes the overall run incomplete and skips pruning, while other data still
+uploads. Inspect `/var/lib/backup-exports/offsite.json`; an uploaded snapshot
+alone does not establish complete application coverage.
 
-Interrupted manual restic commands can leave a stale repository lock that
-fails the post-upload check; each run now clears stale locks before backing
-up, and `restic unlock` run in the service's environment removes one
-manually.
+Arr apps use native scheduled archives; the job checks freshness and size,
+not ZIP or SQLite integrity. After installing or restoring them, check their
+persisted settings: daily backups, 28-day retention, and Bazarr at midnight.
+The other producer units run through this job. Ownership and registrations
+live in each host's `provides.backup`; implementation and retention are in
+[backup.nix](../../modules/aspects/backup.nix).
 
-Before Restic starts, registered export units run synchronously. Each unit must
-succeed and create or refresh a nonempty matching artifact within its declared
-maximum age, one hour by default. A unit that leaves its output unchanged marks
-the run incomplete, as does stale output, missing output, or a failed unit. Other
-exporters still run and Restic uploads the available data, including
-`/var/lib/backup-exports/offsite.json` with each export's outcome. After upload,
-the service returns failure for an incomplete run and skips pruning, preserving
-previous snapshots. Inspect the manifest when selecting a snapshot to restore;
-an uploaded snapshot alone does not establish complete application coverage.
-Independent timers for these enrolled export units are disabled so scheduled
-and manual runs use the same sequence. App-managed Arr schedules remain enabled.
-
-| Export           | Producer and validation                                                                    |
-| ---------------- | ------------------------------------------------------------------------------------------ |
-| Arr apps         | Native daily schedules, nonempty scheduled archive within 26 hours                         |
-| Jellyfin         | Native `Backup/Create` API, required response path, and nonempty output                    |
-| Miniflux         | Container `pg_dump`, gzip integrity check, and atomic publication                          |
-| Paperless        | Container's native `document_exporter`, including its normal service stop/restart behavior |
-| Pi services      | Pi-owned transactional SQLite staging, checked through its export manifest                 |
-| Alpha home state | SQLite `.backup` staging through `home-state-backup-offsite.service`                       |
-
-Sonarr, Radarr, Prowlarr and Bazarr use their own scheduled native backups.
-Restic does not trigger them or manage their archive retention. It requires a
-nonempty matching archive no older than 26 hours, including during manual runs;
-unchanged recent archives are accepted. Servarr checks only `Backups/scheduled`,
-so a manual archive cannot hide a broken native schedule. Bazarr writes to its
-configured backup directory. This gate checks freshness and size, not ZIP or
-SQLite integrity; use native restore validation when selecting an archive.
-
-The live app settings on alpha were changed through their settings APIs:
-Sonarr/Radarr/Prowlarr `backupInterval=1`, `backupRetention=28`; Bazarr
-`backup.frequency=Daily`, `backup.hour=0`, `backup.retention=28`.
-Bazarr runs at midnight ahead of Restic's 01:00–01:15 window. Servarr exposes an
-interval in days, without a configurable backup hour; its task's last execution
-anchors the next daily run. These settings persist in the app databases/config,
-not Nix environment variables. After a fresh app install or restore, check these
-settings and the native task's next execution. An app that is stopped cannot
-export; missing or stale archives make the offsite run incomplete while other
-data still uploads.
-
-Restic over rclone to `gd-crypt:restic/<hostname>`. Covers:
-
-- pi/epsilon: `/etc`, `/boot`, `/root`, the whole `/home/repparw`, container
-  configuration and roots, NixOS account allocation state, timers and recovery
-  metadata. Pi also includes deployment/health controller and Bluetooth/radio
-  state; epsilon includes ddclient state. See the host declarations and
-  `modules/aspects/host-backup.nix` for the shared paths and exclusions.
-- alpha: `/home/containers/backup`, Pictures, Documents (Memorias excluded),
-  and the small home-state allowlist in `modules/hosts/alpha.nix`, staged
-  into a private tree under `/var/lib/home-state-backup/offsite` before
-  restic runs. SQLite files are staged as raw copies, not as `.backup`
-  exports. Missing optional
-  entries are skipped; an export failure marks the backup incomplete. Age keys are
-  included only in the HDD staging tree, never in the offsite tree.
-
-Alpha's `rsync-job-bupstate` mirrors its separately prepared HDD staging tree
-into `/mnt/hdd/backup/.config` and `.local`. It deletes destination entries
-outside the allowlist, including legacy whole-`.config` contents and removed
-sources. `rsync-job-buptohdd` handles Pictures and Documents separately and
-protects those two state subtrees. Restore staged offsite state beneath the
-user's home, rather than to its original `/var/lib` staging path.
-
-Pi prepares its private service export through `pi-services-backup.service`.
-SQLite files are exported transactionally, then a new generation is published
-only after every file succeeds. Historical service trees are retained. Only the
-obsolete `dns/listener.conf` and `dns/resolved.conf` links are excluded. Links
-into `/nix/store` and `dns/hosts` pointing to `/etc/hosts` are allowed; other
-external links and dangling links abort preparation. Source ownership and modes
-remain unchanged; SQLite may create journal sidecars owned like their source
-database. Restore exported files with the required service ownership.
-
-Pi backs up `/var/lib/pi-services-backup`, including the real generation tree
-behind the `current` symlink. Alpha no longer pulls or refreshes this export.
-Existing copies on alpha are retained as historical data; this change does not
-delete backup artifacts.
-
-Each host composes its checklist through `provides.backup` and `includes` in
-`modules/hosts/{alpha,pi,epsilon}.nix`. The shared backup aspect executes these
-registrations and reports completeness without choosing service ownership.
-
-Retention is 7d/4w/12m with a 5% data check each run. The pi/epsilon live backups are
-not automatically consistent database exports.
-
-For a native Restic restore into a fresh directory, use the
-[host recovery runbook](host-recovery.md). It also describes the limits of daily
-backup scope and how to inspect legacy checkpoints. Never restore over live paths while
-testing recovery. Backup scope changes apply after deployment.
-
-Adding a new host's key to a secrets file:
-`sops updatekeys --yes secrets/<file>.sops.yaml` from a machine that can
-decrypt it.
-
-## Staged auto-update
-
-Lock maintenance runs in GitHub Actions; deployment runs on pi:
-
-- `.github/workflows/lock-update.yml` runs daily at 04:15 UTC or through
-  `workflow_dispatch`. It opens or refreshes `automation/flake-lock`, explicitly
-  dispatches `ci.yml` for that exact lock commit, and publishes that same
-  validated commit to `main` only when the candidate is still lock-only and
-  `main` has not moved. It never activates a host.
-- `fleet-deploy.timer` runs daily at 05:30 in the controller's timezone.
-  It snapshots current `origin/main` and requires a successful exact-SHA
-  `ci.yml` run for that commit: either a normal push/main dispatch, or the
-  updater's guarded `automation/flake-lock` dispatch for the exact SHA that was
-  atomically fast-forwarded to `main`. Missing, pending, failed, or unavailable
-  CI results defer deployment without changing the rollback streak. The next
-  scheduled run retries current main.
-- Preparation captures the same immutable Git revision for every selected
-  host, evaluates each configuration sequentially, then builds and pins each
-  deploy-rs profile on its target. It verifies the built system's revision
-  before any activation starts. A failed preparation pauses automation without
-  activating or rolling back a host.
-- Activation attempts epsilon, alpha, then pi using the captured profiles.
-  Alpha can be deferred by the
-  activity gate. Each
-  activated host passes health checks before the next proceeds, including hosts
-  already on that revision.
-- `fleet-alpha-retry.timer` runs daily at 07:00 in the controller's timezone.
-  It retries a deferred alpha against current main, with the same CI gate.
-
-CI's host checks stub selected packages. Successful CI proves those checks,
-not full system builds or runtime health. The controller evaluates each host
-once and sends its derivation graph to that target. Targets build their own
-closures and retain one `fleet-update/prepared` GC root. Deploy-rs activates
-the captured derivations, which are already built, with its existing magic
-rollback and confirmation protocol. Activation does not evaluate host modules
-again or resolve a newer main revision.
-The controller retains one `fleet-update/derivation-<host>` root per selected
-host so garbage collection cannot discard captured build inputs before
-activation. The next preparation replaces these roots.
-
-Read `/var/lib/auto-update/latest-preparation` for the current evidence
-directory. Each invocation retains captured host metadata, capture and preparation logs,
-and a result containing the host, revision, system path, profile path, and
-outcome. Every selected host has a result before capture starts, with null paths
-until metadata is available. Capture failures record `failed` with `stage: capture`.
-`not_attempted` means target preparation did not start for that host. A failed
-revision check retains the revision returned by the built system.
-
-The 2026-10-03 capacity inspection found 4 CPUs and 8 GiB RAM on Pi,
-12 CPUs and 64 GiB RAM on Alpha, and 2 CPUs and 12 GiB RAM on Epsilon.
-Pi had 12 GiB free on `/nix`; Epsilon had 104 GiB free. Sequential evaluation
-keeps Pi from evaluating three systems concurrently. Native target builds
-avoid storing Alpha's system closure on Pi and avoid cross compilation.
-This design uses the existing substituters and needs no shared binary cache.
-
-Lightweight checks, shared configuration checks, and each host's stubbed
-evaluation run in parallel. The required `gate` waits for every group and the
-disposable persistence VM test; a failed, skipped, or cancelled dependency
-fails the gate. Each job uploads individual check logs and records durations
-in its summary. Superseded PR runs are cancelled, while main push runs retain
-separate concurrency groups so the deployment controller can verify its
-captured revision. Explicit lock-update dispatches remain deduplicated by
-workflow SHA and expected SHA, with the expected SHA verified before checkout
-in every build job.
-
-### Enable lock update PRs
-
-The lock workflow uses the built-in `GITHUB_TOKEN`. Its permissions are
-Contents write for the lock branch, Pull requests write for the PR, and Actions
-write for dispatching CI. No separate token or repository secret is needed.
-The repository must allow GitHub Actions to create pull requests and update
-`main`. No approval is synthesized: after exact candidate CI succeeds, the
-workflow requires that candidate to be a direct child of the validated main SHA
-and then fast-forwards `main` to that exact candidate with a lease pinned to the
-original main SHA. The CI-validated commit and the commit later deployed are
-therefore identical, while base validation and publication remain one
-compare-and-swap operation.
-
-Run `gh workflow run lock-update.yml` after this workflow and CI's
-`workflow_dispatch` support reach main. GitHub requires the dispatched workflow
-to exist on the default branch. Bot PR events are not the CI trigger this
-workflow relies on; see [GitHub's workflow triggering rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
-
-After publishing the lock branch and opening or updating its PR, the updater
-explicitly dispatches `ci.yml` on `automation/flake-lock` with the expected head
-SHA, and `pr-title.yml` with that SHA and the PR number. Title validation reads
-the current PR title and rejects a changed head or closed PR. Both
-`validate / gate` and `conventional-title` must succeed before publication.
-Every CI job verifies that SHA before checking out the event's immutable
-`github.sha`. A branch change during dispatch fails that check rather than
-validating a different commit. Lock-only PR events are ignored to avoid the
-approval-required duplicate run produced for bot-authored PRs.
-
-An unchanged lock tree on the same main parent reuses the existing commit.
-The updater checks for an existing dispatched run on that branch and SHA before
-sending another dispatch. Concurrent dispatches for the same SHA share a CI
-concurrency group, so only one remains active. GitHub indexing and dispatch are
-not atomic: a recently accepted run may not be visible yet. An ambiguous
-request failure is reported, and a retry checks GitHub before dispatching.
-If an unchanged commit already has a failed or canceled run, rerun that CI run
-explicitly after diagnosing it; the nightly updater does not repeat it.
-
-A successful lock-branch gate is the publication condition. The updater then
-fast-forwards `main` directly to the validated candidate SHA with an atomic
-compare-and-swap. If `main` changes after validation but before the push, the
-lease rejects publication and the PR remains for the next refresh. There is no
-synthetic merge commit and no second CI run: the SHA validated on
-`automation/flake-lock` is the exact SHA that becomes `main`.
-
-Pi accepts that successful guarded lock-branch dispatch for the exact current
-`main` SHA, as well as successful push or manual-main CI for the same SHA.
-Pull-request runs and dispatches for unrelated branches never satisfy the
-deployment gate.
-Older controllers used rollback roots named by commit. After a verified full
-rollout, inspect `/nix/var/nix/gcroots/fleet-update/` on each host and remove
-obsolete commit roots. Keep `previous` while a rollout or recovery is pending.
-
-Hosts with graphical sessions deploy only when every local session is idle
-or locked — active use (including media streams) defers the host instead of
-forcing it. A deferred alpha is reported, not failed.
-
-Main records the desired revision. `/var/lib/auto-update/deployed-revision`
-records the last revision verified across all hosts. A deferred alpha leaves
-that value unchanged, and a rollback can leave hosts behind main.
-
-Failure handling:
-
-- Activation failures roll back via deploy-rs magic rollback.
-- Before activation, the controller saves and roots each host's prior system.
-  A deployment failure restores those exact systems on hosts reached during
-  this revision, including a host whose activation command failed. The saved
-  state also covers hosts reached in an earlier run before alpha was deferred.
-  Rollback verifies the restored system path. An unsuccessful rollback pauses
-  deployment and retains the roots for recovery. Deployment never writes Git.
-  Each host has one `fleet-update/previous` root, replaced on its next
-  activation attempt. After a successful rollback or full convergence, these
-  roots are removed.
-- Two consecutive failed cycles pause automation (`PAUSE` flag) and alert. A
-  build or activation failure pauses on the first cycle instead: the same lock
-  fails the same way, so a second attempt only spends a deploy cycle. Soak
-  failures keep the two-strike rule, because a flapping container or a
-  timed-out probe can clear before the next attempt.
-- Boot-level regressions remain a rescue-console problem; re-imaging the pi
-  from a cloned SD of the last known-good system is the final recovery path.
-
-### Runtime readiness probe (`fleet-readiness-probe.timer`, every 2 h)
-
-Host-owned upstream waits whose predicates need Alpha's runtime state — the
-running Sonarr build version and its Jellyfin-push log gate, plus Moonshine's
-PR227 test-build drop-ins, candidate GC root and stream activity — are
-evaluated by `fleet-readiness-probe` on Pi over the deployment SSH key. A
-status change appends one fsynced event to `/var/lib/auto-update/readiness-events/`;
-`fleet-readiness-deliver` (every 5 min, like `fleet-package-deliver`) posts
-queued events to Discord and removes an entry only after a successful post, so
-a failed delivery is retried; an ambiguous Discord POST timeout may duplicate a post. The probe also runs
-best-effort after each Alpha convergence and never affects the deployment
-outcome; an unreachable Alpha keeps the previous status instead of fabricating
-a transition. Alpha's own watcher timers stay armed and remain the completion
-owners until this replacement is verified; the probe only reports evidence.
-
-### Reading a deploy failure alert
-
-The rollback alert carries the reason, so the alert is usually enough to
-diagnose without reproducing the deploy. A build failure quotes the error:
-
-````text
-:rotating_light: fleet deployment failed at alpha (139e7d50); rollback
-initiated, 2 consecutive — automation PAUSED (breaker)
-```what failed
-gamescope> FAILED: [code=1] layer/libVkLayer_..._wsi_x86_64.so.p/....o
-gamescope> ../layer/VkLayer_FROG_gamescope_wsi.cpp:319:5: error: ...
-```
-````
-
-A soak or gate failure names the probe or step instead, for example
-`soak: container@jellyfin is activating on alpha`. Only one of the two ever
-appears; the alert never restates the host the headline already names.
-
-The full build and activation output is kept at
-`/var/lib/auto-update/fail-<host>.log` on the pi, one file per host,
-overwritten by the next deploy. It outlives the transient
-`fleet-deploy-run` unit's journal, which does not survive a controller
-reboot — a controller that rebooted mid-deploy leaves no unit entries to
-read. Prefer that file over `journalctl -u fleet-deploy-run`.
-
-Operator controls:
+Check scope before changing storage:
 
 ```sh
-ssh root@192.168.0.4 'touch /var/lib/auto-update/PAUSE'       # pause automation
-ssh root@192.168.0.4 'rm /var/lib/auto-update/PAUSE'          # resume automation
-gh workflow run lock-update.yml                            # open a lock update PR
-ssh root@192.168.0.4 'systemctl start fleet-deploy.service'   # launch fleet consumption
-ssh root@192.168.0.4 'fleet-update deploy --host epsilon'     # consume main on one host
-nix run .#deploy-rs -- .#epsilon --dry-activate               # test a local tree
+nix eval .#nixosConfigurations.alpha.config.services.restic.backups.offsite.paths --json
+nix eval .#nixosConfigurations.alpha.config.services.restic.backups.offsite.exclude --json
 ```
 
-A manual deploy takes the same serialization lock — without `--wait-lock`
-it exits if a transaction is already running rather than interrupting it.
-An authorized manual whole-fleet rollout can use
-`fleet-update deploy --host all --force`. Force requires an explicit `--host`;
-it bypasses the activity and pause gates while preserving the PAUSE file.
-It keeps the exact-main push CI gate, serialization, health checks, and rollback.
+Pi and Epsilon compose [host-backup](../../modules/aspects/host-backup.nix).
+Alpha selects home state in [alpha.nix](../../modules/hosts/alpha.nix), then
+backs up the whole private `offsite` staging tree. Those home-state SQLite
+files are raw copies, not transactional exports. Age keys are staged only for
+the separate HDD mirror. That mirror includes `.config`, `.local`, and `Games`;
+Pictures and Documents have their own sync job. Restoring staged home state
+means placing it beneath the user's home, not its original staging path.
 
-Alpha's interactive `Mod+U` asks the pi controller to run
-`fleet-update deploy --host alpha --force`: it bypasses the activity gate
-and `PAUSE` but keeps the exact-commit CI gate, health checks, and rollback.
-Local-tree reviews use the nix CLI directly
-(`nix run .#deploy-rs -- .#<host> --dry-activate`).
+Pi's [service exporter](../../modules/aspects/pi-services-backup.nix) produces
+transaction-consistent SQLite snapshots and publishes a generation only after
+all files succeed. Alpha's old Pi copies are historical, not current backups.
 
-## Pi store retention
+Use [host recovery](host-recovery.md) or [service restoration](restore-service-backups.md)
+for an isolated restore. Live filesystem copies are not atomic database backups.
 
-Pi's 40 GB `/nix` filesystem uses daily GC. Before collecting unrooted paths,
-`pi-generation-retention` keeps the newest five system profile generations,
-the selected profile, and any generation whose closure contains the running
-or booted system. This also handles deploy-rs profiles that wrap a NixOS system.
-Missing runtime GC roots or a failed closure query abort cleanup before pruning.
+## Deploy current main
 
-The retention command holds `/run/fleet-update.lock` across pruning and GC. It
-defers if a deployment or headless reboot sequence owns the lock. It changes
-only system-profile generation links. User profiles, preparation roots under
-`/var/lib/fleet-verify`, and `/nix/var/nix/gcroots/fleet-update/previous` remain
-intact. Old preparation roots require a separate reviewed cleanup after the
-corresponding rollout and rollback window have finished.
+```sh
+ssh root@192.168.0.4 'fleet-update deploy --host alpha --wait-lock 7200'
+```
 
-Preview eligibility without deleting generations or collecting store paths:
+The controller requires successful CI for the exact main revision, captures
+immutable profiles, and builds every selected target before activation.
+CI's stubbed host checks do not replace full builds. Activation proceeds through
+Epsilon, Alpha, and Pi with health checks and deploy-rs confirmation. Active
+sessions or streams can defer Alpha; the retry timer consumes current main later.
+
+Main is desired state. `/var/lib/auto-update/deployed-revision` records the last
+revision verified across the fleet; a deferred host leaves that value unchanged.
+
+Inspect failures on Pi:
+
+```sh
+cat /var/lib/auto-update/latest-preparation
+less /var/lib/auto-update/fail-alpha.log
+journalctl -u fleet-deploy-run -u fleet-alpha-retry --no-pager
+```
+
+The preparation directory contains captured revisions, profiles, results, and
+logs. Per-host `fail-<host>.log` files survive controller reboots but are replaced
+by later deploys. The transient unit's journal may not survive a reboot.
+
+Preparation failures pause before activation. Activation failures use deploy-rs
+and restore the rooted prior systems on reached hosts. Failed rollback retains
+the roots for rescue. Build or activation failures pause immediately; soak
+failures use a two-cycle breaker. See [rollback](update-rollback.md).
+
+```sh
+ssh root@192.168.0.4 'touch /var/lib/auto-update/PAUSE'
+ssh root@192.168.0.4 'rm /var/lib/auto-update/PAUSE'
+```
+
+Resume only after diagnosing the failure. `--force` requires an explicit host
+and bypasses pause/activity gates while preserving the PAUSE file. It retains
+CI, serialization, health checks, and rollback. Alpha's `Mod+U` uses this forced
+controller path. For a local-tree review, use
+`nix run .#deploy-rs -- .#alpha --dry-activate`.
+
+Implementation: [fleet-update.sh](../../modules/scripts/fleet-update.sh).
+Lock publication: [lock-update workflow](../../.github/workflows/lock-update.yml)
+and [upstream watcher contracts](../../.github/upstream/README.md).
+Run `gh workflow run lock-update.yml` to request a lock update; publication and
+deployment remain separate. Runtime readiness reports do not retire a watcher
+until its declared completion conditions pass.
+
+## Maintain storage
+
+Nix's `min-free` and `max-free` control collection of unreferenced store paths
+during builds. Thresholds and generation policies live in
+[defaults](../../modules/defaults.nix) and the host declarations.
+Alpha's [root Btrfs health job](../../modules/aspects/btrfs-maintenance.nix)
+tries empty-chunk reclamation and one limited low-usage pass, then rechecks.
+Unresolved pressure still fails. It never reclaims media disks automatically.
+Chunk count bounds reclamation; killing the client can leave kernel balancing running.
+
+Pi's [generation policy](../../modules/aspects/pi-generation-retention.nix)
+keeps five recent system generations plus the selected, running, and booted
+systems. It shares the deployment lock and preserves separate preparation and
+rollback roots. Preview before cleanup:
 
 ```sh
 ssh root@192.168.0.4 'pi-generation-retention plan'
 ```
 
-An authorized manual cleanup uses `pi-generation-retention apply`, or starts
-`nix-gc.service`. Avoid `nix-collect-garbage -d`: it bypasses this generation
-policy. Retaining five recent generations bounds ordinary profile history,
-but cannot impose a byte limit on required systems or separately rooted
-builds. Continue checking `df -h /nix`; the deployment preflight still requires
-6 GiB free. Pi's automatic Nix GC also keeps its existing 3 GiB `min-free`
-setting and never deletes profile generations itself.
+An authorized cleanup uses `pi-generation-retention apply` or `nix-gc.service`.
+Avoid `nix-collect-garbage -d`, which bypasses that policy. Separately rooted
+builds can still fill the store; inspect old roots only after their rollout and
+rollback window are complete.
 
-## Firmware updates (`fwupd`, hardware hosts)
+## Update device firmware
 
-`services.fwupd` is enabled on hosts with LVFS-discoverable devices (alpha,
-beta). pi is an SD-boot SBC and epsilon a VPS — neither carries fwupd-managed
-hardware. Firmware does not ride the flake: check and apply it by hand every
-few weeks, or when the edge/dock hardware misbehaves.
+On a host configured with fwupd:
 
 ```sh
-ssh alpha 'fwupdmgr refresh'      # pull metadata from LVFS
-ssh alpha 'fwupdmgr get-updates'  # list pending firmware
-ssh alpha 'fwupdmgr update'       # stage; some devices only apply at reboot
+fwupdmgr refresh
+fwupdmgr get-updates
+fwupdmgr update
 ```
 
-Device firmware applies at the next reboot of the device or host — schedule
-accordingly. UEFI capsule updates require the ESP mounted at `/boot` (alpha's
-systemd-boot layout already satisfies this).
-
-## Related
-
-- [Update rollback](update-rollback.md)
-- [Troubleshooting](../troubleshooting.md)
+Firmware can require a device or host reboot. UEFI capsule updates require the
+ESP mounted at `/boot`. Schedule that interruption separately from fleet deploys.

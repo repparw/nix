@@ -45,7 +45,8 @@ a full-disk image or an atomic application snapshot.
 
 Use native application backups or exports for consistent database restoration.
 The [scheduled offsite operation](fleet-operations.md) refreshes its registered
-native producers before upload; `fleet backup run [host]` runs that same path.
+native producers before upload. Start `restic-backups-offsite.service` to run
+that same path manually.
 Other live pi and epsilon filesystem copies do not stop databases. Old
 `application-state.tar` checkpoints, when present, describe their capture time;
 this change does not refresh them. See [Restore service backups](restore-service-backups.md).
@@ -119,7 +120,7 @@ pi/epsilon/alpha does not establish independent recovery.
 
 ## Related
 
-- [Prepare pi and epsilon for persistent state](host-persistence.md)
+- [Change host persistence](host-persistence.md)
 - [Fleet operations](fleet-operations.md)
 - [Restore service backups](restore-service-backups.md)
 - [Secret inventory](../architecture/secret-inventory.md)
