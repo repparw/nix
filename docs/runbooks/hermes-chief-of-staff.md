@@ -66,21 +66,27 @@ Keep the existing backup trees intact.
    changes the package's Node selection from the running Node 26 to Node 24.
    Container activation can interrupt Discord conversations or running jobs.
    Arrange an idle window before authorizing it.
-3. With activation authorized, review `nix run .#deploy-rs -- .#epsilon --dry-activate`,
+3. Before activation, finish existing workers and stop the gateway for the
+   backup window. Verify that no Hermes worker processes or external cron workers
+   remain and that the cron tick/fire locks are idle. Take one fresh state and
+   workspace backup while all writers are stopped. This makes the independent
+   database/file copies a quiescent recovery point. Keep online backups for normal
+   operation; no new snapshot service is required.
+4. With activation authorized, review `nix run .#deploy-rs -- .#epsilon --dry-activate`,
    then use the repository's local deploy-rs activation path. Do not substitute
    this for the controller's `fleet-update deploy` transaction.
-4. Run `fleet debug epsilon`. Inside the container confirm
+5. Run `fleet debug epsilon`. Inside the container confirm
    `systemctl is-active hermes-agent`, read the managed config without printing
    `.env` or `auth.json`, and confirm the new identity and skill are installed.
    Existing `auth.json`, USER memory, sessions, Discord channel settings, and
    scheduled jobs must remain present.
-5. Through the existing private Discord interface, ask Hermes for a bounded
+6. Through the existing private Discord interface, ask Hermes for a bounded
    read-only documentation review and a durable task. Confirm it loads the skill,
    searches history and cards, records acceptance criteria, delegates through
    `delegate_task`, preserves a handoff, and verifies the result before completion.
    Native workers inherit the coordinator route; do not request nonexistent
    per-call model/toolset selectors. Avoid any task that needs a new permission.
-6. Start fresh conversations for the recall and duplicate-work probes below.
+7. Start fresh conversations for the recall and duplicate-work probes below.
    Verify actual task/session records as well as the assistant's response.
    Keep synthetic entries clearly tagged so they cannot become project policy.
 
@@ -187,6 +193,36 @@ active after the build. The audit's Node 26 observation describes the live
 container process, while the host already has the newer package closure.
 Activation must still reconcile the live container and be checked in an idle
 window. GitHub CI is separate from these local and native checks.
+
+## Review safety checks, 22 October 2026
+
+All checks on reviewed head `3156033c1` succeeded, including `validate / gate`.
+The two unrelated conditional package jobs were skipped by design. Changes made
+after that head require their own validation before activation.
+
+The private Discord allowlist contains one numeric user ID, with no wildcard or
+allow-all environment override. A probe using the installed GatewayRunner
+and live configuration admitted that identity and rejected a synthetic unknown
+identity for both DM and group sources. This exercised the authorization method
+without sending messages or starting another gateway.
+
+The live effective approval mode was `smart`, not manual. The revision responding
+to review makes manual approval explicit. Installed guard probes against an
+isolated home confirmed that the human callback is invoked, a denial blocks the
+flagged command, and a one-shot run fails closed. Only the approval predicate was
+called; the illustrative delete command was never executed. A simulated gateway
+notification/deny round trip exercises the same pending-approval queue without
+sending Discord messages. The real Discord approval UI still needs its smoke test.
+
+Before these checks, the existing gateway had already received SIGTERM at 15:00
+local time. Systemd marked its shutdown exit code as failed; no new configuration
+had been activated. No service-user execution processes, session leases, async
+records, external cron workers, or busy cron locks remained. With writers idle,
+fresh private state/workspace backups were taken at
+`bootstrap-backups/chief-of-staff-preactivate-20261022T223530Z` and its
+`-workspace` sibling. All six SQLite databases passed integrity checks. Any
+resumed gateway activity requires another quiescent backup immediately before
+activation.
 
 ## Recover without losing newer history
 
