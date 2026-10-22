@@ -65,7 +65,7 @@ count({host=~"alpha|pi|epsilon"})
 prometheus_remote_storage_samples_pending{host=~"alpha|pi|epsilon"}
 ```
 
-Expected hosts are Alpha, Pi and Epsilon. Inspect the timestamp of the most recent sample, not just an old chart. The Free series allowance has limited headroom; the Cloud budget alert fires at 9,000 active series, using the Cloud usage datasource. See [Cloud setup and alerting](grafana-cloud-pilot.md).
+Expected hosts are Alpha, Pi and Epsilon. Inspect the timestamp of the most recent sample, not just an old chart. The Free series allowance has limited headroom; the Cloud budget alert fires at 9,000 active series, using the Cloud usage datasource. See [Cloud setup and alerting](grafana-cloud.md).
 
 For local delivery diagnostics:
 

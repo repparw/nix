@@ -9,7 +9,7 @@ tags: [monitoring, grafana, cloud, alloy, alerting]
 
 # Grafana Cloud setup and alerting
 
-Grafana Cloud is the fleet's metrics and log backend. The parallel Epsilon receiver trial has completed. See [Fleet observability](monitoring.md) for collection, diagnostics and rollback.
+Grafana Cloud is the fleet's metrics and log backend. See [Fleet observability](monitoring.md) for collection, diagnostics and rollback.
 
 ## Stack and credentials
 
@@ -26,7 +26,7 @@ The dashboard source is `modules/aspects/monitoring/fleet-overview.json`. When i
 
 The Cloud stack has one independent Discord contact point, **Grafana Cloud Alerts**, posting to `#notifications` through its own webhook. The webhook URL is a runtime secret: do not commit it, and rotate it if it is exposed. Keep `disableResolveMessage: false` so recovery notifications are sent. The contact point shares the channel with workflow notifications, including deployment reports.
 
-Grafana's Discord notifier sends a new message on resolution; it cannot delete the original firing message. The pilot intentionally keeps that built-in behavior. A self-cleaning relay that stores the Discord message ID per alert fingerprint would be required if firing messages must disappear on resolution.
+Grafana's Discord notifier sends a new message on resolution; it cannot delete the original firing message. The contact point keeps that built-in behavior. A self-cleaning relay that stores the Discord message ID per alert fingerprint would be required if firing messages must disappear on resolution.
 
 A notification policy route sends alerts labeled `pilot=grafana-cloud` to that contact point. The route uses `group_by: ["host"]`, a 10s group wait, a 1m group interval, and a 4h repeat interval.
 

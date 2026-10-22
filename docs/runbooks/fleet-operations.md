@@ -44,7 +44,7 @@ CI.
 Grafana Cloud evaluates service probes, required systemd units, retained failed
 jobs, disk capacity and Btrfs allocation pressure, backup freshness and export
 completeness, deployment PAUSE, and Alpha's reboot requirement. See
-[Cloud setup and alerting](grafana-cloud-pilot.md) for the rules and notification
+[Cloud setup and alerting](grafana-cloud.md) for the rules and notification
 policy. The old periodic/event Discord health, disk and reboot senders are
 removed; Cloud sends both firing and recovery notifications.
 
