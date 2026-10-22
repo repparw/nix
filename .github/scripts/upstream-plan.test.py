@@ -306,6 +306,7 @@ class PlanTests(unittest.TestCase):
             "gamescope-vkroots", "moonshine-pr227", "sonarr-jellyfin",
             "t3code-nightly-v2",
             "t3code-stable010",
+            "t3code-browser-libs",
             "opencode-v2",
             "tridactyl-reader",
             "fsr4-rdna2",

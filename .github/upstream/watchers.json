@@ -32,6 +32,12 @@
     "input": "nixpkgs",
     "cleanup": "t3code-connect.patch"
   },
+  "t3code-browser-libs": {
+    "issue": 327,
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "t3code-browser-libs.patch"
+  },
   "t3code-split": {
     "mode": "post-lock",
     "input": "nixpkgs",

@@ -14,6 +14,14 @@ let
 in
 {
   den.aspects.ai.provides.t3code = {
+    nixos = {
+      # T3 launches the chrome-headless-shell it downloads at runtime. That is
+      # a generic Linux ELF, so NixOS needs the nix-ld interpreter stub before
+      # it can run at all; the browser libraries ride on the pin
+      # (NixOS/nixpkgs#575675, watcher t3code-browser-libs).
+      programs.nix-ld.enable = true;
+    };
+
     homeManager =
       {
         lib,

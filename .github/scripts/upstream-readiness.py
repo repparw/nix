@@ -23,6 +23,8 @@ WORKAROUNDS = {
     "t3code-split": ("modules/aspects/ai/t3code-split.nix", "t3code-server ="),
     "tasks-org": ("modules/aspects/gui/apps.nix", "tasksOrgPackage"),
     "t3code-server": ("modules/aspects/ai/t3code.nix", "services.t3code-web"),
+    "t3code-browser-libs": (
+        "modules/aspects/ai/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
     "cliamp-hm-module": ("modules/aspects/cliamp.nix", "hmCliampModule"),
     "cliamp-attach": ("modules/aspects/cliamp.nix", 'owner = "ryanrpj"'),
     "qbittorrent": ("modules/aspects/services/arr.nix", "qbittorrent-nox.overrideAttrs"),
@@ -153,6 +155,19 @@ def t3code_stable_tag(package_revision):
     # Never treat a nightly, preview, non-semver, or arbitrary revision as a
     # stable packaged release. This also rejects unexpected package shapes.
     return tag if re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) else None
+
+
+T3CODE_PACKAGE = "pkgs/by-name/t3/t3code/package.nix"
+
+
+def t3code_browser_wrapped(revision):
+    # The system-wide list is only redundant when upstream's t3code wrapper
+    # itself prefixes LD_LIBRARY_PATH with the browser library set
+    # (NixOS/nixpkgs#575675). A merge that merely touches the package would
+    # leave the downloaded headless browser broken after cleanup.
+    text = source("NixOS/nixpkgs", T3CODE_PACKAGE, revision)
+    return ("LD_LIBRARY_PATH" in text and
+            all(library in text for library in ("libgbm", "nss", "libxkbcommon")))
 
 
 def t3code_nightly_v2_status(lock, minimum_version=(0, 0, 0)):
@@ -317,6 +332,14 @@ def detect(name, lock):
         if not pr.get("merged"):
             return "waiting-upstream"
         return "PINNED-READY" if contains(repo, pr["merge_commit_sha"], pin(lock, input_name)) else "merged-not-pinned"
+    if name == "t3code-browser-libs":
+        pr = api("repos/NixOS/nixpkgs/pulls/575675")
+        if not pr.get("merged"):
+            return "waiting-upstream"
+        revision = pin(lock, "nixpkgs")
+        if not contains("NixOS/nixpkgs", pr["merge_commit_sha"], revision):
+            return "merged-not-pinned"
+        return "PINNED-READY" if t3code_browser_wrapped(revision) else "waiting-source"
     revision = pin(lock, "nixpkgs")
     if name == "qbittorrent":
         repo, number, package = "qbittorrent/qBittorrent", 24055, "qbittorrent"
