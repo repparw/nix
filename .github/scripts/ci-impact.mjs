@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 
 const documentation = 'formatting agent-docs';
 const lightweight = 'formatting sops-files change-detection agent-docs check-flake-file deploy-schema ci-workflow';
-const configuration = 'generated-shellcheck fleet-cli service-definitions host-persistence pi-image-configuration backup-exports monitoring-fleet btrfs-health fleet-failed-units pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage';
+const configuration = 'generated-shellcheck fleet-cli service-definitions host-persistence pi-image-configuration backup-exports monitoring-fleet btrfs-health fleet-failed-units pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage hermes-chief-of-staff';
 
 const full = reason => ({
   runNeovim: true,
