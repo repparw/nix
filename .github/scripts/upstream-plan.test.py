@@ -309,6 +309,7 @@ class PlanTests(unittest.TestCase):
             "opencode-v2",
             "tridactyl-reader",
             "fsr4-rdna2",
+            "nodejs-security",
         }
         self.assertEqual(set(self.registry), expected)
 
