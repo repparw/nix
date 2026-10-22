@@ -169,8 +169,7 @@
             "/home/containers/backup"
             "/home/repparw/Pictures"
             "/home/repparw/Documents"
-            "${stateRoot}/offsite/.config"
-            "${stateRoot}/offsite/.local"
+            "${stateRoot}/offsite"
           ];
           excludes = [
             "${config.users.users.repparw.home}/.config/heroic/**"
