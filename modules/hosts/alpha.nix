@@ -164,6 +164,11 @@
           "jellyfin-backup"
         ];
 
+        nix.settings = {
+          min-free = 100 * 1024 * 1024 * 1024;
+          max-free = 130 * 1024 * 1024 * 1024;
+        };
+
         modules.backup = {
           paths = [
             "/home/containers/backup"
