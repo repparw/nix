@@ -18,14 +18,16 @@ class MetricsTests(unittest.TestCase):
     def test_cloud_policies_preserve_legacy_thresholds_and_fail_closed(self):
         cases = []
         def scenario(rule, values, expected, labels, evaluation="4m", interval="1m"):
+            output_labels = {k: v for k, v in labels.items() if k != "sleeping"}
             label_text = "{" + ",".join(f"{k}={json.dumps(v)}" for k, v in sorted(labels.items())) + "}"
             cases.append({"interval": interval, "input_series": [
                 {"series": name + label_text, "values": f"{value}+0x32"} for name, value in values.items()
             ], "promql_expr_test": [{"expr": "(" + rules["fleet_cloud_" + rule]["expr"] + ") > bool 0",
-                "eval_time": evaluation, "exp_samples": [{"labels": label_text, "value": expected}]}]})
+                "eval_time": evaluation, "exp_samples": [{"labels": "{" + ",".join(f"{k}={json.dumps(v)}" for k, v in sorted(output_labels.items())) + "}", "value": expected}]}]})
         disk = {"host": "epsilon", "mountpoint": "/persist", "sleeping": "false"}
         values = {"fleet_disk_used_percent": 80, "fleet_disk_warning_percent": 70, "fleet_disk_critical_percent": 85}
         scenario("disk_warning", values, 1, disk)
+        scenario("disk_warning", values, 1, disk | {"sleeping": "true"})
         scenario("disk_critical", values, 0, disk)
         scenario("disk_critical", values | {"fleet_disk_used_percent": 86}, 1, disk)
         allocation = {"fleet_btrfs_metadata_used_percent": 80, "fleet_btrfs_unallocated_bytes": 1073741824}
