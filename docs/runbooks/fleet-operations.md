@@ -78,6 +78,26 @@ sudo cat /var/lib/fleet-unit-state/jellyfin-backup.service
 Repair and rerun the underlying job to recover its alert. Removing evidence
 manually only acknowledges the failure; it does not establish backup success.
 
+## Storage maintenance
+
+Nix collects unreferenced store paths during builds when free space falls below
+`min-free`, stopping at `max-free` or when no garbage remains. The defaults are
+3 and 6 GiB. Alpha uses 100 and 130 GiB to reserve build space before its root
+filesystem reaches the disk-warning threshold. This collection preserves GC
+roots. The existing weekly policy still removes generations older than 21 days.
+
+Alpha's daily `btrfs-health-root` job tries reclamation when unallocated space
+falls below 10 GiB. It first releases empty data and metadata chunks. If pressure
+remains, it can relocate at most eight data chunks that are at most 25% occupied.
+That pass requires at least 20 GiB estimated free space, metadata usage below
+97%, and an unused global reserve. The job reads allocation statistics again
+after each pass and retains a failure if the health thresholds remain breached.
+Its work is limited by chunk count rather than killing the balance client on a
+timeout, which could leave the kernel operation running.
+
+Automatic reclamation targets the root filesystem only. It does not wake or
+balance media disks, delete media, or increase the relocation limit after failure.
+
 ## Offsite backups (`restic-backups-offsite.timer`, daily 01:00–01:15)
 
 Run the same offsite operation as the timer, including export preparation:
