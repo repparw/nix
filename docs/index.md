@@ -31,7 +31,6 @@ files instead of copying module contents.
 
 - [Diagnose fleet observability](runbooks/monitoring.md)
 - [Configure Grafana Cloud](runbooks/grafana-cloud.md)
-- [Maintain page watchers](runbooks/change-detection-watchers.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
 - [Update rollback](runbooks/update-rollback.md)
 - [Fleet health, backups, and deployment](runbooks/fleet-operations.md)
@@ -56,6 +55,7 @@ files instead of copying module contents.
 - [Verify NixOS configuration changes](../.agents/skills/verify-nixos-config/SKILL.md)
 - [Operate the running fleet](../.agents/skills/fleet-operations/SKILL.md)
 - [Watch for an upstream fix](../.agents/skills/watch-upstream/SKILL.md)
+- [Manage page watchers](../.agents/skills/manage-page-watchers/SKILL.md)
 - [Domain docs](agents/domain.md)
 - [GitHub issue tracker](agents/issue-tracker.md)
 - [Triage labels](agents/triage-labels.md)
