@@ -156,6 +156,38 @@ production Discord tool exposure still needs the post-activation probe. Forced
 compression, abrupt-crash recovery, provider exhaustion, and end-to-end Discord
 responses remain untested. Existing provider credentials were not rotated.
 
+## Nix validation evidence
+
+Implementation commit `691a0d28d` evaluated Epsilon's full toplevel and the
+container's effective settings without updating the lockfile. The x86-64
+`epsilon` check is evaluation with package stubs, not a full system build.
+Local checks passed for `epsilon`, `pre-commit`, `formatting`, `agent-docs`,
+`ci-workflow`, `hermes-chief-of-staff`, `hermes-crash-triage`, and
+`hermes-package-triage`. The backup check recovered committed content from an
+open WAL database and checked privacy and destination guards. All seven CI
+impact-selection tests also passed.
+
+The local full-system attempt could not build ARM derivations, and local daemon
+policy refused an ad-hoc remote-builder setting. No trust settings were changed.
+Instead, `nix copy --derivation --to ssh-ng://epsilon` transferred the evaluated
+derivation; ordinary `nix-store --realise` on Epsilon built it natively.
+
+The full successful output is
+`/nix/store/y1fsncbqnq31kf3c6nbd415nj3fqbq42-nixos-system-epsilon-26.11.20261014.55bfb4d`.
+It was built without activating or changing the system profile. Generated files
+were built at `/nix/store/71mdm1kpwzvc4am5h613qc1k7hg5vvap-hermes-documents`;
+SHA-256 comparisons matched all three repository inputs. The generated
+`/nix/store/l78c02lb009l3zilygiry06j7gmxkisz-hermes-config.yaml` contains the
+expected toolsets, native memory, no coordinator/worker fallback, disabled
+Kanban dispatch, and the explicit compression/cron routes.
+
+`nix store diff-closures /run/current-system BUILT-SYSTEM` on Epsilon reported
+only the Hermes configuration closure, 10.8 KiB. The running gateway remained
+active after the build. The audit's Node 26 observation describes the live
+container process, while the host already has the newer package closure.
+Activation must still reconcile the live container and be checked in an idle
+window. GitHub CI is separate from these local and native checks.
+
 ## Recover without losing newer history
 
 For a policy rollback, revert the declarative settings/SOUL/skill and activate the
