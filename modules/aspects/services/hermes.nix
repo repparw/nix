@@ -21,6 +21,8 @@
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         crashTriage = import ./hermes-crash/_package.nix { inherit pkgs; };
         packageTriage = import ./hermes-package/_package.nix { inherit pkgs; };
+        # Containers have their own package set; select the host's security overlay.
+        hermesNodejs = pkgs.nodejs_24;
       in
       {
         environment.systemPackages = [
@@ -114,6 +116,7 @@
               services.hermes-agent = {
                 enable = true;
                 package = pkgs.callPackage ../../_packages/hermes-agent.nix {
+                  nodejs_24 = hermesNodejs;
                   upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
                 };
                 environmentFiles = [
@@ -191,7 +194,7 @@
                 extraPackages = with pkgs; [
                   curl
                   ffmpeg
-                  nodejs
+                  hermesNodejs
                   ripgrep
                   (python313.withPackages (ps: [ python313Packages.ddgs ]))
                 ];

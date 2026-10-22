@@ -22,7 +22,7 @@ upstream.override {
           npmPath: npmArgs:
           callPackage npmPath (
             npmArgs
-            // lib.optionalAttrs (builtins.baseNameOf npmPath == "npm-12-0-2.nix") {
+            // lib.optionalAttrs (builtins.baseNameOf npmPath == "npm-pinned.nix") {
               nodejs_26 = nodejs;
             }
           );

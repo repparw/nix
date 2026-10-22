@@ -16,6 +16,7 @@
         monitoring._.agent
         nixvim
         nixpkgs
+        nodejs-security
         nix
         system
       ];

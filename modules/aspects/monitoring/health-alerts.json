@@ -29,24 +29,24 @@
   {
     "uid": "fleet_cloud_disk_warning",
     "title": "Disk space warning",
-    "expr": "(fleet_disk_used_percent >= bool fleet_disk_warning_percent) * (fleet_disk_used_percent < bool fleet_disk_critical_percent)",
+    "expr": "(max without (sleeping) (fleet_disk_used_percent) >= bool max without (sleeping) (fleet_disk_warning_percent)) * (max without (sleeping) (fleet_disk_used_percent) < bool max without (sleeping) (fleet_disk_critical_percent))",
     "pending": "5m",
     "severity": "warning",
     "brief": "Disk {{ $labels.mountpoint }} \u00b7 {{ printf \"%.0f\" $values.D.Value }}% used (limit {{ printf \"%.0f\" $values.E.Value }}%).",
     "recovery": "Disk {{ $labels.mountpoint }} \u00b7 {{ printf \"%.0f\" $values.D.Value }}% used.",
-    "valueExpr": "fleet_disk_used_percent",
-    "thresholdExpr": "fleet_disk_warning_percent"
+    "valueExpr": "max without (sleeping) (fleet_disk_used_percent)",
+    "thresholdExpr": "max without (sleeping) (fleet_disk_warning_percent)"
   },
   {
     "uid": "fleet_cloud_disk_critical",
     "title": "Disk space critical",
-    "expr": "fleet_disk_used_percent >= bool fleet_disk_critical_percent",
+    "expr": "max without (sleeping) (fleet_disk_used_percent) >= bool max without (sleeping) (fleet_disk_critical_percent)",
     "pending": "5m",
     "severity": "critical",
     "brief": "Disk {{ $labels.mountpoint }} \u00b7 {{ printf \"%.0f\" $values.D.Value }}% used (limit {{ printf \"%.0f\" $values.E.Value }}%).",
     "recovery": "Disk {{ $labels.mountpoint }} \u00b7 {{ printf \"%.0f\" $values.D.Value }}% used.",
-    "valueExpr": "fleet_disk_used_percent",
-    "thresholdExpr": "fleet_disk_critical_percent"
+    "valueExpr": "max without (sleeping) (fleet_disk_used_percent)",
+    "thresholdExpr": "max without (sleeping) (fleet_disk_critical_percent)"
   },
   {
     "uid": "fleet_cloud_disk_missing",
@@ -60,7 +60,7 @@
   {
     "uid": "fleet_cloud_btrfs_warning",
     "title": "Btrfs allocation pressure",
-    "expr": "(fleet_btrfs_metadata_used_percent >= bool 85) * (fleet_btrfs_unallocated_bytes < bool 10737418240) * (fleet_btrfs_unallocated_bytes >= bool 2147483648)",
+    "expr": "(max without (sleeping) (fleet_btrfs_metadata_used_percent) >= bool 85) * (max without (sleeping) (fleet_btrfs_unallocated_bytes) < bool 10737418240) * (max without (sleeping) (fleet_btrfs_unallocated_bytes) >= bool 2147483648)",
     "pending": "5m",
     "severity": "warning",
     "brief": "Btrfs {{ $labels.mountpoint }} metadata is crowded and allocation headroom is low.",
@@ -69,7 +69,7 @@
   {
     "uid": "fleet_cloud_btrfs_critical",
     "title": "Btrfs allocation critical",
-    "expr": "fleet_btrfs_unallocated_bytes < bool 2147483648",
+    "expr": "max without (sleeping) (fleet_btrfs_unallocated_bytes) < bool 2147483648",
     "pending": "5m",
     "severity": "critical",
     "brief": "Btrfs {{ $labels.mountpoint }} has less than 2 GiB unallocated.",

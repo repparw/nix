@@ -3,6 +3,7 @@
   lib,
   stdenv,
   bun,
+  bunForInstall ? bun,
   darwin,
   fetchFromGitHub,
   installShellFiles,
@@ -36,7 +37,7 @@ let
       ];
 
       nativeBuildInputs = [
-        bun
+        bunForInstall
         writableTmpDirAsHomeHook
       ];
 
