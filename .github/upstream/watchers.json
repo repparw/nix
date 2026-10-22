@@ -21,7 +21,6 @@
     "input": "nixpkgs",
     "predicate": "nixpkgs-commit-and-channel",
     "fix_commit": "6b157b9637b15f44d1f07065cdfd681166014455",
-    "cleanup": "authelia-override",
     "validation": [
       "host-eval",
       "native-arm-authelia"

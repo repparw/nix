@@ -30,9 +30,15 @@ The registry includes the stable T3 orchestrator-v2 gate and the
 go to #209 and #229 respectively. Package readiness does not complete either
 fleet runtime migration.
 
-Authelia retains its atomic lock planner and pilot publisher. Independent
-`post-lock` contracts publish separate review-required PRs using the recipes
-in `cleanup/`. Each candidate starts at the same checked-out main revision.
+Authelia's pnpm-hash override was retired in #237, and the atomic lock planner
+and pilot publisher stay armed anyway: `upstream-plan.py` requires exactly one
+`atomic` contract, so `authelia-pnpm-hash` remains in `watchers.json`, the
+detector reports `completed` while the override marker is absent from
+`modules/_services/authelia.nix`, and its cleanup runs through the byte-exact
+module handler in `upstream-plan.py` rather than a recipe in `cleanup/`.
+Independent `post-lock` contracts publish separate review-required PRs using
+the recipes in `cleanup/`. Each candidate starts at the same checked-out main
+revision.
 `git apply --check` must pass before publication. A conflict requires review.
 One failed recipe does not prevent other watchers from processing.
 
