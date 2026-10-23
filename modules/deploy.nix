@@ -236,6 +236,22 @@ in
         program = lib.getExe pkgs.deploy-rs;
         meta.description = "Deploy a configured node with deploy-rs";
       };
+      # Local activations of an already-validated tree do not need deploy-rs to
+      # repeat its full flake-check pass: that is the same NixOS evaluation CI
+      # runs, and it costs minutes before every activation. `deploy` skips it;
+      # `deploy-rs` above keeps the checked path for an unvalidated tree.
+      apps.deploy = {
+        type = "app";
+        program = lib.getExe (
+          pkgs.writeShellApplication {
+            name = "deploy";
+            text = ''
+              exec ${lib.getExe pkgs.deploy-rs} "$@" --skip-checks
+            '';
+          }
+        );
+        meta.description = "Deploy a configured node, skipping deploy-rs' redundant flake-check pass";
+      };
       apps.fleet-update = {
         type = "app";
         program = lib.getExe (mkFleetUpdate pkgs);

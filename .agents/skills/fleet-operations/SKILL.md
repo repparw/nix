@@ -37,6 +37,11 @@ Local-tree activations go through the plain nix CLI and deploy-rs directly
 when the user has authorized activation. Do not use them as part of
 `verify-nixos-config`.
 
+For a tree that already passed CI (or the `verify-nixos-config` build), use
+`nix run .#deploy -- .#<host>`: it invokes deploy-rs with `--skip-checks`, so
+activation does not repeat the full flake-check pass that CI already ran.
+Use `.#deploy-rs` instead when the tree has not been validated.
+
 The controller-side production deployment transaction remains the separate
 `fleet-update deploy` command documented in the
 [fleet runbook](../../../docs/runbooks/fleet-operations.md). Do not substitute
