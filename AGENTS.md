@@ -22,6 +22,8 @@ running-fleet inspection or an authorized activation, use
 [fleet-operations](.agents/skills/fleet-operations/SKILL.md). For an external
 change blocked on an upstream input, use
 [watch-upstream](.agents/skills/watch-upstream/SKILL.md).
+For web-page change detection in the automations service, use
+[manage-page-watchers](.agents/skills/manage-page-watchers/SKILL.md).
 
 ### Issue tracker
 
