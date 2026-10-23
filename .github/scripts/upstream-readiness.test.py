@@ -217,6 +217,37 @@ class Readiness(unittest.TestCase):
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")
             detect.assert_not_called()
 
+    def test_nodejs_security_requires_node_shared_deps_and_bun(self):
+        bun = {"merged": True, "merge_commit_sha": "bun-merge-sha"}
+        # Node, Brotli, c-ares and the Bun bump must all be contained by the
+        # pin: the cleanup retires the whole overlay family in one candidate.
+        for results in ([False], [True, False], [True, True, False], [True, True, True, False]):
+            with self.subTest(results=results), \
+                    patch.object(watch, "api", return_value=bun), \
+                    patch.object(watch, "contains", side_effect=results):
+                self.assertEqual(watch.detect("nodejs-security", LOCK), "merged-not-pinned")
+        with patch.object(watch, "api", return_value=bun), \
+                patch.object(watch, "contains", return_value=True) as probe:
+            self.assertEqual(watch.detect("nodejs-security", LOCK), "PINNED-READY")
+            self.assertEqual(probe.call_count, 4)
+        with patch.object(watch, "api", return_value={"merged": False, "merge_commit_sha": "x"}):
+            self.assertEqual(watch.detect("nodejs-security", LOCK), "waiting-upstream")
+        with patch.object(watch, "api", side_effect=ValueError("missing ancestry")):
+            self.assertTrue(watch.inspect("nodejs-security", LOCK).startswith("unavailable"))
+
+    def test_nodejs_security_cleanup_completion_reads_the_aspect(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "modules/aspects").mkdir(parents=True)
+            aspect = root / watch.WORKAROUNDS["nodejs-security"][0]
+            with patch.object(watch, "ROOT", root), patch.object(watch, "detect") as detect:
+                self.assertEqual(watch.inspect("nodejs-security", LOCK), "completed")
+                detect.assert_not_called()
+            aspect.write_text("{ den.aspects.nodejs-security.nixos.nixpkgs.overlays = []; }")
+            with patch.object(watch, "ROOT", root), \
+                    patch.object(watch, "detect", return_value="merged-not-pinned"):
+                self.assertEqual(watch.inspect("nodejs-security", LOCK), "merged-not-pinned")
+
 
     def test_t3code_cleanup_completion_preserves_permanent_aspects(self):
         for name in ("t3code-connect", "t3code-split"):

@@ -159,6 +159,13 @@ def validate(name, architecture):
         require(match and tuple(int(part) for part in match.groups()) >= detector.T3CODE_STABLE_MIN_VERSION,
                 f"pinned t3code {version} is below the bridge version")
         build("alpha.config.home-manager.users.repparw.programs.t3code.package")
+    elif name == "nodejs-security":
+        # The retired overlay family must be absent, and the fleet package
+        # must build against the pinned Bun and Node.
+        residual = json.loads(command("nix", "eval", "--json", "--no-update-lock-file",
+                                      ".#nixosConfigurations.alpha.pkgs", "--apply", "p: p ? bun-security"))
+        require(not residual, "bun-security must be retired from the fleet packages")
+        build("alpha.pkgs.opencode")
     else:
         raise ValueError(f"no package validation for {name}")
 

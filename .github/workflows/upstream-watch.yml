@@ -59,4 +59,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          UPSTREAM_DISCORD_WEBHOOK: ${{ secrets.UPSTREAM_DISCORD_WEBHOOK }}
         run: python3 .github/scripts/upstream-publish.py --readiness "$RUNNER_TEMP/upstream-readiness.json"

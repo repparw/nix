@@ -1,0 +1,128 @@
+diff --git a/modules/_packages/bun-security.nix b/modules/_packages/bun-security.nix
+deleted file mode 100644
+index da24701ba..000000000
+--- a/modules/_packages/bun-security.nix
++++ /dev/null
+@@ -1,26 +0,0 @@
+-{
+-  bun,
+-  fetchurl,
+-  stdenv,
+-}:
+-# Bun 1.4.4 pins Brotli 1.2.1. OpenCode embeds the compiler's runtime.
+-bun.overrideAttrs (_: {
+-  version = "1.4.4";
+-  src = fetchurl {
+-    url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.4/${
+-      {
+-        x86_64-linux = "bun-linux-x64-baseline.zip";
+-        aarch64-linux = "bun-linux-aarch64.zip";
+-        aarch64-darwin = "bun-darwin-aarch64.zip";
+-      }
+-      .${stdenv.hostPlatform.system}
+-    }";
+-    hash =
+-      {
+-        x86_64-linux = "sha256-4ERutVmVdy65iUvrrppr42jZhai5Jx7hJEhvmUbu3XY=";
+-        aarch64-linux = "sha256-uqa7NvUdblhWHgK76oJQOKnfRU9nPW13bou/hvjHhQ4=";
+-        aarch64-darwin = "sha256-wkDX8My5DCY6hJ/NsJt+5iYw2SE0jtaq/ahrnVd7xRA=";
+-      }
+-      .${stdenv.hostPlatform.system};
+-  };
+-})
+diff --git a/modules/_packages/nodejs-security.nix b/modules/_packages/nodejs-security.nix
+deleted file mode 100644
+index 75ab52038..000000000
+--- a/modules/_packages/nodejs-security.nix
++++ /dev/null
+@@ -1,45 +0,0 @@
+-{
+-  callPackage,
+-  path,
+-  fetchurl,
+-  brotli,
+-  c-ares,
+-  openssl,
+-  python3,
+-  nodejs-slim_24,
+-}:
+-let
+-  secureBrotli = brotli.overrideAttrs (old: {
+-    patches = old.patches ++ [
+-      (fetchurl {
+-        url = "https://github.com/google/brotli/commit/0ed4268a4401abcb4472096340477cf4af7d1a2b.patch?full_index=1";
+-        hash = "sha256-1vliUJAAIj3vcGKVgim9CEV+XgMuftDR2U+3kLBUsfw=";
+-      })
+-    ];
+-  });
+-  secureCares = c-ares.overrideAttrs (_: {
+-    version = "1.34.9";
+-    src = fetchurl {
+-      url = "https://github.com/c-ares/c-ares/releases/download/v1.34.9/c-ares-1.34.9.tar.gz";
+-      hash = "sha256-k2S3ChLrWaBoMPtIjZNX+QEA3/DZiyPqNZOhg9Q+by8=";
+-    };
+-  });
+-  secureOpenssl = openssl.overrideAttrs (_: {
+-    version = "3.5.9";
+-    src = fetchurl {
+-      url = "https://github.com/openssl/openssl/releases/download/openssl-3.5.9/openssl-3.5.9.tar.gz";
+-      sha256 = "603f5602e2eef00d77fbd429d34dcd5822bb301757a1bc9cdb24c670f1eb859a";
+-    };
+-  });
+-in
+-(callPackage (path + "/pkgs/development/web/nodejs/nodejs.nix") {
+-  python = python3;
+-  brotli = secureBrotli;
+-  c-ares = secureCares;
+-  openssl = secureOpenssl;
+-})
+-  {
+-    version = "24.22.1";
+-    sha256 = "4f5379796280cdaeb0c2f358fd04b6a16cc4fb7dfa83b5a8c91a9d963b435231";
+-    inherit (nodejs-slim_24) patches;
+-  }
+diff --git a/modules/aspects/ai/opencode.nix b/modules/aspects/ai/opencode.nix
+index bb5a5274b..9ae5891dd 100644
+--- a/modules/aspects/ai/opencode.nix
++++ b/modules/aspects/ai/opencode.nix
+@@ -4,7 +4,7 @@
+     nixos.nixpkgs.overlays = [
+       (final: _prev: {
+         opencode = final.callPackage ../../_packages/opencode.nix {
+-          bun = final.bun-security;
++          bun = final.bun;
+           bunForInstall = final.bun;
+         };
+       })
+diff --git a/modules/aspects/nodejs-security.nix b/modules/aspects/nodejs-security.nix
+deleted file mode 100644
+index b1027e05d..000000000
+--- a/modules/aspects/nodejs-security.nix
++++ /dev/null
+@@ -1,14 +0,0 @@
+-{ den, ... }:
+-{
+-  den.aspects.nodejs-security.nixos.nixpkgs.overlays = [
+-    (_final: prev: {
+-      bun-security = prev.callPackage ../_packages/bun-security.nix { };
+-      # Nixpkgs#576777 and #576792 have not reached our nixos-unstable pin.
+-      # Keep the security dependencies private to Node to avoid a fleet-wide
+-      # OpenSSL/Brotli rebuild. Electron bundles its own libraries separately.
+-      nodejs-slim_24 = prev.callPackage ../_packages/nodejs-security.nix {
+-        inherit (prev) nodejs-slim_24;
+-      };
+-    })
+-  ];
+-}
+diff --git a/modules/defaults.nix b/modules/defaults.nix
+index d0ee86e8c..fffd06500 100644
+--- a/modules/defaults.nix
++++ b/modules/defaults.nix
+@@ -16,7 +16,6 @@
+         monitoring._.agent
+         nixvim
+         nixpkgs
+-        nodejs-security
+         nix
+         system
+       ];

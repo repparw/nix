@@ -160,34 +160,96 @@ def publish(name, spec, repo):
             run("git", "worktree", "remove", "--force", str(candidate))
 
 
-def notify(name, spec, repo, status):
-    issue = spec.get("issue")
-    if not isinstance(issue, int):
-        raise ValueError("notification requires a tracked issue")
-    marker = f"<!-- upstream-watch:{name}:{status} -->"
-    comments = gh_json("api", "--paginate", "--slurp",
-                       f"repos/{repo}/issues/{issue}/comments?per_page=100")
-    if any(marker in comment.get("body", "") for page in comments for comment in page):
-        return {"issue": issue, "status": "already-notified"}
+NOTIFY_STATE_REF = "automation/upstream-notify-state"
+
+
+def discord_post(webhook, content):
+    # The webhook never appears in argv: curl reads it from a private config.
     with tempfile.TemporaryDirectory(prefix="upstream-notify-") as directory:
-        body = Path(directory) / "body.md"
-        if name == "fsr4-rdna2" and status.startswith("upstream-review-required:"):
-            tag = status.split(":", 1)[1]
-            if not re.fullmatch(r"GE-Proton[0-9]+-[0-9]+", tag):
-                raise ValueError("invalid GE candidate release")
-            message = (f"{marker}\nGE-Proton has relevant FSR4/RDNA2 release changes: "
-                       f"https://github.com/GloriousEggroll/proton-ge-custom/releases/tag/{tag}\n\n"
-                       "Review the runner, AMD model and RADV requirements and test on Alpha's RX 6700 XT. "
-                       "This is a candidate, not confirmed support or pinned readiness. "
-                       "Record the tested upstream support commit in watchers.json to arm exact-ancestry "
-                       "tracking through the channel and root pin. No global FSR setting was changed.\n")
-        else:
-            message = (f"{marker}\nCI detected `{status}` for `{name}` on main. "
-                        "The checked-out pin contains the upstream fix. "
-                        "Deployment and runtime completion remain subject to their own checks.\n")
-        body.write_text(message)
-        run("gh", "issue", "comment", str(issue), "--repo", repo, "--body-file", str(body))
-    return {"issue": issue, "status": "notified"}
+        payload = Path(directory) / "payload.json"
+        payload.write_text(json.dumps({"content": content}))
+        config = Path(directory) / "curl-config"
+        config.write_text(f'url = "{webhook}"\n'
+                          'header = "Content-Type: application/json"\n'
+                          f'data-binary = "@{payload}"\n')
+        subprocess.run(["curl", "--fail", "--silent", "--show-error", "--max-time", "30",
+                        "--config", str(config)],
+                       check=True, capture_output=True, text=True, timeout=120)
+
+
+def notify_state():
+    listing = run("git", "ls-remote", "origin", f"refs/heads/{NOTIFY_STATE_REF}")
+    if not listing:
+        return None, {}
+    run("git", "fetch", "--quiet", "--force", "origin",
+        f"refs/heads/{NOTIFY_STATE_REF}:refs/heads/{NOTIFY_STATE_REF}")
+    return listing.split()[0], json.loads(
+        run("git", "show", f"refs/heads/{NOTIFY_STATE_REF}:state.json"))
+
+
+def record_notify_state(previous, state):
+    # Single-commit state ref, mirroring the atomic-cleanup provenance ref.
+    # A concurrent writer that wins the lease also delivered its notice and
+    # the next run converges, so a lost state update is tolerated.
+    with tempfile.TemporaryDirectory(prefix="upstream-notify-state-") as directory:
+        state_file = Path(directory) / "state.json"
+        state_file.write_text(json.dumps(state, sort_keys=True, indent=2) + "\n")
+        environment = {**os.environ, "GIT_INDEX_FILE": str(Path(directory) / "index")}
+        blob = run("git", "hash-object", "-w", str(state_file))
+        run("git", "read-tree", "--empty", env=environment)
+        run("git", "update-index", "--add", "--cacheinfo", f"100644,{blob},state.json",
+            env=environment)
+        tree = run("git", "write-tree", env=environment)
+        identity = {
+            "GIT_AUTHOR_NAME": "github-actions[bot]",
+            "GIT_AUTHOR_EMAIL": "41898282+github-actions[bot]@users.noreply.github.com",
+            "GIT_COMMITTER_NAME": "github-actions[bot]",
+            "GIT_COMMITTER_EMAIL": "41898282+github-actions[bot]@users.noreply.github.com",
+        }
+        commit = run("git", "commit-tree", tree, "-m", "upstream-watch: notify state",
+                     env={**environment, **identity})
+        expected = previous or ""
+        run("git", "push", f"--force-with-lease=refs/heads/{NOTIFY_STATE_REF}:{expected}",
+            "origin", f"{commit}:refs/heads/{NOTIFY_STATE_REF}")
+
+
+def notify(name, spec, repo, status):
+    """Deliver a ready notice to Discord once per status change.
+
+    The upstream-watch run summary carries the status every run; the ping
+    exists for time-sensitive candidates. Delivery state lives on the
+    automation/upstream-notify-state ref instead of per-issue comment
+    markers, so no tracked issue is involved. A missing or failing webhook
+    fails the run: a ready notice must not stay silent.
+    """
+    webhook = os.environ.get("UPSTREAM_DISCORD_WEBHOOK", "").strip()
+    if not webhook:
+        raise ValueError("UPSTREAM_DISCORD_WEBHOOK is not configured")
+    previous, state = notify_state()
+    if state.get(name) == status:
+        return {"status": "already-notified"}
+    if name == "fsr4-rdna2" and status.startswith("upstream-review-required:"):
+        tag = status.split(":", 1)[1]
+        if not re.fullmatch(r"GE-Proton[0-9]+-[0-9]+", tag):
+            raise ValueError("invalid GE candidate release")
+        content = (f"GE-Proton has relevant FSR4/RDNA2 release changes: "
+                   f"https://github.com/GloriousEggroll/proton-ge-custom/releases/tag/{tag}\n\n"
+                   "Review the runner, AMD model and RADV requirements and test on Alpha's RX 6700 XT. "
+                   "This is a candidate, not confirmed support or pinned readiness. "
+                   "Record the tested upstream support commit in watchers.json to arm exact-ancestry "
+                   "tracking through the channel and root pin. No global FSR setting was changed.")
+    else:
+        content = (f"CI detected `{status}` for `{name}` on main: the checked-out pin "
+                   "contains the upstream fix. Deployment and runtime completion remain "
+                   "subject to their own checks. Details: "
+                   f"https://github.com/{repo}/actions/workflows/upstream-watch.yml")
+    discord_post(webhook, content)
+    state[name] = status
+    try:
+        record_notify_state(previous, state)
+    except subprocess.CalledProcessError:
+        pass
+    return {"status": "notified"}
 
 
 def sweep(registry, readiness, repo):

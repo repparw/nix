@@ -2,6 +2,7 @@
 """Exercise publication against a real disposable Git remote and a fake GitHub API."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -42,7 +43,7 @@ class Publication(unittest.TestCase):
         self.closed = []
         self.runs = {}
         self.dispatches = []
-        self.comments = []
+        self.posts = []
         self.automerges = []
         original = publisher.run
 
@@ -65,19 +66,18 @@ class Publication(unittest.TestCase):
                 expected = args[[i for i, a in enumerate(args) if a.startswith("expected_sha=")][0]].split("=", 1)[1]
                 self.runs[args[2]] = self.runs.get(args[2], []) + [{"headSha": expected}]
                 return ""
-            if args[0] == "api":
-                return json.dumps([self.comments])
             if args[:2] == ["pr", "merge"]:
                 self.automerges.append(args)
-                return ""
-            if args[:2] == ["issue", "comment"]:
-                self.comments.append({"body": Path(args[args.index("--body-file") + 1]).read_text()})
                 return ""
             raise AssertionError(arguments)
 
         self.addCleanup(patch.stopall)
         patch.object(publisher, "ROOT", self.root).start()
         patch.object(publisher, "run", execute).start()
+        patch.object(publisher, "discord_post",
+                     lambda webhook, content: self.posts.append(content)).start()
+        os.environ["UPSTREAM_DISCORD_WEBHOOK"] = "https://discord.invalid/webhook"
+        self.addCleanup(os.environ.pop, "UPSTREAM_DISCORD_WEBHOOK", None)
         self.contract = {"mode": "post-lock", "cleanup": "fixture.patch"}
 
     def git(self, *args):
@@ -88,19 +88,19 @@ class Publication(unittest.TestCase):
         return publisher.publish("fixture", self.contract, "fixture/repo")
 
     def test_fsr_candidates_notify_once_without_claiming_pin_readiness(self):
-        registry = {"fsr4-rdna2": {"mode": "notify-only", "issue": 323}}
+        registry = {"fsr4-rdna2": {"mode": "notify-only"}}
         readiness = {"fsr4-rdna2": "upstream-review-required:GE-Proton11-12"}
         first, failed = publisher.sweep(registry, readiness, "fixture/repo")
         self.assertFalse(failed)
         self.assertEqual(first["fsr4-rdna2"]["status"], "notified")
-        self.assertIn("not confirmed support", self.comments[0]["body"])
-        self.assertNotIn("pin contains the upstream fix", self.comments[0]["body"])
+        self.assertIn("not confirmed support", self.posts[0])
+        self.assertNotIn("pin contains the upstream fix", self.posts[0])
         second, failed = publisher.sweep(registry, readiness, "fixture/repo")
         self.assertFalse(failed)
         self.assertEqual(second["fsr4-rdna2"]["status"], "already-notified")
-        self.assertEqual(len(self.comments), 1)
+        self.assertEqual(len(self.posts), 1)
         publisher.sweep(registry, {"fsr4-rdna2": "upstream-review-required:GE-Proton11-13"}, "fixture/repo")
-        self.assertEqual(len(self.comments), 2)
+        self.assertEqual(len(self.posts), 2)
         self.assertEqual(self.prs, [])
         self.assertEqual(self.dispatches, [])
 
@@ -264,10 +264,22 @@ class Publication(unittest.TestCase):
         self.assertEqual(result["broken"]["status"], "needs-attention (FileNotFoundError)")
 
     def test_notification_is_durable_and_deduplicated(self):
-        contract = {"issue": 7}
-        self.assertEqual(publisher.notify("fixture", contract, "fixture/repo", "PINNED-READY")["status"], "notified")
-        self.assertEqual(publisher.notify("fixture", contract, "fixture/repo", "PINNED-READY")["status"], "already-notified")
-        self.assertEqual(len(self.comments), 1)
+        self.assertEqual(publisher.notify("fixture", {}, "fixture/repo", "PINNED-READY")["status"], "notified")
+        self.assertIn("PINNED-READY", self.posts[0])
+        self.assertEqual(publisher.notify("fixture", {}, "fixture/repo", "PINNED-READY")["status"], "already-notified")
+        self.assertEqual(len(self.posts), 1)
+        # Delivery state lives on the remote ref, not in the local checkout.
+        self.git("update-ref", "-d", f"refs/heads/{publisher.NOTIFY_STATE_REF}")
+        self.assertEqual(publisher.notify("fixture", {}, "fixture/repo", "PINNED-READY")["status"], "already-notified")
+        self.assertEqual(len(self.posts), 1)
+
+    def test_notification_requires_a_webhook(self):
+        os.environ.pop("UPSTREAM_DISCORD_WEBHOOK", None)
+        registry = {"fixture-ready": {"mode": "notify-only"}}
+        result, failed = publisher.sweep(registry, {"fixture-ready": "PINNED-READY"}, "fixture/repo")
+        self.assertTrue(failed)
+        self.assertEqual(result["fixture-ready"]["status"], "needs-attention (ValueError)")
+        self.assertEqual(self.posts, [])
 
 
 if __name__ == "__main__":

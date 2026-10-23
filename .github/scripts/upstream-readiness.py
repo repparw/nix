@@ -34,6 +34,7 @@ WORKAROUNDS = {
     "t3code-nightly-v2": ("modules/aspects/ai/t3code-nightly.nix", None),
     "t3code-stable010": ("modules/aspects/ai/t3code-stable010.nix", None),
     "moonshine-pr227": ("modules/aspects/moonshine-pr227-test.nix", None),
+    "nodejs-security": ("modules/aspects/nodejs-security.nix", None),
 }
 
 
@@ -287,6 +288,23 @@ def fsr4_rdna2_status(lock):
 
 
 def detect(name, lock):
+    if name == "nodejs-security":
+        revision = pin(lock, "nixpkgs")
+        # A Node release alone is insufficient: Nix links Brotli and c-ares
+        # as shared libraries, and OpenCode embeds the Bun runtime. The
+        # cleanup retires the whole #341 overlay family at once, so every
+        # piece must be contained by the pin before it fires.
+        bun = api("repos/NixOS/nixpkgs/pulls/577354")
+        if not bun.get("merged"):
+            return "waiting-upstream"
+        fixes = (
+            "2794b31601c683d494c898a548e3c5237fa2242e",  # Node 24.22.1
+            "664dc1852b684a2db1d7734514030739fc557b91",  # Brotli 1.2.1, carries the out-of-bound-write fix
+            "dfbfe7d499556a3acea67ccc4888c2ef489bade0",  # c-ares 1.34.9
+        )
+        ready = contains("NixOS/nixpkgs", bun["merge_commit_sha"], revision)
+        ready = ready and all(contains("NixOS/nixpkgs", fix, revision) for fix in fixes)
+        return "PINNED-READY" if ready else "merged-not-pinned"
     if name == "fsr4-rdna2":
         return fsr4_rdna2_status(lock)
     if name == "tridactyl-reader":
