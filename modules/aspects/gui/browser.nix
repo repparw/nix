@@ -5,8 +5,10 @@
   ...
 }:
 let
+  openInFirefoxId = "lmeddoobegbaiopohmpmmobpnpjifpii";
+
   heliumExtensionIds = [
-    "lmeddoobegbaiopohmpmmobpnpjifpii"
+    openInFirefoxId
     "nngceckbapebfimnlniiiahkandclblb"
     "mnjggcdmjocbbbhaepdhchncahnbgone"
     "enamippconapkdmgfgjchkhakpfinmaj"
@@ -14,27 +16,6 @@ let
     "dbepggeogbaibhgnhhndojpepiihcmeb"
   ];
 
-  allOpenInExtensionIds = [
-    "lmeddoobegbaiopohmpmmobpnpjifpii"
-    "mjoebkkejejidnkfdekpbooceogbapnf"
-    "amojccmdnkdlcjcplmkijeenigbhfbpd"
-    "looohpideggedchhpphemdmppnmdkgfd"
-    "bhfenhhfpcpkknkahnlogooiodcofkjl"
-    "mgmnomlncpmfgelhofilonnecmbdaoia"
-    "bifmfjgpgndemajpeeoiopbeilbaifdo"
-    "ihpiinojhnfhpdmmacgmpoonphhimkaj"
-    "jgpghknlbaljigdhcjimjnkkjniiipmm"
-    "cehiomcamjpnfmemkmpjadaclohoibgo"
-    "balknnpjeohaolphkfhghbaapifbokik"
-    "nfpgfobeckckemhmggkdfjkjaiikadnd"
-    "kjoabfljeghcinlpjhdbdfbcflapkccm"
-    "gkmonffckeeffppchajngpdakfppalfo"
-    "eaicplkoeceoelookkiaeekhodehdhde"
-    "lhplfipknbnglagbgbfogdaihdcekfga"
-    "bffjckjhidlcnenenacdahhpbacpgapo"
-    "oofmnabdpcibefadlibdpnnbglcehfpj"
-    "ocnfecjfebnllnapjjoncgjnnkfmobjc"
-  ];
 in
 {
   flake-file.inputs.firefox-addons = {
@@ -64,20 +45,15 @@ in
         })
       ];
 
-      environment.etc = {
-        # Helium reads platform policies from /etc/chromium (verified via
-        # --enable-logging --v=1: config_dir_policy_loader scans
-        # /etc/chromium/policies/managed). The /etc/helium path is not read.
-        "chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
-          BrowserSignin = 0;
-          PasswordManagerEnabled = false;
-          ExtensionSettings = lib.genAttrs heliumExtensionIds (_: {
-            installation_mode = "normal_installed";
-            # Helium rewrites this Web Store URL to its extension proxy. The
-            # Google URL bypasses that rewrite and stalls policy installs.
-            update_url = "https://update-url-to-be-replaced.qjz9zk";
-          });
-        };
+      environment.etc."chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
+        BrowserSignin = 0;
+        PasswordManagerEnabled = false;
+        ExtensionSettings = lib.genAttrs heliumExtensionIds (_: {
+          installation_mode = "normal_installed";
+          # Helium rewrites this Web Store URL to its extension proxy. The
+          # Google URL bypasses that rewrite and stalls policy installs.
+          update_url = "https://update-url-to-be-replaced.qjz9zk";
+        });
       };
     };
 
@@ -92,196 +68,54 @@ in
       let
         openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
-        browserWithoutMimeApps =
-          desktopFile: browser:
-          (pkgs.symlinkJoin {
-            name = "${browser.name}-without-mimeapps";
-            paths = [ browser ];
-            postBuild = ''
-              rm -rf "$out/share/applications"
-              install -Dm644 ${browser}/share/applications/${desktopFile} \
-                "$out/share/applications/${desktopFile}"
-              sed -i '/^MimeType=/d' "$out/share/applications/${desktopFile}"
-            '';
-            inherit (browser) meta;
-          })
-          // {
-            override = args: browserWithoutMimeApps desktopFile (browser.override args);
-          };
-
-        heliumWithoutMimeApps = browserWithoutMimeApps "helium.desktop";
-        heliumBase = inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium;
-        # Upstream bakes '${NIXOS_OZONE_WL:+...}' into a compiled wrapper
-        # that performs no shell expansion, so every launch carries the
-        # inert literal in argv and the intended ozone hint never applies.
-        # Filter the literal here and apply the hint for real when the
-        # session requests Wayland (NIXOS_OZONE_WL=1, see system aspect).
-        heliumShim =
-          base:
-          let
-            shimScript = pkgs.writeShellApplication {
-              name = "helium-shim";
-              runtimeInputs = [ pkgs.coreutils ];
-              text = ''
-                args=()
-                for arg in "$@"; do
-                  case "$arg" in
-                    *NIXOS_OZONE_WL*) continue ;;
-                    *) args+=("$arg") ;;
-                  esac
-                done
-                if [ -n "''${NIXOS_OZONE_WL:-}" ] && [ -n "''${WAYLAND_DISPLAY:-}" ]; then
-                  args+=(--ozone-platform-hint=auto)
-                fi
-
-                # Chromium's encrypted-pref validation can decide the profile
-                # was tampered with and reset every extension on a version
-                # jump (Helium #1978, upstream crrev 7763038; hit live on the
-                # 0.18.3.1 -> 0.19.2.1 update: all Local/Sync Extension
-                # Settings were re-created empty on first launch, while
-                # unprotected data like History survived). The macOS fix does
-                # not cover Linux, so snapshot the extension storage before
-                # the first launch of each new version. If a wipe strikes,
-                # restore with:
-                #   rsync -a "$XDG_STATE_HOME/helium-extension-snapshots/pre-<version>/" \
-                #     "$HOME/.config/net.imput.helium/Default/"
-                snapshotRoot="''${XDG_STATE_HOME:-$HOME/.local/state}/helium-extension-snapshots"
-                marker="$snapshotRoot/launched-version"
-                defaultDir="$HOME/.config/net.imput.helium/Default"
-                if [ "$(cat "$marker" 2>/dev/null)" != "${base.name}" ]; then
-                  dest="$snapshotRoot/pre-${base.name}"
-                  if [ ! -d "$dest" ]; then
-                    mkdir -p "$dest"
-                    for dir in "Local Extension Settings" "Sync Extension Settings"; do
-                      if [ -d "$defaultDir/$dir" ]; then
-                        cp -a "$defaultDir/$dir" "$dest/"
-                      fi
-                    done
-                  fi
-                  find "$snapshotRoot" -maxdepth 1 -name 'pre-*' -type d | sort -r | tail -n +4 | xargs -r rm -rf
-                  printf '%s' "${base.name}" > "$marker"
-                fi
-                exec ${base}/bin/helium "''${args[@]}"
+        whatsappLinksToFirefox = pkgs.callPackage ../../_packages/whatsapp-links-to-firefox.nix { };
+        heliumPackage =
+          (inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium.override {
+            flags = config.programs.helium.flags;
+          }).overrideAttrs
+            (old: {
+              postInstall = (old.postInstall or "") + ''
+                sed -i '/^MimeType=/d' "$out/share/applications/helium.desktop"
               '';
-            };
-          in
-          (pkgs.symlinkJoin {
-            name = "${base.name}-clean-argv";
-            paths = [ base ];
-            postBuild = ''
-              rm "$out/bin/helium"
-              install -Dm755 ${shimScript}/bin/helium-shim "$out/bin/helium"
-            '';
-          })
-          // {
-            override = newArgs: heliumShim (base.override newArgs);
-            meta = base.meta;
-          };
-        helium = heliumShim heliumBase;
-        heliumPackage = heliumWithoutMimeApps helium;
-        heliumFlags = [
-          "--force-renderer-accessibility"
-          "--silent-debugger-extension-api"
-          # OSCrypt backend must be identical for normal windows and
-          # --app webapps: they share ~/.config/net.imput.helium, and
-          # Chromium honors the first process's backend. Mixed backends
-          # (basic vs libsecret) rewrite Local State without an
-          # encrypted_key and orphan cookie encryption keys, which drops
-          # Google/YouTube session cookies on the next start. basic
-          # persists without requiring an unlocked login keyring.
-          "--password-store=basic"
-        ];
-        heliumForWebapps = heliumPackage.override { flags = heliumFlags; };
-        # Helium's user-data-dir on Linux is ~/.config/net.imput.helium
-        # (verified: live Default/, SingletonSocket, and crashpad database
-        # all live there). NativeMessagingHosts must go under it;
-        # ~/.config/helium is not read by the browser.
-        heliumConfigDir = ".config/net.imput.helium";
+            });
       in
       {
         imports = [ inputs.helium-nix.homeModules.default ];
 
         home.packages = [
-          (pkgs.writeShellApplication {
-            name = "webapp";
-            runtimeInputs = [
-              heliumForWebapps
-              ndrop
-            ];
-            text = ''
-              if [ "$#" -lt 2 ]; then
-                echo "usage: webapp <app-id> <url> [helium args...]" >&2
-                exit 2
-              fi
+          (pkgs.writers.writePython3Bin "webapp" { flakeIgnore = [ "E501" ]; } ''
+            import os
+            import sys
+            from urllib.parse import urlsplit
 
-              app_id="$1"
-              url="$2"
-              shift 2
-
-              # Helium/Chromium on native Wayland ignores --class for --app
-              # windows and exposes a derived app_id of the form
-              # chrome-<host>__<path>-Default (e.g. https://www.youtube.com
-              # becomes chrome-www.youtube.com__-Default, verified via
-              # `niri msg windows`). Derive it so ndrop exact-matches the
-              # existing window instead of spawning a duplicate.
-              # NOTE: --class is intentionally not passed: it is ignored for
-              # --app windows, and when the webapp starts the first browser
-              # process it would mislabel later normal windows with the
-              # webapp name instead of "helium".
-              no_scheme="''${url#https://}"
-              no_scheme="''${no_scheme#http://}"
-              no_scheme="''${no_scheme%%[?#]*}"
-              case "$no_scheme" in
-                */*)
-                  authority="''${no_scheme%%/*}"
-                  path="/''${no_scheme#*/}"
-                  ;;
-                *)
-                  authority="$no_scheme"
-                  path="/"
-                  ;;
-              esac
-
-              # Chromium builds the application name as host + "_" + URL path,
-              # then sanitizes path separators for its Linux desktop/XDG ID.
-              # Keep the leading/trailing path separators: /foo/ must become
-              # __foo_ rather than __foo, otherwise ndrop misses the window.
-              host="''${authority##*@}"
-              case "$host" in
-                \[*\]:*)
-                  host="''${host%%]:*}]"
-                  ;;
-                \[*\])
-                  ;;
-                *:*)
-                  host="''${host%%:*}"
-                  ;;
-              esac
-              host="$(printf '%s' "$host" | tr '[:upper:]' '[:lower:]')"
-
-              if [ -n "$host" ]; then
-                app_name="$(printf '%s_%s' "$host" "$path" | tr '/ ' '__')"
-                chrome_id="chrome-''${app_name}-Default"
-              else
-                chrome_id="$app_id"
-              fi
-
-              exec ndrop -F -c "$chrome_id" \
-                helium \
-                --app="$url" \
-                "$@"
-            '';
-          })
+            if len(sys.argv) < 3:
+                sys.exit("usage: webapp <app-id> <url> [helium args...]")
+            app_id, url, *flags = sys.argv[1:]
+            parsed = urlsplit(url)
+            host = parsed.hostname or ""
+            if ":" in host:
+                host = f"[{host}]"
+            # Native Wayland ignores --class. Match Chromium's derived app ID.
+            app_name = f"{host}_{parsed.path or '/'}".replace("/", "_").replace(" ", "_")
+            chrome_id = f"chrome-{app_name}-Default" if host else app_id
+            os.execv("${ndrop}/bin/ndrop", [
+                "ndrop", "-F", "-c", chrome_id,
+                "${heliumPackage}/bin/helium", f"--app={url}", *flags,
+            ])
+          '')
         ];
 
         home.file = {
           ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
-          "${heliumConfigDir}/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
+          ".config/net.imput.helium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
             name = "com.add0n.node";
             description = "Node Host for Native Messaging";
             path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
             type = "stdio";
-            allowed_origins = map (id: "chrome-extension://${id}/") allOpenInExtensionIds;
+            allowed_origins = map (id: "chrome-extension://${id}/") [
+              openInFirefoxId
+              whatsappLinksToFirefox.extensionId
+            ];
           };
           ".config/tridactyl/tridactylrc".text = ''
             " General Settings
@@ -487,7 +321,15 @@ in
           helium = {
             enable = true;
             package = heliumPackage;
-            flags = heliumFlags;
+            flags = [
+              # Upstream's wrapper does not expand NIXOS_OZONE_WL.
+              "--ozone-platform-hint=auto"
+              "--force-renderer-accessibility"
+              "--silent-debugger-extension-api"
+              # All windows share a profile and must use the same encryption backend.
+              "--password-store=basic"
+              "--load-extension=${whatsappLinksToFirefox}"
+            ];
           };
         };
       };
