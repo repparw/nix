@@ -224,6 +224,35 @@ fresh private state/workspace backups were taken at
 resumed gateway activity requires another quiescent backup immediately before
 activation.
 
+## Combined native build failure, 23 October 2026
+
+All applicable GitHub CI jobs passed on `487038c172827b02c423506e305ec6146917b59f`,
+which includes the current main's Node security fixes and manual approvals.
+Its full native deployment dry run failed before activation. The failing
+dependency was `python3.14-torchaudio-2.11.0`; its test process was terminated
+with exit code 143 while running the wav2vec2 model tests. That prevented
+`sentence-transformers`, Paperless, and therefore the Epsilon system from building.
+The available output does not establish why the process received SIGTERM.
+The Nix daemon remained active with no recorded restart at inspection time.
+
+The private operational log is `/tmp/hermes-security-dry-activate.log` on the
+workstation. It contains the exact failing derivation and dependency chain.
+The earlier daemon-disconnection text in the background command notification
+came from the older security-build log printed before the new command.
+It is not evidence that this dry run failed for the same reason.
+
+No Chief of Staff activation occurred. The original Hermes gateway remains
+stopped pending a verified patched runtime. Earlier successful build evidence
+applies to the earlier input revision and does not satisfy this combined
+revision's deployment gate. Private state/workspace backups remain intact.
+The temporary ten-minute build wake was removed when this attempt finished.
+
+The next step is to establish the termination cause in the failed Torchaudio
+check and obtain a successful full native build. Do not disable package tests,
+restart the vulnerable old runtime, or activate a partially built system to
+bypass this gate. Any retry must retain the existing backups and account for
+the security-maintenance thread's separate native builds.
+
 ## Recover without losing newer history
 
 For a policy rollback, revert the declarative settings/SOUL/skill and activate the
