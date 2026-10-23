@@ -62,13 +62,6 @@ in
     ];
     staticConfigOptions = {
       entryPoints = {
-        web = {
-          address = ":80";
-          http.redirections.entryPoint = {
-            to = "websecure";
-            scheme = "https";
-          };
-        };
         websecure = {
           address = ":443";
           asDefault = true;
