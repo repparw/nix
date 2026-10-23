@@ -127,6 +127,20 @@
       "generated-unit",
       "package-build"
     ]
+  },
+  "hermes-cua-version": {
+    "issue": 360,
+    "mode": "notify-only",
+    "input": "hermes-agent",
+    "fix_commit": "71633f762d2d74faebe604d0b8a2a2e6cf48346a",
+    "cleanup": "hermes-cua-version.patch",
+    "validation": [
+      "host-eval",
+      "generated-unit",
+      "native-arm-hermes",
+      "cua-runtime",
+      "policy-tests"
+    ],
+    "owner": "ci-after-fleet-pause-clearance"
   }
 }
-

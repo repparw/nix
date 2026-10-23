@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Inspect upstream fixes in the checked-out pins without publishing changes."""
 import argparse
+import ast
 import base64
 import json
 import re
@@ -271,7 +272,51 @@ def fsr4_rdna2_status(lock):
     return "PINNED-READY" if ge_package_contains(pin(lock, "nixpkgs"), commit) else "merged-not-pinned"
 
 
+HERMES_CUA_FIX = "71633f762d2d74faebe604d0b8a2a2e6cf48346a"
+HERMES_CUA_GATE = "modules/aspects/services/hermes-cua/_integration.nix"
+HERMES_CUA_VERSION_MARKER = 'release = builtins.match'
+
+
+def hermes_cua_apis(text):
+    try:
+        tree = ast.parse(text)
+    except SyntaxError as error:
+        raise ValueError("invalid Hermes provider source") from error
+    providers = [node for node in tree.body if isinstance(node, ast.ClassDef)
+                 and node.name == "TerminalEnvironmentProvider"]
+    if len(providers) != 1:
+        return False
+    body = providers[0].body
+    streams = any(isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
+                  and node.target.id == "supports_streams" or
+                  isinstance(node, ast.Assign) and any(isinstance(target, ast.Name)
+                  and target.id == "supports_streams" for target in node.targets)
+                  for node in body)
+    cwd = any(isinstance(node, ast.FunctionDef) and node.name == "default_cwd"
+              and any(isinstance(decorator, ast.Name) and decorator.id == "property"
+                      for decorator in node.decorator_list) for node in body)
+    return streams and cwd
+
+
+def hermes_cua_status(lock):
+    repo = "NousResearch/hermes-agent"
+    pr = api(f"repos/{repo}/pulls/142225")
+    if not isinstance(pr, dict) or type(pr.get("merged")) is not bool:
+        raise ValueError("invalid Hermes pull request evidence")
+    if not pr["merged"]:
+        return "waiting-upstream"
+    if pr.get("merge_commit_sha") != HERMES_CUA_FIX:
+        raise ValueError("Hermes merge differs from the reviewed fix")
+    revision = pin(lock, "hermes-agent")
+    if not contains(repo, HERMES_CUA_FIX, revision):
+        return "merged-not-pinned"
+    provider = source(repo, "agent/terminal_env_provider.py", revision)
+    return "PINNED-READY" if hermes_cua_apis(provider) else "waiting-source"
+
+
 def detect(name, lock):
+    if name == "hermes-cua-version":
+        return hermes_cua_status(lock)
     if name == "fsr4-rdna2":
         return fsr4_rdna2_status(lock)
     if name == "tridactyl-reader":
@@ -356,6 +401,19 @@ def detect(name, lock):
 
 def inspect(name, lock):
     try:
+        if name == "hermes-cua-version":
+            gate = ROOT / HERMES_CUA_GATE
+            if not gate.exists():
+                return "waiting-integration"
+            text = gate.read_text()
+            if HERMES_CUA_VERSION_MARKER not in text:
+                retained = ('lib.hasInfix "supports_streams" provider',
+                            'lib.hasInfix "default_cwd" provider',
+                            'lib.versionAtLeast runtime.version "0.7.0"',
+                            'lib.versionOlder runtime.version "0.8"')
+                if not all(marker in text for marker in retained):
+                    raise ValueError("CUA cleanup lost permanent compatibility checks")
+                return "completed"
         if name in WORKAROUNDS:
             relative, marker = WORKAROUNDS[name]
             path = ROOT / relative

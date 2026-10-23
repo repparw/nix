@@ -52,7 +52,8 @@ is created by this configuration.
 
 ## Check the version and packages
 
-The integration is configured to enable automatically when both gates pass:
+Before the temporary release gate is retired by [watcher #360](https://github.com/repparw/nix/issues/360),
+the integration enables automatically when both gates pass:
 
 - The Hermes input has a release ref of at least `v0.22.3`, and its selected
   source declares `supports_streams` and `default_cwd`. The version comes from
@@ -60,6 +61,11 @@ The integration is configured to enable automatically when both gates pass:
   or revision-only pin fails closed pending an explicit compatibility review.
 - The packaged CUA SDK/CLI is at least 0.7.0 and below 0.8. The package supplies
   both from the same hashed upstream wheel, built for Hermes's Python family.
+
+After that cleanup, the release/ref restriction is removed; the source-API
+and packaged-runtime checks remain. The watcher initially notifies only while
+the fleet pause is active. Its prepared cleanup cannot publish or auto-merge
+until a reviewed change promotes it to post-lock mode after pause clearance.
 
 The flake still pins Hermes v0.22.2. CUA plugin installation, backend selection,
 SDK/CLI dependencies and Discord GUI tools are currently absent. Updating the
