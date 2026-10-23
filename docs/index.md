@@ -37,6 +37,7 @@ files instead of copying module contents.
 - [Fleet health, offsite backups, and upgrade reports](runbooks/fleet-operations.md)
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
 - [Bootstrap and validate Hermes Chief of Staff](runbooks/hermes-chief-of-staff.md)
+- [Enroll a remote CUA Space for Hermes](runbooks/hermes-cua-spaces.md)
 - [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
 - [Restore host state from offsite backups](runbooks/host-recovery.md)

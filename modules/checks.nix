@@ -125,6 +125,10 @@
           hermes-crash-triage = (import ./aspects/services/hermes-crash/_package.nix { inherit pkgs; }).check;
           hermes-package-triage =
             (import ./aspects/services/hermes-package/_package.nix { inherit pkgs; }).check;
+          hermes-cua-policy = import ./aspects/services/hermes-cua/_check.nix {
+            inherit pkgs;
+            source = inputs.hermes-agent;
+          };
           hermes-chief-of-staff =
             pkgs.runCommand "check-hermes-chief-of-staff" { nativeBuildInputs = [ pkgs.python3 ]; }
               ''

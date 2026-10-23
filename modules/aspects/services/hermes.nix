@@ -1,9 +1,11 @@
 {
+  den,
   inputs,
   ...
 }:
 {
   den.aspects.nixos-services.provides.hermes = {
+    includes = [ den.aspects.hermes-cua ];
     service-registry = {
       name = "hermes";
       definition.container = true;
@@ -109,7 +111,7 @@
             };
           };
           extraConfig =
-            { pkgs, ... }:
+            containerArgs@{ pkgs, ... }:
             {
               services.resolved.enable = true;
 
@@ -152,6 +154,10 @@
                   "delegation"
                   "kanban"
                   "cronjob"
+                ]
+                ++ lib.optionals containerArgs.config.modules.hermes-cua.ready [
+                  "browser"
+                  "computer_use"
                 ];
                 settings.kanban = {
                   dispatch_in_gateway = false;
