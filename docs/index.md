@@ -32,6 +32,7 @@ files instead of copying module contents.
 - [Grafana Cloud setup and alerting](runbooks/grafana-cloud.md)
 - [Add and maintain change-detection watchers](runbooks/change-detection-watchers.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
+- [Music Assistant: Spotify, Sendspin and player setup](runbooks/music-assistant.md)
 - [Update rollback](runbooks/update-rollback.md)
 - [Fleet health, offsite backups, and upgrade reports](runbooks/fleet-operations.md)
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
