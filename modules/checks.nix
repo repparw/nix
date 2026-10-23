@@ -364,6 +364,22 @@
                 touch $out
               '';
 
+          bttoggle =
+            pkgs.runCommand "check-bttoggle"
+              {
+                nativeBuildInputs = [
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.python3
+                  pkgs.shellcheck
+                ];
+              }
+              ''
+                shellcheck --shell=bash ${./scripts/bttoggle.sh}
+                python3 ${./scripts/bttoggle.test.py} ${./scripts/bttoggle.sh}
+                touch $out
+              '';
+
           service-definitions =
             let
               alpha = inputs.self.nixosConfigurations.alpha.config;
