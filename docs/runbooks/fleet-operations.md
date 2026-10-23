@@ -37,7 +37,9 @@ Local-tree updates happen through the plain nix CLI (`nix build` the
 toplevel, `nix run .#deploy-rs -- .#<host> --dry-activate` to review,
 deploy-rs or `nixos-rebuild` to switch); the controller-side
 `fleet-update` transaction below deploys a main revision after successful
-CI.
+CI. For an already-validated tree, `nix run .#deploy -- .#<host>` skips
+deploy-rs' full flake-check pass; `.#deploy-rs` retains it for unvalidated
+changes.
 
 ## Fleet health
 
