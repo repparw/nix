@@ -9,6 +9,7 @@
       den.aspects.monitoring._.cloud
       den.aspects.fleet-unit-state
       den.aspects.alpha._.backup
+      den.aspects.alpha-persistence
       den.aspects.btrfs-maintenance
       den.aspects.gaming
       den.aspects.logid

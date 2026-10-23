@@ -39,6 +39,7 @@ files instead of copying module contents.
 - [Restore service backups](runbooks/restore-service-backups.md)
 - [Restore host state from offsite backups](runbooks/host-recovery.md)
 - [Prepare pi and epsilon for persistent state](runbooks/host-persistence.md)
+- [Prepare alpha for a volatile root](runbooks/alpha-impermanence.md)
 
 ## Fixes
 

@@ -9,6 +9,16 @@ let
     config: lib.filter (mount: lib.hasPrefix "/persist/" mount.what) config.systemd.mounts;
   pi = hosts.pi.config;
   epsilon = hosts.epsilon.config;
+  alpha = hosts.alpha.config;
+  alphaUnprepared =
+    (hosts.alpha.extendModules {
+      modules = [
+        {
+          modules.persistence.enable = true;
+          modules.persistence.mutableAccounts = true;
+        }
+      ];
+    }).config;
   piMounts = persistenceMounts pi;
   epsilonMounts = persistenceMounts epsilon;
   # The unprepared probe proves the refusal paths on a persistence-disabled
@@ -158,7 +168,32 @@ let
       earlySopsKey = builtins.head epsilon.sops.age.sshKeyPaths;
     };
 in
-assert !(hosts.alpha.config.modules ? persistence);
+assert !alpha.modules.persistence.enable;
+assert !alpha.environment.persistence."/persist".enable;
+assert alpha.fileSystems."/".fsType == "btrfs";
+assert !(alpha.fileSystems ? "/persist");
+assert persistenceMounts alpha == [ ];
+assert !(alpha.boot.initrd.systemd.services ? check-persistence-state);
+assert lib.all
+  (
+    path:
+    lib.any (
+      entry: (if builtins.isString entry then entry else entry.directory) == path
+    ) alpha.environment.persistence."/persist".directories
+  )
+  [
+    "/home"
+    "/var/log"
+    "/var/lib/nixos"
+    "/var/lib/nixos-containers"
+    "/var/lib"
+  ];
+assert lib.any (
+  assertion: !assertion.assertion && lib.hasPrefix "Alpha persistence requires" assertion.message
+) alphaUnprepared.assertions;
+assert lib.any (
+  assertion: !assertion.assertion && lib.hasPrefix "Host persistence requires" assertion.message
+) alphaUnprepared.assertions;
 assert !(hosts.alpha.options.modules.backup ? hostRecovery);
 assert hosts.alpha.config.services.restic.backups.offsite.extraBackupArgs == [ ];
 assert lib.all (
@@ -171,6 +206,7 @@ assert lib.all
     pi
     epsilon
   ];
+
 assert lib.elem "/boot/firmware" pi.services.restic.backups.offsite.paths;
 assert lib.elem "/boot/efi" epsilon.services.restic.backups.offsite.paths;
 assert
@@ -186,5 +222,10 @@ pkgs.writeText "host-persistence-evaluation.json" (
   builtins.toJSON {
     pi = piResult;
     epsilon = epsilonResult;
+    alpha = {
+      disabledByDefault = true;
+      rootFilesystem = alpha.fileSystems."/".fsType;
+      persistentMounts = [ ];
+    };
   }
 )

@@ -26,7 +26,8 @@ const affectsPersistence = path =>
     'modules/scripts/prepare-backup-exports.py', 'modules/aspects/pi-services-backup.nix',
     'modules/_tests/backup-exports.py',
     'modules/aspects/nix.nix', 'modules/aspects/nixpkgs.nix',
-    'modules/hosts/pi.nix', 'modules/hosts/epsilon.nix',
+    'modules/hosts/pi.nix', 'modules/hosts/epsilon.nix', 'modules/hosts/alpha.nix',
+    'modules/aspects/alpha-persistence.nix',
     '.github/workflows/ci.yml', '.github/workflows/revision-validation.yml'].includes(path) ||
   path.startsWith('modules/_tests/host-persistence') ||
   path.startsWith('.github/scripts/ci-impact');
