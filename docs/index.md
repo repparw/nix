@@ -38,6 +38,7 @@ concepts. Identify conflicts with documented decisions before proposing changes.
 - [Diagnose fleet observability](runbooks/monitoring.md)
 - [Grafana Cloud operations (repparw/grafana)](https://github.com/repparw/grafana#readme)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
+- [Music Assistant: Spotify, Sendspin and player setup](runbooks/music-assistant.md)
 - [Update rollback](runbooks/update-rollback.md)
 - [Fleet operational reference](runbooks/fleet-operations.md)
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
