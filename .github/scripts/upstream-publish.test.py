@@ -72,12 +72,15 @@ class Publication(unittest.TestCase):
             raise AssertionError(arguments)
 
         self.addCleanup(patch.stopall)
+        self.real_discord_post = publisher.discord_post
         patch.object(publisher, "ROOT", self.root).start()
         patch.object(publisher, "run", execute).start()
         patch.object(publisher, "discord_post",
-                     lambda webhook, content: self.posts.append(content)).start()
-        os.environ["UPSTREAM_DISCORD_WEBHOOK"] = "https://discord.invalid/webhook"
-        self.addCleanup(os.environ.pop, "UPSTREAM_DISCORD_WEBHOOK", None)
+                     lambda content: self.posts.append(content)).start()
+        os.environ["DISCORD_BOT_TOKEN"] = "fixture-token"
+        os.environ["DISCORD_CHANNEL_ID"] = "fixture-channel"
+        self.addCleanup(os.environ.pop, "DISCORD_BOT_TOKEN", None)
+        self.addCleanup(os.environ.pop, "DISCORD_CHANNEL_ID", None)
         self.contract = {"mode": "post-lock", "cleanup": "fixture.patch"}
 
     def git(self, *args):
@@ -273,10 +276,12 @@ class Publication(unittest.TestCase):
         self.assertEqual(publisher.notify("fixture", {}, "fixture/repo", "PINNED-READY")["status"], "already-notified")
         self.assertEqual(len(self.posts), 1)
 
-    def test_notification_requires_a_webhook(self):
-        os.environ.pop("UPSTREAM_DISCORD_WEBHOOK", None)
+    def test_notification_requires_an_identity(self):
+        os.environ.pop("DISCORD_BOT_TOKEN", None)
+        os.environ.pop("DISCORD_CHANNEL_ID", None)
         registry = {"fixture-ready": {"mode": "notify-only"}}
-        result, failed = publisher.sweep(registry, {"fixture-ready": "PINNED-READY"}, "fixture/repo")
+        with patch.object(publisher, "discord_post", side_effect=self.real_discord_post):
+            result, failed = publisher.sweep(registry, {"fixture-ready": "PINNED-READY"}, "fixture/repo")
         self.assertTrue(failed)
         self.assertEqual(result["fixture-ready"]["status"], "needs-attention (ValueError)")
         self.assertEqual(self.posts, [])

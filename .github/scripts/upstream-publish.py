@@ -163,15 +163,28 @@ def publish(name, spec, repo):
 NOTIFY_STATE_REF = "automation/upstream-notify-state"
 
 
-def discord_post(webhook, content):
-    # The webhook never appears in argv: curl reads it from a private config.
+def discord_post(content):
+    """Post to the fleet channel through the approved bot identity.
+
+    Every other fleet watcher delivers this way — token in the hermes-env
+    sops secret, channel from modules/service-definitions.nix — instead of
+    per-aspect webhooks. The token stays off argv: curl reads it from a
+    private config file. A missing identity fails the run: a ready notice
+    must not stay silent.
+    """
+    token = os.environ.get("DISCORD_BOT_TOKEN", "").strip()
+    channel = os.environ.get("DISCORD_CHANNEL_ID", "").strip()
+    if not token or not channel:
+        raise ValueError("DISCORD_BOT_TOKEN/DISCORD_CHANNEL_ID are not configured")
     with tempfile.TemporaryDirectory(prefix="upstream-notify-") as directory:
         payload = Path(directory) / "payload.json"
         payload.write_text(json.dumps({"content": content}))
         config = Path(directory) / "curl-config"
-        config.write_text(f'url = "{webhook}"\n'
-                          'header = "Content-Type: application/json"\n'
-                          f'data-binary = "@{payload}"\n')
+        config.write_text(
+            f'url = "https://discord.com/api/v10/channels/{channel}/messages"\n'
+            f'header = "Authorization: Bot {token}"\n'
+            'header = "Content-Type: application/json"\n'
+            f'data-binary = "@{payload}"\n')
         subprocess.run(["curl", "--fail", "--silent", "--show-error", "--max-time", "30",
                         "--config", str(config)],
                        check=True, capture_output=True, text=True, timeout=120)
@@ -219,12 +232,9 @@ def notify(name, spec, repo, status):
     The upstream-watch run summary carries the status every run; the ping
     exists for time-sensitive candidates. Delivery state lives on the
     automation/upstream-notify-state ref instead of per-issue comment
-    markers, so no tracked issue is involved. A missing or failing webhook
-    fails the run: a ready notice must not stay silent.
+    markers, so no tracked issue is involved. A missing or failing Discord
+    identity fails the run: a ready notice must not stay silent.
     """
-    webhook = os.environ.get("UPSTREAM_DISCORD_WEBHOOK", "").strip()
-    if not webhook:
-        raise ValueError("UPSTREAM_DISCORD_WEBHOOK is not configured")
     previous, state = notify_state()
     if state.get(name) == status:
         return {"status": "already-notified"}
@@ -243,7 +253,7 @@ def notify(name, spec, repo, status):
                    "contains the upstream fix. Deployment and runtime completion remain "
                    "subject to their own checks. Details: "
                    f"https://github.com/{repo}/actions/workflows/upstream-watch.yml")
-    discord_post(webhook, content)
+    discord_post(content)
     state[name] = status
     try:
         record_notify_state(previous, state)

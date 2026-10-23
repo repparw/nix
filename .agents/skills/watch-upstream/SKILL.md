@@ -16,8 +16,8 @@ Before adding a watcher, record its workaround paths, selected input, precise
 source or ancestry predicate, cleanup edits, build gates, and completion owner
 in the migration contract (`.github/upstream/README.md`), then declare the
 contract in `watchers.json`. Do not open a per-watcher tracker issue: ready
-notices go to the run summary and, once per status change, to Discord through
-`UPSTREAM_DISCORD_WEBHOOK`.
+notices go to the run summary and, once per status change, to the fleet
+Discord channel through the approved bot identity.
 
 Add detection to `.github/scripts/upstream-readiness.py`. Detectors read the
 checked-out `main` pins, never publish, and fail closed when evidence is

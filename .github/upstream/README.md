@@ -82,8 +82,9 @@ The package-specific gates are:
 | moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
 
 Nautilus is notify-only. Ready notices print in every upstream-watch run
-summary and, once per status change, ping Discord through
-`UPSTREAM_DISCORD_WEBHOOK`; delivery state lives on the
+summary and, once per status change, post to the fleet Discord channel
+through the approved bot identity (`DISCORD_BOT_TOKEN` +
+`DISCORD_CHANNEL_ID`); delivery state lives on the
 `automation/upstream-notify-state` ref, so a persistent status pings exactly
 once. Workaround-holding watchers are `post-lock` instead — their cleanup PR
 is the notice, and the removed workaround file disarms the watcher.
