@@ -59,9 +59,21 @@ in
 
         systemd.user.services.cliamp = {
           Unit = {
-            Wants = [ "network-online.target" ];
-            After = [ "network-online.target" ];
+            Wants = [
+              "network-online.target"
+              "pipewire.service"
+              "wireplumber.service"
+            ];
+            After = [
+              "network-online.target"
+              "pipewire.service"
+              "wireplumber.service"
+            ];
           };
+
+          # Audio devices (especially Bluetooth sinks) can appear after the
+          # session manager starts. Space retries beyond systemd's start limit.
+          Service.RestartSec = "5s";
 
           # The daemon skips stale-socket cleanup whenever the PID file names
           # a live process, and PIDs get reused across boots, so a PID file
