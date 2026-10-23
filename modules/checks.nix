@@ -538,7 +538,10 @@
               tunnelRoutingMatches =
                 builtins.hasAttr domain edgeTunnel.ingress
                 && !(builtins.hasAttr "jellyfin.${domain}" edgeTunnel.ingress)
-                && !(builtins.hasAttr "qbit.${domain}" edgeTunnel.ingress)
+                && builtins.hasAttr "qbit.${domain}" edgeTunnel.ingress
+                &&
+                  epsilon.services.traefik.dynamicConfigOptions.http.routers.qbittorrent.middlewares
+                  == [ "qbit-auth" ]
                 && lib.all (
                   host:
                   edgeTunnel.ingress.${host}.service == "https://127.0.0.1:8443"
