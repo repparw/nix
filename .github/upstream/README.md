@@ -78,7 +78,7 @@ The package-specific gates are:
 | wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
 | voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                                             |
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
-| nodejs-security   | Retired overlay family absent from the fleet; alpha's OpenCode builds against the pinned Bun and Node                                    |
+| nodejs-security   | Retired overlay family absent from the fleet; alpha's OpenCode builds against the pinned Bun and Node                                   |
 | moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
 
 Nautilus is notify-only. Ready notices print in every upstream-watch run
