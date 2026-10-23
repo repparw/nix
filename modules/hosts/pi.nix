@@ -13,6 +13,7 @@
       den.aspects.service-host
       den.aspects.nixos-services._.automations
       den.aspects.nixos-services._.homeassistant
+      den.aspects.nixos-services._.music-assistant
       den.aspects.nixos-services._.fleet-health
       den.aspects.nixos-services._.fleet-readiness
       den.aspects.fleet-controller
@@ -75,11 +76,13 @@
           "/var/lib/fleet-health"
           "/var/lib/bluetooth"
           "/var/lib/systemd/rfkill"
+          "/var/lib/music-assistant"
         ];
 
         environment.persistence."/persist".directories = [
           "/home/containers/config"
           "/var/lib/fleet-health"
+          "/var/lib/music-assistant"
           "/var/lib/systemd/rfkill"
           {
             directory = "/var/lib/auto-update";
