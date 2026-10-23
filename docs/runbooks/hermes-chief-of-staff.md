@@ -232,11 +232,16 @@ Its full native deployment dry run failed before activation. The failing
 dependency was `python3.14-torchaudio-2.11.0`; its test process was terminated
 with exit code 143 while running the wav2vec2 model tests. That prevented
 `sentence-transformers`, Paperless, and therefore the Epsilon system from building.
-The available output does not establish why the process received SIGTERM.
-The Nix daemon remained active with no recorded restart at inspection time.
+Subsequent inspection of Epsilon's full system journal established the cause:
+at 05:44:05 UTC, `earlyoom` sent SIGTERM to the Python 3.14 pytest process
+(PID 2289125, build UID 30011, RSS 5,919 MiB). Available RAM was 693 of
+7,589 MiB and swap was exhausted. This was a memory-pressure termination;
+the Nix daemon remained active with no recorded restart. A later native build
+of the same torchaudio output succeeded with 2,233 tests passed, 2,304 skipped,
+281 deselected, and one expected failure. No tests were disabled locally.
 
-The private operational log is `/tmp/hermes-security-dry-activate.log` on the
-workstation. It contains the exact failing derivation and dependency chain.
+The original private operational log was `/tmp/hermes-security-dry-activate.log`
+on the workstation; temporary logs are not durable evidence across its reboot.
 The earlier daemon-disconnection text in the background command notification
 came from the older security-build log printed before the new command.
 It is not evidence that this dry run failed for the same reason.
@@ -247,8 +252,19 @@ applies to the earlier input revision and does not satisfy this combined
 revision's deployment gate. Private state/workspace backups remain intact.
 The temporary ten-minute build wake was removed when this attempt finished.
 
-The next step is to establish the termination cause in the failed Torchaudio
-check and obtain a successful full native build. Do not disable package tests,
+The resumed local dry-run client was interrupted by the workstation reboot;
+it did not establish a successful dry run or an activation restart plan.
+On 23 October, remote PID 3001145 was still building an Epsilon toplevel,
+with output directed to `/root/.local/state/cloudflare-edge-build/`; this is
+separate work, not proof that this PR's deployment dry run completed.
+The host still ran the original system and Hermes had no gateway process.
+The security-maintenance thread owns Epsilon activation; do not activate
+concurrently or launch another full build while existing work is active.
+
+The remaining gates are a successful full native build and reviewed dry-run
+plan for the final revision, reconciliation with the security deployment,
+a fresh quiescent state/workspace backup, and post-activation state, provider,
+approval, and real Discord integration checks. Do not disable package tests,
 restart the vulnerable old runtime, or activate a partially built system to
 bypass this gate. Any retry must retain the existing backups and account for
 the security-maintenance thread's separate native builds.
