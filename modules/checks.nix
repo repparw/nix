@@ -534,13 +534,33 @@
                 && !(builtins.any (rule: builtins.elem "null.example.test" rule.domain) sparsePolicy.authelia.rules)
                 && healthcheckBypassMatches;
 
+              edgeTunnel = epsilon.services.cloudflared.tunnels.epsilon-edge;
+              tunnelRoutingMatches =
+                builtins.hasAttr domain edgeTunnel.ingress
+                && !(builtins.hasAttr "jellyfin.${domain}" edgeTunnel.ingress)
+                && !(builtins.hasAttr "qbit.${domain}" edgeTunnel.ingress)
+                && lib.all (
+                  host:
+                  edgeTunnel.ingress.${host}.service == "https://127.0.0.1:8443"
+                  && edgeTunnel.ingress.${host}.originRequest.originServerName == host
+                  && edgeTunnel.ingress.${host}.originRequest.noTLSVerify != true
+                ) (lib.attrNames edgeTunnel.ingress)
+                && edgeTunnel.default == "http_status:404"
+                && epsilon.services.traefik.staticConfigOptions.entryPoints.tunnel.address == "127.0.0.1:8443"
+                && !epsilon.services.ddclient.enable;
+
               expected =
-                fleetRegistryMatches && validationMatches && ingressPolicyMatches && glanceRoutingMatches;
+                fleetRegistryMatches
+                && validationMatches
+                && ingressPolicyMatches
+                && glanceRoutingMatches
+                && tunnelRoutingMatches;
               matcherReport = builtins.toJSON {
                 r = fleetRegistryMatches;
                 v = validationMatches;
                 i = ingressPolicyMatches;
                 g = glanceRoutingMatches;
+                t = tunnelRoutingMatches;
               };
             in
             assert expected || throw matcherReport;

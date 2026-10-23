@@ -33,3 +33,11 @@ remain in their owning service modules.
 `modules/_services/proxy.nix` owns Traefik's static configuration and installs
 the Traefik projection. `modules/_services/authelia.nix` owns identity and
 session configuration and installs the Authelia projection.
+
+`modules/aspects/edge-tunnel.nix` connects Cloudflare Tunnel to Traefik's
+loopback HTTPS listener on Epsilon. Its hostname allowlist comes from the
+service registry, excluding Jellyfin and qBittorrent. TLS verification and
+the existing Authelia rules apply along this path. Jellyfin keeps its
+DNS-only home address; qBittorrent uses Epsilon's direct HTTPS listener.
+The apex DNS record points to the tunnel, so Epsilon no longer runs the
+apex ddclient updater.
