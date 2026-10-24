@@ -25,6 +25,8 @@
         programs = {
           btop.enable = true;
 
+          devenv.enable = true;
+
           direnv = {
             enable = true;
             nix-direnv.enable = true;
