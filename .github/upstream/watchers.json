@@ -129,7 +129,6 @@
     ]
   },
   "hermes-cua-version": {
-    "issue": 360,
     "mode": "notify-only",
     "input": "hermes-agent",
     "fix_commit": "71633f762d2d74faebe604d0b8a2a2e6cf48346a",

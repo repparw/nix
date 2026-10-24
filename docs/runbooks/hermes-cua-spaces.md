@@ -52,7 +52,7 @@ is created by this configuration.
 
 ## Check the version and packages
 
-Before the temporary release gate is retired by [watcher #360](https://github.com/repparw/nix/issues/360),
+Before the temporary release gate is retired by [`hermes-cua-version` watcher](../../.github/upstream/README.md#hermes-cua-version-gate),
 the integration enables automatically when both gates pass:
 
 - The Hermes input has a release ref of at least `v0.22.3`, and its selected

@@ -74,8 +74,9 @@ The package-specific gates are:
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
 | moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
 
-Nautilus is notify-only. Ready notifications use tracked issues and durable
-comment markers to avoid repeats. T3 receives readiness notices while
+Nautilus is notify-only. Watchers do not require issues: readiness appears in
+the workflow summary. Optional existing issue links retain deduplicated comment
+notifications for historical contracts. T3 receives readiness notices while
 retaining its runtime completion checks. Sonarr/Jellyfin depends on
 the running service version and remains host-owned; its local timer is
 retired in favor of the verified Pi adapter below.
@@ -230,7 +231,7 @@ runtime completion ownership until its issue-gate proof lands. Protect
 `statev2.sqlite` and preserve active conversations while the bridge is
 dropped.
 
-## Hermes CUA version gate (#360)
+## Hermes CUA version gate
 
 `hermes-cua-version` tracks the direct `hermes-agent` input, not the Nixpkgs
 wrapper's `0.0.0` version. Readiness requires reviewed Hermes #142225 merge
@@ -243,8 +244,8 @@ those words do not satisfy readiness. A missing integration is
 restriction to be gone while the permanent source-API/runtime guards remain.
 
 The watcher is **notify-only while the fleet pause is active**. Once this
-stack reaches main, the existing two-hour workflow can notify #360 when the
-input is ready. It cannot publish or merge a cleanup in this mode. No new
+stack reaches main, the existing two-hour workflow reports readiness in its
+job summary. It cannot publish or merge a cleanup in this mode. No new
 agent timer, input update, enrollment or activation is introduced.
 
 `cleanup/hermes-cua-version.patch` removes only the release/ref parsing,

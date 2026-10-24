@@ -88,16 +88,17 @@ class Publication(unittest.TestCase):
         return publisher.publish("fixture", self.contract, "fixture/repo")
 
     def test_paused_hermes_notifies_without_cleanup_publication(self):
-        contract = {"mode": "notify-only", "issue": 360, "cleanup": "hermes-cua-version.patch"}
+        contract = {"mode": "notify-only", "cleanup": "hermes-cua-version.patch"}
         with patch.object(publisher, "publish") as publish:
             result, failed = publisher.sweep({"hermes-cua-version": contract},
                     {"hermes-cua-version": "PINNED-READY"}, "fixture/repo")
             self.assertFalse(failed)
-            self.assertEqual(result["hermes-cua-version"]["status"], "notified")
+            self.assertEqual(result["hermes-cua-version"],
+                             {"status": "PINNED-READY", "notification": "workflow-summary"})
             publish.assert_not_called()
             publisher.sweep({"hermes-cua-version": contract},
                     {"hermes-cua-version": "PINNED-READY"}, "fixture/repo")
-            self.assertEqual(len(self.comments), 1)
+            self.assertEqual(self.comments, [])
             self.assertEqual(self.dispatches, [])
 
     def test_fsr_candidates_notify_once_without_claiming_pin_readiness(self):

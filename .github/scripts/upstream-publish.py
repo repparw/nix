@@ -162,8 +162,10 @@ def publish(name, spec, repo):
 
 def notify(name, spec, repo, status):
     issue = spec.get("issue")
+    if issue is None:
+        return {"status": status, "notification": "workflow-summary"}
     if not isinstance(issue, int):
-        raise ValueError("notification requires a tracked issue")
+        raise ValueError("optional issue must be an integer")
     marker = f"<!-- upstream-watch:{name}:{status} -->"
     comments = gh_json("api", "--paginate", "--slurp",
                        f"repos/{repo}/issues/{issue}/comments?per_page=100")
@@ -181,13 +183,6 @@ def notify(name, spec, repo, status):
                        "This is a candidate, not confirmed support or pinned readiness. "
                        "Record the tested upstream support commit in watchers.json to arm exact-ancestry "
                        "tracking through the channel and root pin. No global FSR setting was changed.\n")
-        elif name == "hermes-cua-version":
-            message = (f"{marker}\nThe main Hermes pin contains reviewed remote GUI support. "
-                       "The temporary release gate can be retired with the prepared cleanup recipe.\n\n"
-                       "This watcher remains notify-only during the fleet pause: no cleanup PR, "
-                       "package build or activation was triggered. A reviewed pause clearance and "
-                       "promotion to post-lock are required before automatic cleanup. Native ARM "
-                       "validation and remote enrollment remain separate production gates.\n")
         else:
             message = (f"{marker}\nCI detected `{status}` for `{name}` on main. "
                         "The checked-out pin contains the upstream fix. "
