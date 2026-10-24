@@ -239,7 +239,6 @@
           iifname "wg-home" oifname { "ve-glance", "ve-hermes" } ct state established,related accept comment "container home-tunnel replies"
         '';
         networking.firewall.extraInputRules = ''
-          iifname "eth0" tcp dport 443 ip saddr { 173.245.48.0/20, 103.21.244.0/22, 103.22.200.0/22, 103.31.4.0/22, 141.101.64.0/18, 108.162.192.0/18, 131.0.72.0/22, 162.158.0.0/15, 172.64.0.0/13, 188.114.96.0/20, 190.93.240.0/20, 197.234.240.0/22, 198.41.128.0/17, 104.16.0.0-104.27.255.255 } accept comment "CF only"
           iifname "eth0" meta mark 0x484f4d45 tcp dport 443 accept comment "home uplink https"
           iifname "eth0" meta mark 0x484f4d45 tcp dport 22 accept comment "home uplink ssh"
           iifname "eth0" meta mark 0x484f4d45 udp dport 60002 accept comment "home uplink mosh"

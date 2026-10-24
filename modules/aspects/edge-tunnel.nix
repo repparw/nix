@@ -8,14 +8,7 @@
         cfg.domain
       ]
       ++ lib.mapAttrsToList (_: service: "${service.hostname}.${cfg.domain}") (
-        lib.filterAttrs (
-          name: service:
-          service.hostname != null
-          && !(builtins.elem name [
-            "jellyfin"
-            "qbittorrent"
-          ])
-        ) cfg.definitions
+        lib.filterAttrs (name: service: service.hostname != null && name != "jellyfin") cfg.definitions
       );
     in
     {

@@ -36,8 +36,10 @@ session configuration and installs the Authelia projection.
 
 `modules/aspects/edge-tunnel.nix` connects Cloudflare Tunnel to Traefik's
 loopback HTTPS listener on Epsilon. Its hostname allowlist comes from the
-service registry, excluding Jellyfin and qBittorrent. TLS verification and
+service registry, excluding Jellyfin. TLS verification and
 the existing Authelia rules apply along this path. Jellyfin keeps its
-DNS-only home address; qBittorrent uses Epsilon's direct HTTPS listener.
+DNS-only home address; qBittorrent's UI/API uses the tunnel while its peer
+traffic keeps its existing ports. Epsilon accepts direct HTTPS only from
+the trusted home uplink and its private Glance container for local probes.
 The apex DNS record points to the tunnel, so Epsilon no longer runs the
 apex ddclient updater.
