@@ -46,6 +46,20 @@ class BackupTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 backup(root, root / "nested")
 
+    def test_preserves_ordinary_files_with_sidecar_suffixes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "state"
+            source.mkdir()
+            (source / "notes").write_text("ordinary state")
+            for suffix in ("-wal", "-shm", "-journal"):
+                (source / ("notes" + suffix)).write_text("unique state")
+            destination = root / "backup"
+            with contextlib.redirect_stdout(io.StringIO()):
+                backup(source, destination)
+            for suffix in ("-wal", "-shm", "-journal"):
+                self.assertEqual((destination / ("notes" + suffix)).read_text(), "unique state")
+
 
 if __name__ == "__main__":
     unittest.main()

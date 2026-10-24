@@ -12,6 +12,13 @@ import stat
 import time
 
 
+def is_database(path):
+    if path.is_symlink() or not path.is_file():
+        return False
+    with path.open("rb") as handle:
+        return handle.read(16) == b"SQLite format 3\x00"
+
+
 def backup(source, destination):
     source = source.resolve(strict=True)
     destination = destination.resolve()
@@ -40,9 +47,7 @@ def backup(source, destination):
             if not stat.S_ISREG(mode):
                 skipped.append(str(path.relative_to(source)))
                 continue
-            with path.open("rb") as handle:
-                is_database = handle.read(16) == b"SQLite format 3\x00"
-            if is_database:
+            if is_database(path):
                 deadline = time.monotonic() + 60
 
                 def progress(_status, _remaining, _total):
@@ -58,7 +63,7 @@ def backup(source, destination):
                 databases.append(str(path.relative_to(source)))
             else:
                 # SQLite sidecars must never be replayed onto the backed-up DB.
-                if any(name.endswith(suffix) and (path.parent / name[:-len(suffix)]).is_file()
+                if any(name.endswith(suffix) and is_database(path.parent / name[:-len(suffix)])
                        for suffix in ("-wal", "-shm", "-journal")):
                     continue
                 shutil.copyfile(path, output)
