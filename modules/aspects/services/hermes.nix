@@ -127,20 +127,50 @@
                   provider = "nous";
                   default = "openai/gpt-6.1-sol";
                 };
-                settings.fallback_providers = [
-                  {
-                    provider = "nous";
-                    model = "stepfun/step-5-preview:free";
-                  }
-                  {
-                    provider = "nous";
-                    model = "meituan/longcat-2.5-preview:free";
-                  }
-                  {
-                    provider = "nous";
-                    model = "stepfun/step-3.7-flash:free";
-                  }
+                # Do not silently downgrade complex work on a provider limit.
+                settings.fallback_providers = [ ];
+                settings.approvals = {
+                  mode = "manual";
+                  cron_mode = "deny";
+                  single_query_mode = "deny";
+                  unattended_mode = "deny";
+                };
+                settings.delegation = {
+                  fallback_providers = [ ];
+                  max_concurrent_children = 2;
+                  max_spawn_depth = 1;
+                  max_summary_chars = 6000;
+                  subagent_auto_approve = false;
+                };
+                settings.platform_toolsets.discord = [
+                  "web"
+                  "file"
+                  "terminal"
+                  "skills"
+                  "memory"
+                  "session_search"
+                  "delegation"
+                  "kanban"
+                  "cronjob"
                 ];
+                settings.kanban = {
+                  dispatch_in_gateway = false;
+                  auto_subscribe_on_create = false;
+                };
+                settings.memory = {
+                  memory_enabled = true;
+                  user_profile_enabled = true;
+                  provider = "";
+                };
+                settings.auxiliary.compression = {
+                  provider = "nous";
+                  model = "stepfun/step-3.7-flash:free";
+                };
+                hermesHomeFiles = {
+                  "SOUL.md" = ./hermes-chief-of-staff/SOUL.md;
+                  "skills/chief-of-staff/SKILL.md" = ./hermes-chief-of-staff/SKILL.md;
+                  "scripts/chief_of_staff_backup.py" = ./hermes-chief-of-staff/backup.py;
+                };
                 settings.display.credits_notices = false;
                 settings.platforms.discord = {
                   enabled = true;
@@ -151,7 +181,7 @@
                   };
                 };
                 settings.cron = {
-                  model = "stepfun/step-5-preview:free";
+                  model = "reflection/beam-1.0-501b-a23b:free";
                   model_provider = "nous";
                 };
                 settings.tool_loop_guardrails = {

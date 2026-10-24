@@ -26,6 +26,7 @@ files instead of copying module contents.
 ## Services
 
 - [Service model](services/service-model.md)
+- [Hermes Chief of Staff](services/hermes-chief-of-staff.md)
 
 ## Runbooks
 
@@ -35,6 +36,7 @@ files instead of copying module contents.
 - [Update rollback](runbooks/update-rollback.md)
 - [Fleet health, backups, and deployment](runbooks/fleet-operations.md)
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
+- [Bootstrap and validate Hermes Chief of Staff](runbooks/hermes-chief-of-staff.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
 - [Restore host state from offsite backups](runbooks/host-recovery.md)
 - [Change host persistence](runbooks/host-persistence.md)
