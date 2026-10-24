@@ -276,6 +276,17 @@ class Publication(unittest.TestCase):
         self.assertEqual(publisher.notify("fixture", {}, "fixture/repo", "PINNED-READY")["status"], "already-notified")
         self.assertEqual(len(self.posts), 1)
 
+    def test_notification_state_failure_is_reported(self):
+        with patch.object(publisher, "record_notify_state",
+                          side_effect=subprocess.CalledProcessError(1, ["git", "push"])):
+            result, failed = publisher.sweep(
+                {"fixture": {"mode": "notify-only"}},
+                {"fixture": "PINNED-READY"}, "fixture/repo")
+        self.assertTrue(failed)
+        self.assertEqual(result["fixture"]["status"], "needs-attention (CalledProcessError)")
+        self.assertEqual(len(self.posts), 1)
+        self.assertEqual(self.git("ls-remote", "origin", f"refs/heads/{publisher.NOTIFY_STATE_REF}"), "")
+
     def test_notification_requires_an_identity(self):
         os.environ.pop("DISCORD_BOT_TOKEN", None)
         os.environ.pop("DISCORD_CHANNEL_ID", None)

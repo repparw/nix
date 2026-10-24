@@ -202,8 +202,7 @@ def notify_state():
 
 def record_notify_state(previous, state):
     # Single-commit state ref, mirroring the atomic-cleanup provenance ref.
-    # A concurrent writer that wins the lease also delivered its notice and
-    # the next run converges, so a lost state update is tolerated.
+    # The lease prevents overwriting a concurrent delivery-state update.
     with tempfile.TemporaryDirectory(prefix="upstream-notify-state-") as directory:
         state_file = Path(directory) / "state.json"
         state_file.write_text(json.dumps(state, sort_keys=True, indent=2) + "\n")
@@ -255,10 +254,7 @@ def notify(name, spec, repo, status):
                    f"https://github.com/{repo}/actions/workflows/upstream-watch.yml")
     discord_post(content)
     state[name] = status
-    try:
-        record_notify_state(previous, state)
-    except subprocess.CalledProcessError:
-        pass
+    record_notify_state(previous, state)
     return {"status": "notified"}
 
 
