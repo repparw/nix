@@ -5,7 +5,7 @@
 `fsr4-rdna2` is notify-only. Until a source-reviewed and runtime-tested
 support commit is recorded in `watchers.json`, stable GE-Proton releases
 newer than the recorded baseline with FSR4/RDNA2 changes produce a
-deduplicated `upstream-review-required:<tag>` issue notice. These notices
+deduplicated `upstream-review-required:<tag>` Discord notice. These notices
 are candidates, not compatibility claims. AMD's Windows driver and Vulkan
 announcements alone do not satisfy readiness. Discovery inspects up to 100
 releases and fails closed if that bound is exhausted; advance the baseline
@@ -27,12 +27,18 @@ The lock updater owns input changes.
 
 The registry includes the stable T3 orchestrator-v2 gate and the
 [OpenCode v2 package detector](opencode-release-watch.md). Readiness notices
-go to #209 and #229 respectively. Package readiness does not complete either
+go to the run summary and Discord. Package readiness does not complete either
 fleet runtime migration.
 
-Authelia retains its atomic lock planner and pilot publisher. Independent
-`post-lock` contracts publish separate review-required PRs using the recipes
-in `cleanup/`. Each candidate starts at the same checked-out main revision.
+Authelia's pnpm-hash override was retired in #237, and the atomic lock planner
+and pilot publisher stay armed anyway: `upstream-plan.py` requires exactly one
+`atomic` contract, so `authelia-pnpm-hash` remains in `watchers.json`, the
+detector reports `completed` while the override marker is absent from
+`modules/_services/authelia.nix`, and its cleanup runs through the byte-exact
+module handler in `upstream-plan.py` rather than a recipe in `cleanup/`.
+Independent `post-lock` contracts publish separate review-required PRs using
+the recipes in `cleanup/`. Each candidate starts at the same checked-out main
+revision.
 `git apply --check` must pass before publication. A conflict requires review.
 One failed recipe does not prevent other watchers from processing.
 
@@ -72,18 +78,24 @@ The package-specific gates are:
 | wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
 | voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                                             |
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
+| nodejs-security   | Retired overlay family absent from the fleet; alpha's OpenCode builds against the pinned Bun and Node                                   |
 | moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
 
-Nautilus is notify-only. Ready notifications use tracked issues and durable
-comment markers to avoid repeats. T3 receives readiness notices while
-retaining its runtime completion checks. Sonarr/Jellyfin depends on
+Nautilus is notify-only. Ready notices print in every upstream-watch run
+summary and, once per status change, post to the fleet Discord channel
+through the approved bot identity (`DISCORD_BOT_TOKEN` +
+`DISCORD_CHANNEL_ID`); delivery state lives on the
+`automation/upstream-notify-state` ref, so a persistent status pings exactly
+once. Workaround-holding watchers are `post-lock` instead — their cleanup PR
+is the notice, and the removed workaround file disarms the watcher.
+Sonarr/Jellyfin depends on
 the running service version and remains host-owned; its local timer is
 retired in favor of the verified Pi adapter below.
 
 `tridactyl-reader` is notify-only for #316. It reads `tridactyl-vim` from the
 pinned `firefox-addons` manifest and checks whether that release tag contains
 tridactyl/tridactyl#5515. Nixpkgs' native messaging host does not determine
-the extension version. CI notifies the issue when the pin is ready. Browser
+the extension version. CI pings Discord when the pin is ready. Browser
 verification and removal of Obsidian Reader remain completion steps because
 this checkout has no Obsidian Reader declaration to remove.
 

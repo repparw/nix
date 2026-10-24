@@ -4,7 +4,7 @@
 side-package migration (repository PR #222 pins 2.0.26 from Nixpkgs PR 569770;
 alternate Nixpkgs PR 572946 packages the same release as `opencode_2`). It
 registers as `opencode-v2` in `watchers.json`. The scheduled CI readiness sweep
-calls it, and the publisher posts one readiness notice to issue #229. The
+calls it, and the publisher posts one readiness notice to Discord. The
 detector never mutates pins, timers, services, or the lock.
 
 ## Readiness rule

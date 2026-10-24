@@ -1,18 +1,15 @@
 {
   "fsr4-rdna2": {
-    "issue": 323,
     "mode": "notify-only",
     "input": "nixpkgs",
     "baseline_release": "GE-Proton11-11",
     "support_commit": null
   },
   "tridactyl-reader": {
-    "issue": 316,
     "mode": "notify-only",
     "input": "firefox-addons"
   },
   "opencode-v2": {
-    "issue": 229,
     "mode": "notify-only",
     "input": "nixpkgs"
   },
@@ -21,7 +18,6 @@
     "input": "nixpkgs",
     "predicate": "nixpkgs-commit-and-channel",
     "fix_commit": "6b157b9637b15f44d1f07065cdfd681166014455",
-    "cleanup": "authelia-override",
     "validation": [
       "host-eval",
       "native-arm-authelia"
@@ -33,7 +29,6 @@
     "cleanup": "t3code-connect.patch"
   },
   "t3code-browser-libs": {
-    "issue": 327,
     "mode": "post-lock",
     "input": "nixpkgs",
     "cleanup": "t3code-browser-libs.patch"
@@ -52,7 +47,6 @@
     "cleanup": "tasks-org.patch"
   },
   "nautilus-module": {
-    "issue": 225,
     "mode": "notify-only",
     "input": "nixpkgs"
   },
@@ -97,7 +91,6 @@
     "coupling": "apply"
   },
   "moonshine-pr227": {
-    "issue": 147,
     "mode": "post-lock",
     "input": "nixpkgs",
     "cleanup": "moonshine-pr227.patch",
@@ -108,12 +101,19 @@
     ],
     "coupling": "apply"
   },
+  "nodejs-security": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "nodejs-security.patch",
+    "validation": [
+      "package-build"
+    ]
+  },
   "sonarr-jellyfin": {
     "mode": "host-owned",
     "input": "nixpkgs"
   },
   "t3code-nightly-v2": {
-    "issue": 209,
     "mode": "host-owned",
     "input": "nixpkgs",
     "owner": "alpha-user-timer",
@@ -125,7 +125,6 @@
     ]
   },
   "t3code-stable010": {
-    "issue": 289,
     "mode": "post-lock",
     "input": "nixpkgs",
     "cleanup": "t3code-stable010.patch",
