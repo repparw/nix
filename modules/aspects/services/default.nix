@@ -86,6 +86,12 @@
       };
 
       config = {
+        systemd.services.systemd-machined = {
+          overrideStrategy = "asDropin";
+          requires = [ "systemd-machined.socket" ];
+          after = [ "systemd-machined.socket" ];
+        };
+
         modules.services = {
           inherit definitions hostAddresses hostSshAddresses;
         };
