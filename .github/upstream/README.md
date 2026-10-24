@@ -1,5 +1,18 @@
 # Upstream watcher migration
 
+## October 2026 Node security backport (#337)
+
+`nodejs-security` is notify-only. It requires the Node 24.22.1, Brotli
+1.2.1, and c-ares 1.34.9 commits in the root nixpkgs pin. Node links shared
+libraries, so the Node version alone does not prove the Brotli fix.
+[Issue #337](https://github.com/repparw/nix/issues/337) owns the backport
+paths, additional OpenSSL source check, cleanup builds, and fleet runtime
+completion. A readiness notice does not authorize cleanup or deployment.
+`bun-security` separately waits for Nixpkgs#577354 before removing the
+OpenCode compiler override. Bun 1.4.4 embeds Brotli 1.2.1. Bundled Electron
+runtimes already contain the Brotli fix through Chromium, but still lack
+the October DNS input-validation fix.
+
 ## FSR 4.1 on Alpha's RDNA2 GPU (#323)
 
 `fsr4-rdna2` is notify-only. Until a source-reviewed and runtime-tested

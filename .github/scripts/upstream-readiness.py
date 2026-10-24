@@ -9,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PR_WAITS = {
+    "bun-security": ("NixOS/nixpkgs", 577354, "nixpkgs"),
     "authelia-pnpm-hash": ("NixOS/nixpkgs", 572207, "nixpkgs"),
     "t3code-connect": ("NixOS/nixpkgs", 555921, "nixpkgs"),
     "t3code-split": ("NixOS/nixpkgs", 555814, "nixpkgs"),
@@ -18,6 +19,8 @@ PR_WAITS = {
     "cliamp-hm-module": ("nix-community/home-manager", 9842, "home-manager"),
 }
 WORKAROUNDS = {
+    "bun-security": ("modules/_packages/bun-security.nix", None),
+    "nodejs-security": ("modules/aspects/nodejs-security.nix", None),
     "authelia-pnpm-hash": ("modules/_services/authelia.nix", "autheliaPackage"),
     "t3code-connect": ("modules/aspects/ai/t3code-connect.nix", "cp .env.example .env"),
     "t3code-split": ("modules/aspects/ai/t3code-split.nix", "t3code-server ="),
@@ -287,6 +290,15 @@ def fsr4_rdna2_status(lock):
 
 
 def detect(name, lock):
+    if name == "nodejs-security":
+        revision = pin(lock, "nixpkgs")
+        # A Node release alone is insufficient: Nix uses shared Brotli/c-ares.
+        fixes = (
+            "2794b31601c683d494c898a548e3c5237fa2242e",  # Node 24.22.1
+            "664dc1852b684a2db1d7734514030739fc557b91",  # Brotli 1.2.1
+            "dfbfe7d499556a3acea67ccc4888c2ef489bade0",  # c-ares 1.34.9
+        )
+        return "PINNED-READY" if all(contains("NixOS/nixpkgs", fix, revision) for fix in fixes) else "merged-not-pinned"
     if name == "fsr4-rdna2":
         return fsr4_rdna2_status(lock)
     if name == "tridactyl-reader":
