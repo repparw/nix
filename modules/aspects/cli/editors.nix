@@ -26,7 +26,6 @@
           with pkgs;
           [
             nvim
-            devenv
             curl
             wget
             jq
