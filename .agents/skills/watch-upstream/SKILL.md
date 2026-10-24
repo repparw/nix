@@ -12,9 +12,12 @@ fleet deployment plus runtime readiness probes for host-owned watchers.
 [The migration contract](../../../.github/upstream/README.md) is the source of
 truth for publication policy and per-watcher gates.
 
-Before adding a watcher, record its workaround paths, selected input, precise
-source or ancestry predicate, cleanup edits, build gates, and completion owner
-in its GitHub issue, then declare the contract in `watchers.json`.
+Record each watcher's workaround paths, selected input, precise source or
+ancestry predicate, cleanup edits, build gates, and completion owner in
+`watchers.json` and the linked repository documentation or cleanup recipe.
+Watchers do not require GitHub issues. Readiness without an optional legacy
+issue is reported in the workflow summary; do not create an issue or a separate
+agent timer just to track a watcher.
 
 Add detection to `.github/scripts/upstream-readiness.py`. Detectors read the
 checked-out `main` pins, never publish, and fail closed when evidence is
@@ -42,7 +45,7 @@ retired human-review gate is not restored for it. Before disabling a local
 timer, verify its replacement's live CI run and all completion checks —
 fixtures and waiting runs are supporting evidence, not the cutover gate.
 Close replaced drafts only after their replacement validates in production.
-Retire a host-owned watcher only when the issue's runtime completion
+Retire a host-owned watcher only when its recorded runtime completion
 condition is proven. Run the watcher test scripts named in the migration
 contract; for runtime inspection or deployment, use fleet-operations.
 Register every worked PR in T3 Code.

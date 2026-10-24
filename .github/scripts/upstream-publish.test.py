@@ -87,6 +87,20 @@ class Publication(unittest.TestCase):
     def publish(self):
         return publisher.publish("fixture", self.contract, "fixture/repo")
 
+    def test_paused_hermes_notifies_without_cleanup_publication(self):
+        contract = {"mode": "notify-only", "cleanup": "hermes-cua-version.patch"}
+        with patch.object(publisher, "publish") as publish:
+            result, failed = publisher.sweep({"hermes-cua-version": contract},
+                    {"hermes-cua-version": "PINNED-READY"}, "fixture/repo")
+            self.assertFalse(failed)
+            self.assertEqual(result["hermes-cua-version"],
+                             {"status": "PINNED-READY", "notification": "workflow-summary"})
+            publish.assert_not_called()
+            publisher.sweep({"hermes-cua-version": contract},
+                    {"hermes-cua-version": "PINNED-READY"}, "fixture/repo")
+            self.assertEqual(self.comments, [])
+            self.assertEqual(self.dispatches, [])
+
     def test_fsr_candidates_notify_once_without_claiming_pin_readiness(self):
         registry = {"fsr4-rdna2": {"mode": "notify-only", "issue": 323}}
         readiness = {"fsr4-rdna2": "upstream-review-required:GE-Proton11-12"}

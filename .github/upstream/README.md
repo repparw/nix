@@ -74,8 +74,9 @@ The package-specific gates are:
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
 | moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
 
-Nautilus is notify-only. Ready notifications use tracked issues and durable
-comment markers to avoid repeats. T3 receives readiness notices while
+Nautilus is notify-only. Watchers do not require issues: readiness appears in
+the workflow summary. Optional existing issue links retain deduplicated comment
+notifications for historical contracts. T3 receives readiness notices while
 retaining its runtime completion checks. Sonarr/Jellyfin depends on
 the running service version and remains host-owned; its local timer is
 retired in favor of the verified Pi adapter below.
@@ -229,3 +230,38 @@ a human merge-time chore; Alpha's `watch-t3code-nightly-v2.timer` keeps
 runtime completion ownership until its issue-gate proof lands. Protect
 `statev2.sqlite` and preserve active conversations while the bridge is
 dropped.
+
+## Hermes CUA version gate
+
+`hermes-cua-version` tracks the direct `hermes-agent` input, not the Nixpkgs
+wrapper's `0.0.0` version. Readiness requires reviewed Hermes #142225 merge
+`71633f762d2d74faebe604d0b8a2a2e6cf48346a` to be an ancestor of the actual
+selected revision, plus class declarations for `supports_streams` and the
+`default_cwd` property in that revision's provider source. Comments containing
+those words do not satisfy readiness. A missing integration is
+`waiting-integration`; a missing fix is `merged-not-pinned`; absent APIs are
+`waiting-source`; API errors are unavailable. Completion requires the version
+restriction to be gone while the permanent source-API/runtime guards remain.
+
+The watcher is **notify-only while the fleet pause is active**. Once this
+stack reaches main, the existing two-hour workflow reports readiness in its
+job summary. It cannot publish or merge a cleanup in this mode. No new
+agent timer, input update, enrollment or activation is introduced.
+
+`cleanup/hermes-cua-version.patch` removes only the release/ref parsing,
+minimum-version restriction and associated plumbing/tests. It retains source
+API checks, CUA >=0.7,<0.8, named remote Linux enrollment, manual approval
+semantics and refusal of local GUI fallback. The recipe changes modules only;
+the enrollment runbook describes the temporary and retired states. Drift
+requires review, and a second application fails.
+
+After the pause has been explicitly cleared, promote the registry entry to
+`post-lock` in a reviewed change. The existing publisher then owns exact-SHA,
+strict-up-to-date cleanup publication and auto-merge. Its native x86 job builds
+the real CUA SDK/CLI and policy checks; its native ARM job builds the effective
+Hermes package with the CUA SDK and generated gateway unit. Validation checks
+Epsilon's settings, package selection, PATH/PYTHONPATH and manual approvals.
+These future builds are prepared, not executed under the current pause.
+Remote enrollment, credentials and end-to-end GUI proof remain independent
+production gates owned by the security/activation work. Do not mark runtime
+validation complete from a readiness notification or package fixture.

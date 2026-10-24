@@ -168,3 +168,12 @@ then switch back to native memory while retaining both logs. Do not share one
 OptChat home between gateway and separate CLI processes: the design documents a
 single-writer log lock. Test restart/recovery and original-message zoom before
 using real history. No experimental provider is activated in this PR.
+
+## Remote CUA desktop
+
+The `hermes-cua` aspect prepares an enabled remote terminal/browser/computer-use
+integration for a supported Hermes release and packaged CUA runtime. It is
+inactive on the current v0.22.2 input. The named Linux Space `hermes-gui` still
+needs enrollment; Epsilon remains headless and manual approval stays in force.
+See [remote CUA enrollment](../runbooks/hermes-cua-spaces.md) for version gates,
+packaging, credentials, and validation limits.

@@ -309,8 +309,10 @@ class PlanTests(unittest.TestCase):
             "opencode-v2",
             "tridactyl-reader",
             "fsr4-rdna2",
+            "hermes-cua-version",
         }
         self.assertEqual(set(self.registry), expected)
+        self.assertEqual(self.registry["hermes-cua-version"]["fix_commit"], readiness.HERMES_CUA_FIX)
 
     def test_registry_explicitly_limits_publication(self):
         self.assertEqual([k for k,v in self.registry.items() if v["mode"] == "atomic"],

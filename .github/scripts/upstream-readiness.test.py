@@ -14,6 +14,75 @@ LOCK = {"nodes": {"root": {"inputs": {"nixpkgs": "np", "home-manager": "hm"}}, "
 
 
 class Readiness(unittest.TestCase):
+    def hermes_lock(self):
+        return {"nodes": {"root": {"inputs": {"hermes-agent": "selected-hermes"}},
+                          "selected-hermes": {"locked": {"rev": "hermes-pin"}}}}
+
+    def test_hermes_uses_exact_fix_and_selected_input_source(self):
+        provider = "class TerminalEnvironmentProvider:\n    supports_streams: bool = False\n    @property\n    def default_cwd(self): pass\n"
+        pr = {"merged": True, "merge_commit_sha": watch.HERMES_CUA_FIX}
+        with patch.object(watch, "api", return_value={"merged": False}):
+            self.assertEqual(watch.detect("hermes-cua-version", self.hermes_lock()), "waiting-upstream")
+        for included, text, expected in ((False, provider, "merged-not-pinned"),
+                (True, "# supports_streams default_cwd\nclass TerminalEnvironmentProvider: pass", "waiting-source"),
+                (True, provider, "PINNED-READY")):
+            with self.subTest(expected=expected), patch.object(watch, "api", return_value=pr), \
+                    patch.object(watch, "contains", return_value=included) as ancestry, \
+                    patch.object(watch, "source", return_value=text) as source:
+                self.assertEqual(watch.detect("hermes-cua-version", self.hermes_lock()), expected)
+                ancestry.assert_called_once_with("NousResearch/hermes-agent", watch.HERMES_CUA_FIX, "hermes-pin")
+                if included:
+                    source.assert_called_once_with("NousResearch/hermes-agent", "agent/terminal_env_provider.py", "hermes-pin")
+                else:
+                    source.assert_not_called()
+        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "other"}):
+            with self.assertRaises(ValueError):
+                watch.detect("hermes-cua-version", self.hermes_lock())
+
+    def test_hermes_lifecycle_does_not_complete_an_unmerged_feature(self):
+        with tempfile.TemporaryDirectory() as directory, patch.object(watch, "ROOT", Path(directory)):
+            self.assertEqual(watch.inspect("hermes-cua-version", self.hermes_lock()), "waiting-integration")
+            gate = Path(directory) / watch.HERMES_CUA_GATE
+            gate.parent.mkdir(parents=True)
+            gate.write_text(watch.HERMES_CUA_VERSION_MARKER)
+            with patch.object(watch, "api", side_effect=ValueError("offline")):
+                self.assertTrue(watch.inspect("hermes-cua-version", self.hermes_lock()).startswith("unavailable"))
+            gate.write_text("")
+            self.assertTrue(watch.inspect("hermes-cua-version", self.hermes_lock()).startswith("unavailable"))
+            gate.write_text('lib.hasInfix "supports_streams" provider\nlib.hasInfix "default_cwd" provider\n'
+                            'lib.versionAtLeast runtime.version "0.7.0"\nlib.versionOlder runtime.version "0.8"')
+            self.assertEqual(watch.inspect("hermes-cua-version", self.hermes_lock()), "completed")
+
+    def test_hermes_cleanup_applies_once_and_rejects_drift(self):
+        import shutil
+        root = Path(__file__).resolve().parents[2]
+        recipe = root / ".github/upstream/cleanup/hermes-cua-version.patch"
+        paths = [line.split()[2][2:] for line in recipe.read_text().splitlines() if line.startswith("diff --git ")]
+        self.assertTrue(paths and all(path.startswith("modules/") for path in paths))
+        with tempfile.TemporaryDirectory() as directory:
+            candidate = Path(directory)
+            for relative in paths:
+                target = candidate / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(root / relative, target)
+            gate = candidate / watch.HERMES_CUA_GATE
+            # Candidate CI also runs after retirement; reconstruct its exact
+            # pre-cleanup baseline before exercising application and drift.
+            if watch.HERMES_CUA_VERSION_MARKER not in gate.read_text():
+                subprocess.run(["git", "apply", "--reverse", str(recipe)], cwd=candidate, check=True, capture_output=True)
+            subprocess.run(["git", "apply", "--check", str(recipe)], cwd=candidate, check=True, capture_output=True)
+            original = gate.read_text()
+            gate.write_text(original.replace('version "0.22.3"', 'version "0.22.4"'))
+            self.assertNotEqual(subprocess.run(["git", "apply", "--check", str(recipe)], cwd=candidate, capture_output=True).returncode, 0)
+            gate.write_text(original)
+            subprocess.run(["git", "apply", str(recipe)], cwd=candidate, check=True, capture_output=True)
+            self.assertNotEqual(subprocess.run(["git", "apply", "--check", str(recipe)], cwd=candidate, capture_output=True).returncode, 0)
+            with patch.object(watch, "ROOT", candidate):
+                self.assertEqual(watch.inspect("hermes-cua-version", self.hermes_lock()), "completed")
+            entry = (root / "modules/aspects/services/hermes-cua/entrypoint.py").read_text()
+            self.assertIn("return False", entry)
+            self.assertIn("refusing local fallback", entry)
+
     def fsr_spec(self, commit=None):
         return patch.object(watch.Path, "read_text", return_value=json.dumps({
             "fsr4-rdna2": {"baseline_release": "GE-Proton11-11", "support_commit": commit}}))

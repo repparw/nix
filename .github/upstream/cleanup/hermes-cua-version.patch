@@ -1,0 +1,91 @@
+diff --git a/modules/aspects/services/hermes-cua/_integration.nix b/modules/aspects/services/hermes-cua/_integration.nix
+--- a/modules/aspects/services/hermes-cua/_integration.nix
++++ b/modules/aspects/services/hermes-cua/_integration.nix
+@@ -1,23 +1,16 @@
+ {
+   lib,
+   source,
+-  ref,
+   runtime,
+ }:
+ let
+-  release = builtins.match "v([0-9]+\\.[0-9]+\\.[0-9]+)" ref;
+-  version = if release == null then null else builtins.head release;
+   provider = builtins.readFile (source + "/agent/terminal_env_provider.py");
+-  supported =
+-    version != null
+-    && lib.versionAtLeast version "0.22.3"
+-    && lib.hasInfix "supports_streams" provider
+-    && lib.hasInfix "default_cwd" provider;
++  supported = lib.hasInfix "supports_streams" provider && lib.hasInfix "default_cwd" provider;
+   ready =
+     supported && lib.versionAtLeast runtime.version "0.7.0" && lib.versionOlder runtime.version "0.8";
+ in
+ {
+-  inherit version supported ready;
++  inherit supported ready;
+   settings = lib.optionalAttrs ready {
+     terminal.backend = "cua";
+     plugins.entries.cua-spaces = {
+diff --git a/modules/aspects/services/hermes-cua.nix b/modules/aspects/services/hermes-cua.nix
+--- a/modules/aspects/services/hermes-cua.nix
++++ b/modules/aspects/services/hermes-cua.nix
+@@ -3,8 +3,6 @@
+   den.aspects.hermes-cua.nixos = {
+     containers.hermes.config = import ./hermes-cua/_module.nix {
+       source = inputs.hermes-agent;
+-      ref =
+-        (builtins.fromJSON (builtins.readFile ../../../flake.lock)).nodes.hermes-agent.original.ref or "";
+     };
+   };
+ }
+diff --git a/modules/aspects/services/hermes-cua/_module.nix b/modules/aspects/services/hermes-cua/_module.nix
+--- a/modules/aspects/services/hermes-cua/_module.nix
++++ b/modules/aspects/services/hermes-cua/_module.nix
+@@ -1,4 +1,4 @@
+-{ source, ref }:
++{ source }:
+ {
+   config,
+   lib,
+@@ -13,7 +13,6 @@
+     inherit
+       lib
+       source
+-      ref
+       runtime
+       ;
+   };
+diff --git a/modules/aspects/services/hermes-cua/_check.nix b/modules/aspects/services/hermes-cua/_check.nix
+--- a/modules/aspects/services/hermes-cua/_check.nix
++++ b/modules/aspects/services/hermes-cua/_check.nix
+@@ -3,22 +3,20 @@
+   plugin = pkgs.callPackage ../../../_packages/hermes-cua-spaces.nix { };
+   python = pkgs.python3.withPackages (ps: [ ps.ruamel-yaml ]);
+   gate =
+-    ref: source: version:
++    source: version:
+     import ./_integration.nix {
+       inherit (pkgs) lib;
+-      inherit source ref;
++      inherit source;
+       runtime = { inherit version; };
+     };
+   apiFixture = ./fixtures/supported;
+   oldApiFixture = ./fixtures/old;
+-  current = gate "v0.22.2" apiFixture "0.7.0";
+-  supported = gate "v0.22.3" apiFixture "0.7.0";
++  unsupported = gate oldApiFixture "0.7.0";
++  supported = gate apiFixture "0.7.0";
+ in
+-assert !current.ready && current.settings == { };
+-assert !(gate "v0.22.3" oldApiFixture "0.7.0").ready;
+-assert !(gate "v0.22.3" apiFixture "0.6.0").ready;
+-assert !(gate "v0.22.3" apiFixture "0.8.0").ready;
+-assert !(gate "main" apiFixture "0.7.0").ready;
++assert !unsupported.ready && unsupported.settings == { };
++assert !(gate apiFixture "0.6.0").ready;
++assert !(gate apiFixture "0.8.0").ready;
+ assert supported.ready && supported.settings.terminal.backend == "cua";
+ assert supported.settings.plugins.entries.cua-spaces.enabled;
+ assert supported.settings.plugins.entries.cua-spaces.settings.space != "create";

@@ -27,7 +27,11 @@ Issues, PRDs, and work tickets live in GitHub Issues for `repparw/nix`. Use the 
 
 ## Upstream waits
 
-For an external change that must reach a NixOS or Home Manager input, open a
-GitHub issue and arm a `watch-upstream` timer. The issue states the workaround
-paths, the landing condition, and the completion actions; the timer is the
-probe. Close the issue when the workaround is gone from `origin/main`.
+Use the [watch-upstream skill](../../.agents/skills/watch-upstream/SKILL.md)
+for changes waiting on an upstream input. Record the contract in
+`.github/upstream/watchers.json` with repository documentation and a cleanup
+recipe. GitHub Actions owns detection and publication; no GitHub issue or
+separate agent timer is required. Optional existing issue links may remain for
+historical notifications. Readiness without an issue appears in the workflow
+summary. Retire the watcher only after its recorded completion gates pass on
+`origin/main`.

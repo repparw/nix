@@ -142,7 +142,7 @@ test('docs-only PRs skip the workflow watcher tests but code changes retain them
 test('atomic package validation reads the PR head and includes bundled ARM validation', () => {
   const job = validation.split('  upstream-package-build:')[1].split('\n  gate:')[0];
   assert.match(job, /ref: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/);
-  assert.match(job, /contains\(inputs.upstream_watcher, 't3code-split'\) \|\| inputs.upstream_watcher == 'automation\/atomic-cleanup'/);
+  assert.match(job, /contains\(inputs.upstream_watcher, 't3code-split'\) \|\| contains\(inputs.upstream_watcher, 'hermes-cua-version'\) \|\| inputs.upstream_watcher == 'automation\/atomic-cleanup'/);
   assert.match(job, /"architecture":"arm","runner":"ubuntu-24.04-arm"/);
   const script = job.split('        run: |\n')[1].replace(/^          /gm, '');
   const directory = mkdtempSync(join(tmpdir(), 'atomic-package-test-'));
@@ -164,9 +164,9 @@ test('atomic package validation reads the PR head and includes bundled ARM valid
     mkdirSync(join(directory, 'bin'));
     const bash = spawnSync('bash', ['-c', 'command -v bash'], { encoding: 'utf8' }).stdout.trim();
     writeFileSync(join(directory, 'bin/python3'), `#!${bash}\nprintf '%s\\n' "$*" >> calls\n`, { mode: 0o755 });
-    const validate = architecture => spawnSync('bash', ['-euo', 'pipefail', '-c', script], {
+    const validate = (architecture, watchers = 'automation/atomic-cleanup') => spawnSync('bash', ['-euo', 'pipefail', '-c', script], {
       cwd: directory, encoding: 'utf8',
-      env: { ...process.env, PATH: `${join(directory, 'bin')}:${process.env.PATH}`, WATCHERS: 'automation/atomic-cleanup', ARCHITECTURE: architecture },
+      env: { ...process.env, PATH: `${join(directory, 'bin')}:${process.env.PATH}`, WATCHERS: watchers, ARCHITECTURE: architecture },
     });
     assert.notEqual(validate('x86').status, 0, 'a synthetic merge message must fail closed');
     run('git', ['checkout', '--detach', head]);
@@ -177,6 +177,10 @@ test('atomic package validation reads the PR head and includes bundled ARM valid
       '.github/scripts/upstream-validate.py qbittorrent --architecture x86',
       '.github/scripts/upstream-validate.py t3code-split --architecture arm',
     ]);
+    writeFileSync(join(directory, 'calls'), '');
+    assert.equal(validate('arm', 'automation/upstream-hermes-cua-version').status, 0);
+    assert.equal(readFileSync(join(directory, 'calls'), 'utf8').trim(),
+      '.github/scripts/upstream-validate.py hermes-cua-version --architecture arm');
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

@@ -162,8 +162,10 @@ def publish(name, spec, repo):
 
 def notify(name, spec, repo, status):
     issue = spec.get("issue")
+    if issue is None:
+        return {"status": status, "notification": "workflow-summary"}
     if not isinstance(issue, int):
-        raise ValueError("notification requires a tracked issue")
+        raise ValueError("optional issue must be an integer")
     marker = f"<!-- upstream-watch:{name}:{status} -->"
     comments = gh_json("api", "--paginate", "--slurp",
                        f"repos/{repo}/issues/{issue}/comments?per_page=100")

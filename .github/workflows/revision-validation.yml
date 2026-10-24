@@ -218,7 +218,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON((contains(inputs.upstream_watcher, 't3code-split') || inputs.upstream_watcher == 'automation/atomic-cleanup') && '[{"architecture":"x86","runner":"ubuntu-latest"},{"architecture":"arm","runner":"ubuntu-24.04-arm"}]' || '[{"architecture":"x86","runner":"ubuntu-latest"}]') }}
+        include: ${{ fromJSON((contains(inputs.upstream_watcher, 't3code-split') || contains(inputs.upstream_watcher, 'hermes-cua-version') || inputs.upstream_watcher == 'automation/atomic-cleanup') && '[{"architecture":"x86","runner":"ubuntu-latest"},{"architecture":"arm","runner":"ubuntu-24.04-arm"}]' || '[{"architecture":"x86","runner":"ubuntu-latest"}]') }}
     steps:
       - name: Verify requested revision
         if: inputs.expected_sha != ''
@@ -257,8 +257,8 @@ jobs:
             exit 0
           fi
           for watcher in $(printf '%s' "$list" | tr ',' ' '); do
-            # Only the split CLI cleanup has an additional ARM validator.
-            if [ "$ARCHITECTURE" = arm ] && [ "$watcher" != t3code-split ]; then
+            # Split CLI and Hermes CUA cleanups also require native ARM validation.
+            if [ "$ARCHITECTURE" = arm ] && [ "$watcher" != t3code-split ] && [ "$watcher" != hermes-cua-version ]; then
               continue
             fi
             python3 .github/scripts/upstream-validate.py "$watcher" --architecture "$ARCHITECTURE"
