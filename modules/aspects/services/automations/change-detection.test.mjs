@@ -6,6 +6,7 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  checkNixpkgsSecurityIssues,
   extractEightBitdoUltimate2cFirmware,
   extractValue,
   runChangeDetection,
@@ -445,4 +446,113 @@ test("failed fetches and notifications never commit partial state", async (t) =>
     JSON.parse(fs.readFileSync(changedFiles.statePath)).watchers.release.current,
     "old",
   );
+});
+
+
+const securityWatcher = {
+  slug: "nixpkgs-security-fleet",
+  mode: "extractor",
+  extractor: "nixpkgsSecurityIssues",
+  url: "https://tracker.security.nixos.org/issues",
+  packages: ["brotli", "nodejs_24", "home-assistant", "postgresql"],
+};
+
+function securityIssue(number, cve = "CVE-2026-12345", packages = { brotli: {} }) {
+  return {
+    code: `NIXPKGS-2026-${number}`,
+    status: "A",
+    suggestions: [{ status: "published", cve_id: cve, packages }],
+  };
+}
+
+function securityPage(results, next = null) {
+  return response(JSON.stringify({ results, next }));
+}
+
+test("security tracker silently baselines accepted issues using package mappings", async (t) => {
+  const files = fixture(t, [securityWatcher]);
+  let calls = 0;
+  const state = await runChangeDetection({ ...files, log: noop, fetchImpl: async () => {
+    calls++;
+    return securityPage([securityIssue(1000)]);
+  }});
+  assert.equal(calls, 1);
+  assert.equal(state.watchers[securityWatcher.slug].latestIssue, "NIXPKGS-2026-1000");
+  assert.deepEqual(state.watchers[securityWatcher.slug].seen, ["CVE-2026-12345:brotli"]);
+});
+
+test("security tracker paginates over unrelated entries and deduplicates CVE/package families", async () => {
+  const previous = { latestIssue: "NIXPKGS-2026-1000", seen: ["CVE-2026-12345:brotli"] };
+  const calls = [];
+  const result = await checkNixpkgsSecurityIssues(securityWatcher, previous, async (url) => {
+    calls.push(url);
+    if (calls.length === 1) return securityPage([
+      securityIssue(1003, "CVE-2026-12345"),
+      securityIssue(1002, "CVE-2026-23456", { unrelated: {} }),
+    ], "http://tracker.security.nixos.org/api/v1/issues?page=2");
+    return securityPage([
+      securityIssue(1001, "CVE-2026-34567", { nodejs_24: {}, "nodejs-slim_24": {}, postgresql_17: {} }),
+      securityIssue(1000),
+    ]);
+  });
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1], "https://tracker.security.nixos.org/api/v1/issues?page=2&expand=suggestions");
+  assert.equal(result.latestIssue, "NIXPKGS-2026-1003");
+  assert.deepEqual(result.added.map((entry) => entry.package), ["nodejs", "postgresql"]);
+});
+
+test("security tracker ignores unpublished, rejected, and unrelated package matches", async () => {
+  const rejected = securityIssue(1003); rejected.status = "NA";
+  const unpublished = securityIssue(1002); unpublished.suggestions[0].status = "pending";
+  const unrelated = securityIssue(1001, "CVE-2026-34567", { "home-assistant-fake": {} });
+  const result = await checkNixpkgsSecurityIssues(securityWatcher,
+    { latestIssue: "NIXPKGS-2026-1000", seen: [] },
+    async () => securityPage([rejected, unpublished, unrelated, securityIssue(1000)]));
+  assert.deepEqual(result.added, []);
+});
+
+test("security tracker notifies concisely once and ignores subsequent issue removal", async (t) => {
+  const initial = { watchers: { [securityWatcher.slug]: { latestIssue: "NIXPKGS-2026-1000", seen: [] } } };
+  const files = fixture(t, [securityWatcher], initial);
+  const messages = [];
+  await runChangeDetection({ ...files, log: noop, fetchImpl: async (url, options) => {
+    if (url.startsWith("https://discord.com/")) {
+      messages.push(JSON.parse(options.body).content); return response();
+    }
+    return securityPage([securityIssue(1001), securityIssue(1000)]);
+  }});
+  assert.equal(messages.length, 1);
+  assert.match(messages[0], /CVE-2026-12345 — brotli/);
+  assert.match(messages[0], /Deployed versions and patches need checking/);
+  await runChangeDetection({ ...files, log: noop,
+    fetchImpl: async () => securityPage([securityIssue(1001)]) });
+  assert.equal(messages.length, 1);
+});
+
+test("security tracker rejects malformed pages, offsite pagination and lost checkpoints", async (t) => {
+  for (const page of [
+    {},
+    { results: [], next: "https://evil.example/api/v1/issues" },
+    { results: [], next: null },
+    { results: [{ code: "bad" }], next: null },
+  ]) {
+    const files = fixture(t, [securityWatcher], { watchers: {
+      [securityWatcher.slug]: { latestIssue: "NIXPKGS-2026-1000", seen: [] },
+    }});
+    const before = fs.readFileSync(files.statePath, "utf8");
+    await assert.rejects(runChangeDetection({ ...files, log: noop,
+      fetchImpl: async () => response(JSON.stringify(page)) }));
+    assert.equal(fs.readFileSync(files.statePath, "utf8"), before);
+  }
+});
+
+test("security tracker delivery failure preserves its checkpoint for retry", async (t) => {
+  const files = fixture(t, [securityWatcher], { watchers: {
+    [securityWatcher.slug]: { latestIssue: "NIXPKGS-2026-1000", seen: [] },
+  }});
+  const before = fs.readFileSync(files.statePath, "utf8");
+  await assert.rejects(runChangeDetection({ ...files, log: noop, fetchImpl: async (url) =>
+    url.startsWith("https://discord.com/") ? response("", { status: 500 }) :
+      securityPage([securityIssue(1001), securityIssue(1000)]) }));
+  assert.equal(fs.readFileSync(files.statePath, "utf8"), before);
 });
