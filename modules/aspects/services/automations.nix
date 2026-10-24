@@ -110,6 +110,17 @@
             displayTemplate = "nixosReleaseChanges";
             message = "**NixOS {{version}} release notes updated**\n{{url}}\n\n**New modules:**\n{{newModules}}\n\n**Breaking changes:**\n{{breakingChanges}}\n\n**Other notable changes:**\n{{otherChanges}}";
           })
+          (mkExtractorWatcher {
+            slug = "cve-now-fleet-critical";
+            label = "cve.now: fleet-relevant critical and KEV vulnerabilities";
+            # cve.now has no nixpkgs version mapping. The extractor narrows
+            # the feed to software this fleet runs before notifying.
+            url = "https://cve.now/vulnerabilities";
+            fetchUrl = "https://cve.now/feed?filter=critical%2Ckev&format=json";
+            extractor = "cveNowFleetVulnerabilities";
+            displayTemplate = "cveNowFleet";
+            message = "**cve.now: new critical/KEV vulnerability affecting fleet software**\n{{added}}\n\nBrowse: {{url}}";
+          })
         ];
         defaultWatchersFile = pkgs.writeText "change-detection-default-watchers.json" (
           builtins.toJSON defaultWatchers

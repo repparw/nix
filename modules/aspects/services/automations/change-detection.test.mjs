@@ -6,6 +6,7 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  extractCveNowFleetVulnerabilities,
   extractEightBitdoUltimate2cFirmware,
   extractValue,
   runChangeDetection,
@@ -155,6 +156,219 @@ test("extractors fail closed and handle distant firmware entries", () => {
   assert.throws(
     () => extractValue(regexWatcher({ pattern: "version: (new)?", group: 2 }), "version: new"),
     /Could not extract/,
+  );
+});
+
+test("cve.now extractor keeps only fleet-relevant entries and fails closed", () => {
+  const body = JSON.stringify({
+    version: "https://jsonfeed.org/version/1.1",
+    items: [
+      {
+        id: "CVE-2026-2000",
+        title: "CVE-2026-2000: Jellyfin authentication bypass",
+        url: "https://cve.now/CVE-2026-2000",
+        content_text: "Jellyfin before 10.11 is affected.",
+      },
+      {
+        id: "CVE-2026-1000",
+        title: "CVE-2026-1000: Authelia policy bypass",
+        url: "https://cve.now/CVE-2026-1000",
+        content_text: "",
+      },
+      {
+        id: "CVE-2026-3000",
+        title: "CVE-2026-3000: Cisco Secure Email Gateway arbitrary file write",
+        url: "https://cve.now/CVE-2026-3000",
+        content_text: "Not used by this fleet.",
+      },
+    ],
+  });
+
+  assert.deepEqual(extractCveNowFleetVulnerabilities(body), {
+    entries: [
+      {
+        id: "CVE-2026-1000",
+        title: "CVE-2026-1000: Authelia policy bypass",
+        url: "https://cve.now/CVE-2026-1000",
+      },
+      {
+        id: "CVE-2026-2000",
+        title: "CVE-2026-2000: Jellyfin authentication bypass",
+        url: "https://cve.now/CVE-2026-2000",
+      },
+    ],
+  });
+
+  assert.throws(
+    () => extractCveNowFleetVulnerabilities("<html>not json</html>"),
+    /not valid JSON/,
+  );
+  assert.throws(
+    () => extractCveNowFleetVulnerabilities(JSON.stringify({ items: {} })),
+    /items array/,
+  );
+  assert.throws(
+    () =>
+      extractCveNowFleetVulnerabilities(
+        JSON.stringify({ items: [{ id: "CVE-2026-1", title: "x" }] }),
+      ),
+    /malformed entry/,
+  );
+  assert.throws(
+    () =>
+      extractCveNowFleetVulnerabilities(
+        JSON.stringify({
+          items: [
+            {
+              id: "CVE-2026-1",
+              title: "Jellyfin",
+              url: "file:///etc/passwd",
+            },
+          ],
+        }),
+      ),
+    /HTTP or HTTPS/,
+  );
+});
+
+test("cve.now watcher alerts only for newly matched entries", async (t) => {
+  const watcher = {
+    slug: "cve",
+    url: "https://cve.now/vulnerabilities",
+    fetchUrl: "https://cve.now/feed?filter=critical%2Ckev&format=json",
+    mode: "extractor",
+    extractor: "cveNowFleetVulnerabilities",
+    displayTemplate: "cveNowFleet",
+    message: "**{{count}} new**\n{{added}}\n\n{{url}}",
+  };
+  const previousCurrent = {
+    entries: [
+      {
+        id: "CVE-2026-1000",
+        title: "CVE-2026-1000: Authelia policy bypass",
+        url: "https://cve.now/CVE-2026-1000",
+      },
+    ],
+  };
+  const files = fixture(t, [watcher], {
+    watchers: {
+      cve: {
+        current: previousCurrent,
+        currentKey: stableStringify(previousCurrent),
+        displayValue: "1 fleet-relevant entry",
+      },
+    },
+  });
+  const posts = [];
+
+  await runChangeDetection({
+    ...files,
+    fetchImpl: async (_url, options = {}) => {
+      if (options.method === "POST") {
+        posts.push(JSON.parse(options.body));
+        return response();
+      }
+      return response(
+        JSON.stringify({
+          items: [
+            {
+              id: "CVE-2026-2000",
+              title: "CVE-2026-2000: Jellyfin authentication bypass",
+              url: "https://cve.now/CVE-2026-2000",
+              content_text: "Jellyfin before 10.11 is affected.",
+            },
+            {
+              id: "CVE-2026-3000",
+              title: "CVE-2026-3000: Cisco Secure Email Gateway arbitrary file write",
+              url: "https://cve.now/CVE-2026-3000",
+              content_text: "",
+            },
+            ...previousCurrent.entries,
+          ],
+        }),
+      );
+    },
+    log: noop,
+  });
+
+  assert.equal(posts.length, 1);
+  assert.match(posts[0].content, /\*\*1 new\*\*/);
+  assert.match(
+    posts[0].content,
+    /\[CVE-2026-2000\]\(https:\/\/cve\.now\/CVE-2026-2000\)/,
+  );
+  assert.match(posts[0].content, /Jellyfin authentication bypass/);
+  assert.doesNotMatch(posts[0].content, /CVE-2026-1000/);
+  assert.doesNotMatch(posts[0].content, /Cisco/);
+  assert.deepEqual(
+    JSON.parse(fs.readFileSync(files.statePath)).watchers.cve.current.entries.map(
+      (entry) => entry.id,
+    ),
+    ["CVE-2026-1000", "CVE-2026-2000"],
+  );
+});
+
+test("cve.now watcher does not alert on feed removals", async (t) => {
+  const watcher = {
+    slug: "cve",
+    url: "https://cve.now/vulnerabilities",
+    fetchUrl: "https://cve.now/feed?filter=critical%2Ckev&format=json",
+    mode: "extractor",
+    extractor: "cveNowFleetVulnerabilities",
+    displayTemplate: "cveNowFleet",
+    message: "**{{count}} new**\n{{added}}\n\n{{url}}",
+  };
+  const kept = {
+    id: "CVE-2026-1000",
+    title: "CVE-2026-1000: Authelia policy bypass",
+    url: "https://cve.now/CVE-2026-1000",
+  };
+  const removed = {
+    id: "CVE-2026-4000",
+    title: "CVE-2026-4000: Redis denial of service",
+    url: "https://cve.now/CVE-2026-4000",
+  };
+  const previousCurrent = { entries: [kept, removed] };
+  const files = fixture(t, [watcher], {
+    watchers: {
+      cve: {
+        current: previousCurrent,
+        currentKey: stableStringify(previousCurrent),
+        displayValue: "2 fleet-relevant entries",
+      },
+    },
+  });
+  const posts = [];
+
+  await runChangeDetection({
+    ...files,
+    fetchImpl: async (_url, options = {}) => {
+      if (options.method === "POST") {
+        posts.push(JSON.parse(options.body));
+        return response();
+      }
+      return response(
+        JSON.stringify({
+          items: [
+            kept,
+            {
+              id: "CVE-2026-3000",
+              title: "CVE-2026-3000: Cisco Secure Email Gateway arbitrary file write",
+              url: "https://cve.now/CVE-2026-3000",
+              content_text: "",
+            },
+          ],
+        }),
+      );
+    },
+    log: noop,
+  });
+
+  assert.equal(posts.length, 0);
+  assert.equal(
+    JSON.parse(fs.readFileSync(files.statePath)).watchers.cve.current.entries
+      .length,
+    1,
   );
 });
 

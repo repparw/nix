@@ -10,7 +10,31 @@ const MAX_STATE_FILE_BYTES = 8 * 1024 * 1024;
 const DEFAULT_MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
 const MAX_RESPONSE_BYTES = 16 * 1024 * 1024;
 const MAX_WATCHERS = 1000;
+const CVE_NOW_MAX_DISPLAY_ENTRIES = 15;
 const DEFAULT_USER_AGENT = "change-monitor/1.0";
+
+// cve.now exposes no per-package mapping for nixpkgs. Match only the
+// software this fleet actually runs; a broad CVE feed would page constantly
+// with unrelated kernel, browser, and enterprise-app disclosures.
+const CVE_NOW_FLEET_PATTERNS = [
+  /\bnixos\b/i,
+  /\bnixpkgs\b/i,
+  /\bhome[ -]?assistant\b/i,
+  /\bhacs\b/i,
+  /\bjellyfin\b/i,
+  /\bpaperless(?:-ngx)?\b/i,
+  /\bauthelia\b/i,
+  /\btraefik\b/i,
+  /\b(?:bazarr|prowlarr|radarr|sonarr|qbittorrent)\b/i,
+  /\bminiflux\b/i,
+  /\barchisteamfarm\b/i,
+  /\bopenssh\b/i,
+  /\bsystemd\b/i,
+  /\bwireguard\b/i,
+  /\bredis\b/i,
+  /\bpostgres(?:ql)?\b/i,
+  /\bgrafana\b/i,
+];
 const DEFAULT_ACCEPT =
   "text/html,application/xhtml+xml,application/json,text/plain";
 const execFileAsync = promisify(execFile);
@@ -211,7 +235,8 @@ export function validateWatchers(watchers) {
     } else if (
       watcher.mode !== "extractor" ||
       (watcher.extractor !== "eightBitdoUltimate2cFirmware" &&
-       watcher.extractor !== "nixosReleaseChanges")
+       watcher.extractor !== "nixosReleaseChanges" &&
+       watcher.extractor !== "cveNowFleetVulnerabilities")
     ) {
       throw new Error(`Unknown watcher mode for ${watcher.slug}`);
     }
@@ -329,6 +354,71 @@ function extractNixosReleaseChanges(body) {
   };
 }
 
+function parseCveNowFeed(body) {
+  let feed;
+  try {
+    feed = JSON.parse(body);
+  } catch (error) {
+    throw new Error("cve.now feed is not valid JSON", { cause: error });
+  }
+  if (!isPlainObject(feed) || !Array.isArray(feed.items)) {
+    throw new Error("cve.now feed must contain an items array");
+  }
+  return feed.items;
+}
+
+export function extractCveNowFleetVulnerabilities(body) {
+  const entries = [];
+  for (const item of parseCveNowFeed(body)) {
+    if (
+      !isPlainObject(item) ||
+      typeof item.id !== "string" ||
+      item.id.length === 0 ||
+      typeof item.title !== "string" ||
+      typeof item.url !== "string" ||
+      item.url.length === 0
+    ) {
+      throw new Error("cve.now feed contains a malformed entry");
+    }
+    validateHttpUrl(item.url, "cve.now entry url");
+
+    const searchable = `${item.title}\n${
+      typeof item.content_text === "string" ? item.content_text : ""
+    }`;
+    if (!CVE_NOW_FLEET_PATTERNS.some((pattern) => pattern.test(searchable))) {
+      continue;
+    }
+    entries.push({
+      id: item.id,
+      title: item.title,
+      url: item.url,
+    });
+  }
+
+  // Feed order is not a stable comparison key; sort so an unchanged set of
+  // matches never looks like a change.
+  entries.sort((left, right) => left.id.localeCompare(right.id));
+  return { entries };
+}
+
+function cveNowEntryTitle(entry) {
+  const prefix = `${entry.id}: `;
+  return entry.title.startsWith(prefix)
+    ? entry.title.slice(prefix.length)
+    : entry.title;
+}
+
+function renderCveNowAdded(entries) {
+  const shown = entries.slice(0, CVE_NOW_MAX_DISPLAY_ENTRIES);
+  const lines = shown.map(
+    (entry) => `- [${entry.id}](${entry.url}) — ${cveNowEntryTitle(entry)}`,
+  );
+  if (entries.length > shown.length) {
+    lines.push(`- …and ${entries.length - shown.length} more`);
+  }
+  return lines.join("\n");
+}
+
 function cleanHtml(html) {
   let cleaned = html.replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([^<]+)<\/a>/g, '[$2]($1)');
 
@@ -407,6 +497,10 @@ function displayValue(watcher, current, currentKey) {
       parts.push(`+${current.otherChanges.length} other changes`);
     }
     return parts.length > 0 ? parts.join(' ') : 'No changes detected';
+  }
+  if (watcher.displayTemplate === "cveNowFleet") {
+    const count = Array.isArray(current.entries) ? current.entries.length : 0;
+    return `${count} fleet-relevant ${count === 1 ? "entry" : "entries"}`;
   }
   return typeof current === "string" ? current : currentKey;
 }
@@ -531,6 +625,13 @@ export function extractValue(watcher, body) {
     watcher.extractor === "nixosReleaseChanges"
   ) {
     return extractNixosReleaseChanges(body);
+  }
+
+  if (
+    watcher.mode === "extractor" &&
+    watcher.extractor === "cveNowFleetVulnerabilities"
+  ) {
+    return extractCveNowFleetVulnerabilities(body);
   }
 
   throw new Error(`Unknown watcher mode for ${watcher.slug}`);
@@ -678,10 +779,42 @@ export async function runChangeDetection({
           );
         }
 
-        await notifyDiscord(discord, content, fetchImpl);
-        log(
-          `${watcher.slug}: changed from ${previousDisplay ?? previousKey} to ${currentDisplay}`,
-        );
+        let shouldNotify = true;
+        if (
+          watcher.extractor === "cveNowFleetVulnerabilities" &&
+          isPlainObject(current) &&
+          Array.isArray(current.entries)
+        ) {
+          const previousEntries =
+            isPlainObject(previous?.current) &&
+            Array.isArray(previous.current.entries)
+              ? previous.current.entries
+              : [];
+          const previousIds = new Set(previousEntries.map((entry) => entry.id));
+          const added = current.entries.filter(
+            (entry) => !previousIds.has(entry.id),
+          );
+
+          if (added.length === 0) {
+            // Removals from the bounded feed are not alerts.
+            shouldNotify = false;
+            log(`${watcher.slug}: no new fleet-relevant entries`);
+          } else {
+            content = replaceLiteral(content, "{{count}}", added.length);
+            content = replaceLiteral(
+              content,
+              "{{added}}",
+              renderCveNowAdded(added),
+            );
+          }
+        }
+
+        if (shouldNotify) {
+          await notifyDiscord(discord, content, fetchImpl);
+          log(
+            `${watcher.slug}: changed from ${previousDisplay ?? previousKey} to ${currentDisplay}`,
+          );
+        }
       } else {
         log(`${watcher.slug}: unchanged at ${currentDisplay}`);
       }

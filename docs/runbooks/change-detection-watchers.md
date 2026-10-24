@@ -53,6 +53,29 @@ its validation entry, display formatting for object values, and fixtures for
 expected plus malformed pages. Extractors fail closed — a bad page reports
 nothing rather than a plausible wrong value.
 
+## CVE feed watcher
+
+The `cve-now-fleet-critical` watcher polls cve.now's
+`filter=critical,kev` JSON feed and alerts only when a new entry names
+software this fleet runs. Matching happens in
+`CVE_NOW_FLEET_PATTERNS` beside `extractCveNowFleetVulnerabilities` in
+`change-detection.mjs`; update that list when the fleet starts or stops
+running matching software. The watcher links humans to the catalog page, not
+the JSON feed, through the `fetchUrl`/`url` split.
+
+cve.now maps package advisories for npm, PyPI, Go, Maven, crates.io,
+Packagist, RubyGems, and NuGet. It does not map nixpkgs packages to the
+versions pinned by this flake, so treat an alert as a disclosure to
+investigate, not a version-impact verdict. Avoid adding kernel, browser, or
+generic runtime keywords: the critical feed produces many such entries and
+would turn the alert into noise.
+
+```sh
+node --test modules/aspects/services/automations/change-detection.test.mjs
+# After deployment, baseline runs stay silent; check the journal for matches:
+journalctl -u change-detection.service -n 100 --no-pager
+```
+
 ## Notification and state behavior
 
 State lives at
