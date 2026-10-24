@@ -78,3 +78,23 @@ Enabled via `services.music-assistant.providers` in the aspect:
   on an ephemeral TCP port; `openFirewall` opens the ephemeral range.
 - **Sendspin client handshake 404** — the URL must include the fixed
   `/sendspin` path.
+
+## Pi native build (deferred)
+
+The overridden MA package builds natively on the Pi; the only missing piece is
+the **nodejs-slim 24.22.1 aarch64 substitute** (needed by the ytmusic dep
+chain: azurite → furo-web → bgutil-ytdlp-pot-provider → yt-dlp-ejs). Its
+~6 GB compile scratch does not fit `/nix` alongside the deployed system.
+Resume when the substitute lands on cache.nixos.org:
+
+```sh
+ssh root@192.168.0.4   # then on the Pi:
+cd /persist/ma-pr-build   # PR branch archive (re-copy with git archive if stale)
+PKGDRV=$(nix eval --raw .#nixosConfigurations.pi.config.services.music-assistant.package.drvPath)
+nix build "$PKGDRV^out" --no-link -o /persist/gc-roots/ma-pr-package \
+  --option min-free 4G --option max-free 8G
+```
+
+Check substitute availability first with
+`nix build /nix/store/<nodejs-slim-drv>^out --dry-run` from the failed log
+(`/persist/ma-pkg-build.log`).
