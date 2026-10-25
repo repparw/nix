@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
@@ -495,7 +495,7 @@ jobs:
           # and bundled package validations for atomic candidates).
           reconcile_atomic_ci() {
             local pr="$1" sha="$2" watchers="${3:-}" title_runs ci_runs
-            local watcher upstream_watchers='' arm_authelia=false required_jobs=0 manifest
+            local watcher upstream_watchers='' required_jobs=0 manifest
             if [ -z "$watchers" ]; then
               # ls-remote does not fetch the object. Recover only from the
               # verified remote branch tip, never from a stale local object.
@@ -511,19 +511,19 @@ jobs:
               return 1
             fi
             for watcher in ${watchers//,/ }; do
-              if [ "$watcher" = authelia-pnpm-hash ]; then
-                arm_authelia=true
-              else
+              # The authelia-pnpm-hash workaround was retired in #237 and its
+              # native ARM gate with it; the watcher has no package validator,
+              # so a stale candidate naming it has nothing left to dispatch.
+              if [ "$watcher" != authelia-pnpm-hash ]; then
                 upstream_watchers="${upstream_watchers:+$upstream_watchers,}$watcher"
               fi
             done
             if [ -n "$upstream_watchers" ]; then required_jobs=$((required_jobs + 1)); fi
-            if [ "$arm_authelia" = true ]; then required_jobs=$((required_jobs + 1)); fi
             if [ "$required_jobs" -eq 0 ]; then return 1; fi
             # An existing run must have received this exact input manifest.
             # A successful manual dispatch on the same SHA with fewer/different
             # watchers is not evidence that every cleanup was validated.
-            manifest="validate sha=$sha watchers=${upstream_watchers:-none} arm=$arm_authelia"
+            manifest="validate sha=$sha watchers=${upstream_watchers:-none}"
 
             title_runs=$(gh api --method GET "repos/$GH_REPO/actions/workflows/pr-title.yml/runs" \
               -f branch="$atomic_branch" -f head_sha="$sha" -f event=workflow_dispatch \
@@ -541,9 +541,6 @@ jobs:
               local ci_args=(--ref "$atomic_branch" -f expected_sha="$sha")
               if [ -n "$upstream_watchers" ]; then
                 ci_args+=(-f upstream_watcher="$upstream_watchers")
-              fi
-              if [ "$arm_authelia" = true ]; then
-                ci_args+=(-f build_arm_authelia=true)
               fi
               gh workflow run ci.yml "${ci_args[@]}" || return 1
             fi
