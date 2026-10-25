@@ -243,7 +243,7 @@ class Readiness(unittest.TestCase):
             with patch.object(watch, "ROOT", root), patch.object(watch, "detect") as detect:
                 self.assertEqual(watch.inspect("nodejs-security", LOCK), "completed")
                 detect.assert_not_called()
-            aspect.write_text("{ den.aspects.nodejs-security.nixos.nixpkgs.overlays = []; }")
+            aspect.write_text("{ nodejs-runtime = callPackage ../_packages/nodejs-security.nix {}; }")
             with patch.object(watch, "ROOT", root), \
                     patch.object(watch, "detect", return_value="merged-not-pinned"):
                 self.assertEqual(watch.inspect("nodejs-security", LOCK), "merged-not-pinned")

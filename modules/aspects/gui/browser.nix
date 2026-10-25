@@ -66,7 +66,9 @@ in
         ...
       }:
       let
-        openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix { };
+        openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix {
+          nodejs = pkgs.nodejs-runtime;
+        };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
         whatsappLinksToFirefox = pkgs.callPackage ../../_packages/whatsapp-links-to-firefox.nix { };
         heliumPackage =
