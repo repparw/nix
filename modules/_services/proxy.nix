@@ -44,18 +44,8 @@ in
             tls.certResolver = "cloudflare";
           };
         };
-        # Traefik silently creates its default internal entrypoint on
-        # 0.0.0.0:8080 for ping/api/metrics. Binding ping to an explicit
-        # loopback-only entrypoint keeps the endpoint usable without the
-        # wildcard listener.
-        internal-ping = {
-          address = "127.0.0.1:8080";
-        };
       };
 
-      ping = {
-        entryPoint = "internal-ping";
-      };
       api = {
         dashboard = false;
         debug = false;

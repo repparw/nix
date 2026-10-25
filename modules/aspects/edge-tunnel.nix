@@ -10,8 +10,6 @@
       ++ lib.mapAttrsToList (_: service: "${service.hostname}.${cfg.domain}") (
         lib.filterAttrs (name: service: service.hostname != null && name != "jellyfin") cfg.definitions
       )
-      # The Grafana Cloud redirect site has no service backend; Traefik answers
-      # it with a 302 to the Cloud stack (monitoring dashboard aspect).
       ++ [ "metrics.${cfg.domain}" ];
     in
     {
