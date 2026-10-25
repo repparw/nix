@@ -538,6 +538,11 @@
 
               hardeningMatches =
                 builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress
+                && epsilon.services.traefik.staticConfigOptions.api.dashboard == false
+                && epsilon.services.traefik.staticConfigOptions.api.debug == false
+                && epsilon.services.traefik.staticConfigOptions.ping.entryPoint == "internal-ping"
+                &&
+                  epsilon.services.traefik.staticConfigOptions.entryPoints."internal-ping".address == "127.0.0.1:8080"
                 && epsilon.containers.paperless.forwardPorts == [ ];
 
               expected =
