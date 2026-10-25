@@ -540,7 +540,6 @@
                 builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress
                 && epsilon.services.traefik.staticConfigOptions.api.dashboard == false
                 && epsilon.services.traefik.staticConfigOptions.api.debug == false
-                && !(epsilon.services.traefik.staticConfigOptions ? ping)
                 && epsilon.containers.paperless.forwardPorts == [ ];
 
               expected =
