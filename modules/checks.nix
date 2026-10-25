@@ -536,7 +536,9 @@
                 && epsilon.services.traefik.staticConfigOptions.entryPoints.tunnel.address == "127.0.0.1:8443"
                 && !epsilon.services.ddclient.enable;
 
-              hardeningMatches = builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress;
+              hardeningMatches =
+                builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress
+                && epsilon.containers.paperless.forwardPorts == [ ];
 
               expected =
                 fleetRegistryMatches

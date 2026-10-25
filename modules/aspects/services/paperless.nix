@@ -57,13 +57,9 @@
           # data dir (Django system check fails, boot loops, no READY).
           # Container paperless (315) becomes host 393531.
           privateUsers = 393216;
-          forwardPorts = [
-            {
-              protocol = "tcp";
-              hostPort = 8000;
-              containerPort = 8000;
-            }
-          ];
+          # No host port forward: Traefik and monitors reach the container
+          # directly on its bridge address, so the DNAT only added unused
+          # public surface.
           bindMounts = {
             "/var/lib/paperless" = {
               hostPath = "${cfg.configDir}/paper";
