@@ -12,6 +12,7 @@
           den.aspects.streaming
           den.aspects.cliamp
           den.aspects.moonshine-pr227-test
+          den.aspects.parakeet-ultra-test
           den.aspects.ai._.t3code-stable010
         ];
       };
