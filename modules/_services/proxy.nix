@@ -46,10 +46,9 @@ in
         };
       };
 
-      ping = { };
       api = {
-        dashboard = true;
-        debug = true;
+        dashboard = false;
+        debug = false;
       };
       certificatesResolvers.cloudflare.acme = {
         email = "ubritos@gmail.com";

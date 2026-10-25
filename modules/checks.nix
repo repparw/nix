@@ -536,18 +536,26 @@
                 && epsilon.services.traefik.staticConfigOptions.entryPoints.tunnel.address == "127.0.0.1:8443"
                 && !epsilon.services.ddclient.enable;
 
+              hardeningMatches =
+                builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress
+                && epsilon.services.traefik.staticConfigOptions.api.dashboard == false
+                && epsilon.services.traefik.staticConfigOptions.api.debug == false
+                && epsilon.containers.paperless.forwardPorts == [ ];
+
               expected =
                 fleetRegistryMatches
                 && validationMatches
                 && ingressPolicyMatches
                 && glanceRoutingMatches
-                && tunnelRoutingMatches;
+                && tunnelRoutingMatches
+                && hardeningMatches;
               matcherReport = builtins.toJSON {
                 r = fleetRegistryMatches;
                 v = validationMatches;
                 i = ingressPolicyMatches;
                 g = glanceRoutingMatches;
                 t = tunnelRoutingMatches;
+                h = hardeningMatches;
               };
             in
             assert expected || throw matcherReport;
