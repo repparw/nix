@@ -30,7 +30,7 @@
             wget
             jq
             libnotify
-            nodejs
+            nodejs-runtime
 
             unzip
             trashy

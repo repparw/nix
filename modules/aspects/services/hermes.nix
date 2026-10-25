@@ -22,7 +22,7 @@
         crashTriage = import ./hermes-crash/_package.nix { inherit pkgs; };
         packageTriage = import ./hermes-package/_package.nix { inherit pkgs; };
         # Containers have their own package set; select the host's security overlay.
-        hermesNodejs = pkgs.nodejs_24;
+        hermesNodejs = pkgs.nodejs-runtime;
       in
       {
         environment.systemPackages = [

@@ -1,13 +1,15 @@
 { den, ... }:
 {
   den.aspects.nodejs-security.nixos.nixpkgs.overlays = [
-    (_final: prev: {
+    (final: prev: {
       bun-security = prev.callPackage ../_packages/bun-security.nix { };
-      # Nixpkgs#576777 and #576792 have not reached our nixos-unstable pin.
-      # Keep the security dependencies private to Node to avoid a fleet-wide
-      # OpenSSL/Brotli rebuild. Electron bundles its own libraries separately.
-      nodejs-slim_24 = prev.callPackage ../_packages/nodejs-security.nix {
-        inherit (prev) nodejs-slim_24;
+      # Keep the runtime separate: overriding nodejs-slim_24 also rebuilds
+      # Electron, QtWebEngine and indirect users of their build tools.
+      nodejs-runtime = prev.nodejs_24.override {
+        nodejs-slim = prev.callPackage ../_packages/nodejs-security.nix { };
+      };
+      t3code = prev.t3code.override {
+        t3code-unwrapped = prev.t3code.unwrapped.override { nodejs = final.nodejs-runtime; };
       };
     })
   ];

@@ -220,6 +220,10 @@
           };
         };
 
+        systemd.user.services.vicinae.Service.Environment = [
+          "VICINAE_NODE_BIN=${pkgs.nodejs-runtime}/bin/node"
+        ];
+
         xdg.configFile."vicinae/settings.json".enable = lib.mkForce false;
       };
   };

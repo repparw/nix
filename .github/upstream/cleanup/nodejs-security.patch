@@ -1,6 +1,5 @@
 diff --git a/modules/_packages/bun-security.nix b/modules/_packages/bun-security.nix
 deleted file mode 100644
-index da24701ba..000000000
 --- a/modules/_packages/bun-security.nix
 +++ /dev/null
 @@ -1,26 +0,0 @@
@@ -32,7 +31,6 @@ index da24701ba..000000000
 -})
 diff --git a/modules/_packages/nodejs-security.nix b/modules/_packages/nodejs-security.nix
 deleted file mode 100644
-index 75ab52038..000000000
 --- a/modules/_packages/nodejs-security.nix
 +++ /dev/null
 @@ -1,45 +0,0 @@
@@ -82,7 +80,6 @@ index 75ab52038..000000000
 -    inherit (nodejs-slim_24) patches;
 -  }
 diff --git a/modules/aspects/ai/opencode.nix b/modules/aspects/ai/opencode.nix
-index bb5a5274b..9ae5891dd 100644
 --- a/modules/aspects/ai/opencode.nix
 +++ b/modules/aspects/ai/opencode.nix
 @@ -4,7 +4,7 @@
@@ -95,34 +92,19 @@ index bb5a5274b..9ae5891dd 100644
          };
        })
 diff --git a/modules/aspects/nodejs-security.nix b/modules/aspects/nodejs-security.nix
-deleted file mode 100644
-index b1027e05d..000000000
 --- a/modules/aspects/nodejs-security.nix
-+++ /dev/null
-@@ -1,14 +0,0 @@
--{ den, ... }:
--{
--  den.aspects.nodejs-security.nixos.nixpkgs.overlays = [
--    (_final: prev: {
++++ b/modules/aspects/nodejs-security.nix
+@@ -2,12 +2,7 @@
+ {
+   den.aspects.nodejs-security.nixos.nixpkgs.overlays = [
+     (final: prev: {
 -      bun-security = prev.callPackage ../_packages/bun-security.nix { };
--      # Nixpkgs#576777 and #576792 have not reached our nixos-unstable pin.
--      # Keep the security dependencies private to Node to avoid a fleet-wide
--      # OpenSSL/Brotli rebuild. Electron bundles its own libraries separately.
--      nodejs-slim_24 = prev.callPackage ../_packages/nodejs-security.nix {
--        inherit (prev) nodejs-slim_24;
+-      # Keep the runtime separate: overriding nodejs-slim_24 also rebuilds
+-      # Electron, QtWebEngine and indirect users of their build tools.
+-      nodejs-runtime = prev.nodejs_24.override {
+-        nodejs-slim = prev.callPackage ../_packages/nodejs-security.nix { };
 -      };
--    })
--  ];
--}
-diff --git a/modules/defaults.nix b/modules/defaults.nix
-index d0ee86e8c..fffd06500 100644
---- a/modules/defaults.nix
-+++ b/modules/defaults.nix
-@@ -16,7 +16,6 @@
-         monitoring._.agent
-         nixvim
-         nixpkgs
--        nodejs-security
-         nix
-         system
-       ];
++      nodejs-runtime = prev.nodejs_24;
+       t3code = prev.t3code.override {
+         t3code-unwrapped = prev.t3code.unwrapped.override { nodejs = final.nodejs-runtime; };
+       };
