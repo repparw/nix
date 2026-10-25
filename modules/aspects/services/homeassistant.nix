@@ -71,6 +71,10 @@
                     "wled"
                     "workday"
                     "google_drive"
+                    # Music Assistant integration: auto-discovers the MA
+                    # server (music-assistant aspect on this host) and
+                    # exposes its players as HA media_player entities.
+                    "music_assistant"
                   ];
                   customComponents = with pkgs.home-assistant-custom-components; [
                     auth_oidc
