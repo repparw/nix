@@ -139,7 +139,7 @@ test('atomic package validation reads the PR head and includes bundled ARM valid
   const job = validation.split('  upstream-package-build:')[1].split('\n  gate:')[0];
   assert.match(job, /ref: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/);
   assert.match(job, /contains\(inputs.upstream_watcher, 't3code-split'\) \|\| inputs.upstream_watcher == 'automation\/atomic-cleanup'/);
-  assert.match(job, /"architecture":"arm","runner":"ubuntu-26.04-arm"/);
+  assert.match(job, /"architecture":"arm","runner":"ubuntu-24.04-arm"/);
   const script = job.split('        run: |\n')[1].replace(/^          /gm, '');
   const directory = mkdtempSync(join(tmpdir(), 'atomic-package-test-'));
   try {
