@@ -50,6 +50,7 @@ files instead of copying module contents.
 
 - [Multi-room audio hardware](research/multi-room-audio-hw.md)
 - [Multi-room audio Music Assistant setup](research/multi-room-audio-music-assistant-setup.md)
+- [Archer AX23 v2 API & OpenTofu feasibility](research/archer-ax23-api-opentofu.md)
 
 ## Agent guidance
 
