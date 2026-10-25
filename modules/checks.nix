@@ -267,12 +267,17 @@
                 export HOME=$TMPDIR
                 export TF_IN_AUTOMATION=1
 
+                # OpenTofu's -plugin-dir search path expects the provider
+                # binary as a file at
+                # <dir>/<host>/<namespace>/<type>/<version>/<os>_<arch>/.
                 plugin_dir=$TMPDIR/plugins/registry.opentofu.org/oracle/oci/6.37.0/linux_amd64
                 mkdir -p "$plugin_dir"
-                unzip -q ${ociProvider} -d "$plugin_dir/terraform-provider-oci_v6.37.0"
+                unzip -q -j ${ociProvider} -d "$plugin_dir"
 
                 cp -r ${inputs.self}/infra module
+                chmod -R u+w module
                 cd module
+                mkdir -p .terraform
                 tofu init -backend=false -input=false -plugin-dir="$TMPDIR/plugins"
                 tofu fmt -check -recursive .
                 tofu validate .
