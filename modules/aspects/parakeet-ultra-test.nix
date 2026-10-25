@@ -26,9 +26,9 @@
       {
         nixpkgs.overlays = [
           (final: prev: {
-            parakeet-ultra-onnx = final.callPackage ../_packages/parakeet-ultra-onnx { };
+            parakeet-ultra-onnx = final.callPackage ../_packages/parakeet-ultra-onnx.nix { };
             voxtype-parakeet = prev.voxtype-vulkan.override { onnxSupport = true; };
-            vox-bench = final.callPackage ../_packages/vox-bench { };
+            vox-bench = final.callPackage ../_packages/vox-bench.nix { };
           })
         ];
       };

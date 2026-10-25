@@ -34,7 +34,7 @@ writeShellApplication {
 
     label="''${1:?usage: vox-bench LABEL ENGINE MODEL_PATH SAMPLES_DIR [OUT_DIR]}"
     engine="''${2:?}"
-    model="''${3:?}" # empty string for the configured default
+    model="''${3-}" # empty string uses the binary's configured default
     samples="''${4:?}"
     out="''${5:-vox-bench-$label}"
     voxtype_bin="''${VOXTYPE_BIN:-voxtype}"
@@ -42,6 +42,14 @@ writeShellApplication {
     mkdir -p "$out"
 
     flags=()
+    # Optional config file (VOXTYPE_CONFIG): needed for engines whose model is
+    # configured in a [section] table rather than resolvable via --model, e.g.
+    # a parakeet model given as an absolute store path. Must precede the
+    # `transcribe` subcommand; -c is a top-level option.
+    cfgflags=()
+    if [ -n "''${VOXTYPE_CONFIG:-}" ]; then
+      cfgflags+=(-c "$VOXTYPE_CONFIG")
+    fi
     if [ -n "$model" ]; then
       flags+=(--model "$model")
     fi
@@ -55,15 +63,21 @@ writeShellApplication {
       fi
 
       for run in 1 2 3; do
-        # GNU time reports wall clock and peak RSS; voxtype prints the
-        # transcript on stdout. `command time` bypasses the bash keyword so
-        # the real binary from runtimeInputs runs (shellcheck SC2023).
-        text="$(command time -f '%e %M' "$voxtype_bin" transcribe "$wav" \
-          --engine "$engine" "''${flags[@]}" 2>"$out/$name.time" )"
+        # GNU time reports wall clock and peak RSS. Voxtype prints per-phase
+        # timings and the transcript on stdout; the transcript is the last
+        # non-empty stdout line (progress logs precede it). Every invocation
+        # is a fresh process, so the wall clock includes model loading each
+        # time; the parsed log timings separate load from inference. The
+        # greps tolerate absence (|| true): engines log different shapes, and
+        # set -e would otherwise kill the loop on a missed match.
+        command time -f '%e %M' "$voxtype_bin" "''${cfgflags[@]}" transcribe "$wav" \
+          --engine "$engine" "''${flags[@]}" >"$out/$name.stdout" 2>"$out/$name.time"
         read -r secs rss < <(tail -n 1 "$out/$name.time")
-        printf '%s\n' "$run $secs $rss" >>"$out/$name.latency"
+        load_s="$(grep -ioE 'model loaded in [0-9.]+s' "$out/$name.stdout" | head -1 | grep -oE '[0-9.]+' || true)"
+        inf_s="$(grep -ioE 'transcription completed in [0-9.]+s' "$out/$name.stdout" | head -1 | grep -oE '[0-9.]+' || true)"
+        printf '%s %s %s %s %s\n' "$run" "$secs" "$rss" "''${load_s:-NA}" "''${inf_s:-NA}" >>"$out/$name.latency"
         if [ "$run" = 1 ]; then
-          printf '%s' "$text" >"$out/$name.$engine.txt"
+          awk 'NF { last = $0 } END { print last }' "$out/$name.stdout" >"$out/$name.$engine.txt"
         fi
       done
     done
@@ -100,20 +114,24 @@ writeShellApplication {
             continue
         ref = ref_file.read_text(encoding="utf-8")
         lat = [l.split() for l in (out_dir / f"{name}.latency").read_text().splitlines()]
-        cold = float(lat[0][1]) if lat else float("nan")
-        warms = [float(x[1]) for x in lat[1:]]
+        wall = [float(x[1]) for x in lat]
+        load = [float(x[3]) for x in lat if x[3] != "NA"]
+        inf = [float(x[4]) for x in lat if x[4] != "NA"]
         rss = max((int(x[2]) for x in lat), default=0)
-        rows.append((name, wer(normalize(ref), normalize(hyp)), cold,
-                     sum(warms)/len(warms) if warms else float("nan"), rss, hyp))
+        rows.append((name, wer(normalize(ref), normalize(hyp)),
+                     load[0] if load else float("nan"),
+                     sum(inf)/len(inf) if inf else float("nan"),
+                     sum(wall)/len(wall), rss, hyp))
 
-    lines = ["| clip | WER | cold (s) | warm avg (s) | peak RSS (KiB) |",
-             "|---|---|---|---|---|"]
-    for name, w, cold, warm, rss, _ in rows:
-        lines.append(f"| {name} | {w:.3f} | {cold:.2f} | {warm:.2f} | {rss} |")
+    lines = ["| clip | WER | load (s) | inference avg (s) | wall avg (s) | peak RSS (KiB) |",
+             "|---|---|---|---|---|---|"]
+    for name, w, ld, inf_avg, wall_avg, rss, _ in rows:
+        lines.append(f"| {name} | {w:.3f} | {ld:.2f} | {inf_avg:.2f} | {wall_avg:.2f} | {rss} |")
     if rows:
         lines.append("")
         lines.append(f"**mean WER:** {sum(r[1] for r in rows)/len(rows):.3f}  ")
-        lines.append(f"**mean warm latency:** {sum(r[3] for r in rows)/len(rows):.2f}s")
+        lines.append(f"**mean inference:** {sum(r[3] for r in rows)/len(rows):.2f}s  ")
+        lines.append(f"**mean wall (incl. model load):** {sum(r[4] for r in rows)/len(rows):.2f}s")
     (out_dir / "results.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
     PY

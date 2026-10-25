@@ -67,6 +67,24 @@ remains the landed default until the benchmark says otherwise.
 - Per-profile engine switching (issue #519, milestone 1.3.0) does not exist in
   1.1.1; engine switches are a config change + daemon restart.
 
+## Deployment blocker (pre-existing, unrelated to this evaluation)
+
+A full alpha closure build from current main fails on
+`nodejs-slim-24.22.1` (produced by the `nodejs-security` overlay,
+`modules/aspects/nodejs-security.nix`): its output check rejects
+`out` inside the `libv8` output check while the derivation itself declares
+`out` ("output check for 'libv8' contains output name 'out', but this is not
+a valid output of this derivation. Valid outputs are [corepack, dev, libv8,
+npm]"). The pristine flake nixpkgs (`02c087f3`) nodejs-slim is 24.21.0, so the
+failing 24.22.1 build comes from the repo's own security overlay; the
+`nodejs refactor` PR (#334662) shows libv8 output handling is mid-change
+upstream. Effect: `nix build
+.#nixosConfigurations.alpha.config.system.build.toplevel` (and therefore
+deploy-rs activation) is blocked for alpha at this revision for every change,
+not just this one. The evaluation therefore proceeds with targeted builds and
+a manually run daemon, and no activation until the nodejs issue is fixed
+separately.
+
 ## Test deployment
 
 `modules/aspects/parakeet-ultra-test.nix` (attached to alpha's repparw user in
@@ -103,7 +121,43 @@ Baseline arms:
 | whisper-small (current) | whisper | small | deployed voxtype-vulkan 1.1.0 | Vulkan |
 | parakeet-ultra | parakeet | ultra (fp16 encoder) | voxtype-parakeet 1.1.1 | CPU |
 
-Results: recorded in the PR description and `decisions.tsv` after the run.
+Results (2026-10-25, alpha, voxtype 1.1.1 for BOTH arms — same binary, same
+energy VAD; whisper via Vulkan, Ultra via ORT CPU; FLEURS dev, 8 clips, 3 runs
+each; WER after lowercase + punctuation-stripping normalization; load and
+inference parsed from voxtype's own log lines because each CLI invocation is a
+fresh process that reloads the model):
+
+| arm | mean WER | load (cold) | inference avg | wall avg | peak RSS |
+|---|---|---|---|---|---|
+| whisper small (Vulkan) | 0.059 | ~0.34s | **0.32s** | **0.68s** | ~0.17 GB |
+| parakeet ultra (CPU) | **0.038** | ~2.6s | 0.89s | 3.81s | ~2.8 GB |
+
+Per-clip: both engines perfect on 5/8; Ultra additionally perfect on
+`4175831345558885921` (EN proper nouns; whisper 0.158: "are"→"and",
+"harbours"→"harbors", lost sentence break) and `809628312584936889` (ES;
+whisper 0.067 plus wrapped a statement in `¿?`). Both show 0.25 on
+`18352318493708579158` — a tokenization artifact of the reference's
+"WiFi door bell" vs both engines' better "Wi-Fi doorbell"; qualitative output
+of both is superior to the reference there.
+
+Interpretation for dictation (the daemon keeps the model loaded, so live
+push-to-talk latency is the inference number, not the wall clock):
+
+- **Accuracy**: Ultra wins on this read-speech set (0.038 vs 0.059) and its
+  Spanish output was byte-identical to the reference where whisper
+  paraphrased. Punctuation/capitalization quality is excellent on both; Ultra
+  was more faithful.
+- **Latency**: whisper-small on Vulkan is ~2.7× faster to transcribe
+  (0.32s vs 0.89s on 2.7–12s clips). Cold start: whisper 0.34s, Ultra 2.6s
+  (paid once per daemon start, or at first dictation).
+- **Memory**: Ultra holds ~2.8 GB resident (fp16 encoder) vs whisper ~0.17 GB.
+  On-demand loading can move this out of steady state at the cost of
+  first-utterance latency.
+
+An earlier whisper-arm run on the deployed 1.1.0 binary showed 2 clips
+discarded by VAD ("0.00s speech") that 1.1.1 transcribes fine — a VAD
+behavior difference between voxtype versions, worth knowing when comparing
+across versions; the table above deliberately uses one binary for both arms.
 
 ## Decision criteria
 
