@@ -6,8 +6,6 @@
       users.repparw.aspect = {
         includes = [
           den.aspects.repparw
-          (den.batteries.user-shell "fish")
-          den.aspects.shell
           den.aspects.fish
           den.aspects.desktop
           den.aspects.gaming

@@ -6,6 +6,8 @@
 }:
 {
   den.aspects.fish = {
+    includes = [ (den.batteries.user-shell "fish") ];
+
     nixos = {
       programs.fish = {
         enable = true;

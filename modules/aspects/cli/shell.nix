@@ -5,9 +5,6 @@
   ...
 }:
 let
-  # Git abbreviations carried over from the fish `plugin-git` plugin so the
-  # same short commands work in bash and fish. Keep expansions portable: no
-  # fish-specific command substitution here.
   gitAliases = {
     g = "git";
 
@@ -112,12 +109,6 @@ let
     gstd = "git stash drop";
     gstl = "git stash list";
     gsts = "git stash show --text";
-
-    gwt = "git worktree";
-    gwta = "git worktree add";
-    gwtls = "git worktree list";
-    gwtpr = "git worktree prune";
-    gwtrm = "git worktree remove";
   };
 in
 {
@@ -140,8 +131,6 @@ in
           silent = true;
         };
 
-        # Ensure bash is Home-Manager-managed so the shared aliases and
-        # init below are written for the default shell on non-desktop hosts.
         programs.bash = {
           enable = true;
           initExtra = ''
