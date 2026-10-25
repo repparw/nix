@@ -22,6 +22,7 @@
       den.aspects.service-host
       den.aspects.nixos-services._.edge
       den.aspects.nixos-services._.hermes
+      den.aspects.wg-egress-relay
       den.aspects.nixos-services._.archisteamfarm
       den.aspects.nixos-services._.paperless
     ];
@@ -325,6 +326,10 @@
               publicKey = "qvjDMgSHda89kuJ0vBL44LAdP681dXMczkSyfk9BnSc=";
               presharedKeyFile = config.sops.secrets.wgEpsilonPresharedKey.path;
               allowedIPs = [
+                # 0.0.0.0/0 is cryptokey routing only: it lets wg-home carry
+                # internet destinations for the egress relay. No main-table
+                # route changes; the default stays via eth0.
+                "0.0.0.0/0"
                 "10.5.5.0/24"
                 "192.168.0.0/24"
                 "10.231.136.0/24"

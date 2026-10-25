@@ -542,13 +542,28 @@
                 && epsilon.services.traefik.staticConfigOptions.api.debug == false
                 && epsilon.containers.paperless.forwardPorts == [ ];
 
+              relayUser = "wg-egress-relay";
+              relayBridgeIp = "10.231.137.1";
+              socksRelayMatches =
+                builtins.elem "0.0.0.0/0" (
+                  lib.concatMap (peer: peer.allowedIPs) epsilon.networking.wireguard.interfaces.wg-home.peers
+                )
+                && epsilon.users.users ? ${relayUser}
+                && epsilon.systemd.services ? wg-egress-relay
+                && epsilon.systemd.services ? wg-egress-rules
+                && epsilon.systemd.services.wg-egress-relay.serviceConfig.User == relayUser
+                && lib.hasSuffix "-i ${relayBridgeIp} -p 1080" epsilon.systemd.services.wg-egress-relay.serviceConfig.ExecStart
+                && lib.hasInfix "uidrange" epsilon.systemd.services.wg-egress-rules.script
+                && lib.hasInfix "blackhole default" epsilon.systemd.services.wg-egress-rules.script;
+
               expected =
                 fleetRegistryMatches
                 && validationMatches
                 && ingressPolicyMatches
                 && glanceRoutingMatches
                 && tunnelRoutingMatches
-                && hardeningMatches;
+                && hardeningMatches
+                && socksRelayMatches;
               matcherReport = builtins.toJSON {
                 r = fleetRegistryMatches;
                 v = validationMatches;
@@ -556,6 +571,7 @@
                 g = glanceRoutingMatches;
                 t = tunnelRoutingMatches;
                 h = hardeningMatches;
+                s = socksRelayMatches;
               };
             in
             assert expected || throw matcherReport;
