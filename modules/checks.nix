@@ -10,54 +10,14 @@
           evalHost =
             host:
             let
-              mkStub =
-                pkgs: name:
-                let
-                  p = pkgs.writeShellScriptBin name "exit 0";
-                in
-                p
-                // {
-                  override = _: p;
-                  extend = _: p;
-                };
-              stubbed = inputs.self.nixosConfigurations.${host}.extendModules {
-                modules = [
-                  (
-                    { lib, pkgs, ... }:
-                    {
-                      nixpkgs.overlays = [
-                        (final: prev: {
-                          repparw-neovim = mkStub pkgs "nvim";
-                        })
-                      ];
-                    }
-                  )
-                ]
-                ++ lib.optionals (host == "epsilon") [
-                  (
-                    { lib, pkgs, ... }:
-                    let
-                      # The v0.22.2 module reads package.hermesVenv in its
-                      # activation script; the stub only needs it to evaluate.
-                      hermesStub = mkStub pkgs "hermes-agent";
-                    in
-                    {
-                      containers.hermes.config.services.hermes-agent.package = lib.mkForce (
-                        hermesStub // { hermesVenv = hermesStub; }
-                      );
-                    }
-                  )
-                ]
-                ++ lib.optionals (host == "alpha") [
-                  (
-                    { lib, pkgs, ... }:
-                    {
-                      home-manager.users.repparw.programs.helium.package = lib.mkForce (mkStub pkgs "helium");
-                    }
-                  )
-                ];
-              };
-              evaluatedDrvPath = builtins.unsafeDiscardStringContext stubbed.config.system.build.toplevel.drvPath;
+              # The real, unstubbed toplevel: evaluating its drvPath is pure and
+              # measured at 20-35s per host, so CI sees evaluation breakage in
+              # every subtree (nixvim, helium, hermes) instead of masking it
+              # behind stubs. unsafeDiscardStringContext keeps the tiny check
+              # derivation from depending on the whole closure.
+              evaluatedDrvPath =
+                builtins.unsafeDiscardStringContext
+                  inputs.self.nixosConfigurations.${host}.config.system.build.toplevel.drvPath;
             in
             pkgs.runCommand "check-nixos-${host}-eval" { } ''
               printf '%s\n' ${lib.escapeShellArg evaluatedDrvPath} > $out

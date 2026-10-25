@@ -170,8 +170,7 @@ class LockUpdate(unittest.TestCase):
             "    if 'actions/runs/21/jobs' in endpoint:\n"
             "        manifest = (root/'atomic-manifest').read_text() if (root/'atomic-manifest').exists() else ''\n"
             "        watchers = next((t.split('=', 1)[1] for t in manifest.split() if t.startswith('watchers=')), 'none')\n"
-            "        arm = next((t.split('=', 1)[1] for t in manifest.split() if t.startswith('arm=')), 'false')\n"
-            "        print(str((1 if watchers != 'none' else 0) + (1 if arm == 'true' else 0)))\n"
+            "        print(str(1 if watchers != 'none' else 0))\n"
             "        sys.exit(0)\n"
             "    if 'actions/runs/22/jobs' in endpoint:\n"
             "        print('1'); sys.exit(0)\n"
@@ -255,8 +254,7 @@ class LockUpdate(unittest.TestCase):
             "    (root / f'dispatched-{key}').write_text(params['expected_sha'] if key == 'atomic-title' else '1')\n"
             "    if key == 'atomic':\n"
             "        (root/'atomic-manifest').write_text('validate sha=' + params['expected_sha'] +\n"
-            "            ' watchers=' + params.get('upstream_watcher', 'none') +\n"
-            "            ' arm=' + params.get('build_arm_authelia', 'false'))\n"
+            "            ' watchers=' + params.get('upstream_watcher', 'none'))\n"
             "elif args[:2] == ['run', 'watch']:\n"
             "    sys.exit(1 if os.environ['FIXTURE_TITLE_CI'] == 'failure' else 0)\n"
         )
@@ -655,13 +653,13 @@ class LockUpdate(unittest.TestCase):
         self.assertTrue(self.git("--git-dir", str(self.remote), "rev-parse",
                                  "automation/atomic-cleanup"))
 
-    def test_authelia_candidate_merges_exact_head_and_runs_native_arm(self):
+    def test_authelia_candidate_merges_exact_head(self):
         self.restore_authelia()
         result = self.update(atomic_ready=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         dispatch = next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]
                         and r[r.index("--ref") + 1] == "automation/atomic-cleanup")
-        self.assertIn("build_arm_authelia=true", dispatch)
+        self.assertNotIn("build_arm_authelia", dispatch)
         self.assertIn("upstream_watcher=qbittorrent", dispatch)
         # Authelia candidates approve enforced checks before exact-head merging.
         self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests))
@@ -781,7 +779,7 @@ class LockUpdate(unittest.TestCase):
         self.assertIn("upstream_watcher=qbittorrent", dispatched[0])
         self.assertFalse(any("actions/runs/22/jobs" in str(r) for r in self.requests))
 
-    def test_recovery_rejects_successful_ci_for_wrong_arm_flag(self):
+    def test_recovery_rejects_successful_ci_for_foreign_manifest(self):
         first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
         self.assertNotEqual(first.returncode, 0)
         tip = self.git("--git-dir", str(self.remote), "rev-parse",
@@ -980,13 +978,13 @@ class LockUpdate(unittest.TestCase):
         self.assertIn("run-name: >-", CI)
         self.assertIn("inputs.expected_sha", CI)
         self.assertIn("inputs.upstream_watcher", CI)
-        self.assertIn("inputs.build_arm_authelia", CI)
 
-    def test_ci_requires_native_arm_for_atomic_prs(self):
-        # The required PR CI itself must run the native ARM Authelia build
-        # for atomic candidates, so the merge gate includes it.
-        self.assertIn("github.head_ref == 'automation/atomic-cleanup'", CI)
-        self.assertIn("build_arm_authelia", CI)
+    def test_ci_atomic_prs_no_longer_require_native_arm(self):
+        # The authelia pnpm workaround was retired in #237; its native ARM
+        # gate and the dispatch plumbing for it must stay gone.
+        self.assertNotIn("build_arm_authelia", CI)
+        self.assertNotIn("build_arm_authelia", VALIDATION)
+        self.assertNotIn("arm-authelia-build", VALIDATION)
 
     def test_stale_atomic_branch_condition_removed(self):
         self.assertNotIn("automation/atomic-authelia-pnpm-hash", CI,
