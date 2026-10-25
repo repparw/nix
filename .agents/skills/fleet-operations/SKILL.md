@@ -44,6 +44,12 @@ a local deploy-rs activation for `fleet-update deploy`; they intentionally
 have different
 roles.
 
+A local-tree deploy-rs review, including `--dry-activate`, is operational
+work: it can realize deployment outputs and contact the target, so it is not
+a PR verification step. Initiating an operation from alpha does not make
+alpha the production controller; the controller host is configured in
+`modules/deploy.nix` (`controllerHost`, currently pi).
+
 ## Report
 
 For operational work, record the host(s), command(s), observed runtime state,

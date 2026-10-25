@@ -118,7 +118,9 @@ Resume only after diagnosing the failure. `--force` requires an explicit host
 and bypasses pause/activity gates while preserving the PAUSE file. It retains
 CI, serialization, health checks, and rollback. Alpha's `Mod+U` uses this forced
 controller path. For a local-tree review, use
-`nix run .#deploy-rs -- .#alpha --dry-activate`.
+`nix run .#deploy-rs -- .#alpha --dry-activate`; such a review, including
+`--dry-activate`, is authorized operational work — it can realize deployment
+outputs and contact the target, and it is not a PR verification step.
 
 Implementation: [fleet-update.sh](../../modules/scripts/fleet-update.sh).
 Lock publication: [lock-update workflow](../../.github/workflows/lock-update.yml)
