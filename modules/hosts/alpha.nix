@@ -165,6 +165,11 @@
         ];
 
         nix.settings = {
+          # Bound, not unlimited: alpha serves interactive and realtime
+          # streaming workloads. Total worst-case build load is
+          # max-jobs x cores ~= 6 threads; substitution is unaffected.
+          max-jobs = 2;
+          cores = 3;
           min-free = 100 * 1024 * 1024 * 1024;
           max-free = 130 * 1024 * 1024 * 1024;
         };
