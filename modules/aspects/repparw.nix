@@ -37,9 +37,14 @@
             # that do not source home-manager's hm-session-vars.sh.
             environment.variables = {
               NPM_CONFIG_CACHE = "/home/repparw/.cache/npm";
+              NPM_CONFIG_USERCONFIG = "/home/repparw/.config/npm/npmrc";
               ANDROID_USER_HOME = "/home/repparw/.local/share/android";
               CARGO_HOME = "/home/repparw/.local/share/cargo";
               CLAUDE_CONFIG_DIR = "/home/repparw/.config/claude";
+              OCI_CLI_CONFIG_FILE = "/home/repparw/.config/oci/config";
+              PULSE_COOKIE = "/home/repparw/.config/pulse/cookie";
+              GOPATH = "/home/repparw/.local/share/go";
+              GOBIN = "/home/repparw/.local/share/go/bin";
               WGETRC = "/home/repparw/.config/wget/wgetrc";
               HISTFILE = "/home/repparw/.local/state/bash/history";
             };
