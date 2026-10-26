@@ -52,6 +52,10 @@ The **Grafana Cloud Alerts** contact point delivers to Discord. Preview firing,
 recovery and mixed-severity cases before changing templates. Grafana sends a
 separate recovery message; it does not delete the firing message.
 
+The failed-unit rule fires on `fleet_failed_unit`, one series per failed loaded
+unit or retained job, so a grouped message names each unit. The aggregate
+`fleet_failed_units` gauge is only for the dashboard.
+
 Keep collection's series budget separate from alert policy. Check actual usage
 in `grafanacloud-usage` after adding metrics or labels. Disk facts and their
 host-specific thresholds remain in `modules.monitoring.health.disks`.

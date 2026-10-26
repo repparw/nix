@@ -2,11 +2,11 @@
   {
     "uid": "fleet_cloud_units",
     "title": "Failed fleet jobs or services",
-    "expr": "fleet_failed_units",
+    "expr": "fleet_failed_unit",
     "pending": "2m",
     "severity": "critical",
-    "brief": "{{ printf \"%.0f\" $values.B.Value }} failed job(s) or service(s).",
-    "recovery": "Services and retained jobs recovered."
+    "brief": "Unit {{ $labels.name }} failed.",
+    "recovery": "Unit {{ $labels.name }} is active again."
   },
   {
     "uid": "fleet_cloud_required_unit",
