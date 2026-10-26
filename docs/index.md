@@ -26,6 +26,7 @@ files instead of copying module contents.
 ## Services
 
 - [Service model](services/service-model.md)
+- [Fleet event transport migration](architecture/fleet-events.md)
 - [Hermes Chief of Staff](services/hermes-chief-of-staff.md)
 
 ## Runbooks
