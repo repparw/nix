@@ -1,0 +1,63 @@
+name: Moonshine host smoke (Alpha, manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      moonshine_ref:
+        description: Trusted fork branch; never an external PR
+        type: choice
+        options: [feature/portable-video-verification, main]
+        default: feature/portable-video-verification
+      host_idle:
+        description: Alpha is reserved, idle, and not streaming or gaming
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpha-moonshine-smoke
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' && inputs.host_idle &&
+      (inputs.moonshine_ref == 'main' || inputs.moonshine_ref == 'feature/portable-video-verification')
+    runs-on: [alpha-moonshine-smoke]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: fleet
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          repository: repparw/moonshine
+          ref: ${{ inputs.moonshine_ref }}
+          path: moonshine
+          persist-credentials: false
+      - name: Build and run the portable smoke command
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          nixpkgs_path=$(nix eval --impure --raw --expr '(builtins.getFlake (toString ./fleet)).inputs.nixpkgs.outPath')
+          git -C moonshine rev-parse HEAD > evidence/source-sha.txt
+          cd moonshine
+          timeout 18m nix develop --override-input nixpkgs "path:$nixpkgs_path" --no-write-lock-file --command bash -eu -s <<'SMOKE' 2>&1 | tee "$GITHUB_WORKSPACE/evidence/run.log"
+            cargo build --release -p moonshine-tools
+            python3 -m unittest discover -s tools/verification -p "test_*.py"
+            python3 tools/verification/verify_video.py doctor > "$GITHUB_WORKSPACE/evidence/doctor.json"
+            python3 tools/verification/verify_video.py smoke --output "$GITHUB_WORKSPACE/evidence/smoke"
+          SMOKE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alpha-moonshine-host-smoke
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 14

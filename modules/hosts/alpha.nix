@@ -11,6 +11,7 @@
       den.aspects.alpha._.backup
       den.aspects.btrfs-maintenance
       den.aspects.gaming
+      den.aspects.moonshine-verification
       den.aspects.logid
       den.aspects.streaming
       den.aspects.networking._.wan-ingress-shaping

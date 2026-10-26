@@ -33,6 +33,7 @@ files instead of copying module contents.
 - [Diagnose fleet observability](runbooks/monitoring.md)
 - [Configure Grafana Cloud](runbooks/grafana-cloud.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
+- [Run Moonshine host verification on Alpha](runbooks/moonshine-verification.md)
 - [Update rollback](runbooks/update-rollback.md)
 - [Fleet health, backups, and deployment](runbooks/fleet-operations.md)
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
