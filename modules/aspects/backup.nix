@@ -94,6 +94,31 @@
             type = lib.types.listOf lib.types.str;
             default = [ ];
           };
+          homeState = lib.mkOption {
+            description = ''
+              Home-relative paths staged by the home-state backup for the HDD
+              mirror and the offsite staging tree. Curated small irreplaceable
+              state; everything else is nix-declared, OAuth/session
+              (re-login), or regenerable cache.
+            '';
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+          homeStateExcludes = lib.mkOption {
+            description = "Rsync exclude patterns applied below the homeState --relative anchor.";
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+          homeStateCritical = lib.mkOption {
+            description = ''
+              Subset of homeState guarded as critical: when a source exists it
+              must be unlocked by its owning tool, staged non-empty, and
+              parseable, or the export fails and the previous staged
+              generation is preserved.
+            '';
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
         };
         # Clear stale locks (interrupted manual runs) before the module's
         # post-start check demands an exclusive lock; the forget unlock runs
