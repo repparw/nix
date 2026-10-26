@@ -24,6 +24,13 @@
       let
         c = config.lib.stylix.colors.withHashtag;
 
+        # Dictation runs Moondream Parakeet Ultra (25-language TDT, incl. es)
+        # through the parakeet engine; the onnx build keeps the Vulkan whisper
+        # backend for the [whisper] fallback and per-recording --model
+        # overrides. See docs/research/parakeet-ultra-evaluation.md.
+        voxtypeDictation = pkgs.voxtype-vulkan.override { onnxSupport = true; };
+        parakeetUltra = pkgs.callPackage ../../_packages/parakeet-ultra-onnx.nix { };
+
         voxtypeQsQml = pkgs.fetchFromGitHub {
           owner = "peteonrails";
           repo = "voxtype";
@@ -35,7 +42,7 @@
           name = "voxtype-toggle";
           runtimeInputs = with pkgs; [
             coreutils
-            voxtype-vulkan
+            voxtypeDictation
           ];
           text = ''
             set -euo pipefail
@@ -68,6 +75,11 @@
 
         home.packages = [
           voxtypeToggle
+
+          # Model-evaluation harness (WER + latency over a fixed sample set);
+          # used for the parakeet-ultra comparison and reusable for future
+          # dictation-model experiments.
+          (pkgs.callPackage ../../_packages/vox-bench.nix { })
 
           (pkgs.writeShellApplication {
             name = "translate-selection";
@@ -143,9 +155,13 @@
 
         services.voxtype = {
           enable = true;
-          package = pkgs.voxtype-vulkan;
+          package = voxtypeDictation;
           settings = {
-            engine = "whisper";
+            engine = "parakeet";
+            parakeet = {
+              model = "${parakeetUltra}";
+              model_type = "tdt";
+            };
             whisper = {
               model = "small";
               language = [
@@ -208,7 +224,7 @@
               wtype
               quickshell
               pulseaudio # pactl for Voxtype media ducking
-              pkgs.voxtype-vulkan
+              voxtypeDictation
             ]
           );
         };
