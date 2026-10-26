@@ -2,6 +2,9 @@
 name: revision-validation
 on:
   workflow_call:
+    secrets:
+      CACHIX_SIGNING_KEY:
+        required: false
     inputs:
       expected_sha:
         description: Exact commit expected for this validation
@@ -137,11 +140,18 @@ jobs:
       - uses: cachix/cachix-action@v17
         with:
           name: repparw
-          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+          skipPush: true
       - name: Build the host-selected Neovim closure
         env:
           CI_CHECKS: host-neovim
         run: bash .github/scripts/run-checks.sh
+      # Same-repository writers are trusted publishers. Forks and Dependabot
+      # still build and substitute, but never receive publishing credentials.
+      - name: Publish and verify the Neovim closure
+        if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
+        run: bash .github/scripts/publish-neovim.sh
       - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4

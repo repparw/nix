@@ -28,6 +28,8 @@ concurrency:
 jobs:
   validate:
     uses: ./.github/workflows/revision-validation.yml
+    secrets:
+      CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
     with:
       expected_sha: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_sha || '' }}
       upstream_watcher: ${{ github.event_name == 'workflow_dispatch' && inputs.upstream_watcher || (github.event_name == 'pull_request' && ((startsWith(github.head_ref, 'automation/upstream-') && github.head_ref) || (github.head_ref == 'automation/atomic-cleanup' && 'automation/atomic-cleanup'))) || '' }}

@@ -177,3 +177,83 @@ test('atomic package validation reads the PR head and includes bundled ARM valid
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('only trusted revisions publish, with an explicitly forwarded step-scoped key', () => {
+  assert.match(workflow, /secrets:\n      CACHIX_SIGNING_KEY: \$\{\{ secrets.CACHIX_SIGNING_KEY \}\}/);
+  assert.doesNotMatch(workflow, /secrets: inherit/);
+  assert.match(validation, /workflow_call:\n    secrets:\n      CACHIX_SIGNING_KEY:\n        required: false/);
+  const job = validation.split('  neovim-build:')[1].split('\n  persistence-vm:')[0];
+  const publish = job.split('      - name: Publish and verify the Neovim closure')[1].split('      - name: Upload build logs')[0];
+  const condition = publish.match(/if: (.*)/)[1];
+  const allowed = new Function('github', `return ${condition}`);
+  for (const [event, actor, source, expected] of [
+    ['push', 'repparw', undefined, true],
+    ['workflow_dispatch', 'repparw', undefined, true],
+    ['pull_request', 'repparw', 'repparw/nix', true],
+    ['pull_request', 'contributor', 'contributor/nix', false],
+    ['pull_request', 'dependabot[bot]', 'repparw/nix', false],
+  ]) {
+    assert.equal(allowed({ actor, event_name: event, repository: 'repparw/nix',
+      event: { pull_request: source ? { head: { repo: { full_name: source } } } : undefined } }), expected);
+  }
+  const beforePublish = job.split('      - name: Publish and verify the Neovim closure')[0];
+  assert.doesNotMatch(beforePublish, /secrets\.|signingKey:/);
+  assert.match(beforePublish, /skipPush: true/);
+  assert.match(publish, /CACHIX_SIGNING_KEY: \$\{\{ secrets.CACHIX_SIGNING_KEY \}\}/);
+  assert.match(publish, /run: bash .github\/scripts\/publish-neovim.sh/);
+});
+
+function publishNeovim(fail = '', key = 'fixture-not-a-secret') {
+  const directory = mkdtempSync(join(tmpdir(), 'publish-neovim-test-'));
+  try {
+    mkdirSync(join(directory, 'bin'));
+    const bash = spawnSync('bash', ['-c', 'command -v bash'], { encoding: 'utf8' }).stdout.trim();
+    const mock = `#!${bash}
+set -euo pipefail
+command_name="$(basename "$0")"
+printf '%s %s\\n' "$command_name" "$*" >> calls
+case "$command_name $*" in
+  'nix path-info .#'*) stage=local; echo /nix/store/fixture-nixvim ;;
+  'cachix push '*) stage=upload ;;
+  'nix path-info --store '*) stage=remote; echo /nix/store/fixture-nixvim ;;
+  'nix store verify '*) stage=signature ;;
+  *) exit 90 ;;
+esac
+[[ "$stage" != "$FAIL_STAGE" ]]
+`;
+    for (const command of ['nix', 'cachix']) writeFileSync(join(directory, 'bin', command), mock, { mode: 0o755 });
+    const result = spawnSync('bash', [join(root, '.github/scripts/publish-neovim.sh')], {
+      cwd: directory, encoding: 'utf8',
+      env: { ...process.env, PATH: `${join(directory, 'bin')}:${process.env.PATH}`,
+        CACHIX_SIGNING_KEY: key, FAIL_STAGE: fail, GITHUB_STEP_SUMMARY: join(directory, 'summary') },
+    });
+    const read = name => { try { return readFileSync(join(directory, name), 'utf8'); } catch { return ''; } };
+    return { ...result, calls: read('calls'), summary: read('summary'), paths: read('ci-logs/host-neovim-paths') };
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+test('publishing waits for upload and verifies remote availability and signatures without building', () => {
+  const result = publishNeovim();
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.calls, /cachix push repparw \/nix\/store\/fixture-nixvim/);
+  assert.match(result.calls, /nix path-info --store https:\/\/repparw.cachix.org --recursive/);
+  assert.match(result.calls, /nix store verify .*--no-contents --sigs-needed 1 .*--option trusted-public-keys repparw.cachix.org-1:/);
+  assert.doesNotMatch(result.calls, /nix build|--rebuild/);
+  assert.match(result.paths, /fixture-nixvim/);
+  assert.match(result.summary, /fixture-nixvim/);
+  assert.doesNotMatch(result.stdout + result.stderr + result.summary, /fixture-not-a-secret/);
+});
+
+test('missing credentials, uploads, remote paths and signatures cannot silently pass', () => {
+  const missing = publishNeovim('', '');
+  assert.notEqual(missing.status, 0);
+  assert.equal(missing.calls, '');
+  for (const failure of ['local', 'upload', 'remote', 'signature']) {
+    const result = publishNeovim(failure);
+    assert.notEqual(result.status, 0, failure);
+    assert.equal(result.summary, '', failure);
+    if (failure === 'upload') assert.doesNotMatch(result.calls, /nix path-info --store/);
+  }
+});
