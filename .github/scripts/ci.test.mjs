@@ -224,48 +224,70 @@ function publishNeovim(fail = '', token = 'fixture-not-a-token') {
 set -euo pipefail
 command_name="$(basename "$0")"
 printf '%s %s\\n' "$command_name" "$*" >> calls
+stage=unknown rc=0
 case "$command_name $*" in
   'nix path-info .#'*) stage=local; echo /nix/store/fixture-nixvim ;;
+  'nix path-info --recursive .#'*)
+    stage=local
+    printf '%s\\n' /nix/store/fixture-nixvim /nix/store/fixturedirect-init.lua /nix/store/fixtureupstream-coreutils ;;
   'cachix push '*) stage=upload ;;
-  'nix path-info --store '*) stage=remote; echo /nix/store/fixture-nixvim ;;
+  'curl '*)
+    stage=coverage
+    case "$*" in
+      *repparw.cachix.org/fixtureupstream*) rc=22 ;;
+    esac ;;
   'nix store verify '*) stage=signature ;;
   *) exit 90 ;;
 esac
 [[ "$stage" != "$FAIL_STAGE" ]]
+exit "$rc"
 `;
-    for (const command of ['nix', 'cachix']) writeFileSync(join(directory, 'bin', command), mock, { mode: 0o755 });
+    for (const command of ['nix', 'cachix', 'curl']) writeFileSync(join(directory, 'bin', command), mock, { mode: 0o755 });
     const result = spawnSync('bash', [join(root, '.github/scripts/publish-neovim.sh')], {
       cwd: directory, encoding: 'utf8',
       env: { ...process.env, PATH: `${join(directory, 'bin')}:${process.env.PATH}`,
         CACHIX_SIGNING_KEY: '', CACHIX_AUTH_TOKEN: token, FAIL_STAGE: fail, GITHUB_STEP_SUMMARY: join(directory, 'summary') },
     });
     const read = name => { try { return readFileSync(join(directory, name), 'utf8'); } catch { return ''; } };
-    return { ...result, calls: read('calls'), summary: read('summary'), paths: read('ci-logs/host-neovim-paths') };
+    return {
+      ...result, calls: read('calls'), summary: read('summary'),
+      roots: read('ci-logs/host-neovim-paths'), closure: read('ci-logs/host-neovim-closure'),
+      classification: read('ci-logs/host-neovim-classification'),
+    };
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
 }
 
-test('publishing waits for upload and verifies remote availability and signatures without building', () => {
+test('publishing waits for upload, probes both substituters and verifies cache signatures without building', () => {
   const result = publishNeovim();
   assert.equal(result.status, 0, result.stderr);
+  assert.match(result.calls, /nix path-info --recursive \.#checks\.x86_64-linux\.host-neovim/);
   assert.match(result.calls, /cachix push repparw \/nix\/store\/fixture-nixvim/);
-  assert.match(result.calls, /nix path-info --store https:\/\/repparw.cachix.org --recursive/);
-  assert.match(result.calls, /nix store verify .*--no-contents --sigs-needed 1 .*--option trusted-public-keys repparw.cachix.org-1:/);
+  assert.match(result.calls, /curl -fsSI -o \/dev\/null https:\/\/repparw\.cachix\.org\/fixture\.narinfo/);
+  assert.match(result.calls, /curl -fsSI -o \/dev\/null https:\/\/cache\.nixos\.org\/fixtureupstream\.narinfo/);
+  assert.match(result.calls, /nix store verify --store https:\/\/repparw\.cachix\.org --no-contents --sigs-needed 1 --option trusted-public-keys repparw\.cachix\.org-1:[^ ]* \/nix\/store\/fixture-nixvim \/nix\/store\/fixturedirect-init\.lua/);
   assert.doesNotMatch(result.calls, /nix build|--rebuild/);
-  assert.match(result.paths, /fixture-nixvim/);
+  assert.doesNotMatch(result.calls, /nix store verify[^\\n]*--recursive/);
+  assert.match(result.roots, /fixture-nixvim/);
+  assert.match(result.closure, /fixtureupstream-coreutils/);
+  assert.match(result.classification, /^repparw \/nix\/store\/fixture-nixvim$/m);
+  assert.match(result.classification, /^upstream \/nix\/store\/fixtureupstream-coreutils$/m);
+  assert.match(result.summary, /2 cache paths verified against the fleet key/);
+  assert.match(result.summary, /1 closure paths remain served by the cache\.nixos\.org upstream/);
   assert.match(result.summary, /fixture-nixvim/);
   assert.doesNotMatch(result.stdout + result.stderr + result.summary, /fixture-not-a-secret|fixture-not-a-token/);
 });
 
-test('missing credentials, uploads, remote paths and signatures cannot silently pass', () => {
+test('missing credentials, uploads, coverage gaps and signatures cannot silently pass', () => {
   const missing = publishNeovim('', '');
   assert.notEqual(missing.status, 0);
   assert.equal(missing.calls, '');
-  for (const failure of ['local', 'upload', 'remote', 'signature']) {
+  for (const failure of ['local', 'upload', 'coverage', 'signature']) {
     const result = publishNeovim(failure);
     assert.notEqual(result.status, 0, failure);
     assert.equal(result.summary, '', failure);
-    if (failure === 'upload') assert.doesNotMatch(result.calls, /nix path-info --store/);
+    if (failure === 'upload') assert.doesNotMatch(result.calls, /curl /);
+    if (failure === 'coverage') assert.match(result.stderr, /can serve/);
   }
 });
