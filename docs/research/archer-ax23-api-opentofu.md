@@ -14,16 +14,16 @@ was modified.
 
 ## 1. Device identified
 
-| Property | Value |
-| --- | --- |
-| Model | TP-Link Archer AX23 (AX1800) |
-| Hardware revision | **v2** (`Archer AX23 v2.0` via authenticated firmware read) |
-| Firmware | **1.1.2 Build 20250814 rel.14122(5553)** (authenticated `get_firmware`); the web UI build is 1.11.0 (`AX23v2_1.11.0_2025-08-14T01:47:53.298Z` in `<meta name="version">` of `/webpages/index.html` — handy unauthenticated firmware-build check) |
-| Certification profile | `["US FCC", "SG CLS L1 STAGE2"]` (unauthenticated `device_config?form=config` read) |
-| LAN address | `192.168.0.1`, gateway for `192.168.0.0/24` |
-| Management interfaces | HTTP :80 (works), HTTPS :443 (serves a "Filtered Content" blocking page — local HTTPS management is disabled), LuCI CGI API under `/cgi-bin/luci/` |
-| Operation mode | `router` (`login?form=sysmode` → `{"mode":"router"}`) |
-| Factory default password | not in effect (`login?form=check_factory_default` → `is_default:false`) |
+| Property                 | Value                                                                                                                                                                                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Model                    | TP-Link Archer AX23 (AX1800)                                                                                                                                                                                                                     |
+| Hardware revision        | **v2** (`Archer AX23 v2.0` via authenticated firmware read)                                                                                                                                                                                      |
+| Firmware                 | **1.1.2 Build 20250814 rel.14122(5553)** (authenticated `get_firmware`); the web UI build is 1.11.0 (`AX23v2_1.11.0_2025-08-14T01:47:53.298Z` in `<meta name="version">` of `/webpages/index.html` — handy unauthenticated firmware-build check) |
+| Certification profile    | `["US FCC", "SG CLS L1 STAGE2"]` (unauthenticated `device_config?form=config` read)                                                                                                                                                              |
+| LAN address              | `192.168.0.1`, gateway for `192.168.0.0/24`                                                                                                                                                                                                      |
+| Management interfaces    | HTTP :80 (works), HTTPS :443 (serves a "Filtered Content" blocking page — local HTTPS management is disabled), LuCI CGI API under `/cgi-bin/luci/`                                                                                               |
+| Operation mode           | `router` (`login?form=sysmode` → `{"mode":"router"}`)                                                                                                                                                                                            |
+| Factory default password | not in effect (`login?form=check_factory_default` → `is_default:false`)                                                                                                                                                                          |
 
 The UI build metadata is served in `<meta name="version">` of
 `/webpages/index.html` — a handy unauthenticated firmware-version check.
@@ -71,32 +71,32 @@ and the [`tplinkrouterc6u` SG client](https://github.com/AlexandrErohin/TP-Link-
 
 Highlights, with the operations the UI itself uses:
 
-| Area | Endpoint | Ops | Notes |
-| --- | --- | --- | --- |
-| Router status | `/admin/status?form=all` | read | WAN/LAN/clients summary |
-| WAN/LAN status | `/admin/status?form=internet`, `router`, `wan_speed` | read | |
-| DHCP server | `/admin/dhcps?form=setting` | read/write | enable, ranges, DNS |
-| DHCP leases | `/admin/dhcps?form=client` | load | |
-| **DHCP reservations** | `/admin/dhcps?form=reservation` | **load/insert/update/remove** | row identity = `key` |
-| **Port forwarding** | `/admin/nat?form=vs` | **load/insert/update/remove** | virtual servers |
-| Port triggering | `/admin/nat?form=pt` | load/insert/update/remove | |
-| DMZ | `/admin/nat?form=dmz` | read/write | |
-| ALG | `/admin/nat?form=alg` | read/write | per-protocol toggles |
-| UPnP / NAT | `/admin/nat?form=setting` | read/write | |
-| **IPv6 firewall rules** | `/admin/nat?form=fr6` | load/insert/update/remove | |
-| Access control | `/admin/access_control?form=black_list`, `white_list`, `mode`, `enable` | read/write | per-device parental control, not a general firewall |
-| Static routes | `/admin/network?form=routes_static`, `routes_system` | **load** (+insert/update/remove for static) | system routes list default/LAN/WireGuard routes |
-| LAN | `/admin/network?form=lan_fc` | read/write | IP, DHCP-announced DNS |
-| WAN | `/admin/network?form=wan_fc` | read/write | connection type, DoH/DoT (`wan_dohdot`) |
-| Wi-Fi (per band) | `/admin/wireless?form=wireless_2g|wireless_5g`, `guest_*` | read/write | SSID, security, channel, etc. |
-| Wi-Fi features | `ofdma`, `twt`, `smart_connect`, `region` | read/write | |
-| Devices | `/admin/smart_network?form=get_host_info`, `client_speed_limit`, `device_priority` | read/write | QoS per device |
-| VPN | `/admin/vpn?form=wireguard`, `server`, `ovpn` | read/write | WireGuard server config |
-| DDNS | `/admin/ddns?form=provider`, `dyndns`, `noip`, `tplink` | read/write | |
-| Firmware | `/admin/firmware?form=config` | read/write | version + upgrade |
-| Reboot | `/admin/system?form=reboot`, `/admin/reboot?form=set` | request/write | avoid |
-| Logout | `/admin/system?form=logout` | request | free the single session |
-| **Config backup** | `/admin/firmware?form=config_multipart` | multipart `operation=backup` | downloads the encrypted config `.bin`; **restore** uses the same URL with `operation=restore` + file — do not run restore unless recovering. Backup files contain Wi-Fi/admin secrets: keep them outside git (0600) |
+| Area                    | Endpoint                                                                           | Ops                                         | Notes                                                                                                                                                                                                               |
+| ----------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Router status           | `/admin/status?form=all`                                                           | read                                        | WAN/LAN/clients summary                                                                                                                                                                                             |
+| WAN/LAN status          | `/admin/status?form=internet`, `router`, `wan_speed`                               | read                                        |                                                                                                                                                                                                                     |
+| DHCP server             | `/admin/dhcps?form=setting`                                                        | read/write                                  | enable, ranges, DNS                                                                                                                                                                                                 |
+| DHCP leases             | `/admin/dhcps?form=client`                                                         | load                                        |                                                                                                                                                                                                                     |
+| **DHCP reservations**   | `/admin/dhcps?form=reservation`                                                    | **load/insert/update/remove**               | row identity = `key`                                                                                                                                                                                                |
+| **Port forwarding**     | `/admin/nat?form=vs`                                                               | **load/insert/update/remove**               | virtual servers                                                                                                                                                                                                     |
+| Port triggering         | `/admin/nat?form=pt`                                                               | load/insert/update/remove                   |                                                                                                                                                                                                                     |
+| DMZ                     | `/admin/nat?form=dmz`                                                              | read/write                                  |                                                                                                                                                                                                                     |
+| ALG                     | `/admin/nat?form=alg`                                                              | read/write                                  | per-protocol toggles                                                                                                                                                                                                |
+| UPnP / NAT              | `/admin/nat?form=setting`                                                          | read/write                                  |                                                                                                                                                                                                                     |
+| **IPv6 firewall rules** | `/admin/nat?form=fr6`                                                              | load/insert/update/remove                   |                                                                                                                                                                                                                     |
+| Access control          | `/admin/access_control?form=black_list`, `white_list`, `mode`, `enable`            | read/write                                  | per-device parental control, not a general firewall                                                                                                                                                                 |
+| Static routes           | `/admin/network?form=routes_static`, `routes_system`                               | **load** (+insert/update/remove for static) | system routes list default/LAN/WireGuard routes                                                                                                                                                                     |
+| LAN                     | `/admin/network?form=lan_fc`                                                       | read/write                                  | IP, DHCP-announced DNS                                                                                                                                                                                              |
+| WAN                     | `/admin/network?form=wan_fc`                                                       | read/write                                  | connection type, DoH/DoT (`wan_dohdot`)                                                                                                                                                                             |
+| Wi-Fi (per band)        | `/admin/wireless?form=wireless_2g                                                  | wireless_5g`, `guest_*`                     | read/write                                                                                                                                                                                                          | SSID, security, channel, etc. |
+| Wi-Fi features          | `ofdma`, `twt`, `smart_connect`, `region`                                          | read/write                                  |                                                                                                                                                                                                                     |
+| Devices                 | `/admin/smart_network?form=get_host_info`, `client_speed_limit`, `device_priority` | read/write                                  | QoS per device                                                                                                                                                                                                      |
+| VPN                     | `/admin/vpn?form=wireguard`, `server`, `ovpn`                                      | read/write                                  | WireGuard server config                                                                                                                                                                                             |
+| DDNS                    | `/admin/ddns?form=provider`, `dyndns`, `noip`, `tplink`                            | read/write                                  |                                                                                                                                                                                                                     |
+| Firmware                | `/admin/firmware?form=config`                                                      | read/write                                  | version + upgrade                                                                                                                                                                                                   |
+| Reboot                  | `/admin/system?form=reboot`, `/admin/reboot?form=set`                              | request/write                               | avoid                                                                                                                                                                                                               |
+| Logout                  | `/admin/system?form=logout`                                                        | request                                     | free the single session                                                                                                                                                                                             |
+| **Config backup**       | `/admin/firmware?form=config_multipart`                                            | multipart `operation=backup`                | downloads the encrypted config `.bin`; **restore** uses the same URL with `operation=restore` + file — do not run restore unless recovering. Backup files contain Wi-Fi/admin secrets: keep them outside git (0600) |
 
 Full list (re-derivable from `/webpages/js/*.js` with
 `grep -hoE '"/[a-z_/]+\?form=[a-z_]+"'`):
@@ -195,16 +195,16 @@ Researched 2026-10-25 (status, dates, and support matrices verified against
 GitHub/PyPI). The task's starting URLs contained one dead end:
 `marckregio/TP-Link-Archer-C6` is a 0★ fork of the real project.
 
-| Project | Status | AX23 v2 / fw 1.11.x verdict |
-| --- | --- | --- |
-| [`AlexandrErohin/TP-Link-Archer-C6U`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U) (`tplinkrouterc6u` on PyPI, GPL-3.0) | very active, v5.37.0 (2026-10-17) | **Works** (verified live, §4): its `TplinkRouterSG` client implements exactly this unit's protocol (SHA256 + RSA-2048 + OAEP + HMAC). DHCP-reservation CRUD and Wi-Fi/VPN writes exist upstream; **port-forwarding CRUD has been contributed upstream** ([`repparw/TP-Link-Archer-C6U#248`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U/pull/248), pending merge). |
-| [`AlexandrErohin/home-assistant-tplink-router`](https://github.com/AlexandrErohin/home-assistant-tplink-router) (HACS custom, MIT) | very active, v2.44.0 (2026-10-17) | Same engine as above (pins `tplinkrouterc6u==5.37.0`). Device trackers, sensors, reboot button, reservation services. |
-| [`sharozdawa/tplink-archer-mcp`](https://github.com/sharozdawa/tplink-archer-mcp) (MIT) | stale since 2026-05, 2★ | Claims AX23 "should work" (untested); drives the **Vue UI in headless Chromium** — unsuitable for Terraform, but its docs confirm the callback-registry restrictions. |
-| [`iambalaji-k/tplink-router-api`](https://github.com/iambalaji-k/tplink-router-api) (MIT) | new, active (2026-10) | AX12 (1024-bit RSA era) — protocol writeups transfer, code targets an older auth generation. Its 226-endpoint survey and gotcha list are valuable. |
-| [`lucavb/terraform-provider-tplink-easysmart`](https://github.com/lucavb/terraform-provider-tplink-easysmart) (MIT) | active-ish | **Switch-only** (TL-SG108PE family). Confirmed irrelevant for the router, but an excellent terraform-plugin-framework skeleton to clone. |
-| HA core `tplink_router` | — | **Does not exist** (researched: not in `home-assistant/components`, docs page 404s). The HACS custom component above is the de-facto integration. |
-| [`ebenezer-isaac/archer-router-mcp`](https://github.com/ebenezer-isaac/archer-router-mcp) (MIT) | active (2026-10-20) | Best protocol documentation anywhere: AX53 UI 1.11.0 auth flow with byte-exact test vectors. Directly applicable to this unit. |
-| [`chang196700/terraform-provider-tplinkrouter`](https://github.com/chang196700/terraform-provider-tplinkrouter) | new (2026-10) | Only router Terraform provider found — targets TL-ER6220T business routers via SLP; not compatible. **No provider exists for TP-Link home routers.** |
+| Project                                                                                                                            | Status                            | AX23 v2 / fw 1.11.x verdict                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`AlexandrErohin/TP-Link-Archer-C6U`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U) (`tplinkrouterc6u` on PyPI, GPL-3.0)   | very active, v5.37.0 (2026-10-17) | **Works** (verified live, §4): its `TplinkRouterSG` client implements exactly this unit's protocol (SHA256 + RSA-2048 + OAEP + HMAC). DHCP-reservation CRUD and Wi-Fi/VPN writes exist upstream; **port-forwarding CRUD has been contributed upstream** ([`repparw/TP-Link-Archer-C6U#248`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U/pull/248), pending merge). |
+| [`AlexandrErohin/home-assistant-tplink-router`](https://github.com/AlexandrErohin/home-assistant-tplink-router) (HACS custom, MIT) | very active, v2.44.0 (2026-10-17) | Same engine as above (pins `tplinkrouterc6u==5.37.0`). Device trackers, sensors, reboot button, reservation services.                                                                                                                                                                                                                                                       |
+| [`sharozdawa/tplink-archer-mcp`](https://github.com/sharozdawa/tplink-archer-mcp) (MIT)                                            | stale since 2026-05, 2★           | Claims AX23 "should work" (untested); drives the **Vue UI in headless Chromium** — unsuitable for Terraform, but its docs confirm the callback-registry restrictions.                                                                                                                                                                                                       |
+| [`iambalaji-k/tplink-router-api`](https://github.com/iambalaji-k/tplink-router-api) (MIT)                                          | new, active (2026-10)             | AX12 (1024-bit RSA era) — protocol writeups transfer, code targets an older auth generation. Its 226-endpoint survey and gotcha list are valuable.                                                                                                                                                                                                                          |
+| [`lucavb/terraform-provider-tplink-easysmart`](https://github.com/lucavb/terraform-provider-tplink-easysmart) (MIT)                | active-ish                        | **Switch-only** (TL-SG108PE family). Confirmed irrelevant for the router, but an excellent terraform-plugin-framework skeleton to clone.                                                                                                                                                                                                                                    |
+| HA core `tplink_router`                                                                                                            | —                                 | **Does not exist** (researched: not in `home-assistant/components`, docs page 404s). The HACS custom component above is the de-facto integration.                                                                                                                                                                                                                           |
+| [`ebenezer-isaac/archer-router-mcp`](https://github.com/ebenezer-isaac/archer-router-mcp) (MIT)                                    | active (2026-10-20)               | Best protocol documentation anywhere: AX53 UI 1.11.0 auth flow with byte-exact test vectors. Directly applicable to this unit.                                                                                                                                                                                                                                              |
+| [`chang196700/terraform-provider-tplinkrouter`](https://github.com/chang196700/terraform-provider-tplinkrouter)                    | new (2026-10)                     | Only router Terraform provider found — targets TL-ER6220T business routers via SLP; not compatible. **No provider exists for TP-Link home routers.**                                                                                                                                                                                                                        |
 
 ## 4. Live read-only verification (tplinkrouterc6u 5.37.0, SG path)
 
@@ -214,20 +214,20 @@ environment; nothing sensitive in transcript or output. The probe script is
 [`archer-ax23-probe.py`](archer-ax23-probe.py) (sanitizes passphrases and WAN
 addresses; read operations only).
 
-| Operation | Result |
-| --- | --- |
-| Login (SG: SHA256 + RSA-2048 + OAEP + HMAC-SHA256 + AES-CBC) | **works** — AX23 v2 fw 1.1.2 is on the same hardened protocol as AX53/BE-series |
-| Firmware / hardware info | **works** — `Archer AX23 v2.0`, `1.1.2 Build 20250814 rel.14122(5553)` |
-| Router status | **works** — typed `get_status()` (conn type, CPU/mem, per-band client counts, 10 devices with hostname/ip/mac) |
-| WAN/LAN config | **works** — WAN DHCP /24, DNS pair, LAN `192.168.0.1/24` |
-| DHCP leases | **works** — 7 leases read via `admin/dhcps?form=client` |
-| DHCP reservations | **works** — 12 reservations read via `admin/dhcps?form=reservation` |
-| Wi-Fi config (2.4/5 GHz, guest, IoT) | **works** — SSID, encryption (`psk_sae`), channel, MAC, hidden/enable flags; passphrases redacted client-side |
-| Port forwarding (`admin/nat?form=vs`) | **works** — 2 rules read; row shape `{name, ipaddr, external_port, internal_port, protocol, enable}`; insert/update/remove verbs confirmed in UI JS |
-| Port triggering (`form=pt`), IPv6 firewall (`form=fr6`) | **works** — empty tables returned (`{}`) |
-| DMZ, ALG, NAT/UPnP setting, DHCP server setting, Smart Connect | **works** |
-| Static routes (`admin/network?form=routes_static`) | **works** — an empty table `{}` (none configured). Resolution: table forms need `operation=load`, not `read` (`read` answers with an error on those forms; the UI JS calls `load` — this also explains the earlier "failure"). `routes_system` lists the 6 kernel routes (default via WAN, LAN, WireGuard hub) |
-| Config backup (`admin/firmware?form=config_multipart`, multipart `operation=backup`) | **works** — 22 KB encrypted config downloaded and stored outside git with 0600 permissions as a rollback safety net before any write-capable work. The same URL with `operation=restore` restores — deliberately not touched |
+| Operation                                                                            | Result                                                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Login (SG: SHA256 + RSA-2048 + OAEP + HMAC-SHA256 + AES-CBC)                         | **works** — AX23 v2 fw 1.1.2 is on the same hardened protocol as AX53/BE-series                                                                                                                                                                                                                                |
+| Firmware / hardware info                                                             | **works** — `Archer AX23 v2.0`, `1.1.2 Build 20250814 rel.14122(5553)`                                                                                                                                                                                                                                         |
+| Router status                                                                        | **works** — typed `get_status()` (conn type, CPU/mem, per-band client counts, 10 devices with hostname/ip/mac)                                                                                                                                                                                                 |
+| WAN/LAN config                                                                       | **works** — WAN DHCP /24, DNS pair, LAN `192.168.0.1/24`                                                                                                                                                                                                                                                       |
+| DHCP leases                                                                          | **works** — 7 leases read via `admin/dhcps?form=client`                                                                                                                                                                                                                                                        |
+| DHCP reservations                                                                    | **works** — 12 reservations read via `admin/dhcps?form=reservation`                                                                                                                                                                                                                                            |
+| Wi-Fi config (2.4/5 GHz, guest, IoT)                                                 | **works** — SSID, encryption (`psk_sae`), channel, MAC, hidden/enable flags; passphrases redacted client-side                                                                                                                                                                                                  |
+| Port forwarding (`admin/nat?form=vs`)                                                | **works** — 2 rules read; row shape `{name, ipaddr, external_port, internal_port, protocol, enable}`; insert/update/remove verbs confirmed in UI JS                                                                                                                                                            |
+| Port triggering (`form=pt`), IPv6 firewall (`form=fr6`)                              | **works** — empty tables returned (`{}`)                                                                                                                                                                                                                                                                       |
+| DMZ, ALG, NAT/UPnP setting, DHCP server setting, Smart Connect                       | **works**                                                                                                                                                                                                                                                                                                      |
+| Static routes (`admin/network?form=routes_static`)                                   | **works** — an empty table `{}` (none configured). Resolution: table forms need `operation=load`, not `read` (`read` answers with an error on those forms; the UI JS calls `load` — this also explains the earlier "failure"). `routes_system` lists the 6 kernel routes (default via WAN, LAN, WireGuard hub) |
+| Config backup (`admin/firmware?form=config_multipart`, multipart `operation=backup`) | **works** — 22 KB encrypted config downloaded and stored outside git with 0600 permissions as a rollback safety net before any write-capable work. The same URL with `operation=restore` restores — deliberately not touched                                                                                   |
 
 Untested (writes): reservation add/delete, port-forward CRUD, Wi-Fi writes —
 deliberately not exercised. The port-forwarding wire formats are now
@@ -250,17 +250,17 @@ The API's shape is unusually provider-friendly:
   the provider must serialize access (one login per apply), log out, and never
   retry failed logins blindly.
 
-| Resource | API | Terraform mapping | Value |
-| --- | --- | --- | --- |
-| DHCP reservations | CRUD + key | resource | High |
-| Port-forwarding rules | CRUD + key | resource | High |
-| IPv6 firewall rules | CRUD + key | resource | High |
-| DMZ / ALG / UPnP | read/write | resource (scalar) | Medium |
-| DHCP server / LAN DNS | read/write | resource (scalar) | Medium |
-| Wi-Fi SSID/security | read/write | resource (scalar) | Medium |
-| Static routes | read (+write) | resource | Medium |
-| Device inventory | read | data source | Medium |
-| Router status / firmware | read | data source | Medium |
+| Resource                 | API           | Terraform mapping | Value  |
+| ------------------------ | ------------- | ----------------- | ------ |
+| DHCP reservations        | CRUD + key    | resource          | High   |
+| Port-forwarding rules    | CRUD + key    | resource          | High   |
+| IPv6 firewall rules      | CRUD + key    | resource          | High   |
+| DMZ / ALG / UPnP         | read/write    | resource (scalar) | Medium |
+| DHCP server / LAN DNS    | read/write    | resource (scalar) | Medium |
+| Wi-Fi SSID/security      | read/write    | resource (scalar) | Medium |
+| Static routes            | read (+write) | resource          | Medium |
+| Device inventory         | read          | data source       | Medium |
+| Router status / firmware | read          | data source       | Medium |
 
 ## 6. Recommendation
 
