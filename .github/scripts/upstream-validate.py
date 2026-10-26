@@ -84,21 +84,6 @@ def validate(name, architecture):
             package = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.outPath")
             require(service["Service"]["ExecStart"].startswith(package + "/bin/t3 "), "server package changed")
         build("alpha.config.home-manager.users.repparw.programs.t3code.package")
-    elif name == "cliamp-hm-module":
-        settings = evaluate("alpha.config.home-manager.users.repparw.programs.cliamp.settings")
-        require(settings == {"theme": "", "repeat": "Off", "shuffle": True, "provider": "spotify",
-                             "spotify": {"client_id": "e79bc2a7d7f44a9e9153c0a5121ee0ce", "bitrate": 320},
-                             "ytmusic": {"cookies_from": "chrome:~/.config/net.imput.helium/Default"}},
-                "cliamp settings changed")
-        service = unit("alpha", "cliamp")
-        require("cliamp" in service["Service"]["ExecStart"] and "daemon" in service["Service"]["ExecStart"],
-                "missing cliamp daemon")
-        require("cliamp.sock.pid" in str(service["Service"]["ExecStartPre"]), "stale PID cleanup changed")
-        build("alpha.pkgs.cliamp")
-    elif name == "cliamp-attach":
-        package = build("alpha.pkgs.cliamp")
-        help_text = command(str(package / "bin/cliamp"), "--help")
-        require(all(re.search(rf"\b{value}\b", help_text) for value in ("attach", "quit")), "missing CLI commands")
     elif name == "gamescope-vkroots":
         # Same raw-package source predicate as readiness, after removing the
         # local override. Then build the real WSI package, without stubs.

@@ -220,13 +220,10 @@
               "Mod+Alt+F" = titledAction "Toggle Floating" "toggle-window-floating";
               "Mod+Ctrl+F" = titledAction "Toggle Focus Floating" "switch-focus-between-floating-and-tiling";
               "Mod+G" = titledSpawn "T3 Code" [ "t3code-desktop-connect" ];
-              "Mod+M" = titledSpawn "cliamp" [
-                "xdg-terminal-exec"
-                "--app-id=cliamp"
-                "--"
-                "cliamp"
-                "attach"
-              ];
+              # Raises the running Spotifast window, or starts the client
+              # when nothing is running: a second launch hands over to the
+              # live instance instead of starting a duplicate.
+              "Mod+M" = titledSpawn "Spotifast" [ "spotifast" ];
               "Mod+N" = titledSpawn "Notes (Neovim)" [
                 "xdg-terminal-exec"
                 "--app-id=notes"
