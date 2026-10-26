@@ -9,10 +9,23 @@ tags: [research, dictation, voxtype, parakeet, asr]
 
 # Parakeet Ultra dictation evaluation (alpha)
 
+**Decision (2026-10-25): adopted.** After the benchmark and a live dictation
+trial on alpha ("works fine"), the default dictation engine flipped to
+Parakeet Ultra in `modules/aspects/ai/dictation.nix`, with Whisper Small kept
+configured as the rollback engine. Language behavior: parakeet has no
+language knob (no force, no block — verified against `ParakeetConfig` and
+parakeet-rs); it transcribes in any of its 25 languages. Whisper Small
+remains the only engine with a real language allowlist
+(`language = ["en", "es"]`); if cross-language confusion appears in daily
+dictation, the options are flipping `engine` back to whisper or an upstream
+output-side language-filter request. Shelf life: voxtype 2.0 removes ONNX
+Runtime (PR #795); the durable Ultra path is parakeet.cpp (#483/#863), which
+already loads Moondream Ultra GGUF by path.
+
 Evaluation of **Parakeet Ultra** (moondream's post-trained
 `nvidia/parakeet-tdt-0.6b-v3`) as a dictation model for voxtype, against the
-deployed Whisper Small. This is an evaluation, not a migration: Whisper Small
-remains the landed default until the benchmark says otherwise.
+deployed Whisper Small. The evaluation phase kept Whisper Small as the landed
+default until the benchmark and live trial said otherwise.
 
 ## Deployment state (phase 1 findings)
 
@@ -87,16 +100,12 @@ separately.
 
 ## Test deployment
 
-`modules/aspects/parakeet-ultra-test.nix` (attached to alpha's repparw user in
-`modules/entities.nix`, pattern after `moonshine-pr227-test`):
-
-- overlay: `parakeet-ultra-onnx` (pinned model), `voxtype-parakeet`
-  (onnx-capable build), `vox-bench` (benchmark harness);
-- HM: `services.voxtype.package = mkForce voxtype-parakeet`, `engine = mkForce
-  "parakeet"`, `[parakeet] model = store path, model_type = "tdt"`.
-- `modules/aspects/ai/dictation.nix` is untouched; retiring the aspect (remove
-  from entities.nix + redeploy) restores today's exact deployment. Generations
-  and the boot entry provide the additional rollback path.
+The evaluation ran through `modules/aspects/parakeet-ultra-test.nix` (alpha's
+repparw user, pattern after `moonshine-pr227-test`): overlay with
+`parakeet-ultra-onnx` (pinned model), `voxtype-parakeet` (onnx-capable build),
+and `vox-bench`, plus an engine flip. On adoption everything graduated into
+`modules/aspects/ai/dictation.nix` and the test aspect was deleted, so this
+section records the retired experiment's shape only.
 
 ## Benchmark
 
