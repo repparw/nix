@@ -3,7 +3,7 @@ type: Research Note
 title: Parakeet Ultra Dictation Evaluation
 description: Compatibility and benchmark plan for moondream/parakeet-ultra ONNX as the voxtype dictation engine on alpha.
 when: Read when changing the dictation engine or model, or retiring the parakeet-ultra test aspect.
-resource: modules/aspects/parakeet-ultra-test.nix
+resource: modules/aspects/ai/dictation.nix
 tags: [research, dictation, voxtype, parakeet, asr]
 ---
 
@@ -125,10 +125,10 @@ covers the gap anecdotally.
 
 Baseline arms:
 
-| arm | engine | model | binary | accel |
-|---|---|---|---|---|
-| whisper-small (current) | whisper | small | deployed voxtype-vulkan 1.1.0 | Vulkan |
-| parakeet-ultra | parakeet | ultra (fp16 encoder) | voxtype-parakeet 1.1.1 | CPU |
+| arm                     | engine   | model                | binary                        | accel  |
+| ----------------------- | -------- | -------------------- | ----------------------------- | ------ |
+| whisper-small (current) | whisper  | small                | deployed voxtype-vulkan 1.1.0 | Vulkan |
+| parakeet-ultra          | parakeet | ultra (fp16 encoder) | voxtype-parakeet 1.1.1        | CPU    |
 
 Results (2026-10-25, alpha, voxtype 1.1.1 for BOTH arms — same binary, same
 energy VAD; whisper via Vulkan, Ultra via ORT CPU; FLEURS dev, 8 clips, 3 runs
@@ -136,10 +136,10 @@ each; WER after lowercase + punctuation-stripping normalization; load and
 inference parsed from voxtype's own log lines because each CLI invocation is a
 fresh process that reloads the model):
 
-| arm | mean WER | load (cold) | inference avg | wall avg | peak RSS |
-|---|---|---|---|---|---|
-| whisper small (Vulkan) | 0.059 | ~0.34s | **0.32s** | **0.68s** | ~0.17 GB |
-| parakeet ultra (CPU) | **0.038** | ~2.6s | 0.89s | 3.81s | ~2.8 GB |
+| arm                    | mean WER  | load (cold) | inference avg | wall avg  | peak RSS |
+| ---------------------- | --------- | ----------- | ------------- | --------- | -------- |
+| whisper small (Vulkan) | 0.059     | ~0.34s      | **0.32s**     | **0.68s** | ~0.17 GB |
+| parakeet ultra (CPU)   | **0.038** | ~2.6s       | 0.89s         | 3.81s     | ~2.8 GB  |
 
 Per-clip: both engines perfect on 5/8; Ultra additionally perfect on
 `4175831345558885921` (EN proper nouns; whisper 0.158: "are"→"and",
