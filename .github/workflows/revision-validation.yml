@@ -5,6 +5,8 @@ on:
     secrets:
       CACHIX_SIGNING_KEY:
         required: false
+      CACHIX_AUTH_TOKEN:
+        required: false
     inputs:
       expected_sha:
         description: Exact commit expected for this validation
@@ -141,6 +143,15 @@ jobs:
         with:
           name: repparw
           skipPush: true
+      - name: Require trusted publishing credentials
+        if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          CACHIX_CREDENTIALS_PRESENT: ${{ secrets.CACHIX_SIGNING_KEY != '' && secrets.CACHIX_AUTH_TOKEN != '' }}
+        run: |
+          if [ "$CACHIX_CREDENTIALS_PRESENT" != true ]; then
+            echo '::error::Trusted publishing needs CACHIX_SIGNING_KEY and a cache-scoped write CACHIX_AUTH_TOKEN.'
+            exit 1
+          fi
       - name: Build the host-selected Neovim closure
         env:
           CI_CHECKS: host-neovim
@@ -151,6 +162,7 @@ jobs:
         if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         env:
           CACHIX_SIGNING_KEY: ${{ secrets.CACHIX_SIGNING_KEY }}
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
         run: bash .github/scripts/publish-neovim.sh
       - name: Upload build logs
         if: always()
