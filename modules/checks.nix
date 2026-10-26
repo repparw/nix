@@ -552,8 +552,10 @@
                 && epsilon.systemd.services ? wg-egress-relay
                 && epsilon.systemd.services ? wg-egress-rules
                 && epsilon.systemd.services.wg-egress-relay.serviceConfig.User == relayUser
+                && !epsilon.networking.wireguard.interfaces.wg-home.allowedIPsAsRoutes
+                && epsilon.systemd.services.wg-egress-relay.serviceConfig.RestrictAddressFamilies == [ "AF_INET" ]
                 && lib.hasSuffix "-i ${relayBridgeIp} -p 1080" epsilon.systemd.services.wg-egress-relay.serviceConfig.ExecStart
-                && lib.hasInfix "uidrange" epsilon.systemd.services.wg-egress-rules.script
+                && lib.hasInfix ''uidrange "$uid-$uid"'' epsilon.systemd.services.wg-egress-rules.script
                 && lib.hasInfix "blackhole default" epsilon.systemd.services.wg-egress-rules.script;
 
               expected =

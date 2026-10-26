@@ -22,14 +22,18 @@ destinations see the home residential IP.
   `51820`, whose default goes out `wg-home`.
 - The table also holds a `blackhole default` with a worse metric: if the
   tunnel is down, relayed traffic fails instead of falling back to the VPS IP.
+- A specific route returns client replies through `ve-hermes`. The rules and
+  relay stop with the Hermes container, before its interface disappears.
 - The main routing table is untouched — management, monitoring, the edge
   tunnel, and backups keep using eth0.
 - The firewall only admits `ve-hermes` to the relay port. Widen by adding an
   `iifname` rule in `modules/aspects/wg-egress-relay.nix`; never expose the
   port further.
 
-`0.0.0.0/0` in the wg-home peer's `allowedIPs` is cryptokey routing only; it
-does not change any route.
+Automatic routes from `allowedIPs` are disabled. The existing three private
+routes are installed explicitly; `0.0.0.0/0` is permitted by WireGuard but
+installed only in the relay's policy table. The relay permits IPv4 sockets
+only, so an IPv6 destination cannot bypass the policy.
 
 ## Prerequisite (home side, not managed here)
 
@@ -48,18 +52,21 @@ curl -x socks5h://10.231.137.1:1080 https://ifconfig.me   # expect 45.237.179.43
 Without container access, verify the path from the host directly:
 
 ```sh
-curl --interface wg-home https://ifconfig.me              # expect 45.237.179.43
+curl -x socks5h://10.231.137.1:1080 https://ifconfig.me     # expect 45.237.179.43
 curl https://ifconfig.me                                  # expect the VPS IP
 ```
 
 Wiring a consumer to the relay (for example the Hermes browser's proxy
 setting) is a separate change; this aspect only provides the path.
+Hostname resolution still uses Epsilon's resolver; this is residential
+destination egress, not a guarantee that DNS queries travel through home.
 
 ## Troubleshoot
 
 ```sh
-ip rule show uidrange $(id -u wg-egress-relay)            # rule present?
+ip rule show                                              # relay UID range present?
 ip route show table 51820                                  # default + blackhole?
-systemctl status wg-egress-relay wg-egress-rules wg-home
+systemctl status wg-egress-relay wg-egress-rules
+networkctl status wg-home
 journalctl -u wg-egress-relay -n 50
 ```

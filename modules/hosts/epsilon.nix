@@ -326,9 +326,8 @@
               publicKey = "qvjDMgSHda89kuJ0vBL44LAdP681dXMczkSyfk9BnSc=";
               presharedKeyFile = config.sops.secrets.wgEpsilonPresharedKey.path;
               allowedIPs = [
-                # 0.0.0.0/0 is cryptokey routing only: it lets wg-home carry
-                # internet destinations for the egress relay. No main-table
-                # route changes; the default stays via eth0.
+                # wg-egress-relay disables automatic routes and keeps this
+                # default confined to the relay's policy table.
                 "0.0.0.0/0"
                 "10.5.5.0/24"
                 "192.168.0.0/24"
