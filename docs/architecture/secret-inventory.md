@@ -55,6 +55,7 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/grafana-cloud-alpha.sops.yaml` | `token` | Write-only Cloud metrics/log uploads | Alloy via systemd credentials | `alpha` |
 | `secrets/grafana-cloud-pi.sops.yaml` | `token` | Write-only Cloud metrics/log uploads | Alloy via systemd credentials | `pi` |
 | `secrets/grafana-cloud-epsilon.sops.yaml` | `token` | Write-only Cloud metrics/log uploads | Alloy via systemd credentials | `epsilon` |
+| `secrets/grafana-cloud-epsilon.sops.yaml` | `grafana-cloud-backup-token` | Read-only Cloud configuration exports, including contact-point secrets | Grafana backup service via systemd credentials | `epsilon` |
 The account-password bootstrap files, Authelia users seed, and Cloud monitoring
 credentials are scoped to the personal recovery recipient and the consuming host. The remaining files use
 the legacy shared creation rule in `.sops.yaml`. When changing a creation rule,
