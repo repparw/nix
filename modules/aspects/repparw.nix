@@ -33,6 +33,17 @@
               backupFileExtension = "hm-backup";
             };
 
+            # Propagate XDG env vars to all processes (SSH, nix-shell, agents)
+            # that do not source home-manager's hm-session-vars.sh.
+            environment.variables = {
+              NPM_CONFIG_CACHE = "/home/repparw/.cache/npm";
+              ANDROID_USER_HOME = "/home/repparw/.local/share/android";
+              CARGO_HOME = "/home/repparw/.local/share/cargo";
+              CLAUDE_CONFIG_DIR = "/home/repparw/.config/claude";
+              WGETRC = "/home/repparw/.config/wget/wgetrc";
+              HISTFILE = "/home/repparw/.local/state/bash/history";
+            };
+
             programs.nh.flake = "${config.home-manager.users.${user.name}.xdg.userDirs.projects}/nix";
 
             sops.secrets.accessTokens = {

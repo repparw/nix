@@ -24,6 +24,10 @@
 
           ANDROID_USER_HOME = "${dataHome}/android";
 
+          CARGO_HOME = "${dataHome}/cargo";
+
+          CLAUDE_CONFIG_DIR = "${configHome}/claude";
+
           WGETRC = "${configHome}/wget/wgetrc";
 
           HISTFILE = "${stateHome}/bash/history";
