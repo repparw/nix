@@ -1,0 +1,20 @@
+{
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "kind": "Connection",
+  "spec": {
+    "title": "Fleet dashboard GitHub App",
+    "type": "github",
+    "url": "https://github.com/settings/installations/175459685",
+    "github": {
+      "appID": "5480103",
+      "installationID": "175459685"
+    },
+    "webhook": {
+      "disabled": true
+    }
+  },
+  "metadata": {
+    "name": "fleet-github",
+    "namespace": "stacks-1882583"
+  }
+}

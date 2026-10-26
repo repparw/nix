@@ -22,8 +22,9 @@ UIDs, including `grafanacloud-prom`, `grafanacloud-logs` and `grafanacloud-usage
 Do not maintain a second dashboard under `modules/aspects`.
 
 Connect Git Sync to `repparw/nix`, branch `main`, path `grafana/dashboards/`.
-Use the repository-scoped GitHub App, PR workflows, and polling with webhooks
-disabled. This avoids sharing a personal GitHub credential with Grafana.
+Use the repository-scoped GitHub App, PR workflows, and five-minute polling
+with webhooks disabled. The public connection/repository specifications are in
+`grafana/connection.json` and `grafana/repository.json`. This avoids sharing a personal GitHub credential with Grafana.
 Confirm the connection is healthy before migrating the dashboard.
 
 For initial migration, back up first, then remove only the original dashboard
@@ -73,7 +74,10 @@ Restic encrypts the offsite copy. Never commit exports or webhook URLs to Git.
 API reads are sequential, not an atomic snapshot; avoid editing configuration
 during a recovery export. This backs up configuration, not metrics or logs.
 Datasource secrets, organization users/RBAC and GitHub App private credentials
-are not recoverable from these APIs; preserve them separately.
+are not recoverable from these APIs. The GitHub App recovery key and IDs are
+SOPS-encrypted as `grafana-git-sync-app` in the Epsilon credential file. When
+recreating the connection, pass the base64-encoded private key as
+`secure.privateKey.create`; do not put it in the public connection specification.
 
 The service account `fleet-state-backup` has no basic organization role and
 read-only resource roles, including permission to export contact-point secrets.
