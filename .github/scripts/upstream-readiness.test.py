@@ -164,12 +164,6 @@ class Readiness(unittest.TestCase):
     def test_version_tag_expression_is_resolved_exactly(self):
         self.assertEqual(watch.source_ref('version = "1.3.0"; tag = finalAttrs.version;'), "1.3.0")
 
-    def test_cliamp_requires_both_attach_and_quit(self):
-        with patch.object(watch, "source", side_effect=['version = "2.3.0"; tag = "v${finalAttrs.version}";', 'attachCommand()']):
-            self.assertEqual(watch.detect("cliamp-attach", LOCK), "merged-not-pinned")
-        with patch.object(watch, "source", side_effect=['rev = "source-sha";', 'attachCommand() quitCommand()']):
-            self.assertEqual(watch.detect("cliamp-attach", LOCK), "PINNED-READY")
-
     def test_graphical_target_must_cover_all_unit_dependencies(self):
         good = 'PartOf = [ "graphical-session.target" ]; After = [ "graphical-session.target" ]; WantedBy = [ "graphical-session.target" ];'
         with patch.object(watch, "source", return_value=good) as source:

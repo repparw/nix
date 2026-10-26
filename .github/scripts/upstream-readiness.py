@@ -15,7 +15,6 @@ PR_WAITS = {
     "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
     "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
     "t3code-server": ("nix-community/home-manager", 9695, "home-manager"),
-    "cliamp-hm-module": ("nix-community/home-manager", 9842, "home-manager"),
 }
 WORKAROUNDS = {
     "authelia-pnpm-hash": ("modules/_services/authelia.nix", "autheliaPackage"),
@@ -25,8 +24,6 @@ WORKAROUNDS = {
     "t3code-server": ("modules/aspects/ai/t3code.nix", "services.t3code-web"),
     "t3code-browser-libs": (
         "modules/aspects/ai/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
-    "cliamp-hm-module": ("modules/aspects/cliamp.nix", "hmCliampModule"),
-    "cliamp-attach": ("modules/aspects/cliamp.nix", 'owner = "ryanrpj"'),
     "qbittorrent": ("modules/aspects/services/arr.nix", "qbittorrent-nox.overrideAttrs"),
     "wpaperd-fix": ("modules/aspects/gui/wpaperd-output-removal-race.patch", None),
     "voxtype-graphical": ("modules/aspects/ai/voxtype-graphical-workaround.nix", None),
@@ -378,10 +375,6 @@ def detect(name, lock):
         return "PINNED-READY" if moonshine_reload_guard(repo, revision) else "waiting-source"
     if name == "wpaperd-fix":
         fixed = package_contains("wpaperd", "danyspin97/wpaperd", "442b962df717dfb6e3d86a3a4bfd1111882323b8", revision)
-    elif name == "cliamp-attach":
-        package_text = source("NixOS/nixpkgs", "pkgs/by-name/cl/cliamp/package.nix", revision)
-        commands = source("bjarneo/cliamp", "commands.go", source_ref(package_text))
-        fixed = all(re.search(rf'\b{command}Command\s*\(|"{command}"', commands) for command in ("attach", "quit"))
     elif name == "voxtype-graphical":
         # The override is a Home Manager user unit, not a NixOS system unit.
         module = source("nix-community/home-manager", "modules/services/voxtype.nix", pin(lock, "home-manager"))

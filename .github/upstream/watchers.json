@@ -55,11 +55,6 @@
     "input": "home-manager",
     "cleanup": "t3code-server.patch"
   },
-  "cliamp-hm-module": {
-    "mode": "post-lock",
-    "input": "home-manager",
-    "cleanup": "cliamp-hm-module.patch"
-  },
   "qbittorrent": {
     "mode": "post-lock",
     "input": "nixpkgs",
@@ -74,11 +69,6 @@
   "voxtype-graphical": {
     "mode": "completed",
     "input": "home-manager"
-  },
-  "cliamp-attach": {
-    "mode": "post-lock",
-    "input": "nixpkgs",
-    "cleanup": "cliamp-attach.patch"
   },
   "gamescope-vkroots": {
     "mode": "post-lock",

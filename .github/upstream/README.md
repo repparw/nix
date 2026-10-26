@@ -73,8 +73,6 @@ The package-specific gates are:
 | t3code-stable010  | Generated units serve the root-pin package (Alpha stock, Pi/Epsilon split server) with the version assertion; Alpha's x86 t3code builds |
 | tasks-org         | Build the upstream Tasks.org package                                                                                                    |
 | qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                                            |
-| cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                                                      |
-| cliamp-attach     | Build upstream cliamp and verify both attach and quit in its help output                                                                |
 | wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
 | voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                                             |
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
