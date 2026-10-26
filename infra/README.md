@@ -81,6 +81,29 @@ state is fully re-derivable from the live infrastructure, and re-importing
 (see below) is the recovery path. Keep a copy of the local state if you want
 faster recovery, and treat any copy as sensitive.
 
+### Authoritative location and backups
+
+The authoritative state lives on alpha at
+`~/Projects/nix/infra/terraform.tfstate` (0600). Worktree copies made during
+development sessions are scratch, not authoritative — do not run `tofu plan`
+against them and expect the result to matter.
+
+Alpha's home-state backup stages the state into
+`/var/lib/home-state-backup/offsite/Projects/nix/infra/terraform.tfstate`,
+from where the daily encrypted restic job (`rclone:gd-crypt:restic/alpha`)
+uploads it, and mirrors it to the HDD at
+`/mnt/hdd/backup/Projects/nix/infra/terraform.tfstate`. The staging script
+refuses to publish a generation while OpenTofu holds the state lock or the
+staged copy is missing or unparseable, so a failed backup never replaces the
+previous staged generation.
+
+After any `tofu apply`, import, or state migration, capture a fresh backup
+(see the [fleet operations runbook](../docs/runbooks/fleet-operations.md) and
+the [state recovery procedure](../docs/runbooks/host-recovery.md#restore-the-opentofu-state)):
+validate recovered copies with `tofu state list -state=...` before use.
+Re-importing from `imports.tf` remains the fallback, not the routine
+recovery method: it silently adopts out-of-band drift as the new baseline.
+
 ## Recovering state
 
 `imports.tf` records the import mapping and is inert once resources are in
