@@ -26,7 +26,10 @@
       den.aspects.nixos-services._.paperless
     ];
     provides.backup = {
-      includes = [ den.aspects.host-backup ];
+      includes = [
+        den.aspects.host-backup
+        den.aspects.monitoring._.backup
+      ];
       nixos = { config, ... }: {
         modules.backup.exports = {
           miniflux = {

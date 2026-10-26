@@ -51,7 +51,8 @@ let
     "/home/containers/media/hdd"
     "/home/containers/media/seagate"
   ];
-  dashboard = builtins.fromJSON (builtins.readFile ../aspects/monitoring/fleet-overview.json);
+  dashboard =
+    (builtins.fromJSON (builtins.readFile ../../grafana/dashboards/fleet-overview.json)).spec;
   cpuTarget = builtins.head (lib.findFirst (panel: panel.id == 1) null dashboard.panels).targets;
   filesystemTarget =
     builtins.head
@@ -431,7 +432,8 @@ pkgs.runCommand "check-monitoring-fleet"
       }"
     ) cloudVariants}
     promtool test rules ${queryTests}
-    GOCACHE="$TMPDIR/go-cache" GO111MODULE=off go run ${./discord-template.go} ${../aspects/monitoring/discord.tmpl}
-    PYTHONDONTWRITEBYTECODE=1 python3 ${./fleet-health-metrics.py} ${../scripts/fleet-health-metrics.py} ${../aspects/monitoring/health-alerts.json}
+    GOCACHE="$TMPDIR/go-cache" GO111MODULE=off go run ${./discord-template.go} ${./fixtures/monitoring/discord.tmpl}
+    PYTHONDONTWRITEBYTECODE=1 python3 ${./fleet-health-metrics.py} ${../scripts/fleet-health-metrics.py} ${./fixtures/monitoring/health-alerts.json}
+    PYTHONDONTWRITEBYTECODE=1 python3 ${./grafana-cloud-backup.py} ${../scripts/grafana-cloud-backup.py}
     touch $out
   ''
