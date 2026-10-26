@@ -22,6 +22,7 @@
       den.aspects.service-host
       den.aspects.nixos-services._.edge
       den.aspects.nixos-services._.hermes
+      den.aspects.nixos-services._.event-bus
       den.aspects.nixos-services._.archisteamfarm
       den.aspects.nixos-services._.paperless
     ];
