@@ -1,5 +1,5 @@
 ---
-type: Architecture Plan
+type: Architecture Concept
 title: Fleet Event Transport Migration
 description: Consolidate durable notification and agent-event delivery without weakening existing safety guarantees.
 when: Work on fleet notifications, Discord, event queues, NATS JetStream, Grafana alert routing, or Hermes triage.
