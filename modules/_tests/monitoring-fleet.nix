@@ -345,6 +345,11 @@ let
   cloudSite = lib.findFirst (site: site.title == "grafana") null glanceMonitor.sites;
 in
 assert lib.all cloudOnly hosts;
+assert !(lib.hasInfix ''name = "paperless"'' (alloyConfig "pi"));
+assert lib.hasInfix
+  ''{ name = "paperless", address = "http://${(cfg "epsilon").containers.paperless.localAddress}:8000"''
+  (alloyConfig "epsilon");
+assert (cfg "epsilon").containers.paperless.forwardPorts == [ ];
 assert lib.all (port: !(builtins.elem port (cfg "epsilon").networking.firewall.allowedTCPPorts)) [
   9090
   3100
