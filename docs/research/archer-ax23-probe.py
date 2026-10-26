@@ -81,7 +81,7 @@ def main():
                 "iot_2g_enable": st.iot_2g_enable,
                 "guest_2g_enable": st.guest_2g_enable,
                 "devices": [
-                    {"hostname": d.hostname, "ip": str(d.ip), "mac": str(d.mac),
+                    {"hostname": d.hostname, "ip": str(d.ipaddr), "mac": str(d.macaddr),
                      "type": str(d.type), "active": d.active}
                     for d in (st.devices or [])
                 ],
@@ -132,20 +132,22 @@ def main():
                 report[f"wifi_{wifi_name}"] = f"error: {e}"
 
         # Low-level reads the library does not natively expose (read verbs only).
-        for label, path in [
-            ("port_forwarding_vs", "/admin/nat?form=vs"),
-            ("port_triggering_pt", "/admin/nat?form=pt"),
-            ("ipv6_firewall_fr6", "/admin/nat?form=fr6"),
-            ("dmz", "/admin/nat?form=dmz"),
-            ("alg", "/admin/nat?form=alg"),
-            ("nat_setting", "/admin/nat?form=setting"),
-            ("dhcp_setting", "/admin/dhcps?form=setting"),
-            ("lan_setting", "/admin/network?form=lan_fc"),
-            ("static_routes", "/admin/network?form=routes_static"),
-            ("smart_connect", "/admin/wireless?form=smart_connect"),
+        # Table forms (routes, vs, pt, fr6) require operation=load, not read.
+        for label, path, op in [
+            ("port_forwarding_vs", "/admin/nat?form=vs", "load"),
+            ("port_triggering_pt", "/admin/nat?form=pt", "load"),
+            ("ipv6_firewall_fr6", "/admin/nat?form=fr6", "load"),
+            ("dmz", "/admin/nat?form=dmz", "read"),
+            ("alg", "/admin/nat?form=alg", "read"),
+            ("nat_setting", "/admin/nat?form=setting", "read"),
+            ("dhcp_setting", "/admin/dhcps?form=setting", "read"),
+            ("lan_setting", "/admin/network?form=lan_fc", "read"),
+            ("static_routes", "/admin/network?form=routes_static", "load"),
+            ("system_routes", "/admin/network?form=routes_system", "load"),
+            ("smart_connect", "/admin/wireless?form=smart_connect", "read"),
         ]:
             try:
-                data = router.request(path, "operation=read")
+                data = router.request(path, "operation=" + op)
                 report[label] = sanitize(data)
             except Exception as e:
                 report[label] = f"error: {e}"

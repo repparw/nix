@@ -85,7 +85,7 @@ Highlights, with the operations the UI itself uses:
 | UPnP / NAT | `/admin/nat?form=setting` | read/write | |
 | **IPv6 firewall rules** | `/admin/nat?form=fr6` | load/insert/update/remove | |
 | Access control | `/admin/access_control?form=black_list`, `white_list`, `mode`, `enable` | read/write | per-device parental control, not a general firewall |
-| Static routes | `/admin/network?form=routes_static`, `routes_system` | read (+write) | |
+| Static routes | `/admin/network?form=routes_static`, `routes_system` | **load** (+insert/update/remove for static) | system routes list default/LAN/WireGuard routes |
 | LAN | `/admin/network?form=lan_fc` | read/write | IP, DHCP-announced DNS |
 | WAN | `/admin/network?form=wan_fc` | read/write | connection type, DoH/DoT (`wan_dohdot`) |
 | Wi-Fi (per band) | `/admin/wireless?form=wireless_2g|wireless_5g`, `guest_*` | read/write | SSID, security, channel, etc. |
@@ -96,6 +96,7 @@ Highlights, with the operations the UI itself uses:
 | Firmware | `/admin/firmware?form=config` | read/write | version + upgrade |
 | Reboot | `/admin/system?form=reboot`, `/admin/reboot?form=set` | request/write | avoid |
 | Logout | `/admin/system?form=logout` | request | free the single session |
+| **Config backup** | `/admin/firmware?form=config_multipart` | multipart `operation=backup` | downloads the encrypted config `.bin`; **restore** uses the same URL with `operation=restore` + file — do not run restore unless recovering. Backup files contain Wi-Fi/admin secrets: keep them outside git (0600) |
 
 Full list (re-derivable from `/webpages/js/*.js` with
 `grep -hoE '"/[a-z_/]+\?form=[a-z_]+"'`):
@@ -196,7 +197,7 @@ GitHub/PyPI). The task's starting URLs contained one dead end:
 
 | Project | Status | AX23 v2 / fw 1.11.x verdict |
 | --- | --- | --- |
-| [`AlexandrErohin/TP-Link-Archer-C6U`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U) (`tplinkrouterc6u` on PyPI, GPL-3.0) | very active, v5.37.0 (2026-10-17) | **Expected to work**: its `TplinkRouterSG` client implements exactly this unit's protocol (SHA256 + RSA-2048 + OAEP + HMAC), proven on AX53 with the same 1.11.0 UI; AX23 v1.0/v1.2 are on the supported list, v2 is unlisted. Read: firmware, status, WAN, DHCP leases + reservations, Wi-Fi. Write: reservations, Wi-Fi, VPN, DHCP server. **No port-forwarding API** — but the generic `request()` reaches `admin/nat?form=vs`. |
+| [`AlexandrErohin/TP-Link-Archer-C6U`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U) (`tplinkrouterc6u` on PyPI, GPL-3.0) | very active, v5.37.0 (2026-10-17) | **Works** (verified live, §4): its `TplinkRouterSG` client implements exactly this unit's protocol (SHA256 + RSA-2048 + OAEP + HMAC). DHCP-reservation CRUD and Wi-Fi/VPN writes exist upstream; **port-forwarding CRUD has been contributed upstream** ([`repparw/TP-Link-Archer-C6U#248`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U/pull/248), pending merge). |
 | [`AlexandrErohin/home-assistant-tplink-router`](https://github.com/AlexandrErohin/home-assistant-tplink-router) (HACS custom, MIT) | very active, v2.44.0 (2026-10-17) | Same engine as above (pins `tplinkrouterc6u==5.37.0`). Device trackers, sensors, reboot button, reservation services. |
 | [`sharozdawa/tplink-archer-mcp`](https://github.com/sharozdawa/tplink-archer-mcp) (MIT) | stale since 2026-05, 2★ | Claims AX23 "should work" (untested); drives the **Vue UI in headless Chromium** — unsuitable for Terraform, but its docs confirm the callback-registry restrictions. |
 | [`iambalaji-k/tplink-router-api`](https://github.com/iambalaji-k/tplink-router-api) (MIT) | new, active (2026-10) | AX12 (1024-bit RSA era) — protocol writeups transfer, code targets an older auth generation. Its 226-endpoint survey and gotcha list are valuable. |
@@ -217,7 +218,7 @@ addresses; read operations only).
 | --- | --- |
 | Login (SG: SHA256 + RSA-2048 + OAEP + HMAC-SHA256 + AES-CBC) | **works** — AX23 v2 fw 1.1.2 is on the same hardened protocol as AX53/BE-series |
 | Firmware / hardware info | **works** — `Archer AX23 v2.0`, `1.1.2 Build 20250814 rel.14122(5553)` |
-| Router status | **works** (raw `admin/status?form=all` read: WAN state, DNS, CPU/mem, client lists, uptime). The library's typed `get_status()` parser hit a field quirk — use the raw read for data sources |
+| Router status | **works** — typed `get_status()` (conn type, CPU/mem, per-band client counts, 10 devices with hostname/ip/mac) |
 | WAN/LAN config | **works** — WAN DHCP /24, DNS pair, LAN `192.168.0.1/24` |
 | DHCP leases | **works** — 7 leases read via `admin/dhcps?form=client` |
 | DHCP reservations | **works** — 12 reservations read via `admin/dhcps?form=reservation` |
@@ -225,11 +226,14 @@ addresses; read operations only).
 | Port forwarding (`admin/nat?form=vs`) | **works** — 2 rules read; row shape `{name, ipaddr, external_port, internal_port, protocol, enable}`; insert/update/remove verbs confirmed in UI JS |
 | Port triggering (`form=pt`), IPv6 firewall (`form=fr6`) | **works** — empty tables returned (`{}`) |
 | DMZ, ALG, NAT/UPnP setting, DHCP server setting, Smart Connect | **works** |
-| Static routes (`admin/network?form=routes_static`) | **failed** — encrypted error response despite the form existing in the UI JS; needs a follow-up with the exact op the UI uses |
+| Static routes (`admin/network?form=routes_static`) | **works** — an empty table `{}` (none configured). Resolution: table forms need `operation=load`, not `read` (`read` answers with an error on those forms; the UI JS calls `load` — this also explains the earlier "failure"). `routes_system` lists the 6 kernel routes (default via WAN, LAN, WireGuard hub) |
+| Config backup (`admin/firmware?form=config_multipart`, multipart `operation=backup`) | **works** — 22 KB encrypted config downloaded and stored outside git with 0600 permissions as a rollback safety net before any write-capable work. The same URL with `operation=restore` restores — deliberately not touched |
 
 Untested (writes): reservation add/delete, port-forward CRUD, Wi-Fi writes —
-deliberately not exercised. Wire formats for writes are documented in the
-endpoint table above and in the SG client source.
+deliberately not exercised. The port-forwarding wire formats are now
+implemented upstream ([`repparw/TP-Link-Archer-C6U#248`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U/pull/248))
+with mock coverage; live write verification on this router is planned behind
+explicit approval (see the provider plan, §6).
 
 ## 5. OpenTofu suitability
 
@@ -261,10 +265,11 @@ The API's shape is unusually provider-friendly:
 ## 6. Recommendation
 
 1. **Reuse `tplinkrouterc6u` (option B/C)**: it already implements this exact
-   auth protocol; DHCP-reservation CRUD exists upstream; port-forwarding needs
-   a small upstream contribution using `admin/nat?form=vs` (wire format
-   documented above). Extending the actively-maintained library benefits other
-   users and keeps the protocol knowledge in one place.
+   auth protocol; DHCP-reservation CRUD exists upstream, and port-forwarding
+   CRUD (`admin/nat?form=vs`) has been contributed upstream
+   ([`repparw/TP-Link-Archer-C6U#248`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U/pull/248)).
+   Extending the actively-maintained library benefits other users and keeps
+   the protocol knowledge in one place.
 2. **Provider later, data sources first** (option A only after step 1 lands):
    clone the `lucavb/tplink-easysmart` plugin-framework skeleton; start with
    data sources (status, firmware, device list) + `tplink_ax23_reservation`
