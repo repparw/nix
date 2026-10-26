@@ -178,12 +178,12 @@ test('atomic package validation reads the PR head and includes bundled ARM valid
   }
 });
 
-test('only trusted revisions publish, with an explicitly forwarded step-scoped key', () => {
-  assert.match(workflow, /secrets:\n      CACHIX_SIGNING_KEY: \$\{\{ secrets.CACHIX_SIGNING_KEY \}\}/);
+test('only trusted revisions publish, with an explicitly forwarded step-scoped token', () => {
+  assert.doesNotMatch(workflow + validation, /CACHIX_SIGNING_KEY/);
   assert.doesNotMatch(workflow, /secrets: inherit/);
   assert.match(workflow, /CACHIX_AUTH_TOKEN: \$\{\{ secrets.CACHIX_AUTH_TOKEN \}\}/);
   assert.match(validation, /CACHIX_AUTH_TOKEN:\n        required: false/);
-  assert.match(validation, /workflow_call:\n    secrets:\n      CACHIX_SIGNING_KEY:\n        required: false/);
+  assert.match(validation, /workflow_call:\n    secrets:\n      CACHIX_AUTH_TOKEN:\n        required: false/);
   const job = validation.split('  neovim-build:')[1].split('\n  persistence-vm:')[0];
   const publish = job.split('      - name: Publish and verify the Neovim closure')[1].split('      - name: Upload build logs')[0];
   const condition = publish.match(/if: (.*)/)[1];
@@ -202,7 +202,7 @@ test('only trusted revisions publish, with an explicitly forwarded step-scoped k
   assert.doesNotMatch(beforePublish, /signingKey:|CACHIX_SIGNING_KEY:|CACHIX_AUTH_TOKEN:/);
   const preflight = beforePublish.split('      - name: Require trusted publishing credentials')[1].split('      - name: Build')[0];
   assert.equal(preflight.match(/if: (.*)/)[1], condition);
-  assert.match(preflight, /secrets.CACHIX_SIGNING_KEY != '' && secrets.CACHIX_AUTH_TOKEN != ''/);
+  assert.match(preflight, /secrets.CACHIX_AUTH_TOKEN != ''/);
   const preflightScript = preflight.split('        run: |\n')[1].replace(/^          /gm, '');
   for (const present of ['true', 'false', '']) {
     const result = spawnSync('bash', ['-e', '-c', preflightScript], {
@@ -211,12 +211,11 @@ test('only trusted revisions publish, with an explicitly forwarded step-scoped k
     assert.equal(result.status === 0, present === 'true');
   }
   assert.match(beforePublish, /skipPush: true/);
-  assert.match(publish, /CACHIX_SIGNING_KEY: \$\{\{ secrets.CACHIX_SIGNING_KEY \}\}/);
   assert.match(publish, /CACHIX_AUTH_TOKEN: \$\{\{ secrets.CACHIX_AUTH_TOKEN \}\}/);
   assert.match(publish, /run: bash .github\/scripts\/publish-neovim.sh/);
 });
 
-function publishNeovim(fail = '', key = 'fixture-not-a-secret', token = 'fixture-not-a-token') {
+function publishNeovim(fail = '', token = 'fixture-not-a-token') {
   const directory = mkdtempSync(join(tmpdir(), 'publish-neovim-test-'));
   try {
     mkdirSync(join(directory, 'bin'));
@@ -238,7 +237,7 @@ esac
     const result = spawnSync('bash', [join(root, '.github/scripts/publish-neovim.sh')], {
       cwd: directory, encoding: 'utf8',
       env: { ...process.env, PATH: `${join(directory, 'bin')}:${process.env.PATH}`,
-        CACHIX_SIGNING_KEY: key, CACHIX_AUTH_TOKEN: token, FAIL_STAGE: fail, GITHUB_STEP_SUMMARY: join(directory, 'summary') },
+        CACHIX_SIGNING_KEY: '', CACHIX_AUTH_TOKEN: token, FAIL_STAGE: fail, GITHUB_STEP_SUMMARY: join(directory, 'summary') },
     });
     const read = name => { try { return readFileSync(join(directory, name), 'utf8'); } catch { return ''; } };
     return { ...result, calls: read('calls'), summary: read('summary'), paths: read('ci-logs/host-neovim-paths') };
@@ -263,9 +262,6 @@ test('missing credentials, uploads, remote paths and signatures cannot silently 
   const missing = publishNeovim('', '');
   assert.notEqual(missing.status, 0);
   assert.equal(missing.calls, '');
-  const missingToken = publishNeovim('', 'fixture-not-a-secret', '');
-  assert.notEqual(missingToken.status, 0);
-  assert.equal(missingToken.calls, '');
   for (const failure of ['local', 'upload', 'remote', 'signature']) {
     const result = publishNeovim(failure);
     assert.notEqual(result.status, 0, failure);

@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Keep the cache-scoped key in this step, rather than exporting it before builds.
-: "${CACHIX_SIGNING_KEY:?Trusted publishing requires CACHIX_SIGNING_KEY}"
+# Cachix manages signing; keep the upload token scoped to this step.
 : "${CACHIX_AUTH_TOKEN:?Trusted publishing requires a cache-scoped CACHIX_AUTH_TOKEN with write permission}"
 : "${GITHUB_STEP_SUMMARY:?GITHUB_STEP_SUMMARY must name the job summary file}"
 
