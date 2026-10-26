@@ -26,6 +26,9 @@
       {
         nixos =
           { config, ... }:
+          let
+            xdg = config.home-manager.users.${user.name}.xdg;
+          in
           {
             home-manager = {
               useGlobalPkgs = true;
@@ -34,19 +37,20 @@
             };
 
             # Propagate XDG env vars to all processes (SSH, nix-shell, agents)
-            # that do not source home-manager's hm-session-vars.sh.
+            # that do not source home-manager's hm-session-vars.sh. Paths come
+            # from home-manager's own xdg module to avoid hardcoding.
             environment.variables = {
-              NPM_CONFIG_CACHE = "/home/repparw/.cache/npm";
-              NPM_CONFIG_USERCONFIG = "/home/repparw/.config/npm/npmrc";
-              ANDROID_USER_HOME = "/home/repparw/.local/share/android";
-              CARGO_HOME = "/home/repparw/.local/share/cargo";
-              CLAUDE_CONFIG_DIR = "/home/repparw/.config/claude";
-              OCI_CLI_CONFIG_FILE = "/home/repparw/.config/oci/config";
-              PULSE_COOKIE = "/home/repparw/.config/pulse/cookie";
-              GOPATH = "/home/repparw/.local/share/go";
-              GOBIN = "/home/repparw/.local/share/go/bin";
-              WGETRC = "/home/repparw/.config/wget/wgetrc";
-              HISTFILE = "/home/repparw/.local/state/bash/history";
+              NPM_CONFIG_CACHE = "${xdg.cacheHome}/npm";
+              NPM_CONFIG_USERCONFIG = "${xdg.configHome}/npm/npmrc";
+              ANDROID_USER_HOME = "${xdg.dataHome}/android";
+              CARGO_HOME = "${xdg.dataHome}/cargo";
+              CLAUDE_CONFIG_DIR = "${xdg.configHome}/claude";
+              OCI_CLI_CONFIG_FILE = "${xdg.configHome}/oci/config";
+              PULSE_COOKIE = "${xdg.configHome}/pulse/cookie";
+              GOPATH = "${xdg.dataHome}/go";
+              GOBIN = "${xdg.dataHome}/go/bin";
+              WGETRC = "${xdg.configHome}/wget/wgetrc";
+              HISTFILE = "${xdg.stateHome}/bash/history";
             };
 
             programs.nh.flake = "${config.home-manager.users.${user.name}.xdg.userDirs.projects}/nix";
