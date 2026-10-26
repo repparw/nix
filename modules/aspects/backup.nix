@@ -119,6 +119,15 @@
             type = lib.types.listOf lib.types.str;
             default = [ ];
           };
+          homeStateStagingScript = lib.mkOption {
+            description = ''
+              The prepare-home-state script staging homeState, as set by the
+              host that defines the staging units. Exposed for manual runs
+              and recovery verification.
+            '';
+            type = lib.types.nullOr lib.types.package;
+            default = null;
+          };
         };
         # Clear stale locks (interrupted manual runs) before the module's
         # post-start check demands an exclusive lock; the forget unlock runs

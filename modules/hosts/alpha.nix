@@ -168,6 +168,7 @@
             "Variations"
           ];
           homeStateCritical = [ "Projects/nix/infra/terraform.tfstate" ];
+          homeStateStagingScript = prepareHomeState;
         };
 
         modules.coredump-watch = {
@@ -317,6 +318,7 @@
                     "/.config/"
                     "/.local/"
                     "/Games/"
+                    "/Projects/"
                   ];
                 };
               };

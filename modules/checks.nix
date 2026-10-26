@@ -252,7 +252,7 @@
           # covered.
           home-state-backup =
             let
-              prepareHomeState = import ../_scripts/prepare-home-state.nix { inherit pkgs lib; };
+              prepareHomeState = import ./_scripts/prepare-home-state.nix { inherit pkgs lib; };
               staging = prepareHomeState {
                 home = "/tmp/home-state-fixture-home";
                 stateRoot = "/tmp/home-state-fixture-root";
@@ -288,7 +288,7 @@
 
                 rm -rf /tmp/home-state-fixture-*
                 mkdir -p $home/.config/vesktop $home/.local/share/fish \
-                  $home/.config/sops/age $state_dir/.terraform
+                  $home/.config/sops/age $state_dir/.terraform $state_root
                 printf '{}' > $home/.config/vesktop/settings.json
                 printf 'history\n' > $home/.local/share/fish/fish_history
                 printf 'x' > $home/.config/sops/age/keys.txt
