@@ -34,6 +34,24 @@ class MetricsTests(unittest.TestCase):
         scenario("btrfs_critical", allocation, 1, disk)
         scenario("btrfs_warning", allocation | {"fleet_btrfs_metadata_used_percent": 86, "fleet_btrfs_unallocated_bytes": 5368709120}, 1, disk)
         scenario("units", {"fleet_failed_unit": 1}, 1, {"host": "pi", "name": "failed.service"})
+        cases.append({
+            "interval": "1m",
+            "input_series": [
+                {"series": 'fleet_health_collection_timestamp_seconds{host="pi",collector="host"}', "values": "100+0x32"},
+                {"series": 'fleet_health_collection_timestamp_seconds{host="epsilon",collector="host"}', "values": "100+0x32"},
+                {"series": 'fleet_failed_unit{host="pi",name="a.service"}', "values": "1+0x32"},
+                {"series": 'fleet_failed_unit{host="pi",name="b.service"}', "values": "1+0x32"},
+            ],
+            "promql_expr_test": [{
+                "expr": "(" + rules["fleet_cloud_units"]["expr"] + ") > bool 0",
+                "eval_time": "4m",
+                "exp_samples": [
+                    {"labels": '{host="pi",name="a.service"}', "value": 1},
+                    {"labels": '{host="pi",name="b.service"}', "value": 1},
+                    {"labels": '{host="epsilon"}', "value": 0},
+                ]
+            }]
+        })
         scenario("required_unit", {"fleet_required_unit_active": 0}, 1, {"host": "pi", "name": "traefik.service"})
         scenario("http", {"fleet_service_probe_expected": 1}, 1, {"host": "pi", "service": "missing"})
         scenario("http", {"fleet_service_probe_expected": 1, "probe_success": 1}, 0, {"host": "pi", "service": "available"})
@@ -118,11 +136,25 @@ class MetricsTests(unittest.TestCase):
              patch.object(Path, "exists", exists), \
              patch.object(Path, "read_text", return_value=json.dumps(report)):
             text, state = collector.host_metrics(settings, {}, 100)
-        self.assertIn("fleet_failed_units 1", text)
         self.assertIn('fleet_failed_unit{name="failed.service"} 1', text)
         self.assertIn("fleet_backup_last_success_timestamp_seconds 0", text)
         self.assertIn('fleet_backup_export_complete{export="paperless"} 1', text)
         self.assertEqual(state["since"], 100)
+
+    def test_failed_unit_metric_is_per_unit_and_absent_when_healthy(self):
+        settings = {"requiredUnits": [], "exports": [], "probes": [], "rebootCheck": False}
+        with patch.object(collector, "command", return_value="first.service\nsecond.service"), \
+             patch.object(Path, "exists", return_value=False):
+            text, _ = collector.host_metrics(settings, {}, 100)
+        self.assertIn('fleet_failed_unit{name="first.service"} 1', text)
+        self.assertIn('fleet_failed_unit{name="second.service"} 1', text)
+        self.assertNotIn("fleet_failed_units", text)
+
+        with patch.object(collector, "command", return_value=""), \
+             patch.object(Path, "exists", return_value=False):
+            healthy, _ = collector.host_metrics(settings, {}, 101)
+        self.assertNotIn("fleet_failed_unit", healthy)
+        self.assertIn("fleet_deployment_paused 0", healthy)
 
 
 unittest.main()

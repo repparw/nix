@@ -270,7 +270,23 @@ let
             interval = "1m";
             input_series = [
               {
-                series = "fleet_failed_units{host=\"alpha\",job=\"integrations/unix\"}";
+                series = "fleet_failed_unit{host=\"alpha\",name=\"first.service\"}";
+                values = "1+0x10";
+              }
+              {
+                series = "fleet_failed_unit{host=\"alpha\",name=\"second.service\"}";
+                values = "1+0x10";
+              }
+              {
+                series = "fleet_health_collection_timestamp_seconds{host=\"alpha\",collector=\"host\"}";
+                values = "100+0x10";
+              }
+              {
+                series = "fleet_health_collection_timestamp_seconds{host=\"epsilon\",collector=\"host\"}";
+                values = "100+0x10";
+              }
+              {
+                series = "fleet_failed_units{host=\"legacy\",job=\"integrations/unix\"}";
                 values = "2+0x10";
               }
               {
@@ -294,6 +310,14 @@ let
                   {
                     labels = "{host=\"pi\"}";
                     value = 1;
+                  }
+                  {
+                    labels = "{host=\"epsilon\"}";
+                    value = 0;
+                  }
+                  {
+                    labels = "{host=\"legacy\"}";
+                    value = 2;
                   }
                 ];
               }

@@ -2,7 +2,7 @@
   {
     "uid": "fleet_cloud_units",
     "title": "Failed fleet jobs or services",
-    "expr": "fleet_failed_unit",
+    "expr": "fleet_failed_unit or on(host) (0 * max by (host) (fleet_health_collection_timestamp_seconds{collector=\"host\"}))",
     "pending": "2m",
     "severity": "critical",
     "brief": "Unit {{ $labels.name }} failed.",
