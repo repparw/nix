@@ -25,6 +25,9 @@ workflow. Selected checkpoints live in the private
 sanitized runtime preferences. Git does not deploy them: live files are
 authoritative and changes are checkpointed after verification. Nix installs only
 the generic backup helper, not personal behavior files, memories or history.
+The private checkout is `/var/lib/hermes/workspace/hermes-config`; its Git key
+grants access only to that repository. Nothing automatically pulls or applies
+commits to the live profile.
 Nix owns installation, service wiring, credentials and approval/resource
 safeguards. Model routes, fallbacks, cron and compression models, toolset
 selection, memory preferences, Kanban preferences and display options live in
