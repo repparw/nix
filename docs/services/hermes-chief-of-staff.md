@@ -19,14 +19,6 @@ home `/var/lib/hermes/.hermes` and workspace `/var/lib/hermes/workspace`. Host
 storage is `/home/repparw/services/hermes`. Existing container resource limits and
 network policy remain in force.
 
-Alpha installs the pinned upstream `hermes-desktop` application through the
-`hermes-desktop` aspect. Epsilon and Pi do not install this desktop package.
-Installation does not configure a remote connection: select the existing
-Epsilon Chief of Staff backend when connecting Desktop. A local Alpha profile
-would have separate history, memory, and credentials. Remote access and its
-authentication must be verified before treating Desktop as the Chief of Staff
-interface.
-
 `SOUL.md` contains the identity and authorization policy. The
 [Chief of Staff skill](../../modules/aspects/services/hermes-chief-of-staff/SKILL.md)
 defines task ownership, handoffs, and verification. Upstream `hermesHomeFiles`

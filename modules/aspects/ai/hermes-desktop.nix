@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  den.aspects.hermes-desktop.nixos =
+  den.aspects.ai.provides.hermes-desktop.homeManager =
     { pkgs, ... }:
     let
       agent = pkgs.callPackage ../../_packages/hermes-agent.nix {
@@ -8,10 +8,6 @@
       };
     in
     {
-      home-manager.sharedModules = [
-        {
-          home.packages = [ agent.hermesDesktop ];
-        }
-      ];
+      home.packages = [ agent.hermesDesktop ];
     };
 }
