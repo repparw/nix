@@ -11,14 +11,21 @@
       cfg = config.modules.monitoring.health;
       servicesLib = import ../_services/lib.nix { inherit lib pkgs; };
       sites = servicesLib.monitorSites config.modules.services config;
-      probes = lib.optionals (config.networking.hostName == "pi") (
+      probeSites = lib.filter (
+        site:
+        if site.title == "paperless" then
+          config.networking.hostName == "epsilon"
+        else
+          config.networking.hostName == "pi"
+      ) sites;
+      probes = lib.optionals (config.modules.monitoring.agent.cloud.metrics != null) (
         map (site: {
           name = site.title;
           address = site.check-url;
           module = if site ? alt-status-codes then "backend" else "healthy";
           service = site.title;
-        }) sites
-        ++ [
+        }) probeSites
+        ++ lib.optionals (config.networking.hostName == "pi") [
           {
             name = "homepage";
             address = "https://${config.modules.services.domain}/";
