@@ -148,12 +148,13 @@ class MetricsTests(unittest.TestCase):
             text, _ = collector.host_metrics(settings, {}, 100)
         self.assertIn('fleet_failed_unit{name="first.service"} 1', text)
         self.assertIn('fleet_failed_unit{name="second.service"} 1', text)
-        self.assertNotIn("fleet_failed_units", text)
+        self.assertIn("fleet_failed_units 2", text)
 
         with patch.object(collector, "command", return_value=""), \
              patch.object(Path, "exists", return_value=False):
             healthy, _ = collector.host_metrics(settings, {}, 101)
-        self.assertNotIn("fleet_failed_unit", healthy)
+        self.assertNotIn("fleet_failed_unit{", healthy)
+        self.assertIn("fleet_failed_units 0", healthy)
         self.assertIn("fleet_deployment_paused 0", healthy)
 
 

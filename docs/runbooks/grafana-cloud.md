@@ -62,7 +62,9 @@ staleness alert covers missing host facts.
 
 The dashboard derives failed counts via `count by (host) (fleet_failed_unit)`,
 zero-filled for healthy reporting hosts. Historical `fleet_failed_units` and
-node-exporter samples remain fallbacks; the aggregate gauge is no longer emitted.
+node-exporter samples remain fallbacks. The collector temporarily continues to
+emit the legacy `fleet_failed_units` gauge so the existing live Cloud alert
+stays functional until its query is migrated. Remove that gauge afterward.
 
 Keep collection's series budget separate from alert policy. Check actual usage
 in `grafanacloud-usage` after adding metrics or labels. Disk facts and their
