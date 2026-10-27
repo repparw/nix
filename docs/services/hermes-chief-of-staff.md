@@ -47,7 +47,8 @@ creates a card assigned to `default`, then claims it through the native CLI.
 The reviewed Hermes pin normalizes new cards to `ready` and has no model-facing
 claim tool. Comments, blocking, and completion use native model tools.
 
-Native delegation is asynchronous and inherits the coordinator's model and tools.
+Native delegation is asynchronous. Workers use Nous `openai/gpt-6.1-terra`
+with high reasoning effort and inherit the coordinator's tools.
 Per-call model, provider, and tool restrictions are unsupported in the reviewed
 pin. A read-only brief constrains intent, not capabilities. Workers are trusted
 contexts with the coordinator's access; human approval remains required.
@@ -57,7 +58,7 @@ a process crash.
 
 ## Routing and approvals
 
-The coordinator and workers use the configured strong Nous route. Explicit
+The coordinator uses Nous `openai/gpt-6.1-sol`; native workers use Terra. Explicit
 fallback chains are empty, so provider failure cannot silently downgrade complex
 work. Global child-model routing is available upstream but does not select a
 model independently for each task. Compression and cron have separate routes in

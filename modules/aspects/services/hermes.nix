@@ -136,6 +136,9 @@
                   unattended_mode = "deny";
                 };
                 settings.delegation = {
+                  provider = "nous";
+                  model = "openai/gpt-6.1-terra";
+                  reasoning_effort = "high";
                   fallback_providers = [ ];
                   max_concurrent_children = 2;
                   max_spawn_depth = 1;
