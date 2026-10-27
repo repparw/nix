@@ -13,8 +13,10 @@ The existing Hermes identity coordinates work through the Discord bot. Temporary
 workers execute bounded tasks; native Kanban preserves assignments and outcomes
 across sessions. The coordinator verifies results and replies to the user.
 
-[hermes.nix](../../modules/aspects/services/hermes.nix) owns settings and container
-wiring. The service runs inside Epsilon's existing `hermes` nspawn container, with
+[hermes.nix](../../modules/aspects/services/hermes.nix) declares the installation,
+container/service wiring, Discord connection, and enforced safety settings.
+Runtime preferences and personal behavior remain in Hermes's private state.
+The service runs inside Epsilon's existing `hermes` nspawn container, with
 home `/var/lib/hermes/.hermes` and workspace `/var/lib/hermes/workspace`. Host
 storage is `/home/repparw/services/hermes`. Existing container resource limits and
 network policy remain in force.
@@ -33,8 +35,10 @@ safeguards. Model routes, fallbacks, cron and compression models, toolset
 selection, memory preferences, Kanban preferences and display options live in
 the private `config.yaml`. Activation merges only the infrastructure and safety
 settings into that file, preserving runtime preferences. Back up the Hermes
-home and workspace before changing them; Epsilon's host backup includes their
-host parent under `/home/repparw`.
+home and workspace before changing them; Epsilon's offsite Restic backup includes
+their host parent under `/home/repparw`. Live Restic copies are not guaranteed
+consistent across SQLite databases and ordinary files: verify a quiescent,
+restorable backup before depending on offsite recovery.
 
 SOPS-managed credentials are mounted read-only into the container; activation
 writes the private runtime environment. Interactive provider auth remains in
@@ -78,7 +82,8 @@ reads the native database without an auxiliary LLM.
 
 The upstream package-management marker also locks application settings. This
 deployment explicitly selects its supported `false` marker/environment value
-to allow native runtime configuration writes. The separate baked Nix provenance
+to allow native runtime configuration writes in the gateway and, when enabled,
+the separate Desktop/dashboard backend. The baked Nix provenance
 still refuses self-updates. `/etc/hermes/config.yaml` uses Hermes's native
 managed-scope overlay to protect only approval, delegation-resource and loop
 safeguards; the native configuration writer refuses those keys and preserves
