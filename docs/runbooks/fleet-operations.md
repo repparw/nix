@@ -48,6 +48,19 @@ makes the overall run incomplete and skips pruning, while other data still
 uploads. Inspect `/var/lib/backup-exports/offsite.json`; an uploaded snapshot
 alone does not establish complete application coverage.
 
+After changing infrastructure state outside Git — a `tofu apply`, import,
+state migration, or manual state repair on alpha — capture a fresh backup of
+the OpenTofu state immediately:
+
+```sh
+sudo systemctl start --wait home-state-backup-offsite.service
+sudo systemctl start --wait restic-backups-offsite.service
+```
+
+Run it manually and never from a hook inside the infrastructure change
+itself: a failed backup must not fail or retry an otherwise successful
+operation. See [state recovery](host-recovery.md#restore-the-opentofu-state).
+
 Arr apps use native scheduled archives; the job checks freshness and size,
 not ZIP or SQLite integrity. After installing or restoring them, check their
 persisted settings: daily backups, 28-day retention, and Bazarr at midnight.
@@ -66,8 +79,9 @@ Pi and Epsilon compose [host-backup](../../modules/aspects/host-backup.nix).
 Alpha selects home state in [alpha.nix](../../modules/hosts/alpha.nix), then
 backs up the whole private `offsite` staging tree. Those home-state SQLite
 files are raw copies, not transactional exports. Age keys are staged only for
-the separate HDD mirror. That mirror includes `.config`, `.local`, and `Games`;
-Pictures and Documents have their own sync job. Restoring staged home state
+the separate HDD mirror. That mirror includes `.config`, `.local`, `Games`,
+and `Projects` (the staged OpenTofu state); Pictures and Documents have their
+own sync job. Restoring staged home state
 means placing it beneath the user's home, not its original staging path.
 
 Pi's [service exporter](../../modules/aspects/pi-services-backup.nix) produces
