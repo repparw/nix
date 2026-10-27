@@ -292,10 +292,9 @@
                 printf '{}' > $home/.config/vesktop/settings.json
                 printf 'history\n' > $home/.local/share/fish/fish_history
                 printf 'x' > $home/.config/sops/age/keys.txt
-                # A realistic minimal state plus the never-backed-up
-                # neighbors in the same directory.
-                printf '{"version": 4, "serial": 1, "resources": [{"type": "oci_core_instance", "name": "epsilon"}]}' > $state
-                chmod 600 $state
+                # The never-backed-up neighbors of the state file; the state
+                # itself is created later so the bootstrap scenario can run
+                # without it.
                 printf 'x' > $state_dir/.terraform/provider-cache
                 printf 'x' > $state_dir/terraform.tfvars
                 printf 'x' > $state_dir/terraform.tfplan
@@ -312,15 +311,37 @@
                 restic_paths='${builtins.toJSON resticPaths}'
                 printf '%s' "$restic_paths" | jq -e 'index("/var/lib/home-state-backup/offsite")' >/dev/null
 
-                # Off-site staging: state plus the rest of the allowlist,
-                # never the neighbors.
+                # Bootstrap: a missing critical source without a prior backup
+                # marker is tolerated (host without tofu yet).
                 ${staging} offsite
                 staged=$state_root/offsite
+                test ! -e $staged/Projects/nix/infra/terraform.tfstate
+                test -f $staged/.config/vesktop/settings.json
+                test ! -e $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
+
+                # Evaluated alpha configuration coverage.
+                home_state='${builtins.toJSON alphaHomeState}'
+                printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
+                # Existing selection must stay untouched (spot check).
+                for kept in .config/moonshine/ .config/net.imput.helium/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
+                  printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
+                done
+                sources='${builtins.toJSON bupstateSources}'
+                printf '%s' "$sources" | jq -e 'index("/var/lib/home-state-backup/hdd/Projects")' >/dev/null
+                restic_paths='${builtins.toJSON resticPaths}'
+                printf '%s' "$restic_paths" | jq -e 'index("/var/lib/home-state-backup/offsite")' >/dev/null
+
+                # Off-site staging: state plus the rest of the allowlist,
+                # never the neighbors.
+                printf '{"version": 4, "serial": 1, "resources": [{"type": "oci_core_instance", "name": "epsilon"}]}' > $state
+                chmod 600 $state
+                ${staging} offsite
                 test -f $staged/Projects/nix/infra/terraform.tfstate
                 test "$(stat -c %a $staged/Projects/nix/infra/terraform.tfstate)" = 600
                 test -f $staged/.config/vesktop/settings.json
                 test -f $staged/.local/share/fish/fish_history
                 test -f $staged/.export-complete
+                test -f $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
                 test ! -e $staged/Projects/nix/infra/terraform.tfvars
                 test ! -e $staged/Projects/nix/infra/terraform.tfplan
                 test ! -e $staged/Projects/nix/infra/.terraform
@@ -337,11 +358,15 @@
                 test "$(cat $staged/.export-complete)" = "$previous_stamp"
                 jq -e . $staged/Projects/nix/infra/terraform.tfstate >/dev/null
 
-                # A missing source is tolerated (host without tofu yet).
+                # After a successful backup, a missing critical source is an
+                # alarm, not a silent gap.
                 rm $state
-                ${staging} offsite
-                test ! -e $staged/Projects/nix/infra/terraform.tfstate
-                test -f $staged/.config/vesktop/settings.json
+                if ${staging} offsite; then
+                  echo 'disappeared state must fail the export' >&2
+                  exit 1
+                fi
+                test -f $staged/Projects/nix/infra/terraform.tfstate
+                test "$(cat $staged/.export-complete)" = "$previous_stamp"
 
                 # Never capture while OpenTofu holds the state lock.
                 printf '{"version": 4, "serial": 2, "resources": []}' > $state

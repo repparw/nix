@@ -111,15 +111,21 @@ available — it re-derives state from the live cloud, but silently adopts any
 out-of-band drift as the new baseline.
 
 After any `tofu apply`, import, state migration, or manual state repair on
-alpha, capture a fresh backup immediately:
+alpha, capture a fresh backup in both destinations immediately:
 
 ```sh
 sudo systemctl start --wait home-state-backup-offsite.service
+sudo systemctl start --wait rsync-job-bupstate.service
 sudo systemctl start --wait restic-backups-offsite.service
 ```
 
 Run this manually rather than from a hook: a failed backup must never fail or
-retry an otherwise successful infrastructure change.
+retry an otherwise successful infrastructure change. The staging script
+refuses to publish a generation while OpenTofu holds the state lock, and
+after the first successful backup it refuses to publish a generation at all
+if the state file has disappeared — the failed unit is retained by fleet
+health until repaired, so a deleted state cannot silently drop out of
+coverage.
 
 ## Restore into an isolated directory
 

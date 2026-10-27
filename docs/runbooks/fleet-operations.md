@@ -49,17 +49,20 @@ uploads. Inspect `/var/lib/backup-exports/offsite.json`; an uploaded snapshot
 alone does not establish complete application coverage.
 
 After changing infrastructure state outside Git — a `tofu apply`, import,
-state migration, or manual state repair on alpha — capture a fresh backup of
-the OpenTofu state immediately:
+state migration, or manual state repair on alpha — capture fresh backups of
+the OpenTofu state in both destinations immediately:
 
 ```sh
 sudo systemctl start --wait home-state-backup-offsite.service
+sudo systemctl start --wait rsync-job-bupstate.service
 sudo systemctl start --wait restic-backups-offsite.service
 ```
 
-Run it manually and never from a hook inside the infrastructure change
-itself: a failed backup must not fail or retry an otherwise successful
-operation. See [state recovery](host-recovery.md#restore-the-opentofu-state).
+The first refreshes the offsite staging tree, the second re-stages and
+mirrors to the HDD, the third uploads and prunes. Run them manually and never
+from a hook inside the infrastructure change itself: a failed backup must not
+fail or retry an otherwise successful operation. See
+[state recovery](host-recovery.md#restore-the-opentofu-state).
 
 Arr apps use native scheduled archives; the job checks freshness and size,
 not ZIP or SQLite integrity. After installing or restoring them, check their
