@@ -16,6 +16,7 @@
     ];
 
     provides.gui.includes = with den.aspects.ai._; [
+      hermes-desktop
       dictation
       speech
     ];
