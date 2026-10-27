@@ -386,6 +386,45 @@
                 touch $out
               '';
 
+          # Static validation of the OCI root module in infra/: formatting
+          # plus schema validation against the pinned provider, fetched from
+          # the upstream release so the check needs no network or registry.
+          tofu =
+            let
+              ociProvider = pkgs.fetchurl {
+                # Keep in sync with infra/.terraform.lock.hcl (same zh hash).
+                url = "https://github.com/oracle/terraform-provider-oci/releases/download/v6.37.0/terraform-provider-oci_6.37.0_linux_amd64.zip";
+                sha256 = "3e3017f035fac18114e0b1d29c72430958054def0f800c22d36e1144d0c76422";
+              };
+            in
+            pkgs.runCommand "check-tofu"
+              {
+                nativeBuildInputs = [
+                  pkgs.opentofu
+                  pkgs.unzip
+                ];
+              }
+              ''
+                export HOME=$TMPDIR
+                export TF_IN_AUTOMATION=1
+
+                # OpenTofu's -plugin-dir search path expects the provider
+                # binary as a file at
+                # <dir>/<host>/<namespace>/<type>/<version>/<os>_<arch>/.
+                plugin_dir=$TMPDIR/plugins/registry.opentofu.org/oracle/oci/6.37.0/linux_amd64
+                mkdir -p "$plugin_dir"
+                unzip -q -j ${ociProvider} -d "$plugin_dir"
+
+                cp -r ${inputs.self}/infra module
+                chmod -R u+w module
+                cd module
+                mkdir -p .terraform
+                tofu init -backend=false -input=false -plugin-dir="$TMPDIR/plugins"
+                tofu fmt -check -recursive .
+                tofu validate .
+                touch $out
+              '';
+
           sops-files = pkgs.runCommand "check-sops-files" { } ''
             invalid_names=$(find ${inputs.self}/secrets -maxdepth 1 -type f -name '*.yaml' ! -name '*.sops.yaml' -print)
             missing_metadata=$(find ${inputs.self}/secrets -maxdepth 1 -type f -name '*.sops.yaml' ! -exec grep -q '^sops:$' {} \; -print)

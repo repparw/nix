@@ -33,6 +33,10 @@ in
                 "            remote \"${service.host} epsilon\" ${name} ${
                               servicesLib.publicHealthUrl cfg config name
                             } 200"
+              else if service.container && service.host != cfg.hostName then
+                "container_http ${
+                  lib.escapeShellArg cfg.hostAddresses.${service.host}
+                } ${lib.escapeShellArg name} ${toString service.port}"
               else
                 "            remote ${service.host} ${name} ${servicesLib.serviceUrl cfg config name}/ \"\""
             )
@@ -128,6 +132,27 @@ in
               shift 2
               [ "$local_only" = 1 ] && return 0
               http "$name" "$@"
+            }
+            container_http() {
+              local address="$1" name="$2" port="$3" code
+              [ "$local_only" = 1 ] && return 0
+              if ! code=$(timeout 20 ssh \
+                -i /home/repparw/.ssh/id_ed25519 \
+                -o BatchMode=yes -o IdentitiesOnly=yes \
+                -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 \
+                "root@$address" bash -s -- "$name" "$port" <<'PROBE'
+            set -eu
+            address=$(nixos-container show-ip "$1")
+            curl -s --max-time 6 -o /dev/null -w '%{http_code}' "http://$address:$2/"
+            PROBE
+              ); then
+                fail "$name" "private backend probe failed"
+                return 0
+              fi
+              case "$code" in
+                200 | 301 | 302 | 303 | 307 | 308 | 401 | 403) ;;
+                *) fail "$name" "private backend returned $code" ;;
+              esac
             }
             ${vhostProbes}
             if [ "$strict" != 1 ] && [ "$local_only" != 1 ]; then
