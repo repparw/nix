@@ -136,6 +136,11 @@
               services.resolved.enable = true;
               environment.etc."hermes/config.yaml".text = builtins.toJSON safetySettings;
               systemd.services.hermes-agent.environment.HERMES_MANAGED = lib.mkForce "false";
+              # The optional Desktop/dashboard backend has a separate unit and
+              # otherwise retains upstream's package-managed config write lock.
+              systemd.services.hermes-backend = lib.mkIf (config.services.hermes-agent.backend.mode != "none") {
+                environment.HERMES_MANAGED = lib.mkForce "false";
+              };
               system.activationScripts.hermes-agent-setup.text = lib.mkAfter ''
                 printf '%s\n' false > /var/lib/hermes/.hermes/.managed
               '';
