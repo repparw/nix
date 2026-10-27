@@ -1,8 +1,8 @@
 ---
 type: Runbook
 title: Run Moonshine host verification on Alpha
-description: Prepare the opt-in disposable runner and retain portable host smoke evidence.
-when: Read before enabling or dispatching the Alpha Moonshine hardware runner.
+description: Run portable host smoke and opt-in real-TV Moonshine verification on Alpha.
+when: Read before enabling the hardware runner or validating Moonshine on the LG C3.
 resource: modules/aspects/moonshine-verification.nix
 tags: [moonshine, alpha, verification, github-actions]
 ---
@@ -42,6 +42,48 @@ limit. The container stops after 30 minutes. Stop the container after collecting
 artifacts to discard its filesystem. Do not interrupt an operator-owned session.
 An idle check is advisory: reserve the host for the entire run and recheck it
 before dispatch. TV tests remain separately authorized and opt-in.
+
+## Default real-TV scenario: Steam and Sekiro
+
+Use this manual scenario for changes that need real-client validation. It is
+separate from the host smoke job and requires an available LG C3, Alpha and an
+operator who can observe the screen. Do not add TV control or game credentials
+to the disposable runner. Reserve the GPU and TV for the whole comparison and
+confirm that no stream or game is active. Launching Moonshine's Steam Big
+Picture application stops the desktop Steam client; make sure its current work
+can be interrupted before proceeding. Keep the TV muted.
+
+1. Record the deployed server version or commit, client version, display and
+   game settings, and the exact source workload. Use the fork's TV verification
+   plan and doctor before its guarded launch of Steam Big Picture. Start Sekiro
+   through Steam's normal interface and use a safe, repeatable scene or route;
+   avoid actions that change an important save. Record any game updates or
+   settings changes that could affect a later comparison.
+2. Start with 4K60 HEVC and the intended bitrate. Record the effective game,
+   stream and client resolution and frame rate, rather than treating requested
+   settings as negotiated values. Confirm real HDR source content and TV HDR
+   mode independently. If Sekiro or the selected configuration does not provide
+   genuine HDR, report it as SDR and use a separately verified HDR workload for
+   the HDR case.
+3. Observe visible playback on the physical TV and preserve timestamped host
+   logs and Moonlight's performance overlay. Record codec, bitrate, network
+   latency, frame drops, host processing and client decode/display evidence
+   where available, plus stalls and recovery. Mark unavailable measurements
+   as unavailable. A launch response, host frame count or TV video-input status
+   alone does not prove visible playback or unique frame presentation.
+4. For performance comparisons, use the same scene, route, settings, client and
+   network for the deployed baseline, current upstream and each candidate.
+   Warm up and run repeated interleaved comparisons; retain every run, including
+   failures. A game with variable camera motion or unlocked frame rate needs a
+   reproducible sequence before its timings can support a speedup claim.
+5. Stop the owned test through Moonlight's normal interface, verify the host
+   session ended, and retain the evidence locally. Do not force-close another
+   session or power-cycle the TV. Do not publish device identifiers, credentials,
+   private paths, or game-save data with upstream contributions.
+
+The existing host smoke remains the default automated check. A successful
+Sekiro run is a real-game integration case; it does not replace the controlled
+HDR comparison or establish a change's GPU lifetime safety.
 
 The [GitHub pre-job hook contract](https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/run-scripts)
 defines access to default context variables and refusal on a nonzero exit.
