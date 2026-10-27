@@ -23,7 +23,13 @@ network policy remain in force.
 [Chief of Staff skill](../../modules/aspects/services/hermes-chief-of-staff/SKILL.md)
 defines task ownership, handoffs, and verification. Upstream `hermesHomeFiles`
 installs these files. Nix does not declare or overwrite native user memories.
-Upstream activation merges managed settings with other runtime preferences.
+Nix owns installation, service wiring, credentials and approval/resource
+safeguards. Model routes, fallbacks, cron and compression models, toolset
+selection, memory preferences, Kanban preferences and display options live in
+the private `config.yaml`. Activation merges only the infrastructure and safety
+settings into that file, preserving runtime preferences. Back up the Hermes
+home and workspace before changing them; Epsilon's host backup includes their
+host parent under `/home/repparw`.
 
 SOPS-managed credentials are mounted read-only into the container; activation
 writes the private runtime environment. Interactive provider auth remains in
@@ -47,8 +53,9 @@ creates a card assigned to `default`, then claims it through the native CLI.
 The reviewed Hermes pin normalizes new cards to `ready` and has no model-facing
 claim tool. Comments, blocking, and completion use native model tools.
 
-Native delegation is asynchronous. Workers use Nous `openai/gpt-6.1-terra`
-with high reasoning effort and inherit the coordinator's tools.
+Native delegation is asynchronous. Worker routing comes from live
+`delegation.provider`, `delegation.model` and `delegation.reasoning_effort`.
+Workers inherit the coordinator's tools.
 Per-call model, provider, and tool restrictions are unsupported in the reviewed
 pin. A read-only brief constrains intent, not capabilities. Workers are trusted
 contexts with the coordinator's access; human approval remains required.
@@ -58,11 +65,17 @@ a process crash.
 
 ## Routing and approvals
 
-The coordinator uses Nous `openai/gpt-6.1-sol`; native workers use Terra. Explicit
-fallback chains are empty, so provider failure cannot silently downgrade complex
-work. Global child-model routing is available upstream but does not select a
-model independently for each task. Compression and cron have separate routes in
-`hermes.nix`; session search reads the native database without an auxiliary LLM.
+The live coordinator route is Nous `openai/gpt-6.1-sol`; native workers use
+`openai/gpt-6.1-terra` with high reasoning. These are runtime choices rather than
+Nix defaults. Global child-model routing does not select a model independently
+for each task. Compression and cron have separate live routes; session search
+reads the native database without an auxiliary LLM.
+
+The pinned upstream version still refuses its normal configuration writer for
+package-manager-managed installations. Removing Nix preference declarations
+prevents deployment resets, but does not remove that upstream CLI/Desktop
+restriction. Runtime configuration edits currently require a private backup,
+an idle gateway, a direct edit of the writable YAML file and gateway restart.
 
 Approvals are manual. Cron, single-query, and unattended execution deny actions
 that require approval; workers cannot approve themselves. This is intentionally
