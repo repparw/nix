@@ -97,12 +97,23 @@ refuses to publish a generation while OpenTofu holds the state lock or the
 staged copy is missing or unparseable, so a failed backup never replaces the
 previous staged generation.
 
-After any `tofu apply`, import, or state migration, capture a fresh backup
-(see the [fleet operations runbook](../docs/runbooks/fleet-operations.md) and
-the [state recovery procedure](../docs/runbooks/host-recovery.md#restore-the-opentofu-state)):
-validate recovered copies with `tofu state list -state=...` before use.
+After any `tofu apply`, import, or state migration, capture a fresh backup in
+both destinations (see the
+[fleet operations runbook](../docs/runbooks/fleet-operations.md) and the
+[state recovery procedure](../docs/runbooks/host-recovery.md#restore-the-opentofu-state)):
+
+```sh
+sudo systemctl start --wait home-state-backup-offsite.service
+sudo systemctl start --wait rsync-job-bupstate.service
+sudo systemctl start --wait restic-backups-offsite.service
+```
+
+Validate recovered copies with `tofu state list -state=...` before use.
 Re-importing from `imports.tf` remains the fallback, not the routine
 recovery method: it silently adopts out-of-band drift as the new baseline.
+Once the first successful backup has recorded the state, its disappearance
+fails the staging export — the retained unit failure shows up in fleet
+health instead of the coverage silently ending.
 
 ## Recovering state
 
