@@ -19,10 +19,12 @@ home `/var/lib/hermes/.hermes` and workspace `/var/lib/hermes/workspace`. Host
 storage is `/home/repparw/services/hermes`. Existing container resource limits and
 network policy remain in force.
 
-`SOUL.md` contains the identity and authorization policy. The
-[Chief of Staff skill](../../modules/aspects/services/hermes-chief-of-staff/SKILL.md)
-defines task ownership, handoffs, and verification. Upstream `hermesHomeFiles`
-installs these files. Nix does not declare or overwrite native user memories.
+The live `SOUL.md` and Chief of Staff skill define the personal identity and
+workflow. Selected checkpoints live in the private
+[`hermes-config` repository](https://github.com/repparw/hermes-config), along with
+sanitized runtime preferences. Git does not deploy them: live files are
+authoritative and changes are checkpointed after verification. Nix installs only
+the generic backup helper, not personal behavior files, memories or history.
 Nix owns installation, service wiring, credentials and approval/resource
 safeguards. Model routes, fallbacks, cron and compression models, toolset
 selection, memory preferences, Kanban preferences and display options live in
@@ -71,11 +73,19 @@ Nix defaults. Global child-model routing does not select a model independently
 for each task. Compression and cron have separate live routes; session search
 reads the native database without an auxiliary LLM.
 
-The pinned upstream version still refuses its normal configuration writer for
-package-manager-managed installations. Removing Nix preference declarations
-prevents deployment resets, but does not remove that upstream CLI/Desktop
-restriction. Runtime configuration edits currently require a private backup,
-an idle gateway, a direct edit of the writable YAML file and gateway restart.
+The upstream package-management marker also locks application settings. This
+deployment explicitly selects its supported `false` marker/environment value
+to allow native runtime configuration writes. The separate baked Nix provenance
+still refuses self-updates. `/etc/hermes/config.yaml` uses Hermes's native
+managed-scope overlay to protect only approval, delegation-resource and loop
+safeguards; the native configuration writer refuses those keys and preserves
+them when saving other preferences.
+
+The private repository uses an explicit file allowlist. Authentication files,
+full runtime configuration, databases, memories, Kanban, browser profiles and
+backups belong only in private backed-up state. Its sanitized preference
+snapshot cannot replace the full runtime configuration. Restoring a new host
+requires the state backup; Nix no longer supplies the personal behavior files.
 
 Approvals are manual. Cron, single-query, and unattended execution deny actions
 that require approval; workers cannot approve themselves. This is intentionally

@@ -110,8 +110,35 @@
           };
           extraConfig =
             { pkgs, ... }:
+            let
+              safetySettings = {
+                approvals = {
+                  mode = "manual";
+                  cron_mode = "deny";
+                  single_query_mode = "deny";
+                  unattended_mode = "deny";
+                };
+                delegation = {
+                  max_concurrent_children = 2;
+                  max_spawn_depth = 1;
+                  subagent_auto_approve = false;
+                };
+                tool_loop_guardrails = {
+                  hard_stop_enabled = true;
+                  hard_stop_after = {
+                    exact_failure = 5;
+                    idempotent_no_progress = 5;
+                  };
+                };
+              };
+            in
             {
               services.resolved.enable = true;
+              environment.etc."hermes/config.yaml".text = builtins.toJSON safetySettings;
+              systemd.services.hermes-agent.environment.HERMES_MANAGED = lib.mkForce "false";
+              system.activationScripts.hermes-agent-setup.text = lib.mkAfter ''
+                printf '%s\n' false > /var/lib/hermes/.hermes/.managed
+              '';
 
               services.hermes-agent = {
                 enable = true;
@@ -123,36 +150,18 @@
                   "/run/secrets/hermes-env"
                   "/run/secrets/hermes-llm-env"
                 ];
-                settings.approvals = {
-                  mode = "manual";
-                  cron_mode = "deny";
-                  single_query_mode = "deny";
-                  unattended_mode = "deny";
-                };
-                settings.delegation = {
-                  max_concurrent_children = 2;
-                  max_spawn_depth = 1;
-                  subagent_auto_approve = false;
+                settings = safetySettings // {
+                  platforms.discord = {
+                    enabled = true;
+                    home_channel = {
+                      platform = "discord";
+                      chat_id = config.modules.services.discordChannelId;
+                      name = "notifications";
+                    };
+                  };
                 };
                 hermesHomeFiles = {
-                  "SOUL.md" = ./hermes-chief-of-staff/SOUL.md;
-                  "skills/chief-of-staff/SKILL.md" = ./hermes-chief-of-staff/SKILL.md;
                   "scripts/chief_of_staff_backup.py" = ./hermes-chief-of-staff/backup.py;
-                };
-                settings.platforms.discord = {
-                  enabled = true;
-                  home_channel = {
-                    platform = "discord";
-                    chat_id = config.modules.services.discordChannelId;
-                    name = "notifications";
-                  };
-                };
-                settings.tool_loop_guardrails = {
-                  hard_stop_enabled = true;
-                  hard_stop_after = {
-                    exact_failure = 5;
-                    idempotent_no_progress = 5;
-                  };
                 };
                 extraPackages = with pkgs; [
                   curl
