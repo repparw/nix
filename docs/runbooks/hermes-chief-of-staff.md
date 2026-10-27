@@ -33,8 +33,13 @@ preserved without following them; special files are skipped and recorded.
 Directories and ordinary files are owner-only. Failed output is incomplete;
 retain it for diagnosis and retry with a new destination.
 
-Backups contain credentials and conversations. Keep them private, preserve older
-copies, and check offsite coverage separately. Existing audit backups remain
+Backups contain credentials and conversations. Keep them private and preserve
+older copies. Epsilon's offsite Restic configuration includes the Hermes host
+state under `/home/repparw`, but a routine live filesystem copy is not an
+application-consistent SQLite/home-and-workspace backup. Check offsite coverage
+of a completed quiescent backup and periodically test restoring it in isolation;
+do not treat a successful Restic run alone as proof of database recovery.
+Existing audit backups remain
 under `bootstrap-backups/chief-of-staff-20261022T1730Z` and its `-workspace`
 companion. Detailed historical test evidence is attached to
 [PR #338](https://github.com/repparw/nix/pull/338).
@@ -53,9 +58,13 @@ companion. Detailed historical test evidence is attached to
    transaction in the fleet skill. Preserve existing provider credentials, memory,
    history, workspace, and runtime settings outside the managed configuration.
 4. Check the gateway's executable, environment paths, ownership, provider access,
-   manual approvals, and persisted state after activation. Test Discord replies,
-   task continuity, delegation, and approval denial before accepting production
-   operation. A successful isolated CLI test does not prove the Discord path.
+   manual approvals, and persisted state after activation. Verify that the
+   gateway and any enabled Desktop/dashboard backend have
+   `HERMES_MANAGED=false`, the home `.managed` marker reads `false`, and
+   managed-scope approval/resource keys still reject runtime overrides.
+   Test Discord replies, task continuity, delegation, and approval denial
+   before accepting production operation. A successful isolated CLI test does
+   not prove the Discord path.
 
 ## Check continuity safely
 
@@ -68,8 +77,9 @@ Kanban card, save a real delegation result, block the card, then recover the
 original decision and result through session search. Repeat the request and
 verify that no duplicate card or worker appears. Independently check the artifact,
 then complete the same card with structured metadata. Inspect actual database
-records as well as model replies. The installed Chief of Staff skill defines the
-handoff and ownership rules.
+records as well as model replies. The live, privately maintained
+`.hermes/skills/chief-of-staff/SKILL.md` defines handoff and ownership rules;
+Nix no longer installs that personal skill.
 
 The pre-activation isolated probes passed decision recall, historical retrieval,
 blocked-card continuity, deduplication, native delegation, and verified completion
@@ -78,8 +88,20 @@ forced compression, provider exhaustion, or the production Discord route.
 
 ## Recover
 
-Stop the gateway and workers before restoring a matched state and workspace
-backup. Preserve the current trees first, restore database files without source
-sidecars, and restore `hermes:hermes` ownership inside the container. Recheck
-SQLite integrity and provider access before restarting. Nix rollback restores
-configuration; it does not reverse database writes or replace a state backup.
+Stop the gateway and workers before restoring a matched, quiescent backup of
+both `.hermes` and `workspace`. Preserve the current trees first; restore
+databases from the backup helper's consistent SQLite copies, without original
+WAL/SHM/journal sidecars, and restore `hermes:hermes` ownership inside the
+container. Verify SQLite integrity, the live `SOUL.md`, Chief of Staff skill,
+runtime `config.yaml` (including model/tool preferences), memories, sessions,
+Kanban and provider access before restarting. Restore the private
+`hermes-config` checkout only as a checkpoint source, not as a replacement
+for the full home and workspace backup.
+
+If restoring from an offsite Restic snapshot taken while Hermes was active,
+first restore it to an isolated location and verify the databases with their
+associated sidecars; the live filesystem snapshot is not guaranteed consistent.
+Do not promote an unverified restore to production. Nix rollback reinstates
+Nix-owned installation, wiring, and safety declarations on activation; it does
+not roll back private runtime preferences or personal behavior, credentials,
+history, database writes, or other mutable state.
