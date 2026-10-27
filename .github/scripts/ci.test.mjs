@@ -178,8 +178,8 @@ test('atomic package validation reads the PR head and includes bundled ARM valid
   }
 });
 
-test('only trusted revisions publish, with an explicitly forwarded step-scoped token', () => {
-  assert.doesNotMatch(workflow + validation, /CACHIX_SIGNING_KEY/);
+test('only trusted revisions publish, with the daemon gated per revision trust', () => {
+  assert.doesNotMatch(workflow + validation + upstreamWatch, /CACHIX_SIGNING_KEY|signingKey/);
   assert.doesNotMatch(workflow, /secrets: inherit/);
   assert.match(workflow, /CACHIX_AUTH_TOKEN: \$\{\{ secrets.CACHIX_AUTH_TOKEN \}\}/);
   assert.match(validation, /CACHIX_AUTH_TOKEN:\n        required: false/);
@@ -199,7 +199,21 @@ test('only trusted revisions publish, with an explicitly forwarded step-scoped t
       event: { pull_request: source ? { head: { repo: { full_name: source } } } : undefined } }), expected);
   }
   const beforePublish = job.split('      - name: Publish and verify the Neovim closure')[0];
-  assert.doesNotMatch(beforePublish, /signingKey:|CACHIX_SIGNING_KEY:|CACHIX_AUTH_TOKEN:/);
+  assert.doesNotMatch(beforePublish, /signingKey:|CACHIX_SIGNING_KEY:/);
+  const cachixStep = beforePublish.split('      - uses: cachix/cachix-action@')[1];
+  const skipPush = new Function('github', `return ${cachixStep.match(/skipPush: \$\{\{ (.*) \}\}/)[1]}`);
+  for (const [event, actor, source, publishing] of [
+    ['push', 'repparw', undefined, true],
+    ['workflow_dispatch', 'repparw', undefined, true],
+    ['pull_request', 'repparw', 'repparw/nix', true],
+    ['pull_request', 'contributor', 'contributor/nix', false],
+    ['pull_request', 'dependabot[bot]', 'repparw/nix', false],
+  ]) {
+    assert.equal(!skipPush({ actor, event_name: event, repository: 'repparw/nix',
+      event: { pull_request: source ? { head: { repo: { full_name: source } } } : undefined } }), publishing);
+  }
+  assert.match(cachixStep, /useDaemon: true/);
+  assert.match(cachixStep, /authToken: \$\{\{ secrets\.CACHIX_AUTH_TOKEN \}\}/);
   const preflight = beforePublish.split('      - name: Require trusted publishing credentials')[1].split('      - name: Build')[0];
   assert.equal(preflight.match(/if: (.*)/)[1], condition);
   assert.match(preflight, /secrets.CACHIX_AUTH_TOKEN != ''/);
@@ -210,9 +224,26 @@ test('only trusted revisions publish, with an explicitly forwarded step-scoped t
     });
     assert.equal(result.status === 0, present === 'true');
   }
-  assert.match(beforePublish, /skipPush: true/);
   assert.match(publish, /CACHIX_AUTH_TOKEN: \$\{\{ secrets.CACHIX_AUTH_TOKEN \}\}/);
   assert.match(publish, /run: bash .github\/scripts\/publish-neovim.sh/);
+});
+
+test('every building job publishes through the daemon with the same trust gate', () => {
+  const section = (name, next) => validation.split(`  ${name}:`)[1].split(`\n  ${next}:`)[0];
+  for (const [name, next] of [
+    ['checks', 'host-eval'],
+    ['persistence-vm', 'upstream-package-build'],
+    ['upstream-package-build', 'gate'],
+  ]) {
+    const step = section(name, next).split('      - uses: cachix/cachix-action@')[1];
+    assert.match(step, /skipPush: \$\{\{ github\.actor == 'dependabot\[bot\]' \|\| \(github\.event_name == 'pull_request' && github\.event\.pull_request\.head\.repo\.full_name != github\.repository\) \}\}/, name);
+    assert.match(step, /useDaemon: true/, name);
+    assert.match(step, /authToken: \$\{\{ secrets\.CACHIX_AUTH_TOKEN \}\}/, name);
+  }
+  const watcher = upstreamWatch.split('      - uses: cachix/cachix-action@')[1];
+  assert.doesNotMatch(watcher, /skipPush/);
+  assert.match(watcher, /useDaemon: true/);
+  assert.match(watcher, /authToken: \$\{\{ secrets\.CACHIX_AUTH_TOKEN \}\}/);
 });
 
 function publishNeovim(fail = '', token = 'fixture-not-a-token') {
