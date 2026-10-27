@@ -33,7 +33,12 @@ desktop use is allowed. Before building and immediately before the smoke, a
 read-only host procfs check refuses a Moonshine session, another verifier, a
 game or selected known GPU test processes. The immutable pre-job hook refuses other events,
 repositories and workflow refs before their steps execute. It requires GitHub's
-default context variables; missing variables fail closed.
+default context variables; missing variables fail closed. It also rejects a job
+unless both the host container and runner have at least 21 minutes remaining:
+the 20-minute job timeout plus a one-minute margin. Dispatch promptly after
+starting the container; if the budget is too short, stop the container and
+start a fresh one. The check uses host and container monotonic timestamps, which
+must be verified during the first live dispatch.
 
 The workflow builds inside Moonshine's development shell using this fleet's
 nixpkgs, then runs the existing doctor and smoke commands. It uploads the source

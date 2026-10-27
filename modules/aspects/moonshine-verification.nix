@@ -16,6 +16,15 @@
         "/dev/uinput"
         "/dev/uhid"
       ];
+      lifetimeCheck = pkgs.writeText "moonshine-check-lifetime.py" (
+        builtins.readFile ../../tools/moonshine-verification/check-lifetime.py
+      );
+      markContainerStart = pkgs.writeShellScript "moonshine-container-start.sh" ''
+        set -euo pipefail
+        ${pkgs.coreutils}/bin/install -d -m 0755 /run/moonshine-verification-lifetime
+        ${pkgs.python3}/bin/python3 -c 'import time; print(time.monotonic())' > /run/moonshine-verification-lifetime/start.tmp
+        ${pkgs.coreutils}/bin/mv /run/moonshine-verification-lifetime/start.tmp /run/moonshine-verification-lifetime/start
+      '';
       trustedJob = pkgs.writeShellScript "moonshine-trusted-job.sh" ''
         set -euo pipefail
         test "''${GITHUB_EVENT_NAME:-}" = workflow_dispatch
@@ -23,6 +32,11 @@
         test "''${GITHUB_REF:-}" = refs/heads/main
         test "''${GITHUB_WORKFLOW_REF:-}" = \
           repparw/nix/.github/workflows/moonshine-host-smoke.yml@refs/heads/main
+        runner_start=$(${pkgs.systemd}/bin/systemctl show github-runner-moonshine.service \
+          --property=ActiveEnterTimestampMonotonic --value)
+        ${pkgs.python3}/bin/python3 ${lifetimeCheck} \
+          --container-start-file /run/moonshine-verification-lifetime/start \
+          --runner-start-us "$runner_start"
       '';
       conflictCheck = pkgs.writeText "moonshine-check-conflicts.py" (
         builtins.readFile ../../tools/moonshine-verification/check-conflicts.py
@@ -78,6 +92,10 @@
               };
               "/run/host-proc" = {
                 hostPath = "/proc";
+                isReadOnly = true;
+              };
+              "/run/moonshine-verification-lifetime" = {
+                hostPath = "/run/moonshine-verification-lifetime";
                 isReadOnly = true;
               };
               "/run/secrets/runner-token" = {
@@ -144,6 +162,7 @@
         systemd.services."container@moonshine-verification" = {
           overrideStrategy = "asDropin";
           serviceConfig = {
+            ExecStartPre = [ markContainerStart ];
             RuntimeMaxSec = "30min";
             MemoryMax = "12G";
             CPUQuota = "400%";
