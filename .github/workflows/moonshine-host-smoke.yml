@@ -8,8 +8,8 @@ on:
         type: choice
         options: [feature/portable-video-verification, main]
         default: feature/portable-video-verification
-      host_idle:
-        description: Alpha is reserved, idle, and not streaming or gaming
+      host_available:
+        description: Alpha is not streaming, gaming, or running a conflicting GPU test
         type: boolean
         required: true
         default: false
@@ -25,7 +25,7 @@ jobs:
   smoke:
     if: >-
       github.event_name == 'workflow_dispatch' &&
-      github.ref == 'refs/heads/main' && inputs.host_idle &&
+      github.ref == 'refs/heads/main' && inputs.host_available &&
       (inputs.moonshine_ref == 'main' || inputs.moonshine_ref == 'feature/portable-video-verification')
     runs-on: [alpha-moonshine-smoke]
     timeout-minutes: 20
@@ -40,6 +40,12 @@ jobs:
           ref: ${{ inputs.moonshine_ref }}
           path: moonshine
           persist-credentials: false
+      - name: Check for host conflicts before building
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          python3 "$MOONSHINE_CONFLICT_CHECK" 2>&1 | tee evidence/conflicts-before-build.log
       - name: Build and run the portable smoke command
         shell: bash
         run: |
@@ -48,10 +54,11 @@ jobs:
           nixpkgs_path=$(nix eval --impure --raw --expr '(builtins.getFlake (toString ./fleet)).inputs.nixpkgs.outPath')
           git -C moonshine rev-parse HEAD > evidence/source-sha.txt
           cd moonshine
-          timeout 18m nix develop --override-input nixpkgs "path:$nixpkgs_path" --no-write-lock-file --command bash -eu -s <<'SMOKE' 2>&1 | tee "$GITHUB_WORKSPACE/evidence/run.log"
+          timeout 18m nix develop --override-input nixpkgs "path:$nixpkgs_path" --no-write-lock-file --command bash -euo pipefail -s <<'SMOKE' 2>&1 | tee "$GITHUB_WORKSPACE/evidence/run.log"
             cargo build --release -p moonshine-tools
             python3 -m unittest discover -s tools/verification -p "test_*.py"
             python3 tools/verification/verify_video.py doctor > "$GITHUB_WORKSPACE/evidence/doctor.json"
+            python3 "$MOONSHINE_CONFLICT_CHECK" 2>&1 | tee "$GITHUB_WORKSPACE/evidence/conflicts.log"
             python3 tools/verification/verify_video.py smoke --output "$GITHUB_WORKSPACE/evidence/smoke"
           SMOKE
       - uses: actions/upload-artifact@v4

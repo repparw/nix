@@ -24,23 +24,9 @@
         test "''${GITHUB_WORKFLOW_REF:-}" = \
           repparw/nix/.github/workflows/moonshine-host-smoke.yml@refs/heads/main
       '';
-      hostIdle = pkgs.writeShellScript "moonshine-verification-host-idle.sh" ''
-        set -euo pipefail
-        operator_uid=$(${pkgs.coreutils}/bin/id -u ${lib.escapeShellArg cfg.operatorUser})
-        state=$(${pkgs.util-linux}/bin/runuser -u ${lib.escapeShellArg cfg.operatorUser} -- \
-          ${pkgs.coreutils}/bin/env XDG_RUNTIME_DIR="/run/user/$operator_uid" \
-          DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$operator_uid/bus" \
-          ${pkgs.systemd}/bin/systemctl --user show moonshine-session.service \
-          --property=ActiveState --value)
-        test "$state" = inactive
-        for session in $(${pkgs.systemd}/bin/loginctl show-user \
-          ${lib.escapeShellArg cfg.operatorUser} --property=Sessions --value); do
-          kind=$(${pkgs.systemd}/bin/loginctl show-session "$session" --property=Type --value)
-          if test "$kind" = wayland || test "$kind" = x11; then
-            test "$(${pkgs.systemd}/bin/loginctl show-session "$session" --property=IdleHint --value)" = yes
-          fi
-        done
-      '';
+      conflictCheck = pkgs.writeText "moonshine-check-conflicts.py" (
+        builtins.readFile ../../tools/moonshine-verification/check-conflicts.py
+      );
     in
     {
       options.services.moonshineVerification = {
@@ -54,11 +40,6 @@
           type = lib.types.str;
           default = "/dev/dri/renderD128";
           description = "Alpha render node exposed to the verification container.";
-        };
-        operatorUser = lib.mkOption {
-          type = lib.types.str;
-          default = "repparw";
-          description = "Desktop user whose stream and graphical idle state gate container startup.";
         };
       };
 
@@ -93,6 +74,10 @@
             // {
               "/run/opengl-driver" = {
                 hostPath = "/run/opengl-driver";
+                isReadOnly = true;
+              };
+              "/run/host-proc" = {
+                hostPath = "/proc";
                 isReadOnly = true;
               };
               "/run/secrets/runner-token" = {
@@ -131,11 +116,13 @@
                 pkgs.git
                 pkgs.nix
                 pkgs.coreutils
+                pkgs.python3
               ];
               extraEnvironment = {
                 XDG_RUNTIME_DIR = "/run/user/${toString runnerUid}";
                 DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/user/${toString runnerUid}/bus";
                 ACTIONS_RUNNER_HOOK_JOB_STARTED = trustedJob;
+                MOONSHINE_CONFLICT_CHECK = "${conflictCheck}";
               };
               serviceOverrides = {
                 Restart = lib.mkForce "no";
@@ -157,7 +144,6 @@
         systemd.services."container@moonshine-verification" = {
           overrideStrategy = "asDropin";
           serviceConfig = {
-            ExecCondition = hostIdle;
             RuntimeMaxSec = "30min";
             MemoryMax = "12G";
             CPUQuota = "400%";

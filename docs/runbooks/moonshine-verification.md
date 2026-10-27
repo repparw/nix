@@ -11,11 +11,13 @@ tags: [moonshine, alpha, verification, github-actions]
 
 This configuration is disabled by default and has not been activated or tested
 as a runner. Its first live run must validate container GPU access, the isolated
-user bus, idle refusal, job-hook refusal and artifact upload before unattended use.
+user bus, conflict refusal, job-hook refusal and artifact upload before use.
 
 The container has a disposable root, its own user manager and PulseAudio socket,
 and explicit render/uinput/uhid access. It shares the host network and read-only
-Nix store/daemon access, but no desktop home, user bus or TV configuration.
+Nix store/daemon access and a read-only view of host procfs, but no desktop
+home, user bus or TV configuration. Host process metadata is visible to the
+runner subject to normal procfs permissions.
 It is a trusted-code execution environment, not a hostile-code sandbox.
 
 Configure `services.moonshineVerification.enable = true` and a consumer-scoped
@@ -24,10 +26,12 @@ Nix expression or workflow. Review and deploy through the normal fleet process.
 The token needs runner registration access to this repository; the runner does
 not join the public Moonshine repository.
 
-After reserving Alpha, start `container@moonshine-verification.service` manually.
-Startup refuses an active Moonshine session or a non-idle graphical login.
+Start `container@moonshine-verification.service` manually.
 Dispatch `moonshine-host-smoke.yml` from `main` with a listed trusted fork branch
-and the idle confirmation. The immutable pre-job hook refuses other events,
+and confirmation that no stream, game or competing GPU test is active. Normal
+desktop use is allowed. Before building and immediately before the smoke, a
+read-only host procfs check refuses a Moonshine session, another verifier, a
+game or selected known GPU test processes. The immutable pre-job hook refuses other events,
 repositories and workflow refs before their steps execute. It requires GitHub's
 default context variables; missing variables fail closed.
 
@@ -40,8 +44,11 @@ on the selected branch; `main` becomes usable after the portable verifier lands.
 The runner accepts one job, with a 20-minute job limit and 25-minute service
 limit. The container stops after 30 minutes. Stop the container after collecting
 artifacts to discard its filesystem. Do not interrupt an operator-owned session.
-An idle check is advisory: reserve the host for the entire run and recheck it
-before dispatch. TV tests remain separately authorized and opt-in.
+The process check is advisory: its known-process list cannot detect every GPU
+workload or prevent a new stream starting after the check. Do not start a stream
+or game until the smoke finishes. Functional smokes can tolerate ordinary
+desktop GPU activity; reserve the host and control competing workloads for
+performance benchmarks. TV tests remain separately authorized and opt-in.
 
 ## Default real-TV scenario: Steam and Sekiro
 
