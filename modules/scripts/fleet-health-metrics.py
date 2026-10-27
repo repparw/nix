@@ -92,8 +92,12 @@ def reboot_required(booted=Path("/run/booted-system"), staged=Path("/nix/var/nix
 
 
 def host_metrics(settings, state, now):
-    lines = [metric("fleet_failed_units", len(command("fleet-unit-snapshot").splitlines())),
+    failed_units = command("fleet-unit-snapshot").splitlines()
+    # Transitional compatibility: the live Cloud rule still queries this gauge.
+    # Remove it after the Cloud rule has switched to fleet_failed_unit.
+    lines = [metric("fleet_failed_units", len(failed_units)),
              metric("fleet_deployment_paused", int(Path("/var/lib/auto-update/PAUSE").exists()))]
+    lines += [metric("fleet_failed_unit", 1, name=unit) for unit in failed_units]
     if settings["rebootCheck"]:
         lines.append(metric("fleet_reboot_required", reboot_required()))
     for unit in settings["requiredUnits"]:

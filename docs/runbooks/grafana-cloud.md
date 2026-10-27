@@ -52,6 +52,20 @@ The **Grafana Cloud Alerts** contact point delivers to Discord. Preview firing,
 recovery and mixed-severity cases before changing templates. Grafana sends a
 separate recovery message; it does not delete the firing message.
 
+The failed-unit rule fires on `fleet_failed_unit`, one series per failed loaded
+unit or retained job, so a grouped message names each unit. Its query also
+returns a zero-valued host baseline from `fleet_health_collection_timestamp_seconds`
+when no units fail. This avoids a No Data result after the last failed unit
+recovers: Grafana can then resolve the disappeared alert instance through its
+MissingSeries handling (normally after two evaluations). The separate collector
+staleness alert covers missing host facts.
+
+The dashboard derives failed counts via `count by (host) (fleet_failed_unit)`,
+zero-filled for healthy reporting hosts. Historical `fleet_failed_units` and
+node-exporter samples remain fallbacks. The collector temporarily continues to
+emit the legacy `fleet_failed_units` gauge so the existing live Cloud alert
+stays functional until its query is migrated. Remove that gauge afterward.
+
 Keep collection's series budget separate from alert policy. Check actual usage
 in `grafanacloud-usage` after adding metrics or labels. Disk facts and their
 host-specific thresholds remain in `modules.monitoring.health.disks`.
