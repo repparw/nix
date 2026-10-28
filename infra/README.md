@@ -5,6 +5,9 @@ Cloud resources into declarative management. It covers cloud resources only:
 the operating system, services, persistence, and backups remain owned by the
 NixOS configuration in `modules/`.
 
+> The home router is managed separately in [`router/`](router/) — its own
+> root, state file, and apply boundary.
+
 | OpenTofu manages         | NixOS manages                |
 | ------------------------ | ---------------------------- |
 | OCI compute instance     | Operating system             |
