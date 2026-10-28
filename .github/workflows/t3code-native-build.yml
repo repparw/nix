@@ -1,0 +1,51 @@
+name: T3 Code native package smoke
+on:
+  pull_request:
+    paths:
+      - modules/aspects/ai/t3code*.nix
+      - .github/upstream/cleanup/t3code*.patch
+      - .github/workflows/t3code-native-build.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: alpha
+            runner: ubuntu-24.04
+          - host: epsilon
+            runner: ubuntu-24.04-arm
+          - host: pi
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          skipPush: true
+      - name: Build native desktop or headless package
+        shell: bash
+        env:
+          HOST: ${{ matrix.host }}
+        run: |
+          set -euo pipefail
+          attr=".#nixosConfigurations.${HOST}.config.home-manager.users.repparw.programs.t3code.package"
+          path=$(nix build --no-link --print-out-paths -L "$attr")
+          test -x "$path/bin/t3"
+          T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1 timeout 30 "$path/bin/t3" --version
+          if [ "$HOST" != alpha ]; then
+            test ! -e "$path/bin/t3code-desktop"
+            closure=$(nix path-info -r "$path")
+            if grep -Eq -- '/[^/]+-electron(-unwrapped)?-[0-9]' <<< "$closure"; then
+              echo "headless package contains Electron" >&2
+              exit 1
+            fi
+          else
+            test -x "$path/bin/t3code-desktop"
+          fi

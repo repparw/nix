@@ -329,16 +329,33 @@ class Readiness(unittest.TestCase):
             with self.assertRaises(ValueError):
                 watch.detect("t3code-stable010", LOCK)
 
+    def test_t3code_bridge_and_retirement_floor_agree(self):
+        # The post-lock cleanup must never retire a newer local bridge for an
+        # older package on the root pin.
+        import re
+        root = Path(__file__).resolve().parents[2]
+        bridge = (root / "modules/aspects/ai/t3code-stable010.nix").read_text()
+        cleanup = (root / ".github/upstream/cleanup/t3code-stable010.patch").read_text()
+        match = re.search(r'\bversion\s*=\s*"(\d+)\.(\d+)\.(\d+)";', bridge)
+        self.assertIsNotNone(match)
+        minimum = tuple(map(int, match.groups()))
+        self.assertEqual(watch.T3CODE_STABLE_MIN_VERSION, minimum)
+        version = ".".join(map(str, minimum))
+        self.assertIn(
+            f'lib.versionAtLeast config.programs.t3code.package.version "{version}"',
+            cleanup,
+        )
+
     def test_t3code_bridge_cleanup_cannot_downgrade_the_installed_release(self):
         def api(endpoint):
             if endpoint.endswith("/commits/nixos-unstable"):
                 return {"sha": "a" * 40}
-            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.1"
+            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.3"
             return {"tag_name": tag, "draft": False, "prerelease": False}
         for channel, pinned, expected in (
-                ("v0.1.0", "v0.1.0", "waiting-unstable"),
-                ("v0.1.1", "v0.1.0", "merged-not-pinned"),
-                ("v0.1.1", "v0.1.1", "PINNED-READY"),
+                ("v0.1.2", "v0.1.2", "waiting-unstable"),
+                ("v0.1.3", "v0.1.2", "merged-not-pinned"),
+                ("v0.1.3", "v0.1.3", "PINNED-READY"),
                 ("v0.1.10", "v0.1.10", "PINNED-READY")):
             with self.subTest(channel=channel, pinned=pinned), \
                     patch.object(watch, "api", side_effect=api), \
