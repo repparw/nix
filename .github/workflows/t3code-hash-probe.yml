@@ -12,6 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      - name: Print Nixfmt canonical output
+        run: |
+          set -euo pipefail
+          nix shell nixpkgs#nixfmt --command nixfmt modules/aspects/ai/t3code-stable010.nix
+          echo T3CODE_FORMATTED_FILE_BEGIN
+          cat modules/aspects/ai/t3code-stable010.nix
+          echo T3CODE_FORMATTED_FILE_END
       - name: Verify pnpm 12 / fetcher 4 on current root pin
         run: |
           set -euo pipefail
