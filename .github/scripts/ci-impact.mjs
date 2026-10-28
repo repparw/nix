@@ -16,7 +16,8 @@ const full = reason => ({
 
 const documentationOnly = path =>
   path.startsWith('docs/') ||
-  ['README.md', 'CONTRIBUTING.md', '.github/upstream/README.md'].includes(path);
+  (path.startsWith('.agents/') && path.endsWith('.md')) ||
+  ['AGENTS.md', 'README.md', 'CONTRIBUTING.md', '.github/upstream/README.md'].includes(path);
 
 // Match the inputs actually used by the persistence/recovery VM, plus host
 // boot/storage changes and tooling that could affect how it is evaluated.
