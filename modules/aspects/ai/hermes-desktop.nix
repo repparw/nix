@@ -8,6 +8,13 @@
       };
     in
     {
-      home.packages = [ agent.hermesDesktop ];
+      home.packages = [
+        (agent.hermesDesktop.override {
+          extraEnv = {
+            HERMES_DESKTOP_HERMES = "";
+            HERMES_DESKTOP_IGNORE_EXISTING = "1";
+          };
+        })
+      ];
     };
 }

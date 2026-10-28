@@ -75,6 +75,10 @@
             "--restrict-address-families=AF_NETLINK"
           ];
           bindMounts = {
+            "/etc/ssh/desktop_authorized_keys" = {
+              hostPath = "/home/repparw/services/hermes/.hermes/desktop_authorized_keys";
+              isReadOnly = true;
+            };
             "/var/lib/hermes/.hermes/scripts/crash_triage_cron.py" = {
               hostPath = toString crashTriage.gate;
               isReadOnly = true;
@@ -109,21 +113,22 @@
             };
           };
           extraConfig =
-            { config, pkgs, ... }:
+            { pkgs, ... }:
             {
               services.resolved.enable = true;
               systemd.services.hermes-agent.environment.HERMES_MANAGED = lib.mkForce "false";
-              # The optional Desktop/dashboard backend has a separate unit and
-              # otherwise retains upstream's package-managed config write lock.
-              systemd.services.hermes-backend = lib.mkIf (config.services.hermes-agent.backend.mode != "none") {
-                environment.HERMES_MANAGED = lib.mkForce "false";
-              };
+              systemd.services.hermes-backend.environment.HERMES_MANAGED = lib.mkForce "false";
               system.activationScripts.hermes-agent-setup.text = lib.mkAfter ''
                 printf '%s\n' false > /var/lib/hermes/.hermes/.managed
               '';
 
               services.hermes-agent = {
                 enable = true;
+                backend = {
+                  mode = "serve";
+                  host = "127.0.0.1";
+                  sessionTokenFile = "/var/lib/hermes/.hermes/desktop-session-token";
+                };
                 package = pkgs.callPackage ../../_packages/hermes-agent.nix {
                   nodejs_24 = hermesNodejs;
                   upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
@@ -143,6 +148,25 @@
 
               users.users.hermes.uid = 345;
               users.groups.hermes.gid = 345;
+              services.openssh = {
+                enable = true;
+                settings = {
+                  AllowUsers = [ "hermes" ];
+                  AuthenticationMethods = "publickey";
+                  AuthorizedKeysFile = "/etc/ssh/desktop_authorized_keys";
+                  PasswordAuthentication = false;
+                  KbdInteractiveAuthentication = false;
+                  PermitRootLogin = "no";
+                  AllowAgentForwarding = false;
+                  AllowStreamLocalForwarding = "no";
+                  AllowTcpForwarding = "local";
+                  PermitOpen = "127.0.0.1:9119";
+                  PermitListen = "none";
+                  X11Forwarding = false;
+                  PermitTTY = false;
+                  MaxSessions = 0;
+                };
+              };
 
               system.stateVersion = "26.05";
             };
