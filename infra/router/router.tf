@@ -43,8 +43,8 @@ data "tplink_firmware" "current" {}
 output "router_firmware" {
   description = "Firmware the provider is managing against."
   value = {
-    model     = data.tplink_firmware.current.model
-    hardware  = data.tplink_firmware.current.hardware_version
-    firmware  = data.tplink_firmware.current.firmware_version
+    model    = data.tplink_firmware.current.model
+    hardware = data.tplink_firmware.current.hardware_version
+    firmware = data.tplink_firmware.current.firmware_version
   }
 }
