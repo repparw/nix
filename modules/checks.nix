@@ -504,7 +504,7 @@
                   exit 1
                 fi
 
-                printf '%s\n' '# Example' '' '* item' > README.md
+                printf '%s\n' '# Example' "" '* item' > README.md
                 git add README.md
                 if pre-commit run prettier --config "$hook_config" --files README.md; then
                   echo 'prettier hook did not report a formatting change' >&2
