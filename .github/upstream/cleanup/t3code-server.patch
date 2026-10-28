@@ -1,7 +1,7 @@
 diff --git a/modules/aspects/ai/t3code.nix b/modules/aspects/ai/t3code.nix
 --- a/modules/aspects/ai/t3code.nix
 +++ b/modules/aspects/ai/t3code.nix
-@@ -127,27 +127,25 @@
+@@ -127,27 +127,27 @@
              };
            };
          };
@@ -33,11 +33,13 @@ diff --git a/modules/aspects/ai/t3code.nix b/modules/aspects/ai/t3code.nix
 +          ];
 +        };
 +
-+        # The upstream Home Manager unit follows the configured package.
-+        # Preserve the separate upstream CLI selection on the desktop once
-+        # nixpkgs grows t3code-cli; headless hosts already select server-only.
++        # Use the CLI package after the split, but let Home Manager own the
++        # server arguments; static ExecStart arguments would shadow extraArgs.
 +        systemd.user.services.t3code.Service = {
-+          ExecStart = lib.mkForce "${if pkgs ? t3code-cli then pkgs.t3code-cli else config.programs.t3code.package}/bin/t3 serve --mode web";
++          ExecStart = lib.mkForce (
++            "${lib.getExe' (if pkgs ? t3code-cli then pkgs.t3code-cli else config.programs.t3code.package) "t3"}"
++            + " ${lib.escapeShellArgs ([ "serve" ] ++ config.programs.t3code.server.extraArgs)}"
++          );
 +          Restart = lib.mkForce "always";
 +          Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [
 +            "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
