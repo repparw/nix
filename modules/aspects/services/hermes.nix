@@ -109,7 +109,7 @@
             };
           };
           extraConfig =
-            { pkgs, ... }:
+            { config, pkgs, ... }:
             let
               safetySettings = {
                 approvals = {
@@ -160,7 +160,7 @@
                     enabled = true;
                     home_channel = {
                       platform = "discord";
-                      chat_id = config.modules.services.discordChannelId;
+                      chat_id = cfg.discordChannelId;
                       name = "notifications";
                     };
                   };
