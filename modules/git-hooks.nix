@@ -54,6 +54,20 @@
                 }
               );
             };
+            # Keep Markdown changes aligned with the treefmt CI check.
+            prettier = {
+              enable = true;
+              files = "\\.md$";
+            };
+            # Surface broken agent-doc links before CI, without Nix evaluation.
+            agent-docs = {
+              enable = true;
+              name = "agent-docs";
+              entry = "${pkgs.lib.getExe (pkgs.python3.withPackages (ps: [ ps.pyyaml ]))} ${./scripts/check-agent-docs.py} .";
+              language = "system";
+              pass_filenames = false;
+              files = "^(AGENTS\\.md|docs/.*\\.md|\\.agents/.*\\.md|modules/scripts/check-agent-docs(\\.test)?\\.py)$";
+            };
             nixfmt = {
               enable = true;
               package = pkgs.nixfmt;
