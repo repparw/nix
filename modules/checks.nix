@@ -125,6 +125,7 @@
               '';
 
           monitoring-vm = import ./_tests/monitoring-vm.nix { inherit inputs pkgs; };
+          nats-event-bus-vm = import ./_tests/nats-event-bus-vm.nix { inherit pkgs; };
 
           monitoring-fleet = import ./_tests/monitoring-fleet.nix { inherit inputs lib pkgs; };
 
