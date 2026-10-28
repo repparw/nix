@@ -1,0 +1,51 @@
+name: T3 Code Home Manager migration
+on:
+  pull_request:
+    paths:
+      - .github/upstream/cleanup/t3code-server.patch
+      - .github/scripts/upstream-readiness.test.py
+      - .github/workflows/t3code-hm-migration.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  migration-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      - name: Apply the guarded migration recipe
+        run: |
+          set -euo pipefail
+          git apply --check .github/upstream/cleanup/t3code-server.patch
+          git apply .github/upstream/cleanup/t3code-server.patch
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("modules/aspects/ai/t3code.nix")
+          text = path.read_text()
+          before = '          extraArgs = [\n            "--mode"\n            "web"\n          ];'
+          after = '          extraArgs = [\n            "--mode"\n            "web"\n            "--port"\n            "4719"\n          ];'
+          assert text.count(before) == 1, "server.extraArgs layout changed"
+          path.write_text(text.replace(before, after))
+          PY
+      - name: Evaluate new Home Manager service and transition contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The exact merged commit that introduced programs.t3code.server.
+          hm=github:nix-community/home-manager/2f5ab4a8feca1441f3146bec67d7f0f07c3cffee
+          for host in alpha pi epsilon; do
+            prefix=".#nixosConfigurations.${host}.config.home-manager.users.repparw"
+            command=$(nix eval --raw --override-input home-manager "$hm"               "${prefix}.systemd.user.services.t3code.Service.ExecStart")
+            echo "${host} ExecStart: ${command}"
+            [[ "$command" == *"/bin/t3 serve --mode web --port 4719"* ]]
+            start_services=$(nix eval --json --override-input home-manager "$hm"               "${prefix}.systemd.user.startServices")
+            [[ "$start_services" == true ]]
+            # The old unit must no longer exist; sd-switch stops obsolete units
+            # from the previous generation by default.
+            if nix eval --json --override-input home-manager "$hm"               "${prefix}.systemd.user.services.t3code-web" >/dev/null 2>&1; then
+              echo "ERROR: stale t3code-web service remains on ${host}" >&2
+              exit 1
+            fi
+          done
