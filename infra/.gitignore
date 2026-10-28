@@ -1,0 +1,21 @@
+# Local OpenTofu state and transient artifacts. State is not committed: it is
+# re-derivable from the live OCI resources (see README.md, "Recovering state").
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+.terraform/
+.terraform.lock.hcl.bak
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Local variable values carry the tenancy OCID; keep them out of Git.
+terraform.tfvars
+terraform.tfvars.json
+*.auto.tfvars
+*.auto.tfvars.json

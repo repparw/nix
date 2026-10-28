@@ -2,6 +2,9 @@
 name: revision-validation
 on:
   workflow_call:
+    secrets:
+      CACHIX_AUTH_TOKEN:
+        required: false
     inputs:
       expected_sha:
         description: Exact commit expected for this validation
@@ -56,6 +59,15 @@ jobs:
         with:
           ref: ${{ github.sha }}
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      # The daemon publishes locally built paths as they finish; substituted
+      # paths never reach the post-build hook and Cachix skips paths that
+      # cache.nixos.org already serves.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Run attributed checks
         env:
           CI_CHECKS: ${{ matrix.checks }}
@@ -137,11 +149,32 @@ jobs:
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: repparw
-          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+          # The daemon publishes the built closure during the build; the
+          # explicit publish step below still flushes and verifies it
+          # synchronously against the fleet key.
+          skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Require trusted publishing credentials
+        if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          CACHIX_CREDENTIALS_PRESENT: ${{ secrets.CACHIX_AUTH_TOKEN != '' }}
+        run: |
+          if [ "$CACHIX_CREDENTIALS_PRESENT" != true ]; then
+            echo '::error::Trusted publishing needs a cache-scoped write CACHIX_AUTH_TOKEN.'
+            exit 1
+          fi
       - name: Build the host-selected Neovim closure
         env:
           CI_CHECKS: host-neovim
         run: bash .github/scripts/run-checks.sh
+      # Same-repository writers are trusted publishers. Forks and Dependabot
+      # still build and substitute, but never receive publishing credentials.
+      - name: Publish and verify the Neovim closure
+        if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        run: bash .github/scripts/publish-neovim.sh
       - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -168,6 +201,15 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
         with:
           kvm: true
+      # Same daemon contract as the checks job: uploads ride the post-build
+      # hook, so VM-closure builds land in the fleet cache without re-uploading
+      # substituted paths, and cache outages cannot fail the build.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Exercise persistence in disposable VMs
         env:
           CI_CHECKS: host-persistence-vm
@@ -202,6 +244,14 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      # Native x86 and ARM builds feed the fleet cache; aarch64 hosts and the
+      # ARM validator reuse these outputs on later watcher validations.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Verify actual upstream package and generated behavior
         env:
           WATCHERS: ${{ inputs.upstream_watcher }}

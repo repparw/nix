@@ -207,7 +207,7 @@
           "type": "prometheus",
           "uid": "grafanacloud-prom"
         },
-        "description": "Loaded failed units and retained failed job results. Before the host collector was installed, historical samples contain loaded units only.",
+        "description": "Failed loaded units and retained jobs counted by unit name, with a zero baseline for healthy reporting hosts. Historical aggregate and node-exporter series remain as fallbacks.",
         "fieldConfig": {
           "defaults": {
             "unit": "short"
@@ -232,7 +232,7 @@
         },
         "targets": [
           {
-            "expr": "max by (host) (fleet_failed_units) or on(host) sum by (host) (node_systemd_unit_state{state=\"failed\"})",
+            "expr": "count by (host) (fleet_failed_unit) or on(host) max by (host) (fleet_failed_units) or on(host) (0 * max by (host) (fleet_health_collection_timestamp_seconds{collector=\"host\"})) or on(host) sum by (host) (node_systemd_unit_state{state=\"failed\"})",
             "interval": "",
             "legendFormat": "{{host}}",
             "refId": "A"

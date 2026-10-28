@@ -35,6 +35,13 @@ jobs:
         with:
           ref: main
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      # Scheduled and main-branch runs are trusted publishers; daemon uploads
+      # never fail the watch when the cache is unreachable.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Install pinned upstream PR lookup tool
         run: |
           nh_path=$(nix build --no-link --print-out-paths --no-update-lock-file .#nixosConfigurations.alpha.pkgs.nh)

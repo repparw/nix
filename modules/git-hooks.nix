@@ -103,7 +103,11 @@
       };
 
       devShells.default = pkgs.mkShell {
-        nativeBuildInputs = [ config.pre-commit.settings.package ];
+        nativeBuildInputs = [
+          config.pre-commit.settings.package
+          # OpenTofu manages the OCI cloud resources in infra/.
+          pkgs.opentofu
+        ];
         shellHook = ''
           ${config.pre-commit.installationScript}
           if repo_hooks_common_dir="$(${pkgs.lib.getExe pkgs.git} rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then

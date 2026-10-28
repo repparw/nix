@@ -94,6 +94,44 @@
             type = lib.types.listOf lib.types.str;
             default = [ ];
           };
+          homeState = lib.mkOption {
+            description = ''
+              Home-relative paths staged by the home-state backup for the HDD
+              mirror and the offsite staging tree. Curated small irreplaceable
+              state; everything else is nix-declared, OAuth/session
+              (re-login), or regenerable cache.
+            '';
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+          homeStateExcludes = lib.mkOption {
+            description = "Rsync exclude patterns applied below the homeState --relative anchor.";
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+          homeStateCritical = lib.mkOption {
+            description = ''
+              Subset of homeState guarded as critical: when a source exists it
+              must be unlocked by its owning tool, staged non-empty, and
+              parseable, or the export fails and the previous staged
+              generation is preserved. A missing source is tolerated until the
+              first successful backup has recorded it under
+              stateRoot/.critical-seen; afterwards a missing source fails the
+              export so a deleted critical file is flagged by fleet health
+              instead of silently dropping out of coverage.
+            '';
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+          homeStateStagingScript = lib.mkOption {
+            description = ''
+              The prepare-home-state script staging homeState, as set by the
+              host that defines the staging units. Exposed for manual runs
+              and recovery verification.
+            '';
+            type = lib.types.nullOr lib.types.package;
+            default = null;
+          };
         };
         # Clear stale locks (interrupted manual runs) before the module's
         # post-start check demands an exclusive lock; the forget unlock runs
