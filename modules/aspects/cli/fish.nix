@@ -23,6 +23,9 @@
             export SHELL=${bash}
             exec ${bash} -c "$SSH_ORIGINAL_COMMAND"
           elif [[ -n "''${SSH_TTY-}" ]]; then
+            if [[ ! -v TMUX ]]; then
+              ${lib.getExe pkgs.tmux} new-session -A -s ssh
+            fi
             exec ${lib.getExe pkgs.fish} --login
           else
             export SHELL=${bash}
@@ -63,10 +66,6 @@
             }
           ];
           interactiveShellInit = ''
-            if not set -q TMUX; and set -q SSH_TTY
-              tmux new-session -A -s ssh
-            end
-
             set -g fish_key_bindings fish_vi_key_bindings
 
             if type -q kitty
