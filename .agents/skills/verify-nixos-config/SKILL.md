@@ -1,78 +1,45 @@
 ---
 name: verify-nixos-config
-description: Verify NixOS flake changes through evaluation, generated files, builds, and closure diffs. Use after editing modules/, before deployment, or when a rebuild surprises you.
+description: Verify NixOS flake changes with targeted evaluation, generated-file inspection, and optional builds. Use after editing modules/, before deployment, or when a rebuild surprises you.
 ---
 
 # Verify NixOS config
 
-Run from the repository root. Select the checks in the
-[feature map](features/README.md) that observe the changed behavior. Shared
-aspects and defaults require evaluation of every affected host; a host-specific
-change can target that host. Discover host names from the flake.
+Work from the repository root. Commit hooks in `modules/git-hooks.nix` and
+revision CI own repeatable formatting, documentation, script, test, and
+host-evaluation checks. Review CI for the exact PR revision instead of
+repeating its matrix locally. CI host checks are not native system builds.
 
-## Build-host policy
+Use the [verification map](features/README.md) for behavior-specific checks.
+Evaluate every affected host for shared aspects/defaults, or just the target
+host for host-specific edits. Inspect the **changed option values or generated
+files** as well as evaluation success. Discover hosts from the flake rather
+than relying on a copied host list.
 
-For pull requests, start with evaluation: affected-host evaluation and
-assertions on changed options or generated configuration. CI supplies the
-repository checks for that revision; evaluation does not prove a native
-system closure. Realizing outputs is a conditional stage: builds inherit the
-execution host's global nix limits (alpha caps builds at `max-jobs = 2,
-cores = 3` because the host serves interactive and realtime streaming
-workloads — do not override them per-invocation), and a full local closure
-build is only warranted when activation is imminent and CI cannot cover it.
-
-This procedure evaluates and builds without activation. For runtime inspection
-or an authorized deployment, hand off to
-[fleet-operations](../fleet-operations/SKILL.md). A successful build does not
-prove activation or runtime health.
-
-## Prepare
+For local checks that need saved evidence:
 
 ```bash
-set -euo pipefail
 VERIFY_EVIDENCE=$(mktemp -d /tmp/nix-verify.XXXXXX)
-VERIFY_HOST=alpha  # select the host affected by the change
+VERIFY_HOST=alpha # replace with the affected host
 VERIFY_BUILD=.agents/skills/verify-nixos-config/scripts/build.sh
-nix eval .#nixosConfigurations --apply builtins.attrNames --json --no-update-lock-file
 ```
 
-The [build helper](scripts/build.sh) creates a unique evidence directory for
-each invocation. It prints one store path only after a successful build,
-preserves Nix's failure status and logs, and leaves `result` and the lockfile
-unchanged. Build logs are available at the printed evidence location while
-the command runs.
+The [build helper](scripts/build.sh) uses `--no-link` and
+`--no-update-lock-file`, preserves Nix failure status, and stores logs in a
+unique directory. Use it only when inspecting generated outputs or realizing
+a closure is needed.
 
-## Diagnose evaluation failures
+## Boundaries
 
-```bash
-jq -e . flake.lock > /dev/null
-git diff -- flake.nix flake.lock modules/
-nix flake metadata --json --no-update-lock-file > "$VERIFY_EVIDENCE/metadata.json"
-```
+Prefer evaluation and targeted assertions for PRs. Build a full local
+system closure only when activation is imminent and CI cannot cover it.
+Honor the execution host's global Nix `max-jobs` and `cores` limits;
+do not override them for verification. Builds and closure comparisons do
+not prove activation or runtime health. For runtime inspection or authorized
+activation, use [fleet-operations](../fleet-operations/SKILL.md).
 
-Read the error before changing inputs. These commands inspect the current
-checkout without updating its lock or stashing edits. JSON validity alone
-does not prove that a lockfile describes the intended inputs.
+## Report
 
-## Verify
-
-- [Evaluate host configurations and changed options](features/flake-eval.md).
-- [Build and inspect generated Home Manager files](features/home-manager-files.md).
-- [Build the system closure](features/system-build.md).
-- [Compare the system closure with the running target](features/closure-diff.md).
-
-Keep Home Manager and system output paths in separate variables. For a
-generated-file change, read the file from the returned output and compare its
-contents with the requested behavior. Run additional checks when the change
-needs them; one feature per session is not a limit.
-
-## Report evidence
-
-Record the target hosts, commands, observed values, returned store paths, and
-evidence directory. State which relevant checks were skipped. Repository
-checks in `modules/checks.nix` deliberately stub selected packages, so report
-those checks as evaluation with stubs, not as full host builds.
-
-Keep successful and failed evidence for review. Remove only scratch directories
-created by this run when they are no longer needed; verification never needs
-to remove `result` or a store path.
+Record hosts, commands, observed values, output paths, evidence directories,
+and relevant skipped checks. Distinguish CI's selected-package stubs from
+native builds. Retain useful evidence; do not delete `result` or store paths.
