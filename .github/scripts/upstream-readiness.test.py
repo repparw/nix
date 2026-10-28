@@ -357,6 +357,25 @@ class Readiness(unittest.TestCase):
                 self.assertIn('diff --git a/modules/', patch_text)
 
 
+    def test_t3code_server_cleanup_applies_to_current_service(self):
+        # The cleanup is published after the Home Manager pin moves; keep
+        # the recipe applicable while the hand-written unit still exists.
+        root = Path(__file__).resolve().parents[2]
+        module = (root / "modules/aspects/ai/t3code.nix").read_text()
+        if "systemd.user.services.t3code-web" not in module:
+            return  # Already retired.
+        recipe = root / ".github/upstream/cleanup/t3code-server.patch"
+        recipe_text = recipe.read_text()
+        self.assertIn("config.programs.t3code.server.extraArgs", recipe_text)
+        self.assertIn("lib.escapeShellArgs", recipe_text)
+        self.assertIn("lib.getExe'", recipe_text)
+        # Home Manager's default sd-switch stops obsolete services from the
+        # previous generation; keep the removal of t3code-web in the recipe.
+        self.assertIn("-        systemd.user.services.t3code-web = {", recipe_text)
+        subprocess.run(["git", "apply", "--check", str(recipe)],
+                       cwd=root, check=True, capture_output=True)
+
+
 if __name__ == "__main__":
     unittest.main()
 
