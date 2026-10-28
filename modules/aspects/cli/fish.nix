@@ -8,12 +8,39 @@
   den.aspects.fish = {
     includes = [ (den.batteries.user-shell "fish") ];
 
-    nixos = {
-      programs.fish = {
-        enable = true;
-        useBabelfish = true;
+    nixos =
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
+      let
+        bash = "${pkgs.bashInteractive}/bin/bash";
+        fishUsers = lib.attrNames (lib.filterAttrs (_: user: user.shell == pkgs.fish) config.users.users);
+        dispatcher = pkgs.writeShellScript "ssh-command-shell" ''
+          if [[ -v SSH_ORIGINAL_COMMAND ]]; then
+            export SHELL=${bash}
+            exec ${bash} -c "$SSH_ORIGINAL_COMMAND"
+          elif [[ -n "''${SSH_TTY-}" ]]; then
+            exec ${lib.getExe pkgs.fish} --login
+          else
+            export SHELL=${bash}
+            exec ${bash} --login
+          fi
+        '';
+      in
+      {
+        programs.fish = {
+          enable = true;
+          useBabelfish = true;
+        };
+        services.openssh.extraConfig = lib.optionalString (fishUsers != [ ]) ''
+          Match User ${lib.concatStringsSep "," fishUsers}
+            ForceCommand ${dispatcher}
+          Match all
+        '';
       };
-    };
 
     homeManager =
       {
