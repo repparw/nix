@@ -33,7 +33,7 @@
                       pnpmWorkspaces
                       ;
                     fetcherVersion = 4;
-                    hash = prev.lib.fakeHash; # pending fetcher-v4 hash
+                    hash = "sha256-8x9wUvxXBq++6EGzOLLACloCNqm9L0JDX8gTCVA+OPE=";
                   };
                 }
               );
