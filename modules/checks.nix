@@ -511,6 +511,7 @@
                   exit 1
                 fi
                 grep -q -- '- item' README.md
+                git add README.md
                 pre-commit run prettier --config "$hook_config" --files README.md
                 touch $out
               '';
