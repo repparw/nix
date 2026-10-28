@@ -12,20 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
-      - name: Prefetch source and probe pnpm hash
+      - name: Probe updated Nixpkgs and pnpm hash
         shell: bash
         run: |
           set -euo pipefail
-          base32=$(nix-prefetch-url --unpack --type sha256 https://github.com/pingdotgg/t3code/archive/refs/tags/v0.1.3.tar.gz)
-          src_hash=$(nix hash convert --hash-algo sha256 --to sri "$base32")
-          echo "T3CODE_SOURCE_HASH=$src_hash"
-          T3CODE_SOURCE_HASH="$src_hash" python3 - <<'PY'
-          import os
-          from pathlib import Path
-          p = Path("modules/aspects/ai/t3code-stable010.nix")
-          content = p.read_text().replace(
-              "hash = prev.lib.fakeHash; # temporary source hash",
-              f'hash = "{os.environ["T3CODE_SOURCE_HASH"]}";', 1)
-          p.write_text(content)
+          nix flake update nixpkgs
+          python3 - <<'PY'
+          import json
+          with open("flake.lock") as f:
+              locked = json.load(f)["nodes"]["nixpkgs"]["locked"]
+          print("T3CODE_NIXPKGS_LOCKED_JSON=" + json.dumps(locked, sort_keys=True), flush=True)
           PY
           nix build --no-link --show-trace -L .#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.t3code.package

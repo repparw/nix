@@ -22,7 +22,7 @@
                     owner = "pingdotgg";
                     repo = "t3code";
                     tag = "v${finalAttrs.version}";
-                    hash = prev.lib.fakeHash; # temporary source hash
+                    hash = "sha256-xxmwaHPkXzR0CAtknCc6raAzcnPtmw8wxF3YO3WcbE4=";
                   };
                   pnpmDeps = prev.fetchPnpmDeps {
                     pnpm = final.pnpm_12;
