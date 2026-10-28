@@ -28,7 +28,7 @@
                     cp --recursive --no-preserve=mode apps/server/{node_modules,dist} \
                       $out/libexec/t3code/apps/server
                     find $out/libexec/t3code -xtype l -delete
-                    makeWrapper ${prev.lib.getExe final.nodejs-runtime} $out/bin/t3 \
+                    makeWrapper ${prev.lib.getExe final.nodejs_26} $out/bin/t3 \
                       --add-flags "$out/libexec/t3code/apps/server/dist/bin.mjs"
 
                     runHook postInstall
