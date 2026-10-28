@@ -33,7 +33,7 @@
                       pnpmWorkspaces
                       ;
                     fetcherVersion = 5;
-                    hash = prev.lib.fakeHash; # temporary pnpm hash
+                    hash = "sha256-ZLWw3MSdx0nnK88cm2asDvDXG4vCJOY+1NKF3ugMEGc=";
                   };
                 }
               );
