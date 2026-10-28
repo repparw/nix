@@ -80,6 +80,7 @@
           package = pkgs.opencode;
           enable = true;
           enableMcpIntegration = true;
+          mutableSettings = true;
           skills = { };
           web.enable = false;
           settings = {
