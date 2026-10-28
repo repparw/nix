@@ -1,8 +1,8 @@
 diff --git a/modules/aspects/ai/t3code.nix b/modules/aspects/ai/t3code.nix
-index 4c6a0ad28..5a5f0d1c0 100644
 --- a/modules/aspects/ai/t3code.nix
 +++ b/modules/aspects/ai/t3code.nix
-@@ -114,23 +114,21 @@ in
+@@ -127,27 +127,27 @@
+             };
            };
          };
  
@@ -12,11 +12,13 @@ index 4c6a0ad28..5a5f0d1c0 100644
 -            After = [ "network.target" ];
 -          };
 -          Service = {
--            # Follow programs.t3code.package (pi pins the server-only build).
--            ExecStart = "${config.programs.t3code.package}/bin/t3 serve --mode web";
+-            # Use the upstream CLI after the split; headless hosts select the local split until then.
+-            ExecStart = "${
+-              if pkgs ? t3code-cli then pkgs.t3code-cli else config.programs.t3code.package
+-            }/bin/t3 serve --mode web";
 -            Restart = "always";
 -            RestartSec = 5;
--            Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") connectEnvironment) ++ [
+-            Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [
 -              "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
 -            ];
 -          };
@@ -30,14 +32,19 @@ index 4c6a0ad28..5a5f0d1c0 100644
 +            "web"
 +          ];
 +        };
-+        # Preserve Connect's relay environment and the existing restart policy.
-+        # The upstream server module follows programs.t3code.package, including
-+        # pi's server-only package override.
++
++        # Use the CLI package after the split, but let Home Manager own the
++        # server arguments; static ExecStart arguments would shadow extraArgs.
 +        systemd.user.services.t3code.Service = {
++          ExecStart = lib.mkForce (
++            "${lib.getExe' (if pkgs ? t3code-cli then pkgs.t3code-cli else config.programs.t3code.package) "t3"}"
++            + " ${lib.escapeShellArgs ([ "serve" ] ++ config.programs.t3code.server.extraArgs)}"
++          );
 +          Restart = lib.mkForce "always";
-+          Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") connectEnvironment) ++ [
++          Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [
 +            "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
 +          ];
          };
        };
    };
+ }
