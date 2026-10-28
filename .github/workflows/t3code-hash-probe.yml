@@ -1,4 +1,4 @@
-name: t3code native build probe (temporary)
+name: t3code pnpm-v4 compatibility probe (temporary)
 on:
   push:
     branches:
@@ -6,38 +6,13 @@ on:
 permissions:
   contents: read
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - architecture: x86
-            runner: ubuntu-24.04
-            host: alpha
-          - architecture: arm
-            runner: ubuntu-24.04-arm
-            host: epsilon
-    runs-on: ${{ matrix.runner }}
+  hash:
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
-      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
-        with:
-          name: repparw
-          skipPush: true
-      - name: Native T3 package build and executable smoke
-        shell: bash
-        env:
-          HOST: ${{ matrix.host }}
+      - name: Verify pnpm 12 / fetcher 4 on current root pin
         run: |
           set -euo pipefail
-          path=$(nix build --no-link --print-out-paths -L ".#nixosConfigurations.${HOST}.config.home-manager.users.repparw.programs.t3code.package")
-          "$path/bin/t3" --version
-          if test "$HOST" = epsilon; then
-            test ! -e "$path/bin/t3code-desktop"
-            if nix path-info -r "$path" | grep -Eq -- '-electron-[0-9]'; then
-              echo 'ERROR: ARM headless package closure contains Electron' >&2
-              exit 1
-            fi
-          fi
+          nix build --no-link --show-trace -L .#nixosConfigurations.alpha.pkgs.t3code
