@@ -37,7 +37,8 @@ jobs:
           hm=github:nix-community/home-manager/2f5ab4a8feca1441f3146bec67d7f0f07c3cffee
           for host in alpha pi epsilon; do
             prefix=".#nixosConfigurations.${host}.config.home-manager.users.repparw"
-            command=$(nix eval --raw --override-input home-manager "$hm"               "${prefix}.systemd.user.services.t3code.Service.ExecStart")
+            command_json=$(nix eval --json --override-input home-manager "$hm" "${prefix}.systemd.user.services.t3code.Service.ExecStart")
+            command=$(printf '%s' "$command_json" | python3 -c 'import json,sys; v=json.load(sys.stdin); assert isinstance(v,list) and len(v)==1; print(v[0])')
             echo "${host} ExecStart: ${command}"
             [[ "$command" == *"/bin/t3 serve --mode web --port 4719"* ]]
             start_services=$(nix eval --json --override-input home-manager "$hm"               "${prefix}.systemd.user.startServices")
