@@ -21,7 +21,8 @@
               };
             });
 
-            wpaperd = (import ../upstream/_overlays/wpaperd-fix.nix) lib prev;          })
+            wpaperd = (import ../upstream/_overlays/wpaperd-fix.nix) lib prev;
+          })
         ];
 
         programs.niri.enable = lib.mkDefault true;
