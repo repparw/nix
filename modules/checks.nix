@@ -85,15 +85,6 @@
           hermes-crash-triage = (import ./aspects/services/hermes-crash/_package.nix { inherit pkgs; }).check;
           hermes-package-triage =
             (import ./aspects/services/hermes-package/_package.nix { inherit pkgs; }).check;
-          hermes-chief-of-staff =
-            pkgs.runCommand "check-hermes-chief-of-staff" { nativeBuildInputs = [ pkgs.python3 ]; }
-              ''
-                cp -r ${./aspects/services/hermes-chief-of-staff} source
-                chmod -R u+w source
-                python3 -m unittest discover -s source -v
-                touch $out
-              '';
-
           coredump-collector =
             pkgs.runCommand "check-coredump-collector" { nativeBuildInputs = [ pkgs.python3 ]; }
               ''

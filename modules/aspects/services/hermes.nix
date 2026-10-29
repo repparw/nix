@@ -75,6 +75,10 @@
             "--restrict-address-families=AF_NETLINK"
           ];
           bindMounts = {
+            "/etc/ssh/desktop_authorized_keys" = {
+              hostPath = "/home/repparw/services/hermes/.hermes/desktop_authorized_keys";
+              isReadOnly = true;
+            };
             "/var/lib/hermes/.hermes/scripts/crash_triage_cron.py" = {
               hostPath = toString crashTriage.gate;
               isReadOnly = true;
@@ -112,9 +116,19 @@
             { pkgs, ... }:
             {
               services.resolved.enable = true;
+              systemd.services.hermes-agent.environment.HERMES_MANAGED = lib.mkForce "false";
+              systemd.services.hermes-backend.environment.HERMES_MANAGED = lib.mkForce "false";
+              system.activationScripts.hermes-agent-setup.text = lib.mkAfter ''
+                printf '%s\n' false > /var/lib/hermes/.hermes/.managed
+              '';
 
               services.hermes-agent = {
                 enable = true;
+                backend = {
+                  mode = "serve";
+                  host = "127.0.0.1";
+                  sessionTokenFile = "/var/lib/hermes/.hermes/desktop-session-token";
+                };
                 package = pkgs.callPackage ../../_packages/hermes-agent.nix {
                   nodejs_24 = hermesNodejs;
                   upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
@@ -123,74 +137,6 @@
                   "/run/secrets/hermes-env"
                   "/run/secrets/hermes-llm-env"
                 ];
-                settings.model = {
-                  provider = "nous";
-                  default = "openai/gpt-6.1-sol";
-                };
-                # Do not silently downgrade complex work on a provider limit.
-                settings.fallback_providers = [ ];
-                settings.approvals = {
-                  mode = "manual";
-                  cron_mode = "deny";
-                  single_query_mode = "deny";
-                  unattended_mode = "deny";
-                };
-                settings.delegation = {
-                  fallback_providers = [ ];
-                  max_concurrent_children = 2;
-                  max_spawn_depth = 1;
-                  max_summary_chars = 6000;
-                  subagent_auto_approve = false;
-                };
-                settings.platform_toolsets.discord = [
-                  "web"
-                  "file"
-                  "terminal"
-                  "skills"
-                  "memory"
-                  "session_search"
-                  "delegation"
-                  "kanban"
-                  "cronjob"
-                ];
-                settings.kanban = {
-                  dispatch_in_gateway = false;
-                  auto_subscribe_on_create = false;
-                };
-                settings.memory = {
-                  memory_enabled = true;
-                  user_profile_enabled = true;
-                  provider = "";
-                };
-                settings.auxiliary.compression = {
-                  provider = "nous";
-                  model = "stepfun/step-3.7-flash:free";
-                };
-                hermesHomeFiles = {
-                  "SOUL.md" = ./hermes-chief-of-staff/SOUL.md;
-                  "skills/chief-of-staff/SKILL.md" = ./hermes-chief-of-staff/SKILL.md;
-                  "scripts/chief_of_staff_backup.py" = ./hermes-chief-of-staff/backup.py;
-                };
-                settings.display.credits_notices = false;
-                settings.platforms.discord = {
-                  enabled = true;
-                  home_channel = {
-                    platform = "discord";
-                    chat_id = config.modules.services.discordChannelId;
-                    name = "notifications";
-                  };
-                };
-                settings.cron = {
-                  model = "reflection/beam-1.0-501b-a23b:free";
-                  model_provider = "nous";
-                };
-                settings.tool_loop_guardrails = {
-                  hard_stop_enabled = true;
-                  hard_stop_after = {
-                    exact_failure = 5;
-                    idempotent_no_progress = 5;
-                  };
-                };
                 extraPackages = with pkgs; [
                   curl
                   ffmpeg
@@ -202,6 +148,25 @@
 
               users.users.hermes.uid = 345;
               users.groups.hermes.gid = 345;
+              services.openssh = {
+                enable = true;
+                settings = {
+                  AllowUsers = [ "hermes" ];
+                  AuthenticationMethods = "publickey";
+                  AuthorizedKeysFile = "/etc/ssh/desktop_authorized_keys";
+                  PasswordAuthentication = false;
+                  KbdInteractiveAuthentication = false;
+                  PermitRootLogin = "no";
+                  AllowAgentForwarding = false;
+                  AllowStreamLocalForwarding = "no";
+                  AllowTcpForwarding = "local";
+                  PermitOpen = "127.0.0.1:9119";
+                  PermitListen = "none";
+                  X11Forwarding = false;
+                  PermitTTY = false;
+                  MaxSessions = 0;
+                };
+              };
 
               system.stateVersion = "26.05";
             };
