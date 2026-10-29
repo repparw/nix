@@ -118,11 +118,6 @@ class Readiness(unittest.TestCase):
             with self.subTest(status=status, base=base), patch.object(watch, "api", return_value={"status": status, "merge_base_commit": {"sha": base}}):
                 self.assertEqual(watch.contains("repo", "fix", "pin"), expected)
 
-    def test_hm_waits_use_hm_pin(self):
-        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), patch.object(watch, "contains", return_value=True) as contains:
-            self.assertEqual(watch.detect("t3code-server", LOCK), "PINNED-READY")
-            contains.assert_called_once_with("nix-community/home-manager", "fix", "hm-pin")
-
     def test_upstream_unmerged_and_pin_behind(self):
         with patch.object(watch, "api", return_value={"merged": False}):
             self.assertEqual(watch.detect("tasks-org", LOCK), "waiting-upstream")
@@ -382,7 +377,7 @@ class Readiness(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         registry = json.loads((root / ".github/upstream/watchers.json").read_text())
         for name, spec in registry.items():
-            if spec["mode"] != "post-lock" or name == "t3code-server":
+            if spec["mode"] != "post-lock":
                 continue
             with self.subTest(watcher=name):
                 relative, _marker = watch.WORKAROUNDS[name]
@@ -393,23 +388,6 @@ class Readiness(unittest.TestCase):
                     cwd=root, check=True, capture_output=True, text=True,
                 )
 
-    def test_t3code_server_cleanup_applies_to_current_service(self):
-        # The cleanup is published after the Home Manager pin moves; keep
-        # the recipe applicable while the hand-written unit still exists.
-        root = Path(__file__).resolve().parents[2]
-        module = (root / "modules/aspects/ai/t3code.nix").read_text()
-        if "systemd.user.services.t3code-web" not in module:
-            return  # Already retired.
-        recipe = root / ".github/upstream/cleanup/t3code-server.patch"
-        recipe_text = recipe.read_text()
-        self.assertIn("config.programs.t3code.server.extraArgs", recipe_text)
-        self.assertIn("lib.escapeShellArgs", recipe_text)
-        self.assertIn("lib.getExe'", recipe_text)
-        # Home Manager's default sd-switch stops obsolete services from the
-        # previous generation; keep the removal of t3code-web in the recipe.
-        self.assertIn("-        systemd.user.services.t3code-web = {", recipe_text)
-        subprocess.run(["git", "apply", "--check", str(recipe)],
-                       cwd=root, check=True, capture_output=True)
 
 
 if __name__ == "__main__":

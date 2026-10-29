@@ -49,8 +49,7 @@ The four former inline overrides (qBittorrent, Gamescope vkroots, Tasks.org,
 wpaperd) are separate provided modules, not imports from their permanent
 modules. Their cleanup recipes can therefore delete just the temporary
 provider (plus any attached patch asset). The test suite checks each recipe
-against the worktree. The T3 Code server migration (#402) independently
-retires its watcher.
+against the worktree. The T3 Code server migration retired its watcher in #402.
 
 The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
 the exact expected candidate tree before reusing an existing branch and
@@ -79,7 +78,6 @@ The package-specific gates are:
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme                                |
 | t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop                               |
-| t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy                                       |
 | t3code-stable010  | Generated units serve the root-pin package (Alpha stock, Pi/Epsilon split server) with the version assertion; Alpha's x86 t3code builds |
 | tasks-org         | Build the upstream Tasks.org package                                                                                                    |
 | qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                                            |

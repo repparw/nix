@@ -14,14 +14,12 @@ PR_WAITS = {
     "t3code-split": ("NixOS/nixpkgs", 555814, "nixpkgs"),
     "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
     "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
-    "t3code-server": ("nix-community/home-manager", 9695, "home-manager"),
 }
 WORKAROUNDS = {
     "authelia-pnpm-hash": ("modules/_services/authelia.nix", "autheliaPackage"),
     "t3code-connect": ("modules/aspects/upstream/t3code-connect.nix", "cp .env.example .env"),
     "t3code-split": ("modules/aspects/upstream/t3code-split.nix", "t3code-server ="),
     "tasks-org": ("modules/aspects/upstream/tasks-org.nix", None),
-    "t3code-server": ("modules/aspects/ai/t3code.nix", "services.t3code-web"),
     "t3code-browser-libs": (
         "modules/aspects/upstream/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
     "qbittorrent": ("modules/aspects/upstream/qbittorrent.nix", None),
