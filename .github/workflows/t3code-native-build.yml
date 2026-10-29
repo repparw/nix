@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - modules/aspects/ai/t3code*.nix
+      - modules/aspects/upstream/t3code*.nix
       - .github/upstream/cleanup/t3code*.patch
       - .github/workflows/t3code-native-build.yml
   workflow_dispatch:
