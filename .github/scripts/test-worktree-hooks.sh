@@ -9,8 +9,12 @@ trap 'rm -rf "$scratch"' EXIT
 repo="$scratch/repo"
 worktree="$scratch/worktree"
 git init -q "$repo"
-git -C "$repo" fetch -q --no-tags "$source_root" HEAD
-git -C "$repo" checkout -q --detach FETCH_HEAD
+# GitHub Actions checks out a shallow HEAD; archive copies its exact tracked
+# contents without depending on fetch negotiation or shallow-root histories.
+git -C "$source_root" archive --format=tar HEAD | tar -xf - -C "$repo"
+git -C "$repo" add -A
+git -C "$repo" -c user.name=CI -c user.email=ci@example.invalid \
+  -c commit.gpgsign=false commit -q -m 'test: seed isolated repository'
 
 # Installing hooks in the primary checkout must also provision the shared
 # post-checkout bootstrap used by subsequent linked worktrees.
