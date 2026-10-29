@@ -42,6 +42,16 @@ revision.
 `git apply --check` must pass before publication. A conflict requires review.
 One failed recipe does not prevent other watchers from processing.
 
+Post-lock workarounds live under `modules/aspects/upstream/`. Existing
+`den.aspects` declarations keep their original names and consumers; file
+location does not change the provided aspect. Helpers in
+`modules/aspects/upstream/_overlays/` are explicitly imported by permanent
+modules and excluded from recursive `import-tree` discovery. A cleanup
+recipe removes both the temporary helper/aspect and the permanent reference
+to it. The test suite checks that these recipes still apply to the current
+worktree before their corresponding upstream pin becomes ready. The existing
+T3 Code server migration (#402) is independently retiring its watcher.
+
 The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
 the exact expected candidate tree before reusing an existing branch and
 dispatches only missing checks. This also recovers interruptions between
@@ -98,7 +108,7 @@ verification and removal of Obsidian Reader remain completion steps because
 this checkout has no Obsidian Reader declaration to remove.
 
 The Moonshine PR227 test build is declarative alpha config
-(`modules/aspects/moonshine-pr227-test.nix`, #147): the generated unit
+(`modules/aspects/upstream/moonshine-pr227-test.nix`, #147): the generated unit
 selects the test package, so activation and rollback belong to deploy-rs and
 the `waiting-source` predicate requires the pinned upstream source to carry
 the UnitRemoved reload guard before the cleanup candidate may publish. The
