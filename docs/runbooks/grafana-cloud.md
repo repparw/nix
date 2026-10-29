@@ -10,6 +10,13 @@ tags: [monitoring, grafana, cloud, alloy, alerting, backup]
 # Configure Grafana Cloud
 
 Stack: `https://repparw.grafana.net`. Edit dashboards and alerting in Cloud.
+The vanity hostname `https://grafana.repparw.com` redirects to that stack through
+Cloudflare Tunnel and Traefik; `metrics.repparw.com` remains a temporary alias.
+Before using the new vanity hostname, add the proxied `grafana` DNS CNAME with
+the same tunnel target as the existing `metrics` record, deploy the NixOS
+routing change, and verify HTTPS redirects with dashboard paths and queries.
+Update live Cloud notification templates and external links separately; the
+Discord fixture in `modules/_tests` does not configure Cloud notifications.
 Nix owns Alloy, collection filters, native health facts, private service probes,
 and encrypted credentials. See [monitoring diagnostics](monitoring.md) for
 collection checks.

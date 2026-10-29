@@ -387,11 +387,14 @@ assert !(redirectConfig.services ? grafana);
 assert
   !(lib.hasInfix "authenticated Alloy ingestion" (cfg "epsilon").networking.firewall.extraInputRules);
 assert redirectConfig.routers.grafana.service == "noop@internal";
+assert redirectConfig.routers.grafana.rule == "Host(`grafana.repparw.com`) || Host(`metrics.repparw.com`)";
 assert redirectConfig.routers.grafana.middlewares == [ "grafana-cloud-redirect" ];
 assert
   redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.replacement
   == "https://repparw.grafana.net\${1}";
 assert !redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.permanent;
+assert lib.hasInfix "grafana" redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.regex;
+assert lib.hasInfix "metrics" redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.regex;
 assert cloudSite.check-url == "https://repparw.grafana.net/api/health";
 assert lib.all
   (
