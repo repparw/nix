@@ -5,8 +5,14 @@
   den.aspects.gui.provides.niri.nixos.nixpkgs.overlays = [
     (_final: prev: {
       wpaperd = prev.wpaperd.overrideAttrs (old: {
-        patches =
-          (old.patches or [ ]) ++ lib.optional (old.version == "1.3.0") ./wpaperd-output-removal-race.patch;
+        patches = (old.patches or [ ]) ++ lib.optional (old.version == "1.3.0") (
+          prev.fetchpatch {
+            url = "https://github.com/danyspin97/wpaperd/commit/442b962df717dfb6e3d86a3a4bfd1111882323b8.patch";
+            # The commit also contains an unrelated .local/state/gh/device-id.
+            includes = [ "daemon/src/wpaperd.rs" ];
+            hash = "sha256-pjYDZ51yeV9QPZlXyRmk6pDJw5/7AqbvpUSgBoMNdgk=";
+          }
+        );
       });
     })
   ];
