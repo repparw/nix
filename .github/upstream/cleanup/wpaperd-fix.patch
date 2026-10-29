@@ -2,7 +2,7 @@ diff --git a/modules/aspects/upstream/wpaperd-fix.nix b/modules/aspects/upstream
 deleted file mode 100644
 --- a/modules/aspects/upstream/wpaperd-fix.nix
 +++ /dev/null
-@@ -1,13 +0,0 @@
+@@ -1,19 +0,0 @@
 -{ den, lib, ... }:
 -{
 -  # Upstream danyspin97/wpaperd@442b962 fixes stale Wayland surface events
@@ -10,68 +10,15 @@ deleted file mode 100644
 -  den.aspects.gui.provides.niri.nixos.nixpkgs.overlays = [
 -    (_final: prev: {
 -      wpaperd = prev.wpaperd.overrideAttrs (old: {
--        patches =
--          (old.patches or [ ]) ++ lib.optional (old.version == "1.3.0") ./wpaperd-output-removal-race.patch;
+-        patches = (old.patches or [ ]) ++ lib.optional (old.version == "1.3.0") (
+-          prev.fetchpatch {
+-            url = "https://github.com/danyspin97/wpaperd/commit/442b962df717dfb6e3d86a3a4bfd1111882323b8.patch";
+-            # The commit also contains an unrelated .local/state/gh/device-id.
+-            includes = [ "daemon/src/wpaperd.rs" ];
+-            hash = "sha256-pjYDZ51yeV9QPZlXyRmk6pDJw5/7AqbvpUSgBoMNdgk=";
+-          }
+-        );
 -      });
 -    })
 -  ];
 -}
-diff --git a/modules/aspects/upstream/wpaperd-output-removal-race.patch b/modules/aspects/upstream/wpaperd-output-removal-race.patch
-deleted file mode 100644
---- a/modules/aspects/upstream/wpaperd-output-removal-race.patch
-+++ /dev/null
-@@ -1,54 +0,0 @@
----- a/daemon/src/wpaperd.rs
--+++ b/daemon/src/wpaperd.rs
--@@ -103,11 +103,13 @@
--             .find(|surface| surface.name() == name)
--     }
-- 
---    pub fn surface_from_wl_surface(&mut self, surface: &wl_surface::WlSurface) -> &mut Surface {
--+    pub fn surface_from_wl_surface(
--+        &mut self,
--+        surface: &wl_surface::WlSurface,
--+    ) -> Option<&mut Surface> {
--         self.surfaces
--             .iter_mut()
--             .find(|s| surface == s.wl_surface())
---            .expect("surface to be registered in wpaperd")
--     }
-- }
-- 
--@@ -119,8 +121,9 @@
--         surface: &wl_surface::WlSurface,
--         new_factor: i32,
--     ) {
---        self.surface_from_wl_surface(surface)
---            .change_scale_factor(new_factor, qh);
--+        if let Some(s) = self.surface_from_wl_surface(surface) {
--+            s.change_scale_factor(new_factor, qh);
--+        }
--     }
-- 
--     fn frame(
--@@ -130,8 +133,9 @@
--         surface: &wl_surface::WlSurface,
--         time: u32,
--     ) {
---        let surface = self.surface_from_wl_surface(surface);
---        surface.try_drawing(qh, Some(time));
--+        if let Some(s) = self.surface_from_wl_surface(surface) {
--+            s.try_drawing(qh, Some(time));
--+        }
--     }
-- 
--     fn transform_changed(
--@@ -141,8 +145,9 @@
--         surface: &wl_surface::WlSurface,
--         new_transform: wl_output::Transform,
--     ) {
---        self.surface_from_wl_surface(surface)
---            .change_transform(new_transform, qh);
--+        if let Some(s) = self.surface_from_wl_surface(surface) {
--+            s.change_transform(new_transform, qh);
--+        }
--     }
-- 
--     fn surface_enter(
