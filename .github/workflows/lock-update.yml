@@ -177,12 +177,8 @@ jobs:
           atomic_recipe_paths() {
             local watcher
             for watcher in ${1//,/ }; do
-              if [ "$watcher" = authelia-pnpm-hash ]; then
-                printf '%s\n' modules/_services/authelia.nix
-              else
-                git apply --numstat ".github/upstream/cleanup/$(jq -r --arg w "$watcher" \
-                  '.[$w].cleanup' .github/upstream/watchers.json)" | awk '{print $3}'
-              fi
+              git apply --numstat ".github/upstream/cleanup/$(jq -r --arg w "$watcher" \
+                '.[$w].cleanup' .github/upstream/watchers.json)" | awk '{print $3}'
             done | sort -u
           }
 
@@ -369,17 +365,11 @@ jobs:
             scratch=$(mktemp -d "${TMPDIR:-/tmp}/atomic-verify-XXXXXXXX")
             git worktree add --quiet --detach "$scratch" "$atomic_base"
             for watcher in ${atomic_watchers//,/ }; do
-              if [ "$watcher" = authelia-pnpm-hash ]; then
-                python3 .github/scripts/upstream-plan.py apply --id "$watcher" \
-                  --module "$scratch/modules/_services/authelia.nix" \
-                || { git worktree remove --force "$scratch"; return 1; }
-              else
-                patch="$(git rev-parse --show-toplevel)/.github/upstream/cleanup/$(jq -r --arg w "$watcher" \
-                  '.[$w].cleanup' .github/upstream/watchers.json)"
-                git -C "$scratch" apply --check "$patch" \
-                && git -C "$scratch" apply "$patch" \
-                || { git worktree remove --force "$scratch"; return 1; }
-              fi
+              patch="$(git rev-parse --show-toplevel)/.github/upstream/cleanup/$(jq -r --arg w "$watcher" \
+                '.[$w].cleanup' .github/upstream/watchers.json)"
+              git -C "$scratch" apply --check "$patch" \
+              && git -C "$scratch" apply "$patch" \
+              || { git worktree remove --force "$scratch"; return 1; }
             done
             for path in $(atomic_recipe_paths "$atomic_watchers"); do
               if ! git show "$atomic_revision:$path" | cmp -s - "$scratch/$path"; then
@@ -408,8 +398,7 @@ jobs:
               return 1
             fi
             plan=$(python3 .github/scripts/upstream-plan.py plan \
-              --old <(git show "$new_main:flake.lock") --candidate flake.lock \
-              --module "$PWD/modules/_services/authelia.nix")
+              --old <(git show "$new_main:flake.lock") --candidate flake.lock)
             printf '%s\n' "$plan" | jq -r '"watcher re-plan: \(.action) (\(.reason))"'
             watchers=$(jq -r '.atomic | join(",")' <<<"$plan" 2>/dev/null || true)
             if [ "$(jq -r .action <<<"$plan")" != atomic ] \
@@ -461,7 +450,7 @@ jobs:
               for id in $ci_runs; do
                 status=$(gh api "repos/$GH_REPO/actions/runs/$id" --jq .status) || return 1
                 pkg_jobs=$(gh api "repos/$GH_REPO/actions/runs/$id/jobs?per_page=100" \
-                  --jq '[.jobs[] | select((.name | contains("upstream-package")) or (.name | contains("arm-build (authelia"))) | select(.conclusion != "skipped")] | length') || return 1
+                  --jq '[.jobs[] | select((.name | contains("upstream-package"))) | select(.conclusion != "skipped")] | length') || return 1
                 if [ "$pkg_jobs" -ge "$required" ]; then
                   result=$(gh api "repos/$GH_REPO/actions/runs/$id" --jq '.conclusion // ""') || return 1
                   if [ "$status" = completed ]; then
@@ -491,8 +480,7 @@ jobs:
           # Dispatches missing exact-SHA validation and waits until it is
           # green. Never merges: the caller merges only after the
           # required PR checks are approved as well, and the merge itself is
-          # gated by the required PR CI (which includes the native ARM build
-          # and bundled package validations for atomic candidates).
+          # gated by the required PR CI (including bundled package validations).
           reconcile_atomic_ci() {
             local pr="$1" sha="$2" watchers="${3:-}" title_runs ci_runs
             local watcher upstream_watchers='' required_jobs=0 manifest
@@ -510,16 +498,9 @@ jobs:
               echo "Cannot recover atomic watcher list from $sha" >&2
               return 1
             fi
-            for watcher in ${watchers//,/ }; do
-              # The authelia-pnpm-hash workaround was retired in #237 and its
-              # native ARM gate with it; the watcher has no package validator,
-              # so a stale candidate naming it has nothing left to dispatch.
-              if [ "$watcher" != authelia-pnpm-hash ]; then
-                upstream_watchers="${upstream_watchers:+$upstream_watchers,}$watcher"
-              fi
-            done
-            if [ -n "$upstream_watchers" ]; then required_jobs=$((required_jobs + 1)); fi
-            if [ "$required_jobs" -eq 0 ]; then return 1; fi
+            upstream_watchers="$watchers"
+            [ -n "$upstream_watchers" ] || return 1
+            required_jobs=1
             # An existing run must have received this exact input manifest.
             # A successful manual dispatch on the same SHA with fewer/different
             # watchers is not evidence that every cleanup was validated.
@@ -666,7 +647,6 @@ jobs:
               # refreshed lock-only branch. Every planned apply-coupled
               # cleanup rides this candidate; per-watcher validation runs in
               # CI and merging happens only when green and current (#265),
-              # including candidates carrying Authelia.
               jq -e '.automerge == true' <<<"$plan" >/dev/null || {
                 echo "Atomic plan is not merge-automated; fail closed." >&2
                 exit 1
@@ -708,7 +688,7 @@ jobs:
               create_token="${approval_token:-$GH_TOKEN}"
               url=$(GH_TOKEN="$create_token" gh pr create --base main --head "$atomic_branch" \
                 --title 'fix(upstream): retire apply-coupled workarounds with updated lock' \
-                --body "$(printf '%s\n\n%s' "Atomic lock+cleanup candidate for: $watcher_list. Each included watcher is ready on this candidate pin. Merging happens only after exact-SHA CI is green and main is current, including the native ARM Authelia build when applicable." \
+                --body "$(printf '%s\n\n%s' "Atomic lock+cleanup candidate for: $watcher_list. Each included watcher is ready on this candidate pin. Merging happens only after exact-SHA CI is green and main is current, including required package validation." \
                   "$(atomic_trailer "$main_sha" "$revision" "$watcher_list")")")
               atomic_pr=${url##*/}
               atomic_revision=$revision

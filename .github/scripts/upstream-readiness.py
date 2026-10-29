@@ -9,14 +9,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PR_WAITS = {
-    "authelia-pnpm-hash": ("NixOS/nixpkgs", 572207, "nixpkgs"),
     "t3code-connect": ("NixOS/nixpkgs", 555921, "nixpkgs"),
     "t3code-split": ("NixOS/nixpkgs", 555814, "nixpkgs"),
     "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
     "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
 }
 WORKAROUNDS = {
-    "authelia-pnpm-hash": ("modules/_services/authelia.nix", "autheliaPackage"),
     "t3code-connect": ("modules/aspects/upstream/t3code-connect.nix", "cp .env.example .env"),
     "t3code-split": ("modules/aspects/upstream/t3code-split.nix", "t3code-server ="),
     "tasks-org": ("modules/aspects/upstream/tasks-org.nix", None),
