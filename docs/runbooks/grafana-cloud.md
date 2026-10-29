@@ -12,8 +12,8 @@ tags: [monitoring, grafana, cloud, alloy, alerting, backup]
 Stack: `https://repparw.grafana.net`. Edit dashboards and alerting in Cloud.
 The vanity hostname `https://grafana.repparw.com` redirects to that stack through
 Cloudflare Tunnel and Traefik; `metrics.repparw.com` remains a temporary alias.
-Before using the new vanity hostname, add the proxied `grafana` DNS CNAME with
-the same tunnel target as the existing `metrics` record, deploy the NixOS
+Both names currently match the proxied wildcard CNAME to the apex, which points
+to Epsilon's tunnel. Verify that DNS routing still applies, deploy the NixOS
 routing change, and verify HTTPS redirects with dashboard paths and queries.
 Update live Cloud notification templates and external links separately; the
 Discord fixture in `modules/_tests` does not configure Cloud notifications.
