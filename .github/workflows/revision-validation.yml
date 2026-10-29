@@ -121,6 +121,13 @@ jobs:
         env:
           CI_CHECKS: alpha pi epsilon
         run: bash .github/scripts/run-checks.sh
+      # Temporary merge gate for the watched-workaround relocation. Remove
+      # this PR-specific step and script after its parity evidence is captured.
+      - name: Compare upstream workaround refactor against pre-refactor fleet
+        if: github.event_name == 'pull_request' && github.event.pull_request.number == 404
+        env:
+          UPSTREAM_PARITY_BASE: ${{ github.event.pull_request.base.sha }}
+        run: python3 .github/scripts/check-upstream-refactor-parity.py
       - name: Upload evaluation logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
