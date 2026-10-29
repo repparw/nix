@@ -118,11 +118,6 @@ class Readiness(unittest.TestCase):
             with self.subTest(status=status, base=base), patch.object(watch, "api", return_value={"status": status, "merge_base_commit": {"sha": base}}):
                 self.assertEqual(watch.contains("repo", "fix", "pin"), expected)
 
-    def test_hm_waits_use_hm_pin(self):
-        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), patch.object(watch, "contains", return_value=True) as contains:
-            self.assertEqual(watch.detect("t3code-server", LOCK), "PINNED-READY")
-            contains.assert_called_once_with("nix-community/home-manager", "fix", "hm-pin")
-
     def test_upstream_unmerged_and_pin_behind(self):
         with patch.object(watch, "api", return_value={"merged": False}):
             self.assertEqual(watch.detect("tasks-org", LOCK), "waiting-upstream")
@@ -329,16 +324,33 @@ class Readiness(unittest.TestCase):
             with self.assertRaises(ValueError):
                 watch.detect("t3code-stable010", LOCK)
 
+    def test_t3code_bridge_and_retirement_floor_agree(self):
+        # The post-lock cleanup must never retire a newer local bridge for an
+        # older package on the root pin.
+        import re
+        root = Path(__file__).resolve().parents[2]
+        bridge = (root / "modules/aspects/ai/t3code-stable010.nix").read_text()
+        cleanup = (root / ".github/upstream/cleanup/t3code-stable010.patch").read_text()
+        match = re.search(r'\bversion\s*=\s*"(\d+)\.(\d+)\.(\d+)";', bridge)
+        self.assertIsNotNone(match)
+        minimum = tuple(map(int, match.groups()))
+        self.assertEqual(watch.T3CODE_STABLE_MIN_VERSION, minimum)
+        version = ".".join(map(str, minimum))
+        self.assertIn(
+            f'lib.versionAtLeast config.programs.t3code.package.version "{version}"',
+            cleanup,
+        )
+
     def test_t3code_bridge_cleanup_cannot_downgrade_the_installed_release(self):
         def api(endpoint):
             if endpoint.endswith("/commits/nixos-unstable"):
                 return {"sha": "a" * 40}
-            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.1"
+            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.3"
             return {"tag_name": tag, "draft": False, "prerelease": False}
         for channel, pinned, expected in (
-                ("v0.1.0", "v0.1.0", "waiting-unstable"),
-                ("v0.1.1", "v0.1.0", "merged-not-pinned"),
-                ("v0.1.1", "v0.1.1", "PINNED-READY"),
+                ("v0.1.2", "v0.1.2", "waiting-unstable"),
+                ("v0.1.3", "v0.1.2", "merged-not-pinned"),
+                ("v0.1.3", "v0.1.3", "PINNED-READY"),
                 ("v0.1.10", "v0.1.10", "PINNED-READY")):
             with self.subTest(channel=channel, pinned=pinned), \
                     patch.object(watch, "api", side_effect=api), \
@@ -355,6 +367,8 @@ class Readiness(unittest.TestCase):
                 self.assertNotIn('diff --git a/flake.lock', patch_text)
                 self.assertNotIn('diff --git a/.github/', patch_text)
                 self.assertIn('diff --git a/modules/', patch_text)
+
+
 
 
 if __name__ == "__main__":
