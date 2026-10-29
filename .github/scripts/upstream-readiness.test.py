@@ -296,7 +296,7 @@ class Readiness(unittest.TestCase):
             with self.assertRaises(ValueError):
                 watch.detect("t3code-stable010", LOCK)
         with patch.object(watch, "source", return_value=stable):
-            self.assertEqual(watch.t3code_stable_tag("pin"), "v0.0.46")
+            self.assertEqual(watch.t3code_stable_tag("pin"), "v0.1.3")
         for package in ['version = "0.0.46"; tag = "v0.0.46-preview";',
                         'version = "0.0.46-nightly"; tag = "v0.0.46-nightly";']:
             with patch.object(watch, "source", return_value=package):
