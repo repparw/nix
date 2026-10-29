@@ -199,9 +199,8 @@ candidates retain their own validation gates.
 The `t3code-stable010` watcher tracks the stable-version bridge. The bridge builds the desktop package from the
 existing Nixpkgs recipe with verified release source and pnpm hashes;
 the same override applies on all architectures. The separate split aspect
-selects the server-only package on Pi and Epsilon. Its detector requires a verified stable
-orchestrator-v2 release meeting the bridge's version floor in the root Nixpkgs
-pin may drop the bridge,
+selects the server-only package on Pi and Epsilon. Its detector requires a verified stable orchestrator-v2 release meeting the
+bridge's version floor on the root Nixpkgs pin before dropping the bridge,
 because an earlier drop downgrades Alpha to V1 0.0.45 and breaks Android/web
 clients. The post-lock cleanup is the complete cutover: it deletes the
 bridge aspect, removes its entity includes so every host serves the
@@ -218,6 +217,6 @@ A cleanup that conflicts with edited modules fails closed for review.
 Candidate validation requires the `PINNED-READY` pin, checks every
 generated `t3code-web` unit against the selected CLI (or the combined package
 before the upstream split), and builds
-Alpha's x86 `t3code`. The old nightly aspect and its separate watcher are retired
-while the bridge is
-being retired.
+Alpha's x86 `t3code`. The former nightly aspect and separate V2 migration watcher are retired.
+The stable-version bridge keeps its own release and pin readiness checks.
+Preserve `statev2.sqlite` and active conversations during the bridge cutover.
