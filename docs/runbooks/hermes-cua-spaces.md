@@ -1,8 +1,8 @@
 ---
 type: Runbook
 title: Enroll a remote CUA Space for Hermes
-description: Prepare the named remote Linux desktop used by Epsilon's version-gated CUA integration.
-when: Read when enrolling CUA, updating Hermes past v0.22.2, or validating remote browser and computer-use routing.
+description: Prepare the named remote Linux desktop and explicitly opt in to Epsilon's CUA integration.
+when: Read when enrolling CUA, opting in, or validating remote browser and computer-use routing.
 resource: modules/aspects/services/hermes-cua.nix
 tags: [hermes, epsilon, cua, desktop, security]
 ---
@@ -52,27 +52,22 @@ is created by this configuration.
 
 ## Check the version and packages
 
-Before the temporary release gate is retired by [`hermes-cua-version` watcher](../../.github/upstream/README.md#hermes-cua-version-gate),
-the integration enables automatically when both gates pass:
+The integration is **disabled by default**, even if Hermes is upgraded to
+a compatible release. Compatibility does not authorize a backend replacement.
+After the remote Linux Space is enrolled, credentials are managed, the
+deployment pause is cleared, and end-to-end safety/rollback tests pass,
+explicitly set `modules.hermes-cua.enable = true;` in the Hermes container
+configuration. Enabling without a compatible source/runtime fails evaluation.
 
-- The Hermes input has a release ref of at least `v0.22.3`, and its selected
-  source declares `supports_streams` and `default_cwd`. The version comes from
-  the locked input ref, not the derivation's misleading `0.0.0` version. A branch
-  or revision-only pin fails closed pending an explicit compatibility review.
-- The packaged CUA SDK/CLI is at least 0.7.0 and below 0.8. The package supplies
-  both from the same hashed upstream wheel, built for Hermes's Python family.
+The compatibility gates still require:
 
-After that cleanup, the release/ref restriction is removed; the source-API
-and packaged-runtime checks remain. The watcher initially notifies only while
-the fleet pause is active. Its prepared cleanup cannot publish or auto-merge
-until a reviewed change promotes it to post-lock mode after pause clearance.
+- Hermes source at release ref v0.22.3 or newer, with `supports_streams`
+  and `default_cwd` provider APIs.
+- CUA SDK/CLI at least 0.7.0 and below 0.8.
 
-The flake still pins Hermes v0.22.2. CUA plugin installation, backend selection,
-SDK/CLI dependencies and Discord GUI tools are currently absent. Updating the
-input is a separate change. Hermes
-[#142225](https://github.com/NousResearch/hermes-agent/pull/142225), merge
-`71633f762d2d74faebe604d0b8a2a2e6cf48346a`, is an ancestor of tag v0.22.3;
-that tag's actual provider source contains both required APIs.
+The version watcher may retire an obsolete compatibility check after upstream
+is pinned, but **must not** turn on CUA. The explicit opt-in is a permanent
+deployment boundary. The currently pinned v0.22.2 remains unsupported.
 
 The plugin is version 0.4.0, pinned to reviewed catalog commit
 `82bb8d31517d2d1b8f1ef7f64701558dcac8aea9`. Nix installs it using upstream
