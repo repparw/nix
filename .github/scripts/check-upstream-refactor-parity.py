@@ -9,6 +9,7 @@ requiring the patch derivation's store path to remain identical.
 import difflib
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import tempfile
@@ -89,6 +90,10 @@ def main():
                 before / "modules/aspects/gui/wpaperd-output-removal-race.patch"
             ).read_bytes()
             actual_patch = fetched_wpaperd_patch(ROOT)
+            # The upstream Git diff includes optional section names after
+            # each @@ hunk marker; the old copied patch omitted them.
+            # Compare the actual changes after stripping that metadata.
+            actual_patch = re.sub(rb"^(@@.*?@@)[^\\n]*$", rb"\\1", actual_patch, flags=re.M)
             if actual_patch != expected_patch:
                 raise AssertionError(
                     f"wpaperd fetched patch differs from prior vendor copy: "
