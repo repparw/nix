@@ -41,7 +41,7 @@ companion. Detailed historical test evidence is attached to
 
 ## Validate and activate
 
-1. Run the [configuration verification skill](../../.agents/skills/verify-nixos-config/SKILL.md).
+1. Run the [configuration verification skill](../../.agents/skills/verify-fleet-change/SKILL.md).
    Inspect the effective Hermes settings and managed home files. Build the full
    Epsilon system; CI's stubbed host evaluation does not replace that build.
    Run `hermes-chief-of-staff`, Hermes triage, formatting, and agent-docs checks.
