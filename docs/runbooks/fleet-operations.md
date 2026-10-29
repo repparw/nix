@@ -139,6 +139,12 @@ controller path. For a local-tree review, use
 `--dry-activate`, is authorized operational work — it can realize deployment
 outputs and contact the target, and it is not a PR verification step.
 
+For a local tree already verified at its current contents,
+`nix run .#deploy -- .#alpha` skips deploy-rs' repeated flake checks.
+This shortcut does not enforce verification; for unverified changes use
+`nix run .#deploy-rs -- .#alpha`. The Pi controller's gated
+`fleet-update deploy` path is unaffected.
+
 Implementation: [fleet-update.sh](../../modules/scripts/fleet-update.sh).
 Lock publication: [lock-update workflow](../../.github/workflows/lock-update.yml)
 and [upstream watcher contracts](../../.github/upstream/README.md).
