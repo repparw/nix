@@ -135,7 +135,7 @@ class LockUpdate(unittest.TestCase):
             "        print(body.read_text() if body.exists() else '')\n"
             "    else:\n"
             "        sha = subprocess.check_output(['git','--git-dir',remote,'rev-parse','automation/atomic-cleanup'], text=True).strip()\n"
-            "        print(sha)\n"
+            "        print('wrong' if os.environ['FIXTURE_ATOMIC_WRONG_HEAD'] == '1' else sha)\n"
             "elif args[:2] == ['pr', 'merge']:\n"
             "    if '--disable-auto' in args:\n"
             "        if (root/'disable-fails').exists(): sys.exit(1)\n"
