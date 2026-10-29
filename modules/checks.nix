@@ -550,7 +550,7 @@
               enabledConfig = relayEnabled.config;
               enabledWireGuard = enabledConfig.networking.wireguard.interfaces.wg-home;
               relayService = enabledConfig.systemd.services.wg-egress-relay.serviceConfig;
-              relayRules = relayRules;
+              relayRules = enabledConfig.systemd.services.wg-egress-rules.script;
               defaultRelayRoutes = lib.concatMap (peer: peer.allowedIPs) (
                 epsilon.networking.wireguard.interfaces.wg-home.peers
               );
