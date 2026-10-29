@@ -31,7 +31,7 @@ files instead of copying module contents.
 ## Runbooks
 
 - [Diagnose fleet observability](runbooks/monitoring.md)
-- [Grafana Cloud operations (repparw/grafana)](https://github.com/repparw/grafana/blob/main/docs/operations.md)
+- [Grafana Cloud operations (repparw/grafana)](https://github.com/repparw/grafana#readme)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
 - [Update rollback](runbooks/update-rollback.md)
 - [Fleet health, backups, and deployment](runbooks/fleet-operations.md)

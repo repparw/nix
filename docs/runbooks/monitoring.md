@@ -12,7 +12,7 @@ tags: [monitoring, grafana, cloud, alloy, journald]
 Alpha, Pi, and Epsilon send metrics and filtered host journals directly to
 Grafana Cloud through Alloy. Pi runs the service probes. Epsilon redirects
 [the dashboard hostname](https://metrics.repparw.com/d/fleet-overview/fleet-overview)
-to Cloud, which controls sign-in. See [Grafana Cloud operations](https://github.com/repparw/grafana/blob/main/docs/operations.md)
+to Cloud, which controls sign-in. See [Grafana Cloud operations](https://github.com/repparw/grafana#readme)
 for dashboards, alerts, credentials and recovery.
 
 ## Check delivery

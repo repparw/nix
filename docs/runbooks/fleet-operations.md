@@ -18,7 +18,7 @@ Discover the installed commands with `fleet commands --json`.
 ## Inspect health and retained failures
 
 Grafana Cloud owns periodic health alerts. See [monitoring](monitoring.md) for
-telemetry diagnostics and [Cloud alert configuration](https://github.com/repparw/grafana/blob/main/docs/operations.md) for policy.
+telemetry diagnostics and [Cloud alert configuration](https://github.com/repparw/grafana#readme) for policy.
 `fleet health probe` is read-only; `--strict` checks deployment readiness without
 making Cloud availability or unrelated failed jobs deployment prerequisites.
 
