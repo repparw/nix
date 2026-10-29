@@ -16,15 +16,15 @@ index 4fef412f7..a36d90f7b 100644
 -            # failing patchPhase.
 -            wpaperd = prev.wpaperd.overrideAttrs (old: {
 -              patches =
--                (old.patches or [ ]) ++ lib.optional (old.version == "1.3.0") ./wpaperd-output-removal-race.patch;
+-                (old.patches or [ ]) ++ lib.optional (old.version == "1.3.0") ../upstream/wpaperd-output-removal-race.patch;
 -            });
            })
          ];
  
-diff --git a/modules/aspects/gui/wpaperd-output-removal-race.patch b/modules/aspects/gui/wpaperd-output-removal-race.patch
+diff --git a/modules/aspects/upstream/wpaperd-output-removal-race.patch b/modules/aspects/upstream/wpaperd-output-removal-race.patch
 deleted file mode 100644
 index 419e48a49..000000000
---- a/modules/aspects/gui/wpaperd-output-removal-race.patch
+--- a/modules/aspects/upstream/wpaperd-output-removal-race.patch
 +++ /dev/null
 @@ -1,54 +0,0 @@
 ---- a/daemon/src/wpaperd.rs
