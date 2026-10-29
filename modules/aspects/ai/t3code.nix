@@ -81,13 +81,13 @@ in
               secondaryLabel = c.base04;
               iconMuted = c.base04;
               error = c.base08;
-              errorForeground = c.base07;
+              errorForeground = c.base08;
               errorSurface = c.base01;
               warning = c.base0A;
-              warningForeground = c.base07;
+              warningForeground = c.base0A;
               warningSurface = c.base01;
               update = c.base0D;
-              updateForeground = c.base07;
+              updateForeground = c.base0D;
               updateSurface = c.base02;
               accentSurface = c.base02;
               accentSurfaceForeground = c.base05;
@@ -98,6 +98,10 @@ in
               messageActionHover = c.base0E;
               codeBackground = c.base01;
               codeForeground = c.base05;
+              searchMatchBackground = c.base0A;
+              searchMatchForeground = c.base00;
+              searchMatchActiveBackground = c.base09;
+              searchMatchActiveForeground = c.base00;
               sidebar = c.base01;
               sidebarForeground = c.base05;
               sidebarMutedForeground = c.base04;
