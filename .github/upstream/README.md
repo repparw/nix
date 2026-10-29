@@ -42,15 +42,15 @@ revision.
 `git apply --check` must pass before publication. A conflict requires review.
 One failed recipe does not prevent other watchers from processing.
 
-Post-lock workarounds live under `modules/aspects/upstream/`. Existing
-`den.aspects` declarations keep their original names and consumers; file
-location does not change the provided aspect. Helpers in
-`modules/aspects/upstream/_overlays/` are explicitly imported by permanent
-modules and excluded from recursive `import-tree` discovery. A cleanup
-recipe removes both the temporary helper/aspect and the permanent reference
-to it. The test suite checks that these recipes still apply to the current
-worktree before their corresponding upstream pin becomes ready. The existing
-T3 Code server migration (#402) is independently retiring its watcher.
+Post-lock workarounds live under `modules/aspects/upstream/`. Each module
+contributes to its permanent owner through `den.aspects.<owner>.provides.<aspect>`,
+without changing the provided aspect's name or explicit host includes.
+The four former inline overrides (qBittorrent, Gamescope vkroots, Tasks.org,
+wpaperd) are separate provided modules, not imports from their permanent
+modules. Their cleanup recipes can therefore delete just the temporary
+provider (plus any attached patch asset). The test suite checks each recipe
+against the worktree. The T3 Code server migration (#402) independently
+retires its watcher.
 
 The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
 the exact expected candidate tree before reusing an existing branch and
