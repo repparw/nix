@@ -33,8 +33,10 @@ is not evidence of the intended behavior. Check an unaffected host or
 previous value when the change could cause a regression.
 
 For changes not yet committed, verify the working tree locally: CI validates
-a committed revision, not uncommitted edits. Once a PR exists, consult the
-CI result for its exact head before repeating expensive checks. Use existing
+a committed revision, not uncommitted edits. New Nix files must be Git-tracked
+for flake evaluation to include them; check the working-tree status before
+claiming a successful evaluation covers newly created files. Once a PR exists,
+consult CI for its exact head before repeating expensive checks. Use existing
 focused tests in [modules/checks.nix](../../../modules/checks.nix) or nearby
 test files; do not duplicate the entire CI matrix.
 
