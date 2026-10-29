@@ -423,14 +423,13 @@ index 6364de55..00000000
 -    };
 -}
 diff --git a/modules/entities.nix b/modules/entities.nix
-index 5b1a5f1b..b8970e71 100644
 --- a/modules/entities.nix
 +++ b/modules/entities.nix
-@@ -10,7 +10,6 @@
+@@ -11,7 +11,6 @@
            den.aspects.gaming
            den.aspects.streaming
            den.aspects.spotifast
 -          den.aspects.moonshine-pr227-test
-           den.aspects.ai._.t3code-nightly
-           den.aspects.ai._.opencode-v2-primary
+           den.aspects.ai._.t3code-stable010
          ];
+       };
