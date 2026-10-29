@@ -394,8 +394,7 @@ assert
   == "https://repparw.grafana.net\${1}";
 assert !redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.permanent;
 assert cloudSite.check-url == "https://repparw.grafana.net/api/health";
-assert lib.all (path: !(builtins.elem path persistencePaths))
-  [
+assert lib.all (path: !(builtins.elem path persistencePaths)) [
     "/var/lib/grafana"
     "/var/lib/loki"
     "/var/lib/prometheus2"
