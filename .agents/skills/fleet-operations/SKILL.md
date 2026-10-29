@@ -14,7 +14,7 @@ fleet commands --json
 ```
 
 For configuration edits and pre-deployment confidence, use
-[verify-nixos-config](../verify-nixos-config/SKILL.md). That skill evaluates
+[verify-fleet-change](../verify-fleet-change/SKILL.md). That skill evaluates
 and builds without activation. A successful build does not prove runtime
 health.
 
@@ -35,7 +35,7 @@ state rather than silently treating missing evidence as healthy.
 Local-tree activations go through the plain nix CLI and deploy-rs directly
 (`nix run .#deploy-rs -- .#<host> --dry-activate` to review). Run them only
 when the user has authorized activation. Do not use them as part of
-`verify-nixos-config`.
+`verify-fleet-change`.
 
 The controller-side production deployment transaction remains the separate
 `fleet-update deploy` command documented in the
