@@ -93,7 +93,7 @@ def main():
             # The upstream Git diff includes optional section names after
             # each @@ hunk marker; the old copied patch omitted them.
             # Compare the actual changes after stripping that metadata.
-            actual_patch = re.sub(rb"^(@@.*?@@)[^\\n]*$", rb"\\1", actual_patch, flags=re.M)
+            actual_patch = re.sub(rb"^(@@.*?@@)[^\n]*$", rb"\1", actual_patch, flags=re.M)
             if actual_patch != expected_patch:
                 raise AssertionError(
                     f"wpaperd fetched patch differs from prior vendor copy: "
