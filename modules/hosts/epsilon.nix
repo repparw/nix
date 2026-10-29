@@ -325,10 +325,7 @@
             {
               publicKey = "qvjDMgSHda89kuJ0vBL44LAdP681dXMczkSyfk9BnSc=";
               presharedKeyFile = config.sops.secrets.wgEpsilonPresharedKey.path;
-              allowedIPs = [
-                # wg-egress-relay disables automatic routes and keeps this
-                # default confined to the relay's policy table.
-                "0.0.0.0/0"
+              allowedIPs = lib.optionals config.modules.wg-egress-relay.enable [ "0.0.0.0/0" ] ++ [
                 "10.5.5.0/24"
                 "192.168.0.0/24"
                 "10.231.136.0/24"
