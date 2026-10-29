@@ -26,8 +26,9 @@ pkgs.testers.runNixOSTest {
     virtualisation.memorySize = 1536;
     virtualisation.emptyDiskImages = [ 512 ];
     # Swap uses Btrfs backing, never the volatile /.
-    # qemu-vm.nix clears swapDevices by VM override; force this test's real swap unit.
-    swapDevices = lib.mkForce [
+    # qemu-vm.nix uses mkVMOverride (priority 10) to clear swapDevices.
+    # Override it at higher priority so the VM actually exercises swap activation.
+    swapDevices = lib.mkOverride 0 [
       {
         device = "/persist/swapfile";
         size = 64;
