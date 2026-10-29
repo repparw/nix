@@ -44,13 +44,31 @@
         ...
       }:
       let
+        # The server selects the wrapped CLI, while Alpha's desktop entry
+        # launches the desktop package directly. Do not pull Electron into
+        # Pi/Epsilon's headless profiles.
+        desktopPackage =
+          if (osConfig.modules.desktop.enable or false) && pkgs ? t3code-desktop then
+            pkgs.t3code-desktop
+          else
+            config.programs.t3code.package;
         launcher = pkgs.writeShellScriptBin "t3code-desktop-connect" ''
           export CODEX_HOME=${lib.escapeShellArg config.home.sessionVariables.CODEX_HOME}
-          exec ${lib.getExe' config.programs.t3code.package "t3code-desktop"} "$@"
+          exec ${lib.getExe' desktopPackage "t3code-desktop"} "$@"
         '';
       in
       {
         home.packages = [ launcher ];
+
+        # The desktop package is no longer directly in home.packages when the
+        # split CLI is selected; preserve its icon without adding a second
+        # package that also exports bin/t3 (which would collide in the profile).
+        xdg.dataFile = lib.mkIf ((osConfig.modules.desktop.enable or false) && pkgs ? t3code-desktop) {
+          "icons/hicolor/scalable/apps/t3code.svg".source =
+            "${pkgs.t3code-desktop}/share/icons/hicolor/scalable/apps/t3code.svg";
+          "icons/hicolor/1024x1024/apps/t3code.png".source =
+            "${pkgs.t3code-desktop}/share/icons/hicolor/1024x1024/apps/t3code.png";
+        };
 
         # Browsers resolve URL schemes through GIO, which only consults
         # `mimeinfo.cache` associations when `mimeapps.list` names a default.
