@@ -10,11 +10,7 @@
       ++ lib.mapAttrsToList (_: service: "${service.hostname}.${cfg.domain}") (
         lib.filterAttrs (name: service: service.hostname != null && name != "jellyfin") cfg.definitions
       )
-      # Grafana vanity hostname plus temporary legacy alias.
-      ++ [
-        "grafana.${cfg.domain}"
-        "metrics.${cfg.domain}"
-      ];
+      ++ [ "grafana.${cfg.domain}" ];
     in
     {
       services.ddclient.enable = lib.mkForce false;

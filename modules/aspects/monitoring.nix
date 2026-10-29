@@ -265,19 +265,17 @@
     { config, lib, ... }:
     let
       fqdn = "grafana.${config.modules.services.domain}";
-      legacyFqdn = "metrics.${config.modules.services.domain}";
       origin = lib.removeSuffix "/" config.modules.monitoring.cloudUrl;
     in
     {
       services.traefik.dynamicConfigOptions.http = {
         routers.grafana = {
-          # Keep the old hostname as an alias until Cloud alert links and DNS migrate.
-          rule = "Host(`${fqdn}`) || Host(`${legacyFqdn}`)";
+          rule = "Host(`${fqdn}`)";
           service = "noop@internal";
           middlewares = [ "grafana-cloud-redirect" ];
         };
         middlewares.grafana-cloud-redirect.redirectRegex = {
-          regex = "^https?://(?:${lib.escapeRegex fqdn}|${lib.escapeRegex legacyFqdn})([/?].*|$)";
+          regex = "^https?://${lib.escapeRegex fqdn}([/?].*|$)";
           replacement = origin + "\${1}";
           permanent = false;
         };
