@@ -19,13 +19,22 @@ let
   };
 in
 {
-  options.modules.hermes-cua.ready = lib.mkOption {
-    type = lib.types.bool;
-    readOnly = true;
-    internal = true;
-    default = integration.ready;
+  options.modules.hermes-cua = {
+    enable = lib.mkEnableOption "the remote CUA Spaces backend for Hermes";
+    ready = lib.mkOption {
+      type = lib.types.bool;
+      readOnly = true;
+      internal = true;
+      default = config.modules.hermes-cua.enable && integration.ready;
+    };
   };
-  config.services.hermes-agent = lib.mkIf integration.ready {
+  config.assertions = [
+    {
+      assertion = !config.modules.hermes-cua.enable || integration.ready;
+      message = "Hermes CUA was explicitly enabled without a compatible source and SDK; leave it disabled until enrollment and validation are complete.";
+    }
+  ];
+  config.services.hermes-agent = lib.mkIf config.modules.hermes-cua.ready {
     settings = integration.settings;
     extraPlugins = [ (pkgs.callPackage ../../../_packages/hermes-cua-spaces.nix { }) ];
     extraPythonPackages = [ runtime ];
