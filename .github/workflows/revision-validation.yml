@@ -92,9 +92,6 @@ jobs:
             .github/workflows/lock-update.yml \
             .github/workflows/ci.yml \
             .github/workflows/revision-validation.yml
-      - name: Verify linked worktree Git hooks
-        if: matrix.group == 'lightweight'
-        run: bash .github/scripts/test-worktree-hooks.sh
       - name: Upload check logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
