@@ -136,13 +136,9 @@ in
           ];
         };
 
-        # Use the CLI package after the split, but let Home Manager own the
-        # server arguments; static ExecStart arguments would shadow extraArgs.
+        # Home Manager builds ExecStart from programs.t3code.package and
+        # server.extraArgs; only retain our explicit restart/environment policy.
         systemd.user.services.t3code.Service = {
-          ExecStart = lib.mkForce (
-            "${lib.getExe' (if pkgs ? t3code-cli then pkgs.t3code-cli else config.programs.t3code.package) "t3"}"
-            + " ${lib.escapeShellArgs ([ "serve" ] ++ config.programs.t3code.server.extraArgs)}"
-          );
           Restart = lib.mkForce "always";
           Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [
             "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
