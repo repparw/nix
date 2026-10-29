@@ -24,7 +24,6 @@ WORKAROUNDS = {
         "modules/aspects/upstream/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
     "qbittorrent": ("modules/aspects/upstream/qbittorrent.nix", None),
     "wpaperd-fix": ("modules/aspects/upstream/wpaperd-fix.nix", None),
-    "voxtype-graphical": ("modules/aspects/ai/voxtype-graphical-workaround.nix", None),
     "gamescope-vkroots": ("modules/aspects/upstream/gamescope-vkroots.nix", None),
     "t3code-nightly-v2": ("modules/aspects/ai/t3code-nightly.nix", None),
     "t3code-stable010": ("modules/aspects/upstream/t3code-stable010.nix", None),
@@ -373,10 +372,6 @@ def detect(name, lock):
         return "PINNED-READY" if moonshine_reload_guard(repo, revision) else "waiting-source"
     if name == "wpaperd-fix":
         fixed = package_contains("wpaperd", "danyspin97/wpaperd", "442b962df717dfb6e3d86a3a4bfd1111882323b8", revision)
-    elif name == "voxtype-graphical":
-        # The override is a Home Manager user unit, not a NixOS system unit.
-        module = source("nix-community/home-manager", "modules/services/voxtype.nix", pin(lock, "home-manager"))
-        fixed = all(re.search(rf"\b{option}\s*=\s*\[\s*\"graphical-session.target\"", module) for option in ("PartOf", "After", "WantedBy"))
     elif name == "gamescope-vkroots":
         fixed = gamescope_fixed()
     elif name == "sonarr-jellyfin":

@@ -302,7 +302,7 @@ class PlanTests(unittest.TestCase):
         readiness = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(readiness)
         expected = set(readiness.PR_WAITS) | {
-            "qbittorrent", "wpaperd-fix", "voxtype-graphical",
+            "qbittorrent", "wpaperd-fix",
             "gamescope-vkroots", "moonshine-pr227", "sonarr-jellyfin",
             "t3code-nightly-v2",
             "t3code-stable010",
