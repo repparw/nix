@@ -1,30 +1,28 @@
 diff --git a/modules/aspects/gui/apps.nix b/modules/aspects/gui/apps.nix
-index c8a446ad1..4ea3e1673 100644
 --- a/modules/aspects/gui/apps.nix
 +++ b/modules/aspects/gui/apps.nix
-@@ -2,12 +2,6 @@
-   den,
-   ...
- }:
--let
--  tasksOrgPackage = builtins.fetchurl {
--    url = "https://raw.githubusercontent.com/NixOS/nixpkgs/68e19592a6d35b03cb050e499d051cff6f8c9539/pkgs/by-name/ta/tasks-org/package.nix";
--    sha256 = "sha256-ROHXY5AJiH9B1iarpvCKinvIpAr4HuXXdIcjIwnHq1I=";
--  };
--in
- {
-   flake-file.inputs.nixcord = {
-     url = "github:FlameFlag/nixcord";
-@@ -17,12 +11,6 @@ in
+@@ -12,12 +12,6 @@
      nixos =
        { pkgs, ... }:
        {
 -        nixpkgs.overlays = [
 -          (final: _prev: {
--            tasks-org = final.callPackage tasksOrgPackage { };
+-            tasks-org = (import ../upstream/_overlays/tasks-org.nix) final;
 -          })
 -        ];
 -
          programs = {
            gnome-disks.enable = true;
          };
+diff --git a/modules/aspects/upstream/_overlays/tasks-org.nix b/modules/aspects/upstream/_overlays/tasks-org.nix
+deleted file mode 100644
+--- a/modules/aspects/upstream/_overlays/tasks-org.nix
++++ /dev/null
+@@ -1,7 +0,0 @@
+-let
+-  tasksOrgPackage = builtins.fetchurl {
+-    url = "https://raw.githubusercontent.com/NixOS/nixpkgs/68e19592a6d35b03cb050e499d051cff6f8c9539/pkgs/by-name/ta/tasks-org/package.nix";
+-    sha256 = "sha256-ROHXY5AJiH9B1iarpvCKinvIpAr4HuXXdIcjIwnHq1I=";
+-  };
+-in
+-final: final.callPackage tasksOrgPackage { }
