@@ -67,15 +67,15 @@ class LockUpdate(unittest.TestCase):
         (self.checkout / ".github/upstream/watchers.json").write_text(json.dumps(registry, indent=2))
         # The fixture id must be a real readiness detector, and the file must
         # carry that detector's workaround marker (or inspect reports completed).
-        workaround = self.checkout / "modules/aspects/services/arr.nix"
+        workaround = self.checkout / "modules/aspects/upstream/qbittorrent.nix"
         workaround.parent.mkdir(parents=True, exist_ok=True)
         workaround.write_text("keep\nqbittorrent-nox.overrideAttrs\nworkaround\n")
         recipe = self.checkout / ".github/upstream/cleanup/fixture-cleanup.patch"
         recipe.parent.mkdir(parents=True, exist_ok=True)
         recipe.write_text(
-            "diff --git a/modules/aspects/services/arr.nix b/modules/aspects/services/arr.nix\n"
-            "--- a/modules/aspects/services/arr.nix\n"
-            "+++ b/modules/aspects/services/arr.nix\n"
+            "diff --git a/modules/aspects/upstream/qbittorrent.nix b/modules/aspects/upstream/qbittorrent.nix\n"
+            "--- a/modules/aspects/upstream/qbittorrent.nix\n"
+            "+++ b/modules/aspects/upstream/qbittorrent.nix\n"
             "@@ -1,3 +1 @@\n keep\n-qbittorrent-nox.overrideAttrs\n-workaround\n")
         # Nix-store source fixtures are read-only; a real Git checkout is writable.
         # Exercise the atomic cleanup against checkout-like permissions.
@@ -541,7 +541,7 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.main_sha(), self.main, "The fixture records the GitHub merge request separately")
         atomic = self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-cleanup")
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", "automation/atomic-cleanup:flake.lock"), lock_fixture("new"))
-        arr = self.git("--git-dir", str(self.remote), "show", "automation/atomic-cleanup:modules/aspects/services/arr.nix")
+        arr = self.git("--git-dir", str(self.remote), "show", "automation/atomic-cleanup:modules/aspects/upstream/qbittorrent.nix")
         self.assertEqual(arr, "keep")
         self.assertEqual(
             {r[2] for r in self.requests if r[:2] == ["workflow", "run"]
@@ -697,7 +697,7 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", f"{refreshed}:flake.lock"),
                          lock_fixture("new"))
         arr = self.git("--git-dir", str(self.remote), "show",
-                       f"{refreshed}:modules/aspects/services/arr.nix")
+                       f"{refreshed}:modules/aspects/upstream/qbittorrent.nix")
         self.assertEqual(arr, "keep")
         authelia = self.git("--git-dir", str(self.remote), "show",
                             f"{refreshed}:modules/_services/authelia.nix")
@@ -725,7 +725,7 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(first.returncode, 0, first.stderr)
         self.git("fetch", "--quiet", "origin", "automation/atomic-cleanup", cwd=self.checkout)
         self.git("switch", "--quiet", "--detach", "FETCH_HEAD", cwd=self.checkout)
-        arr = self.checkout / "modules/aspects/services/arr.nix"
+        arr = self.checkout / "modules/aspects/upstream/qbittorrent.nix"
         arr.write_text(arr.read_text() + "extra\n")
         self.git("add", ".", cwd=self.checkout)
         self.git("commit", "--quiet", "--amend", "--no-edit", cwd=self.checkout)
