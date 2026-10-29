@@ -137,7 +137,6 @@ figures below differ between audit summaries and must be refreshed before a
 production boot candidate. The owner confirmed `/srv` was empty on October 28;
 recheck before activation if services have since started using it.
 
-
 - **Root and ESP:** NVMe `/dev/nvme0n1p2[/@]` is Btrfs and `/boot` is `/dev/nvme0n1p1`. Home, store and service data remain on the original root.
 - **Capacity:** One report recorded ~124 GiB free, ~1 GiB unallocated and 76.0% metadata use; a later summary recorded ~68 GiB free, ~1 MiB unallocated and 77.2% metadata use. Timestamps are inconsistent. Refresh Btrfs usage and allocation pressure before changing boot layout.
 - **Device errors:** All five Btrfs error counters were zero. This is not a full integrity or recovery test.
