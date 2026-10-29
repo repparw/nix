@@ -150,11 +150,11 @@
 
         # A live, foreign hook must be preserved.
         rm "$repo_post_checkout"
-        printf '#!/bin/sh\\necho foreign\\n' > "$repo_post_checkout"
+        printf '#!/bin/sh\necho foreign\n' > "$repo_post_checkout"
         expect_preserve
 
         # Owned hooks can be refreshed, including through a valid symlink.
-        printf '%s\\n' ${pkgs.lib.escapeShellArg bootstrapMarker} > "$repo_post_checkout"
+        printf '%s\n' ${pkgs.lib.escapeShellArg bootstrapMarker} > "$repo_post_checkout"
         expect_install
         mv "$repo_post_checkout" "$TMPDIR/managed-hook"
         ln -s "$TMPDIR/managed-hook" "$repo_post_checkout"
