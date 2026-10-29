@@ -25,7 +25,6 @@ WORKAROUNDS = {
     "qbittorrent": ("modules/aspects/upstream/qbittorrent.nix", None),
     "wpaperd-fix": ("modules/aspects/upstream/wpaperd-fix.nix", None),
     "gamescope-vkroots": ("modules/aspects/upstream/gamescope-vkroots.nix", None),
-    "t3code-nightly-v2": ("modules/aspects/ai/t3code-nightly.nix", None),
     "t3code-stable010": ("modules/aspects/upstream/t3code-stable010.nix", None),
     "moonshine-pr227": ("modules/aspects/upstream/moonshine-pr227-test.nix", None),
     "nodejs-security": ("modules/aspects/upstream/nodejs-security.nix", "../../_packages/nodejs-security.nix"),
@@ -132,8 +131,7 @@ def moonshine_reload_guard(repo, revision):
 
 
 
-# Alpha's temporary nightly server remains local-owned until stable v2 is
-# deployed and verified. CI only checks immutable release/package evidence.
+# The stable-version bridge needs release and pin evidence before retirement.
 T3CODE_V2_COMMIT = "de343914273eceb852a1d1d739cd1d38df7796ee"
 T3CODE_STABLE_MIN_VERSION = (0, 1, 3)
 T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
@@ -165,7 +163,7 @@ def t3code_browser_wrapped(revision):
             all(library in text for library in ("libgbm", "nss", "libxkbcommon")))
 
 
-def t3code_nightly_v2_status(lock, minimum_version=(0, 0, 0)):
+def t3code_stable_v2_status(lock, minimum_version=(0, 0, 0)):
     upstream = "pingdotgg/t3code"
     latest = api(f"repos/{upstream}/releases/latest")
     if not isinstance(latest, dict) or not isinstance(latest.get("tag_name"), str):
@@ -333,11 +331,9 @@ def detect(name, lock):
         detector = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(detector)
         return detector.inspect(name, lock)["status"]
-    if name == "t3code-nightly-v2":
-        return t3code_nightly_v2_status(lock)
     if name == "t3code-stable010":
         # Removing the bridge must not downgrade the installed stable version.
-        return t3code_nightly_v2_status(lock, minimum_version=T3CODE_STABLE_MIN_VERSION)
+        return t3code_stable_v2_status(lock, minimum_version=T3CODE_STABLE_MIN_VERSION)
     if name in PR_WAITS:
         repo, number, input_name = PR_WAITS[name]
         pr = api(f"repos/{repo}/pulls/{number}")
