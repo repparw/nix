@@ -374,6 +374,25 @@ class Readiness(unittest.TestCase):
                 self.assertIn('diff --git a/modules/', patch_text)
 
 
+    def test_relocated_upstream_cleanups_apply_and_are_owned(self):
+        # Every remaining post-lock workaround except the independently
+        # migrating t3code-server unit lives under the watched directory.
+        # Check against the actual worktree so a moved helper and its cleanup
+        # cannot drift apart and silently break publication.
+        root = Path(__file__).resolve().parents[2]
+        registry = json.loads((root / ".github/upstream/watchers.json").read_text())
+        for name, spec in registry.items():
+            if spec["mode"] != "post-lock" or name == "t3code-server":
+                continue
+            with self.subTest(watcher=name):
+                relative, _marker = watch.WORKAROUNDS[name]
+                self.assertTrue(relative.startswith("modules/aspects/upstream/"), name)
+                recipe = root / ".github/upstream/cleanup" / spec["cleanup"]
+                subprocess.run(
+                    ["git", "apply", "--check", str(recipe)],
+                    cwd=root, check=True, capture_output=True, text=True,
+                )
+
     def test_t3code_server_cleanup_applies_to_current_service(self):
         # The cleanup is published after the Home Manager pin moves; keep
         # the recipe applicable while the hand-written unit still exists.
