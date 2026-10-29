@@ -232,12 +232,12 @@ class Readiness(unittest.TestCase):
     def test_nodejs_security_cleanup_completion_reads_the_aspect(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "modules/aspects").mkdir(parents=True)
+            (root / "modules/aspects/upstream").mkdir(parents=True)
             aspect = root / watch.WORKAROUNDS["nodejs-security"][0]
             with patch.object(watch, "ROOT", root), patch.object(watch, "detect") as detect:
                 self.assertEqual(watch.inspect("nodejs-security", LOCK), "completed")
                 detect.assert_not_called()
-            aspect.write_text("{ nodejs-runtime = callPackage ../_packages/nodejs-security.nix {}; }")
+            aspect.write_text("{ nodejs-runtime = callPackage ../../_packages/nodejs-security.nix {}; }")
             with patch.object(watch, "ROOT", root), \
                     patch.object(watch, "detect", return_value="merged-not-pinned"):
                 self.assertEqual(watch.inspect("nodejs-security", LOCK), "merged-not-pinned")
@@ -334,7 +334,7 @@ class Readiness(unittest.TestCase):
         # older package on the root pin.
         import re
         root = Path(__file__).resolve().parents[2]
-        bridge = (root / "modules/aspects/ai/t3code-stable010.nix").read_text()
+        bridge = (root / "modules/aspects/upstream/t3code-stable010.nix").read_text()
         cleanup = (root / ".github/upstream/cleanup/t3code-stable010.patch").read_text()
         match = re.search(r'\bversion\s*=\s*"(\d+)\.(\d+)\.(\d+)";', bridge)
         self.assertIsNotNone(match)
