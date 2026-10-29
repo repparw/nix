@@ -548,8 +548,13 @@
                 modules = [ { modules.wg-egress-relay.enable = true; } ];
               };
               enabledConfig = relayEnabled.config;
-              defaultRelayRoutes = lib.concatMap (peer: peer.allowedIPs) epsilon.networking.wireguard.interfaces.wg-home.peers;
-              enabledRelayRoutes = lib.concatMap (peer: peer.allowedIPs) enabledConfig.networking.wireguard.interfaces.wg-home.peers;
+              enabledWireGuard = enabledConfig.networking.wireguard.interfaces.wg-home;
+              relayService = enabledConfig.systemd.services.wg-egress-relay.serviceConfig;
+              relayRules = relayRules;
+              defaultRelayRoutes = lib.concatMap (peer: peer.allowedIPs) (
+                epsilon.networking.wireguard.interfaces.wg-home.peers
+              );
+              enabledRelayRoutes = lib.concatMap (peer: peer.allowedIPs) enabledWireGuard.peers;
               socksRelayMatches =
                 !epsilon.modules.wg-egress-relay.enable
                 && !(epsilon.users.users ? ${relayUser})
@@ -561,12 +566,12 @@
                 && enabledConfig.users.users ? ${relayUser}
                 && enabledConfig.systemd.services ? wg-egress-relay
                 && enabledConfig.systemd.services ? wg-egress-rules
-                && enabledConfig.systemd.services.wg-egress-relay.serviceConfig.User == relayUser
-                && !enabledConfig.networking.wireguard.interfaces.wg-home.allowedIPsAsRoutes
-                && enabledConfig.systemd.services.wg-egress-relay.serviceConfig.RestrictAddressFamilies == [ "AF_INET" ]
-                && lib.hasSuffix "-i ${relayBridgeIp} -p 1080" enabledConfig.systemd.services.wg-egress-relay.serviceConfig.ExecStart
-                && lib.hasInfix ''uidrange "$uid-$uid"'' enabledConfig.systemd.services.wg-egress-rules.script
-                && lib.hasInfix "blackhole default" enabledConfig.systemd.services.wg-egress-rules.script;
+                && relayService.User == relayUser
+                && !enabledWireGuard.allowedIPsAsRoutes
+                && relayService.RestrictAddressFamilies == [ "AF_INET" ]
+                && lib.hasSuffix "-i ${relayBridgeIp} -p 1080" relayService.ExecStart
+                && lib.hasInfix ''uidrange "$uid-$uid"'' relayRules
+                && lib.hasInfix "blackhole default" relayRules;
 
               expected =
                 fleetRegistryMatches
