@@ -18,20 +18,20 @@ PR_WAITS = {
 }
 WORKAROUNDS = {
     "authelia-pnpm-hash": ("modules/_services/authelia.nix", "autheliaPackage"),
-    "t3code-connect": ("modules/aspects/ai/t3code-connect.nix", "cp .env.example .env"),
-    "t3code-split": ("modules/aspects/ai/t3code-split.nix", "t3code-server ="),
+    "t3code-connect": ("modules/aspects/upstream/t3code-connect.nix", "cp .env.example .env"),
+    "t3code-split": ("modules/aspects/upstream/t3code-split.nix", "t3code-server ="),
     "tasks-org": ("modules/aspects/gui/apps.nix", "tasksOrgPackage"),
     "t3code-server": ("modules/aspects/ai/t3code.nix", "services.t3code-web"),
     "t3code-browser-libs": (
-        "modules/aspects/ai/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
+        "modules/aspects/upstream/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
     "qbittorrent": ("modules/aspects/services/arr.nix", "qbittorrent-nox.overrideAttrs"),
-    "wpaperd-fix": ("modules/aspects/gui/wpaperd-output-removal-race.patch", None),
+    "wpaperd-fix": ("modules/aspects/upstream/wpaperd-output-removal-race.patch", None),
     "voxtype-graphical": ("modules/aspects/ai/voxtype-graphical-workaround.nix", None),
     "gamescope-vkroots": ("modules/aspects/streaming.nix", "queueInfo.flags) { VkDeviceQueueInfo2"),
     "t3code-nightly-v2": ("modules/aspects/ai/t3code-nightly.nix", None),
-    "t3code-stable010": ("modules/aspects/ai/t3code-stable010.nix", None),
-    "moonshine-pr227": ("modules/aspects/moonshine-pr227-test.nix", None),
-    "nodejs-security": ("modules/aspects/nodejs-security.nix", "../_packages/nodejs-security.nix"),
+    "t3code-stable010": ("modules/aspects/upstream/t3code-stable010.nix", None),
+    "moonshine-pr227": ("modules/aspects/upstream/moonshine-pr227-test.nix", None),
+    "nodejs-security": ("modules/aspects/upstream/nodejs-security.nix", "../_packages/nodejs-security.nix"),
 }
 
 
