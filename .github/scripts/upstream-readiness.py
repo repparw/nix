@@ -31,7 +31,7 @@ WORKAROUNDS = {
     "t3code-nightly-v2": ("modules/aspects/ai/t3code-nightly.nix", None),
     "t3code-stable010": ("modules/aspects/upstream/t3code-stable010.nix", None),
     "moonshine-pr227": ("modules/aspects/upstream/moonshine-pr227-test.nix", None),
-    "nodejs-security": ("modules/aspects/upstream/nodejs-security.nix", "../_packages/nodejs-security.nix"),
+    "nodejs-security": ("modules/aspects/upstream/nodejs-security.nix", "../../_packages/nodejs-security.nix"),
 }
 
 
