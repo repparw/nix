@@ -329,16 +329,33 @@ class Readiness(unittest.TestCase):
             with self.assertRaises(ValueError):
                 watch.detect("t3code-stable010", LOCK)
 
+    def test_t3code_bridge_and_retirement_floor_agree(self):
+        # The post-lock cleanup must never retire a newer local bridge for an
+        # older package on the root pin.
+        import re
+        root = Path(__file__).resolve().parents[2]
+        bridge = (root / "modules/aspects/ai/t3code-stable010.nix").read_text()
+        cleanup = (root / ".github/upstream/cleanup/t3code-stable010.patch").read_text()
+        match = re.search(r'\bversion\s*=\s*"(\d+)\.(\d+)\.(\d+)";', bridge)
+        self.assertIsNotNone(match)
+        minimum = tuple(map(int, match.groups()))
+        self.assertEqual(watch.T3CODE_STABLE_MIN_VERSION, minimum)
+        version = ".".join(map(str, minimum))
+        self.assertIn(
+            f'lib.versionAtLeast config.programs.t3code.package.version "{version}"',
+            cleanup,
+        )
+
     def test_t3code_bridge_cleanup_cannot_downgrade_the_installed_release(self):
         def api(endpoint):
             if endpoint.endswith("/commits/nixos-unstable"):
                 return {"sha": "a" * 40}
-            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.1"
+            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.3"
             return {"tag_name": tag, "draft": False, "prerelease": False}
         for channel, pinned, expected in (
-                ("v0.1.0", "v0.1.0", "waiting-unstable"),
-                ("v0.1.1", "v0.1.0", "merged-not-pinned"),
-                ("v0.1.1", "v0.1.1", "PINNED-READY"),
+                ("v0.1.2", "v0.1.2", "waiting-unstable"),
+                ("v0.1.3", "v0.1.2", "merged-not-pinned"),
+                ("v0.1.3", "v0.1.3", "PINNED-READY"),
                 ("v0.1.10", "v0.1.10", "PINNED-READY")):
             with self.subTest(channel=channel, pinned=pinned), \
                     patch.object(watch, "api", side_effect=api), \
@@ -355,6 +372,25 @@ class Readiness(unittest.TestCase):
                 self.assertNotIn('diff --git a/flake.lock', patch_text)
                 self.assertNotIn('diff --git a/.github/', patch_text)
                 self.assertIn('diff --git a/modules/', patch_text)
+
+
+    def test_t3code_server_cleanup_applies_to_current_service(self):
+        # The cleanup is published after the Home Manager pin moves; keep
+        # the recipe applicable while the hand-written unit still exists.
+        root = Path(__file__).resolve().parents[2]
+        module = (root / "modules/aspects/ai/t3code.nix").read_text()
+        if "systemd.user.services.t3code-web" not in module:
+            return  # Already retired.
+        recipe = root / ".github/upstream/cleanup/t3code-server.patch"
+        recipe_text = recipe.read_text()
+        self.assertIn("config.programs.t3code.server.extraArgs", recipe_text)
+        self.assertIn("lib.escapeShellArgs", recipe_text)
+        self.assertIn("lib.getExe'", recipe_text)
+        # Home Manager's default sd-switch stops obsolete services from the
+        # previous generation; keep the removal of t3code-web in the recipe.
+        self.assertIn("-        systemd.user.services.t3code-web = {", recipe_text)
+        subprocess.run(["git", "apply", "--check", str(recipe)],
+                       cwd=root, check=True, capture_output=True)
 
 
 if __name__ == "__main__":

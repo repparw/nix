@@ -138,7 +138,7 @@ def moonshine_reload_guard(repo, revision):
 # Alpha's temporary nightly server remains local-owned until stable v2 is
 # deployed and verified. CI only checks immutable release/package evidence.
 T3CODE_V2_COMMIT = "de343914273eceb852a1d1d739cd1d38df7796ee"
-T3CODE_STABLE_MIN_VERSION = (0, 1, 1)
+T3CODE_STABLE_MIN_VERSION = (0, 1, 3)
 T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
 
 
