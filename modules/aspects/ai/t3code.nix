@@ -128,25 +128,21 @@ in
           };
         };
 
-        systemd.user.services.t3code-web = {
-          Unit = {
-            Description = "T3 Code Web Service";
-            After = [ "network.target" ];
-          };
-          Service = {
-            # Use the upstream CLI after the split; headless hosts select the local split until then.
-            ExecStart = "${
-              if pkgs ? t3code-cli then pkgs.t3code-cli else config.programs.t3code.package
-            }/bin/t3 serve --mode web";
-            Restart = "always";
-            RestartSec = 5;
-            Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [
-              "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
-            ];
-          };
-          Install = {
-            WantedBy = [ "default.target" ];
-          };
+        programs.t3code.server = {
+          enable = true;
+          extraArgs = [
+            "--mode"
+            "web"
+          ];
+        };
+
+        # Home Manager builds ExecStart from programs.t3code.package and
+        # server.extraArgs; only retain our explicit restart/environment policy.
+        systemd.user.services.t3code.Service = {
+          Restart = lib.mkForce "always";
+          Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [
+            "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
+          ];
         };
       };
   };
