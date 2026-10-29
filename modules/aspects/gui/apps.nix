@@ -12,12 +12,6 @@
     nixos =
       { pkgs, ... }:
       {
-        nixpkgs.overlays = [
-          (final: _prev: {
-            tasks-org = (import ../upstream/_overlays/tasks-org.nix) final;
-          })
-        ];
-
         programs = {
           gnome-disks.enable = true;
         };
