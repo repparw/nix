@@ -14,6 +14,14 @@ Epsilon's default egress carries its VPS IP, which some sites flag. The
 whose outbound traffic is policy-routed through the `wg-home` tunnel, so
 destinations see the home residential IP.
 
+## Activation
+
+The relay is **disabled by default**. Merely including the aspect on Epsilon
+does not alter WireGuard routes, create a proxy listener, or add a firewall rule.
+After separately verifying home-side NAT and authorizing the rollout, set
+`modules.wg-egress-relay.enable = true;` on Epsilon and deploy the validated
+configuration. Keep it disabled while this PR remains parked.
+
 ## How it works
 
 - `microsocks` listens on the Epsilon bridge gateway (`10.231.137.1:1080`) as
