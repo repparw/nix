@@ -64,6 +64,52 @@
             mode = "extractor";
           };
         defaultWatchers = [
+          (
+            (mkExtractorWatcher {
+              slug = "nixpkgs-security-fleet";
+              label = "Accepted Nixpkgs security issues for fleet packages";
+              url = "https://tracker.security.nixos.org/issues";
+              fetchUrl = "https://tracker.security.nixos.org/api/v1/issues?expand=suggestions";
+              extractor = "nixpkgsSecurityIssues";
+              displayTemplate = "nixpkgsSecurityIssues";
+              message = "New accepted Nixpkgs security issues for fleet packages";
+            })
+            // {
+              fetcher = "curl";
+              packages = [
+                "authelia"
+                "bazarr"
+                "brotli"
+                "bun"
+                "c-ares"
+                "chromium"
+                "electron"
+                "firefox"
+                "git"
+                "glibc"
+                "home-assistant"
+                "jellyfin"
+                "linux"
+                "miniflux"
+                "nix"
+                "nodejs_24"
+                "nodejs-slim_24"
+                "openssh"
+                "openssl"
+                "paperless-ngx"
+                "postgresql"
+                "prowlarr"
+                "python3"
+                "qbittorrent"
+                "radarr"
+                "redis"
+                "sonarr"
+                "systemd"
+                "traefik"
+                "wireguard-tools"
+              ];
+            }
+          )
           (mkExtractorWatcher {
             slug = "8bitdo-ultimate-2c-firmware";
             label = "8BitDo Ultimate 2C firmware";
@@ -120,7 +166,7 @@
         changeDetection = pkgs.writeShellApplication {
           name = "change-detection";
           runtimeInputs = [
-            pkgs.nodejs
+            pkgs.nodejs-runtime
             pkgs.curl
           ];
           text = ''
@@ -142,7 +188,7 @@
             fi
           '';
           serviceConfig.Type = "oneshot";
-          path = [ pkgs.nodejs ];
+          path = [ pkgs.nodejs-runtime ];
           # Posts through the fleet bot identity (token + channel), like every
           # other watcher, instead of a per-aspect webhook.
           script = ''

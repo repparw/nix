@@ -21,6 +21,8 @@
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         crashTriage = import ./hermes-crash/_package.nix { inherit pkgs; };
         packageTriage = import ./hermes-package/_package.nix { inherit pkgs; };
+        # Containers have their own package set; select the host's security overlay.
+        hermesNodejs = pkgs.nodejs-runtime;
       in
       {
         environment.systemPackages = [
@@ -73,6 +75,10 @@
             "--restrict-address-families=AF_NETLINK"
           ];
           bindMounts = {
+            "/etc/ssh/desktop_authorized_keys" = {
+              hostPath = "/home/repparw/services/hermes/.hermes/desktop_authorized_keys";
+              isReadOnly = true;
+            };
             "/var/lib/hermes/.hermes/scripts/crash_triage_cron.py" = {
               hostPath = toString crashTriage.gate;
               isReadOnly = true;
@@ -110,58 +116,31 @@
             { pkgs, ... }:
             {
               services.resolved.enable = true;
+              systemd.services.hermes-agent.environment.HERMES_MANAGED = lib.mkForce "false";
+              systemd.services.hermes-backend.environment.HERMES_MANAGED = lib.mkForce "false";
+              system.activationScripts.hermes-agent-setup.text = lib.mkAfter ''
+                printf '%s\n' false > /var/lib/hermes/.hermes/.managed
+              '';
 
               services.hermes-agent = {
                 enable = true;
+                backend = {
+                  mode = "serve";
+                  host = "127.0.0.1";
+                  sessionTokenFile = "/var/lib/hermes/.hermes/desktop-session-token";
+                };
                 package = pkgs.callPackage ../../_packages/hermes-agent.nix {
+                  nodejs_24 = hermesNodejs;
                   upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
                 };
                 environmentFiles = [
                   "/run/secrets/hermes-env"
                   "/run/secrets/hermes-llm-env"
                 ];
-                settings.model = {
-                  provider = "nous";
-                  default = "openai/gpt-6.1-sol";
-                };
-                settings.fallback_providers = [
-                  {
-                    provider = "nous";
-                    model = "stepfun/step-5-preview:free";
-                  }
-                  {
-                    provider = "nous";
-                    model = "meituan/longcat-2.5-preview:free";
-                  }
-                  {
-                    provider = "nous";
-                    model = "stepfun/step-3.7-flash:free";
-                  }
-                ];
-                settings.display.credits_notices = false;
-                settings.platforms.discord = {
-                  enabled = true;
-                  home_channel = {
-                    platform = "discord";
-                    chat_id = config.modules.services.discordChannelId;
-                    name = "notifications";
-                  };
-                };
-                settings.cron = {
-                  model = "stepfun/step-5-preview:free";
-                  model_provider = "nous";
-                };
-                settings.tool_loop_guardrails = {
-                  hard_stop_enabled = true;
-                  hard_stop_after = {
-                    exact_failure = 5;
-                    idempotent_no_progress = 5;
-                  };
-                };
                 extraPackages = with pkgs; [
                   curl
                   ffmpeg
-                  nodejs
+                  hermesNodejs
                   ripgrep
                   (python313.withPackages (ps: [ python313Packages.ddgs ]))
                 ];
@@ -169,6 +148,25 @@
 
               users.users.hermes.uid = 345;
               users.groups.hermes.gid = 345;
+              services.openssh = {
+                enable = true;
+                settings = {
+                  AllowUsers = [ "hermes" ];
+                  AuthenticationMethods = "publickey";
+                  AuthorizedKeysFile = "/etc/ssh/desktop_authorized_keys";
+                  PasswordAuthentication = false;
+                  KbdInteractiveAuthentication = false;
+                  PermitRootLogin = "no";
+                  AllowAgentForwarding = false;
+                  AllowStreamLocalForwarding = "no";
+                  AllowTcpForwarding = "local";
+                  PermitOpen = "127.0.0.1:9119";
+                  PermitListen = "none";
+                  X11Forwarding = false;
+                  PermitTTY = false;
+                  MaxSessions = 0;
+                };
+              };
 
               system.stateVersion = "26.05";
             };

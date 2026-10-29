@@ -25,6 +25,12 @@ pkgs.testers.runNixOSTest {
     virtualisation.diskImage = null;
     virtualisation.memorySize = 1536;
     virtualisation.emptyDiskImages = [ 512 ];
+    # Swap uses Btrfs backing, never the volatile /.
+    swapDevices = [
+      {
+        device = "/persist/swapfile";
+      }
+    ];
     virtualisation.fileSystems."/".neededForBoot = true;
     virtualisation.fileSystems."/persist" = {
       device = "/dev/disk/by-label/alpha-state";
@@ -70,6 +76,7 @@ pkgs.testers.runNixOSTest {
           echo existing-home > /seed/@/home/repparw/retained
           echo wrong-home > /seed/@home/decoy
           echo existing-store-state > /seed/@/nix/var/nix/retained
+          ${pkgs.btrfs-progs}/bin/btrfs filesystem mkswapfile --size 64m /seed/@/swapfile
           ${pkgs.util-linux}/bin/umount /seed
         fi
       '';
@@ -106,8 +113,12 @@ pkgs.testers.runNixOSTest {
         machine.succeed("umount /run/backing-check")
         machine.fail("test -e /home/decoy")
         machine.succeed("cmp /nix/var/nix/retained /persist/nix/var/nix/retained")
+        machine.succeed("grep -Eq '^/persist/swapfile[[:space:]]' /proc/swaps")
         machine.succeed("cmp /etc/ssh/ssh_host_ed25519_key ${fixture}/ssh_host_ed25519_key")
-        machine.succeed("echo test-password | passwd --stdin repparw; cp /etc/shadow /persist/expected-shadow")
+        machine.succeed("cp /etc/shadow /persist/before-shadow")
+        machine.succeed("echo test-password | passwd --stdin repparw")
+        machine.succeed("! cmp -s /etc/shadow /persist/before-shadow")
+        machine.succeed("cp /etc/shadow /persist/expected-shadow")
         machine.succeed("touch /ephemeral; echo after-boot >> /home/repparw/retained; sync")
     with subtest("A second tmpfs boot preserves accounts and existing data"):
         machine.reboot()
@@ -117,6 +128,7 @@ pkgs.testers.runNixOSTest {
         machine.succeed("test $(findmnt -n -o FSTYPE /home/containers/media/library) = tmpfs")
         machine.succeed("grep -qx after-boot /home/repparw/retained")
         machine.succeed("cmp /etc/shadow /persist/expected-shadow")
+        machine.succeed("grep -Eq '^/persist/swapfile[[:space:]]' /proc/swaps")
         machine.succeed("cmp /nix/var/nix/retained /persist/nix/var/nix/retained")
         machine.succeed("cmp /etc/ssh/ssh_host_ed25519_key ${fixture}/ssh_host_ed25519_key")
     with subtest("An unprepared existing subvolume refuses activation"):

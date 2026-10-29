@@ -84,21 +84,6 @@ def validate(name, architecture):
             package = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.outPath")
             require(service["Service"]["ExecStart"].startswith(package + "/bin/t3 "), "server package changed")
         build("alpha.config.home-manager.users.repparw.programs.t3code.package")
-    elif name == "cliamp-hm-module":
-        settings = evaluate("alpha.config.home-manager.users.repparw.programs.cliamp.settings")
-        require(settings == {"theme": "", "repeat": "Off", "shuffle": True, "provider": "spotify",
-                             "spotify": {"client_id": "e79bc2a7d7f44a9e9153c0a5121ee0ce", "bitrate": 320},
-                             "ytmusic": {"cookies_from": "chrome:~/.config/net.imput.helium/Default"}},
-                "cliamp settings changed")
-        service = unit("alpha", "cliamp")
-        require("cliamp" in service["Service"]["ExecStart"] and "daemon" in service["Service"]["ExecStart"],
-                "missing cliamp daemon")
-        require("cliamp.sock.pid" in str(service["Service"]["ExecStartPre"]), "stale PID cleanup changed")
-        build("alpha.pkgs.cliamp")
-    elif name == "cliamp-attach":
-        package = build("alpha.pkgs.cliamp")
-        help_text = command(str(package / "bin/cliamp"), "--help")
-        require(all(re.search(rf"\b{value}\b", help_text) for value in ("attach", "quit")), "missing CLI commands")
     elif name == "gamescope-vkroots":
         # Same raw-package source predicate as readiness, after removing the
         # local override. Then build the real WSI package, without stubs.
@@ -141,8 +126,9 @@ def validate(name, architecture):
         detector = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(detector)
         lock = json.loads((ROOT / "flake.lock").read_text())
-        require(detector.t3code_nightly_v2_status(lock) == "PINNED-READY",
-                "root pin must carry a stable orchestrator-v2 release")
+        require(detector.t3code_nightly_v2_status(
+                    lock, minimum_version=detector.T3CODE_STABLE_MIN_VERSION) == "PINNED-READY",
+                "root pin must carry a stable release at least as new as the bridge")
         for host in ("alpha", "pi", "epsilon"):
             service = unit(host, "t3code-web")
             require("--mode web" in service["Service"]["ExecStart"], "missing web arguments")
@@ -155,9 +141,16 @@ def validate(name, architecture):
         version = command("nix", "eval", "--raw", "--no-update-lock-file",
                           ".#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.t3code.package.version")
         match = re.match(r"(\d+)\.(\d+)\.(\d+)", version)
-        require(match and tuple(int(part) for part in match.groups()) >= (0, 1, 0),
-                f"pinned t3code {version} is below 0.1.0")
+        require(match and tuple(int(part) for part in match.groups()) >= detector.T3CODE_STABLE_MIN_VERSION,
+                f"pinned t3code {version} is below the bridge version")
         build("alpha.config.home-manager.users.repparw.programs.t3code.package")
+    elif name == "nodejs-security":
+        # The retired overlay family must be absent, and the fleet package
+        # must build against the pinned Bun and Node.
+        residual = json.loads(command("nix", "eval", "--json", "--no-update-lock-file",
+                                      ".#nixosConfigurations.alpha.pkgs", "--apply", "p: p ? bun-security"))
+        require(not residual, "bun-security must be retired from the fleet packages")
+        build("alpha.pkgs.opencode")
     else:
         raise ValueError(f"no package validation for {name}")
 

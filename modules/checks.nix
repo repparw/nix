@@ -10,54 +10,14 @@
           evalHost =
             host:
             let
-              mkStub =
-                pkgs: name:
-                let
-                  p = pkgs.writeShellScriptBin name "exit 0";
-                in
-                p
-                // {
-                  override = _: p;
-                  extend = _: p;
-                };
-              stubbed = inputs.self.nixosConfigurations.${host}.extendModules {
-                modules = [
-                  (
-                    { lib, pkgs, ... }:
-                    {
-                      nixpkgs.overlays = [
-                        (final: prev: {
-                          repparw-neovim = mkStub pkgs "nvim";
-                        })
-                      ];
-                    }
-                  )
-                ]
-                ++ lib.optionals (host == "epsilon") [
-                  (
-                    { lib, pkgs, ... }:
-                    let
-                      # The v0.22.2 module reads package.hermesVenv in its
-                      # activation script; the stub only needs it to evaluate.
-                      hermesStub = mkStub pkgs "hermes-agent";
-                    in
-                    {
-                      containers.hermes.config.services.hermes-agent.package = lib.mkForce (
-                        hermesStub // { hermesVenv = hermesStub; }
-                      );
-                    }
-                  )
-                ]
-                ++ lib.optionals (host == "alpha") [
-                  (
-                    { lib, pkgs, ... }:
-                    {
-                      home-manager.users.repparw.programs.helium.package = lib.mkForce (mkStub pkgs "helium");
-                    }
-                  )
-                ];
-              };
-              evaluatedDrvPath = builtins.unsafeDiscardStringContext stubbed.config.system.build.toplevel.drvPath;
+              # The real, unstubbed toplevel: evaluating its drvPath is pure and
+              # measured at 20-35s per host, so CI sees evaluation breakage in
+              # every subtree (nixvim, helium, hermes) instead of masking it
+              # behind stubs. unsafeDiscardStringContext keeps the tiny check
+              # derivation from depending on the whole closure.
+              evaluatedDrvPath =
+                builtins.unsafeDiscardStringContext
+                  inputs.self.nixosConfigurations.${host}.config.system.build.toplevel.drvPath;
             in
             pkgs.runCommand "check-nixos-${host}-eval" { } ''
               printf '%s\n' ${lib.escapeShellArg evaluatedDrvPath} > $out
@@ -125,7 +85,6 @@
           hermes-crash-triage = (import ./aspects/services/hermes-crash/_package.nix { inherit pkgs; }).check;
           hermes-package-triage =
             (import ./aspects/services/hermes-package/_package.nix { inherit pkgs; }).check;
-
           coredump-collector =
             pkgs.runCommand "check-coredump-collector" { nativeBuildInputs = [ pkgs.python3 ]; }
               ''
@@ -213,6 +172,7 @@
                 TEST_BASH = "${pkgs.bash}/bin/bash";
               }
               ''
+                ${pkgs.shellcheck}/bin/shellcheck -s bash ${probe}
                 node --test ${./_tests/fleet-failed-units.mjs}
                 touch $out
               '';
@@ -274,6 +234,186 @@
               }
               ''
                 ${generatedShellChecks}
+                touch $out
+              '';
+
+          # Alpha's home-state staging: exercises the production
+          # prepare-home-state script against a fixture home — including the
+          # critical-file guards for the OpenTofu state — and asserts the
+          # evaluated alpha configuration keeps both backup destinations
+          # covered.
+          home-state-backup =
+            let
+              prepareHomeState = import ./_scripts/prepare-home-state.nix { inherit pkgs lib; };
+              staging = prepareHomeState {
+                home = "/tmp/home-state-fixture-home";
+                stateRoot = "/tmp/home-state-fixture-root";
+                paths = [
+                  ".config/vesktop/settings.json"
+                  ".local/share/fish/fish_history"
+                  "Projects/nix/infra/terraform.tfstate"
+                ];
+                criticalPaths = [ "Projects/nix/infra/terraform.tfstate" ];
+                hddOnlyPaths = [ ".config/sops/age/keys.txt" ];
+              };
+              # Cut the string context: these evaluated values are plain
+              # paths and the check derivation must not depend on the host
+              # closure (same trick as evalHost above).
+              alpha = inputs.self.nixosConfigurations.alpha.config;
+              alphaHomeState = map builtins.unsafeDiscardStringContext alpha.modules.backup.homeState;
+              bupstateSources = map builtins.unsafeDiscardStringContext alpha.services.rsync.jobs.bupstate.sources;
+              resticPaths = map builtins.unsafeDiscardStringContext alpha.services.restic.backups.offsite.paths;
+            in
+            pkgs.runCommand "check-home-state-backup"
+              {
+                nativeBuildInputs = [
+                  pkgs.coreutils
+                  pkgs.jq
+                  pkgs.rsync
+                ];
+              }
+              ''
+                home=/tmp/home-state-fixture-home
+                state_root=/tmp/home-state-fixture-root
+                state_dir=$home/Projects/nix/infra
+                state=$state_dir/terraform.tfstate
+
+                rm -rf /tmp/home-state-fixture-*
+                mkdir -p $home/.config/vesktop $home/.local/share/fish \
+                  $home/.config/sops/age $state_dir/.terraform $state_root
+                printf '{}' > $home/.config/vesktop/settings.json
+                printf 'history\n' > $home/.local/share/fish/fish_history
+                printf 'x' > $home/.config/sops/age/keys.txt
+                # The never-backed-up neighbors of the state file; the state
+                # itself is created later so the bootstrap scenario can run
+                # without it.
+                printf 'x' > $state_dir/.terraform/provider-cache
+                printf 'x' > $state_dir/terraform.tfvars
+                printf 'x' > $state_dir/terraform.tfplan
+
+                # Evaluated alpha configuration coverage.
+                home_state='${builtins.toJSON alphaHomeState}'
+                printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
+                # Existing selection must stay untouched (spot check).
+                for kept in .config/moonshine/ .config/net.imput.helium/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
+                  printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
+                done
+                sources='${builtins.toJSON bupstateSources}'
+                printf '%s' "$sources" | jq -e 'index("/var/lib/home-state-backup/hdd/Projects")' >/dev/null
+                restic_paths='${builtins.toJSON resticPaths}'
+                printf '%s' "$restic_paths" | jq -e 'index("/var/lib/home-state-backup/offsite")' >/dev/null
+
+                # Bootstrap: a missing critical source without a prior backup
+                # marker is tolerated (host without tofu yet).
+                ${staging} offsite
+                staged=$state_root/offsite
+                test ! -e $staged/Projects/nix/infra/terraform.tfstate
+                test -f $staged/.config/vesktop/settings.json
+                test ! -e $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
+
+                # Evaluated alpha configuration coverage.
+                home_state='${builtins.toJSON alphaHomeState}'
+                printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
+                # Existing selection must stay untouched (spot check).
+                for kept in .config/moonshine/ .config/net.imput.helium/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
+                  printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
+                done
+                sources='${builtins.toJSON bupstateSources}'
+                printf '%s' "$sources" | jq -e 'index("/var/lib/home-state-backup/hdd/Projects")' >/dev/null
+                restic_paths='${builtins.toJSON resticPaths}'
+                printf '%s' "$restic_paths" | jq -e 'index("/var/lib/home-state-backup/offsite")' >/dev/null
+
+                # Off-site staging: state plus the rest of the allowlist,
+                # never the neighbors.
+                printf '{"version": 4, "serial": 1, "resources": [{"type": "oci_core_instance", "name": "epsilon"}]}' > $state
+                chmod 600 $state
+                ${staging} offsite
+                test -f $staged/Projects/nix/infra/terraform.tfstate
+                test "$(stat -c %a $staged/Projects/nix/infra/terraform.tfstate)" = 600
+                test -f $staged/.config/vesktop/settings.json
+                test -f $staged/.local/share/fish/fish_history
+                test -f $staged/.export-complete
+                test -f $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
+                test ! -e $staged/Projects/nix/infra/terraform.tfvars
+                test ! -e $staged/Projects/nix/infra/terraform.tfplan
+                test ! -e $staged/Projects/nix/infra/.terraform
+                test ! -e $staged/.config/sops/age
+
+                # A corrupt state fails the export and preserves the previous
+                # valid staged generation.
+                previous_stamp=$(cat $staged/.export-complete)
+                printf 'not json {{' > $state
+                if ${staging} offsite; then
+                  echo 'corrupt state must fail the export' >&2
+                  exit 1
+                fi
+                test "$(cat $staged/.export-complete)" = "$previous_stamp"
+                jq -e . $staged/Projects/nix/infra/terraform.tfstate >/dev/null
+
+                # After a successful backup, a missing critical source is an
+                # alarm, not a silent gap.
+                rm $state
+                if ${staging} offsite; then
+                  echo 'disappeared state must fail the export' >&2
+                  exit 1
+                fi
+                test -f $staged/Projects/nix/infra/terraform.tfstate
+                test "$(cat $staged/.export-complete)" = "$previous_stamp"
+
+                # Never capture while OpenTofu holds the state lock.
+                printf '{"version": 4, "serial": 2, "resources": []}' > $state
+                touch $state_dir/.terraform.tfstate.lock.info
+                if ${staging} offsite; then
+                  echo 'locked state must fail the export' >&2
+                  exit 1
+                fi
+                rm $state_dir/.terraform.tfstate.lock.info
+
+                # HDD destination additionally stages the age keys and the
+                # critical state.
+                ${staging} hdd
+                test -f $state_root/hdd/Projects/nix/infra/terraform.tfstate
+                test -f $state_root/hdd/.config/sops/age/keys.txt
+
+                touch $out
+              '';
+
+          # Static validation of the OCI root module in infra/: formatting
+          # plus schema validation against the pinned provider, fetched from
+          # the upstream release so the check needs no network or registry.
+          tofu =
+            let
+              ociProvider = pkgs.fetchurl {
+                # Keep in sync with infra/.terraform.lock.hcl (same zh hash).
+                url = "https://github.com/oracle/terraform-provider-oci/releases/download/v6.37.0/terraform-provider-oci_6.37.0_linux_amd64.zip";
+                sha256 = "3e3017f035fac18114e0b1d29c72430958054def0f800c22d36e1144d0c76422";
+              };
+            in
+            pkgs.runCommand "check-tofu"
+              {
+                nativeBuildInputs = [
+                  pkgs.opentofu
+                  pkgs.unzip
+                ];
+              }
+              ''
+                export HOME=$TMPDIR
+                export TF_IN_AUTOMATION=1
+
+                # OpenTofu's -plugin-dir search path expects the provider
+                # binary as a file at
+                # <dir>/<host>/<namespace>/<type>/<version>/<os>_<arch>/.
+                plugin_dir=$TMPDIR/plugins/registry.opentofu.org/oracle/oci/6.37.0/linux_amd64
+                mkdir -p "$plugin_dir"
+                unzip -q -j ${ociProvider} -d "$plugin_dir"
+
+                cp -r ${inputs.self}/infra module
+                chmod -R u+w module
+                cd module
+                mkdir -p .terraform
+                tofu init -backend=false -input=false -plugin-dir="$TMPDIR/plugins"
+                tofu fmt -check -recursive .
+                tofu validate .
                 touch $out
               '';
 
@@ -361,6 +501,22 @@
                 python3 ${./scripts/pi-generation-retention.test.py} ${./scripts/pi-generation-retention.py}
                 python3 ${./scripts/package-update-event.test.py} ${./scripts/package-update-event.py}
                 python3 ${./scripts/lock-update.test.py} ${inputs.self}/.github/workflows/lock-update.yml ${inputs.self}/.github/workflows/ci.yml ${inputs.self}/.github/workflows/revision-validation.yml
+                touch $out
+              '';
+
+          bttoggle =
+            pkgs.runCommand "check-bttoggle"
+              {
+                nativeBuildInputs = [
+                  pkgs.bash
+                  pkgs.coreutils
+                  pkgs.python3
+                  pkgs.shellcheck
+                ];
+              }
+              ''
+                shellcheck --shell=bash ${./scripts/bttoggle.sh}
+                python3 ${./scripts/bttoggle.test.py} ${./scripts/bttoggle.sh}
                 touch $out
               '';
 
@@ -534,13 +690,44 @@
                 && !(builtins.any (rule: builtins.elem "null.example.test" rule.domain) sparsePolicy.authelia.rules)
                 && healthcheckBypassMatches;
 
+              edgeTunnel = epsilon.services.cloudflared.tunnels.epsilon-edge;
+              tunnelRoutingMatches =
+                builtins.hasAttr domain edgeTunnel.ingress
+                && !(builtins.hasAttr "jellyfin.${domain}" edgeTunnel.ingress)
+                && builtins.hasAttr "qbit.${domain}" edgeTunnel.ingress
+                &&
+                  epsilon.services.traefik.dynamicConfigOptions.http.routers.qbittorrent.middlewares
+                  == [ "qbit-auth" ]
+                && lib.all (
+                  host:
+                  edgeTunnel.ingress.${host}.service == "https://127.0.0.1:8443"
+                  && edgeTunnel.ingress.${host}.originRequest.originServerName == host
+                  && edgeTunnel.ingress.${host}.originRequest.noTLSVerify != true
+                ) (lib.attrNames edgeTunnel.ingress)
+                && edgeTunnel.default == "http_status:404"
+                && epsilon.services.traefik.staticConfigOptions.entryPoints.tunnel.address == "127.0.0.1:8443"
+                && !epsilon.services.ddclient.enable;
+
+              hardeningMatches =
+                builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress
+                && epsilon.services.traefik.staticConfigOptions.api.dashboard == false
+                && epsilon.services.traefik.staticConfigOptions.api.debug == false
+                && epsilon.containers.paperless.forwardPorts == [ ];
+
               expected =
-                fleetRegistryMatches && validationMatches && ingressPolicyMatches && glanceRoutingMatches;
+                fleetRegistryMatches
+                && validationMatches
+                && ingressPolicyMatches
+                && glanceRoutingMatches
+                && tunnelRoutingMatches
+                && hardeningMatches;
               matcherReport = builtins.toJSON {
                 r = fleetRegistryMatches;
                 v = validationMatches;
                 i = ingressPolicyMatches;
                 g = glanceRoutingMatches;
+                t = tunnelRoutingMatches;
+                h = hardeningMatches;
               };
             in
             assert expected || throw matcherReport;

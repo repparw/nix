@@ -2,16 +2,14 @@
 name: revision-validation
 on:
   workflow_call:
+    secrets:
+      CACHIX_AUTH_TOKEN:
+        required: false
     inputs:
       expected_sha:
         description: Exact commit expected for this validation
         required: false
         type: string
-      build_arm_authelia:
-        description: Build the unpatched aarch64 Authelia package natively
-        required: false
-        type: boolean
-        default: false
       upstream_watcher:
         required: false
         type: string
@@ -21,7 +19,7 @@ permissions:
 
 jobs:
   changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       check_matrix: ${{ steps.impact.outputs.check_matrix }}
@@ -34,7 +32,7 @@ jobs:
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
         run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.sha }}
       - name: Detect affected validation
@@ -46,7 +44,7 @@ jobs:
   checks:
     needs: changes
     name: checks (${{ matrix.group }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -57,10 +55,19 @@ jobs:
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
         run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.sha }}
-      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      # The daemon publishes locally built paths as they finish; substituted
+      # paths never reach the post-build hook and Cachix skips paths that
+      # cache.nixos.org already serves.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Run attributed checks
         env:
           CI_CHECKS: ${{ matrix.checks }}
@@ -87,7 +94,7 @@ jobs:
             .github/workflows/revision-validation.yml
       - name: Upload check logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: checks-${{ matrix.group }}
           path: ci-logs/
@@ -98,7 +105,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.run_hosts == 'true'
     name: host-eval (fleet, stubbed)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Verify requested revision
@@ -106,17 +113,17 @@ jobs:
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
         run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.sha }}
-      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
       - name: Evaluate all hosts with stubs
         env:
           CI_CHECKS: alpha pi epsilon
         run: bash .github/scripts/run-checks.sh
       - name: Upload evaluation logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: host-eval-fleet
           path: ci-logs/
@@ -127,7 +134,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.run_neovim == 'true'
     name: neovim-build (alpha, native)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - name: Verify requested revision
@@ -135,17 +142,42 @@ jobs:
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
         run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.sha }}
-      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          # The daemon publishes the built closure during the build; the
+          # explicit publish step below still flushes and verifies it
+          # synchronously against the fleet key.
+          skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Require trusted publishing credentials
+        if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          CACHIX_CREDENTIALS_PRESENT: ${{ secrets.CACHIX_AUTH_TOKEN != '' }}
+        run: |
+          if [ "$CACHIX_CREDENTIALS_PRESENT" != true ]; then
+            echo '::error::Trusted publishing needs a cache-scoped write CACHIX_AUTH_TOKEN.'
+            exit 1
+          fi
       - name: Build the host-selected Neovim closure
         env:
           CI_CHECKS: host-neovim
         run: bash .github/scripts/run-checks.sh
+      # Same-repository writers are trusted publishers. Forks and Dependabot
+      # still build and substitute, but never receive publishing credentials.
+      - name: Publish and verify the Neovim closure
+        if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        run: bash .github/scripts/publish-neovim.sh
       - name: Upload build logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: host-neovim
           path: ci-logs/
@@ -155,7 +187,7 @@ jobs:
   persistence-vm:
     needs: changes
     if: needs.changes.outputs.run_persistence_vm == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - name: Verify requested revision
@@ -163,50 +195,33 @@ jobs:
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
         run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.sha }}
-      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
         with:
           kvm: true
+      # Same daemon contract as the checks job: uploads ride the post-build
+      # hook, so VM-closure builds land in the fleet cache without re-uploading
+      # substituted paths, and cache outages cannot fail the build.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Exercise persistence in disposable VMs
         env:
           CI_CHECKS: host-persistence-vm host-persistence-btrfs-vm
         run: bash .github/scripts/run-checks.sh
       - name: Upload VM logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: persistence-vm
           path: ci-logs/
           if-no-files-found: ignore
           retention-days: 14
-
-  # Opt-in: the cleanup PR removes a hash workaround that a native aarch64
-  # build originally caught (PR #168). Config checks and stubbed host evals
-  # alone do not prove the original failure is gone, so the candidate that
-  # removes the workaround must build the unpatched package natively.
-  # ci.yml enables this for every automation/atomic-cleanup PR, so the
-  # required gate includes the ARM result before auto-merge can land it.
-  arm-authelia-build:
-    name: arm-build (authelia, native)
-    if: inputs.build_arm_authelia
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 60
-    steps:
-      - name: Verify requested revision
-        if: inputs.expected_sha != ''
-        env:
-          EXPECTED_SHA: ${{ inputs.expected_sha }}
-        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
-      - uses: actions/checkout@v7
-        with:
-          ref: ${{ github.sha }}
-      - uses: DeterminateSystems/nix-installer-action@v22
-      - name: Rebuild pnpm dependencies and build unpatched Authelia on ARM
-        run: |
-          nix build --rebuild --no-link --print-out-paths ".#nixosConfigurations.epsilon.pkgs.authelia.web.pnpmDeps"
-          nix build --no-link --print-out-paths ".#nixosConfigurations.epsilon.pkgs.authelia"
 
   upstream-package-build:
     name: upstream-package (${{ matrix.architecture }}, native)
@@ -218,17 +233,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON((contains(inputs.upstream_watcher, 't3code-split') || inputs.upstream_watcher == 'automation/atomic-cleanup') && '[{"architecture":"x86","runner":"ubuntu-latest"},{"architecture":"arm","runner":"ubuntu-24.04-arm"}]' || '[{"architecture":"x86","runner":"ubuntu-latest"}]') }}
+        include: ${{ fromJSON((contains(inputs.upstream_watcher, 't3code-split') || inputs.upstream_watcher == 'automation/atomic-cleanup') && '[{"architecture":"x86","runner":"ubuntu-24.04"},{"architecture":"arm","runner":"ubuntu-24.04-arm"}]' || '[{"architecture":"x86","runner":"ubuntu-24.04"}]') }}
     steps:
       - name: Verify requested revision
         if: inputs.expected_sha != ''
         env:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
         run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      # Native x86 and ARM builds feed the fleet cache; aarch64 hosts and the
+      # ARM validator reuse these outputs on later watcher validations.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Verify actual upstream package and generated behavior
         env:
           WATCHERS: ${{ inputs.upstream_watcher }}
@@ -238,9 +261,10 @@ jobs:
           # A dispatch may bundle several apply-coupled cleanups; validate
           # each in turn. Branch-triggered runs carry a single watcher name.
           # Atomic-cleanup PRs carry the sentinel instead: the bundled
-          # watchers (minus Authelia, covered by the native ARM build plus
-          # host evals) resolve from the exact candidate commit message, so
+          # watchers resolve from the exact candidate commit message, so
           # the required gate includes every bundled package validation.
+          # The retired authelia-pnpm-hash watcher has no package validator;
+          # it is stripped defensively if a stale candidate ever names it.
           list="$WATCHERS"
           if [ "$list" = automation/atomic-cleanup ]; then
             list=$(git log -1 --format=%s | sed -n 's/.*updated lock (\([^)]*\)).*/\1/p' | tr ',' ' ')
@@ -253,7 +277,7 @@ jobs:
             list="${list#automation/upstream-}"
           fi
           if [ -z "$(printf '%s' "$list" | tr -d ' ')" ]; then
-            echo "No package-validated watchers in this atomic candidate; ARM and host evals cover it."
+            echo "No package-validated watchers in this atomic candidate; host evals cover it."
             exit 0
           fi
           for watcher in $(printf '%s' "$list" | tr ',' ' '); do
@@ -266,8 +290,8 @@ jobs:
 
   gate:
     if: always()
-    needs: [changes, checks, neovim-build, host-eval, persistence-vm, arm-authelia-build, upstream-package-build]
-    runs-on: ubuntu-latest
+    needs: [changes, checks, neovim-build, host-eval, persistence-vm, upstream-package-build]
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Require every validation group
@@ -278,10 +302,8 @@ jobs:
           NEOVIM_RESULT: ${{ needs.neovim-build.result }}
           HOSTS_ENABLED: ${{ needs.changes.outputs.run_hosts }}
           PERSISTENCE_ENABLED: ${{ needs.changes.outputs.run_persistence_vm }}
-          BUILD_ARM: ${{ inputs.build_arm_authelia }}
           HOSTS_RESULT: ${{ needs.host-eval.result }}
           PERSISTENCE_RESULT: ${{ needs.persistence-vm.result }}
-          ARM_RESULT: ${{ needs.arm-authelia-build.result }}
           UPSTREAM_WATCHER: ${{ inputs.upstream_watcher }}
           UPSTREAM_RESULT: ${{ needs.upstream-package-build.result }}
         run: |
@@ -302,13 +324,6 @@ jobs:
             false) test "$PERSISTENCE_RESULT" = skipped || exit 1 ;;
             *) exit 1 ;;
           esac
-          # An explicitly requested native ARM build must pass; otherwise
-          # it may be skipped, but must never fail.
-          if test "$BUILD_ARM" = true; then
-            test "$ARM_RESULT" = success
-          else
-            test "$ARM_RESULT" = success || test "$ARM_RESULT" = skipped
-          fi
           if test -n "$UPSTREAM_WATCHER"; then
             test "$UPSTREAM_RESULT" = success
           else

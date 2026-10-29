@@ -27,6 +27,8 @@
     "/run",
     "/tmp",
     "/var/tmp",
+    "/swapfile",
+    "/persist/swapfile",
     "/mnt",
     "/home/containers/media/hdd",
     "/home/containers/media/seagate",

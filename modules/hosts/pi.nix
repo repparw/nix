@@ -55,6 +55,18 @@
         # host-owned upstream waits (Sonarr/Jellyfin, Moonshine PR227) after
         # each Alpha convergence and on its own timer.
         modules.fleet-readiness.enable = true;
+        modules.monitoring.health.disks =
+          map
+            (mount: {
+              inherit mount;
+              warn = 90;
+              crit = 93;
+            })
+            [
+              "/persist"
+              "/nix"
+              "/home/repparw"
+            ];
         modules.persistence.enable = true;
         modules.persistence.mutableAccounts = true;
         modules.backup.paths = [

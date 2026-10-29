@@ -26,20 +26,20 @@ files instead of copying module contents.
 ## Services
 
 - [Service model](services/service-model.md)
+- [Hermes configuration and operations (private)](https://github.com/repparw/hermes-config)
 
 ## Runbooks
 
-- [Grafana Cloud setup and alerting](runbooks/grafana-cloud-pilot.md)
-- [Add and maintain change-detection watchers](runbooks/change-detection-watchers.md)
+- [Diagnose fleet observability](runbooks/monitoring.md)
+- [Configure Grafana Cloud](runbooks/grafana-cloud.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
 - [Update rollback](runbooks/update-rollback.md)
-- [Fleet health, offsite backups, and upgrade reports](runbooks/fleet-operations.md)
+- [Fleet health, backups, and deployment](runbooks/fleet-operations.md)
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
-- [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
 - [Restore host state from offsite backups](runbooks/host-recovery.md)
-- [Prepare pi and epsilon for persistent state](runbooks/host-persistence.md)
-- [Prepare alpha for a volatile root](runbooks/alpha-impermanence.md)
+- [Change host persistence](runbooks/host-persistence.md)
+- [Prepare Alpha for a volatile root](runbooks/alpha-impermanence.md)
 
 ## Fixes
 
@@ -56,6 +56,7 @@ files instead of copying module contents.
 - [Verify NixOS configuration changes](../.agents/skills/verify-nixos-config/SKILL.md)
 - [Operate the running fleet](../.agents/skills/fleet-operations/SKILL.md)
 - [Watch for an upstream fix](../.agents/skills/watch-upstream/SKILL.md)
+- [Manage page watchers](../.agents/skills/manage-page-watchers/SKILL.md)
 - [Domain docs](agents/domain.md)
 - [GitHub issue tracker](agents/issue-tracker.md)
 - [Triage labels](agents/triage-labels.md)

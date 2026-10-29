@@ -16,6 +16,7 @@
         monitoring._.agent
         nixvim
         nixpkgs
+        nodejs-security
         nix
         system
       ];
@@ -27,7 +28,10 @@
       nixos.systemd.targets.machines.wantedBy = [ "multi-user.target" ];
       homeManager.home.stateVersion = "26.05";
 
-      nixos.nix.settings.min-free = 3 * 1024 * 1024 * 1024;
+      nixos.nix.settings = {
+        min-free = lib.mkDefault (3 * 1024 * 1024 * 1024);
+        max-free = lib.mkDefault (6 * 1024 * 1024 * 1024);
+      };
       nixos.nix.gc = {
         automatic = true;
         dates = "weekly";

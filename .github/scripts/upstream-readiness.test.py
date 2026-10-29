@@ -14,6 +14,70 @@ LOCK = {"nodes": {"root": {"inputs": {"nixpkgs": "np", "home-manager": "hm"}}, "
 
 
 class Readiness(unittest.TestCase):
+    def fsr_spec(self, commit=None):
+        return patch.object(watch.Path, "read_text", return_value=json.dumps({
+            "fsr4-rdna2": {"baseline_release": "GE-Proton11-11", "support_commit": commit}}))
+
+    def test_fsr_release_notes_only_request_review_never_ready(self):
+        def release(tag, body, **extra):
+            return dict(tag_name=tag, body=body, draft=False, prerelease=False, **extra)
+        releases = [release("GE-Proton11-11", "FSR4 support"),
+                    release("GE-Proton11-12", "Video playback fixes"),
+                    release("GE-Proton11-13", "FSR 4.1 RDNA2 support")]
+        with self.fsr_spec(), patch.object(watch, "api", return_value=releases), \
+                patch.object(watch, "ge_package_contains") as probe:
+            self.assertEqual(watch.detect("fsr4-rdna2", LOCK),
+                             "upstream-review-required:GE-Proton11-13")
+            probe.assert_not_called()
+        releases[-1]["prerelease"] = True
+        with self.fsr_spec(), patch.object(watch, "api", return_value=releases):
+            self.assertEqual(watch.detect("fsr4-rdna2", LOCK), "waiting-upstream")
+        with self.fsr_spec(), patch.object(watch, "api", return_value=[releases[0]] * 100):
+            self.assertEqual(watch.detect("fsr4-rdna2", LOCK), "waiting-upstream")
+
+    def test_fsr_ancestry_gates_channel_and_pin_independently(self):
+        commit = "b" * 40
+        lock = json.loads(json.dumps(LOCK))
+        lock["nodes"]["np"]["original"] = {"ref": "nixos-unstable"}
+        def api(endpoint):
+            if endpoint.endswith("releases/latest"):
+                return {"tag_name": "GE-Proton11-12", "draft": False, "prerelease": False}
+            return {"sha": "a" * 40}
+        for package_results, expected in (([False], "waiting-unstable"),
+                                          ([True, False], "merged-not-pinned"),
+                                          ([True, True], "PINNED-READY")):
+            with self.subTest(expected=expected), self.fsr_spec(commit), \
+                    patch.object(watch, "api", side_effect=api), \
+                    patch.object(watch, "contains", return_value=True), \
+                    patch.object(watch, "ge_package_contains", side_effect=package_results) as probe:
+                self.assertEqual(watch.detect("fsr4-rdna2", lock), expected)
+                self.assertEqual(probe.call_args_list[0].args, ("a" * 40, commit))
+                if len(package_results) == 2:
+                    self.assertEqual(probe.call_args_list[1].args, ("nix-pin", commit))
+        with self.fsr_spec(commit), patch.object(watch, "api", side_effect=api), \
+                patch.object(watch, "contains", return_value=False), \
+                patch.object(watch, "ge_package_contains") as probe:
+            self.assertEqual(watch.detect("fsr4-rdna2", lock), "waiting-upstream")
+            probe.assert_not_called()
+
+    def test_fsr_rejects_unknown_archive_and_unstable_packaged_release(self):
+        archive = ('https://github.com/GloriousEggroll/proton-ge-custom/releases/'
+                   'download/${finalAttrs.version}/${finalAttrs.version}-x86_64.tar.gz')
+        package = 'version = "GE-Proton11-12"; url = "' + archive + '";'
+        with patch.object(watch, "source", return_value=package.replace("github.com", "example.com")):
+            with self.assertRaises(ValueError):
+                watch.ge_package_contains("pin", "b" * 40)
+        with patch.object(watch, "source", return_value=package), patch.object(watch, "api", return_value={
+                "tag_name": "GE-Proton11-12", "draft": False, "prerelease": True}):
+            with self.assertRaises(ValueError):
+                watch.ge_package_contains("pin", "b" * 40)
+
+    def test_fsr_api_errors_and_invalid_evidence_fail_closed(self):
+        for commit, result in (("short", []), (None, [{}]), (None, [{}] * 100)):
+            with self.subTest(commit=commit), self.fsr_spec(commit), \
+                    patch.object(watch, "api", return_value=result):
+                self.assertTrue(watch.inspect("fsr4-rdna2", LOCK).startswith("unavailable"))
+
     def test_tridactyl_waits_for_the_selected_extension_release(self):
         lock = {"nodes": {"root": {"inputs": {"firefox-addons": "addons"}},
                           "addons": {"locked": {"rev": "addon-pin"}}}}
@@ -53,11 +117,6 @@ class Readiness(unittest.TestCase):
         for status, base, expected in [("ahead", "fix", True), ("identical", "fix", True), ("behind", "fix", False), ("diverged", "fix", False), ("ahead", "other", False)]:
             with self.subTest(status=status, base=base), patch.object(watch, "api", return_value={"status": status, "merge_base_commit": {"sha": base}}):
                 self.assertEqual(watch.contains("repo", "fix", "pin"), expected)
-
-    def test_hm_waits_use_hm_pin(self):
-        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), patch.object(watch, "contains", return_value=True) as contains:
-            self.assertEqual(watch.detect("t3code-server", LOCK), "PINNED-READY")
-            contains.assert_called_once_with("nix-community/home-manager", "fix", "hm-pin")
 
     def test_upstream_unmerged_and_pin_behind(self):
         with patch.object(watch, "api", return_value={"merged": False}):
@@ -99,12 +158,6 @@ class Readiness(unittest.TestCase):
 
     def test_version_tag_expression_is_resolved_exactly(self):
         self.assertEqual(watch.source_ref('version = "1.3.0"; tag = finalAttrs.version;'), "1.3.0")
-
-    def test_cliamp_requires_both_attach_and_quit(self):
-        with patch.object(watch, "source", side_effect=['version = "2.3.0"; tag = "v${finalAttrs.version}";', 'attachCommand()']):
-            self.assertEqual(watch.detect("cliamp-attach", LOCK), "merged-not-pinned")
-        with patch.object(watch, "source", side_effect=['rev = "source-sha";', 'attachCommand() quitCommand()']):
-            self.assertEqual(watch.detect("cliamp-attach", LOCK), "PINNED-READY")
 
     def test_graphical_target_must_cover_all_unit_dependencies(self):
         good = 'PartOf = [ "graphical-session.target" ]; After = [ "graphical-session.target" ]; WantedBy = [ "graphical-session.target" ];'
@@ -152,6 +205,37 @@ class Readiness(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, patch.object(watch, "ROOT", Path(directory)), patch.object(watch, "detect") as detect:
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")
             detect.assert_not_called()
+
+    def test_nodejs_security_requires_node_shared_deps_and_bun(self):
+        bun = {"merged": True, "merge_commit_sha": "bun-merge-sha"}
+        # Node, Brotli, c-ares and the Bun bump must all be contained by the
+        # pin: the cleanup retires the whole overlay family in one candidate.
+        for results in ([False], [True, False], [True, True, False], [True, True, True, False]):
+            with self.subTest(results=results), \
+                    patch.object(watch, "api", return_value=bun), \
+                    patch.object(watch, "contains", side_effect=results):
+                self.assertEqual(watch.detect("nodejs-security", LOCK), "merged-not-pinned")
+        with patch.object(watch, "api", return_value=bun), \
+                patch.object(watch, "contains", return_value=True) as probe:
+            self.assertEqual(watch.detect("nodejs-security", LOCK), "PINNED-READY")
+            self.assertEqual(probe.call_count, 4)
+        with patch.object(watch, "api", return_value={"merged": False, "merge_commit_sha": "x"}):
+            self.assertEqual(watch.detect("nodejs-security", LOCK), "waiting-upstream")
+        with patch.object(watch, "api", side_effect=ValueError("missing ancestry")):
+            self.assertTrue(watch.inspect("nodejs-security", LOCK).startswith("unavailable"))
+
+    def test_nodejs_security_cleanup_completion_reads_the_aspect(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "modules/aspects").mkdir(parents=True)
+            aspect = root / watch.WORKAROUNDS["nodejs-security"][0]
+            with patch.object(watch, "ROOT", root), patch.object(watch, "detect") as detect:
+                self.assertEqual(watch.inspect("nodejs-security", LOCK), "completed")
+                detect.assert_not_called()
+            aspect.write_text("{ nodejs-runtime = callPackage ../_packages/nodejs-security.nix {}; }")
+            with patch.object(watch, "ROOT", root), \
+                    patch.object(watch, "detect", return_value="merged-not-pinned"):
+                self.assertEqual(watch.inspect("nodejs-security", LOCK), "merged-not-pinned")
 
 
     def test_t3code_cleanup_completion_preserves_permanent_aspects(self):
@@ -235,10 +319,44 @@ class Readiness(unittest.TestCase):
         for status in ("waiting-upstream", "merged-not-pinned", "PINNED-READY"):
             with patch.object(watch, "t3code_nightly_v2_status", return_value=status) as gate:
                 self.assertEqual(watch.detect("t3code-stable010", LOCK), status)
-                gate.assert_called_once_with(LOCK)
+                gate.assert_called_once_with(LOCK, minimum_version=watch.T3CODE_STABLE_MIN_VERSION)
         with patch.object(watch, "t3code_nightly_v2_status", side_effect=ValueError("boom")):
             with self.assertRaises(ValueError):
                 watch.detect("t3code-stable010", LOCK)
+
+    def test_t3code_bridge_and_retirement_floor_agree(self):
+        # The post-lock cleanup must never retire a newer local bridge for an
+        # older package on the root pin.
+        import re
+        root = Path(__file__).resolve().parents[2]
+        bridge = (root / "modules/aspects/ai/t3code-stable010.nix").read_text()
+        cleanup = (root / ".github/upstream/cleanup/t3code-stable010.patch").read_text()
+        match = re.search(r'\bversion\s*=\s*"(\d+)\.(\d+)\.(\d+)";', bridge)
+        self.assertIsNotNone(match)
+        minimum = tuple(map(int, match.groups()))
+        self.assertEqual(watch.T3CODE_STABLE_MIN_VERSION, minimum)
+        version = ".".join(map(str, minimum))
+        self.assertIn(
+            f'lib.versionAtLeast config.programs.t3code.package.version "{version}"',
+            cleanup,
+        )
+
+    def test_t3code_bridge_cleanup_cannot_downgrade_the_installed_release(self):
+        def api(endpoint):
+            if endpoint.endswith("/commits/nixos-unstable"):
+                return {"sha": "a" * 40}
+            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.3"
+            return {"tag_name": tag, "draft": False, "prerelease": False}
+        for channel, pinned, expected in (
+                ("v0.1.2", "v0.1.2", "waiting-unstable"),
+                ("v0.1.3", "v0.1.2", "merged-not-pinned"),
+                ("v0.1.3", "v0.1.3", "PINNED-READY"),
+                ("v0.1.10", "v0.1.10", "PINNED-READY")):
+            with self.subTest(channel=channel, pinned=pinned), \
+                    patch.object(watch, "api", side_effect=api), \
+                    patch.object(watch, "contains", return_value=True), \
+                    patch.object(watch, "t3code_stable_tag", side_effect=[channel, pinned]):
+                self.assertEqual(watch.detect("t3code-stable010", LOCK), expected)
 
     def test_cleanup_recipes_are_well_formed_and_narrow(self):
         root = Path(__file__).resolve().parents[2]
@@ -251,5 +369,8 @@ class Readiness(unittest.TestCase):
                 self.assertIn('diff --git a/modules/', patch_text)
 
 
+
+
 if __name__ == "__main__":
     unittest.main()
+

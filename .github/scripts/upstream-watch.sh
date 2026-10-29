@@ -193,11 +193,10 @@ Left in place the guard would still match and force the stale hash, so removal i
 fi
 
 # GITHUB_TOKEN pushes do not trigger workflows; dispatch CI on the exact SHA.
-# The opt-in ARM build is part of the candidate's required validation: the
-# dispatched run's overall gate fails if the unpatched aarch64 package does
-# not build, so a green result establishes the original failure is gone.
+# The authelia pnpm-hash workaround was retired in #237, so its native ARM
+# gate no longer exists; candidates validate through the standard gate.
 gh workflow run pr-title.yml --ref "$BRANCH" -f pull_request_number="$pr" -f expected_sha="$REVISION"
-gh workflow run ci.yml --ref "$BRANCH" -f expected_sha="$REVISION" -f build_arm_authelia=true
+gh workflow run ci.yml --ref "$BRANCH" -f expected_sha="$REVISION"
 
 {
   echo "### upstream-watch: cleanup candidate prepared"

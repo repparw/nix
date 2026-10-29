@@ -10,6 +10,17 @@ Run from the repository root. Select the checks in the
 aspects and defaults require evaluation of every affected host; a host-specific
 change can target that host. Discover host names from the flake.
 
+## Build-host policy
+
+For pull requests, start with evaluation: affected-host evaluation and
+assertions on changed options or generated configuration. CI supplies the
+repository checks for that revision; evaluation does not prove a native
+system closure. Realizing outputs is a conditional stage: builds inherit the
+execution host's global nix limits (alpha caps builds at `max-jobs = 2,
+cores = 3` because the host serves interactive and realtime streaming
+workloads — do not override them per-invocation), and a full local closure
+build is only warranted when activation is imminent and CI cannot cover it.
+
 This procedure evaluates and builds without activation. For runtime inspection
 or an authorized deployment, hand off to
 [fleet-operations](../fleet-operations/SKILL.md). A successful build does not

@@ -83,7 +83,11 @@ use Epsilon's tmpfs `/var/tmp` for the restore.
 
 Mount a tmpfs root and reuse the existing NVMe Btrfs `@` subvolume as `/persist`,
 with explicit `subvol=@`. The separate `@home` subvolume is not Alpha's live
-home. Bind `/persist/nix` to `/sysroot/nix` in the systemd initrd before
+home. Keep the existing Btrfs `/swapfile` on the same `@` subvolume, but expose
+it as `/persist/swapfile` when persistence is enabled; `/swapfile` under tmpfs
+cannot be used for swap. Verify swapon across two boots and avoid snapshotting
+the active Btrfs swapfile. Bind `/persist/nix` to `/sysroot/nix` in the systemd
+initrd before
 `initrd-nixos-activation.service`. Keep the store and database together.
 
 Set `modules.persistence.mutableAccounts = true` to retain complete `/etc`
@@ -108,7 +112,7 @@ shared persistence module. It seeds a Btrfs `@` root and an unrelated `@home`,
 then exercises:
 
 - Existing home and store-state reuse through `/persist` and the initrd `/nix` bind.
-- A second tmpfs-root boot retaining SSH identity, changed passwords, and home data.
+- A second tmpfs-root boot retaining SSH identity, changed passwords, home data, and Btrfs-backed swap.
 - A nested simulated media mount that remains separate from the backing home.
 - Refusal to activate after the readiness marker is removed.
 
@@ -126,14 +130,18 @@ nix build .#checks.x86_64-linux.host-persistence \
   .#checks.x86_64-linux.host-persistence-btrfs-vm --no-link
 ```
 
-## Live audit, 2026-10-21
+## Live audit, October 2026
 
-Read-only storage inspection confirmed:
+Read-only storage inspection confirmed the mount layout. The recorded space
+figures below differ between audit summaries and must be refreshed before a
+production boot candidate. The owner confirmed `/srv` was empty on October 28;
+recheck before activation if services have since started using it.
+
 
 | Item                      | Observation                                                                                      | Consequence                                                                                                                          |
 | ------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Root and ESP              | NVMe `/dev/nvme0n1p2[/@]` is Btrfs; `/boot` is `/dev/nvme0n1p1`                                  | Home, store and service data remain on the original root.                                                                            |
-| Capacity                  | About 124 GiB free; about 1 GiB unallocated; metadata 76.0% used; global reserve unused          | A second full copy does not fit. Review allocation pressure before a boot-layout change.                                             |
+| Capacity                  | Earlier report: ~124 GiB free, ~1 GiB unallocated, metadata 76.0%; later PR summary: ~68 GiB free, ~1 MiB unallocated, metadata 77.2%. Timestamps were not consistently recorded. | Do not assume either measurement is current. Refresh Btrfs usage and allocation pressure before changing the boot layout. |
 | Device errors             | All five Btrfs device error counters are zero                                                    | No reported device errors; this is not a full integrity or recovery test.                                                            |
 | Other subvolumes          | `@home`, `srv`, `var/lib/machines`, `var/lib/portables`, `tmp`, `var/tmp`, and `.beeshome` exist | Inventory occupied subvolumes explicitly before capture; same-filesystem traversal can skip them. Do not delete them based on names. |
 | Identity and boot entries | Machine ID, shadow and host SSH key present; ten installed boot entries                          | Presence does not prove independent key access or a working rescue/fallback boot.                                                    |
@@ -167,7 +175,8 @@ recovery coverage.
    block groups differs from unallocated device space. Do not run a balance or
    delete data just to silence the check. See the upstream
    [filesystem usage documentation](https://btrfs.readthedocs.io/en/latest/btrfs-filesystem.html#subcommand).
-3. Test independently usable rescue media and the independently stored recovery
+3. Confirm `/srv` is still empty and `/persist/swapfile` activates as swap
+   without writing a tmpfs-root swapfile. Test independently usable rescue media and the independently stored recovery
    key at Alpha's local console. Protect a known-good persistent-root generation
    and its closure from pruning.
 4. Build a separate boot candidate and test its real store/ESP ordering and

@@ -14,17 +14,14 @@ PR_WAITS = {
     "t3code-split": ("NixOS/nixpkgs", 555814, "nixpkgs"),
     "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
     "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
-    "t3code-server": ("nix-community/home-manager", 9695, "home-manager"),
-    "cliamp-hm-module": ("nix-community/home-manager", 9842, "home-manager"),
 }
 WORKAROUNDS = {
     "authelia-pnpm-hash": ("modules/_services/authelia.nix", "autheliaPackage"),
     "t3code-connect": ("modules/aspects/ai/t3code-connect.nix", "cp .env.example .env"),
     "t3code-split": ("modules/aspects/ai/t3code-split.nix", "t3code-server ="),
     "tasks-org": ("modules/aspects/gui/apps.nix", "tasksOrgPackage"),
-    "t3code-server": ("modules/aspects/ai/t3code.nix", "services.t3code-web"),
-    "cliamp-hm-module": ("modules/aspects/cliamp.nix", "hmCliampModule"),
-    "cliamp-attach": ("modules/aspects/cliamp.nix", 'owner = "ryanrpj"'),
+    "t3code-browser-libs": (
+        "modules/aspects/ai/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
     "qbittorrent": ("modules/aspects/services/arr.nix", "qbittorrent-nox.overrideAttrs"),
     "wpaperd-fix": ("modules/aspects/gui/wpaperd-output-removal-race.patch", None),
     "voxtype-graphical": ("modules/aspects/ai/voxtype-graphical-workaround.nix", None),
@@ -32,6 +29,7 @@ WORKAROUNDS = {
     "t3code-nightly-v2": ("modules/aspects/ai/t3code-nightly.nix", None),
     "t3code-stable010": ("modules/aspects/ai/t3code-stable010.nix", None),
     "moonshine-pr227": ("modules/aspects/moonshine-pr227-test.nix", None),
+    "nodejs-security": ("modules/aspects/nodejs-security.nix", "../_packages/nodejs-security.nix"),
 }
 
 
@@ -138,6 +136,7 @@ def moonshine_reload_guard(repo, revision):
 # Alpha's temporary nightly server remains local-owned until stable v2 is
 # deployed and verified. CI only checks immutable release/package evidence.
 T3CODE_V2_COMMIT = "de343914273eceb852a1d1d739cd1d38df7796ee"
+T3CODE_STABLE_MIN_VERSION = (0, 1, 3)
 T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
 
 
@@ -154,7 +153,20 @@ def t3code_stable_tag(package_revision):
     return tag if re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) else None
 
 
-def t3code_nightly_v2_status(lock):
+T3CODE_PACKAGE = "pkgs/by-name/t3/t3code/package.nix"
+
+
+def t3code_browser_wrapped(revision):
+    # The system-wide list is only redundant when upstream's t3code wrapper
+    # itself prefixes LD_LIBRARY_PATH with the browser library set
+    # (NixOS/nixpkgs#575675). A merge that merely touches the package would
+    # leave the downloaded headless browser broken after cleanup.
+    text = source("NixOS/nixpkgs", T3CODE_PACKAGE, revision)
+    return ("LD_LIBRARY_PATH" in text and
+            all(library in text for library in ("libgbm", "nss", "libxkbcommon")))
+
+
+def t3code_nightly_v2_status(lock, minimum_version=(0, 0, 0)):
     upstream = "pingdotgg/t3code"
     latest = api(f"repos/{upstream}/releases/latest")
     if not isinstance(latest, dict) or not isinstance(latest.get("tag_name"), str):
@@ -171,12 +183,17 @@ def t3code_nightly_v2_status(lock):
     channel_revision = channel["sha"]
     if not re.fullmatch(r"[a-f0-9]{40}", channel_revision):
         raise ValueError("invalid channel revision")
+    def eligible(tag):
+        return (tag is not None and
+                tuple(map(int, tag[1:].split("."))) >= minimum_version and
+                contains(upstream, T3CODE_V2_COMMIT, tag))
+
     channel_tag = t3code_stable_tag(channel_revision)
-    if not channel_tag or not contains(upstream, T3CODE_V2_COMMIT, channel_tag):
+    if not eligible(channel_tag):
         return "waiting-unstable"
 
     pinned_tag = t3code_stable_tag(pin(lock, "nixpkgs"))
-    if not pinned_tag or not contains(upstream, T3CODE_V2_COMMIT, pinned_tag):
+    if not eligible(pinned_tag):
         return "merged-not-pinned"
 
     # Pin tags also need an actual, non-prerelease GitHub release. Tag
@@ -187,7 +204,104 @@ def t3code_nightly_v2_status(lock):
         raise ValueError("pinned T3 Code release is not stable")
     return "PINNED-READY"
 
+GE_UPSTREAM = "GloriousEggroll/proton-ge-custom"
+GE_PACKAGE = "pkgs/by-name/pr/proton-ge-bin/package.nix"
+
+
+def ge_version(tag):
+    match = re.fullmatch(r"GE-Proton([0-9]+)-([0-9]+)", tag)
+    if not match:
+        raise ValueError("unexpected GE stable release tag")
+    return tuple(map(int, match.groups()))
+
+
+def ge_stable_release(release):
+    tag = release["tag_name"]
+    ge_version(tag)
+    if release.get("draft") is not False or release.get("prerelease") is not False:
+        raise ValueError("GE release is not stable")
+    return tag
+
+
+def ge_package_contains(revision, commit):
+    text = source("NixOS/nixpkgs", GE_PACKAGE, revision)
+    match = re.search(r'\bversion\s*=\s*"(GE-Proton[0-9]+-[0-9]+)";', text)
+    # Verify the actual x86_64 upstream archive, not just a version string.
+    archive = ('https://github.com/GloriousEggroll/proton-ge-custom/releases/'
+               'download/${finalAttrs.version}/${finalAttrs.version}-x86_64.tar.gz')
+    if not match or f'url = "{archive}";' not in text:
+        raise ValueError("unknown GE package source")
+    tag = match.group(1)
+    release = api(f"repos/{GE_UPSTREAM}/releases/tags/{tag}")
+    if ge_stable_release(release) != tag:
+        raise ValueError("GE package release mismatch")
+    return contains(GE_UPSTREAM, commit, tag)
+
+
+def fsr4_rdna2_status(lock):
+    spec = json.loads((ROOT / ".github/upstream/watchers.json").read_text())["fsr4-rdna2"]
+    commit = spec.get("support_commit")
+    if commit is None:
+        # Discovery only. Release prose can flag a candidate, never establish
+        # Linux/RDNA2 usability. A reviewed and tested commit arms pin tracking.
+        releases = api(f"repos/{GE_UPSTREAM}/releases?per_page=100")
+        if not isinstance(releases, list) or not releases:
+            raise ValueError("cannot bound GE release discovery")
+        candidates = []
+        reached_baseline = False
+        for release in releases:
+            if release.get("draft") or release.get("prerelease"):
+                continue
+            tag = ge_stable_release(release)
+            if ge_version(tag) <= ge_version(spec["baseline_release"]):
+                reached_baseline = True
+                continue
+            body = release.get("body")
+            if not isinstance(body, str):
+                raise ValueError("missing GE release notes")
+            if re.search(r"\b(?:FSR\s*4(?:\.1)?|RDNA\s*2|RX\s*6[0-9]{3})\b", body, re.I):
+                candidates.append(tag)
+        if len(releases) >= 100 and not reached_baseline:
+            raise ValueError("GE discovery exhausted before baseline")
+        return ("upstream-review-required:" + max(candidates, key=ge_version)
+                if candidates else "waiting-upstream")
+    if not re.fullmatch(r"[a-f0-9]{40}", commit):
+        raise ValueError("support_commit must be a reviewed full SHA")
+    latest = ge_stable_release(api(f"repos/{GE_UPSTREAM}/releases/latest"))
+    if not contains(GE_UPSTREAM, commit, latest):
+        return "waiting-upstream"
+    node = lock["nodes"][lock["nodes"]["root"]["inputs"]["nixpkgs"]]
+    branch = node["original"]["ref"]
+    if not re.fullmatch(r"[a-zA-Z0-9._/-]+", branch):
+        raise ValueError("invalid Nixpkgs channel")
+    channel = api(f"repos/NixOS/nixpkgs/commits/{branch}")["sha"]
+    if not re.fullmatch(r"[a-f0-9]{40}", channel):
+        raise ValueError("invalid Nixpkgs channel revision")
+    if not ge_package_contains(channel, commit):
+        return "waiting-unstable"
+    return "PINNED-READY" if ge_package_contains(pin(lock, "nixpkgs"), commit) else "merged-not-pinned"
+
+
 def detect(name, lock):
+    if name == "nodejs-security":
+        revision = pin(lock, "nixpkgs")
+        # A Node release alone is insufficient: Nix links Brotli and c-ares
+        # as shared libraries, and OpenCode embeds the Bun runtime. The
+        # cleanup retires the whole #341 overlay family at once, so every
+        # piece must be contained by the pin before it fires.
+        bun = api("repos/NixOS/nixpkgs/pulls/577354")
+        if not bun.get("merged"):
+            return "waiting-upstream"
+        fixes = (
+            "2794b31601c683d494c898a548e3c5237fa2242e",  # Node 24.22.1
+            "664dc1852b684a2db1d7734514030739fc557b91",  # Brotli 1.2.1, carries the out-of-bound-write fix
+            "dfbfe7d499556a3acea67ccc4888c2ef489bade0",  # c-ares 1.34.9
+        )
+        ready = contains("NixOS/nixpkgs", bun["merge_commit_sha"], revision)
+        ready = ready and all(contains("NixOS/nixpkgs", fix, revision) for fix in fixes)
+        return "PINNED-READY" if ready else "merged-not-pinned"
+    if name == "fsr4-rdna2":
+        return fsr4_rdna2_status(lock)
     if name == "tridactyl-reader":
         pr = api("repos/tridactyl/tridactyl/pulls/5515")
         if not pr.get("merged"):
@@ -223,15 +337,22 @@ def detect(name, lock):
     if name == "t3code-nightly-v2":
         return t3code_nightly_v2_status(lock)
     if name == "t3code-stable010":
-        # The bridging overlay is droppable under the same gate as the
-        # nightly cutover: a stable V2 release carrying the root pin.
-        return t3code_nightly_v2_status(lock)
+        # Removing the bridge must not downgrade the installed stable version.
+        return t3code_nightly_v2_status(lock, minimum_version=T3CODE_STABLE_MIN_VERSION)
     if name in PR_WAITS:
         repo, number, input_name = PR_WAITS[name]
         pr = api(f"repos/{repo}/pulls/{number}")
         if not pr.get("merged"):
             return "waiting-upstream"
         return "PINNED-READY" if contains(repo, pr["merge_commit_sha"], pin(lock, input_name)) else "merged-not-pinned"
+    if name == "t3code-browser-libs":
+        pr = api("repos/NixOS/nixpkgs/pulls/575675")
+        if not pr.get("merged"):
+            return "waiting-upstream"
+        revision = pin(lock, "nixpkgs")
+        if not contains("NixOS/nixpkgs", pr["merge_commit_sha"], revision):
+            return "merged-not-pinned"
+        return "PINNED-READY" if t3code_browser_wrapped(revision) else "waiting-source"
     revision = pin(lock, "nixpkgs")
     if name == "qbittorrent":
         repo, number, package = "qbittorrent/qBittorrent", 24055, "qbittorrent"
@@ -252,10 +373,6 @@ def detect(name, lock):
         return "PINNED-READY" if moonshine_reload_guard(repo, revision) else "waiting-source"
     if name == "wpaperd-fix":
         fixed = package_contains("wpaperd", "danyspin97/wpaperd", "442b962df717dfb6e3d86a3a4bfd1111882323b8", revision)
-    elif name == "cliamp-attach":
-        package_text = source("NixOS/nixpkgs", "pkgs/by-name/cl/cliamp/package.nix", revision)
-        commands = source("bjarneo/cliamp", "commands.go", source_ref(package_text))
-        fixed = all(re.search(rf'\b{command}Command\s*\(|"{command}"', commands) for command in ("attach", "quit"))
     elif name == "voxtype-graphical":
         # The override is a Home Manager user unit, not a NixOS system unit.
         module = source("nix-community/home-manager", "modules/services/voxtype.nix", pin(lock, "home-manager"))
@@ -299,3 +416,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

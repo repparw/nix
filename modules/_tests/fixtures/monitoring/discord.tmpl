@@ -1,5 +1,9 @@
 {{ define "fleet.discord.title" -}}
 {{- $name := index .CommonLabels "alertname" -}}
+{{- $critical := false -}}
+{{- range .Alerts.Firing -}}
+{{- if eq (index .Labels "severity") "critical" -}}{{- $critical = true -}}{{- end -}}
+{{- end -}}
 {{- if eq (index .CommonAnnotations "grafana_state_reason") "Updated" -}}Alert updated
 {{- else if eq .Status "resolved" -}}
 {{- if eq $name "Disk space critical" -}}Critical cleared
@@ -12,7 +16,7 @@
 {{- else if eq $name "Disk space warning" -}}Disk warning
 {{- else if eq $name "DatasourceError" -}}Monitoring unavailable
 {{- else if eq $name "DatasourceNoData" -}}Monitoring unavailable
-{{- else if eq (index .CommonLabels "severity") "critical" -}}Critical
+{{- else if $critical -}}Critical
 {{- else -}}Warning{{- end -}}
 {{- end -}}
 {{- with index .CommonLabels "host" }} · {{ . }}{{ end -}}

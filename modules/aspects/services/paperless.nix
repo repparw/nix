@@ -57,13 +57,6 @@
           # data dir (Django system check fails, boot loops, no READY).
           # Container paperless (315) becomes host 393531.
           privateUsers = 393216;
-          forwardPorts = [
-            {
-              protocol = "tcp";
-              hostPort = 8000;
-              containerPort = 8000;
-            }
-          ];
           bindMounts = {
             "/var/lib/paperless" = {
               hostPath = "${cfg.configDir}/paper";

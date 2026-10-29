@@ -1,61 +1,70 @@
 ---
 type: Runbook
-title: Fleet observability with Grafana Cloud
-description: Operate Cloud metrics, filtered host journals, and independent fleet checks.
+title: Diagnose fleet observability
+description: Check Cloud ingestion, collection limits, and receiver rollback.
 when: Diagnose missing telemetry, operate dashboards, or roll back the Cloud cutover.
 resource: modules/aspects/monitoring.nix
 tags: [monitoring, grafana, cloud, alloy, journald]
 ---
 
-# Fleet observability
+# Diagnose fleet observability
 
-Alpha, Pi and Epsilon run Alloy and send directly to Grafana Cloud. Epsilon no longer runs Prometheus, Loki or Grafana, and no host sends telemetry to Epsilon. Existing fleet-health, disk-watch, backup and deployment checks remain independent.
+Alpha, Pi, and Epsilon send metrics and filtered host journals directly to
+Grafana Cloud through Alloy. Pi runs the service probes. Epsilon redirects
+[the dashboard hostname](https://metrics.repparw.com/d/fleet-overview/fleet-overview)
+to Cloud, which controls sign-in. See [Cloud setup](grafana-cloud.md) for
+credentials, dashboards, and notification policy.
 
-## Collection
+## Check delivery
 
-The default agent aspect collects Unix exporter metrics and host journald. Each host includes the Cloud credential aspect; Pi and Epsilon also include the persistence aspect so Alloy's state files survive their tmpfs-root reboots. File persistence alone does not establish that every unsent sample or log entry will replay after restart.
-
-- Node and Alloy self-metrics are scraped every 60 seconds. Node exporter supplies the job label `integrations/unix`; Alloy self-metrics use `alloy`.
-- Alloy self-metrics omit histogram buckets to reduce cardinality. Queue, failure, retry, count and sum metrics remain available. Host metrics are unaffected.
-- Alpha excludes sleeping media mountpoints from filesystem collection so monitoring does not wake disks.
-- Host journals pass through native `loki.secretfilter` before upload. Recognized credentials are redacted; arbitrary private content is not. Container journals require separate collection.
-- Metrics and logs have their own write-ahead logs. Logs retry indefinitely through transient failures. Buffering is finite and cannot guarantee delivery through an unlimited outage. Alloy also has a [known log WAL replay gap](https://github.com/grafana/alloy/issues/7112): unsent entries in an already-marked open segment can be skipped after a restart during an outage. Persisting the directory does not fix this. Do not claim lossless log delivery across that combination of failures.
-- Host-scoped write-only tokens come from `secrets/grafana-cloud-<host>.sops.yaml` through systemd credentials. Neither tokens nor ingestion passwords appear in generated configuration.
-
-## Dashboard and health checks
-
-Open [Fleet overview](https://metrics.repparw.com/d/fleet-overview/fleet-overview). Epsilon's Traefik preserves the hostname as a reversible 302 to `https://repparw.grafana.net`, including bookmark paths and queries. Grafana Cloud controls sign-in and membership. There is no local Grafana health exception; `/api/health` redirects to Cloud too.
-
-Glance probes Cloud's unauthenticated `/api/health` directly. The scheduled fleet-health probe also checks that endpoint, but strict deployment readiness and local-only probes exclude it. A Cloud outage must not prevent fleet recovery. This endpoint proves frontend health, not telemetry ingestion.
-
-Use these Cloud Prometheus queries to check ingestion:
-
-```promql
-count by (host) (node_uname_info)
-up{host=~"alpha|pi|epsilon"}
-count({host=~"alpha|pi|epsilon"})
-prometheus_remote_storage_samples_pending{host=~"alpha|pi|epsilon"}
-```
-
-Expected hosts are Alpha, Pi and Epsilon. Inspect the timestamp of the most recent sample, not just an old chart. The Free series allowance has limited headroom; the Cloud budget alert fires at 9,800. See [Cloud setup and alerting](grafana-cloud-pilot.md).
-
-For local delivery diagnostics:
-
-```bash
-fleet commands --json
+```sh
 fleet debug epsilon
 ssh root@epsilon 'systemctl status alloy; journalctl -u alloy --since "30 minutes ago" --no-pager'
 ssh root@epsilon 'curl -fsS http://127.0.0.1:12345/metrics'
 ```
 
-Inspect Cloud writer queue depth, highest sent timestamp, retry/failure counters and dropped log entries. A successful HTTP write does not prove queries or dashboards are available. Never print runtime credential files.
+In Cloud, inspect fresh timestamps and writer queue/retry/drop counters:
 
-## Retained Epsilon history and rollback
+```promql
+count by (host) (node_uname_info)
+up{host=~"alpha|pi|epsilon"}
+prometheus_remote_storage_samples_pending{host=~"alpha|pi|epsilon"}
+```
 
-The old `/var/lib/grafana`, `/var/lib/loki` and `/var/lib/prometheus2` bind mounts remain backed by `/persist`. Their existing contents and ownership are retained; no service writes to them. Do not delete them as part of activation. This is a temporary rollback reserve, not a second monitoring backend or a new offsite backup.
+A successful write or unauthenticated Cloud `/api/health` response does not prove
+end-to-end query availability. Strict deployment probes exclude Cloud reachability
+so a Cloud outage cannot prevent fleet recovery. Never print credential files.
 
-To restore the previous topology, revert the Cloud-only cleanup and build/deploy the previous configuration to Epsilon and the agents. The Git history retains the encrypted ingestion credentials and receiver definitions. Restore the receivers before switching agents back; keep Cloud writes active until local ingestion is verified. The existing deployment rollback procedure remains available.
+## Interpret collection limits
 
-## Verification
+[Agent configuration](../../modules/aspects/monitoring.nix) defines scrape
+cadence and metric/log filters. [Host collection](../../modules/aspects/monitoring-health.nix)
+adds retained failures, completed backup timestamps, export status, and disk facts.
 
-`nix build .#checks.x86_64-linux.monitoring-fleet --no-link` validates generated Alloy configuration, Cloud-only host topology, credentials, redirect and retained data mounts. The monitoring VM exercises an isolated HTTPS Cloud fixture: authenticated ingestion, redaction, excluded automounts, histogram filtering, normal outage recovery, and agent-state plus uploaded-telemetry availability after a reboot. The fixture's Prometheus/Loki receivers are test-only.
+- Sleeping media retain their last mounted observation and timestamp; monitoring
+  does not wake them. Btrfs unallocated chunks are distinct from total free space.
+- Journal redaction recognizes credential patterns, not arbitrary private text.
+  Container journals need separate collection.
+- Persisted Alloy state does not guarantee replay: unsent logs can be lost when
+  Alloy restarts during an outage ([Alloy #7112](https://github.com/grafana/alloy/issues/7112)).
+- Verify actual active-series usage in `grafanacloud-usage` after changing labels
+  or targets; the application datasource's instantaneous series count differs.
+
+## Restore local receivers if required
+
+Epsilon retains `/var/lib/grafana`, `/var/lib/loki`, and `/var/lib/prometheus2`
+under `/persist` as inactive rollback data. Do not delete them during activation.
+To restore the former topology, recover the receiver configuration and encrypted
+credentials from Git, build and deploy it, then verify receivers before switching
+agents. Keep Cloud writes until local ingestion works; use the normal
+[rollback procedure](update-rollback.md).
+
+## Verify configuration changes
+
+```sh
+nix build .#checks.x86_64-linux.monitoring-fleet --no-link
+```
+
+Use the [monitoring VM](../../modules/_tests/monitoring-vm.nix) for delivery,
+outage, and reboot behavior against test-only receivers. Production ingestion
+and notification delivery still require live verification.

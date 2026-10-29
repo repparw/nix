@@ -1,17 +1,44 @@
 # Upstream watcher migration
 
+## FSR 4.1 on Alpha's RDNA2 GPU (#323)
+
+`fsr4-rdna2` is notify-only. Until a source-reviewed and runtime-tested
+support commit is recorded in `watchers.json`, stable GE-Proton releases
+newer than the recorded baseline with FSR4/RDNA2 changes produce a
+deduplicated `upstream-review-required:<tag>` Discord notice. These notices
+are candidates, not compatibility claims. AMD's Windows driver and Vulkan
+announcements alone do not satisfy readiness. Discovery inspects up to 100
+releases and fails closed if that bound is exhausted; advance the baseline
+after reviewing candidates.
+
+After the issue records the actual model, RADV requirements, real package
+build and Alpha game verification (including Steam and Heroic/UMU), set
+`support_commit` to the full reviewed GE-Proton SHA. CI then requires exact
+ancestry in a stable upstream release and in the actual upstream release
+archives packaged by both the root input's channel and root pin. A newer
+version alone never produces `PINNED-READY`. Package layout changes and API
+errors fail closed. Runtime completion and the choice of per-game/global
+FSR activation remain with the issue owner; this watcher has no cleanup or
+global configuration mutation.
+
 `upstream-watch.yml` inspects the current `main` pins every two hours, after
 successful lock publication, after manual lock merges, and on manual dispatch.
 The lock updater owns input changes.
 
 The registry includes the stable T3 orchestrator-v2 gate and the
 [OpenCode v2 package detector](opencode-release-watch.md). Readiness notices
-go to #209 and #229 respectively. Package readiness does not complete either
+go to the run summary and Discord. Package readiness does not complete either
 fleet runtime migration.
 
-Authelia retains its atomic lock planner and pilot publisher. Independent
-`post-lock` contracts publish separate review-required PRs using the recipes
-in `cleanup/`. Each candidate starts at the same checked-out main revision.
+Authelia's pnpm-hash override was retired in #237, and the atomic lock planner
+and pilot publisher stay armed anyway: `upstream-plan.py` requires exactly one
+`atomic` contract, so `authelia-pnpm-hash` remains in `watchers.json`, the
+detector reports `completed` while the override marker is absent from
+`modules/_services/authelia.nix`, and its cleanup runs through the byte-exact
+module handler in `upstream-plan.py` rather than a recipe in `cleanup/`.
+Independent `post-lock` contracts publish separate review-required PRs using
+the recipes in `cleanup/`. Each candidate starts at the same checked-out main
+revision.
 `git apply --check` must pass before publication. A conflict requires review.
 One failed recipe does not prevent other watchers from processing.
 
@@ -42,27 +69,30 @@ The package-specific gates are:
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme                                |
 | t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop                               |
-| t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy                                       |
 | t3code-stable010  | Generated units serve the root-pin package (Alpha stock, Pi/Epsilon split server) with the version assertion; Alpha's x86 t3code builds |
 | tasks-org         | Build the upstream Tasks.org package                                                                                                    |
 | qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                                            |
-| cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                                                      |
-| cliamp-attach     | Build upstream cliamp and verify both attach and quit in its help output                                                                |
 | wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
 | voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                                             |
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
+| nodejs-security   | Retired overlay family absent from the fleet; alpha's OpenCode builds against the pinned Bun and Node                                   |
 | moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
 
-Nautilus is notify-only. Ready notifications use tracked issues and durable
-comment markers to avoid repeats. T3 receives readiness notices while
-retaining its runtime completion checks. Sonarr/Jellyfin depends on
+Nautilus is notify-only. Ready notices print in every upstream-watch run
+summary and, once per status change, post to the fleet Discord channel
+through the approved bot identity (`DISCORD_BOT_TOKEN` +
+`DISCORD_CHANNEL_ID`); delivery state lives on the
+`automation/upstream-notify-state` ref, so a persistent status pings exactly
+once. Workaround-holding watchers are `post-lock` instead — their cleanup PR
+is the notice, and the removed workaround file disarms the watcher.
+Sonarr/Jellyfin depends on
 the running service version and remains host-owned; its local timer is
 retired in favor of the verified Pi adapter below.
 
 `tridactyl-reader` is notify-only for #316. It reads `tridactyl-vim` from the
 pinned `firefox-addons` manifest and checks whether that release tag contains
 tridactyl/tridactyl#5515. Nixpkgs' native messaging host does not determine
-the extension version. CI notifies the issue when the pin is ready. Browser
+the extension version. CI pings Discord when the pin is ready. Browser
 verification and removal of Obsidian Reader remain completion steps because
 this checkout has no Obsidian Reader declaration to remove.
 
@@ -173,20 +203,21 @@ CI posts a deduplicated readiness notice to #209. The Alpha
 fleet CI adapter is verified. Protect `statev2.sqlite` and preserve active
 conversations during a cutover.
 
-## T3 Code stable 0.1.0 bridge (#288, #289)
+## T3 Code stable version bridge (#288, #289)
 
-The `t3code-stable010` watcher retires the complete 0.1.0 version bridge
-ahead of nixpkgs#575132. The bridge builds the desktop package from the
-existing Nixpkgs recipe with the PR's version, source hash, and pnpm hash;
+The `t3code-stable010` watcher retains its original ID and now tracks the
+0.1.1 version bridge. The bridge builds the desktop package from the
+existing Nixpkgs recipe with verified release source and pnpm hashes;
 the same override applies on all architectures. The separate split aspect
 selects the server-only package on Pi and Epsilon. Its detector reuses the nightly-v2
-`PINNED-READY` gate: only a stable
-orchestrator-v2 release carrying the root Nixpkgs pin may drop the bridge,
+`PINNED-READY` gate plus a 0.1.1 minimum: only a stable
+orchestrator-v2 release at least as new as the bridge in the root Nixpkgs
+pin may drop the bridge,
 because an earlier drop downgrades Alpha to V1 0.0.45 and breaks Android/web
 clients. The post-lock cleanup is the complete cutover: it deletes the
 bridge aspect, removes its entity includes so every host serves the
 root-pin package (Alpha stock, Pi/Epsilon the `t3code-split` server-only
-build) and arms the `t3code >= 0.1.0`
+build) and arms the `t3code >= 0.1.1`
 version assertion in `t3code.nix` that keeps a pin regression from silently
 downgrading `statev2.sqlite`. The `t3code-split` watcher independently keeps
 the server-only layer until nixpkgs#555814 reaches the pin, then selects

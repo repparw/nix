@@ -1,0 +1,399 @@
+{
+  "apiVersion": "dashboard.grafana.app/v1",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "fleet-overview"
+  },
+  "spec": {
+    "annotations": {
+      "list": []
+    },
+    "panels": [
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafanacloud-prom"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "targets": [
+          {
+            "expr": "100 * sum by (host) (rate(node_cpu_seconds_total{job=\"integrations/unix\",mode!=\"idle\"}[5m])) / sum by (host) (rate(node_cpu_seconds_total{job=\"integrations/unix\"}[5m]))",
+            "interval": "",
+            "legendFormat": "{{host}}",
+            "refId": "A"
+          }
+        ],
+        "title": "CPU used (%)",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafanacloud-prom"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "targets": [
+          {
+            "expr": "100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
+            "interval": "",
+            "legendFormat": "{{host}}",
+            "refId": "A"
+          }
+        ],
+        "title": "Memory used (%)",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafanacloud-prom"
+        },
+        "description": "Used space divided by used plus unprivileged available space, matching df before rounding. Bind mounts on the same host and device are shown once.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "id": 3,
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "targets": [
+          {
+            "expr": "max by (host, device) (100 * (node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\",mountpoint=~\"/|/persist|/nix|/home/repparw\"} - node_filesystem_free_bytes) / (node_filesystem_size_bytes - node_filesystem_free_bytes + node_filesystem_avail_bytes))",
+            "interval": "",
+            "legendFormat": "{{host}} {{device}}",
+            "refId": "A"
+          }
+        ],
+        "title": "Filesystem used (%)",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafanacloud-prom"
+        },
+        "description": "Ethernet and Wi-Fi traffic. Excludes loopback, container bridges, WireGuard and IFB traffic-shaping interfaces to avoid counting packets twice.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "Bps"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "id": 4,
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum by (host) (rate(node_network_receive_bytes_total{device=~\"eth[0-9]+|en.*|wl.*\"}[5m]))",
+            "interval": "",
+            "legendFormat": "{{host}}",
+            "refId": "A"
+          }
+        ],
+        "title": "Uplink receive (bytes/s)",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafanacloud-prom"
+        },
+        "description": "Ethernet and Wi-Fi traffic. Excludes loopback, container bridges, WireGuard and IFB traffic-shaping interfaces to avoid counting packets twice.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "Bps"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "id": 5,
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "targets": [
+          {
+            "expr": "sum by (host) (rate(node_network_transmit_bytes_total{device=~\"eth[0-9]+|en.*|wl.*\"}[5m]))",
+            "interval": "",
+            "legendFormat": "{{host}}",
+            "refId": "A"
+          }
+        ],
+        "title": "Uplink transmit (bytes/s)",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafanacloud-prom"
+        },
+        "description": "Failed loaded units and retained jobs counted by unit name, with a zero baseline for healthy reporting hosts. Historical aggregate and node-exporter series remain as fallbacks.",
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        },
+        "id": 6,
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "targets": [
+          {
+            "expr": "count by (host) (fleet_failed_unit) or on(host) max by (host) (fleet_failed_units) or on(host) (0 * max by (host) (fleet_health_collection_timestamp_seconds{collector=\"host\"})) or on(host) sum by (host) (node_systemd_unit_state{state=\"failed\"})",
+            "interval": "",
+            "legendFormat": "{{host}}",
+            "refId": "A"
+          }
+        ],
+        "title": "Failed jobs or services",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafanacloud-prom"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "max": 1,
+            "min": 0,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 1
+                }
+              ]
+            },
+            "unit": "short"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
+        "id": 7,
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "targets": [
+          {
+            "expr": "absent_over_time(node_uname_info{host=\"alpha\"}[5m]) or on(host) label_replace(vector(0), \"host\", \"alpha\", \"\", \"\")",
+            "interval": "",
+            "legendFormat": "alpha",
+            "refId": "A"
+          },
+          {
+            "expr": "absent_over_time(node_uname_info{host=\"pi\"}[5m]) or on(host) label_replace(vector(0), \"host\", \"pi\", \"\", \"\")",
+            "interval": "",
+            "legendFormat": "pi",
+            "refId": "B"
+          },
+          {
+            "expr": "absent_over_time(node_uname_info{host=\"epsilon\"}[5m]) or on(host) label_replace(vector(0), \"host\", \"epsilon\", \"\", \"\")",
+            "interval": "",
+            "legendFormat": "epsilon",
+            "refId": "C"
+          }
+        ],
+        "title": "Missing host telemetry (1 = missing)",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "grafanacloud-prom"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        },
+        "id": 8,
+        "options": {
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          },
+          "tooltip": {
+            "mode": "multi"
+          }
+        },
+        "targets": [
+          {
+            "expr": "node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes",
+            "interval": "",
+            "legendFormat": "{{host}}",
+            "refId": "A"
+          }
+        ],
+        "title": "Swap used (bytes)",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "grafanacloud-logs"
+        },
+        "gridPos": {
+          "h": 10,
+          "w": 24,
+          "x": 0,
+          "y": 32
+        },
+        "id": 9,
+        "options": {
+          "dedupStrategy": "none",
+          "enableLogDetails": true,
+          "showLabels": true,
+          "showTime": true,
+          "sortOrder": "Descending",
+          "wrapLogMessage": true
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "grafanacloud-logs"
+            },
+            "expr": "{source=\"journald\",host=~\".+\"}",
+            "queryType": "range",
+            "refId": "A"
+          }
+        ],
+        "title": "Recent host journal (filtered)",
+        "type": "logs"
+      }
+    ],
+    "refresh": "1m",
+    "schemaVersion": 39,
+    "tags": [
+      "fleet",
+      "nixos"
+    ],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timezone": "browser",
+    "title": "Fleet Overview",
+    "uid": "fleet-overview"
+  }
+}

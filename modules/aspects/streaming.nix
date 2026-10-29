@@ -90,9 +90,11 @@ in
               config.programs.steam.package
             ];
             text = ''
-              # Trial SteamOS mode. The compatibility helper is scoped to this
-              # stream; the normal Niri desktop Steam session is unchanged.
-              exec steam -steamos3 -tenfoot
+              # Big Picture only. -steamos3 was a trial SteamOS mode; it enrolls
+              # the client in the retired steamdeck_stable beta on every launch,
+              # so Steam showed a "beta has ended" dialog each time. Session
+              # switching is already handled by the steamos-session-select shim.
+              exec steam -tenfoot
             '';
           };
 

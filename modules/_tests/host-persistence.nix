@@ -174,6 +174,7 @@ assert alpha.fileSystems."/".fsType == "btrfs";
 assert !(alpha.fileSystems ? "/persist");
 assert persistenceMounts alpha == [ ];
 assert !(alpha.boot.initrd.systemd.services ? check-persistence-state);
+assert (builtins.head alpha.swapDevices).device == "/swapfile";
 assert lib.all
   (
     path:
@@ -188,6 +189,7 @@ assert lib.all
     "/var/lib/nixos-containers"
     "/var/lib"
   ];
+assert (builtins.head alphaUnprepared.swapDevices).device == "/persist/swapfile";
 assert lib.any (
   assertion: !assertion.assertion && lib.hasPrefix "Alpha persistence requires" assertion.message
 ) alphaUnprepared.assertions;
@@ -206,7 +208,6 @@ assert lib.all
     pi
     epsilon
   ];
-
 assert lib.elem "/boot/firmware" pi.services.restic.backups.offsite.paths;
 assert lib.elem "/boot/efi" epsilon.services.restic.backups.offsite.paths;
 assert
@@ -225,6 +226,7 @@ pkgs.writeText "host-persistence-evaluation.json" (
     alpha = {
       disabledByDefault = true;
       rootFilesystem = alpha.fileSystems."/".fsType;
+      swapFile = (builtins.head alpha.swapDevices).device;
       persistentMounts = [ ];
     };
   }

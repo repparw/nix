@@ -1,6 +1,8 @@
 { inputs, pkgs, ... }:
 let
   monitoring = (import ../aspects/monitoring.nix { den = null; }).den.aspects.monitoring.provides;
+  health =
+    (import ../aspects/monitoring-health.nix { den = null; }).den.aspects.monitoring.provides.health;
   password = pkgs.writeText "cloud-fixture-password" "vm-test-credential";
   users = pkgs.runCommand "cloud-fixture-users" { nativeBuildInputs = [ pkgs.mkpasswd ]; } ''
     hash=$(mkpasswd --method=bcrypt --rounds=4 --stdin < ${password})
@@ -83,6 +85,8 @@ pkgs.testers.runNixOSTest {
             sslCertificate = "${tls}/cert.pem";
             sslCertificateKey = "${tls}/key.pem";
             basicAuthFile = users;
+            locations."/healthz".extraConfig = "auth_basic off; return 200 'healthy';";
+            locations."/login-only".extraConfig = "auth_basic off; return 302 /healthz;";
             locations."/api/prom/push".proxyPass = "http://127.0.0.1:9090/api/v1/write";
             locations."/loki/api/v1/push".proxyPass = "http://127.0.0.1:3100/loki/api/v1/push";
           };
@@ -99,77 +103,97 @@ pkgs.testers.runNixOSTest {
       imports = [
         monitoring.agent.nixos
         monitoring.persist.nixos
+        health.nixos
         (inputs.impermanence + "/nixos.nix")
       ];
-      networking.interfaces.eth1.ipv4.addresses = lib.mkForce [
-        {
-          address = "192.168.1.2";
-          prefixLength = 24;
-        }
-      ];
-      virtualisation.diskImage = null;
-      virtualisation.emptyDiskImages = [ 1024 ];
-      virtualisation.fileSystems."/persist" = {
-        device = "/dev/disk/by-label/alloy-persist";
-        fsType = "ext4";
-        neededForBoot = true;
-        noCheck = true;
+      options.modules.services = lib.mkOption { type = lib.types.attrs; };
+      options.modules.backup.exports = lib.mkOption {
+        type = lib.types.attrs;
+        default = { };
       };
-      boot.initrd.systemd.enable = true;
-      boot.initrd.systemd.storePaths = [
-        pkgs.e2fsprogs
-        pkgs.util-linux
-      ];
-      boot.initrd.systemd.services.prepare-alloy-disk = {
-        wantedBy = [ "initrd.target" ];
-        requiredBy = [ "sysroot-persist.mount" ];
-        before = [ "sysroot-persist.mount" ];
-        after = [ "dev-vda.device" ];
-        requires = [ "dev-vda.device" ];
-        unitConfig.DefaultDependencies = false;
-        serviceConfig.Type = "oneshot";
-        script = "if ! ${pkgs.util-linux}/bin/blkid /dev/vda; then ${pkgs.e2fsprogs}/bin/mkfs.ext4 -L alloy-persist /dev/vda; fi";
-      };
-      networking.hostName = "pi";
-      networking.hosts."192.168.1.1" = [ "cloud.example.test" ];
-      security.pki.certificateFiles = [ "${tls}/cert.pem" ];
-      modules.monitoring.agent = {
-        cloud = {
-          metrics = {
-            url = "https://cloud.example.test/api/prom/push";
-            username = "fixture";
-            tokenFile = toString password;
-          };
-          logs = {
-            url = "https://cloud.example.test/loki/api/v1/push";
-            username = "fixture";
-            tokenFile = toString password;
-          };
+      options.modules.fleet-unit-state.snapshot = lib.mkOption { type = lib.types.package; };
+      config = {
+        modules.fleet-unit-state.snapshot = pkgs.writeShellScriptBin "fleet-unit-snapshot" "exit 0";
+        modules.services = {
+          domain = "example.test";
+          definitions = lib.genAttrs [ "fixture" "logintrap" ] (name: {
+            monitor = true;
+            hostname = "cloud";
+            port = 443;
+            auth = "bypass";
+            healthcheck = if name == "fixture" then "/healthz" else "/login-only";
+          });
         };
-        extraExcludedMounts = [ "/mnt/hdd" ];
+        networking.interfaces.eth1.ipv4.addresses = lib.mkForce [
+          {
+            address = "192.168.1.2";
+            prefixLength = 24;
+          }
+        ];
+        virtualisation.diskImage = null;
+        virtualisation.emptyDiskImages = [ 1024 ];
+        virtualisation.fileSystems."/persist" = {
+          device = "/dev/disk/by-label/alloy-persist";
+          fsType = "ext4";
+          neededForBoot = true;
+          noCheck = true;
+        };
+        boot.initrd.systemd.enable = true;
+        boot.initrd.systemd.storePaths = [
+          pkgs.e2fsprogs
+          pkgs.util-linux
+        ];
+        boot.initrd.systemd.services.prepare-alloy-disk = {
+          wantedBy = [ "initrd.target" ];
+          requiredBy = [ "sysroot-persist.mount" ];
+          before = [ "sysroot-persist.mount" ];
+          after = [ "dev-vda.device" ];
+          requires = [ "dev-vda.device" ];
+          unitConfig.DefaultDependencies = false;
+          serviceConfig.Type = "oneshot";
+          script = "if ! ${pkgs.util-linux}/bin/blkid /dev/vda; then ${pkgs.e2fsprogs}/bin/mkfs.ext4 -L alloy-persist /dev/vda; fi";
+        };
+        networking.hostName = "pi";
+        networking.hosts."192.168.1.1" = [ "cloud.example.test" ];
+        security.pki.certificateFiles = [ "${tls}/cert.pem" ];
+        modules.monitoring.agent = {
+          cloud = {
+            metrics = {
+              url = "https://cloud.example.test/api/prom/push";
+              username = "fixture";
+              tokenFile = toString password;
+            };
+            logs = {
+              url = "https://cloud.example.test/loki/api/v1/push";
+              username = "fixture";
+              tokenFile = toString password;
+            };
+          };
+          extraExcludedMounts = [ "/mnt/hdd" ];
+        };
+        services.journald.settings.Journal = {
+          Storage = "volatile";
+          ForwardToConsole = lib.mkForce false;
+        };
+        systemd.mounts = [
+          {
+            what = "tmpfs";
+            where = "/mnt/hdd";
+            type = "tmpfs";
+            options = "size=1m";
+          }
+        ];
+        systemd.automounts = [
+          {
+            where = "/mnt/hdd";
+            wantedBy = [ "multi-user.target" ];
+            automountConfig.TimeoutIdleSec = "2s";
+          }
+        ];
+        environment.systemPackages = [ pkgs.curl ];
+        virtualisation.memorySize = 1024;
+        system.stateVersion = "26.05";
       };
-      services.journald.settings.Journal = {
-        Storage = "volatile";
-        ForwardToConsole = lib.mkForce false;
-      };
-      systemd.mounts = [
-        {
-          what = "tmpfs";
-          where = "/mnt/hdd";
-          type = "tmpfs";
-          options = "size=1m";
-        }
-      ];
-      systemd.automounts = [
-        {
-          where = "/mnt/hdd";
-          wantedBy = [ "multi-user.target" ];
-          automountConfig.TimeoutIdleSec = "2s";
-        }
-      ];
-      environment.systemPackages = [ pkgs.curl ];
-      virtualisation.memorySize = 1024;
-      system.stateVersion = "26.05";
     };
   };
   testScript = ''
@@ -205,6 +229,7 @@ pkgs.testers.runNixOSTest {
     with subtest("Cloud HTTPS authentication, metrics, and redacted logs"):
         client.succeed("test $(curl -s -o /dev/null -w '%{http_code}' -X POST https://cloud.example.test/api/prom/push) = 401")
         client.succeed("printf 'monitoring_fixture_value 42\\n' > /var/lib/fleet-metrics/textfile/test.prom")
+        client.succeed("systemctl start fleet-health-metrics.service || { journalctl -u fleet-health-metrics.service --no-pager; exit 1; }")
         try:
             retry(lambda _last: len(prom('node_uname_info{host="pi"}')) == 1, timeout_seconds=90)
         except Exception:
@@ -215,6 +240,12 @@ pkgs.testers.runNixOSTest {
         retry(lambda _last: len(prom('monitoring_fixture_value{host="pi"} == 42')) == 1, timeout_seconds=150)
         assert not prom('{job="alloy",__name__=~".*_bucket"}')
         assert prom('prometheus_remote_storage_samples_failed_total{host="pi"}')
+        retry(lambda _last: len(prom('probe_success{service="fixture"} == 1')) == 1, timeout_seconds=150)
+        retry(lambda _last: len(prom('probe_success{service="logintrap"} == 0')) == 1, timeout_seconds=150)
+        retry(lambda _last: len(prom('fleet_health_collection_timestamp_seconds{collector="host"}')) == 1, timeout_seconds=150)
+        assert prom('node_systemd_unit_state{state="active"}')
+        assert not prom('node_systemd_unit_state{state=~"inactive|activating|deactivating"}')
+        assert not prom('{service="fixture",__name__=~"probe_http_duration_seconds|probe_dns_lookup_time_seconds"}')
         marker = "cloud-redaction-" + secrets.token_hex(6)
         token = "ghp_" + secrets.token_hex(18)
         client.succeed("logger -t monitoring-fixture " + shlex.quote(marker + " " + token))

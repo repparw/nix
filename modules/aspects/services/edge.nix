@@ -1,9 +1,11 @@
 {
+  den,
   lib,
   ...
 }:
 {
   den.aspects.nixos-services.provides.edge = {
+    includes = [ den.aspects.edge-tunnel ];
     service-registry = [
       {
         name = "authelia";

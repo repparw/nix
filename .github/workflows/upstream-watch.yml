@@ -28,13 +28,20 @@ jobs:
     # A failed lock-update has published nothing; only a successful update or
     # an explicit/main-branch event can require cleanup publication.
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: main
-      - uses: DeterminateSystems/nix-installer-action@v22
+      - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+      # Scheduled and main-branch runs are trusted publishers; daemon uploads
+      # never fail the watch when the cache is unreachable.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Install pinned upstream PR lookup tool
         run: |
           nh_path=$(nix build --no-link --print-out-paths --no-update-lock-file .#nixosConfigurations.alpha.pkgs.nh)
@@ -59,4 +66,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
         run: python3 .github/scripts/upstream-publish.py --readiness "$RUNNER_TEMP/upstream-readiness.json"

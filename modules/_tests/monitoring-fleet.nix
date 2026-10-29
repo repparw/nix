@@ -51,7 +51,13 @@ let
     "/home/containers/media/hdd"
     "/home/containers/media/seagate"
   ];
-  dashboard = builtins.fromJSON (builtins.readFile ../aspects/monitoring/fleet-overview.json);
+  dashboard =
+    (builtins.fromJSON (builtins.readFile ../../grafana/dashboards/fleet-overview.json)).spec;
+  cpuTarget = builtins.head (lib.findFirst (panel: panel.id == 1) null dashboard.panels).targets;
+  filesystemTarget =
+    builtins.head
+      (lib.findFirst (panel: panel.id == 3) null dashboard.panels).targets;
+  failuresTarget = builtins.head (lib.findFirst (panel: panel.id == 6) null dashboard.panels).targets;
   absentTargets = (lib.findFirst (panel: panel.id == 7) null dashboard.panels).targets;
   networkTargets = lib.filter (
     panel:
@@ -63,6 +69,7 @@ let
   queryTests = pkgs.writeText "monitoring-dashboard-tests.json" (
     builtins.toJSON {
       evaluation_interval = "1m";
+      fuzzy_compare = true;
       tests =
         map
           (missing: {
@@ -76,7 +83,7 @@ let
               eval_time = "6m";
               exp_samples = [
                 {
-                  labels = if builtins.elemAt hosts index == missing then "{host=\"${missing}\"}" else "{}";
+                  labels = "{host=\"${builtins.elemAt hosts index}\"}";
                   value = if builtins.elemAt hosts index == missing then 1 else 0;
                 }
               ];
@@ -89,6 +96,100 @@ let
             "epsilon"
           ]
         ++ [
+          {
+            interval = "1m";
+            input_series = [
+              {
+                series = "node_uname_info{host=\"alpha\"}";
+                values = "1+0x3 stale";
+              }
+            ];
+            promql_expr_test =
+              map
+                (minute: {
+                  expr = (builtins.head absentTargets).expr;
+                  eval_time = "${toString minute}m";
+                  exp_samples = [
+                    {
+                      labels = "{host=\"alpha\"}";
+                      value = if minute == 4 then 0 else 1;
+                    }
+                  ];
+                })
+                [
+                  4
+                  10
+                ];
+          }
+          {
+            interval = "1m";
+            input_series =
+              lib.concatMap
+                (
+                  fixture:
+                  map
+                    (mode: {
+                      series = "node_cpu_seconds_total{host=\"${fixture.host}\",cpu=\"0\",job=\"integrations/unix\",mode=\"${mode}\"}";
+                      values = "0+${toString fixture.${mode}}x10";
+                    })
+                    [
+                      "user"
+                      "idle"
+                    ]
+                )
+                [
+                  {
+                    host = "pi";
+                    user = 1;
+                    idle = 65;
+                  }
+                  {
+                    host = "alpha";
+                    user = 30;
+                    idle = 30;
+                  }
+                  {
+                    host = "epsilon";
+                    user = 0;
+                    idle = 60;
+                  }
+                  {
+                    host = "saturated";
+                    user = 60;
+                    idle = 0;
+                  }
+                ]
+              ++ [
+                {
+                  series = "node_cpu_seconds_total{host=\"pi\",cpu=\"0\",job=\"unrelated\",mode=\"user\"}";
+                  values = "0+6000x10";
+                }
+              ];
+            promql_expr_test = [
+              {
+                expr = cpuTarget.expr;
+                eval_time = "6m";
+                exp_samples = [
+                  {
+                    labels = "{host=\"pi\"}";
+                    value = 100.0 / 66.0;
+                  }
+                  {
+                    labels = "{host=\"alpha\"}";
+                    value = 50;
+                  }
+                  {
+                    labels = "{host=\"epsilon\"}";
+                    value = 0;
+                  }
+                  {
+                    labels = "{host=\"saturated\"}";
+                    value = 100;
+                  }
+                ];
+              }
+            ];
+          }
           {
             interval = "1m";
             input_series =
@@ -104,6 +205,9 @@ let
                       "enp6s0"
                       "lo"
                       "veth-fixture"
+                      "ifb-wan"
+                      "wg-home"
+                      "br0"
                     ]
                 )
                 [
@@ -120,6 +224,104 @@ let
                 }
               ];
             }) networkTargets;
+          }
+          {
+            interval = "1m";
+            input_series =
+              lib.concatMap
+                (
+                  mount:
+                  map
+                    (metric: {
+                      series = "node_filesystem_${metric}_bytes{host=\"epsilon\",device=\"/dev/sda1\",fstype=\"ext4\",mountpoint=\"${mount}\"}";
+                      values =
+                        if metric == "size" then
+                          "1000+0x10"
+                        else if metric == "free" then
+                          "500+0x10"
+                        else
+                          "450+0x10";
+                    })
+                    [
+                      "size"
+                      "free"
+                      "avail"
+                    ]
+                )
+                [
+                  "/persist"
+                  "/nix"
+                  "/home/repparw"
+                ];
+            promql_expr_test = [
+              {
+                expr = filesystemTarget.expr;
+                eval_time = "6m";
+                exp_samples = [
+                  {
+                    labels = "{host=\"epsilon\",device=\"/dev/sda1\"}";
+                    value = 100 * 500.0 / 950.0;
+                  }
+                ];
+              }
+            ];
+          }
+          {
+            interval = "1m";
+            input_series = [
+              {
+                series = "fleet_failed_unit{host=\"alpha\",name=\"first.service\"}";
+                values = "1+0x10";
+              }
+              {
+                series = "fleet_failed_unit{host=\"alpha\",name=\"second.service\"}";
+                values = "1+0x10";
+              }
+              {
+                series = "fleet_health_collection_timestamp_seconds{host=\"alpha\",collector=\"host\"}";
+                values = "100+0x10";
+              }
+              {
+                series = "fleet_health_collection_timestamp_seconds{host=\"epsilon\",collector=\"host\"}";
+                values = "100+0x10";
+              }
+              {
+                series = "fleet_failed_units{host=\"legacy\",job=\"integrations/unix\"}";
+                values = "2+0x10";
+              }
+              {
+                series = "node_systemd_unit_state{host=\"alpha\",name=\"test.service\",state=\"failed\"}";
+                values = "0+0x10";
+              }
+              {
+                series = "node_systemd_unit_state{host=\"pi\",name=\"test.service\",state=\"failed\"}";
+                values = "1+0x10";
+              }
+            ];
+            promql_expr_test = [
+              {
+                expr = failuresTarget.expr;
+                eval_time = "6m";
+                exp_samples = [
+                  {
+                    labels = "{host=\"alpha\"}";
+                    value = 2;
+                  }
+                  {
+                    labels = "{host=\"pi\"}";
+                    value = 1;
+                  }
+                  {
+                    labels = "{host=\"epsilon\"}";
+                    value = 0;
+                  }
+                  {
+                    labels = "{host=\"legacy\"}";
+                    value = 2;
+                  }
+                ];
+              }
+            ];
           }
         ];
     }
@@ -167,6 +369,11 @@ let
   cloudSite = lib.findFirst (site: site.title == "grafana") null glanceMonitor.sites;
 in
 assert lib.all cloudOnly hosts;
+assert !(lib.hasInfix ''name = "paperless"'' (alloyConfig "pi"));
+assert lib.hasInfix
+  ''{ name = "paperless", address = "http://${(cfg "epsilon").containers.paperless.localAddress}:8000"''
+  (alloyConfig "epsilon");
+assert (cfg "epsilon").containers.paperless.forwardPorts == [ ];
 assert lib.all (port: !(builtins.elem port (cfg "epsilon").networking.firewall.allowedTCPPorts)) [
   9090
   3100
@@ -198,8 +405,22 @@ assert lib.all
     "/var/lib/prometheus2"
   ];
 assert alphaExclusions;
-assert (cfg "epsilon").modules.disk-watch.enable;
-assert (cfg "pi").systemd.timers ? fleet-health;
+assert lib.all (host: !(cfg host).systemd.timers ? fleet-health) hosts;
+assert lib.all (host: !(cfg host).systemd.timers ? disk-watch) hosts;
+assert lib.all (host: !(cfg host).systemd.timers ? reboot-watch) hosts;
+assert !((cfg "pi").systemd.services ? fleet-health-event);
+assert map (disk: disk.mount) (cfg "epsilon").modules.monitoring.health.disks == [ "/persist" ];
+assert lib.all (host: (cfg host).systemd.timers ? fleet-health-metrics) hosts;
+assert lib.all (
+  host: lib.hasInfix "node_systemd_unit_state;(inactive|activating|deactivating)" (alloyConfig host)
+) hosts;
+assert
+  (lib.findFirst (disk: disk.mount == "/persist") null
+    (cfg "epsilon").modules.monitoring.health.disks
+  ).crit == 85;
+assert
+  (lib.findFirst (disk: disk.mount == "/mnt/hdd") null (cfg "alpha").modules.monitoring.health.disks)
+  .sleeping;
 assert lib.all (
   variant:
   let
@@ -223,6 +444,8 @@ pkgs.runCommand "check-monitoring-fleet"
     nativeBuildInputs = [
       pkgs.grafana-alloy
       pkgs.prometheus.cli
+      pkgs.python3
+      pkgs.go
     ];
   }
   ''
@@ -238,5 +461,8 @@ pkgs.runCommand "check-monitoring-fleet"
       }"
     ) cloudVariants}
     promtool test rules ${queryTests}
+    GOCACHE="$TMPDIR/go-cache" GO111MODULE=off go run ${./discord-template.go} ${./fixtures/monitoring/discord.tmpl}
+    PYTHONDONTWRITEBYTECODE=1 python3 ${./fleet-health-metrics.py} ${../scripts/fleet-health-metrics.py} ${./fixtures/monitoring/health-alerts.json}
+    PYTHONDONTWRITEBYTECODE=1 python3 ${./grafana-cloud-backup.py} ${../scripts/grafana-cloud-backup.py}
     touch $out
   ''
