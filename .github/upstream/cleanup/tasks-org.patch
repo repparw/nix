@@ -1,28 +1,19 @@
-diff --git a/modules/aspects/gui/apps.nix b/modules/aspects/gui/apps.nix
---- a/modules/aspects/gui/apps.nix
-+++ b/modules/aspects/gui/apps.nix
-@@ -12,12 +12,6 @@
-     nixos =
-       { pkgs, ... }:
-       {
--        nixpkgs.overlays = [
--          (final: _prev: {
--            tasks-org = (import ../upstream/_overlays/tasks-org.nix) final;
--          })
--        ];
--
-         programs = {
-           gnome-disks.enable = true;
-         };
-diff --git a/modules/aspects/upstream/_overlays/tasks-org.nix b/modules/aspects/upstream/_overlays/tasks-org.nix
+diff --git a/modules/aspects/upstream/tasks-org.nix b/modules/aspects/upstream/tasks-org.nix
 deleted file mode 100644
---- a/modules/aspects/upstream/_overlays/tasks-org.nix
+--- a/modules/aspects/upstream/tasks-org.nix
 +++ /dev/null
-@@ -1,7 +0,0 @@
+@@ -1,14 +0,0 @@
+-{ den, ... }:
 -let
 -  tasksOrgPackage = builtins.fetchurl {
 -    url = "https://raw.githubusercontent.com/NixOS/nixpkgs/68e19592a6d35b03cb050e499d051cff6f8c9539/pkgs/by-name/ta/tasks-org/package.nix";
 -    sha256 = "sha256-ROHXY5AJiH9B1iarpvCKinvIpAr4HuXXdIcjIwnHq1I=";
 -  };
 -in
--final: final.callPackage tasksOrgPackage { }
+-{
+-  den.aspects.gui.provides.guiApps.nixos.nixpkgs.overlays = [
+-    (final: _prev: {
+-      tasks-org = final.callPackage tasksOrgPackage { };
+-    })
+-  ];
+-}
