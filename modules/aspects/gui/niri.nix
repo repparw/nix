@@ -21,7 +21,6 @@
               };
             });
 
-            wpaperd = (import ../upstream/_overlays/wpaperd-fix.nix) lib prev;
           })
         ];
 
