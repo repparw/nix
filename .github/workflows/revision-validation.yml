@@ -262,8 +262,6 @@ jobs:
           # Atomic-cleanup PRs carry the sentinel instead: the bundled
           # watchers resolve from the exact candidate commit message, so
           # the required gate includes every bundled package validation.
-          # The retired authelia-pnpm-hash watcher has no package validator;
-          # it is stripped defensively if a stale candidate ever names it.
           list="$WATCHERS"
           if [ "$list" = automation/atomic-cleanup ]; then
             list=$(git log -1 --format=%s | sed -n 's/.*updated lock (\([^)]*\)).*/\1/p' | tr ',' ' ')
@@ -271,13 +269,12 @@ jobs:
               echo "Cannot infer atomic watchers from the candidate head." >&2
               exit 1
             fi
-            list=$(printf '%s\n' $list | grep -v '^authelia-pnpm-hash$' || true | tr '\n' ' ')
           else
             list="${list#automation/upstream-}"
           fi
           if [ -z "$(printf '%s' "$list" | tr -d ' ')" ]; then
-            echo "No package-validated watchers in this atomic candidate; host evals cover it."
-            exit 0
+            echo "Atomic candidate has no package-validated watchers; refusing to skip validation." >&2
+            exit 1
           fi
           for watcher in $(printf '%s' "$list" | tr ',' ' '); do
             # Only the split CLI cleanup has an additional ARM validator.
