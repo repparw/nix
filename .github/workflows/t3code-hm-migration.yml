@@ -2,6 +2,8 @@ name: T3 Code Home Manager migration
 on:
   pull_request:
     paths:
+      - modules/aspects/ai/t3code.nix
+      - modules/aspects/ai/t3code-connect.nix
       - .github/upstream/cleanup/t3code-server.patch
       - .github/scripts/upstream-readiness.test.py
       - .github/workflows/t3code-hm-migration.yml
@@ -15,11 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
-      - name: Apply the guarded migration recipe
+      - name: Apply recipe only if the local user unit still exists
         run: |
           set -euo pipefail
-          git apply --check .github/upstream/cleanup/t3code-server.patch
-          git apply .github/upstream/cleanup/t3code-server.patch
+          if grep -q 'systemd.user.services.t3code-web' modules/aspects/ai/t3code.nix; then
+            git apply --check .github/upstream/cleanup/t3code-server.patch
+            git apply .github/upstream/cleanup/t3code-server.patch
+          fi
           python3 - <<'PY'
           from pathlib import Path
           path = Path("modules/aspects/ai/t3code.nix")
@@ -40,13 +44,32 @@ jobs:
             command_json=$(nix eval --json --override-input home-manager "$hm" "${prefix}.systemd.user.services.t3code.Service.ExecStart")
             command=$(printf '%s' "$command_json" | python3 -c 'import json,sys; v=json.load(sys.stdin); assert isinstance(v,list) and len(v)==1; print(v[0])')
             echo "${host} ExecStart: ${command}"
-            [[ "$command" == *"/bin/t3 serve --mode web --port 4719"* ]]
-            start_services=$(nix eval --json --override-input home-manager "$hm"               "${prefix}.systemd.user.startServices")
+            package=$(nix eval --raw --override-input home-manager "$hm" "${prefix}.programs.t3code.package.outPath")
+            [[ "$command" == "$package/bin/t3 serve --mode web --port 4719" ]]
+            start_services=$(nix eval --json --override-input home-manager "$hm" "${prefix}.systemd.user.startServices")
             [[ "$start_services" == true ]]
             # The old unit must no longer exist; sd-switch stops obsolete units
             # from the previous generation by default.
-            if nix eval --json --override-input home-manager "$hm"               "${prefix}.systemd.user.services.t3code-web" >/dev/null 2>&1; then
+            if nix eval --json --override-input home-manager "$hm" "${prefix}.systemd.user.services.t3code-web" >/dev/null 2>&1; then
               echo "ERROR: stale t3code-web service remains on ${host}" >&2
               exit 1
             fi
           done
+          # When the nixpkgs package split lands, both packages must share
+          # a source and version. The server selects the CLI on all hosts.
+          split=$(nix eval --json --override-input home-manager "$hm" \
+            .#nixosConfigurations.alpha.pkgs --apply 'pkgs: pkgs ? t3code-cli')
+          if [[ "$split" == true ]]; then
+            cli=.#nixosConfigurations.alpha.pkgs.t3code-cli
+            desktop=.#nixosConfigurations.alpha.pkgs.t3code-desktop
+            cli_version=$(nix eval --raw --override-input home-manager "$hm" "${cli}.version")
+            desktop_version=$(nix eval --raw --override-input home-manager "$hm" "${desktop}.version")
+            [[ "$cli_version" == "$desktop_version" ]]
+            cli_source=$(nix eval --raw --override-input home-manager "$hm" "${cli}.unwrapped.src.outPath")
+            desktop_source=$(nix eval --raw --override-input home-manager "$hm" "${desktop}.unwrapped.src.outPath")
+            [[ "$cli_source" == "$desktop_source" ]]
+            cli_path=$(nix eval --raw --override-input home-manager "$hm" "${cli}.outPath")
+            selected=$(nix eval --raw --override-input home-manager "$hm" \
+              .#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.t3code.package.outPath)
+            [[ "$selected" == "$cli_path" ]]
+          fi
