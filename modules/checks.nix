@@ -544,32 +544,29 @@
 
               relayUser = "wg-egress-relay";
               relayBridgeIp = "10.231.137.1";
-              relayEnabled = (inputs.self.nixosConfigurations.epsilon.extendModules {
-                modules = [
-                  { modules.wg-egress-relay.enable = true; }
-                ];
-              }).config;
+              relayEnabled = inputs.self.nixosConfigurations.epsilon.extendModules {
+                modules = [ { modules.wg-egress-relay.enable = true; } ];
+              };
+              enabledConfig = relayEnabled.config;
+              defaultRelayRoutes = lib.concatMap (peer: peer.allowedIPs) epsilon.networking.wireguard.interfaces.wg-home.peers;
+              enabledRelayRoutes = lib.concatMap (peer: peer.allowedIPs) enabledConfig.networking.wireguard.interfaces.wg-home.peers;
               socksRelayMatches =
                 !epsilon.modules.wg-egress-relay.enable
                 && !(epsilon.users.users ? ${relayUser})
                 && !(epsilon.systemd.services ? wg-egress-relay)
                 && !(epsilon.systemd.services ? wg-egress-rules)
                 && epsilon.networking.wireguard.interfaces.wg-home.allowedIPsAsRoutes
-                && !(builtins.elem "0.0.0.0/0" (
-                  lib.concatMap (peer: peer.allowedIPs) epsilon.networking.wireguard.interfaces.wg-home.peers
-                ))
-                && builtins.elem "0.0.0.0/0" (
-                  lib.concatMap (peer: peer.allowedIPs) relayEnabled.networking.wireguard.interfaces.wg-home.peers
-                )
-                && relayEnabled.users.users ? ${relayUser}
-                && relayEnabled.systemd.services ? wg-egress-relay
-                && relayEnabled.systemd.services ? wg-egress-rules
-                && relayEnabled.systemd.services.wg-egress-relay.serviceConfig.User == relayUser
-                && !relayEnabled.networking.wireguard.interfaces.wg-home.allowedIPsAsRoutes
-                && relayEnabled.systemd.services.wg-egress-relay.serviceConfig.RestrictAddressFamilies == [ "AF_INET" ]
-                && lib.hasSuffix "-i ${relayBridgeIp} -p 1080" relayEnabled.systemd.services.wg-egress-relay.serviceConfig.ExecStart
-                && lib.hasInfix ''uidrange "$uid-$uid"'' relayEnabled.systemd.services.wg-egress-rules.script
-                && lib.hasInfix "blackhole default" relayEnabled.systemd.services.wg-egress-rules.script;
+                && !(builtins.elem "0.0.0.0/0" defaultRelayRoutes)
+                && builtins.elem "0.0.0.0/0" enabledRelayRoutes
+                && enabledConfig.users.users ? ${relayUser}
+                && enabledConfig.systemd.services ? wg-egress-relay
+                && enabledConfig.systemd.services ? wg-egress-rules
+                && enabledConfig.systemd.services.wg-egress-relay.serviceConfig.User == relayUser
+                && !enabledConfig.networking.wireguard.interfaces.wg-home.allowedIPsAsRoutes
+                && enabledConfig.systemd.services.wg-egress-relay.serviceConfig.RestrictAddressFamilies == [ "AF_INET" ]
+                && lib.hasSuffix "-i ${relayBridgeIp} -p 1080" enabledConfig.systemd.services.wg-egress-relay.serviceConfig.ExecStart
+                && lib.hasInfix ''uidrange "$uid-$uid"'' enabledConfig.systemd.services.wg-egress-rules.script
+                && lib.hasInfix "blackhole default" enabledConfig.systemd.services.wg-egress-rules.script;
 
               expected =
                 fleetRegistryMatches
