@@ -84,7 +84,7 @@ default until the benchmark and live trial said otherwise.
 
 A full alpha closure build from current main fails on
 `nodejs-slim-24.22.1` (produced by the `nodejs-security` overlay,
-`modules/aspects/nodejs-security.nix`): its output check rejects
+`modules/aspects/upstream/nodejs-security.nix`): its output check rejects
 `out` inside the `libv8` output check while the derivation itself declares
 `out` ("output check for 'libv8' contains output name 'out', but this is not
 a valid output of this derivation. Valid outputs are [corepack, dev, libv8,
