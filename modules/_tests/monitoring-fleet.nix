@@ -396,8 +396,12 @@ assert cloudSite.check-url == "https://repparw.grafana.net/api/health";
 assert lib.all
   (
     path:
-    lib.any (entry: entry.directory == path)
-      (cfg "epsilon").environment.persistence."/persist".directories
+    !(lib.any
+      (
+        entry:
+        (if builtins.isAttrs entry then entry.directory else entry) == path
+      )
+      (cfg "epsilon").environment.persistence."/persist".directories)
   )
   [
     "/var/lib/grafana"

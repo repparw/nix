@@ -281,12 +281,5 @@
         };
       };
 
-      # Keep the existing bind mounts and their ownership for rollback.
-      # Removing the services must not discard Epsilon's historical data.
-      environment.persistence."/persist".directories = [
-        "/var/lib/grafana"
-        "/var/lib/loki"
-        "/var/lib/prometheus2"
-      ];
     };
 }

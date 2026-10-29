@@ -50,14 +50,16 @@ adds retained failures, completed backup timestamps, export status, and disk fac
 - Verify actual active-series usage in `grafanacloud-usage` after changing labels
   or targets; the application datasource's instantaneous series count differs.
 
-## Restore local receivers if required
+## Retired local receivers
 
-Epsilon retains `/var/lib/grafana`, `/var/lib/loki`, and `/var/lib/prometheus2`
-under `/persist` as inactive rollback data. Do not delete them during activation.
-To restore the former topology, recover the receiver configuration and encrypted
-credentials from Git, build and deploy it, then verify receivers before switching
-agents. Keep Cloud writes until local ingestion works; use the normal
-[rollback procedure](update-rollback.md).
+Grafana, Loki, and Prometheus are no longer hosted on Epsilon. Their former
+`/var/lib/grafana`, `/var/lib/loki`, and `/var/lib/prometheus2` directories
+are no longer declared as persistent state. Removing the NixOS persistence
+entries does **not** erase existing data from `/persist` or any old bind mounts.
+If those directories still exist on disk, inspect and remove them separately
+after verifying the Cloud setup and its recovery backup. Historical receiver
+configuration remains available in Git history; use the normal
+[rollback procedure](update-rollback.md) if restoring an older topology.
 
 ## Verify configuration changes
 
