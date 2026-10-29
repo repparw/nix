@@ -16,25 +16,27 @@ collection checks.
 
 ## Dashboards in Git
 
-[Dashboard resources](../../grafana/dashboards/) use Grafana's Git Sync format.
-The dashboard UID remains `fleet-overview`; datasource UIDs are the live Cloud
-UIDs, including `grafanacloud-prom`, `grafanacloud-logs` and `grafanacloud-usage`.
-Do not maintain a second dashboard under `modules/aspects`.
+[Dashboard resources](https://github.com/repparw/grafana/tree/main/dashboards)
+are maintained in the standalone public `repparw/grafana` repository.
+The dashboard UID is `fleet-overview`; datasource UIDs are the live Cloud
+UIDs, including `grafanacloud-prom`, `grafanacloud-logs` and
+`grafanacloud-usage`. Do not maintain a second dashboard in this NixOS repo.
 
-Connect Git Sync to `repparw/nix`, branch `main`, path `grafana/dashboards/`.
-Use the repository-scoped GitHub App, PR workflows, and five-minute polling
-with webhooks disabled. The public connection/repository specifications are in
-`grafana/connection.json` and `grafana/repository.json`. This avoids sharing a personal GitHub credential with Grafana.
-Confirm the connection is healthy before migrating the dashboard.
+The existing Grafana Cloud Git Sync repository `fleet-dashboards` uses
+`repparw/grafana`, branch `main`, path `dashboards/`, through the
+repository-scoped `fleet-github` GitHub App connection. Keep PR workflows
+and five-minute polling with webhooks disabled. Public integration metadata
+lives in [connection.json](https://github.com/repparw/grafana/blob/main/connection.json)
+and [repository.json](https://github.com/repparw/grafana/blob/main/repository.json).
+The App key and backup credentials remain SOPS-encrypted in this repo.
 
-For initial migration, back up first, then remove only the original dashboard
-so Git Sync can adopt its UID. Never delete the alert folder. Validate the
-recreated dashboard, stable URL, queries and unchanged alert-rule count. If
-sync fails, restore the dashboard from the private export through Grafana's
-native dashboard API before investigating further.
+Cloud UI dashboard changes should produce GitHub PRs; dashboard query tests
+run in the Grafana repository's own CI. Verify live sync status, UID and
+queries following changes. Never enable a second Git Sync owner for the same
+dashboard UID.
 
 Git Sync covers dashboards and folders, not alerts or notification settings.
-Check live provisioning status before assuming a pending setup is active.
+The latter remain Cloud-managed and privately backed up as described below.
 
 ## Alerts and notifications
 
