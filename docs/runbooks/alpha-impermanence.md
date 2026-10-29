@@ -138,14 +138,12 @@ production boot candidate. The owner confirmed `/srv` was empty on October 28;
 recheck before activation if services have since started using it.
 
 
-| Item                      | Observation                                                                                      | Consequence                                                                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Root and ESP              | NVMe `/dev/nvme0n1p2[/@]` is Btrfs; `/boot` is `/dev/nvme0n1p1`                                  | Home, store and service data remain on the original root.                                                                            |
-| Capacity                  | Earlier report: ~124 GiB free, ~1 GiB unallocated, metadata 76.0%; later PR summary: ~68 GiB free, ~1 MiB unallocated, metadata 77.2%. Timestamps were not consistently recorded. | Do not assume either measurement is current. Refresh Btrfs usage and allocation pressure before changing the boot layout. |
-| Device errors             | All five Btrfs device error counters are zero                                                    | No reported device errors; this is not a full integrity or recovery test.                                                            |
-| Other subvolumes          | `@home`, `srv`, `var/lib/machines`, `var/lib/portables`, `tmp`, `var/tmp`, and `.beeshome` exist | Inventory occupied subvolumes explicitly before capture; same-filesystem traversal can skip them. Do not delete them based on names. |
-| Identity and boot entries | Machine ID, shadow and host SSH key present; ten installed boot entries                          | Presence does not prove independent key access or a working rescue/fallback boot.                                                    |
-| Latest offsite attempt    | October 20 journal reports uploaded data but an incomplete `alpha-home` export                   | Do not treat the service's reset result after activation as proof of a successful backup.                                            |
+- **Root and ESP:** NVMe `/dev/nvme0n1p2[/@]` is Btrfs and `/boot` is `/dev/nvme0n1p1`. Home, store and service data remain on the original root.
+- **Capacity:** One report recorded ~124 GiB free, ~1 GiB unallocated and 76.0% metadata use; a later summary recorded ~68 GiB free, ~1 MiB unallocated and 77.2% metadata use. Timestamps are inconsistent. Refresh Btrfs usage and allocation pressure before changing boot layout.
+- **Device errors:** All five Btrfs error counters were zero. This is not a full integrity or recovery test.
+- **Other subvolumes:** `@home`, `srv`, `var/lib/machines`, `var/lib/portables`, `tmp`, `var/tmp` and `.beeshome` exist. Inventory occupied subvolumes; same-filesystem traversal can skip them. Do not delete them by name.
+- **Identity and boot:** Machine ID, shadow and host SSH key were present, with ten boot entries. Presence does not establish independent key access or a usable rescue/fallback boot.
+- **Offsite attempt:** The October 20 journal reported uploaded data but an incomplete `alpha-home` export. A reset service result after activation does not prove a successful backup.
 
 The installed home exporter fails on the historical Bloodborne paths under
 `.local/share/bbport-test/data/`. A synthetic reproduction confirmed rsync
