@@ -85,7 +85,7 @@ diff --git a/modules/aspects/ai/opencode.nix b/modules/aspects/ai/opencode.nix
 @@ -4,7 +4,7 @@
      nixos.nixpkgs.overlays = [
        (final: _prev: {
-         opencode = final.callPackage ../../../_packages/opencode.nix {
+         opencode = final.callPackage ../../_packages/opencode.nix {
 -          bun = final.bun-security;
 +          bun = final.bun;
            bunForInstall = final.bun;
