@@ -31,7 +31,7 @@
             # failing patchPhase.
             wpaperd = prev.wpaperd.overrideAttrs (old: {
               patches =
-                (old.patches or [ ]) ++ lib.optional (old.version == "1.3.0") ./wpaperd-output-removal-race.patch;
+                (old.patches or [ ]) ++ lib.optional (old.version == "1.3.0") ../upstream/wpaperd-output-removal-race.patch;
             });
           })
         ];
