@@ -45,6 +45,9 @@ let
     ]
   ];
   redirectConfig = (cfg "epsilon").services.traefik.dynamicConfigOptions.http;
+  persistencePaths = map (entry: if builtins.isAttrs entry then entry.directory else entry) (
+    (cfg "epsilon").environment.persistence."/persist".directories
+  );
   alphaMounts = [
     "/mnt/hdd"
     "/mnt/seagate"
@@ -393,16 +396,7 @@ assert
   == "https://repparw.grafana.net\${1}";
 assert !redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.permanent;
 assert cloudSite.check-url == "https://repparw.grafana.net/api/health";
-assert lib.all
-  (
-    path:
-    !(lib.any
-      (
-        entry:
-        (if builtins.isAttrs entry then entry.directory else entry) == path
-      )
-      (cfg "epsilon").environment.persistence."/persist".directories)
-  )
+assert lib.all (path: !(builtins.elem path persistencePaths))
   [
     "/var/lib/grafana"
     "/var/lib/loki"
