@@ -5,4 +5,4 @@ prev: prev.qbittorrent-nox.overrideAttrs (old: {
                         hash = "sha256-XW4ZnyaxBuIb3kny12+T/uTQOFIOVnBRV9qc1AWy6MY=";
                       })
                     ];
-                  });
+                  })
