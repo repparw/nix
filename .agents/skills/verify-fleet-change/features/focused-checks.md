@@ -8,9 +8,9 @@ check really observes; do not infer coverage from a check's name.
 For example, the fleet monitoring check is already exposed through the
 flake's checks output:
 
-~~~sh
+```sh
 nix build '.#checks.x86_64-linux.monitoring-fleet' --no-link --no-update-lock-file --print-out-paths
-~~~
+```
 
 This runs the existing check on a compatible build host. Substitute the
 relevant check and system for the task; do not assume the execution machine
