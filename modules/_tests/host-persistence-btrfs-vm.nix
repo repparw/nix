@@ -29,6 +29,7 @@ pkgs.testers.runNixOSTest {
     swapDevices = [
       {
         device = "/persist/swapfile";
+        size = 64;
       }
     ];
     virtualisation.fileSystems."/".neededForBoot = true;
@@ -113,6 +114,7 @@ pkgs.testers.runNixOSTest {
         machine.succeed("umount /run/backing-check")
         machine.fail("test -e /home/decoy")
         machine.succeed("cmp /nix/var/nix/retained /persist/nix/var/nix/retained")
+        print(machine.succeed("cat /proc/swaps; systemctl list-units --all --type=swap --no-pager; grep swap /etc/fstab || true; ls -l /persist/swapfile"))
         machine.succeed("grep -Eq '^/persist/swapfile[[:space:]]' /proc/swaps")
         machine.succeed("cmp /etc/ssh/ssh_host_ed25519_key ${fixture}/ssh_host_ed25519_key")
         machine.succeed("cp /etc/shadow /persist/before-shadow")
