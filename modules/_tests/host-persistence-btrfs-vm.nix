@@ -10,7 +10,7 @@ let
 in
 pkgs.testers.runNixOSTest {
   name = "alpha-btrfs-persistence";
-  nodes.machine = { config, ... }: {
+  nodes.machine = { config, lib, ... }: {
     imports = [
       persistence
       alpha
@@ -26,7 +26,8 @@ pkgs.testers.runNixOSTest {
     virtualisation.memorySize = 1536;
     virtualisation.emptyDiskImages = [ 512 ];
     # Swap uses Btrfs backing, never the volatile /.
-    swapDevices = [
+    # qemu-vm.nix clears swapDevices by VM override; force this test's real swap unit.
+    swapDevices = lib.mkForce [
       {
         device = "/persist/swapfile";
         size = 64;
