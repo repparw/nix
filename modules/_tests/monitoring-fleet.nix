@@ -169,7 +169,6 @@ pkgs.runCommand "check-monitoring-fleet"
     nativeBuildInputs = [
       pkgs.grafana-alloy
       pkgs.python3
-      pkgs.go
     ];
   }
   ''
@@ -184,8 +183,7 @@ pkgs.runCommand "check-monitoring-fleet"
           variant.environment.etc."alloy/config.alloy".text
       }"
     ) cloudVariants}
-    GOCACHE="$TMPDIR/go-cache" GO111MODULE=off go run ${./discord-template.go} ${./fixtures/monitoring/discord.tmpl}
-    PYTHONDONTWRITEBYTECODE=1 python3 ${./fleet-health-metrics.py} ${../scripts/fleet-health-metrics.py} ${./fixtures/monitoring/health-alerts.json}
+    PYTHONDONTWRITEBYTECODE=1 python3 ${./fleet-health-metrics.py} ${../scripts/fleet-health-metrics.py}
     PYTHONDONTWRITEBYTECODE=1 python3 ${./grafana-cloud-backup.py} ${../scripts/grafana-cloud-backup.py}
     touch $out
   ''

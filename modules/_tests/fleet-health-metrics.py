@@ -1,6 +1,5 @@
 import importlib.util
 import json
-import subprocess
 from pathlib import Path
 import sys
 import tempfile
@@ -11,65 +10,9 @@ from unittest.mock import patch
 spec = importlib.util.spec_from_file_location("collector", sys.argv.pop(1))
 collector = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(collector)
-rules = {rule["uid"]: rule for rule in json.loads(Path(sys.argv.pop(1)).read_text())}
 
 
 class MetricsTests(unittest.TestCase):
-    def test_cloud_policies_preserve_legacy_thresholds_and_fail_closed(self):
-        cases = []
-        def scenario(rule, values, expected, labels, evaluation="4m", interval="1m"):
-            output_labels = {k: v for k, v in labels.items() if k != "sleeping"}
-            label_text = "{" + ",".join(f"{k}={json.dumps(v)}" for k, v in sorted(labels.items())) + "}"
-            cases.append({"interval": interval, "input_series": [
-                {"series": name + label_text, "values": f"{value}+0x32"} for name, value in values.items()
-            ], "promql_expr_test": [{"expr": "(" + rules["fleet_cloud_" + rule]["expr"] + ") > bool 0",
-                "eval_time": evaluation, "exp_samples": [{"labels": "{" + ",".join(f"{k}={json.dumps(v)}" for k, v in sorted(output_labels.items())) + "}", "value": expected}]}]})
-        disk = {"host": "epsilon", "mountpoint": "/persist", "sleeping": "false"}
-        values = {"fleet_disk_used_percent": 80, "fleet_disk_warning_percent": 70, "fleet_disk_critical_percent": 85}
-        scenario("disk_warning", values, 1, disk)
-        scenario("disk_warning", values, 1, disk | {"sleeping": "true"})
-        scenario("disk_critical", values, 0, disk)
-        scenario("disk_critical", values | {"fleet_disk_used_percent": 86}, 1, disk)
-        allocation = {"fleet_btrfs_metadata_used_percent": 80, "fleet_btrfs_unallocated_bytes": 1073741824}
-        scenario("btrfs_critical", allocation, 1, disk)
-        scenario("btrfs_warning", allocation | {"fleet_btrfs_metadata_used_percent": 86, "fleet_btrfs_unallocated_bytes": 5368709120}, 1, disk)
-        scenario("units", {"fleet_failed_unit": 1}, 1, {"host": "pi", "name": "failed.service"})
-        cases.append({
-            "interval": "1m",
-            "input_series": [
-                {"series": 'fleet_health_collection_timestamp_seconds{host="pi",collector="host"}', "values": "100+0x32"},
-                {"series": 'fleet_health_collection_timestamp_seconds{host="epsilon",collector="host"}', "values": "100+0x32"},
-                {"series": 'fleet_failed_unit{host="pi",name="a.service"}', "values": "1+0x32"},
-                {"series": 'fleet_failed_unit{host="pi",name="b.service"}', "values": "1+0x32"},
-            ],
-            "promql_expr_test": [{
-                "expr": "(" + rules["fleet_cloud_units"]["expr"] + ") > bool 0",
-                "eval_time": "4m",
-                "exp_samples": [
-                    {"labels": '{host="pi",name="a.service"}', "value": 1},
-                    {"labels": '{host="pi",name="b.service"}', "value": 1},
-                    {"labels": '{host="epsilon"}', "value": 0},
-                ]
-            }]
-        })
-        scenario("required_unit", {"fleet_required_unit_active": 0}, 1, {"host": "pi", "name": "traefik.service"})
-        scenario("http", {"fleet_service_probe_expected": 1}, 1, {"host": "pi", "service": "missing"})
-        scenario("http", {"fleet_service_probe_expected": 1, "probe_success": 1}, 0, {"host": "pi", "service": "available"})
-        backup = {"fleet_backup_last_success_timestamp_seconds": 0, "fleet_backup_monitoring_since_timestamp_seconds": 0}
-        scenario("backup_stale", backup, 0, {"host": "pi"}, "1h", "1h")
-        scenario("backup_stale", backup, 1, {"host": "pi"}, "31h", "1h")
-        with tempfile.TemporaryDirectory() as root:
-            tests = Path(root) / "policies.yml"
-            tests.write_text(json.dumps({"evaluation_interval": "1m", "tests": cases}))
-            result = subprocess.run(["promtool", "test", "rules", str(tests)], capture_output=True, text=True)
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            policy = Path(root) / "rules.yml"
-            policy.write_text(json.dumps({"groups": [{"name": "fleet-cloud", "rules": [
-                {"alert": rule["uid"], "expr": "(" + rule["expr"] + ") > 0", "for": rule["pending"]} for rule in rules.values()
-            ]}]}))
-            result = subprocess.run(["promtool", "check", "rules", str(policy)], capture_output=True, text=True)
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
     def test_sleeping_mount_is_never_accessed(self):
         disk = {"mount": "/media", "warn": 95, "crit": 98, "sleeping": True}
         mounts = collector.mounted_filesystems("1 0 0:1 / /media rw - autofs systemd-1 rw")

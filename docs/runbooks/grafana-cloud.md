@@ -41,9 +41,7 @@ The latter remain Cloud-managed and privately backed up as described below.
 ## Alerts and notifications
 
 Cloud is authoritative for rules, contact points, notification policies and
-notification templates. Their old source copies under
-`modules/_tests/fixtures/monitoring/` are historical test fixtures, not files to
-apply to production. Editing alerting does not require a fleet deployment.
+notification templates. Editing alerting does not require a fleet deployment.
 
 Keep ordinary health rules at **Keep Last State** for evaluation errors and
 No Data. **Cloud metrics query availability** separately reports datasource
