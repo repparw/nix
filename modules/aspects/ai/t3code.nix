@@ -40,9 +40,9 @@ in
         home.sessionVariables = connectEnvironment;
 
         programs.t3code.enable = true;
-        programs.t3code.package = lib.mkDefault (
-          if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code
-        );
+        # Keep the wrapped CLI as the server package. On split nixpkgs, Alpha's
+        # desktop launcher selects t3code-desktop separately.
+        programs.t3code.package = lib.mkDefault (if pkgs ? t3code-cli then pkgs.t3code-cli else pkgs.t3code);
 
         # t3code keeps custom themes in Electron/browser localStorage and only
         # imports them through the UI (Settings -> Appearance -> Add a theme).
@@ -139,10 +139,6 @@ in
         # Use the CLI package after the split, but let Home Manager own the
         # server arguments; static ExecStart arguments would shadow extraArgs.
         systemd.user.services.t3code.Service = {
-          ExecStart = lib.mkForce (
-            "${lib.getExe' (if pkgs ? t3code-cli then pkgs.t3code-cli else config.programs.t3code.package) "t3"}"
-            + " ${lib.escapeShellArgs ([ "serve" ] ++ config.programs.t3code.server.extraArgs)}"
-          );
           Restart = lib.mkForce "always";
           Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [
             "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
