@@ -37,5 +37,5 @@
 {{ end -}}
 {{- range .Alerts.Resolved }}{{ if gt (len $.Alerts.Firing) 0 }}Cleared: {{ end }}{{ template "fleet.discord.detail" . }}
 {{ end }}
-[Dashboard](https://grafana.repparw.com/d/fleet-overview/fleet-overview)
+[Dashboard](https://metrics.repparw.com/d/fleet-overview/fleet-overview)
 {{- end }}
