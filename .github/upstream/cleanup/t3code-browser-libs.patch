@@ -1,4 +1,4 @@
-diff --git a/modules/aspects/ai/default.nix w/modules/aspects/ai/default.nix
+diff --git a/modules/aspects/ai/default.nix b/modules/aspects/ai/default.nix
 index c52dcc7..12a81c5 100644
 --- a/modules/aspects/ai/default.nix
 +++ b/modules/aspects/ai/default.nix
@@ -10,7 +10,7 @@ index c52dcc7..12a81c5 100644
        t3code-connect
        t3code
      ];
-diff --git a/modules/aspects/upstream/t3code-browser-libs.nix w/modules/aspects/upstream/t3code-browser-libs.nix
+diff --git a/modules/aspects/upstream/t3code-browser-libs.nix b/modules/aspects/upstream/t3code-browser-libs.nix
 deleted file mode 100644
 index b023a86..0000000
 --- a/modules/aspects/upstream/t3code-browser-libs.nix
