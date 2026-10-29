@@ -30,10 +30,9 @@ lives in [connection.json](https://github.com/repparw/grafana/blob/main/connecti
 and [repository.json](https://github.com/repparw/grafana/blob/main/repository.json).
 The App key and backup credentials remain SOPS-encrypted in this repo.
 
-Cloud UI dashboard changes should produce GitHub PRs; dashboard query tests
-run in the Grafana repository's own CI. Verify live sync status, UID and
-queries following changes. Never enable a second Git Sync owner for the same
-dashboard UID.
+Cloud UI dashboard changes should produce GitHub PRs. Verify live sync
+status, UID and panel behavior following changes. Never enable a second Git
+Sync owner for the same dashboard UID.
 
 Git Sync covers dashboards and folders, not alerts or notification settings.
 The latter remain Cloud-managed and privately backed up as described below.
