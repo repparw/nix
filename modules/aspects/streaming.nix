@@ -222,9 +222,7 @@ in
           config = {
             nixpkgs.overlays = [
               (_final: prev: {
-                gamescope = (prev.gamescope.override { enableWsi = true; }).overrideAttrs (old: {
-                  postPatch = (old.postPatch or "") + (import ./upstream/_overlays/gamescope-vkroots.nix);
-                });
+                gamescope = prev.gamescope.override { enableWsi = true; };
               })
             ];
 
