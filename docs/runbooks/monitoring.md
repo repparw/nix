@@ -1,8 +1,8 @@
 ---
 type: Runbook
 title: Diagnose fleet observability
-description: Check Cloud ingestion, collection limits, and receiver rollback.
-when: Diagnose missing telemetry, operate dashboards, or roll back the Cloud cutover.
+description: Check Cloud ingestion and collection limits.
+when: Diagnose missing telemetry or operate dashboards.
 resource: modules/aspects/monitoring.nix
 tags: [monitoring, grafana, cloud, alloy, journald]
 ---
@@ -49,17 +49,6 @@ adds retained failures, completed backup timestamps, export status, and disk fac
   Alloy restarts during an outage ([Alloy #7112](https://github.com/grafana/alloy/issues/7112)).
 - Verify actual active-series usage in `grafanacloud-usage` after changing labels
   or targets; the application datasource's instantaneous series count differs.
-
-## Retired local receivers
-
-Grafana, Loki, and Prometheus are no longer hosted on Epsilon. Their former
-`/var/lib/grafana`, `/var/lib/loki`, and `/var/lib/prometheus2` directories
-are no longer declared as persistent state. Removing the NixOS persistence
-entries does **not** erase existing data from `/persist` or any old bind mounts.
-If those directories still exist on disk, inspect and remove them separately
-after verifying the Cloud setup and its recovery backup. Historical receiver
-configuration remains available in Git history; use the normal
-[rollback procedure](update-rollback.md) if restoring an older topology.
 
 ## Verify configuration changes
 
