@@ -213,11 +213,6 @@
           qbittorrent = {
             mediaBind = false;
             extraConfig = {
-              nixpkgs.overlays = [
-                (_final: prev: {
-                  qbittorrent-nox = (import ../upstream/_overlays/qbittorrent.nix) prev;
-                })
-              ];
               services.qbittorrent.group = "media";
               users.groups.media.gid = 900;
               systemd.services.qbittorrent.preStart = lib.mkBefore ''
