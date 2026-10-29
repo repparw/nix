@@ -112,7 +112,6 @@ let
     assert lib.any (mount: mount.where == "/etc" && mount.what == "/persist/etc") epsilonMounts;
     assert lib.any (mount: mount.where == "/home/repparw") epsilonMounts;
     assert lib.any (mount: mount.where == "/var/log") epsilonMounts;
-    assert lib.any (mount: mount.where == "/var/lib/ddclient") epsilonMounts;
     assert lib.elem "sysroot-nix.mount"
       epsilon.boot.initrd.systemd.services.initrd-nixos-activation.requires;
     assert lib.elem "sysroot-var-lib-nixos.mount"
@@ -125,9 +124,6 @@ let
       mount: mount.where == "/sysroot/var/lib/nixos" && mount.what == "/sysroot/persist/var/lib/nixos"
     ) epsilon.boot.initrd.systemd.mounts;
     assert lib.any (entry: entry.directory or null == "/var/log") (
-      epsilon.environment.persistence."/persist".directories
-    );
-    assert lib.any (entry: entry.directory or null == "/var/lib/ddclient") (
       epsilon.environment.persistence."/persist".directories
     );
     # Same same-fs landmine as pi: the random-seed symlink must stay absent

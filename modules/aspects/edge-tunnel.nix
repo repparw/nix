@@ -13,8 +13,6 @@
       ++ [ "metrics.${cfg.domain}" ];
     in
     {
-      services.ddclient.enable = lib.mkForce false;
-
       sops.secrets.cloudflareTunnelCredentials = {
         sopsFile = ../../secrets/proxy.sops.yaml;
         restartUnits = [ "cloudflared-tunnel-epsilon-edge.service" ];
