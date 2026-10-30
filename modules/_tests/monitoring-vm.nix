@@ -112,8 +112,12 @@ pkgs.testers.runNixOSTest {
         default = { };
       };
       options.modules.fleet-unit-state.snapshot = lib.mkOption { type = lib.types.package; };
+      # The fleet-reboot aspect ships fleet-wide; this standalone import of
+      # the health aspect needs its own stand-in like fleet-unit-state's.
+      options.modules.fleet-reboot.predicate = lib.mkOption { type = lib.types.package; };
       config = {
         modules.fleet-unit-state.snapshot = pkgs.writeShellScriptBin "fleet-unit-snapshot" "exit 0";
+        modules.fleet-reboot.predicate = pkgs.writeShellScriptBin "fleet-reboot-required" "exit 1";
         modules.services = {
           domain = "example.test";
           definitions = lib.genAttrs [ "fixture" "logintrap" ] (name: {

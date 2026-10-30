@@ -784,3 +784,8 @@ if [ "$requested_host" = all ]; then
     notify ":information_source: required nodes converged on ${revision:0:8}; alpha remains deferred"
   fi
 fi
+# Land a reboot right after a successful convergence instead of waiting for
+# the nightly window: the sequence no-ops when the headless hosts already
+# match their staged boot chain, orders itself after this deploy unit, and
+# the 03:00 timer remains the safety net for anything this run deferred.
+systemctl --no-block start fleet-headless-reboot.service >/dev/null 2>&1 || true
