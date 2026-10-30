@@ -38,7 +38,7 @@
                         src
                         pnpmWorkspaces
                         ;
-                      fetcherVersion = 5;
+                      fetcherVersion = 4;
                       hash = "sha256-uj7IxNMdubCtIqkv1M/vg5dRTeUaysC+1l/7ag+D7/4=";
                     };
                   }
