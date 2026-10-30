@@ -33,6 +33,9 @@ Both managed resources carry `lifecycle { prevent_destroy = true }`: a
 
 ## Inventory
 
+The commands below that use `go run ./cmd/tfinventory` must be run from the
+pinned provider checkout described in **Setup**, not from this OpenTofu root.
+
 `inventory.auto.tfvars` and `imports.tf` are **generated** from the live
 router by the provider's `tfinventory` tool and are gitignored — they
 contain the LAN device inventory (MACs, hostnames). Only the `.example`
@@ -47,12 +50,16 @@ TPLINK_PASSWORD=... go run ./cmd/tfinventory -dir ~/Projects/nix/infra/router
 ## Setup
 
 The provider is not published to a registry yet; install it as a local
-plugin (OpenTofu picks up `~/.tofu.d/plugins` automatically for
-`-plugin-dir` runs):
+plugin (OpenTofu picks up `~/.tofu.d/plugins` for
+`-plugin-dir` runs). Build from the pinned revision below; do not use an
+unversioned provider binary labelled as `0.1.0`:
 
 ```sh
 git clone https://github.com/repparw/terraform-provider-tplink
 cd terraform-provider-tplink
+# Reproducible source revision, verified against the AX23 v2.
+# The 0.1.0 version is a local development version, not a registry release.
+git checkout d8d740ce6855808e69c1c1967c5f91ca4a9f8e3a
 go build -ldflags "-X main.version=0.1.0" -o terraform-provider-tplink .
 mkdir -p ~/.tofu.d/plugins/registry.opentofu.org/repparw/tplink/0.1.0/linux_amd64
 cp terraform-provider-tplink ~/.tofu.d/plugins/registry.opentofu.org/repparw/tplink/0.1.0/linux_amd64/
@@ -64,7 +71,7 @@ cp terraform-provider-tplink ~/.tofu.d/plugins/registry.opentofu.org/repparw/tpl
 cd ~/Projects/nix/infra/router
 # one-time: generate inventory.auto.tfvars + imports.tf (see Inventory)
 export TF_VAR_router_password="..."
-tofu init -plugin-dir=~/.tofu.d/plugins
+tofu init -plugin-dir="$HOME/.tofu.d/plugins"
 tofu plan     # must read "Plan: N to import, 0 to add, 0 to change, 0 to destroy"
 tofu apply    # performs the imports; reads only — no router writes
 tofu plan     # must end in "No changes"
@@ -90,19 +97,22 @@ destroy`.
   retries failed logins.
 - **Can** update a reservation or forward in place (IP, ports, protocol,
   enabled, hostname). Updates are verified by read-back after the write.
-- **Can** replace a row if its identity changes (MAC for reservations, name
-  for forwards are force-replaced): the old row is deleted and the new one
-  created. Until the replacement apply completes, the old mapping is gone —
-  for reservations this means a device could pick a pool address on its
-  next renewal if the apply fails midway. Review such plans in full.
+- **Cannot** replace a row while `prevent_destroy` is in force: changing a
+  reservation MAC or a forward's name requires a replacement with a destroy
+  step, so the plan fails. To authorize such a replacement, explicitly remove
+  the safeguard and review the full plan. Once protection is removed, the old
+  mapping may be deleted before its replacement succeeds; a failed apply could
+  leave the device without its reserved IP or the forward unavailable.
 
 Deliberate removal of a managed row is a two-step, on purpose:
 
-1. Remove the entry from `inventory.auto.tfvars`, apply — the plan will
-   fail with `prevent_destroy`.
-2. Temporarily comment the `lifecycle { prevent_destroy = true }` block in
-   `router.tf`, apply, restore the block, commit. This friction is the
-   point: row deletion should never be an accident.
+1. Remove the entry from `inventory.auto.tfvars`, then run `tofu plan` —
+   it must fail with `prevent_destroy`.
+2. Temporarily remove the applicable `lifecycle { prevent_destroy = true }`
+   block from `router.tf`; inspect the resulting plan and confirm the exact
+   row(s) to destroy or replace before applying.
+3. Restore `prevent_destroy` immediately after the authorized operation.
+   This friction is intentional: accidental deletion is never routine.
 
 ## State
 
