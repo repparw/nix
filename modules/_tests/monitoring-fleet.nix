@@ -45,6 +45,9 @@ let
     ]
   ];
   redirectConfig = (cfg "epsilon").services.traefik.dynamicConfigOptions.http;
+  persistencePaths = map (entry: if builtins.isAttrs entry then entry.directory else entry) (
+    cfg "epsilon"
+  ).environment.persistence."/persist".directories;
   alphaMounts = [
     "/mnt/hdd"
     "/mnt/seagate"
@@ -122,17 +125,11 @@ assert !redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.permanen
 assert lib.hasInfix "grafana" redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.regex;
 assert lib.hasInfix "metrics" redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.regex;
 assert cloudSite.check-url == "https://repparw.grafana.net/api/health";
-assert lib.all
-  (
-    path:
-    lib.any (entry: entry.directory == path)
-      (cfg "epsilon").environment.persistence."/persist".directories
-  )
-  [
-    "/var/lib/grafana"
-    "/var/lib/loki"
-    "/var/lib/prometheus2"
-  ];
+assert lib.all (path: !(builtins.elem path persistencePaths)) [
+  "/var/lib/grafana"
+  "/var/lib/loki"
+  "/var/lib/prometheus2"
+];
 assert alphaExclusions;
 assert lib.all (host: !(cfg host).systemd.timers ? fleet-health) hosts;
 assert lib.all (host: !(cfg host).systemd.timers ? disk-watch) hosts;
