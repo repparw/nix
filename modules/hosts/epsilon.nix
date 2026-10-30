@@ -80,10 +80,7 @@
           }
         ];
 
-        modules.backup.paths = [
-          "/home/containers/config"
-          "/var/lib/ddclient"
-        ];
+        modules.backup.paths = [ "/home/containers/config" ];
         modules.persistence.enable = true;
         modules.persistence.mutableAccounts = true;
         # The aspect's random-seed symlink cannot transition on this host: /
@@ -108,11 +105,6 @@
             directory = "/home/containers/config";
             user = "repparw";
             group = "users";
-          }
-          {
-            directory = "/var/lib/ddclient";
-            user = "ddclient";
-            group = "ddclient";
           }
           "/var/log"
         ];
