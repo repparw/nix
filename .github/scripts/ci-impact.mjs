@@ -7,7 +7,6 @@ const lightweight = 'formatting sops-files change-detection agent-docs check-fla
 const configuration = 'generated-shellcheck fleet-cli service-definitions host-persistence pi-image-configuration backup-exports monitoring-fleet btrfs-health fleet-failed-units pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage';
 
 const full = reason => ({
-  runNeovim: true,
   runHosts: true,
   runPersistenceVm: true,
   checkMatrix: { include: [{ group: 'lightweight', checks: lightweight }, { group: 'configuration', checks: configuration }] },
@@ -46,7 +45,6 @@ export function classifyChanges(paths, eventName = 'pull_request') {
       paths.some(p => typeof p !== 'string' || !p)) return full('unknown or truncated comparison');
   if (paths.every(documentationOnly)) {
     return {
-      runNeovim: false,
       runHosts: false,
       runPersistenceVm: false,
       checkMatrix: { include: [{ group: 'documentation', checks: documentation }] },
@@ -54,10 +52,6 @@ export function classifyChanges(paths, eventName = 'pull_request') {
     };
   }
   return {
-    // Lock updates include transitive inputs and follows overrides. Any module
-    // can change the package selected by the host, so keep this conservative.
-    runNeovim: paths.some(path => ['flake.nix', 'flake.lock'].includes(path) ||
-      path.startsWith('modules/') || path.startsWith('.github/')),
     runHosts: true,
     runPersistenceVm: paths.some(affectsPersistence),
     checkMatrix: full().checkMatrix,
@@ -96,7 +90,6 @@ function detect() {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const impact = detect();
   const outputs = [
-    `run_neovim=${impact.runNeovim}`,
     `run_hosts=${impact.runHosts}`,
     `run_persistence_vm=${impact.runPersistenceVm}`,
     `check_matrix=${JSON.stringify(impact.checkMatrix)}`,

@@ -16,7 +16,6 @@ test('documentation-only PRs select only formatting and documentation checks', (
     ['AGENTS.md'], ['.agents/skills/verify-nixos-config/SKILL.md']]) {
     const result = classifyChanges(paths);
     assert.equal(result.runHosts, false);
-    assert.equal(result.runNeovim, false);
     assert.equal(result.runPersistenceVm, false);
     assert.deepEqual(result.checkMatrix.include, [{ group: 'documentation', checks: 'formatting agent-docs' }]);
   }
@@ -68,23 +67,11 @@ test('mixed diffs use the most conservative classification', () => {
 test('untrusted or incomplete comparisons never skip validation', () => {
   for (const files of [null, undefined, [], [''], [null], Array(300).fill('docs/notes.md')]) {
     verify(files, { hosts: true, vm: true, groups: both });
-    assert.equal(classifyChanges(files).runNeovim, true);
   }
   for (const event of ['push', 'workflow_dispatch', 'unknown']) {
     const result = classifyChanges(['README.md'], event);
     assert.equal(result.runHosts, true);
-    assert.equal(result.runNeovim, true);
     assert.equal(result.runPersistenceVm, true);
     assert.deepEqual(result.checkMatrix.include.map(g => g.group), both);
   }
-});
-
-test('host Neovim builds for locks, follows declarations, modules and CI changes', () => {
-  for (const path of ['flake.lock', 'flake.nix', 'modules/aspects/nixvim.nix',
-    'modules/aspects/cli/editors.nix', 'modules/aspects/style.nix',
-    'modules/neovim-build.nix', '.github/workflows/revision-validation.yml',
-    '.github/scripts/ci-impact.mjs']) {
-    assert.equal(classifyChanges([path]).runNeovim, true, path);
-  }
-  assert.equal(classifyChanges(['docs/notes.md']).runNeovim, false);
 });
