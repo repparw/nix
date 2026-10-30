@@ -2,8 +2,10 @@
 """Read-only probe for TP-Link Archer AX23 v2 (firmware 1.11.x, SG_L1_S2 auth).
 
 Uses tplinkrouterc6u (TplinkRouterSG) to authenticate and read status/config.
-All output is sanitized: Wi-Fi passphrases and WAN address are redacted before
-printing. No write operations are performed.
+Passphrases and WAN addresses are redacted before printing, but SSIDs,
+client hostnames, local addresses, and MACs are intentionally retained for
+inventory diagnostics. Treat the output as private network inventory.
+No write operations are performed.
 
 Env:
   TPLINK_HOST      router address (default http://192.168.0.1)
@@ -11,7 +13,7 @@ Env:
 
 Requires: python3 with the `tplinkrouterc6u` package (>= 5.33 for the SG
 client). Run against the router with the admin password in the environment;
-all output is sanitized (passphrases and WAN addresses redacted). The script
+passphrases and WAN addresses are redacted (local inventory is not). The script
 performs exactly one login, read-only queries, and a logout."""
 import json
 import os
