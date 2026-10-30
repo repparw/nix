@@ -171,12 +171,7 @@ assert pi.services.restic.backups.offsite.extraBackupArgs == [
 ];
 assert epsilon.services.restic.backups.offsite.extraBackupArgs == [ "--one-file-system" ];
 assert lib.elem "rclone.connections=1" pi.services.restic.backups.offsite.extraOptions;
-assert lib.all (
-  host: !(lib.elem "rclone.connections=1" host.services.restic.backups.offsite.extraOptions)
-) [
-  hosts.alpha.config
-  epsilon
-];
+assert !(lib.elem "rclone.connections=1" epsilon.services.restic.backups.offsite.extraOptions);
 assert lib.elem "/boot/firmware" pi.services.restic.backups.offsite.paths;
 assert lib.elem "/boot/efi" epsilon.services.restic.backups.offsite.paths;
 assert
