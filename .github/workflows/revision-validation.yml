@@ -24,6 +24,7 @@ jobs:
     outputs:
       check_matrix: ${{ steps.impact.outputs.check_matrix }}
       run_hosts: ${{ steps.impact.outputs.run_hosts }}
+      run_neovim: ${{ steps.impact.outputs.run_neovim }}
       run_persistence_vm: ${{ steps.impact.outputs.run_persistence_vm }}
     steps:
       - name: Verify requested revision
@@ -125,6 +126,60 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: host-eval-fleet
+          path: ci-logs/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  neovim-build:
+    needs: changes
+    if: needs.changes.outputs.run_neovim == 'true'
+    name: neovim-build (alpha, native)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          # The daemon publishes the built closure during the build; the
+          # explicit publish step below still flushes and verifies it
+          # synchronously against the fleet key.
+          skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Require trusted publishing credentials
+        if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          CACHIX_CREDENTIALS_PRESENT: ${{ secrets.CACHIX_AUTH_TOKEN != '' }}
+        run: |
+          if [ "$CACHIX_CREDENTIALS_PRESENT" != true ]; then
+            echo '::error::Trusted publishing needs a cache-scoped write CACHIX_AUTH_TOKEN.'
+            exit 1
+          fi
+      - name: Build the host-selected Neovim closure
+        env:
+          CI_CHECKS: host-neovim
+        run: bash .github/scripts/run-checks.sh
+      # Same-repository writers are trusted publishers. Forks and Dependabot
+      # still build and substitute, but never receive publishing credentials.
+      - name: Publish and verify the Neovim closure
+        if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        run: bash .github/scripts/publish-neovim.sh
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: host-neovim
           path: ci-logs/
           if-no-files-found: ignore
           retention-days: 14
@@ -235,7 +290,7 @@ jobs:
 
   gate:
     if: always()
-    needs: [changes, checks, host-eval, persistence-vm, upstream-package-build]
+    needs: [changes, checks, neovim-build, host-eval, persistence-vm, upstream-package-build]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -243,6 +298,8 @@ jobs:
         env:
           CHANGES_RESULT: ${{ needs.changes.result }}
           CHECKS_RESULT: ${{ needs.checks.result }}
+          NEOVIM_ENABLED: ${{ needs.changes.outputs.run_neovim }}
+          NEOVIM_RESULT: ${{ needs.neovim-build.result }}
           HOSTS_ENABLED: ${{ needs.changes.outputs.run_hosts }}
           PERSISTENCE_ENABLED: ${{ needs.changes.outputs.run_persistence_vm }}
           HOSTS_RESULT: ${{ needs.host-eval.result }}
@@ -252,6 +309,11 @@ jobs:
         run: |
           test "$CHANGES_RESULT" = success || exit 1
           test "$CHECKS_RESULT" = success || exit 1
+          case "$NEOVIM_ENABLED" in
+            true) test "$NEOVIM_RESULT" = success || exit 1 ;;
+            false) test "$NEOVIM_RESULT" = skipped || exit 1 ;;
+            *) exit 1 ;;
+          esac
           case "$HOSTS_ENABLED" in
             true) test "$HOSTS_RESULT" = success || exit 1 ;;
             false) test "$HOSTS_RESULT" = skipped || exit 1 ;;

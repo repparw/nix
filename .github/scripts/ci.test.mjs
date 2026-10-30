@@ -18,6 +18,8 @@ test('the aggregate respects only classifier-authorized skips', () => {
       ...process.env,
       CHANGES_RESULT: 'success',
       CHECKS_RESULT: 'success',
+      NEOVIM_ENABLED: 'true',
+      NEOVIM_RESULT: 'success',
       HOSTS_RESULT: 'success',
       PERSISTENCE_RESULT: 'success',
       HOSTS_ENABLED: 'true',
@@ -28,11 +30,15 @@ test('the aggregate respects only classifier-authorized skips', () => {
     },
   }).status === 0;
   assert.equal(runGate(), true);
+  assert.equal(runGate({ NEOVIM_ENABLED: 'false', NEOVIM_RESULT: 'skipped' }), true);
   assert.equal(runGate({ HOSTS_ENABLED: 'false', HOSTS_RESULT: 'skipped', PERSISTENCE_ENABLED: 'false', PERSISTENCE_RESULT: 'skipped' }), true);
   assert.equal(runGate({ PERSISTENCE_ENABLED: 'false', PERSISTENCE_RESULT: 'skipped' }), true);
   assert.equal(runGate({ UPSTREAM_WATCHER: 'tasks-org', UPSTREAM_RESULT: 'success' }), true);
   for (const env of [
     { CHANGES_RESULT: 'failure' }, { CHECKS_RESULT: 'failure' },
+    ...['failure', 'cancelled', 'skipped'].map(NEOVIM_RESULT => ({ NEOVIM_RESULT })),
+    { NEOVIM_ENABLED: 'false', NEOVIM_RESULT: 'success' },
+    { NEOVIM_ENABLED: 'unknown' },
     { HOSTS_ENABLED: 'true', HOSTS_RESULT: 'skipped' },
     { HOSTS_ENABLED: 'false', HOSTS_RESULT: 'success' },
     { HOSTS_ENABLED: 'unknown' },
@@ -43,14 +49,14 @@ test('the aggregate respects only classifier-authorized skips', () => {
     { UPSTREAM_WATCHER: 'tasks-org', UPSTREAM_RESULT: 'failure' },
     { UPSTREAM_RESULT: 'failure' },
   ]) assert.equal(runGate(env), false, JSON.stringify(env));
-  assert.match(validation, /gate:\n    if: always\(\)\n    needs: \[changes, checks, host-eval, persistence-vm, upstream-package-build\]/);
+  assert.match(validation, /gate:\n    if: always\(\)\n    needs: \[changes, checks, neovim-build, host-eval, persistence-vm, upstream-package-build\]/);
   assert.match(validation, /matrix: \$\{\{ fromJSON\(needs.changes.outputs.check_matrix\) \}\}/);
   assert.match(validation, /if: needs.changes.outputs.run_persistence_vm == 'true'/);
 });
 
 test('every checkout job verifies dispatch SHA before checking out the workflow SHA', () => {
   const jobs = validation.split(/^  [a-z-]+:\n/gm).slice(1).filter(job => job.includes('actions/checkout'));
-  assert.equal(jobs.length, 5);
+  assert.equal(jobs.length, 6);
   for (const job of jobs) {
     assert.match(job, /if: inputs.expected_sha != ''/);
     assert.match(job, /EXPECTED_SHA: \$\{\{ inputs.expected_sha \}\}/);
@@ -172,11 +178,57 @@ test('atomic package validation reads the PR head and includes bundled ARM valid
   }
 });
 
-test('every building job publishes through the daemon with the same trust gate', () => {
+test('only trusted revisions publish, with the daemon gated per revision trust', () => {
   assert.doesNotMatch(workflow + validation + upstreamWatch, /CACHIX_SIGNING_KEY|signingKey/);
   assert.doesNotMatch(workflow, /secrets: inherit/);
   assert.match(workflow, /CACHIX_AUTH_TOKEN: \$\{\{ secrets.CACHIX_AUTH_TOKEN \}\}/);
+  assert.match(validation, /CACHIX_AUTH_TOKEN:\n        required: false/);
   assert.match(validation, /workflow_call:\n    secrets:\n      CACHIX_AUTH_TOKEN:\n        required: false/);
+  const job = validation.split('  neovim-build:')[1].split('\n  persistence-vm:')[0];
+  const publish = job.split('      - name: Publish and verify the Neovim closure')[1].split('      - name: Upload build logs')[0];
+  const condition = publish.match(/if: (.*)/)[1];
+  const allowed = new Function('github', `return ${condition}`);
+  for (const [event, actor, source, expected] of [
+    ['push', 'repparw', undefined, true],
+    ['workflow_dispatch', 'repparw', undefined, true],
+    ['pull_request', 'repparw', 'repparw/nix', true],
+    ['pull_request', 'contributor', 'contributor/nix', false],
+    ['pull_request', 'dependabot[bot]', 'repparw/nix', false],
+  ]) {
+    assert.equal(allowed({ actor, event_name: event, repository: 'repparw/nix',
+      event: { pull_request: source ? { head: { repo: { full_name: source } } } : undefined } }), expected);
+  }
+  const beforePublish = job.split('      - name: Publish and verify the Neovim closure')[0];
+  assert.doesNotMatch(beforePublish, /signingKey:|CACHIX_SIGNING_KEY:/);
+  const cachixStep = beforePublish.split('      - uses: cachix/cachix-action@')[1];
+  const skipPush = new Function('github', `return ${cachixStep.match(/skipPush: \$\{\{ (.*) \}\}/)[1]}`);
+  for (const [event, actor, source, publishing] of [
+    ['push', 'repparw', undefined, true],
+    ['workflow_dispatch', 'repparw', undefined, true],
+    ['pull_request', 'repparw', 'repparw/nix', true],
+    ['pull_request', 'contributor', 'contributor/nix', false],
+    ['pull_request', 'dependabot[bot]', 'repparw/nix', false],
+  ]) {
+    assert.equal(!skipPush({ actor, event_name: event, repository: 'repparw/nix',
+      event: { pull_request: source ? { head: { repo: { full_name: source } } } : undefined } }), publishing);
+  }
+  assert.match(cachixStep, /useDaemon: true/);
+  assert.match(cachixStep, /authToken: \$\{\{ secrets\.CACHIX_AUTH_TOKEN \}\}/);
+  const preflight = beforePublish.split('      - name: Require trusted publishing credentials')[1].split('      - name: Build')[0];
+  assert.equal(preflight.match(/if: (.*)/)[1], condition);
+  assert.match(preflight, /secrets.CACHIX_AUTH_TOKEN != ''/);
+  const preflightScript = preflight.split('        run: |\n')[1].replace(/^          /gm, '');
+  for (const present of ['true', 'false', '']) {
+    const result = spawnSync('bash', ['-e', '-c', preflightScript], {
+      env: { ...process.env, CACHIX_CREDENTIALS_PRESENT: present },
+    });
+    assert.equal(result.status === 0, present === 'true');
+  }
+  assert.match(publish, /CACHIX_AUTH_TOKEN: \$\{\{ secrets.CACHIX_AUTH_TOKEN \}\}/);
+  assert.match(publish, /run: bash .github\/scripts\/publish-neovim.sh/);
+});
+
+test('every building job publishes through the daemon with the same trust gate', () => {
   const section = (name, next) => validation.split(`  ${name}:`)[1].split(`\n  ${next}:`)[0];
   for (const [name, next] of [
     ['checks', 'host-eval'],
@@ -192,4 +244,81 @@ test('every building job publishes through the daemon with the same trust gate',
   assert.doesNotMatch(watcher, /skipPush/);
   assert.match(watcher, /useDaemon: true/);
   assert.match(watcher, /authToken: \$\{\{ secrets\.CACHIX_AUTH_TOKEN \}\}/);
+});
+
+function publishNeovim(fail = '', token = 'fixture-not-a-token') {
+  const directory = mkdtempSync(join(tmpdir(), 'publish-neovim-test-'));
+  try {
+    mkdirSync(join(directory, 'bin'));
+    const bash = spawnSync('bash', ['-c', 'command -v bash'], { encoding: 'utf8' }).stdout.trim();
+    const mock = `#!${bash}
+set -euo pipefail
+command_name="$(basename "$0")"
+printf '%s %s\\n' "$command_name" "$*" >> calls
+stage=unknown rc=0
+case "$command_name $*" in
+  'nix path-info .#'*) stage=local; echo /nix/store/fixture-nixvim ;;
+  'nix path-info --recursive .#'*)
+    stage=local
+    printf '%s\\n' /nix/store/fixture-nixvim /nix/store/fixturedirect-init.lua /nix/store/fixtureupstream-coreutils ;;
+  'cachix push '*) stage=upload ;;
+  'curl '*)
+    stage=coverage
+    case "$*" in
+      *repparw.cachix.org/fixtureupstream*) rc=22 ;;
+    esac ;;
+  'nix store verify '*) stage=signature ;;
+  *) exit 90 ;;
+esac
+[[ "$stage" != "$FAIL_STAGE" ]]
+exit "$rc"
+`;
+    for (const command of ['nix', 'cachix', 'curl']) writeFileSync(join(directory, 'bin', command), mock, { mode: 0o755 });
+    const result = spawnSync('bash', [join(root, '.github/scripts/publish-neovim.sh')], {
+      cwd: directory, encoding: 'utf8',
+      env: { ...process.env, PATH: `${join(directory, 'bin')}:${process.env.PATH}`,
+        CACHIX_SIGNING_KEY: '', CACHIX_AUTH_TOKEN: token, FAIL_STAGE: fail, GITHUB_STEP_SUMMARY: join(directory, 'summary') },
+    });
+    const read = name => { try { return readFileSync(join(directory, name), 'utf8'); } catch { return ''; } };
+    return {
+      ...result, calls: read('calls'), summary: read('summary'),
+      roots: read('ci-logs/host-neovim-paths'), closure: read('ci-logs/host-neovim-closure'),
+      classification: read('ci-logs/host-neovim-classification'),
+    };
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+test('publishing waits for upload, probes both substituters and verifies cache signatures without building', () => {
+  const result = publishNeovim();
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.calls, /nix path-info --recursive \.#checks\.x86_64-linux\.host-neovim/);
+  assert.match(result.calls, /cachix push repparw \/nix\/store\/fixture-nixvim/);
+  assert.match(result.calls, /curl -fsSI -o \/dev\/null https:\/\/repparw\.cachix\.org\/fixture\.narinfo/);
+  assert.match(result.calls, /curl -fsSI -o \/dev\/null https:\/\/cache\.nixos\.org\/fixtureupstream\.narinfo/);
+  assert.match(result.calls, /nix store verify --store https:\/\/repparw\.cachix\.org --no-contents --sigs-needed 1 --option trusted-public-keys repparw\.cachix\.org-1:[^ ]* \/nix\/store\/fixture-nixvim \/nix\/store\/fixturedirect-init\.lua/);
+  assert.doesNotMatch(result.calls, /nix build|--rebuild/);
+  assert.doesNotMatch(result.calls, /nix store verify[^\\n]*--recursive/);
+  assert.match(result.roots, /fixture-nixvim/);
+  assert.match(result.closure, /fixtureupstream-coreutils/);
+  assert.match(result.classification, /^repparw \/nix\/store\/fixture-nixvim$/m);
+  assert.match(result.classification, /^upstream \/nix\/store\/fixtureupstream-coreutils$/m);
+  assert.match(result.summary, /2 cache paths verified against the fleet key/);
+  assert.match(result.summary, /1 closure paths remain served by the cache\.nixos\.org upstream/);
+  assert.match(result.summary, /fixture-nixvim/);
+  assert.doesNotMatch(result.stdout + result.stderr + result.summary, /fixture-not-a-secret|fixture-not-a-token/);
+});
+
+test('missing credentials, uploads, coverage gaps and signatures cannot silently pass', () => {
+  const missing = publishNeovim('', '');
+  assert.notEqual(missing.status, 0);
+  assert.equal(missing.calls, '');
+  for (const failure of ['local', 'upload', 'coverage', 'signature']) {
+    const result = publishNeovim(failure);
+    assert.notEqual(result.status, 0, failure);
+    assert.equal(result.summary, '', failure);
+    if (failure === 'upload') assert.doesNotMatch(result.calls, /curl /);
+    if (failure === 'coverage') assert.match(result.stderr, /can serve/);
+  }
 });
