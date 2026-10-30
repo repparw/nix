@@ -12,9 +12,9 @@ is deliberately split from the OCI stack in the parent directory:
   manages the device that provides the LAN everyone else lives on.
 
 Provider: [`repparw/terraform-provider-tplink`](https://github.com/repparw/terraform-provider-tplink)
-(native Go implementation of the SG-hardened TP-Link API; protocol and
-verification history in
-[`docs/research/archer-ax23-api-opentofu.md`](../../docs/research/archer-ax23-api-opentofu.md)).
+(native Go implementation of the SG-hardened TP-Link API). Protocol
+information and hardware verification are maintained with the provider in
+[its protocol reference](https://github.com/repparw/terraform-provider-tplink/blob/main/PROTOCOL.md).
 
 ## What is managed
 
