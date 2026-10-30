@@ -212,7 +212,7 @@ jobs:
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Exercise persistence in disposable VMs
         env:
-          CI_CHECKS: host-persistence-vm
+          CI_CHECKS: host-persistence-vm host-persistence-btrfs-vm
         run: bash .github/scripts/run-checks.sh
       - name: Upload VM logs
         if: always()

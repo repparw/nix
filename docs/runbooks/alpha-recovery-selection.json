@@ -1,0 +1,87 @@
+{
+  "status": "review-only; not configured as a backup job",
+  "host": "alpha",
+  "approved_policy": {
+    "exclude": "verified redownloadable game installation files and torrent payloads",
+    "preserve": [
+      "saves",
+      "mods",
+      "configuration",
+      "credentials",
+      "download metadata",
+      "unverified content"
+    ],
+    "delete_live_files": false
+  },
+  "live_capture_roots": [
+    "/",
+    "/boot",
+    "/srv",
+    "/var/lib/machines",
+    "/var/lib/portables"
+  ],
+  "always_exclude_subtrees": [
+    "/dev",
+    "/proc",
+    "/sys",
+    "/run",
+    "/tmp",
+    "/var/tmp",
+    "/swapfile",
+    "/persist/swapfile",
+    "/mnt",
+    "/home/containers/media/hdd",
+    "/home/containers/media/seagate",
+    "/home/repparw/.cloud/claro",
+    "/home/repparw/.cloud/nextcloud",
+    "/home/repparw/.cloud/gdrive",
+    "/home/repparw/.cloud/dropbox",
+    "/home/repparw/.cloud/crypt"
+  ],
+  "preserve_selections": [
+    "/etc",
+    "/root",
+    "/home/repparw/.t3",
+    "/home/repparw/Projects",
+    "/home/repparw/.config",
+    "/home/repparw/.steam",
+    "/home/repparw/.local/share/Steam/userdata",
+    "/home/repparw/.local/share/Steam/steamapps/compatdata",
+    "/home/repparw/Games/steamapps/compatdata",
+    "/home/repparw/Games/steamapps/workshop",
+    "/home/repparw/Games/mods",
+    "/home/repparw/Games/Heroic/Prefixes",
+    "/home/repparw/Games/bbport",
+    "/home/containers/config/qbittorrent",
+    "/var/lib",
+    "/var/log",
+    "/nix"
+  ],
+  "payload_exclusion_requirements": {
+    "steam": "Exact file matches installed depot content hash; changed/extra files and selected state/config remain included. Revalidate on captured source.",
+    "torrents": "Exact metadata mapping, payload integrity and redownload availability must be established; extra/unverified files remain included.",
+    "other_games": "Explicit verified replacement source and retained unique-state inventory required; otherwise include."
+  },
+  "capture_requirements": [
+    "Refresh the mount/subvolume inventory; restrict physical sources to NVMe root and ESP.",
+    "No traversal of foreign mounts or symlinks to external storage.",
+    "Use application-consistent exports or a reviewed consistent checkpoint; do not trust live database file copies alone.",
+    "Rebase canonical paths/exclusions onto the actual capture root; this manifest is not an executable exclude file.",
+    "Native Restic encrypted offsite copy, available quota/reserve checked before upload.",
+    "Isolated disk-backed restore batches must cover every retained manifest entry and preserve numeric owners, permissions, ACLs, xattrs and hard links."
+  ],
+  "production_boot_gates": [
+    "Verified offsite capture and isolated restore coverage",
+    "Independent rescue media and key tested locally",
+    "Real-store and ESP boot plus persistent-root fallback proven",
+    "Local-console first boot and second reboot"
+  ],
+  "steam_audit": {
+    "verified_stock_files": 103826,
+    "verified_bytes": 193518803220,
+    "modified_or_unmatched_files_preserved": 34,
+    "missing_depot_manifests": 39,
+    "inventory": "/home/repparw/Downloads/alpha-recovery-2026-10-21/steam-verified.json",
+    "applied_to_backup_job": false
+  }
+}

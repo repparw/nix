@@ -36,7 +36,8 @@ test('unrelated service, AI and GUI changes do not run the persistence VM', () =
 
 test('persistence, recovery, boot and CI infrastructure changes run the VM', () => {
   for (const path of ['modules/pi-image.nix', 'modules/aspects/persistence.nix', 'modules/_tests/host-persistence-vm.nix',
-    'modules/_tests/host-persistence.nix', 'modules/aspects/host-backup.nix',
+    'modules/_tests/host-persistence.nix', 'modules/_tests/host-persistence-btrfs-vm.nix',
+    'modules/aspects/alpha-persistence.nix', 'modules/hosts/alpha.nix', 'modules/aspects/host-backup.nix',
     'modules/scripts/prepare-backup-exports.py', 'modules/aspects/pi-services-backup.nix',
     'modules/_tests/backup-exports.py',
     'modules/aspects/backup.nix', 'modules/hosts/pi.nix', 'modules/hosts/epsilon.nix',
