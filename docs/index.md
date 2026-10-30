@@ -34,6 +34,7 @@ files instead of copying module contents.
 - [Configure Grafana Cloud](runbooks/grafana-cloud.md)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
 - [Update rollback](runbooks/update-rollback.md)
+- [Residential egress via the home tunnel](runbooks/residential-egress.md)
 - [Fleet health, backups, and deployment](runbooks/fleet-operations.md)
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
 - [Restore service backups](runbooks/restore-service-backups.md)

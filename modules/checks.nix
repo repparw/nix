@@ -766,13 +766,45 @@
                 && epsilon.services.traefik.staticConfigOptions.api.debug == false
                 && epsilon.containers.paperless.forwardPorts == [ ];
 
+              relayUser = "wg-egress-relay";
+              relayBridgeIp = "10.231.137.1";
+              relayEnabled = inputs.self.nixosConfigurations.epsilon.extendModules {
+                modules = [ { modules.wg-egress-relay.enable = true; } ];
+              };
+              enabledConfig = relayEnabled.config;
+              enabledWireGuard = enabledConfig.networking.wireguard.interfaces.wg-home;
+              relayService = enabledConfig.systemd.services.wg-egress-relay.serviceConfig;
+              relayRules = enabledConfig.systemd.services.wg-egress-rules.script;
+              defaultRelayRoutes = lib.concatMap (peer: peer.allowedIPs) (
+                epsilon.networking.wireguard.interfaces.wg-home.peers
+              );
+              enabledRelayRoutes = lib.concatMap (peer: peer.allowedIPs) enabledWireGuard.peers;
+              socksRelayMatches =
+                !epsilon.modules.wg-egress-relay.enable
+                && !(epsilon.users.users ? ${relayUser})
+                && !(epsilon.systemd.services ? wg-egress-relay)
+                && !(epsilon.systemd.services ? wg-egress-rules)
+                && epsilon.networking.wireguard.interfaces.wg-home.allowedIPsAsRoutes
+                && !(builtins.elem "0.0.0.0/0" defaultRelayRoutes)
+                && builtins.elem "0.0.0.0/0" enabledRelayRoutes
+                && enabledConfig.users.users ? ${relayUser}
+                && enabledConfig.systemd.services ? wg-egress-relay
+                && enabledConfig.systemd.services ? wg-egress-rules
+                && relayService.User == relayUser
+                && !enabledWireGuard.allowedIPsAsRoutes
+                && relayService.RestrictAddressFamilies == [ "AF_INET" ]
+                && lib.hasSuffix "-i ${relayBridgeIp} -p 1080" relayService.ExecStart
+                && lib.hasInfix ''uidrange "$uid-$uid"'' relayRules
+                && lib.hasInfix "blackhole default" relayRules;
+
               expected =
                 fleetRegistryMatches
                 && validationMatches
                 && ingressPolicyMatches
                 && glanceRoutingMatches
                 && tunnelRoutingMatches
-                && hardeningMatches;
+                && hardeningMatches
+                && socksRelayMatches;
               matcherReport = builtins.toJSON {
                 r = fleetRegistryMatches;
                 v = validationMatches;
@@ -780,6 +812,7 @@
                 g = glanceRoutingMatches;
                 t = tunnelRoutingMatches;
                 h = hardeningMatches;
+                s = socksRelayMatches;
               };
             in
             assert expected || throw matcherReport;
