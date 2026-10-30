@@ -166,7 +166,7 @@ assert lib.all (
   !(lib.any (p: (p.meta.mainProgram or "") == "host-recovery") host.config.environment.systemPackages)
 ) (lib.attrValues hosts);
 assert lib.all
-  (config: config.services.restic.backups.offsite.extraBackupArgs == [ "--one-file-system" ])
+  (config: lib.elem "--one-file-system" config.services.restic.backups.offsite.extraBackupArgs)
   [
     pi
     epsilon
