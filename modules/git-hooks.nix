@@ -12,8 +12,12 @@
     { config, pkgs, ... }:
     let
       agentDocsPython = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
+      bootstrapMarker = "# Managed by modules/git-hooks.nix: worktree bootstrap";
+      # [ ! -e ] is true for both absent paths and dangling symlinks.
+      # Preserve existing, readable foreign hooks.
+      shouldInstallBootstrap = "[ ! -e \"$repo_post_checkout\" ] || ${pkgs.lib.getExe pkgs.gnugrep} -qFx ${pkgs.lib.escapeShellArg bootstrapMarker} \"$repo_post_checkout\"";
       worktreeBootstrap = pkgs.writeShellScript "nix-worktree-bootstrap" ''
-        # Managed by modules/git-hooks.nix: worktree bootstrap
+        ${bootstrapMarker}
         set -euo pipefail
         if [ "''${3:-0}" != 1 ] || [ ! -f flake.nix ] || [ -f .pre-commit-config.yaml ]; then
           exit 0
@@ -117,6 +121,45 @@
         };
       };
 
+      checks.worktree-bootstrap-guard = pkgs.runCommand "check-worktree-bootstrap-guard" { } ''
+        set -euo pipefail
+        repo_post_checkout="$TMPDIR/post-checkout"
+
+        expect_install() {
+          if ${shouldInstallBootstrap}; then
+            return 0
+          fi
+          echo "Expected to install bootstrap: $repo_post_checkout" >&2
+          exit 1
+        }
+        expect_preserve() {
+          if ${shouldInstallBootstrap}; then
+            echo "Foreign post-checkout hook would be overwritten" >&2
+            exit 1
+          fi
+        }
+
+        # Absent and dangling targets are safe to replace.
+        expect_install
+        ln -s "$TMPDIR/no-longer-exists" "$repo_post_checkout"
+        test -L "$repo_post_checkout"
+        test ! -e "$repo_post_checkout"
+        expect_install
+
+        # A live, foreign hook must be preserved.
+        rm "$repo_post_checkout"
+        printf '#!/bin/sh\necho foreign\n' > "$repo_post_checkout"
+        expect_preserve
+
+        # Owned hooks can be refreshed, including through a valid symlink.
+        printf '%s\n' ${pkgs.lib.escapeShellArg bootstrapMarker} > "$repo_post_checkout"
+        expect_install
+        mv "$repo_post_checkout" "$TMPDIR/managed-hook"
+        ln -s "$TMPDIR/managed-hook" "$repo_post_checkout"
+        expect_install
+        touch "$out"
+      '';
+
       devShells.default = pkgs.mkShell {
         nativeBuildInputs = [
           config.pre-commit.settings.package
@@ -128,7 +171,7 @@
           if repo_hooks_common_dir="$(${pkgs.lib.getExe pkgs.git} rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"; then
             ${pkgs.lib.getExe pkgs.git} config --local core.hooksPath "$repo_hooks_common_dir/hooks"
             repo_post_checkout="$repo_hooks_common_dir/hooks/post-checkout"
-            if { [ ! -e "$repo_post_checkout" ] && [ ! -L "$repo_post_checkout" ]; } || ${pkgs.lib.getExe pkgs.gnugrep} -qFx '# Managed by modules/git-hooks.nix: worktree bootstrap' "$repo_post_checkout"; then
+            if ${shouldInstallBootstrap}; then
               ${pkgs.lib.getExe' pkgs.nix "nix-store"} --add-root "$repo_post_checkout" --indirect --realise ${worktreeBootstrap} >/dev/null
             else
               echo "Preserving existing post-checkout hook: $repo_post_checkout" >&2
