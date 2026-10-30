@@ -9,6 +9,9 @@ let
     config: lib.filter (mount: lib.hasPrefix "/persist/" mount.what) config.systemd.mounts;
   pi = hosts.pi.config;
   epsilon = hosts.epsilon.config;
+  alphaOffsite = hosts.alpha.config.services.restic.backups.offsite;
+  piOffsite = pi.services.restic.backups.offsite;
+  epsilonOffsite = epsilon.services.restic.backups.offsite;
   piMounts = persistenceMounts pi;
   epsilonMounts = persistenceMounts epsilon;
   # The unprepared probe proves the refusal paths on a persistence-disabled
@@ -160,18 +163,16 @@ let
 in
 assert !(hosts.alpha.config.modules ? persistence);
 assert !(hosts.alpha.options.modules.backup ? hostRecovery);
-assert hosts.alpha.config.services.restic.backups.offsite.extraBackupArgs == [ ];
+assert alphaOffsite.extraBackupArgs == [ ];
 assert lib.all (
   host:
   !(lib.any (p: (p.meta.mainProgram or "") == "host-recovery") host.config.environment.systemPackages)
 ) (lib.attrValues hosts);
-assert pi.services.restic.backups.offsite.extraBackupArgs == [
-  "--one-file-system"
-  "--limit-upload=2048"
-];
-assert epsilon.services.restic.backups.offsite.extraBackupArgs == [ "--one-file-system" ];
-assert lib.elem "rclone.connections=1" pi.services.restic.backups.offsite.extraOptions;
-assert !(lib.elem "rclone.connections=1" epsilon.services.restic.backups.offsite.extraOptions);
+assert piOffsite.extraBackupArgs == [ "--one-file-system" "--limit-upload=2048" ];
+assert epsilonOffsite.extraBackupArgs == [ "--one-file-system" ];
+assert lib.elem "rclone.connections=1" piOffsite.extraOptions;
+assert !(lib.elem "rclone.connections=1" alphaOffsite.extraOptions);
+assert !(lib.elem "rclone.connections=1" epsilonOffsite.extraOptions);
 assert lib.elem "/boot/firmware" pi.services.restic.backups.offsite.paths;
 assert lib.elem "/boot/efi" epsilon.services.restic.backups.offsite.paths;
 assert
