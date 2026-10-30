@@ -288,16 +288,6 @@ in
               };
             };
 
-            # Boot race: moonshine's healthcheck starts before the GPU finishes
-            # initializing (Vulkan FAIL, exit 1, recovered only by Restart=).
-            # Order after udev-settle so DRM probe and firmware load are done
-            # before the first healthcheck. (Not After=graphical.target: moonshine
-            # is WantedBy multi-user, so that ordering cycles
-            # multi-user -> moonshine -> graphical -> multi-user and breaks
-            # graphical.target entirely.)
-            systemd.services.moonshine.wants = [ "systemd-udev-settle.service" ];
-            systemd.services.moonshine.after = [ "systemd-udev-settle.service" ];
-
             services.udev.extraRules = ''
               ACTION=="add", SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_JOYSTICK}=="1", ATTRS{idVendor}=="2dc8", ATTRS{idProduct}=="310a", TAG+="systemd", ENV{SYSTEMD_USER_WANTS}+="8bitdo-tv-moonlight.service"
             '';
