@@ -5,9 +5,9 @@ rather than merely checking that `services.<name>.enable` evaluates to true.
 
 For example, inspect the offsite backup service from a selected host:
 
-~~~sh
+```sh
 nix eval '.#nixosConfigurations.alpha.config.systemd.units."restic-backups-offsite.service".text' --raw --no-update-lock-file
-~~~
+```
 
 Change the host and quoted unit name for the task. Read the relevant
 `ExecStart`, `ExecStartPre`, `After`, `Requires`, `Environment`, or

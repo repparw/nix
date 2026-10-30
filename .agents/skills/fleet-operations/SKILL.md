@@ -111,6 +111,10 @@ nix run .#deploy-rs -- .#alpha --dry-activate
 ```
 
 That path is distinct from the controller's production transaction.
+For a local tree already verified at its exact contents, `nix run .#deploy -- .#alpha`
+skips deploy-rs' repeated flake checks. It does not perform verification
+itself; use `nix run .#deploy-rs -- .#alpha` for unverified changes. Both
+are authorized operational actions, not PR checks.
 See [rollback and recovery](../../../docs/runbooks/update-rollback.md)
 before manually restoring a generation or resuming a paused controller.
 

@@ -219,12 +219,13 @@ pkgs.testers.runNixOSTest {
     server.wait_until_succeeds("curl -fsS http://127.0.0.1:3100/ready")
     client.wait_for_unit("alloy.service")
 
-    with subtest("redirect works without a Grafana process, including old health path"):
+    with subtest("Grafana vanity hostname redirects without a local process"):
         server.fail("systemctl is-active grafana.service")
-        for path in ["/", "/d/fleet-overview?orgId=1&from=now-1h", "/api/health"]:
-            url = "https://metrics.example.test" + path
-            output = server.succeed("curl -ksS --connect-to metrics.example.test:443:127.0.0.1:8443 -o /dev/null -w '%{http_code} %{redirect_url}' " + shlex.quote(url))
-            assert output == "302 https://fixture.grafana.net" + path, output
+        for hostname in ["grafana.example.test", "metrics.example.test"]:
+            for path in ["/", "/d/fleet-overview?orgId=1&from=now-1h", "/api/health"]:
+                url = "https://" + hostname + path
+                output = server.succeed("curl -ksS --connect-to " + hostname + ":443:127.0.0.1:8443 -o /dev/null -w '%{http_code} %{redirect_url}' " + shlex.quote(url))
+                assert output == "302 https://fixture.grafana.net" + path, output
 
     with subtest("Cloud HTTPS authentication, metrics, and redacted logs"):
         client.succeed("test $(curl -s -o /dev/null -w '%{http_code}' -X POST https://cloud.example.test/api/prom/push) = 401")

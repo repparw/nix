@@ -7,10 +7,10 @@ configuration.
 
 For example, to inspect the generated OpenCode JSON on Alpha:
 
-~~~sh
+```sh
 home_output=$(nix build '.#nixosConfigurations.alpha.config.home-manager.users.repparw.home.activationPackage' --no-link --no-update-lock-file --print-out-paths)
 jq '.agent' "$home_output/home-files/.config/opencode/opencode.json"
-~~~
+```
 
 Replace the host, user, target file, and JSON query with the effect being
 verified. Compare the generated contents against the claimed behavior; do

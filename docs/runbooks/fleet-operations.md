@@ -19,8 +19,9 @@ changes use [verify-fleet-change](../../.agents/skills/verify-fleet-change/SKILL
 ## Retained failures and health
 
 Grafana Cloud owns periodic health alerts; see [monitoring](monitoring.md)
-for delivery failures and [Cloud alert configuration](grafana-cloud.md) for
-notification policy. `fleet health probe` is read-only and `--strict`
+for delivery failures and
+[Cloud alert configuration](https://github.com/repparw/grafana#readme)
+for notification policy. `fleet health probe` is read-only and `--strict`
 tests deployment readiness without requiring Cloud availability or unrelated
 failed scheduled jobs.
 
@@ -144,14 +145,19 @@ routine retry strategy.
 A local-tree `nix run .#deploy-rs -- .#alpha --dry-activate` is a
 **separate authorized operational path**: it can build and contact a target.
 It is not a read-only PR verification step or a substitute for
-`fleet-update deploy`.
+`fleet-update deploy`. For an already verified local tree,
+`nix run .#deploy -- .#alpha` skips deploy-rs' repeated flake checks;
+this shortcut does not verify its inputs. Unverified trees must use
+`nix run .#deploy-rs -- .#alpha`. Both require authorization.
 
 Deployment implementation:
 [fleet-update.sh](../../modules/scripts/fleet-update.sh).
 Input publication is independent:
 [lock update workflow](../../.github/workflows/lock-update.yml) and
 [upstream watcher contracts](../../.github/upstream/README.md).
-A runtime readiness report alone does not retire an upstream workaround.
+Request a lock update with `gh workflow run lock-update.yml`; publishing
+and fleet deployment remain separate. A runtime readiness report alone
+does not retire an upstream workaround.
 
 ## Storage and firmware safeguards
 
