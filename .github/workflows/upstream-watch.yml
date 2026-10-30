@@ -51,16 +51,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 .github/scripts/upstream-readiness.py --json > "$RUNNER_TEMP/upstream-readiness.json"
-      - name: Publish the atomic Authelia pilot
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          UPSTREAM_READINESS_FILE: ${{ runner.temp }}/upstream-readiness.json
-        shell: bash
-        run: |
-          upstream_main_sha=$(git rev-parse HEAD)
-          trap 'git switch --detach "$upstream_main_sha"' EXIT
-          bash .github/scripts/upstream-watch.sh
       - name: Publish independent cleanup candidates and readiness notifications
         if: always() && !cancelled() && steps.readiness.outcome == 'success'
         env:

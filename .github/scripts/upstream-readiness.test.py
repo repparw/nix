@@ -159,14 +159,6 @@ class Readiness(unittest.TestCase):
     def test_version_tag_expression_is_resolved_exactly(self):
         self.assertEqual(watch.source_ref('version = "1.3.0"; tag = finalAttrs.version;'), "1.3.0")
 
-    def test_graphical_target_must_cover_all_unit_dependencies(self):
-        good = 'PartOf = [ "graphical-session.target" ]; After = [ "graphical-session.target" ]; WantedBy = [ "graphical-session.target" ];'
-        with patch.object(watch, "source", return_value=good) as source:
-            self.assertEqual(watch.detect("voxtype-graphical", LOCK), "PINNED-READY")
-            source.assert_called_once_with("nix-community/home-manager", "modules/services/voxtype.nix", "hm-pin")
-        with patch.object(watch, "source", return_value=good.replace('WantedBy', 'Wrong')):
-            self.assertEqual(watch.detect("voxtype-graphical", LOCK), "merged-not-pinned")
-
     def test_gamescope_requires_both_lookup_sites_and_flag_branch(self):
         site = 'if (queueInfo.flags) { VkDeviceQueueInfo2 q2; dispatch->GetDeviceQueue2(device, &q2, &queue); } else dispatch->GetDeviceQueue(device, family, j, &queue);'
         self.assertFalse(watch.flagged_queues_fixed('void GetDeviceQueue2();'))

@@ -30,12 +30,12 @@ The registry includes the stable T3 orchestrator-v2 gate and the
 go to the run summary and Discord. Package readiness does not complete either
 fleet runtime migration.
 
-Authelia's pnpm-hash override was retired in #237, and the atomic lock planner
-and pilot publisher stay armed anyway: `upstream-plan.py` requires exactly one
-`atomic` contract, so `authelia-pnpm-hash` remains in `watchers.json`, the
-detector reports `completed` while the override marker is absent from
-`modules/_services/authelia.nix`, and its cleanup runs through the byte-exact
-module handler in `upstream-plan.py` rather than a recipe in `cleanup/`.
+Authelia's pnpm-hash override was retired in #237. Its completed atomic
+registry entry remains temporarily because `upstream-plan.py` still requires
+exactly one `atomic` contract and retains the byte-exact cleanup handler for
+candidate locks. The standalone post-lock Authelia pilot is retired; the
+independent post-lock publisher remains active.
+
 Independent `post-lock` contracts publish separate review-required PRs using
 the recipes in `cleanup/`. Each candidate starts at the same checked-out main
 revision.
@@ -82,7 +82,6 @@ The package-specific gates are:
 | tasks-org         | Build the upstream Tasks.org package                                                                                                    |
 | qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                                            |
 | wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
-| voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                                             |
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
 | nodejs-security   | Retired overlay family absent from the fleet; alpha's OpenCode builds against the pinned Bun and Node                                   |
 | moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
@@ -138,10 +137,9 @@ overlays. Alpha's patched package cannot establish upstream readiness. Its
 cleanup retains WSI, removes only the queue workaround, and builds with
 `enableWsi=true`. It requires no GPU or Alpha runtime test.
 
-Run `python3 .github/scripts/upstream-readiness.test.py` for detector fixtures,
-`python3 .github/scripts/upstream-pilot.test.py` for the Authelia pilot, and
-`python3 .github/scripts/upstream-publish.test.py` for independent publication,
-interruption recovery, drift rejection, and notification deduplication.
+Run `python3 .github/scripts/upstream-readiness.test.py` for detector fixtures
+and `python3 .github/scripts/upstream-publish.test.py` for independent
+publication, interruption recovery, drift rejection, and notification deduplication.
 
 ## Lock candidate planner (apply-coupled cleanups)
 
@@ -154,9 +152,8 @@ candidate instead of racing the post-lock sweep. Readiness runs against the
 candidate tree; `PINNED-READY` diverts publication into a combined atomic
 candidate. A watcher that is not ready but whose package the pin moved gets a
 stubbed-phase compatibility build of the actual fleet package; failure blocks
-the lock, and so does an unavailable readiness API. The Authelia pilot keeps
-its byte-exact cleanup handler and native ARM validation, and every combined
-candidate merge-automates under the #265 policy: the registry checker is the
+the lock, and so does an unavailable readiness API. The planner retains
+its legacy byte-exact Authelia handler, and every combined candidate merge-automates under the #265 policy: the registry checker is the
 sole landing decision and the cleanup is declarative. Independent watchers without
 the flag publish through the separate post-lock sweep.
 
@@ -194,9 +191,8 @@ arming auto-merge.
 If the atomic predicate is negative, the original lock-only CI and compare-and-
 swap fast-forward remain unchanged. If ancestry is unavailable, or a candidate
 contains the fix before the authoritative channel, publication fails closed.
-The existing Authelia post-lock pilot remains responsible for its readiness
-and completion on `main` when the planner did not combine the cleanup with a
-lock update. Independent cleanup candidates retain their own validation gates.
+The completed Authelia post-lock pilot is retired. Independent cleanup
+candidates retain their own validation gates.
 
 ## T3 Code nightly-v2 (read-only, #209)
 
