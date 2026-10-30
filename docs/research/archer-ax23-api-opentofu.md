@@ -194,8 +194,10 @@ Full list (re-derivable from `/webpages/js/*.js` with
 
 ## 3. Existing integrations
 
-Initially researched 2026-10-25 (historical snapshot; see the 2026-10-29 implementation outcome above; status, dates, and support matrices verified against
-GitHub/PyPI). The task's starting URLs contained one dead end:
+Researched on 2026-10-25 (status, dates, and support matrices verified
+against GitHub/PyPI). This table preserves the original snapshot; the
+2026-10-29 follow-up is recorded in **Implementation outcome** below.
+The task's starting URLs contained one dead end:
 `marckregio/TP-Link-Archer-C6` is a 0★ fork of the real project.
 
 | Project                                                                                                                            | Status                            | AX23 v2 / fw 1.11.x verdict                                                                                                                                                                                                                                                                                                                                                 |
