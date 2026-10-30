@@ -12,13 +12,19 @@ function verify(paths, { hosts, vm, groups }) {
 const both = ['lightweight', 'configuration'];
 test('documentation-only PRs select only formatting and documentation checks', () => {
   for (const paths of [['docs/runbooks/host-persistence.md', 'README.md'],
-    ['docs/research/audio.md'], ['.github/upstream/README.md']]) {
+    ['docs/research/audio.md'], ['.github/upstream/README.md'],
+    ['AGENTS.md'], ['.agents/skills/verify-nixos-config/SKILL.md']]) {
     const result = classifyChanges(paths);
     assert.equal(result.runHosts, false);
     assert.equal(result.runNeovim, false);
     assert.equal(result.runPersistenceVm, false);
     assert.deepEqual(result.checkMatrix.include, [{ group: 'documentation', checks: 'formatting agent-docs' }]);
   }
+});
+
+test('agent skill scripts are not treated as documentation-only', () => {
+  verify(['.agents/skills/verify-nixos-config/scripts/build.sh'],
+    { hosts: true, vm: false, groups: both });
 });
 
 test('unrelated service, AI and GUI changes do not run the persistence VM', () => {

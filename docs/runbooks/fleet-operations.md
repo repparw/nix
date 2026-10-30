@@ -12,7 +12,7 @@ tags:
 
 Pi is the deployment controller. Agents use the
 [fleet operations skill](../../.agents/skills/fleet-operations/SKILL.md) and
-[configuration verification skill](../../.agents/skills/verify-nixos-config/SKILL.md).
+[configuration verification skill](../../.agents/skills/verify-fleet-change/SKILL.md).
 Discover the installed commands with `fleet commands --json`.
 
 ## Inspect health and retained failures
