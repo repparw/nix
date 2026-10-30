@@ -50,9 +50,12 @@
         };
         services.restic.backups.offsite.extraBackupArgs = [
           "--one-file-system"
+        ]
+        ++ lib.optionals (config.networking.hostName != "epsilon") [
           # Sustained full-rate uploads have triggered macb TX-queue watchdog
-          # timeouts on pi (see Grafana logs 2026-10-30). Cap throughput to keep
-          # the onboard Ethernet stable during offsite backups.
+          # timeouts on pi's onboard Ethernet (see Grafana logs 2026-10-30).
+          # Cap throughput to keep the onboard link stable during backups.
+          # Epsilon is a VPS with ample uplink, so it is left uncapped.
           "--limit-upload=2048"
         ];
         # Keep existing checkpoints readable and backed up after retiring the tool.
