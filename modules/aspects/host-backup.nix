@@ -48,16 +48,17 @@
             "tmp"
           ];
         };
-        services.restic.backups.offsite.extraBackupArgs = [
-          "--one-file-system"
-        ]
-        ++ lib.optionals (config.networking.hostName != "epsilon") [
-          # Sustained full-rate uploads have triggered macb TX-queue watchdog
-          # timeouts on pi's onboard Ethernet (see Grafana logs 2026-10-30).
-          # Cap throughput to keep the onboard link stable during backups.
-          # Epsilon is a VPS with ample uplink, so it is left uncapped.
-          "--limit-upload=2048"
-        ];
+        services.restic.backups.offsite = {
+          extraBackupArgs = [ "--one-file-system" ] ++ lib.optionals (config.networking.hostName == "pi") [
+            # Pi's onboard Ethernet hit macb TX-queue watchdog timeouts during
+            # sustained offsite uploads (Grafana logs 2026-10-30).
+            # restic interprets this value in KiB/s: 2048 = 2 MiB/s.
+            "--limit-upload=2048"
+          ];
+          extraOptions = lib.optionals (config.networking.hostName == "pi") [
+            "rclone.connections=1"
+          ];
+        };
         # Keep existing checkpoints readable and backed up after retiring the tool.
         systemd.tmpfiles.rules = [ "d /var/lib/host-recovery 0700 root root -" ];
       };
