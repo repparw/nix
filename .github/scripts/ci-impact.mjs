@@ -36,9 +36,12 @@ export const affectsNeovim = path => [
   'modules/aspects/style.nix',
   'modules/aspects/cli/editors.nix',
   'modules/neovim-build.nix',
+  'modules/checks.nix',
   '.github/scripts/ci-impact.mjs',
+  '.github/scripts/run-checks.sh',
   '.github/scripts/publish-neovim.sh',
   '.github/workflows/revision-validation.yml',
+  '.github/workflows/ci.yml',
 ].includes(path);
 
 const affectsPersistence = path =>
@@ -63,12 +66,14 @@ export function classifyChanges(paths, eventName = 'pull_request') {
     paths.every(p => typeof p === 'string' && p);
   // Main pushes still run the full safety net. Only the separately published
   // Neovim build may skip when the push's exact diff is unrelated.
-  if (eventName !== 'pull_request') {
+  if (eventName === 'push') {
     return {
-      ...full(`full validation for ${eventName}`),
+      ...full('full validation for push'),
       runNeovim: !knownPaths || paths.some(affectsNeovim),
     };
   }
+  // Exact-SHA dispatch and unexpected events cannot opt out of prebuilding.
+  if (eventName !== 'pull_request') return full(`full validation for ${eventName}`);
   if (!knownPaths) return full('unknown or truncated comparison');
   if (paths.every(documentationOnly)) {
     return {
@@ -88,20 +93,25 @@ export function classifyChanges(paths, eventName = 'pull_request') {
   };
 }
 
-function detect() {
-  const eventName = process.env.GITHUB_EVENT_NAME;
+// Dependency injection lets tests exercise real event JSON and comparison
+// handling without requiring authenticated GitHub access.
+export function detect({
+  eventName = process.env.GITHUB_EVENT_NAME,
+  eventPath = process.env.GITHUB_EVENT_PATH,
+  repo = process.env.GITHUB_REPOSITORY,
+  compare = (repository, base, head) => spawnSync('gh', [
+    'api', '--method', 'GET', `repos/${repository}/compare/${base}...${head}`,
+  ], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }),
+} = {}) {
   if (eventName !== 'pull_request' && eventName !== 'push')
     return classifyChanges(null, eventName);
   try {
-    const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
+    const event = JSON.parse(readFileSync(eventPath, 'utf8'));
     const base = eventName === 'push' ? event.before : event.pull_request?.base?.sha;
     const head = eventName === 'push' ? event.after : event.pull_request?.head?.sha;
-    const repo = process.env.GITHUB_REPOSITORY;
     if (!/^[a-f0-9]{40}$/i.test(base ?? '') || !/^[a-f0-9]{40}$/i.test(head ?? '') ||
         !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo ?? '')) return classifyChanges(null, eventName);
-    const result = spawnSync('gh', ['api', '--method', 'GET', `repos/${repo}/compare/${base}...${head}`], {
-      encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
-    });
+    const result = compare(repo, base, head);
     if (result.status !== 0 || result.error) {
       console.warn('Change lookup failed; running full validation:', result.stderr || result.error);
       return classifyChanges(null, eventName);
