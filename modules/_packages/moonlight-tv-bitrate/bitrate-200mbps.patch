@@ -1,0 +1,41 @@
+diff --git i/cmake/AresPackage.cmake w/cmake/AresPackage.cmake
+index f66f77b..8c9208b 100644
+--- i/cmake/AresPackage.cmake
++++ w/cmake/AresPackage.cmake
+@@ -4,7 +4,6 @@ execute_process(COMMAND ares-package "${CPACK_TEMPORARY_DIRECTORY}" -o "${CPACK_
+         -e "libmbedtls[.].*"
+         -e "lib/static"
+         -e "lib/pkgconfig"
+-        --force-arch "${CPACK_WEBOS_PACKAGE_ARCH}"
+         COMMAND_ERROR_IS_FATAL ANY
+ )
+ 
+diff --git i/src/app/stream/session.c w/src/app/stream/session.c
+index 031082d..830a410 100644
+--- i/src/app/stream/session.c
++++ w/src/app/stream/session.c
+@@ -272,9 +272,11 @@ void session_config_init(app_t *app, session_config_t *config, const SERVER_DATA
+                                                           config->stream.fps);
+     }
+     // Cap framerate to platform request
++#if !defined(TARGET_WEBOS)
+     if (video_cap.maxBitrate && config->stream.bitrate > video_cap.maxBitrate) {
+         config->stream.bitrate = (int) video_cap.maxBitrate;
+     }
++#endif
+     if (video_cap.codecs & SS4S_VIDEO_H264) {
+         config->stream.supportedVideoFormats |= VIDEO_FORMAT_H264;
+     }
+diff --git i/src/app/ui/settings/panes/basic.pane.c w/src/app/ui/settings/panes/basic.pane.c
+index 3dcbd55..acdb128 100644
+--- i/src/app/ui/settings/panes/basic.pane.c
++++ w/src/app/ui/settings/panes/basic.pane.c
+@@ -117,7 +117,7 @@ static lv_obj_t *create_obj(lv_fragment_t *self, lv_obj_t *container) {
+ 
+     pane->bitrate_label = pref_title_label(view, locstr("Video bitrate"));
+ 
+-    unsigned int max = app->ss4s.video_cap.maxBitrate ? app->ss4s.video_cap.maxBitrate : 100000;
++    unsigned int max = 200000;
+     lv_obj_t *bitrate_slider = pref_slider(view, &app_configuration->stream.bitrate, 5000, (int) max, BITRATE_STEP);
+     lv_obj_set_width(bitrate_slider, LV_PCT(100));
+     lv_obj_add_event_cb(bitrate_slider, on_bitrate_changed, LV_EVENT_VALUE_CHANGED, self);
