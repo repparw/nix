@@ -104,7 +104,7 @@ destroy`.
   mapping may be deleted before its replacement succeeds; a failed apply could
   leave the device without its reserved IP or the forward unavailable.
 
-Deliberate removal of a managed row is a two-step, on purpose:
+Deliberate removal or identity replacement is an explicit three-step process:
 
 1. Remove the entry from `inventory.auto.tfvars`, then run `tofu plan` —
    it must fail with `prevent_destroy`.
