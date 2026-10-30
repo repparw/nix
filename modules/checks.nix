@@ -761,7 +761,8 @@
                 && !epsilon.services.ddclient.enable;
 
               hardeningMatches =
-                builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress
+                builtins.hasAttr "grafana.${domain}" edgeTunnel.ingress
+                && builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress
                 && epsilon.services.traefik.staticConfigOptions.api.dashboard == false
                 && epsilon.services.traefik.staticConfigOptions.api.debug == false
                 && epsilon.containers.paperless.forwardPorts == [ ];
