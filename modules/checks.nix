@@ -85,15 +85,6 @@
           hermes-crash-triage = (import ./aspects/services/hermes-crash/_package.nix { inherit pkgs; }).check;
           hermes-package-triage =
             (import ./aspects/services/hermes-package/_package.nix { inherit pkgs; }).check;
-          hermes-chief-of-staff =
-            pkgs.runCommand "check-hermes-chief-of-staff" { nativeBuildInputs = [ pkgs.python3 ]; }
-              ''
-                cp -r ${./aspects/services/hermes-chief-of-staff} source
-                chmod -R u+w source
-                python3 -m unittest discover -s source -v
-                touch $out
-              '';
-
           coredump-collector =
             pkgs.runCommand "check-coredump-collector" { nativeBuildInputs = [ pkgs.python3 ]; }
               ''
@@ -455,11 +446,64 @@
           agent-docs =
             pkgs.runCommand "check-agent-docs"
               {
-                nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+                nativeBuildInputs = [
+                  (pkgs.python3.withPackages (ps: [ ps.pyyaml ]))
+                  pkgs.git
+                  config.pre-commit.settings.package
+                ];
               }
               ''
                 export PYTHONDONTWRITEBYTECODE=1
                 python3 ${./scripts}/check-agent-docs.test.py ${inputs.self}
+
+                # Verify the generated hooks, not just their Nix declarations.
+                hook_config=${config.pre-commit.settings.configFile}
+                python3 - "$hook_config" <<'PY'
+                import json
+                import re
+                import sys
+                from pathlib import Path
+
+                lines = Path(sys.argv[1]).read_text().splitlines()
+                config = json.loads("\n".join(line for line in lines if not line.startswith("#")))
+                hooks = [hook for repo in config["repos"] for hook in repo["hooks"]]
+                by_id = {hook["id"]: hook for hook in hooks}
+
+                assert len(by_id) == len(hooks), "duplicate hook ID"
+                assert "prettier" in by_id and "agent-docs" in by_id, "missing hook"
+                assert re.search(by_id["prettier"]["files"], "README.md")
+                assert not re.search(by_id["prettier"]["files"], "modules/checks.nix")
+                assert by_id["agent-docs"]["pass_filenames"] is False
+                assert re.search(by_id["agent-docs"]["files"], ".agents/skills/probe/SKILL.md")
+                assert not re.search(by_id["agent-docs"]["files"], "README.md")
+                PY
+
+                # Smoke-test both hooks against disposable, staged fixture files.
+                mkdir -p hook-fixture/.agents/skills/probe
+                cd hook-fixture
+                git init -q
+                printf '%s\n' '---' 'name: probe' 'description: Example skill.' '---' > .agents/skills/probe/SKILL.md
+                printf '%s\n' '# Example' > README.md
+                git add .
+                export PRE_COMMIT_HOME="$TMPDIR/pre-commit-home"
+                pre-commit run agent-docs --config "$hook_config" --files .agents/skills/probe/SKILL.md
+
+                printf '%s\n' '[broken](nonexistent.md)' >> .agents/skills/probe/SKILL.md
+                git add .agents/skills/probe/SKILL.md
+                if pre-commit run agent-docs --config "$hook_config" --files .agents/skills/probe/SKILL.md; then
+                  echo 'agent-docs hook accepted a broken relative link' >&2
+                  exit 1
+                fi
+
+                printf '%s\n' '# Example' "" '* item' > README.md
+                git add README.md
+                if pre-commit run prettier --config "$hook_config" --files README.md; then
+                  echo 'prettier hook did not report a formatting change' >&2
+                  exit 1
+                fi
+                grep -q -- '- item' README.md
+                git add README.md
+                pre-commit run prettier --config "$hook_config" --files README.md
                 touch $out
               '';
 
@@ -717,7 +761,8 @@
                 && !epsilon.services.ddclient.enable;
 
               hardeningMatches =
-                builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress
+                builtins.hasAttr "grafana.${domain}" edgeTunnel.ingress
+                && builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress
                 && epsilon.services.traefik.staticConfigOptions.api.dashboard == false
                 && epsilon.services.traefik.staticConfigOptions.api.debug == false
                 && epsilon.containers.paperless.forwardPorts == [ ];

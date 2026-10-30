@@ -147,6 +147,9 @@
             # infra/README.md. terraform.tfstate.backup is intentionally not
             # staged — restic snapshots already provide generation history.
             "Projects/nix/infra/terraform.tfstate"
+            # Router adoption state (infra/router/): same pattern, see
+            # infra/router/README.md.
+            "Projects/nix/infra/router/terraform.tfstate"
           ];
           homeStateExcludes = map (dir: "/.config/net.imput.helium/${dir}") [
             "Default/History*"
@@ -167,7 +170,10 @@
             "DeferredBrowserMetrics"
             "Variations"
           ];
-          homeStateCritical = [ "Projects/nix/infra/terraform.tfstate" ];
+          homeStateCritical = [
+            "Projects/nix/infra/terraform.tfstate"
+            "Projects/nix/infra/router/terraform.tfstate"
+          ];
           homeStateStagingScript = prepareHomeState;
         };
 

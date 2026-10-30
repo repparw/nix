@@ -47,7 +47,6 @@
         imports = [
           ../../_services/proxy.nix
           ../../_services/authelia.nix
-          ../../_services/ddclient.nix
           ../../_services/glance.nix
           ../../_services/miniflux.nix
         ];

@@ -179,10 +179,17 @@ in
               }
               trap cleanup EXIT
 
-              # Moonshine launches with systemd's default environment; fuzzel
-              # needs the system application database to list anything.
+              # Moonshine launches with systemd's default environment, which
+              # has neither the login session's profile directories nor the
+              # system profile. niri spawns binds with this script's PATH and
+              # fuzzel lists desktop entries from XDG_DATA_DIRS, so mirror the
+              # login composition (/etc/profile, /etc/set-environment) to keep
+              # stream keybinds and the fuzzel app list working. The display
+              # manager's -desktops aggregate only holds xsessions entries and
+              # is skipped.
               home_dir="''${HOME:-/home/${sessionUser}}"
-              export XDG_DATA_DIRS="/run/current-system/sw/share:''${home_dir}/.nix-profile/share:''${home_dir}/.local/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+              export XDG_DATA_DIRS="''${home_dir}/.nix-profile/share:/nix/profile/share:''${home_dir}/.local/state/nix/profile/share:/etc/profiles/per-user/${sessionUser}/share:/nix/var/nix/profiles/default/share:/run/current-system/sw/share:''${home_dir}/.local/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+              export PATH="''${PATH}:/run/wrappers/bin:''${home_dir}/.nix-profile/bin:/nix/profile/bin:''${home_dir}/.local/state/nix/profile/bin:/etc/profiles/per-user/${sessionUser}/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
 
               niri >"$work/niri.log" 2>&1 &
               niri_pid=$!
@@ -270,16 +277,6 @@ in
                 ];
               };
             };
-
-            # Boot race: moonshine's healthcheck starts before the GPU finishes
-            # initializing (Vulkan FAIL, exit 1, recovered only by Restart=).
-            # Order after udev-settle so DRM probe and firmware load are done
-            # before the first healthcheck. (Not After=graphical.target: moonshine
-            # is WantedBy multi-user, so that ordering cycles
-            # multi-user -> moonshine -> graphical -> multi-user and breaks
-            # graphical.target entirely.)
-            systemd.services.moonshine.wants = [ "systemd-udev-settle.service" ];
-            systemd.services.moonshine.after = [ "systemd-udev-settle.service" ];
 
             services.udev.extraRules = ''
               ACTION=="add", SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_JOYSTICK}=="1", ATTRS{idVendor}=="2dc8", ATTRS{idProduct}=="310a", TAG+="systemd", ENV{SYSTEMD_USER_WANTS}+="8bitdo-tv-moonlight.service"

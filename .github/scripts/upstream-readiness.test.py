@@ -337,12 +337,12 @@ class Readiness(unittest.TestCase):
         def api(endpoint):
             if endpoint.endswith("/commits/nixos-unstable"):
                 return {"sha": "a" * 40}
-            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.3"
+            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.5"
             return {"tag_name": tag, "draft": False, "prerelease": False}
         for channel, pinned, expected in (
-                ("v0.1.2", "v0.1.2", "waiting-unstable"),
-                ("v0.1.3", "v0.1.2", "merged-not-pinned"),
-                ("v0.1.3", "v0.1.3", "PINNED-READY"),
+                ("v0.1.4", "v0.1.4", "waiting-unstable"),
+                ("v0.1.5", "v0.1.4", "merged-not-pinned"),
+                ("v0.1.5", "v0.1.5", "PINNED-READY"),
                 ("v0.1.10", "v0.1.10", "PINNED-READY")):
             with self.subTest(channel=channel, pinned=pinned), \
                     patch.object(watch, "api", side_effect=api), \
