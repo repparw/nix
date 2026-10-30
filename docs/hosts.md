@@ -1,10 +1,10 @@
 ---
 type: Host Profiles
 title: Host Profiles
-description: The alpha desktop, pi home server, and epsilon VPS edge profiles, plus the parked beta laptop.
+description: The alpha desktop, pi home server, and epsilon VPS edge profiles.
 when: Read when comparing host profiles or adding or changing a host.
 resource: modules/hosts/
-tags: [hosts, alpha, beta, pi, epsilon]
+tags: [hosts, alpha, pi, epsilon]
 ---
 
 # Host Profiles
@@ -33,14 +33,6 @@ See the
 [fleet operations runbook](runbooks/fleet-operations.md).
 
 Source: `modules/hosts/alpha.nix`
-
-## Beta
-
-`beta` is the laptop profile. It adds laptop-specific input, power, and display
-handling to the shared baseline. It is parked: there is no `den.hosts` entry,
-so it does not participate in flake evaluations until it has hardware again.
-
-Source: `modules/hosts/beta.nix`
 
 ## Pi
 

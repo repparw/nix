@@ -32,6 +32,7 @@ in
       let
         hasStylix = config.lib ? stylix;
         c = config.lib.stylix.colors.withHashtag;
+        mutedText = "${c.base05}cc";
         providerEnvironment = connectEnvironment // {
           CODEX_HOME = config.home.sessionVariables.CODEX_HOME;
         };
@@ -48,7 +49,7 @@ in
         # imports them through the UI (Settings -> Appearance -> Add a theme).
         # Derive an importable theme file from the stylix palette and install
         # it under the desktop userData dir; re-import after a stylix change.
-        home.file.".config/t3code/themes/stylix.json" = lib.mkIf hasStylix {
+        home.file.".config/t3code-v2/themes/stylix.json" = lib.mkIf hasStylix {
           text = builtins.toJSON {
             version = 1;
             id = "stylix";
@@ -67,7 +68,7 @@ in
               surfaceRaised = c.base02;
               surfaceOverlay = c.base02;
               text = c.base05;
-              textMuted = c.base04;
+              textMuted = mutedText;
               border = c.base02;
               input = c.base02;
               focus = c.base0D;
@@ -76,31 +77,35 @@ in
               secondary = c.base02;
               secondaryForeground = c.base05;
               muted = c.base01;
-              mutedForeground = c.base04;
-              placeholder = c.base04;
-              secondaryLabel = c.base04;
-              iconMuted = c.base04;
+              mutedForeground = mutedText;
+              placeholder = mutedText;
+              secondaryLabel = mutedText;
+              iconMuted = mutedText;
               error = c.base08;
-              errorForeground = c.base07;
-              errorSurface = c.base01;
+              errorForeground = c.base08;
+              errorSurface = "${c.base08}1a";
               warning = c.base0A;
-              warningForeground = c.base07;
-              warningSurface = c.base01;
+              warningForeground = c.base0A;
+              warningSurface = "${c.base0A}1a";
               update = c.base0D;
-              updateForeground = c.base07;
-              updateSurface = c.base02;
+              updateForeground = c.base0D;
+              updateSurface = "${c.base0D}1a";
               accentSurface = c.base02;
               accentSurfaceForeground = c.base05;
-              messageSurface = c.base01;
+              messageSurface = c.base02;
               messageForeground = c.base05;
               messageAction = c.base0D;
               messageActionForeground = c.base00;
               messageActionHover = c.base0E;
               codeBackground = c.base01;
               codeForeground = c.base05;
+              searchMatchBackground = c.base0A;
+              searchMatchForeground = c.base00;
+              searchMatchActiveBackground = c.base09;
+              searchMatchActiveForeground = c.base00;
               sidebar = c.base01;
               sidebarForeground = c.base05;
-              sidebarMutedForeground = c.base04;
+              sidebarMutedForeground = mutedText;
               sidebarControlSurface = c.base02;
               sidebarRowHover = c.base02;
               sidebarRowActive = c.base03;
@@ -109,7 +114,7 @@ in
               terminalBackground = c.base00;
               terminalForeground = c.base05;
               terminalCursor = c.base0D;
-              terminalSelection = c.base02;
+              terminalSelection = "${c.base0D}4d";
               terminalScrollbar = c.base02;
               terminalScrollbarHover = c.base03;
             };

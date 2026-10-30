@@ -18,7 +18,7 @@ Discover the installed commands with `fleet commands --json`.
 ## Inspect health and retained failures
 
 Grafana Cloud owns periodic health alerts. See [monitoring](monitoring.md) for
-telemetry diagnostics and [Cloud alert configuration](grafana-cloud.md) for policy.
+telemetry diagnostics and [Cloud alert configuration](https://github.com/repparw/grafana#readme) for policy.
 `fleet health probe` is read-only; `--strict` checks deployment readiness without
 making Cloud availability or unrelated failed jobs deployment prerequisites.
 
@@ -138,6 +138,12 @@ controller path. For a local-tree review, use
 `nix run .#deploy-rs -- .#alpha --dry-activate`; such a review, including
 `--dry-activate`, is authorized operational work — it can realize deployment
 outputs and contact the target, and it is not a PR verification step.
+
+For a local tree already verified at its current contents,
+`nix run .#deploy -- .#alpha` skips deploy-rs' repeated flake checks.
+This shortcut does not enforce verification; for unverified changes use
+`nix run .#deploy-rs -- .#alpha`. The Pi controller's gated
+`fleet-update deploy` path is unaffected.
 
 Implementation: [fleet-update.sh](../../modules/scripts/fleet-update.sh).
 Lock publication: [lock-update workflow](../../.github/workflows/lock-update.yml)
