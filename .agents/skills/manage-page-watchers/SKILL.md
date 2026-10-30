@@ -30,7 +30,7 @@ Run the local tests from the repository root:
 node --test modules/aspects/services/automations/change-detection.test.mjs
 ```
 
-Use [verify-nixos-config](../verify-nixos-config/SKILL.md) for generated configuration
+Use [verify-fleet-change](../verify-fleet-change/SKILL.md) for generated configuration
 and builds, then [fleet-operations](../fleet-operations/SKILL.md) for authorized
 activation and runtime verification. A live `change-detection.service` run can
 post to Discord; local fixtures do not need a live notification. Within an

@@ -264,18 +264,19 @@
   den.aspects.monitoring.provides.dashboard.nixos =
     { config, lib, ... }:
     let
-      fqdn = "metrics.${config.modules.services.domain}";
+      fqdn = "grafana.${config.modules.services.domain}";
+      legacyFqdn = "metrics.${config.modules.services.domain}";
       origin = lib.removeSuffix "/" config.modules.monitoring.cloudUrl;
     in
     {
       services.traefik.dynamicConfigOptions.http = {
         routers.grafana = {
-          rule = "Host(`${fqdn}`)";
+          rule = "Host(`${fqdn}`) || Host(`${legacyFqdn}`)";
           service = "noop@internal";
           middlewares = [ "grafana-cloud-redirect" ];
         };
         middlewares.grafana-cloud-redirect.redirectRegex = {
-          regex = "^https?://${lib.escapeRegex fqdn}([/?].*|$)";
+          regex = "^https?://(?:${lib.escapeRegex fqdn}|${lib.escapeRegex legacyFqdn})([/?].*|$)";
           replacement = origin + "\${1}";
           permanent = false;
         };

@@ -50,11 +50,6 @@
     "mode": "notify-only",
     "input": "nixpkgs"
   },
-  "t3code-server": {
-    "mode": "post-lock",
-    "input": "home-manager",
-    "cleanup": "t3code-server.patch"
-  },
   "qbittorrent": {
     "mode": "post-lock",
     "input": "nixpkgs",
@@ -124,4 +119,3 @@
     ]
   }
 }
-

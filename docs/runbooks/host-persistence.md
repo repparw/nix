@@ -73,6 +73,6 @@ account consent, mount ordering, and backup coverage. The
 identity, SOPS, application state, incomplete exports, isolated restores, and
 failed-boot recovery. It uses disposable x86 credentials and storage; real ARM
 firmware, production services, device attachment, and interactive logins still
-need their own validation. Use the [verification skill](../../.agents/skills/verify-nixos-config/SKILL.md)
+need their own validation. Use the [verification skill](../../.agents/skills/verify-fleet-change/SKILL.md)
 for builds and the [fleet skill](../../.agents/skills/fleet-operations/SKILL.md)
 for authorized activation.

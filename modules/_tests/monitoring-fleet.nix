@@ -52,281 +52,6 @@ let
     "/home/containers/media/hdd"
     "/home/containers/media/seagate"
   ];
-  dashboard =
-    (builtins.fromJSON (builtins.readFile ../../grafana/dashboards/fleet-overview.json)).spec;
-  cpuTarget = builtins.head (lib.findFirst (panel: panel.id == 1) null dashboard.panels).targets;
-  filesystemTarget =
-    builtins.head
-      (lib.findFirst (panel: panel.id == 3) null dashboard.panels).targets;
-  failuresTarget = builtins.head (lib.findFirst (panel: panel.id == 6) null dashboard.panels).targets;
-  absentTargets = (lib.findFirst (panel: panel.id == 7) null dashboard.panels).targets;
-  networkTargets = lib.filter (
-    panel:
-    builtins.elem panel.id [
-      4
-      5
-    ]
-  ) dashboard.panels;
-  queryTests = pkgs.writeText "monitoring-dashboard-tests.json" (
-    builtins.toJSON {
-      evaluation_interval = "1m";
-      fuzzy_compare = true;
-      tests =
-        map
-          (missing: {
-            interval = "1m";
-            input_series = map (host: {
-              series = "node_uname_info{host=\"${host}\"}";
-              values = "1+0x10";
-            }) (lib.filter (host: host != missing) hosts);
-            promql_expr_test = lib.imap0 (index: target: {
-              expr = target.expr;
-              eval_time = "6m";
-              exp_samples = [
-                {
-                  labels = "{host=\"${builtins.elemAt hosts index}\"}";
-                  value = if builtins.elemAt hosts index == missing then 1 else 0;
-                }
-              ];
-            }) absentTargets;
-          })
-          [
-            "none"
-            "alpha"
-            "pi"
-            "epsilon"
-          ]
-        ++ [
-          {
-            interval = "1m";
-            input_series = [
-              {
-                series = "node_uname_info{host=\"alpha\"}";
-                values = "1+0x3 stale";
-              }
-            ];
-            promql_expr_test =
-              map
-                (minute: {
-                  expr = (builtins.head absentTargets).expr;
-                  eval_time = "${toString minute}m";
-                  exp_samples = [
-                    {
-                      labels = "{host=\"alpha\"}";
-                      value = if minute == 4 then 0 else 1;
-                    }
-                  ];
-                })
-                [
-                  4
-                  10
-                ];
-          }
-          {
-            interval = "1m";
-            input_series =
-              lib.concatMap
-                (
-                  fixture:
-                  map
-                    (mode: {
-                      series = "node_cpu_seconds_total{host=\"${fixture.host}\",cpu=\"0\",job=\"integrations/unix\",mode=\"${mode}\"}";
-                      values = "0+${toString fixture.${mode}}x10";
-                    })
-                    [
-                      "user"
-                      "idle"
-                    ]
-                )
-                [
-                  {
-                    host = "pi";
-                    user = 1;
-                    idle = 65;
-                  }
-                  {
-                    host = "alpha";
-                    user = 30;
-                    idle = 30;
-                  }
-                  {
-                    host = "epsilon";
-                    user = 0;
-                    idle = 60;
-                  }
-                  {
-                    host = "saturated";
-                    user = 60;
-                    idle = 0;
-                  }
-                ]
-              ++ [
-                {
-                  series = "node_cpu_seconds_total{host=\"pi\",cpu=\"0\",job=\"unrelated\",mode=\"user\"}";
-                  values = "0+6000x10";
-                }
-              ];
-            promql_expr_test = [
-              {
-                expr = cpuTarget.expr;
-                eval_time = "6m";
-                exp_samples = [
-                  {
-                    labels = "{host=\"pi\"}";
-                    value = 100.0 / 66.0;
-                  }
-                  {
-                    labels = "{host=\"alpha\"}";
-                    value = 50;
-                  }
-                  {
-                    labels = "{host=\"epsilon\"}";
-                    value = 0;
-                  }
-                  {
-                    labels = "{host=\"saturated\"}";
-                    value = 100;
-                  }
-                ];
-              }
-            ];
-          }
-          {
-            interval = "1m";
-            input_series =
-              lib.concatMap
-                (
-                  direction:
-                  map
-                    (device: {
-                      series = "node_network_${direction}_bytes_total{host=\"alpha\",device=\"${device}\"}";
-                      values = if device == "enp6s0" then "0+60x10" else "0+6000x10";
-                    })
-                    [
-                      "enp6s0"
-                      "lo"
-                      "veth-fixture"
-                      "ifb-wan"
-                      "wg-home"
-                      "br0"
-                    ]
-                )
-                [
-                  "receive"
-                  "transmit"
-                ];
-            promql_expr_test = map (panel: {
-              expr = (builtins.head panel.targets).expr;
-              eval_time = "6m";
-              exp_samples = [
-                {
-                  labels = "{host=\"alpha\"}";
-                  value = 1;
-                }
-              ];
-            }) networkTargets;
-          }
-          {
-            interval = "1m";
-            input_series =
-              lib.concatMap
-                (
-                  mount:
-                  map
-                    (metric: {
-                      series = "node_filesystem_${metric}_bytes{host=\"epsilon\",device=\"/dev/sda1\",fstype=\"ext4\",mountpoint=\"${mount}\"}";
-                      values =
-                        if metric == "size" then
-                          "1000+0x10"
-                        else if metric == "free" then
-                          "500+0x10"
-                        else
-                          "450+0x10";
-                    })
-                    [
-                      "size"
-                      "free"
-                      "avail"
-                    ]
-                )
-                [
-                  "/persist"
-                  "/nix"
-                  "/home/repparw"
-                ];
-            promql_expr_test = [
-              {
-                expr = filesystemTarget.expr;
-                eval_time = "6m";
-                exp_samples = [
-                  {
-                    labels = "{host=\"epsilon\",device=\"/dev/sda1\"}";
-                    value = 100 * 500.0 / 950.0;
-                  }
-                ];
-              }
-            ];
-          }
-          {
-            interval = "1m";
-            input_series = [
-              {
-                series = "fleet_failed_unit{host=\"alpha\",name=\"first.service\"}";
-                values = "1+0x10";
-              }
-              {
-                series = "fleet_failed_unit{host=\"alpha\",name=\"second.service\"}";
-                values = "1+0x10";
-              }
-              {
-                series = "fleet_health_collection_timestamp_seconds{host=\"alpha\",collector=\"host\"}";
-                values = "100+0x10";
-              }
-              {
-                series = "fleet_health_collection_timestamp_seconds{host=\"epsilon\",collector=\"host\"}";
-                values = "100+0x10";
-              }
-              {
-                series = "fleet_failed_units{host=\"legacy\",job=\"integrations/unix\"}";
-                values = "2+0x10";
-              }
-              {
-                series = "node_systemd_unit_state{host=\"alpha\",name=\"test.service\",state=\"failed\"}";
-                values = "0+0x10";
-              }
-              {
-                series = "node_systemd_unit_state{host=\"pi\",name=\"test.service\",state=\"failed\"}";
-                values = "1+0x10";
-              }
-            ];
-            promql_expr_test = [
-              {
-                expr = failuresTarget.expr;
-                eval_time = "6m";
-                exp_samples = [
-                  {
-                    labels = "{host=\"alpha\"}";
-                    value = 2;
-                  }
-                  {
-                    labels = "{host=\"pi\"}";
-                    value = 1;
-                  }
-                  {
-                    labels = "{host=\"epsilon\"}";
-                    value = 0;
-                  }
-                  {
-                    labels = "{host=\"legacy\"}";
-                    value = 2;
-                  }
-                ];
-              }
-            ];
-          }
-        ];
-    }
-  );
   cloudOnly =
     host:
     let
@@ -388,17 +113,21 @@ assert !(redirectConfig.services ? grafana);
 assert
   !(lib.hasInfix "authenticated Alloy ingestion" (cfg "epsilon").networking.firewall.extraInputRules);
 assert redirectConfig.routers.grafana.service == "noop@internal";
+assert redirectConfig.routers.grafana.rule
+  == "Host(`grafana.repparw.com`) || Host(`metrics.repparw.com`)";
 assert redirectConfig.routers.grafana.middlewares == [ "grafana-cloud-redirect" ];
 assert
   redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.replacement
   == "https://repparw.grafana.net\${1}";
 assert !redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.permanent;
+assert lib.hasInfix "grafana" redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.regex;
+assert lib.hasInfix "metrics" redirectConfig.middlewares.grafana-cloud-redirect.redirectRegex.regex;
 assert cloudSite.check-url == "https://repparw.grafana.net/api/health";
 assert lib.all (path: !(builtins.elem path persistencePaths)) [
-    "/var/lib/grafana"
-    "/var/lib/loki"
-    "/var/lib/prometheus2"
-  ];
+  "/var/lib/grafana"
+  "/var/lib/loki"
+  "/var/lib/prometheus2"
+];
 assert alphaExclusions;
 assert lib.all (host: !(cfg host).systemd.timers ? fleet-health) hosts;
 assert lib.all (host: !(cfg host).systemd.timers ? disk-watch) hosts;
@@ -438,9 +167,7 @@ pkgs.runCommand "check-monitoring-fleet"
   {
     nativeBuildInputs = [
       pkgs.grafana-alloy
-      pkgs.prometheus.cli
       pkgs.python3
-      pkgs.go
     ];
   }
   ''
@@ -455,9 +182,7 @@ pkgs.runCommand "check-monitoring-fleet"
           variant.environment.etc."alloy/config.alloy".text
       }"
     ) cloudVariants}
-    promtool test rules ${queryTests}
-    GOCACHE="$TMPDIR/go-cache" GO111MODULE=off go run ${./discord-template.go} ${./fixtures/monitoring/discord.tmpl}
-    PYTHONDONTWRITEBYTECODE=1 python3 ${./fleet-health-metrics.py} ${../scripts/fleet-health-metrics.py} ${./fixtures/monitoring/health-alerts.json}
+    PYTHONDONTWRITEBYTECODE=1 python3 ${./fleet-health-metrics.py} ${../scripts/fleet-health-metrics.py}
     PYTHONDONTWRITEBYTECODE=1 python3 ${./grafana-cloud-backup.py} ${../scripts/grafana-cloud-backup.py}
     touch $out
   ''

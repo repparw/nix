@@ -28,6 +28,14 @@ import yaml
 DOC_ROOTS = ("AGENTS.md", "docs", ".agents")
 DOCS_PREFIX = "docs/"
 
+
+def is_skill_entrypoint(rel: Path) -> bool:
+    return (
+        len(rel.parts) == 4
+        and rel.parts[:2] == (".agents", "skills")
+        and rel.name == "SKILL.md"
+    )
+
 BASE_FIELDS = ("type", "title", "description", "when", "tags")
 RESOURCE_EXEMPT_TYPES = frozenset({"Agent Guide"})
 KNOWN_TYPES = frozenset(
@@ -161,19 +169,21 @@ def validate_file(root: Path, rel: Path) -> list[str]:
     if frontmatter is None:
         if rel_posix.startswith(DOCS_PREFIX):
             errors.append(f"{rel}: documentation page is missing YAML frontmatter")
-        return errors
-
-    data = validate_frontmatter(rel, frontmatter, errors)
-    if data is None:
-        return errors
-
-    if "type" in data:
-        validate_docs_frontmatter(rel, data, root, errors)
-    elif "name" in data:
-        validate_skill_frontmatter(rel, data, errors)
+        elif is_skill_entrypoint(rel):
+            errors.append(f"{rel}: skill entrypoint is missing YAML frontmatter")
     else:
-        errors.append(f"{rel}: frontmatter has neither `type` nor `name`")
+        data = validate_frontmatter(rel, frontmatter, errors)
+        if data is not None:
+            if is_skill_entrypoint(rel):
+                validate_skill_frontmatter(rel, data, errors)
+            elif "type" in data:
+                validate_docs_frontmatter(rel, data, root, errors)
+            elif "name" in data:
+                validate_skill_frontmatter(rel, data, errors)
+            else:
+                errors.append(f"{rel}: frontmatter has neither `type` nor `name`")
 
+    # Validate links even when frontmatter is missing or malformed.
     validate_links(rel, body, root, errors)
     return errors
 
