@@ -109,6 +109,15 @@ sessions or streams can defer Alpha; the retry timer consumes current main later
 Main is desired state. `/var/lib/auto-update/deployed-revision` records the last
 revision verified across the fleet; a deferred host leaves that value unchanged.
 
+A successful convergence also lands the boot chain. Pi starts the headless
+reboot sequence best-effort right after every successful run: it reboots
+Epsilon into its staged kernel/initrd first, waits for health, then reboots
+itself, with each step gated on backups and Epsilon recovery. The 03:00 timer
+runs the same check as a safety net for anything a deploy deferred or a manual
+rebuild staged without a deploy. Alpha stays manual: the Cloud alert
+**Reboot required** and `fleet debug`'s `reboot_required` line surface its
+pending state.
+
 Inspect failures on Pi:
 
 ```sh

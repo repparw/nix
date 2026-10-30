@@ -497,6 +497,8 @@
                 python3 ${./scripts/fleet-update-notifications.test.py} ${./scripts/fleet-update.sh}
                 python3 ${./scripts}/fleet-update.test.py ${./scripts/fleet-update.sh}
                 python3 ${./scripts/fleet-readiness.test.py} ${./scripts/fleet-readiness-probe.sh} ${./scripts/fleet-readiness-deliver.sh}
+                python3 ${./scripts/fleet-reboot-required.test.py} ${./scripts/fleet-reboot-required.sh}
+                python3 ${./scripts/fleet-headless-reboot.test.py} ${./scripts/fleet-headless-reboot.sh}
                 python3 ${./scripts/pi-generation-retention.test.py} ${./scripts/pi-generation-retention.py}
                 python3 ${./scripts/package-update-event.test.py} ${./scripts/package-update-event.py}
                 python3 ${./scripts/lock-update.test.py} ${inputs.self}/.github/workflows/lock-update.yml ${inputs.self}/.github/workflows/ci.yml ${inputs.self}/.github/workflows/revision-validation.yml

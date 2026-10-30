@@ -103,6 +103,15 @@
     "recovery": "Booted kernel and initrd match the staged generation."
   },
   {
+    "uid": "fleet_cloud_reboot_stuck",
+    "title": "Headless reboot not converging",
+    "expr": "fleet_reboot_required{host=~\"pi|epsilon\"}",
+    "pending": "26h",
+    "severity": "warning",
+    "brief": "Staged kernel or initrd pending on {{ $labels.host }} for over a day; the post-deploy and nightly reboot sequence did not converge.",
+    "recovery": "Booted kernel and initrd match the staged generation."
+  },
+  {
     "uid": "fleet_cloud_paused",
     "title": "Fleet deployment automation paused",
     "expr": "fleet_deployment_paused{host=\"pi\"}",

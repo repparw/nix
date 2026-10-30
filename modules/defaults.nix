@@ -14,6 +14,10 @@
       includes = with den.aspects; [
         nix-index
         monitoring._.agent
+        # The health collector above and the headless reboot sequence both
+        # gate on this predicate; it ships fleet-wide so fleet debug and the
+        # controller's remote check find it on any host.
+        fleet-reboot
         nixvim
         nixpkgs
         nodejs-security
