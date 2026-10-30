@@ -72,13 +72,12 @@ jobs:
         env:
           CI_CHECKS: ${{ matrix.checks }}
         run: bash .github/scripts/run-checks.sh
-      - name: Test upstream watcher predicates and pilot lifecycle
+      - name: Test upstream watcher predicates and publication lifecycle
         if: matrix.group == 'lightweight'
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |
           python3 .github/scripts/upstream-readiness.test.py
-          python3 .github/scripts/upstream-pilot.test.py
           python3 .github/scripts/upstream-plan.test.py
           # Evaluate fleet attributes and build compatible/incompatible patch
           # fixtures through the production probe, including version-check hooks.

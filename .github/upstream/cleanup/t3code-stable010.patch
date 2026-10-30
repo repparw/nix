@@ -1,6 +1,6 @@
-diff --git a/modules/aspects/ai/t3code-stable010.nix b/modules/aspects/ai/t3code-stable010.nix
+diff --git a/modules/aspects/upstream/t3code-stable010.nix b/modules/aspects/upstream/t3code-stable010.nix
 deleted file mode 100644
---- a/modules/aspects/ai/t3code-stable010.nix
+--- a/modules/aspects/upstream/t3code-stable010.nix
 +++ /dev/null
 @@ -1,63 +0,0 @@
 -{ den, ... }:

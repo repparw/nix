@@ -61,10 +61,6 @@
     "input": "nixpkgs",
     "cleanup": "wpaperd-fix.patch"
   },
-  "voxtype-graphical": {
-    "mode": "completed",
-    "input": "home-manager"
-  },
   "gamescope-vkroots": {
     "mode": "post-lock",
     "input": "nixpkgs",
