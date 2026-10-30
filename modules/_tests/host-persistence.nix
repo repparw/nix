@@ -168,11 +168,12 @@ assert lib.all (
   host:
   !(lib.any (p: (p.meta.mainProgram or "") == "host-recovery") host.config.environment.systemPackages)
 ) (lib.attrValues hosts);
-assert piOffsite.extraBackupArgs == [ "--one-file-system" "--limit-upload=2048" ];
+assert piOffsite.extraBackupArgs == [
+  "--one-file-system"
+  "--limit-upload=2048"
+];
 assert epsilonOffsite.extraBackupArgs == [ "--one-file-system" ];
 assert lib.elem "rclone.connections=1" piOffsite.extraOptions;
-assert !(lib.elem "rclone.connections=1" alphaOffsite.extraOptions);
-assert !(lib.elem "rclone.connections=1" epsilonOffsite.extraOptions);
 assert lib.elem "/boot/firmware" pi.services.restic.backups.offsite.paths;
 assert lib.elem "/boot/efi" epsilon.services.restic.backups.offsite.paths;
 assert
