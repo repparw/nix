@@ -230,6 +230,10 @@
             extraOptions = [
               "rclone.program=${lib.getExe pkgs.rclone}"
             ];
+            # Cap sustained upload throughput: full-rate offsite uploads have
+            # triggered macb TX-queue watchdog timeouts on pi's onboard
+            # Ethernet. See Grafana logs 2026-10-30.
+            extraBackupArgs = lib.mkDefault [ "--limit-upload=20480" ];
             pruneOpts = lib.optionals (bcfg.exports == { }) bcfg.retentionArgs;
             checkOpts = [ "--read-data-subset=5%" ];
             timerConfig = {

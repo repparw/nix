@@ -48,7 +48,13 @@
             "tmp"
           ];
         };
-        services.restic.backups.offsite.extraBackupArgs = [ "--one-file-system" ];
+        services.restic.backups.offsite.extraBackupArgs = [
+          "--one-file-system"
+          # Sustained full-rate uploads have triggered macb TX-queue watchdog
+          # timeouts on pi (see Grafana logs 2026-10-30). Cap throughput to keep
+          # the onboard Ethernet stable during offsite backups.
+          "--limit-upload=20480"
+        ];
         # Keep existing checkpoints readable and backed up after retiring the tool.
         systemd.tmpfiles.rules = [ "d /var/lib/host-recovery 0700 root root -" ];
       };
