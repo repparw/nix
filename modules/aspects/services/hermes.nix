@@ -155,6 +155,9 @@
                     "t3_thread_send"
                     "t3_thread_wait"
                     "t3_thread_interrupt"
+                    "t3_thread_launch"
+                    # These require a current T3 parent run; an external
+                    # mcp-client may receive parent_not_active instead.
                     "create_threads"
                     "delegate_task"
                   ];
