@@ -130,6 +130,7 @@ in
             set smoothscroll true
             set tabsort mru
 
+            set searchurls.gpt https://chatgpt.com/?q=%s
             set searchurls.n https://mynixos.com/search?q=%s
             set searchurls., https://search.nixos.org/packages?channel=unstable&query=%s
 
@@ -290,6 +291,10 @@ in
                   search = {
                     force = true;
                     engines = {
+                      "ChatGPT" = {
+                        urls = [ { template = "https://chatgpt.com/?q={searchTerms}"; } ];
+                        definedAliases = [ "gpt" ];
+                      };
                       "Nix options" = {
                         urls = [ { template = "https://mynixos.com/search?q={searchTerms}"; } ];
                         definedAliases = [ "n" ];
