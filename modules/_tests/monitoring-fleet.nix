@@ -45,7 +45,9 @@ let
     ]
   ];
   redirectConfig = (cfg "epsilon").services.traefik.dynamicConfigOptions.http;
-  persistencePaths = map (entry: if builtins.isAttrs entry then entry.directory else entry) (cfg "epsilon").environment.persistence."/persist".directories;
+  persistencePaths = map (entry: if builtins.isAttrs entry then entry.directory else entry) (
+    cfg "epsilon"
+  ).environment.persistence."/persist".directories;
   alphaMounts = [
     "/mnt/hdd"
     "/mnt/seagate"
