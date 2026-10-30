@@ -229,11 +229,16 @@
             ++ bcfg.excludes;
             extraOptions = [
               "rclone.program=${lib.getExe pkgs.rclone}"
+              # Reduce concurrent transfers/connections during offsite uploads:
+              # sustained multi-connection uploads triggered macb TX-queue
+              # watchdog timeouts on pi's onboard Ethernet.
+              "rclone.connections=1"
+              "rest.connections=1"
             ];
             # Cap sustained upload throughput: full-rate offsite uploads have
             # triggered macb TX-queue watchdog timeouts on pi's onboard
             # Ethernet. See Grafana logs 2026-10-30.
-            extraBackupArgs = lib.mkDefault [ "--limit-upload=20480" ];
+            extraBackupArgs = lib.mkDefault [ "--limit-upload=2048" ];
             pruneOpts = lib.optionals (bcfg.exports == { }) bcfg.retentionArgs;
             checkOpts = [ "--read-data-subset=5%" ];
             timerConfig = {
