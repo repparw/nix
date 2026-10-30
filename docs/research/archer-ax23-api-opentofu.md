@@ -9,8 +9,10 @@ tags: [research, router, tp-link, ax23, opentofu, terraform, api]
 
 # Archer AX23 v2 — programmatic API & OpenTofu feasibility
 
-Investigated 2026-10-25 against the live router. Read-only; no configuration
-was modified.
+Initial investigation completed 2026-10-25 against the live router.
+That research pass was read-only; no configuration was modified. Follow-up
+hardware writes and the OpenTofu implementation were verified on 2026-10-29
+(see **Implementation outcome**, below).
 
 ## 1. Device identified
 
@@ -30,9 +32,10 @@ The UI build metadata is served in `<meta name="version">` of
 
 Note: plain `curl` receives a 403 "Filtered Content" page on HTML routes even
 with a perfect Chrome TLS fingerprint (`curl-impersonate`); the API CGI
-endpoints do not filter. Local management is HTTP-only, which is normal for
-this firmware generation but worth knowing for secret hygiene: the admin
-password transits the LAN unencrypted on its way to the router.
+endpoints do not filter. Local management uses HTTP, so the connection is not
+TLS-protected. The login protocol RSA-encrypts credentials and uses an encrypted,
+signed session envelope; this does **not** provide the same security properties
+as HTTPS. Avoid untrusted LAN segments.
 
 ## 2. The new-generation API protocol
 
@@ -191,7 +194,7 @@ Full list (re-derivable from `/webpages/js/*.js` with
 
 ## 3. Existing integrations
 
-Researched 2026-10-25 (status, dates, and support matrices verified against
+Initially researched 2026-10-25 (historical snapshot; see the 2026-10-29 implementation outcome above; status, dates, and support matrices verified against
 GitHub/PyPI). The task's starting URLs contained one dead end:
 `marckregio/TP-Link-Archer-C6` is a 0★ fork of the real project.
 
@@ -211,8 +214,9 @@ GitHub/PyPI). The task's starting URLs contained one dead end:
 Verified 2026-10-25 with `TplinkRouterSG` over HTTP, one login per run, logout
 afterwards, zero failed logins (no lockout exposure). Password supplied via
 environment; nothing sensitive in transcript or output. The probe script is
-[`archer-ax23-probe.py`](archer-ax23-probe.py) (sanitizes passphrases and WAN
-addresses; read operations only).
+[`archer-ax23-probe.py`](archer-ax23-probe.py) (redacts passphrases and WAN
+addresses; read operations only). Its output still includes **internal SSIDs,
+local IPs, hostnames, and MAC addresses** and must not be published verbatim.
 
 | Operation                                                                            | Result                                                                                                                                                                                                                                                                                                         |
 | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -229,11 +233,39 @@ addresses; read operations only).
 | Static routes (`admin/network?form=routes_static`)                                   | **works** — an empty table `{}` (none configured). Resolution: table forms need `operation=load`, not `read` (`read` answers with an error on those forms; the UI JS calls `load` — this also explains the earlier "failure"). `routes_system` lists the 6 kernel routes (default via WAN, LAN, WireGuard hub) |
 | Config backup (`admin/firmware?form=config_multipart`, multipart `operation=backup`) | **works** — 22 KB encrypted config downloaded and stored outside git with 0600 permissions as a rollback safety net before any write-capable work. The same URL with `operation=restore` restores — deliberately not touched                                                                                   |
 
-Untested (writes): reservation add/delete, port-forward CRUD, Wi-Fi writes —
-deliberately not exercised. The port-forwarding wire formats are now
-implemented upstream ([`repparw/TP-Link-Archer-C6U#248`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U/pull/248))
-with mock coverage; live write verification on this router is planned behind
-explicit approval (see the provider plan, §6).
+At the time of this **2026-10-25 read-only pass**, reservation add/delete,
+port-forward CRUD, and Wi-Fi writes had deliberately not been exercised.
+On **2026-10-29**, authorized disposable disabled reservation and port-forward
+create/update/delete operations were hardware-verified with read-back and full
+restoration; Wi-Fi writes remain untested. See **Implementation outcome** below.
+
+## Implementation outcome (2026-10-29)
+
+The feasibility recommendation has now been implemented:
+
+- [`repparw/terraform-provider-tplink`](https://github.com/repparw/terraform-provider-tplink)
+  implements the SG-hardened protocol independently in Go (MIT), with data
+  sources for inventory and OpenTofu resources for DHCP reservations and IPv4
+  port forwards. It is not registry-published yet.
+- [`repparw/nix#403`](https://github.com/repparw/nix/pull/403)
+  adds a separate `infra/router/` OpenTofu root. The AX23 v2's 12 reservations
+  and 2 port-forward rules were imported as 14 resources; subsequent
+  `tofu plan` showed **no changes**. Both resource types use
+  `prevent_destroy`. The real inventory and state are excluded from Git.
+- [`AlexandrErohin/TP-Link-Archer-C6U#248`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U/pull/248)
+  contributes port-forward CRUD to the Python library. Its AX23 v2
+  insert/update/delete cycle passed seven hardware read-back checks and left
+  the initial rows intact. The upstream PR remains open.
+- Independent authorized writes through the Go provider also exercised
+  disposable disabled reservation and port-forward create/update/destroy
+  operations, with read-back and confirmation that the initial configuration
+  was restored. They did **not** alter any of the 14 adopted entries.
+- The router state is now backed up in Alpha's home-state configuration **once
+  #403 is deployed**; before deployment, local state recovery still requires
+  a separate backup or intentional re-import.
+
+The sections below preserve the original feasibility reasoning as historical
+context, not as uncompleted implementation tasks.
 
 ## 5. OpenTofu suitability
 
@@ -270,11 +302,12 @@ The API's shape is unusually provider-friendly:
    ([`repparw/TP-Link-Archer-C6U#248`](https://github.com/AlexandrErohin/TP-Link-Archer-C6U/pull/248)).
    Extending the actively-maintained library benefits other users and keeps
    the protocol knowledge in one place.
-2. **Provider later, data sources first** (option A only after step 1 lands):
-   clone the `lucavb/tplink-easysmart` plugin-framework skeleton; start with
-   data sources (status, firmware, device list) + `tplink_ax23_reservation`
-   and `tplink_ax23_port_forward` resources behind an explicit
-   enablement flag. Host it in its own repository, not inside `repparw/nix`.
+2. **Provider design (historical plan; completed 2026-10-29):** create a
+   standalone provider in its own repository, starting with read-only data
+   sources and narrowly scoped DHCP-reservation / port-forward resources.
+   The resulting provider is native Go at
+   [`repparw/terraform-provider-tplink`](https://github.com/repparw/terraform-provider-tplink);
+   it is not a GPL-derived Python wrapper.
 3. **Short term**: the read-only probe script (this investigation) can feed a
    monitoring/inventory view (e.g. Home Assistant or a cron + Prometheus
    exporter) without any writes.
@@ -295,9 +328,8 @@ The API's shape is unusually provider-friendly:
   LAN segments.
 - **Watchdog**: rapid-fire request storms can watchdog-reboot similar units
   (BE400 reports); pace requests.
-- Upstream library is GPL-3.0 — keep any Go provider (own repo, MPL/Apache)
-  talking to a separate process or reimplementing the protocol, not importing
-  the Python code.
+- Upstream library is GPL-3.0 — the separately implemented, MIT-licensed Go
+  provider does not copy or import the Python implementation.
 
 ## Related
 
