@@ -10,7 +10,7 @@
           let
             overrideVersion =
               package:
-              # The current pin still uses Node 24 / pnpm 11. Stable 0.1.3
+              # The current pin still uses Node 24 / pnpm 11. Stable 0.1.5
               # requires Node 26 / pnpm 12; split packages already use them.
               (
                 if prev ? t3code-cli then
@@ -23,12 +23,12 @@
               ).overrideAttrs
                 (
                   finalAttrs: _: {
-                    version = "0.1.3";
+                    version = "0.1.5";
                     src = prev.fetchFromGitHub {
                       owner = "pingdotgg";
                       repo = "t3code";
                       tag = "v${finalAttrs.version}";
-                      hash = "sha256-xxmwaHPkXzR0CAtknCc6raAzcnPtmw8wxF3YO3WcbE4=";
+                      hash = "sha256-MUIf+6/gk2jG3eziHFjtvOfooDeQbbcJxMBECFZh6KQ=";
                     };
                     pnpmDeps = prev.fetchPnpmDeps {
                       pnpm = final.pnpm_12;
@@ -39,7 +39,7 @@
                         pnpmWorkspaces
                         ;
                       fetcherVersion = 4;
-                      hash = "sha256-8x9wUvxXBq++6EGzOLLACloCNqm9L0JDX8gTCVA+OPE=";
+                      hash = "sha256-uj7IxNMdubCtIqkv1M/vg5dRTeUaysC+1l/7ag+D7/4=";
                     };
                   }
                 );
