@@ -15,8 +15,7 @@
       bootstrapMarker = "# Managed by modules/git-hooks.nix: worktree bootstrap";
       # [ ! -e ] is true for both absent paths and dangling symlinks.
       # Preserve existing, readable foreign hooks.
-      shouldInstallBootstrap =
-        ''[ ! -e "$repo_post_checkout" ] || ${pkgs.lib.getExe pkgs.gnugrep} -qFx ${pkgs.lib.escapeShellArg bootstrapMarker} "$repo_post_checkout"'';
+      shouldInstallBootstrap = "[ ! -e \"$repo_post_checkout\" ] || ${pkgs.lib.getExe pkgs.gnugrep} -qFx ${pkgs.lib.escapeShellArg bootstrapMarker} \"$repo_post_checkout\"";
       worktreeBootstrap = pkgs.writeShellScript "nix-worktree-bootstrap" ''
         ${bootstrapMarker}
         set -euo pipefail
