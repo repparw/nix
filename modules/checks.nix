@@ -251,6 +251,7 @@
                   ".config/vesktop/settings.json"
                   ".local/share/fish/fish_history"
                   "Projects/nix/infra/terraform.tfstate"
+                  "Projects/nix/infra/router/inventory.auto.tfvars"
                 ];
                 criticalPaths = [ "Projects/nix/infra/terraform.tfstate" ];
                 hddOnlyPaths = [ ".config/sops/age/keys.txt" ];
@@ -276,10 +277,11 @@
                 state_root=/tmp/home-state-fixture-root
                 state_dir=$home/Projects/nix/infra
                 state=$state_dir/terraform.tfstate
+                router_dir=$state_dir/router
 
                 rm -rf /tmp/home-state-fixture-*
                 mkdir -p $home/.config/vesktop $home/.local/share/fish \
-                  $home/.config/sops/age $state_dir/.terraform $state_root
+                  $home/.config/sops/age $state_dir/.terraform $router_dir $state_root
                 printf '{}' > $home/.config/vesktop/settings.json
                 printf 'history\n' > $home/.local/share/fish/fish_history
                 printf 'x' > $home/.config/sops/age/keys.txt
@@ -289,10 +291,14 @@
                 printf 'x' > $state_dir/.terraform/provider-cache
                 printf 'x' > $state_dir/terraform.tfvars
                 printf 'x' > $state_dir/terraform.tfplan
+                printf 'port_forwards = {}\n' > $router_dir/inventory.auto.tfvars
+                chmod 600 $router_dir/inventory.auto.tfvars
+                printf 'x' > $router_dir/imports.tf
 
                 # Evaluated alpha configuration coverage.
                 home_state='${builtins.toJSON alphaHomeState}'
                 printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
+                printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/router/inventory.auto.tfvars")' >/dev/null
                 # Existing selection must stay untouched (spot check).
                 for kept in .config/moonshine/ .config/net.imput.helium/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
                   printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
@@ -328,6 +334,9 @@
                 chmod 600 $state
                 ${staging} offsite
                 test -f $staged/Projects/nix/infra/terraform.tfstate
+                test -f $staged/Projects/nix/infra/router/inventory.auto.tfvars
+                cmp $router_dir/inventory.auto.tfvars $staged/Projects/nix/infra/router/inventory.auto.tfvars
+                test "$(stat -c %a $staged/Projects/nix/infra/router/inventory.auto.tfvars)" = 600
                 test "$(stat -c %a $staged/Projects/nix/infra/terraform.tfstate)" = 600
                 test -f $staged/.config/vesktop/settings.json
                 test -f $staged/.local/share/fish/fish_history
@@ -335,6 +344,7 @@
                 test -f $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
                 test ! -e $staged/Projects/nix/infra/terraform.tfvars
                 test ! -e $staged/Projects/nix/infra/terraform.tfplan
+                test ! -e $staged/Projects/nix/infra/router/imports.tf
                 test ! -e $staged/Projects/nix/infra/.terraform
                 test ! -e $staged/.config/sops/age
 
@@ -372,6 +382,8 @@
                 # critical state.
                 ${staging} hdd
                 test -f $state_root/hdd/Projects/nix/infra/terraform.tfstate
+                cmp $router_dir/inventory.auto.tfvars $state_root/hdd/Projects/nix/infra/router/inventory.auto.tfvars
+                test ! -e $state_root/hdd/Projects/nix/infra/router/imports.tf
                 test -f $state_root/hdd/.config/sops/age/keys.txt
 
                 touch $out
