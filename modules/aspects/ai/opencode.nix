@@ -96,6 +96,12 @@
           settings = {
             model = "opencode/muse-spark-1.3-contributor-free";
             small_model = "opencode/muse-spark-1.3-contributor-free";
+            # GitHub Student/Free Copilot plans only allow Auto model
+            # selection; this plugin adds the github-copilot/auto router
+            # models so the Copilot provider lists anything at all.
+            plugins = [
+              "@klconsultancy/opencode-copilot-auto@1.0.1"
+            ];
             permission = {
               "*" = {
                 "*" = "allow";
