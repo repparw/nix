@@ -116,16 +116,22 @@ Deliberate removal or identity replacement is an explicit three-step process:
 
 ## State
 
-Local state (`terraform.tfstate`, gitignored, 0600 via umask of the tool).
-It contains MACs, hostnames, and LAN IP addresses — device inventory, no
-credentials (the password lives only in `TF_VAR_router_password`). The
-alpha home-state backup stages `Projects/nix/**` before the daily encrypted
-offsite upload; after any apply or import, capture a fresh backup as with
-the OCI stack (see the
+Local state (`terraform.tfstate`, gitignored, 0600 via umask of the tool)
+contains MACs, hostnames, and LAN IP addresses — device inventory, no
+credentials (the password lives only in `TF_VAR_router_password`).
+
+Alpha's home-state backup stages both `terraform.tfstate` and the gitignored
+`inventory.auto.tfvars` for the HDD mirror and daily encrypted offsite upload.
+`imports.tf` and provider caches remain excluded. The inventory is desired
+configuration, so backing it up preserves edits not yet applied to the router;
+it is not committed to Git. The backup stages an inventory file when present
+but does not require it to exist. After any apply, import, or inventory edit,
+capture fresh backups as with the OCI stack (see the
 [fleet operations runbook](../../docs/runbooks/fleet-operations.md)) and
-confirm the new `infra/router/terraform.tfstate` path appears in the staged
-generation. Re-running `tfinventory` + imports is the state-recovery
-fallback, with the usual caveat: it silently adopts out-of-band drift.
+confirm both `infra/router/terraform.tfstate` and
+`infra/router/inventory.auto.tfvars` appear in the staged generation.
+Re-running `tfinventory` + imports is the recovery fallback, with the usual
+caveat: it silently adopts out-of-band drift.
 
 ## Reviewing drift
 

@@ -159,14 +159,6 @@ class Readiness(unittest.TestCase):
     def test_version_tag_expression_is_resolved_exactly(self):
         self.assertEqual(watch.source_ref('version = "1.3.0"; tag = finalAttrs.version;'), "1.3.0")
 
-    def test_graphical_target_must_cover_all_unit_dependencies(self):
-        good = 'PartOf = [ "graphical-session.target" ]; After = [ "graphical-session.target" ]; WantedBy = [ "graphical-session.target" ];'
-        with patch.object(watch, "source", return_value=good) as source:
-            self.assertEqual(watch.detect("voxtype-graphical", LOCK), "PINNED-READY")
-            source.assert_called_once_with("nix-community/home-manager", "modules/services/voxtype.nix", "hm-pin")
-        with patch.object(watch, "source", return_value=good.replace('WantedBy', 'Wrong')):
-            self.assertEqual(watch.detect("voxtype-graphical", LOCK), "merged-not-pinned")
-
     def test_gamescope_requires_both_lookup_sites_and_flag_branch(self):
         site = 'if (queueInfo.flags) { VkDeviceQueueInfo2 q2; dispatch->GetDeviceQueue2(device, &q2, &queue); } else dispatch->GetDeviceQueue(device, family, j, &queue);'
         self.assertFalse(watch.flagged_queues_fixed('void GetDeviceQueue2();'))
@@ -227,12 +219,12 @@ class Readiness(unittest.TestCase):
     def test_nodejs_security_cleanup_completion_reads_the_aspect(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            (root / "modules/aspects").mkdir(parents=True)
+            (root / "modules/aspects/upstream").mkdir(parents=True)
             aspect = root / watch.WORKAROUNDS["nodejs-security"][0]
             with patch.object(watch, "ROOT", root), patch.object(watch, "detect") as detect:
                 self.assertEqual(watch.inspect("nodejs-security", LOCK), "completed")
                 detect.assert_not_called()
-            aspect.write_text("{ nodejs-runtime = callPackage ../_packages/nodejs-security.nix {}; }")
+            aspect.write_text("{ nodejs-runtime = callPackage ../../_packages/nodejs-security.nix {}; }")
             with patch.object(watch, "ROOT", root), \
                     patch.object(watch, "detect", return_value="merged-not-pinned"):
                 self.assertEqual(watch.inspect("nodejs-security", LOCK), "merged-not-pinned")
@@ -329,7 +321,7 @@ class Readiness(unittest.TestCase):
         # older package on the root pin.
         import re
         root = Path(__file__).resolve().parents[2]
-        bridge = (root / "modules/aspects/ai/t3code-stable010.nix").read_text()
+        bridge = (root / "modules/aspects/upstream/t3code-stable010.nix").read_text()
         cleanup = (root / ".github/upstream/cleanup/t3code-stable010.patch").read_text()
         match = re.search(r'\bversion\s*=\s*"(\d+)\.(\d+)\.(\d+)";', bridge)
         self.assertIsNotNone(match)
@@ -368,6 +360,25 @@ class Readiness(unittest.TestCase):
                 self.assertNotIn('diff --git a/.github/', patch_text)
                 self.assertIn('diff --git a/modules/', patch_text)
 
+
+    def test_relocated_upstream_cleanups_apply_and_are_owned(self):
+        # Every remaining post-lock workaround except the independently
+        # migrating t3code-server unit lives under the watched directory.
+        # Check against the actual worktree so a moved helper and its cleanup
+        # cannot drift apart and silently break publication.
+        root = Path(__file__).resolve().parents[2]
+        registry = json.loads((root / ".github/upstream/watchers.json").read_text())
+        for name, spec in registry.items():
+            if spec["mode"] != "post-lock":
+                continue
+            with self.subTest(watcher=name):
+                relative, _marker = watch.WORKAROUNDS[name]
+                self.assertTrue(relative.startswith("modules/aspects/upstream/"), name)
+                recipe = root / ".github/upstream/cleanup" / spec["cleanup"]
+                subprocess.run(
+                    ["git", "apply", "--check", str(recipe)],
+                    cwd=root, check=True, capture_output=True, text=True,
+                )
 
 
 

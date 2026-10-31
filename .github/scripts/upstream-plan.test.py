@@ -302,7 +302,7 @@ class PlanTests(unittest.TestCase):
         readiness = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(readiness)
         expected = set(readiness.PR_WAITS) | {
-            "qbittorrent", "wpaperd-fix", "voxtype-graphical",
+            "qbittorrent", "wpaperd-fix",
             "gamescope-vkroots", "moonshine-pr227", "sonarr-jellyfin",
             "t3code-nightly-v2",
             "t3code-stable010",
@@ -324,7 +324,7 @@ class PlanTests(unittest.TestCase):
 
     def test_t3code_cleanups_preserve_independent_layers_in_every_order(self):
         names = ("t3code-connect", "t3code-split", "t3code-stable010")
-        files = [f"modules/aspects/ai/{name}.nix" for name in names] + [
+        files = [f"modules/aspects/upstream/{name}.nix" for name in names] + [
             "modules/aspects/ai/t3code.nix", "modules/entities.nix"]
         for order in itertools.permutations(names):
             with self.subTest(order=order), tempfile.TemporaryDirectory() as directory:

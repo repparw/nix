@@ -150,6 +150,9 @@
             # Router adoption state (infra/router/): same pattern, see
             # infra/router/README.md.
             "Projects/nix/infra/router/terraform.tfstate"
+            # Declarative router inventory: local and gitignored, backed up
+            # alongside state but not parsed as OpenTofu JSON state.
+            "Projects/nix/infra/router/inventory.auto.tfvars"
           ];
           homeStateExcludes = map (dir: "/.config/net.imput.helium/${dir}") [
             "Default/History*"
