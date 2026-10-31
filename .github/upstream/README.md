@@ -30,7 +30,6 @@ The registry includes the stable T3 orchestrator-v2 gate and the
 go to the run summary and Discord. Package readiness does not complete either
 fleet runtime migration.
 
-
 Independent `post-lock` contracts publish separate review-required PRs using
 the recipes in `cleanup/`. Each candidate starts at the same checked-out main
 revision.
