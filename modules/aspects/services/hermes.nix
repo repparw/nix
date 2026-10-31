@@ -46,6 +46,8 @@
         sops.secrets."hermes-llm-env" = {
           sopsFile = ../../../secrets/hermes.sops.yaml;
           uid = 327680;
+          # Token rotation must refresh Hermes' generated .env and MCP client.
+          restartUnits = [ "container@hermes.service" ];
         };
 
         sops.secrets."arr-api-keys" = {
@@ -137,6 +139,29 @@
                   "/run/secrets/hermes-env"
                   "/run/secrets/hermes-llm-env"
                 ];
+                # Alpha's T3 orchestration MCP: one minimally scoped
+                # mcp-client session with read + operate, never admin scopes.
+                # The token is supplied at runtime by hermes-llm-env in SOPS.
+                mcpServers.t3 = {
+                  url = "http://${cfg.hostAddresses.alpha}:3773/mcp";
+                  headers.Authorization = "Bearer \${T3_MCP_TOKEN}";
+                  connect_timeout = 10;
+                  timeout = 300;
+                  # Only expose tools needed to inspect and direct T3 work.
+                  tools.include = [
+                    "t3_thread_list"
+                    "t3_thread_search"
+                    "t3_thread_read"
+                    "t3_thread_send"
+                    "t3_thread_wait"
+                    "t3_thread_interrupt"
+                    "t3_thread_launch"
+                    # These require a current T3 parent run; an external
+                    # mcp-client may receive parent_not_active instead.
+                    "create_threads"
+                    "delegate_task"
+                  ];
+                };
                 extraPackages = with pkgs; [
                   curl
                   ffmpeg
