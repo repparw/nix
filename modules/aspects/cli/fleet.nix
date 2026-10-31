@@ -239,7 +239,7 @@ in
           }
 
           debug_local() {
-            local host system_state current booted profile failed unit
+            local host system_state current booted profile failed unit rc reboot
             host=$(hostname)
             echo "== fleet debug: $host =="
             printf 'configuration_revision: '
@@ -250,6 +250,16 @@ in
             printf 'current_system: %s\n' "''${current:-unknown}"
             printf 'booted_system: %s\n' "''${booted:-unknown}"
             printf 'profile_system: %s\n' "''${profile:-unknown}"
+            # The shared predicate decides: 0 = staged boot chain differs
+            # (reboot owed), 1 = converged, anything else = unknown.
+            reboot=unknown
+            rc=0
+            fleet-reboot-required >/dev/null 2>&1 || rc=$?
+            case "$rc" in
+              0) reboot=pending ;;
+              1) reboot=clear ;;
+            esac
+            printf 'reboot_required: %s\n' "$reboot"
             system_state=$(systemctl is-system-running 2>/dev/null || true)
             printf 'system_state: %s\n' "''${system_state:-unknown}"
 
