@@ -53,10 +53,20 @@
               keeps=$(${jq} -nc --argjson a "$keeps" --argjson z "$z" '$a + $z.keeps') || true
             fi
             o=$(${curl} -fsS -m 30 https://openrouter.ai/api/v1/models 2>/dev/null \
-              | ${jq} -c '{
-                  hides: [ .data[].id | select(((contains("free")) or startswith("~") or startswith("nvidia/")) | not) | "openrouter/" + . ],
-                  keeps: [ .data[].id | select((contains("free")) or startswith("~") or startswith("nvidia/")) | "openrouter/" + . ]
-                }' 2>/dev/null) || o=
+              | ${jq} -c '
+                  # NVIDIA publishes both paid and :free variants. Only surface
+                  # the free variant when its input and output prices are zero.
+                  def keep:
+                    (.id | startswith("~"))
+                    or ((.id | startswith("nvidia/"))
+                        and (.id | endswith(":free"))
+                        and ((.pricing.prompt | tonumber?) == 0)
+                        and ((.pricing.completion | tonumber?) == 0))
+                    or ((.id | startswith("nvidia/") | not) and (.id | contains("free")));
+                  {
+                    hides: [ .data[] | select(keep | not) | "openrouter/" + .id ],
+                    keeps: [ .data[] | select(keep) | "openrouter/" + .id ]
+                  }' 2>/dev/null) || o=
             if [ -n "''${o:-}" ]; then
               hides=$(${jq} -nc --argjson a "$hides" --argjson o "$o" '$a + $o.hides') || true
               keeps=$(${jq} -nc --argjson a "$keeps" --argjson o "$o" '$a + $o.keeps') || true

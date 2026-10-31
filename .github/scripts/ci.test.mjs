@@ -127,7 +127,7 @@ test('all successful checks pass and invalid or empty selections cannot pass sil
 
 
 test('docs-only PRs skip the workflow watcher tests but code changes retain them', () => {
-  const watcherGroup = validation.match(/name: Test upstream watcher predicates and pilot lifecycle\n\s+if: matrix.group == '([^']+)'/)[1];
+  const watcherGroup = validation.match(/name: Test upstream watcher predicates and publication lifecycle\n\s+if: matrix.group == '([^']+)'/)[1];
   const runsWatcher = paths => classifyChanges(paths).checkMatrix.include.some(g => g.group === watcherGroup);
   assert.equal(runsWatcher(['docs/hosts.md', 'README.md']), false);
   for (const path of ['.github/scripts/upstream-plan.py', '.github/workflows/revision-validation.yml', 'flake.lock']) {
@@ -153,7 +153,7 @@ test('atomic package validation reads the PR head and includes bundled ARM valid
     run('git', ['config', 'user.email', 'fixture@example.test']);
     run('git', ['commit', '--allow-empty', '-m', 'base']);
     run('git', ['switch', '-c', 'candidate']);
-    run('git', ['commit', '--allow-empty', '-m', 'fix(upstream): updated lock (authelia-pnpm-hash,t3code-split,qbittorrent)']);
+    run('git', ['commit', '--allow-empty', '-m', 'fix(upstream): updated lock (t3code-split,qbittorrent)']);
     const head = run('git', ['rev-parse', 'HEAD']);
     run('git', ['switch', 'main']);
     run('git', ['merge', '--no-ff', 'candidate', '-m', 'Merge candidate into main']);

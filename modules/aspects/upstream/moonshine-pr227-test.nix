@@ -21,7 +21,7 @@
     {
       nixpkgs.overlays = [
         (final: prev: {
-          moonshine-pr227 = final.callPackage ../_packages/moonshine-pr227 {
+          moonshine-pr227 = final.callPackage ../../_packages/moonshine-pr227 {
             moonshine = prev.moonshine;
           };
         })

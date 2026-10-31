@@ -31,7 +31,7 @@ files instead of copying module contents.
 ## Runbooks
 
 - [Diagnose fleet observability](runbooks/monitoring.md)
-- [Configure Grafana Cloud](runbooks/grafana-cloud.md)
+- [Grafana Cloud operations (repparw/grafana)](https://github.com/repparw/grafana#readme)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
 - [Update rollback](runbooks/update-rollback.md)
 - [Fleet health, backups, and deployment](runbooks/fleet-operations.md)
@@ -52,7 +52,7 @@ files instead of copying module contents.
 
 ## Agent guidance
 
-- [Verify NixOS configuration changes](../.agents/skills/verify-nixos-config/SKILL.md)
+- [Verify NixOS configuration changes](../.agents/skills/verify-fleet-change/SKILL.md)
 - [Operate the running fleet](../.agents/skills/fleet-operations/SKILL.md)
 - [Watch for an upstream fix](../.agents/skills/watch-upstream/SKILL.md)
 - [Manage page watchers](../.agents/skills/manage-page-watchers/SKILL.md)

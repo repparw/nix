@@ -9,27 +9,25 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PR_WAITS = {
-    "authelia-pnpm-hash": ("NixOS/nixpkgs", 572207, "nixpkgs"),
+
     "t3code-connect": ("NixOS/nixpkgs", 555921, "nixpkgs"),
     "t3code-split": ("NixOS/nixpkgs", 555814, "nixpkgs"),
     "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
     "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
 }
 WORKAROUNDS = {
-    "authelia-pnpm-hash": ("modules/_services/authelia.nix", "autheliaPackage"),
-    "t3code-connect": ("modules/aspects/ai/t3code-connect.nix", "cp .env.example .env"),
-    "t3code-split": ("modules/aspects/ai/t3code-split.nix", "t3code-server ="),
-    "tasks-org": ("modules/aspects/gui/apps.nix", "tasksOrgPackage"),
+
+    "t3code-connect": ("modules/aspects/upstream/t3code-connect.nix", "cp .env.example .env"),
+    "t3code-split": ("modules/aspects/upstream/t3code-split.nix", "t3code-server ="),
+    "tasks-org": ("modules/aspects/upstream/tasks-org.nix", None),
     "t3code-browser-libs": (
-        "modules/aspects/ai/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
-    "qbittorrent": ("modules/aspects/services/arr.nix", "qbittorrent-nox.overrideAttrs"),
-    "wpaperd-fix": ("modules/aspects/gui/wpaperd-output-removal-race.patch", None),
-    "voxtype-graphical": ("modules/aspects/ai/voxtype-graphical-workaround.nix", None),
-    "gamescope-vkroots": ("modules/aspects/streaming.nix", "queueInfo.flags) { VkDeviceQueueInfo2"),
-    "t3code-nightly-v2": ("modules/aspects/ai/t3code-nightly.nix", None),
-    "t3code-stable010": ("modules/aspects/ai/t3code-stable010.nix", None),
-    "moonshine-pr227": ("modules/aspects/moonshine-pr227-test.nix", None),
-    "nodejs-security": ("modules/aspects/nodejs-security.nix", "../_packages/nodejs-security.nix"),
+        "modules/aspects/upstream/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
+    "qbittorrent": ("modules/aspects/upstream/qbittorrent.nix", None),
+    "wpaperd-fix": ("modules/aspects/upstream/wpaperd-fix.nix", None),
+    "gamescope-vkroots": ("modules/aspects/upstream/gamescope-vkroots.nix", None),
+    "t3code-stable010": ("modules/aspects/upstream/t3code-stable010.nix", None),
+    "moonshine-pr227": ("modules/aspects/upstream/moonshine-pr227-test.nix", None),
+    "nodejs-security": ("modules/aspects/upstream/nodejs-security.nix", "../../_packages/nodejs-security.nix"),
 }
 
 
@@ -133,10 +131,9 @@ def moonshine_reload_guard(repo, revision):
 
 
 
-# Alpha's temporary nightly server remains local-owned until stable v2 is
-# deployed and verified. CI only checks immutable release/package evidence.
+# The stable-version bridge needs release and pin evidence before retirement.
 T3CODE_V2_COMMIT = "de343914273eceb852a1d1d739cd1d38df7796ee"
-T3CODE_STABLE_MIN_VERSION = (0, 1, 3)
+T3CODE_STABLE_MIN_VERSION = (0, 1, 5)
 T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
 
 
@@ -166,7 +163,7 @@ def t3code_browser_wrapped(revision):
             all(library in text for library in ("libgbm", "nss", "libxkbcommon")))
 
 
-def t3code_nightly_v2_status(lock, minimum_version=(0, 0, 0)):
+def t3code_stable_v2_status(lock, minimum_version=(0, 0, 0)):
     upstream = "pingdotgg/t3code"
     latest = api(f"repos/{upstream}/releases/latest")
     if not isinstance(latest, dict) or not isinstance(latest.get("tag_name"), str):
@@ -334,11 +331,9 @@ def detect(name, lock):
         detector = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(detector)
         return detector.inspect(name, lock)["status"]
-    if name == "t3code-nightly-v2":
-        return t3code_nightly_v2_status(lock)
     if name == "t3code-stable010":
         # Removing the bridge must not downgrade the installed stable version.
-        return t3code_nightly_v2_status(lock, minimum_version=T3CODE_STABLE_MIN_VERSION)
+        return t3code_stable_v2_status(lock, minimum_version=T3CODE_STABLE_MIN_VERSION)
     if name in PR_WAITS:
         repo, number, input_name = PR_WAITS[name]
         pr = api(f"repos/{repo}/pulls/{number}")
@@ -373,10 +368,6 @@ def detect(name, lock):
         return "PINNED-READY" if moonshine_reload_guard(repo, revision) else "waiting-source"
     if name == "wpaperd-fix":
         fixed = package_contains("wpaperd", "danyspin97/wpaperd", "442b962df717dfb6e3d86a3a4bfd1111882323b8", revision)
-    elif name == "voxtype-graphical":
-        # The override is a Home Manager user unit, not a NixOS system unit.
-        module = source("nix-community/home-manager", "modules/services/voxtype.nix", pin(lock, "home-manager"))
-        fixed = all(re.search(rf"\b{option}\s*=\s*\[\s*\"graphical-session.target\"", module) for option in ("PartOf", "After", "WantedBy"))
     elif name == "gamescope-vkroots":
         fixed = gamescope_fixed()
     elif name == "sonarr-jellyfin":

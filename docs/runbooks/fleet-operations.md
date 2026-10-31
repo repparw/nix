@@ -12,13 +12,13 @@ tags:
 
 Pi is the deployment controller. Agents use the
 [fleet operations skill](../../.agents/skills/fleet-operations/SKILL.md) and
-[configuration verification skill](../../.agents/skills/verify-nixos-config/SKILL.md).
+[configuration verification skill](../../.agents/skills/verify-fleet-change/SKILL.md).
 Discover the installed commands with `fleet commands --json`.
 
 ## Inspect health and retained failures
 
 Grafana Cloud owns periodic health alerts. See [monitoring](monitoring.md) for
-telemetry diagnostics and [Cloud alert configuration](grafana-cloud.md) for policy.
+telemetry diagnostics and [Cloud alert configuration](https://github.com/repparw/grafana#readme) for policy.
 `fleet health probe` is read-only; `--strict` checks deployment readiness without
 making Cloud availability or unrelated failed jobs deployment prerequisites.
 
