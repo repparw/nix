@@ -16,8 +16,8 @@ duplicating them.
 ## GE-Proton automatic FSR upgrade
 
 The gaming aspect supplies `PROTON_FSR4_UPGRADE=1` in Steam and Heroic's
-launcher environments, including Heroic shortcuts inside Steam and Moonshine
-sessions. GE-Proton chooses its default DLL from the upstream upscaler
+launcher environments, including Heroic shortcuts inside Steam. GE-Proton
+chooses its default DLL from the upstream upscaler
 manifest. The managed runner remains `GE-Proton`.
 
 Compatible games using their FSR 3.1 integration can use the automatic upgrade.

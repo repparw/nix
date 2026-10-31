@@ -64,11 +64,6 @@ in
               ${pkgs.niri.src}/docs/wiki/logo/niri-icon.svg \
               > $out/desktop.png
             cp ${pkgs.steam-unwrapped}/share/icons/hicolor/256x256/apps/steam.png $out/steam.png
-            rsvg-convert \
-              --width 512 \
-              --height 512 \
-              ${pkgs.heroic}/share/icons/hicolor/scalable/apps/com.heroicgameslauncher.hgl.svg \
-              > $out/heroic.png
           '';
 
           # SteamOS session switching is not available on the Niri host.
@@ -271,16 +266,6 @@ in
                     # disconnect and an app exit alike - and needs no process
                     # left running to watch for it.
                     post_command = [ [ "${steam-restore-trigger}/bin/steam-restore-trigger" ] ];
-                    stdout = "journal";
-                    stderr = "journal";
-                  }
-                  {
-                    title = "Heroic Games Launcher";
-                    boxart = "${moonshine-boxart}/heroic.png";
-                    command = [
-                      (lib.getExe pkgs.heroic)
-                      "--console"
-                    ];
                     stdout = "journal";
                     stderr = "journal";
                   }
