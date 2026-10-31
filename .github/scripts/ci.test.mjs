@@ -127,7 +127,7 @@ test('all successful checks pass and invalid or empty selections cannot pass sil
 
 
 test('docs-only PRs skip the workflow watcher tests but code changes retain them', () => {
-  const watcherGroup = validation.match(/name: Test upstream watcher predicates and pilot lifecycle\n\s+if: matrix.group == '([^']+)'/)[1];
+  const watcherGroup = validation.match(/name: Test upstream watcher predicates and publication lifecycle\n\s+if: matrix.group == '([^']+)'/)[1];
   const runsWatcher = paths => classifyChanges(paths).checkMatrix.include.some(g => g.group === watcherGroup);
   assert.equal(runsWatcher(['docs/hosts.md', 'README.md']), false);
   for (const path of ['.github/scripts/upstream-plan.py', '.github/workflows/revision-validation.yml', 'flake.lock']) {

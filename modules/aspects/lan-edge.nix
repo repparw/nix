@@ -6,8 +6,6 @@
       servicesLib = import ../_services/lib.nix { inherit lib pkgs; };
     in
     {
-      services.ddclient.enable = lib.mkForce false;
-
       networking.firewall = {
         extraInputRules = ''
           iifname "ve-*" tcp dport { 80, 443 } accept comment "containers -> local edge"

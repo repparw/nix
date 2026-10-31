@@ -1,6 +1,6 @@
-diff --git a/modules/aspects/ai/t3code-split.nix b/modules/aspects/ai/t3code-split.nix
---- a/modules/aspects/ai/t3code-split.nix
-+++ b/modules/aspects/ai/t3code-split.nix
+diff --git a/modules/aspects/upstream/t3code-split.nix b/modules/aspects/upstream/t3code-split.nix
+--- a/modules/aspects/upstream/t3code-split.nix
++++ b/modules/aspects/upstream/t3code-split.nix
 @@ -1,54 +1,10 @@
  { den, ... }:
  {

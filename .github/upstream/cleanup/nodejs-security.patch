@@ -91,18 +91,18 @@ diff --git a/modules/aspects/ai/opencode.nix b/modules/aspects/ai/opencode.nix
            bunForInstall = final.bun;
          };
        })
-diff --git a/modules/aspects/nodejs-security.nix b/modules/aspects/nodejs-security.nix
---- a/modules/aspects/nodejs-security.nix
-+++ b/modules/aspects/nodejs-security.nix
+diff --git a/modules/aspects/upstream/nodejs-security.nix b/modules/aspects/upstream/nodejs-security.nix
+--- a/modules/aspects/upstream/nodejs-security.nix
++++ b/modules/aspects/upstream/nodejs-security.nix
 @@ -2,12 +2,7 @@
  {
    den.aspects.nodejs-security.nixos.nixpkgs.overlays = [
      (final: prev: {
--      bun-security = prev.callPackage ../_packages/bun-security.nix { };
+-      bun-security = prev.callPackage ../../_packages/bun-security.nix { };
 -      # Keep the runtime separate: overriding nodejs-slim_24 also rebuilds
 -      # Electron, QtWebEngine and indirect users of their build tools.
 -      nodejs-runtime = prev.nodejs_24.override {
--        nodejs-slim = prev.callPackage ../_packages/nodejs-security.nix { };
+-        nodejs-slim = prev.callPackage ../../_packages/nodejs-security.nix { };
 -      };
 +      nodejs-runtime = prev.nodejs_24;
        t3code = prev.t3code.override {
