@@ -93,8 +93,7 @@ class PlanTests(unittest.TestCase):
     def test_unchanged_pin_skips_readiness(self):
         def explode(_):
             raise AssertionError("readiness must not run without a nixpkgs change")
-        result = self.evaluate(old="new", new="new", readiness=explode,
-                               ancestry=lambda *_: False)
+        result = self.evaluate(old="new", new="new", readiness=explode)
         self.assertEqual(result["action"], "normal")
 
     def test_default_readiness_runs_once_for_three_watchers(self):
@@ -171,7 +170,6 @@ class PlanTests(unittest.TestCase):
         expected = set(readiness.PR_WAITS) | {
             "qbittorrent", "wpaperd-fix",
             "gamescope-vkroots", "moonshine-pr227", "sonarr-jellyfin",
-            "t3code-nightly-v2",
             "t3code-stable010",
             "t3code-browser-libs",
             "opencode-v2",
