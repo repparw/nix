@@ -13,16 +13,6 @@
     "mode": "notify-only",
     "input": "nixpkgs"
   },
-  "authelia-pnpm-hash": {
-    "mode": "atomic",
-    "input": "nixpkgs",
-    "predicate": "nixpkgs-commit-and-channel",
-    "fix_commit": "6b157b9637b15f44d1f07065cdfd681166014455",
-    "validation": [
-      "host-eval",
-      "native-arm-authelia"
-    ]
-  },
   "t3code-connect": {
     "mode": "post-lock",
     "input": "nixpkgs",
@@ -93,17 +83,6 @@
   "sonarr-jellyfin": {
     "mode": "host-owned",
     "input": "nixpkgs"
-  },
-  "t3code-nightly-v2": {
-    "mode": "host-owned",
-    "input": "nixpkgs",
-    "owner": "alpha-user-timer",
-    "validation": [
-      "stable-v2-release",
-      "unstable-package",
-      "pinned-package",
-      "alpha-runtime-proof"
-    ]
   },
   "t3code-stable010": {
     "mode": "post-lock",

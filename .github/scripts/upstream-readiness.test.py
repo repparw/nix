@@ -245,10 +245,10 @@ class Readiness(unittest.TestCase):
                 with patch.object(watch, "ROOT", root), patch.object(watch, "detect", return_value="waiting-upstream"):
                     self.assertEqual(watch.inspect(name, LOCK), "waiting-upstream")
 
-    def test_t3code_nightly_v2_release_channel_and_pin_gates(self):
-        stable = 'version = "0.0.46"; tag = "v0.0.46";'
-        outdated = 'version = "0.0.45"; tag = "v0.0.45";'
-        released = {"tag_name": "v0.0.46", "draft": False, "prerelease": False}
+    def test_t3code_stable_v2_release_channel_and_pin_gates(self):
+        stable = 'version = "0.1.5"; tag = "v0.1.5";'
+        outdated = 'version = "0.1.4"; tag = "v0.1.4";'
+        released = {"tag_name": "v0.1.5", "draft": False, "prerelease": False}
         def run(eligible, channel=stable, pinned=stable, verified=True):
             def api(endpoint):
                 if endpoint.endswith("/releases/latest"):
@@ -266,14 +266,14 @@ class Readiness(unittest.TestCase):
             ), patch.object(
                 watch, "contains", side_effect=lambda _repo, _fix, tag: tag in eligible
             ):
-                return watch.detect("t3code-nightly-v2", LOCK)
+                return watch.detect("t3code-stable010", LOCK)
 
         self.assertEqual(run(set()), "waiting-upstream")
-        self.assertEqual(run({"v0.0.46"}, channel=outdated), "waiting-unstable")
-        self.assertEqual(run({"v0.0.46"}, pinned=outdated), "merged-not-pinned")
-        self.assertEqual(run({"v0.0.46"}), "PINNED-READY")
+        self.assertEqual(run({"v0.1.5"}, channel=outdated), "waiting-unstable")
+        self.assertEqual(run({"v0.1.5"}, pinned=outdated), "merged-not-pinned")
+        self.assertEqual(run({"v0.1.5"}), "PINNED-READY")
         with self.assertRaises(ValueError):
-            run({"v0.0.46"}, verified=False)
+            run({"v0.1.5"}, verified=False)
 
     def test_t3code_version_detection_survives_the_package_split(self):
         missing = subprocess.CalledProcessError(1, ["gh"], stderr="HTTP 404: Not Found")
@@ -287,32 +287,32 @@ class Readiness(unittest.TestCase):
                 watch.t3code_stable_tag("pin")
             self.assertEqual(source.call_count, 1)
 
-    def test_t3code_nightly_v2_never_accepts_a_prerelease_or_malformed_metadata(self):
-        stable = 'version = "0.0.46"; tag = "v0.0.46";'
+    def test_t3code_stable_v2_never_accepts_a_prerelease_or_malformed_metadata(self):
+        stable = 'version = "0.1.5"; tag = "v0.1.5";'
         with patch.object(watch, "api", return_value={
-            "tag_name": "v0.0.46-nightly.20261012.3021",
+            "tag_name": "v0.1.5-nightly.20261012.3021",
             "draft": False, "prerelease": False
         }):
             with self.assertRaises(ValueError):
-                watch.detect("t3code-nightly-v2", LOCK)
+                watch.detect("t3code-stable010", LOCK)
         with patch.object(watch, "source", return_value=stable):
-            self.assertEqual(watch.t3code_stable_tag("pin"), "v0.0.46")
-        for package in ['version = "0.0.46"; tag = "v0.0.46-preview";',
-                        'version = "0.0.46-nightly"; tag = "v0.0.46-nightly";']:
+            self.assertEqual(watch.t3code_stable_tag("pin"), "v0.1.5")
+        for package in ['version = "0.1.5"; tag = "v0.1.5-preview";',
+                        'version = "0.1.5-nightly"; tag = "v0.1.5-nightly";']:
             with patch.object(watch, "source", return_value=package):
                 self.assertIsNone(watch.t3code_stable_tag("pin"))
 
-    def test_t3code_nightly_v2_missing_upstream_metadata_fails_closed(self):
+    def test_t3code_stable_v2_missing_upstream_metadata_fails_closed(self):
         with patch.object(watch, "api", return_value={}):
             with self.assertRaises(ValueError):
-                watch.detect("t3code-nightly-v2", LOCK)
+                watch.detect("t3code-stable010", LOCK)
 
-    def test_t3code_stable010_reuses_the_nightly_v2_gate(self):
+    def test_t3code_stable010_reuses_the_stable_v2_gate(self):
         for status in ("waiting-upstream", "merged-not-pinned", "PINNED-READY"):
-            with patch.object(watch, "t3code_nightly_v2_status", return_value=status) as gate:
+            with patch.object(watch, "t3code_stable_v2_status", return_value=status) as gate:
                 self.assertEqual(watch.detect("t3code-stable010", LOCK), status)
                 gate.assert_called_once_with(LOCK, minimum_version=watch.T3CODE_STABLE_MIN_VERSION)
-        with patch.object(watch, "t3code_nightly_v2_status", side_effect=ValueError("boom")):
+        with patch.object(watch, "t3code_stable_v2_status", side_effect=ValueError("boom")):
             with self.assertRaises(ValueError):
                 watch.detect("t3code-stable010", LOCK)
 

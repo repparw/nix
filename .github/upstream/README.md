@@ -30,12 +30,6 @@ The registry includes the stable T3 orchestrator-v2 gate and the
 go to the run summary and Discord. Package readiness does not complete either
 fleet runtime migration.
 
-Authelia's pnpm-hash override was retired in #237. Its completed atomic
-registry entry remains temporarily because `upstream-plan.py` still requires
-exactly one `atomic` contract and retains the byte-exact cleanup handler for
-candidate locks. The standalone post-lock Authelia pilot is retired; the
-independent post-lock publisher remains active.
-
 Independent `post-lock` contracts publish separate review-required PRs using
 the recipes in `cleanup/`. Each candidate starts at the same checked-out main
 revision.
@@ -152,72 +146,23 @@ candidate instead of racing the post-lock sweep. Readiness runs against the
 candidate tree; `PINNED-READY` diverts publication into a combined atomic
 candidate. A watcher that is not ready but whose package the pin moved gets a
 stubbed-phase compatibility build of the actual fleet package; failure blocks
-the lock, and so does an unavailable readiness API. The planner retains
-its legacy byte-exact Authelia handler, and every combined candidate merge-automates under the #265 policy: the registry checker is the
-sole landing decision and the cleanup is declarative. Independent watchers without
-the flag publish through the separate post-lock sweep.
-
-If the candidate Nixpkgs pin contains the Authelia fix and `nixos-unstable`
-contains it too, the updater applies the narrowly validated Authelia removal,
-then publishes a stable `automation/atomic-cleanup` branch and a
-**combined lock + PR**. It dispatches exact-SHA CI with
-native ARM Authelia enabled, and arms auto-merge: GitHub merges exactly when
-the required checks pass and the branch is strict up-to-date with main, never
-with pending or failed checks. The required PR CI itself runs the native ARM
-Authelia build (and the bundled package validations) for atomic candidates,
-so the build result gates the merge directly rather than relying on the
-updater waiting. When main advances first, the updater re-plans
-and re-applies the recipe onto the new main and revalidates — but only when
-the existing branch tip is provably its own earlier candidate (the recipe
-applied to its parent); a tampered or changed candidate requires review and
-is never overwritten. Repeat runs reuse the combined PR and branch without
-overwriting human edits or repeating successful CI, dispatching only missing
-checks on the exact SHA. Enforced PR checks on the automation branch are
-approved with a dedicated approval token (`LOCK_UPDATE_APPROVAL_TOKEN`: a
-fine-grained PAT with Actions read+write on this repo, or an App installation
-token with actions:write), after verifying the exact
-candidate. A candidate is merge-eligible only when its exact SHA, ownership,
-watcher manifest, required validation results, and current base are ALL
-verified. Publication records trustworthy provenance (a state ref plus a
-PR-body trailer); any recovered tip that is not the published SHA — including
-a lockfile-only amendment that keeps the cleanups byte-identical — fails
-closed, and the planner re-run on the recovered lock is the backstop against
-forged provenance. A dangling branch, malformed cleanup or unavailable API
-blocks publication rather than overwriting human changes or publishing a
-potentially incompatible pin. Until the owner stores the approval token, any
-approval-gated run fails closed with a message naming the secret instead of
-arming auto-merge.
+the lock, and so does an unavailable readiness API. Only active apply-coupled
+watchers can divert the lock update; their recipe-defined changes are
+validated on the exact candidate commit. Atomic publication preserves the
+exact-SHA CI, provenance, fail-closed recovery, strict up-to-date and
+GitHub approval gates described by the lock-update workflow.
 
 If the atomic predicate is negative, the original lock-only CI and compare-and-
 swap fast-forward remain unchanged. If ancestry is unavailable, or a candidate
 contains the fix before the authoritative channel, publication fails closed.
-The completed Authelia post-lock pilot is retired. Independent cleanup
-candidates retain their own validation gates.
-
-## T3 Code nightly-v2 (read-only, #209)
-
-The `t3code-nightly-v2` detector tracks a stable, non-prerelease T3 Code
-release containing orchestrator-v2 merge `de343914`, the corresponding
-`nixos-unstable` package source, and the root Nixpkgs pin. The check uses
-exact tag ancestry and verifies the pinned tag against a stable GitHub Release.
-Statuses are `waiting-upstream`, `waiting-unstable`,
-`merged-not-pinned`, and `PINNED-READY` (or unavailable on API errors).
-
-CI posts a deduplicated readiness notice to #209. The Alpha
-`watch-t3code-nightly-v2.timer` retains runtime completion ownership until the
-fleet CI adapter is verified. Protect `statev2.sqlite` and preserve active
-conversations during a cutover.
+Independent cleanup candidates retain their own validation gates.
 
 ## T3 Code stable version bridge (#288, #289)
 
-The `t3code-stable010` watcher retains its historical ID while tracking the
-0.1.5 version bridge. The bridge builds the desktop package from the
+The `t3code-stable010` watcher retains its ID and tracks the stable 0.1.5 bridge. It builds the desktop package from the
 existing Nixpkgs recipe with verified release source and pnpm hashes;
 the same override applies on all architectures. The separate split aspect
-selects the server-only package on Pi and Epsilon. Its detector reuses the nightly-v2
-`PINNED-READY` gate plus a 0.1.5 minimum: only a stable
-orchestrator-v2 release at least as new as the bridge in the root Nixpkgs
-pin may drop the bridge,
+selects the server-only package on Pi and Epsilon. Its detector requires a stable orchestrator-v2 release at least as new as 0.1.5 in the root Nixpkgs pin before dropping the bridge,
 because an earlier drop downgrades Alpha to V1 0.0.45 and breaks Android/web
 clients. The post-lock cleanup is the complete cutover: it deletes the
 bridge aspect, removes its entity includes so every host serves the
@@ -234,12 +179,6 @@ A cleanup that conflicts with edited modules fails closed for review.
 Candidate validation requires the `PINNED-READY` pin, checks every
 generated `t3code-web` unit against the selected CLI (or the combined package
 before the upstream split), and builds
-Alpha's x86 `t3code`. The nightly aspect is already retired: no entity
-included it after #288, and deleting the file completes the
-`t3code-nightly-v2` detector through the `WORKAROUNDS` path contract
-(draft #285 was superseded by this cleanup). Watcher-id retirement for
-both `t3code-nightly-v2` and `t3code-stable010` in `watchers.json` stays
-a human merge-time chore; Alpha's `watch-t3code-nightly-v2.timer` keeps
-runtime completion ownership until its issue-gate proof lands. Protect
-`statev2.sqlite` and preserve active conversations while the bridge is
-dropped.
+Alpha's x86 `t3code`. The separate nightly migration watcher is retired;
+the stable-version bridge retains its own release and pin gates. Preserve
+`statev2.sqlite` and active conversations while the bridge is dropped.
