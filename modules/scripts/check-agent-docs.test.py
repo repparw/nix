@@ -51,6 +51,17 @@ tags: [test]
 - [Example](runbooks/example.md)
 """
 
+VALID_SKILL = """\
+---
+name: example
+description: Example agent skill.
+---
+
+# Example skill
+
+See [supporting notes](notes.md).
+"""
+
 
 class ValidatorFixtures(unittest.TestCase):
     def setUp(self):
@@ -71,6 +82,48 @@ class ValidatorFixtures(unittest.TestCase):
         self.write("docs/runbooks/example.md", VALID_PAGE)
         self.write("docs/index.md", VALID_INDEX)
         self.assertEqual([], check_agent_docs.validate_tree(self.root))
+
+    def test_skill_without_frontmatter_rejected_and_links_checked(self):
+        self.write(
+            ".agents/skills/example/SKILL.md",
+            "# Example skill\n\n[Missing](missing.md)\n",
+        )
+        errors = check_agent_docs.validate_tree(self.root)
+        self.assertTrue(any("skill entrypoint is missing YAML frontmatter" in e for e in errors), errors)
+        self.assertTrue(any("broken relative link" in e for e in errors), errors)
+
+    def test_skill_requires_name_and_description(self):
+        for missing in ("name", "description"):
+            with self.subTest(missing=missing):
+                self.write(
+                    ".agents/skills/example/SKILL.md",
+                    VALID_SKILL.replace(
+                        "name: example\n" if missing == "name" else "description: Example agent skill.\n",
+                        "",
+                    ),
+                )
+                self.write(".agents/skills/example/notes.md", "# Notes\n")
+                errors = check_agent_docs.validate_tree(self.root)
+                self.assertTrue(any(f"`{missing}`" in e for e in errors), errors)
+
+    def test_valid_skill_and_supporting_markdown_without_frontmatter(self):
+        self.write(".agents/skills/example/SKILL.md", VALID_SKILL)
+        self.write(".agents/skills/example/notes.md", "# Notes\n")
+        self.assertEqual([], check_agent_docs.validate_tree(self.root))
+
+    def test_supporting_markdown_without_frontmatter_still_checks_links(self):
+        self.write(".agents/skills/example/notes.md", "[Missing](missing.md)\n")
+        errors = check_agent_docs.validate_tree(self.root)
+        self.assertTrue(any("broken relative link" in e for e in errors), errors)
+
+    def test_skill_with_malformed_frontmatter_still_checks_links(self):
+        self.write(
+            ".agents/skills/example/SKILL.md",
+            "---\nname: [unclosed\n---\n\n[Missing](missing.md)\n",
+        )
+        errors = check_agent_docs.validate_tree(self.root)
+        self.assertTrue(any("not valid YAML" in e for e in errors), errors)
+        self.assertTrue(any("broken relative link" in e for e in errors), errors)
 
     def test_nul_bytes_rejected(self):
         (self.root / "docs").mkdir()

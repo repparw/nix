@@ -246,9 +246,9 @@ class Readiness(unittest.TestCase):
                     self.assertEqual(watch.inspect(name, LOCK), "waiting-upstream")
 
     def test_t3code_stable_v2_release_channel_and_pin_gates(self):
-        stable = 'version = "0.1.3"; tag = "v0.1.3";'
-        outdated = 'version = "0.1.2"; tag = "v0.1.2";'
-        released = {"tag_name": "v0.1.3", "draft": False, "prerelease": False}
+        stable = 'version = "0.1.5"; tag = "v0.1.5";'
+        outdated = 'version = "0.1.4"; tag = "v0.1.4";'
+        released = {"tag_name": "v0.1.5", "draft": False, "prerelease": False}
         def run(eligible, channel=stable, pinned=stable, verified=True):
             def api(endpoint):
                 if endpoint.endswith("/releases/latest"):
@@ -269,11 +269,11 @@ class Readiness(unittest.TestCase):
                 return watch.detect("t3code-stable010", LOCK)
 
         self.assertEqual(run(set()), "waiting-upstream")
-        self.assertEqual(run({"v0.1.3"}, channel=outdated), "waiting-unstable")
-        self.assertEqual(run({"v0.1.3"}, pinned=outdated), "merged-not-pinned")
-        self.assertEqual(run({"v0.1.3"}), "PINNED-READY")
+        self.assertEqual(run({"v0.1.5"}, channel=outdated), "waiting-unstable")
+        self.assertEqual(run({"v0.1.5"}, pinned=outdated), "merged-not-pinned")
+        self.assertEqual(run({"v0.1.5"}), "PINNED-READY")
         with self.assertRaises(ValueError):
-            run({"v0.1.3"}, verified=False)
+            run({"v0.1.5"}, verified=False)
 
     def test_t3code_version_detection_survives_the_package_split(self):
         missing = subprocess.CalledProcessError(1, ["gh"], stderr="HTTP 404: Not Found")
@@ -288,17 +288,17 @@ class Readiness(unittest.TestCase):
             self.assertEqual(source.call_count, 1)
 
     def test_t3code_stable_v2_never_accepts_a_prerelease_or_malformed_metadata(self):
-        stable = 'version = "0.1.3"; tag = "v0.1.3";'
+        stable = 'version = "0.1.5"; tag = "v0.1.5";'
         with patch.object(watch, "api", return_value={
-            "tag_name": "v0.0.46-nightly.20261012.3021",
+            "tag_name": "v0.1.5-nightly.20261012.3021",
             "draft": False, "prerelease": False
         }):
             with self.assertRaises(ValueError):
                 watch.detect("t3code-stable010", LOCK)
         with patch.object(watch, "source", return_value=stable):
-            self.assertEqual(watch.t3code_stable_tag("pin"), "v0.1.3")
-        for package in ['version = "0.0.46"; tag = "v0.0.46-preview";',
-                        'version = "0.0.46-nightly"; tag = "v0.0.46-nightly";']:
+            self.assertEqual(watch.t3code_stable_tag("pin"), "v0.1.5")
+        for package in ['version = "0.1.5"; tag = "v0.1.5-preview";',
+                        'version = "0.1.5-nightly"; tag = "v0.1.5-nightly";']:
             with patch.object(watch, "source", return_value=package):
                 self.assertIsNone(watch.t3code_stable_tag("pin"))
 
@@ -307,7 +307,7 @@ class Readiness(unittest.TestCase):
             with self.assertRaises(ValueError):
                 watch.detect("t3code-stable010", LOCK)
 
-    def test_t3code_stable010_reuses_stable_v2_gate(self):
+    def test_t3code_stable010_reuses_the_stable_v2_gate(self):
         for status in ("waiting-upstream", "merged-not-pinned", "PINNED-READY"):
             with patch.object(watch, "t3code_stable_v2_status", return_value=status) as gate:
                 self.assertEqual(watch.detect("t3code-stable010", LOCK), status)
@@ -337,12 +337,12 @@ class Readiness(unittest.TestCase):
         def api(endpoint):
             if endpoint.endswith("/commits/nixos-unstable"):
                 return {"sha": "a" * 40}
-            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.3"
+            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.5"
             return {"tag_name": tag, "draft": False, "prerelease": False}
         for channel, pinned, expected in (
-                ("v0.1.2", "v0.1.2", "waiting-unstable"),
-                ("v0.1.3", "v0.1.2", "merged-not-pinned"),
-                ("v0.1.3", "v0.1.3", "PINNED-READY"),
+                ("v0.1.4", "v0.1.4", "waiting-unstable"),
+                ("v0.1.5", "v0.1.4", "merged-not-pinned"),
+                ("v0.1.5", "v0.1.5", "PINNED-READY"),
                 ("v0.1.10", "v0.1.10", "PINNED-READY")):
             with self.subTest(channel=channel, pinned=pinned), \
                     patch.object(watch, "api", side_effect=api), \

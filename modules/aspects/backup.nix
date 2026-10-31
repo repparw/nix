@@ -227,9 +227,7 @@
               "**/Service Worker/**"
             ]
             ++ bcfg.excludes;
-            extraOptions = [
-              "rclone.program=${lib.getExe pkgs.rclone}"
-            ];
+            extraOptions = [ "rclone.program=${lib.getExe pkgs.rclone}" ];
             pruneOpts = lib.optionals (bcfg.exports == { }) bcfg.retentionArgs;
             checkOpts = [ "--read-data-subset=5%" ];
             timerConfig = {

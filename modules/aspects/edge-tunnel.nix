@@ -10,11 +10,12 @@
       ++ lib.mapAttrsToList (_: service: "${service.hostname}.${cfg.domain}") (
         lib.filterAttrs (name: service: service.hostname != null && name != "jellyfin") cfg.definitions
       )
-      ++ [ "metrics.${cfg.domain}" ];
+      ++ [
+        "grafana.${cfg.domain}"
+        "metrics.${cfg.domain}"
+      ];
     in
     {
-      services.ddclient.enable = lib.mkForce false;
-
       sops.secrets.cloudflareTunnelCredentials = {
         sopsFile = ../../secrets/proxy.sops.yaml;
         restartUnits = [ "cloudflared-tunnel-epsilon-edge.service" ];

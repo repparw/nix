@@ -85,15 +85,6 @@
           hermes-crash-triage = (import ./aspects/services/hermes-crash/_package.nix { inherit pkgs; }).check;
           hermes-package-triage =
             (import ./aspects/services/hermes-package/_package.nix { inherit pkgs; }).check;
-          hermes-chief-of-staff =
-            pkgs.runCommand "check-hermes-chief-of-staff" { nativeBuildInputs = [ pkgs.python3 ]; }
-              ''
-                cp -r ${./aspects/services/hermes-chief-of-staff} source
-                chmod -R u+w source
-                python3 -m unittest discover -s source -v
-                touch $out
-              '';
-
           coredump-collector =
             pkgs.runCommand "check-coredump-collector" { nativeBuildInputs = [ pkgs.python3 ]; }
               ''
@@ -260,6 +251,7 @@
                   ".config/vesktop/settings.json"
                   ".local/share/fish/fish_history"
                   "Projects/nix/infra/terraform.tfstate"
+                  "Projects/nix/infra/router/inventory.auto.tfvars"
                 ];
                 criticalPaths = [ "Projects/nix/infra/terraform.tfstate" ];
                 hddOnlyPaths = [ ".config/sops/age/keys.txt" ];
@@ -285,10 +277,11 @@
                 state_root=/tmp/home-state-fixture-root
                 state_dir=$home/Projects/nix/infra
                 state=$state_dir/terraform.tfstate
+                router_dir=$state_dir/router
 
                 rm -rf /tmp/home-state-fixture-*
                 mkdir -p $home/.config/vesktop $home/.local/share/fish \
-                  $home/.config/sops/age $state_dir/.terraform $state_root
+                  $home/.config/sops/age $state_dir/.terraform $router_dir $state_root
                 printf '{}' > $home/.config/vesktop/settings.json
                 printf 'history\n' > $home/.local/share/fish/fish_history
                 printf 'x' > $home/.config/sops/age/keys.txt
@@ -298,10 +291,14 @@
                 printf 'x' > $state_dir/.terraform/provider-cache
                 printf 'x' > $state_dir/terraform.tfvars
                 printf 'x' > $state_dir/terraform.tfplan
+                printf 'port_forwards = {}\n' > $router_dir/inventory.auto.tfvars
+                chmod 600 $router_dir/inventory.auto.tfvars
+                printf 'x' > $router_dir/imports.tf
 
                 # Evaluated alpha configuration coverage.
                 home_state='${builtins.toJSON alphaHomeState}'
                 printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
+                printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/router/inventory.auto.tfvars")' >/dev/null
                 # Existing selection must stay untouched (spot check).
                 for kept in .config/moonshine/ .config/net.imput.helium/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
                   printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
@@ -337,6 +334,9 @@
                 chmod 600 $state
                 ${staging} offsite
                 test -f $staged/Projects/nix/infra/terraform.tfstate
+                test -f $staged/Projects/nix/infra/router/inventory.auto.tfvars
+                cmp $router_dir/inventory.auto.tfvars $staged/Projects/nix/infra/router/inventory.auto.tfvars
+                test "$(stat -c %a $staged/Projects/nix/infra/router/inventory.auto.tfvars)" = 600
                 test "$(stat -c %a $staged/Projects/nix/infra/terraform.tfstate)" = 600
                 test -f $staged/.config/vesktop/settings.json
                 test -f $staged/.local/share/fish/fish_history
@@ -344,6 +344,7 @@
                 test -f $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
                 test ! -e $staged/Projects/nix/infra/terraform.tfvars
                 test ! -e $staged/Projects/nix/infra/terraform.tfplan
+                test ! -e $staged/Projects/nix/infra/router/imports.tf
                 test ! -e $staged/Projects/nix/infra/.terraform
                 test ! -e $staged/.config/sops/age
 
@@ -381,6 +382,8 @@
                 # critical state.
                 ${staging} hdd
                 test -f $state_root/hdd/Projects/nix/infra/terraform.tfstate
+                cmp $router_dir/inventory.auto.tfvars $state_root/hdd/Projects/nix/infra/router/inventory.auto.tfvars
+                test ! -e $state_root/hdd/Projects/nix/infra/router/imports.tf
                 test -f $state_root/hdd/.config/sops/age/keys.txt
 
                 touch $out
@@ -455,11 +458,64 @@
           agent-docs =
             pkgs.runCommand "check-agent-docs"
               {
-                nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+                nativeBuildInputs = [
+                  (pkgs.python3.withPackages (ps: [ ps.pyyaml ]))
+                  pkgs.git
+                  config.pre-commit.settings.package
+                ];
               }
               ''
                 export PYTHONDONTWRITEBYTECODE=1
                 python3 ${./scripts}/check-agent-docs.test.py ${inputs.self}
+
+                # Verify the generated hooks, not just their Nix declarations.
+                hook_config=${config.pre-commit.settings.configFile}
+                python3 - "$hook_config" <<'PY'
+                import json
+                import re
+                import sys
+                from pathlib import Path
+
+                lines = Path(sys.argv[1]).read_text().splitlines()
+                config = json.loads("\n".join(line for line in lines if not line.startswith("#")))
+                hooks = [hook for repo in config["repos"] for hook in repo["hooks"]]
+                by_id = {hook["id"]: hook for hook in hooks}
+
+                assert len(by_id) == len(hooks), "duplicate hook ID"
+                assert "prettier" in by_id and "agent-docs" in by_id, "missing hook"
+                assert re.search(by_id["prettier"]["files"], "README.md")
+                assert not re.search(by_id["prettier"]["files"], "modules/checks.nix")
+                assert by_id["agent-docs"]["pass_filenames"] is False
+                assert re.search(by_id["agent-docs"]["files"], ".agents/skills/probe/SKILL.md")
+                assert not re.search(by_id["agent-docs"]["files"], "README.md")
+                PY
+
+                # Smoke-test both hooks against disposable, staged fixture files.
+                mkdir -p hook-fixture/.agents/skills/probe
+                cd hook-fixture
+                git init -q
+                printf '%s\n' '---' 'name: probe' 'description: Example skill.' '---' > .agents/skills/probe/SKILL.md
+                printf '%s\n' '# Example' > README.md
+                git add .
+                export PRE_COMMIT_HOME="$TMPDIR/pre-commit-home"
+                pre-commit run agent-docs --config "$hook_config" --files .agents/skills/probe/SKILL.md
+
+                printf '%s\n' '[broken](nonexistent.md)' >> .agents/skills/probe/SKILL.md
+                git add .agents/skills/probe/SKILL.md
+                if pre-commit run agent-docs --config "$hook_config" --files .agents/skills/probe/SKILL.md; then
+                  echo 'agent-docs hook accepted a broken relative link' >&2
+                  exit 1
+                fi
+
+                printf '%s\n' '# Example' "" '* item' > README.md
+                git add README.md
+                if pre-commit run prettier --config "$hook_config" --files README.md; then
+                  echo 'prettier hook did not report a formatting change' >&2
+                  exit 1
+                fi
+                grep -q -- '- item' README.md
+                git add README.md
+                pre-commit run prettier --config "$hook_config" --files README.md
                 touch $out
               '';
 
@@ -717,7 +773,8 @@
                 && !epsilon.services.ddclient.enable;
 
               hardeningMatches =
-                builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress
+                builtins.hasAttr "grafana.${domain}" edgeTunnel.ingress
+                && builtins.hasAttr "metrics.${domain}" edgeTunnel.ingress
                 && epsilon.services.traefik.staticConfigOptions.api.dashboard == false
                 && epsilon.services.traefik.staticConfigOptions.api.debug == false
                 && epsilon.containers.paperless.forwardPorts == [ ];

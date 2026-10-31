@@ -27,7 +27,8 @@
       {
         nixpkgs.overlays = [
           (_final: prev: {
-            # Cover every Heroic entry point, including Moonshine.
+            # Cover every Heroic entry point: the desktop launcher and the
+            # Steam shortcuts games are launched through.
             heroic = prev.heroic.override {
               extraPkgs = pkgs': [ pkgs'.gamemode ];
               extraEnv = gamingEnvironment;

@@ -1,8 +1,8 @@
 ---
 type: Runbook
 title: Diagnose fleet observability
-description: Check Cloud ingestion, collection limits, and receiver rollback.
-when: Diagnose missing telemetry, operate dashboards, or roll back the Cloud cutover.
+description: Check Cloud ingestion and collection limits.
+when: Diagnose missing telemetry or operate dashboards.
 resource: modules/aspects/monitoring.nix
 tags: [monitoring, grafana, cloud, alloy, journald]
 ---
@@ -12,8 +12,8 @@ tags: [monitoring, grafana, cloud, alloy, journald]
 Alpha, Pi, and Epsilon send metrics and filtered host journals directly to
 Grafana Cloud through Alloy. Pi runs the service probes. Epsilon redirects
 [the dashboard hostname](https://metrics.repparw.com/d/fleet-overview/fleet-overview)
-to Cloud, which controls sign-in. See [Cloud setup](grafana-cloud.md) for
-credentials, dashboards, and notification policy.
+to Cloud, which controls sign-in. See [Grafana Cloud operations](https://github.com/repparw/grafana#readme)
+for dashboards, alerts, credentials and recovery.
 
 ## Check delivery
 
@@ -49,15 +49,6 @@ adds retained failures, completed backup timestamps, export status, and disk fac
   Alloy restarts during an outage ([Alloy #7112](https://github.com/grafana/alloy/issues/7112)).
 - Verify actual active-series usage in `grafanacloud-usage` after changing labels
   or targets; the application datasource's instantaneous series count differs.
-
-## Restore local receivers if required
-
-Epsilon retains `/var/lib/grafana`, `/var/lib/loki`, and `/var/lib/prometheus2`
-under `/persist` as inactive rollback data. Do not delete them during activation.
-To restore the former topology, recover the receiver configuration and encrypted
-credentials from Git, build and deploy it, then verify receivers before switching
-agents. Keep Cloud writes until local ingestion works; use the normal
-[rollback procedure](update-rollback.md).
 
 ## Verify configuration changes
 
