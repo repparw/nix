@@ -1,0 +1,45 @@
+name: qBittorrent candidate compatibility (temporary)
+on:
+  push:
+    branches:
+      - fix/qbittorrent-minspace-53-compat
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          skipPush: true
+      - name: Recreate failed updater's candidate Nixpkgs pin
+        run: |
+          set -euo pipefail
+          nix flake lock --override-input nixpkgs github:NixOS/nixpkgs/1c89083e451e891152365b799595cf7790a43325
+          nix eval --raw .#nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package.version | tee /tmp/qbit-version
+          test "$(cat /tmp/qbit-version)" = 5.3.0
+      - name: Probe actual container package patch phases and restored constructor
+        run: |
+          set -euo pipefail
+          export PWD="$GITHUB_WORKSPACE"
+          patched=$(nix build --impure --no-link --print-out-paths --expr '
+            let f = builtins.getFlake (builtins.getEnv "PWD");
+                pkg = f.nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package;
+            in pkg.overrideAttrs (_: {
+              phases = [ "unpackPhase" "patchPhase" "installPhase" ];
+              installPhase = "mkdir -p $out; cp src/base/bittorrent/sessionimpl.cpp $out/sessionimpl.cpp";
+            })
+          ')
+          grep -F 'm_minFreeDiskSpace {BITTORRENT_SESSION_KEY(u"MinFreeDiskSpace"_s), 0LL}' "$patched/sessionimpl.cpp"
+          grep -F 'm_backupTorrentFilesRegistry {new KeyValueDataStorage(u"BackupTorrentFiles"_s, this)}' "$patched/sessionimpl.cpp"
+          grep -A1 -F 'm_minFreeDiskSpace {BITTORRENT_SESSION_KEY(u"MinFreeDiskSpace"_s), 0LL}' "$patched/sessionimpl.cpp" | grep -F 'm_backupTorrentFilesRegistry'
+      - name: Native build of candidate qBittorrent no-X package
+        run: |
+          nix build -L --no-link --print-out-paths .#nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package
