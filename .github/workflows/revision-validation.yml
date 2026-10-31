@@ -72,13 +72,6 @@ jobs:
         env:
           CI_CHECKS: ${{ matrix.checks }}
         run: bash .github/scripts/run-checks.sh
-      # Temporary diagnostics; remove after landing source formatting.
-      - name: Explain qBittorrent formatting
-        if: failure() && matrix.group == 'lightweight'
-        shell: bash
-        run: |
-          nix fmt -- --tree-root . --walk filesystem || true
-          git --no-pager diff -- modules/aspects/upstream/qbittorrent.nix
       - name: Test upstream watcher predicates and publication lifecycle
         if: matrix.group == 'lightweight'
         env:
