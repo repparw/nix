@@ -26,6 +26,7 @@ files instead of copying module contents.
 ## Services
 
 - [Service model](services/service-model.md)
+- [Free games claimer](services/free-games-claimer.md)
 - [Hermes configuration and operations (private)](https://github.com/repparw/hermes-config)
 
 ## Runbooks

@@ -79,6 +79,9 @@ jobs:
         run: |
           python3 .github/scripts/upstream-readiness.test.py
           python3 .github/scripts/upstream-plan.test.py
+          # Claim-diff filter for the free-games-claimer notification state.
+          python3 modules/aspects/services/free-games-claimer/claim-diff.test.py
+          python3 modules/aspects/services/free-games-claimer/notify.test.py
           # Evaluate fleet attributes and build compatible/incompatible patch
           # fixtures through the production probe, including version-check hooks.
           NIX_PROBE_SMOKE=1 python3 .github/scripts/upstream-plan.test.py \
