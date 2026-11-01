@@ -29,7 +29,7 @@
       };
 
     homeManager =
-      { pkgs, ... }:
+      { config, pkgs, ... }:
       let
         titledAction = title: action: {
           _props.hotkey-overlay-title = title;
@@ -91,17 +91,6 @@
           })
 
           (writeShellApplication {
-            name = "clip2qr";
-            runtimeInputs = [
-              wl-clipboard
-              zbar
-            ];
-            text = ''
-              wl-paste --type image/png | zbarimg --raw - | wl-copy
-            '';
-          })
-
-          (writeShellApplication {
             name = "niri-swap-active-monitor-windows";
             runtimeInputs = [
               niri
@@ -117,7 +106,7 @@
           systemd.enable = false;
           portalPackage = null;
           settings = {
-            screenshot-path = "/home/repparw/Pictures/ss/screenshot-%Y-%m-%d_%H-%M-%S.png";
+            screenshot-path = "${config.home.homeDirectory}/Pictures/ss/screenshot-%Y-%m-%d_%H-%M-%S.png";
             prefer-no-csd = { };
 
             input = {
@@ -315,7 +304,7 @@
                 "-c"
                 "imv"
                 "imv"
-                "/home/repparw/Projects/totem/layout/totem.svg"
+                "${config.home.homeDirectory}/Projects/totem/layout/totem.svg"
               ];
               "Mod+Period" = titledSpawn "Show Keys" [
                 "sh"
