@@ -47,10 +47,7 @@
               package:
               # Upstream T3 Code 0.1.5 already uses Node 26 and pnpm 12,
               # so don't apply the old backport to the native package.
-              if lib.versionAtLeast package.version "0.1.5" then
-                package
-              else
-                overrideVersion package;
+              if lib.versionAtLeast package.version "0.1.5" then package else overrideVersion package;
           in
           if prev ? t3code-cli then
             {
