@@ -74,8 +74,10 @@ if [ "$force" = 1 ] && [ "$host_selected" = 0 ]; then
   echo "--force requires an explicit --host" >&2
   exit 2
 fi
+# Keep progress visible even while the preflight/capture output is logged.
+exec 3>&2
 progress() {
-  printf '[%s] fleet-update: %s\n' "$(date +%H:%M:%S)" "$*" >&2
+  printf '[%s] fleet-update: %s\n' "$(date +%H:%M:%S)" "$*" >&3
 }
 
 mkdir -p "$state"
