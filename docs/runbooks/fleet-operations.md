@@ -100,6 +100,12 @@ for an isolated restore. Live filesystem copies are not atomic database backups.
 ssh root@192.168.0.4 'fleet-update deploy --host alpha --wait-lock 7200'
 ```
 
+The controller prints timestamped stage updates on stderr (CI verification,
+preflight, per-host preparation/build, activation, health checks, and final
+convergence or failure). Detailed build output is retained in the preparation
+directory; while a preparation is running, another shell can inspect
+`/var/lib/auto-update/latest-preparation` and the referenced logs.
+
 The controller requires successful CI for the exact main revision, captures
 immutable profiles, and builds every selected target before activation.
 CI's stubbed host checks do not replace full builds. Activation proceeds through
