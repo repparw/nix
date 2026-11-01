@@ -112,8 +112,11 @@ pkgs.testers.runNixOSTest {
         default = { };
       };
       options.modules.fleet-unit-state.snapshot = lib.mkOption { type = lib.types.package; };
+      # This isolated VM imports the health aspect without the fleet default.
+      options.modules.fleet-reboot.predicate = lib.mkOption { type = lib.types.package; };
       config = {
         modules.fleet-unit-state.snapshot = pkgs.writeShellScriptBin "fleet-unit-snapshot" "exit 0";
+        modules.fleet-reboot.predicate = pkgs.writeShellScriptBin "fleet-reboot-required" "exit 1";
         modules.services = {
           domain = "example.test";
           definitions = lib.genAttrs [ "fixture" "logintrap" ] (name: {

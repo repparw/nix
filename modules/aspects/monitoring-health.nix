@@ -50,7 +50,6 @@
             ++ lib.optional config.services.traefik.enable "traefik.service";
           exports = lib.attrNames config.modules.backup.exports;
           probes = map (probe: probe.service) probes;
-          rebootCheck = config.networking.hostName == "alpha";
         }
       );
       collector = pkgs.writeShellApplication {
@@ -60,6 +59,7 @@
           pkgs.systemd
           pkgs.btrfs-progs
           config.modules.fleet-unit-state.snapshot
+          config.modules.fleet-reboot.predicate
         ];
         text = ''
           exec python3 ${../scripts/fleet-health-metrics.py} ${settings} "$@"

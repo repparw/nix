@@ -345,6 +345,7 @@ class Deployment(unittest.TestCase):
         self.assertFalse(any(c[0] == 'deploy' for c in self.calls))
         self.assertFalse(any(c[0] == 'ssh' and 'switch-to-configuration' in ' '.join(c) for c in self.calls))
         self.assertTrue((self.state / 'PAUSE').exists())
+        self.assertEqual(self.reboots(), [])
         self.assertEqual(list(self.state.glob('reached-*')), [])
         evidence = Path((self.state / 'latest-preparation').read_text().strip())
         self.assertIn('preparation build failed', (evidence / 'prepare-alpha.log').read_text())
@@ -355,6 +356,9 @@ class Deployment(unittest.TestCase):
 
     def probes(self):
         return [c for c in self.calls if c[0] == "systemctl" and "fleet-readiness-probe.service" in c]
+
+    def reboots(self):
+        return [c for c in self.calls if c[0] == "systemctl" and "fleet-headless-reboot.service" in c]
 
     def outbox(self):
         directory = self.state / "package-events"
@@ -385,6 +389,19 @@ class Deployment(unittest.TestCase):
         result = self.deploy()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.probes(), [["systemctl", "--no-block", "start", "fleet-readiness-probe.service"]])
+
+    def test_convergence_triggers_headless_reboot_sequence_once(self):
+        result = self.deploy()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(
+            self.reboots(),
+            [["systemctl", "--no-block", "start", "fleet-headless-reboot.service"]],
+        )
+
+    def test_deferred_alpha_still_triggers_reboot_check(self):
+        result = self.deploy(busy_alpha=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(self.reboots()), 1)
 
     def test_deferred_alpha_skips_readiness_probe(self):
         result = self.deploy(busy_alpha=True)

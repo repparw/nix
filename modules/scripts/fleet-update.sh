@@ -819,3 +819,7 @@ elif [ "${#deferred[@]}" -gt 0 ]; then
 else
   progress "selected host $requested_host completed at ${revision:0:8}"
 fi
+# The reboot check is best-effort after a successful deployment. Its service
+# waits on the fleet lock so it cannot race this process's lock release.
+# The 03:00 timer retries if this trigger fails or is deferred.
+systemctl --no-block start fleet-headless-reboot.service >/dev/null 2>&1 || true
