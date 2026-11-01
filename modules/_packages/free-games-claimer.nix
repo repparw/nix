@@ -38,6 +38,12 @@
     substituteInPlace src/util.js \
       --replace-fail "path.resolve(__dirname, '..', 'data', s)" \
         "path.resolve(process.env.FGC_DATA_DIR || path.resolve(__dirname, '..', 'data'), s)"
+
+    # GOG persists the first error indefinitely unless statuses are updated.
+    # Allow later claims or already-owned results to clear stale failures.
+    substituteInPlace gog.js \
+      --replace-fail "db.data[user][title].status ||= status;" \
+        "db.data[user][title].status = status;"
   '';
 
   meta = {
