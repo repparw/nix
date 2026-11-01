@@ -126,11 +126,11 @@ def validate(name, architecture):
         detector = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(detector)
         lock = json.loads((ROOT / "flake.lock").read_text())
-        require(detector.t3code_nightly_v2_status(
+        require(detector.t3code_stable_v2_status(
                     lock, minimum_version=detector.T3CODE_STABLE_MIN_VERSION) == "PINNED-READY",
                 "root pin must carry a stable release at least as new as the bridge")
         for host in ("alpha", "pi", "epsilon"):
-            service = unit(host, "t3code-web")
+            service = unit(host, "t3code")
             require("--mode web" in service["Service"]["ExecStart"], "missing web arguments")
             package = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.outPath")
             has_cli = json.loads(command("nix", "eval", "--json", "--no-update-lock-file",

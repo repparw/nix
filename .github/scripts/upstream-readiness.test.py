@@ -321,16 +321,23 @@ class Readiness(unittest.TestCase):
         # older package on the root pin.
         import re
         root = Path(__file__).resolve().parents[2]
-        bridge = (root / "modules/aspects/upstream/t3code-stable010.nix").read_text()
+        bridge = root / "modules/aspects/upstream/t3code-stable010.nix"
         cleanup = (root / ".github/upstream/cleanup/t3code-stable010.patch").read_text()
-        match = re.search(r'\bversion\s*=\s*"(\d+)\.(\d+)\.(\d+)";', bridge)
+        # Before retirement the bridge is the source of the version floor.
+        # After retirement the patch retains that source, and the installed
+        # Home Manager module must enforce the same floor itself.
+        source = bridge.read_text() if bridge.exists() else cleanup
+        match = re.search(r'\bversion\s*=\s*"(\d+)\.(\d+)\.(\d+)";', source)
         self.assertIsNotNone(match)
         minimum = tuple(map(int, match.groups()))
         self.assertEqual(watch.T3CODE_STABLE_MIN_VERSION, minimum)
         version = ".".join(map(str, minimum))
+        assertion_source = cleanup if bridge.exists() else (
+            root / "modules/aspects/ai/t3code.nix"
+        ).read_text()
         self.assertIn(
             f'lib.versionAtLeast config.programs.t3code.package.version "{version}"',
-            cleanup,
+            assertion_source,
         )
 
     def test_t3code_bridge_cleanup_cannot_downgrade_the_installed_release(self):
@@ -374,6 +381,11 @@ class Readiness(unittest.TestCase):
             with self.subTest(watcher=name):
                 relative, _marker = watch.WORKAROUNDS[name]
                 self.assertTrue(relative.startswith("modules/aspects/upstream/"), name)
+                if not (root / relative).exists():
+                    # A previously applied cleanup no longer applies a second
+                    # time. The watcher must mark it complete, not fail CI.
+                    self.assertEqual(watch.inspect(name, LOCK), "completed")
+                    continue
                 recipe = root / ".github/upstream/cleanup" / spec["cleanup"]
                 subprocess.run(
                     ["git", "apply", "--check", str(recipe)],
