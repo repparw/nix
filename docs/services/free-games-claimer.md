@@ -30,13 +30,17 @@ Chrome has no aarch64 Linux build.
 - Daily timer at 18:10 ART (21:10 UTC, after Epic's 16:00 UTC Friday rotation)
   runs `epic-games` and `gog` against a permanent Xvfb display. Headless mode
   trips captchas, so the browser is always headed inside the virtual display.
-- Sessions live in `/var/lib/free-games-claimer/app/data` (host path
-  `/home/containers/config/free-games-claimer`, included in the service backup
-  export). No credentials are stored; logins are interactive and persist as
-  browser cookies.
-- New `claimed`/`failed` results and login/captcha trouble post to the fleet
-  Discord channel through the shared bot identity (`discord-notify` +
-  `hermes-env`).
+- Sessions live in `/var/lib/free-games-claimer/data` (host path
+  `/home/containers/config/free-games-claimer/data`, included in the service
+  backup export). No passwords are stored; logins are interactive and persist
+  as browser cookies. The application runs directly from the immutable Nix store.
+- New claims, errors, and login/captcha trouble post to the fleet Discord
+  channel through the shared bot identity. The browser runs as `fgc`, without
+  access to the bot token. A root-only post-stop notifier reads `hermes-env`.
+  Notification batches only advance saved state after every post succeeds.
+- Port 6080 is available only on the Pi host's loopback interface, through an
+  SSH tunnel. Other containers and routed clients are blocked from accessing
+  the noVNC endpoint directly.
 
 ## First login and re-login
 
@@ -60,7 +64,8 @@ the VNC page while the run is still waiting, then rerun the service.
 - Manual run: `ssh pi sudo -A systemctl start free-games-claimer`
 - Dry run (no purchases): add `DRYRUN=1` to the unit environment temporarily.
 - A failed run does not block the next day's timer; the notify state replays
-  the report if Discord was unreachable.
+  the report if Discord was unreachable. Generic execution failures are also
+  reported, even when no claim database entry was created.
 
 ## Related
 
