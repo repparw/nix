@@ -33,6 +33,11 @@
       steam-games.js steam.js unrealengine.js \
       --replace-fail "channel: 'chrome'," \
         "executablePath: process.env.FGC_CHROME_PATH,"
+
+    # Keep the package in the Nix store and redirect only mutable browser data.
+    substituteInPlace src/util.js \
+      --replace-fail "path.resolve(__dirname, '..', 'data', s)" \
+        "path.resolve(process.env.FGC_DATA_DIR || path.resolve(__dirname, '..', 'data'), s)"
   '';
 
   meta = {
