@@ -49,7 +49,7 @@ in
       # epoch mtimes and let a directory-enumeration race publish empty policy.
       environment.etc."chromium/policies/managed/helium-nixos.json".mode = "0644";
       environment.etc."chromium/policies/managed/extra.json" =
-        lib.mkIf (config.programs.chromium.extraOpts != { })
+        lib.mkIf (config.programs.chromium.enable && config.programs.chromium.extraOpts != { })
           {
             mode = "0644";
           };
