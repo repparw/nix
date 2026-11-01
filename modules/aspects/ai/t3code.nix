@@ -45,6 +45,13 @@ in
           if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code
         );
 
+        assertions = [
+          {
+            assertion = lib.versionAtLeast config.programs.t3code.package.version "0.1.5";
+            message = "T3 Code stable V2 requires t3code >= 0.1.5 in the nixpkgs pin.";
+          }
+        ];
+
         # t3code keeps custom themes in Electron/browser localStorage and only
         # imports them through the UI (Settings -> Appearance -> Add a theme).
         # Derive an importable theme file from the stylix palette and install
