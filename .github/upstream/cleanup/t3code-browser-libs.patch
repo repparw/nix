@@ -2,9 +2,10 @@ diff --git a/modules/aspects/ai/default.nix b/modules/aspects/ai/default.nix
 index c52dcc7..12a81c5 100644
 --- a/modules/aspects/ai/default.nix
 +++ b/modules/aspects/ai/default.nix
-@@ -10,7 +10,6 @@
+@@ -10,8 +10,7 @@
        opencode
        pstack
+       mattpocock-skills
        skills
 -      t3code-browser-libs
        t3code-connect

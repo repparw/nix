@@ -1,0 +1,155 @@
+diff --git i/skills/engineering/diagnosing-bugs/SKILL.md w/skills/engineering/diagnosing-bugs/SKILL.md
+index d039541..5f8b528 100644
+--- i/skills/engineering/diagnosing-bugs/SKILL.md
++++ w/skills/engineering/diagnosing-bugs/SKILL.md
+@@ -5,9 +5,9 @@ description: Diagnosis loop for hard bugs and performance regressions. Use when
+
+ # Diagnosing Bugs
+
+-A discipline for hard bugs. Skip phases only when explicitly justified.
++Use the diagnosis loop for hard bugs and performance regressions. Scale the work to the failure: a focused existing check may be enough for a small, obvious defect. Repository verification and operational skills determine how configuration is checked and which runtime actions are authorized.
+
+-When exploring the codebase, read `GLOSSARY.md` (if it exists) to get a clear mental model of the relevant modules, and check ADRs in the area you're touching.
++Follow the repository's documentation routing for domain context and decisions. Use `GLOSSARY.md` or `CONTEXT.md` when the repository identifies it as authoritative.
+
+ ## Redact
+
+@@ -19,7 +19,7 @@ If the redacted output is not enough to diagnose the bug, say so and ask the use
+
+ **This is the skill.** Everything else is mechanical. If you have a **tight** pass/fail signal for the bug (one that goes red on _this_ bug), you will find the cause; bisection, hypothesis-testing, and instrumentation all just consume it. If you don't have one, no amount of staring at code will save you.
+
+-Spend disproportionate effort here. **Be aggressive. Be creative. Refuse to give up.**
++Read relevant source, logs, configuration, and existing checks to construct the feedback loop. Preliminary hypotheses can guide this investigation; distinguish them from verified causes.
+
+ ### Ways to construct one, in roughly this order
+
+@@ -52,7 +52,7 @@ The goal is not a clean repro but a **higher reproduction rate**. Loop the trigg
+
+ ### When you genuinely cannot build a loop
+
+-Stop and say so explicitly. List what you tried. Ask the user for: (a) access to whatever environment reproduces it, (b) a redacted captured artifact (HAR file, log dump, core dump, screen recording with timestamps), or (c) permission to add temporary production instrumentation. Do **not** proceed to hypothesise without a loop.
++State what you tried and what remains unobservable. Continue useful read-only investigation using captured artifacts, configuration, and source. Ask for missing access or evidence only when it blocks progress. Label conclusions provisional when the failure cannot be reproduced; production instrumentation requires the appropriate authorization.
+
+ ### Completion criterion: a tight loop that goes red
+
+@@ -60,10 +60,10 @@ Phase 1 is done when the loop is **tight** and **red-capable**: you can name **o
+
+ - [ ] **Red-capable**: it drives the actual bug code path and asserts the **user's exact symptom**, so it can go red on this bug and green once fixed. Not "runs without erroring"; it must be able to _catch this specific bug_.
+ - [ ] **Deterministic**: same verdict every run (flaky bugs: a pinned, high reproduction rate, per above).
+-- [ ] **Fast**: seconds, not minutes.
+-- [ ] **Agent-runnable**: you can run it unattended; a human in the loop only via `scripts/hitl-loop.template.sh`.
++- [ ] **Focused**: the narrowest useful check; report expensive setup or slow runtime rather than treating a fixed time limit as a gate.
++- [ ] **Repeatable**: runnable by the agent where possible. Use `scripts/hitl-loop.template.sh` only when reproduction actually requires a human action.
+
+-If you catch yourself reading code to build a theory before this command exists, **stop: jumping straight to a hypothesis is the exact failure this skill prevents.** No red-capable command, no Phase 2.
++Prefer a command that demonstrates the exact failure before changing code. If the environment prevents this, record the limitation and use the strongest available observation without claiming a reproduced failure.
+
+ ## Phase 2: Reproduce + minimise
+
+@@ -81,13 +81,11 @@ Once it's red, shrink the repro to the **smallest scenario that still goes red**
+
+ Why bother: a minimal repro shrinks the hypothesis space in Phase 3 (fewer moving parts left to suspect) and becomes the clean regression test in Phase 5.
+
+-Done when **every remaining element is load-bearing**: removing any one of them makes the loop go green.
+-
+-Do not proceed until you have reproduced **and** minimised.
++Stop minimising when the scenario is small enough to distinguish the plausible causes. Keep the original trigger so the final check covers the reported failure as well as the reduced case.
+
+ ## Phase 3: Hypothesise
+
+-Generate **3–5 ranked hypotheses** before testing any of them. Single-hypothesis generation anchors on the first plausible idea.
++Rank the plausible causes supported by the evidence. Consider alternatives when the cause is uncertain; a fixed hypothesis count is unnecessary for an obvious defect.
+
+ Each hypothesis must be **falsifiable**: state the prediction it makes.
+
+@@ -117,7 +115,7 @@ Write the regression test **before the fix**, but only if there is a **correct s
+
+ A correct seam is one where the test exercises the **real bug pattern** as it occurs at the call site. If the only available seam is too shallow (single-caller test when the bug needs multiple callers, unit test that can't replicate the chain that triggered the bug), a regression test there gives false confidence.
+
+-**If no correct seam exists, that itself is the finding.** Note it. The codebase architecture is preventing the bug from being locked down. Flag this for the next phase.
++If a practical regression test is unavailable, use the closest executable check and state its coverage limits. Identify whether the obstacle is missing access, expensive setup, or an unsuitable test interface before proposing architectural work.
+
+ If a correct seam exists:
+
+diff --git i/skills/engineering/retro/SKILL.md w/skills/engineering/retro/SKILL.md
+index 12149ac..f8e5d2b 100644
+--- i/skills/engineering/retro/SKILL.md
++++ w/skills/engineering/retro/SKILL.md
+@@ -8,9 +8,9 @@ The user has asked for a **retrospective**. You are suggesting improvements to t
+
+ ## Steps
+
+-1. Call the Skill tool with `writing-for-agents` for the writing style guide.
++1. Apply the installed `writing-for-agents` skill when evaluating agent instructions.
+
+-2. Read the primary sources for the session the user specifies. This may mean searching through session logs on this machine. If the user doesn't specify a session, default to the current one.
++2. Review the current conversation and the artifacts it references unless the user names another session. Read a named session through the available transcript tools or its known path; keep transcript searches within that session's workspace.
+
+ 3. Look for candidates for improvement in these categories.
+
+@@ -22,7 +22,7 @@ The user has asked for a **retrospective**. You are suggesting improvements to t
+ - **No-ops**: look for instructions in steering files that don't modify the agent's behavior. _Use when_ the steering files are large and unwieldy.
+ - **Information access**: look for opportunities to increase the agent's access to information. Teeing dev server logs, readonly access to third-party services. _Use when_ a crucial piece of information was not available to the agent.
+
+-4. Present these candidates to the user, in order of severity.
++4. Present candidates in order of severity, with the session evidence, the proposed change, and where it belongs. Distinguish repeated failures from one-off friction. This review proposes improvements; apply them only when the user has authorized that work. For generated or Nix-managed files, propose edits to their source configuration rather than the installed copy.
+
+ ## Reference
+
+@@ -30,15 +30,13 @@ The user has asked for a **retrospective**. You are suggesting improvements to t
+
+ Remember that all work goes through two stages: implementation and review. The implementation agent has the most **context pressure**. They are responsible for exploration, writing code, and debugging failures.
+
+-The review agent has the least context pressure - it receives a diff, so no exploration needed. It often does not need to write code or debug.
+-
+-This means that the review agent should be responsible for imposing coding standards, not the implementation agent.
++A reviewer can focus on a narrower diff, but still needs enough source and requirements context to verify findings. Use existing review tooling when available; a retrospective does not require a separate reviewer or a new delegation workflow.
+
+ ### Files
+
+ You have access to several files in the repo:
+
+ - `CLAUDE.md`/`AGENTS.md`: these files are pushed to the context window of any agent working in this repo. They should be used incredibly sparingly, usually only for **navigation pointers** to other files.
+-- `CODING_STANDARDS.md`: this file is read during review, not implementation. Add **navigation pointers** to docs folders if the standards file gets more than 1,000 lines long.
++- Coding standards: use the repository's existing conventions and documentation routing. Put mechanical rules in checks; retain written guidance for judgment calls.
+ - Docs: use docs as references files, pointed to by other files. Look for existing docs before writing new ones.
+ - Skills: use skills for docs (since their description goes into the agent's context window), or for user-invoked commands. Follow the advice in the `writing-for-agents` skill.
+diff --git i/skills/productivity/writing-for-agents/SKILL-MECHANICS.md w/skills/productivity/writing-for-agents/SKILL-MECHANICS.md
+index 9cdbdb2..576fa1e 100644
+--- i/skills/productivity/writing-for-agents/SKILL-MECHANICS.md
++++ w/skills/productivity/writing-for-agents/SKILL-MECHANICS.md
+@@ -1,22 +1,25 @@
+ # Skill mechanics
+
+-The skill-specific branch of [`writing-for-agents`](SKILL.md): what changes when the document is a skill (frontmatter, the invocation choice, and router skills). Everything else about writing it is the universal reference in `SKILL.md`.
++Use this reference when choosing a skill's discovery policy or splitting a skill into entrypoints and supporting references.
+
+-## Invocation
++## Discovery and invocation
+
+-Two choices, trading the two loads:
++Skill metadata and invocation controls differ between harnesses. Inspect the target harness and existing configuration before choosing frontmatter or UI policy. Preserve an existing invocation policy unless the requested change includes revising it.
+
+-- A **model-invoked** skill keeps a `description`, so the agent can fire it autonomously, and other skills can reach it. You can still type its name: model-invocation always _includes_ user reach; a description only ever adds agent discovery, never removes the human's. The description is the skill's top-level context pointer, forced to stay loaded at all times: permanent context load in exchange for discoverability. A model-invoked skill whose content is all reference is also one home for shared reference: another skill can invoke it, so reference needed by several skills lives in one place. Mechanics: omit `disable-model-invocation`, and write a model-facing description carrying the trigger branches (the pointer-writing rules in `SKILL.md` apply in full).
+-- A **user-invoked** skill strips the description from the agent's reach: only the human typing its name can invoke it, and no other skill can. Zero context load, but it spends cognitive load: you are the index that must remember it exists. Mechanics: set `disable-model-invocation: true`; the `description` becomes human-facing: a one-line summary, trigger lists stripped.
++- Use a concise description for a capability the agent should discover when the task fits. State the distinct situations that warrant loading it.
++- Use the harness's explicit-only control when the user wants a command they invoke themselves. Keep its human-facing summary short.
++- Keep reusable instructions in supporting files when they need no independent discovery trigger. Link each reference with the condition for reading it.
+
+-Pick model-invocation only when the agent must reach the skill on its own, or another skill must. If it only ever fires by hand, make it user-invoked and pay no context load.
++Check what the harness actually exposes. An explicit-only flag does not establish that descriptions disappear from every agent's context, that context cost becomes zero, or that one skill can invoke another. Describe those behaviors only when verified for the target environment.
+
+-Shared reference that two user-invoked skills both need can live in neither: with no descriptions, neither can fire the other. Push it to a plain file outside the skill system: external reference any skill can point at.
++Instructions should name the needed capability rather than require a particular `Skill` or `Task` API. Use available tools and the environment's delegation rules. Another skill is a dependency only if it is installed and needed; otherwise make the reference self-contained.
+
+ ## Splitting by invocation
+
+-The invocation cut of splitting (the sequence cut lives in `SKILL.md`): split off a model-invoked skill when you have a distinct leading word that should trigger it on its own (a trigger word you actually use in your prompts), or another skill must reach it. You pay context load for the new always-loaded description, so that independent reach has to be worth it.
++Create another discoverable skill when it has an independent task trigger worth exposing, or when other workflows need it as a supported capability. Shared background guidance can stay in a plain reference file without another catalog entry.
++
++Split by task or branch so the main file contains the decisions every invocation needs. Keep mode-specific detail behind references instead of introducing a chain of small router skills.
+
+ ## Router skills
+
+-When user-invoked skills multiply past what you can remember, that piled-up cognitive load is cured by a **router skill**: one user-invoked skill that names the others and when to reach for each, so the human has one skill to remember instead of many. It can only hint, never fire them: user-invoked skills have no description, so nothing but the human can reach them.
++A router can help a person choose between many commands. It should explain which command fits and honor each command's invocation policy. Add one only when discovery is a demonstrated problem; a router adds another instruction file to maintain.

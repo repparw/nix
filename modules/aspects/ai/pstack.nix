@@ -24,11 +24,19 @@
         let
           skillsDir = "${plugins}/pstack/skills";
           teamSkill = name: "${plugins}/cursor-team-kit/skills/${name}";
+          excludedSkills = [
+            "make-bot-ui"
+            "poteto-help"
+            "reflect"
+            "setup-pstack"
+          ];
         in
         {
           programs.opencode.skills =
-            lib.mapAttrs (name: _type: skillsDir + "/${name}") (
-              lib.filterAttrs (_name: type: type == "directory") (builtins.readDir skillsDir)
+            lib.mapAttrs (name: _: skillsDir + "/${name}") (
+              lib.filterAttrs (name: type: type == "directory" && !(builtins.elem name excludedSkills)) (
+                builtins.readDir skillsDir
+              )
             )
             // {
               deslop = teamSkill "deslop";
