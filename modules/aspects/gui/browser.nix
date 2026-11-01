@@ -30,7 +30,7 @@ in
   };
 
   den.aspects.gui.provides.browser = {
-    nixos = {
+    nixos = { config, ... }: {
       nixpkgs.overlays = [
         inputs.firefox-addons.overlays.default
         (final: prev: {
@@ -45,6 +45,14 @@ in
         })
       ];
 
+      # Chromium settles policy reloads using file mtimes. Store symlinks keep
+      # epoch mtimes and let a directory-enumeration race publish empty policy.
+      environment.etc."chromium/policies/managed/helium-nixos.json".mode = "0644";
+      environment.etc."chromium/policies/managed/extra.json" =
+        lib.mkIf (config.programs.chromium.extraOpts != { })
+          {
+            mode = "0644";
+          };
       environment.etc."chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
         BrowserSignin = 0;
         PasswordManagerEnabled = false;
