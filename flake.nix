@@ -38,7 +38,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hermes-agent = {
-      url = "github:NousResearch/hermes-agent/v0.22.2";
+      url = "github:NousResearch/hermes-agent/v0.22.5";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
@@ -50,6 +50,10 @@
       flake = false;
     };
     import-tree.url = "github:vic/import-tree";
+    mattpocock-skills = {
+      url = "github:mattpocock/skills";
+      flake = false;
+    };
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";

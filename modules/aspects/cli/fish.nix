@@ -20,7 +20,12 @@
         fishUsers = lib.attrNames (lib.filterAttrs (_: user: user.shell == pkgs.fish) config.users.users);
         dispatcher = pkgs.writeShellScript "ssh-command-shell" ''
           if [[ -v SSH_ORIGINAL_COMMAND ]]; then
-            export SHELL=${bash}
+            # mosh-server starts the interactive mosh session's login shell
+            # from $SHELL, so leave sshd's value (the user's shell) alone for
+            # it; everything else keeps the bash override for agents.
+            if [[ $SSH_ORIGINAL_COMMAND != mosh-server* ]]; then
+              export SHELL=${bash}
+            fi
             exec ${bash} -c "$SSH_ORIGINAL_COMMAND"
           elif [[ -n "''${SSH_TTY-}" ]]; then
             if [[ ! -v TMUX ]]; then

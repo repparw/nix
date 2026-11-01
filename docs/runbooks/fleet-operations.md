@@ -100,6 +100,12 @@ for an isolated restore. Live filesystem copies are not atomic database backups.
 ssh root@192.168.0.4 'fleet-update deploy --host alpha --wait-lock 7200'
 ```
 
+The controller prints timestamped stage updates on stderr (CI verification,
+preflight, per-host preparation/build, activation, health checks, and final
+convergence or failure). Detailed build output is retained in the preparation
+directory; while a preparation is running, another shell can inspect
+`/var/lib/auto-update/latest-preparation` and the referenced logs.
+
 The controller requires successful CI for the exact main revision, captures
 immutable profiles, and builds every selected target before activation.
 CI's stubbed host checks do not replace full builds. Activation proceeds through
@@ -115,8 +121,8 @@ Epsilon into its staged kernel/initrd first, waits for health, then reboots
 itself, with each step gated on backups and Epsilon recovery. The 03:00 timer
 runs the same check as a safety net for anything a deploy deferred or a manual
 rebuild staged without a deploy. Alpha stays manual: the Cloud alert
-**Reboot required** and `fleet debug`'s `reboot_required` line surface its
-pending state.
+**Reboot required** and `fleet debug`'s `reboot_required` line show its
+pending state. The separate Grafana Cloud stuck-reboot alert is follow-up work.
 
 Inspect failures on Pi:
 

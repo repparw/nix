@@ -5,7 +5,7 @@
 }:
 {
   flake-file.inputs.hermes-agent = {
-    url = "github:NousResearch/hermes-agent/v0.22.2";
+    url = "github:NousResearch/hermes-agent/v0.22.5";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 

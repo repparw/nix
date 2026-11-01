@@ -74,10 +74,17 @@ if [ "$force" = 1 ] && [ "$host_selected" = 0 ]; then
   echo "--force requires an explicit --host" >&2
   exit 2
 fi
+# Keep progress visible even while the preflight/capture output is logged.
+exec 3>&2
+progress() {
+  printf '[%s] fleet-update: %s\n' "$(date +%H:%M:%S)" "$*" >&3
+}
+
 mkdir -p "$state"
 package_outbox="$state/package-events"
 exec 9>"${FLEET_UPDATE_LOCK:-/run/fleet-update.lock}"
 if [ "$lock_wait" -gt 0 ]; then
+  progress "waiting for deployment lock (up to ${lock_wait}s)"
   if ! flock -w "$lock_wait" 9; then
     echo "timed out waiting ${lock_wait}s for another fleet update" >&2
     exit 1
@@ -86,6 +93,7 @@ elif ! flock -n 9; then
   echo "another fleet update is already running"
   exit 0
 fi
+progress "deployment lock acquired"
 
 if [ -e "$state/PAUSE" ] && [ "$force" = 0 ]; then
   echo "automation paused via $state/PAUSE"
@@ -237,6 +245,7 @@ notify_file() {
 }
 
 repo="$state/src"
+progress "fetching main"
 if [ -d "$repo/.git" ]; then
   git -C "$repo" fetch origin main
   if [ "$(git -C "$repo" rev-parse --is-shallow-repository)" = true ]; then
@@ -522,6 +531,7 @@ capture_host() {
 capture_hosts() {
   local host
   for host in "${hosts[@]}"; do
+    progress "capturing $host configuration"
     if ! capture_host "$host" > "$preparation/capture-$host.log" 2>&1; then
       jq '.outcome = "failed" | .stage = "capture"' "$preparation/result-$host.json" \
         > "$preparation/result-$host.tmp"
@@ -540,8 +550,12 @@ prepare_host() {
   store="ssh-ng://root@$(host_address "$host")"
   NIX_SSHOPTS="${ssh_options[*]}" nix copy -s --to "$store" --derivation "$drv" || return 1
   remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || return 1
+  # Persist nix's raw internal-json stream: it is compact and greppable.
+  # Piping it through nom re-rendered the whole dependency tree on every
+  # progress event, which grew prepare logs past a gigabyte per host and
+  # buried the actual build error under repeated progress frames.
   built=$(remote "$host" nix build "$drv^out" --out-link /nix/var/nix/gcroots/fleet-update/prepared \
-    --print-out-paths --log-format internal-json -v 2> >(nom --json >&2)) || return 1
+    --print-out-paths --log-format internal-json -v) || return 1
   [ "$built" = "$profile" ] || { echo "error: $host prepared unexpected profile: $built" >&2; return 1; }
   remote "$host" test -f "$profile/activate-rs" || return 1
   remote "$host" test -f "$profile/deploy-rs-activate" || return 1
@@ -564,11 +578,13 @@ fi
 
 revision=$(git rev-parse HEAD)
 source="git+file://$repo?rev=$revision"
+progress "checking CI for main ${revision:0:8}"
 if ! ci_passed; then
   notify ":warning: fleet deployment deferred: CI has not passed for main ${revision:0:8}"
   echo "CI has not passed for main $revision; no host was changed" >&2
   exit 1
 fi
+progress "CI passed for ${revision:0:8}"
 printf '%s\n' "$revision" > "$state/target-revision"
 
 current_system=$(nix eval --impure --raw --expr builtins.currentSystem)
@@ -580,20 +596,25 @@ for host in "${hosts[@]}"; do
     > "$preparation/result-$host.json"
 done
 preflight_log="$state/preflight.log"
+progress "running deployment preflight"
 if ! nix build ".#checks.$current_system.deploy-schema" --no-link > "$preflight_log" 2>&1 \
   || ! capture_hosts >> "$preflight_log" 2>&1; then
   failure_reason="deployment preflight failed"
+  progress "preflight failed; see $preflight_log"
   notify_failure ":warning: fleet deployment aborted before activation (${revision:0:8})" "$preflight_log"
   exit 1
 fi
+progress "preflight passed"
 
 for host in "${hosts[@]}"; do
   # Each captured deployment has its own flake, so activation never rereads main.
   mkdir -p "$preparation/$host"
+  progress "preparing $host (copy/build); log: $preparation/prepare-$host.log"
   if ! prepare_host "$host" > "$preparation/prepare-$host.log" 2>&1; then
     jq '.outcome = "failed"' "$preparation/result-$host.json" > "$preparation/result-$host.tmp"
     mv "$preparation/result-$host.tmp" "$preparation/result-$host.json"
     failure_reason="preparation of $host failed"
+    progress "preparation failed on $host; see $preparation/prepare-$host.log"
     streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
     printf '%s\n' "$streak" > "$state/rollback-streak"
     touch "$state/PAUSE"
@@ -601,6 +622,7 @@ for host in "${hosts[@]}"; do
     exit 1
   fi
   container_units_json[$host]=$(jq -c '.containerUnits' "$preparation/$host.json")
+  progress "prepared $host"
 done
 
 declare -A before_generation
@@ -623,6 +645,7 @@ deploy_one() {
   running_revision=$(remote "$host" nixos-version --configuration-revision 2>/dev/null || true)
   if [ "$running_revision" = "$revision" ]; then
     echo "$host already runs ${revision:0:8}"
+    progress "$host: verifying health"
     if ! soak "$host"; then
       fail "${failure_reason:-soak: $host never passed two consecutive health checks}"
       return 1
@@ -676,6 +699,7 @@ deploy_one() {
   # The build and activation output is the only record of why this failed, and
   # it has to outlive the transient unit, so keep it beside the other state.
   # pipefail propagates deploy-rs' own status through tee.
+  progress "$host: activating ${revision:0:8}"
   if ! deploy "$preparation/$host#$host" --skip-checks 2>&1 | tee "$failure_log"; then
     fail "build or activation of $host failed"
     return 1
@@ -686,6 +710,7 @@ deploy_one() {
     fail "$host activated revision ${running_revision:-unknown}, expected $revision"
     return 1
   fi
+  progress "$host: verifying health"
   if ! soak "$host"; then
     fail "${failure_reason:-soak: $host never passed two consecutive health checks}"
     return 1
@@ -701,6 +726,7 @@ deploy_one() {
   # Per-host success posts were channel noise: the diff stays on disk for
   # the failure report below, and the converged one-liner is the only
   # success signal. Diffs surface on failure only.
+  progress "$host: healthy at ${revision:0:8}"
 }
 
 
@@ -714,6 +740,7 @@ for host in "${hosts[@]}"; do
 done
 
 if [ -n "$failure_host" ]; then
+  progress "deployment failed on $failure_host; rolling back activated hosts"
   # Preserve the existing breaker policy: soak failures allow one retry;
   # other deployment failures pause on the first cycle.
   case "$failure_reason" in
@@ -744,10 +771,12 @@ if [ -n "$failure_host" ]; then
     fi
   done
   if [ "$rollback_failed" = 1 ]; then
+    progress "rollback incomplete; operator review required"
     touch "$state/PAUSE" || true
     notify ":rotating_light: fleet rollback after ${revision:0:8} needs operator review; rollback roots retained"
   else
     cleanup_rollback_roots
+    progress "rollback completed"
   fi
 
   # The reason and the failing command's own output first, then the closure
@@ -780,12 +809,17 @@ if [ "$requested_host" = all ]; then
     printf '%s\n' "$revision" > "$state/deployed-revision"
     cleanup_rollback_roots
     notify ":white_check_mark: fleet converged on ${revision:0:8}"
+    progress "fleet converged at ${revision:0:8}"
   else
     notify ":information_source: required nodes converged on ${revision:0:8}; alpha remains deferred"
+    progress "partially converged at ${revision:0:8}; deferred: ${deferred[*]}"
   fi
+elif [ "${#deferred[@]}" -gt 0 ]; then
+  progress "deployment deferred for ${deferred[*]}"
+else
+  progress "selected host $requested_host completed at ${revision:0:8}"
 fi
-# Land a reboot right after a successful convergence instead of waiting for
-# the nightly window: the sequence no-ops when the headless hosts already
-# match their staged boot chain, orders itself after this deploy unit, and
-# the 03:00 timer remains the safety net for anything this run deferred.
+# The reboot check is best-effort after a successful deployment. Its service
+# waits on the fleet lock so it cannot race this process's lock release.
+# The 03:00 timer retries if this trigger fails or is deferred.
 systemctl --no-block start fleet-headless-reboot.service >/dev/null 2>&1 || true

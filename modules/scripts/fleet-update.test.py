@@ -190,6 +190,20 @@ class Deployment(unittest.TestCase):
     def test_all_hosts_converge_after_ci(self):
         result = self.deploy()
         self.assertEqual(result.returncode, 0, result.stderr)
+        output = result.stderr
+        milestones = [
+            "fetching main", "checking CI for main", "CI passed",
+            "running deployment preflight", "capturing epsilon configuration",
+            "capturing alpha configuration", "capturing pi configuration",
+            "preflight passed", "preparing epsilon", "prepared epsilon",
+            "preparing alpha", "prepared alpha", "preparing pi", "prepared pi",
+            "epsilon: activating", "epsilon: verifying health", "epsilon: healthy",
+            "alpha: activating", "alpha: verifying health", "alpha: healthy",
+            "pi: activating", "pi: verifying health", "pi: healthy",
+            "fleet converged",
+        ]
+        offsets = [output.index("fleet-update: " + message) for message in milestones]
+        self.assertEqual(offsets, sorted(offsets), output)
         self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["epsilon", "alpha", "pi"])
         first_activation = next(i for i, c in enumerate(self.calls) if c[0] == 'deploy')
         prepared = [c for c in self.calls[:first_activation] if c[0] == 'ssh' and 'build' in c]
@@ -276,12 +290,17 @@ class Deployment(unittest.TestCase):
             self.assertEqual(path.read_text(), contents)
 
     def test_schema_failure_does_not_activate(self):
-        self.assertNotEqual(self.deploy(schema_failure=True).returncode, 0)
+        result = self.deploy(schema_failure=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("fleet-update: preflight failed; see ", result.stderr)
+        self.assertNotIn("fleet-update: fleet converged", result.stderr)
         self.assert_no_activation()
 
     def test_failed_activation_restores_failed_host_and_previous_hosts(self):
         result = self.deploy(deploy_failure="pi")
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn("fleet-update: deployment failed on pi; rolling back activated hosts", result.stderr)
+        self.assertNotIn("fleet-update: fleet converged", result.stderr)
         self.assertEqual((self.root / "pi").read_text(), "old")
         self.assertEqual((self.root / "alpha").read_text(), "old")
         self.assertEqual((self.root / "epsilon").read_text(), "old")
@@ -320,12 +339,12 @@ class Deployment(unittest.TestCase):
     def test_failed_preparation_stops_before_any_activation(self):
         result = self.deploy(prepare_failure='alpha')
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn("fleet-update: preparation failed on alpha", result.stderr)
+        self.assertNotIn("fleet-update: alpha: activating", result.stderr)
+        self.assertNotIn("fleet-update: fleet converged", result.stderr)
         self.assertFalse(any(c[0] == 'deploy' for c in self.calls))
         self.assertFalse(any(c[0] == 'ssh' and 'switch-to-configuration' in ' '.join(c) for c in self.calls))
         self.assertTrue((self.state / 'PAUSE').exists())
-        # A failed run must not start a reboot sequence: rollback state and
-        # failure evidence stay inspectable, and the nightly timer decides
-        # about any staged boot chain after review.
         self.assertEqual(self.reboots(), [])
         self.assertEqual(list(self.state.glob('reached-*')), [])
         evidence = Path((self.state / 'latest-preparation').read_text().strip())
@@ -380,9 +399,6 @@ class Deployment(unittest.TestCase):
         )
 
     def test_deferred_alpha_still_triggers_reboot_check(self):
-        # Headless hosts converged; alpha's deferral must not keep a staged
-        # pi/epsilon kernel from landing, and the sequence no-ops for a
-        # fleet that is already converged.
         result = self.deploy(busy_alpha=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len(self.reboots()), 1)
@@ -390,6 +406,9 @@ class Deployment(unittest.TestCase):
     def test_deferred_alpha_skips_readiness_probe(self):
         result = self.deploy(busy_alpha=True)
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("fleet-update: partially converged", result.stderr)
+        self.assertIn("deferred: alpha", result.stderr)
+        self.assertNotIn("fleet-update: fleet converged", result.stderr)
         self.assertEqual(self.probes(), [])
 
     def test_readiness_probe_failure_does_not_fail_deployment(self):

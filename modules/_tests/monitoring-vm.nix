@@ -112,8 +112,7 @@ pkgs.testers.runNixOSTest {
         default = { };
       };
       options.modules.fleet-unit-state.snapshot = lib.mkOption { type = lib.types.package; };
-      # The fleet-reboot aspect ships fleet-wide; this standalone import of
-      # the health aspect needs its own stand-in like fleet-unit-state's.
+      # This isolated VM imports the health aspect without the fleet default.
       options.modules.fleet-reboot.predicate = lib.mkOption { type = lib.types.package; };
       config = {
         modules.fleet-unit-state.snapshot = pkgs.writeShellScriptBin "fleet-unit-snapshot" "exit 0";
@@ -142,7 +141,6 @@ pkgs.testers.runNixOSTest {
           neededForBoot = true;
           noCheck = true;
         };
-        boot.initrd.systemd.enable = true;
         boot.initrd.systemd.storePaths = [
           pkgs.e2fsprogs
           pkgs.util-linux

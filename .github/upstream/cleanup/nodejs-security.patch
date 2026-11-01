@@ -94,7 +94,8 @@ diff --git a/modules/aspects/ai/opencode.nix b/modules/aspects/ai/opencode.nix
 diff --git a/modules/aspects/upstream/nodejs-security.nix b/modules/aspects/upstream/nodejs-security.nix
 --- a/modules/aspects/upstream/nodejs-security.nix
 +++ b/modules/aspects/upstream/nodejs-security.nix
-@@ -2,12 +2,7 @@
+@@ -1,23 +1,18 @@
+ { den, ... }:
  {
    den.aspects.nodejs-security.nixos.nixpkgs.overlays = [
      (final: prev: {
@@ -105,6 +106,16 @@ diff --git a/modules/aspects/upstream/nodejs-security.nix b/modules/aspects/upst
 -        nodejs-slim = prev.callPackage ../../_packages/nodejs-security.nix { };
 -      };
 +      nodejs-runtime = prev.nodejs_24;
-       t3code = prev.t3code.override {
-         t3code-unwrapped = prev.t3code.unwrapped.override { nodejs = final.nodejs-runtime; };
-       };
+       # T3 Code 0.1.5 uses Node 26 directly, and its unwrapped package no
+       # longer accepts the old `nodejs` argument. Keep our pinned secure
+       # Node 24 runtime only for older packages that still use that argument.
+       t3code =
+         if prev.lib.versionAtLeast prev.t3code.unwrapped.version "0.1.5" then
+           prev.t3code
+         else
+           prev.t3code.override {
+             t3code-unwrapped = prev.t3code.unwrapped.override { nodejs = final.nodejs-runtime; };
+           };
+     })
+   ];
+ }
