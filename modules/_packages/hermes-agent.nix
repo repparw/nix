@@ -6,7 +6,7 @@
 }:
 let
   # Hermes accepts Node >=22.22.0; npm 12 accepts Node ^24.15.0.
-  # Node 26 currently fails on ARM (NixOS/nixpkgs#568974).
+  # Keep the fleet's patched Node runtime when upstream selects PM artifacts.
   nodejs =
     assert lib.versionAtLeast nodejs_24.version "24.15.0";
     nodejs_24;
@@ -17,15 +17,9 @@ upstream.override {
     callPackage path (
       args
       // lib.optionalAttrs (builtins.baseNameOf path == "lib.nix") {
-        nodejs_26 = nodejs;
-        callPackage =
-          npmPath: npmArgs:
-          callPackage npmPath (
-            npmArgs
-            // lib.optionalAttrs (builtins.baseNameOf npmPath == "npm-pinned.nix") {
-              nodejs_26 = nodejs;
-            }
-          );
+        pmPackages = args.pmPackages // {
+          node = nodejs;
+        };
       }
     );
 }
