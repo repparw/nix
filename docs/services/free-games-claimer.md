@@ -47,7 +47,7 @@ Chrome has no aarch64 Linux build.
 1. From a desktop: `ssh -N -L 6080:127.0.0.1:6080 pi`
 2. Open <http://localhost:6080/vnc.html?autoconnect=1&resize=scale>
 3. Run the service so a browser opens:
-   `ssh pi sudo -A systemctl start free-games-claimer` (the run waits up to
+   `ssh pi sudo -A systemctl -M free-games-claimer start free-games-claimer.service` (the run waits up to
    `LOGIN_TIMEOUT` = 10 minutes for the login).
 4. Log in inside the VNC browser. Epic offers app OTP; GOG sends email codes.
    The session persists afterwards; repeat only when a store logs out.
@@ -58,10 +58,10 @@ the VNC page while the run is still waiting, then rerun the service.
 
 ## Runbook
 
-- Claim results and failures: `journalctl -u container@free-games-claimer` on
+- Claim results and failures: `journalctl -M free-games-claimer -u free-games-claimer.service` on
   pi; per-store output is in
   `/home/containers/config/free-games-claimer/logs/<store>.log`.
-- Manual run: `ssh pi sudo -A systemctl start free-games-claimer`
+- Manual run: `ssh pi sudo -A systemctl -M free-games-claimer start free-games-claimer.service`
 - Dry run (no purchases): add `DRYRUN=1` to the unit environment temporarily.
 - A failed run does not block the next day's timer; the notify state replays
   the report if Discord was unreachable. Generic execution failures are also
