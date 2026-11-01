@@ -204,7 +204,7 @@
                 "yazi"
               ];
               "Mod+Shift+E" = titledSpawn "File Manager (GUI)" [ "nautilus" ];
-              "Mod+F" = titledAction "Fullscreen" "maximize-window-to-edges";
+              "Mod+F" = titledAction "Maximize" "maximize-window-to-edges";
               "Mod+Alt+F" = titledAction "Toggle Floating" "toggle-window-floating";
               "Mod+Ctrl+F" = titledAction "Toggle Focus Floating" "switch-focus-between-floating-and-tiling";
               "Mod+G" = titledSpawn "T3 Code" [ "t3code-desktop-connect" ];
@@ -323,26 +323,12 @@
                 "pkill wshowkeys || wshowkeys -a bottom -m 108 -b 000000BB"
               ];
 
-              Print = titledSpawn "Screenshot Screen" [
-                "niri"
-                "msg"
-                "action"
-                "screenshot-screen"
-              ];
-              "Mod+Print" = titledSpawn "Screenshot Window" [
-                "niri"
-                "msg"
-                "action"
-                "screenshot-window"
-              ];
-              "Mod+Shift+Print" = titledSpawn "Screenshot Area" [
-                "niri"
-                "msg"
-                "action"
-                "screenshot"
-                "-p"
-                "false"
-              ];
+              Print = titledAction "Screenshot Screen" "screenshot-screen";
+              "Mod+Print" = titledAction "Screenshot Window" "screenshot-window";
+              "Mod+Shift+Print" = {
+                _props.hotkey-overlay-title = "Screenshot Area";
+                screenshot._props.show-pointer = false;
+              };
               "Ctrl+Print" = titledSpawn "Record Screen" [
                 "record"
                 "screen"
