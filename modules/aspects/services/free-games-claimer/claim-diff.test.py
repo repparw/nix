@@ -114,6 +114,26 @@ class ClaimDiffTest(unittest.TestCase):
         self.assertEqual(out["lines"], [])
         self.assertEqual(out["state"], {})
 
+    def test_gog_unauthorized_is_reported(self):
+        db = {"user": {"giveaway": {"title": "Giveaway", "url": "u", "status": "Unauthorized"}}}
+        out = run_diff({}, db, {})
+        self.assertEqual(out["lines"], ["⚠️ gog: Giveaway (Unauthorized) — u"])
+        self.assertEqual(out["state"], {"gog|user|giveaway": "Unauthorized"})
+
+    def test_gog_error_recovery_is_reported(self):
+        failed = {"user": {"game": {"title": "Game", "status": "Giveaway has ended"}}}
+        claimed = {"user": {"game": {"title": "Game", "status": "claimed"}}}
+        out = run_diff({}, failed, {})
+        self.assertEqual(len(out["lines"]), 1)
+        self.assertIn("Giveaway has ended", out["lines"][0])
+        self.assertEqual(run_diff({}, failed, out["state"])["lines"], [])
+        recovered = run_diff({}, claimed, out["state"])
+        self.assertEqual(recovered["lines"], ["✅ gog: Game — "])
+
+    def test_malformed_status_is_ignored(self):
+        db = {"user": {"game": {"title": "Game", "status": ["bad"]}}}
+        self.assertEqual(run_diff(db, {}, {})["lines"], [])
+
 
 if __name__ == "__main__":
     unittest.main()
