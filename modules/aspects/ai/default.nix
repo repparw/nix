@@ -9,6 +9,7 @@
       mcp
       opencode
       pstack
+      mattpocock-skills
       skills
       t3code-browser-libs
       t3code-connect
