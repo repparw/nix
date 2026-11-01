@@ -43,18 +43,23 @@
                     };
                   }
                 );
+            selectVersion =
+              package:
+              # Upstream T3 Code 0.1.5 already uses Node 26 and pnpm 12,
+              # so don't apply the old backport to the native package.
+              if lib.versionAtLeast package.version "0.1.5" then package else overrideVersion package;
           in
           if prev ? t3code-cli then
             {
               t3code-cli = prev.t3code-cli.override {
-                t3code-unwrapped = overrideVersion prev.t3code-cli.unwrapped;
+                t3code-unwrapped = selectVersion prev.t3code-cli.unwrapped;
               };
               t3code-desktop = prev.t3code-desktop.override { t3code-cli = final.t3code-cli; };
             }
           else
             {
               t3code = prev.t3code.override {
-                t3code-unwrapped = overrideVersion prev.t3code.unwrapped;
+                t3code-unwrapped = selectVersion prev.t3code.unwrapped;
               };
             }
         )
