@@ -425,9 +425,10 @@ index 6364de55..00000000
 diff --git a/modules/entities.nix b/modules/entities.nix
 --- a/modules/entities.nix
 +++ b/modules/entities.nix
-@@ -11,4 +11,3 @@
+@@ -11,6 +11,5 @@
            den.aspects.gaming
            den.aspects.streaming
            den.aspects.spotifast
 -          den.aspects.moonshine-pr227-test
+         ];
        };
