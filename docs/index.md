@@ -39,6 +39,7 @@ files instead of copying module contents.
 - [Restore service backups](runbooks/restore-service-backups.md)
 - [Restore host state from offsite backups](runbooks/host-recovery.md)
 - [Change host persistence](runbooks/host-persistence.md)
+- [Moonlight TV 200 Mbps bitrate build](runbooks/moonlight-tv-bitrate.md)
 
 ## Fixes
 
