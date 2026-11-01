@@ -1,0 +1,196 @@
+name: hermes-update
+# Track NousResearch/hermes-agent's latest stable release. The flake input
+# stays pinned to an exact tag; this workflow rewrites the pin and opens a
+# CI-validated PR when a new stable release lands. Merging stays manual: a
+# Hermes bump changes the fleet's agent runtime, so it never auto-merges.
+on:
+  schedule:
+    # After lock-update (04:15) so its main fast-forwards settle first.
+    - cron: "45 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: hermes-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: main
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - name: Open the stable-release bump PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          # Dedicated identity for approving approval-gated workflow runs; it
+          # also creates the PR without the first-time-actor approval gate.
+          # See the lock-update workflow for the token's required scopes.
+          LOCK_UPDATE_APPROVAL_TOKEN: ${{ secrets.LOCK_UPDATE_APPROVAL_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch=automation/hermes-stable
+          poll_seconds=${HERMES_UPDATE_POLL_SECONDS:-15}
+          poll_attempts=${HERMES_UPDATE_POLL_ATTEMPTS:-160}
+          approval_token="${LOCK_UPDATE_APPROVAL_TOKEN:-}"
+
+          # Latest dispatched exact-SHA run of $1 on $2@$3:
+          # [id, status, conclusion] as TSV, empty when none exists yet.
+          latest_run() {
+            gh api --method GET "repos/$GH_REPO/actions/workflows/$1/runs" \
+              -f branch="$2" -f head_sha="$3" -f event=workflow_dispatch \
+              --jq '.workflow_runs | sort_by(.run_number) | last // empty | [.id, .status, (.conclusion // "")] | @tsv'
+          }
+
+          # Dispatched runs do not enter the PR protection rollup; they prove
+          # the candidate itself. Succeeds only on completed success.
+          wait_for_run() {
+            local workflow="$1" ref="$2" sha="$3" row run_id status conclusion attempt=0
+            while [ "$attempt" -lt "$poll_attempts" ]; do
+              row=$(latest_run "$workflow" "$ref" "$sha")
+              if [ -n "$row" ]; then
+                IFS=$'\t' read -r run_id status conclusion <<< "$row"
+                if [ "$status" = completed ]; then
+                  if [ "$conclusion" = success ]; then
+                    printf '%s\n' "$run_id"
+                    return 0
+                  fi
+                  echo "Dispatched $workflow run $run_id for $ref@$sha concluded $conclusion" >&2
+                  return 1
+                fi
+              fi
+              attempt=$((attempt + 1))
+              sleep "$poll_seconds"
+            done
+            echo "timed out waiting for $workflow on $ref@$sha" >&2
+            return 1
+          }
+
+          # The managed branch may only be rewritten when automation owns its
+          # tip: an open PR whose head equals the remote branch tip, or a tip
+          # already recorded as merged.
+          existing=$(git ls-remote --heads origin "$branch" | cut -f1)
+          pr=$(gh pr list --head "$branch" --base main --state open --json number \
+            --jq '.[0].number // empty')
+          if [ -n "$pr" ]; then
+            pr_tip=$(gh pr view "$pr" --json headRefOid --jq .headRefOid)
+            if [ "$pr_tip" != "$existing" ]; then
+              echo "Managed branch $branch diverged from PR #$pr; requires human review." >&2
+              exit 1
+            fi
+          elif [ -n "$existing" ]; then
+            merged_tip=$(gh pr list --head "$branch" --base main --state merged \
+              --limit 1 --json headRefOid --jq '.[0].headRefOid // empty')
+            if [ "$existing" != "$merged_tip" ]; then
+              echo "Unowned $branch tip $existing; refusing to overwrite." >&2
+              exit 1
+            fi
+            git push "--force-with-lease=refs/heads/$branch:$existing" \
+              origin ":refs/heads/$branch"
+            existing=""
+          fi
+
+          # Latest published stable release; the API already excludes drafts
+          # and prereleases.
+          latest=$(gh api repos/NousResearch/hermes-agent/releases/latest --jq .tag_name)
+          printf 'upstream latest stable release: %s\n' "$latest"
+          # Only v-prefixed semver tags are eligible; anything else fails closed.
+          if [[ ! "$latest" =~ ^v[0-9]+(\.[0-9]+)+$ ]]; then
+            echo "Refusing unexpected release tag '$latest'." >&2
+            exit 1
+          fi
+
+          read -r current owner repo type <<< "$(jq -r \
+            '.nodes["hermes-agent"].original | [.ref // "", .owner, .repo, .type] | @tsv' flake.lock)"
+          if [ "$owner" != NousResearch ] || [ "$repo" != hermes-agent ] || [ "$type" != github ]; then
+            echo "Unexpected hermes-agent input origin $owner/$repo; requires human review." >&2
+            exit 1
+          fi
+          if [ -z "$current" ]; then
+            echo 'hermes-agent input has no pinned tag; stable tracking does not apply.' >&2
+            exit 0
+          fi
+          if [ "$current" = "$latest" ]; then
+            if [ -n "$pr" ]; then
+              gh pr close "$pr" --comment "main already pins $latest; closing this candidate."
+            fi
+            echo "hermes-agent already pinned to $latest."
+            exit 0
+          fi
+
+          # A same-tag candidate refreshes onto the current main; an identical
+          # tree needs no push, dispatch, or PR edit. The managed branch's
+          # objects are not present until fetched.
+          pr_tree=""
+          if [ -n "$pr" ]; then
+            git fetch --no-tags --quiet origin "refs/heads/$branch"
+            pr_ref=$(git show "$pr_tip:flake.lock" | jq -r '.nodes["hermes-agent"].original.ref // empty')
+            if [ "$pr_ref" = "$latest" ]; then
+              pr_tree=$(git rev-parse "$pr_tip^{tree}")
+            fi
+          fi
+
+          # Move the pin in the canonical flake-file spec, regenerate the
+          # generated flake.nix, then re-resolve only the hermes-agent subtree
+          # in the lockfile. Each file must change by exactly its URL line.
+          spec=modules/hosts/epsilon.nix
+          test "$(grep -c 'github:NousResearch/hermes-agent/' "$spec")" = 1
+          sed -i "s#github:NousResearch/hermes-agent/[^\" ]*#github:NousResearch/hermes-agent/$latest#" "$spec"
+          test "$(git diff --numstat -- "$spec" | wc -l)" = 1
+          grep -q "github:NousResearch/hermes-agent/$latest\"" "$spec"
+
+          nix run .#write-flake
+          test "$(git diff --numstat -- flake.nix | wc -l)" = 1
+          grep -q "github:NousResearch/hermes-agent/$latest\"" flake.nix
+
+          nix flake update hermes-agent
+
+          changed=$(git diff --name-only | sort)
+          test "$changed" = "$(printf 'flake.lock\nflake.nix\n%s' "$spec")"
+          test "$(jq -r '.nodes["hermes-agent"].original.ref' flake.lock)" = "$latest"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C "$branch"
+          git add flake.nix flake.lock "$spec"
+          git commit --quiet -m "chore(hermes): update to $latest"
+          revision=$(git rev-parse HEAD)
+          if [ -n "$pr_tree" ] && [ "$(git rev-parse "$revision^{tree}")" = "$pr_tree" ]; then
+            echo "PR #$pr already proposes $latest at the same tree; nothing to do."
+            exit 0
+          fi
+          git push "--force-with-lease=refs/heads/$branch:$existing" \
+            origin "HEAD:refs/heads/$branch"
+
+          body=$(cat <<BODY
+          Automated stable-release bump for the hermes-agent flake input: $current → $latest.
+
+          - Resolution: the pinned tag in the canonical flake-file spec (modules/hosts/epsilon.nix) moves, write-flake regenerates flake.nix, and nix flake update hermes-agent re-pins the input and its own sub-inputs; no other lock input moves.
+          - Node runtime: the fleet's patched Node override (modules/_packages/hermes-agent.nix) keeps applying, and the dispatched exact-SHA CI below validates the rebuilt package.
+          - Merging stays manual on purpose: this changes the fleet's agent runtime. Required PR checks may need a one-click approval while LOCK_UPDATE_APPROVAL_TOKEN is unset.
+          BODY
+          )
+          if [ -n "$pr" ]; then
+            gh pr edit "$pr" --title "chore(hermes): update to $latest" --body "$body"
+          else
+            create_token="${approval_token:-$GH_TOKEN}"
+            url=$(GH_TOKEN="$create_token" gh pr create --base main --head "$branch" \
+              --title "chore(hermes): update to $latest" --body "$body")
+            pr=${url##*/}
+          fi
+
+          gh workflow run ci.yml --ref "$branch" -f expected_sha="$revision"
+          gh workflow run pr-title.yml --ref "$branch" \
+            -f pull_request_number="$pr" -f expected_sha="$revision"
+          ci_run=$(wait_for_run ci.yml "$branch" "$revision")
+          title_run=$(wait_for_run pr-title.yml "$branch" "$revision")
+          echo "Hermes stable PR #$pr validated at $revision (ci $ci_run, title $title_run); merge manually after the required PR checks."

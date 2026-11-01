@@ -166,6 +166,9 @@ and [upstream watcher contracts](../../.github/upstream/README.md).
 Run `gh workflow run lock-update.yml` to request a lock update; publication and
 deployment remain separate. Runtime readiness reports do not retire a watcher
 until its declared completion conditions pass.
+Hermes stable tracking: [hermes-update workflow](../../.github/workflows/hermes-update.yml)
+opens a manual-merge PR when NousResearch/hermes-agent publishes a new stable
+release; the pinned tag stays exact between releases.
 
 ## Maintain storage
 
