@@ -94,11 +94,18 @@
           };
         };
 
-        # Reject routed traffic, including traffic from other containers.
-        # The host-to-container proxy uses OUTPUT and remains allowed.
-        networking.firewall.extraForwardRules = ''
-          ip daddr ${config.containers.free-games-claimer.localAddress} tcp dport 6080 drop
-        '';
+        # The regular NixOS forward firewall is disabled on pi. Use a
+        # dedicated forward hook, without changing the host's NAT behavior.
+        # The local loopback proxy uses OUTPUT and is unaffected.
+        networking.nftables.tables.fgc_vnc = {
+          family = "inet";
+          content = ''
+            chain forward_guard {
+              type filter hook forward priority -10; policy accept;
+              ip daddr ${config.containers.free-games-claimer.localAddress} tcp dport 6080 drop
+            }
+          '';
+        };
 
         containers.free-games-claimer = servicesLib.mkContainer {
           inherit cfg;
