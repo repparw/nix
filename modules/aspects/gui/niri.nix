@@ -67,6 +67,8 @@
               jq
               libnotify
               wl-clipboard
+              util-linux
+              gawk
             ];
             text = builtins.readFile ./niri-record.sh;
           })
