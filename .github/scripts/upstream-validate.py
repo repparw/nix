@@ -126,7 +126,7 @@ def validate(name, architecture):
         detector = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(detector)
         lock = json.loads((ROOT / "flake.lock").read_text())
-        require(detector.t3code_nightly_v2_status(
+        require(detector.t3code_stable_v2_status(
                     lock, minimum_version=detector.T3CODE_STABLE_MIN_VERSION) == "PINNED-READY",
                 "root pin must carry a stable release at least as new as the bridge")
         for host in ("alpha", "pi", "epsilon"):
