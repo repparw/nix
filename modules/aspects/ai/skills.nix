@@ -41,6 +41,19 @@
             src = inputs.mattpocock-skills;
             patches = [ ./patches/mattpocock-skills.patch ];
           };
+          noCommentsSource = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/backnotprop/pstack/25abb38559ddbabec563646224d09eff9a250eca/skills/no-comments/SKILL.md";
+            hash = "sha256-pyUFl3HRV3/Fn70mbi91/n9UeiOj3MEFJFnbVK4QwMI=";
+          };
+          noCommentsReference = pkgs.fetchurl {
+            url = "https://raw.githubusercontent.com/backnotprop/pstack/25abb38559ddbabec563646224d09eff9a250eca/skills/no-comments/references/comment-sicko.md";
+            hash = "sha256-c8C8uMJYmBExwA8JwsVuMAxyJYA71OEJPvQTYuAHPZg=";
+          };
+          noCommentsSkill = pkgs.runCommand "pstack-no-comments-skill" { } ''
+            mkdir -p "$out/references"
+            cp ${noCommentsSource} "$out/SKILL.md"
+            cp ${noCommentsReference} "$out/references/comment-sicko.md"
+          '';
         in
         {
           programs.opencode.skills =
@@ -51,6 +64,7 @@
             )
             // {
               deslop = teamSkill "deslop";
+              no-comments = "${noCommentsSkill}";
               control-cli = teamSkill "control-cli";
               control-ui = teamSkill "control-ui";
               retro = "${pocockSource}/skills/engineering/retro";
