@@ -138,7 +138,6 @@ pkgs.testers.runNixOSTest {
           neededForBoot = true;
           noCheck = true;
         };
-        boot.initrd.systemd.enable = true;
         boot.initrd.systemd.storePaths = [
           pkgs.e2fsprogs
           pkgs.util-linux
