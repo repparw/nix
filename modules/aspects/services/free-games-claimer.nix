@@ -24,80 +24,52 @@
         discordNotify = servicesLib.mkDiscordNotify pkgs config.modules.services.discordChannelId;
         stateDir = "${cfg.configDir}/free-games-claimer";
 
-        # Runs both storefronts, then reports claimed/failed games and login or
-        # captcha trouble through the fleet bot identity. Deliberately runs the
-        # second store after the first one fails: a broken session on Epic must
-        # not stop the GOG claim.
+        # Storefront automation runs as fgc with no access to bot secrets.
+        # The root-only ExecStopPost notifier reports even failed runs.
         claimScript = pkgs.writeShellApplication {
           name = "free-games-claim";
+          runtimeInputs = with pkgs; [
+            coreutils
+            nodejs-runtime
+          ];
+          text = ''
+            state=/var/lib/free-games-claimer
+            logs=$state/logs
+            for store in epic-games gog; do
+              printf 'pending\n' > "$logs/$store.status"
+            done
+
+            rc=0
+            for store in epic-games gog; do
+              echo "=== $store: run started $(date -u '+%Y-%m-%dT%H:%M:%SZ') ==="
+              if node ${claimer}/lib/node_modules/free-games-claimer/"$store".js >"$logs/$store.log" 2>&1; then
+                printf '0\n' > "$logs/$store.status"
+                echo "=== $store: run finished ==="
+              else
+                store_rc=$?
+                printf '%s\n' "$store_rc" > "$logs/$store.status"
+                rc=1
+                echo "=== $store: run FAILED (exit $store_rc) ==="
+              fi
+              tail -n 5 "$logs/$store.log" || true
+            done
+            exit "$rc"
+          '';
+        };
+
+        # The notifier runs as root so hermes-env remains inaccessible to the
+        # unprivileged browser. The notification state is root-owned as well.
+        notifyScript = pkgs.writeShellApplication {
+          name = "free-games-notify";
           runtimeInputs = with pkgs; [
             coreutils
             discordNotify
             gnugrep
             jq
-            nodejs-runtime
           ];
           text = ''
-            state=/var/lib/free-games-claimer
-            app=$state/app
-            data=$app/data
-            logs=$state/logs
-            mkdir -p "$logs"
-
-            rc=0
-            for store in epic-games gog; do
-              echo "=== $store: run started $(date -u '+%Y-%m-%dT%H:%M:%SZ') ==="
-              if node "$app/$store.js" >"$logs/$store.log" 2>&1; then
-                echo "=== $store: run finished ==="
-              else
-                rc=1
-                echo "=== $store: run FAILED ==="
-              fi
-              tail -n 5 "$logs/$store.log" || true
-            done
-
-            prev='{}'
-            if [ -s "$state/notify-state.json" ]; then
-              prev=$(cat "$state/notify-state.json")
-            fi
-            epic='{}'
-            if [ -s "$data/epic-games.json" ]; then
-              epic=$(cat "$data/epic-games.json")
-            fi
-            gog='{}'
-            if [ -s "$data/gog.json" ]; then
-              gog=$(cat "$data/gog.json")
-            fi
-
-            diffout=$(jq -n \
-              --argjson previous "$prev" \
-              --argjson epic "$epic" \
-              --argjson gog "$gog" \
-              -f ${claimDiff})
-            lines=$(jq -r '.lines | join("\n")' <<<"$diffout")
-
-            msg="$lines"
-            for store in epic-games gog; do
-              if grep -q "Not signed in anymore" "$logs/$store.log" 2>/dev/null; then
-                msg+=$'\n'"🔑 $store needs login: ssh -N -L 6080:127.0.0.1:6080 pi, then open http://localhost:6080/vnc.html and rerun the service"
-              fi
-              if grep -qi "captcha" "$logs/$store.log" 2>/dev/null; then
-                msg+=$'\n'"⚠️ $store hit a captcha: open the VNC page above while a run is waiting, then rerun the service"
-              fi
-            done
-
-            if [ -n "$msg" ]; then
-              # Discord caps content at 2000 chars; keep a comfortable margin.
-              msg=$(printf '%s' "$msg" | head -c 1900)
-              discord-notify post "**free-games-claimer**"$'\n'"$msg"
-            fi
-
-            # Persist the notification state only after the post was accepted,
-            # so a Discord outage replays the report instead of losing it.
-            jq '.state' <<<"$diffout" >"$state/notify-state.json.new"
-            mv "$state/notify-state.json.new" "$state/notify-state.json"
-
-            exit "$rc"
+            export FGC_CLAIM_DIFF=${claimDiff}
+            ${builtins.readFile ./free-games-claimer/notify.sh}
           '';
         };
       in
@@ -105,23 +77,34 @@
         # The container user maps 1:1 to a host uid (no privateUsers), so the
         # host-owned state directory is pre-created with the same numeric ids.
         systemd.tmpfiles.rules = [
-          "d ${stateDir} 0755 348 348 - -"
+          "d ${stateDir} 0755 root root - -"
         ];
+
+        # nspawn --port exposes the endpoint on all host interfaces.
+        # Instead, proxy localhost:6080 to the private container address.
+        systemd.services.free-games-novnc-loopback = {
+          description = "SSH-only loopback access to free-games-claimer noVNC";
+          requires = [ "container@free-games-claimer.service" ];
+          after = [ "container@free-games-claimer.service" ];
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            ExecStart = "${pkgs.socat}/bin/socat TCP-LISTEN:6080,bind=127.0.0.1,reuseaddr,fork TCP:${config.containers.free-games-claimer.localAddress}:6080";
+            Restart = "always";
+            RestartSec = "5s";
+          };
+        };
+
+        # Reject routed traffic, including traffic from other containers.
+        # The host-to-container proxy uses OUTPUT and remains allowed.
+        networking.firewall.extraForwardRules = ''
+          ip daddr ${config.containers.free-games-claimer.localAddress} tcp dport 6080 drop
+        '';
 
         containers.free-games-claimer = servicesLib.mkContainer {
           inherit cfg;
           name = "free-games-claimer";
 
-          # noVNC is exposed on the host only for the occasional interactive
-          # login or captcha; reach it through an SSH tunnel from a desktop:
-          #   ssh -N -L 6080:127.0.0.1:6080 pi
-          forwardPorts = [
-            {
-              containerPort = 6080;
-              hostPort = 6080;
-              protocol = "tcp";
-            }
-          ];
+          # No nspawn port forwarding. The host proxy binds to loopback only.
 
           bindMounts = {
             "/var/lib/free-games-claimer" = {
@@ -153,6 +136,8 @@
               };
             in
             {
+              time.timeZone = "America/Argentina/Buenos_Aires";
+
               users.users.fgc = {
                 isSystemUser = true;
                 uid = 348;
@@ -169,7 +154,8 @@
               ];
 
               systemd.tmpfiles.rules = [
-                "d /var/lib/free-games-claimer/logs 0755 fgc fgc - -"
+                "d /var/lib/free-games-claimer/data 0750 fgc fgc - -"
+                "d /var/lib/free-games-claimer/logs 0750 fgc fgc - -"
               ];
 
               # The claimer always drives a headed browser (headless trips
@@ -193,7 +179,7 @@
                 wantedBy = [ "free-games-display.service" ];
                 serviceConfig = {
                   User = "fgc";
-                  ExecStart = "${pkgs.x11vnc}/bin/x11vnc -display :99 -forever -shared -nopw -rfbport 5900";
+                  ExecStart = "${pkgs.x11vnc}/bin/x11vnc -display :99 -localhost -forever -shared -nopw -rfbport 5900";
                   Restart = "always";
                   RestartSec = "5s";
                 };
@@ -206,7 +192,7 @@
                 wantedBy = [ "free-games-vnc.service" ];
                 serviceConfig = {
                   User = "fgc";
-                  ExecStart = "${websockify}/bin/websockify --web ${novncStatic} 6080 127.0.0.1:5900";
+                  ExecStart = "${websockify}/bin/websockify --web ${novncStatic} ${config.containers.free-games-claimer.localAddress}:6080 127.0.0.1:5900";
                   Restart = "always";
                   RestartSec = "5s";
                 };
@@ -228,40 +214,24 @@
                   LOGIN_TIMEOUT = "600";
                   NOVNC_PORT = "6080";
                   HOME = "/var/lib/free-games-claimer";
+                  FGC_DATA_DIR = "/var/lib/free-games-claimer/data";
                   FGC_CHROME_PATH = "${pkgs.chromium}/bin/chromium";
                 };
                 serviceConfig = {
                   Type = "oneshot";
                   User = "fgc";
                   ExecStart = "${claimScript}/bin/free-games-claim";
+                  # '+' overrides User=fgc for this command only. Executed
+                  # after success or failure (including ExecStart errors).
+                  ExecStopPost = "+${notifyScript}/bin/free-games-notify";
                   # Chromium plus a slow store page can take a while on the pi.
                   TimeoutStartSec = "2h";
                 };
                 preStart = ''
                   state=/var/lib/free-games-claimer
-                  marker=$state/.app-version
-                  current=$(cat "$marker" 2>/dev/null || true)
-                  if [ "$current" != "${claimer}" ]; then
-                    tmp=$state/app.new
-                    rm -rf "$tmp"
-                    cp -r ${claimer}/lib/node_modules/free-games-claimer "$tmp"
-                    rm -rf "$tmp/node_modules"
-                    ln -s ${claimer}/lib/node_modules/free-games-claimer/node_modules "$tmp/node_modules"
-                    if [ -d "$state/app/data" ]; then
-                      mv "$state/app/data" "$tmp/data"
-                    fi
-                    rm -rf "$state/app.old"
-                    if [ -d "$state/app" ]; then
-                      mv "$state/app" "$state/app.old"
-                    fi
-                    mv "$tmp" "$state/app"
-                    rm -rf "$state/app.old"
-                    printf '%s\n' "${claimer}" >"$marker"
-                  fi
-                  mkdir -p "$state/app/data"
-                  # A killed run leaves a stale profile lock that makes the
-                  # next launch time out (upstream docker-entrypoint fix).
-                  rm -f "$state/app/data/browser/SingletonLock"
+                  mkdir -p "$state/data/browser" "$state/data/screenshots/epic-games/failed" "$state/data/screenshots/gog"
+                  # A killed run can leave a stale Chromium profile lock.
+                  rm -f "$state/data/browser/SingletonLock"
                 '';
               };
 
