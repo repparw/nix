@@ -31,7 +31,17 @@ def entries($store; $db):
 
 ($previous // {}) as $previous
 | ([entries("epic"; $epic // {})] + [entries("gog"; $gog // {})] | add // [])
-| map(select(.status == "claimed" or (.status | startswith("failed"))))
+| map(
+    select(.status | type == "string")
+    | select(
+        .status == "claimed"
+        or (.status != "existed"
+          and .status != "manual"
+          and .status != "skipped"
+          and .status != "unknown"
+          and .status != "requires base game")
+      )
+  )
 | {
     lines:
       [
