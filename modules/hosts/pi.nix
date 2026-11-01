@@ -168,10 +168,14 @@
         ];
 
         services.fstrim.enable = true;
+        # Disk swap previously lived on the NVMe home partition as an 8G file
+        # and never took pages (zram absorbed all swapping) while the partition
+        # sat near its 90% health threshold. Zram is the only swap device now,
+        # sized up to compensate for the removed file.
         zramSwap = {
           enable = true;
           algorithm = "zstd";
-          memoryPercent = 25;
+          memoryPercent = 50;
         };
 
         fileSystems = {
@@ -235,13 +239,6 @@
             ];
           };
         };
-
-        swapDevices = [
-          {
-            device = "/home/repparw/.swapfile";
-            size = 8192;
-          }
-        ];
 
         hardware.bluetooth.enable = true;
 
