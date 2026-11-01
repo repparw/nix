@@ -10,17 +10,21 @@
           let
             overrideVersion =
               package:
-              # The current pin still uses Node 24 / pnpm 11. Stable 0.1.5
-              # requires Node 26 / pnpm 12; split packages already use them.
-              (
-                if prev ? t3code-cli then
-                  package
-                else
-                  package.override {
-                    nodejs = final.nodejs_26;
-                    pnpm_11 = final.pnpm_12;
-                  }
-              ).overrideAttrs
+              # Upstream 0.1.5 already uses Node 26 / pnpm 12 and a
+              # newer dependency fetcher; never reapply the legacy
+              # build override to the native upstream package.
+              if lib.versionAtLeast package.version "0.1.5" then
+                package
+              else
+                (
+                  if prev ? t3code-cli then
+                    package
+                  else
+                    package.override {
+                      nodejs = final.nodejs_26;
+                      pnpm_11 = final.pnpm_12;
+                    }
+                ).overrideAttrs
                 (
                   finalAttrs: _: {
                     version = "0.1.5";
