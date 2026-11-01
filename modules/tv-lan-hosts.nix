@@ -15,9 +15,11 @@
       # device repository.
       packages.tv-lan-hosts = lanHosts;
 
-      checks.tv-lan-hosts = pkgs.runCommand "check-tv-lan-hosts" { nativeBuildInputs = [ pkgs.gnugrep ]; } ''
-        grep -Fqx ${lib.escapeShellArg jellyfinEntry} ${lanHosts}
-        touch "$out"
-      '';
+      checks.tv-lan-hosts =
+        pkgs.runCommand "check-tv-lan-hosts" { nativeBuildInputs = [ pkgs.gnugrep ]; }
+          ''
+            grep -Fqx ${lib.escapeShellArg jellyfinEntry} ${lanHosts}
+            touch "$out"
+          '';
     };
 }
