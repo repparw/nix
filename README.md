@@ -8,7 +8,7 @@ Hosts:
 - `alpha`: desktop workstation with backend services, gaming, streaming, and
   backups.
 - `pi`: Raspberry Pi 5 home server with Home Assistant, the LAN HTTPS edge,
-  fleet monitoring, and the deployment controller.
+  fleet monitoring, the deployment controller, and the free-games claimer.
 - `epsilon`: aarch64 VPS with the public HTTPS edge, Authelia, Miniflux,
   Glance, Hermes, ArchiSteamFarm, and Paperless in nspawn containers.
 

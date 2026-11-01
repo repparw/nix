@@ -79,6 +79,10 @@ public vhosts with Authelia SSO. Installed in place via nixos-infect
   and masquerades the allocation range only toward `eth0` and `wg-home`.
   Containers resolve through the host at `10.231.137.1`; Glance's monitors
   probe public endpoints through the home tunnel where required.
+- `containers.free-games-claimer` claims Epic and GOG free games here
+  (residential IP keeps Epic captchas rare; headed Chromium under Xvfb, daily
+  timer, reports to the fleet Discord channel). See the
+  [free-games-claimer guide](services/free-games-claimer.md).
 - `containers.hermes` runs the Hermes Agent messaging gateway here
   (migrated from pi).
 - `containers.archisteamfarm` runs the Steam bot here (migrated from pi
