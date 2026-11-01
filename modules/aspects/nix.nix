@@ -2,8 +2,18 @@ _: {
   den.aspects.nix.nixos = {
     programs.nh.enable = true;
 
+    # Nix's default build-dir is /tmp, which is a tmpfs on this fleet
+    # (boot.tmp.useTmpfs). Build trees are then bounded by half of RAM
+    # instead of disk, and their pages count against RAM: pi could not
+    # extract t3code's vendor tree (No space left on device on a 3.9 GiB
+    # tmpfs), and tmpfs pressure contributed to earlyoom killing a
+    # torchaudio test build on epsilon. Keep build trees on the store
+    # filesystem instead.
+    systemd.tmpfiles.rules = [ "d /nix/tmp 0755 root root -" ];
+
     nix = {
       settings = {
+        build-dir = "/nix/tmp";
         extra-substituters = [
           "https://cachix.cachix.org"
           "https://devenv.cachix.org"
