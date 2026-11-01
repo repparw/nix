@@ -550,8 +550,12 @@ prepare_host() {
   store="ssh-ng://root@$(host_address "$host")"
   NIX_SSHOPTS="${ssh_options[*]}" nix copy -s --to "$store" --derivation "$drv" || return 1
   remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || return 1
+  # Persist nix's raw internal-json stream: it is compact and greppable.
+  # Piping it through nom re-rendered the whole dependency tree on every
+  # progress event, which grew prepare logs past a gigabyte per host and
+  # buried the actual build error under repeated progress frames.
   built=$(remote "$host" nix build "$drv^out" --out-link /nix/var/nix/gcroots/fleet-update/prepared \
-    --print-out-paths --log-format internal-json -v 2> >(nom --json >&2)) || return 1
+    --print-out-paths --log-format internal-json -v) || return 1
   [ "$built" = "$profile" ] || { echo "error: $host prepared unexpected profile: $built" >&2; return 1; }
   remote "$host" test -f "$profile/activate-rs" || return 1
   remote "$host" test -f "$profile/deploy-rs-activate" || return 1
