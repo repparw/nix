@@ -1,4 +1,4 @@
-{ den, ... }:
+{ den, inputs, lib, ... }:
 {
   den.aspects.backup = {
     includes = [ den.aspects.backup._.restic ];
@@ -30,17 +30,18 @@
             ]) options
           );
         resticCommand = mkResticCommand backup.extraOptions;
-        # Restic prune repacks packs with parallel backend connections and
-        # refuses to run below two, while the backup itself may be throttled
-        # to one connection (pi's rclone.connections=1, host-backup.nix,
-        # macb TX-queue watchdog). Give the post-start forget --prune its own
-        # bumped limit so retention keeps working on hosts that throttle the
-        # backup.
-        pruneCommand = mkResticCommand (
-          map (
-            option: if lib.hasPrefix "rclone.connections=" option then "rclone.connections=2" else option
-          ) backup.extraOptions
-        );
+        # extraBackupArgs apply only to backup, but prune also uploads
+        # repacked data. Keep Pi's macb TX-queue watchdog upload throttle.
+        pruneUploadArgs = lib.filter (lib.hasPrefix "--limit-upload=") backup.extraBackupArgs;
+        # Pruning needs at least two backend connections. Do not reduce
+        # already valid limits on other hosts.
+        pruneCommand =
+          mkResticCommand (
+            map (
+              option: if option == "rclone.connections=1" then "rclone.connections=2" else option
+            ) backup.extraOptions
+          )
+          + lib.optionalString (pruneUploadArgs != [ ]) " ${lib.escapeShellArgs pruneUploadArgs}";
         prepareExports = pkgs.writeShellApplication {
           name = "prepare-offsite-exports";
           runtimeInputs = [
@@ -306,6 +307,17 @@
   };
   perSystem = { pkgs, ... }: {
     checks.backup-exports =
+      let
+        piPostStart = builtins.unsafeDiscardStringContext (
+          inputs.self.nixosConfigurations.pi.config.systemd.services.restic-backups-offsite.postStart
+        );
+        lines = lib.splitString "\n" piPostStart;
+        pruneLine = lib.findFirst (lib.hasInfix "forget --prune") "" lines;
+        unlockLine = lib.findFirst (lib.hasInfix " unlock") "" lines;
+      in
+      assert lib.hasInfix "rclone.connections=2" pruneLine;
+      assert lib.hasInfix "--limit-upload=2048" pruneLine;
+      assert lib.hasInfix "rclone.connections=1" unlockLine;
       pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; }
         ''
           PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
