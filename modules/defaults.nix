@@ -14,6 +14,10 @@
       includes = with den.aspects; [
         nix-index
         monitoring._.agent
+        # The health collector above and the headless reboot sequence both
+        # gate on this predicate; it ships fleet-wide so fleet debug and the
+        # controller's remote check find it on any host.
+        fleet-reboot
         nixvim
         nixpkgs
         nodejs-security
@@ -28,7 +32,10 @@
       nixos.systemd.targets.machines.wantedBy = [ "multi-user.target" ];
       homeManager.home.stateVersion = "26.05";
 
-      nixos.nix.settings.min-free = 3 * 1024 * 1024 * 1024;
+      nixos.nix.settings = {
+        min-free = lib.mkDefault (3 * 1024 * 1024 * 1024);
+        max-free = lib.mkDefault (6 * 1024 * 1024 * 1024);
+      };
       nixos.nix.gc = {
         automatic = true;
         dates = "weekly";

@@ -132,6 +132,11 @@ export function validateWatchers(watchers) {
     slugs.add(watcher.slug);
 
     if (watcher.enabled === false) continue;
+    if (watcher.extractor === "nixpkgsSecurityIssues" &&
+        (!Array.isArray(watcher.packages) || watcher.packages.length === 0 ||
+         watcher.packages.some((name) => typeof name !== "string" || !/^[a-zA-Z0-9_.+-]+$/.test(name)))) {
+      throw new Error(`${label}.packages must contain Nixpkgs package names`);
+    }
 
     validateHttpUrl(watcher.url, `${label}.url`);
     if (watcher.fetchUrl !== undefined) {
@@ -211,7 +216,8 @@ export function validateWatchers(watchers) {
     } else if (
       watcher.mode !== "extractor" ||
       (watcher.extractor !== "eightBitdoUltimate2cFirmware" &&
-       watcher.extractor !== "nixosReleaseChanges")
+       watcher.extractor !== "nixosReleaseChanges" &&
+       watcher.extractor !== "nixpkgsSecurityIssues")
     ) {
       throw new Error(`Unknown watcher mode for ${watcher.slug}`);
     }
@@ -571,6 +577,81 @@ async function notifyDiscord(discord, content, fetchImpl) {
   }
 }
 
+const TRACKER_ISSUES_API = "https://tracker.security.nixos.org/api/v1/issues";
+
+function trackerPageUrl(value) {
+  const url = new URL(value);
+  // The API currently emits HTTP next links behind its HTTPS reverse proxy.
+  if (url.hostname !== "tracker.security.nixos.org" || url.port ||
+      url.username || url.password || url.pathname !== "/api/v1/issues" ||
+      !["http:", "https:"].includes(url.protocol)) {
+    throw new Error("Unexpected security tracker pagination URL");
+  }
+  url.protocol = "https:";
+  url.searchParams.set("expand", "suggestions");
+  return url.href;
+}
+
+function fleetSecurityPackage(name) {
+  const attribute = name.split(".").at(-1);
+  return attribute
+    .replace(/^nodejs(?:-slim)?(?:_\d+)?$/, "nodejs")
+    .replace(/^(postgresql|python|electron|openssl)(?:[_-]?[\d.]+)?$/, "$1");
+}
+
+export async function checkNixpkgsSecurityIssues(watcher, previous, fetchImpl) {
+  const packages = new Set(watcher.packages.map(fleetSecurityPackage));
+  const seen = new Set(previous?.seen ?? []);
+  const added = [];
+  const visited = new Set();
+  let url = `${TRACKER_ISSUES_API}?expand=suggestions`;
+  let latestIssue = previous?.latestIssue ?? null;
+  let foundCheckpoint = !previous?.latestIssue;
+  for (let page = 0; page < 50; page++) {
+    if (visited.has(url)) throw new Error("Security tracker pagination loop");
+    visited.add(url);
+    const body = await fetchText({ ...watcher, fetchUrl: url }, fetchImpl);
+    const data = JSON.parse(body);
+    if (!isPlainObject(data) || !Array.isArray(data.results) ||
+        !(data.next === null || typeof data.next === "string")) {
+      throw new Error("Malformed security tracker page");
+    }
+    for (const issue of data.results) {
+      if (!isPlainObject(issue) || !/^NIXPKGS-\d{4}-\d{4,19}$/.test(issue.code) ||
+          !Array.isArray(issue.suggestions) || typeof issue.status !== "string") {
+        throw new Error("Malformed security tracker issue");
+      }
+      if (page === 0 && issue === data.results[0]) latestIssue = issue.code;
+      if (issue.code === previous?.latestIssue) {
+        foundCheckpoint = true;
+        break;
+      }
+      for (const suggestion of issue.suggestions) {
+        if (!isPlainObject(suggestion) || !/^CVE-\d{4}-\d{4,}$/.test(suggestion.cve_id) ||
+            !isPlainObject(suggestion.packages) || typeof suggestion.status !== "string") {
+          throw new Error("Malformed published security suggestion");
+        }
+        if (suggestion.status !== "published" || ["NA", "O"].includes(issue.status)) continue;
+        for (const name of Object.keys(suggestion.packages)) {
+          const packageName = fleetSecurityPackage(name);
+          if (!packages.has(packageName)) continue;
+          const key = `${suggestion.cve_id}:${packageName}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          added.push({ cve: suggestion.cve_id, package: packageName, issue: issue.code });
+        }
+      }
+    }
+    // Initial run deliberately baselines the latest page, without replaying history.
+    if (!previous?.latestIssue || foundCheckpoint) break;
+    if (data.next === null) throw new Error("Security tracker checkpoint disappeared");
+    url = trackerPageUrl(data.next);
+  }
+  if (!foundCheckpoint) throw new Error("Security tracker checkpoint not reached within 50 pages");
+  if (seen.size > 50000) throw new Error("Security tracker deduplication state exceeds 50000 pairs");
+  return { latestIssue, seen: [...seen].sort(), added: previous ? added : [] };
+}
+
 export async function runChangeDetection({
   watchersPath,
   defaultWatchersPath,
@@ -601,6 +682,23 @@ export async function runChangeDetection({
     const state = readState(statePath);
 
     for (const watcher of watchers.filter((entry) => entry.enabled !== false)) {
+      if (watcher.extractor === "nixpkgsSecurityIssues") {
+        const result = await checkNixpkgsSecurityIssues(watcher, state.watchers[watcher.slug], fetchImpl);
+        for (let offset = 0; offset < result.added.length; offset += 8) {
+          const lines = result.added.slice(offset, offset + 8).map((entry) =>
+            `• ${entry.cve} — ${entry.package}\nhttps://tracker.security.nixos.org/issues/${entry.issue}`);
+          await notifyDiscord(discord,
+            `**Nixpkgs security: new fleet-package issues**\n${lines.join("\n")}\nDeployed versions and patches need checking.`, fetchImpl);
+        }
+        state.watchers[watcher.slug] = {
+          latestIssue: result.latestIssue,
+          seen: result.seen,
+          checkedAt: now().toISOString(),
+          url: watcher.url,
+        };
+        log(`${watcher.slug}: ${result.added.length} new CVE/package matches`);
+        continue;
+      }
       const body = await fetchText(watcher, fetchImpl);
       const current = extractValue(watcher, body);
       const currentKey =

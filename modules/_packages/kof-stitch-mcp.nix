@@ -1,13 +1,14 @@
 {
   lib,
   buildNpmPackage,
+  nodejs,
   fetchFromGitHub,
   makeWrapper,
   google-cloud-sdk,
   coreutils,
 }:
 
-buildNpmPackage {
+(buildNpmPackage.override { inherit nodejs; }) {
   pname = "kof-stitch-mcp";
   version = "1.3.0";
 

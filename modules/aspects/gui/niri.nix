@@ -21,23 +21,25 @@
               };
             });
 
-            # wpaperd 1.3.0 segfaults on every monitor hotplug: niri can still
-            # dispatch frame/scale/transform events for a wl_surface that
-            # output_destroyed() already removed, and surface_from_wl_surface()
-            # used .expect() on that lookup. Upstream fixed it in
-            # danyspin97/wpaperd@442b962 ("avoid panic when Wayland events arrive
-            # after output removal"), which fixes #190 and is in no release yet.
-            # Matched on the exact version so a bump drops the patch instead of
-            # failing patchPhase.
-            wpaperd = prev.wpaperd.overrideAttrs (old: {
-              patches =
-                (old.patches or [ ]) ++ lib.optional (old.version == "1.3.0") ./wpaperd-output-removal-race.patch;
-            });
           })
         ];
 
         programs.niri.enable = lib.mkDefault true;
         programs.wshowkeys.enable = true;
+
+        # KDE Connect's remote-input (mouse/keyboard from a phone) needs a
+        # portal backend that implements RemoteDesktop on wlroots compositors.
+        # The GNOME portal backend does not implement RemoteDesktop on Niri,
+        # so use Luminous for that interface only.
+        xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-luminous ];
+        xdg.portal.config.niri."org.freedesktop.impl.portal.RemoteDesktop" = "luminous";
+
+        environment.etc."xdg/xdg-desktop-portal-luminous/config.toml".text = ''
+          # Avoid blocking remote input on a permission dialog that may not
+          # be reachable from the phone-initiated flow.
+          remote_permission_check = false
+          screenshot_permission_check = false
+        '';
       };
 
     homeManager =
@@ -220,13 +222,21 @@
               "Mod+Alt+F" = titledAction "Toggle Floating" "toggle-window-floating";
               "Mod+Ctrl+F" = titledAction "Toggle Focus Floating" "switch-focus-between-floating-and-tiling";
               "Mod+G" = titledSpawn "T3 Code" [ "t3code-desktop-connect" ];
-              "Mod+M" = titledSpawn "cliamp" [
-                "xdg-terminal-exec"
-                "--app-id=cliamp"
-                "--"
-                "cliamp"
-                "attach"
+              "Mod+Shift+G" = titledSpawn "T3 SnapShot" [
+                (lib.getExe' pkgs.glib "gdbus")
+                "call"
+                "--session"
+                "--dest"
+                "com.t3tools.T3Code.SnapShot"
+                "--object-path"
+                "/com/t3tools/SnapShot"
+                "--method"
+                "com.t3tools.SnapShot.Capture"
               ];
+              # Raises the running Spotifast window, or starts the client
+              # when nothing is running: a second launch hands over to the
+              # live instance instead of starting a duplicate.
+              "Mod+M" = titledSpawn "Spotifast" [ "spotifast" ];
               "Mod+N" = titledSpawn "Notes (Neovim)" [
                 "xdg-terminal-exec"
                 "--app-id=notes"

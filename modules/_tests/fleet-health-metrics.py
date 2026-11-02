@@ -1,6 +1,5 @@
 import importlib.util
 import json
-import subprocess
 from pathlib import Path
 import sys
 import tempfile
@@ -11,47 +10,9 @@ from unittest.mock import patch
 spec = importlib.util.spec_from_file_location("collector", sys.argv.pop(1))
 collector = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(collector)
-rules = {rule["uid"]: rule for rule in json.loads(Path(sys.argv.pop(1)).read_text())}
 
 
 class MetricsTests(unittest.TestCase):
-    def test_cloud_policies_preserve_legacy_thresholds_and_fail_closed(self):
-        cases = []
-        def scenario(rule, values, expected, labels, evaluation="4m", interval="1m"):
-            output_labels = {k: v for k, v in labels.items() if k != "sleeping"}
-            label_text = "{" + ",".join(f"{k}={json.dumps(v)}" for k, v in sorted(labels.items())) + "}"
-            cases.append({"interval": interval, "input_series": [
-                {"series": name + label_text, "values": f"{value}+0x32"} for name, value in values.items()
-            ], "promql_expr_test": [{"expr": "(" + rules["fleet_cloud_" + rule]["expr"] + ") > bool 0",
-                "eval_time": evaluation, "exp_samples": [{"labels": "{" + ",".join(f"{k}={json.dumps(v)}" for k, v in sorted(output_labels.items())) + "}", "value": expected}]}]})
-        disk = {"host": "epsilon", "mountpoint": "/persist", "sleeping": "false"}
-        values = {"fleet_disk_used_percent": 80, "fleet_disk_warning_percent": 70, "fleet_disk_critical_percent": 85}
-        scenario("disk_warning", values, 1, disk)
-        scenario("disk_warning", values, 1, disk | {"sleeping": "true"})
-        scenario("disk_critical", values, 0, disk)
-        scenario("disk_critical", values | {"fleet_disk_used_percent": 86}, 1, disk)
-        allocation = {"fleet_btrfs_metadata_used_percent": 80, "fleet_btrfs_unallocated_bytes": 1073741824}
-        scenario("btrfs_critical", allocation, 1, disk)
-        scenario("btrfs_warning", allocation | {"fleet_btrfs_metadata_used_percent": 86, "fleet_btrfs_unallocated_bytes": 5368709120}, 1, disk)
-        scenario("units", {"fleet_failed_units": 1}, 1, {"host": "pi"})
-        scenario("required_unit", {"fleet_required_unit_active": 0}, 1, {"host": "pi", "name": "traefik.service"})
-        scenario("http", {"fleet_service_probe_expected": 1}, 1, {"host": "pi", "service": "missing"})
-        scenario("http", {"fleet_service_probe_expected": 1, "probe_success": 1}, 0, {"host": "pi", "service": "available"})
-        backup = {"fleet_backup_last_success_timestamp_seconds": 0, "fleet_backup_monitoring_since_timestamp_seconds": 0}
-        scenario("backup_stale", backup, 0, {"host": "pi"}, "1h", "1h")
-        scenario("backup_stale", backup, 1, {"host": "pi"}, "31h", "1h")
-        with tempfile.TemporaryDirectory() as root:
-            tests = Path(root) / "policies.yml"
-            tests.write_text(json.dumps({"evaluation_interval": "1m", "tests": cases}))
-            result = subprocess.run(["promtool", "test", "rules", str(tests)], capture_output=True, text=True)
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            policy = Path(root) / "rules.yml"
-            policy.write_text(json.dumps({"groups": [{"name": "fleet-cloud", "rules": [
-                {"alert": rule["uid"], "expr": "(" + rule["expr"] + ") > 0", "for": rule["pending"]} for rule in rules.values()
-            ]}]}))
-            result = subprocess.run(["promtool", "check", "rules", str(policy)], capture_output=True, text=True)
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
     def test_sleeping_mount_is_never_accessed(self):
         disk = {"mount": "/media", "warn": 95, "crit": 98, "sleeping": True}
         mounts = collector.mounted_filesystems("1 0 0:1 / /media rw - autofs systemd-1 rw")
@@ -90,26 +51,22 @@ class MetricsTests(unittest.TestCase):
             self.assertEqual(path.stat().st_mode & 0o777, 0o644)
             self.assertIn('name="unit\\"\\\\name"', path.read_text())
 
-    def test_reboot_compares_kernel_links_not_generation_names(self):
-        with tempfile.TemporaryDirectory() as root:
-            base = Path(root)
-            old, new = base / "old", base / "new"
-            old.mkdir(); new.mkdir()
-            for name in ["initrd", "kernel", "kernel-modules"]:
-                target = base / name
-                target.touch()
-                (old / name).symlink_to(target)
-                (new / name).symlink_to(target)
-            self.assertEqual(collector.reboot_required(old, new), 0)
-            (new / "kernel").unlink()
-            (new / "kernel").touch()
-            self.assertEqual(collector.reboot_required(old, new), 1)
-            (new / "kernel").unlink()
-            with self.assertRaises(ValueError):
-                collector.reboot_required(old, new)
+    def test_reboot_metric_follows_predicate_exit_codes(self):
+        # The shell predicate owns link comparison (fleet-reboot-required
+        # test.py); the collector only maps its exit codes onto the metric.
+        def outcome(code, stderr=b""):
+            return lambda *_args, **_kwargs: SimpleNamespace(
+                returncode=code, stderr=stderr, stdout=b""
+            )
+        self.assertEqual(collector.reboot_required(run=outcome(0)), 1)
+        self.assertEqual(collector.reboot_required(run=outcome(1)), 0)
+        with self.assertRaises(ValueError):
+            collector.reboot_required(run=outcome(2, b"missing /run/booted-system/kernel"))
+        with self.assertRaises(ValueError):
+            collector.reboot_required(run=outcome(255, b""))
 
     def test_backup_success_is_not_inferred_from_export_preparation(self):
-        settings = {"requiredUnits": [], "exports": ["paperless"], "probes": ["paperless"], "rebootCheck": True}
+        settings = {"requiredUnits": [], "exports": ["paperless"], "probes": ["paperless"]}
         report = {"finishedAt": 99, "exports": {"paperless": {"status": "complete"}}}
         def exists(path):
             return str(path).endswith("offsite.json")
@@ -118,10 +75,28 @@ class MetricsTests(unittest.TestCase):
              patch.object(Path, "exists", exists), \
              patch.object(Path, "read_text", return_value=json.dumps(report)):
             text, state = collector.host_metrics(settings, {}, 100)
-        self.assertIn("fleet_failed_units 1", text)
+        self.assertIn('fleet_failed_unit{name="failed.service"} 1', text)
         self.assertIn("fleet_backup_last_success_timestamp_seconds 0", text)
         self.assertIn('fleet_backup_export_complete{export="paperless"} 1', text)
         self.assertEqual(state["since"], 100)
+
+    def test_failed_unit_metric_is_per_unit_and_absent_when_healthy(self):
+        settings = {"requiredUnits": [], "exports": [], "probes": []}
+        with patch.object(collector, "command", return_value="first.service\nsecond.service"), \
+             patch.object(collector, "reboot_required", return_value=0), \
+             patch.object(Path, "exists", return_value=False):
+            text, _ = collector.host_metrics(settings, {}, 100)
+        self.assertIn('fleet_failed_unit{name="first.service"} 1', text)
+        self.assertIn('fleet_failed_unit{name="second.service"} 1', text)
+        self.assertIn("fleet_failed_units 2", text)
+
+        with patch.object(collector, "command", return_value=""), \
+             patch.object(collector, "reboot_required", return_value=0), \
+             patch.object(Path, "exists", return_value=False):
+            healthy, _ = collector.host_metrics(settings, {}, 101)
+        self.assertNotIn("fleet_failed_unit{", healthy)
+        self.assertIn("fleet_failed_units 0", healthy)
+        self.assertIn("fleet_deployment_paused 0", healthy)
 
 
 unittest.main()

@@ -1,10 +1,10 @@
 ---
 type: Host Profiles
 title: Host Profiles
-description: The alpha desktop, pi home server, and epsilon VPS edge profiles, plus the parked beta laptop.
+description: The alpha desktop, pi home server, and epsilon VPS edge profiles.
 when: Read when comparing host profiles or adding or changing a host.
 resource: modules/hosts/
-tags: [hosts, alpha, beta, pi, epsilon]
+tags: [hosts, alpha, pi, epsilon]
 ---
 
 # Host Profiles
@@ -34,14 +34,6 @@ See the
 
 Source: `modules/hosts/alpha.nix`
 
-## Beta
-
-`beta` is the laptop profile. It adds laptop-specific input, power, and display
-handling to the shared baseline. It is parked: there is no `den.hosts` entry,
-so it does not participate in flake evaluations until it has hardware again.
-
-Source: `modules/hosts/beta.nix`
-
 ## Pi
 
 `pi` is the Raspberry Pi 5 home server (aarch64, `192.168.0.4`) and the
@@ -55,9 +47,13 @@ same SHA when main has not moved. Pi then reuses that exact successful CI result
 while staging the revision through epsilon, idle alpha, and finally pi with
 deploy-rs.
 
-- Traefik (:80/:443) fronts `jellyfin.repparw.com` on the LAN and
-  `home.repparw.com` locally. Jellyfin's backend is alpha's published port.
-- `containers.homeassistant` serves `home.repparw.com`.
+- Traefik (:443) fronts `jellyfin.repparw.com` only — the fleet's one direct
+  WAN HTTPS entrypoint, reached through the router's TCP 443 port-forward.
+  The DNS-only `jellyfin` A record is stable because the home WAN IP is
+  static, so no DDNS updater is needed for it. Jellyfin's backend is alpha's
+  published port.
+- `containers.homeassistant` serves `home.repparw.com` through the Cloudflare
+  tunnel via epsilon, not through pi's Traefik.
 - Fleet-health monitoring and the `fleet-controller` auto-update pipeline run here.
 
 It boots through the Raspberry Pi firmware and generic-extlinux-compatible

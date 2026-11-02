@@ -17,11 +17,13 @@ Check issues before implementing a local workaround. For merged pull requests, v
 ## Agent skills
 
 For configuration changes or pre-deployment checks, use
-[verify-nixos-config](.agents/skills/verify-nixos-config/SKILL.md). For
+[verify-fleet-change](.agents/skills/verify-fleet-change/SKILL.md). For
 running-fleet inspection or an authorized activation, use
 [fleet-operations](.agents/skills/fleet-operations/SKILL.md). For an external
 change blocked on an upstream input, use
 [watch-upstream](.agents/skills/watch-upstream/SKILL.md).
+For web-page change detection in the automations service, use
+[manage-page-watchers](.agents/skills/manage-page-watchers/SKILL.md).
 
 ### Issue tracker
 

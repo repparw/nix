@@ -27,6 +27,13 @@ function fixture() {
   mock('fleet-unit-snapshot', '[ ! -f "$MOCK_ROOT/pi-error" ]; cat "$MOCK_ROOT/pi"');
   mock('ssh', `for arg in "$@"; do case "$arg" in root@*) target="$arg";; esac; done
     case "$target" in root@192.168.0.18) host=alpha;; *) host=epsilon;; esac
+    if [[ " $* " == *" bash -s -- "* ]]; then
+      cat >/dev/null
+      [ ! -f "$MOCK_ROOT/backend-error" ]
+      printf '%s' "$(cat "$MOCK_ROOT/backend-status" 2>/dev/null || echo 302)"
+      printf '%s\\n' "$*" >> "$MOCK_ROOT/backend-probes"
+      exit 0
+    fi
     [ ! -f "$MOCK_ROOT/$host-error" ]; cat "$MOCK_ROOT/$host"`);
   mock('discord-notify', `printf '%s|%s\n' "$1" "$2" >> "$MOCK_ROOT/messages"
     [ ! -f "$MOCK_ROOT/$1-error" ]
@@ -72,6 +79,20 @@ test('required HTTP health response still gates strict readiness', () => {
   const f = fixture(); try {
     f.set('http-status', '503');
     assert.notEqual(f.sweep(['--strict']).status, 0);
+    assert.equal(f.messages(), '');
+  } finally { f.cleanup(); }
+});
+
+test('private container checks run on the owning host and reject backend errors', () => {
+  const f = fixture(); try {
+    const r = f.sweep(['--strict']); assert.equal(r.status, 0, r.stderr);
+    assert.match(readFileSync(join(f.root, 'backend-probes'), 'utf8'), /root@10\.5\.5\.3 bash -s -- paperless 8000/);
+    f.set('backend-status', '503');
+    const failed = f.sweep(['--strict']); assert.notEqual(failed.status, 0);
+    assert.match(failed.stderr, /paperless: private backend returned 503/);
+    f.set('backend-error', '');
+    assert.notEqual(f.sweep(['--strict']).status, 0);
+    assert.equal(f.sweep(['--strict', '--local']).status, 0);
     assert.equal(f.messages(), '');
   } finally { f.cleanup(); }
 });

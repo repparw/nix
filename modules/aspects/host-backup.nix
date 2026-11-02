@@ -48,7 +48,20 @@
             "tmp"
           ];
         };
-        services.restic.backups.offsite.extraBackupArgs = [ "--one-file-system" ];
+        services.restic.backups.offsite = {
+          extraBackupArgs = [
+            "--one-file-system"
+          ]
+          ++ lib.optionals (config.networking.hostName == "pi") [
+            # Pi's onboard Ethernet hit macb TX-queue watchdog timeouts during
+            # sustained offsite uploads (Grafana logs 2026-10-30).
+            # restic interprets this value in KiB/s: 2048 = 2 MiB/s.
+            "--limit-upload=2048"
+          ];
+          extraOptions = lib.optionals (config.networking.hostName == "pi") [
+            "rclone.connections=1"
+          ];
+        };
         # Keep existing checkpoints readable and backed up after retiring the tool.
         systemd.tmpfiles.rules = [ "d /var/lib/host-recovery 0700 root root -" ];
       };

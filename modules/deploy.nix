@@ -91,7 +91,6 @@ let
         gawk
         jq
         nix
-        nix-output-monitor
         openssh
         python3
         systemd
@@ -235,6 +234,20 @@ in
         type = "app";
         program = lib.getExe pkgs.deploy-rs;
         meta.description = "Deploy a configured node with deploy-rs";
+      };
+      # Manual deploys of verified local trees can avoid rerunning flake checks.
+      # This command deliberately does not verify the checkout or CI status.
+      apps.deploy = {
+        type = "app";
+        program = lib.getExe (
+          pkgs.writeShellApplication {
+            name = "deploy";
+            text = ''
+              exec ${lib.getExe pkgs.deploy-rs} "$@" --skip-checks
+            '';
+          }
+        );
+        meta.description = "Deploy a verified local tree without repeating flake checks";
       };
       apps.fleet-update = {
         type = "app";

@@ -28,11 +28,14 @@
         };
 
         systemd.services.btrfs-health-root = {
-          description = "Check root btrfs allocation health";
+          description = "Reclaim low-usage root btrfs chunks and check allocation health";
           documentation = [ "man:btrfs-filesystem(8)" ];
           serviceConfig = {
             Type = "oneshot";
             StateDirectory = "btrfs-health-root";
+            TimeoutStartSec = "infinity";
+            IOSchedulingClass = "idle";
+            Nice = 10;
           };
           path = with pkgs; [
             btrfs-progs
@@ -43,32 +46,49 @@
           script = ''
             set -eu
 
-            usage="$(btrfs filesystem usage -b ${root})"
+            read_usage() {
+              usage="$(btrfs filesystem usage -b ${root})"
 
-            unallocated_bytes="$(printf '%s\n' "$usage" | awk '/^[[:space:]]*Device unallocated:/ { print $3 }')"
-            metadata_pct="$(
-              printf '%s\n' "$usage" |
-                awk '/^Metadata,DUP:/ {
-                  sub(/^.*\(/, "", $0)
-                  sub(/%\).*$/, "", $0)
-                  print $0
-                }'
-            )"
-            global_reserve_used="$(
-              printf '%s\n' "$usage" |
-                awk '/Global reserve:/ {
-                  sub(/^.*\(used: /, "", $0)
-                  sub(/\).*$/, "", $0)
-                  print $0
-                }'
-            )"
+              unallocated_bytes="$(printf '%s\n' "$usage" | awk '/^[[:space:]]*Device unallocated:/ { print $3 }')"
+              metadata_pct="$(
+                printf '%s\n' "$usage" |
+                  awk '/^Metadata,DUP:/ {
+                    sub(/^.*\(/, "", $0)
+                    sub(/%\).*$/, "", $0)
+                    print $0
+                  }'
+              )"
+              global_reserve_used="$(
+                printf '%s\n' "$usage" |
+                  awk '/Global reserve:/ {
+                    sub(/^.*\(used: /, "", $0)
+                    sub(/\).*$/, "", $0)
+                    print $0
+                  }'
+              )"
 
-            for value in "$unallocated_bytes" "$metadata_pct" "$global_reserve_used"; do
-              if ! printf '%s\n' "$value" | grep -Eq '^[0-9]+([.][0-9]+)?$'; then
-                echo "cannot parse root btrfs allocation health from byte-mode usage" >&2
-                exit 1
+              estimated_free_bytes="$(printf '%s\n' "$usage" | awk '/Free \(estimated\):/ { print $3 }')"
+
+              for value in "$unallocated_bytes" "$metadata_pct" "$global_reserve_used" "$estimated_free_bytes"; do
+                if ! printf '%s\n' "$value" | grep -Eq '^[0-9]+([.][0-9]+)?$'; then
+                  echo "cannot parse root btrfs allocation health from byte-mode usage" >&2
+                  exit 1
+                fi
+              done
+            }
+
+            min_unallocated_bytes=${toString (minUnallocatedGiB * 1024 * 1024 * 1024)}
+            read_usage
+            if awk "BEGIN { exit !($unallocated_bytes < $min_unallocated_bytes) }"; then
+              btrfs balance start -dusage=0 -musage=0 ${root}
+              read_usage
+              if awk "BEGIN { exit !($unallocated_bytes < $min_unallocated_bytes &&
+                  $estimated_free_bytes >= 2 * $min_unallocated_bytes &&
+                  $metadata_pct < ${toString metadataCriticalPercent} && $global_reserve_used == 0) }"; then
+                btrfs balance start -dusage=25,limit=8 ${root}
+                read_usage
               fi
-            done
+            fi
 
             failed=0
 

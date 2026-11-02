@@ -4,10 +4,9 @@
     { config, pkgs, ... }:
     let
       servicesLib = import ../_services/lib.nix { inherit lib pkgs; };
+      jellyfinHost = "Host(`${config.modules.services.definitions.jellyfin.hostname}.${config.modules.services.domain}`)";
     in
     {
-      services.ddclient.enable = lib.mkForce false;
-
       networking.firewall = {
         extraInputRules = ''
           iifname "ve-*" tcp dport { 80, 443 } accept comment "containers -> local edge"
@@ -44,9 +43,25 @@
           tls.options.default.sniStrict = true;
           http = {
             routers.jellyfin = {
-              rule = "Host(`${config.modules.services.definitions.jellyfin.hostname}.${config.modules.services.domain}`)";
+              rule = jellyfinHost;
               service = "jellyfin";
               tls.certResolver = "cloudflare";
+              middlewares = [ "hsts" ];
+            };
+            routers.jellyfin-login = {
+              rule = "${jellyfinHost} && PathPrefix(`/Users/AuthenticateByName`)";
+              service = "jellyfin";
+              tls.certResolver = "cloudflare";
+              middlewares = [
+                "hsts"
+                "jellyfin-login-limit"
+              ];
+            };
+            middlewares.hsts.headers.stsSeconds = 2592000;
+            middlewares.jellyfin-login-limit.rateLimit = {
+              average = 5;
+              burst = 10;
+              period = "1m";
             };
             services.jellyfin.loadBalancer.servers = [
               { url = servicesLib.serviceUrl config.modules.services config "jellyfin"; }

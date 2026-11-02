@@ -67,6 +67,11 @@ _: {
           wanInterface = "eth0";
           ifbDevice = "ifb-wan";
           bandwidth = "23Mbit";
+          # alpha's LAN subnet. Peers on it terminate on eth0 directly, so the
+          # mirred catch-all would shape LAN ingress too (measured 21.6 vs
+          # 913 Mbit/s pi->alpha). The prio-5 pass filter exempts them so only
+          # WAN ingress is redirected into the CAKE shaper.
+          lanSubnet = "192.168.0.0/24";
         in
         {
           boot.kernelModules = [
@@ -95,7 +100,10 @@ _: {
             serviceConfig = {
               Type = "oneshot";
               RemainAfterExit = true;
-              ExecStop = "-${pkgs.iproute2}/bin/tc filter del dev ${wanInterface} parent ffff: protocol all prio 10";
+              ExecStop = [
+                "-${pkgs.iproute2}/bin/tc filter del dev ${wanInterface} parent ffff: protocol all prio 10"
+                "-${pkgs.iproute2}/bin/tc filter del dev ${wanInterface} parent ffff: protocol ip prio 5"
+              ];
             };
             script = ''
               set -euo pipefail
@@ -109,6 +117,7 @@ _: {
               done
               "$IP" link set ${ifbDevice} up
               "$TC" qdisc replace dev ${wanInterface} handle ffff: ingress
+              "$TC" filter replace dev ${wanInterface} parent ffff: protocol ip prio 5 u32 match ip src ${lanSubnet} action pass
               "$TC" filter replace dev ${wanInterface} parent ffff: protocol all prio 10 u32 match u32 0 0 action mirred egress redirect dev ${ifbDevice}
               "$TC" qdisc replace dev ${ifbDevice} root cake bandwidth ${bandwidth} diffserv4 triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms raw overhead 0
             '';

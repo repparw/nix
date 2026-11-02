@@ -5,6 +5,7 @@
 }:
 {
   den.aspects.nixos-services.provides.hermes = {
+    # The CUA module is opt-in and remains disabled until remote enrollment.
     includes = [ den.aspects.hermes-cua ];
     service-registry = {
       name = "hermes";
@@ -24,7 +25,7 @@
         crashTriage = import ./hermes-crash/_package.nix { inherit pkgs; };
         packageTriage = import ./hermes-package/_package.nix { inherit pkgs; };
         # Containers have their own package set; select the host's security overlay.
-        hermesNodejs = pkgs.nodejs_24;
+        hermesNodejs = pkgs.nodejs-runtime;
       in
       {
         environment.systemPackages = [
@@ -48,6 +49,8 @@
         sops.secrets."hermes-llm-env" = {
           sopsFile = ../../../secrets/hermes.sops.yaml;
           uid = 327680;
+          # Token rotation must refresh Hermes' generated .env and MCP client.
+          restartUnits = [ "container@hermes.service" ];
         };
 
         sops.secrets."arr-api-keys" = {
@@ -111,12 +114,22 @@
             };
           };
           extraConfig =
-            containerArgs@{ pkgs, ... }:
+            { pkgs, ... }:
             {
               services.resolved.enable = true;
+              systemd.services.hermes-agent.environment.HERMES_MANAGED = lib.mkForce "false";
+              systemd.services.hermes-backend.environment.HERMES_MANAGED = lib.mkForce "false";
+              system.activationScripts.hermes-agent-setup.text = lib.mkAfter ''
+                printf '%s\n' false > /var/lib/hermes/.hermes/.managed
+              '';
 
               services.hermes-agent = {
                 enable = true;
+                backend = {
+                  mode = "serve";
+                  host = "127.0.0.1";
+                  sessionTokenFile = "/var/lib/hermes/.hermes/desktop-session-token";
+                };
                 package = pkgs.callPackage ../../_packages/hermes-agent.nix {
                   nodejs_24 = hermesNodejs;
                   upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
@@ -125,77 +138,28 @@
                   "/run/secrets/hermes-env"
                   "/run/secrets/hermes-llm-env"
                 ];
-                settings.model = {
-                  provider = "nous";
-                  default = "openai/gpt-6.1-sol";
-                };
-                # Do not silently downgrade complex work on a provider limit.
-                settings.fallback_providers = [ ];
-                settings.approvals = {
-                  mode = "manual";
-                  cron_mode = "deny";
-                  single_query_mode = "deny";
-                  unattended_mode = "deny";
-                };
-                settings.delegation = {
-                  fallback_providers = [ ];
-                  max_concurrent_children = 2;
-                  max_spawn_depth = 1;
-                  max_summary_chars = 6000;
-                  subagent_auto_approve = false;
-                };
-                settings.platform_toolsets.discord = [
-                  "web"
-                  "file"
-                  "terminal"
-                  "skills"
-                  "memory"
-                  "session_search"
-                  "delegation"
-                  "kanban"
-                  "cronjob"
-                ]
-                ++ lib.optionals containerArgs.config.modules.hermes-cua.ready [
-                  "browser"
-                  "computer_use"
-                ];
-                settings.kanban = {
-                  dispatch_in_gateway = false;
-                  auto_subscribe_on_create = false;
-                };
-                settings.memory = {
-                  memory_enabled = true;
-                  user_profile_enabled = true;
-                  provider = "";
-                };
-                settings.auxiliary.compression = {
-                  provider = "nous";
-                  model = "stepfun/step-3.7-flash:free";
-                };
-                hermesHomeFiles = {
-                  "SOUL.md" = ./hermes-chief-of-staff/SOUL.md;
-                  "skills/chief-of-staff/SKILL.md" = ./hermes-chief-of-staff/SKILL.md;
-                  "scripts/chief_of_staff_backup.py" = ./hermes-chief-of-staff/backup.py;
-                };
-                settings.display.credits_notices = false;
-                settings.platforms.discord = {
-                  enabled = true;
-                  home_channel = {
-                    platform = "discord";
-                    chat_id = config.modules.services.discordChannelId;
-                    name = "notifications";
-                  };
-                };
-                settings.cron = {
-                  model = "reflection/beam-1.0-501b-a23b:free";
-                  model_provider = "nous";
-                };
-                settings.tool_loop_guardrails = {
-                  hard_stop_enabled = true;
-                  hard_stop_after = {
-                    exact_failure = 5;
-                    idempotent_no_progress = 5;
-                  };
+                # Alpha's T3 orchestration MCP: one minimally scoped
+                # mcp-client session with read + operate, never admin scopes.
+                # The token is supplied at runtime by hermes-llm-env in SOPS.
+                mcpServers.t3 = {
+                  url = "http://${cfg.hostAddresses.alpha}:3773/mcp";
+                  headers.Authorization = "Bearer \${T3_MCP_TOKEN}";
+                  connect_timeout = 10;
+                  timeout = 300;
+                  # Only expose tools needed to inspect and direct T3 work.
+                  tools.include = [
+                    "t3_thread_list"
+                    "t3_thread_search"
+                    "t3_thread_read"
+                    "t3_thread_send"
+                    "t3_thread_wait"
+                    "t3_thread_interrupt"
+                    "t3_thread_launch"
+                    # These require a current T3 parent run; an external
+                    # mcp-client may receive parent_not_active instead.
+                    "create_threads"
+                    "delegate_task"
+                  ];
                 };
                 extraPackages = with pkgs; [
                   curl

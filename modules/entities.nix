@@ -6,12 +6,12 @@
       users.repparw.aspect = {
         includes = [
           den.aspects.repparw
+          den.aspects.fish
           den.aspects.desktop
           den.aspects.gaming
           den.aspects.streaming
-          den.aspects.cliamp
+          den.aspects.spotifast
           den.aspects.moonshine-pr227-test
-          den.aspects.ai._.t3code-stable010
         ];
       };
     };
@@ -24,7 +24,6 @@
           includes = [
             den.aspects.repparw
             den.aspects.ai._.t3code-split
-            den.aspects.ai._.t3code-stable010
           ];
         };
       };
@@ -35,7 +34,6 @@
           includes = [
             den.aspects.repparw
             den.aspects.ai._.t3code-split
-            den.aspects.ai._.t3code-stable010
           ];
         };
       };

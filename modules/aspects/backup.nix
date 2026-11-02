@@ -1,4 +1,9 @@
-{ den, ... }:
+{
+  den,
+  inputs ? null,
+  lib ? null,
+  ...
+}:
 {
   den.aspects.backup = {
     includes = [ den.aspects.backup._.restic ];
@@ -13,20 +18,35 @@
         exports = config.modules.backup.exports;
         exportReport = "/var/lib/backup-exports/offsite.json";
         backup = config.services.restic.backups.offsite;
-        resticCommand = lib.escapeShellArgs (
-          lib.optionals backup.inhibitsSleep [
-            "${pkgs.systemd}/bin/systemd-inhibit"
-            "--mode=block"
-            "--who=restic"
-            "--what=sleep"
-            "--why=Scheduled backup offsite"
-          ]
-          ++ [ (lib.getExe backup.package) ]
-          ++ lib.concatMap (option: [
-            "-o"
-            option
-          ]) backup.extraOptions
-        );
+        mkResticCommand =
+          options:
+          lib.escapeShellArgs (
+            lib.optionals backup.inhibitsSleep [
+              "${pkgs.systemd}/bin/systemd-inhibit"
+              "--mode=block"
+              "--who=restic"
+              "--what=sleep"
+              "--why=Scheduled backup offsite"
+            ]
+            ++ [ (lib.getExe backup.package) ]
+            ++ lib.concatMap (option: [
+              "-o"
+              option
+            ]) options
+          );
+        resticCommand = mkResticCommand backup.extraOptions;
+        # extraBackupArgs apply only to backup, but prune also uploads
+        # repacked data. Keep Pi's macb TX-queue watchdog upload throttle.
+        pruneUploadArgs = lib.filter (lib.hasPrefix "--limit-upload=") backup.extraBackupArgs;
+        # Pruning needs at least two backend connections. Do not reduce
+        # already valid limits on other hosts.
+        pruneCommand =
+          mkResticCommand (
+            map (
+              option: if option == "rclone.connections=1" then "rclone.connections=2" else option
+            ) backup.extraOptions
+          )
+          + lib.optionalString (pruneUploadArgs != [ ]) " ${lib.escapeShellArgs pruneUploadArgs}";
         prepareExports = pkgs.writeShellApplication {
           name = "prepare-offsite-exports";
           runtimeInputs = [
@@ -94,6 +114,44 @@
             type = lib.types.listOf lib.types.str;
             default = [ ];
           };
+          homeState = lib.mkOption {
+            description = ''
+              Home-relative paths staged by the home-state backup for the HDD
+              mirror and the offsite staging tree. Curated small irreplaceable
+              state; everything else is nix-declared, OAuth/session
+              (re-login), or regenerable cache.
+            '';
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+          homeStateExcludes = lib.mkOption {
+            description = "Rsync exclude patterns applied below the homeState --relative anchor.";
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+          homeStateCritical = lib.mkOption {
+            description = ''
+              Subset of homeState guarded as critical: when a source exists it
+              must be unlocked by its owning tool, staged non-empty, and
+              parseable, or the export fails and the previous staged
+              generation is preserved. A missing source is tolerated until the
+              first successful backup has recorded it under
+              stateRoot/.critical-seen; afterwards a missing source fails the
+              export so a deleted critical file is flagged by fleet health
+              instead of silently dropping out of coverage.
+            '';
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+          homeStateStagingScript = lib.mkOption {
+            description = ''
+              The prepare-home-state script staging homeState, as set by the
+              host that defines the staging units. Exposed for manual runs
+              and recovery verification.
+            '';
+            type = lib.types.nullOr lib.types.package;
+            default = null;
+          };
         };
         # Clear stale locks (interrupted manual runs) before the module's
         # post-start check demands an exclusive lock; the forget unlock runs
@@ -106,7 +164,7 @@
           ${lib.getExe pkgs.python3} ${../scripts/prepare-backup-exports.py} --check ${exportReport}
           ${lib.optionalString (config.modules.backup.retentionArgs != [ ]) ''
             ${resticCommand} unlock
-            ${resticCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
+            ${pruneCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
           ''}
         '';
         config.systemd.services.restic-backups-offsite.serviceConfig = lib.mkIf (exports != { }) {
@@ -189,9 +247,7 @@
               "**/Service Worker/**"
             ]
             ++ bcfg.excludes;
-            extraOptions = [
-              "rclone.program=${lib.getExe pkgs.rclone}"
-            ];
+            extraOptions = [ "rclone.program=${lib.getExe pkgs.rclone}" ];
             pruneOpts = lib.optionals (bcfg.exports == { }) bcfg.retentionArgs;
             checkOpts = [ "--read-data-subset=5%" ];
             timerConfig = {
@@ -256,11 +312,21 @@
   };
   perSystem = { pkgs, ... }: {
     checks.backup-exports =
-      pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; }
-        ''
-          PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
-          touch "$out"
-        '';
+      let
+        piPostStart = builtins.unsafeDiscardStringContext (
+          inputs.self.nixosConfigurations.pi.config.systemd.services.restic-backups-offsite.postStart
+        );
+        lines = lib.splitString "\n" piPostStart;
+        pruneLine = lib.findFirst (lib.hasInfix "forget --prune") "" lines;
+        unlockLine = lib.findFirst (lib.hasInfix " unlock") "" lines;
+      in
+      assert lib.hasInfix "rclone.connections=2" pruneLine;
+      assert lib.hasInfix "--limit-upload=2048" pruneLine;
+      assert lib.hasInfix "rclone.connections=1" unlockLine;
+      pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+        PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
+        touch "$out"
+      '';
   };
 
 }

@@ -9,7 +9,6 @@
     includes = [
       den.batteries.define-user
       den.batteries.primary-user
-      (den.batteries.user-shell "fish")
       den.aspects.shell
       den.aspects.editors
       den.aspects.tmux
@@ -26,11 +25,31 @@
       {
         nixos =
           { config, ... }:
+          let
+            xdg = config.home-manager.users.${user.name}.xdg;
+          in
           {
             home-manager = {
               useGlobalPkgs = true;
               useUserPackages = true;
               backupFileExtension = "hm-backup";
+            };
+
+            # Propagate XDG env vars to all processes (SSH, nix-shell, agents)
+            # that do not source home-manager's hm-session-vars.sh. Paths come
+            # from home-manager's own xdg module to avoid hardcoding.
+            environment.variables = {
+              NPM_CONFIG_CACHE = "${xdg.cacheHome}/npm";
+              NPM_CONFIG_USERCONFIG = "${xdg.configHome}/npm/npmrc";
+              ANDROID_USER_HOME = "${xdg.dataHome}/android";
+              CARGO_HOME = "${xdg.dataHome}/cargo";
+              CLAUDE_CONFIG_DIR = "${xdg.configHome}/claude";
+              OCI_CLI_CONFIG_FILE = "${xdg.configHome}/oci/config";
+              PULSE_COOKIE = "${xdg.configHome}/pulse/cookie";
+              GOPATH = "${xdg.dataHome}/go";
+              GOBIN = "${xdg.dataHome}/go/bin";
+              WGETRC = "${xdg.configHome}/wget/wgetrc";
+              HISTFILE = "${xdg.stateHome}/bash/history";
             };
 
             programs.nh.flake = "${config.home-manager.users.${user.name}.xdg.userDirs.projects}/nix";

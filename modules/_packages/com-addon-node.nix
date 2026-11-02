@@ -24,6 +24,10 @@ stdenvNoCC.mkDerivation {
 
         cat > $out/lib/com.add0n.node/run.sh << 'RUNEOF'
     #!${bash}/bin/bash -e
+    # Chromium wrappers export their own LD_LIBRARY_PATH (bundled NSS, GL).
+    # Spawning browsers with it inherited makes Firefox 159 fail XPCOM
+    # startup against NSS 3.112, so external links silently do nothing.
+    unset LD_LIBRARY_PATH
     exec ${lib.getExe nodejs} "$(dirname "$0")/host.js"
     RUNEOF
         chmod +x $out/lib/com.add0n.node/run.sh

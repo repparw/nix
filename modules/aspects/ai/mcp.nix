@@ -8,7 +8,7 @@
     homeManager =
       { pkgs, ... }:
       let
-        stitch = pkgs.callPackage ../../_packages/kof-stitch-mcp.nix { };
+        stitch = pkgs.callPackage ../../_packages/kof-stitch-mcp.nix { nodejs = pkgs.nodejs-runtime; };
       in
       {
         home.packages = [

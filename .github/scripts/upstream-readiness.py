@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Inspect upstream fixes in the checked-out pins without publishing changes."""
 import argparse
-import ast
 import base64
 import json
 import re
@@ -10,29 +9,25 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PR_WAITS = {
-    "authelia-pnpm-hash": ("NixOS/nixpkgs", 572207, "nixpkgs"),
+
     "t3code-connect": ("NixOS/nixpkgs", 555921, "nixpkgs"),
     "t3code-split": ("NixOS/nixpkgs", 555814, "nixpkgs"),
     "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
     "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
-    "t3code-server": ("nix-community/home-manager", 9695, "home-manager"),
-    "cliamp-hm-module": ("nix-community/home-manager", 9842, "home-manager"),
 }
 WORKAROUNDS = {
-    "authelia-pnpm-hash": ("modules/_services/authelia.nix", "autheliaPackage"),
-    "t3code-connect": ("modules/aspects/ai/t3code-connect.nix", "cp .env.example .env"),
-    "t3code-split": ("modules/aspects/ai/t3code-split.nix", "t3code-server ="),
-    "tasks-org": ("modules/aspects/gui/apps.nix", "tasksOrgPackage"),
-    "t3code-server": ("modules/aspects/ai/t3code.nix", "services.t3code-web"),
-    "cliamp-hm-module": ("modules/aspects/cliamp.nix", "hmCliampModule"),
-    "cliamp-attach": ("modules/aspects/cliamp.nix", 'owner = "ryanrpj"'),
-    "qbittorrent": ("modules/aspects/services/arr.nix", "qbittorrent-nox.overrideAttrs"),
-    "wpaperd-fix": ("modules/aspects/gui/wpaperd-output-removal-race.patch", None),
-    "voxtype-graphical": ("modules/aspects/ai/voxtype-graphical-workaround.nix", None),
-    "gamescope-vkroots": ("modules/aspects/streaming.nix", "queueInfo.flags) { VkDeviceQueueInfo2"),
-    "t3code-nightly-v2": ("modules/aspects/ai/t3code-nightly.nix", None),
-    "t3code-stable010": ("modules/aspects/ai/t3code-stable010.nix", None),
-    "moonshine-pr227": ("modules/aspects/moonshine-pr227-test.nix", None),
+
+    "t3code-connect": ("modules/aspects/upstream/t3code-connect.nix", "cp .env.example .env"),
+    "t3code-split": ("modules/aspects/upstream/t3code-split.nix", "t3code-server ="),
+    "tasks-org": ("modules/aspects/upstream/tasks-org.nix", None),
+    "t3code-browser-libs": (
+        "modules/aspects/upstream/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
+    "qbittorrent": ("modules/aspects/upstream/qbittorrent.nix", None),
+    "wpaperd-fix": ("modules/aspects/upstream/wpaperd-fix.nix", None),
+    "gamescope-vkroots": ("modules/aspects/upstream/gamescope-vkroots.nix", None),
+    "t3code-stable010": ("modules/aspects/upstream/t3code-stable010.nix", None),
+    "moonshine-pr227": ("modules/aspects/upstream/moonshine-pr227-test.nix", None),
+    "nodejs-security": ("modules/aspects/upstream/nodejs-security.nix", "../../_packages/nodejs-security.nix"),
 }
 
 
@@ -136,10 +131,9 @@ def moonshine_reload_guard(repo, revision):
 
 
 
-# Alpha's temporary nightly server remains local-owned until stable v2 is
-# deployed and verified. CI only checks immutable release/package evidence.
+# The stable-version bridge needs release and pin evidence before retirement.
 T3CODE_V2_COMMIT = "de343914273eceb852a1d1d739cd1d38df7796ee"
-T3CODE_STABLE_MIN_VERSION = (0, 1, 1)
+T3CODE_STABLE_MIN_VERSION = (0, 1, 5)
 T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
 
 
@@ -156,7 +150,20 @@ def t3code_stable_tag(package_revision):
     return tag if re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) else None
 
 
-def t3code_nightly_v2_status(lock, minimum_version=(0, 0, 0)):
+T3CODE_PACKAGE = "pkgs/by-name/t3/t3code/package.nix"
+
+
+def t3code_browser_wrapped(revision):
+    # The system-wide list is only redundant when upstream's t3code wrapper
+    # itself prefixes LD_LIBRARY_PATH with the browser library set
+    # (NixOS/nixpkgs#575675). A merge that merely touches the package would
+    # leave the downloaded headless browser broken after cleanup.
+    text = source("NixOS/nixpkgs", T3CODE_PACKAGE, revision)
+    return ("LD_LIBRARY_PATH" in text and
+            all(library in text for library in ("libgbm", "nss", "libxkbcommon")))
+
+
+def t3code_stable_v2_status(lock, minimum_version=(0, 0, 0)):
     upstream = "pingdotgg/t3code"
     latest = api(f"repos/{upstream}/releases/latest")
     if not isinstance(latest, dict) or not isinstance(latest.get("tag_name"), str):
@@ -272,51 +279,24 @@ def fsr4_rdna2_status(lock):
     return "PINNED-READY" if ge_package_contains(pin(lock, "nixpkgs"), commit) else "merged-not-pinned"
 
 
-HERMES_CUA_FIX = "71633f762d2d74faebe604d0b8a2a2e6cf48346a"
-HERMES_CUA_GATE = "modules/aspects/services/hermes-cua/_integration.nix"
-HERMES_CUA_VERSION_MARKER = 'release = builtins.match'
-
-
-def hermes_cua_apis(text):
-    try:
-        tree = ast.parse(text)
-    except SyntaxError as error:
-        raise ValueError("invalid Hermes provider source") from error
-    providers = [node for node in tree.body if isinstance(node, ast.ClassDef)
-                 and node.name == "TerminalEnvironmentProvider"]
-    if len(providers) != 1:
-        return False
-    body = providers[0].body
-    streams = any(isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name)
-                  and node.target.id == "supports_streams" or
-                  isinstance(node, ast.Assign) and any(isinstance(target, ast.Name)
-                  and target.id == "supports_streams" for target in node.targets)
-                  for node in body)
-    cwd = any(isinstance(node, ast.FunctionDef) and node.name == "default_cwd"
-              and any(isinstance(decorator, ast.Name) and decorator.id == "property"
-                      for decorator in node.decorator_list) for node in body)
-    return streams and cwd
-
-
-def hermes_cua_status(lock):
-    repo = "NousResearch/hermes-agent"
-    pr = api(f"repos/{repo}/pulls/142225")
-    if not isinstance(pr, dict) or type(pr.get("merged")) is not bool:
-        raise ValueError("invalid Hermes pull request evidence")
-    if not pr["merged"]:
-        return "waiting-upstream"
-    if pr.get("merge_commit_sha") != HERMES_CUA_FIX:
-        raise ValueError("Hermes merge differs from the reviewed fix")
-    revision = pin(lock, "hermes-agent")
-    if not contains(repo, HERMES_CUA_FIX, revision):
-        return "merged-not-pinned"
-    provider = source(repo, "agent/terminal_env_provider.py", revision)
-    return "PINNED-READY" if hermes_cua_apis(provider) else "waiting-source"
-
-
 def detect(name, lock):
-    if name == "hermes-cua-version":
-        return hermes_cua_status(lock)
+    if name == "nodejs-security":
+        revision = pin(lock, "nixpkgs")
+        # A Node release alone is insufficient: Nix links Brotli and c-ares
+        # as shared libraries, and OpenCode embeds the Bun runtime. The
+        # cleanup retires the whole #341 overlay family at once, so every
+        # piece must be contained by the pin before it fires.
+        bun = api("repos/NixOS/nixpkgs/pulls/577354")
+        if not bun.get("merged"):
+            return "waiting-upstream"
+        fixes = (
+            "2794b31601c683d494c898a548e3c5237fa2242e",  # Node 24.22.1
+            "664dc1852b684a2db1d7734514030739fc557b91",  # Brotli 1.2.1, carries the out-of-bound-write fix
+            "dfbfe7d499556a3acea67ccc4888c2ef489bade0",  # c-ares 1.34.9
+        )
+        ready = contains("NixOS/nixpkgs", bun["merge_commit_sha"], revision)
+        ready = ready and all(contains("NixOS/nixpkgs", fix, revision) for fix in fixes)
+        return "PINNED-READY" if ready else "merged-not-pinned"
     if name == "fsr4-rdna2":
         return fsr4_rdna2_status(lock)
     if name == "tridactyl-reader":
@@ -351,17 +331,23 @@ def detect(name, lock):
         detector = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(detector)
         return detector.inspect(name, lock)["status"]
-    if name == "t3code-nightly-v2":
-        return t3code_nightly_v2_status(lock)
     if name == "t3code-stable010":
         # Removing the bridge must not downgrade the installed stable version.
-        return t3code_nightly_v2_status(lock, minimum_version=T3CODE_STABLE_MIN_VERSION)
+        return t3code_stable_v2_status(lock, minimum_version=T3CODE_STABLE_MIN_VERSION)
     if name in PR_WAITS:
         repo, number, input_name = PR_WAITS[name]
         pr = api(f"repos/{repo}/pulls/{number}")
         if not pr.get("merged"):
             return "waiting-upstream"
         return "PINNED-READY" if contains(repo, pr["merge_commit_sha"], pin(lock, input_name)) else "merged-not-pinned"
+    if name == "t3code-browser-libs":
+        pr = api("repos/NixOS/nixpkgs/pulls/575675")
+        if not pr.get("merged"):
+            return "waiting-upstream"
+        revision = pin(lock, "nixpkgs")
+        if not contains("NixOS/nixpkgs", pr["merge_commit_sha"], revision):
+            return "merged-not-pinned"
+        return "PINNED-READY" if t3code_browser_wrapped(revision) else "waiting-source"
     revision = pin(lock, "nixpkgs")
     if name == "qbittorrent":
         repo, number, package = "qbittorrent/qBittorrent", 24055, "qbittorrent"
@@ -382,14 +368,6 @@ def detect(name, lock):
         return "PINNED-READY" if moonshine_reload_guard(repo, revision) else "waiting-source"
     if name == "wpaperd-fix":
         fixed = package_contains("wpaperd", "danyspin97/wpaperd", "442b962df717dfb6e3d86a3a4bfd1111882323b8", revision)
-    elif name == "cliamp-attach":
-        package_text = source("NixOS/nixpkgs", "pkgs/by-name/cl/cliamp/package.nix", revision)
-        commands = source("bjarneo/cliamp", "commands.go", source_ref(package_text))
-        fixed = all(re.search(rf'\b{command}Command\s*\(|"{command}"', commands) for command in ("attach", "quit"))
-    elif name == "voxtype-graphical":
-        # The override is a Home Manager user unit, not a NixOS system unit.
-        module = source("nix-community/home-manager", "modules/services/voxtype.nix", pin(lock, "home-manager"))
-        fixed = all(re.search(rf"\b{option}\s*=\s*\[\s*\"graphical-session.target\"", module) for option in ("PartOf", "After", "WantedBy"))
     elif name == "gamescope-vkroots":
         fixed = gamescope_fixed()
     elif name == "sonarr-jellyfin":
@@ -401,19 +379,6 @@ def detect(name, lock):
 
 def inspect(name, lock):
     try:
-        if name == "hermes-cua-version":
-            gate = ROOT / HERMES_CUA_GATE
-            if not gate.exists():
-                return "waiting-integration"
-            text = gate.read_text()
-            if HERMES_CUA_VERSION_MARKER not in text:
-                retained = ('lib.hasInfix "supports_streams" provider',
-                            'lib.hasInfix "default_cwd" provider',
-                            'lib.versionAtLeast runtime.version "0.7.0"',
-                            'lib.versionOlder runtime.version "0.8"')
-                if not all(marker in text for marker in retained):
-                    raise ValueError("CUA cleanup lost permanent compatibility checks")
-                return "completed"
         if name in WORKAROUNDS:
             relative, marker = WORKAROUNDS[name]
             path = ROOT / relative

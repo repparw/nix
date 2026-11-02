@@ -26,12 +26,11 @@
           with pkgs;
           [
             nvim
-            devenv
             curl
             wget
             jq
             libnotify
-            nodejs
+            nodejs-runtime
 
             unzip
             trashy

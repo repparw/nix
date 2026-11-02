@@ -264,29 +264,23 @@
   den.aspects.monitoring.provides.dashboard.nixos =
     { config, lib, ... }:
     let
-      fqdn = "metrics.${config.modules.services.domain}";
+      fqdn = "grafana.${config.modules.services.domain}";
+      legacyFqdn = "metrics.${config.modules.services.domain}";
       origin = lib.removeSuffix "/" config.modules.monitoring.cloudUrl;
     in
     {
       services.traefik.dynamicConfigOptions.http = {
         routers.grafana = {
-          rule = "Host(`${fqdn}`)";
+          rule = "Host(`${fqdn}`) || Host(`${legacyFqdn}`)";
           service = "noop@internal";
           middlewares = [ "grafana-cloud-redirect" ];
         };
         middlewares.grafana-cloud-redirect.redirectRegex = {
-          regex = "^https?://${lib.escapeRegex fqdn}([/?].*|$)";
+          regex = "^https?://(?:${lib.escapeRegex fqdn}|${lib.escapeRegex legacyFqdn})([/?].*|$)";
           replacement = origin + "\${1}";
           permanent = false;
         };
       };
 
-      # Keep the existing bind mounts and their ownership for rollback.
-      # Removing the services must not discard Epsilon's historical data.
-      environment.persistence."/persist".directories = [
-        "/var/lib/grafana"
-        "/var/lib/loki"
-        "/var/lib/prometheus2"
-      ];
     };
 }

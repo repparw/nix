@@ -5,7 +5,7 @@
 `fsr4-rdna2` is notify-only. Until a source-reviewed and runtime-tested
 support commit is recorded in `watchers.json`, stable GE-Proton releases
 newer than the recorded baseline with FSR4/RDNA2 changes produce a
-deduplicated `upstream-review-required:<tag>` issue notice. These notices
+deduplicated `upstream-review-required:<tag>` Discord notice. These notices
 are candidates, not compatibility claims. AMD's Windows driver and Vulkan
 announcements alone do not satisfy readiness. Discovery inspects up to 100
 releases and fails closed if that bound is exhausted; advance the baseline
@@ -27,14 +27,23 @@ The lock updater owns input changes.
 
 The registry includes the stable T3 orchestrator-v2 gate and the
 [OpenCode v2 package detector](opencode-release-watch.md). Readiness notices
-go to #209 and #229 respectively. Package readiness does not complete either
+go to the run summary and Discord. Package readiness does not complete either
 fleet runtime migration.
 
-Authelia retains its atomic lock planner and pilot publisher. Independent
-`post-lock` contracts publish separate review-required PRs using the recipes
-in `cleanup/`. Each candidate starts at the same checked-out main revision.
+Independent `post-lock` contracts publish separate review-required PRs using
+the recipes in `cleanup/`. Each candidate starts at the same checked-out main
+revision.
 `git apply --check` must pass before publication. A conflict requires review.
 One failed recipe does not prevent other watchers from processing.
+
+Post-lock workarounds live under `modules/aspects/upstream/`. Each module
+contributes to its permanent owner through `den.aspects.<owner>.provides.<aspect>`,
+without changing the provided aspect's name or explicit host includes.
+The four former inline overrides (qBittorrent, Gamescope vkroots, Tasks.org,
+wpaperd) are separate provided modules, not imports from their permanent
+modules. Their cleanup recipes can therefore delete just the temporary
+provider (plus any attached patch asset). The test suite checks each recipe
+against the worktree. The T3 Code server migration retired its watcher in #402.
 
 The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
 the exact expected candidate tree before reusing an existing branch and
@@ -63,33 +72,34 @@ The package-specific gates are:
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme                                |
 | t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop                               |
-| t3code-server     | Generated unit preserves web arguments, package selection, Connect environment and restart policy                                       |
 | t3code-stable010  | Generated units serve the root-pin package (Alpha stock, Pi/Epsilon split server) with the version assertion; Alpha's x86 t3code builds |
 | tasks-org         | Build the upstream Tasks.org package                                                                                                    |
 | qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                                            |
-| cliamp-hm-module  | Generated Home Manager unit and settings preserve current behavior                                                                      |
-| cliamp-attach     | Build upstream cliamp and verify both attach and quit in its help output                                                                |
 | wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
-| voxtype-graphical | Generated unit uses graphical-session.target for PartOf, After and WantedBy                                                             |
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
+| nodejs-security   | Retired overlay family absent from the fleet; alpha's OpenCode builds against the pinned Bun and Node                                   |
 | moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
 
-Nautilus is notify-only. Watchers do not require issues: readiness appears in
-the workflow summary. Optional existing issue links retain deduplicated comment
-notifications for historical contracts. T3 receives readiness notices while
-retaining its runtime completion checks. Sonarr/Jellyfin depends on
+Nautilus is notify-only. Ready notices print in every upstream-watch run
+summary and, once per status change, post to the fleet Discord channel
+through the approved bot identity (`DISCORD_BOT_TOKEN` +
+`DISCORD_CHANNEL_ID`); delivery state lives on the
+`automation/upstream-notify-state` ref, so a persistent status pings exactly
+once. Workaround-holding watchers are `post-lock` instead — their cleanup PR
+is the notice, and the removed workaround file disarms the watcher.
+Sonarr/Jellyfin depends on
 the running service version and remains host-owned; its local timer is
 retired in favor of the verified Pi adapter below.
 
 `tridactyl-reader` is notify-only for #316. It reads `tridactyl-vim` from the
 pinned `firefox-addons` manifest and checks whether that release tag contains
 tridactyl/tridactyl#5515. Nixpkgs' native messaging host does not determine
-the extension version. CI notifies the issue when the pin is ready. Browser
+the extension version. CI pings Discord when the pin is ready. Browser
 verification and removal of Obsidian Reader remain completion steps because
 this checkout has no Obsidian Reader declaration to remove.
 
 The Moonshine PR227 test build is declarative alpha config
-(`modules/aspects/moonshine-pr227-test.nix`, #147): the generated unit
+(`modules/aspects/upstream/moonshine-pr227-test.nix`, #147): the generated unit
 selects the test package, so activation and rollback belong to deploy-rs and
 the `waiting-source` predicate requires the pinned upstream source to carry
 the UnitRemoved reload guard before the cleanup candidate may publish. The
@@ -121,10 +131,9 @@ overlays. Alpha's patched package cannot establish upstream readiness. Its
 cleanup retains WSI, removes only the queue workaround, and builds with
 `enableWsi=true`. It requires no GPU or Alpha runtime test.
 
-Run `python3 .github/scripts/upstream-readiness.test.py` for detector fixtures,
-`python3 .github/scripts/upstream-pilot.test.py` for the Authelia pilot, and
-`python3 .github/scripts/upstream-publish.test.py` for independent publication,
-interruption recovery, drift rejection, and notification deduplication.
+Run `python3 .github/scripts/upstream-readiness.test.py` for detector fixtures
+and `python3 .github/scripts/upstream-publish.test.py` for independent
+publication, interruption recovery, drift rejection, and notification deduplication.
 
 ## Lock candidate planner (apply-coupled cleanups)
 
@@ -137,79 +146,28 @@ candidate instead of racing the post-lock sweep. Readiness runs against the
 candidate tree; `PINNED-READY` diverts publication into a combined atomic
 candidate. A watcher that is not ready but whose package the pin moved gets a
 stubbed-phase compatibility build of the actual fleet package; failure blocks
-the lock, and so does an unavailable readiness API. The Authelia pilot keeps
-its byte-exact cleanup handler and native ARM validation, and every combined
-candidate merge-automates under the #265 policy: the registry checker is the
-sole landing decision and the cleanup is declarative. Independent watchers without
-the flag publish through the separate post-lock sweep.
-
-If the candidate Nixpkgs pin contains the Authelia fix and `nixos-unstable`
-contains it too, the updater applies the narrowly validated Authelia removal,
-then publishes a stable `automation/atomic-cleanup` branch and a
-**combined lock + PR**. It dispatches exact-SHA CI with
-native ARM Authelia enabled, and arms auto-merge: GitHub merges exactly when
-the required checks pass and the branch is strict up-to-date with main, never
-with pending or failed checks. The required PR CI itself runs the native ARM
-Authelia build (and the bundled package validations) for atomic candidates,
-so the build result gates the merge directly rather than relying on the
-updater waiting. When main advances first, the updater re-plans
-and re-applies the recipe onto the new main and revalidates — but only when
-the existing branch tip is provably its own earlier candidate (the recipe
-applied to its parent); a tampered or changed candidate requires review and
-is never overwritten. Repeat runs reuse the combined PR and branch without
-overwriting human edits or repeating successful CI, dispatching only missing
-checks on the exact SHA. Enforced PR checks on the automation branch are
-approved with a dedicated approval token (`LOCK_UPDATE_APPROVAL_TOKEN`: a
-fine-grained PAT with Actions read+write on this repo, or an App installation
-token with actions:write), after verifying the exact
-candidate. A candidate is merge-eligible only when its exact SHA, ownership,
-watcher manifest, required validation results, and current base are ALL
-verified. Publication records trustworthy provenance (a state ref plus a
-PR-body trailer); any recovered tip that is not the published SHA — including
-a lockfile-only amendment that keeps the cleanups byte-identical — fails
-closed, and the planner re-run on the recovered lock is the backstop against
-forged provenance. A dangling branch, malformed cleanup or unavailable API
-blocks publication rather than overwriting human changes or publishing a
-potentially incompatible pin. Until the owner stores the approval token, any
-approval-gated run fails closed with a message naming the secret instead of
-arming auto-merge.
+the lock, and so does an unavailable readiness API. Only active apply-coupled
+watchers can divert the lock update; their recipe-defined changes are
+validated on the exact candidate commit. Atomic publication preserves the
+exact-SHA CI, provenance, fail-closed recovery, strict up-to-date and
+GitHub approval gates described by the lock-update workflow.
 
 If the atomic predicate is negative, the original lock-only CI and compare-and-
 swap fast-forward remain unchanged. If ancestry is unavailable, or a candidate
 contains the fix before the authoritative channel, publication fails closed.
-The existing Authelia post-lock pilot remains responsible for its readiness
-and completion on `main` when the planner did not combine the cleanup with a
-lock update. Independent cleanup candidates retain their own validation gates.
-
-## T3 Code nightly-v2 (read-only, #209)
-
-The `t3code-nightly-v2` detector tracks a stable, non-prerelease T3 Code
-release containing orchestrator-v2 merge `de343914`, the corresponding
-`nixos-unstable` package source, and the root Nixpkgs pin. The check uses
-exact tag ancestry and verifies the pinned tag against a stable GitHub Release.
-Statuses are `waiting-upstream`, `waiting-unstable`,
-`merged-not-pinned`, and `PINNED-READY` (or unavailable on API errors).
-
-CI posts a deduplicated readiness notice to #209. The Alpha
-`watch-t3code-nightly-v2.timer` retains runtime completion ownership until the
-fleet CI adapter is verified. Protect `statev2.sqlite` and preserve active
-conversations during a cutover.
+Independent cleanup candidates retain their own validation gates.
 
 ## T3 Code stable version bridge (#288, #289)
 
-The `t3code-stable010` watcher retains its original ID and now tracks the
-0.1.1 version bridge. The bridge builds the desktop package from the
+The `t3code-stable010` watcher retains its ID and tracks the stable 0.1.5 bridge. It builds the desktop package from the
 existing Nixpkgs recipe with verified release source and pnpm hashes;
 the same override applies on all architectures. The separate split aspect
-selects the server-only package on Pi and Epsilon. Its detector reuses the nightly-v2
-`PINNED-READY` gate plus a 0.1.1 minimum: only a stable
-orchestrator-v2 release at least as new as the bridge in the root Nixpkgs
-pin may drop the bridge,
+selects the server-only package on Pi and Epsilon. Its detector requires a stable orchestrator-v2 release at least as new as 0.1.5 in the root Nixpkgs pin before dropping the bridge,
 because an earlier drop downgrades Alpha to V1 0.0.45 and breaks Android/web
 clients. The post-lock cleanup is the complete cutover: it deletes the
 bridge aspect, removes its entity includes so every host serves the
 root-pin package (Alpha stock, Pi/Epsilon the `t3code-split` server-only
-build) and arms the `t3code >= 0.1.1`
+build) and arms the `t3code >= 0.1.5`
 version assertion in `t3code.nix` that keeps a pin regression from silently
 downgrading `statev2.sqlite`. The `t3code-split` watcher independently keeps
 the server-only layer until nixpkgs#555814 reaches the pin, then selects
@@ -221,47 +179,6 @@ A cleanup that conflicts with edited modules fails closed for review.
 Candidate validation requires the `PINNED-READY` pin, checks every
 generated `t3code-web` unit against the selected CLI (or the combined package
 before the upstream split), and builds
-Alpha's x86 `t3code`. The nightly aspect is already retired: no entity
-included it after #288, and deleting the file completes the
-`t3code-nightly-v2` detector through the `WORKAROUNDS` path contract
-(draft #285 was superseded by this cleanup). Watcher-id retirement for
-both `t3code-nightly-v2` and `t3code-stable010` in `watchers.json` stays
-a human merge-time chore; Alpha's `watch-t3code-nightly-v2.timer` keeps
-runtime completion ownership until its issue-gate proof lands. Protect
-`statev2.sqlite` and preserve active conversations while the bridge is
-dropped.
-
-## Hermes CUA version gate
-
-`hermes-cua-version` tracks the direct `hermes-agent` input, not the Nixpkgs
-wrapper's `0.0.0` version. Readiness requires reviewed Hermes #142225 merge
-`71633f762d2d74faebe604d0b8a2a2e6cf48346a` to be an ancestor of the actual
-selected revision, plus class declarations for `supports_streams` and the
-`default_cwd` property in that revision's provider source. Comments containing
-those words do not satisfy readiness. A missing integration is
-`waiting-integration`; a missing fix is `merged-not-pinned`; absent APIs are
-`waiting-source`; API errors are unavailable. Completion requires the version
-restriction to be gone while the permanent source-API/runtime guards remain.
-
-The watcher is **notify-only while the fleet pause is active**. Once this
-stack reaches main, the existing two-hour workflow reports readiness in its
-job summary. It cannot publish or merge a cleanup in this mode. No new
-agent timer, input update, enrollment or activation is introduced.
-
-`cleanup/hermes-cua-version.patch` removes only the release/ref parsing,
-minimum-version restriction and associated plumbing/tests. It retains source
-API checks, CUA >=0.7,<0.8, named remote Linux enrollment, manual approval
-semantics and refusal of local GUI fallback. The recipe changes modules only;
-the enrollment runbook describes the temporary and retired states. Drift
-requires review, and a second application fails.
-
-After the pause has been explicitly cleared, promote the registry entry to
-`post-lock` in a reviewed change. The existing publisher then owns exact-SHA,
-strict-up-to-date cleanup publication and auto-merge. Its native x86 job builds
-the real CUA SDK/CLI and policy checks; its native ARM job builds the effective
-Hermes package with the CUA SDK and generated gateway unit. Validation checks
-Epsilon's settings, package selection, PATH/PYTHONPATH and manual approvals.
-These future builds are prepared, not executed under the current pause.
-Remote enrollment, credentials and end-to-end GUI proof remain independent
-production gates owned by the security/activation work. Do not mark runtime
-validation complete from a readiness notification or package fixture.
+Alpha's x86 `t3code`. The separate nightly migration watcher is retired;
+the stable-version bridge retains its own release and pin gates. Preserve
+`statev2.sqlite` and active conversations while the bridge is dropped.

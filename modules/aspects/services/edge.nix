@@ -1,9 +1,11 @@
 {
+  den,
   lib,
   ...
 }:
 {
   den.aspects.nixos-services.provides.edge = {
+    includes = [ den.aspects.edge-tunnel ];
     service-registry = [
       {
         name = "authelia";
@@ -45,7 +47,6 @@
         imports = [
           ../../_services/proxy.nix
           ../../_services/authelia.nix
-          ../../_services/ddclient.nix
           ../../_services/glance.nix
           ../../_services/miniflux.nix
         ];

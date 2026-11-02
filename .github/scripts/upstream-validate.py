@@ -37,65 +37,7 @@ def require(condition, message):
         raise ValueError(message)
 
 
-def validate_hermes_cua(architecture):
-    import importlib.util
-    spec = importlib.util.spec_from_file_location("readiness", ROOT / ".github/scripts/upstream-readiness.py")
-    detector = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(detector)
-    lock = json.loads((ROOT / "flake.lock").read_text())
-    require(detector.hermes_cua_status(lock) == "PINNED-READY", "Hermes pin lacks reviewed remote GUI support")
-    gate = (ROOT / detector.HERMES_CUA_GATE).read_text()
-    require(detector.HERMES_CUA_VERSION_MARKER not in gate, "temporary Hermes version restriction remains")
-    require(detector.inspect("hermes-cua-version", lock) == "completed", "permanent CUA compatibility guards changed")
-    settings = evaluate("epsilon.config.containers.hermes.config.services.hermes-agent.settings")
-    require(settings["terminal"]["backend"] == "cua", "remote CUA backend must be enabled")
-    plugin = settings["plugins"]["entries"]["cua-spaces"]
-    require(plugin["enabled"] and plugin["settings"]["space"] not in ("", "create"), "named Space required")
-    require(plugin["settings"]["desktop"] is False, "automatic desktop installation must stay disabled")
-    require(settings["approvals"] == {"mode": "manual", "cron_mode": "deny",
-            "single_query_mode": "deny", "unattended_mode": "deny"}, "manual approval policy changed")
-    require({"browser", "computer_use"}.issubset(settings["platform_toolsets"]["discord"]), "missing GUI toolsets")
-    expression = ('let f = builtins.getFlake (toString ./.); '
-                  'c = f.nixosConfigurations.epsilon.config.containers.hermes.config.services.hermes-agent; '
-                  'in { plugins = map toString c.extraPlugins; python = map toString c.extraPythonPackages; '
-                  'tools = map toString c.extraPackages; }')
-    selected = json.loads(command("nix", "eval", "--impure", "--json", "--no-update-lock-file", "--expr", expression))
-    require(any("hermes-cua-spaces-0.4.0" in path for path in selected["plugins"]), "pinned CUA plugin missing")
-    require(len(selected["python"]) == 1 and "-cua-0.7.0" in selected["python"][0], "packaged CUA SDK missing")
-    require(selected["python"][0] in selected["tools"], "same CUA CLI must be on PATH")
-    # Evaluate the affected host, but never build its system closure or activate.
-    evaluate("epsilon.config.system.build.toplevel.drvPath")
-    expected_system = {"x86": "x86_64-linux", "arm": "aarch64-linux"}[architecture]
-    system = command("nix", "eval", "--impure", "--raw", "--expr", "builtins.currentSystem")
-    require(system == expected_system, "CUA validation requires the selected native architecture")
-    expression = ('let f = builtins.getFlake (toString ./.); '
-                  'pkgs = import f.inputs.nixpkgs { system = builtins.currentSystem; }; '
-                  'in pkgs.callPackage ./modules/_packages/cua.nix { '
-                  'python3Packages = f.inputs.hermes-agent.packages.${builtins.currentSystem}.messaging.python.pkgs; }')
-    runtime = Path(command("nix", "build", "--impure", "--no-link", "--print-out-paths",
-                           "--no-update-lock-file", "--expr", expression))
-    require("--stdin" in command(str(runtime / "bin/cua"), "sandbox", "exec", "--help"), "missing CUA GUI stream transport")
-    if architecture == "x86":
-        command("nix", "build", "--no-link", "--no-update-lock-file", ".#checks.x86_64-linux.hermes-cua-policy")
-    if architecture == "arm":
-        expression = ('let f = builtins.getFlake (toString ./.); '
-                      'c = f.nixosConfigurations.epsilon.config.containers.hermes.config.services.hermes-agent; '
-                      'in c.package.override { inherit (c) extraPythonPackages extraDependencyGroups; }')
-        effective = command("nix", "build", "--impure", "--no-link", "--print-out-paths",
-                            "--no-update-lock-file", "--expr", expression)
-        unit_text = evaluate('epsilon.config.containers.hermes.config.systemd.units."hermes-agent.service".text')
-        require(effective + "/bin/hermes" in unit_text, "gateway must run the package with CUA Python dependencies")
-        wrapper = (Path(effective) / "bin/hermes").read_text()
-        require(selected["python"][0] in wrapper, "effective Hermes wrapper lacks CUA on PYTHONPATH")
-        require(selected["python"][0] + "/bin" in unit_text, "gateway PATH lacks the packaged CUA CLI")
-        unit = build('epsilon.config.containers.hermes.config.systemd.units."hermes-agent.service".unit')
-        require(unit.exists(), "generated gateway unit was not built")
-
-
 def validate(name, architecture):
-    if name == "hermes-cua-version":
-        validate_hermes_cua(architecture)
-        return
     if architecture == "arm":
         require(name == "t3code-split", "unexpected native ARM request")
         for host in ("pi", "epsilon"):
@@ -142,21 +84,6 @@ def validate(name, architecture):
             package = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.outPath")
             require(service["Service"]["ExecStart"].startswith(package + "/bin/t3 "), "server package changed")
         build("alpha.config.home-manager.users.repparw.programs.t3code.package")
-    elif name == "cliamp-hm-module":
-        settings = evaluate("alpha.config.home-manager.users.repparw.programs.cliamp.settings")
-        require(settings == {"theme": "", "repeat": "Off", "shuffle": True, "provider": "spotify",
-                             "spotify": {"client_id": "e79bc2a7d7f44a9e9153c0a5121ee0ce", "bitrate": 320},
-                             "ytmusic": {"cookies_from": "chrome:~/.config/net.imput.helium/Default"}},
-                "cliamp settings changed")
-        service = unit("alpha", "cliamp")
-        require("cliamp" in service["Service"]["ExecStart"] and "daemon" in service["Service"]["ExecStart"],
-                "missing cliamp daemon")
-        require("cliamp.sock.pid" in str(service["Service"]["ExecStartPre"]), "stale PID cleanup changed")
-        build("alpha.pkgs.cliamp")
-    elif name == "cliamp-attach":
-        package = build("alpha.pkgs.cliamp")
-        help_text = command(str(package / "bin/cliamp"), "--help")
-        require(all(re.search(rf"\b{value}\b", help_text) for value in ("attach", "quit")), "missing CLI commands")
     elif name == "gamescope-vkroots":
         # Same raw-package source predicate as readiness, after removing the
         # local override. Then build the real WSI package, without stubs.
@@ -199,11 +126,11 @@ def validate(name, architecture):
         detector = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(detector)
         lock = json.loads((ROOT / "flake.lock").read_text())
-        require(detector.t3code_nightly_v2_status(
+        require(detector.t3code_stable_v2_status(
                     lock, minimum_version=detector.T3CODE_STABLE_MIN_VERSION) == "PINNED-READY",
                 "root pin must carry a stable release at least as new as the bridge")
         for host in ("alpha", "pi", "epsilon"):
-            service = unit(host, "t3code-web")
+            service = unit(host, "t3code")
             require("--mode web" in service["Service"]["ExecStart"], "missing web arguments")
             package = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.outPath")
             has_cli = json.loads(command("nix", "eval", "--json", "--no-update-lock-file",
@@ -217,6 +144,13 @@ def validate(name, architecture):
         require(match and tuple(int(part) for part in match.groups()) >= detector.T3CODE_STABLE_MIN_VERSION,
                 f"pinned t3code {version} is below the bridge version")
         build("alpha.config.home-manager.users.repparw.programs.t3code.package")
+    elif name == "nodejs-security":
+        # The retired overlay family must be absent, and the fleet package
+        # must build against the pinned Bun and Node.
+        residual = json.loads(command("nix", "eval", "--json", "--no-update-lock-file",
+                                      ".#nixosConfigurations.alpha.pkgs", "--apply", "p: p ? bun-security"))
+        require(not residual, "bun-security must be retired from the fleet packages")
+        build("alpha.pkgs.opencode")
     else:
         raise ValueError(f"no package validation for {name}")
 

@@ -1,7 +1,7 @@
-diff --git a/modules/aspects/ai/t3code-connect.nix b/modules/aspects/ai/t3code-connect.nix
+diff --git a/modules/aspects/upstream/t3code-connect.nix b/modules/aspects/upstream/t3code-connect.nix
 index 5dc2b6a..5d39dea 100644
---- a/modules/aspects/ai/t3code-connect.nix
-+++ b/modules/aspects/ai/t3code-connect.nix
+--- a/modules/aspects/upstream/t3code-connect.nix
++++ b/modules/aspects/upstream/t3code-connect.nix
 @@ -4,37 +4,6 @@
  }:
  {

@@ -26,22 +26,20 @@ files instead of copying module contents.
 ## Services
 
 - [Service model](services/service-model.md)
-- [Hermes Chief of Staff](services/hermes-chief-of-staff.md)
+- [Hermes configuration and operations (private)](https://github.com/repparw/hermes-config)
 
 ## Runbooks
 
-- [Grafana Cloud setup and alerting](runbooks/grafana-cloud-pilot.md)
-- [Add and maintain change-detection watchers](runbooks/change-detection-watchers.md)
+- [Diagnose fleet observability](runbooks/monitoring.md)
+- [Grafana Cloud operations (repparw/grafana)](https://github.com/repparw/grafana#readme)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
+- [Hermes CUA Spaces preparation](runbooks/hermes-cua-spaces.md)
 - [Update rollback](runbooks/update-rollback.md)
-- [Fleet health, offsite backups, and upgrade reports](runbooks/fleet-operations.md)
+- [Fleet operational reference](runbooks/fleet-operations.md)
 - [Hermes crash triage](runbooks/hermes-crash-triage.md)
-- [Bootstrap and validate Hermes Chief of Staff](runbooks/hermes-chief-of-staff.md)
-- [Enroll a remote CUA Space for Hermes](runbooks/hermes-cua-spaces.md)
-- [Obsidian rclone bisync](runbooks/obsidian-rclone-bisync.md)
 - [Restore service backups](runbooks/restore-service-backups.md)
 - [Restore host state from offsite backups](runbooks/host-recovery.md)
-- [Prepare pi and epsilon for persistent state](runbooks/host-persistence.md)
+- [Change host persistence](runbooks/host-persistence.md)
 
 ## Fixes
 
@@ -55,9 +53,10 @@ files instead of copying module contents.
 
 ## Agent guidance
 
-- [Verify NixOS configuration changes](../.agents/skills/verify-nixos-config/SKILL.md)
+- [Verify NixOS configuration changes](../.agents/skills/verify-fleet-change/SKILL.md)
 - [Operate the running fleet](../.agents/skills/fleet-operations/SKILL.md)
 - [Watch for an upstream fix](../.agents/skills/watch-upstream/SKILL.md)
+- [Manage page watchers](../.agents/skills/manage-page-watchers/SKILL.md)
 - [Domain docs](agents/domain.md)
 - [GitHub issue tracker](agents/issue-tracker.md)
 - [Triage labels](agents/triage-labels.md)

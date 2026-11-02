@@ -53,10 +53,20 @@
               keeps=$(${jq} -nc --argjson a "$keeps" --argjson z "$z" '$a + $z.keeps') || true
             fi
             o=$(${curl} -fsS -m 30 https://openrouter.ai/api/v1/models 2>/dev/null \
-              | ${jq} -c '{
-                  hides: [ .data[].id | select(((contains("free")) or startswith("~") or startswith("nvidia/")) | not) | "openrouter/" + . ],
-                  keeps: [ .data[].id | select((contains("free")) or startswith("~") or startswith("nvidia/")) | "openrouter/" + . ]
-                }' 2>/dev/null) || o=
+              | ${jq} -c '
+                  # NVIDIA publishes both paid and :free variants. Only surface
+                  # the free variant when its input and output prices are zero.
+                  def keep:
+                    (.id | startswith("~"))
+                    or ((.id | startswith("nvidia/"))
+                        and (.id | endswith(":free"))
+                        and ((.pricing.prompt | tonumber?) == 0)
+                        and ((.pricing.completion | tonumber?) == 0))
+                    or ((.id | startswith("nvidia/") | not) and (.id | contains("free")));
+                  {
+                    hides: [ .data[] | select(keep | not) | "openrouter/" + .id ],
+                    keeps: [ .data[] | select(keep) | "openrouter/" + .id ]
+                  }' 2>/dev/null) || o=
             if [ -n "''${o:-}" ]; then
               hides=$(${jq} -nc --argjson a "$hides" --argjson o "$o" '$a + $o.hides') || true
               keeps=$(${jq} -nc --argjson a "$keeps" --argjson o "$o" '$a + $o.keeps') || true
@@ -80,94 +90,24 @@
           package = pkgs.opencode;
           enable = true;
           enableMcpIntegration = true;
+          mutableSettings = true;
           skills = { };
           web.enable = false;
           settings = {
             model = "opencode/muse-spark-1.3-contributor-free";
             small_model = "opencode/muse-spark-1.3-contributor-free";
+            # GitHub Student/Free Copilot plans only allow Auto model
+            # selection; this plugin adds the github-copilot/auto router
+            # models so the Copilot provider lists anything at all.
+            plugins = [
+              "@klconsultancy/opencode-copilot-auto@1.0.1"
+            ];
             permission = {
               "*" = {
                 "*" = "allow";
               };
             };
             formatter = false;
-            agent = {
-              feature = {
-                model = "opencode/muse-spark-1.2-contributor-free";
-                description = "PStack feature role";
-                mode = "subagent";
-              };
-              refactoring = {
-                model = "opencode/muse-spark-1.2-contributor-free";
-                description = "PStack refactoring role";
-                mode = "subagent";
-              };
-              how-explorer = {
-                model = "opencode/muse-spark-1.2-contributor-free";
-                description = "PStack how explorer role";
-                mode = "subagent";
-              };
-              why-investigators = {
-                model = "opencode/muse-spark-1.2-contributor-free";
-                description = "PStack why investigators role";
-                mode = "subagent";
-              };
-              swarm-workers = {
-                model = "openrouter/openrouter/free";
-                description = "PStack swarm workers role";
-                mode = "subagent";
-              };
-              swarm-workers-orca = {
-                model = "orcarouter/deepseek/deepseek-v4-flash-free";
-                description = "PStack swarm workers role (orca free pool arm)";
-                mode = "subagent";
-              };
-              bug-fix = {
-                model = "opencode-go/gpt-5.6-luna";
-                description = "PStack bug-fix role";
-                mode = "subagent";
-              };
-              perf-issue = {
-                model = "opencode-go/gpt-5.6-luna";
-                description = "PStack perf-issue role";
-                mode = "subagent";
-              };
-              hillclimb = {
-                model = "opencode-go/gpt-5.6-luna";
-                description = "PStack hillclimb role";
-                mode = "subagent";
-              };
-              reflect-tooling = {
-                model = "opencode-go/gpt-5.6-luna";
-                description = "PStack reflect tooling role";
-                mode = "subagent";
-              };
-              judgment-and-prose = {
-                model = "opencode-go/glm-5.3-flash";
-                description = "PStack judgment and prose role";
-                mode = "subagent";
-              };
-              hardest-tasks = {
-                model = "opencode-go/glm-5.3-flash";
-                description = "PStack hardest tasks role";
-                mode = "subagent";
-              };
-              how-explainer = {
-                model = "opencode-go/glm-5.3-flash";
-                description = "PStack how explainer role";
-                mode = "subagent";
-              };
-              why-synthesizer = {
-                model = "opencode-go/glm-5.3-flash";
-                description = "PStack why synthesizer role";
-                mode = "subagent";
-              };
-              reflect-synthesizer = {
-                model = "opencode-go/glm-5.3-flash";
-                description = "PStack reflect synthesizer role";
-                mode = "subagent";
-              };
-            };
             provider = {
               explabs = {
                 npm = "@ai-sdk/openai-compatible";
