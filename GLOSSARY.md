@@ -1,7 +1,7 @@
 # Fleet glossary
 
-Shared language for the managed NixOS fleet. These are domain concepts, not
-implementation rules or operating instructions.
+Shared language for the managed NixOS fleet. Definitions describe domain
+concepts, not configuration syntax or operating procedures.
 
 ## Fleet and configuration
 
@@ -19,23 +19,21 @@ compose other aspects and need not correspond to a running service.
 
 ## Services and access
 
-**Registered service**:
-An application or workload with a fleet-wide record of where it runs and
-how the fleet treats it operationally.
+**Service**:
+An application or system-managed process or task operated on a host. A service
+does not need to appear in the fleet's service inventory.
+
+**Service inventory**:
+The selected services whose locations, access requirements, or operational
+responsibilities are tracked across the fleet.
 
 **Service definition**:
-The authoritative facts about a registered service's location, access, and
+A service inventory entry describing one service's location, access, and
 operational responsibilities.
-
-**Service registry**:
-The fleet-wide collection of service definitions.
-
-**Hosting host**:
-The host on which a service actually runs, whether directly or in a container.
 
 **Edge**:
 A fleet-managed entry point that receives requests for a service and routes
-them toward its backend. The edge and hosting host can be different machines.
+them toward its backend. The edge and the machine running the service can differ.
 
 **Backend**:
 The service endpoint to which an edge forwards requests.
