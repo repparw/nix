@@ -60,6 +60,10 @@
       in
       {
         options.modules.backup = {
+          claroReplica = {
+            enable = lib.mkEnableOption "independent weekly Restic snapshot copying to Claro Drive";
+            schedule = lib.mkEnableOption "the Claro Drive replica timer after the remote has been initialized";
+          };
           retentionArgs = lib.mkOption {
             type = lib.types.listOf lib.types.str;
             default = [
@@ -191,6 +195,39 @@
               bcfg.repository
             else
               "rclone:gd-crypt:restic/${config.networking.hostName}";
+          backup = config.services.restic.backups.offsite;
+          claroRepo = "rclone:claro:restic-replica/${config.networking.hostName}";
+          rcloneConnections = lib.findFirst (lib.hasPrefix "rclone.connections=") "" backup.extraOptions;
+          uploadLimit = lib.findFirst (lib.hasPrefix "--limit-upload=") "" backup.extraBackupArgs;
+          replicaProgram = pkgs.writeShellApplication {
+            name = "restic-claro-replica";
+            runtimeInputs = [
+              pkgs.restic
+              pkgs.rclone
+            ];
+            text = builtins.readFile ../scripts/restic-claro-replica.sh;
+          };
+          replicaEnvironment = {
+            RCLONE_CONFIG = config.sops.templates."rclone.conf".path;
+            RCLONE_BIN = lib.getExe pkgs.rclone;
+            RESTIC_REPOSITORY = claroRepo;
+            RESTIC_FROM_REPOSITORY = repository;
+            RESTIC_PASSWORD_FILE = config.sops.secrets.resticPassword.path;
+            RESTIC_RETENTION_ARGS = lib.concatStringsSep " " bcfg.retentionArgs;
+            RESTIC_RCLONE_CONNECTIONS = lib.removePrefix "rclone.connections=" rcloneConnections;
+            RESTIC_UPLOAD_LIMIT_KIB = lib.removePrefix "--limit-upload=" uploadLimit;
+          };
+          replicaUnit = command: {
+            description = "Restic Claro Drive replica (${command})";
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            environment = replicaEnvironment;
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = "${lib.getExe replicaProgram} ${command}";
+              TimeoutStartSec = "36h";
+            };
+          };
         in
         {
           sops.secrets = {
@@ -201,6 +238,11 @@
             rcloneDriveSecret.sopsFile = ../../secrets/rclone.sops.yaml;
             rcloneDriveToken.sopsFile = ../../secrets/rclone.sops.yaml;
             rcloneCrypt.sopsFile = ../../secrets/rclone.sops.yaml;
+          }
+          // lib.optionalAttrs bcfg.claroReplica.enable {
+            rcloneClarodrive.sopsFile = ../../secrets/rclone.sops.yaml;
+            rcloneClarodriveUser.sopsFile = ../../secrets/rclone.sops.yaml;
+            rcloneClarodriveUrl.sopsFile = ../../secrets/rclone.sops.yaml;
           };
 
           # System-level rclone config, rendered by sops at activation with
@@ -221,11 +263,38 @@
               type = crypt
               remote = gdrive:nixos-backups
               password = ${config.sops.placeholder.rcloneCrypt}
+            ''
+            + lib.optionalString bcfg.claroReplica.enable ''
+              [claro]
+              type = webdav
+              vendor = nextcloud
+              url = ${config.sops.placeholder.rcloneClarodriveUrl}
+              user = ${config.sops.placeholder.rcloneClarodriveUser}
+              pass = ${config.sops.placeholder.rcloneClarodrive}
             '';
           };
 
           systemd.services.restic-backups-offsite = {
             environment.RCLONE_CONFIG = config.sops.templates."rclone.conf".path;
+          };
+
+          # An explicit bootstrap after quota verification keeps a newly deployed
+          # host from creating large copies or accidentally consuming Claro quota.
+          systemd.services.restic-claro-replica-preflight =
+            lib.mkIf bcfg.claroReplica.enable (replicaUnit "preflight");
+          systemd.services.restic-claro-replica-init =
+            lib.mkIf bcfg.claroReplica.enable (replicaUnit "init");
+          systemd.services.restic-claro-replica =
+            lib.mkIf bcfg.claroReplica.enable (replicaUnit "copy");
+          systemd.timers.restic-claro-replica = lib.mkIf (
+            bcfg.claroReplica.enable && bcfg.claroReplica.schedule
+          ) {
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "Sun *-*-* 05:00:00";
+              RandomizedDelaySec = "1h";
+              Persistent = true;
+            };
           };
 
           services.restic.backups.offsite = {
