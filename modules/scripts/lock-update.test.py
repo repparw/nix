@@ -51,16 +51,11 @@ class LockUpdate(unittest.TestCase):
             # Nix-store source fixtures are read-only; the disposable checkout
             # must be writable for the fixture registry and atomic cleanup.
             dst.chmod(0o644)
-        module = self.checkout / "modules/_services/authelia.nix"
-        module.parent.mkdir(parents=True, exist_ok=True)
-        # Main has already retired Authelia; fixture must reproduce that
-        # otherwise a ready qBittorrent cleanup would also select Authelia.
-        module.write_text("services.authelia.instances.main = {\n  package = pkgs.authelia;\n};\n")
+
         # A fixture registry: one apply-coupled watcher whose workaround file,
         # cleanup recipe, and readiness endpoints the fake gh can answer.
         registry = {
-            "authelia-pnpm-hash": {"mode": "atomic", "input": "nixpkgs",
-                                   "fix_commit": "fix", "cleanup": "authelia-override"},
+
             "qbittorrent": {"mode": "post-lock", "input": "nixpkgs",
                                 "cleanup": "fixture-cleanup.patch", "coupling": "apply"},
         }
@@ -77,9 +72,7 @@ class LockUpdate(unittest.TestCase):
             "--- a/modules/aspects/upstream/qbittorrent.nix\n"
             "+++ b/modules/aspects/upstream/qbittorrent.nix\n"
             "@@ -1,3 +1 @@\n keep\n-qbittorrent-nox.overrideAttrs\n-workaround\n")
-        # Nix-store source fixtures are read-only; a real Git checkout is writable.
-        # Exercise the atomic cleanup against checkout-like permissions.
-        module.chmod(0o644)
+
         (self.checkout / "flake.lock").write_text(lock_fixture("old"))
         self.git("add", ".", cwd=self.checkout)
         self.git("commit", "-m", "fixture", cwd=self.checkout)
@@ -371,14 +364,6 @@ class LockUpdate(unittest.TestCase):
     def atomic_sha(self):
         return self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-cleanup")
 
-    def restore_authelia(self):
-        module = self.checkout / "modules/_services/authelia.nix"
-        shutil.copy(REPO / ".github/upstream/fixtures/authelia-before.nix.txt", module)
-        module.chmod(0o644)
-        self.git("add", ".", cwd=self.checkout)
-        self.git("commit", "-m", "restore Authelia fixture", cwd=self.checkout)
-        self.git("push", "origin", "main", cwd=self.checkout)
-        self.main = self.git("rev-parse", "HEAD", cwd=self.checkout)
 
     def advance_main(self):
         self.git("switch", "--quiet", "main", cwd=self.checkout)
@@ -653,21 +638,18 @@ class LockUpdate(unittest.TestCase):
         self.assertTrue(self.git("--git-dir", str(self.remote), "rev-parse",
                                  "automation/atomic-cleanup"))
 
-    def test_authelia_candidate_merges_exact_head(self):
-        self.restore_authelia()
+    def test_atomic_candidate_merges_exact_head(self):
         result = self.update(atomic_ready=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         dispatch = next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]
                         and r[r.index("--ref") + 1] == "automation/atomic-cleanup")
         self.assertNotIn("build_arm_authelia", dispatch)
         self.assertIn("upstream_watcher=qbittorrent", dispatch)
-        # Authelia candidates approve enforced checks before exact-head merging.
+        # Atomic candidates approve enforced checks before exact-head merging.
         self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests))
         approvals = [r for r in self.requests if r[0] == "api" and any(a.endswith("/approve") for a in r)]
         self.assertEqual(len(approvals), 2)
-        text = self.git("--git-dir", str(self.remote), "show",
-                        "automation/atomic-cleanup:modules/_services/authelia.nix")
-        self.assertNotIn("autheliaPackage", text)
+
 
     def test_stale_atomic_pr_head_cannot_be_approved(self):
         first = self.update(atomic_ready=True)
@@ -679,12 +661,12 @@ class LockUpdate(unittest.TestCase):
                          "a diverged PR head must never be approved")
 
     def test_atomic_refresh_reapplies_recipe_when_main_advances(self):
-        self.restore_authelia()
+
         first = self.update(atomic_ready=True)
         self.assertEqual(first.returncode, 0, first.stderr)
         tip = self.atomic_sha()
         message = self.git("--git-dir", str(self.remote), "log", "-1", "--format=%s", tip)
-        self.assertIn("authelia-pnpm-hash,qbittorrent", message)
+        self.assertIn("updated lock (qbittorrent)", message)
         new_main = self.advance_main()
         # Clear the prior successful merge request before refreshing.
         (self.root / "auto-merged").unlink()
@@ -699,9 +681,7 @@ class LockUpdate(unittest.TestCase):
         arr = self.git("--git-dir", str(self.remote), "show",
                        f"{refreshed}:modules/aspects/upstream/qbittorrent.nix")
         self.assertEqual(arr, "keep")
-        authelia = self.git("--git-dir", str(self.remote), "show",
-                            f"{refreshed}:modules/_services/authelia.nix")
-        self.assertNotIn("autheliaPackage", authelia)
+
         # The existing PR is reused, not recreated.
         self.assertFalse(any(r[:2] == ["pr", "create"] for r in self.requests))
         # Fresh exact-SHA CI on the rebuilt tip, then an exact-head merge.
@@ -979,25 +959,14 @@ class LockUpdate(unittest.TestCase):
         self.assertIn("inputs.expected_sha", CI)
         self.assertIn("inputs.upstream_watcher", CI)
 
-    def test_ci_atomic_prs_no_longer_require_native_arm(self):
-        # The authelia pnpm workaround was retired in #237; its native ARM
-        # gate and the dispatch plumbing for it must stay gone.
-        self.assertNotIn("build_arm_authelia", CI)
-        self.assertNotIn("build_arm_authelia", VALIDATION)
-        self.assertNotIn("arm-authelia-build", VALIDATION)
-
-    def test_stale_atomic_branch_condition_removed(self):
-        self.assertNotIn("automation/atomic-authelia-pnpm-hash", CI,
-                         "the stale single-use branch must not gate validation")
 
     def test_atomic_sentinel_drives_package_validation(self):
-        # Atomic PRs carry the sentinel; the validation job resolves the
-        # bundled watchers (minus Authelia, covered by the ARM build) from
-        # the exact candidate commit so the required gate includes them.
+        # Atomic PRs carry the sentinel; the validation job resolves bundled
+        # watchers from the candidate commit and validates each one.
         self.assertIn("automation/atomic-cleanup", CI)
         self.assertIn("automation/atomic-cleanup", VALIDATION)
         self.assertIn("updated lock", VALIDATION)
-        self.assertIn("authelia-pnpm-hash", VALIDATION)
+
 
     def test_lock_publisher_shell_is_parseable(self):
         # Workflow YAML checks alone do not parse the embedded bash script.

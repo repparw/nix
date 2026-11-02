@@ -44,3 +44,8 @@ traffic keeps its existing ports. Epsilon accepts direct HTTPS only from
 the trusted home uplink and its private Glance container for local probes.
 The apex DNS record points to the tunnel, so Epsilon no longer runs the
 apex ddclient updater.
+
+Direct WAN exposure outside the tunnel is limited to three router mappings:
+the WireGuard listener (UDP 51820), the TCP 443 forward to pi's Traefik for
+Jellyfin, and the TCP 54535 forward to alpha for qBittorrent peer traffic.
+The router's WAN management interface stays disabled.

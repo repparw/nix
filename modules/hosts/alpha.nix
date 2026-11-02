@@ -18,6 +18,7 @@
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.free-model-watch
+      den.aspects.nixos-services._.t3-token-watch
       den.aspects.deploy-target
     ];
 
@@ -150,6 +151,9 @@
             # Router adoption state (infra/router/): same pattern, see
             # infra/router/README.md.
             "Projects/nix/infra/router/terraform.tfstate"
+            # Declarative router inventory: local and gitignored, backed up
+            # alongside state but not parsed as OpenTofu JSON state.
+            "Projects/nix/infra/router/inventory.auto.tfvars"
           ];
           homeStateExcludes = map (dir: "/.config/net.imput.helium/${dir}") [
             "Default/History*"
@@ -214,7 +218,6 @@
         boot = {
           kernelPackages = pkgs.linuxPackages_latest;
           initrd = {
-            systemd.enable = true;
             availableKernelModules = [
               "nvme"
               "xhci_pci"
@@ -456,6 +459,9 @@
 
         networking.firewall.extraInputRules = ''
           iifname "eth0" ip saddr { ${config.modules.services.hostAddresses.pi}, ${config.modules.services.hostAddresses.epsilon} } tcp dport { 3000, 8081 } accept comment "edge ingress -> native alpha listeners"
+          # Epsilon's Hermes container is masqueraded to the wg-home address
+          # before reaching Alpha; do not expose T3 MCP to the full LAN.
+          iifname "eth0" ip saddr ${config.modules.services.hostAddresses.epsilon} tcp dport 3773 accept comment "Hermes -> T3 MCP"
         '';
 
         networking.firewall.extraForwardRules = ''

@@ -46,6 +46,8 @@
         sops.secrets."hermes-llm-env" = {
           sopsFile = ../../../secrets/hermes.sops.yaml;
           uid = 327680;
+          # Token rotation must refresh Hermes' generated .env and MCP client.
+          restartUnits = [ "container@hermes.service" ];
         };
 
         sops.secrets."arr-api-keys" = {
@@ -75,10 +77,6 @@
             "--restrict-address-families=AF_NETLINK"
           ];
           bindMounts = {
-            "/etc/ssh/desktop_authorized_keys" = {
-              hostPath = "/home/repparw/services/hermes/.hermes/desktop_authorized_keys";
-              isReadOnly = true;
-            };
             "/var/lib/hermes/.hermes/scripts/crash_triage_cron.py" = {
               hostPath = toString crashTriage.gate;
               isReadOnly = true;
@@ -137,6 +135,29 @@
                   "/run/secrets/hermes-env"
                   "/run/secrets/hermes-llm-env"
                 ];
+                # Alpha's T3 orchestration MCP: one minimally scoped
+                # mcp-client session with read + operate, never admin scopes.
+                # The token is supplied at runtime by hermes-llm-env in SOPS.
+                mcpServers.t3 = {
+                  url = "http://${cfg.hostAddresses.alpha}:3773/mcp";
+                  headers.Authorization = "Bearer \${T3_MCP_TOKEN}";
+                  connect_timeout = 10;
+                  timeout = 300;
+                  # Only expose tools needed to inspect and direct T3 work.
+                  tools.include = [
+                    "t3_thread_list"
+                    "t3_thread_search"
+                    "t3_thread_read"
+                    "t3_thread_send"
+                    "t3_thread_wait"
+                    "t3_thread_interrupt"
+                    "t3_thread_launch"
+                    # These require a current T3 parent run; an external
+                    # mcp-client may receive parent_not_active instead.
+                    "create_threads"
+                    "delegate_task"
+                  ];
+                };
                 extraPackages = with pkgs; [
                   curl
                   ffmpeg
@@ -148,25 +169,6 @@
 
               users.users.hermes.uid = 345;
               users.groups.hermes.gid = 345;
-              services.openssh = {
-                enable = true;
-                settings = {
-                  AllowUsers = [ "hermes" ];
-                  AuthenticationMethods = "publickey";
-                  AuthorizedKeysFile = "/etc/ssh/desktop_authorized_keys";
-                  PasswordAuthentication = false;
-                  KbdInteractiveAuthentication = false;
-                  PermitRootLogin = "no";
-                  AllowAgentForwarding = false;
-                  AllowStreamLocalForwarding = "no";
-                  AllowTcpForwarding = "local";
-                  PermitOpen = "127.0.0.1:9119";
-                  PermitListen = "none";
-                  X11Forwarding = false;
-                  PermitTTY = false;
-                  MaxSessions = 0;
-                };
-              };
 
               system.stateVersion = "26.05";
             };

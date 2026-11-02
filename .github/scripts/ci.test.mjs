@@ -153,7 +153,7 @@ test('atomic package validation reads the PR head and includes bundled ARM valid
     run('git', ['config', 'user.email', 'fixture@example.test']);
     run('git', ['commit', '--allow-empty', '-m', 'base']);
     run('git', ['switch', '-c', 'candidate']);
-    run('git', ['commit', '--allow-empty', '-m', 'fix(upstream): updated lock (authelia-pnpm-hash,t3code-split,qbittorrent)']);
+    run('git', ['commit', '--allow-empty', '-m', 'fix(upstream): updated lock (t3code-split,qbittorrent)']);
     const head = run('git', ['rev-parse', 'HEAD']);
     run('git', ['switch', 'main']);
     run('git', ['merge', '--no-ff', 'candidate', '-m', 'Merge candidate into main']);

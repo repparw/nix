@@ -115,6 +115,17 @@ state, while `/var/lib/auto-update/deployed-revision` records the last
 revision verified across the **entire** fleet. A deferred host does not
 advance that marker.
 
+The controller prints timestamped stage updates on stderr, with detailed
+build logs retained in its preparation directory. Progress messages alone
+do not establish deployment success.
+
+After a successful deployment, Pi requests Epsilon's headless reboot first,
+checks its health, and then reboots itself if needed. Backup and recovery
+gates can defer either reboot; the 03:00 timer provides a retry. Alpha
+remains manual. `fleet debug` reports `reboot_required` and the separate
+`fleet_cloud_reboot_stuck` alert is managed directly in Grafana Cloud,
+not by dashboard Git Sync.
+
 The controller's `/var/lib/auto-update/latest-preparation` points to
 captured revision and prepared profiles/results. Per-host
 `fail-<host>.log` files survive controller reboots, though later attempts

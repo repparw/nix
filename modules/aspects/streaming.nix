@@ -64,11 +64,6 @@ in
               ${pkgs.niri.src}/docs/wiki/logo/niri-icon.svg \
               > $out/desktop.png
             cp ${pkgs.steam-unwrapped}/share/icons/hicolor/256x256/apps/steam.png $out/steam.png
-            rsvg-convert \
-              --width 512 \
-              --height 512 \
-              ${pkgs.heroic}/share/icons/hicolor/scalable/apps/com.heroicgameslauncher.hgl.svg \
-              > $out/heroic.png
           '';
 
           # SteamOS session switching is not available on the Niri host.
@@ -229,7 +224,17 @@ in
           config = {
             nixpkgs.overlays = [
               (_final: prev: {
-                gamescope = prev.gamescope.override { enableWsi = true; };
+                gamescope = (prev.gamescope.override { enableWsi = true; }).overrideAttrs (old: {
+                  postPatch = (old.postPatch or "") + ''
+                    substituteInPlace subprojects/vkroots/vkroots.h --replace-fail \
+                      'deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, j, &queue);' \
+                      'if (queueInfo.flags) { VkDeviceQueueInfo2 q2; q2.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2; q2.pNext = nullptr; q2.flags = queueInfo.flags; q2.queueFamilyIndex = queueInfo.queueFamilyIndex; q2.queueIndex = j; deviceDispatch->GetDeviceQueue2(device, &q2, &queue); } else deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, j, &queue);'
+
+                    substituteInPlace subprojects/vkroots/vkroots.h --replace-fail \
+                      'deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, i, &queue);' \
+                      'if (queueInfo.flags) { VkDeviceQueueInfo2 q2; q2.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2; q2.pNext = nullptr; q2.flags = queueInfo.flags; q2.queueFamilyIndex = queueInfo.queueFamilyIndex; q2.queueIndex = i; deviceDispatch->GetDeviceQueue2(device, &q2, &queue); } else deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, i, &queue);'
+                  '';
+                });
               })
             ];
 
@@ -264,19 +269,19 @@ in
                     stdout = "journal";
                     stderr = "journal";
                   }
-                  {
-                    title = "Heroic Games Launcher";
-                    boxart = "${moonshine-boxart}/heroic.png";
-                    command = [
-                      (lib.getExe pkgs.heroic)
-                      "--console"
-                    ];
-                    stdout = "journal";
-                    stderr = "journal";
-                  }
                 ];
               };
             };
+
+            # Boot race: moonshine's healthcheck starts before the GPU finishes
+            # initializing (Vulkan FAIL, exit 1, recovered only by Restart=).
+            # Order after udev-settle so DRM probe and firmware load are done
+            # before the first healthcheck. (Not After=graphical.target: moonshine
+            # is WantedBy multi-user, so that ordering cycles
+            # multi-user -> moonshine -> graphical -> multi-user and breaks
+            # graphical.target entirely.)
+            systemd.services.moonshine.wants = [ "systemd-udev-settle.service" ];
+            systemd.services.moonshine.after = [ "systemd-udev-settle.service" ];
 
             services.udev.extraRules = ''
               ACTION=="add", SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_JOYSTICK}=="1", ATTRS{idVendor}=="2dc8", ATTRS{idProduct}=="310a", TAG+="systemd", ENV{SYSTEMD_USER_WANTS}+="8bitdo-tv-moonlight.service"

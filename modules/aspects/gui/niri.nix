@@ -26,6 +26,20 @@
 
         programs.niri.enable = lib.mkDefault true;
         programs.wshowkeys.enable = true;
+
+        # KDE Connect's remote-input (mouse/keyboard from a phone) needs a
+        # portal backend that implements RemoteDesktop on wlroots compositors.
+        # The GNOME portal backend does not implement RemoteDesktop on Niri,
+        # so use Luminous for that interface only.
+        xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-luminous ];
+        xdg.portal.config.niri."org.freedesktop.impl.portal.RemoteDesktop" = "luminous";
+
+        environment.etc."xdg/xdg-desktop-portal-luminous/config.toml".text = ''
+          # Avoid blocking remote input on a permission dialog that may not
+          # be reachable from the phone-initiated flow.
+          remote_permission_check = false
+          screenshot_permission_check = false
+        '';
       };
 
     homeManager =
