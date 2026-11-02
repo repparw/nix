@@ -116,7 +116,10 @@
               '';
 
           hermes-cua-policy =
-            assert !inputs.self.nixosConfigurations.epsilon.config.containers.hermes.config.modules.hermes-cua.enable;
+            let
+              epsilon = inputs.self.nixosConfigurations.epsilon.config;
+            in
+            assert !epsilon.containers.hermes.config.modules.hermes-cua.enable;
             import ./aspects/services/hermes-cua/_check.nix {
               inherit pkgs;
               source = inputs.hermes-agent;
