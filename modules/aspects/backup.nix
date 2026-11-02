@@ -60,10 +60,6 @@
       in
       {
         options.modules.backup = {
-          claroReplica = {
-            enable = lib.mkEnableOption "independent weekly Restic snapshot copying to Claro Drive";
-            schedule = lib.mkEnableOption "the Claro Drive replica timer after the remote has been initialized";
-          };
           retentionArgs = lib.mkOption {
             type = lib.types.listOf lib.types.str;
             default = [
@@ -204,6 +200,7 @@
             runtimeInputs = [
               pkgs.restic
               pkgs.rclone
+              pkgs.jq
             ];
             text = builtins.readFile ../scripts/restic-claro-replica.sh;
           };
@@ -238,19 +235,10 @@
             rcloneDriveSecret.sopsFile = ../../secrets/rclone.sops.yaml;
             rcloneDriveToken.sopsFile = ../../secrets/rclone.sops.yaml;
             rcloneCrypt.sopsFile = ../../secrets/rclone.sops.yaml;
-          }
-          // lib.optionalAttrs bcfg.claroReplica.enable {
             rcloneClarodrive.sopsFile = ../../secrets/rclone.sops.yaml;
             rcloneClarodriveUser.sopsFile = ../../secrets/rclone.sops.yaml;
             rcloneClarodriveUrl.sopsFile = ../../secrets/rclone.sops.yaml;
           };
-
-          assertions = [
-            {
-              assertion = !bcfg.claroReplica.schedule || bcfg.claroReplica.enable;
-              message = "modules.backup.claroReplica.schedule requires claroReplica.enable";
-            }
-          ];
 
           # System-level rclone config, rendered by sops at activation with
           # secret values substituted: rclone has no path indirection in
@@ -270,8 +258,7 @@
               type = crypt
               remote = gdrive:nixos-backups
               password = ${config.sops.placeholder.rcloneCrypt}
-            ''
-            + lib.optionalString bcfg.claroReplica.enable ''
+
               [claro]
               type = webdav
               vendor = nextcloud
@@ -285,24 +272,23 @@
             environment.RCLONE_CONFIG = config.sops.templates."rclone.conf".path;
           };
 
-          # An explicit bootstrap after quota verification keeps a newly deployed
-          # host from creating large copies or accidentally consuming Claro quota.
-          # Retain weekly replica failures independently from the primary job.
-          modules.fleet-unit-state.retainedJobs =
-            lib.optionals bcfg.claroReplica.enable [ "restic-claro-replica" ];
+          # Secondary failure evidence must not change primary backup status.
+          modules.fleet-unit-state.retainedJobs = [ "restic-claro-replica" ];
 
-          systemd.services.restic-claro-replica-preflight =
-            lib.mkIf bcfg.claroReplica.enable (replicaUnit "preflight");
-          systemd.services.restic-claro-replica-init =
-            lib.mkIf bcfg.claroReplica.enable (replicaUnit "init");
-          systemd.services.restic-claro-replica =
-            lib.mkIf bcfg.claroReplica.enable (replicaUnit "copy");
-          systemd.timers.restic-claro-replica = lib.mkIf (
-            bcfg.claroReplica.enable && bcfg.claroReplica.schedule
-          ) {
+          systemd.services.restic-claro-replica-preflight = replicaUnit "preflight";
+          systemd.services.restic-claro-replica = replicaUnit "copy";
+          systemd.timers.restic-claro-replica = {
             wantedBy = [ "timers.target" ];
             timerConfig = {
-              OnCalendar = "Sun *-*-* 05:00:00";
+              # Stagger the three hosts against the shared 75 GB account and
+              # avoid simultaneous first copies over the limited upload link.
+              OnCalendar =
+                if config.networking.hostName == "alpha" then
+                  "Sat *-*-* 05:00:00"
+                else if config.networking.hostName == "pi" then
+                  "Tue *-*-* 05:00:00"
+                else
+                  "Thu *-*-* 05:00:00";
               RandomizedDelaySec = "1h";
               Persistent = true;
             };
