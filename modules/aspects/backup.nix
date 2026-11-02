@@ -287,6 +287,10 @@
 
           # An explicit bootstrap after quota verification keeps a newly deployed
           # host from creating large copies or accidentally consuming Claro quota.
+          # Retain weekly replica failures independently from the primary job.
+          modules.fleet-unit-state.retainedJobs =
+            lib.optionals bcfg.claroReplica.enable [ "restic-claro-replica" ];
+
           systemd.services.restic-claro-replica-preflight =
             lib.mkIf bcfg.claroReplica.enable (replicaUnit "preflight");
           systemd.services.restic-claro-replica-init =
