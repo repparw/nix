@@ -48,7 +48,6 @@ pkgs.testers.runNixOSTest {
     };
     # The VM supplies its executable store through its normal host share. This
     # exercises the backing /nix bind and database, not a standalone rescue boot.
-    boot.initrd.systemd.enable = true;
     boot.supportedFilesystems = [ "btrfs" ];
     boot.initrd.systemd.storePaths = [
       pkgs.btrfs-progs
