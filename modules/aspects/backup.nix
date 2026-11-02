@@ -1,4 +1,4 @@
-{ den, inputs, lib, ... }:
+{ den, inputs ? null, lib ? null, ... }:
 {
   den.aspects.backup = {
     includes = [ den.aspects.backup._.restic ];
