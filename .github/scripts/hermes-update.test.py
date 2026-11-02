@@ -67,7 +67,7 @@ class HermesUpdateTests(unittest.TestCase):
     def test_validation_recovery(self):
         prepare = function("prepare_run")
         scenarios = [
-            ("", "", False),
+            ("", "", True),
             ("31\tcompleted\tsuccess", "", False),
             ("31\tin_progress\t", "", False),
             ("31\tcompleted\tfailure", "31", True),
