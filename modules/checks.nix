@@ -127,8 +127,7 @@
                   0;
             in
             assert lib.assertMsg (connections >= 2) "Pi Restic prune requires rclone.connections >= 2.";
-            assert lib.assertMsg (lib.hasInfix "--limit-upload=2048" postStart)
-              "Pi Restic prune must preserve the existing 2 MiB/s upload limit.";
+            assert lib.assertMsg (lib.hasInfix "--limit-upload=2048" postStart) "Pi prune must retain its upload limit.";
             pkgs.runCommand "check-restic-pi-prune-connections" { } "touch $out";
 
           monitoring-vm = import ./_tests/monitoring-vm.nix { inherit inputs pkgs; };
