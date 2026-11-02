@@ -79,6 +79,54 @@ Use [host recovery](host-recovery.md) or
 instructions. Never substitute a successful backup upload for an actual
 restore/integrity test.
 
+### Optional Claro Drive Restic replica
+
+The primary nightly Restic backup remains on Google Drive. The optional Claro
+replica uses a **separate** Restic repository at
+`rclone:claro:restic-replica/<host>` over WebDAV. It does not use the rclone
+union: failures must not corrupt or silently diverge the primary. Restic
+encrypts the secondary repository independently; it uses the existing Restic
+password but its own repository key. The `copy` operation reads the primary
+repository and transfers data through the host, so the first copy can use
+substantial download and upload bandwidth.
+
+The replica is **off by default**. Claro credentials currently belong to Alpha
+and Pi, not Epsilon. Before enabling it, establish the usable free quota on
+the shared Claro account, including ordinary files already present, and
+compare it with the Google Drive repository sizes for each proposed host.
+Account for both hosts together. This cannot be verified from a Nix evaluation.
+
+Bootstrap each host separately:
+
+1. Set `modules.backup.claroReplica.enable = true;` in its host configuration
+   and deploy it **without** setting `schedule = true`.
+2. Run `sudo systemctl start --wait restic-claro-replica-preflight.service`,
+   then read `journalctl -u restic-claro-replica-preflight.service -n 100`.
+   The probe reports Claro quota and the primary repository's stored size.
+   A failed or quota-unsupported probe requires manual capacity verification.
+3. When capacity is confirmed, run
+   `sudo systemctl start --wait restic-claro-replica-init.service` **once**.
+   This initializes the destination with the source chunker parameters, so
+   incremental copies can deduplicate correctly. Do not rerun initialization
+   against an existing repository.
+4. Run `sudo systemctl start --wait restic-claro-replica.service` manually.
+   Check the unit journal for the completed copy, repository check, and
+   retention. An interrupted copy is resumable.
+5. Only after verifying snapshots and a test restore, set
+   `modules.backup.claroReplica.schedule = true;` and deploy. The weekly
+   timer runs Sunday after the nightly primary job, with randomized delay.
+   Successful copying is followed by a metadata check and the same
+   retention policy as the primary.
+
+To inspect and restore, use the system-level rclone template at
+`/run/secrets-rendered/rclone.conf` and Restic password at
+`/run/secrets/resticPassword` with repository
+`rclone:claro:restic-replica/<host>`. These paths are accessible to root.
+Verify the paths against `systemctl cat restic-claro-replica.service` on the
+deployed host. Never initialize or prune a repository during an unexplained
+authentication, capacity or consistency failure. Claro copy failures are
+independent of the primary night's backup.
+
 ### After an OpenTofu state change
 
 After an authorized `tofu apply`, import, state migration, or manual repair
