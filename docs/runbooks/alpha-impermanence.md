@@ -161,6 +161,24 @@ and overlapping bind mounts affect them. No full scan was repeated on the media
 disks. The ordinary daily backup remains a narrow allowlist, not full host
 recovery coverage.
 
+## Repeatable read-only preflight
+
+Collect a fresh, dated report before any boot candidate is prepared:
+
+```sh
+sudo bash modules/scripts/alpha-impermanence-preflight.sh > alpha-preflight-$(date +%Y%m%d).txt
+```
+
+The script checks mount sources and subvolumes, Btrfs allocation and device
+errors, swap, boot status, and whether `/srv` needs a separate inventory. It
+does **not** modify disks, create snapshots, change the readiness marker, run a
+backup, or reboot. Treat errors as unknown evidence, not passing checks.
+Preserve the report privately alongside the backup and restore manifests.
+Recheck the NVMe/ESP layout and confirm HDD, Seagate and FUSE mounts are never
+included in the capture. The report cannot establish recovery readiness on
+its own: an independent disk-backed restore, rescue media/key, and a proven
+persistent-root fallback remain required.
+
 ## Remaining gates before a production trial
 
 1. Fix the home-export failure and verify a fresh offsite snapshot and isolated
