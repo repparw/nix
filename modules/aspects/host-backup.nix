@@ -59,7 +59,12 @@
             "--limit-upload=2048"
           ];
           extraOptions = lib.optionals (config.networking.hostName == "pi") [
-            "rclone.connections=1"
+            # Prune refuses to run with a single backend connection
+            # ("prune requires a backend connection limit of at least two"),
+            # which failed the whole offsite unit after each backup.
+            # The upload cap above is process-wide, so a second connection
+            # does not raise the sustained NIC throughput.
+            "rclone.connections=2"
           ];
         };
         # Keep existing checkpoints readable and backed up after retiring the tool.
