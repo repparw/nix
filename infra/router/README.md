@@ -96,7 +96,8 @@ destroy`.
   Roughly 12 failed logins trigger a ~2 h lockout — the provider never
   retries failed logins.
 - **Can** update a reservation or forward in place (IP, ports, protocol,
-  enabled, hostname). Updates are verified by read-back after the write.
+  enabled, hostname — see the device-name caveat below). Updates are
+  verified by read-back after the write.
 - **Cannot** replace a row while `prevent_destroy` is in force: changing a
   reservation MAC or a forward's name requires a replacement with a destroy
   step, so the plan fails. To authorize such a replacement, explicitly remove
@@ -132,6 +133,19 @@ confirm both `infra/router/terraform.tfstate` and
 `infra/router/inventory.auto.tfvars` appear in the staged generation.
 Re-running `tfinventory` + imports is the recovery fallback, with the usual
 caveat: it silently adopts out-of-band drift.
+
+## Reservation device names are client-controlled
+
+The AX23 v2 derives a reservation's device-name fields (`hostname` and
+`comment`) from the connected client's DHCP hostname. For an online device,
+both insert and update read back with the device-reported name, so a custom
+label in `inventory.auto.tfvars` never reaches the router: the apply fails
+with the provider's "inconsistent result after apply" guard (the MAC→IP
+mapping itself is written and stays correct; the failed resource may need
+`tofu untaint`). To rename a device, change the DHCP hostname the device
+itself reports and let it reconnect — the router row, tofu state, and a
+subsequent plan converge without a write. Rows created for offline or
+unknown devices keep the name they were created with.
 
 ## Reviewing drift
 
