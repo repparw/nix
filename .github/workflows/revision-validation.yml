@@ -95,6 +95,7 @@ jobs:
             .github/workflows/lock-update.yml \
             .github/workflows/ci.yml \
             .github/workflows/revision-validation.yml
+          python3 .github/scripts/hermes-update.test.py
       - name: Upload check logs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
