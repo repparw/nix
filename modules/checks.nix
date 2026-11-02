@@ -125,8 +125,7 @@
                 else
                   0;
             in
-            assert lib.assertMsg (connections >= 2)
-              "Pi's Restic offsite prune requires rclone.connections >= 2 (found ${toString connections}).";
+            assert lib.assertMsg (connections >= 2) "Pi Restic prune requires rclone.connections >= 2.";
             pkgs.runCommand "check-restic-pi-prune-connections" { } "touch $out";
 
           monitoring-vm = import ./_tests/monitoring-vm.nix { inherit inputs pkgs; };
