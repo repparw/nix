@@ -59,7 +59,9 @@
             "--limit-upload=2048"
           ];
           extraOptions = lib.optionals (config.networking.hostName == "pi") [
-            "rclone.connections=1"
+            # Restic prune needs at least two backend connections. Keep this
+            # at the minimum while preserving Pi\'s 2 MiB/s upload limit.
+            "rclone.connections=2"
           ];
         };
         # Keep existing checkpoints readable and backed up after retiring the tool.

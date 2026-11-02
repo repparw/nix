@@ -115,6 +115,20 @@
                 touch $out
               '';
 
+          restic-pi-prune-connections =
+            let
+              options = inputs.self.nixosConfigurations.pi.config.services.restic.backups.offsite.extraOptions;
+              limits = lib.filter (lib.hasPrefix "rclone.connections=") options;
+              connections =
+                if builtins.length limits == 1 then
+                  lib.toInt (lib.removePrefix "rclone.connections=" (builtins.head limits))
+                else
+                  0;
+            in
+            assert lib.assertMsg (connections >= 2)
+              "Pi's Restic offsite prune requires rclone.connections >= 2 (found ${toString connections}).";
+            pkgs.runCommand "check-restic-pi-prune-connections" { } "touch $out";
+
           monitoring-vm = import ./_tests/monitoring-vm.nix { inherit inputs pkgs; };
 
           monitoring-fleet = import ./_tests/monitoring-fleet.nix { inherit inputs lib pkgs; };
