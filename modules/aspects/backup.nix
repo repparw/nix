@@ -13,19 +13,33 @@
         exports = config.modules.backup.exports;
         exportReport = "/var/lib/backup-exports/offsite.json";
         backup = config.services.restic.backups.offsite;
-        resticCommand = lib.escapeShellArgs (
-          lib.optionals backup.inhibitsSleep [
-            "${pkgs.systemd}/bin/systemd-inhibit"
-            "--mode=block"
-            "--who=restic"
-            "--what=sleep"
-            "--why=Scheduled backup offsite"
-          ]
-          ++ [ (lib.getExe backup.package) ]
-          ++ lib.concatMap (option: [
-            "-o"
-            option
-          ]) backup.extraOptions
+        mkResticCommand =
+          options:
+          lib.escapeShellArgs (
+            lib.optionals backup.inhibitsSleep [
+              "${pkgs.systemd}/bin/systemd-inhibit"
+              "--mode=block"
+              "--who=restic"
+              "--what=sleep"
+              "--why=Scheduled backup offsite"
+            ]
+            ++ [ (lib.getExe backup.package) ]
+            ++ lib.concatMap (option: [
+              "-o"
+              option
+            ]) options
+          );
+        resticCommand = mkResticCommand backup.extraOptions;
+        # Restic prune repacks packs with parallel backend connections and
+        # refuses to run below two, while the backup itself may be throttled
+        # to one connection (pi's rclone.connections=1, host-backup.nix,
+        # macb TX-queue watchdog). Give the post-start forget --prune its own
+        # bumped limit so retention keeps working on hosts that throttle the
+        # backup.
+        pruneCommand = mkResticCommand (
+          map (
+            option: if lib.hasPrefix "rclone.connections=" option then "rclone.connections=2" else option
+          ) backup.extraOptions
         );
         prepareExports = pkgs.writeShellApplication {
           name = "prepare-offsite-exports";
@@ -144,7 +158,7 @@
           ${lib.getExe pkgs.python3} ${../scripts/prepare-backup-exports.py} --check ${exportReport}
           ${lib.optionalString (config.modules.backup.retentionArgs != [ ]) ''
             ${resticCommand} unlock
-            ${resticCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
+            ${pruneCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
           ''}
         '';
         config.systemd.services.restic-backups-offsite.serviceConfig = lib.mkIf (exports != { }) {
