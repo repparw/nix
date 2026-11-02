@@ -170,6 +170,11 @@ Request a lock update with `gh workflow run lock-update.yml`; publishing
 and fleet deployment remain separate. A runtime readiness report alone
 does not retire an upstream workaround.
 
+Hermes stable releases are tracked by the
+[hermes-update workflow](../../.github/workflows/hermes-update.yml). It opens
+manual-merge update PRs and preserves the exact pinned release between updates.
+Publication and fleet activation are separate.
+
 ## Storage and firmware safeguards
 
 Nix `min-free` and `max-free` control reclamation of unreferenced paths
