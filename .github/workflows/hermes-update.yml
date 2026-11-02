@@ -167,6 +167,7 @@ jobs:
           pr=$(gh pr list --head "$branch" --base main --state open --json number \
             --jq '.[0].number // empty')
           orphan=""
+          publication_incomplete=""
           if [ -n "$existing" ]; then
             verify_managed_tip "$existing" || {
               echo "Unowned $branch tip $existing; requires human review." >&2
@@ -181,8 +182,10 @@ jobs:
               recorded=$(gh pr view "$pr" --json body --jq .body |
                 sed -n 's/.*<!-- hermes-update-sha=\([a-f0-9]*\) -->.*/\1/p' | tail -n 1)
               if [ -n "$recorded" ] && [ "$recorded" != "$existing" ]; then
-                echo "PR #$pr provenance differs from its head; requires human review." >&2
-                exit 1
+                # Crash window: the candidate push may have completed before
+                # its PR-body provenance was refreshed. Never trust the new
+                # tip until the regenerated candidate matches it byte-for-byte.
+                publication_incomplete=1
               fi
             else
               merged_tip=$(gh pr list --head "$branch" --base main --state merged \
@@ -265,6 +268,11 @@ jobs:
           git commit --quiet -m "chore(hermes): update to $latest"
           revision=$(git rev-parse HEAD)
           unchanged=""
+          if [ -n "$publication_incomplete" ] \
+            && [ "$(git rev-parse "$revision^{tree}")" != "$(git rev-parse "$existing^{tree}")" ]; then
+            echo "PR #$pr head differs from the regenerated candidate; requires human review." >&2
+            exit 1
+          fi
           if [ -n "$pr_tree" ] && [ "$(git rev-parse "$revision^{tree}")" = "$pr_tree" ]; then
             revision=$pr_tip
             unchanged=1
@@ -296,7 +304,7 @@ jobs:
           BODY
           )
           if [ -n "$pr" ]; then
-            if [ -z "$unchanged" ]; then
+            if [ -z "$unchanged" ] || [ -n "$publication_incomplete" ]; then
               gh pr edit "$pr" --title "chore(hermes): update to $latest" --body "$body"
             fi
           else
