@@ -27,6 +27,11 @@
             option
           ]) backup.extraOptions
         );
+        # Pruning may upload repacked data. Reuse the backup upload limit so
+        # Pi's low-bandwidth protection covers both stages of the offsite job.
+        pruneUploadLimit = lib.escapeShellArgs (
+          lib.filter (lib.hasPrefix "--limit-upload=") backup.extraBackupArgs
+        );
         prepareExports = pkgs.writeShellApplication {
           name = "prepare-offsite-exports";
           runtimeInputs = [
@@ -144,7 +149,7 @@
           ${lib.getExe pkgs.python3} ${../scripts/prepare-backup-exports.py} --check ${exportReport}
           ${lib.optionalString (config.modules.backup.retentionArgs != [ ]) ''
             ${resticCommand} unlock
-            ${resticCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
+            ${resticCommand} ${pruneUploadLimit} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
           ''}
         '';
         config.systemd.services.restic-backups-offsite.serviceConfig = lib.mkIf (exports != { }) {

@@ -118,6 +118,7 @@
           restic-pi-prune-connections =
             let
               options = inputs.self.nixosConfigurations.pi.config.services.restic.backups.offsite.extraOptions;
+              postStart = inputs.self.nixosConfigurations.pi.config.systemd.services.restic-backups-offsite.postStart;
               limits = lib.filter (lib.hasPrefix "rclone.connections=") options;
               connections =
                 if builtins.length limits == 1 then
@@ -126,6 +127,8 @@
                   0;
             in
             assert lib.assertMsg (connections >= 2) "Pi Restic prune requires rclone.connections >= 2.";
+            assert lib.assertMsg (lib.hasInfix "--limit-upload=2048" postStart)
+              "Pi Restic prune must preserve the existing 2 MiB/s upload limit.";
             pkgs.runCommand "check-restic-pi-prune-connections" { } "touch $out";
 
           monitoring-vm = import ./_tests/monitoring-vm.nix { inherit inputs pkgs; };
