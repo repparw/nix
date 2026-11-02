@@ -203,6 +203,20 @@ jobs:
             exit 1
           fi
 
+          # Closing a proposed release is an explicit human veto. Do not
+          # republish that same version on every cron tick, even if GitHub
+          # already deleted the old PR branch. A newer release can proceed.
+          if [ -z "$pr" ] && [ "$current" != "$latest" ]; then
+            declined=$(gh pr list --head "$branch" --base main --state closed \
+              --limit 1000 --json title,mergedAt |
+              jq -r --arg title "chore(hermes): update to $latest" \
+                '[.[] | select(.mergedAt == null and .title == $title)] | length')
+            if [ "$declined" -gt 0 ]; then
+              echo "Hermes $latest was declined in a closed PR; skipping until a newer release."
+              exit 0
+            fi
+          fi
+
           if [ "$current" = "$latest" ]; then
             if [ -n "$pr" ]; then
               gh pr close "$pr" --comment "main already pins $latest; closing this candidate."
@@ -214,7 +228,7 @@ jobs:
           fi
 
           # A same-tag candidate refreshes onto the current main; an identical
-          # tree needs no push, dispatch, or PR edit. The managed branch's
+          # tree needs no push or PR edit, but validation is reconciled. The branch's
           # objects are not present until fetched.
           pr_tree=""
           if [ -n "$pr" ]; then
