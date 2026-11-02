@@ -79,53 +79,52 @@ Use [host recovery](host-recovery.md) or
 instructions. Never substitute a successful backup upload for an actual
 restore/integrity test.
 
-### Optional Claro Drive Restic replica
+### Automatic Claro Drive Restic mirror
 
-The primary nightly Restic backup remains on Google Drive. The optional Claro
-replica uses a **separate** Restic repository at
-`rclone:claro:restic-replica/<host>` over WebDAV. It does not use the rclone
-union: failures must not corrupt or silently diverge the primary. Restic
-encrypts the secondary repository independently; it uses the existing Restic
-password but its own repository key. The `copy` operation reads the primary
-repository and transfers data through the host, so the first copy can use
-substantial download and upload bandwidth.
+Every host has a weekly secondary Restic replica on the same 75 GB Claro Drive
+account. Google Drive remains the primary nightly backup. Each replica uses an
+independent Restic repository under
+`rclone:claro:restic-replica/<host>`; this does not use the rclone union.
+Restic `copy` replicates the source's snapshots and preserves chunker
+parameters for deduplication, but it creates a separate encrypted repository,
+not a byte-for-byte sync. The source credentials and existing Restic password
+are injected through SOPS.
 
-The replica is **off by default**. Claro credentials currently belong to Alpha
-and Pi, not Epsilon. Before enabling it, establish the usable free quota on
-the shared Claro account, including ordinary files already present, and
-compare it with the Google Drive repository sizes for each proposed host.
-Account for both hosts together. This cannot be verified from a Nix evaluation.
+The timer is enabled by default. To spread traffic and avoid concurrent initial
+uploads to one account, Alpha runs Saturday around 05:00, Pi Tuesday around
+05:00, and Epsilon Thursday around 05:00, each with up to 1 hour of delay.
+The one-shot job automatically creates the destination repository on its first
+run, copies every retained source snapshot, checks the destination, applies
+the primary retention policy and checks again. Subsequent runs are incremental.
+Pi retains its upload throttle and uses two backend connections for pruning.
 
-Bootstrap each host separately:
+Before initializing a new destination, the service requires reported free quota
+to exceed the primary repository's stored size by 1 GiB. The 75 GB quota is
+**shared** among the three host repositories and any other Claro files. If
+an initial copy cannot fit, Claro's quota API is unavailable, or a repository
+cannot be validated, the replica **fails without modifying Google Drive**.
+Failed runs are retained in fleet-unit-state. The primary nightly backup is
+not coupled to the secondary. Once initialized, a failed incremental transfer
+can be resumed on the next run. Capacity checks are estimates and cannot
+guarantee that all future snapshots will fit; the initial clone may saturate
+the host's available download/upload bandwidth for a long time.
 
-1. Set `modules.backup.claroReplica.enable = true;` in its host configuration
-   and deploy it **without** setting `schedule = true`.
-2. Run `sudo systemctl start --wait restic-claro-replica-preflight.service`,
-   then read `journalctl -u restic-claro-replica-preflight.service -n 100`.
-   The probe reports Claro quota and the primary repository's stored size.
-   A failed or quota-unsupported probe requires manual capacity verification.
-3. When capacity is confirmed, run
-   `sudo systemctl start --wait restic-claro-replica-init.service` **once**.
-   This initializes the destination with the source chunker parameters, so
-   incremental copies can deduplicate correctly. Do not rerun initialization
-   against an existing repository.
-4. Run `sudo systemctl start --wait restic-claro-replica.service` manually.
-   Check the unit journal for the completed copy, repository check, and
-   retention. An interrupted copy is resumable.
-5. Only after verifying snapshots and a test restore, set
-   `modules.backup.claroReplica.schedule = true;` and deploy. The weekly
-   timer runs Sunday after the nightly primary job, with randomized delay.
-   Successful copying is followed by a metadata check and the same
-   retention policy as the primary.
+Inspect a host:
 
-To inspect and restore, use the system-level rclone template at
-`/run/secrets-rendered/rclone.conf` and Restic password at
-`/run/secrets/resticPassword` with repository
-`rclone:claro:restic-replica/<host>`. These paths are accessible to root.
-Verify the paths against `systemctl cat restic-claro-replica.service` on the
-deployed host. Never initialize or prune a repository during an unexplained
-authentication, capacity or consistency failure. Claro copy failures are
-independent of the primary night's backup.
+```sh
+sudo systemctl status restic-claro-replica.service restic-claro-replica.timer
+sudo systemctl start --wait restic-claro-replica-preflight.service
+sudo journalctl -u restic-claro-replica.service -n 100 --no-pager
+```
+
+The preflight command prints current Claro quota and Google Drive Restic size,
+without writing remote data. For a manually triggered run, use
+`sudo systemctl start --wait restic-claro-replica.service`.
+To restore, point Restic at `rclone:claro:restic-replica/<host>` using the
+system-level RCLONE_CONFIG template and `resticPassword` secret resolved by
+`systemctl cat restic-claro-replica.service`. Test a file restore before
+relying on the second provider. Do not initialize or prune a damaged
+repository during an unexplained authentication or consistency failure.
 
 ### After an OpenTofu state change
 
