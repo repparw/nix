@@ -380,6 +380,18 @@
     };
   };
   perSystem = { pkgs, ... }: {
+    checks.claro-replica = pkgs.runCommand "check-claro-replica" {
+      nativeBuildInputs = [
+        pkgs.python3
+        pkgs.bash
+        pkgs.shellcheck
+      ];
+    } ''
+      shellcheck -s bash ${../scripts/restic-claro-replica.sh}
+      python3 ${../_tests/restic-claro-replica.py} ${../scripts/restic-claro-replica.sh}
+      touch "$out"
+    '';
+
     checks.backup-exports =
       let
         piPostStart = builtins.unsafeDiscardStringContext (
