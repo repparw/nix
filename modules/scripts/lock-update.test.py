@@ -993,8 +993,9 @@ class LockUpdate(unittest.TestCase):
                     env=os.environ | {"GITHUB_SHA": sha, "EXPECTED_SHA": expected},
                 )
                 self.assertEqual(result.returncode == 0, success)
-        self.assertEqual(VALIDATION.count("ref: ${{ github.sha }}"), checkout_count - 1)
-        self.assertEqual(VALIDATION.count("ref: ${{ github.event.pull_request.head.sha || github.sha }}"), 1)
+        # Both upstream-package and Hermes native builds select the PR head.
+        self.assertEqual(VALIDATION.count("ref: ${{ github.sha }}"), checkout_count - 2)
+        self.assertEqual(VALIDATION.count("ref: ${{ github.event.pull_request.head.sha || github.sha }}"), 2)
         self.assertIn("  pull_request:", CI)
         self.assertNotIn("paths-ignore:", CI)
 
