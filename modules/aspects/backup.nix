@@ -321,6 +321,11 @@
       pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; }
         ''
           PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
+          cp ${./backup.nix} formatted.nix
+          chmod +w formatted.nix
+          ${pkgs.nixfmt}/bin/nixfmt formatted.nix
+          ${pkgs.deadnix}/bin/deadnix --edit --no-lambda-arg --no-lambda-pattern-names formatted.nix
+          ${pkgs.diffutils}/bin/diff -u ${./backup.nix} formatted.nix || true
           touch "$out"
         '';
   };
