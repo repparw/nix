@@ -77,10 +77,6 @@
             "--restrict-address-families=AF_NETLINK"
           ];
           bindMounts = {
-            "/etc/ssh/desktop_authorized_keys" = {
-              hostPath = "/home/repparw/services/hermes/.hermes/desktop_authorized_keys";
-              isReadOnly = true;
-            };
             "/var/lib/hermes/.hermes/scripts/crash_triage_cron.py" = {
               hostPath = toString crashTriage.gate;
               isReadOnly = true;
@@ -173,25 +169,6 @@
 
               users.users.hermes.uid = 345;
               users.groups.hermes.gid = 345;
-              services.openssh = {
-                enable = true;
-                settings = {
-                  AllowUsers = [ "hermes" ];
-                  AuthenticationMethods = "publickey";
-                  AuthorizedKeysFile = "/etc/ssh/desktop_authorized_keys";
-                  PasswordAuthentication = false;
-                  KbdInteractiveAuthentication = false;
-                  PermitRootLogin = "no";
-                  AllowAgentForwarding = false;
-                  AllowStreamLocalForwarding = "no";
-                  AllowTcpForwarding = "local";
-                  PermitOpen = "127.0.0.1:9119";
-                  PermitListen = "none";
-                  X11Forwarding = false;
-                  PermitTTY = false;
-                  MaxSessions = 0;
-                };
-              };
 
               system.stateVersion = "26.05";
             };
