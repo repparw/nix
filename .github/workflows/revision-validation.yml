@@ -13,6 +13,10 @@ on:
       upstream_watcher:
         required: false
         type: string
+      hermes_update:
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -286,9 +290,36 @@ jobs:
             python3 .github/scripts/upstream-validate.py "$watcher" --architecture "$ARCHITECTURE"
           done
 
+  hermes-package-build:
+    # Build Epsilon's selected, patched messaging derivation, not an upstream
+    # package or stubbed NixOS toplevel. Epsilon is native aarch64-linux.
+    if: inputs.hermes_update
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 90
+    steps:
+      - name: Verify requested revision
+        if: inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+          useDaemon: true
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Build fleet-selected Hermes runtime
+        run: |
+          nix build --no-link --print-build-logs --no-update-lock-file \
+            '.#nixosConfigurations.epsilon.config.containers.hermes.config.services.hermes-agent.package'
+
   gate:
     if: always()
-    needs: [changes, checks, neovim-build, host-eval, persistence-vm, upstream-package-build]
+    needs: [changes, checks, neovim-build, host-eval, persistence-vm, upstream-package-build, hermes-package-build]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -304,6 +335,8 @@ jobs:
           PERSISTENCE_RESULT: ${{ needs.persistence-vm.result }}
           UPSTREAM_WATCHER: ${{ inputs.upstream_watcher }}
           UPSTREAM_RESULT: ${{ needs.upstream-package-build.result }}
+          HERMES_UPDATE: ${{ inputs.hermes_update }}
+          HERMES_RESULT: ${{ needs.hermes-package-build.result }}
         run: |
           test "$CHANGES_RESULT" = success || exit 1
           test "$CHECKS_RESULT" = success || exit 1
@@ -322,6 +355,11 @@ jobs:
             false) test "$PERSISTENCE_RESULT" = skipped || exit 1 ;;
             *) exit 1 ;;
           esac
+          if test "$HERMES_UPDATE" = true; then
+            test "$HERMES_RESULT" = success || exit 1
+          else
+            test "$HERMES_RESULT" = skipped || exit 1
+          fi
           if test -n "$UPSTREAM_WATCHER"; then
             test "$UPSTREAM_RESULT" = success
           else
