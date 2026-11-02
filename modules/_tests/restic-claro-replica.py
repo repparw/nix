@@ -1,4 +1,4 @@
-"""Verify safe bootstrap, replication order and failure behavior."""
+"""Test automatic, capacity-guarded Claro Restic replication."""
 
 import json
 import os
@@ -32,6 +32,21 @@ if os.environ.get("FAIL_COMMAND") in args:
 import json, os, sys
 with open(os.environ["CALL_LOG"], "a") as f:
     f.write(json.dumps(["rclone", *sys.argv[1:]]) + "\\n")
+cmd = sys.argv[1]
+if cmd == "lsf":
+    state = os.environ.get("REMOTE_STATE", "empty")
+    if state == "existing":
+        print("config")
+        print("keys/")
+    elif state == "partial":
+        print("keys/")
+elif cmd == "about":
+    if os.environ.get("FREE_QUOTA") == "unknown":
+        print("{}")
+    else:
+        print(json.dumps({"free": int(os.environ.get("FREE_QUOTA", str(80 * 1024**3)))}))
+elif cmd == "size":
+    print(json.dumps({"bytes": int(os.environ.get("SOURCE_SIZE", str(30 * 1024**3)))}))
 """)
         for executable in self.bin.iterdir():
             executable.chmod(0o755)
@@ -64,46 +79,64 @@ with open(os.environ["CALL_LOG"], "a") as f:
     def test_preflight_is_read_only(self):
         self.assertEqual(self.run_mode("preflight").returncode, 0)
         self.assertEqual(self.calls(), [
-            ["rclone", "about", "claro:"],
-            ["rclone", "size", "gd-crypt:restic/pi"],
+            ["rclone", "about", "claro:", "--json"],
+            ["rclone", "size", "gd-crypt:restic/pi", "--json"],
         ])
 
-    def test_init_preserves_source_chunking_parameters(self):
-        self.assertEqual(self.run_mode("init").returncode, 0)
-        calls = self.calls()
-        self.assertEqual(len(calls), 1)
-        args = calls[0]
-        self.assertEqual(args[0], "restic")
-        self.assertIn("init", args)
-        self.assertIn("--copy-chunker-params", args)
-        self.assertIn("rclone:claro:restic-replica/pi", args)
-        self.assertIn("rclone:gd-crypt:restic/pi", args)
-        self.assertIn("rclone.connections=1", args)
-        self.assertNotIn("--limit-upload=2048", args)
-
-    def test_copy_checks_before_pruning(self):
+    def test_first_run_initializes_and_copies_without_manual_step(self):
         self.assertEqual(self.run_mode("copy").returncode, 0)
         calls = self.calls()
-        self.assertEqual(len(calls), 3)
-        self.assertTrue(any(x == "copy" for x in calls[0]))
-        self.assertTrue(any(x == "check" for x in calls[1]))
-        self.assertTrue(any(x == "forget" for x in calls[2]))
-        self.assertIn("--from-password-file", calls[0])
-        self.assertIn("--limit-upload=2048", calls[0])
-        self.assertIn("--limit-upload=2048", calls[2])
-        self.assertIn("--keep-monthly", calls[2])
+        self.assertEqual([x[0] for x in calls], [
+            "rclone", "rclone", "rclone", "rclone",
+            "restic", "restic", "restic", "restic", "restic",
+        ])
+        self.assertEqual([x[1] for x in calls[:4]], ["mkdir", "lsf", "about", "size"])
+        self.assertIn("init", calls[4])
+        self.assertIn("--copy-chunker-params", calls[4])
+        self.assertIn("rclone:gd-crypt:restic/pi", calls[4])
+        self.assertIn("rclone:claro:restic-replica/pi", calls[4])
+        self.assertIn("copy", calls[5])
+        self.assertIn("--limit-upload=2048", calls[5])
+        self.assertIn("check", calls[6])
+        self.assertIn("forget", calls[7])
+        self.assertIn("rclone.connections=2", calls[7])
+        self.assertIn("--limit-upload=2048", calls[7])
+        self.assertIn("--keep-monthly", calls[7])
+        self.assertIn("check", calls[8])
 
-    def test_copy_failure_skips_check_and_prune(self):
-        self.assertNotEqual(self.run_mode("copy", FAIL_COMMAND="copy").returncode, 0)
-        self.assertEqual(len(self.calls()), 1)
+    def test_existing_repo_only_copies_without_reinitialization(self):
+        self.assertEqual(self.run_mode("copy", REMOTE_STATE="existing").returncode, 0)
+        calls = self.calls()
+        self.assertEqual([x[1] for x in calls[:2]], ["mkdir", "lsf"])
+        self.assertFalse(any("init" in x for x in calls))
+        self.assertTrue(any("copy" in x for x in calls))
+
+    def test_no_space_refuses_initialization(self):
+        result = self.run_mode("copy", FREE_QUOTA=str(31 * 1024**3),
+                               SOURCE_SIZE=str(31 * 1024**3))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("insufficient space", result.stderr)
+        self.assertFalse(any(x[0] == "restic" for x in self.calls()))
+
+    def test_missing_quota_refuses_initialization(self):
+        self.assertNotEqual(self.run_mode("copy", FREE_QUOTA="unknown").returncode, 0)
+        self.assertFalse(any(x[0] == "restic" for x in self.calls()))
+
+    def test_partial_repo_is_not_overwritten(self):
+        self.assertNotEqual(self.run_mode("copy", REMOTE_STATE="partial").returncode, 0)
+        self.assertFalse(any(x[0] == "restic" for x in self.calls()))
+
+    def test_copy_failure_skips_checks_and_prune(self):
+        self.assertNotEqual(self.run_mode("copy", REMOTE_STATE="existing", FAIL_COMMAND="copy").returncode, 0)
+        self.assertFalse(any("check" in x or "forget" in x for x in self.calls()))
 
     def test_check_failure_skips_prune(self):
-        self.assertNotEqual(self.run_mode("copy", FAIL_COMMAND="check").returncode, 0)
-        self.assertEqual(len(self.calls()), 2)
+        self.assertNotEqual(self.run_mode("copy", REMOTE_STATE="existing", FAIL_COMMAND="check").returncode, 0)
+        self.assertFalse(any("forget" in x for x in self.calls()))
 
     def test_no_retention_skips_prune(self):
-        self.assertEqual(self.run_mode("copy", RESTIC_RETENTION_ARGS="").returncode, 0)
-        self.assertEqual(len(self.calls()), 2)
+        self.assertEqual(self.run_mode("copy", REMOTE_STATE="existing", RESTIC_RETENTION_ARGS="").returncode, 0)
+        self.assertFalse(any("forget" in x for x in self.calls()))
 
     def test_invalid_command_does_not_touch_remote(self):
         self.assertNotEqual(self.run_mode("bad").returncode, 0)
