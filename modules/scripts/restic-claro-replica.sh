@@ -1,3 +1,5 @@
+set -euo pipefail
+
 case "${1:-}" in
   preflight)
     : "${RESTIC_FROM_REPOSITORY:?}"
