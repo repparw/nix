@@ -1,4 +1,9 @@
-{ den, ... }:
+{
+  den,
+  inputs ? null,
+  lib ? null,
+  ...
+}:
 {
   den.aspects.backup = {
     includes = [ den.aspects.backup._.restic ];
@@ -13,20 +18,35 @@
         exports = config.modules.backup.exports;
         exportReport = "/var/lib/backup-exports/offsite.json";
         backup = config.services.restic.backups.offsite;
-        resticCommand = lib.escapeShellArgs (
-          lib.optionals backup.inhibitsSleep [
-            "${pkgs.systemd}/bin/systemd-inhibit"
-            "--mode=block"
-            "--who=restic"
-            "--what=sleep"
-            "--why=Scheduled backup offsite"
-          ]
-          ++ [ (lib.getExe backup.package) ]
-          ++ lib.concatMap (option: [
-            "-o"
-            option
-          ]) backup.extraOptions
-        );
+        mkResticCommand =
+          options:
+          lib.escapeShellArgs (
+            lib.optionals backup.inhibitsSleep [
+              "${pkgs.systemd}/bin/systemd-inhibit"
+              "--mode=block"
+              "--who=restic"
+              "--what=sleep"
+              "--why=Scheduled backup offsite"
+            ]
+            ++ [ (lib.getExe backup.package) ]
+            ++ lib.concatMap (option: [
+              "-o"
+              option
+            ]) options
+          );
+        resticCommand = mkResticCommand backup.extraOptions;
+        # extraBackupArgs apply only to backup, but prune also uploads
+        # repacked data. Keep Pi's macb TX-queue watchdog upload throttle.
+        pruneUploadArgs = lib.filter (lib.hasPrefix "--limit-upload=") backup.extraBackupArgs;
+        # Pruning needs at least two backend connections. Do not reduce
+        # already valid limits on other hosts.
+        pruneCommand =
+          mkResticCommand (
+            map (
+              option: if option == "rclone.connections=1" then "rclone.connections=2" else option
+            ) backup.extraOptions
+          )
+          + lib.optionalString (pruneUploadArgs != [ ]) " ${lib.escapeShellArgs pruneUploadArgs}";
         prepareExports = pkgs.writeShellApplication {
           name = "prepare-offsite-exports";
           runtimeInputs = [
@@ -144,7 +164,7 @@
           ${lib.getExe pkgs.python3} ${../scripts/prepare-backup-exports.py} --check ${exportReport}
           ${lib.optionalString (config.modules.backup.retentionArgs != [ ]) ''
             ${resticCommand} unlock
-            ${resticCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
+            ${pruneCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
           ''}
         '';
         config.systemd.services.restic-backups-offsite.serviceConfig = lib.mkIf (exports != { }) {
@@ -292,11 +312,21 @@
   };
   perSystem = { pkgs, ... }: {
     checks.backup-exports =
-      pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; }
-        ''
-          PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
-          touch "$out"
-        '';
+      let
+        piPostStart = builtins.unsafeDiscardStringContext (
+          inputs.self.nixosConfigurations.pi.config.systemd.services.restic-backups-offsite.postStart
+        );
+        lines = lib.splitString "\n" piPostStart;
+        pruneLine = lib.findFirst (lib.hasInfix "forget --prune") "" lines;
+        unlockLine = lib.findFirst (lib.hasInfix " unlock") "" lines;
+      in
+      assert lib.hasInfix "rclone.connections=2" pruneLine;
+      assert lib.hasInfix "--limit-upload=2048" pruneLine;
+      assert lib.hasInfix "rclone.connections=1" unlockLine;
+      pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+        PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
+        touch "$out"
+      '';
   };
 
 }
