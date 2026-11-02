@@ -77,29 +77,27 @@ jobs:
             return 1
           }
 
-          ensure_run() {
+          # Start both workflows before waiting so a 90-minute native build
+          # does not serialize with the title check. Return the failed run
+          # ID to ignore after a fresh dispatch, or nothing when reusing.
+          prepare_run() {
             local workflow="$1" ref="$2" sha="$3" row prior_id="" status="" conclusion=""
             row=$(latest_run "$workflow" "$ref" "$sha")
             if [ -n "$row" ]; then
               IFS=$'\t' read -r prior_id status conclusion <<< "$row"
-              if [ "$status" = completed ] && [ "$conclusion" = success ]; then
-                printf '%s\n' "$prior_id"
+              if [ "$status" != completed ] || [ "$conclusion" = success ]; then
                 return 0
-              fi
-              if [ "$status" != completed ]; then
-                wait_for_run "$workflow" "$ref" "$sha" ""
-                return
               fi
             fi
             case "$workflow" in
               ci.yml)
-                gh workflow run ci.yml --ref "$ref" -f expected_sha="$sha" -f hermes_update=true ;;
+                gh workflow run ci.yml --ref "$ref" -f expected_sha="$sha" -f hermes_update=true >&2 ;;
               pr-title.yml)
                 gh workflow run pr-title.yml --ref "$ref" \
-                  -f pull_request_number="$pr" -f expected_sha="$sha" ;;
+                  -f pull_request_number="$pr" -f expected_sha="$sha" >&2 ;;
               *) echo "Unexpected validation workflow $workflow" >&2; return 1 ;;
             esac
-            wait_for_run "$workflow" "$ref" "$sha" "$prior_id"
+            printf '%s\n' "$prior_id"
           }
 
           # A human-authored edit is not an updater-owned tip. Orphans from
@@ -107,9 +105,9 @@ jobs:
           # matches the freshly regenerated candidate exactly.
           verify_managed_tip() {
             local tip="$1" parent subject tag files want
-            git fetch --no-tags --quiet origin "$tip"
+            git fetch --no-tags --quiet origin "$tip" || return 1
             test "$(git rev-list --parents -n 1 "$tip" | wc -w)" = 2 || return 1
-            parent=$(git rev-parse "$tip^")
+            parent=$(git rev-parse "$tip^") || return 1
             subject=$(git show -s --format=%s "$tip")
             if [[ ! "$subject" =~ ^chore\(hermes\):\ update\ to\ (v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
               echo "Managed tip $tip has an unexpected subject." >&2
@@ -121,7 +119,7 @@ jobs:
               return 1
             fi
             want=$(printf 'flake.lock\nflake.nix\nmodules/hosts/epsilon.nix' | sort)
-            files=$(git diff --name-only "$parent" "$tip" | sort)
+            files=$(git diff --name-only "$parent" "$tip" | sort) || return 1
             if [ "$files" != "$want" ] \
               || [ "$(git show "$tip:flake.lock" | jq -r '.nodes["hermes-agent"].original.ref // empty')" != "$tag" ] \
               || ! git show "$tip:flake.nix" | grep -Fq "github:NousResearch/hermes-agent/$tag\"" \
@@ -299,6 +297,8 @@ jobs:
             echo "Candidate branch or PR moved before validation; requires human review." >&2
             exit 1
           fi
-          ci_run=$(ensure_run ci.yml "$branch" "$revision")
-          title_run=$(ensure_run pr-title.yml "$branch" "$revision")
+          ci_ignore=$(prepare_run ci.yml "$branch" "$revision")
+          title_ignore=$(prepare_run pr-title.yml "$branch" "$revision")
+          ci_run=$(wait_for_run ci.yml "$branch" "$revision" "$ci_ignore")
+          title_run=$(wait_for_run pr-title.yml "$branch" "$revision" "$title_ignore")
           echo "Hermes stable PR #$pr validated at $revision (ci $ci_run, title $title_run); merge manually after the required PR checks."
