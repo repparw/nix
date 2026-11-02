@@ -245,6 +245,13 @@
             rcloneClarodriveUrl.sopsFile = ../../secrets/rclone.sops.yaml;
           };
 
+          assertions = [
+            {
+              assertion = !bcfg.claroReplica.schedule || bcfg.claroReplica.enable;
+              message = "modules.backup.claroReplica.schedule requires claroReplica.enable";
+            }
+          ];
+
           # System-level rclone config, rendered by sops at activation with
           # secret values substituted: rclone has no path indirection in
           # config values, so a static /etc conf referencing /run/secrets
