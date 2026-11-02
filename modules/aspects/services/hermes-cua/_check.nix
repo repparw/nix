@@ -11,14 +11,16 @@ let
     };
   apiFixture = ./fixtures/supported;
   oldApiFixture = ./fixtures/old;
-  current = gate "v0.22.2" apiFixture "0.7.0";
   supported = gate "v0.22.3" apiFixture "0.7.0";
 in
-assert !current.ready && current.settings == { };
-assert !(gate "v0.22.3" oldApiFixture "0.7.0").ready;
+# The v0.22.2-era provider lacked the stream APIs: the marker check must
+# refuse it (and any source without the markers) regardless of its ref.
+assert
+  !(gate "v0.22.2" oldApiFixture "0.7.0").ready
+  && (gate "v0.22.2" oldApiFixture "0.7.0").settings == { };
+assert !(gate "main" apiFixture "0.7.0").ready;
 assert !(gate "v0.22.3" apiFixture "0.6.0").ready;
 assert !(gate "v0.22.3" apiFixture "0.8.0").ready;
-assert !(gate "main" apiFixture "0.7.0").ready;
 assert supported.ready && supported.settings.terminal.backend == "cua";
 assert supported.settings.plugins.entries.cua-spaces.enabled;
 assert supported.settings.plugins.entries.cua-spaces.settings.space != "create";

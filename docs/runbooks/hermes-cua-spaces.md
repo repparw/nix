@@ -59,15 +59,18 @@ deployment pause is cleared, and end-to-end safety/rollback tests pass,
 explicitly set `modules.hermes-cua.enable = true;` in the Hermes container
 configuration. Enabling without a compatible source/runtime fails evaluation.
 
-The compatibility gates still require:
+The compatibility gates require:
 
-- Hermes source at release ref v0.22.3 or newer, with `supports_streams`
-  and `default_cwd` provider APIs.
+- Hermes pinned to a release tag whose `agent/terminal_env_provider.py`
+  exposes the `supports_streams` and `default_cwd` APIs the CUA backend
+  needs. The source markers are the contract. The former v0.22.3 version
+  floor was retired once the `hermes-update` stable tracker kept the pin at
+  a current release; an old, moved, or marker-less source still fails the
+  gate, and a non-release ref is refused.
 - CUA SDK/CLI at least 0.7.0 and below 0.8.
 
-The version watcher may retire an obsolete compatibility check after upstream
-is pinned, but **must not** turn on CUA. The explicit opt-in is a permanent
-deployment boundary. The currently pinned v0.22.2 remains unsupported.
+A future watcher may retire a provably obsolete check, but **must not** turn
+on CUA. The explicit opt-in is a permanent deployment boundary.
 
 The plugin is version 0.4.0, pinned to reviewed catalog commit
 `82bb8d31517d2d1b8f1ef7f64701558dcac8aea9`. Nix installs it using upstream

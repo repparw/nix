@@ -5,19 +5,20 @@
   runtime,
 }:
 let
-  release = builtins.match "v([0-9]+\\.[0-9]+\\.[0-9]+)" ref;
-  version = if release == null then null else builtins.head release;
+  # The compatibility contract is the pinned provider source itself: a
+  # reviewed release tag whose terminal_env_provider exposes the stream APIs
+  # the CUA backend needs. The former v0.22.3 version floor was retired once
+  # the hermes-update stable tracker kept the pin at a current release; a
+  # source without the markers — old, new, or a moved main — still fails.
+  release = builtins.match "v[0-9]+\\.[0-9]+\\.[0-9]+" ref;
   provider = builtins.readFile (source + "/agent/terminal_env_provider.py");
   supported =
-    version != null
-    && lib.versionAtLeast version "0.22.3"
-    && lib.hasInfix "supports_streams" provider
-    && lib.hasInfix "default_cwd" provider;
+    release != null && lib.hasInfix "supports_streams" provider && lib.hasInfix "default_cwd" provider;
   ready =
     supported && lib.versionAtLeast runtime.version "0.7.0" && lib.versionOlder runtime.version "0.8";
 in
 {
-  inherit version supported ready;
+  inherit supported ready;
   settings = lib.optionalAttrs ready {
     terminal.backend = "cua";
     plugins.entries.cua-spaces = {
