@@ -70,6 +70,7 @@
               retro = "${pocockSource}/skills/engineering/retro";
               writing-for-agents = "${pocockSource}/skills/productivity/writing-for-agents";
               diagnosing-bugs = "${pocockSource}/skills/engineering/diagnosing-bugs";
+              domain-modeling = "${pocockSource}/skills/engineering/domain-modeling";
             };
 
           programs.codex = {
