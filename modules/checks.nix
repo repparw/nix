@@ -222,7 +222,10 @@
                 cp -r ${inputs.self} src
                 chmod -R +w src
                 cd src
-                treefmt --tree-root . --walk filesystem --fail-on-change
+                cp modules/aspects/backup.nix /tmp/claro-backup-original.nix
+                treefmt --tree-root . --walk filesystem
+                diff -u /tmp/claro-backup-original.nix modules/aspects/backup.nix || true
+                exit 1
                 touch $out
               '';
 
