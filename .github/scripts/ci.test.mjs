@@ -135,6 +135,25 @@ test('docs-only PRs skip the workflow watcher tests but code changes retain them
   }
 });
 
+test('CUA implementation changes execute the opt-in policy check', () => {
+  const select = path => classifyChanges([path]).checkMatrix.include;
+  for (const path of [
+    'modules/aspects/services/hermes-cua/entrypoint.py',
+    'modules/aspects/services/hermes-cua/test_policy.py',
+    'modules/_packages/hermes-cua-spaces.nix',
+    'modules/_packages/cua.nix',
+  ]) {
+    const groups = select(path);
+    assert.ok(groups.some(group => group.group === 'configuration' &&
+      group.checks.split(' ').includes('hermes-cua-policy')), path);
+  }
+  assert.ok(!select('docs/runbooks/hermes-cua-spaces.md')
+    .some(group => group.checks.split(' ').includes('hermes-cua-policy')));
+  const nixChecks = readFileSync(join(root, 'modules/checks.nix'), 'utf8');
+  assert.match(nixChecks, /hermes-cua-policy =/);
+  assert.match(nixChecks, /assert !epsilon\.containers\.hermes\.config\.modules\.hermes-cua\.enable/);
+});
+
 test('atomic package validation reads the PR head and includes bundled ARM validation', () => {
   const job = validation.split('  upstream-package-build:')[1].split('\n  gate:')[0];
   assert.match(job, /ref: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/);
