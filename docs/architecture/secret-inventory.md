@@ -61,9 +61,9 @@ rules for newly encrypted or rekeyed files.
 | `secrets/grafana-cloud-epsilon.sops.yaml` | `grafana-cloud-backup-token` | Read-only Cloud configuration exports, including contact-point secrets | Grafana backup service via systemd credentials | `epsilon` |
 | `secrets/grafana-cloud-epsilon.sops.yaml` | `grafana-git-sync-app` | GitHub App private key and IDs for Git Sync recovery | Injected privately when recreating the Cloud connection; not a host service credential | operator |
 The account-password bootstrap files, Authelia users seed, Cloud monitoring
-credentials, and the WireGuard home-tunnel keys are scoped to the personal
-recovery recipient and the consuming host. The remaining files use
-the legacy shared creation rule in `.sops.yaml`. When changing a creation rule,
+credentials, WireGuard home-tunnel keys, and Hermes ARR credentials are scoped
+to the personal recovery recipient and the consuming host. The remaining files
+use the legacy shared creation rule in `.sops.yaml`. When changing a creation rule,
 run `sops updatekeys` on the affected files and verify their embedded recipient
 metadata matches the rule.
 
