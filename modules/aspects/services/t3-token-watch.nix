@@ -148,7 +148,7 @@ in
         systemd.timers.t3-token-watch = {
           wantedBy = [ "timers.target" ];
           timerConfig = {
-            # Daily scan; the script deduplicates per band.
+            # Daily scan; threshold bands deduplicate, unresolved credentials repeat weekly.
             OnCalendar = "daily";
             Persistent = true;
           };
