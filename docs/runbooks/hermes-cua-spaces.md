@@ -28,9 +28,12 @@ is created by this configuration.
    `modules/aspects/services/hermes-cua/_integration.nix` to its exact existing
    name or ID before activation. A name is resolved by the SDK; `on` selects
    placement only when creating a Space and does not relocate a named Space.
-   The policy accepts remote `relay:`, `aws:`, `gcp:`, `modal:` or `direct:` IDs,
-   rejects local and loopback IDs, and requires the resolved OS to be Linux.
-   Verify that a direct endpoint is on a separate machine, not Epsilon.
+   The policy accepts remote `relay:`, `aws:`, `gcp:`, or `modal:` IDs
+   and requires the resolved OS to be Linux. `local:` and every `direct:`
+   endpoint are denied, including DNS names that could resolve back to Epsilon.
+   Direct transport needs a separate reviewed allowlist before support can be
+   introduced. The plugin resolves Space metadata and validates it before
+   starting a stopped Space, so denied machines cannot be started by Hermes.
 3. Prepare the Linux guest's desktop stack through a separately reviewed image
    or provisioning change. It needs TigerVNC (`Xvnc`), Xfce (`xfwm4`),
    `xdpyinfo`, `cua-driver`, `agent-browser`, and Playwright Chromium under
