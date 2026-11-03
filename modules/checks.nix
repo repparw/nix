@@ -222,7 +222,10 @@
                 cp -r ${inputs.self} src
                 chmod -R +w src
                 cd src
-                treefmt --tree-root . --walk filesystem --fail-on-change
+                cp modules/aspects/backup.nix /tmp/backup-before-nixfmt.nix
+                treefmt --tree-root . --walk filesystem
+                diff -u /tmp/backup-before-nixfmt.nix modules/aspects/backup.nix || true
+                exit 1
                 touch $out
               '';
 
