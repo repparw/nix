@@ -14,8 +14,9 @@ This file contains names and deployment metadata only. Never add secret values.
 Secret material is stored in `*.sops.yaml` files under `secrets/` and managed
 through `sops-nix`. Services and aspects declare the SOPS files they consume.
 The **Hosts** column identifies runtime consumers, not every machine whose
-key can decrypt the encrypted file. Recipient access is determined per SOPS
-file by its embedded age recipients and the rules in `.sops.yaml`.
+key can decrypt the encrypted file. Decryption access follows the recipients
+embedded in each SOPS file; `.sops.yaml` specifies the intended recipient
+rules for newly encrypted or rekeyed files.
 
 | SOPS file                          | Secret                          | Purpose                                                                                                                                                                                            | Consumer                                                       | Hosts                    |
 | ---------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------ |
