@@ -22,32 +22,25 @@
           name:
           let
             backup = config.services.restic.backups.${name};
-            mkResticCommand =
-              options:
-              lib.escapeShellArgs (
-                lib.optionals backup.inhibitsSleep [
-                  "${pkgs.systemd}/bin/systemd-inhibit"
-                  "--mode=block"
-                  "--who=restic"
-                  "--what=sleep"
-                  "--why=Scheduled backup offsite"
-                ]
-                ++ [ (lib.getExe backup.package) ]
-                ++ lib.concatMap (option: [
-                  "-o"
-                  option
-                ]) options
-              );
-            resticCommand = mkResticCommand backup.extraOptions;
-            # Pruning also uploads repacked data. Preserve Pi's upload throttle.
+            resticCommand = lib.escapeShellArgs (
+              lib.optionals backup.inhibitsSleep [
+                "${pkgs.systemd}/bin/systemd-inhibit"
+                "--mode=block"
+                "--who=restic"
+                "--what=sleep"
+                "--why=Scheduled backup offsite"
+              ]
+              ++ [ (lib.getExe backup.package) ]
+              ++ lib.concatMap (option: [
+                "-o"
+                option
+              ]) backup.extraOptions
+            );
+            # Backup-only arguments are not passed to forget. Preserve Pi's
+            # upload limit when prune repacks and uploads repository data.
             pruneUploadArgs = lib.filter (lib.hasPrefix "--limit-upload=") backup.extraBackupArgs;
-            # Pruning needs two backend connections, even if backup uses one.
             pruneCommand =
-              mkResticCommand (
-                map (
-                  option: if option == "rclone.connections=1" then "rclone.connections=2" else option
-                ) backup.extraOptions
-              )
+              resticCommand
               + lib.optionalString (pruneUploadArgs != [ ]) " ${lib.escapeShellArgs pruneUploadArgs}";
           in
           {
@@ -268,7 +261,12 @@
               "**/Service Worker/**"
             ]
             ++ bcfg.excludes;
-            extraOptions = [ "rclone.program=${lib.getExe pkgs.rclone}" ];
+            # Use the same conservative concurrency for backup and prune.
+            # Prune needs two connections; the default of five is unnecessary.
+            extraOptions = [
+              "rclone.program=${lib.getExe pkgs.rclone}"
+              "rclone.connections=2"
+            ];
             pruneOpts = lib.optionals (bcfg.exports == { }) bcfg.retentionArgs;
             checkOpts = [ "--read-data-subset=5%" ];
             timerConfig = {
@@ -365,8 +363,9 @@
         unlockLine = lib.findFirst (lib.hasInfix " unlock") "" lines;
       in
       assert lib.hasInfix "rclone.connections=2" pruneLine;
+      assert lib.hasInfix "rclone.connections=2" unlockLine;
       assert lib.hasInfix "--limit-upload=2048" pruneLine;
-      assert lib.hasInfix "rclone.connections=1" unlockLine;
+      assert lib.elem "rclone.connections=2" inputs.self.nixosConfigurations.pi.config.services.restic.backups.claro.extraOptions;
       pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; } ''
         PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
         touch "$out"
