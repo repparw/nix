@@ -80,14 +80,28 @@ scopes allow it to direct T3 threads, so revoke it immediately if compromised.
 3. Verify an actual Hermes-initiated T3 MCP tool call on epsilon using the
    newly deployed configuration. Issuing the session or checking it from alpha
    does **not** prove that Hermes loaded the new credential.
-4. Revoke the old session on alpha, then check that `t3 auth session list`
-   reports exactly one active session labeled `hermes-t3-mcp`.
+4. On alpha, identify the **new** session ID from `t3 auth session list --json`
+   (check its `issuedAt` and `expiresAt`). After step 3 succeeds, acknowledge
+   this specific ID in the watcher's state directory:
+
+   ```sh
+   sudo install -d -m 0755 /var/lib/t3-token-watch
+   printf '%s\\n' '<new-session-id>' | sudo tee /var/lib/t3-token-watch/verified-session-id >/dev/null
+   ```
+
+   The session ID is metadata, **not** the bearer token. Never store the bearer
+   token in this file.
+5. Revoke the old session on alpha, then confirm `t3 auth session list --json`
+   reports exactly one active session with label `hermes-t3-mcp`. Run
+   `sudo systemctl start t3-token-watch` and check that its
+   `/var/lib/t3-token-watch/last-band` state is `ok`.
 
 Alpha's daily `t3-token-watch` cannot inspect the credential loaded by
-Hermes on epsilon. It warns immediately if more than one matching session
-exists, repeats that warning weekly, and only tracks expiry when exactly one
-remains. A healthy expiry report is **not** a substitute for the MCP probe in
-step 3. Do not leave the overlapping sessions active indefinitely.
+Hermes on epsilon. It reports overlapping sessions and replacement session
+IDs lacking the post-deployment acknowledgment, with weekly reminders until
+resolved. The watcher only tracks expiry when one labeled session remains and
+its ID matches the acknowledged one. A healthy expiry report does **not**
+replace the MCP probe in step 3.
 
 ## Account password and Authelia user provisioning
 
