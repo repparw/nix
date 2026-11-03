@@ -14,7 +14,7 @@ def require_remote_linux(space):
     # reject all direct IDs until an explicitly reviewed allowlist exists.
     if scheme not in {"relay", "aws", "gcp", "modal"}:
         raise RuntimeError(f"CUA requires a remote managed Space, got {space.id!r}")
-    if space.os != "linux":
+    if str(getattr(space, "os", "")).lower() != "linux":
         raise RuntimeError("CUA GUI integration requires a Linux Space")
 
 
