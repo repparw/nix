@@ -234,17 +234,12 @@
             '';
           };
 
-          systemd.services.restic-backups-offsite = {
-            environment.RCLONE_CONFIG = config.sops.templates."rclone.conf".path;
-          };
-          systemd.services.restic-backups-claro = {
-            environment.RCLONE_CONFIG = config.sops.templates."rclone.conf".path;
-            after = [ "restic-backups-offsite.service" ];
-          };
+          systemd.services.restic-backups-claro.after = [ "restic-backups-offsite.service" ];
 
           services.restic.backups.offsite = {
             inherit repository;
             passwordFile = config.sops.secrets.resticPassword.path;
+            rcloneConfigFile = config.sops.templates."rclone.conf".path;
             initialize = true;
             inhibitsSleep = true;
             paths = bcfg.paths;
@@ -284,6 +279,7 @@
               paths
               exclude
               passwordFile
+              rcloneConfigFile
               initialize
               inhibitsSleep
               extraOptions
