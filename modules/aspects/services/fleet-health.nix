@@ -28,7 +28,10 @@ in
               if name == "homeassistant" then
                 ''
                   http home-assistant ${servicesLib.serviceUrl cfg config name} ""
-                  http home https://${fqdn}/ "" --resolve ${fqdn}:443:127.0.0.1''
+                  # Pi's LAN traefik does not route this vhost; Epsilon fronts
+                  # it publicly, so follow real DNS instead of pinning the
+                  # probe to the controller's loopback.
+                  http home https://${fqdn}/ ""''
               else if service.healthcheck != null then
                 "            remote \"${service.host} epsilon\" ${name} ${
                               servicesLib.publicHealthUrl cfg config name
