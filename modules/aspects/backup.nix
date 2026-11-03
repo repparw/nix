@@ -17,36 +17,56 @@
       let
         exports = config.modules.backup.exports;
         exportReport = "/var/lib/backup-exports/offsite.json";
-        backup = config.services.restic.backups.offsite;
-        mkResticCommand =
-          options:
-          lib.escapeShellArgs (
-            lib.optionals backup.inhibitsSleep [
-              "${pkgs.systemd}/bin/systemd-inhibit"
-              "--mode=block"
-              "--who=restic"
-              "--what=sleep"
-              "--why=Scheduled backup offsite"
-            ]
-            ++ [ (lib.getExe backup.package) ]
-            ++ lib.concatMap (option: [
-              "-o"
-              option
-            ]) options
-          );
-        resticCommand = mkResticCommand backup.extraOptions;
-        # extraBackupArgs apply only to backup, but prune also uploads
-        # repacked data. Keep Pi's macb TX-queue watchdog upload throttle.
-        pruneUploadArgs = lib.filter (lib.hasPrefix "--limit-upload=") backup.extraBackupArgs;
-        # Pruning needs at least two backend connections. Do not reduce
-        # already valid limits on other hosts.
-        pruneCommand =
-          mkResticCommand (
-            map (
-              option: if option == "rclone.connections=1" then "rclone.connections=2" else option
-            ) backup.extraOptions
-          )
-          + lib.optionalString (pruneUploadArgs != [ ]) " ${lib.escapeShellArgs pruneUploadArgs}";
+        backupNames = [ "offsite" ] ++ lib.optional (config.services.restic.backups ? claro) "claro";
+        mkBackupHooks =
+          name:
+          let
+            backup = config.services.restic.backups.${name};
+            mkResticCommand =
+              options:
+              lib.escapeShellArgs (
+                lib.optionals backup.inhibitsSleep [
+                  "${pkgs.systemd}/bin/systemd-inhibit"
+                  "--mode=block"
+                  "--who=restic"
+                  "--what=sleep"
+                  "--why=Scheduled backup offsite"
+                ]
+                ++ [ (lib.getExe backup.package) ]
+                ++ lib.concatMap (option: [
+                  "-o"
+                  option
+                ]) options
+              );
+            resticCommand = mkResticCommand backup.extraOptions;
+            # Pruning also uploads repacked data. Preserve Pi's upload throttle.
+            pruneUploadArgs = lib.filter (lib.hasPrefix "--limit-upload=") backup.extraBackupArgs;
+            # Pruning needs two backend connections, even if backup uses one.
+            pruneCommand =
+              mkResticCommand (
+                map (
+                  option: if option == "rclone.connections=1" then "rclone.connections=2" else option
+                ) backup.extraOptions
+              )
+              + lib.optionalString (pruneUploadArgs != [ ]) " ${lib.escapeShellArgs pruneUploadArgs}";
+          in
+          {
+            preStart = lib.mkMerge [
+              (lib.mkIf (exports != { }) (lib.mkBefore "${lib.getExe prepareExports}\n"))
+              (lib.mkAfter "${resticCommand} unlock\n")
+            ];
+            postStart = lib.mkIf (exports != { }) ''
+              ${lib.getExe pkgs.python3} ${../scripts/prepare-backup-exports.py} --check ${exportReport}
+              ${lib.optionalString (config.modules.backup.retentionArgs != [ ]) ''
+                ${resticCommand} unlock
+                ${pruneCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
+              ''}
+            '';
+            serviceConfig = lib.mkIf (exports != { }) {
+              StateDirectory = [ "backup-exports" ];
+              StateDirectoryMode = "0700";
+            };
+          };
         prepareExports = pkgs.writeShellApplication {
           name = "prepare-offsite-exports";
           runtimeInputs = [
@@ -153,24 +173,11 @@
             default = null;
           };
         };
-        # Clear stale locks (interrupted manual runs) before the module's
-        # post-start check demands an exclusive lock; the forget unlock runs
-        # too late to help there (observed 2026-10-18 on pi).
-        config.systemd.services.restic-backups-offsite.preStart = lib.mkMerge [
-          (lib.mkIf (exports != { }) (lib.mkBefore "${lib.getExe prepareExports}\n"))
-          (lib.mkAfter "${resticCommand} unlock\n")
-        ];
-        config.systemd.services.restic-backups-offsite.postStart = lib.mkIf (exports != { }) ''
-          ${lib.getExe pkgs.python3} ${../scripts/prepare-backup-exports.py} --check ${exportReport}
-          ${lib.optionalString (config.modules.backup.retentionArgs != [ ]) ''
-            ${resticCommand} unlock
-            ${pruneCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
-          ''}
-        '';
-        config.systemd.services.restic-backups-offsite.serviceConfig = lib.mkIf (exports != { }) {
-          StateDirectory = [ "backup-exports" ];
-          StateDirectoryMode = "0700";
-        };
+        # Keep the export freshness and retention guards identical for both
+        # independently scheduled repositories.
+        config.systemd.services = lib.genAttrs
+          (map (name: "restic-backups-${name}") backupNames)
+          (service: mkBackupHooks (lib.removePrefix "restic-backups-" service));
         config.services.restic.backups.offsite.paths = lib.mkIf (exports != { }) (
           lib.mkAfter [ exportReport ]
         );
@@ -191,40 +198,6 @@
               bcfg.repository
             else
               "rclone:gd-crypt:restic/${config.networking.hostName}";
-          backup = config.services.restic.backups.offsite;
-          claroRepo = "rclone:claro:restic-replica/${config.networking.hostName}";
-          rcloneConnections = lib.findFirst (lib.hasPrefix "rclone.connections=") "" backup.extraOptions;
-          uploadLimit = lib.findFirst (lib.hasPrefix "--limit-upload=") "" backup.extraBackupArgs;
-          replicaProgram = pkgs.writeShellApplication {
-            name = "restic-claro-replica";
-            runtimeInputs = [
-              pkgs.restic
-              pkgs.rclone
-              pkgs.jq
-            ];
-            text = builtins.readFile ../scripts/restic-claro-replica.sh;
-          };
-          replicaEnvironment = {
-            RCLONE_CONFIG = config.sops.templates."rclone.conf".path;
-            RCLONE_BIN = lib.getExe pkgs.rclone;
-            RESTIC_REPOSITORY = claroRepo;
-            RESTIC_FROM_REPOSITORY = repository;
-            RESTIC_PASSWORD_FILE = config.sops.secrets.resticPassword.path;
-            RESTIC_RETENTION_ARGS = lib.concatStringsSep " " bcfg.retentionArgs;
-            RESTIC_RCLONE_CONNECTIONS = lib.removePrefix "rclone.connections=" rcloneConnections;
-            RESTIC_UPLOAD_LIMIT_KIB = lib.removePrefix "--limit-upload=" uploadLimit;
-          };
-          replicaUnit = command: {
-            description = "Restic Claro Drive replica (${command})";
-            after = [ "network-online.target" ];
-            wants = [ "network-online.target" ];
-            environment = replicaEnvironment;
-            serviceConfig = {
-              Type = "oneshot";
-              ExecStart = "${lib.getExe replicaProgram} ${command}";
-              TimeoutStartSec = "36h";
-            };
-          };
         in
         {
           sops.secrets = {
@@ -271,27 +244,9 @@
           systemd.services.restic-backups-offsite = {
             environment.RCLONE_CONFIG = config.sops.templates."rclone.conf".path;
           };
-
-          # Secondary failure evidence must not change primary backup status.
-          modules.fleet-unit-state.retainedJobs = [ "restic-claro-replica" ];
-
-          systemd.services.restic-claro-replica-preflight = replicaUnit "preflight";
-          systemd.services.restic-claro-replica = replicaUnit "copy";
-          systemd.timers.restic-claro-replica = {
-            wantedBy = [ "timers.target" ];
-            timerConfig = {
-              # Stagger the three hosts against the shared 75 GB account and
-              # avoid simultaneous first copies over the limited upload link.
-              OnCalendar =
-                if config.networking.hostName == "alpha" then
-                  "Sat *-*-* 05:00:00"
-                else if config.networking.hostName == "pi" then
-                  "Tue *-*-* 05:00:00"
-                else
-                  "Thu *-*-* 05:00:00";
-              RandomizedDelaySec = "1h";
-              Persistent = false;
-            };
+          systemd.services.restic-backups-claro = {
+            environment.RCLONE_CONFIG = config.sops.templates."rclone.conf".path;
+            after = [ "restic-backups-offsite.service" ];
           };
 
           services.restic.backups.offsite = {
@@ -318,6 +273,29 @@
             checkOpts = [ "--read-data-subset=5%" ];
             timerConfig = {
               OnCalendar = "*-*-* 01:00:00";
+              RandomizedDelaySec = "15min";
+              Persistent = true;
+            };
+          };
+
+          # A second normal Restic job, not a union remote or a custom
+          # repository replication script. It remains usable if Google Drive
+          # cannot be reached.
+          services.restic.backups.claro = {
+            inherit (config.services.restic.backups.offsite)
+              paths
+              exclude
+              passwordFile
+              initialize
+              inhibitsSleep
+              extraOptions
+              extraBackupArgs
+              checkOpts
+              ;
+            repository = "rclone:claro:restic/${config.networking.hostName}";
+            pruneOpts = lib.optionals (bcfg.exports == { }) bcfg.retentionArgs;
+            timerConfig = {
+              OnCalendar = "*-*-* 05:00:00";
               RandomizedDelaySec = "15min";
               Persistent = true;
             };
@@ -377,21 +355,6 @@
     };
   };
   perSystem = { pkgs, ... }: {
-    checks.claro-replica =
-      pkgs.runCommand "check-claro-replica"
-        {
-          nativeBuildInputs = [
-            pkgs.python3
-            pkgs.bash
-            pkgs.shellcheck
-          ];
-        }
-        ''
-          shellcheck -s bash ${../scripts/restic-claro-replica.sh}
-          python3 ${../_tests/restic-claro-replica.py} ${../scripts/restic-claro-replica.sh}
-          touch "$out"
-        '';
-
     checks.backup-exports =
       let
         piPostStart = builtins.unsafeDiscardStringContext (
