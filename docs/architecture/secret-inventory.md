@@ -86,7 +86,7 @@ scopes allow it to direct T3 threads, so revoke it immediately if compromised.
 
    ```sh
    sudo install -d -m 0755 /var/lib/t3-token-watch
-   printf '%s\\n' '<new-session-id>' | sudo tee /var/lib/t3-token-watch/verified-session-id >/dev/null
+   printf '%s\n' '<new-session-id>' | sudo tee /var/lib/t3-token-watch/verified-session-id >/dev/null
    ```
 
    The session ID is metadata, **not** the bearer token. Never store the bearer
