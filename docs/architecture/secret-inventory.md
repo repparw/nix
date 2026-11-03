@@ -91,6 +91,7 @@ scopes allow it to direct T3 threads, so revoke it immediately if compromised.
 
    The session ID is metadata, **not** the bearer token. Never store the bearer
    token in this file.
+
 5. Revoke the old session on alpha, then confirm `t3 auth session list --json`
    reports exactly one active session with label `hermes-t3-mcp`. Run
    `sudo systemctl start t3-token-watch` and check that its
