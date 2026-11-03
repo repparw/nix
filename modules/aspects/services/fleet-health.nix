@@ -28,10 +28,10 @@ in
               if name == "homeassistant" then
                 ''
                   http home-assistant ${servicesLib.serviceUrl cfg config name} ""
-                  # Pi's LAN traefik does not route this vhost; Epsilon fronts
-                  # it publicly, so follow real DNS instead of pinning the
-                  # probe to the controller's loopback.
-                  http home https://${fqdn}/ ""''
+                  # Public Home Assistant traffic passes through Cloudflare
+                  # Tunnel to Epsilon, not Pi's LAN Traefik. Keep the public
+                  # route out of --local readiness checks.
+                  remote epsilon home https://${fqdn}/ 200''
               else if service.healthcheck != null then
                 "            remote \"${service.host} epsilon\" ${name} ${
                               servicesLib.publicHealthUrl cfg config name
