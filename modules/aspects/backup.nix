@@ -17,7 +17,7 @@
       let
         exports = config.modules.backup.exports;
         exportReport = "/var/lib/backup-exports/offsite.json";
-        backupNames = [ "offsite" ] ++ lib.optional (config.services.restic.backups ? claro) "claro";
+        backupNames = [ "offsite" "claro" ];
         mkBackupHooks =
           name:
           let
