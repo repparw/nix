@@ -168,8 +168,9 @@
         # Keep the export freshness and retention guards identical for both
         # independently scheduled repositories.
         config.systemd.services.restic-backups-offsite = mkBackupHooks "offsite";
-        config.systemd.services.restic-backups-claro =
-          lib.mkIf (config.services.restic.backups ? claro) (mkBackupHooks "claro");
+        config.systemd.services.restic-backups-claro = lib.mkIf (config.services.restic.backups ? claro) (
+          mkBackupHooks "claro"
+        );
         config.services.restic.backups.offsite.paths = lib.mkIf (exports != { }) (
           lib.mkAfter [ exportReport ]
         );
@@ -360,7 +361,8 @@
       assert lib.hasInfix "rclone.connections=2" pruneLine;
       assert lib.hasInfix "rclone.connections=2" unlockLine;
       assert lib.hasInfix "--limit-upload=2048" pruneLine;
-      assert lib.elem "rclone.connections=2" inputs.self.nixosConfigurations.pi.config.services.restic.backups.claro.extraOptions;
+      assert lib.elem "rclone.connections=2"
+        inputs.self.nixosConfigurations.pi.config.services.restic.backups.claro.extraOptions;
       pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; } ''
         PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
         touch "$out"
