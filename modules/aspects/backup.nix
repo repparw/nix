@@ -17,7 +17,6 @@
       let
         exports = config.modules.backup.exports;
         exportReport = "/var/lib/backup-exports/offsite.json";
-        backupNames = [ "offsite" "claro" ];
         mkBackupHooks =
           name:
           let
@@ -168,9 +167,9 @@
         };
         # Keep the export freshness and retention guards identical for both
         # independently scheduled repositories.
-        config.systemd.services = lib.genAttrs
-          (map (name: "restic-backups-${name}") backupNames)
-          (service: mkBackupHooks (lib.removePrefix "restic-backups-" service));
+        config.systemd.services.restic-backups-offsite = mkBackupHooks "offsite";
+        config.systemd.services.restic-backups-claro =
+          lib.mkIf (config.services.restic.backups ? claro) (mkBackupHooks "claro");
         config.services.restic.backups.offsite.paths = lib.mkIf (exports != { }) (
           lib.mkAfter [ exportReport ]
         );
