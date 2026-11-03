@@ -37,8 +37,9 @@ Source: `modules/hosts/alpha.nix`
 ## Pi
 
 `pi` is the Raspberry Pi 5 home server (aarch64, `192.168.0.4`) and the
-always-on host: it runs the LAN HTTPS edge for Jellyfin and Home Assistant,
-plus fleet-health and the deploy-rs controller. Authelia, Miniflux, and
+always-on host: it runs the LAN HTTPS edge for Jellyfin, the Home Assistant
+container, fleet-health, and the deploy-rs controller. Home Assistant's
+public HTTPS route uses Epsilon's Cloudflare Tunnel. Authelia, Miniflux, and
 Glance live on epsilon.
 
 It is the fleet's deployment controller. GitHub Actions opens lock update PRs,
