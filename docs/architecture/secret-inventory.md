@@ -48,7 +48,7 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/jellyfin.sops.yaml`       | `jellyfinBackupKey`             | Authorize Jellyfin backup creation                                                                                                                                                                 | Jellyfin backup tooling                                        | `alpha`                  |
 | `secrets/automations.sops.yaml`    | `discordWebhook`                | Deliver automation notifications to Discord                                                                                                                                                        | Automation services                                            | `pi`                     |
 | `secrets/hermes.sops.yaml`         | `hermes-env`                    | Discord token for the Hermes gateway plus fleet-wide Discord notify (fleet-update, backup, fleet-health source it on every host)                                                                   | `services.hermes-agent` environmentFiles, fleet notify scripts | fleet-wide               |
-| `secrets/hermes.sops.yaml`         | `hermes-llm-env`                | Provider/tool keys and the short-lived T3 MCP `T3_MCP_TOKEN` (`mcp-client`, `orchestration:read` + `orchestration:operate`)                                                                        | Hermes runtime `.env` in its Epsilon container                 | `epsilon`                |
+| `secrets/hermes.sops.yaml`         | `hermes-llm-env`                | Provider/tool keys and the annual T3 MCP `T3_MCP_TOKEN` (`mcp-client`, `orchestration:read` + `orchestration:operate`, 365-day session)                                                                        | Hermes runtime `.env` in its Epsilon container                 | `epsilon`                |
 | `secrets/hermes-arr.sops.yaml`     | `arr-api-keys`                  | Authenticate Sonarr/Radarr queue-triage requests                                                                                                                                                   | Hermes tool subprocesses                                       | `epsilon`                |
 
 | `secrets/grafana-cloud-alpha.sops.yaml` | `token` | Write-only Cloud metrics/log uploads | Alloy via systemd credentials | `alpha` |
@@ -66,6 +66,28 @@ NixOS decrypts with the machine SSH host key at
 `/etc/ssh/ssh_host_ed25519_key`; the personal Age recipient in `.sops.yaml` is
 recovery access and is not used during activation. Docs, plans, and commits
 should refer to SOPS secret names or source modules, never secret values.
+
+## Hermes T3 MCP token rotation
+
+The `hermes-t3-mcp` bearer session on alpha is issued for 365 days and
+loaded into Hermes on epsilon from `hermes-llm-env`. Its read and operate
+scopes allow it to direct T3 threads, so revoke it immediately if compromised.
+
+1. Issue a new `mcp-client` session on alpha with the same label, scopes
+   (`orchestration:read` and `orchestration:operate`), and a 365-day TTL.
+2. Replace only `T3_MCP_TOKEN` in the SOPS `hermes-llm-env` value and
+   deploy epsilon. The secret has a `container@hermes.service` restart trigger.
+3. Verify an actual Hermes-initiated T3 MCP tool call on epsilon using the
+   newly deployed configuration. Issuing the session or checking it from alpha
+   does **not** prove that Hermes loaded the new credential.
+4. Revoke the old session on alpha, then check that `t3 auth session list`
+   reports exactly one active session labeled `hermes-t3-mcp`.
+
+Alpha's daily `t3-token-watch` cannot inspect the credential loaded by
+Hermes on epsilon. It warns immediately if more than one matching session
+exists, repeats that warning weekly, and only tracks expiry when exactly one
+remains. A healthy expiry report is **not** a substitute for the MCP probe in
+step 3. Do not leave the overlapping sessions active indefinitely.
 
 ## Account password and Authelia user provisioning
 
