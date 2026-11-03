@@ -11,9 +11,11 @@ tags: [security, secrets, sops-nix]
 
 This file contains names and deployment metadata only. Never add secret values.
 
-Secret material belongs in consumer-scoped `*.sops.yaml` files under `secrets/`
-and is managed through `sops-nix`. Each service or aspect declares its own
-`sopsFile`, limiting the ciphertext and recipient blast radius.
+Secret material is stored in `*.sops.yaml` files under `secrets/` and managed
+through `sops-nix`. Services and aspects declare the SOPS files they consume.
+The **Hosts** column identifies runtime consumers, not every machine whose
+key can decrypt the encrypted file. Recipient access is determined per SOPS
+file by its embedded age recipients and the rules in `.sops.yaml`.
 
 | SOPS file                          | Secret                          | Purpose                                                                                                                                                                                            | Consumer                                                       | Hosts                    |
 | ---------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------ |
