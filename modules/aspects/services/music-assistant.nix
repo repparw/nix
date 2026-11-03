@@ -51,16 +51,17 @@
 
         # Spotify's OAuth client id is a public identifier (PKCE flow, no
         # secret), but it is kept in sops to keep credentials out of the
-        # tree per repo policy.
+        # tree per repo policy. Rendered as an EnvironmentFile so the
+        # service receives the VALUE, not a path to it.
         sops.secrets.musicAssistantSpotifyClientId = {
           sopsFile = ../../../secrets/music-assistant.sops.yaml;
           key = "spotifyClientId";
-          # The service runs as a DynamicUser; a world-readable mode is safe
-          # for a public client id and keeps the unit definition simple.
-          mode = "0444";
         };
-        systemd.services.music-assistant.environment.MASS_APP_VAR_SPOTIFY_CLIENT_ID =
-          config.sops.secrets.musicAssistantSpotifyClientId.path;
+        sops.templates."music-assistant.env".content = ''
+          MASS_APP_VAR_SPOTIFY_CLIENT_ID=${config.sops.placeholder.musicAssistantSpotifyClientId}
+        '';
+        systemd.services.music-assistant.serviceConfig.EnvironmentFile =
+          config.sops.templates."music-assistant.env".path;
 
         # Native (non-container) service: an independent lifecycle from the
         # Home Assistant nspawn container, so restarting HA never interrupts
