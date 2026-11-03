@@ -1,8 +1,6 @@
 """Fleet policy for the pinned CUA backend: remote Linux, no local GUI fallback."""
-import ipaddress
 import sys
 from pathlib import Path
-from urllib.parse import urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from hermes_cua_spaces import CuaSpacesProvider, _shared_client
@@ -10,27 +8,27 @@ from hermes_cua_spaces.config import load_settings
 
 
 def require_remote_linux(space):
-    scheme, _, address = space.id.partition(":")
-    if scheme == "direct":
-        host = urlsplit("//" + address).hostname
-        if not host or host == "localhost":
-            raise RuntimeError("CUA requires a remote Space")
-        try:
-            local = ipaddress.ip_address(host).is_loopback
-        except ValueError:
-            local = False
-        if local:
-            raise RuntimeError("CUA requires a remote Space")
-    elif scheme not in {"relay", "aws", "gcp", "modal"}:
-        raise RuntimeError(f"CUA requires a remote Space, got {space.id!r}")
+    scheme, _, _ = space.id.partition(":")
+    # Only providers with out-of-process placement are supported. A direct
+    # endpoint may resolve to epsilon (including through DNS aliases), so
+    # reject all direct IDs until an explicitly reviewed allowlist exists.
+    if scheme not in {"relay", "aws", "gcp", "modal"}:
+        raise RuntimeError(f"CUA requires a remote managed Space, got {space.id!r}")
     if space.os != "linux":
         raise RuntimeError("CUA GUI integration requires a Linux Space")
 
 
 class RemoteClient:
     def attach(self, name):
-        space = _shared_client().attach(name)
-        # Validate before the upstream environment can run OS-specific setup.
+        client = _shared_client()
+        # The pinned SDK's public attach() starts stopped Spaces before it
+        # returns. Resolve metadata without starting anything, validate that
+        # metadata, then start only an approved remote Linux Space.
+        info = client._resolve(name)
+        require_remote_linux(info)
+        running = client._ensure_running(info)
+        require_remote_linux(running)
+        space = client._handle(running)
         require_remote_linux(space)
         result = space.run(
             "command -v Xvnc && command -v xfwm4 && command -v xdpyinfo "
