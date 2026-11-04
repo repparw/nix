@@ -38,7 +38,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hermes-agent = {
-      url = "github:NousResearch/hermes-agent/v0.22.5";
+      url = "github:NousResearch/hermes-agent/v0.22.7";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
