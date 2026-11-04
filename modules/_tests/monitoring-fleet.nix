@@ -86,20 +86,23 @@ let
           "metrics"
           "logs"
         ];
-  lanDnsOverrides = lib.all (
-    host:
-    let
-      networking = (cfg host).networking;
-      piAddress = (cfg host).modules.services.hostSshAddresses.pi;
-      names = lib.concatLists (lib.attrValues networking.hosts);
-    in
-    lib.elem "jellyfin.repparw.com" (networking.hosts.${piAddress} or [ ])
-    && !(lib.elem "home.repparw.com" names)
-    && !(lib.elem "repparw.com" names)
-  ) [
-    "alpha"
-    "pi"
-  ];
+  lanDnsOverrides =
+    lib.all
+      (
+        host:
+        let
+          networking = (cfg host).networking;
+          piAddress = (cfg host).modules.services.hostSshAddresses.pi;
+          names = lib.concatLists (lib.attrValues networking.hosts);
+        in
+        lib.elem "jellyfin.repparw.com" (networking.hosts.${piAddress} or [ ])
+        && !(lib.elem "home.repparw.com" names)
+        && !(lib.elem "repparw.com" names)
+      )
+      [
+        "alpha"
+        "pi"
+      ];
   alphaExclusions =
     (cfg "alpha").modules.monitoring.agent.extraExcludedMounts == alphaMounts
     && lib.all (path: lib.hasInfix path (alloyConfig "alpha")) alphaMounts
