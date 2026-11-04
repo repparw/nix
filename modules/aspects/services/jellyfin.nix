@@ -88,9 +88,15 @@
             if [ ! -f "$pluginDir/Authelia-Auth.dll" ]; then
               echo "seeding Authelia Authentication 1.0.17.0 from the declarative source"
               mkdir -p "$pluginDir"
-              cp ${autheliaPluginRelease}/Authelia-Auth.dll ${autheliaPluginRelease}/meta.json "$pluginDir/"
-              cp ${autheliaPluginLogo} "$pluginDir/logo.png"
+              # install, not cp: store files are mode 0444, and Jellyfin rewrites
+              # meta.json on every start. A read-only copy aborts server startup.
+              install -m 644 ${autheliaPluginRelease}/Authelia-Auth.dll ${autheliaPluginRelease}/meta.json "$pluginDir/"
+              install -m 644 ${autheliaPluginLogo} "$pluginDir/logo.png"
             fi
+
+            # Self-heal a dir seeded before the install -m fix: the plugin
+            # manager must be able to rewrite meta.json on every start.
+            chmod 644 "$pluginDir/Authelia-Auth.dll" "$pluginDir/meta.json" "$pluginDir/logo.png" 2>/dev/null || true
 
             if [ -e "$marker" ]; then
               exit 0
