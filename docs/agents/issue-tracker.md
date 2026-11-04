@@ -27,7 +27,5 @@ Issues, PRDs, and work tickets live in GitHub Issues for `repparw/nix`. Use the 
 
 ## Upstream waits
 
-For an external change that must reach a NixOS or Home Manager input, open a
-GitHub issue and arm a `watch-upstream` timer. The issue states the workaround
-paths, the landing condition, and the completion actions; the timer is the
-probe. Close the issue when the workaround is gone from `origin/main`.
+For an external change blocked on a flake input, use
+[watch-upstream](../../.agents/skills/watch-upstream/SKILL.md).
