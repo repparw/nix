@@ -18,9 +18,7 @@ change blocked on an upstream input, use
 For web-page change detection in the automations service, use
 [manage-page-watchers](.agents/skills/manage-page-watchers/SKILL.md).
 
-For issues and PRDs, read [issue tracker](docs/agents/issue-tracker.md).
-For triage and labels, read [triage labels](docs/agents/triage-labels.md).
-For domain modeling or design decisions, read [domain docs](docs/agents/domain.md).
+For issues, PRDs, or triage, read [issue tracker](docs/agents/issue-tracker.md).
 
 ### Documentation routing
 
