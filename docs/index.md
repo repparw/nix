@@ -12,6 +12,9 @@ tags: [nix, nixos, home-manager, den]
 These pages record stable knowledge about the configuration and link to source
 files instead of copying module contents.
 
+Use established domain terminology from the relevant documentation when naming
+concepts. Identify conflicts with documented decisions before proposing changes.
+
 ## Architecture
 
 - [Den aspect composition](architecture/den-aspect-composition.md)
@@ -56,6 +59,4 @@ files instead of copying module contents.
 - [Operate the running fleet](../.agents/skills/fleet-operations/SKILL.md)
 - [Watch for an upstream fix](../.agents/skills/watch-upstream/SKILL.md)
 - [Manage page watchers](../.agents/skills/manage-page-watchers/SKILL.md)
-- [Domain docs](agents/domain.md)
 - [GitHub issue tracker](agents/issue-tracker.md)
-- [Triage labels](agents/triage-labels.md)
