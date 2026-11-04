@@ -61,7 +61,7 @@ Probe the public Home Assistant route using normal DNS:
 curl -fsS -o /dev/null -w '%{http_code}\n' https://home.repparw.com/
 ```
 
-To exercise Pi's *local* Jellyfin edge while preserving SNI:
+To exercise Pi's _local_ Jellyfin edge while preserving SNI:
 
 ```sh
 curl -fsS --resolve jellyfin.repparw.com:443:127.0.0.1 \
