@@ -48,17 +48,29 @@ mountinfo and must not touch the automount, while a statvfs check via
 Touches: `modules/hosts/alpha.nix` (`systemd.services.hdd-spindown`,
 `systemd.timers.hdd-spindown`, every 5 minutes).
 
-## Probe traefik with SNI intact
+## Probe HTTPS edges with SNI intact
 
-Both edges set `tls.options.default.sniStrict = true`, so only clients that
-present a known SNI hostname get a route — probing by IP, or with a client
-that sends no SNI, is rejected even when the backend is healthy. Probe the
-FQDN and pin it to localhost so SNI stays correct:
+Both Traefik edges set `tls.options.default.sniStrict = true`; probing by IP
+without a hostname fails even if the backend is healthy. Pi's LAN Traefik
+routes Jellyfin only. Home Assistant uses the public Cloudflare Tunnel to
+Epsilon, so do not force its hostname to Pi's loopback.
+
+Probe the public Home Assistant route using normal DNS:
 
 ```sh
-curl --resolve home.repparw.com:443:127.0.0.1 https://home.repparw.com/
+curl -fsS -o /dev/null -w '%{http_code}\n' https://home.repparw.com/
 ```
 
-Touches: `modules/_services/proxy.nix`, `modules/aspects/lan-edge.nix`;
-the working pattern is the fleet-health vhost probes in
-`modules/aspects/services/fleet-health.nix`.
+To exercise Pi's _local_ Jellyfin edge while preserving SNI:
+
+```sh
+curl -fsS --resolve jellyfin.repparw.com:443:127.0.0.1 \
+  -o /dev/null -w '%{http_code}\n' https://jellyfin.repparw.com/health
+```
+
+Only LAN-edge vhosts have static `/etc/hosts` entries on fleet hosts.
+Public HTTPS names use regular DNS; SSH still uses direct machine addresses.
+
+Touches: `modules/aspects/services/default.nix`,
+`modules/aspects/services/fleet-health.nix`, `modules/_services/proxy.nix`,
+and `modules/aspects/lan-edge.nix`.

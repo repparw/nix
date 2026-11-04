@@ -33,14 +33,15 @@ derives each service's `host` from the originating host entity. `host` is
 required.
 The host entity's `serviceAddress` is the backend other fleet hosts use
 (`modules.services.hostAddresses`). `sshAddress` (defaulting to
-`serviceAddress`) is SSH, deploy-rs, and LAN `/etc/hosts`. Epsilon sets
-`sshAddress` to its public IP; its WireGuard address stays on
-`serviceAddress`.
+`serviceAddress`) is used for SSH and deploy-rs. Epsilon sets `sshAddress`
+to its public IP; its WireGuard address stays on `serviceAddress`.
 
-`service-host` also folds LAN DNS: vhosts with `lanEdge` resolve to
-`lanEdgeHost` (pi); other public names and the apex domain resolve to
-`publicEdgeHost` (epsilon's `sshAddress`). Invalid routed or monitored
-definitions and duplicate names or container hostnames fail evaluation.
+`service-host` provides static LAN `/etc/hosts` entries only for vhosts marked
+`lanEdge` (currently Jellyfin on pi). Public HTTPS names and the apex use
+ordinary DNS and Cloudflare Tunnel rather than pinning Epsilon's public IP.
+Jellyfin's external record remains DNS-only and LAN clients reach pi directly.
+Invalid routed or monitored definitions and duplicate names or container
+hostnames fail evaluation.
 
 Definition fields drive host behavior as follows:
 

@@ -23,7 +23,12 @@ function fixture() {
     is-failed) echo inactive; exit 0;;
     list-units) [ ! -f "$MOCK_ROOT/list-error" ]; cat "$MOCK_ROOT/live";;
     *) exit 2;; esac`);
-  mock('curl', `printf '%s' "$(cat "$MOCK_ROOT/http-status" 2>/dev/null || echo 200)"`);
+  mock('curl', `printf '%s\\n' "$*" >> "$MOCK_ROOT/curl-requests"
+    if [[ " $* " == *"https://home.repparw.com/"* ]]; then
+      printf '%s' "$(cat "$MOCK_ROOT/home-status" 2>/dev/null || echo 200)"
+    else
+      printf '%s' "$(cat "$MOCK_ROOT/http-status" 2>/dev/null || echo 200)"
+    fi`);
   mock('fleet-unit-snapshot', '[ ! -f "$MOCK_ROOT/pi-error" ]; cat "$MOCK_ROOT/pi"');
   mock('ssh', `for arg in "$@"; do case "$arg" in root@*) target="$arg";; esac; done
     case "$target" in root@192.168.0.18) host=alpha;; *) host=epsilon;; esac
@@ -80,6 +85,22 @@ test('required HTTP health response still gates strict readiness', () => {
     f.set('http-status', '503');
     assert.notEqual(f.sweep(['--strict']).status, 0);
     assert.equal(f.messages(), '');
+  } finally { f.cleanup(); }
+});
+
+test('home HTTPS probe uses public DNS, rejects HTTP errors, and skips --local', () => {
+  const f = fixture(); try {
+    f.set('home-status', '503');
+    const local = f.sweep(['--strict', '--local']);
+    assert.equal(local.status, 0, local.stderr);
+    const localCalls = readFileSync(join(f.root, 'curl-requests'), 'utf8');
+    assert.doesNotMatch(localCalls, /https:\/\/home\.repparw\.com\//);
+    const remote = f.sweep(['--strict']);
+    assert.notEqual(remote.status, 0);
+    assert.match(remote.stderr, /home: got 503 want 200/);
+    const allCalls = readFileSync(join(f.root, 'curl-requests'), 'utf8');
+    assert.match(allCalls, /https:\/\/home\.repparw\.com\//);
+    assert.doesNotMatch(allCalls, /--resolve home\.repparw\.com:443/);
   } finally { f.cleanup(); }
 });
 

@@ -28,7 +28,10 @@ in
               if name == "homeassistant" then
                 ''
                   http home-assistant ${servicesLib.serviceUrl cfg config name} ""
-                  http home https://${fqdn}/ "" --resolve ${fqdn}:443:127.0.0.1''
+                  # Public Home Assistant traffic passes through Cloudflare
+                  # Tunnel to Epsilon, not Pi's LAN Traefik. Keep the public
+                  # route out of --local readiness checks.
+                  remote epsilon home https://${fqdn}/ 200''
               else if service.healthcheck != null then
                 "            remote \"${service.host} epsilon\" ${name} ${
                               servicesLib.publicHealthUrl cfg config name
