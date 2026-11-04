@@ -63,8 +63,7 @@
       );
       # Only LAN-edge vhosts need static host overrides. Public services use
       # DNS and Cloudflare; SSH uses the direct hostSshAddresses separately.
-      rendered =
-        lib.optionalString (lanNames != [ ]) "${lanIp} ${lib.concatStringsSep " " lanNames}\n";
+      rendered = lib.optionalString (lanNames != [ ]) "${lanIp} ${lib.concatStringsSep " " lanNames}\n";
     in
     {
       imports = [
