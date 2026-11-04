@@ -220,9 +220,13 @@
               ''
                 export HOME=$(mktemp -d)
                 cp -r ${inputs.self} src
+                cp -r src before
                 chmod -R +w src
                 cd src
-                treefmt --tree-root . --walk filesystem --fail-on-change
+                if ! treefmt --tree-root . --walk filesystem --fail-on-change; then
+                  diff -ru ../before . || true
+                  exit 1
+                fi
                 touch $out
               '';
 
