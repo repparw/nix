@@ -30,9 +30,8 @@
         # overrides. See docs/research/parakeet-ultra-evaluation.md.
         voxtypeDictation = pkgs.voxtype-vulkan.override { onnxSupport = true; };
 
-        # nixpkgs#583099 is not in the pinned nixos-unstable yet. Use its
-        # package recipe until the next channel update includes it.
-        hexTrial = pkgs.anomaly-hex or (pkgs.callPackage ../../_packages/anomaly-hex.nix { });
+        # Available after nixpkgs#583099 reaches the pinned nixos-unstable.
+        hexTrial = pkgs.anomaly-hex;
         hexToggle = pkgs.writeShellApplication {
           name = "hex-toggle";
           runtimeInputs = [ hexTrial ];
