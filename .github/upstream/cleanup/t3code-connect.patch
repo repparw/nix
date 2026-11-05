@@ -1,9 +1,7 @@
 diff --git a/modules/aspects/upstream/t3code-connect.nix b/modules/aspects/upstream/t3code-connect.nix
-index 5dc2b6a..5d39dea 100644
 --- a/modules/aspects/upstream/t3code-connect.nix
 +++ b/modules/aspects/upstream/t3code-connect.nix
-@@ -4,37 +4,6 @@
- }:
+@@ -5,36 +5,6 @@
  {
    den.aspects.ai.provides.t3code-connect = {
 -    nixos = {
@@ -36,7 +34,7 @@ index 5dc2b6a..5d39dea 100644
 -        )
 -      ];
 -    };
--
-     homeManager =
-       {
-         config,
+   };
+ 
+   # Desktop-session half of Connect: the launcher and the t3code:// handler
+   # only matter where a graphical browser runs. Hosts pick this up through

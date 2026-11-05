@@ -91,7 +91,6 @@ let
         gawk
         jq
         nix
-        nix-output-monitor
         openssh
         python3
         systemd
@@ -158,7 +157,7 @@ in
         };
         activityGate = lib.mkOption {
           type = lib.types.bool;
-          default = config.modules.desktop.enable or false;
+          default = config.services.displayManager.sddm.enable || config.services.xserver.enable;
           readOnly = true;
           description = "Whether deployment waits for local graphical sessions to be idle or locked";
         };

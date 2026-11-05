@@ -86,6 +86,23 @@ let
           "metrics"
           "logs"
         ];
+  lanDnsOverrides =
+    lib.all
+      (
+        host:
+        let
+          networking = (cfg host).networking;
+          piAddress = (cfg host).modules.services.hostSshAddresses.pi;
+          names = lib.concatLists (lib.attrValues networking.hosts);
+        in
+        lib.elem "jellyfin.repparw.com" (networking.hosts.${piAddress} or [ ])
+        && !(lib.elem "home.repparw.com" names)
+        && !(lib.elem "repparw.com" names)
+      )
+      [
+        "alpha"
+        "pi"
+      ];
   alphaExclusions =
     (cfg "alpha").modules.monitoring.agent.extraExcludedMounts == alphaMounts
     && lib.all (path: lib.hasInfix path (alloyConfig "alpha")) alphaMounts
@@ -131,6 +148,7 @@ assert lib.all (path: !(builtins.elem path persistencePaths)) [
   "/var/lib/prometheus2"
 ];
 assert alphaExclusions;
+assert lanDnsOverrides;
 assert lib.all (host: !(cfg host).systemd.timers ? fleet-health) hosts;
 assert lib.all (host: !(cfg host).systemd.timers ? disk-watch) hosts;
 assert lib.all (host: !(cfg host).systemd.timers ? reboot-watch) hosts;

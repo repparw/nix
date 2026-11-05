@@ -169,10 +169,14 @@
         ];
 
         services.fstrim.enable = true;
+        # Disk swap previously lived on the NVMe home partition as an 8G file
+        # and never took pages (zram absorbed all swapping) while the partition
+        # sat near its 90% health threshold. Zram is the only swap device now,
+        # sized up to compensate for the removed file.
         zramSwap = {
           enable = true;
           algorithm = "zstd";
-          memoryPercent = 25;
+          memoryPercent = 50;
         };
 
         fileSystems = {
@@ -237,13 +241,6 @@
           };
         };
 
-        swapDevices = [
-          {
-            device = "/home/repparw/.swapfile";
-            size = 8192;
-          }
-        ];
-
         hardware.bluetooth.enable = true;
 
         nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
@@ -285,7 +282,17 @@
               60001
             ];
           };
+
+          # Containers resolve through resolved's cache instead of querying
+          # public DNS directly from the masqueraded bridge. The cache and
+          # StaleRetentionSec keep OAuth/API refreshes working through short
+          # upstream DNS outages.
+          firewall.extraInputRules = ''
+            iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
+          '';
         };
+
+        services.resolved.settings.Resolve.DNSStubListenerExtra = "0.0.0.0";
       };
   };
 

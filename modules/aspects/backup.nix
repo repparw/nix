@@ -1,4 +1,9 @@
-{ den, ... }:
+{
+  den,
+  inputs ? null,
+  lib ? null,
+  ...
+}:
 {
   den.aspects.backup = {
     includes = [ den.aspects.backup._.restic ];
@@ -12,21 +17,48 @@
       let
         exports = config.modules.backup.exports;
         exportReport = "/var/lib/backup-exports/offsite.json";
-        backup = config.services.restic.backups.offsite;
-        resticCommand = lib.escapeShellArgs (
-          lib.optionals backup.inhibitsSleep [
-            "${pkgs.systemd}/bin/systemd-inhibit"
-            "--mode=block"
-            "--who=restic"
-            "--what=sleep"
-            "--why=Scheduled backup offsite"
-          ]
-          ++ [ (lib.getExe backup.package) ]
-          ++ lib.concatMap (option: [
-            "-o"
-            option
-          ]) backup.extraOptions
-        );
+        mkBackupHooks =
+          name:
+          let
+            backup = config.services.restic.backups.${name};
+            resticCommand = lib.escapeShellArgs (
+              lib.optionals backup.inhibitsSleep [
+                "${pkgs.systemd}/bin/systemd-inhibit"
+                "--mode=block"
+                "--who=restic"
+                "--what=sleep"
+                "--why=Scheduled backup offsite"
+              ]
+              ++ [ (lib.getExe backup.package) ]
+              ++ lib.concatMap (option: [
+                "-o"
+                option
+              ]) backup.extraOptions
+            );
+            # Backup-only arguments are not passed to forget. Preserve Pi's
+            # upload limit when prune repacks and uploads repository data.
+            pruneUploadArgs = lib.filter (lib.hasPrefix "--limit-upload=") backup.extraBackupArgs;
+            pruneCommand =
+              resticCommand
+              + lib.optionalString (pruneUploadArgs != [ ]) " ${lib.escapeShellArgs pruneUploadArgs}";
+          in
+          {
+            preStart = lib.mkMerge [
+              (lib.mkIf (exports != { }) (lib.mkBefore "${lib.getExe prepareExports}\n"))
+              (lib.mkAfter "${resticCommand} unlock\n")
+            ];
+            postStart = lib.mkIf (exports != { }) ''
+              ${lib.getExe pkgs.python3} ${../scripts/prepare-backup-exports.py} --check ${exportReport}
+              ${lib.optionalString (config.modules.backup.retentionArgs != [ ]) ''
+                ${resticCommand} unlock
+                ${pruneCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
+              ''}
+            '';
+            serviceConfig = lib.mkIf (exports != { }) {
+              StateDirectory = [ "backup-exports" ];
+              StateDirectoryMode = "0700";
+            };
+          };
         prepareExports = pkgs.writeShellApplication {
           name = "prepare-offsite-exports";
           runtimeInputs = [
@@ -133,24 +165,12 @@
             default = null;
           };
         };
-        # Clear stale locks (interrupted manual runs) before the module's
-        # post-start check demands an exclusive lock; the forget unlock runs
-        # too late to help there (observed 2026-10-18 on pi).
-        config.systemd.services.restic-backups-offsite.preStart = lib.mkMerge [
-          (lib.mkIf (exports != { }) (lib.mkBefore "${lib.getExe prepareExports}\n"))
-          (lib.mkAfter "${resticCommand} unlock\n")
-        ];
-        config.systemd.services.restic-backups-offsite.postStart = lib.mkIf (exports != { }) ''
-          ${lib.getExe pkgs.python3} ${../scripts/prepare-backup-exports.py} --check ${exportReport}
-          ${lib.optionalString (config.modules.backup.retentionArgs != [ ]) ''
-            ${resticCommand} unlock
-            ${resticCommand} forget --prune ${lib.concatStringsSep " " config.modules.backup.retentionArgs}
-          ''}
-        '';
-        config.systemd.services.restic-backups-offsite.serviceConfig = lib.mkIf (exports != { }) {
-          StateDirectory = [ "backup-exports" ];
-          StateDirectoryMode = "0700";
-        };
+        # Keep the export freshness and retention guards identical for both
+        # independently scheduled repositories.
+        config.systemd.services.restic-backups-offsite = mkBackupHooks "offsite";
+        config.systemd.services.restic-backups-claro = lib.mkIf (config.services.restic.backups ? claro) (
+          mkBackupHooks "claro"
+        );
         config.services.restic.backups.offsite.paths = lib.mkIf (exports != { }) (
           lib.mkAfter [ exportReport ]
         );
@@ -181,6 +201,9 @@
             rcloneDriveSecret.sopsFile = ../../secrets/rclone.sops.yaml;
             rcloneDriveToken.sopsFile = ../../secrets/rclone.sops.yaml;
             rcloneCrypt.sopsFile = ../../secrets/rclone.sops.yaml;
+            rcloneClarodrive.sopsFile = ../../secrets/rclone.sops.yaml;
+            rcloneClarodriveUser.sopsFile = ../../secrets/rclone.sops.yaml;
+            rcloneClarodriveUrl.sopsFile = ../../secrets/rclone.sops.yaml;
           };
 
           # System-level rclone config, rendered by sops at activation with
@@ -201,16 +224,22 @@
               type = crypt
               remote = gdrive:nixos-backups
               password = ${config.sops.placeholder.rcloneCrypt}
+
+              [claro]
+              type = webdav
+              vendor = nextcloud
+              url = ${config.sops.placeholder.rcloneClarodriveUrl}
+              user = ${config.sops.placeholder.rcloneClarodriveUser}
+              pass = ${config.sops.placeholder.rcloneClarodrive}
             '';
           };
 
-          systemd.services.restic-backups-offsite = {
-            environment.RCLONE_CONFIG = config.sops.templates."rclone.conf".path;
-          };
+          systemd.services.restic-backups-claro.after = [ "restic-backups-offsite.service" ];
 
           services.restic.backups.offsite = {
             inherit repository;
             passwordFile = config.sops.secrets.resticPassword.path;
+            rcloneConfigFile = config.sops.templates."rclone.conf".path;
             initialize = true;
             inhibitsSleep = true;
             paths = bcfg.paths;
@@ -227,11 +256,40 @@
               "**/Service Worker/**"
             ]
             ++ bcfg.excludes;
-            extraOptions = [ "rclone.program=${lib.getExe pkgs.rclone}" ];
+            # Use the same conservative concurrency for backup and prune.
+            # Prune needs two connections; the default of five is unnecessary.
+            extraOptions = [
+              "rclone.program=${lib.getExe pkgs.rclone}"
+              "rclone.connections=2"
+            ];
             pruneOpts = lib.optionals (bcfg.exports == { }) bcfg.retentionArgs;
             checkOpts = [ "--read-data-subset=5%" ];
             timerConfig = {
               OnCalendar = "*-*-* 01:00:00";
+              RandomizedDelaySec = "15min";
+              Persistent = true;
+            };
+          };
+
+          # A second normal Restic job, not a union remote or a custom
+          # repository replication script. It remains usable if Google Drive
+          # cannot be reached.
+          services.restic.backups.claro = {
+            inherit (config.services.restic.backups.offsite)
+              paths
+              exclude
+              passwordFile
+              rcloneConfigFile
+              initialize
+              inhibitsSleep
+              extraOptions
+              extraBackupArgs
+              checkOpts
+              ;
+            repository = "rclone:claro:restic/${config.networking.hostName}";
+            pruneOpts = lib.optionals (bcfg.exports == { }) bcfg.retentionArgs;
+            timerConfig = {
+              OnCalendar = "*-*-* 05:00:00";
               RandomizedDelaySec = "15min";
               Persistent = true;
             };
@@ -292,11 +350,23 @@
   };
   perSystem = { pkgs, ... }: {
     checks.backup-exports =
-      pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; }
-        ''
-          PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
-          touch "$out"
-        '';
+      let
+        piPostStart = builtins.unsafeDiscardStringContext (
+          inputs.self.nixosConfigurations.pi.config.systemd.services.restic-backups-offsite.postStart
+        );
+        lines = lib.splitString "\n" piPostStart;
+        pruneLine = lib.findFirst (lib.hasInfix "forget --prune") "" lines;
+        unlockLine = lib.findFirst (lib.hasInfix " unlock") "" lines;
+      in
+      assert lib.hasInfix "rclone.connections=2" pruneLine;
+      assert lib.hasInfix "rclone.connections=2" unlockLine;
+      assert lib.hasInfix "--limit-upload=2048" pruneLine;
+      assert lib.elem "rclone.connections=2"
+        inputs.self.nixosConfigurations.pi.config.services.restic.backups.claro.extraOptions;
+      pkgs.runCommand "backup-exports" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+        PYTHONDONTWRITEBYTECODE=1 python3 ${../_tests/backup-exports.py} ${../scripts/prepare-backup-exports.py}
+        touch "$out"
+      '';
   };
 
 }

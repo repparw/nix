@@ -26,10 +26,24 @@
 
         programs.niri.enable = lib.mkDefault true;
         programs.wshowkeys.enable = true;
+
+        # KDE Connect's remote-input (mouse/keyboard from a phone) needs a
+        # portal backend that implements RemoteDesktop on wlroots compositors.
+        # The GNOME portal backend does not implement RemoteDesktop on Niri,
+        # so use Luminous for that interface only.
+        xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-luminous ];
+        xdg.portal.config.niri."org.freedesktop.impl.portal.RemoteDesktop" = "luminous";
+
+        environment.etc."xdg/xdg-desktop-portal-luminous/config.toml".text = ''
+          # Avoid blocking remote input on a permission dialog that may not
+          # be reachable from the phone-initiated flow.
+          remote_permission_check = false
+          screenshot_permission_check = false
+        '';
       };
 
     homeManager =
-      { pkgs, ... }:
+      { config, pkgs, ... }:
       let
         titledAction = title: action: {
           _props.hotkey-overlay-title = title;
@@ -67,6 +81,8 @@
               jq
               libnotify
               wl-clipboard
+              util-linux
+              gawk
             ];
             text = builtins.readFile ./niri-record.sh;
           })
@@ -91,17 +107,6 @@
           })
 
           (writeShellApplication {
-            name = "clip2qr";
-            runtimeInputs = [
-              wl-clipboard
-              zbar
-            ];
-            text = ''
-              wl-paste --type image/png | zbarimg --raw - | wl-copy
-            '';
-          })
-
-          (writeShellApplication {
             name = "niri-swap-active-monitor-windows";
             runtimeInputs = [
               niri
@@ -117,7 +122,7 @@
           systemd.enable = false;
           portalPackage = null;
           settings = {
-            screenshot-path = "/home/repparw/Pictures/ss/screenshot-%Y-%m-%d_%H-%M-%S.png";
+            screenshot-path = "${config.home.homeDirectory}/Pictures/ss/screenshot-%Y-%m-%d_%H-%M-%S.png";
             prefer-no-csd = { };
 
             input = {
@@ -204,7 +209,7 @@
                 "yazi"
               ];
               "Mod+Shift+E" = titledSpawn "File Manager (GUI)" [ "nautilus" ];
-              "Mod+F" = titledAction "Fullscreen" "maximize-window-to-edges";
+              "Mod+F" = titledAction "Maximize" "maximize-window-to-edges";
               "Mod+Alt+F" = titledAction "Toggle Floating" "toggle-window-floating";
               "Mod+Ctrl+F" = titledAction "Toggle Focus Floating" "switch-focus-between-floating-and-tiling";
               "Mod+G" = titledSpawn "T3 Code" [ "t3code-desktop-connect" ];
@@ -315,7 +320,7 @@
                 "-c"
                 "imv"
                 "imv"
-                "/home/repparw/Projects/totem/layout/totem.svg"
+                "${config.home.homeDirectory}/Projects/totem/layout/totem.svg"
               ];
               "Mod+Period" = titledSpawn "Show Keys" [
                 "sh"
@@ -323,26 +328,12 @@
                 "pkill wshowkeys || wshowkeys -a bottom -m 108 -b 000000BB"
               ];
 
-              Print = titledSpawn "Screenshot Screen" [
-                "niri"
-                "msg"
-                "action"
-                "screenshot-screen"
-              ];
-              "Mod+Print" = titledSpawn "Screenshot Window" [
-                "niri"
-                "msg"
-                "action"
-                "screenshot-window"
-              ];
-              "Mod+Shift+Print" = titledSpawn "Screenshot Area" [
-                "niri"
-                "msg"
-                "action"
-                "screenshot"
-                "-p"
-                "false"
-              ];
+              Print = titledAction "Screenshot Screen" "screenshot-screen";
+              "Mod+Print" = titledAction "Screenshot Window" "screenshot-window";
+              "Mod+Shift+Print" = {
+                _props.hotkey-overlay-title = "Screenshot Area";
+                screenshot._props.show-pointer = false;
+              };
               "Ctrl+Print" = titledSpawn "Record Screen" [
                 "record"
                 "screen"

@@ -37,7 +37,6 @@ let
     };
     virtualisation.diskImage = null;
     virtualisation.memorySize = 1024;
-    boot.initrd.systemd.enable = true;
     virtualisation.fileSystems."/".neededForBoot = true;
     virtualisation.fileSystems."/persist" = {
       device = "/dev/disk/by-label/persist";

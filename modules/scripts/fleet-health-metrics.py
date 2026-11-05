@@ -84,11 +84,17 @@ def disk_metrics(disks, cached, mounts, statvfs=os.statvfs, usage=lambda mount: 
     return "".join(lines), cached
 
 
-def reboot_required(booted=Path("/run/booted-system"), staged=Path("/nix/var/nix/profiles/system")):
-    paths = ["initrd", "kernel", "kernel-modules"]
-    if not all((root / path).exists() for root in (booted, staged) for path in paths):
-        raise ValueError("booted or staged kernel links unavailable")
-    return int(any((booted / path).resolve() != (staged / path).resolve() for path in paths))
+def reboot_required(run=subprocess.run):
+    # The shell predicate is the single implementation shared with the
+    # headless reboot sequence and fleet debug: exit 0 pending, 1 converged,
+    # anything else cannot be determined and fails the collector closed.
+    result = run(["fleet-reboot-required"], capture_output=True, timeout=30, check=False)
+    if result.returncode == 0:
+        return 1
+    if result.returncode == 1:
+        return 0
+    detail = result.stderr.decode(errors="replace").strip()
+    raise ValueError(f"cannot determine reboot state ({detail or f'exit {result.returncode}'})")
 
 
 def host_metrics(settings, state, now):
@@ -96,10 +102,12 @@ def host_metrics(settings, state, now):
     # Transitional compatibility: the live Cloud rule still queries this gauge.
     # Remove it after the Cloud rule has switched to fleet_failed_unit.
     lines = [metric("fleet_failed_units", len(failed_units)),
-             metric("fleet_deployment_paused", int(Path("/var/lib/auto-update/PAUSE").exists()))]
+             metric("fleet_deployment_paused", int(Path("/var/lib/auto-update/PAUSE").exists())),
+             # Emitted on every host; per-host policy (alpha warns at once,
+             # headless hosts only after a nightly cycle) lives in the alert
+             # rules, not in the collector.
+             metric("fleet_reboot_required", reboot_required())]
     lines += [metric("fleet_failed_unit", 1, name=unit) for unit in failed_units]
-    if settings["rebootCheck"]:
-        lines.append(metric("fleet_reboot_required", reboot_required()))
     for unit in settings["requiredUnits"]:
         status = subprocess.run(["systemctl", "is-active", "--quiet", unit], timeout=10, check=False).returncode
         if status not in (0, 3, 4):
