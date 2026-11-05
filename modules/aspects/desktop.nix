@@ -10,6 +10,7 @@
       den.aspects.file-manager
       den.aspects.obsidian
       den.aspects.ai._.gui
+      den.aspects.ai._.t3code-connect-desktop
       den.aspects.desktop._.bitwarden
     ];
 
@@ -24,21 +25,13 @@
       { user, ... }:
       {
         includes = [ den.aspects.gui ];
-        nixos =
-          { lib, ... }:
-          {
-            options.modules.desktop.enable = lib.mkOption {
-              type = lib.types.bool;
-              default = true;
-              readOnly = true;
-              description = "Whether this host includes the desktop aspect";
-            };
-
-            config = {
-              home-manager.sharedModules = [ inputs.nixcord.homeModules.default ];
-              services.displayManager.autoLogin.user = user.name;
-            };
+        nixos = {
+          home-manager.sharedModules = [ inputs.nixcord.homeModules.default ];
+          services.displayManager.autoLogin = {
+            enable = true;
+            user = user.name;
           };
+        };
       };
   };
 }
