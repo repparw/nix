@@ -281,7 +281,17 @@
               60001
             ];
           };
+
+          # Containers resolve through resolved's cache instead of querying
+          # public DNS directly from the masqueraded bridge. The cache and
+          # StaleRetentionSec keep OAuth/API refreshes working through short
+          # upstream DNS outages.
+          firewall.extraInputRules = ''
+            iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
+          '';
         };
+
+        services.resolved.settings.Resolve.DNSStubListenerExtra = "0.0.0.0";
       };
   };
 
