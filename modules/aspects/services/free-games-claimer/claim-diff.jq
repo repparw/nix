@@ -39,7 +39,8 @@ def entries($store; $db):
           and .status != "manual"
           and .status != "skipped"
           and .status != "unknown"
-          and .status != "requires base game")
+          and .status != "requires base game"
+          and .status != "failed:requires-base-game")
       )
   )
 | {

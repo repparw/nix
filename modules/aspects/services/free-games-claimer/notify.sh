@@ -35,10 +35,10 @@ for store in epic-games gog; do
     lines+=("Store $store run failed (status $status). Check the free-games-claimer service journal and $store.log.")
   fi
   if [ "$status" != 0 ] && grep -q "Not signed in anymore" "$logs/$store.log" 2>/dev/null; then
-    lines+=("$store needs login: ssh -N -L 6080:127.0.0.1:6080 pi, then open http://localhost:6080/vnc.html")
+    lines+=("$store needs login: tunnel ssh -N -L 5900:127.0.0.1:5900 pi, then connect a VNC viewer during the run.")
   fi
   if [ "$status" != 0 ] && grep -qi "captcha" "$logs/$store.log" 2>/dev/null; then
-    lines+=("$store encountered a captcha. Open noVNC while the run is waiting.")
+    lines+=("$store encountered a captcha. Connect a VNC viewer over SSH while the run is waiting.")
   fi
 done
 if [ "${SERVICE_RESULT:-success}" != success ]; then

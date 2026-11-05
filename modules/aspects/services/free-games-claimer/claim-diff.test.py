@@ -130,6 +130,12 @@ class ClaimDiffTest(unittest.TestCase):
         recovered = run_diff({}, claimed, out["state"])
         self.assertEqual(recovered["lines"], ["✅ gog: Game — "])
 
+    def test_missing_base_game_is_not_an_error_notification(self):
+        db = {"user": {"dlc": {"title": "DLC", "status": "failed:requires-base-game"}}}
+        out = run_diff(db, {}, {})
+        self.assertEqual(out["lines"], [])
+        self.assertEqual(out["state"], {})
+
     def test_malformed_status_is_ignored(self):
         db = {"user": {"game": {"title": "Game", "status": ["bad"]}}}
         self.assertEqual(run_diff(db, {}, {})["lines"], [])
