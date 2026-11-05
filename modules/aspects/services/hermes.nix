@@ -159,12 +159,21 @@
                   ];
                 };
                 extraPackages = with pkgs; [
+                  agent-browser
+                  chromium
                   curl
                   ffmpeg
                   hermesNodejs
                   ripgrep
                   (python313.withPackages (ps: [ python313Packages.ddgs ]))
                 ];
+                # Headless browser for the agent's browser toolset: Epsilon has
+                # no display, and Hermes' local browser backend defaults to
+                # headless Chromium driven through agent-browser. The env var
+                # is the override both Hermes (hermes_cli/browser_runtime.py)
+                # and agent-browser itself honor, replacing the mutable
+                # `hermes pm install chromium` runtime.
+                environment.AGENT_BROWSER_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
               };
 
               users.users.hermes.uid = 345;
