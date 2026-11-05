@@ -30,11 +30,9 @@
         # overrides. See docs/research/parakeet-ultra-evaluation.md.
         voxtypeDictation = pkgs.voxtype-vulkan.override { onnxSupport = true; };
 
-        # Available after nixpkgs#583099 reaches the pinned nixos-unstable.
-        hexTrial = pkgs.anomaly-hex;
         hexToggle = pkgs.writeShellApplication {
           name = "hex-toggle";
-          runtimeInputs = [ hexTrial ];
+          runtimeInputs = [ pkgs.anomaly-hex ];
           text = ''
             if ! hex status >/dev/null 2>&1; then
               hex start
@@ -88,7 +86,7 @@
 
         home.packages = [
           # Side-by-side Hex trial. Voxtype remains the default dictation service.
-          hexTrial
+          pkgs.anomaly-hex
           hexToggle
           voxtypeToggle
 
