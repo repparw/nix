@@ -159,13 +159,15 @@
                   ];
                 };
                 extraPackages = with pkgs; [
+                  agent-browser
+                  chromium
                   curl
                   ffmpeg
                   hermesNodejs
                   ripgrep
                   (python313.withPackages (ps: [ python313Packages.ddgs ]))
                 ];
-                environment.etc."hermes/chromium-executable-path".text = "${pkgs.chromium}/bin/chromium";
+                environment.AGENT_BROWSER_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
               };
 
               users.users.hermes.uid = 345;
