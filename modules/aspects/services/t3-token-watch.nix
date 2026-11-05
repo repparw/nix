@@ -24,6 +24,7 @@ in
           name = "t3-token-watch";
           runtimeInputs = with pkgs; [
             coreutils
+            gawk
             gnugrep
             gnused
             jq
