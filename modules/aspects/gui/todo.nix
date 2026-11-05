@@ -119,74 +119,110 @@
             util-linux
           ];
           text = ''
-            if [ "$#" -eq 0 ]; then
-                echo "Usage: t \"TASK SUMMARY\" [DATETIME]"
-                echo "Example: t \"Buy milk\" \"tomorrow 9am\""
+            if [[ $# -lt 1 || $# -gt 2 || -z "$1" ]]; then
+                echo 'Usage: t "TASK SUMMARY" [DATETIME]' >&2
                 exit 1
             fi
 
-            if [ ! -f "${passwordFile}" ]; then
+            if [[ ! -f "${passwordFile}" ]]; then
                 echo "Error: Nextcloud secret file not found at ${passwordFile}" >&2
                 exit 1
             fi
+
+            task_summary=$1
+            datetime=''${2:-"tomorrow 9am"}
+            if ! due_epoch=$(date -d "$datetime" +%s 2>/dev/null); then
+                echo "Error: Invalid due date: $datetime" >&2
+                exit 1
+            fi
+
+            # A date without a time represents an all-day task.
+            if [[ "$datetime" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2}|today|tomorrow|(next[[:space:]]+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday))$ ]]; then
+                due_line="DUE;VALUE=DATE:$(date -d "@$due_epoch" +%Y%m%d)"
+            else
+                due_line="DUE:$(date -u -d "@$due_epoch" +%Y%m%dT%H%M%SZ)"
+            fi
+
+            escape_ical_text() {
+                local value="$1"
+                value="''${value//\\/\\\\}"
+                value="''${value//;/\\;}"
+                value="''${value//,/\\,}"
+                value="''${value//$'\r\n'/\\n}"
+                value="''${value//$'\r'/\\n}"
+                value="''${value//$'\n'/\\n}"
+                printf '%s' "$value"
+            }
+
+            escape_curl_config() {
+                local value="$1"
+                value="''${value//\\/\\\\}"
+                value="''${value//\"/\\\"}"
+                printf '%s' "$value"
+            }
+
+            # RFC 5545 lines have a 75-octet folding limit, including UTF-8.
+            fold_ical_line() {
+                local LC_ALL=C.UTF-8
+                local line="$1" width=0 ch size i
+                for ((i = 0; i < ''${#line}; i++)); do
+                    ch="''${line:i:1}"
+                    LC_ALL=C
+                    size=''${#ch}
+                    LC_ALL=C.UTF-8
+                    if ((width + size > 75)); then
+                        printf '\r\n '
+                        width=1
+                    fi
+                    printf '%s' "$ch"
+                    width=$((width + size))
+                done
+                printf '\r\n'
+            }
+
+            task_text=$(escape_ical_text "$task_summary")
+            task_uid=$(uuidgen)
+            dtstamp=$(date -u +%Y%m%dT%H%M%SZ)
             nc_app_pass=$(cat "${passwordFile}")
+            curl_user=$(escape_curl_config "ubritos@gmail.com:$nc_app_pass")
 
-            task_summary="$*"
-            datetime="tomorrow 9am"
-
-            if date -d "''${!#}" > /dev/null 2>&1; then
-                datetime="''${!#}"
-                task_summary="''${*:1:$#-1}"
-            fi
-
-            is_midnight=$(date -d "$datetime" +%H%M)
-            if [ "$is_midnight" = "0000" ]; then
-                due_time=$(date -d "$datetime" +%Y%m%dT000000)
-                is_day_only=true
-            else
-                due_time=$(date -u -d "$datetime" +%Y%m%dT%H%M%SZ)
-                is_day_only=false
-            fi
-
-            TASK_UID=$(uuidgen 2>/dev/null || date +%s%N)
-            DTSTAMP=$(date -u +%Y%m%dT%H%M%SZ)
-            FILE_NAME="$TASK_UID.ics"
-
-            if [ "$is_day_only" = true ]; then
-                DUE_LINE="DUE;VALUE=DATE:$(date -d "$datetime" +%Y%m%d)"
-            else
-                DUE_LINE="DUE:$due_time"
-            fi
-
-            ICAL_DATA=$(cat <<EOF
-            BEGIN:VCALENDAR
-            VERSION:2.0
-            PRODID:-//repparw t//EN
-            BEGIN:VTODO
-            UID:$TASK_UID
-            DTSTAMP:$DTSTAMP
-            SUMMARY:$task_summary
-            $DUE_LINE
-            PRIORITY:9
-            PERCENT-COMPLETE:0
-            BEGIN:VALARM
-            ACTION:DISPLAY
-            TRIGGER;VALUE=DATE-TIME:$due_time
-            DESCRIPTION:$task_summary
-            END:VALARM
-            END:VTODO
-            END:VCALENDAR
-            EOF
+            ical_lines=(
+                "BEGIN:VCALENDAR"
+                "VERSION:2.0"
+                "PRODID:-//repparw t//EN"
+                "BEGIN:VTODO"
+                "UID:$task_uid"
+                "DTSTAMP:$dtstamp"
+                "SUMMARY:$task_text"
+                "$due_line"
+                "PRIORITY:9"
+                "PERCENT-COMPLETE:0"
+                "BEGIN:VALARM"
+                "ACTION:DISPLAY"
+                "TRIGGER;RELATED=END:PT0S"
+                "DESCRIPTION:$task_text"
+                "END:VALARM"
+                "END:VTODO"
+                "END:VCALENDAR"
             )
 
-            http_code=$(curl -s -o /dev/null -w '%{http_code}' \
-                -X PUT \
-                --user "ubritos@gmail.com:$nc_app_pass" \
-                -H "Content-Type: text/calendar; charset=utf-8" \
-                --data-raw "$ICAL_DATA" \
-                "${caldavList}/$FILE_NAME")
+            if ! http_code=$(
+                for line in "''${ical_lines[@]}"; do
+                    fold_ical_line "$line"
+                done |
+                    curl -sS -o /dev/null -w '%{http_code}' \
+                        --connect-timeout 10 --max-time 30 \
+                        --config <(printf 'user = "%s"\n' "$curl_user") \
+                        -X PUT \
+                        -H 'Content-Type: text/calendar; charset=utf-8' \
+                        --data-binary @- \
+                        "${caldavList}/$task_uid.ics"
+            ); then
+                echo "Error: Failed to contact Nextcloud CalDAV" >&2
+                exit 1
+            fi
 
-            if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+            if [[ "$http_code" =~ ^2[0-9]{2}$ ]]; then
                 echo "Task created: $task_summary"
             else
                 echo "Error: Failed to create task (HTTP status: $http_code)." >&2
