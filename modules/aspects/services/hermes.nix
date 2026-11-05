@@ -163,7 +163,13 @@
                   ffmpeg
                   hermesNodejs
                   ripgrep
-                  (python313.withPackages (ps: [ python313Packages.ddgs ]))
+                  # Agent-authored cron scripts in /var/lib/hermes/.hermes/scripts
+                  # (arr_queue_monitor.py) import yaml and dotenv at module scope.
+                  (python313.withPackages (ps: [
+                    python313Packages.ddgs
+                    python313Packages.pyyaml
+                    python313Packages.python-dotenv
+                  ]))
                 ];
               };
 
