@@ -10,6 +10,7 @@
         browser
         mpv
         wm
+        todo
         zathura
         guiApps
       ]
