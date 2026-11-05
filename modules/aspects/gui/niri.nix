@@ -190,6 +190,13 @@
                 };
                 spawn = [ "voxtype-toggle" ];
               };
+              "Mod+Alt+D" = {
+                _props = {
+                  repeat = false;
+                  hotkey-overlay-title = "Hex Dictation (Trial)";
+                };
+                spawn = [ "hex-toggle" ];
+              };
               "Mod+Shift+D" = {
                 _props = {
                   repeat = false;

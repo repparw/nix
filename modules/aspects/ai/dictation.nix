@@ -29,6 +29,20 @@
         # backend for the [whisper] fallback and per-recording --model
         # overrides. See docs/research/parakeet-ultra-evaluation.md.
         voxtypeDictation = pkgs.voxtype-vulkan.override { onnxSupport = true; };
+
+        # nixpkgs#583099 is not in the pinned nixos-unstable yet. Use its
+        # package recipe until the next channel update includes it.
+        hexTrial = pkgs.anomaly-hex or (pkgs.callPackage ../../_packages/anomaly-hex.nix { });
+        hexToggle = pkgs.writeShellApplication {
+          name = "hex-toggle";
+          runtimeInputs = [ hexTrial ];
+          text = ''
+            if ! hex status >/dev/null 2>&1; then
+              hex start
+            fi
+            hex dictation toggle
+          '';
+        };
         parakeetUltra = pkgs.callPackage ../../_packages/parakeet-ultra-onnx.nix { };
 
         voxtypeQsQml = pkgs.fetchFromGitHub {
@@ -74,6 +88,9 @@
         };
 
         home.packages = [
+          # Side-by-side Hex trial. Voxtype remains the default dictation service.
+          hexTrial
+          hexToggle
           voxtypeToggle
 
           # Model-evaluation harness (WER + latency over a fixed sample set);
