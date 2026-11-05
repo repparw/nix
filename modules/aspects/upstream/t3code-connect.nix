@@ -40,7 +40,12 @@
   # only matter where a graphical browser runs. Hosts pick this up through
   # aspect composition (den.aspects.desktop) instead of a capability flag.
   den.aspects.ai.provides.t3code-connect-desktop.homeManager =
-    { config, lib, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       launcher = pkgs.writeShellScriptBin "t3code-desktop-connect" ''
         export CODEX_HOME=${lib.escapeShellArg config.home.sessionVariables.CODEX_HOME}
