@@ -159,6 +159,8 @@
                   ];
                 };
                 extraPackages = with pkgs; [
+                  agent-browser
+                  chromium
                   curl
                   ffmpeg
                   hermesNodejs
@@ -171,6 +173,7 @@
                     python313Packages.python-dotenv
                   ]))
                 ];
+                environment.AGENT_BROWSER_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
               };
 
               users.users.hermes.uid = 345;
