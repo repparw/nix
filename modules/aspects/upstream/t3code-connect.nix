@@ -59,8 +59,7 @@
       # `mimeinfo.cache` associations when `mimeapps.list` names a default.
       # The app's own `xdg-mime default` call is skipped while Electron runs
       # unpackaged, so declare the handler instead of relying on runtime
-      # registration. Keep it beside the desktop entry so the cleanup patch
-      # leaves the permanent launcher intact.
+      # registration.
       xdg.mimeApps = {
         enable = true;
         defaultApplications."x-scheme-handler/t3code" = "t3code.desktop";
@@ -73,13 +72,6 @@
         settings.StartupWMClass = "t3code";
         categories = [ "Development" ];
         mimeType = [ "x-scheme-handler/t3code" ];
-      };
-
-      # Keep a user-local entry authoritative over stale desktop files left
-      # by older installs. XDG menu lookup prefers this directory to the
-      # Home Manager profile's share/applications directory.
-      home.file.".local/share/applications/t3code.desktop" = {
-        source = "${config.home.path}/share/applications/t3code.desktop";
       };
     };
 }
