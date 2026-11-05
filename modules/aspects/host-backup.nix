@@ -58,9 +58,6 @@
             # restic interprets this value in KiB/s: 2048 = 2 MiB/s.
             "--limit-upload=2048"
           ];
-          extraOptions = lib.optionals (config.networking.hostName == "pi") [
-            "rclone.connections=1"
-          ];
         };
         # Keep existing checkpoints readable and backed up after retiring the tool.
         systemd.tmpfiles.rules = [ "d /var/lib/host-recovery 0700 root root -" ];
