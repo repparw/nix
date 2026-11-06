@@ -37,8 +37,9 @@ Source: `modules/hosts/alpha.nix`
 ## Pi
 
 `pi` is the Raspberry Pi 5 home server (aarch64, `192.168.0.4`) and the
-always-on host: it runs the LAN HTTPS edge for Jellyfin and Home Assistant,
-plus fleet-health and the deploy-rs controller. Authelia, Miniflux, and
+always-on host: it runs the LAN HTTPS edge for Jellyfin, the Home Assistant
+container, fleet-health, and the deploy-rs controller. Home Assistant's
+public HTTPS route uses Epsilon's Cloudflare Tunnel. Authelia, Miniflux, and
 Glance live on epsilon.
 
 It is the fleet's deployment controller. GitHub Actions opens lock update PRs,
@@ -55,6 +56,9 @@ deploy-rs.
 - `containers.homeassistant` serves `home.repparw.com` through the Cloudflare
   tunnel via epsilon, not through pi's Traefik.
 - Fleet-health monitoring and the `fleet-controller` auto-update pipeline run here.
+- `free-games-claimer.service` claims Epic/GOG free games on Pi's residential
+  connection. Its daily timer and temporary virtual display are described in
+  the [free-games-claimer guide](services/free-games-claimer.md).
 
 It boots through the Raspberry Pi firmware and generic-extlinux-compatible
 loader (linuxPackages_latest, with the `pcie_brcmstb` module in the initrd

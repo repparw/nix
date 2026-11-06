@@ -5,7 +5,7 @@
 }:
 {
   flake-file.inputs.hermes-agent = {
-    url = "github:NousResearch/hermes-agent/v0.22.2";
+    url = "github:NousResearch/hermes-agent/v0.23.0";
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
@@ -22,6 +22,7 @@
       den.aspects.service-host
       den.aspects.nixos-services._.edge
       den.aspects.nixos-services._.hermes
+      den.aspects.nixos-services._.automations
       den.aspects.nixos-services._.archisteamfarm
       den.aspects.nixos-services._.paperless
     ];

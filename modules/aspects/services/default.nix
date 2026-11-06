@@ -56,22 +56,14 @@
       domain = svc.domain;
       lanIp =
         hostSshAddresses.${svc.lanEdgeHost} or (throw "lanEdgeHost ${svc.lanEdgeHost} missing ssh address");
-      publicIp =
-        hostSshAddresses.${svc.publicEdgeHost}
-          or (throw "publicEdgeHost ${svc.publicEdgeHost} missing ssh address");
       vhosts = lib.filterAttrs (_: service: (service.hostname or null) != null) generatedDefinitions;
       fqdn = service: "${service.hostname}.${domain}";
       lanNames = lib.mapAttrsToList (_: fqdn) (
         lib.filterAttrs (_: service: service.lanEdge or false) vhosts
       );
-      publicNames = [
-        domain
-      ]
-      ++ lib.mapAttrsToList (_: fqdn) (lib.filterAttrs (_: service: !(service.lanEdge or false)) vhosts);
-      rendered = ''
-        ${lib.optionalString (lanNames != [ ]) "${lanIp} ${lib.concatStringsSep " " lanNames}"}
-        ${publicIp} ${lib.concatStringsSep " " publicNames}
-      '';
+      # Only LAN-edge vhosts need static host overrides. Public services use
+      # DNS and Cloudflare; SSH uses the direct hostSshAddresses separately.
+      rendered = lib.optionalString (lanNames != [ ]) "${lanIp} ${lib.concatStringsSep " " lanNames}\n";
     in
     {
       imports = [
@@ -100,7 +92,6 @@
 
         networking.hosts = lib.mkIf (config.networking.hostName != svc.publicEdgeHost) {
           ${lanIp} = lanNames;
-          ${publicIp} = publicNames;
         };
       };
     };

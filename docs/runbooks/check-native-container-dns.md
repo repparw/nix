@@ -17,8 +17,9 @@ resolvers differ per host:
   `10.231.136.1`.
 - `epsilon` exposes resolved on its bridge gateway (`10.231.137.1`);
   containers resolve through the host, which forwards upstream.
-- `pi` runs no resolver for containers: `containers.homeassistant` resolves
-  upstream directly (`1.1.1.1`, `9.9.9.9`) out of the masqueraded bridge.
+- `pi` runs resolved as a container resolver on all addresses
+  (`DNSStubListenerExtra = "0.0.0.0"`); containers target the host bridge at
+  `10.231.136.1`, which caches and forwards upstream.
 
 1. Check host-side DNS first:
 
@@ -37,8 +38,8 @@ resolvers differ per host:
    ```
 
 3. If lookup fails, verify the container points at its host's expected
-   resolver (`10.231.136.1` on alpha, `10.231.137.1` on epsilon, or the
-   container's own public nameservers on pi), the host firewall accepts
+   resolver (`10.231.136.1` on alpha and pi, `10.231.137.1` on epsilon),
+   the host firewall accepts
    `ve-*` DNS traffic, and
    `services.resolved.settings.Resolve.DNSStubListenerExtra` still carries the
    host's expected listeners.

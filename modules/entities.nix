@@ -12,7 +12,6 @@
           den.aspects.streaming
           den.aspects.spotifast
           den.aspects.moonshine-pr227-test
-          den.aspects.ai._.t3code-stable010
         ];
       };
     };
@@ -24,8 +23,8 @@
         users.repparw.aspect = {
           includes = [
             den.aspects.repparw
+            den.aspects.fish
             den.aspects.ai._.t3code-split
-            den.aspects.ai._.t3code-stable010
           ];
         };
       };
@@ -35,8 +34,8 @@
         users.repparw.aspect = {
           includes = [
             den.aspects.repparw
+            den.aspects.fish
             den.aspects.ai._.t3code-split
-            den.aspects.ai._.t3code-stable010
           ];
         };
       };

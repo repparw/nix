@@ -47,11 +47,6 @@
             extraConfig =
               { pkgs, ... }:
               {
-                networking.nameservers = [
-                  "1.1.1.1"
-                  "9.9.9.9"
-                ];
-
                 # The nspawn unit PATH omits system packages, so the
                 # ssh binary must be added to the service path explicitly.
                 systemd.services.home-assistant.path = [ pkgs.openssh ];

@@ -187,7 +187,9 @@ class PlanTests(unittest.TestCase):
                 self.assertTrue((ROOT / ".github/upstream/cleanup" / spec["cleanup"]).exists(), name)
 
     def test_t3code_cleanups_preserve_independent_layers_in_every_order(self):
-        names = ("t3code-connect", "t3code-split", "t3code-stable010")
+        names = ["t3code-connect", "t3code-split"]
+        if (ROOT / "modules/aspects/upstream/t3code-stable010.nix").exists():
+            names.append("t3code-stable010")
         files = [f"modules/aspects/upstream/{name}.nix" for name in names] + [
             "modules/aspects/ai/t3code.nix", "modules/entities.nix"]
         for order in itertools.permutations(names):
@@ -210,8 +212,10 @@ class PlanTests(unittest.TestCase):
                                      "t3code-connect" not in order[:order.index(name) + 1])
                     self.assertEqual('t3code-server =' in split,
                                      "t3code-split" not in order[:order.index(name) + 1])
-                self.assertFalse((candidate / files[2]).exists())
-                self.assertNotIn("t3code-stable010", (candidate / files[4]).read_text())
+                self.assertFalse((candidate / "modules/aspects/upstream/t3code-stable010.nix").exists())
+                self.assertNotIn(
+                    "t3code-stable010", (candidate / "modules/entities.nix").read_text()
+                )
                 self.assertIn("pkgs.t3code-cli", split)
 
 

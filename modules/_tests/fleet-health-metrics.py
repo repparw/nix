@@ -51,26 +51,22 @@ class MetricsTests(unittest.TestCase):
             self.assertEqual(path.stat().st_mode & 0o777, 0o644)
             self.assertIn('name="unit\\"\\\\name"', path.read_text())
 
-    def test_reboot_compares_kernel_links_not_generation_names(self):
-        with tempfile.TemporaryDirectory() as root:
-            base = Path(root)
-            old, new = base / "old", base / "new"
-            old.mkdir(); new.mkdir()
-            for name in ["initrd", "kernel", "kernel-modules"]:
-                target = base / name
-                target.touch()
-                (old / name).symlink_to(target)
-                (new / name).symlink_to(target)
-            self.assertEqual(collector.reboot_required(old, new), 0)
-            (new / "kernel").unlink()
-            (new / "kernel").touch()
-            self.assertEqual(collector.reboot_required(old, new), 1)
-            (new / "kernel").unlink()
-            with self.assertRaises(ValueError):
-                collector.reboot_required(old, new)
+    def test_reboot_metric_follows_predicate_exit_codes(self):
+        # The shell predicate owns link comparison (fleet-reboot-required
+        # test.py); the collector only maps its exit codes onto the metric.
+        def outcome(code, stderr=b""):
+            return lambda *_args, **_kwargs: SimpleNamespace(
+                returncode=code, stderr=stderr, stdout=b""
+            )
+        self.assertEqual(collector.reboot_required(run=outcome(0)), 1)
+        self.assertEqual(collector.reboot_required(run=outcome(1)), 0)
+        with self.assertRaises(ValueError):
+            collector.reboot_required(run=outcome(2, b"missing /run/booted-system/kernel"))
+        with self.assertRaises(ValueError):
+            collector.reboot_required(run=outcome(255, b""))
 
     def test_backup_success_is_not_inferred_from_export_preparation(self):
-        settings = {"requiredUnits": [], "exports": ["paperless"], "probes": ["paperless"], "rebootCheck": True}
+        settings = {"requiredUnits": [], "exports": ["paperless"], "probes": ["paperless"]}
         report = {"finishedAt": 99, "exports": {"paperless": {"status": "complete"}}}
         def exists(path):
             return str(path).endswith("offsite.json")
@@ -85,8 +81,9 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(state["since"], 100)
 
     def test_failed_unit_metric_is_per_unit_and_absent_when_healthy(self):
-        settings = {"requiredUnits": [], "exports": [], "probes": [], "rebootCheck": False}
+        settings = {"requiredUnits": [], "exports": [], "probes": []}
         with patch.object(collector, "command", return_value="first.service\nsecond.service"), \
+             patch.object(collector, "reboot_required", return_value=0), \
              patch.object(Path, "exists", return_value=False):
             text, _ = collector.host_metrics(settings, {}, 100)
         self.assertIn('fleet_failed_unit{name="first.service"} 1', text)
@@ -94,6 +91,7 @@ class MetricsTests(unittest.TestCase):
         self.assertIn("fleet_failed_units 2", text)
 
         with patch.object(collector, "command", return_value=""), \
+             patch.object(collector, "reboot_required", return_value=0), \
              patch.object(Path, "exists", return_value=False):
             healthy, _ = collector.host_metrics(settings, {}, 101)
         self.assertNotIn("fleet_failed_unit{", healthy)

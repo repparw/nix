@@ -11,9 +11,12 @@ tags: [security, secrets, sops-nix]
 
 This file contains names and deployment metadata only. Never add secret values.
 
-Secret material belongs in consumer-scoped `*.sops.yaml` files under `secrets/`
-and is managed through `sops-nix`. Each service or aspect declares its own
-`sopsFile`, limiting the ciphertext and recipient blast radius.
+Secret material is stored in `*.sops.yaml` files under `secrets/` and managed
+through `sops-nix`. Services and aspects declare the SOPS files they consume.
+The **Hosts** column identifies runtime consumers, not every machine whose
+key can decrypt the encrypted file. Decryption access follows the recipients
+embedded in each SOPS file; `.sops.yaml` specifies the intended recipient
+rules for newly encrypted or rekeyed files.
 
 | SOPS file                          | Secret                          | Purpose                                                                                                                                                                                            | Consumer                                                       | Hosts                    |
 | ---------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------ |
@@ -24,11 +27,11 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/rclone.sops.yaml`         | `rcloneDriveSecret`             | Authenticate the Google Drive OAuth client                                                                                                                                                         | rclone services and host backup                                | `alpha`, `pi`, `epsilon` |
 | `secrets/rclone.sops.yaml`         | `rcloneCrypt`                   | Unlock the encrypted rclone remote                                                                                                                                                                 | rclone services and host backup                                | `alpha`, `pi`, `epsilon` |
 | `secrets/rclone.sops.yaml`         | `rcloneObsidianCrypt`           | Unlock the Remotely Save-compatible Obsidian crypt remote                                                                                                                                          | Obsidian bisync service                                        | `alpha`                  |
-| `secrets/rclone.sops.yaml`         | `rcloneClarodrive`              | Authenticate the Claro Drive remote                                                                                                                                                                | rclone Home Manager services                                   | `alpha`, `pi`            |
-| `secrets/rclone.sops.yaml`         | `rcloneClarodriveUser`          | Identify the Claro Drive account (injected into the remote `user` at activation, never baked into the store)                                                                                       | rclone Home Manager services                                   | `alpha`, `pi`            |
-| `secrets/rclone.sops.yaml`         | `rcloneClarodriveUrl`           | Claro Drive WebDAV endpoint carrying the account id (injected at activation)                                                                                                                       | rclone Home Manager services                                   | `alpha`, `pi`            |
-| `secrets/rclone.sops.yaml`         | `rcloneDropbox`                 | Authorize Dropbox access                                                                                                                                                                           | rclone Home Manager services                                   | `alpha`, `pi`            |
-| `secrets/rclone.sops.yaml`         | `rcloneNextcloud`               | Authenticate the Nextcloud remote                                                                                                                                                                  | rclone Home Manager services                                   | `alpha`, `pi`            |
+| `secrets/rclone.sops.yaml`         | `rcloneClarodrive`              | Authenticate the Claro Drive remote                                                                                                                                                                | rclone Home Manager and secondary Restic backup                | `alpha`, `pi`, `epsilon` |
+| `secrets/rclone.sops.yaml`         | `rcloneClarodriveUser`          | Identify the Claro Drive account (injected into the remote `user` at activation, never baked into the store)                                                                                       | rclone Home Manager and secondary Restic backup                | `alpha`, `pi`, `epsilon` |
+| `secrets/rclone.sops.yaml`         | `rcloneClarodriveUrl`           | Claro Drive WebDAV endpoint carrying the account id (injected at activation)                                                                                                                       | rclone Home Manager and secondary Restic backup                | `alpha`, `pi`, `epsilon` |
+| `secrets/rclone.sops.yaml`         | `rcloneDropbox`                 | Authorize Dropbox access                                                                                                                                                                           | rclone Home Manager services                                   | `alpha`                  |
+| `secrets/rclone.sops.yaml`         | `rcloneNextcloud`               | Authenticate the Nextcloud remote                                                                                                                                                                  | rclone Home Manager services                                   | `alpha`                  |
 | `secrets/proxy.sops.yaml`          | `cloudflare`                    | Authorize Cloudflare DNS-01 certificate updates                                                                                                                                                    | Traefik                                                        | `pi`, `epsilon`          |
 | `secrets/proxy.sops.yaml`          | `qbittorrentAuth`               | Configure qBittorrent proxy authentication                                                                                                                                                         | Traefik                                                        | `epsilon`                |
 | `secrets/proxy.sops.yaml`          | `cloudflareTunnelCredentials`   | Connect the epsilon-edge Cloudflare Tunnel                                                                                                                                                         | cloudflared                                                    | `epsilon`                |
@@ -46,8 +49,9 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/home.sops.yaml`           | `homeWanIp`                     | Home WAN IP: populates the `home-wan` nft set and the `wg-home` endpoint at boot via the `home-wan` service (firewall/WG strings render at evaluation time, so SOPS feeds them at runtime instead) | home uplink provisioning                                       | `epsilon`                |
 | `secrets/bluetooth.sops.yaml`      | `btDevice`                      | Bluetooth MAC targeted by `bttoggle`, read as a fallback when `TOGGLE_BT_DEVICE` is unset                                                                                                          | bttoggle helper                                                | `alpha`                  |
 | `secrets/jellyfin.sops.yaml`       | `jellyfinBackupKey`             | Authorize Jellyfin backup creation                                                                                                                                                                 | Jellyfin backup tooling                                        | `alpha`                  |
-| `secrets/automations.sops.yaml`    | `discordWebhook`                | Deliver automation notifications to Discord                                                                                                                                                        | Automation services                                            | `pi`                     |
-| `secrets/hermes.sops.yaml`         | `hermes-env`                    | Discord token for the Hermes gateway plus fleet-wide Discord notify (fleet-update, backup, fleet-health source it on every host)                                                                   | `services.hermes-agent` environmentFiles, fleet notify scripts | fleet-wide               |
+| `secrets/wg.sops.yaml`             | `wgEpsilonPrivateKey`           | Identify the epsilon edge peer of the WireGuard home tunnel                                                                                                                                        | wg-quick home tunnel                                           | `epsilon`                |
+| `secrets/wg.sops.yaml`             | `wgEpsilonPresharedKey`         | Authenticate the WireGuard home-tunnel peer                                                                                                                                                        | wg-quick home tunnel                                           | `epsilon`                |
+| `secrets/hermes.sops.yaml`         | `hermes-env`                    | Discord token for the Hermes gateway plus fleet-wide Discord notify (fleet-update, backup, fleet-health, and the free-games-claimer notifier source it)                                            | `services.hermes-agent` environmentFiles, fleet notify scripts | fleet-wide               |
 | `secrets/hermes.sops.yaml`         | `hermes-llm-env`                | Provider/tool keys and the short-lived T3 MCP `T3_MCP_TOKEN` (`mcp-client`, `orchestration:read` + `orchestration:operate`)                                                                        | Hermes runtime `.env` in its Epsilon container                 | `epsilon`                |
 | `secrets/hermes-arr.sops.yaml`     | `arr-api-keys`                  | Authenticate Sonarr/Radarr queue-triage requests                                                                                                                                                   | Hermes tool subprocesses                                       | `epsilon`                |
 
@@ -56,9 +60,10 @@ and is managed through `sops-nix`. Each service or aspect declares its own
 | `secrets/grafana-cloud-epsilon.sops.yaml` | `token` | Write-only Cloud metrics/log uploads | Alloy via systemd credentials | `epsilon` |
 | `secrets/grafana-cloud-epsilon.sops.yaml` | `grafana-cloud-backup-token` | Read-only Cloud configuration exports, including contact-point secrets | Grafana backup service via systemd credentials | `epsilon` |
 | `secrets/grafana-cloud-epsilon.sops.yaml` | `grafana-git-sync-app` | GitHub App private key and IDs for Git Sync recovery | Injected privately when recreating the Cloud connection; not a host service credential | operator |
-The account-password bootstrap files, Authelia users seed, and Cloud monitoring
-credentials are scoped to the personal recovery recipient and the consuming host. The remaining files use
-the legacy shared creation rule in `.sops.yaml`. When changing a creation rule,
+The account-password bootstrap files, Authelia users seed, Cloud monitoring
+credentials, WireGuard home-tunnel keys, and Hermes ARR credentials are scoped
+to the personal recovery recipient and the consuming host. The remaining files
+use the legacy shared creation rule in `.sops.yaml`. When changing a creation rule,
 run `sops updatekeys` on the affected files and verify their embedded recipient
 metadata matches the rule.
 
@@ -66,6 +71,43 @@ NixOS decrypts with the machine SSH host key at
 `/etc/ssh/ssh_host_ed25519_key`; the personal Age recipient in `.sops.yaml` is
 recovery access and is not used during activation. Docs, plans, and commits
 should refer to SOPS secret names or source modules, never secret values.
+
+## Hermes T3 MCP token rotation
+
+The `hermes-t3-mcp` bearer session on alpha is issued for 365 days and
+loaded into Hermes on epsilon from `hermes-llm-env`. Its read and operate
+scopes allow it to direct T3 threads, so revoke it immediately if compromised.
+
+1. Issue a new `mcp-client` session on alpha with the same label, scopes
+   (`orchestration:read` and `orchestration:operate`), and a 365-day TTL.
+2. Replace only `T3_MCP_TOKEN` in the SOPS `hermes-llm-env` value and
+   deploy epsilon. The secret has a `container@hermes.service` restart trigger.
+3. Verify an actual Hermes-initiated T3 MCP tool call on epsilon using the
+   newly deployed configuration. Issuing the session or checking it from alpha
+   does **not** prove that Hermes loaded the new credential.
+4. On alpha, identify the **new** session ID from `t3 auth session list --json`
+   (check its `issuedAt` and `expiresAt`). After step 3 succeeds, acknowledge
+   this specific ID in the watcher's state directory:
+
+   ```sh
+   sudo install -d -m 0755 /var/lib/t3-token-watch
+   printf '%s\n' '<new-session-id>' | sudo tee /var/lib/t3-token-watch/verified-session-id >/dev/null
+   ```
+
+   The session ID is metadata, **not** the bearer token. Never store the bearer
+   token in this file.
+
+5. Revoke the old session on alpha, then confirm `t3 auth session list --json`
+   reports exactly one active session with label `hermes-t3-mcp`. Run
+   `sudo systemctl start t3-token-watch` and check that its
+   `/var/lib/t3-token-watch/last-band` state is `ok`.
+
+Alpha's daily `t3-token-watch` cannot inspect the credential loaded by
+Hermes on epsilon. It reports overlapping sessions and replacement session
+IDs lacking the post-deployment acknowledgment, with weekly reminders until
+resolved. The watcher only tracks expiry when one labeled session remains and
+its ID matches the acknowledged one. A healthy expiry report does **not**
+replace the MCP probe in step 3.
 
 ## Account password and Authelia user provisioning
 
