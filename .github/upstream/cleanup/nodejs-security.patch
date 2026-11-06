@@ -82,14 +82,15 @@ deleted file mode 100644
 diff --git a/modules/aspects/ai/opencode.nix b/modules/aspects/ai/opencode.nix
 --- a/modules/aspects/ai/opencode.nix
 +++ b/modules/aspects/ai/opencode.nix
-@@ -4,7 +4,7 @@
+@@ -4,8 +4,8 @@
      nixos.nixpkgs.overlays = [
        (final: _prev: {
          opencode = final.callPackage ../../_packages/opencode.nix {
 -          bun = final.bun-security;
 +          bun = final.bun;
-           bunForInstall = final.bun;
+           bunForInstall = final.bun-1-4-2;
          };
+         bun-1-4-2 = final.callPackage ../../_packages/bun-1-4-2.nix { };
        })
 diff --git a/modules/aspects/upstream/nodejs-security.nix b/modules/aspects/upstream/nodejs-security.nix
 --- a/modules/aspects/upstream/nodejs-security.nix
