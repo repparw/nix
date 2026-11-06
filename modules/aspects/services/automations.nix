@@ -20,27 +20,6 @@
         serviceName = "automations";
         stateDir = "${cfg.configDir}/${serviceName}";
         watchersFile = "${stateDir}/change-watchers.json";
-        mkRegexWatcher =
-          {
-            slug,
-            label,
-            url,
-            pattern,
-            message,
-            fetcher ? null,
-          }:
-          {
-            inherit
-              slug
-              label
-              url
-              pattern
-              message
-              ;
-            mode = "regex";
-            flags = "is";
-          }
-          // lib.optionalAttrs (fetcher != null) { inherit fetcher; };
         mkExtractorWatcher =
           {
             slug,
@@ -122,43 +101,22 @@
             displayTemplate = "8bitdoFirmware";
             message = "8BitDo Ultimate 2C firmware changed: {{previous}} -> {{current}}\n{{url}}";
           })
-          (mkRegexWatcher {
-            slug = "argentina-open-finance-objectives";
-            label = "Argentina open finance: BCRA implementation plan";
-            url = "https://www.bcra.gob.ar/objetivos-y-planes/";
-            pattern = ''(Sistema\s+de\s+Finanzas\s+Abiertas[\s\S]{0,1800})'';
-            message = "Argentina open-finance implementation plan changed.\n{{url}}";
-          })
-          (mkRegexWatcher {
-            slug = "argentina-open-finance-api-catalog";
-            label = "Argentina open finance: BCRA API catalog";
-            url = "https://www.bcra.gob.ar/apis-banco-central/";
-            pattern = ''(Actualmente,?\s+este\s+sitio\s+ofrece\s+las\s+siguientes\s+API:[\s\S]{0,2200}Régimen\s+de\s+Transparencia)'';
-            message = "BCRA API catalog changed; check for an open-finance integration surface.\n{{url}}";
-          })
-          (mkRegexWatcher {
-            slug = "argentina-open-finance-public-consultations";
-            label = "Argentina open finance: BCRA public consultations";
-            url = "https://www.bcra.gob.ar/listado-servicios/";
-            pattern = ''(Consulta\s+pública\s+sobre\s+proyectos\s+normativos[\s\S]{0,800})'';
-            message = "BCRA public-consultation index changed.\n{{url}}";
-          })
-          (mkRegexWatcher {
-            slug = "argentina-open-finance-communications-index";
-            label = "Argentina open finance: BCRA communications index";
-            url = "https://www.bcra.gob.ar/en/communications-search-engine/";
-            pattern = ''(Annual\s+report\s+of\s+communications:[\s\S]{0,1600})'';
-            message = "BCRA communications index changed; review new regulatory material.\n{{url}}";
-          })
-          (mkExtractorWatcher {
-            slug = "nixos-latest-release-notes";
-            label = "NixOS latest release notes";
-            url = "https://nixos.org/manual/nixos/unstable/release-notes";
-            fetchUrl = "https://nixos.org/manual/nixos/unstable/release-notes";
-            extractor = "nixosReleaseChanges";
-            displayTemplate = "nixosReleaseChanges";
-            message = "**NixOS {{version}} release notes updated**\n{{url}}\n\n**New modules:**\n{{newModules}}\n\n**Breaking changes:**\n{{breakingChanges}}\n\n**Other notable changes:**\n{{otherChanges}}";
-          })
+          (
+            mkExtractorWatcher {
+              slug = "nixos-latest-release-notes";
+              label = "NixOS latest release notes";
+              url = "https://nixos.org/manual/nixos/unstable/release-notes";
+              fetchUrl = "https://nixos.org/manual/nixos/unstable/release-notes";
+              extractor = "nixosReleaseChanges";
+              displayTemplate = "nixosReleaseChanges";
+              message = "**NixOS {{version}} release notes updated**\n{{url}}\n\n**New modules:**\n{{newModules}}\n\n**Breaking changes:**\n{{breakingChanges}}\n\n**Other notable changes:**\n{{otherChanges}}";
+            }
+            // {
+              # Unstable release notes are a single accumulating page, 1.6 MiB
+              # as of 2026-11-05 and growing toward the 2 MiB default.
+              maxResponseBytes = 16 * 1024 * 1024;
+            }
+          )
         ];
         defaultWatchersFile = pkgs.writeText "change-detection-default-watchers.json" (
           builtins.toJSON defaultWatchers
