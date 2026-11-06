@@ -23,6 +23,7 @@
         users.repparw.aspect = {
           includes = [
             den.aspects.repparw
+            den.aspects.fish
             den.aspects.ai._.t3code-split
           ];
         };
@@ -33,6 +34,7 @@
         users.repparw.aspect = {
           includes = [
             den.aspects.repparw
+            den.aspects.fish
             den.aspects.ai._.t3code-split
           ];
         };

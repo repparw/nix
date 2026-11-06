@@ -147,6 +147,26 @@ in
         };
 
         home.shellAliases = {
+          su = "sudo -s";
+          v = "nvim";
+          meminfo = "free -hlt";
+          cpuinfo = "lscpu";
+          md = "mkdir -pv";
+          btctl = "bluetoothctl";
+
+          sys = "systemctl";
+          sysu = "systemctl --user";
+          syslist = "systemctl list-unit-files";
+
+          cl = "sudo nixos-container list";
+          crs = "sudo nixos-container restart";
+          csh = "sudo nixos-container root-login";
+          crun = "sudo nixos-container run";
+          clo = "journalctl -xeu 'container@*'";
+          cps = "systemctl list-units 'container@*'";
+          cst = "sudo systemctl start container@";
+          csp = "sudo systemctl stop container@";
+
           vo = "cd ~/Documents/obsidian/ && $EDITOR .";
 
           vn = "cd ${osConfig.programs.nh.flake}; $EDITOR flake.nix";

@@ -5,8 +5,9 @@
       (final: _prev: {
         opencode = final.callPackage ../../_packages/opencode.nix {
           bun = final.bun-security;
-          bunForInstall = final.bun;
+          bunForInstall = final.bun-1-4-2;
         };
+        bun-1-4-2 = final.callPackage ../../_packages/bun-1-4-2.nix { };
       })
     ];
     homeManager =

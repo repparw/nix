@@ -76,6 +76,9 @@
             })
             // {
               fetcher = "curl";
+              # Suggestion payloads embed full per-package version and
+              # maintainer metadata; single pages now exceed the 2 MiB default.
+              maxResponseBytes = 16 * 1024 * 1024;
               packages = [
                 "authelia"
                 "bazarr"
