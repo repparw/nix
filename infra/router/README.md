@@ -12,7 +12,7 @@ is deliberately split from the OCI stack in the parent directory:
   manages the device that provides the LAN everyone else lives on.
 
 Provider: [`repparw/terraform-provider-tplink`](https://github.com/repparw/terraform-provider-tplink)
-(native Go implementation of the SG-hardened TP-Link API). Protocol
+(released Python/Pyvider implementation of the SG-hardened TP-Link API). Protocol
 information and hardware verification are maintained with the provider in
 [its protocol reference](https://github.com/repparw/terraform-provider-tplink/blob/main/PROTOCOL.md).
 
@@ -33,36 +33,47 @@ Both managed resources carry `lifecycle { prevent_destroy = true }`: a
 
 ## Inventory
 
-The commands below that use `go run ./cmd/tfinventory` must be run from the
+The commands below that use `python -m tplink_py.inventory` must be run from the
 pinned provider checkout described in **Setup**, not from this OpenTofu root.
 
 `inventory.auto.tfvars` and `imports.tf` are **generated** from the live
-router by the provider's `tfinventory` tool and are gitignored — they
+router by the provider's Python inventory tool and are gitignored — they
 contain the LAN device inventory (MACs, hostnames). Only the `.example`
 files are committed.
 
 Regenerate after deliberate out-of-band router changes:
 
 ```sh
-TPLINK_PASSWORD=... go run ./cmd/tfinventory -dir ~/Projects/nix/infra/router
+TPLINK_PASSWORD=... python -m tplink_py.inventory --dir ~/Projects/nix/infra/router
 ```
 
 ## Setup
 
-The provider is not published to a registry yet; install it as a local
-plugin (OpenTofu picks up `~/.tofu.d/plugins` for
-`-plugin-dir` runs). Build from the pinned revision below; do not use an
-unversioned provider binary labelled as `0.1.0`:
+The provider is pinned to release `0.1.0` from the
+[OpenTofu registry](https://search.opentofu.org/provider/repparw/tplink/latest).
+Run `tofu init` to download it and verify its signed checksums using the
+committed `.terraform.lock.hcl`. No local plugin build is needed.
+
+The release supports Linux amd64, macOS arm64, and Windows amd64;
+Linux arm64 is not supported. On NixOS the frozen Linux executable needs
+`programs.nix-ld.enable = true`.
+
+Existing state uses the same provider address, so no `state replace-provider`
+is needed. The old Go build was also labelled `0.1.0`, but predates the
+released Python implementation. Remove custom CLI `dev_overrides` or filesystem
+mirrors for this provider and the old root-local `.terraform/` cache. Replace
+any old local-build lockfile with the committed release lockfile, then run
+`tofu init`. Review `tofu plan` before applying the implementation change.
+
+Only inventory generation requires a source checkout and Python environment:
 
 ```sh
 git clone https://github.com/repparw/terraform-provider-tplink
 cd terraform-provider-tplink
-# Reproducible source revision, verified against the AX23 v2.
-# The 0.1.0 version is a local development version, not a registry release.
-git checkout d8d740ce6855808e69c1c1967c5f91ca4a9f8e3a
-go build -ldflags "-X main.version=0.1.0" -o terraform-provider-tplink .
-mkdir -p ~/.tofu.d/plugins/registry.opentofu.org/repparw/tplink/0.1.0/linux_amd64
-cp terraform-provider-tplink ~/.tofu.d/plugins/registry.opentofu.org/repparw/tplink/0.1.0/linux_amd64/
+git checkout v0.1.0
+python -m venv .venv
+. .venv/bin/activate
+pip install ./python
 ```
 
 ## Adopting the current configuration
@@ -71,7 +82,7 @@ cp terraform-provider-tplink ~/.tofu.d/plugins/registry.opentofu.org/repparw/tpl
 cd ~/Projects/nix/infra/router
 # one-time: generate inventory.auto.tfvars + imports.tf (see Inventory)
 export TF_VAR_router_password="..."
-tofu init -plugin-dir="$HOME/.tofu.d/plugins"
+tofu init
 tofu plan     # must read "Plan: N to import, 0 to add, 0 to change, 0 to destroy"
 tofu apply    # performs the imports; reads only — no router writes
 tofu plan     # must end in "No changes"
@@ -131,7 +142,7 @@ capture fresh backups as with the OCI stack (see the
 [fleet operations runbook](../../docs/runbooks/fleet-operations.md)) and
 confirm both `infra/router/terraform.tfstate` and
 `infra/router/inventory.auto.tfvars` appear in the staged generation.
-Re-running `tfinventory` + imports is the recovery fallback, with the usual
+Re-running the Python inventory tool + imports is the recovery fallback, with the usual
 caveat: it silently adopts out-of-band drift.
 
 ## Reservation device names are client-controlled
