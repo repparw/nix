@@ -25,7 +25,7 @@ hosting platform. The repository is public; operational secrets are not.
 | Host      | Role                                                                                                                                                      |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `alpha`   | Desktop workstation with backend services, game streaming, and backups                                                                                    |
-| `pi`      | Raspberry Pi 5 home server running Home Assistant, LAN HTTPS ingress, fleet monitoring, and deployment control                                            |
+| `pi`      | Raspberry Pi 5 home server running Home Assistant, LAN HTTPS ingress, fleet monitoring, deployment control, and the free-games claimer                    |
 | `epsilon` | aarch64 VPS providing public HTTPS ingress, Authelia, and services including Miniflux, Glance, Hermes, ArchiSteamFarm, and Paperless in nspawn containers |
 
 `beta` is parked: `modules/entities.nix` currently has no host entry for the laptop.

@@ -11,6 +11,7 @@
       den.aspects.pi._.backup
       den.aspects.persistence
       den.aspects.service-host
+      den.aspects.nixos-services._.free-games-claimer
       den.aspects.nixos-services._.homeassistant
       den.aspects.nixos-services._.fleet-health
       den.aspects.nixos-services._.fleet-readiness
