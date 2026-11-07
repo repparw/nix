@@ -9,8 +9,9 @@ tags: [impermanence, persistence, pi, epsilon, recovery, backups]
 
 # Change host persistence
 
-Pi and Epsilon use tmpfs roots backed by `/persist`; Alpha does not enable
-persistence. The inventory and mount ordering live in
+Pi and Epsilon use tmpfs roots backed by `/persist`; Alpha includes a disabled
+[persistence inventory](alpha-impermanence.md) but does not enable it.
+The inventory and mount ordering live in
 [persistence.nix](../../modules/aspects/persistence.nix), with additions in
 [pi.nix](../../modules/hosts/pi.nix) and [epsilon.nix](../../modules/hosts/epsilon.nix).
 
@@ -55,16 +56,18 @@ blanket backup root.
    name. Make the root-layout change outside automatic fleet deployment and
    verify service recovery before trialling another host.
 
-For Alpha, first separate desktop and service state from the root subvolume.
-Its `/home`, `/nix`, and application data currently share root subvolume `@`;
-root rollback would encompass that data. An unmounted `@home` is not proof of
-separation, and Prowlarr keeps live state in its container root.
+For Alpha, desktop and service state still share the Btrfs `@` subvolume.
+The proposed layout reuses that subvolume as `/persist` rather than resetting
+it; root rollback would still encompass mutable state. An unmounted `@home`
+is not proof of separation, and Prowlarr keeps live state in its container root.
+See [Alpha's preparation gates](alpha-impermanence.md) before enabling it.
 
 ## Verify changes
 
 ```sh
 nix build .#checks.x86_64-linux.host-persistence --no-link
 nix build .#checks.x86_64-linux.host-persistence-vm --no-link
+nix build .#checks.x86_64-linux.host-persistence-btrfs-vm --no-link
 ```
 
 The [evaluation checks](../../modules/_tests/host-persistence.nix) cover inventory,
