@@ -1,6 +1,8 @@
 provider "tplink" {
-  host     = var.router_host
-  password = var.router_password
+  host             = var.router_host
+  password         = var.router_password
+  password_key_pin = var.password_key_pin
+  auth_key_pin     = var.auth_key_pin
 }
 
 # Static DHCP address assignments, keyed by the device MAC address.
