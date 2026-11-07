@@ -60,9 +60,13 @@ tracker checkpoint.
 
 For a host move, use this order:
 
-1. On the source, stop `change-detection.timer` and
-   `change-detection.service`; verify the service is inactive before copying.
-   Keep the timer stopped so the two hosts never run concurrently.
+1. On the source, stop `change-detection.timer` only. Allow any
+   running `change-detection.service` to finish and verify it is inactive
+   before copying. Do not stop the active service: SIGTERM can arrive after
+   Discord delivery but before the state checkpoint is written, causing
+   duplicate notifications on the destination. If it cannot finish, inspect
+   its journal and reconcile notifications before migrating. Keep the source
+   timer stopped so both hosts cannot run concurrently.
 2. Before activating the destination's new configuration, create
    `/home/containers/config/automations` on it and copy both
    `change-watchers.json` and `change-detection-state.json` from the source.
