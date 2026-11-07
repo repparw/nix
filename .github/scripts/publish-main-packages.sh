@@ -2,15 +2,8 @@
 set -euo pipefail
 
 : "${CACHIX_AUTH_TOKEN:?Publishing requires a cache-scoped write token}"
-# A failed setup/build may have produced no manifest. A successful build
-# must have one, otherwise publication would silently do nothing.
-if [[ ! -f ci-logs/packages.json ]]; then
-  if [[ "${BUILD_SUCCEEDED:-false}" == true ]]; then
-    echo 'Missing ci-logs/packages.json after successful package build' >&2
-    exit 1
-  fi
-  exit 0
-fi
+# Fail rather than silently skipping publication without a results manifest.
+test -s ci-logs/packages.json
 jq -r '.results[] |
   select(.success and (.type == "BUILD" or (.type == "EVAL" and .cacheStatus == "local"))) |
   .outputs[]' ci-logs/packages.json | sort -u > ci-logs/package-outputs

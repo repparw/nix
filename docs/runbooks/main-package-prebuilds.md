@@ -42,16 +42,8 @@ It exercises `nix-fast-build --skip-cached`, actual local closure inspection,
 JSON parsing, and publisher path selection. A fake Cachix command records the
 publish arguments; the PR job does not receive a publishing token.
 
-Once the workflow exists on main, a trusted manual run can verify a real
-Cachix upload without launching the fleet package sweep:
-
-```sh
-gh workflow run main-packages.yml --ref main -f expected_sha=<main-commit> -f smoke_only=true
-```
-
-The manual smoke run publishes the tiny derivation and checks its public
-`.narinfo` metadata on `repparw.cachix.org`. It also works when the fixture
-is already in Cachix. Regular main pushes still select fleet packages.
+The regular main workflow is responsible for real Cachix publication. Its
+first post-merge run validates this separately from the PR smoke test.
 
 ## Run a reviewed revision
 

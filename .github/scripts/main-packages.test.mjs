@@ -12,16 +12,14 @@ const smokeWorkflow = readFileSync(join(root, '.github/workflows/package-prebuil
 test('main package builds use pinned native tooling and skip cached targets', () => {
   assert.match(workflow, /branches: \[main\]/);
   assert.doesNotMatch(workflow, /pull_request|system\.build\.toplevel|--cachix-cache/);
-  assert.match(workflow, /FLAKE_ROOT=ciPackages/);
-  assert.match(workflow, /FLAKE_ROOT=ciPackageSmoke/);
-  assert.match(workflow, /--flake "\.#\$FLAKE_ROOT\.\$SYSTEM"/);
+  assert.match(workflow, /--flake "\.#ciPackages\.\$SYSTEM"/);
   assert.match(workflow, /--skip-cached/);
   assert.match(workflow, /runner: ubuntu-24.04-arm/);
   assert.match(workflow, /runner: ubuntu-24.04\n/);
   assert.match(workflow, /cancel-in-progress: false/);
   assert.match(workflow, /test "\$GITHUB_SHA" = "\$EXPECTED_SHA"/);
-  assert.match(workflow, /BUILD_SUCCEEDED:/);
-  assert.match(workflow, /smoke_only:/);
+  assert.match(workflow, /test -s ci-logs\/packages\.json/);
+  assert.match(workflow, /hashFiles\('ci-logs\/packages\.json'\)/);
 });
 
 test('PR smoke tests both native systems and avoids cache publishing credentials', () => {
@@ -34,7 +32,7 @@ test('PR smoke tests both native systems and avoids cache publishing credentials
   assert.doesNotMatch(smokeWorkflow, /secrets\.CACHIX_AUTH_TOKEN/);
 });
 
-function publish({ failure = '', malformed = false, manifest = true, buildSucceeded = true } = {}) {
+function publish({ failure = '', malformed = false, manifest = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'main-packages-test-'));
   try {
     mkdirSync(join(dir, 'bin'));
@@ -59,7 +57,7 @@ echo "$*" >> calls
 `, { mode: 0o755 });
     const run = spawnSync('bash', [join(root, '.github/scripts/publish-main-packages.sh')], {
       cwd: dir, encoding: 'utf8', env: { ...process.env, FAILURE: failure,
-        CACHIX_AUTH_TOKEN: 'test-token', BUILD_SUCCEEDED: String(buildSucceeded), PATH: `${join(dir, 'bin')}:${process.env.PATH}` },
+        CACHIX_AUTH_TOKEN: 'test-token', PATH: `${join(dir, 'bin')}:${process.env.PATH}` },
     });
     let calls = '';
     try { calls = readFileSync(join(dir, 'calls'), 'utf8'); } catch {}
@@ -81,13 +79,8 @@ test('invalid results, failed closure inspection and upload errors fail publishi
   assert.notEqual(publish({ failure: 'upload' }).status, 0);
 });
 
-test('a missing manifest fails after a successful build only', () => {
-  const goodBuild = publish({ manifest: false });
-  assert.notEqual(goodBuild.status, 0);
-  assert.match(goodBuild.stderr, /Missing ci-logs\/packages\.json/);
-  assert.equal(goodBuild.calls, '');
-
-  const earlyFailure = publish({ manifest: false, buildSucceeded: false });
-  assert.equal(earlyFailure.status, 0, earlyFailure.stderr);
-  assert.equal(earlyFailure.calls, '');
+test('a missing manifest fails rather than silently skipping publication', () => {
+  const run = publish({ manifest: false });
+  assert.notEqual(run.status, 0);
+  assert.equal(run.calls, '');
 });
