@@ -60,17 +60,18 @@
       --replace-fail "console.error('Could not determine GOG login state - page structure changed?');" \
         "throw new Error('GOG: cannot determine saved login state.');"
 
-    # Exit 75 signals transient claim failure; other errors exit 1.
+    # Generic exceptions always fail without retries (even after an earlier
+    # retryable game failure). Only known transient checkout outcomes use 75.
     substituteInPlace epic-games.js gog.js \
-      --replace-fail "process.exitCode ||= 1;" "process.exitCode ||= user ? 75 : 1;"
+      --replace-fail "process.exitCode ||= 1;" "process.exitCode = 1;"
     substituteInPlace epic-games.js \
       --replace-fail "db.data[user][game_id].status = 'failed';" \
-        "db.data[user][game_id].status = 'failed'; process.exitCode ||= 75;" \
+        "const challenged = (await iframe.locator('#h_captcha_challenge_checkout_free_prod iframe, .payment__errors:has-text(\"Failed to challenge captcha\")').count().catch(() => 0)) > 0; process.exitCode = challenged || e.name !== 'TimeoutError' ? 1 : (process.exitCode || 75); db.data[user][game_id].status = 'failed';" \
       --replace-fail "console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');" \
         "process.exitCode = 1; console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');"
     substituteInPlace gog.js \
       --replace-fail "notify_games.push({ title, url, status });" \
-        "if (status === 'Unauthorized') process.exitCode ||= 1; else if (!['claimed', 'existed', 'Giveaway has ended'].includes(status)) process.exitCode ||= 75; notify_games.push({ title, url, status });"
+        "const outcome = String(status).toLowerCase(); if (!['claimed', 'existed', 'giveaway has ended'].includes(outcome)) { process.exitCode = ['internal server error', 'service unavailable', 'bad gateway', 'gateway timeout', 'too many requests'].includes(outcome) ? (process.exitCode || 75) : 1; } notify_games.push({ title, url, status });"
   '';
 
   meta = {

@@ -60,10 +60,12 @@ endpoint is only available while the service is active, and only over SSH.
 - Test without purchases: temporarily set `DRYRUN=1` in the service environment.
 
 The timer runs daily at 18:10 ART plus up to 30 minutes of jitter. Exit 75
-marks a transient claim failure and triggers a retry after 45 minutes, capped
-at three additional attempts per daily cycle. Authentication and captcha
-failures exit 1 without automatic retries. A failed store run does not
-prevent the next daily timer attempt. The Discord notifier remains in this
+marks a recognized temporary checkout failure and triggers a retry after
+45 minutes. Systemd permits at most four starts (including manual starts) in
+a rolling 23-hour window, so at most three retries follow a scheduled start.
+Unexpected exceptions, authentication errors and detected captchas exit 1
+without automatic retries. The next daily timer attempts the claims again,
+subject to systemd's start limit. The Discord notifier remains in this
 experiment; switching to Grafana-only alerts is a separate change.
 
 ## Related

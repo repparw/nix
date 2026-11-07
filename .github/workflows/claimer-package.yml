@@ -1,0 +1,35 @@
+name: claimer-package
+on:
+  pull_request:
+    paths:
+      - 'modules/_packages/free-games-claimer.nix'
+      - 'modules/aspects/services/free-games-claimer.nix'
+      - 'modules/aspects/services/free-games-claimer/**'
+      - '.github/workflows/claimer-package.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: build (aarch64-linux, native)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          skipPush: true
+      - name: Build Pi's claimer package and verify source patches
+        run: |
+          nix build --impure --no-link --show-trace --expr '
+            let
+              flake = builtins.getFlake (toString ./.);
+              pkgs = flake.inputs.nixpkgs.legacyPackages.aarch64-linux;
+            in
+              pkgs.callPackage ./modules/_packages/free-games-claimer.nix { }
+          '

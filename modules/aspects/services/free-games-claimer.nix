@@ -79,7 +79,13 @@
               else
                 store_rc=$?
                 printf '%s\n' "$store_rc" > "$logs/$store.status"
-                rc=1
+                # Keep the transient marker for systemd's targeted retry.
+                # Any non-transient failure wins if both stores fail.
+                if [ "$store_rc" -eq 75 ]; then
+                  if [ "$rc" -eq 0 ]; then rc=75; fi
+                else
+                  rc=1
+                fi
                 echo "=== $store: failed (exit $store_rc) ==="
               fi
               tail -n 5 "$logs/$store.log" || true
@@ -127,7 +133,8 @@
           description = "Claim free games on Epic and GOG";
           wants = [ "network-online.target" ];
           after = [ "network-online.target" ];
-          # One calendar start plus at most three transient retries per day.
+          # Rate-limit all starts (including manual starts) to four in a
+          # rolling 23-hour window; next day's timer starts after 24 hours.
           unitConfig = {
             StartLimitIntervalSec = "23h";
             StartLimitBurst = 4;
