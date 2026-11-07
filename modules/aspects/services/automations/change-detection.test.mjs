@@ -469,6 +469,56 @@ function securityPage(results, next = null) {
   return response(JSON.stringify({ results, next }));
 }
 
+test("curl security tracker accepts pages above the default response cap", async (t) => {
+  const files = fixture(t, [securityWatcher]);
+  const binDir = path.join(files.directory, "bin");
+  fs.mkdirSync(binDir);
+  const payloadPath = path.join(files.directory, "tracker-page.json");
+  const payload = JSON.stringify({
+    results: [
+      securityIssue(1001, "CVE-2026-23456", {
+        brotli: { versions: "x".repeat(2 * 1024 * 1024) },
+      }),
+      securityIssue(1000),
+    ],
+    next: null,
+  });
+  assert.ok(Buffer.byteLength(payload) > 2 * 1024 * 1024);
+  assert.ok(Buffer.byteLength(payload) < 16 * 1024 * 1024);
+  fs.writeFileSync(payloadPath, payload);
+
+  // Stub curl locally so the test works without network access or system curl.
+  const fakeCurl = [
+    `#!${process.execPath}`,
+    `process.stdout.write(require("node:fs").readFileSync(${JSON.stringify(payloadPath)}));`,
+  ].join("\n");
+  fs.writeFileSync(path.join(binDir, "curl"), fakeCurl, { mode: 0o755 });
+  const originalPath = process.env.PATH;
+  process.env.PATH = `${binDir}${path.delimiter}${originalPath ?? ""}`;
+  try {
+    const previous = { latestIssue: "NIXPKGS-2026-1000", seen: [] };
+    const fetchImpl = () => {
+      throw new Error("curl watcher must not use fetch");
+    };
+    await assert.rejects(
+      checkNixpkgsSecurityIssues({ ...securityWatcher, fetcher: "curl" }, previous, fetchImpl),
+      /response exceeds 2097152 bytes/,
+    );
+    const result = await checkNixpkgsSecurityIssues(
+      { ...securityWatcher, fetcher: "curl", maxResponseBytes: 16 * 1024 * 1024 },
+      previous,
+      fetchImpl,
+    );
+    assert.equal(result.latestIssue, "NIXPKGS-2026-1001");
+    assert.deepEqual(result.added, [
+      { cve: "CVE-2026-23456", package: "brotli", issue: "NIXPKGS-2026-1001" },
+    ]);
+  } finally {
+    if (originalPath === undefined) delete process.env.PATH;
+    else process.env.PATH = originalPath;
+  }
+});
+
 test("security tracker silently baselines accepted issues using package mappings", async (t) => {
   const files = fixture(t, [securityWatcher]);
   let calls = 0;
