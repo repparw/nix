@@ -272,7 +272,9 @@ case "$command_name $*" in
   'curl '*)
     stage=coverage
     case "$*" in
-      *repparw.cachix.org/fixtureupstream*) rc=22 ;;
+      *cache.nixos.org/fixture.narinfo|*cache.nixos.org/fixturedirect.narinfo) rc=22 ;;
+      # fixtureupstream exists in both caches, with a third-party signature
+      # in Cachix. It must not be verified against the repparw key.
     esac ;;
   'nix store verify '*) stage=signature ;;
   *) exit 90 ;;

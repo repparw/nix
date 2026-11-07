@@ -226,6 +226,8 @@
                 touch $out
               '';
 
+          cachix-push = import ./_tests/cachix-push.nix { inherit pkgs; };
+
           generated-shellcheck =
             pkgs.runCommand "check-generated-shellcheck"
               {
