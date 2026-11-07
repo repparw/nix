@@ -116,8 +116,11 @@
               services.resolved.enable = true;
               systemd.services.hermes-agent.environment.HERMES_MANAGED = lib.mkForce "false";
               systemd.services.hermes-backend.environment.HERMES_MANAGED = lib.mkForce "false";
+              # Upstream's activation writes a `.managed` marker, which makes
+              # interactive shells refuse config changes. Keep runtime platform
+              # toggles editable by removing the marker after upstream writes it.
               system.activationScripts.hermes-agent-setup.text = lib.mkAfter ''
-                printf '%s\n' false > /var/lib/hermes/.hermes/.managed
+                rm -f /var/lib/hermes/.hermes/.managed
               '';
 
               services.hermes-agent = {
