@@ -2,8 +2,13 @@
 set -euo pipefail
 
 : "${CACHIX_AUTH_TOKEN:?Publishing requires a cache-scoped write token}"
-# Evaluation or tool installation can fail before nix-fast-build writes results.
+# A failed setup/build may have produced no manifest. A successful build
+# must have one, otherwise publication would silently do nothing.
 if [[ ! -f ci-logs/packages.json ]]; then
+  if [[ "${BUILD_SUCCEEDED:-false}" == true ]]; then
+    echo 'Missing ci-logs/packages.json after successful package build' >&2
+    exit 1
+  fi
   exit 0
 fi
 jq -r '.results[] |

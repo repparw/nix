@@ -7,25 +7,40 @@ import test from 'node:test';
 
 const root = resolve(import.meta.dirname, '../..');
 const workflow = readFileSync(join(root, '.github/workflows/main-packages.yml'), 'utf8');
+const smokeWorkflow = readFileSync(join(root, '.github/workflows/package-prebuild-smoke.yml'), 'utf8');
 
 test('main package builds use pinned native tooling and skip cached targets', () => {
   assert.match(workflow, /branches: \[main\]/);
   assert.doesNotMatch(workflow, /pull_request|system\.build\.toplevel|--cachix-cache/);
-  assert.match(workflow, /--flake "\.#ciPackages\.\$SYSTEM"/);
+  assert.match(workflow, /FLAKE_ROOT=ciPackages/);
+  assert.match(workflow, /FLAKE_ROOT=ciPackageSmoke/);
+  assert.match(workflow, /--flake "\.#\$FLAKE_ROOT\.\$SYSTEM"/);
   assert.match(workflow, /--skip-cached/);
   assert.match(workflow, /runner: ubuntu-24.04-arm/);
   assert.match(workflow, /runner: ubuntu-24.04\n/);
   assert.match(workflow, /cancel-in-progress: false/);
   assert.match(workflow, /test "\$GITHUB_SHA" = "\$EXPECTED_SHA"/);
+  assert.match(workflow, /BUILD_SUCCEEDED:/);
+  assert.match(workflow, /smoke_only:/);
 });
 
-function publish(failure = '', malformed = false) {
+test('PR smoke tests both native systems and avoids cache publishing credentials', () => {
+  assert.match(smokeWorkflow, /pull_request:/);
+  assert.match(smokeWorkflow, /ciPackageSmoke\.\$SYSTEM/);
+  assert.match(smokeWorkflow, /--skip-cached/);
+  assert.match(smokeWorkflow, /runner: ubuntu-24\.04-arm/);
+  assert.match(smokeWorkflow, /nix-store --query --requisites/);
+  assert.match(smokeWorkflow, /publish-main-packages\.sh/);
+  assert.doesNotMatch(smokeWorkflow, /secrets\.CACHIX_AUTH_TOKEN/);
+});
+
+function publish({ failure = '', malformed = false, manifest = true, buildSucceeded = true } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'main-packages-test-'));
   try {
     mkdirSync(join(dir, 'bin'));
     mkdirSync(join(dir, 'ci-logs'));
     const result = (type, cacheStatus, path) => ({ type, cacheStatus, success: true, outputs: { out: path } });
-    writeFileSync(join(dir, 'ci-logs/packages.json'), malformed ? '{' : JSON.stringify({ results: [
+    if (manifest) writeFileSync(join(dir, 'ci-logs/packages.json'), malformed ? '{' : JSON.stringify({ results: [
       result('BUILD', undefined, '/nix/store/safe'),
       result('BUILD', undefined, '/nix/store/system'),
       result('EVAL', 'cached', '/nix/store/remote'),
@@ -44,7 +59,7 @@ echo "$*" >> calls
 `, { mode: 0o755 });
     const run = spawnSync('bash', [join(root, '.github/scripts/publish-main-packages.sh')], {
       cwd: dir, encoding: 'utf8', env: { ...process.env, FAILURE: failure,
-        CACHIX_AUTH_TOKEN: 'test-token', PATH: `${join(dir, 'bin')}:${process.env.PATH}` },
+        CACHIX_AUTH_TOKEN: 'test-token', BUILD_SUCCEEDED: String(buildSucceeded), PATH: `${join(dir, 'bin')}:${process.env.PATH}` },
     });
     let calls = '';
     try { calls = readFileSync(join(dir, 'calls'), 'utf8'); } catch {}
@@ -60,8 +75,19 @@ test('publishing only sends local successful outputs with vault-free closures', 
 });
 
 test('invalid results, failed closure inspection and upload errors fail publishing', () => {
-  assert.notEqual(publish('', true).status, 0);
-  assert.equal(publish('query').calls, '');
-  assert.notEqual(publish('query').status, 0);
-  assert.notEqual(publish('upload').status, 0);
+  assert.notEqual(publish({ malformed: true }).status, 0);
+  assert.equal(publish({ failure: 'query' }).calls, '');
+  assert.notEqual(publish({ failure: 'query' }).status, 0);
+  assert.notEqual(publish({ failure: 'upload' }).status, 0);
+});
+
+test('a missing manifest fails after a successful build only', () => {
+  const goodBuild = publish({ manifest: false });
+  assert.notEqual(goodBuild.status, 0);
+  assert.match(goodBuild.stderr, /Missing ci-logs\/packages\.json/);
+  assert.equal(goodBuild.calls, '');
+
+  const earlyFailure = publish({ manifest: false, buildSucceeded: false });
+  assert.equal(earlyFailure.status, 0, earlyFailure.stderr);
+  assert.equal(earlyFailure.calls, '');
 });
