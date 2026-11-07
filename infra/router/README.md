@@ -28,8 +28,10 @@ admin credentials, reboot) is **deliberately unmanaged** — the provider
 implements no write path for it, so no plan can ever alter management
 access, wireless, or the LAN's DHCP server configuration.
 
-Both managed resources carry `lifecycle { prevent_destroy = true }`: a
-`tofu destroy`, or any plan that would delete a row, fails at plan time.
+Both managed resources carry `lifecycle { prevent_destroy = true }`.
+This blocks planned destruction while their resource blocks remain configured.
+Removing an entire resource block also removes this protection, so inspect
+every plan before approval.
 
 ## Inventory
 
@@ -41,11 +43,42 @@ router by the provider's Python inventory tool and are gitignored — they
 contain the LAN device inventory (MACs, hostnames). Only the `.example`
 files are committed.
 
-Regenerate after deliberate out-of-band router changes:
+Keep the existing private inventory and state during a provider change.
+An existing, already-adopted state needs a read-only plan, not regenerated
+imports or inventory.
+
+For a deliberate inventory reconciliation, first verify both RSA keys on a
+trusted LAN connection with the source checkout and environment described in
+**Setup**:
 
 ```sh
-TPLINK_PASSWORD=... python -m tplink_py.inventory --dir ~/Projects/nix/infra/router
+python -m tplink_py.keyprobe --host http://192.168.0.1
 ```
+
+Compare both reported SHA-256 SPKI fingerprints with independent trusted
+evidence. The probe reads public keys without logging in. Set
+`TPLINK_PASSWORD`, `TPLINK_PASSWORD_KEY_PIN`, and `TPLINK_AUTH_KEY_PIN`
+locally through the approved credential source before proceeding. The
+inventory utility uses `TPLINK_*` names, not `TF_VAR_*`.
+
+Generate into a *private staging directory*, never directly over the live
+`inventory.auto.tfvars` or `imports.tf`:
+
+```sh
+umask 077
+stage="$(mktemp -d)"
+python -m tplink_py.inventory --dry-run --dir "$stage"
+python -m tplink_py.inventory --dir "$stage"
+diff -u ~/Projects/nix/infra/router/inventory.auto.tfvars "$stage/inventory.auto.tfvars" || true
+diff -u ~/Projects/nix/infra/router/imports.tf "$stage/imports.tf" || true
+# Inspect every change; copy approved files manually, then remove the stage.
+```
+
+Inventory generation logs into the router for read operations. A `--dry-run`
+prevents file writes but still requires verified keys and authentication.
+Do not treat missing private files as permission for implicit initial
+adoption. Stage and separately review any desired-configuration change,
+including out-of-band edits.
 
 ## Setup
 
@@ -65,7 +98,17 @@ mirrors for this provider and the old root-local `.terraform/` cache. Replace
 any old local-build lockfile with the committed release lockfile, then run
 `tofu init`. Review `tofu plan` before applying the implementation change.
 
-Only inventory generation requires a source checkout and Python environment:
+For this OpenTofu root, both independently enrolled RSA key fingerprints are
+required even though the public provider exposes optional pin attributes.
+Supply `TF_VAR_password_key_pin` and `TF_VAR_auth_key_pin` alongside
+`TF_VAR_router_password` through local secret inputs; never commit their
+values. Pin validation rejects null, empty and malformed fingerprints.
+Verify both keys with `tplink_py.keyprobe` on the trusted LAN before the
+first provider login. OpenTofu and the Python inventory utility use
+different environment variable names.
+
+Only key enrollment and inventory generation require a source checkout and
+Python environment:
 
 ```sh
 git clone https://github.com/repparw/terraform-provider-tplink
@@ -76,34 +119,64 @@ python -m venv .venv
 pip install ./python
 ```
 
-## Adopting the current configuration
+## Read-only validation and future imports
+
+For an existing, already-adopted state, take a local backup of
+`terraform.tfstate` and `inventory.auto.tfvars` using Alpha's documented
+procedure. Remove any obsolete local Go provider override or cache, then
+initialize the released provider and require a zero-change plan:
 
 ```sh
 cd ~/Projects/nix/infra/router
-# one-time: generate inventory.auto.tfvars + imports.tf (see Inventory)
-export TF_VAR_router_password="..."
+# Supply the router password and both enrolled TF_VAR_*_key_pin values.
 tofu init
-tofu plan     # must read "Plan: N to import, 0 to add, 0 to change, 0 to destroy"
-tofu apply    # performs the imports; reads only — no router writes
-tofu plan     # must end in "No changes"
+tofu providers schema -json > /dev/null
+tofu plan -detailed-exitcode
 ```
 
-The import apply touches the router with read operations only (login +
-reservation/forward loads); it changes no router state. State is written
-locally.
+Exit code 0 means no changes; 1 means an error; 2 means proposed changes.
+Do not apply a nonzero plan, replace state addresses, or regenerate the
+private inventory as part of provider validation. Confirm the signed registry
+provider is selected, not an old local Go executable.
+
+A *separate, explicitly approved* import of new router entries may follow
+later. Stage and inspect inventory first, then create and inspect a saved
+plan rather than running an unreviewed `tofu apply`:
+
+```sh
+cd ~/Projects/nix/infra/router
+tofu plan -out=import-review.tfplan
+tofu show import-review.tfplan
+tofu show -json import-review.tfplan | jq -e '
+  all(.resource_changes[]?;
+    .mode != "managed" or
+    (.change.actions == ["no-op"] and .previous_address == null)
+  )
+'
+# STOP unless only the intended imports appear, with no managed resource writes.
+# Only after separate approval to update the local state:
+# tofu apply import-review.tfplan
+```
+
+The machine-readable check rejects creates, updates, deletes, replacements,
+and moves of managed resources. It is a guard, not authorization: inspect
+the import identities and the entire plan. An approved import reads router
+configuration and updates local OpenTofu state. It must not create or
+modify router rows. Apply the exact reviewed plan, not a new implicit plan.
+Saved plans can contain sensitive data and are gitignored (`*.tfplan`).
 
 ## Destructive-operation audit
 
 What a plan/apply here can and cannot do:
 
-- **Cannot** delete a reservation or port forward: `prevent_destroy` fails
-  any plan containing a destroy on these resources, including `tofu
-destroy`.
+- **Cannot normally** delete an existing reservation or port forward
+  while its `prevent_destroy` resource block remains configured.
+  Removing the entire block removes that safeguard; inspect the plan.
 - **Cannot** change Wi-Fi, DHCP server settings, DNS, WAN, admin password,
   or reboot: the provider has no write implementation for those forms, and
   no resource in this root references them.
-- **Cannot** interrupt management access: the worst case is evicting an
-  interactive web-UI session (the router allows exactly one admin login).
+- **Can** evict an interactive web-UI session when logging in (the router
+  allows exactly one admin login).
   Roughly 12 failed logins trigger a ~2 h lockout — the provider never
   retries failed logins.
 - **Can** update a reservation or forward in place (IP, ports, protocol,
@@ -120,11 +193,13 @@ Deliberate removal or identity replacement is an explicit three-step process:
 
 1. Remove the entry from `inventory.auto.tfvars`, then run `tofu plan` —
    it must fail with `prevent_destroy`.
-2. Temporarily remove the applicable `lifecycle { prevent_destroy = true }`
-   block from `router.tf`; inspect the resulting plan and confirm the exact
-   row(s) to destroy or replace before applying.
-3. Restore `prevent_destroy` immediately after the authorized operation.
-   This friction is intentional: accidental deletion is never routine.
+2. Only for the specifically approved operation, temporarily remove the
+   applicable `prevent_destroy` safeguard from `router.tf`. Save a plan
+   with `tofu plan -out=reviewed.tfplan` and inspect the full output with
+   `tofu show reviewed.tfplan`. Verify the exact rows and all actions.
+3. Only after separate explicit authorization, run
+   `tofu apply reviewed.tfplan`, then restore `prevent_destroy` at once.
+   Do not replan with a plain `tofu apply` after reviewing a saved plan.
 
 ## State
 
@@ -142,8 +217,9 @@ capture fresh backups as with the OCI stack (see the
 [fleet operations runbook](../../docs/runbooks/fleet-operations.md)) and
 confirm both `infra/router/terraform.tfstate` and
 `infra/router/inventory.auto.tfvars` appear in the staged generation.
-Re-running the Python inventory tool + imports is the recovery fallback, with the usual
-caveat: it silently adopts out-of-band drift.
+Re-running the Python inventory generator and imports is a recovery fallback,
+not an automatic migration step. It can silently adopt out-of-band drift, so
+stage and compare results against the last trusted inventory first.
 
 ## Reservation device names are client-controlled
 
@@ -163,9 +239,10 @@ unknown devices keep the name they were created with.
 `tofu plan` re-reads the router. Because the inventory was generated from
 the live rows, any diff means someone changed the router out of band (web
 UI, Tether app, firmware upgrade) or the provider changed behavior.
-Investigate before adopting: console edits that you want to keep go into
-`inventory.auto.tfvars` (regenerate), console edits that were mistakes get
-reverted on the router.
+Investigate before adopting: approved console edits should first be
+regenerated into a private staging directory, reviewed against
+`inventory.auto.tfvars`, and copied manually; mistaken console edits should
+be reverted on the router.
 
 ## Firmware upgrades
 

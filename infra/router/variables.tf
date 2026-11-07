@@ -4,6 +4,30 @@ variable "router_password" {
   sensitive   = true
 }
 
+# Both independently verified RSA public-key fingerprints are mandatory on
+# this household deployment; a first-contact key must not be silently trusted.
+variable "password_key_pin" {
+  description = "SHA-256 SPKI fingerprint for the password-encryption RSA key. Supply via TF_VAR_password_key_pin."
+  type        = string
+  nullable    = false
+
+  validation {
+    condition     = can(regex("^(sha256:)?[0-9a-fA-F]{64}$", var.password_key_pin))
+    error_message = "password_key_pin must be 64 SHA-256 hex characters, optionally prefixed by sha256:."
+  }
+}
+
+variable "auth_key_pin" {
+  description = "SHA-256 SPKI fingerprint for the authentication RSA key. Supply via TF_VAR_auth_key_pin."
+  type        = string
+  nullable    = false
+
+  validation {
+    condition     = can(regex("^(sha256:)?[0-9a-fA-F]{64}$", var.auth_key_pin))
+    error_message = "auth_key_pin must be 64 SHA-256 hex characters, optionally prefixed by sha256:."
+  }
+}
+
 variable "router_host" {
   description = "Router management address (HTTP; this firmware serves local management over plain HTTP)."
   type        = string
