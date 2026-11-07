@@ -1,4 +1,4 @@
-import { Plugin } from "@opencode/plugin"
+import { Model, Plugin } from "@opencode/plugin"
 import { Schema } from "effect"
 
 const CatalogModel = Schema.Struct({ id: Schema.String, name: Schema.optional(Schema.String) })
@@ -14,7 +14,14 @@ export default Plugin.define({
     if (!connection) return
     const credential = await ctx.integration.connection.resolve(connection)
     if (credential?.type !== "key") return
-    const response = await fetch("https://inference-api.nousresearch.com/v1/models", {
+    const baseURL =
+      typeof ctx.options.baseURL === "string"
+        ? ctx.options.baseURL
+        : "https://inference-api.nousresearch.com/v1"
+    // Free-tier routes require a `user=` tag on every request body.
+    const userTag =
+      typeof ctx.options.nousUserTag === "string" ? ctx.options.nousUserTag : "user=ubritos@gmail.com"
+    const response = await fetch(`${baseURL.replace(/\/$/, "")}/models`, {
       headers: { Authorization: `Bearer ${credential.key}` },
       signal: AbortSignal.timeout(8000),
     })
@@ -22,22 +29,27 @@ export default Plugin.define({
     const catalog = Schema.decodeUnknownSync(Catalog)(await response.json())
     const models = "data" in catalog ? catalog.data : catalog
     const free = models.filter((model) => /:free$/i.test(model.id))
-    const selected = free
-    await ctx.model.transform((editor) => {
-      const provider = editor.provider.get("nous-portal")
-      if (!provider) return
-      const tag = provider.provider.settings?.nousUserTag
-      const ids = new Set(selected.map((model) => model.id))
-      for (const model of editor.list("nous-portal")) {
-        if (!ids.has(model.id)) editor.remove("nous-portal", model.id)
-      }
-      for (const item of selected) {
-        editor.update("nous-portal", item.id, (model) => {
-          model.name = item.name ?? item.id
-          if (typeof tag === "string") model.body = { ...model.body, tags: [tag] }
-          if (model.settings) delete model.settings.nousUserTag
-        })
-      }
+    // The provider lives entirely in runtime state: registered here from the
+    // live credential, never declared in settings, so every spawn path that
+    // loads plugins sees it regardless of how config files are layered. An
+    // empty or failed discovery leaves no provider behind.
+    await ctx.provider.transform((editor) => {
+      editor.add({
+        info: {
+          id: "nous-portal",
+          name: "Nous Portal",
+          activation: "auto",
+          // The native builtin: `add` skips the npm-name rewrite the config
+          // path applies, so name the package it would resolve to directly.
+          package: "@opencode/ai/providers/openai-compatible",
+          settings: { baseURL, provider: "nous-portal" },
+        },
+        models: free.map((item) => ({
+          ...Model.Info.default("nous-portal", Model.ID.make(item.id)),
+          name: item.name ?? item.id,
+          body: { tags: [userTag] },
+        })),
+      })
     })
   },
 })

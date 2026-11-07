@@ -47,10 +47,9 @@ await mkdir(config, { recursive: true })
 const pluginDirectory = join(root, "fixture-plugin")
 await mkdir(pluginDirectory)
 await copyFile(resolve(plugin), join(pluginDirectory, "index.ts"))
+// Deliberately no `provider` block: explabs must exist only through the plugin.
 await writeFile(join(config, "opencode.json"), JSON.stringify({
   plugins: [{ package: pluginDirectory, options: { baseURL: `http://127.0.0.1:${address.port}/api/v1` } }],
-  provider: { explabs: { npm: "@ai-sdk/openai-compatible", name: "Experiential Labs",
-    options: { baseURL: `http://127.0.0.1:${address.port}/api/v1` } } },
 }))
 const env = { ...process.env, HOME: root, XDG_CONFIG_HOME: join(root, "config"),
   XDG_DATA_HOME: join(root, "data"), XDG_STATE_HOME: join(root, "state"), XDG_CACHE_HOME: join(root, "cache"),

@@ -154,6 +154,10 @@
             # Declarative router inventory: local and gitignored, backed up
             # alongside state but not parsed as OpenTofu JSON state.
             "Projects/nix/infra/router/inventory.auto.tfvars"
+            # Opencode session and credential state: the sqlite stores are
+            # staged as raw copies with their sidecars (same policy as the
+            # Helium profile); logs and tool outputs are regenerable.
+            ".local/share/opencode/"
           ];
           homeStateExcludes = map (dir: "/.config/net.imput.helium/${dir}") [
             "Default/History*"
@@ -173,6 +177,11 @@
             "segmentation_platform"
             "DeferredBrowserMetrics"
             "Variations"
+          ]
+          # Regenerable opencode artifacts, not session state.
+          ++ map (dir: "/.local/share/opencode/${dir}") [
+            "log/"
+            "tool-output/"
           ];
           homeStateCritical = [
             "Projects/nix/infra/terraform.tfstate"
