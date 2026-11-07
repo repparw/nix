@@ -45,6 +45,8 @@
             Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp &
             xvfb_pid=$!
             vnc_pid=
+            # Invoked via the trap below; shellcheck does not count that as a call.
+            # shellcheck disable=SC2329
             cleanup() {
               if [ -n "$vnc_pid" ]; then
                 kill "$vnc_pid" 2>/dev/null || true
