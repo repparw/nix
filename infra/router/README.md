@@ -61,7 +61,7 @@ evidence. The probe reads public keys without logging in. Set
 locally through the approved credential source before proceeding. The
 inventory utility uses `TPLINK_*` names, not `TF_VAR_*`.
 
-Generate into a *private staging directory*, never directly over the live
+Generate into a _private staging directory_, never directly over the live
 `inventory.auto.tfvars` or `imports.tf`:
 
 ```sh
@@ -139,7 +139,7 @@ Do not apply a nonzero plan, replace state addresses, or regenerate the
 private inventory as part of provider validation. Confirm the signed registry
 provider is selected, not an old local Go executable.
 
-A *separate, explicitly approved* import of new router entries may follow
+A _separate, explicitly approved_ import of new router entries may follow
 later. Stage and inspect inventory first, then create and inspect a saved
 plan rather than running an unreviewed `tofu apply`:
 
