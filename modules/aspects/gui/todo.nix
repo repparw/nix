@@ -130,17 +130,20 @@
             fi
 
             task_summary=$1
-            datetime=''${2:-"tomorrow 9am"}
-            if ! due_epoch=$(date -d "$datetime" +%s 2>/dev/null); then
-                echo "Error: Invalid due date: $datetime" >&2
-                exit 1
-            fi
+            due_line=""
+            if [[ $# -eq 2 && -n $2 ]]; then
+                datetime=$2
+                if ! due_epoch=$(date -d "$datetime" +%s 2>/dev/null); then
+                    echo "Error: Invalid due date: $datetime" >&2
+                    exit 1
+                fi
 
-            # A date without a time represents an all-day task.
-            if [[ "$datetime" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2}|today|tomorrow|(next[[:space:]]+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday))$ ]]; then
-                due_line="DUE;VALUE=DATE:$(date -d "@$due_epoch" +%Y%m%d)"
-            else
-                due_line="DUE:$(date -u -d "@$due_epoch" +%Y%m%dT%H%M%SZ)"
+                # A date without a time represents an all-day task.
+                if [[ "''${datetime,,}" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2}|today|tomorrow|(next[[:space:]]+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday))$ ]]; then
+                    due_line="DUE;VALUE=DATE:$(date -d "@$due_epoch" +%Y%m%d)"
+                else
+                    due_line="DUE:$(date -u -d "@$due_epoch" +%Y%m%dT%H%M%SZ)"
+                fi
             fi
 
             escape_ical_text() {
@@ -194,14 +197,21 @@
                 "UID:$task_uid"
                 "DTSTAMP:$dtstamp"
                 "SUMMARY:$task_text"
-                "$due_line"
-                "PRIORITY:9"
-                "PERCENT-COMPLETE:0"
-                "BEGIN:VALARM"
-                "ACTION:DISPLAY"
-                "TRIGGER;RELATED=END:PT0S"
-                "DESCRIPTION:$task_text"
-                "END:VALARM"
+            )
+            if [[ -n "$due_line" ]]; then
+                ical_lines+=("$due_line")
+            fi
+            ical_lines+=("PRIORITY:9" "PERCENT-COMPLETE:0")
+            if [[ -n "$due_line" ]]; then
+                ical_lines+=(
+                    "BEGIN:VALARM"
+                    "ACTION:DISPLAY"
+                    "TRIGGER;RELATED=END:PT0S"
+                    "DESCRIPTION:$task_text"
+                    "END:VALARM"
+                )
+            fi
+            ical_lines+=(
                 "END:VTODO"
                 "END:VCALENDAR"
             )
