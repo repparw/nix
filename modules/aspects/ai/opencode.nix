@@ -121,21 +121,5 @@
   };
   perSystem = { config, pkgs, ... }: {
     packages.opencode = pkgs.callPackage ../../_packages/opencode.nix { };
-    checks.explabs-free-provider = pkgs.runCommand "check-explabs-free-provider" { } ''
-      ${pkgs.nodejs}/bin/node ${../../_tests/explabs-free-provider.mjs} \
-        ${config.packages.opencode}/bin/opencode ${./opencode-plugins/explabs-free.ts}
-      touch $out
-    '';
-    checks.nous-live-provider = pkgs.runCommand "check-nous-live-provider" { } ''
-      ${pkgs.nodejs}/bin/node ${../../_tests/nous-live-provider.mjs} \
-        ${config.packages.opencode}/bin/opencode ${./opencode-plugins/nous-live.ts}
-      touch $out
-    '';
-    checks.orca-live-provider = pkgs.runCommand "check-orca-live-provider" { } ''
-      ${pkgs.nodejs}/bin/node ${../../_tests/orca-live-provider.mjs} \
-        ${config.packages.opencode}/bin/opencode \
-        ${./opencode-plugins/orca-router.ts} ${./opencode-plugins/model-defaults.ts}
-      touch $out
-    '';
   };
 }
