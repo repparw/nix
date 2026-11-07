@@ -36,35 +36,40 @@
           text = ''
             state=${lib.escapeShellArg stateDir}
             logs="$state/logs"
-            export DISPLAY=:99 SHOW=1
-
             for store in epic-games gog; do
               printf 'pending\n' > "$logs/$store.status"
             done
 
-            Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp &
-            xvfb_pid=$!
+            # Headless runs need neither an X display nor a VNC process.
+            # SHOW=1 restores the previous headed/VNC path for recovery.
+            xvfb_pid=
             vnc_pid=
             cleanup() {
               if [ -n "$vnc_pid" ]; then
                 kill "$vnc_pid" 2>/dev/null || true
               fi
-              kill "$xvfb_pid" 2>/dev/null || true
+              if [ -n "$xvfb_pid" ]; then
+                kill "$xvfb_pid" 2>/dev/null || true
+              fi
             }
             trap cleanup EXIT
 
-            for _ in $(seq 1 50); do
-              [ -S /tmp/.X11-unix/X99 ] && break
-              kill -0 "$xvfb_pid" 2>/dev/null || exit 1
-              sleep 0.1
-            done
-            if [ ! -S /tmp/.X11-unix/X99 ]; then
-              echo "Xvfb failed to start" >&2
-              exit 1
+            if [ "$SHOW" = 1 ]; then
+              export DISPLAY=:99
+              Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp &
+              xvfb_pid=$!
+              for _ in $(seq 1 50); do
+                [ -S /tmp/.X11-unix/X99 ] && break
+                kill -0 "$xvfb_pid" 2>/dev/null || exit 1
+                sleep 0.1
+              done
+              if [ ! -S /tmp/.X11-unix/X99 ]; then
+                echo "Xvfb failed to start" >&2
+                exit 1
+              fi
+              x11vnc -display :99 -localhost -forever -shared -nopw -rfbport 5900 -quiet &
+              vnc_pid=$!
             fi
-
-            x11vnc -display :99 -localhost -forever -shared -nopw -rfbport 5900 -quiet &
-            vnc_pid=$!
 
             rc=0
             for store in epic-games gog; do
@@ -122,12 +127,17 @@
           description = "Claim free games on Epic and GOG";
           wants = [ "network-online.target" ];
           after = [ "network-online.target" ];
+          # One calendar start plus at most three transient retries per day.
+          unitConfig = {
+            StartLimitIntervalSec = "23h";
+            StartLimitBurst = 4;
+          };
           environment = {
             HOME = stateDir;
             FGC_STATE_DIR = stateDir;
             FGC_DATA_DIR = "${stateDir}/data";
             FGC_CHROME_PATH = "${pkgs.chromium}/bin/chromium";
-            SHOW = "1";
+            SHOW = "0";
             WIDTH = "1920";
             HEIGHT = "1080";
             TIMEOUT = "90";
@@ -139,6 +149,9 @@
           '';
           serviceConfig = {
             Type = "oneshot";
+            Restart = "no";
+            RestartForceExitStatus = "75";
+            RestartSec = "45min";
             User = "fgc";
             Group = "fgc";
             ExecStart = "${claimScript}/bin/free-games-claim";

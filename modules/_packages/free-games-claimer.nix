@@ -44,6 +44,33 @@
     substituteInPlace gog.js \
       --replace-fail "db.data[user][title].status ||= status;" \
         "db.data[user][title].status = status;"
+
+    # Test native headless first. The service's SHOW=1 switch restores headed.
+    substituteInPlace epic-games.js gog.js \
+      --replace-fail "headless: false," "headless: cfg.headless,"
+
+    # No terminal is available during scheduled runs; fail promptly if the
+    # persistent profile needs interactive authentication.
+    substituteInPlace epic-games.js \
+      --replace-fail "console.error('Not signed in anymore. Please login in the browser or here in the terminal.');" \
+        "if (cfg.headless) throw new Error('Epic: saved session expired; headed login required.'); console.error('Not signed in anymore. Please login in the browser or here in the terminal.');"
+    substituteInPlace gog.js \
+      --replace-fail "console.error('Not signed in anymore.');" \
+        "if (cfg.headless) throw new Error('GOG: saved session expired; headed login required.'); console.error('Not signed in anymore.');" \
+      --replace-fail "console.error('Could not determine GOG login state - page structure changed?');" \
+        "throw new Error('GOG: cannot determine saved login state.');"
+
+    # Exit 75 signals transient claim failure; other errors exit 1.
+    substituteInPlace epic-games.js gog.js \
+      --replace-fail "process.exitCode ||= 1;" "process.exitCode ||= user ? 75 : 1;"
+    substituteInPlace epic-games.js \
+      --replace-fail "db.data[user][game_id].status = 'failed';" \
+        "db.data[user][game_id].status = 'failed'; process.exitCode ||= 75;" \
+      --replace-fail "console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');" \
+        "process.exitCode = 1; console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');"
+    substituteInPlace gog.js \
+      --replace-fail "notify_games.push({ title, url, status });" \
+        "if (status === 'Unauthorized') process.exitCode ||= 1; else if (!['claimed', 'existed', 'Giveaway has ended'].includes(status)) process.exitCode ||= 75; notify_games.push({ title, url, status });"
   '';
 
   meta = {

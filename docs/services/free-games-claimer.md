@@ -15,9 +15,9 @@ announcing itch.io, Humble, and other stores, with Steam/Epic/GOG excluded.
 
 The [FroggMaster fork](https://github.com/FroggMaster/free-games-claimer)
 is packaged in `modules/_packages/free-games-claimer.nix` and uses Nixpkgs
-Chromium. A single unprivileged, sandboxed systemd service starts a temporary
-Xvfb display and loopback-only VNC server while it runs. No VNC server or
-display stays running between claims.
+Chromium. A sandboxed systemd service runs native headless Chromium by default.
+Xvfb and loopback-only VNC start only when SHOW=1 is selected for headed
+recovery. No display or VNC process runs during normal claims.
 
 Cookies and claim databases are stored in
 `/home/containers/config/free-games-claimer/data`, included in the existing
@@ -26,7 +26,15 @@ access to the Discord bot token; a privileged post-stop notifier reads
 `hermes-env` and tracks which results have been announced. Failed
 notifications are retried on the next run.
 
-## First login and re-login
+## Headless trial, login and recovery
+
+Regular runs use the saved Chromium profile with SHOW=0. If a saved session
+has expired, the script fails without waiting for unattended terminal prompts.
+The actual Pi session and storefront checkout still need a live smoke test.
+If headless mode causes captchas, revert the service's SHOW setting to 1.
+
+For first login or recovery, set SHOW=1 in the systemd service environment and
+deploy that change. This restores the former Xvfb and VNC behavior.
 
 Use three terminals on your desktop:
 
@@ -51,8 +59,12 @@ endpoint is only available while the service is active, and only over SSH.
 - Inspect schedule: `ssh pi systemctl list-timers free-games-claimer.timer`
 - Test without purchases: temporarily set `DRYRUN=1` in the service environment.
 
-A failed store run does not prevent the next scheduled attempt. Notification
-state only advances after Discord acknowledges the complete batch.
+The timer runs daily at 18:10 ART plus up to 30 minutes of jitter. Exit 75
+marks a transient claim failure and triggers a retry after 45 minutes, capped
+at three additional attempts per daily cycle. Authentication and captcha
+failures exit 1 without automatic retries. A failed store run does not
+prevent the next daily timer attempt. The Discord notifier remains in this
+experiment; switching to Grafana-only alerts is a separate change.
 
 ## Related
 
