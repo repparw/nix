@@ -20,7 +20,7 @@
         serviceName = "automations";
         stateDir = "${cfg.configDir}/${serviceName}";
         watchersFile = "${stateDir}/change-watchers.json";
-        defaultWatchers = import ./automations/default-watchers.nix;
+        defaultWatchers = import ../../_services/automations-watchers.nix;
         defaultWatchersFile = pkgs.writeText "change-detection-default-watchers.json" (
           builtins.toJSON defaultWatchers
         );
