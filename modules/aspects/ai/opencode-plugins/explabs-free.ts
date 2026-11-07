@@ -24,16 +24,32 @@ const providerID = Provider.ID.make("explabs")
 export default Plugin.define({
   id: "explabs-free",
   async setup(ctx) {
-    // An empty or failed discovery must not reuse a previous inventory.
-    await ctx.provider.transform((editor) => editor.models.set(providerID, []))
+    const baseURL =
+      typeof ctx.options.baseURL === "string" ? ctx.options.baseURL : "https://api.experientiallabs.ai/api/v1"
+    // The provider lives entirely in runtime state: registered here, never
+    // declared in settings, so every spawn path that loads plugins sees it
+    // regardless of how config files are layered. Registered with no models
+    // first: an empty or failed discovery must not reuse a previous inventory.
+    await ctx.provider.transform((editor) => {
+      editor.add({
+        info: {
+          id: "explabs",
+          name: "Experiential Labs",
+          activation: "enabled",
+          // The native builtin: `add` skips the npm-name rewrite the config
+          // path applies, so name the package it would resolve to directly.
+          package: "@opencode/ai/providers/openai-compatible",
+          settings: { baseURL, provider: "explabs" },
+        },
+        models: [],
+      })
+    })
     const connection = await ctx.integration.connection.active(providerID)
     if (!connection) return
     const credential = await ctx.integration.connection.resolve(connection)
     if (credential?.type !== "key") return
-    const configured = typeof ctx.options.baseURL === "string"
-      ? ctx.options.baseURL : "https://api.experientiallabs.ai/api/v1"
-    const catalogURL = `${configured.replace(/\/$/, "")}/models`
-    const origin = new URL(configured).origin
+    const catalogURL = `${baseURL.replace(/\/$/, "")}/models`
+    const origin = new URL(catalogURL).origin
 
     const headers = { Authorization: `Bearer ${credential.key}` }
     const get = async (url: string) => {
