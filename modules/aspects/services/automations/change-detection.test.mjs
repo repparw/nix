@@ -497,7 +497,9 @@ test("curl security tracker accepts pages above the default response cap", async
   process.env.PATH = `${binDir}${path.delimiter}${originalPath ?? ""}`;
   try {
     const previous = { latestIssue: "NIXPKGS-2026-1000", seen: [] };
-    const fetchImpl = () => { throw new Error("curl watcher must not use fetch"); };
+    const fetchImpl = () => {
+      throw new Error("curl watcher must not use fetch");
+    };
     await assert.rejects(
       checkNixpkgsSecurityIssues({ ...securityWatcher, fetcher: "curl" }, previous, fetchImpl),
       /response exceeds 2097152 bytes/,
@@ -516,6 +518,7 @@ test("curl security tracker accepts pages above the default response cap", async
     else process.env.PATH = originalPath;
   }
 });
+
 test("security tracker silently baselines accepted issues using package mappings", async (t) => {
   const files = fixture(t, [securityWatcher]);
   let calls = 0;
