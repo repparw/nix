@@ -26,10 +26,12 @@ jobs:
           skipPush: true
       - name: Build Pi's claimer package and verify source patches
         run: |
-          nix build --impure --no-link --show-trace --expr '
+          package=$(nix build --impure --no-link --show-trace --print-out-paths --expr '
             let
               flake = builtins.getFlake (toString ./.);
               pkgs = flake.inputs.nixpkgs.legacyPackages.aarch64-linux;
             in
               pkgs.callPackage ./modules/_packages/free-games-claimer.nix { }
-          '
+          ')
+          node --check "$package/lib/node_modules/free-games-claimer/epic-games.js"
+          node --check "$package/lib/node_modules/free-games-claimer/gog.js"

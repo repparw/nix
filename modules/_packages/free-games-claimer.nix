@@ -66,7 +66,7 @@
       --replace-fail "process.exitCode ||= 1;" "process.exitCode = 1;"
     substituteInPlace epic-games.js \
       --replace-fail "db.data[user][game_id].status = 'failed';" \
-        "const challenged = (await iframe.locator('#h_captcha_challenge_checkout_free_prod iframe, .payment__errors:has-text(\"Failed to challenge captcha\")').count().catch(() => 0)) > 0; process.exitCode = challenged || e.name !== 'TimeoutError' ? 1 : (process.exitCode || 75); db.data[user][game_id].status = 'failed';" \
+        "const challenged = (await iframe.locator('#h_captcha_challenge_checkout_free_prod iframe, .payment__errors:has-text(\"Failed to challenge captcha\")').count().catch(() => 1)) > 0; process.exitCode = challenged || e.name !== 'TimeoutError' ? 1 : (process.exitCode || 75); db.data[user][game_id].status = 'failed';" \
       --replace-fail "console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');" \
         "process.exitCode = 1; console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');"
     substituteInPlace gog.js \
