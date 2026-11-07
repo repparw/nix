@@ -450,7 +450,7 @@
               # The NixOS service imports this same list when generating its
               # default-watchers JSON. Check the serialized configuration too.
               defaultWatchersFile = pkgs.writeText "change-detection-default-watchers-test.json" (
-                builtins.toJSON (import ./aspects/services/automations/default-watchers.nix)
+                builtins.toJSON (import ./_services/automations-watchers.nix)
               );
             in
             pkgs.runCommand "check-change-detection"
