@@ -17,16 +17,21 @@
         if [ -z "''${OUT_PATHS:-}" ]; then
           exit 0
         fi
-        # Cachix's upstream filtering already skips paths cache.nixos.org
-        # serves. sops vaults additionally never leave the host, even
-        # encrypted: they are permanent offline secret material for a public
-        # cache.
-        filtered="$(printf '%s\n' $OUT_PATHS | grep -vEe '\.sops\.ya?ml$' | xargs)"
-        if [ -z "$filtered" ]; then
-          exit 0
-        fi
-        ${pkgs.cachix}/bin/cachix daemon push --socket ${socketPath} $filtered \
-          || echo "cachix: daemon push failed with exit $?; continuing." >&2
+        for path in $OUT_PATHS; do
+          # Cachix uploads dependencies too. Reject the entire root when its
+          # closure contains a vault; filtering only OUT_PATHS leaks vaults
+          # referenced by activation scripts or the system toplevel.
+          if ! closure="$(${pkgs.nix}/bin/nix-store --query --requisites "$path")"; then
+            echo "cachix: cannot inspect closure of $path; skipping." >&2
+            continue
+          fi
+          if printf '%s\n' "$closure" | ${pkgs.gnugrep}/bin/grep -E '\.sops\.ya?ml$' >/dev/null; then
+            echo "cachix: closure contains a sops vault; skipping $path." >&2
+            continue
+          fi
+          ${pkgs.cachix}/bin/cachix daemon push --socket ${socketPath} "$path" \
+            || echo "cachix: daemon push failed with exit $?; continuing." >&2
+        done
       '';
     in
     {
