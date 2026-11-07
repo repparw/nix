@@ -446,11 +446,27 @@
           '';
 
           change-detection =
+            let
+              # The NixOS service imports this same list when generating its
+              # default-watchers JSON. Check the serialized configuration too.
+              defaultWatchersFile = pkgs.writeText "change-detection-default-watchers-test.json" (
+                builtins.toJSON (import ./aspects/services/automations/default-watchers.nix)
+              );
+            in
             pkgs.runCommand "check-change-detection"
               {
-                nativeBuildInputs = [ pkgs.nodejs ];
+                nativeBuildInputs = [
+                  pkgs.nodejs
+                  pkgs.jq
+                ];
               }
               ''
+                jq -e '
+                  [.[] | select(.slug == "nixpkgs-security-fleet")] as $matches
+                  | ($matches | length) == 1
+                    and $matches[0].fetcher == "curl"
+                    and $matches[0].maxResponseBytes == 16777216
+                ' ${defaultWatchersFile}
                 node ${./aspects/services/automations}/change-detection.test.mjs
                 touch $out
               '';
