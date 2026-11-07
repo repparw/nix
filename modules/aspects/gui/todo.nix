@@ -130,7 +130,7 @@
             fi
 
             task_summary=$1
-            due_line=''
+            due_line=""
             if [[ $# -eq 2 && -n $2 ]]; then
                 datetime=$2
                 if ! due_epoch=$(date -d "$datetime" +%s 2>/dev/null); then
