@@ -35,10 +35,12 @@ classify() {
   local path=$1 hash
   hash=$(basename "$path")
   hash=${hash%%-*}
-  if curl -fsSI -o /dev/null "$cache_url/$hash.narinfo"; then
-    printf 'repparw %s\n' "$path"
-  elif curl -fsSI -o /dev/null "$upstream_url/$hash.narinfo"; then
+  # Upstream paths may also exist in Cachix with their original signature.
+  # Their presence there does not imply they were signed by our cache key.
+  if curl -fsSI -o /dev/null "$upstream_url/$hash.narinfo"; then
     printf 'upstream %s\n' "$path"
+  elif curl -fsSI -o /dev/null "$cache_url/$hash.narinfo"; then
+    printf 'repparw %s\n' "$path"
   else
     printf 'missing %s\n' "$path"
   fi
