@@ -50,6 +50,34 @@ can stop later watchers. Inspect the response, journal, and overrides before
 changing patterns or state. Narrow noisy extraction to the intended field;
 preserve existing baselines when correcting a URL or parser failure.
 
+## Move the service between hosts
+
+`change-detection.timer` has `Persistent = true`: activating it on a new
+host can trigger an immediate run. Never activate the destination and then
+copy its state. Without `change-watchers.json`, the run fails; without the
+state file, it silently creates fresh baselines and loses the old security
+tracker checkpoint.
+
+For a host move, use this order:
+
+1. On the source, stop `change-detection.timer` and
+   `change-detection.service`; verify the service is inactive before copying.
+   Keep the timer stopped so the two hosts never run concurrently.
+2. Before activating the destination's new configuration, create
+   `/home/containers/config/automations` on it and copy both
+   `change-watchers.json` and `change-detection-state.json` from the source.
+   Keep the files root-owned with mode `0600` and the directory at `0750`.
+   Do not replace a missing state file with an empty baseline.
+3. Compare file checksums between the two hosts and inspect the
+   `nixpkgs-security-fleet.latestIssue` checkpoint on both.
+4. Activate the destination, then the source configuration that removes the
+   old unit. Verify exactly one enabled timer, run the destination service
+   under supervision, and inspect its journal and resulting checkpoint.
+
+If the destination has already activated, stop its timer first and inspect
+whether it wrote state. Do not overwrite a newer state file without
+reconciling its checkpoint and notifications against the source.
+
 ## Accepted security issues
 
 `nixpkgs-security-fleet` reads the public Nixpkgs tracker issues API with expanded
