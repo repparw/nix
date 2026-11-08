@@ -19,7 +19,6 @@ test('documentation-only PRs select only formatting and documentation checks', (
     ['AGENTS.md'], ['.agents/skills/verify-nixos-config/SKILL.md']]) {
     const result = classifyChanges(paths);
     assert.equal(result.runHosts, false);
-    assert.equal(result.runNeovim, false);
     assert.equal(result.runPersistenceVm, false);
     assert.deepEqual(result.checkMatrix.include, [{ group: 'documentation', checks: 'formatting agent-docs' }]);
   }
@@ -71,67 +70,12 @@ test('mixed diffs use the most conservative classification', () => {
 test('untrusted or incomplete comparisons never skip validation', () => {
   for (const files of [null, undefined, [], [''], [null], Array(300).fill('docs/notes.md')]) {
     verify(files, { hosts: true, vm: true, groups: both });
-    assert.equal(classifyChanges(files).runNeovim, true);
   }
   for (const event of ['push', 'workflow_dispatch', 'unknown']) {
     const result = classifyChanges(['README.md'], event);
     assert.equal(result.runHosts, true);
-    assert.equal(result.runNeovim, event !== 'push');
     assert.equal(result.runPersistenceVm, true);
     assert.deepEqual(result.checkMatrix.include.map(g => g.group), both);
-  }
-});
-
-test('Neovim prebuild follows package, inputs, Stylix and publishing changes', () => {
-  for (const path of [
-    'flake.lock', 'flake.nix', 'modules/dendritic.nix', 'modules/entities.nix',
-    'modules/defaults.nix', 'modules/hosts/alpha.nix', 'modules/aspects/nixvim.nix',
-    'modules/aspects/cli/editors.nix', 'modules/aspects/style.nix',
-    'modules/aspects/nixpkgs.nix', 'modules/aspects/nix.nix',
-    'modules/neovim-build.nix', 'modules/checks.nix',
-    '.github/workflows/revision-validation.yml', '.github/workflows/ci.yml',
-    '.github/scripts/ci-impact.mjs', '.github/scripts/run-checks.sh',
-    '.github/scripts/publish-neovim.sh',
-  ]) {
-    assert.equal(classifyChanges([path]).runNeovim, true, path);
-    assert.equal(classifyChanges([path], 'push').runNeovim, true, path);
-  }
-});
-
-test('unrelated changes do not rebuild Neovim on PRs or main pushes', () => {
-  for (const path of [
-    'modules/git-hooks.nix', 'modules/aspects/services/hermes.nix',
-    'modules/aspects/gui/niri.nix',
-    '.github/scripts/ci-impact.test.mjs',
-    'docs/notes.md',
-  ]) {
-    assert.equal(classifyChanges([path]).runNeovim, false, path);
-    assert.equal(classifyChanges([path], 'push').runNeovim, false, path);
-  }
-  assert.equal(classifyChanges([
-    'modules/git-hooks.nix', 'modules/aspects/cli/editors.nix',
-  ]).runNeovim, true);
-});
-
-test('renames and missing diffs fail closed for Neovim publication', () => {
-  const paths = changedPaths([{
-    filename: 'modules/moved-editor.nix',
-    previous_filename: 'modules/aspects/cli/editors.nix',
-    status: 'renamed',
-  }]);
-  assert.equal(classifyChanges(paths).runNeovim, true);
-  assert.equal(classifyChanges(paths, 'push').runNeovim, true);
-  for (const event of ['push', 'workflow_dispatch', 'unknown']) {
-    assert.equal(classifyChanges(null, event).runNeovim, true);
-  }
-});
-
-test('non-PR dispatch cannot skip prebuild even with a supplied file list', () => {
-  for (const event of ['workflow_dispatch', 'schedule', 'unknown']) {
-    const result = classifyChanges(['README.md'], event);
-    assert.equal(result.runNeovim, true, event);
-    assert.equal(result.runHosts, true, event);
-    assert.equal(result.runPersistenceVm, true, event);
   }
 });
 
@@ -159,21 +103,15 @@ function detectFixture(eventName, event, response = compareResponse([])) {
   }
 }
 
-test('real push event JSON selects the correct diff and gates only Neovim', () => {
+test('real push event JSON selects the correct diff for full validation', () => {
   const event = { before, after, ref: 'refs/heads/main' };
-  const unrelated = detectFixture('push', event, compareResponse([
+  const observed = detectFixture('push', event, compareResponse([
     { filename: 'modules/git-hooks.nix', status: 'modified' },
   ]));
-  assert.deepEqual(unrelated.calls, [{ repository: 'repparw/nix', base: before, head: after }]);
-  assert.equal(unrelated.result.runNeovim, false);
-  assert.equal(unrelated.result.runHosts, true);
-  assert.equal(unrelated.result.runPersistenceVm, true);
-  assert.deepEqual(unrelated.result.checkMatrix.include.map(x => x.group), both);
-
-  const rename = detectFixture('push', event, compareResponse([
-    { filename: 'docs/editor.md', previous_filename: 'modules/aspects/cli/editors.nix', status: 'renamed' },
-  ]));
-  assert.equal(rename.result.runNeovim, true);
+  assert.deepEqual(observed.calls, [{ repository: 'repparw/nix', base: before, head: after }]);
+  assert.equal(observed.result.runHosts, true);
+  assert.equal(observed.result.runPersistenceVm, true);
+  assert.deepEqual(observed.result.checkMatrix.include.map(x => x.group), both);
 });
 
 test('real pull request event JSON selects PR base/head, not push SHAs', () => {
@@ -182,7 +120,6 @@ test('real pull request event JSON selects PR base/head, not push SHAs', () => {
     { filename: 'modules/aspects/services/hermes.nix', status: 'modified' },
   ]));
   assert.deepEqual(observed.calls, [{ repository: 'repparw/nix', base: before, head: after }]);
-  assert.equal(observed.result.runNeovim, false);
   assert.equal(observed.result.runHosts, true);
 });
 
@@ -195,12 +132,11 @@ test('push comparison failures and malformed inputs fail closed', () => {
     { status: 0, stdout: JSON.stringify({ files: [{ filename: 'docs/one.md' }], total_files: 2 }) },
     compareResponse([]),
   ]) {
-    assert.equal(detectFixture('push', event, response).result.runNeovim, true);
+    assert.equal(detectFixture('push', event, response).result.runHosts, true);
   }
   const invalid = detectFixture('push', { before: '0'.repeat(40), after: 'not-a-sha' },
     compareResponse([{ filename: 'docs/one.md' }]));
   assert.deepEqual(invalid.calls, []);
-  assert.equal(invalid.result.runNeovim, true);
   assert.equal(detect({ eventName: 'workflow_dispatch', eventPath: '/nonexistent-fixture',
-    repo: 'repparw/nix', compare: () => { throw Error('Must not compare'); } }).runNeovim, true);
+    repo: 'repparw/nix', compare: () => { throw Error('Must not compare'); } }).runHosts, true);
 });

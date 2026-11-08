@@ -7,7 +7,6 @@ const lightweight = 'formatting sops-files change-detection agent-docs worktree-
 const configuration = 'generated-shellcheck cachix-push ci-package-targets fleet-cli service-definitions host-persistence pi-image-configuration backup-exports monitoring-fleet btrfs-health fleet-failed-units pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage';
 
 const full = reason => ({
-  runNeovim: true,
   runHosts: true,
   runPersistenceVm: true,
   checkMatrix: { include: [{ group: 'lightweight', checks: lightweight }, { group: 'configuration', checks: configuration }] },
@@ -21,29 +20,6 @@ const documentationOnly = path =>
 
 // Match the inputs actually used by the persistence/recovery VM, plus host
 // boot/storage changes and tooling that could affect how it is evaluated.
-// Neovim is a separate cached CI build: select only inputs capable of
-// changing Alpha's Nixvim/Stylix-extended package or its publishing contract.
-export const affectsNeovim = path => [
-  'flake.nix',
-  'flake.lock',
-  'modules/dendritic.nix',
-  'modules/entities.nix',
-  'modules/defaults.nix',
-  'modules/hosts/alpha.nix',
-  'modules/aspects/nixvim.nix',
-  'modules/aspects/nixpkgs.nix',
-  'modules/aspects/nix.nix',
-  'modules/aspects/style.nix',
-  'modules/aspects/cli/editors.nix',
-  'modules/neovim-build.nix',
-  'modules/checks.nix',
-  '.github/scripts/ci-impact.mjs',
-  '.github/scripts/run-checks.sh',
-  '.github/scripts/publish-neovim.sh',
-  '.github/workflows/revision-validation.yml',
-  '.github/workflows/ci.yml',
-].includes(path);
-
 const affectsPersistence = path =>
   ['flake.nix', 'flake.lock', 'modules/checks.nix', 'modules/entities.nix',
     'modules/pi-image.nix', 'modules/aspects/persistence.nix', 'modules/aspects/backup.nix', 'modules/aspects/host-backup.nix',
@@ -64,20 +40,13 @@ export function classifyChanges(paths, eventName = 'pull_request') {
   // truncated comparisons must still prebuild rather than risk cache misses.
   const knownPaths = Array.isArray(paths) && paths.length > 0 && paths.length < 300 &&
     paths.every(p => typeof p === 'string' && p);
-  // Main pushes still run the full safety net. Only the separately published
-  // Neovim build may skip when the push's exact diff is unrelated.
-  if (eventName === 'push') {
-    return {
-      ...full('full validation for push'),
-      runNeovim: !knownPaths || paths.some(affectsNeovim),
-    };
-  }
-  // Exact-SHA dispatch and unexpected events cannot opt out of prebuilding.
+  // Main pushes always run the full safety net.
+  if (eventName === 'push') return full('full validation for push');
+  // Exact-SHA dispatch and unexpected events cannot skip validation.
   if (eventName !== 'pull_request') return full(`full validation for ${eventName}`);
   if (!knownPaths) return full('unknown or truncated comparison');
   if (paths.every(documentationOnly)) {
     return {
-      runNeovim: false,
       runHosts: false,
       runPersistenceVm: false,
       checkMatrix: { include: [{ group: 'documentation', checks: documentation }] },
@@ -85,7 +54,6 @@ export function classifyChanges(paths, eventName = 'pull_request') {
     };
   }
   return {
-    runNeovim: paths.some(affectsNeovim),
     runHosts: true,
     runPersistenceVm: paths.some(affectsPersistence),
     checkMatrix: full().checkMatrix,
@@ -131,13 +99,12 @@ export function detect({
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const impact = detect();
   const outputs = [
-    `run_neovim=${impact.runNeovim}`,
     `run_hosts=${impact.runHosts}`,
     `run_persistence_vm=${impact.runPersistenceVm}`,
     `check_matrix=${JSON.stringify(impact.checkMatrix)}`,
   ].join('\n') + '\n';
   appendFileSync(process.env.GITHUB_OUTPUT, outputs);
   appendFileSync(process.env.GITHUB_STEP_SUMMARY,
-    `CI impact: ${impact.reason}; host evaluations: ${impact.runHosts}; Neovim prebuild: ${impact.runNeovim}; persistence VM: ${impact.runPersistenceVm}.\n`);
+    `CI impact: ${impact.reason}; host evaluations: ${impact.runHosts}; persistence VM: ${impact.runPersistenceVm}.\n`);
   console.log(outputs.trim());
 }
