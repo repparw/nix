@@ -265,7 +265,8 @@ case "$command_name $*" in
   'curl '*)
     stage=coverage
     case "$*" in
-      *repparw.cachix.org/fixtureupstream*) rc=22 ;;
+      *cache.nixos.org/fixtureupstream*) ;; # upstream available, even if mirrored in Cachix
+      *cache.nixos.org/*) rc=22 ;;
     esac ;;
   'nix store verify '*) stage=signature ;;
   *) exit 90 ;;
@@ -295,6 +296,7 @@ test('publishing waits for upload, probes both substituters and verifies cache s
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.calls, /nix path-info --recursive \.#checks\.x86_64-linux\.host-neovim/);
   assert.match(result.calls, /cachix push repparw \/nix\/store\/fixture-nixvim/);
+  assert.match(result.calls, /curl -fsSI -o \/dev\/null https:\/\/cache\.nixos\.org\/fixture\.narinfo/);
   assert.match(result.calls, /curl -fsSI -o \/dev\/null https:\/\/repparw\.cachix\.org\/fixture\.narinfo/);
   assert.match(result.calls, /curl -fsSI -o \/dev\/null https:\/\/cache\.nixos\.org\/fixtureupstream\.narinfo/);
   assert.match(result.calls, /nix store verify --store https:\/\/repparw\.cachix\.org --no-contents --sigs-needed 1 --option trusted-public-keys repparw\.cachix\.org-1:[^ ]* \/nix\/store\/fixture-nixvim \/nix\/store\/fixturedirect-init\.lua/);
