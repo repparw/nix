@@ -1,0 +1,39 @@
+# Temporary cross-revision semantic checks for the Den role refactor.
+# Remove after the refactor has passed and the final PR is based on main.
+name: den-role-equivalence
+on:
+  pull_request:
+    paths:
+      - 'modules/**'
+      - '.github/scripts/role-snapshot.nix'
+      - '.github/workflows/den-role-equivalence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: candidate
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Frozen baseline: the pre-refactor main revision, not the stacked PR base.
+          ref: 4689d58627d88e1243233eb1b239faefb43c5e8a
+          path: baseline
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - name: Compare evaluated user, desktop and service configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          snapshot="$GITHUB_WORKSPACE/candidate/.github/scripts/role-snapshot.nix"
+          nix eval --impure --json --show-trace --file "$snapshot" --argstr flakePath "$GITHUB_WORKSPACE/baseline" | jq -S . > baseline.json
+          nix eval --impure --json --show-trace --file "$snapshot" --argstr flakePath "$GITHUB_WORKSPACE/candidate" | jq -S . > candidate.json
+          if ! diff -u baseline.json candidate.json; then
+            echo "::error::Den role refactor changed evaluated semantics; inspect the diff above"
+            exit 1
+          fi
+          echo "Evaluated snapshots match for alpha, pi and epsilon"
