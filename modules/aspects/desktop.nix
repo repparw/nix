@@ -9,6 +9,7 @@
       den.aspects.gui
       den.aspects.file-manager
       den.aspects.obsidian
+      den.aspects.spotifast
       den.aspects.ai._.gui
       den.aspects.ai._.t3code-connect-desktop
       den.aspects.desktop._.bitwarden
