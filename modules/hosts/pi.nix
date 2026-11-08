@@ -69,6 +69,88 @@
             ];
         modules.persistence.enable = true;
         modules.persistence.mutableAccounts = true;
+
+        # RP1's Cadence GEM (macb over PCIe) silently stalls its TX ring: a
+        # TSTART doorbell write or a TCOMP completion can be lost on the PCIe
+        # fabric, and the 7.3 driver's recovery re-writes the same posted
+        # register. On 2026-11-07 the NETDEV WATCHDOG fired twice on eth0 and
+        # the network never came back (pi went dark until a power cycle; see
+        # raspberrypi/linux#7661 for the same re-fire pattern). Two userspace
+        # layers, no kernel build:
+        #
+        # 1. prevention: TSO + scatter-gather off -- a reporter on
+        #    LP #2133877 (comment 52) went 256 node-hours with zero stalls
+        #    (baseline ~18). SG off is the load-bearing bit; TSO/GSO off with
+        #    SG left on still hung (dtype.org). Negligible CPU cost on a 1G
+        #    service box.
+        # 2. recovery: the timer below bounces the link when the gateway is
+        #    unreachable while the link reports up -- a link down/up resets
+        #    the stalled GEM and always recovers (dtype.org; their same
+        #    watchdog was the primary protection before their driver patch).
+        #    Skipped while the fleet deploy controller is mid-transaction:
+        #    a bounce would sever its ssh session to the host being
+        #    activated.
+        systemd.services.eth0-rp1-tx-mitigation = {
+          description = "Disable TSO and scatter-gather on eth0 (RP1 macb TX stall mitigation)";
+          after = [ "network-pre.target" ];
+          before = [ "network.target" ];
+          wantedBy = [ "network.target" ];
+          unitConfig.ConditionPathExists = "/sys/class/net/eth0";
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            ExecStart = "${pkgs.ethtool}/bin/ethtool -K eth0 tso off sg off";
+          };
+        };
+
+        systemd.services.eth0-rp1-recovery = {
+          description = "Bounce eth0 when it stops passing traffic (RP1 macb TX stall recovery)";
+          path = [
+            pkgs.iproute2
+            pkgs.iputils
+            pkgs.util-linux
+          ];
+          serviceConfig = {
+            Type = "oneshot";
+            RuntimeDirectory = "eth0-rp1-recovery";
+            ExecStart = pkgs.writeShellScript "eth0-rp1-recovery" ''
+              set -eu
+              stamp=/run/eth0-rp1-recovery/last-bounce
+              # cooldown: at most one bounce per 3 minutes
+              if [ -e "$stamp" ]; then
+                last=$(cat "$stamp" 2>/dev/null || echo 0)
+                now=$(date +%s)
+                if [ "$((now - last))" -lt 180 ]; then
+                  exit 0
+                fi
+              fi
+              # link administratively down: intentional, hands off
+              ip -o link show eth0 | grep -q 'state UP' || exit 0
+              # never bounce under the fleet deploy controller
+              if systemctl -q is-active fleet-deploy-run.service; then
+                exit 0
+              fi
+              gw=$(ip -4 route show default | awk '{print $3; exit}')
+              [ -n "$gw" ] || exit 0
+              if ! ping -c 3 -W 2 -I eth0 "$gw" >/dev/null 2>&1; then
+                logger -t rp1-recovery "gateway $gw unreachable with link up; bouncing eth0"
+                ip link set eth0 down
+                sleep 2
+                ip link set eth0 up
+                date +%s > "$stamp"
+              fi
+            '';
+          };
+        };
+
+        systemd.timers.eth0-rp1-recovery = {
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "2min";
+            OnUnitActiveSec = "60s";
+          };
+        };
+
         modules.backup.paths = [
           "/home/containers/config"
           "/var/lib/auto-update"
