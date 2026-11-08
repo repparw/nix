@@ -11,15 +11,9 @@
 
   den.aspects.epsilon = {
     includes = [
-      den.aspects.fleet-unit-state
+      den.aspects.managed-server
       den.aspects.monitoring._.dashboard
-      den.aspects.monitoring._.persist
-      den.aspects.monitoring._.cloud
-      den.aspects.deploy-target
-      den.aspects.passwordless-sudo
       den.aspects.epsilon._.backup
-      den.aspects.persistence
-      den.aspects.service-host
       den.aspects.nixos-services._.edge
       den.aspects.nixos-services._.hermes
       den.aspects.nixos-services._.automations
