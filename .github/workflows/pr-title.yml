@@ -44,4 +44,4 @@ jobs:
           if test "$PR_TITLE" = 'flake.lock: Update'; then
             exit 0
           fi
-          printf '%s\n' "$PR_TITLE" | nix shell --inputs-from . nixpkgs#convco --command convco check --from-stdin
+          printf '%s\n' "$PR_TITLE" | nix shell .#convco-ci --command convco check --from-stdin

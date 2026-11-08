@@ -79,19 +79,6 @@ deleted file mode 100644
 -    sha256 = "4f5379796280cdaeb0c2f358fd04b6a16cc4fb7dfa83b5a8c91a9d963b435231";
 -    inherit (nodejs-slim_24) patches;
 -  }
-diff --git a/modules/aspects/ai/opencode.nix b/modules/aspects/ai/opencode.nix
---- a/modules/aspects/ai/opencode.nix
-+++ b/modules/aspects/ai/opencode.nix
-@@ -4,8 +4,8 @@
-     nixos.nixpkgs.overlays = [
-       (final: _prev: {
-         opencode = final.callPackage ../../_packages/opencode.nix {
--          bun = final.bun-security;
-+          bun = final.bun;
-           bunForInstall = final.bun-1-4-2;
-         };
-         bun-1-4-2 = final.callPackage ../../_packages/bun-1-4-2.nix { };
-       })
 diff --git a/modules/aspects/upstream/nodejs-security.nix b/modules/aspects/upstream/nodejs-security.nix
 --- a/modules/aspects/upstream/nodejs-security.nix
 +++ b/modules/aspects/upstream/nodejs-security.nix

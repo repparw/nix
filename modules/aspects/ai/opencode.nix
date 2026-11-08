@@ -1,15 +1,8 @@
 { den, ... }:
 {
+  # Packaged by nixpkgs (the channel and pin both track the anomalyco v2
+  # release); the vendored 2.0.26 workaround was retired per issue #229.
   den.aspects.ai.provides.opencode = {
-    nixos.nixpkgs.overlays = [
-      (final: _prev: {
-        opencode = final.callPackage ../../_packages/opencode.nix {
-          bun = final.bun-security;
-          bunForInstall = final.bun-1-4-2;
-        };
-        bun-1-4-2 = final.callPackage ../../_packages/bun-1-4-2.nix { };
-      })
-    ];
     homeManager =
       {
         config,
@@ -151,7 +144,7 @@
       };
   };
   perSystem = { config, pkgs, ... }: {
-    packages.opencode = pkgs.callPackage ../../_packages/opencode.nix { };
+    packages.opencode = pkgs.opencode;
     checks.explabs-free-provider = pkgs.runCommand "check-explabs-free-provider" { } ''
       ${pkgs.nodejs}/bin/node ${../../_tests/explabs-free-provider.mjs} \
         ${config.packages.opencode}/bin/opencode ${./opencode-plugins/explabs-free.ts}
