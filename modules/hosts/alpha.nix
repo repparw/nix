@@ -19,6 +19,7 @@
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.free-model-watch
       den.aspects.nixos-services._.t3-token-watch
+      den.aspects.cachix-push
       den.aspects.deploy-target
     ];
 
