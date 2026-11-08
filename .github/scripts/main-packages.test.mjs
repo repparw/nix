@@ -11,6 +11,9 @@ const smokeWorkflow = readFileSync(join(root, '.github/workflows/package-prebuil
 
 test('main package builds use pinned native tooling and skip cached targets', () => {
   assert.match(workflow, /branches: \[main\]/);
+  assert.match(workflow, /workflow_run:\s+workflows: \[lock-update\]\s+types: \[completed\]/);
+  assert.match(workflow, /github\.event\.workflow_run\.conclusion == 'success'/);
+  assert.match(workflow, /github\.event\.workflow_run\.head_sha != github\.sha/);
   assert.doesNotMatch(workflow, /pull_request|system\.build\.toplevel|--cachix-cache/);
   assert.match(workflow, /--flake "\.#ciPackages\.\$SYSTEM"/);
   assert.match(workflow, /--skip-cached/);
