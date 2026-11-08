@@ -6,7 +6,6 @@
     {
       config,
       lib,
-      pkgs,
       service-registry,
       ...
     }:
@@ -63,19 +62,12 @@
       );
       # Only LAN-edge vhosts need static host overrides. Public services use
       # DNS and Cloudflare; SSH uses the direct hostSshAddresses separately.
-      rendered = lib.optionalString (lanNames != [ ]) "${lanIp} ${lib.concatStringsSep " " lanNames}\n";
     in
     {
       imports = [
         ../../service-definitions.nix
         ../../_services/address-allocator.nix
       ];
-
-      options.modules.lan-hosts.file = lib.mkOption {
-        type = lib.types.package;
-        readOnly = true;
-        description = "Rendered hosts fragment for external consumers (TV deployment).";
-      };
 
       config = {
         systemd.services.systemd-machined = {
@@ -87,8 +79,6 @@
         modules.services = {
           inherit definitions hostAddresses hostSshAddresses;
         };
-
-        modules.lan-hosts.file = pkgs.writeText "lan-hosts" rendered;
 
         networking.hosts = lib.mkIf (config.networking.hostName != svc.publicEdgeHost) {
           ${lanIp} = lanNames;
