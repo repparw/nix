@@ -34,6 +34,7 @@ concepts. Identify conflicts with documented decisions before proposing changes.
 
 ## Runbooks
 
+- [Main package prebuilds](runbooks/main-package-prebuilds.md)
 - [Diagnose fleet observability](runbooks/monitoring.md)
 - [Grafana Cloud operations (repparw/grafana)](https://github.com/repparw/grafana#readme)
 - [Check native container DNS](runbooks/check-native-container-dns.md)
