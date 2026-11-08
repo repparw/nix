@@ -213,8 +213,16 @@ class Readiness(unittest.TestCase):
             self.assertEqual(probe.call_count, 4)
         with patch.object(watch, "api", return_value={"merged": False, "merge_commit_sha": "x"}):
             self.assertEqual(watch.detect("nodejs-security", LOCK), "waiting-upstream")
-        with patch.object(watch, "api", side_effect=ValueError("missing ancestry")):
-            self.assertTrue(watch.inspect("nodejs-security", LOCK).startswith("unavailable"))
+        # Exercise unavailable API handling against an active workaround, even
+        # after the real checkout has been cleaned up by an automated PR.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / watch.WORKAROUNDS["nodejs-security"][0]
+            target.parent.mkdir(parents=True)
+            target.write_text("nodejs-security.nix ../../_packages/nodejs-security.nix")
+            with patch.object(watch, "ROOT", root), \
+                    patch.object(watch, "api", side_effect=ValueError("missing ancestry")):
+                self.assertTrue(watch.inspect("nodejs-security", LOCK).startswith("unavailable"))
 
     def test_nodejs_security_cleanup_completion_reads_the_aspect(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -381,9 +389,12 @@ class Readiness(unittest.TestCase):
             with self.subTest(watcher=name):
                 relative, _marker = watch.WORKAROUNDS[name]
                 self.assertTrue(relative.startswith("modules/aspects/upstream/"), name)
-                if not (root / relative).exists():
-                    # A previously applied cleanup no longer applies a second
-                    # time. The watcher must mark it complete, not fail CI.
+                path = root / relative
+                if not path.exists() or (_marker is not None and _marker not in path.read_text()):
+                    # A previously applied cleanup may leave the permanent
+                    # aspect but remove its temporary overlay marker. In both
+                    # cases the watcher reports completion and must not try to
+                    # reapply the removal patch.
                     self.assertEqual(watch.inspect(name, LOCK), "completed")
                     continue
                 recipe = root / ".github/upstream/cleanup" / spec["cleanup"]
