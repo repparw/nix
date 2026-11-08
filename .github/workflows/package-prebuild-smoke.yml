@@ -1,0 +1,66 @@
+name: package-prebuild-smoke
+on:
+  pull_request:
+    paths:
+      - 'modules/ci-packages.nix'
+      - '.github/scripts/main-packages.test.mjs'
+      - '.github/scripts/publish-main-packages.sh'
+      - '.github/workflows/main-packages.yml'
+      - '.github/workflows/package-prebuild-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: native-smoke (${{ matrix.system }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - system: x86_64-linux
+            runner: ubuntu-24.04
+          - system: aarch64-linux
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: repparw
+          skipPush: true
+      - name: Build uncached native fixture and inspect publisher selection
+        env:
+          SYSTEM: ${{ matrix.system }}
+        run: |
+          set -euo pipefail
+          mkdir -p ci-logs
+          nix run .#nix-fast-build --no-update-lock-file -- --flake ".#ciPackageSmoke.$SYSTEM" --systems "$SYSTEM" --skip-cached --out-link "$RUNNER_TEMP/package-smoke-result" --eval-workers 1 --eval-max-memory-size 8192 --max-jobs 1 --option cores 2 --result-file ci-logs/packages.json
+          jq -e '[.results[] | select(.type == "BUILD" and .success)] | length == 1' ci-logs/packages.json
+          output=$(jq -er '[.results[] | select(.type == "BUILD" and .success) | .outputs[]][0]' ci-logs/packages.json)
+          nix-store --query --requisites "$output" >/dev/null
+          mkdir -p "$RUNNER_TEMP/mock-bin"
+          cat > "$RUNNER_TEMP/mock-bin/cachix" <<'EOF'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          [[ "$1" == push && "$2" == repparw ]]
+          shift 2
+          printf '%s\n' "$@" > "$UPLOAD_CAPTURE"
+          EOF
+          chmod +x "$RUNNER_TEMP/mock-bin/cachix"
+          CACHIX_AUTH_TOKEN=smoke-only BUILD_SUCCEEDED=true UPLOAD_CAPTURE="$RUNNER_TEMP/cachix-paths" PATH="$RUNNER_TEMP/mock-bin:$PATH" bash .github/scripts/publish-main-packages.sh
+          test "$(cat "$RUNNER_TEMP/cachix-paths")" = "$output"
+      - name: Upload smoke logs
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package-prebuild-smoke-${{ matrix.system }}
+          path: ci-logs/
+          if-no-files-found: ignore
+          retention-days: 7
