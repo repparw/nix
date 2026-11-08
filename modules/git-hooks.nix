@@ -16,9 +16,9 @@
       # The pinned nixpkgs build forces system libgit2 without providing it.
       # Build the bundled libgit2 until nixpkgs includes the matching library.
       convco = pkgs.convco.overrideAttrs (old: {
-        env = (old.env or { }) // {
-          LIBGIT2_NO_VENDOR = "0";
-        };
+        preBuild = ''
+          export LIBGIT2_NO_VENDOR=0
+        '' + (old.preBuild or "");
       });
       bootstrapMarker = "# Managed by modules/git-hooks.nix: worktree bootstrap";
       # [ ! -e ] is true for both absent paths and dangling symlinks.
