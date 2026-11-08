@@ -30,8 +30,8 @@ jobs:
         run: |
           set -euo pipefail
           snapshot="$GITHUB_WORKSPACE/candidate/.github/scripts/role-snapshot.nix"
-          nix eval --impure --json --show-trace --file "$snapshot" --argstr flakePath "$GITHUB_WORKSPACE/baseline" | jq -S . > baseline.json
-          nix eval --impure --json --show-trace --file "$snapshot" --argstr flakePath "$GITHUB_WORKSPACE/candidate" | jq -S . > candidate.json
+          nix eval --impure --json --show-trace --expr "(import $snapshot) { flakePath = \"$GITHUB_WORKSPACE/baseline\"; }" | jq -S . > baseline.json
+          nix eval --impure --json --show-trace --expr "(import $snapshot) { flakePath = \"$GITHUB_WORKSPACE/candidate\"; }" | jq -S . > candidate.json
           if ! diff -u baseline.json candidate.json; then
             echo "::error::Den role refactor changed evaluated semantics; inspect the diff above"
             exit 1
