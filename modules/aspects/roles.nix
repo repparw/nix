@@ -13,4 +13,15 @@
     den.aspects.repparw
     den.aspects.ai._.t3code-split
   ];
+  # Shared NixOS capabilities of the two headless managed hosts.
+  # Hardware, network addresses, and actual services stay host-owned.
+  den.aspects.managed-server.includes = [
+    den.aspects.fleet-unit-state
+    den.aspects.monitoring._.persist
+    den.aspects.monitoring._.cloud
+    den.aspects.deploy-target
+    den.aspects.passwordless-sudo
+    den.aspects.persistence
+    den.aspects.service-host
+  ];
 }
