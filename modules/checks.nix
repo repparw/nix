@@ -224,7 +224,11 @@
                 cp -r ${inputs.self} src
                 chmod -R +w src
                 cd src
-                treefmt --tree-root . --walk filesystem --fail-on-change
+                treefmt --tree-root . --walk filesystem --fail-on-change || {
+                  # Print the formatter's exact output for actionable CI errors.
+                  ${pkgs.diffutils}/bin/diff -ru ${inputs.self} . | head -n 300 || true
+                  exit 1
+                }
                 touch $out
               '';
 

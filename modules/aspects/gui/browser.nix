@@ -14,6 +14,8 @@ let
     "enamippconapkdmgfgjchkhakpfinmaj"
     "bnomihfieiccainjcjblhegjgglakjdd"
     "dbepggeogbaibhgnhhndojpepiihcmeb"
+    # OpenCode Browse MCP extension (Chrome Web Store).
+    "mfnicocicmmlkpjnaffgihfjhdgjkdjg"
   ];
 
 in
