@@ -35,10 +35,13 @@ classify() {
   local path=$1 hash
   hash=$(basename "$path")
   hash=${hash%%-*}
-  if curl -fsSI -o /dev/null "$cache_url/$hash.narinfo"; then
-    printf 'repparw %s\n' "$path"
-  elif curl -fsSI -o /dev/null "$upstream_url/$hash.narinfo"; then
+  # Some upstream paths are mirrored into Cachix with their original
+  # cache.nixos.org signatures. Attribute them to upstream first so the
+  # fleet-key verification only checks genuinely fleet-signed paths.
+  if curl -fsSI -o /dev/null "$upstream_url/$hash.narinfo"; then
     printf 'upstream %s\n' "$path"
+  elif curl -fsSI -o /dev/null "$cache_url/$hash.narinfo"; then
+    printf 'repparw %s\n' "$path"
   else
     printf 'missing %s\n' "$path"
   fi
