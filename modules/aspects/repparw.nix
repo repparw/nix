@@ -10,6 +10,7 @@
       den.batteries.define-user
       den.batteries.primary-user
       den.aspects.shell
+      den.aspects.fish
       den.aspects.editors
       den.aspects.tmux
       den.aspects.git
