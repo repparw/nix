@@ -8,6 +8,11 @@ on:
       - 'flake.lock'
       - '.github/workflows/main-packages.yml'
       - '.github/scripts/publish-main-packages.sh'
+  # Actions using GITHUB_TOKEN to fast-forward main do not produce push workflows.
+  # Trigger after lock-update instead, only if main advanced during that run.
+  workflow_run:
+    workflows: [lock-update]
+    types: [completed]
   workflow_dispatch:
     inputs:
       expected_sha:
@@ -25,6 +30,7 @@ concurrency:
 
 jobs:
   packages:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_sha != github.sha)
     name: packages (${{ matrix.system }}, native)
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 180
