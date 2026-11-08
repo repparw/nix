@@ -60,7 +60,7 @@
   perSystem =
     { pkgs, ... }:
     {
-      checks = lib.optionalAttrs pkgs.stdenv.isLinux {
+      checks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         browse-mcp =
           let
             browse = pkgs.callPackage ../../_packages/opencode-browse.nix {
@@ -80,7 +80,10 @@
               mkdir -p "$HOME"
               test "$(${lib.getExe browse} --version)" = "0.0.15"
               printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"nix-ci","version":"1"}}}' \
-                | timeout 15 ${lib.getExe browse} mcp > "$TMPDIR/initialize.json"
+                | timeout 15 ${lib.getExe browse} mcp > "$TMPDIR/initialize.json" || status=$?
+              # The CLI currently exits 130 when the JSON-RPC input pipe closes.
+              # Accept that shutdown only if initialization produced a valid response.
+              test "${status:-0}" -eq 0 || test "$status" -eq 130
               jq -se 'any(.[]; .id == 1 and .result.serverInfo.name == "browse" and .result.serverInfo.version == "0.0.15")' \
                 "$TMPDIR/initialize.json"
               touch "$out"
