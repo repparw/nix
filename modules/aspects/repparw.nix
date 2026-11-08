@@ -10,6 +10,7 @@
       den.batteries.define-user
       den.batteries.primary-user
       den.aspects.shell
+      den.aspects.fish
       den.aspects.editors
       den.aspects.tmux
       den.aspects.git
@@ -79,4 +80,14 @@
       home.preferXdgDirectories = true;
     };
   };
+
+  # Host-qualified user aspects are selected by Den automatically.
+  den.aspects."repparw@alpha".includes = [
+    den.aspects.workstation-user
+    # Temporary alpha-only package experiment, retained in user scope for parity.
+    den.aspects.moonshine-pr227-test
+  ];
+
+  den.aspects."repparw@pi".includes = [ den.aspects.headless-user ];
+  den.aspects."repparw@epsilon".includes = [ den.aspects.headless-user ];
 }
