@@ -18,7 +18,8 @@
       convco = pkgs.convco.overrideAttrs (old: {
         preBuild = ''
           export LIBGIT2_NO_VENDOR=0
-        '' + (old.preBuild or "");
+        ''
+        + (old.preBuild or "");
       });
       bootstrapMarker = "# Managed by modules/git-hooks.nix: worktree bootstrap";
       # [ ! -e ] is true for both absent paths and dangling symlinks.
