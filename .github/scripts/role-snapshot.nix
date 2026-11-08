@@ -27,12 +27,15 @@ let
         fishEnabled = cfgAt [ "programs" "fish" "enable" ] false;
         sshEnabled = cfgAt [ "services" "openssh" "enable" ] false;
         moonshineEnabled = cfgAt [ "services" "moonshine" "enable" ] false;
-        moonshineUser = cfgAt [ "services" "moonshine" "user" ] null;
-        moonshinePackage = getName (cfgAt [ "services" "moonshine" "package" ] cfg.system.build.toplevel);
-        moonshineSettings = cfgAt [ "services" "moonshine" "settings" ] { };
+        moonshineUser = if hostName == "alpha" then cfg.services.moonshine.user else null;
+        moonshinePackage = if hostName == "alpha" then getName cfg.services.moonshine.package else null;
+        moonshineSettings = if hostName == "alpha" then cfg.services.moonshine.settings else { };
         steamEnabled = cfgAt [ "programs" "steam" "enable" ] false;
         gamemodeEnabled = cfgAt [ "programs" "gamemode" "enable" ] false;
-        displayAutoLogin = cfgAt [ "services" "displayManager" "autoLogin" ] { };
+        displayAutoLogin = if hostName == "alpha" then {
+          enable = cfg.services.displayManager.autoLogin.enable;
+          user = cfg.services.displayManager.autoLogin.user;
+        } else null;
         systemPackages = names cfg.environment.systemPackages;
         homeManagerSharedModules = builtins.length (cfgAt [ "home-manager" "sharedModules" ] [ ]);
         nixpkgsOverlayCount = builtins.length (cfgAt [ "nixpkgs" "overlays" ] [ ]);
