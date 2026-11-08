@@ -15,9 +15,10 @@ announcing itch.io, Humble, and other stores, with Steam/Epic/GOG excluded.
 
 The [FroggMaster fork](https://github.com/FroggMaster/free-games-claimer)
 is packaged in `modules/_packages/free-games-claimer.nix` and uses Nixpkgs
-Chromium. A sandboxed systemd service runs native headless Chromium by default.
-Xvfb and loopback-only VNC start only when SHOW=1 is selected for headed
-recovery. No display or VNC process runs during normal claims.
+Chromium. Epic runs headed on Xvfb: its storefront sits behind a Cloudflare
+managed challenge that rejects headless Chromium in every mode (probed
+2026-11-08 with the "Just a moment..." interstitial). GOG runs truly
+headless. Xvfb and loopback-only VNC exist only while a claim is running.
 
 Cookies and claim databases are stored in
 `/home/containers/config/free-games-claimer/data`, included in the existing
@@ -28,13 +29,14 @@ notifications are retried on the next run.
 
 ## Headless trial, login and recovery
 
-Regular runs use the saved Chromium profile with SHOW=0. If a saved session
-has expired, the script fails without waiting for unattended terminal prompts.
-The actual Pi session and storefront checkout still need a live smoke test.
-If headless mode causes captchas, revert the service's SHOW setting to 1.
+GOG runs headless against the saved Chromium profile; session reuse was
+verified live on 2026-11-08. Epic always runs headed on Xvfb because of the
+Cloudflare challenge, so it behaves like the former SHOW=1 path on every run.
 
-For first login or recovery, set SHOW=1 in the systemd service environment and
-deploy that change. This restores the former Xvfb and VNC behavior.
+If a saved GOG session has expired, the headless script fails promptly with a
+"login required" notification instead of waiting on unreachable prompts. For
+GOG login recovery, set SHOW=1 in the systemd service environment and deploy
+that change; Epic logins and captchas always use the VNC steps below.
 
 Use three terminals on your desktop:
 

@@ -40,8 +40,13 @@
               printf 'pending\n' > "$logs/$store.status"
             done
 
-            # Headless runs need neither an X display nor a VNC process.
-            # SHOW=1 restores the previous headed/VNC path for recovery.
+            # Epic sits behind a Cloudflare managed challenge that rejects
+            # headless Chromium (probed 2026-11-08: "Just a moment..."
+            # interstitial in every headless mode), so it always runs headed
+            # on Xvfb. GOG has no such gate and runs truly headless; SHOW=1
+            # through a systemd override flips it to headed for login
+            # recovery. Xvfb and VNC exist only while a claim runs; SSH
+            # forward localhost:5900 for Epic logins and captchas.
             xvfb_pid=
             vnc_pid=
             # Invoked via the trap below; shellcheck does not count that as a call.
@@ -56,27 +61,29 @@
             }
             trap cleanup EXIT
 
-            if [ "$SHOW" = 1 ]; then
-              export DISPLAY=:99
-              Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp &
-              xvfb_pid=$!
-              for _ in $(seq 1 50); do
-                [ -S /tmp/.X11-unix/X99 ] && break
-                kill -0 "$xvfb_pid" 2>/dev/null || exit 1
-                sleep 0.1
-              done
-              if [ ! -S /tmp/.X11-unix/X99 ]; then
-                echo "Xvfb failed to start" >&2
-                exit 1
-              fi
-              x11vnc -display :99 -localhost -forever -shared -nopw -rfbport 5900 -quiet &
-              vnc_pid=$!
+            export DISPLAY=:99
+            Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp &
+            xvfb_pid=$!
+            for _ in $(seq 1 50); do
+              [ -S /tmp/.X11-unix/X99 ] && break
+              kill -0 "$xvfb_pid" 2>/dev/null || exit 1
+              sleep 0.1
+            done
+            if [ ! -S /tmp/.X11-unix/X99 ]; then
+              echo "Xvfb failed to start" >&2
+              exit 1
             fi
+            x11vnc -display :99 -localhost -forever -shared -nopw -rfbport 5900 -quiet &
+            vnc_pid=$!
 
             rc=0
             for store in epic-games gog; do
+              case "$store" in
+                epic-games) store_show=1 ;;
+                *) store_show="''${SHOW:-0}" ;;
+              esac
               echo "=== $store: run started ==="
-              if node ${claimer}/lib/node_modules/free-games-claimer/"$store".js >"$logs/$store.log" 2>&1; then
+              if SHOW="$store_show" node ${claimer}/lib/node_modules/free-games-claimer/"$store".js >"$logs/$store.log" 2>&1; then
                 printf '0\n' > "$logs/$store.status"
               else
                 store_rc=$?

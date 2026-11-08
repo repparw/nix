@@ -41,10 +41,28 @@ class ClaimExitTest(unittest.TestCase):
                 "esac\n"
             )
             node.chmod(0o755)
-            for name in ("Xvfb", "x11vnc"):
-                path = mockbin / name
-                path.write_text("#!/usr/bin/env bash\nexit 99\n")
-                path.chmod(0o755)
+            # The wrapper waits for the X11 socket, so the Xvfb mock has to
+            # bind one; x11vnc is never awaited by the wrapper.
+            xvfb = mockbin / "Xvfb"
+            xvfb.write_text(
+                "#!/usr/bin/env bash\n"
+                "exec python3 -c '\n"
+                "import os, socket, time\n"
+                "os.makedirs(\"/tmp/.X11-unix\", exist_ok=True)\n"
+                "try:\n"
+                "    os.unlink(\"/tmp/.X11-unix/X99\")\n"
+                "except FileNotFoundError:\n"
+                "    pass\n"
+                "s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)\n"
+                "s.bind(\"/tmp/.X11-unix/X99\")\n"
+                "s.listen(1)\n"
+                "time.sleep(300)\n"
+                "'\n"
+            )
+            xvfb.chmod(0o755)
+            x11vnc = mockbin / "x11vnc"
+            x11vnc.write_text("#!/usr/bin/env bash\nexit 99\n")
+            x11vnc.chmod(0o755)
             env = os.environ | {
                 "PATH": str(mockbin) + os.pathsep + os.environ["PATH"],
                 "SHOW": "0",
