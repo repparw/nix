@@ -68,11 +68,16 @@ state); Pictures and Documents have their own sync job. Age keys are staged
 only for the HDD mirror. Restored staging data belongs under the user's home,
 not the staging path.
 
-Some Alpha home-state SQLite files are raw copies, **not transactional
-exports**. Pi's [service exporter](../../modules/aspects/pi-services-backup.nix)
-produces consistent SQLite snapshots and publishes only complete
-generations. Alpha's old copies of Pi data are historical, not current.
-Filesystem copies alone do not establish a consistent application backup.
+Alpha's curated home-state staging detects SQLite databases by file
+signature, including files without a `.db` extension. It replaces raw
+rsync copies with validated SQLite `VACUUM INTO` snapshots, removes stale
+WAL/SHM/journal sidecars, and publishes a new generation only when every
+snapshot succeeds.
+
+Pi's [service exporter](../../modules/aspects/pi-services-backup.nix)
+independently produces consistent SQLite snapshots. Alpha's old copies of
+Pi data are historical, not current. Other application data and native
+archives still require application-specific restore verification.
 
 Use [host recovery](host-recovery.md) or
 [service restoration](restore-service-backups.md) for isolated restore
