@@ -253,9 +253,15 @@
                 stateRoot = "/tmp/home-state-fixture-root";
                 paths = [
                   ".config/vesktop/settings.json"
+                  ".config/opencode/plugins/"
                   ".local/share/fish/fish_history"
+                  ".local/share/opencode/"
                   "Projects/nix/infra/terraform.tfstate"
                   "Projects/nix/infra/router/inventory.auto.tfvars"
+                ];
+                excludes = [
+                  "/.local/share/opencode/log/"
+                  "/.local/share/opencode/tool-output/"
                 ];
                 criticalPaths = [ "Projects/nix/infra/terraform.tfstate" ];
                 hddOnlyPaths = [ ".config/sops/age/keys.txt" ];
@@ -306,7 +312,7 @@
                 printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
                 printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/router/inventory.auto.tfvars")' >/dev/null
                 # Existing selection must stay untouched (spot check).
-                for kept in .config/moonshine/ .config/net.imput.helium/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
+                for kept in .config/moonshine/ .config/net.imput.helium/ .config/opencode/plugins/ .local/share/opencode/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
                   printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
                 done
                 sources='${builtins.toJSON bupstateSources}'
@@ -326,7 +332,7 @@
                 home_state='${builtins.toJSON alphaHomeState}'
                 printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
                 # Existing selection must stay untouched (spot check).
-                for kept in .config/moonshine/ .config/net.imput.helium/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
+                for kept in .config/moonshine/ .config/net.imput.helium/ .config/opencode/plugins/ .local/share/opencode/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
                   printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
                 done
                 sources='${builtins.toJSON bupstateSources}'
@@ -347,6 +353,23 @@
                 test -f $staged/.config/vesktop/settings.json
                 test -f $staged/.local/share/fish/fish_history
                 test -f $staged/.export-complete
+                # OpenCode: back up live plugin files, credentials and
+                # consistent SQLite databases, but exclude regenerable outputs.
+                mkdir -p $home/.config/opencode/plugins
+                mkdir -p $home/.local/share/opencode/log $home/.local/share/opencode/tool-output
+                printf 'export default {}\n' > $home/.config/opencode/plugins/local.ts
+                printf '{"type":"api","key":"fixture"}' > $home/.local/share/opencode/auth.json
+                python3 -c 'import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); db.execute("CREATE TABLE session (value TEXT)"); db.execute("INSERT INTO session VALUES (?)", ("saved",)); db.commit(); db.close()' $home/.local/share/opencode/opencode.db
+                printf 'log' > $home/.local/share/opencode/log/opencode.log
+                printf 'tool' > $home/.local/share/opencode/tool-output/part
+                ${staging} offsite
+                test -f $staged/.config/opencode/plugins/local.ts
+                cmp $home/.config/opencode/plugins/local.ts $staged/.config/opencode/plugins/local.ts
+                test -f $staged/.local/share/opencode/auth.json
+                test -f $staged/.local/share/opencode/opencode.db
+                test "$(sqlite3 $staged/.local/share/opencode/opencode.db 'SELECT value FROM session')" = saved
+                test ! -e $staged/.local/share/opencode/log
+                test ! -e $staged/.local/share/opencode/tool-output
                 test -f $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
                 test ! -e $staged/Projects/nix/infra/terraform.tfvars
                 test ! -e $staged/Projects/nix/infra/terraform.tfplan
@@ -391,6 +414,8 @@
                 cmp $router_dir/inventory.auto.tfvars $state_root/hdd/Projects/nix/infra/router/inventory.auto.tfvars
                 test ! -e $state_root/hdd/Projects/nix/infra/router/imports.tf
                 test -f $state_root/hdd/.config/sops/age/keys.txt
+                test -f $state_root/hdd/.config/opencode/plugins/local.ts
+                test "$(sqlite3 $state_root/hdd/.local/share/opencode/opencode.db 'SELECT value FROM session')" = saved
 
                 PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
                 touch $out
