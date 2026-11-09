@@ -68,11 +68,12 @@ state); Pictures and Documents have their own sync job. Age keys are staged
 only for the HDD mirror. Restored staging data belongs under the user's home,
 not the staging path.
 
-Alpha's curated home-state staging detects SQLite databases by file
-signature, including files without a `.db` extension. It replaces raw
-rsync copies with validated SQLite `VACUUM INTO` snapshots, removes stale
+Alpha's curated home-state staging now detects SQLite databases by file
+signature, including files without a `.db` extension. It replaces each raw
+rsync copy with a validated SQLite `VACUUM INTO` snapshot, removes stale
 WAL/SHM/journal sidecars, and publishes a new generation only when every
-snapshot succeeds.
+snapshot succeeds. The live OpenCode plugin directory is included in Alpha's
+home-state allowlist; plugins remain user-managed, not Nix-managed.
 
 Pi's [service exporter](../../modules/aspects/pi-services-backup.nix)
 independently produces consistent SQLite snapshots. Alpha's old copies of
