@@ -4,12 +4,18 @@ import { pathToFileURL } from 'node:url';
 
 const documentation = 'formatting agent-docs';
 const lightweight = 'formatting sops-files change-detection agent-docs worktree-bootstrap-guard check-flake-file deploy-schema ci-workflow tofu home-state-backup';
-const configuration = 'generated-shellcheck cachix-push ci-package-targets fleet-cli service-definitions host-persistence pi-image-configuration backup-exports monitoring-fleet btrfs-health fleet-failed-units pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage';
+const configuration = 'cachix-push ci-package-targets service-definitions host-persistence pi-image-configuration backup-exports monitoring-fleet btrfs-health fleet-failed-units pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage';
 
 const full = reason => ({
   runHosts: true,
   runPersistenceVm: true,
-  checkMatrix: { include: [{ group: 'lightweight', checks: lightweight }, { group: 'configuration', checks: configuration }] },
+  // Isolate the two expensive Nix checks without one runner per small check.
+  checkMatrix: { include: [
+    { group: 'lightweight', checks: lightweight },
+    { group: 'configuration', checks: configuration },
+    { group: 'shellcheck', checks: 'generated-shellcheck' },
+    { group: 'fleet-cli', checks: 'fleet-cli' },
+  ] },
   reason,
 });
 

@@ -79,6 +79,13 @@ test('every checkout job verifies dispatch SHA before checking out the workflow 
   assert.match(workflow, /\|\| github.run_id/);
 });
 
+test('dispatch concurrency and run names distinguish native Hermes validation', () => {
+  assert.ok(workflow.includes("format('{0}-{1}-{2}-{3}', github.sha, inputs.expected_sha, inputs.upstream_watcher || 'none', inputs.hermes_update)"));
+  assert.ok(workflow.includes("inputs.hermes_update && ' hermes=true' || ''"));
+  // Preserve the lock updater's manifest for ordinary (non-Hermes) dispatches.
+  assert.ok(workflow.includes("watchers=\$\{\{ inputs.upstream_watcher || 'none' \}\}"));
+});
+
 test('all host evaluations share one runner, and failed lock updates do not wake the watcher', () => {
   assert.match(validation, /name: host-eval \(fleet, stubbed\)/);
   assert.match(validation, /CI_CHECKS: alpha pi epsilon/);

@@ -43,11 +43,22 @@ jobs:
           poll_attempts=${HERMES_UPDATE_POLL_ATTEMPTS:-420}
           approval_token="${LOCK_UPDATE_APPROVAL_TOKEN:-}"
 
-          # Only exact-SHA workflow_dispatch runs qualify for candidate validation.
+          # Reuse only a dispatch with the native-Hermes validation manifest.
+          # A passing ordinary CI run on the same SHA does not qualify.
           latest_run() {
-            gh api --method GET "repos/$GH_REPO/actions/workflows/$1/runs" \
-              -f branch="$2" -f head_sha="$3" -f event=workflow_dispatch \
-              --jq '.workflow_runs | sort_by(.run_number, .run_attempt) | last // empty | [.id, .status, (.conclusion // "")] | @tsv'
+            local workflow="$1" ref="$2" sha="$3"
+            if [ "$workflow" = ci.yml ]; then
+              gh api --method GET "repos/$GH_REPO/actions/workflows/$workflow/runs" \
+                -f branch="$ref" -f head_sha="$sha" -f event=workflow_dispatch \
+                -f per_page=100 | jq -r --arg manifest "validate sha=$sha watchers=none hermes=true" \
+                  '[.workflow_runs[] | select(.display_title == $manifest)]
+                   | sort_by(.run_number, .run_attempt) | last // empty
+                   | [.id, .status, (.conclusion // "")] | @tsv'
+            else
+              gh api --method GET "repos/$GH_REPO/actions/workflows/$workflow/runs" \
+                -f branch="$ref" -f head_sha="$sha" -f event=workflow_dispatch \
+                --jq '.workflow_runs | sort_by(.run_number, .run_attempt) | last // empty | [.id, .status, (.conclusion // "")] | @tsv'
+            fi
           }
 
           # Reuse successful or still-running validation; re-dispatch a failed
