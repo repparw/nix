@@ -62,11 +62,11 @@ nix eval .#nixosConfigurations.alpha.config.services.restic.backups.offsite.excl
 
 Pi and Epsilon compose [host-backup](../../modules/aspects/host-backup.nix).
 Alpha selects home-state roots in [alpha.nix](../../modules/hosts/alpha.nix),
-then backs up its private `offsite` staging tree. The separate HDD mirror
-includes `.config`, `.local`, `Games`, and `Projects` (including OpenTofu
-state); Pictures and Documents have their own sync job. Age keys are staged
-only for the HDD mirror. Restored staging data belongs under the user's home,
-not the staging path.
+then backs up its private `offsite` staging tree. The HDD mirror jobs are
+retired; existing `/mnt/hdd/backup` copies remain historical. Age keys are
+not uploaded offsite; verify independent key recovery as described in
+[host recovery](host-recovery.md#recovery-after-losing-the-whole-fleet).
+Restored staging data belongs under the user's home, not the staging path.
 
 Alpha's curated home-state staging now detects SQLite databases by file
 signature, including files without a `.db` extension. It replaces each raw
@@ -88,16 +88,15 @@ restore/integrity test.
 ### After an OpenTofu state change
 
 After an authorized `tofu apply`, import, state migration, or manual repair
-on Alpha, refresh **both** the local HDD and offsite copies in order:
+on Alpha, refresh the offsite backup:
 
 ```sh
 sudo systemctl start --wait home-state-backup-offsite.service
-sudo systemctl start --wait rsync-job-bupstate.service
 sudo systemctl start --wait restic-backups-offsite.service
 ```
 
-The first updates the offsite staging tree, the second mirrors that state
-to the HDD, and the third uploads and applies its normal backup policy.
+The first updates the offsite staging tree; the second refreshes registered
+exports, uploads, and applies its normal backup policy.
 Verify each unit and the export report; stop to investigate a failure instead
 of reporting complete coverage. Do not put these commands in a hook around
 OpenTofu itself: a backup failure must not fail or retry a successful

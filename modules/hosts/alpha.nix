@@ -58,20 +58,16 @@
       }:
       let
         home = config.users.users.repparw.home;
-        # Staged by the prepare-home-state script (modules/scripts/) to
-        # ${stateRoot}/{hdd,offsite}; see modules.backup.homeState in
+        # Staged by the prepare-home-state script (modules/_scripts/) to
+        # ${stateRoot}/offsite; see modules.backup.homeState in
         # aspects/backup.nix for the selection policy.
         stateRoot = "/var/lib/home-state-backup";
-        # Each consumer has its own staging tree. A failed export never replaces
-        # its previous tree.
+        # A failed export never replaces its previous tree.
         prepareHomeState = import ../_scripts/prepare-home-state.nix { inherit pkgs lib; } {
           inherit home stateRoot;
           paths = config.modules.backup.homeState;
           excludes = config.modules.backup.homeStateExcludes;
           criticalPaths = config.modules.backup.homeStateCritical;
-          # sops/age/keys.txt deliberately HDD-only: mirror + manual, never
-          # uploaded offsite.
-          hddOnlyPaths = [ ".config/sops/age/keys.txt" ];
         };
       in
       {
@@ -323,60 +319,14 @@
             ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0032", ATTR{power/control}="on"
           '';
 
-          rsync = {
-            enable = true;
-            jobs = {
-              buptohdd = {
-                destination = "/mnt/hdd/backup";
-                sources = [
-                  "${config.users.users.repparw.home}/Pictures"
-                  "${config.users.users.repparw.home}/Documents"
-                ];
-                settings = {
-                  archive = true;
-                  delete = true;
-                  # Protect the allowlist jobs' output (same dest root).
-                  exclude = [
-                    "/.config/"
-                    "/.local/"
-                    "/Games/"
-                    "/Projects/"
-                  ];
-                };
-              };
-              bupstate = {
-                destination = "/mnt/hdd/backup";
-                sources = [
-                  "${stateRoot}/hdd/.config"
-                  "${stateRoot}/hdd/.local"
-                  "${stateRoot}/hdd/Games"
-                  # Staged OpenTofu state (Projects/nix/infra), see
-                  # modules.backup.homeStateCritical.
-                  "${stateRoot}/hdd/Projects"
-                ];
-                settings = {
-                  archive = true;
-                  delete = true;
-                };
-              };
-
-            };
-          };
         };
 
-        systemd.services.rsync-job-bupstate.serviceConfig = {
-          StateDirectory = "home-state-backup";
-          StateDirectoryMode = "0700";
-          # Large live SQLite files can take longer than rsync alone.
-          TimeoutStartSec = "15min";
-          ExecStartPre = "${prepareHomeState} hdd";
-        };
         systemd.services.home-state-backup-offsite.serviceConfig = {
           Type = "oneshot";
           StateDirectory = "home-state-backup";
           StateDirectoryMode = "0700";
           TimeoutStartSec = "15min";
-          ExecStart = "${prepareHomeState} offsite";
+          ExecStart = "${prepareHomeState}";
         };
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl

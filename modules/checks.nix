@@ -243,8 +243,8 @@
           # Alpha's home-state staging: exercises the production
           # prepare-home-state script against a fixture home — including the
           # critical-file guards for the OpenTofu state — and asserts the
-          # evaluated alpha configuration keeps both backup destinations
-          # covered.
+          # evaluated alpha configuration keeps offsite coverage without HDD
+          # backup jobs.
           home-state-backup =
             let
               prepareHomeState = import ./_scripts/prepare-home-state.nix { inherit pkgs lib; };
@@ -264,14 +264,13 @@
                   "/.local/share/opencode/tool-output/"
                 ];
                 criticalPaths = [ "Projects/nix/infra/terraform.tfstate" ];
-                hddOnlyPaths = [ ".config/sops/age/keys.txt" ];
               };
               # Cut the string context: these evaluated values are plain
               # paths and the check derivation must not depend on the host
               # closure (same trick as evalHost above).
               alpha = inputs.self.nixosConfigurations.alpha.config;
               alphaHomeState = map builtins.unsafeDiscardStringContext alpha.modules.backup.homeState;
-              bupstateSources = map builtins.unsafeDiscardStringContext alpha.services.rsync.jobs.bupstate.sources;
+              rsyncJobs = builtins.attrNames alpha.services.rsync.jobs;
               resticPaths = map builtins.unsafeDiscardStringContext alpha.services.restic.backups.offsite.paths;
             in
             pkgs.runCommand "check-home-state-backup"
@@ -315,36 +314,24 @@
                 for kept in .config/moonshine/ .config/net.imput.helium/ .config/opencode/plugins/ .local/share/opencode/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
                   printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
                 done
-                sources='${builtins.toJSON bupstateSources}'
-                printf '%s' "$sources" | jq -e 'index("/var/lib/home-state-backup/hdd/Projects")' >/dev/null
+                jobs='${builtins.toJSON rsyncJobs}'
+                printf '%s' "$jobs" | jq -e '(index("bupstate") == null) and (index("buptohdd") == null)' >/dev/null
                 restic_paths='${builtins.toJSON resticPaths}'
                 printf '%s' "$restic_paths" | jq -e 'index("/var/lib/home-state-backup/offsite")' >/dev/null
 
                 # Bootstrap: a missing critical source without a prior backup
                 # marker is tolerated (host without tofu yet).
-                ${staging} offsite
+                ${staging}
                 staged=$state_root/offsite
                 test ! -e $staged/Projects/nix/infra/terraform.tfstate
                 test -f $staged/.config/vesktop/settings.json
                 test ! -e $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
 
-                # Evaluated alpha configuration coverage.
-                home_state='${builtins.toJSON alphaHomeState}'
-                printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
-                # Existing selection must stay untouched (spot check).
-                for kept in .config/moonshine/ .config/net.imput.helium/ .config/opencode/plugins/ .local/share/opencode/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
-                  printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
-                done
-                sources='${builtins.toJSON bupstateSources}'
-                printf '%s' "$sources" | jq -e 'index("/var/lib/home-state-backup/hdd/Projects")' >/dev/null
-                restic_paths='${builtins.toJSON resticPaths}'
-                printf '%s' "$restic_paths" | jq -e 'index("/var/lib/home-state-backup/offsite")' >/dev/null
-
                 # Off-site staging: state plus the rest of the allowlist,
                 # never the neighbors.
                 printf '{"version": 4, "serial": 1, "resources": [{"type": "oci_core_instance", "name": "epsilon"}]}' > $state
                 chmod 600 $state
-                ${staging} offsite
+                ${staging}
                 test -f $staged/Projects/nix/infra/terraform.tfstate
                 test -f $staged/Projects/nix/infra/router/inventory.auto.tfvars
                 cmp $router_dir/inventory.auto.tfvars $staged/Projects/nix/infra/router/inventory.auto.tfvars
@@ -362,7 +349,7 @@
                 python3 -c 'import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); db.execute("CREATE TABLE session (value TEXT)"); db.execute("INSERT INTO session VALUES (?)", ("saved",)); db.commit(); db.close()' $home/.local/share/opencode/opencode.db
                 printf 'log' > $home/.local/share/opencode/log/opencode.log
                 printf 'tool' > $home/.local/share/opencode/tool-output/part
-                ${staging} offsite
+                ${staging}
                 test -f $staged/.config/opencode/plugins/local.ts
                 cmp $home/.config/opencode/plugins/local.ts $staged/.config/opencode/plugins/local.ts
                 test -f $staged/.local/share/opencode/auth.json
@@ -381,7 +368,7 @@
                 # valid staged generation.
                 previous_stamp=$(cat $staged/.export-complete)
                 printf 'not json {{' > $state
-                if ${staging} offsite; then
+                if ${staging}; then
                   echo 'corrupt state must fail the export' >&2
                   exit 1
                 fi
@@ -391,7 +378,7 @@
                 # After a successful backup, a missing critical source is an
                 # alarm, not a silent gap.
                 rm $state
-                if ${staging} offsite; then
+                if ${staging}; then
                   echo 'disappeared state must fail the export' >&2
                   exit 1
                 fi
@@ -401,21 +388,11 @@
                 # Never capture while OpenTofu holds the state lock.
                 printf '{"version": 4, "serial": 2, "resources": []}' > $state
                 touch $state_dir/.terraform.tfstate.lock.info
-                if ${staging} offsite; then
+                if ${staging}; then
                   echo 'locked state must fail the export' >&2
                   exit 1
                 fi
                 rm $state_dir/.terraform.tfstate.lock.info
-
-                # HDD destination additionally stages the age keys and the
-                # critical state.
-                ${staging} hdd
-                test -f $state_root/hdd/Projects/nix/infra/terraform.tfstate
-                cmp $router_dir/inventory.auto.tfvars $state_root/hdd/Projects/nix/infra/router/inventory.auto.tfvars
-                test ! -e $state_root/hdd/Projects/nix/infra/router/imports.tf
-                test -f $state_root/hdd/.config/sops/age/keys.txt
-                test -f $state_root/hdd/.config/opencode/plugins/local.ts
-                test "$(sqlite3 $state_root/hdd/.local/share/opencode/opencode.db 'SELECT value FROM session')" = saved
 
                 PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
                 touch $out
