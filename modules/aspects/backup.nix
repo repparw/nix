@@ -128,8 +128,8 @@
           };
           homeState = lib.mkOption {
             description = ''
-              Home-relative paths staged by the home-state backup for the HDD
-              mirror and the offsite staging tree. Curated small irreplaceable
+              Home-relative paths staged by the home-state backup for the
+              offsite staging tree. Curated small irreplaceable
               state; everything else is nix-declared, OAuth/session
               (re-login), or regenerable cache.
             '';

@@ -10,12 +10,10 @@
   # Absolute home and staging root; both are baked into the script.
   home,
   stateRoot,
-  # Home-relative paths staged for both destinations.
+  # Home-relative paths staged for offsite backup.
   paths,
   # Rsync exclude patterns applied below the --relative anchor.
   excludes ? [ ],
-  # Paths staged only for the HDD destination (never uploaded offsite).
-  hddOnlyPaths ? [ ],
   # Subset of paths guarded as critical. When a source exists it must be
   # unlocked by OpenTofu, staged non-empty, and parseable, or the whole
   # export fails and the previous staged generation is preserved. A missing
@@ -27,7 +25,7 @@
 }:
 let
   # Marker names are the relative path with separators flattened; they live
-  # outside the hdd/offsite generation trees and survive replacements.
+  # outside the offsite generation tree and survive replacements.
   markerOf = path: builtins.replaceStrings [ "/" ] [ "__" ] path;
 in
 pkgs.writeShellScript "prepare-home-state" ''
@@ -42,11 +40,10 @@ pkgs.writeShellScript "prepare-home-state" ''
     ]
   }
   test -d ${lib.escapeShellArg home}
-  case "$1" in hdd|offsite) ;; *) exit 1 ;; esac
   parent=${lib.escapeShellArg stateRoot}
-  destination="$parent/$1"
+  destination="$parent/offsite"
   seen_dir="$parent/.critical-seen"
-  temporary=$(mktemp -d "$parent/.prepare-$1.XXXXXX")
+  temporary=$(mktemp -d "$parent/.prepare-offsite.XXXXXX")
   trap 'rm -rf "$temporary"' EXIT
   mkdir -p "$temporary/.config" "$temporary/.local" "$seen_dir"
   ${lib.concatMapStrings (path: ''
@@ -86,14 +83,9 @@ pkgs.writeShellScript "prepare-home-state" ''
       printf '%s\n' "$(date --iso-8601=ns)" > "$seen_dir/${markerOf path}"
     fi
   '') criticalPaths}
-  if [ "$1" = hdd ]; then
-    rsync --archive --relative --ignore-missing-args -- \
-      ${lib.escapeShellArgs (map (p: "${home}/./${p}") hddOnlyPaths)} \
-      "$temporary/"
-  fi
   # A raw rsync copy is not a consistent SQLite snapshot when a writer
   # has an active WAL. Replace every detected SQLite file with a validated,
-  # self-contained online snapshot before publishing either destination.
+  # self-contained online snapshot before publishing the staging tree.
   python3 ${../scripts/home-state-sqlite.py} ${lib.escapeShellArg home} "$temporary"
   date --iso-8601=ns > "$temporary/.export-complete"
   rm -rf "$destination"

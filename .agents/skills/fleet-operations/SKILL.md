@@ -77,9 +77,8 @@ does not establish a **complete** application backup: stale or failed
 producers can mark the report incomplete and prevent pruning. A successful
 unit status is not a substitute for checking export coverage and freshness.
 
-After an authorized OpenTofu state change on Alpha, run the three backup
-units in the documented order for offsite staging, HDD mirroring, and
-offsite upload. Use the [state recovery reference](../../../docs/runbooks/host-recovery.md#restore-the-opentofu-state);
+After an authorized OpenTofu state change on Alpha, run the backup
+units in the documented order for offsite staging and upload. Use the [state recovery reference](../../../docs/runbooks/host-recovery.md#restore-the-opentofu-state);
 do not attach backups as hooks to `tofu apply`.
 
 Restoring host or service data is a separate, higher-risk workflow. Read

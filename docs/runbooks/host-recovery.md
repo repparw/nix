@@ -72,8 +72,6 @@ Coverage:
   `/var/lib/home-state-backup/offsite/Projects/nix/infra/terraform.tfstate`
   and the daily `restic-backups-offsite` job uploads the whole staging tree to
   `rclone:gd-crypt:restic/alpha`.
-- **Local HDD:** the same staging tree is mirrored by `rsync-job-bupstate` to
-  `/mnt/hdd/backup/Projects/nix/infra/terraform.tfstate`.
 - `terraform.tfstate.backup` (OpenTofu's automatic pre-change copy) is
   deliberately not staged: restic snapshots already provide generation
   history.
@@ -99,10 +97,10 @@ tofu state list -state="$restored"   # expect the eight managed resources
 sha256sum "$restored" ~/Projects/nix/infra/terraform.tfstate
 ```
 
-HDD copies restore the same way without the repository environment:
-`/mnt/hdd/backup/Projects/nix/infra/terraform.tfstate`. Validate with
-`tofu state list -state=...` before using any recovered copy, and compare
-checksums against the live file when both exist.
+Historical HDD copies may remain at
+`/mnt/hdd/backup/Projects/nix/infra/terraform.tfstate`; the HDD backup jobs
+are retired. Validate any historical copy with `tofu state list -state=...`
+and check its age before using it.
 
 Prefer a restored snapshot over re-importing: the snapshot preserves the
 exact serial and resource identities the fleet last applied. Re-running the
@@ -111,11 +109,10 @@ available — it re-derives state from the live cloud, but silently adopts any
 out-of-band drift as the new baseline.
 
 After any `tofu apply`, import, state migration, or manual state repair on
-alpha, capture a fresh backup in both destinations immediately:
+alpha, capture a fresh offsite backup immediately:
 
 ```sh
 sudo systemctl start --wait home-state-backup-offsite.service
-sudo systemctl start --wait rsync-job-bupstate.service
 sudo systemctl start --wait restic-backups-offsite.service
 ```
 
