@@ -274,6 +274,8 @@
                   pkgs.coreutils
                   pkgs.jq
                   pkgs.rsync
+                  pkgs.python3
+                  pkgs.sqlite
                 ];
               }
               ''
@@ -390,6 +392,7 @@
                 test ! -e $state_root/hdd/Projects/nix/infra/router/imports.tf
                 test -f $state_root/hdd/.config/sops/age/keys.txt
 
+                PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
                 touch $out
               '';
 
