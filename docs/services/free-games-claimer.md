@@ -15,9 +15,10 @@ announcing itch.io, Humble, and other stores, with Steam/Epic/GOG excluded.
 
 The [FroggMaster fork](https://github.com/FroggMaster/free-games-claimer)
 is packaged in `modules/_packages/free-games-claimer.nix` and uses Nixpkgs
-Chromium. A single unprivileged, sandboxed systemd service starts a temporary
-Xvfb display and loopback-only VNC server while it runs. No VNC server or
-display stays running between claims.
+Chromium. Epic runs headed on Xvfb: its storefront sits behind a Cloudflare
+managed challenge that rejects headless Chromium in every mode (probed
+2026-11-08 with the "Just a moment..." interstitial). GOG runs truly
+headless. Xvfb and loopback-only VNC exist only while a claim is running.
 
 Cookies and claim databases are stored in
 `/home/containers/config/free-games-claimer/data`, included in the existing
@@ -26,7 +27,16 @@ access to the Discord bot token; a privileged post-stop notifier reads
 `hermes-env` and tracks which results have been announced. Failed
 notifications are retried on the next run.
 
-## First login and re-login
+## Headless trial, login and recovery
+
+GOG runs headless against the saved Chromium profile; session reuse was
+verified live on 2026-11-08. Epic always runs headed on Xvfb because of the
+Cloudflare challenge, so it behaves like the former SHOW=1 path on every run.
+
+If a saved GOG session has expired, the headless script fails promptly with a
+"login required" notification instead of waiting on unreachable prompts. For
+GOG login recovery, set SHOW=1 in the systemd service environment and deploy
+that change; Epic logins and captchas always use the VNC steps below.
 
 Use three terminals on your desktop:
 
@@ -51,8 +61,14 @@ endpoint is only available while the service is active, and only over SSH.
 - Inspect schedule: `ssh pi systemctl list-timers free-games-claimer.timer`
 - Test without purchases: temporarily set `DRYRUN=1` in the service environment.
 
-A failed store run does not prevent the next scheduled attempt. Notification
-state only advances after Discord acknowledges the complete batch.
+The timer runs daily at 18:10 ART plus up to 30 minutes of jitter. Exit 75
+marks a recognized temporary checkout failure and triggers a retry after
+45 minutes. Systemd permits at most four starts (including manual starts) in
+a rolling 23-hour window, so at most three retries follow a scheduled start.
+Unexpected exceptions, authentication errors and detected captchas exit 1
+without automatic retries. The next daily timer attempts the claims again,
+subject to systemd's start limit. The Discord notifier remains in this
+experiment; switching to Grafana-only alerts is a separate change.
 
 ## Related
 

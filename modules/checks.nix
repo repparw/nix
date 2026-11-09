@@ -210,7 +210,7 @@
               ''
                 cd ${inputs.self}
                 node --test .github/scripts/ci.test.mjs .github/scripts/ci-impact.test.mjs .github/scripts/main-packages.test.mjs
-                actionlint -shellcheck= .github/workflows/ci.yml .github/workflows/revision-validation.yml .github/workflows/pr-title.yml .github/workflows/upstream-watch.yml .github/workflows/main-packages.yml .github/workflows/package-prebuild-smoke.yml
+                actionlint -shellcheck= .github/workflows/ci.yml .github/workflows/revision-validation.yml .github/workflows/pr-title.yml .github/workflows/upstream-watch.yml .github/workflows/claimer-package.yml .github/workflows/main-packages.yml .github/workflows/package-prebuild-smoke.yml
                 touch $out
               '';
 
