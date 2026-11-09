@@ -23,8 +23,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      # The standalone title check must not evaluate the entire fleet flake.
+      # Keep this at the same Convco version as the local convco-ci hook.
       - name: Validate the squash commit title
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
@@ -44,4 +44,16 @@ jobs:
           if test "$PR_TITLE" = 'flake.lock: Update'; then
             exit 0
           fi
-          printf '%s\n' "$PR_TITLE" | nix shell .#convco-ci --command convco check --from-stdin
+          set -euo pipefail
+          archive="$RUNNER_TEMP/convco.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 \
+            'https://github.com/convco/convco/releases/download/v0.7.2/convco-x86_64-unknown-linux-musl.tar.gz' \
+            --output "$archive"
+          # Digest from the GitHub v0.7.2 release asset, not the PR.
+          printf '%s  %s\n' 'f9cfad24af372018f4b8d430cf86d1b7b9b36fcb7e1db5dd30c54b2eed7dde75' "$archive" \
+            | sha256sum --check --status
+          mkdir -p "$RUNNER_TEMP/convco"
+          tar -xzf "$archive" -C "$RUNNER_TEMP/convco" --strip-components=1 \
+            'convco-x86_64-unknown-linux-musl/convco'
+          chmod +x "$RUNNER_TEMP/convco/convco"
+          printf '%s\n' "$PR_TITLE" | "$RUNNER_TEMP/convco/convco" check --from-stdin
