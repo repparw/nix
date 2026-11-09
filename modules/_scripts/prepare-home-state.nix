@@ -37,6 +37,8 @@ pkgs.writeShellScript "prepare-home-state" ''
       pkgs.coreutils
       pkgs.jq
       pkgs.rsync
+      pkgs.python3
+      pkgs.sqlite
     ]
   }
   test -d ${lib.escapeShellArg home}
@@ -89,6 +91,10 @@ pkgs.writeShellScript "prepare-home-state" ''
       ${lib.escapeShellArgs (map (p: "${home}/./${p}") hddOnlyPaths)} \
       "$temporary/"
   fi
+  # A raw rsync copy is not a consistent SQLite snapshot when a writer
+  # has an active WAL. Replace every detected SQLite file with a validated,
+  # self-contained online snapshot before publishing either destination.
+  python3 ${../scripts/home-state-sqlite.py} ${lib.escapeShellArg home} "$temporary"
   date --iso-8601=ns > "$temporary/.export-complete"
   rm -rf "$destination"
   mv "$temporary" "$destination"
