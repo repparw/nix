@@ -14,8 +14,10 @@
         json5 = pkgs.python3Packages.toPythonApplication pkgs.python3Packages.json5;
       in
       {
-        xdg.configFile."opencode/plugins/nous-live.ts".source = ./opencode-plugins/nous-live.ts;
-        xdg.configFile."opencode/plugins/explabs-free.ts".source = ./opencode-plugins/explabs-free.ts;
+        # Plugins are live state in ~/.config/opencode/plugins/ (seeded by
+        # hand from the repo history during the live-state migration); the
+        # runtime providers (nous-portal, explabs, orcarouter) and the
+        # session default model come from those plugins.
         # Compute the opencode provider instance's hidden models at activation
         # time from the live Zen and OpenRouter catalogs. Everything is hidden
         # except: endpoints containing "free", OpenRouter's ~latest dynamic
@@ -88,7 +90,12 @@
           skills = { };
           web.enable = false;
           settings = {
-            model = "opencode/muse-spark-1.3-contributor-free";
+            # small_model has no plugin surface (the runtime derives it from
+            # model families), so it stays the one declared model setting;
+            # everything else model-related is runtime state: the session
+            # default comes from model-defaults.ts, and providers are
+            # registered by their plugins (nous-live, explabs-free,
+            # orca-router) — see those files.
             small_model = "opencode/muse-spark-1.3-contributor-free";
             # GitHub Student/Free Copilot plans only allow Auto model
             # selection; this plugin adds the github-copilot/auto router
@@ -102,53 +109,11 @@
               };
             };
             formatter = false;
-            provider = {
-              explabs = {
-                npm = "@ai-sdk/openai-compatible";
-                name = "Experiential Labs";
-                options.baseURL = "https://api.experientiallabs.ai/api/v1";
-                models = {
-                  "deepseek-v4.1-flash" = {
-                    name = "DeepSeek V4.1 Flash";
-                  };
-                };
-              };
-              nous-portal = {
-                npm = "@ai-sdk/openai-compatible";
-                name = "Nous Portal";
-                options = {
-                  baseURL = "https://inference-api.nousresearch.com/v1";
-                  # Free-tier routes require a `user=` tag; nous-live.ts strips
-                  # this key from options and injects it into request bodies.
-                  nousUserTag = "user=ubritos@gmail.com";
-                };
-              };
-              orcarouter = {
-                npm = "@ai-sdk/openai-compatible";
-                name = "OrcaRouter";
-                options = {
-                  baseURL = "https://api.orcarouter.ai/v1";
-                };
-                models = {
-                  "deepseek/deepseek-v4-flash-free" = {
-                    name = "DeepSeek V4 Flash (Free)";
-                  };
-                  "deepseek/deepseek-v4-pro-free" = {
-                    name = "DeepSeek V4 Pro (Free)";
-                  };
-                };
-              };
-            };
           };
         };
       };
   };
   perSystem = { config, pkgs, ... }: {
     packages.opencode = pkgs.opencode;
-    checks.explabs-free-provider = pkgs.runCommand "check-explabs-free-provider" { } ''
-      ${pkgs.nodejs}/bin/node ${../../_tests/explabs-free-provider.mjs} \
-        ${config.packages.opencode}/bin/opencode ${./opencode-plugins/explabs-free.ts}
-      touch $out
-    '';
   };
 }
