@@ -6,25 +6,15 @@
 {
   den.aspects.ai.provides.mcp = {
     homeManager =
-      { pkgs, osConfig, ... }:
+      { pkgs, ... }:
       let
         stitch = pkgs.callPackage ../../_packages/kof-stitch-mcp.nix { nodejs = pkgs.nodejs-runtime; };
-        browse = pkgs.callPackage ../../_packages/opencode-browse.nix {
-          nodejs-runtime = pkgs.nodejs-runtime;
-        };
-        # Browse drives the live Helium desktop browser (extension +
-        # chrome.debugger), so it only makes sense on Alpha. The package,
-        # MCP entry, and Helium policy are therefore Alpha-only; T3 Preview
-        # remains the headless path fleet-wide and Hermes keeps its own
-        # agent-browser in its container.
-        browseEnabled = osConfig.networking.hostName == "alpha";
       in
       {
         home.packages = [
           pkgs.mcp-nixos
           pkgs.google-cloud-sdk
-        ]
-        ++ lib.optional browseEnabled browse;
+        ];
 
         programs.mcp = {
           enable = true;
@@ -40,21 +30,29 @@
                 GOOGLE_CLOUD_PROJECT = "gen-lang-client-0649723761";
               };
             };
-          }
-          // lib.optionalAttrs browseEnabled {
-            browse = {
-              command = lib.getExe browse;
-              args = [ "mcp" ];
-              env = {
-                # Pinned by store path; disable silent auto-update so
-                # the version only changes via flake updates.
-                OPENCODE_BROWSER_AUTO_UPDATE = "off";
-              };
-            };
           };
         };
       };
   };
+
+  den.aspects.ai.provides.browse-desktop.homeManager =
+    { pkgs, ... }:
+    let
+      browse = pkgs.callPackage ../../_packages/opencode-browse.nix {
+        nodejs-runtime = pkgs.nodejs-runtime;
+      };
+    in
+    {
+      home.packages = [ browse ];
+
+      programs.mcp.servers.browse = {
+        command = lib.getExe browse;
+        args = [ "mcp" ];
+        env = {
+          OPENCODE_BROWSER_AUTO_UPDATE = "off";
+        };
+      };
+    };
 
   # Exercise the real packaged CLI, not the host-eval stubs.
   perSystem =

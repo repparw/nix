@@ -100,9 +100,6 @@
               "*" = {
                 "*" = "allow";
               };
-              # Browse can act on signed-in Helium tabs. Keep existing tool
-              # permissions unchanged, but ask before its MCP tools run.
-              # OpenCode can approve repeated calls for the current session.
               "browse_*" = {
                 "*" = "ask";
               };
