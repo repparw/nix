@@ -123,8 +123,8 @@
             # Whole Helium profile: extension state (Vimium exclusions,
             # DeArrow, ImprovedTube) lives in per-extension LevelDB dirs that
             # would otherwise need enumerating, and update wipes have proven
-            # that guessing the file list loses data. The sqlite files are
-            # staged as raw copies with their sidecars, and homeStateExcludes
+            # that guessing the file list loses data. SQLite files are
+            # snapshotted consistently during staging, and homeStateExcludes
             # prunes caches and telemetry.
             ".config/net.imput.helium/"
             ".config/fish/fish_variables"
@@ -355,12 +355,15 @@
         systemd.services.rsync-job-bupstate.serviceConfig = {
           StateDirectory = "home-state-backup";
           StateDirectoryMode = "0700";
+          # Large live SQLite files can take longer than rsync alone.
+          TimeoutStartSec = "15min";
           ExecStartPre = "${prepareHomeState} hdd";
         };
         systemd.services.home-state-backup-offsite.serviceConfig = {
           Type = "oneshot";
           StateDirectory = "home-state-backup";
           StateDirectoryMode = "0700";
+          TimeoutStartSec = "15min";
           ExecStart = "${prepareHomeState} offsite";
         };
 
