@@ -42,17 +42,24 @@ stdenv.mkDerivation {
 
   installPhase = ''
     runHook preInstall
+    # Some npm tarballs (notably pngjs@7.0.0) ship directories as drw-rw-rw-
+    # (no +x), so a plain extract cannot create files inside them. Extract
+    # once, restore the exec bit on directories, then re-extract without
+    # overwriting the fixed directories.
+    extractTgz() {
+      local tgz="$1" dest="$2"
+      mkdir -p "$dest"
+      tar --no-same-permissions -xzf "$tgz" -C "$dest" --strip-components=1 || true
+      find "$dest" -type d -exec chmod u+rwX {} +
+      tar --no-same-permissions --no-overwrite-dir -xzf "$tgz" -C "$dest" --strip-components=1
+    }
     mkdir -p $out/lib/browse
-    tar xzf $src -C $out/lib/browse --strip-components=1
-    mkdir -p $out/lib/browse/node_modules/patchright-core
-    tar xzf $patchrightCore -C $out/lib/browse/node_modules/patchright-core --strip-components=1
-    for dep in ws acorn pixelmatch pngjs; do
-      mkdir -p "$out/lib/browse/node_modules/$dep"
-    done
-    tar xzf "$ws" -C "$out/lib/browse/node_modules/ws" --strip-components=1
-    tar xzf "$acorn" -C "$out/lib/browse/node_modules/acorn" --strip-components=1
-    tar xzf "$pixelmatch" -C "$out/lib/browse/node_modules/pixelmatch" --strip-components=1
-    tar xzf "$pngjs" -C "$out/lib/browse/node_modules/pngjs" --strip-components=1
+    extractTgz "$src" $out/lib/browse
+    extractTgz "$patchrightCore" $out/lib/browse/node_modules/patchright-core
+    extractTgz "$ws" $out/lib/browse/node_modules/ws
+    extractTgz "$acorn" $out/lib/browse/node_modules/acorn
+    extractTgz "$pixelmatch" $out/lib/browse/node_modules/pixelmatch
+    extractTgz "$pngjs" $out/lib/browse/node_modules/pngjs
     mkdir -p $out/bin
     makeWrapper ${nodejs-runtime}/bin/node $out/bin/browse \
       --add-flags "$out/lib/browse/dist/cli.mjs" \
