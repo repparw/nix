@@ -120,6 +120,8 @@
             ".config/codex/skills/"
             ".config/codex/plugins/"
             ".config/codex/goals_1.sqlite"
+            # Live OpenCode plugins are intentionally not managed by Nix.
+            ".config/opencode/plugins/"
             # Whole Helium profile: extension state (Vimium exclusions,
             # DeArrow, ImprovedTube) lives in per-extension LevelDB dirs that
             # would otherwise need enumerating, and update wipes have proven
@@ -155,26 +157,36 @@
             # Declarative router inventory: local and gitignored, backed up
             # alongside state but not parsed as OpenTofu JSON state.
             "Projects/nix/infra/router/inventory.auto.tfvars"
+            # OpenCode session and credential state: SQLite databases are
+            # snapshotted consistently during staging. Logs and tool outputs
+            # are regenerable.
+            ".local/share/opencode/"
           ];
-          homeStateExcludes = map (dir: "/.config/net.imput.helium/${dir}") [
-            "Default/History*"
-            "Default/Service Worker/CacheStorage"
-            "Default/Service Worker/ScriptCache"
-            "Default/GPUCache"
-            "Default/DawnWebGPUCache"
-            "Default/DawnGraphiteCache"
-            "GPUPersistentCache"
-            "GrShaderCache"
-            "ShaderCache"
-            "GraphiteDawnCache"
-            "component_crx_cache"
-            "extensions_crx_cache"
-            "CertificateRevocation"
-            "Dictionaries"
-            "segmentation_platform"
-            "DeferredBrowserMetrics"
-            "Variations"
-          ];
+          homeStateExcludes =
+            map (dir: "/.config/net.imput.helium/${dir}") [
+              "Default/History*"
+              "Default/Service Worker/CacheStorage"
+              "Default/Service Worker/ScriptCache"
+              "Default/GPUCache"
+              "Default/DawnWebGPUCache"
+              "Default/DawnGraphiteCache"
+              "GPUPersistentCache"
+              "GrShaderCache"
+              "ShaderCache"
+              "GraphiteDawnCache"
+              "component_crx_cache"
+              "extensions_crx_cache"
+              "CertificateRevocation"
+              "Dictionaries"
+              "segmentation_platform"
+              "DeferredBrowserMetrics"
+              "Variations"
+            ]
+            # Regenerable opencode artifacts, not session state.
+            ++ map (dir: "/.local/share/opencode/${dir}") [
+              "log/"
+              "tool-output/"
+            ];
           homeStateCritical = [
             "Projects/nix/infra/terraform.tfstate"
             "Projects/nix/infra/router/terraform.tfstate"
