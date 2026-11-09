@@ -111,13 +111,13 @@ class HermesUpdateTests(unittest.TestCase):
             'gh() { printf "%s\\n" "$RUNS"; }',
             "latest_run ci.yml automation/hermes-stable abc123",
         ))
-        result = bash(script, env={"RUNS": json.dumps(runs)})
+        result = bash(script, env={"RUNS": json.dumps(runs), "GH_REPO": "repparw/nix"})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.strip(), "102\tcompleted\tsuccess")
 
         # A green normal dispatch must not count as Hermes validation.
         runs["workflow_runs"] = [runs["workflow_runs"][0], runs["workflow_runs"][2]]
-        result = bash(script, env={"RUNS": json.dumps(runs)})
+        result = bash(script, env={"RUNS": json.dumps(runs), "GH_REPO": "repparw/nix"})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.strip(), "")
 
