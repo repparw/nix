@@ -43,8 +43,6 @@
       };
     in
     {
-      home.packages = [ browse ];
-
       programs.mcp.servers.browse = {
         command = lib.getExe browse;
         args = [ "mcp" ];
@@ -57,15 +55,21 @@
   # Exercise the real packaged CLI, not the host-eval stubs.
   perSystem =
     { pkgs, ... }:
+    let
+      browse = pkgs.callPackage ../../_packages/opencode-browse.nix {
+        # perSystem packages do not inherit host-scoped overlays.
+        nodejs-runtime = pkgs.nodejs_24;
+      };
+    in
     {
+      # Keep the CLI accessible on demand without adding it to the user PATH.
+      # Run from the flake checkout with: nix run .#browse -- pair
+      packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+        inherit browse;
+      };
+
       checks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         browse-mcp =
-          let
-            browse = pkgs.callPackage ../../_packages/opencode-browse.nix {
-              # perSystem packages do not inherit host-scoped overlays.
-              nodejs-runtime = pkgs.nodejs_24;
-            };
-          in
           pkgs.runCommand "check-browse-mcp"
             {
               nativeBuildInputs = [
