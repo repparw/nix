@@ -8,6 +8,11 @@
       den.aspects.networking
       den.aspects.secrets
       den.aspects.fleet-cli
+      # Every host participates in fleet monitoring, deploy, and service discovery.
+      den.aspects.monitoring._.cloud
+      den.aspects.fleet-unit-state
+      den.aspects.deploy-target
+      den.aspects.service-host
     ];
 
     default = {
