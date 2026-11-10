@@ -306,7 +306,7 @@ in
               # Model snapshots may precede plugin activation. Confirm a
               # complete JSON response twice before accepting any changes.
               for attempt in 1 2 3; do
-                payload=$(timeout 20 runuser -u repparw -- env HOME="$opencode_home" "$opencode_bin" api get '/api/model?types=chat' 2>/dev/null) || payload=
+                payload=$(timeout 20 setpriv --reuid=repparw --regid=repparw --init-groups -- env HOME="$opencode_home" "$opencode_bin" api get '/api/model?types=chat' 2>/dev/null) || payload=
                 if [ -n "$payload" ] &&
                   printf '%s\n' "$payload" | jq -e '
                     type == "object" and
@@ -444,7 +444,7 @@ in
             serviceConfig = {
               Type = "oneshot";
               # Keep Discord notification privileged for /run/secrets/hermes-env.
-              # The OpenCode CLI and plugins run as repparw through runuser.
+              # The OpenCode CLI and plugins run as repparw through setpriv (no PAM).
               NoNewPrivileges = true;
               ExecStart = lib.getExe freeModelWatch;
               StateDirectory = "free-model-watch";

@@ -51,9 +51,10 @@ case "$*" in
 esac
 """
 
-RUNUSER = """#!/usr/bin/env bash
-[ "$1" = "-u" ] && [ "$2" = "repparw" ] && [ "$3" = "--" ] || exit 81
-shift 3
+SETPRIV = """#!/usr/bin/env bash
+[ "$1" = "--reuid=repparw" ] && [ "$2" = "--regid=repparw" ] &&
+  [ "$3" = "--init-groups" ] && [ "$4" = "--" ] || exit 81
+shift 4
 exec "$@"
 """
 
@@ -76,7 +77,7 @@ class FreeModelWatch(unittest.TestCase):
     def setUp(self):
         self.root = Path(tempfile.mkdtemp(prefix="free-model-watch-test-"))
         self.addCleanup(lambda: subprocess.run(["rm", "-rf", str(self.root)]))
-        for name, text in (("opencode", OPENCODE), ("runuser", RUNUSER), ("discord-notify", NOTIFY)):
+        for name, text in (("opencode", OPENCODE), ("setpriv", SETPRIV), ("discord-notify", NOTIFY)):
             stub = self.root / "bin" / name
             stub.parent.mkdir(exist_ok=True)
             stub.write_text(text.replace("#!/usr/bin/env bash", f"#!{shutil.which('bash')}"))
