@@ -8,11 +8,11 @@
 
 stdenv.mkDerivation {
   pname = "opencode-browse";
-  version = "0.0.15";
+  version = "0.0.16";
 
   src = fetchurl {
-    url = "https://registry.npmjs.org/@opencode/browse/-/browse-0.0.15.tgz";
-    hash = "sha256-TUb6MjrpUVzTSPlPPIUJ8FzPE7rVI0O3h4KhhRLtqo4=";
+    url = "https://registry.npmjs.org/@opencode/browse/-/browse-0.0.16.tgz";
+    hash = "sha256-Yt78xDraYiBpsOVKjBsn7L5YZwHSTd/AuRUYAb7RKrg=";
   };
 
   patchrightCore = fetchurl {
