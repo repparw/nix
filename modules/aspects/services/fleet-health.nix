@@ -273,7 +273,6 @@ in
         freeModelWatch = pkgs.writeShellApplication {
           name = "free-model-watch";
           runtimeInputs = with pkgs; [
-            curl
             jq
             coreutils
             gnugrep
@@ -296,19 +295,32 @@ in
             state_dir="''${STATE_DIRECTORY:-/var/lib/free-model-watch}"
             mkdir -p "$state_dir"
 
-            opencode_url="''${OPENCODE_MODELS_URL:-https://opencode.ai/zen/v1/models}"
-            nous_url="''${NOUS_MODELS_URL:-https://portal.nousresearch.com/api/nous/recommended-models}"
+            opencode_bin="''${OPENCODE_BIN:-/etc/profiles/per-user/repparw/bin/opencode}"
+            opencode_home="''${OPENCODE_HOME:-/home/repparw}"
 
-            fetch_opencode() {
-              curl -fsS -m 20 "$opencode_url" 2>/dev/null |
-                jq -r '.data[]?.id | select(endswith("-free"))' 2>/dev/null |
-                sed '/^[[:space:]]*$/d' | LC_ALL=C sort -u || true
-            }
-
-            fetch_nous() {
-              curl -fsS -m 20 "$nous_url" 2>/dev/null |
-                jq -r '.freeRecommendedModels[]?.modelName' 2>/dev/null |
-                sed '/^[[:space:]]*$/d' | LC_ALL=C sort -u || true
+            # One source instead of one per portal: the instance's model
+            # snapshot already aggregates every runtime provider (zen,
+            # nous-portal, explabs, orcarouter, openrouter, ...), so a provider
+            # adding or dropping a free tier surfaces without a new poller.
+            # The unit runs as the instance's owner (see User=) and pins HOME
+            # for direct runs; when no shared service is healthy, `opencode
+            # api` starts one, the same lifecycle an interactive client
+            # triggers. timeout bounds what curl -m 20 used to bound.
+            fetch_instance() {
+              # The CLI intermittently truncates its JSON mid-body. jq is a
+              # streaming parser, so a truncated document can still emit a
+              # partial id list that reads as mass removals; validate the
+              # whole document before trusting any of it, and retry briefly
+              # before declaring the catalog unavailable.
+              for _ in 1 2 3; do
+                payload=$(timeout 20 env HOME="$opencode_home" "$opencode_bin" api get '/api/model?types=chat' 2>/dev/null) || payload=
+                [ -n "$payload" ] || { sleep "''${RETRY_SECS:-5}"; continue; }
+                printf '%s\n' "$payload" | jq -e . >/dev/null 2>&1 || { sleep "''${RETRY_SECS:-5}"; continue; }
+                ids=$(printf '%s\n' "$payload" | jq -r '.data[]?.id | select(contains("free"))' |
+                  sed '/^[[:space:]]*$/d' | LC_ALL=C sort -u)
+                [ -n "$ids" ] && { printf '%s\n' "$ids"; return 0; }
+                sleep "''${RETRY_SECS:-5}"
+              done
             }
 
             # Bounded so one churny catalog cannot blow past Discord's
@@ -365,8 +377,7 @@ in
               changed=1
             }
 
-            record_source "opencode-free" "$(fetch_opencode)"
-            record_source "nous-free" "$(fetch_nous)"
+            record_source "instance-free" "$(fetch_instance)"
 
             if [ "$changed" = 0 ]; then
               echo "free-model-watch: no free-model catalog change"
@@ -398,7 +409,7 @@ in
       in
       {
         options.modules.free-model-watch = {
-          enable = lib.mkEnableOption "Discord notification when the OpenCode/Nous free-model catalogs change";
+          enable = lib.mkEnableOption "Discord notification when the OpenCode instance's free-model catalog changes";
 
           interval = lib.mkOption {
             type = lib.types.str;
@@ -426,6 +437,14 @@ in
             };
             serviceConfig = {
               Type = "oneshot";
+              # The instance, its plugins and its auth all live in the user's
+              # home, so the watcher runs as that user: no root->user hop, no
+              # runuser/PAM dependency. systemd migrates the StateDirectory
+              # ownership (previously root's) on the first start. Verified on
+              # systemd 262: a User= unit gets HOME exported; XDG_RUNTIME_DIR
+              # is not exported and is not needed for instance discovery.
+              User = "repparw";
+              NoNewPrivileges = true;
               ExecStart = lib.getExe freeModelWatch;
               StateDirectory = "free-model-watch";
             };
