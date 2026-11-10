@@ -439,6 +439,7 @@ class Deployment(unittest.TestCase):
 
     def test_paused_controller_does_not_deploy_without_force(self):
         (self.state / "PAUSE").touch()
+        (self.root / "calls").touch()
         result = self.deploy()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(any(c[0] == "deploy" for c in self.calls))
