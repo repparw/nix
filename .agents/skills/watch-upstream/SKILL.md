@@ -9,8 +9,9 @@ GitHub Actions owns detection and cleanup publication. Watcher contracts live
 in `.github/upstream/watchers.json`; `upstream-watch.yml` runs detection,
 `lock-update.yml` owns lock publication and the atomic planner, and Pi owns
 fleet deployment plus runtime readiness probes for host-owned watchers.
-[The migration contract](../../../.github/upstream/README.md) is the source of
-truth for publication policy and per-watcher gates.
+Before adding, changing, or retiring a watcher, read
+[the migration contract](../../../.github/upstream/README.md) for publication
+policy, per-watcher gates, and timer or publisher cutover requirements.
 
 Before adding a watcher, record its workaround paths, selected input, precise
 source or ancestry predicate, cleanup edits, build gates, and completion owner
@@ -33,19 +34,12 @@ forced patch. Evaluate every affected host and its generated units, and gate
 on the real package builds in `upstream-validate.py`, not configuration
 stubs. Reuse an existing cleanup PR without overwriting reviewer changes.
 Dispatch CI on the exact SHA; bot-token pushes do not start workflows. Judge
-completion on current `main`, never a mutable checkout. Combined atomic
-lock+cleanup candidates merge-automate under the #265 policy once exact-SHA
-CI is green and the branch is strict up-to-date with main; eligibility
-re-verifies exact SHA, ownership, watcher manifest, required validations,
-and base, and approvals fail closed without `LOCK_UPDATE_APPROVAL_TOKEN`.
+completion on current `main`, never a mutable checkout. Follow the migration
+contract's merge policy, including exact-SHA validation, branch ownership,
+strict base freshness, and fail-closed approval checks.
 
-CI publication is the standing owner; Authelia's combined candidate is the
-first atomic firing and merge-automates under the same #265 policy — the
-retired human-review gate is not restored for it. Before disabling a local
-timer, verify its replacement's live CI run and all completion checks —
-fixtures and waiting runs are supporting evidence, not the cutover gate.
-Close replaced drafts only after their replacement validates in production.
-Retire a host-owned watcher only when the issue's runtime completion
+Retire a host-owned watcher only when its documented runtime completion
 condition is proven. Run the watcher test scripts named in the migration
-contract; for runtime inspection or deployment, use fleet-operations.
+contract; for runtime inspection or deployment, use
+[fleet-operations](../fleet-operations/SKILL.md).
 Register every worked PR in T3 Code.
