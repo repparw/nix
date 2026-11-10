@@ -72,6 +72,4 @@ experiment; switching to Grafana-only alerts is a separate change.
 
 ## Related
 
-- [Service model](service-model.md)
-- [Host profiles](../hosts.md)
 - [Fleet operations](../runbooks/fleet-operations.md)
