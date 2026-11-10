@@ -16,7 +16,7 @@
         passwordFile = osConfig.sops.secrets.rcloneNextcloud.path;
 
         todoExtension = pkgs.runCommandLocal "vicinae-todo-extension" { } ''
-          mkdir -p "$out"
+          mkdir -p "$out/assets"
           cp ${
             pkgs.writeText "vicinae-todo-package.json" (
               builtins.toJSON {
