@@ -5,10 +5,7 @@
   ...
 }:
 let
-  openInFirefoxId = "lmeddoobegbaiopohmpmmobpnpjifpii";
-
   heliumExtensionIds = [
-    openInFirefoxId
     "nngceckbapebfimnlniiiahkandclblb"
     "mnjggcdmjocbbbhaepdhchncahnbgone"
     "enamippconapkdmgfgjchkhakpfinmaj"
@@ -57,12 +54,17 @@ in
       environment.etc."chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
         BrowserSignin = 0;
         PasswordManagerEnabled = false;
-        ExtensionSettings = lib.genAttrs heliumExtensionIds (_: {
-          installation_mode = "normal_installed";
-          # Helium rewrites this Web Store URL to its extension proxy. The
-          # Google URL bypasses that rewrite and stalls policy installs.
-          update_url = "https://update-url-to-be-replaced.qjz9zk";
-        });
+        ExtensionSettings =
+          lib.genAttrs heliumExtensionIds (_: {
+            installation_mode = "normal_installed";
+            # Helium rewrites this Web Store URL to its extension proxy. The
+            # Google URL bypasses that rewrite and stalls policy installs.
+            update_url = "https://update-url-to-be-replaced.qjz9zk";
+          })
+          // {
+            # Uninstall the old extension from persisted Helium profiles.
+            "lmeddoobegbaiopohmpmmobpnpjifpii".installation_mode = "removed";
+          };
       };
     };
 
@@ -75,9 +77,6 @@ in
         ...
       }:
       let
-        openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix {
-          nodejs = pkgs.nodejs-runtime;
-        };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
         heliumPackage =
           (inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium.override {
@@ -116,14 +115,6 @@ in
         ];
 
         home.file = {
-          ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
-          ".config/net.imput.helium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
-            name = "com.add0n.node";
-            description = "Node Host for Native Messaging";
-            path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
-            type = "stdio";
-            allowed_origins = [ "chrome-extension://${openInFirefoxId}/" ];
-          };
           ".config/tridactyl/tridactylrc".text = ''
             " General Settings
             set configversion 2.0
