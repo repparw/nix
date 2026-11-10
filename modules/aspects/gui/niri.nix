@@ -178,11 +178,7 @@
               "Mod+Shift+Space" = titledSpawn "Browser" [ "firefox" ];
 
               "Mod+B" = titledSpawn "Bluetooth Toggle" [ "bttoggle" ];
-              "Mod+C" = titledSpawn "WhatsApp" [
-                "webapp"
-                "whatsapp"
-                "https://web.whatsapp.com"
-              ];
+              "Mod+C" = titledSpawn "WhatsApp (ZapFast)" [ "zapfast" ];
               "Mod+D" = {
                 _props = {
                   repeat = false;

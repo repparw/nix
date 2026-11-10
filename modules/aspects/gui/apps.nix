@@ -29,6 +29,7 @@
         home.packages = with pkgs; [
           godot
           tasks-org
+          zapfast
         ];
 
         gtk.enable = true;

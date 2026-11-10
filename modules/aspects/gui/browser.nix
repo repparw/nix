@@ -79,7 +79,6 @@ in
           nodejs = pkgs.nodejs-runtime;
         };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
-        whatsappLinksToFirefox = pkgs.callPackage ../../_packages/whatsapp-links-to-firefox.nix { };
         heliumPackage =
           (inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium.override {
             flags = config.programs.helium.flags;
@@ -123,10 +122,7 @@ in
             description = "Node Host for Native Messaging";
             path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
             type = "stdio";
-            allowed_origins = map (id: "chrome-extension://${id}/") [
-              openInFirefoxId
-              whatsappLinksToFirefox.extensionId
-            ];
+            allowed_origins = [ "chrome-extension://${openInFirefoxId}/" ];
           };
           ".config/tridactyl/tridactylrc".text = ''
             " General Settings
@@ -339,7 +335,6 @@ in
               "--silent-debugger-extension-api"
               # All windows share a profile and must use the same encryption backend.
               "--password-store=basic"
-              "--load-extension=${whatsappLinksToFirefox}"
             ];
           };
         };
