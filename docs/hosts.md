@@ -20,15 +20,10 @@ streaming, and backup behavior. Since the edge migrations it is not a
 public entrypoint: epsilon terminates the public vhosts, and pi fronts
 alpha's published service backends over the LAN.
 
-The fleet deployment order is epsilon, alpha, then pi. Alpha is activated only when
-every local graphical user session is idle, locked, or no longer active. This
-policy also defers for block-mode systemd sleep inhibitors, so a remote game or
-media stream remains active even when the physical session is locked. It
-ignores delay-mode and non-sleep inhibitors. The policy comes from alpha's
-desktop aspect rather than its host name. Pi schedules the retry against the
-current main revision when the fleet pass deferred or could not reach alpha,
-ensuring every deployment shares one controller mutex and alpha never updates
-the system from inside a unit being replaced.
+The fleet prepares all hosts concurrently, then activates epsilon, alpha, and
+pi in that order. Pi is last because it runs the deployment controller.
+All preparation must succeed before the first activation, and each host must
+pass its health checks before the next one starts.
 See the
 [fleet operations runbook](runbooks/fleet-operations.md).
 
@@ -45,7 +40,7 @@ Glance live on epsilon.
 It is the fleet's deployment controller. GitHub Actions opens lock update PRs,
 validates their exact lock commit, and atomically fast-forwards main to that
 same SHA when main has not moved. Pi then reuses that exact successful CI result
-while staging the revision through epsilon, idle alpha, and finally pi with
+while staging the revision through epsilon, alpha, and finally pi with
 deploy-rs.
 
 - Traefik (:443) fronts `jellyfin.repparw.com` only — the fleet's one direct
