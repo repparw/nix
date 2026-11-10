@@ -44,6 +44,3 @@ resolvers differ per host:
    `services.resolved.settings.Resolve.DNSStubListenerExtra` still carries the
    host's expected listeners.
 
-## Related
-
-- [Service model](../services/service-model.md)
