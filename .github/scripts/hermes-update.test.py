@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Regression checks for the Hermes stable-release update workflow."""
+import json
 import os
 from pathlib import Path
 import re
@@ -89,6 +90,36 @@ class HermesUpdateTests(unittest.TestCase):
                 if dispatch:
                     self.assertIn("hermes_update=true", calls.read_text())
                     self.assertIn("expected_sha=abc123", calls.read_text())
+
+    def test_dispatch_reuse_requires_native_hermes_manifest(self):
+        lookup = function("latest_run")
+        runs = {
+            "workflow_runs": [
+                {"id": 101, "run_number": 101, "run_attempt": 1,
+                 "status": "completed", "conclusion": "success",
+                 "display_title": "validate sha=abc123 watchers=none"},
+                {"id": 102, "run_number": 102, "run_attempt": 1,
+                 "status": "completed", "conclusion": "success",
+                 "display_title": "validate sha=abc123 watchers=none hermes=true"},
+                {"id": 103, "run_number": 103, "run_attempt": 1,
+                 "status": "completed", "conclusion": "success",
+                 "display_title": "validate sha=abc123 watchers=tasks-org"},
+            ],
+        }
+        script = "\n".join((
+            lookup,
+            'gh() { printf "%s\\n" "$RUNS"; }',
+            "latest_run ci.yml automation/hermes-stable abc123",
+        ))
+        result = bash(script, env={"RUNS": json.dumps(runs), "GH_REPO": "repparw/nix"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "102\tcompleted\tsuccess")
+
+        # A green normal dispatch must not count as Hermes validation.
+        runs["workflow_runs"] = [runs["workflow_runs"][0], runs["workflow_runs"][2]]
+        result = bash(script, env={"RUNS": json.dumps(runs), "GH_REPO": "repparw/nix"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "")
 
     def test_wait_ignores_failed_previous_run(self):
         with tempfile.TemporaryDirectory() as d:

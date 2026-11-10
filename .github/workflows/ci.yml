@@ -2,7 +2,7 @@ name: ci
 # GitHub exposes this as workflow_runs[].display_title. Recovery verifies
 # the exact requested package validations before reusing an existing run.
 run-name: >-
-  validate sha=${{ inputs.expected_sha || 'none' }} watchers=${{ inputs.upstream_watcher || 'none' }}
+  validate sha=${{ inputs.expected_sha || 'none' }} watchers=${{ inputs.upstream_watcher || 'none' }}${{ inputs.hermes_update && ' hermes=true' || '' }}
 on:
   push:
     branches: [main]
@@ -27,7 +27,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || (github.event_name == 'workflow_dispatch' && format('{0}-{1}', github.sha, inputs.expected_sha) || github.run_id) }}
+  # Exact SHA does not identify all required checks: isolate the manifests.
+  group: ci-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || (github.event_name == 'workflow_dispatch' && format('{0}-{1}-{2}-{3}', github.sha, inputs.expected_sha, inputs.upstream_watcher || 'none', inputs.hermes_update) || github.run_id) }}
   cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
