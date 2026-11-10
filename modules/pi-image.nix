@@ -21,7 +21,6 @@ let
             sdImage.nixPathRegistrationFile = "/persist/nix-path-registration";
             sdImage.expandOnBoot = false;
             systemd.timers.fleet-deploy.enable = false;
-            systemd.timers.fleet-alpha-retry.enable = false;
             modules.persistence.mutableAccounts = lib.mkForce false;
             users.mutableUsers = lib.mkForce false;
             environment.persistence."/persist".files = lib.mkForce [ "/etc/machine-id" ];
@@ -41,7 +40,7 @@ in
         assert image.sdImage.nixPathRegistrationFile == "/persist/nix-path-registration";
         assert !image.sdImage.expandOnBoot;
         assert !image.modules.persistence.mutableAccounts && !image.users.mutableUsers;
-        assert !image.systemd.timers.fleet-deploy.enable && !image.systemd.timers.fleet-alpha-retry.enable;
+        assert !image.systemd.timers.fleet-deploy.enable;
         pkgs.writeText "pi-image-configuration.json" (
           builtins.toJSON {
             persistedFiles = map (entry: entry.file) image.environment.persistence."/persist".files;
