@@ -54,17 +54,12 @@ in
       environment.etc."chromium/policies/managed/helium-nixos.json".text = builtins.toJSON {
         BrowserSignin = 0;
         PasswordManagerEnabled = false;
-        ExtensionSettings =
-          lib.genAttrs heliumExtensionIds (_: {
-            installation_mode = "normal_installed";
-            # Helium rewrites this Web Store URL to its extension proxy. The
-            # Google URL bypasses that rewrite and stalls policy installs.
-            update_url = "https://update-url-to-be-replaced.qjz9zk";
-          })
-          // {
-            # Uninstall the old extension from persisted Helium profiles.
-            "lmeddoobegbaiopohmpmmobpnpjifpii".installation_mode = "removed";
-          };
+        ExtensionSettings = lib.genAttrs heliumExtensionIds (_: {
+          installation_mode = "normal_installed";
+          # Helium rewrites this Web Store URL to its extension proxy. The
+          # Google URL bypasses that rewrite and stalls policy installs.
+          update_url = "https://update-url-to-be-replaced.qjz9zk";
+        });
       };
     };
 
