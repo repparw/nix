@@ -45,18 +45,15 @@
               isReadOnly = false;
             };
             extraConfig =
-              {
-                lib,
-                pkgs,
-                ...
-              }:
+              { pkgs, ... }:
               let
                 # Upstream workaround: tplinkrouterc6u 5.38.0 merges stale
                 # smart_network history entries (onlineTime 0) into the
                 # active-client list, so a phone that left Wi-Fi stays in the
                 # inventory and its tracker remains "home". The patch skips
                 # those entries; the AX23 v2 SG response carries no explicit
-                # online flag. Retire the patch and switch to the nixpkgs
+                # online flag (the TL-XDR6088 issue upstream closed without
+                # merging #107). Retire the patch and switch to the nixpkgs
                 # package once upstream stops merging onlineTime-0
                 # smart_network-only clients (AlexandrErohin/
                 # TP-Link-Archer-C6U#106 tracks the related behavior).
@@ -69,18 +66,6 @@
                 # The nspawn unit PATH omits system packages, so the
                 # ssh binary must be added to the service path explicitly.
                 systemd.services.home-assistant.path = [ pkgs.openssh ];
-
-                # Migration: the module's copyCustomComponents recreates
-                # symlinks with ln -fns, which fails while a real directory
-                # (the HACS-managed install) occupies the path, aborting
-                # preStart and the start. Move the HACS copy aside once; the
-                # renamed directory stays recoverable if deploy-rs rolls
-                # back, and any HACS reinstall is moved aside the same way.
-                systemd.services.home-assistant.preStart = lib.mkBefore ''
-                  if [ -d /var/lib/hass/custom_components/tplink_router ] && [ ! -L /var/lib/hass/custom_components/tplink_router ]; then
-                    mv /var/lib/hass/custom_components/tplink_router /var/lib/hass/custom_components/tplink_router.hacs-moved
-                  fi
-                '';
 
                 services.home-assistant = {
                   enable = true;
