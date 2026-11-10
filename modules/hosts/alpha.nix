@@ -6,8 +6,6 @@
 {
   den.aspects.alpha = {
     includes = [
-      den.aspects.monitoring._.cloud
-      den.aspects.fleet-unit-state
       den.aspects.alpha._.backup
       den.aspects.btrfs-maintenance
       den.aspects.gaming
@@ -20,7 +18,6 @@
       den.aspects.nixos-services._.free-model-watch
       den.aspects.nixos-services._.t3-token-watch
       den.aspects.cachix-push
-      den.aspects.deploy-target
     ];
 
     provides.backup = {
