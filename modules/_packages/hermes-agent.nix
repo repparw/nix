@@ -1,17 +1,9 @@
 {
   lib,
-  callPackage,
   fetchurl,
-  nodejs_24,
   upstream,
 }:
 let
-  # Hermes accepts Node >=22.22.0; npm 12 accepts Node ^24.15.0.
-  # Keep the fleet's patched Node runtime when upstream selects PM artifacts.
-  nodejs =
-    assert lib.versionAtLeast nodejs_24.version "24.15.0";
-    nodejs_24;
-
   # Hermes v0.23.1 patches patchelf for an ELF interpreter/RPATH regression
   # introduced after the nixpkgs pin's 0.15.2. Supply the upstream patch's
   # intended 0.19.2 source to its own PM artifact builders only.
@@ -35,15 +27,6 @@ let
     });
 in
 upstream.override (previous: {
+  # Upstream v0.23.1 requires Node >=26. Preserve its pinned Node tool.
   pmPackages = lib.mapAttrs (_: fixPmArtifact) previous.pmPackages;
-  callPackage =
-    path: args:
-    callPackage path (
-      args
-      // lib.optionalAttrs (builtins.baseNameOf path == "lib.nix") {
-        pmPackages = args.pmPackages // {
-          node = nodejs;
-        };
-      }
-    );
 })
