@@ -5,10 +5,7 @@
   ...
 }:
 let
-  openInFirefoxId = "lmeddoobegbaiopohmpmmobpnpjifpii";
-
   heliumExtensionIds = [
-    openInFirefoxId
     "nngceckbapebfimnlniiiahkandclblb"
     "mnjggcdmjocbbbhaepdhchncahnbgone"
     "enamippconapkdmgfgjchkhakpfinmaj"
@@ -75,9 +72,6 @@ in
         ...
       }:
       let
-        openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix {
-          nodejs = pkgs.nodejs-runtime;
-        };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
         heliumPackage =
           (inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium.override {
@@ -116,14 +110,6 @@ in
         ];
 
         home.file = {
-          ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
-          ".config/net.imput.helium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
-            name = "com.add0n.node";
-            description = "Node Host for Native Messaging";
-            path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
-            type = "stdio";
-            allowed_origins = [ "chrome-extension://${openInFirefoxId}/" ];
-          };
           ".config/tridactyl/tridactylrc".text = ''
             " General Settings
             set configversion 2.0
