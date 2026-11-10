@@ -131,7 +131,6 @@
                   sessionTokenFile = "/var/lib/hermes/.hermes/desktop-session-token";
                 };
                 package = pkgs.callPackage ../../_packages/hermes-agent.nix {
-                  nodejs_24 = hermesNodejs;
                   upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
                 };
                 environmentFiles = [
