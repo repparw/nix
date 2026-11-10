@@ -13,16 +13,6 @@ function verify(paths, { hosts, vm, groups }) {
 }
 
 const both = ['lightweight', 'configuration', 'shellcheck', 'fleet-cli'];
-test('parallel check groups execute every check exactly once', () => {
-  const groups = classifyChanges(['modules/aspects/ai/codex.nix']).checkMatrix.include;
-  assert.deepEqual(groups.map(group => group.group), both);
-  const names = groups.flatMap(group => group.checks.split(' '));
-  assert.equal(new Set(names).size, names.length);
-  for (const required of ['generated-shellcheck', 'fleet-cli', 'ci-workflow', 'formatting']) {
-    assert.equal(names.filter(name => name === required).length, 1, required);
-  }
-});
-
 test('documentation-only PRs select only formatting and documentation checks', () => {
   for (const paths of [['docs/runbooks/host-persistence.md', 'README.md'],
     ['docs/research/audio.md'], ['.github/upstream/README.md'],

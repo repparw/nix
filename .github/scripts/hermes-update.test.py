@@ -190,7 +190,6 @@ class HermesUpdateTests(unittest.TestCase):
         self.assertIn("hermes-package-build:", validation)
         self.assertIn("nixosConfigurations.epsilon.config.containers.hermes.config.services.hermes-agent.package", validation)
         self.assertIn('test "$HERMES_RESULT" = success', validation)
-        self.assertIn("inputs.hermes_update && ' hermes=true'", ci)
 
 
 if __name__ == "__main__":

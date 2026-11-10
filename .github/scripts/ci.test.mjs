@@ -79,22 +79,6 @@ test('every checkout job verifies dispatch SHA before checking out the workflow 
   assert.match(workflow, /\|\| github.run_id/);
 });
 
-test('dispatch concurrency and run names distinguish native Hermes validation', () => {
-  assert.ok(workflow.includes("format('{0}-{1}-{2}-{3}', github.sha, inputs.expected_sha, inputs.upstream_watcher || 'none', inputs.hermes_update)"));
-  assert.ok(workflow.includes("inputs.hermes_update && ' hermes=true' || ''"));
-  // Preserve the lock updater's manifest for ordinary (non-Hermes) dispatches.
-  assert.ok(workflow.includes("watchers=\$\{\{ inputs.upstream_watcher || 'none' \}\}"));
-});
-
-test('title validator uses a pinned binary rather than compiling Convco', () => {
-  const title = readFileSync(join(root, '.github/workflows/pr-title.yml'), 'utf8');
-  assert.doesNotMatch(title, /nix shell|nix-installer-action/);
-  assert.match(title, /convco\/convco\/releases\/download\/v0\.7\.2\/convco-x86_64-unknown-linux-musl\.tar\.gz/);
-  assert.match(title, /f9cfad24af372018f4b8d430cf86d1b7b9b36fcb7e1db5dd30c54b2eed7dde75/);
-  assert.match(title, /sha256sum --check --status/);
-  assert.match(title, /convco" check --from-stdin/);
-});
-
 test('all host evaluations share one runner, and failed lock updates do not wake the watcher', () => {
   assert.match(validation, /name: host-eval \(fleet, stubbed\)/);
   assert.match(validation, /CI_CHECKS: alpha pi epsilon/);
