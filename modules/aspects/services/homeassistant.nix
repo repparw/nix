@@ -45,11 +45,42 @@
               isReadOnly = false;
             };
             extraConfig =
-              { pkgs, ... }:
+              {
+                lib,
+                pkgs,
+                ...
+              }:
+              let
+                # Upstream workaround: tplinkrouterc6u 5.38.0 merges stale
+                # smart_network history entries (onlineTime 0) into the
+                # active-client list, so a phone that left Wi-Fi stays in the
+                # inventory and its tracker remains "home". The patch skips
+                # those entries; the AX23 v2 SG response carries no explicit
+                # online flag. Retire the patch and switch to the nixpkgs
+                # package once upstream stops merging onlineTime-0
+                # smart_network-only clients (AlexandrErohin/
+                # TP-Link-Archer-C6U#106 tracks the related behavior).
+                # Named "-patched" so a future nixpkgs
+                # python3Packages.tplinkrouterc6u cannot shadow it in the
+                # extraPackages with-scope.
+                tplinkrouterc6u-patched = pkgs.python3Packages.callPackage ../../_packages/tplinkrouterc6u.nix { };
+              in
               {
                 # The nspawn unit PATH omits system packages, so the
                 # ssh binary must be added to the service path explicitly.
                 systemd.services.home-assistant.path = [ pkgs.openssh ];
+
+                # Migration: the module's copyCustomComponents recreates
+                # symlinks with ln -fns, which fails while a real directory
+                # (the HACS-managed install) occupies the path, aborting
+                # preStart and the start. Move the HACS copy aside once; the
+                # renamed directory stays recoverable if deploy-rs rolls
+                # back, and any HACS reinstall is moved aside the same way.
+                systemd.services.home-assistant.preStart = lib.mkBefore ''
+                  if [ -d /var/lib/hass/custom_components/tplink_router ] && [ ! -L /var/lib/hass/custom_components/tplink_router ]; then
+                    mv /var/lib/hass/custom_components/tplink_router /var/lib/hass/custom_components/tplink_router.hacs-moved
+                  fi
+                '';
 
                 services.home-assistant = {
                   enable = true;
@@ -67,12 +98,25 @@
                     "workday"
                     "google_drive"
                   ];
-                  customComponents = with pkgs.home-assistant-custom-components; [
-                    auth_oidc
-                    adaptive_lighting
-                  ];
+                  customComponents =
+                    with pkgs.home-assistant-custom-components;
+                    [
+                      auth_oidc
+                      adaptive_lighting
+                    ]
+                    ++ [
+                      # Device_tracker presence from the router; replaces the
+                      # HACS-managed install tested live. The config entry
+                      # (credentials, 60 s polling, 300 s offline timeout)
+                      # stays in the host storage.
+                      (pkgs.callPackage ../../_packages/tplink-router-ha.nix {
+                        tplinkrouterc6u = tplinkrouterc6u-patched;
+                      })
+                    ];
                   extraPackages =
-                    ps: with ps; [
+                    ps:
+                    with ps;
+                    [
                       aiogithubapi # hacs
                       aiofiles
                       jinja2
@@ -81,6 +125,9 @@
                       litellm
                       pyyaml # ai_automation_suggester
                       pkgs.openssh
+                    ]
+                    ++ [
+                      tplinkrouterc6u-patched # tplink_router
                     ];
                 };
                 networking.firewall.allowedTCPPorts = [ 8123 ];
