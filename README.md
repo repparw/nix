@@ -32,15 +32,19 @@ hosting platform. The repository is public; operational secrets are not.
 
 ## Explore the implementation
 
-- [Architecture and repository layout](docs/index.md)
-- [Host profiles](docs/hosts.md)
-- [Fleet operations](docs/runbooks/fleet-operations.md)
-- [Monitoring and troubleshooting](docs/runbooks/monitoring.md)
-- [Update and rollback](docs/runbooks/update-rollback.md)
-- [Backup restoration](docs/runbooks/restore-service-backups.md)
-- [Host recovery](docs/runbooks/host-recovery.md)
-- [Grafana Cloud dashboards and operations](https://github.com/repparw/grafana)
-- [TP-Link Terraform/OpenTofu provider](https://github.com/repparw/terraform-provider-tplink)
+The configuration itself is the reference for current behavior:
+
+- Fleet topology: [entities.nix](modules/entities.nix)
+- Shared host composition: [defaults.nix](modules/defaults.nix)
+- Service definitions: [services](modules/aspects/services/)
+- Deployment controller: [deploy.nix](modules/deploy.nix) and [fleet-update.sh](modules/scripts/fleet-update.sh)
+
+Procedures that cannot be recovered by reading the configuration:
+
+- [Fleet operations and deployment recovery](.agents/skills/fleet-operations/SKILL.md)
+- [Offsite host recovery](docs/runbooks/host-recovery.md)
+- [Changing persistent storage](docs/runbooks/host-persistence.md)
+- [Manual update rollback](docs/runbooks/update-rollback.md)
 
 The configuration started from the upstream `vic/den` template and has since
 been adapted for this fleet.
@@ -53,6 +57,5 @@ nix flake check
 nh os switch
 ```
 
-See the [documentation index](docs/index.md) for service-specific procedures
-and verification steps. Deployment and restoration depend on host-specific
-permissions, encrypted secrets, and the corresponding runbooks.
+Use the [agent guidance](AGENTS.md) for source-of-truth rules and validation
+boundaries.
