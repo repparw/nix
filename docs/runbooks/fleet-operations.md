@@ -155,9 +155,8 @@ post-incident checklist.
 `/var/lib/auto-update/PAUSE` inhibits ordinary automation; only remove it
 after diagnosis and approval. `fleet-update --force` requires an explicitly
 selected host and bypasses PAUSE **without removing PAUSE**. It still
-enforces CI, locking, health checks, and rollback. Alpha's `Mod+U`
-uses this forced controller path. Without PAUSE, regular deployments do not
-require `--force`.
+enforces CI, locking, health checks, and rollback. Alpha's `Mod+U` uses the regular controller path and respects PAUSE.
+Use `--force` only for an explicitly authorized PAUSE override.
 
 A local-tree `nix run .#deploy-rs -- .#alpha --dry-activate` is a
 **separate authorized operational path**: it can build and contact a target.
