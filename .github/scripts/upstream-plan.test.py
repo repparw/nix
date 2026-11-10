@@ -148,7 +148,17 @@ class PlanTests(unittest.TestCase):
     def test_real_nix_evaluation_of_probe_attributes(self):
         # No package compilation: .drvPath forces evaluation of the exact
         # overridden derivation used by nix_build_ok for each fleet package.
+        # A cleanup can retire an apply-coupled package while its registry
+        # entry remains as an audit trail. Probe only live workarounds.
+        spec = importlib.util.spec_from_file_location(
+            "upstream_readiness", ROOT / ".github/scripts/upstream-readiness.py")
+        readiness = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(readiness)
         for watcher, attribute in planner.APPLY_COUPLED_PROBES.items():
+            relative, marker = readiness.WORKAROUNDS[watcher]
+            aspect = ROOT / relative
+            if not aspect.exists() or (marker is not None and marker not in aspect.read_text()):
+                continue
             with self.subTest(watcher=watcher):
                 expression = f"({planner.nix_probe_expression(attribute)}).drvPath"
                 result = subprocess.run(
