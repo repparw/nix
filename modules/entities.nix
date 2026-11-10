@@ -11,7 +11,6 @@
           den.aspects.gaming
           den.aspects.streaming
           den.aspects.spotifast
-          den.aspects.moonshine-pr227-test
         ];
       };
     };

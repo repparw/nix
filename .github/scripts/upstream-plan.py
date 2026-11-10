@@ -16,12 +16,11 @@ REGISTRY = ROOT / ".github/upstream/watchers.json"
 # Apply-coupled workarounds break the moment the candidate pin carries their
 # fix (or any context-shifting package bump): their cleanup must ride the lock
 # candidate instead of racing the post-lock sweep. The probe attribute builds
-# each fleet package with stubbed compile phases, which still executes the
+# each active fleet package with stubbed compile phases, which still executes the
 # apply-coupled logic: fetchpatch, substituteInPlace, and patch application.
 APPLY_COUPLED_PROBES = {
     "qbittorrent": "nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package",
     "gamescope-vkroots": "nixosConfigurations.alpha.pkgs.gamescope",
-    "moonshine-pr227": "nixosConfigurations.alpha.pkgs.moonshine-pr227",
 }
 
 
