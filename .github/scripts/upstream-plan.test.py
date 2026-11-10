@@ -82,12 +82,11 @@ class PlanTests(unittest.TestCase):
                                probe=lambda attribute: (False, "must not run"))
         self.assertEqual(result["action"], "normal")
 
-    def test_apply_coupled_probe_runs_only_for_the_flagged_three(self):
+    def test_apply_coupled_probe_runs_only_for_active_watchers(self):
         seen = []
         self.evaluate(probe=lambda attribute: (seen.append(attribute), (True, ""))[1])
         self.assertEqual(sorted(seen), sorted(["nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package",
-                                               "nixosConfigurations.alpha.pkgs.gamescope",
-                                               "nixosConfigurations.alpha.pkgs.moonshine-pr227"]))
+                                               "nixosConfigurations.alpha.pkgs.gamescope"]))
 
 
     def test_unchanged_pin_skips_readiness(self):
@@ -96,7 +95,7 @@ class PlanTests(unittest.TestCase):
         result = self.evaluate(old="new", new="new", readiness=explode)
         self.assertEqual(result["action"], "normal")
 
-    def test_default_readiness_runs_once_for_three_watchers(self):
+    def test_default_readiness_runs_once_for_active_watchers(self):
         selected = []
         def statuses(names):
             selected.append(names)
@@ -104,8 +103,7 @@ class PlanTests(unittest.TestCase):
         with patch.object(planner, "_candidate_readiness", side_effect=statuses):
             planner.plan(lock("old"), lock("new"), self.registry,
                          probe_fn=lambda _: (True, ""))
-        self.assertEqual(selected, [["qbittorrent", "gamescope-vkroots",
-                                     "moonshine-pr227"]])
+        self.assertEqual(selected, [["qbittorrent", "gamescope-vkroots"]])
 
     def test_real_probe_constructs_nix_expression_and_preserves_patch_phase(self):
         class Done:
@@ -148,17 +146,7 @@ class PlanTests(unittest.TestCase):
     def test_real_nix_evaluation_of_probe_attributes(self):
         # No package compilation: .drvPath forces evaluation of the exact
         # overridden derivation used by nix_build_ok for each fleet package.
-        # A cleanup can retire an apply-coupled package while its registry
-        # entry remains as an audit trail. Probe only live workarounds.
-        spec = importlib.util.spec_from_file_location(
-            "upstream_readiness", ROOT / ".github/scripts/upstream-readiness.py")
-        readiness = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(readiness)
         for watcher, attribute in planner.APPLY_COUPLED_PROBES.items():
-            relative, marker = readiness.WORKAROUNDS[watcher]
-            aspect = ROOT / relative
-            if not aspect.exists() or (marker is not None and marker not in aspect.read_text()):
-                continue
             with self.subTest(watcher=watcher):
                 expression = f"({planner.nix_probe_expression(attribute)}).drvPath"
                 result = subprocess.run(
