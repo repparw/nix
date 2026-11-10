@@ -37,12 +37,10 @@
           builtins.listToAttrs entries;
       definitions = lib.mapAttrs (_: lib.mkDefault) generatedDefinitions;
 
-      hostMeta = builtins.listToAttrs (
-        map (entry: {
-          name = entry.source.host.name;
-          value = entry.source.host;
-        }) service-registry
-      );
+      # The inventory is the Den host topology, not merely hosts that happen
+      # to publish services. A host without any services still participates
+      # in reachability and fleet health.
+      hostMeta = lib.concatMapAttrs (_system: hosts: hosts) den.hosts;
       hostAddresses = lib.mapAttrs (
         name: host:
         host.serviceAddress or (throw "service host ${name} is missing serviceAddress topology metadata")

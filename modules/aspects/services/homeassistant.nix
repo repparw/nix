@@ -13,6 +13,8 @@
           port = 8123;
           auth = "bypass";
           monitor = true;
+          # Cloudflare Tunnel serves this public URL on the remote edge.
+          probePublicRoute = true;
         };
       };
 
