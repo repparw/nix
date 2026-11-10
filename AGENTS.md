@@ -19,8 +19,8 @@ in Markdown. Routine implementation changes do not require docs edits.
 
 Write Markdown for decisions and non-obvious reasons, constraints that an agent
 could otherwise violate, and recovery procedures that must work when the
-normal system is unavailable. Update those pages only when the *decision,
-safety boundary, or operator procedure* changes. Keep commands next to
+normal system is unavailable. Update those pages only when the _decision,
+safety boundary, or operator procedure_ changes. Keep commands next to
 the procedure they are needed for, and link to source instead of copying it.
 Historical research notes are snapshots, not live configuration references.
 

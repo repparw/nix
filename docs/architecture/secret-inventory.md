@@ -9,10 +9,12 @@ tags: [security, secrets, sops-nix]
 
 # Secret handling and recovery
 
-Secret identifiers, file ownership, consumers and host allocations are
-declared in [the secret aspects](../../modules/aspects/secrets.nix) and the
-encrypted `secrets/*.sops.yaml` files. Do not copy that inventory into
-Markdown or commit decrypted values.
+Secret identifiers and consumers are declared as `sops.secrets` in their
+owning Nix host and service modules. The encrypted `secrets/*.sops.yaml`
+files carry ciphertext and recipient metadata; the shared
+[sops-nix aspect](../../modules/aspects/secrets.nix) configures decryption,
+not the per-secret inventory. Search the Nix sources rather than copying an
+inventory into Markdown, and never commit decrypted values.
 
 There are two distinct authorities:
 
@@ -102,4 +104,3 @@ the user-owned `btDevice` secret file when `TOGGLE_BT_DEVICE` is unset.
 
 - `modules/aspects/secrets.nix`
 - `secrets/`
-

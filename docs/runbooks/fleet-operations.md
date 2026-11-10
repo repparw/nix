@@ -23,7 +23,7 @@ not that it is healthy.
 
 `fleet health probe --strict` measures deployment readiness; it does not
 require Grafana Cloud availability or unrelated scheduled jobs to pass.
-Missing telemetry and unreachable hosts are *unknown*, not green. Consult
+Missing telemetry and unreachable hosts are _unknown_, not green. Consult
 [monitoring](monitoring.md) before deciding an alert has been resolved.
 
 ## Offsite backup coverage and consistency
@@ -62,6 +62,12 @@ then proceeds with per-host service health checks. A successful build,
 SSH confirmation or one healthy host does not establish fleet convergence.
 The last fully verified revision is recorded separately from desired Git
 `main`; failure does not revert Git.
+
+After a successful deployment, the controller may reboot headless Epsilon and
+Pi to activate staged kernel or initrd changes. Backup and health gates can
+defer those reboots; Alpha remains manual. The
+[headless reboot implementation](../../modules/scripts/fleet-headless-reboot.sh)
+owns the exact sequence and retry behavior.
 
 A failed activation uses deploy-rs rollback and the controller restores
 earlier systems on reached hosts. Preparation and activation errors pause
