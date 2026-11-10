@@ -11,7 +11,7 @@ import unittest
 SOURCE = Path(sys.argv.pop(1)).read_text()
 REVISION = "a" * 40
 STUB = r'''
-import json, os, sys
+import json, os, sys, time
 from pathlib import Path
 root = Path(os.environ['FIXTURE'])
 name = Path(sys.argv[0]).name
@@ -47,13 +47,11 @@ elif name == 'nix':
             print('x86_64-linux')
         elif 'containerUnits' in target and 'builtins.getFlake' not in target:
             print('[]')
-        elif 'activityGate' in target and 'builtins.getFlake' not in target:
-            print('true' if config.get('busy_alpha') and '.alpha.' in target else 'false')
         elif 'builtins.getFlake' in target:
             host = next(h for h in ['epsilon', 'alpha', 'pi'] if f'nixosConfigurations.{h}.' in target)
             print(json.dumps(dict(revision=revision,
                 systemPath='invalid-path' if config.get('invalid_metadata') == host else f'/nix/store/{host}-system-26.11',
-                activityGate=bool(config.get('busy_alpha') and host == 'alpha'), containerUnits=[],
+                containerUnits=[],
                 deployment=dict(remoteBuild=True, nodes={host: dict(hostname=host,
                     profiles=dict(system=dict(path=f'/nix/store/{host}-profile-26.11',
                                               drvPath=f'/nix/store/{host}-profile-26.11.drv', user='root')))}))))
@@ -71,6 +69,15 @@ elif name == 'ssh':
     if command[0].endswith('/sw/bin/nixos-version'):
         print('c' * 40 if config.get('inconsistent_revision') == host else revision)
     elif command[0] == 'nix' and command[1] == 'build':
+        if config.get('parallel_preparation'):
+            (root / f'prepare-started-{host}').touch()
+            deadline = time.monotonic() + 12
+            while not all((root / f'prepare-started-{h}').exists()
+                          for h in ['epsilon', 'alpha', 'pi']):
+                if time.monotonic() >= deadline:
+                    print('error: remote builds did not overlap', file=sys.stderr)
+                    sys.exit(1)
+                time.sleep(0.02)
         if config.get('prepare_failure') == host:
             print('error: preparation build failed', file=sys.stderr)
             sys.exit(1)
@@ -195,8 +202,8 @@ class Deployment(unittest.TestCase):
             "fetching main", "checking CI for main", "CI passed",
             "running deployment preflight", "capturing epsilon configuration",
             "capturing alpha configuration", "capturing pi configuration",
-            "preflight passed", "preparing epsilon", "prepared epsilon",
-            "preparing alpha", "prepared alpha", "preparing pi", "prepared pi",
+            "preflight passed", "preparing epsilon", "preparing alpha", "preparing pi",
+            "prepared epsilon", "prepared alpha", "prepared pi",
             "epsilon: activating", "epsilon: verifying health", "epsilon: healthy",
             "alpha: activating", "alpha: verifying health", "alpha: healthy",
             "pi: activating", "pi: verifying health", "pi: healthy",
@@ -319,15 +326,16 @@ class Deployment(unittest.TestCase):
         self.assertTrue((self.state / "PAUSE").exists())
         self.assertFalse(any(c[0] == "ssh" and "rm" in c for c in self.calls))
 
-    def test_retry_rolls_back_hosts_reached_during_earlier_deferred_run(self):
-        result = self.deploy(busy_alpha=True)
+    def test_selected_host_failure_rolls_back_prior_selected_host(self):
+        result = self.deploy(arguments=["--host", "epsilon"])
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse((self.state / "deployed-revision").exists())
         self.assertEqual((self.root / "epsilon").read_text(), "new")
         result = self.deploy(deploy_failure="alpha", arguments=["--host", "alpha"])
         self.assertNotEqual(result.returncode, 0)
-        for host in ["epsilon", "pi", "alpha"]:
-            self.assertEqual((self.root / host).read_text(), "old")
+        self.assertEqual((self.root / "epsilon").read_text(), "old")
+        self.assertEqual((self.root / "alpha").read_text(), "old")
+        self.assertFalse((self.root / "pi").exists())
 
     def test_already_running_revision_must_pass_health(self):
         (self.root / "epsilon").write_text("new")
@@ -350,6 +358,30 @@ class Deployment(unittest.TestCase):
         evidence = Path((self.state / 'latest-preparation').read_text().strip())
         self.assertIn('preparation build failed', (evidence / 'prepare-alpha.log').read_text())
         self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text())['outcome'], 'failed')
+
+    def test_preparation_builds_run_concurrently_before_activation(self):
+        # Every remote build waits for all three to start. Sequential
+        # preparation times out rather than passing this fixture.
+        result = self.deploy(parallel_preparation=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for host in ["epsilon", "alpha", "pi"]:
+            self.assertTrue((self.root / f"prepare-started-{host}").exists())
+        first_deploy = next(i for i, call in enumerate(self.calls) if call[0] == "deploy")
+        builds = [call for call in self.calls[:first_deploy]
+                  if call[0] == "ssh" and "build" in call]
+        self.assertEqual(len(builds), 3)
+        self.assertEqual([call[1].split("#")[-1] for call in self.calls
+                          if call[0] == "deploy"], ["epsilon", "alpha", "pi"])
+
+    def test_parallel_preparation_waits_for_all_results_on_failure(self):
+        result = self.deploy(parallel_preparation=True, prepare_failure="alpha")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(call[0] == "deploy" for call in self.calls))
+        evidence = Path((self.state / "latest-preparation").read_text().strip())
+        self.assertEqual({host: json.loads((evidence / f"result-{host}.json").read_text())["outcome"]
+                          for host in ["epsilon", "alpha", "pi"]},
+                         {"epsilon": "prepared", "alpha": "failed", "pi": "prepared"})
+        self.assertTrue((self.state / "PAUSE").exists())
 
     def ingested(self):
         return [c for c in self.calls if c[0] == "ssh" and "hermes-package-ingest" in " ".join(c)]
@@ -398,18 +430,19 @@ class Deployment(unittest.TestCase):
             [["systemctl", "--no-block", "start", "fleet-headless-reboot.service"]],
         )
 
-    def test_deferred_alpha_still_triggers_reboot_check(self):
-        result = self.deploy(busy_alpha=True)
+    def test_activity_is_not_probed_before_activation(self):
+        result = self.deploy()
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(c[0] == "ssh" and "systemd-inhibit" in c for c in self.calls))
         self.assertEqual(len(self.reboots()), 1)
+        self.assertEqual(len(self.probes()), 1)
 
-    def test_deferred_alpha_skips_readiness_probe(self):
-        result = self.deploy(busy_alpha=True)
+    def test_paused_controller_does_not_deploy_without_force(self):
+        (self.state / "PAUSE").touch()
+        result = self.deploy()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("fleet-update: partially converged", result.stderr)
-        self.assertIn("deferred: alpha", result.stderr)
-        self.assertNotIn("fleet-update: fleet converged", result.stderr)
-        self.assertEqual(self.probes(), [])
+        self.assertFalse(any(c[0] == "deploy" for c in self.calls))
+        self.assertFalse((self.state / "deployed-revision").exists())
 
     def test_readiness_probe_failure_does_not_fail_deployment(self):
         result = self.deploy(readiness_failure=True)
@@ -417,10 +450,10 @@ class Deployment(unittest.TestCase):
         self.assertEqual(len(self.probes()), 1)
         self.assertEqual({json.loads(path.read_text())["host"] for path in self.outbox()}, {"alpha", "pi", "epsilon"})
 
-    def test_deferred_convergence_queues_only_reached_hosts(self):
-        result = self.deploy(busy_alpha=True)
+    def test_selected_host_convergence_queues_only_reached_host(self):
+        result = self.deploy(arguments=["--host", "alpha"])
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual({json.loads(path.read_text())["host"] for path in self.outbox()}, {"pi", "epsilon"})
+        self.assertEqual({json.loads(path.read_text())["host"] for path in self.outbox()}, {"alpha"})
         self.assertEqual(self.ingested(), [])
 
     def test_intake_unavailability_retains_exact_bytes_for_independent_retry(self):
