@@ -30,6 +30,3 @@ features should live in dedicated aspect files.
 - `modules/aspects/`
 - `modules/hosts/`
 
-## Related
-
-- [Repository layout](repository-layout.md)
