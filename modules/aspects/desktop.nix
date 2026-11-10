@@ -11,6 +11,7 @@
       den.aspects.obsidian
       den.aspects.ai._.gui
       den.aspects.ai._.t3code-connect-desktop
+      den.aspects.ai._.browse-desktop
       den.aspects.desktop._.bitwarden
     ];
 

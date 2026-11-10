@@ -273,9 +273,9 @@ in
         freeModelWatch = pkgs.writeShellApplication {
           name = "free-model-watch";
           runtimeInputs = with pkgs; [
-            curl
             jq
             coreutils
+            util-linux
             gnugrep
             gnused
             (mkDiscordNotify pkgs config.modules.services.discordChannelId)
@@ -296,19 +296,37 @@ in
             state_dir="''${STATE_DIRECTORY:-/var/lib/free-model-watch}"
             mkdir -p "$state_dir"
 
-            opencode_url="''${OPENCODE_MODELS_URL:-https://opencode.ai/zen/v1/models}"
-            nous_url="''${NOUS_MODELS_URL:-https://portal.nousresearch.com/api/nous/recommended-models}"
+            opencode_bin="''${OPENCODE_BIN:-/etc/profiles/per-user/repparw/bin/opencode}"
+            opencode_home="''${OPENCODE_HOME:-/home/repparw}"
 
-            fetch_opencode() {
-              curl -fsS -m 20 "$opencode_url" 2>/dev/null |
-                jq -r '.data[]?.id | select(endswith("-free"))' 2>/dev/null |
-                sed '/^[[:space:]]*$/d' | LC_ALL=C sort -u || true
-            }
-
-            fetch_nous() {
-              curl -fsS -m 20 "$nous_url" 2>/dev/null |
-                jq -r '.freeRecommendedModels[]?.modelName' 2>/dev/null |
-                sed '/^[[:space:]]*$/d' | LC_ALL=C sort -u || true
+            # The notifier needs the root-only hermes-env secret, so only the
+            # OpenCode command runs as repparw. Plugins must not run as root.
+            fetch_instance() {
+              local payload ids previous_ids="" have_previous=0 attempt
+              # Model snapshots may precede plugin activation. Confirm a
+              # complete JSON response twice before accepting any changes.
+              for attempt in 1 2 3; do
+                payload=$(timeout 20 setpriv --reuid=repparw --regid=repparw --init-groups -- env HOME="$opencode_home" "$opencode_bin" api get '/api/model?types=chat' 2>/dev/null) || payload=
+                if [ -n "$payload" ] &&
+                  printf '%s\n' "$payload" | jq -e '
+                    type == "object" and
+                    (.data | type == "array") and
+                    all(.data[]; .id | type == "string")
+                  ' >/dev/null 2>&1; then
+                  ids=$(printf '%s\n' "$payload" | jq -r '.data[].id | select(contains("free"))' |
+                    LC_ALL=C sort -u) || return 1
+                  if [ "$have_previous" = 1 ] && [ "$ids" = "$previous_ids" ]; then
+                    printf '%s' "$ids"
+                    return 0
+                  fi
+                  previous_ids="$ids"
+                  have_previous=1
+                else
+                  have_previous=0
+                fi
+                [ "$attempt" = 3 ] || sleep "''${RETRY_SECS:-5}"
+              done
+              return 1
             }
 
             # Bounded so one churny catalog cannot blow past Discord's
@@ -331,12 +349,8 @@ in
               local name="$1" current="$2"
               local state_file previous added removed part
               state_file="$state_dir/$name.list"
-              if [ -z "$current" ]; then
-                echo "free-model-watch: $name catalog unavailable; keeping the previous snapshot" >&2
-                return 0
-              fi
               if [ ! -f "$state_file" ]; then
-                printf '%s\n' "$current" > "$state_file"
+                printf '%s\n' "$current" | sed '/^[[:space:]]*$/d' > "$state_file"
                 echo "free-model-watch: $name baseline recorded ($(printf '%s\n' "$current" | grep -c .) models)"
                 return 0
               fi
@@ -349,7 +363,7 @@ in
                 echo "free-model-watch: $name unchanged"
                 return 0
               fi
-              printf '%s\n' "$current" > "$stage/$name.list"
+              printf '%s\n' "$current" | sed '/^[[:space:]]*$/d' > "$stage/$name.list"
               part="• $name:"
               if [ -n "$added" ]; then
                 part="$part new: $(printf '%s\n' "$added" | compact)"
@@ -365,8 +379,11 @@ in
               changed=1
             }
 
-            record_source "opencode-free" "$(fetch_opencode)"
-            record_source "nous-free" "$(fetch_nous)"
+            if current=$(fetch_instance); then
+              record_source "instance-free" "$current"
+            else
+              echo "free-model-watch: instance-free catalog unavailable; keeping the previous snapshot" >&2
+            fi
 
             if [ "$changed" = 0 ]; then
               echo "free-model-watch: no free-model catalog change"
@@ -398,7 +415,7 @@ in
       in
       {
         options.modules.free-model-watch = {
-          enable = lib.mkEnableOption "Discord notification when the OpenCode/Nous free-model catalogs change";
+          enable = lib.mkEnableOption "Discord notification when the OpenCode instance's free-model catalog changes";
 
           interval = lib.mkOption {
             type = lib.types.str;
@@ -426,6 +443,9 @@ in
             };
             serviceConfig = {
               Type = "oneshot";
+              # Keep Discord notification privileged for /run/secrets/hermes-env.
+              # The OpenCode CLI and plugins run as repparw through setpriv (no PAM).
+              NoNewPrivileges = true;
               ExecStart = lib.getExe freeModelWatch;
               StateDirectory = "free-model-watch";
             };

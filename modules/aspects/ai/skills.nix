@@ -76,6 +76,8 @@
             enable = true;
             package = null;
             skills = config.programs.opencode.skills;
+            enableMcpIntegration = true;
+            mutableSettings = true;
           };
         };
     };

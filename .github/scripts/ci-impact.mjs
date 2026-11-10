@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 
 const documentation = 'formatting agent-docs';
 const lightweight = 'formatting sops-files change-detection agent-docs worktree-bootstrap-guard check-flake-file deploy-schema ci-workflow tofu home-state-backup';
-const configuration = 'cachix-push ci-package-targets service-definitions host-persistence pi-image-configuration backup-exports monitoring-fleet btrfs-health fleet-failed-units pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage';
+const configuration = 'cachix-push ci-package-targets service-definitions host-persistence pi-image-configuration backup-exports monitoring-fleet btrfs-health fleet-failed-units pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage browse-mcp';
 
 const full = reason => ({
   runHosts: true,

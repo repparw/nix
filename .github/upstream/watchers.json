@@ -62,15 +62,14 @@
     "coupling": "apply"
   },
   "moonshine-pr227": {
-    "mode": "post-lock",
+    "mode": "completed",
     "input": "nixpkgs",
     "cleanup": "moonshine-pr227.patch",
     "validation": [
       "source-guard",
       "package-build",
       "generated-unit"
-    ],
-    "coupling": "apply"
+    ]
   },
   "nodejs-security": {
     "mode": "post-lock",

@@ -5,15 +5,13 @@
   ...
 }:
 let
-  openInFirefoxId = "lmeddoobegbaiopohmpmmobpnpjifpii";
-
   heliumExtensionIds = [
-    openInFirefoxId
     "nngceckbapebfimnlniiiahkandclblb"
     "mnjggcdmjocbbbhaepdhchncahnbgone"
     "enamippconapkdmgfgjchkhakpfinmaj"
     "bnomihfieiccainjcjblhegjgglakjdd"
     "dbepggeogbaibhgnhhndojpepiihcmeb"
+    "mfnicocicmmlkpjnaffgihfjhdgjkdjg"
   ];
 
 in
@@ -74,11 +72,7 @@ in
         ...
       }:
       let
-        openInNativeHost = pkgs.callPackage ../../_packages/com-addon-node.nix {
-          nodejs = pkgs.nodejs-runtime;
-        };
         ndrop = pkgs.callPackage ../../_packages/ndrop.nix { };
-        whatsappLinksToFirefox = pkgs.callPackage ../../_packages/whatsapp-links-to-firefox.nix { };
         heliumPackage =
           (inputs.helium-nix.packages.${pkgs.stdenv.hostPlatform.system}.helium.override {
             flags = config.programs.helium.flags;
@@ -116,17 +110,6 @@ in
         ];
 
         home.file = {
-          ".config/com.add0n.node".source = "${openInNativeHost}/lib/com.add0n.node";
-          ".config/net.imput.helium/NativeMessagingHosts/com.add0n.node.json".text = builtins.toJSON {
-            name = "com.add0n.node";
-            description = "Node Host for Native Messaging";
-            path = "${openInNativeHost}/lib/com.add0n.node/run.sh";
-            type = "stdio";
-            allowed_origins = map (id: "chrome-extension://${id}/") [
-              openInFirefoxId
-              whatsappLinksToFirefox.extensionId
-            ];
-          };
           ".config/tridactyl/tridactylrc".text = ''
             " General Settings
             set configversion 2.0
@@ -338,7 +321,6 @@ in
               "--silent-debugger-extension-api"
               # All windows share a profile and must use the same encryption backend.
               "--password-store=basic"
-              "--load-extension=${whatsappLinksToFirefox}"
             ];
           };
         };

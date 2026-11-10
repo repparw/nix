@@ -1,8 +1,9 @@
-"""Exercise the real free-model watcher with stubbed curl and Discord."""
+"""Exercise the real free-model watcher with stubbed opencode and Discord."""
 
 import json
 import os
 from pathlib import Path
+import shlex
 import shutil
 import subprocess
 import sys
@@ -18,23 +19,43 @@ LINES = SCRIPT.splitlines()
 CUT = next(i for i, line in enumerate(LINES) if line.startswith("export PATH=")) + 1
 BODY = "set -euo pipefail\n" + "\n".join(LINES[CUT:])
 
-OPENCODE = {"data": [{"id": f"model-{n}"} for n in ("a-free", "b-free", "paid-one")]}
-OPENCODE_NEW = {"data": [{"id": f"model-{n}"} for n in ("a-free", "b-free", "newthing-free")]}
-OPENCODE_LOST = {"data": [{"id": "model-a-free"}]}
-NOUS = {"freeRecommendedModels": [{"modelName": m} for m in ("one:free", "two:free")]}
-NOUS_NEW = {"freeRecommendedModels": [{"modelName": m} for m in ("one:free", "three:free")]}
 
-CURL = """#!/usr/bin/env bash
-url="${@: -1}"
-case "$url" in
-  *opencode.ai*)
-    [ -r "$OPENCODE_FIXTURE" ] || exit 7
-    cat "$OPENCODE_FIXTURE" ;;
-  *nousresearch.com*)
-    [ -r "$NOUS_FIXTURE" ] || exit 7
-    cat "$NOUS_FIXTURE" ;;
+def instance(ids):
+    """A /api/model snapshot in the shape the watcher consumes."""
+    return {"data": [{"id": i, "enabled": True, "status": "active"} for i in ids]}
+
+
+INSTANCE = instance((
+    "nous-portal/one:free",
+    "nous-portal/two:free",
+    "opencode/model-a-free",
+    "opencode/model-b-free",
+    "opencode/model-paid-one",
+))
+INSTANCE_NEW = instance((
+    "nous-portal/one:free",
+    "nous-portal/three:free",
+    "opencode/model-a-free",
+    "opencode/model-b-free",
+    "opencode/model-newthing-free",
+))
+INSTANCE_LOST = instance(("opencode/model-a-free",))
+BASELINE = ["nous-portal/one:free", "nous-portal/two:free", "opencode/model-a-free", "opencode/model-b-free"]
+
+OPENCODE = """#!/usr/bin/env bash
+case "$*" in
+  *"/api/model"*)
+    [ -r "$INSTANCE_FIXTURE" ] || exit 7
+    cat "$INSTANCE_FIXTURE" ;;
   *) exit 7 ;;
 esac
+"""
+
+SETPRIV = """#!/usr/bin/env bash
+[ "$1" = "--reuid=repparw" ] && [ "$2" = "--regid=repparw" ] &&
+  [ "$3" = "--init-groups" ] && [ "$4" = "--" ] || exit 81
+shift 4
+exec "$@"
 """
 
 NOTIFY = """#!/usr/bin/env bash
@@ -56,7 +77,7 @@ class FreeModelWatch(unittest.TestCase):
     def setUp(self):
         self.root = Path(tempfile.mkdtemp(prefix="free-model-watch-test-"))
         self.addCleanup(lambda: subprocess.run(["rm", "-rf", str(self.root)]))
-        for name, text in (("curl", CURL), ("discord-notify", NOTIFY)):
+        for name, text in (("opencode", OPENCODE), ("setpriv", SETPRIV), ("discord-notify", NOTIFY)):
             stub = self.root / "bin" / name
             stub.parent.mkdir(exist_ok=True)
             stub.write_text(text.replace("#!/usr/bin/env bash", f"#!{shutil.which('bash')}"))
@@ -68,14 +89,17 @@ class FreeModelWatch(unittest.TestCase):
             "CALLS": str(self.calls),
             "STATE_DIRECTORY": str(self.root / "state"),
             "HOSTNAME": "test-host",
-            "OPENCODE_FIXTURE": str(self.root / "absent"),
-            "NOUS_FIXTURE": str(self.root / "absent"),
+            "INSTANCE_FIXTURE": str(self.root / "absent"),
+            "OPENCODE_BIN": str(self.root / "bin" / "opencode"),
+            "OPENCODE_HOME": str(self.root),
+            # Keep the unavailable-catalog retry instant in tests.
+            "RETRY_SECS": "0",
         }
 
-    def fixture(self, name, payload):
-        path = self.root / f"{name}.json"
+    def fixture(self, payload):
+        path = self.root / "instance.json"
         path.write_text(json.dumps(payload))
-        self.env["OPENCODE_FIXTURE" if name == "opencode" else "NOUS_FIXTURE"] = str(path)
+        self.env["INSTANCE_FIXTURE"] = str(path)
 
     def run_watch(self, *, fail_post=False):
         env = self.env | {"FAIL_POST": "1" if fail_post else "0"}
@@ -89,48 +113,64 @@ class FreeModelWatch(unittest.TestCase):
     def actions(self):
         return [line for line in self.calls.read_text().splitlines() if line]
 
+    def snapshot(self):
+        return (Path(self.env["STATE_DIRECTORY"]) / "instance-free.list").read_text()
+
+    def scripted_instance(self, responses):
+        """Supply a sequence of model responses to the same CLI stub."""
+        directory = self.root / "sequence"
+        directory.mkdir(exist_ok=True)
+        for i, response in enumerate(responses, start=1):
+            (directory / f"{i}.json").write_text(
+                response if isinstance(response, str) else json.dumps(response)
+            )
+        stub = self.root / "bin" / "sequence-opencode"
+        stub.write_text(f"""#!/usr/bin/env bash
+count=$(cat "$SEQUENCE_COUNT" 2>/dev/null || echo 0)
+count=$((count + 1))
+echo "$count" > "$SEQUENCE_COUNT"
+if [ "$count" -gt {len(responses)} ]; then count={len(responses)}; fi
+cat "$SEQUENCE_DIR/$count.json"
+""".replace("#!/usr/bin/env bash", f"#!{shutil.which('bash')}"))
+        stub.chmod(0o755)
+        self.env["SEQUENCE_DIR"] = str(directory)
+        self.env["SEQUENCE_COUNT"] = str(self.root / "sequence-count")
+        self.env["OPENCODE_BIN"] = str(stub)
+
     def test_first_run_records_baseline_without_notifying(self):
-        self.fixture("opencode", OPENCODE)
-        self.fixture("nous", NOUS)
+        self.fixture(INSTANCE)
         result = self.run_watch()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("baseline recorded", result.stdout)
         self.assertEqual(self.actions(), [])
-        self.assertEqual(
-            (Path(self.env["STATE_DIRECTORY"]) / "opencode-free.list").read_text().splitlines(),
-            ["model-a-free", "model-b-free"],
-        )
-        self.assertEqual(
-            (Path(self.env["STATE_DIRECTORY"]) / "nous-free.list").read_text().splitlines(),
-            ["one:free", "two:free"],
-        )
+        self.assertEqual(self.snapshot().splitlines(), BASELINE)
 
     def test_appearance_and_disappearance_notify(self):
-        self.fixture("opencode", OPENCODE)
-        self.fixture("nous", NOUS)
+        self.fixture(INSTANCE)
         self.assertEqual(self.run_watch().returncode, 0)
 
-        self.fixture("opencode", OPENCODE_NEW)
-        self.fixture("nous", NOUS_NEW)
+        self.fixture(INSTANCE_NEW)
         result = self.run_watch()
         self.assertEqual(result.returncode, 0, result.stderr)
         posts = [line for line in self.actions() if line.startswith("post ")]
         self.assertEqual(len(posts), 1)
         self.assertIn("free-model catalog changed on test-host", posts[0])
-        self.assertIn("new: model-newthing-free", posts[0])
-        self.assertIn("new: three:free", posts[0])
-        self.assertIn("gone: two:free", posts[0])
+        self.assertIn("new: nous-portal/three:free, opencode/model-newthing-free", posts[0])
+        self.assertIn("gone: nous-portal/two:free", posts[0])
         self.assertEqual(
             (Path(self.env["STATE_DIRECTORY"]) / ".free-models.msgid").read_text().strip(),
             "msg-1",
         )
 
-        self.fixture("opencode", OPENCODE_LOST)
+        self.fixture(INSTANCE_LOST)
         result = self.run_watch()
         self.assertEqual(result.returncode, 0, result.stderr)
         posts = [line for line in self.actions() if line.startswith("post ")]
         self.assertEqual(len(posts), 2)
-        self.assertIn("gone: model-b-free", posts[1])
+        self.assertIn("gone: nous-portal/one:free", posts[1])
+        self.assertIn("nous-portal/three:free", posts[1])
+        self.assertIn("opencode/model-b-free", posts[1])
+        self.assertIn("opencode/model-newthing-free", posts[1])
         self.assertEqual(
             (Path(self.env["STATE_DIRECTORY"]) / ".free-models.msgid").read_text().strip(),
             "msg-2",
@@ -139,8 +179,7 @@ class FreeModelWatch(unittest.TestCase):
         self.assertEqual(self.actions()[1], "delete msg-1")
 
     def test_unchanged_catalog_is_silent(self):
-        self.fixture("opencode", OPENCODE)
-        self.fixture("nous", NOUS)
+        self.fixture(INSTANCE)
         self.assertEqual(self.run_watch().returncode, 0)
         result = self.run_watch()
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -152,32 +191,29 @@ class FreeModelWatch(unittest.TestCase):
             with self.subTest(locale=locale):
                 self.env["LC_ALL"] = locale
                 sorted_names = subprocess.run(
-                    ["sort"], input="Z:free\na:free\n", env=self.env,
+                    ["sort"], input="nous-portal/Z:free\nnous-portal/a:free\n", env=self.env,
                     capture_output=True, text=True, check=True,
                 )
                 self.assertEqual(
                     sorted_names.stdout,
-                    "Z:free\na:free\n" if locale == "C" else "a:free\nZ:free\n",
+                    "nous-portal/Z:free\nnous-portal/a:free\n" if locale == "C"
+                    else "nous-portal/a:free\nnous-portal/Z:free\n",
                 )
                 self.env["STATE_DIRECTORY"] = str(self.root / locale)
                 self.calls.write_text("")
-                self.fixture("nous", {"freeRecommendedModels": [
-                    {"modelName": name} for name in ("Z:free", "a:free")
-                ]})
+                self.fixture(instance(("nous-portal/Z:free", "nous-portal/a:free")))
                 baseline = self.run_watch()
                 self.assertEqual(baseline.returncode, 0, baseline.stderr)
-                self.fixture("nous", {"freeRecommendedModels": [
-                    {"modelName": name} for name in ("Z:free", "b:free")
-                ]})
+                self.fixture(instance(("nous-portal/Z:free", "nous-portal/b:free")))
                 result = self.run_watch()
                 self.assertEqual(result.returncode, 0, result.stderr)
                 posts = [line for line in self.actions() if line.startswith("post ")]
                 self.assertEqual(len(posts), 1)
-                self.assertIn("new: b:free; gone: a:free", posts[0])
+                self.assertIn("new: nous-portal/b:free; gone: nous-portal/a:free", posts[0])
                 self.assertNotIn("Z:free", posts[0])
                 self.assertEqual(
-                    (Path(self.env["STATE_DIRECTORY"]) / "nous-free.list").read_text(),
-                    "Z:free\nb:free\n",
+                    (Path(self.env["STATE_DIRECTORY"]) / "instance-free.list").read_text(),
+                    "nous-portal/Z:free\nnous-portal/b:free\n",
                 )
 
     def test_ambient_host_locale_cannot_break_the_diff(self):
@@ -195,28 +231,26 @@ class FreeModelWatch(unittest.TestCase):
                 self.env["LC_MONETARY"] = "es_AR.UTF-8"
                 self.env["STATE_DIRECTORY"] = str(self.root / f"ambient-{lang}")
                 self.calls.write_text("")
-                self.fixture("opencode", {"data": [{"id": name} for name in ("Z-free", "a-free", "b-free")]})
+                self.fixture(instance(("opencode/Z-free", "opencode/a-free", "opencode/b-free")))
                 baseline = self.run_watch()
                 self.assertEqual(baseline.returncode, 0, baseline.stderr)
-                self.fixture("opencode", {"data": [{"id": name} for name in ("Z-free", "b-free")]})
+                self.fixture(instance(("opencode/Z-free", "opencode/b-free")))
                 result = self.run_watch()
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertNotIn("not in sorted order", result.stderr)
                 posts = [line for line in self.actions() if line.startswith("post ")]
                 self.assertEqual(len(posts), 1)
-                self.assertIn("gone: a-free", posts[0])
+                self.assertIn("gone: opencode/a-free", posts[0])
                 self.assertNotIn("Z-free", posts[0])
                 self.assertEqual(
-                    (Path(self.env["STATE_DIRECTORY"]) / "opencode-free.list").read_text(),
-                    "Z-free\nb-free\n",
+                    (Path(self.env["STATE_DIRECTORY"]) / "instance-free.list").read_text(),
+                    "opencode/Z-free\nopencode/b-free\n",
                 )
 
     def test_large_catalog_change_keeps_the_notification_bounded(self):
-        self.fixture("opencode", OPENCODE)
-        self.fixture("nous", NOUS)
+        self.fixture(INSTANCE)
         self.assertEqual(self.run_watch().returncode, 0)
-        self.fixture("opencode", {"data": [{"id": f"{'long-name-' * 15}{n:04}-free"} for n in range(1000)]})
-        self.fixture("nous", {"freeRecommendedModels": [{"modelName": f"{'long-name-' * 15}{n:04}:free"} for n in range(1000)]})
+        self.fixture(instance([f"opencode/{'long-name-' * 15}{n:04}-free" for n in range(1000)]))
         result = self.run_watch()
         self.assertEqual(result.returncode, 0, result.stderr)
         posts = [line for line in self.actions() if line.startswith("post ")]
@@ -224,40 +258,132 @@ class FreeModelWatch(unittest.TestCase):
         self.assertLessEqual(len(posts[0]), 2000)
 
     def test_endpoint_failure_keeps_previous_snapshot(self):
-        self.fixture("opencode", OPENCODE)
-        self.fixture("nous", NOUS)
+        self.fixture(INSTANCE)
         self.assertEqual(self.run_watch().returncode, 0)
 
-        Path(self.env["NOUS_FIXTURE"]).unlink()
+        Path(self.env["INSTANCE_FIXTURE"]).unlink()
         result = self.run_watch()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("nous-free catalog unavailable", result.stderr)
-        self.assertIn("opencode-free unchanged", result.stdout)
-        self.assertEqual(
-            (Path(self.env["STATE_DIRECTORY"]) / "nous-free.list").read_text().splitlines(),
-            ["one:free", "two:free"],
-        )
+        self.assertIn("instance-free catalog unavailable", result.stderr)
+        self.assertEqual(self.snapshot().splitlines(), BASELINE)
         self.assertEqual([line for line in self.actions() if line.startswith("post")], [])
 
-    def test_post_failure_leaves_state_without_msgid(self):
-        self.fixture("opencode", OPENCODE)
-        self.fixture("nous", NOUS)
+    def test_truncated_catalog_is_not_mistaken_for_removals(self):
+        """The CLI intermittently cuts its JSON mid-body. jq streams, so a
+        truncated document would still emit a partial id list; a snapshot
+        must never be built from one."""
+        self.fixture(INSTANCE)
         self.assertEqual(self.run_watch().returncode, 0)
 
-        self.fixture("opencode", OPENCODE_NEW)
+        valid = json.dumps(INSTANCE_NEW)
+        # Cut mid-record: the surviving prefix still parses as far as
+        # "nous-portal/three:free" under a streaming parser.
+        truncated = valid[: valid.index("opencode/model-newthing-free") - 2]
+        path = self.root / "truncated.json"
+        path.write_text(truncated)
+        self.env["INSTANCE_FIXTURE"] = str(path)
+
+        result = self.run_watch()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("instance-free catalog unavailable", result.stderr)
+        self.assertEqual(self.snapshot().splitlines(), BASELINE)
+        self.assertEqual([line for line in self.actions() if line.startswith("post")], [])
+
+    def test_truncated_catalog_recovers_after_a_good_retry(self):
+        """Retries within the same run answer with the full catalog, so one
+        truncated response does not push the update out by a full interval."""
+        self.fixture(INSTANCE)
+        self.assertEqual(self.run_watch().returncode, 0)
+
+        valid = json.dumps(INSTANCE_NEW)
+        truncated = valid[: valid.index("opencode/model-newthing-free") - 2]
+        count_file = self.root / "flaky-count"
+        stub = self.root / "bin" / "flaky-opencode"
+        stub.write_text(f"""#!/usr/bin/env bash
+count=$(cat {count_file} 2>/dev/null || echo 0)
+count=$((count + 1))
+echo $count > {count_file}
+if [ "$count" = 1 ]; then
+  printf '%s' {shlex.quote(truncated)}
+  exit 0
+fi
+cat "$INSTANCE_FIXTURE"
+""".replace("#!/usr/bin/env bash", f"#!{shutil.which('bash')}"))
+        stub.chmod(0o755)
+        self.fixture(INSTANCE_NEW)
+        self.env["OPENCODE_BIN"] = str(stub)
+
+        result = self.run_watch()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        posts = [line for line in self.actions() if line.startswith("post ")]
+        self.assertEqual(len(posts), 1, result.stdout + result.stderr)
+        self.assertIn("opencode/model-newthing-free", posts[0])
+        self.assertIn("opencode/model-newthing-free", self.snapshot())
+
+    def test_incomplete_startup_catalog_waits_for_plugins(self):
+        self.fixture(INSTANCE)
+        self.assertEqual(self.run_watch().returncode, 0)
+        self.calls.write_text("")
+        partial = instance(("opencode/model-a-free",))
+        self.scripted_instance([partial, INSTANCE_NEW, INSTANCE_NEW])
+        result = self.run_watch()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual((self.root / "sequence-count").read_text().strip(), "3")
+        posts = [line for line in self.actions() if line.startswith("post ")]
+        self.assertEqual(len(posts), 1)
+        self.assertIn("opencode/model-newthing-free", posts[0])
+        self.assertIn("opencode/model-newthing-free", self.snapshot())
+
+    def test_unsettled_catalog_keeps_previous_snapshot(self):
+        self.fixture(INSTANCE)
+        self.assertEqual(self.run_watch().returncode, 0)
+        self.calls.write_text("")
+        partial = instance(("opencode/model-a-free",))
+        self.scripted_instance([partial, INSTANCE_NEW, partial])
+        result = self.run_watch()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("catalog unavailable", result.stderr)
+        self.assertEqual(self.snapshot().splitlines(), BASELINE)
+        self.assertEqual(self.actions(), [])
+
+    def test_empty_free_model_list_reports_removals(self):
+        self.fixture(INSTANCE)
+        self.assertEqual(self.run_watch().returncode, 0)
+        self.calls.write_text("")
+        self.fixture(instance(()))
+        result = self.run_watch()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        posts = [line for line in self.actions() if line.startswith("post ")]
+        self.assertEqual(len(posts), 1)
+        self.assertIn("gone: nous-portal/one:free", posts[0])
+        self.assertEqual(self.snapshot(), "")
+
+    def test_invalid_response_shape_keeps_previous_snapshot(self):
+        self.fixture(INSTANCE)
+        self.assertEqual(self.run_watch().returncode, 0)
+        self.calls.write_text("")
+        self.scripted_instance(['{"data":[{"bad":true}]}'] * 3)
+        result = self.run_watch()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("catalog unavailable", result.stderr)
+        self.assertEqual(self.snapshot().splitlines(), BASELINE)
+        self.assertEqual(self.actions(), [])
+
+    def test_post_failure_leaves_state_without_msgid(self):
+        self.fixture(INSTANCE)
+        self.assertEqual(self.run_watch().returncode, 0)
+
+        self.fixture(INSTANCE_NEW)
         result = self.run_watch(fail_post=True)
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertIn("announcing the catalog change failed", result.stderr)
         self.assertFalse((Path(self.env["STATE_DIRECTORY"]) / ".free-models.msgid").exists())
-        self.assertEqual(
-            (Path(self.env["STATE_DIRECTORY"]) / "opencode-free.list").read_text().splitlines(),
-            ["model-a-free", "model-b-free"],
-        )
+        self.assertEqual(self.snapshot().splitlines(), BASELINE)
         # A retry once Discord answers again announces the same change.
         result = self.run_watch()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len([line for line in self.actions() if line.startswith("post")]), 2)
-        self.assertIn("model-newthing-free", (Path(self.env["STATE_DIRECTORY"]) / "opencode-free.list").read_text())
+        self.assertIn("model-newthing-free", self.snapshot())
 
 
 if __name__ == "__main__":

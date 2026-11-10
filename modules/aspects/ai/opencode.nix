@@ -107,6 +107,9 @@
               "*" = {
                 "*" = "allow";
               };
+              "browse_*" = {
+                "*" = "ask";
+              };
             };
             formatter = false;
           };
