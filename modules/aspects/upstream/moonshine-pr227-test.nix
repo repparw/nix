@@ -12,7 +12,7 @@
   # candidate (CI-published once the pinned upstream source carries PR227
   # and the UnitRemoved reload guard). Keep behavior identical to the
   # drop-in it replaces: same package, same environment.
-  den.aspects.moonshine-pr227-test.nixos =
+  den.aspects.moonshine-pr227-test.provides.to-hosts.nixos =
     {
       lib,
       pkgs,
