@@ -126,14 +126,11 @@
         }
 
         (lib.mkIf hasStylix {
-          home.activation.t3codeStylixTheme =
-            let
-              themeFile = pkgs.writeText "t3code-stylix-theme.json" stylixThemeJson;
-            in
-            lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-              mkdir -p "${config.home.homeDirectory}/.t3/userdata/themes"
-              cp --remove-destination ${lib.escapeShellArg themeFile} "${config.home.homeDirectory}/.t3/userdata/themes/stylix.json"
-            '';
+          home.file.".t3/userdata/themes/stylix.json" = {
+            source = pkgs.writeText "t3code-stylix-theme.json" stylixThemeJson;
+            # Replace the plain file written by the previous activation.
+            force = true;
+          };
 
           programs.t3code.userSettings = {
             defaultTheme = "stylix";
