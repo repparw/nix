@@ -13,6 +13,7 @@ PR_WAITS = {
     "t3code-connect": ("NixOS/nixpkgs", 555921, "nixpkgs"),
     "t3code-split": ("NixOS/nixpkgs", 555814, "nixpkgs"),
     "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
+    "zapfast-openssl": ("NixOS/nixpkgs", 585883, "nixpkgs"),
     "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
 }
 WORKAROUNDS = {
@@ -20,6 +21,9 @@ WORKAROUNDS = {
     "t3code-connect": ("modules/aspects/upstream/t3code-connect.nix", "cp .env.example .env"),
     "t3code-split": ("modules/aspects/upstream/t3code-split.nix", "t3code-server ="),
     "tasks-org": ("modules/aspects/upstream/tasks-org.nix", None),
+    # These temporary overrides live in their permanent GUI owners.
+    "ashell-aws-lc": ("modules/aspects/gui/niri.nix", "ashell = prev.ashell.overrideAttrs"),
+    "zapfast-openssl": ("modules/aspects/gui/apps.nix", "(zapfast.overrideAttrs"),
     "t3code-browser-libs": (
         "modules/aspects/upstream/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
     "qbittorrent": ("modules/aspects/upstream/qbittorrent.nix", None),
@@ -349,6 +353,13 @@ def detect(name, lock):
             return "merged-not-pinned"
         return "PINNED-READY" if t3code_browser_wrapped(revision) else "waiting-source"
     revision = pin(lock, "nixpkgs")
+    if name == "ashell-aws-lc":
+        # There is no upstream fix PR yet. Require the pinned raw Nixpkgs recipe
+        # to declare the AWS-LC dependency before attempting cleanup.
+        package = source("NixOS/nixpkgs", "pkgs/by-name/as/ashell/package.nix", revision)
+        inputs = re.search(r"\\bbuildInputs\\s*=\\s*\\[([^]]*)\\]", package, re.S)
+        fixed = bool(inputs and re.search(r"(?m)^\\s*aws-lc\\s*$", inputs.group(1)))
+        return "PINNED-READY" if fixed else "waiting-source"
     if name == "qbittorrent":
         repo, number, package = "qbittorrent/qBittorrent", 24055, "qbittorrent"
         pr = api(f"repos/{repo}/pulls/{number}")
