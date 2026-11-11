@@ -123,7 +123,9 @@
             defaultThemeSetAt = builtins.hashString "sha256" stylixThemeJson;
           }
           // {
-            # Providers come from nixpkgs, so t3code should not check for updates.
+            # nixpkgs pins the provider CLIs, so version advisories are noise.
+            # The flag also stops the remote model catalog fetch, which only
+            # matters for Claude's picker; Claude is not enabled here.
             enableProviderUpdateChecks = false;
             providerInstances.opencode = {
               driver = "opencode";
