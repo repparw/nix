@@ -28,7 +28,11 @@
         # through the parakeet engine; the onnx build keeps the Vulkan whisper
         # backend for the [whisper] fallback and per-recording --model
         # overrides. See docs/research/parakeet-ultra-evaluation.md.
-        voxtypeDictation = pkgs.voxtype-vulkan.override { onnxSupport = true; };
+        # The pinned Voxtype Rust build requires Oniguruma when onig_sys is
+        # configured to link against the system copy.
+        voxtypeDictation = (pkgs.voxtype-vulkan.override { onnxSupport = true; }).overrideAttrs (old: {
+          buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.oniguruma ];
+        });
 
         hexToggle = pkgs.writeShellApplication {
           name = "hex-toggle";
