@@ -3,8 +3,12 @@ on:
   pull_request:
     paths:
       - 'modules/_packages/free-games-claimer.nix'
+      - 'modules/_packages/epicgames-freegames-node.nix'
       - 'modules/aspects/services/free-games-claimer.nix'
       - 'modules/aspects/services/free-games-claimer/**'
+      - 'modules/aspects/services/epic-freegames-portal.nix'
+      - 'modules/aspects/services/epic-freegames-portal/**'
+      - 'modules/ci-packages.nix'
       - '.github/workflows/claimer-package.yml'
 
 permissions:
@@ -20,10 +24,13 @@ jobs:
         with:
           persist-credentials: false
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      # Push successful builds so pi deploys substitute instead of building
+      # the node stacks on target. Forks and dependabot get no token.
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: repparw
-          skipPush: true
+          skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Build Pi's claimer package and verify source patches
         run: |
           package=$(nix build --impure --no-link --show-trace --print-out-paths --expr '
@@ -35,3 +42,12 @@ jobs:
           ')
           node --check "$package/lib/node_modules/free-games-claimer/epic-games.js"
           node --check "$package/lib/node_modules/free-games-claimer/gog.js"
+      - name: Build the Epic device-auth portal package
+        run: |
+          nix build --impure --no-link --show-trace --print-out-paths --expr '
+            let
+              flake = builtins.getFlake (toString ./.);
+              pkgs = flake.inputs.nixpkgs.legacyPackages.aarch64-linux;
+            in
+              pkgs.callPackage ./modules/_packages/epicgames-freegames-node.nix { }
+          '

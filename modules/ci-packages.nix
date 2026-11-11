@@ -34,6 +34,22 @@ let
     "pi"
     "epsilon"
   ];
+  # Aspects whose services don't expose enable/package options are invisible
+  # to the collector above. List them explicitly so main-packages pushes them
+  # and pi deploys substitute instead of building the node stacks on target
+  # (#521). The _tests/ci-packages.nix harness stubs inputs without nixpkgs,
+  # so skip the explicit list there rather than pull real packages into it.
+  explicitPackages =
+    system:
+    lib.optionals ((inputs ? nixpkgs) && system == "aarch64-linux") (
+      let
+        pkgs = inputs.nixpkgs.legacyPackages.${system};
+      in
+      [
+        (pkgs.callPackage ../_packages/free-games-claimer.nix { })
+        (pkgs.callPackage ../_packages/epicgames-freegames-node.nix { })
+      ]
+    );
   targetsFor =
     system:
     lib.listToAttrs (
@@ -43,9 +59,10 @@ let
           value = package;
         })
         (
-          lib.concatMap (host: packagesFor host.config host.options.services) (
+          (lib.concatMap (host: packagesFor host.config host.options.services) (
             lib.filter (host: host.config.nixpkgs.hostPlatform.system == system) hosts
-          )
+          ))
+          ++ (explicitPackages system)
         )
     );
 in
