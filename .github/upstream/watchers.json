@@ -36,6 +36,16 @@
     "input": "nixpkgs",
     "cleanup": "tasks-org.patch"
   },
+  "ashell-aws-lc": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "ashell-aws-lc.patch"
+  },
+  "zapfast-openssl": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "cleanup": "zapfast-openssl.patch"
+  },
   "nautilus-module": {
     "mode": "notify-only",
     "input": "nixpkgs"

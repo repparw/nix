@@ -1,0 +1,18 @@
+diff --git a/modules/aspects/gui/apps.nix b/modules/aspects/gui/apps.nix
+--- a/modules/aspects/gui/apps.nix
++++ b/modules/aspects/gui/apps.nix
+@@ -29,13 +29,7 @@
+         home.packages = with pkgs; [
+           godot
+           tasks-org
+-          # Remove the override once nixpkgs#585883 reaches the pinned revision.
+-          (zapfast.overrideAttrs (old: {
+-            buildInputs = old.buildInputs ++ [
+-              openssl
+-              sqlcipher
+-            ];
+-          }))
++          zapfast
+         ];
+ 
+         gtk.enable = true;

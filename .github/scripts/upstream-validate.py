@@ -95,6 +95,10 @@ def validate(name, architecture):
         expression = 'let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT"); in f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope.override { enableWsi = true; }'
         subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--expr", expression],
                        env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, check=True)
+    elif name in ("ashell-aws-lc", "zapfast-openssl"):
+        # The cleanup removes an inline override. Build the package selected
+        # by Alpha after it falls back to the pinned Nixpkgs definition.
+        build("alpha.pkgs.ashell" if name == "ashell-aws-lc" else "alpha.pkgs.zapfast")
     elif name in ("tasks-org", "wpaperd-fix", "qbittorrent"):
         attribute = {"tasks-org": "alpha.pkgs.tasks-org", "wpaperd-fix": "alpha.pkgs.wpaperd",
                      "qbittorrent": "alpha.config.containers.qbittorrent.config.services.qbittorrent.package"}[name]

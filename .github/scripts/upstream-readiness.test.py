@@ -159,6 +159,16 @@ class Readiness(unittest.TestCase):
     def test_version_tag_expression_is_resolved_exactly(self):
         self.assertEqual(watch.source_ref('version = "1.3.0"; tag = finalAttrs.version;'), "1.3.0")
 
+    def test_ashell_cleanup_waits_for_pinned_aws_lc_dependency(self):
+        no_fix = "nativeBuildInputs = [ pkg-config ]; buildInputs = [ pipewire udev ];"
+        commented = "buildInputs = [ pipewire ]; # aws-lc may be needed later"
+        fixed = "nativeBuildInputs = [ pkg-config ]; buildInputs = [ pipewire\n  aws-lc\n ];"
+        for recipe, expected in ((no_fix, "waiting-source"),
+                                 (commented, "waiting-source"),
+                                 (fixed, "PINNED-READY")):
+            with self.subTest(expected=expected), patch.object(watch, "source", return_value=recipe):
+                self.assertEqual(watch.detect("ashell-aws-lc", LOCK), expected)
+
     def test_gamescope_requires_both_lookup_sites_and_flag_branch(self):
         site = 'if (queueInfo.flags) { VkDeviceQueueInfo2 q2; dispatch->GetDeviceQueue2(device, &q2, &queue); } else dispatch->GetDeviceQueue(device, family, j, &queue);'
         self.assertFalse(watch.flagged_queues_fixed('void GetDeviceQueue2();'))
@@ -377,8 +387,8 @@ class Readiness(unittest.TestCase):
 
 
     def test_relocated_upstream_cleanups_apply_and_are_owned(self):
-        # Every remaining post-lock workaround except the independently
-        # migrating t3code-server unit lives under the watched directory.
+        # Most post-lock workarounds live under upstream/. The GUI overrides
+        # are inline in their owners; they also require exact cleanup recipes.
         # Check against the actual worktree so a moved helper and its cleanup
         # cannot drift apart and silently break publication.
         root = Path(__file__).resolve().parents[2]
@@ -388,7 +398,11 @@ class Readiness(unittest.TestCase):
                 continue
             with self.subTest(watcher=name):
                 relative, _marker = watch.WORKAROUNDS[name]
-                self.assertTrue(relative.startswith("modules/aspects/upstream/"), name)
+                self.assertTrue(relative.startswith("modules/aspects/upstream/") or
+                                (name, relative) in {
+                                    ("ashell-aws-lc", "modules/aspects/gui/niri.nix"),
+                                    ("zapfast-openssl", "modules/aspects/gui/apps.nix"),
+                                }, name)
                 path = root / relative
                 if not path.exists() or (_marker is not None and _marker not in path.read_text()):
                     # A previously applied cleanup may leave the permanent
