@@ -40,8 +40,10 @@ jobs:
         include:
           - system: x86_64-linux
             runner: ubuntu-24.04
+            build_cores: 2
           - system: aarch64-linux
             runner: ubuntu-24.04-arm
+            build_cores: 1
     steps:
       - name: Verify requested revision
         if: github.event_name == 'workflow_dispatch'
@@ -64,6 +66,7 @@ jobs:
       - name: Build missing packages
         env:
           SYSTEM: ${{ matrix.system }}
+          BUILD_CORES: ${{ matrix.build_cores }}
         run: |
           mkdir -p ci-logs
           nix run .#nix-fast-build --no-update-lock-file -- \
@@ -71,7 +74,7 @@ jobs:
             --skip-cached \
             --out-link "$RUNNER_TEMP/main-package-result" \
             --eval-workers 1 --eval-max-memory-size 8192 \
-            --max-jobs 1 --option cores 2 \
+            --max-jobs 1 --option cores "$BUILD_CORES" \
             --result-file ci-logs/packages.json
           test -s ci-logs/packages.json
       - name: Publish successful package outputs
