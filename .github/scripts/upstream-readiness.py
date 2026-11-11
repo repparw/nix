@@ -357,8 +357,8 @@ def detect(name, lock):
         # There is no upstream fix PR yet. Require the pinned raw Nixpkgs recipe
         # to declare the AWS-LC dependency before attempting cleanup.
         package = source("NixOS/nixpkgs", "pkgs/by-name/as/ashell/package.nix", revision)
-        inputs = re.search(r"\\bbuildInputs\\s*=\\s*\\[([^]]*)\\]", package, re.S)
-        fixed = bool(inputs and re.search(r"(?m)^\\s*aws-lc\\s*$", inputs.group(1)))
+        inputs = re.search(r"\bbuildInputs\s*=\s*\[([^]]*)\]", package, re.S)
+        fixed = bool(inputs and re.search(r"(?m)^\s*aws-lc\s*$", inputs.group(1)))
         return "PINNED-READY" if fixed else "waiting-source"
     if name == "qbittorrent":
         repo, number, package = "qbittorrent/qBittorrent", 24055, "qbittorrent"
