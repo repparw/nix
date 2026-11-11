@@ -129,6 +129,8 @@
             defaultThemeSetAt = builtins.hashString "sha256" stylixThemeJson;
           }
           // {
+            # Providers come from nixpkgs, so t3code should not check for updates.
+            enableProviderUpdateChecks = false;
             providerInstances.opencode = {
               driver = "opencode";
               enabled = true;
@@ -146,12 +148,8 @@
             "--mode"
             "web"
           ];
-          # The upstream module loads this as the unit's EnvironmentFile.
-          # Connect's identifiers are baked into the bundle by the
-          # t3code-connect overlay, so they stay out of the environment.
           environmentFile = pkgs.writeText "t3code-environment" ''
             CODEX_HOME=${config.xdg.configHome}/codex
-            T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1
           '';
         };
 
