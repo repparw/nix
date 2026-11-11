@@ -85,21 +85,6 @@
           sessionEnv
 
           (writeShellApplication {
-            name = "record";
-            runtimeInputs = [
-              wl-screenrec
-              slurp
-              niri
-              jq
-              libnotify
-              wl-clipboard
-              util-linux
-              gawk
-            ];
-            text = builtins.readFile ./niri-record.sh;
-          })
-
-          (writeShellApplication {
             name = "grabtext";
             runtimeInputs = [
               grim
@@ -356,9 +341,7 @@
                 _props.hotkey-overlay-title = "Screenshot Area";
                 screenshot._props.show-pointer = false;
               };
-              # The original `record` command remains available as a
-              # fallback (and still copies the finished MP4 to the clipboard).
-              # GSR UI's native completion-to-clipboard flow needs testing.
+              # GSR UI's completion-to-clipboard workflow still needs testing.
               "Ctrl+Print" = titledSpawn "Toggle Recording" [
                 "gsr-ui-cli"
                 "toggle-record"
