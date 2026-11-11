@@ -52,7 +52,8 @@
                 # Upstream fixed it in v5.39.0 (TP-Link-Archer-C6U#260).
                 # Drop the patch when the integration accepts v5.39.0.
                 tplinkrouterc6u-patched =
-                  pkgs.home-assistant.python3Packages.callPackage ../../_packages/tplinkrouterc6u.nix { };
+                  pkgs.home-assistant.python3Packages.callPackage ../../_packages/tplinkrouterc6u.nix
+                    { };
               in
               {
                 # The nspawn unit PATH omits system packages, so the
@@ -91,9 +92,7 @@
                       })
                     ];
                   extraPackages =
-                    ps:
-                    with ps;
-                    [
+                    ps: with ps; [
                       aiogithubapi # hacs
                       aiofiles
                       jinja2
