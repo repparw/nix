@@ -31,7 +31,7 @@
         # The pinned Voxtype Rust build requires Oniguruma when onig_sys is
         # configured to link against the system copy.
         voxtypeDictation = (pkgs.voxtype-vulkan.override { onnxSupport = true; }).overrideAttrs (old: {
-          buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.oniguruma ];
+          buildInputs = (old.buildInputs or [ ]) ++ (with pkgs; [ oniguruma sqlite ]);
         });
 
         hexToggle = pkgs.writeShellApplication {
