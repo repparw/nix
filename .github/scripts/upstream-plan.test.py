@@ -174,6 +174,7 @@ class PlanTests(unittest.TestCase):
             "tridactyl-reader",
             "fsr4-rdna2",
             "nodejs-security",
+            "ashell-aws-lc",
         }
         self.assertEqual(set(self.registry), expected)
 
