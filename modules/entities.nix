@@ -8,6 +8,7 @@
           den.aspects.repparw
           den.aspects.fish
           den.aspects.desktop
+          den.aspects.sendspin-client
           den.aspects.gaming
           den.aspects.streaming
           den.aspects.spotifast
