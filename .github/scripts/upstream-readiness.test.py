@@ -162,7 +162,7 @@ class Readiness(unittest.TestCase):
     def test_ashell_cleanup_waits_for_pinned_aws_lc_dependency(self):
         no_fix = "nativeBuildInputs = [ pkg-config ]; buildInputs = [ pipewire udev ];"
         commented = "buildInputs = [ pipewire ]; # aws-lc may be needed later"
-        fixed = "nativeBuildInputs = [ pkg-config ]; buildInputs = [ pipewire\\n  aws-lc\\n ];"
+        fixed = "nativeBuildInputs = [ pkg-config ]; buildInputs = [ pipewire\n  aws-lc\n ];"
         for recipe, expected in ((no_fix, "waiting-source"),
                                  (commented, "waiting-source"),
                                  (fixed, "PINNED-READY")):
