@@ -66,23 +66,10 @@
           spawn = command;
         };
         spawn = command: { spawn = command; };
-        # Moonshine's Desktop stream boots a nested niri with this same
-        # config. Its sockets belong to the stream, so importing them into
-        # the login session's user manager would poison the real desktop.
-        sessionEnv = pkgs.writeShellApplication {
-          name = "niri-session-env";
-          runtimeInputs = [ pkgs.systemd ];
-          text = ''
-            if [ -z "''${MOONSHINE_CLIENT_WIDTH:-}" ]; then
-              exec systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP NIRI_SOCKET
-            fi
-          '';
-        };
       in
       {
         home.packages = with pkgs; [
           ndrop
-          sessionEnv
 
           (writeShellApplication {
             name = "grabtext";
@@ -163,11 +150,11 @@
             };
             debug.honor-xdg-activation-with-invalid-serial = { };
 
-            # The login session owns the UI; avoid another instance when
-            # Moonshine starts its nested Niri using the same config.
+            # Niri --session imports the compositor environment into the
+            # user manager itself. Moonshine launches plain nested Niri;
+            # avoid starting a second GUI controller there.
             spawn-sh-at-startup = ''
-              niri-session-env
-              if [ -z "$MOONSHINE_CLIENT_WIDTH" ]; then
+              if [ -z "''${MOONSHINE_CLIENT_WIDTH:-}" ]; then
                 exec gsr-ui
               fi
             '';
