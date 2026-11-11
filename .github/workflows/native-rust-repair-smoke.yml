@@ -40,4 +40,4 @@ jobs:
       - name: Build selected native package
         env:
           ATTRIBUTE: ${{ matrix.attribute }}
-        run: nix build --no-link --print-build-logs --no-update-lock-file ".#$ATTRIBUTE"
+        run: nix build --cores 1 --max-jobs 1 --no-link --print-build-logs --no-update-lock-file ".#$ATTRIBUTE"
