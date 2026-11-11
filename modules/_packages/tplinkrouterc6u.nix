@@ -8,13 +8,10 @@
   setuptools,
 }:
 
-# Pinned client for the home-assistant TP-Link Router integration with a
-# local presence fix: smart_network history-only entries (onlineTime 0) are
-# no longer merged into the active-client list. On the Archer AX23 v2 a
-# departed phone keeps such an entry, which previously held its tracker at
-# "home". Remove the patch when upstream stops merging those entries
-# (AlexandrErohin/TP-Link-Archer-C6U#106 tracks the related behavior), then
-# switch to the nixpkgs python3Packages package.
+# The Home Assistant integration v2.45.0 requires exactly version 5.38.0.
+# Upstream fixed stale smart_network history-only clients in v5.39.0
+# (AlexandrErohin/TP-Link-Archer-C6U#260); keep the backported patch until
+# the integration accepts the newer client, then use the unpatched package.
 buildPythonPackage rec {
   pname = "tplinkrouterc6u";
   version = "5.38.0";
