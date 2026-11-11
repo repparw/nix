@@ -28,7 +28,17 @@
         # through the parakeet engine; the onnx build keeps the Vulkan whisper
         # backend for the [whisper] fallback and per-recording --model
         # overrides. See docs/research/parakeet-ultra-evaluation.md.
-        voxtypeDictation = pkgs.voxtype-vulkan.override { onnxSupport = true; };
+        # Pinned Vulkan shader generation currently emits unresolved ggml
+        # symbols. Keep Parakeet ONNX as the default; Whisper temporarily uses
+        # CPU until the upstream Vulkan build is fixed.
+        voxtypeDictation = (pkgs.voxtype.override { onnxSupport = true; }).overrideAttrs (old: {
+          buildInputs =
+            (old.buildInputs or [ ])
+            ++ (with pkgs; [
+              oniguruma
+              sqlite
+            ]);
+        });
 
         hexToggle = pkgs.writeShellApplication {
           name = "hex-toggle";
