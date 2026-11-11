@@ -94,49 +94,52 @@
           };
         };
       in
-      {
-        programs.t3code.enable = true;
-        programs.t3code.package = lib.mkDefault (
-          if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code
-        );
+      lib.mkMerge [
+        {
+          programs.t3code = {
+            enable = true;
+            package = lib.mkDefault (if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code);
 
-        home.activation.t3codeStylixTheme = lib.mkIf hasStylix (
-          let
-            themeFile = pkgs.writeText "t3code-stylix-theme.json" stylixThemeJson;
-          in
-          lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-            mkdir -p "${config.home.homeDirectory}/.t3/userdata/themes"
-            cp --remove-destination ${lib.escapeShellArg themeFile} "${config.home.homeDirectory}/.t3/userdata/themes/stylix.json"
-          ''
-        );
-
-        programs.t3code.userSettings =
-          lib.optionalAttrs hasStylix {
-            defaultTheme = "stylix";
-            defaultThemeSetAt = builtins.hashString "sha256" stylixThemeJson;
-          }
-          // {
-            providerInstances.opencode = {
-              driver = "opencode";
-              enabled = true;
-              config = {
+            userSettings = {
+              providerInstances.opencode = {
+                driver = "opencode";
                 enabled = true;
-                binaryPath = "${config.programs.opencode.package}/bin/opencode";
-                serverUrl = "";
+                config = {
+                  enabled = true;
+                  binaryPath = "${config.programs.opencode.package}/bin/opencode";
+                  serverUrl = "";
+                };
               };
             };
-          };
 
-        programs.t3code.server = {
-          enable = true;
-          extraArgs = [
-            "--mode"
-            "web"
-          ];
-          environmentFile = pkgs.writeText "t3code-environment" ''
-            CODEX_HOME=${config.xdg.configHome}/codex
-          '';
-        };
-      };
+            server = {
+              enable = true;
+              extraArgs = [
+                "--mode"
+                "web"
+              ];
+              environmentFile = pkgs.writeText "t3code-environment" ''
+                CODEX_HOME=${config.xdg.configHome}/codex
+              '';
+            };
+          };
+        }
+
+        (lib.mkIf hasStylix {
+          home.activation.t3codeStylixTheme =
+            let
+              themeFile = pkgs.writeText "t3code-stylix-theme.json" stylixThemeJson;
+            in
+            lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+              mkdir -p "${config.home.homeDirectory}/.t3/userdata/themes"
+              cp --remove-destination ${lib.escapeShellArg themeFile} "${config.home.homeDirectory}/.t3/userdata/themes/stylix.json"
+            '';
+
+          programs.t3code.userSettings = {
+            defaultTheme = "stylix";
+            defaultThemeSetAt = builtins.hashString "sha256" stylixThemeJson;
+          };
+        })
+      ];
   };
 }
