@@ -29,6 +29,7 @@ concepts. Identify conflicts with documented decisions before proposing changes.
 ## Services
 
 - [Service model](services/service-model.md)
+- [Fleet event transport migration](architecture/fleet-events.md)
 - [Free games claimer](services/free-games-claimer.md)
 - [Hermes configuration and operations (private)](https://github.com/repparw/hermes-config)
 
