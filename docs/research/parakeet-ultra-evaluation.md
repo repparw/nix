@@ -1,13 +1,19 @@
 ---
 type: Research Note
 title: Parakeet Ultra Dictation Evaluation
-description: Compatibility and benchmark plan for moondream/parakeet-ultra ONNX as the voxtype dictation engine on alpha.
+description: Compatibility and benchmark plan for moondream/parakeet-ultra as the voxtype dictation engine on alpha, and the 1.2.0 GGUF/Vulkan migration.
 when: Read when changing the dictation engine or model, or retiring the parakeet-ultra test aspect.
 resource: modules/aspects/ai/dictation.nix
 tags: [research, dictation, voxtype, parakeet, asr]
 ---
 
 # Parakeet Ultra dictation evaluation (alpha)
+
+**Update (2026-11-11): Ultra now runs as a Q8 GGUF on Vulkan.** voxtype 1.2.0
+replaced the ONNX Parakeet path with transcribe.cpp's GGUF worker, and the
+deployment moved off CPU ONNX Runtime onto the RX 6700 XT. The ONNX model
+derivation and the `onnxSupport` build flag are gone; Whisper Small stays
+configured as the rollback engine. See "GGUF on Vulkan" below.
 
 **Decision (2026-10-25): adopted.** After the benchmark and a live dictation
 trial on alpha ("works fine"), the default dictation engine flipped to
@@ -27,7 +33,7 @@ Evaluation of **Parakeet Ultra** (moondream's post-trained
 deployed Whisper Small. The evaluation phase kept Whisper Small as the landed
 default until the benchmark and live trial said otherwise.
 
-## Deployment state (phase 1 findings)
+## Deployment state
 
 - Deployed: `voxtype-vulkan` 1.1.0 (nixpkgs, flake rev `0c721967`, Oct 14),
   `engine = "whisper"`, `model = "small"` (multilingual), `language = ["en", "es"]`,
@@ -41,9 +47,15 @@ default until the benchmark and live trial said otherwise.
   describes v2-era models. `parakeet-tdt-0.6b-v3` and Ultra are 25-language
   models (incl. es), and voxtype's catalog default is `parakeet-tdt-0.6b-v3`.
 
-## Compatibility verdict
+Those notes describe the 1.1.x ONNX deployment. The current deployment state
+is the GGUF/Vulkan setup below.
+
+## Compatibility verdict (ONNX path, retired)
 
 **Works with a documented rename (applied declaratively), pending live test.**
+
+This section records the 1.1.x ONNX evaluation. The ONNX model derivation has
+been removed; see "GGUF on Vulkan" for the current path.
 
 - Conversion: [beshkenadze/parakeet-ultra-onnx](https://huggingface.co/beshkenadze/parakeet-ultra-onnx)
   (CC-BY-4.0, sha256-pinned in `modules/_packages/parakeet-ultra-onnx.nix`).
@@ -68,6 +80,84 @@ default until the benchmark and live trial said otherwise.
 - AMD GPU: voxtype has a `parakeet-migraphx` feature, but nixpkgs' onnxruntime
   does not ship the MIGraphX EP, and RDNA2 gfx1031 (RX 6700 XT) is not an
   official ROCm target. Per the evaluation brief, Ultra runs on CPU here.
+
+## GGUF on Vulkan (2026-11-11)
+
+voxtype 1.2.0 makes the GGUF path the primary one: `parakeet` with a `.gguf`
+model is served by the out-of-process `voxtype-gguf-worker` (transcribe.cpp
+0.2.3), not by ONNX Runtime. That removes the CPU-only constraint above, so
+Ultra now runs on the GPU.
+
+**Package.** nixpkgs still carries 1.1.1, which has no GGUF support, so
+`modules/_packages/voxtype-vulkan-gguf.nix` builds 1.2.0 locally with the
+`gpu-vulkan` feature (whisper Vulkan + `gguf` + `parakeet-gguf` +
+`cohere-gguf`). The worker is a separate workspace crate, so the derivation
+runs a second `cargo build -p voxtype-gguf-worker --features vulkan` and
+installs the binary next to the daemon: voxtype resolves the worker beside
+its own executable (`src/transcribe/gguf_subprocess.rs`,
+`worker_beside_executable`), so both must share a `bin` directory. The
+openvino `Cargo.lock` patch is copied verbatim from nixpkgs' 1.1.1 package —
+the 1.2.0 lock pins the same openvino-rs git fork with the unvendorable
+submodule. `spirv-headers` is a build input because ggml-vulkan's CMake
+`find_package(SPIRV-Headers)` needs it, and `sqlite` is a build input because
+`libsqlite3-sys` emits `-lsqlite3` and the pinned nixpkgs no longer leaves
+SQLite on the link path. The ONNX features are deliberately
+not enabled, so the binary links no ONNX Runtime at all.
+
+**Model.** `modules/_packages/parakeet-ultra-gguf.nix` pins
+[handy-computer/parakeet-ultra-gguf](https://huggingface.co/handy-computer/parakeet-ultra-gguf)
+`parakeet-ultra-Q8_0.gguf` at revision
+`a1539be1b849ea7463b88343e5277b373d0c4ea9`, sha256
+`007a59761e9258779f189df396b50d12b83bb5b79e66df4b955c230d2f2a0a59`
+(740,363,168 bytes). That revision and hash are the ones voxtype 1.2.0's own
+catalog lists (`src/setup/model.rs`, `PARAKEET_GGUF_MODELS`), so the pinned
+file and upstream's curated entry agree. The 25-language coverage of Ultra is
+unchanged, so the parakeet engine still needs no language setting.
+
+**Config.** `[parakeet] model` points at the absolute store path and
+`gguf_backend = "vulkan"` pins the backend. The path is resolved directly by
+voxtype (absolute paths need no registry entry) and its `.gguf` suffix is what
+routes the engine to the GGUF worker instead of ONNX. `model_type` was
+dropped: it only applies to the ONNX path, which the GGUF branch returns
+before. Whisper Small keeps its `language = ["en", "es"]` allowlist as the
+rollback engine.
+
+**Validation on alpha** (RX 6700 XT, RADV NAVI22), against an isolated
+daemon with its own config, runtime and data directories, with the live
+`voxtype.service` left untouched:
+
+- `voxtype` reports 1.2.0; the daemon spawns
+  `voxtype-gguf-worker --engine parakeet --config-json {... "gguf_backend":"vulkan" ...}`
+  from the package's own `bin` directory.
+- The worker logs `Parakeet GGUF loaded on Vulkan0 [Vulkan0] (AMD Radeon RX
+6700 XT (RADV NAVI22))`; the model loads in ~0.6s. `voxtype status --format
+json --extended` reports `Backend: GGUF Vulkan (transcribe.cpp)`, and the
+  worker writes the backend it actually bound to
+  `$XDG_RUNTIME_DIR/voxtype/gguf_backend.json`.
+- No silent CPU fallback: with the Vulkan ICD hidden
+  (`VK_DRIVER_FILES=/nonexistent`) the explicit `vulkan` backend fails loudly
+  (`parakeet: vulkan backend requested but not available`) instead of falling
+  back to CPU.
+- Transcription, daemon record cycle, `voxtype transcribe` and the worker
+  all produce correct English, Spanish and mixed-language text; a 72s
+  recording transcribed in 0.82s. The daemon runs with the deployed
+  `[vad]` settings (`enabled`, `energy` backend), and every recording passed
+  the VAD gate.
+- The worker survived repeated record cycles, was respawned on Vulkan after
+  being killed, and the daemon recovered the model after a restart. `record
+cancel` discards without writing output.
+- Whisper Small still transcribes English and Spanish through the same
+  build.
+
+The Quickshell OSD recipe stays on its existing pin: v1.2.0's style JSON adds
+fields the pinned QML ignores, and the pinned `RecipeRenderer.qml` still
+handles the configured `pulse`/`waveform` layers. The OSD frontend binary
+ships in the package.
+
+The cleanup options `collapse_restarts`, `repair_sentence_breaks` and
+`format_numbers` were left disabled; each needs its own evaluation, and
+`format_numbers` in particular changes output text. Auto-submit and LLM
+post-processing stay disabled.
 
 ## Upstream context
 
@@ -123,7 +213,7 @@ utterances. FLEURS es_419 is Latin-American but not specifically Rioplatense;
 the es numbers are a proxy, and the qualitative live-dictation test on alpha
 covers the gap anecdotally.
 
-Baseline arms:
+Baseline arms (the 2026-10-25 ONNX/CPU comparison):
 
 | arm                     | engine   | model                | binary                        | accel  |
 | ----------------------- | -------- | -------------------- | ----------------------------- | ------ |
