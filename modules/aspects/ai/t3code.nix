@@ -107,12 +107,6 @@
           }
         ];
 
-        # t3code publishes environment themes as files in
-        # ~/.t3/userdata/themes/<id>.json and applies the id named by the
-        # defaultTheme setting. Home Manager symlinks home.file targets and the
-        # theme watcher skips symlinks, so install a real file at activation.
-        # defaultThemeSetAt hashes the palette so open clients re-apply after a
-        # stylix change; `t3 theme set` would write a timestamp here.
         home.activation.t3codeStylixTheme = lib.mkIf hasStylix (
           let
             themeFile = pkgs.writeText "t3code-stylix-theme.json" stylixThemeJson;
@@ -151,12 +145,6 @@
           environmentFile = pkgs.writeText "t3code-environment" ''
             CODEX_HOME=${config.xdg.configHome}/codex
           '';
-        };
-
-        # A competing T3 server exits 78 when the state directory is already
-        # owned; keep the unit from restarting into the same refusal.
-        systemd.user.services.t3code.Service = {
-          RestartPreventExitStatus = 78;
         };
       };
   };
