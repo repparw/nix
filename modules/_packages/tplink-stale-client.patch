@@ -1,0 +1,13 @@
+diff --git i/tplinkrouterc6u/client/c6u.py w/tplinkrouterc6u/client/c6u.py
+index 065f961..6864c20 100644
+--- i/tplinkrouterc6u/client/c6u.py
++++ w/tplinkrouterc6u/client/c6u.py
+@@ -462,6 +462,8 @@ class TplinkBaseRouter(AbstractRouter, TplinkRequest):
+                     continue
+ 
+                 if mac not in devices:
++                    if item.get('onlineTime', item.get('online_time')) in (0, '0'):
++                        continue
+                     conn = self._map_wire_type(item.get('deviceTag'), not item.get('isGuest'))
+                     devices[mac] = Device(conn, get_mac(item.get('mac', '00:00:00:00:00:00')),
+                                           get_ip(item.get('ip', '0.0.0.0')), item.get('deviceName', ''))

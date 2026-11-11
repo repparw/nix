@@ -46,6 +46,15 @@
             };
             extraConfig =
               { pkgs, ... }:
+              let
+                # The integration's v2.45.0 manifest pins tplinkrouterc6u
+                # 5.38.0, which needs the stale smart_network client fix.
+                # Upstream fixed it in v5.39.0 (TP-Link-Archer-C6U#260).
+                # Drop the patch when the integration accepts v5.39.0.
+                tplinkrouterc6u-patched =
+                  pkgs.home-assistant.python3Packages.callPackage ../../_packages/tplinkrouterc6u.nix
+                    { };
+              in
               {
                 # The nspawn unit PATH omits system packages, so the
                 # ssh binary must be added to the service path explicitly.
@@ -67,10 +76,21 @@
                     "workday"
                     "google_drive"
                   ];
-                  customComponents = with pkgs.home-assistant-custom-components; [
-                    auth_oidc
-                    adaptive_lighting
-                  ];
+                  customComponents =
+                    with pkgs.home-assistant-custom-components;
+                    [
+                      auth_oidc
+                      adaptive_lighting
+                    ]
+                    ++ [
+                      # Device_tracker presence from the router; replaces the
+                      # HACS-managed install tested live. The config entry
+                      # (credentials, 60 s polling, 300 s offline timeout)
+                      # stays in the host storage.
+                      (pkgs.callPackage ../../_packages/tplink-router-ha.nix {
+                        tplinkrouterc6u = tplinkrouterc6u-patched;
+                      })
+                    ];
                   extraPackages =
                     ps: with ps; [
                       aiogithubapi # hacs
