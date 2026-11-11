@@ -116,7 +116,6 @@
             defaultThemeSetAt = builtins.hashString "sha256" stylixThemeJson;
           }
           // {
-            enableProviderUpdateChecks = false;
             providerInstances.opencode = {
               driver = "opencode";
               enabled = true;
