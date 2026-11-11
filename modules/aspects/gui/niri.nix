@@ -32,6 +32,13 @@
         programs.niri.enable = lib.mkDefault true;
         programs.wshowkeys.enable = true;
 
+        # The KMS recorder needs the NixOS capability wrappers, not just
+        # the UI package on PATH.
+        programs.gpu-screen-recorder = {
+          enable = true;
+          ui.enable = true;
+        };
+
         # KDE Connect's remote-input (mouse/keyboard from a phone) needs a
         # portal backend that implements RemoteDesktop on wlroots compositors.
         # The GNOME portal backend does not implement RemoteDesktop on Niri,
@@ -171,7 +178,14 @@
             };
             debug.honor-xdg-activation-with-invalid-serial = { };
 
-            spawn-sh-at-startup = "niri-session-env";
+            # The login session owns the UI; avoid another instance when
+            # Moonshine starts its nested Niri using the same config.
+            spawn-sh-at-startup = ''
+              niri-session-env
+              if [ -z "$MOONSHINE_CLIENT_WIDTH" ]; then
+                exec gsr-ui
+              fi
+            '';
 
             binds = {
               "Mod+Return" = titledSpawn "Terminal" [ "xdg-terminal-exec" ];
@@ -342,14 +356,13 @@
                 _props.hotkey-overlay-title = "Screenshot Area";
                 screenshot._props.show-pointer = false;
               };
-              "Ctrl+Print" = titledSpawn "Record Screen" [
-                "record"
-                "screen"
-              ];
-              "Ctrl+Mod+Shift+Print" = titledSpawn "Record Area" [
-                "record"
-                "area"
-              ];
+              # The original `record` command remains available as a
+              # fallback (and still copies the finished MP4 to the clipboard).
+              # GSR UI's native completion-to-clipboard flow needs testing.
+              "Ctrl+Print" = titledSpawn "Toggle Recording" [ "gsr-ui-cli" "toggle-record" ];
+              "Ctrl+Alt+Print" = titledSpawn "Recording Controls" [ "gsr-ui-cli" "toggle-show" ];
+              "Ctrl+Shift+Print" = titledSpawn "Record Window" [ "gsr-ui-cli" "toggle-record-window" ];
+              "Ctrl+Mod+Shift+Print" = titledSpawn "Record Area" [ "gsr-ui-cli" "toggle-record-region" ];
 
               XF86AudioPlay = {
                 _props = {
