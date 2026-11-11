@@ -359,10 +359,22 @@
               # The original `record` command remains available as a
               # fallback (and still copies the finished MP4 to the clipboard).
               # GSR UI's native completion-to-clipboard flow needs testing.
-              "Ctrl+Print" = titledSpawn "Toggle Recording" [ "gsr-ui-cli" "toggle-record" ];
-              "Ctrl+Alt+Print" = titledSpawn "Recording Controls" [ "gsr-ui-cli" "toggle-show" ];
-              "Ctrl+Shift+Print" = titledSpawn "Record Window" [ "gsr-ui-cli" "toggle-record-window" ];
-              "Ctrl+Mod+Shift+Print" = titledSpawn "Record Area" [ "gsr-ui-cli" "toggle-record-region" ];
+              "Ctrl+Print" = titledSpawn "Toggle Recording" [
+                "gsr-ui-cli"
+                "toggle-record"
+              ];
+              "Ctrl+Alt+Print" = titledSpawn "Recording Controls" [
+                "gsr-ui-cli"
+                "toggle-show"
+              ];
+              "Ctrl+Shift+Print" = titledSpawn "Record Window" [
+                "gsr-ui-cli"
+                "toggle-record-window"
+              ];
+              "Ctrl+Mod+Shift+Print" = titledSpawn "Record Area" [
+                "gsr-ui-cli"
+                "toggle-record-region"
+              ];
 
               XF86AudioPlay = {
                 _props = {
