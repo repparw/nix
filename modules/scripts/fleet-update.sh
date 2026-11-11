@@ -286,64 +286,6 @@ remote() {
   ssh "${ssh_options[@]}" "root@$(host_address "$host")" "$@"
 }
 
-host_is_idle() {
-  local host="$1" inhibitors blocking_sleep
-
-  # A locked physical session can still be serving an active remote game or
-  # media stream. Those applications publish the standard systemd sleep
-  # inhibitor; delay-mode power-management hooks are not evidence of use.
-  if ! inhibitors=$(remote "$host" systemd-inhibit --list --json=short --no-pager); then
-    echo "$host inhibitor state is unavailable" >&2
-    return 1
-  fi
-  if ! jq -e 'type == "array"' <<< "$inhibitors" >/dev/null; then
-    echo "$host returned invalid inhibitor state" >&2
-    return 1
-  fi
-  blocking_sleep=$(
-    jq -r '
-      .[]
-      | select(.mode == "block")
-      | select(((.what // "") | split(":")) | index("sleep") != null)
-      | "\(.who // .comm // "unknown") (\(.why // "no reason"))"
-    ' <<< "$inhibitors"
-  ) || return 1
-  if [ -n "$blocking_sleep" ]; then
-    echo "$host has a block-mode sleep inhibitor:" >&2
-    printf '%s\n' "$blocking_sleep" >&2
-    return 1
-  fi
-
-  remote "$host" bash -s <<'EOF'
-locked=""
-idle=""
-session_state=""
-session_type=""
-sessions=$(loginctl list-sessions --no-legend 2>/dev/null) || exit 1
-[ -z "$sessions" ] && exit 0
-while read -r sess _; do
-  [ -n "$sess" ] || continue
-  class=$(loginctl show-session "$sess" -p Class --value 2>/dev/null) || exit 1
-  is_remote=$(loginctl show-session "$sess" -p Remote --value 2>/dev/null) || exit 1
-  session_type=$(loginctl show-session "$sess" -p Type --value 2>/dev/null) || exit 1
-  [ "$class" = user ] || continue
-  [ "$is_remote" = no ] || continue
-  case "$session_type" in
-    wayland | x11) ;;
-    *) continue ;;
-  esac
-
-  locked=$(loginctl show-session "$sess" -p LockedHint --value 2>/dev/null) || exit 1
-  idle=$(loginctl show-session "$sess" -p IdleHint --value 2>/dev/null) || exit 1
-  session_state=$(loginctl show-session "$sess" -p State --value 2>/dev/null) || exit 1
-  [ "$locked" = yes ] && continue
-  [ "$idle" = yes ] && continue
-  [ -n "$session_state" ] && [ "$session_state" != active ] && continue
-  exit 1
-done <<< "$sessions"
-EOF
-}
-
 http_code() {
   [ "$(curl -sS -m 10 -o /dev/null -w '%{http_code}' "$1" || true)" = "$2" ]
 }
@@ -500,7 +442,6 @@ capture_host() {
     in {
       revision = c.system.configurationRevision;
       systemPath = c.system.build.toplevel.outPath;
-      activityGate = c.modules.fleet-update.activityGate;
       containerUnits = c.modules.fleet-update.containerUnits;
       deployment = f.deploy // { nodes = {
         $host = n // { profiles.system = n.profiles.system // {
@@ -512,7 +453,6 @@ capture_host() {
   jq -e --arg revision "$revision" --arg host "$host" '
     .revision == $revision
     and (.systemPath | test("^/nix/store/[A-Za-z0-9+._=-]+$"))
-    and (.activityGate | type == "boolean")
     and (.containerUnits | type == "array")
     and (.deployment.nodes[$host].profiles.system.path | test("^/nix/store/[A-Za-z0-9+._=-]+$"))
     and (.deployment.nodes[$host].profiles.system.drvPath | test("^/nix/store/[A-Za-z0-9+._=-]+\\.drv$"))
@@ -606,27 +546,41 @@ if ! nix build ".#checks.$current_system.deploy-schema" --no-link > "$preflight_
 fi
 progress "preflight passed"
 
+# Prepare every selected host concurrently. Activation cannot begin until every
+# background job has finished successfully. Keep independent per-host logs and
+# preparation results so a failure can be attributed without racing on state.
+declare -A prepare_pids
 for host in "${hosts[@]}"; do
   # Each captured deployment has its own flake, so activation never rereads main.
   mkdir -p "$preparation/$host"
   progress "preparing $host (copy/build); log: $preparation/prepare-$host.log"
-  if ! prepare_host "$host" > "$preparation/prepare-$host.log" 2>&1; then
-    jq '.outcome = "failed"' "$preparation/result-$host.json" > "$preparation/result-$host.tmp"
-    mv "$preparation/result-$host.tmp" "$preparation/result-$host.json"
-    failure_reason="preparation of $host failed"
-    progress "preparation failed on $host; see $preparation/prepare-$host.log"
-    streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
-    printf '%s\n' "$streak" > "$state/rollback-streak"
-    touch "$state/PAUSE"
-    notify_failure ":warning: fleet preparation failed at $host (${revision:0:8}); no activation started; automation PAUSED" "$preparation/prepare-$host.log"
-    exit 1
-  fi
-  container_units_json[$host]=$(jq -c '.containerUnits' "$preparation/$host.json")
-  progress "prepared $host"
+  prepare_host "$host" > "$preparation/prepare-$host.log" 2>&1 &
+  prepare_pids["$host"]=$!
 done
 
+failed_preparation=""
+for host in "${hosts[@]}"; do
+  if wait "${prepare_pids[$host]}"; then
+    container_units_json[$host]=$(jq -c '.containerUnits' "$preparation/$host.json")
+    progress "prepared $host"
+  else
+    jq '.outcome = "failed"' "$preparation/result-$host.json" > "$preparation/result-$host.tmp"
+    mv "$preparation/result-$host.tmp" "$preparation/result-$host.json"
+    [ -n "$failed_preparation" ] || failed_preparation="$host"
+    progress "preparation failed on $host; see $preparation/prepare-$host.log"
+  fi
+done
+
+if [ -n "$failed_preparation" ]; then
+  failure_reason="preparation of $failed_preparation failed"
+  streak=$(( $(cat "$state/rollback-streak" 2>/dev/null || echo 0) + 1 ))
+  printf '%s\n' "$streak" > "$state/rollback-streak"
+  touch "$state/PAUSE"
+  notify_failure ":warning: fleet preparation failed at $failed_preparation (${revision:0:8}); no activation started; automation PAUSED" "$preparation/prepare-$failed_preparation.log"
+  exit 1
+fi
+
 declare -A before_generation
-deferred=()
 failure_host=""
 # One log per host, overwritten each run, so the evidence for the failure being
 # reported is the evidence for that failure rather than a stale earlier one.
@@ -634,7 +588,7 @@ failure_log=""
 for host in epsilon pi alpha; do rm -f "$state/fail-$host.log"; done
 
 deploy_one() {
-  local host="$1" running_revision before saved_before after_generation activity_gate
+  local host="$1" running_revision before saved_before after_generation
   failure_log="$state/fail-$host.log"
   failure_reason=""
 
@@ -652,26 +606,6 @@ deploy_one() {
     fi
     return 2
   fi
-
-  activity_gate=$(jq -r '.activityGate' "$preparation/$host.json") || {
-    fail "could not evaluate the activity gate for $host"
-    return 1
-  }
-  case "$activity_gate" in
-    true)
-      if [ "$force" = 0 ] && ! host_is_idle "$host"; then
-        echo "$host has an active graphical session or is unavailable; deferring it"
-        notify ":information_source: fleet update deferred $host (active or unavailable) at ${revision:0:8}"
-        deferred+=("$host")
-        return 2
-      fi
-      ;;
-    false) ;;
-    *)
-      fail "$host returned an invalid activity-gate value: $activity_gate"
-      return 1
-      ;;
-  esac
 
   before=$(remote "$host" readlink /run/current-system) || {
     fail "could not read the current system generation on $host"
@@ -805,17 +739,10 @@ if [[ " ${converged[*]:-} " == *" alpha "* ]]; then
 fi
 printf '0\n' > "$state/rollback-streak"
 if [ "$requested_host" = all ]; then
-  if [ "${#deferred[@]}" = 0 ]; then
-    printf '%s\n' "$revision" > "$state/deployed-revision"
-    cleanup_rollback_roots
-    notify ":white_check_mark: fleet converged on ${revision:0:8}"
-    progress "fleet converged at ${revision:0:8}"
-  else
-    notify ":information_source: required nodes converged on ${revision:0:8}; alpha remains deferred"
-    progress "partially converged at ${revision:0:8}; deferred: ${deferred[*]}"
-  fi
-elif [ "${#deferred[@]}" -gt 0 ]; then
-  progress "deployment deferred for ${deferred[*]}"
+  printf '%s\n' "$revision" > "$state/deployed-revision"
+  cleanup_rollback_roots
+  notify ":white_check_mark: fleet converged on ${revision:0:8}"
+  progress "fleet converged at ${revision:0:8}"
 else
   progress "selected host $requested_host completed at ${revision:0:8}"
 fi

@@ -155,12 +155,6 @@ in
           readOnly = true;
           description = "Transactional deploy-rs fleet updater";
         };
-        activityGate = lib.mkOption {
-          type = lib.types.bool;
-          default = config.services.displayManager.sddm.enable || config.services.xserver.enable;
-          readOnly = true;
-          description = "Whether deployment waits for local graphical sessions to be idle or locked";
-        };
         controllerHost = lib.mkOption {
           type = lib.types.str;
           default = deployBase.nodes.pi.hostname;

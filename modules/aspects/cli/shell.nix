@@ -175,7 +175,7 @@ in
           nrb = "nh os boot";
           nrt = "nh os test";
 
-          nrsu = "${lib.getExe pkgs.openssh} -t -i /home/repparw/.ssh/id_ed25519 -o BatchMode=yes -o IdentitiesOnly=yes root@${osConfig.modules.fleet-update.controllerHost} /run/current-system/sw/bin/fleet-update deploy --host alpha --force --wait-lock 10800 --state /var/lib/auto-update";
+          nrsu = "${lib.getExe pkgs.openssh} -t -i /home/repparw/.ssh/id_ed25519 -o BatchMode=yes -o IdentitiesOnly=yes root@${osConfig.modules.fleet-update.controllerHost} /run/current-system/sw/bin/fleet-update deploy --host alpha --wait-lock 10800 --state /var/lib/auto-update";
           nrbu = "nrb";
 
           ln = "ln -i";

@@ -156,30 +156,5 @@
         };
       };
 
-      systemd.services.fleet-alpha-retry = {
-        description = "Retry gated alpha fleet convergence";
-        after = [ "network-online.target" ];
-        wants = [ "network-online.target" ];
-        restartIfChanged = false;
-        serviceConfig = {
-          Type = "oneshot";
-          WorkingDirectory = "/var/lib/auto-update";
-          StateDirectory = "auto-update";
-          TimeoutStartSec = "240min";
-        };
-        script = ''
-          exec ${lib.getExe config.modules.fleet-update.package} \
-            deploy --host alpha --wait-lock 10800 --state /var/lib/auto-update
-        '';
-      };
-
-      systemd.timers.fleet-alpha-retry = {
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = "*-*-* 07:00:00";
-          Persistent = true;
-          RandomizedDelaySec = "15min";
-        };
-      };
     };
 }

@@ -38,7 +38,7 @@ fleet from an unreachable host, a missing status file, or a successful build.
 
 Do not start services, back up or prune data, change PAUSE, deploy, roll back,
 collect garbage, or update firmware unless authorized for that action.
-`--force` needs explicit authorization to bypass pause/activity gates.
+`--force` needs explicit authorization to bypass PAUSE.
 A deploy-rs `--dry-activate` is **not read-only**: it may build outputs and
 contact the target, and also requires authorization.
 
@@ -98,8 +98,7 @@ fleet-update deploy --host alpha --wait-lock 7200
 ```
 
 Replace the host with the explicitly selected scope. Run this **on the
-controller**, not on an arbitrary host. Alpha may defer for activity; a
-deferred host does not mean fleet-wide deployment succeeded. Inspect
+controller**, not on an arbitrary host. A selected-host deployment does not establish fleet-wide convergence. Inspect
 `/var/lib/auto-update/latest-preparation`, host failure logs, and controller
 journals before retrying.
 
@@ -136,5 +135,5 @@ for host-specific constraints.
 
 Record target hosts, operation, approval boundary, commands, before/after
 observations, actual exit statuses, missing evidence, and remaining risks.
-For deployment include the exact revision, reached/deferred hosts, and
+For deployment include the exact revision, reached hosts, and
 post-activation health; never claim fleet-wide success from one healthy host.

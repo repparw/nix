@@ -10,8 +10,8 @@ tags: [runbook, recovery, updates, pi, alpha, epsilon, deploy-rs]
 # Update Rollback
 
 Pi's 05:30 consumer requires successful CI for exact current main, then
-prepares every selected host before activating epsilon, idle alpha, and
-finally pi; pi's 07:00 retry covers a deferred alpha. Full pipeline detail
+prepares every selected host concurrently before activating epsilon, alpha,
+and finally pi. Full pipeline detail
 lives in the [fleet operations runbook](fleet-operations.md).
 
 ## Automatic rollback
@@ -25,7 +25,6 @@ controller and retry journals before the next cycle:
 ```sh
 less /var/lib/auto-update/fail-alpha.log  # on Pi; replace alpha with the failed host
 journalctl -u fleet-deploy-run -b   # transient entries may be absent after reboot
-journalctl -u fleet-alpha-retry -b  # pi alpha retry
 ```
 
 ## Manual rollback

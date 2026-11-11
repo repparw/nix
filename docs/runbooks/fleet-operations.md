@@ -110,14 +110,15 @@ describes the exact state paths and independent restore procedure.
 Pi is the serialized production deployment controller (configured by
 [deploy.nix](../../modules/deploy.nix)). It checks successful CI for the
 **exact current main revision**, captures prior system profiles and roots,
-and prepares all selected targets before activation. CI host checks use
-package stubs and do not replace full preparation builds.
+and prepares all selected targets concurrently before activation. All
+builds must succeed before any activation starts. CI host checks use package
+stubs and do not replace full preparation builds.
 
-The transaction activates Epsilon, idle Alpha, then Pi, with deploy-rs
-confirmation and health checks. Streaming or an active session can defer
-Alpha; the retry timer consumes current `main` later. `main` is desired
-state, while `/var/lib/auto-update/deployed-revision` records the last
-revision verified across the **entire** fleet. A deferred host does not
+The transaction activates Epsilon, Alpha, then Pi, with deploy-rs
+confirmation and health checks between hosts. Activity and graphical sessions
+do not block deployment. `main` is desired state, while
+`/var/lib/auto-update/deployed-revision` records the last revision
+verified across the **entire** fleet. A selected-host deployment does not
 advance that marker.
 
 The controller prints timestamped stage updates on stderr, with detailed
@@ -140,7 +141,7 @@ Investigate on Pi:
 ```sh
 cat /var/lib/auto-update/latest-preparation
 less /var/lib/auto-update/fail-alpha.log
-journalctl -u fleet-deploy-run -u fleet-alpha-retry --no-pager
+journalctl -u fleet-deploy-run --no-pager
 ```
 
 A preparation failure pauses before activation. A failed activation uses
@@ -153,10 +154,9 @@ post-incident checklist.
 
 `/var/lib/auto-update/PAUSE` inhibits ordinary automation; only remove it
 after diagnosis and approval. `fleet-update --force` requires an explicitly
-selected host, bypasses PAUSE and activity gates **without removing PAUSE**,
-and retains CI, locking, health checks, and rollback. Alpha's `Mod+U`
-uses this forced controller path. Bypassing an activity gate is not a
-routine retry strategy.
+selected host and bypasses PAUSE **without removing PAUSE**. It still
+enforces CI, locking, health checks, and rollback. Alpha's `Mod+U` uses the regular controller path and respects PAUSE.
+Use `--force` only for an explicitly authorized PAUSE override.
 
 A local-tree `nix run .#deploy-rs -- .#alpha --dry-activate` is a
 **separate authorized operational path**: it can build and contact a target.
