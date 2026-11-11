@@ -25,10 +25,20 @@
         c = config.lib.stylix.colors.withHashtag;
 
         # Dictation runs Moondream Parakeet Ultra (25-language TDT, incl. es)
-        # through the parakeet engine; the onnx build keeps the Vulkan whisper
-        # backend for the [whisper] fallback and per-recording --model
-        # overrides. See docs/research/parakeet-ultra-evaluation.md.
-        voxtypeDictation = pkgs.voxtype-vulkan.override { onnxSupport = true; };
+        # through the parakeet engine. Whisper fallback uses CPU temporarily
+        # because the pinned Vulkan shader build fails at link time.
+        # See docs/research/parakeet-ultra-evaluation.md.
+        # Pinned Vulkan shader generation currently emits unresolved ggml
+        # symbols. Keep Parakeet ONNX as the default; Whisper temporarily uses
+        # CPU until the upstream Vulkan build is fixed.
+        voxtypeDictation = (pkgs.voxtype.override { onnxSupport = true; }).overrideAttrs (old: {
+          buildInputs =
+            (old.buildInputs or [ ])
+            ++ (with pkgs; [
+              oniguruma
+              sqlite
+            ]);
+        });
 
         hexToggle = pkgs.writeShellApplication {
           name = "hex-toggle";
