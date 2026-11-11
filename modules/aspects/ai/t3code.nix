@@ -4,14 +4,6 @@
   pkgs,
   ...
 }:
-let
-  connectEnvironment = {
-    T3CODE_CLERK_PUBLISHABLE_KEY = "pk_live_Y2xlcmsudDMuY29kZXMk";
-    T3CODE_CLERK_JWT_TEMPLATE = "t3-relay";
-    T3CODE_CLERK_CLI_OAUTH_CLIENT_ID = "hzxSgY2cH10sDU2r";
-    T3CODE_RELAY_URL = "https://relay.t3.codes";
-  };
-in
 {
   den.aspects.ai.provides.t3code = {
     nixos = {
@@ -33,9 +25,6 @@ in
         hasStylix = config.lib ? stylix;
         c = config.lib.stylix.colors.withHashtag;
         mutedText = "${c.base05}cc";
-        providerEnvironment = connectEnvironment // {
-          CODEX_HOME = config.home.sessionVariables.CODEX_HOME;
-        };
         stylixThemeJson = builtins.toJSON {
           version = 1;
           name = "Stylix";
@@ -106,8 +95,6 @@ in
         };
       in
       {
-        home.sessionVariables = connectEnvironment;
-
         programs.t3code.enable = true;
         programs.t3code.package = lib.mkDefault (
           if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code
@@ -159,15 +146,19 @@ in
             "--mode"
             "web"
           ];
+          # The upstream module loads this as the unit's EnvironmentFile.
+          # Connect's identifiers are baked into the bundle by the
+          # t3code-connect overlay, so they stay out of the environment.
+          environmentFile = pkgs.writeText "t3code-environment" ''
+            CODEX_HOME=${config.xdg.configHome}/codex
+            T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1
+          '';
         };
 
         # Home Manager builds ExecStart from programs.t3code.package and
-        # server.extraArgs; only retain our explicit restart/environment policy.
+        # server.extraArgs; only the restart policy is ours.
         systemd.user.services.t3code.Service = {
           Restart = lib.mkForce "always";
-          Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [
-            "T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1"
-          ];
         };
       };
   };
