@@ -1,76 +1,33 @@
 ---
 type: Architecture Concept
 when: Read when adding, consuming, rotating, or documenting SOPS secrets.
-title: Secret Inventory and Management
-description: Inventory and operating rules for encrypted values, consumers, and deployment scope.
+title: Secret handling and recovery
+description: Secret authority, rotation and recovery rules that are not visible from declarations alone.
 resource: secrets
 tags: [security, secrets, sops-nix]
 ---
 
-# Secret Inventory and Management
+# Secret handling and recovery
 
-This file contains names and deployment metadata only. Never add secret values.
+Secret identifiers and consumers are declared as `sops.secrets` in their
+owning Nix host and service modules. The encrypted `secrets/*.sops.yaml`
+files carry ciphertext and recipient metadata; the shared
+[sops-nix aspect](../../modules/aspects/secrets.nix) configures decryption,
+not the per-secret inventory. Search the Nix sources rather than copying an
+inventory into Markdown, and never commit decrypted values.
 
-Secret material is stored in `*.sops.yaml` files under `secrets/` and managed
-through `sops-nix`. Services and aspects declare the SOPS files they consume.
-The **Hosts** column identifies runtime consumers, not every machine whose
-key can decrypt the encrypted file. Decryption access follows the recipients
-embedded in each SOPS file; `.sops.yaml` specifies the intended recipient
-rules for newly encrypted or rekeyed files.
+There are two distinct authorities:
 
-| SOPS file                          | Secret                          | Purpose                                                                                                                                                                                            | Consumer                                                       | Hosts                    |
-| ---------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------ |
-| `secrets/nix.sops.yaml`            | `accessTokens`                  | Authenticate Nix fetches against private sources                                                                                                                                                   | Nix daemon configuration                                       | `alpha`, `pi`, `epsilon` |
-| `secrets/backup.sops.yaml`         | `resticPassword`                | Unlock the encrypted Restic repository                                                                                                                                                             | Restic backup                                                  | `alpha`, `pi`, `epsilon` |
-| `secrets/rclone.sops.yaml`         | `rcloneDriveId`                 | Identify the Google Drive OAuth client                                                                                                                                                             | rclone services and host backup                                | `alpha`, `pi`, `epsilon` |
-| `secrets/rclone.sops.yaml`         | `rcloneDriveToken`              | Authorize Google Drive access                                                                                                                                                                      | rclone services and host backup                                | `alpha`, `pi`, `epsilon` |
-| `secrets/rclone.sops.yaml`         | `rcloneDriveSecret`             | Authenticate the Google Drive OAuth client                                                                                                                                                         | rclone services and host backup                                | `alpha`, `pi`, `epsilon` |
-| `secrets/rclone.sops.yaml`         | `rcloneCrypt`                   | Unlock the encrypted rclone remote                                                                                                                                                                 | rclone services and host backup                                | `alpha`, `pi`, `epsilon` |
-| `secrets/rclone.sops.yaml`         | `rcloneObsidianCrypt`           | Unlock the Remotely Save-compatible Obsidian crypt remote                                                                                                                                          | Obsidian bisync service                                        | `alpha`                  |
-| `secrets/rclone.sops.yaml`         | `rcloneClarodrive`              | Authenticate the Claro Drive remote                                                                                                                                                                | rclone Home Manager and secondary Restic backup                | `alpha`, `pi`, `epsilon` |
-| `secrets/rclone.sops.yaml`         | `rcloneClarodriveUser`          | Identify the Claro Drive account (injected into the remote `user` at activation, never baked into the store)                                                                                       | rclone Home Manager and secondary Restic backup                | `alpha`, `pi`, `epsilon` |
-| `secrets/rclone.sops.yaml`         | `rcloneClarodriveUrl`           | Claro Drive WebDAV endpoint carrying the account id (injected at activation)                                                                                                                       | rclone Home Manager and secondary Restic backup                | `alpha`, `pi`, `epsilon` |
-| `secrets/rclone.sops.yaml`         | `rcloneDropbox`                 | Authorize Dropbox access                                                                                                                                                                           | rclone Home Manager services                                   | `alpha`                  |
-| `secrets/rclone.sops.yaml`         | `rcloneNextcloud`               | Authenticate the Nextcloud remote                                                                                                                                                                  | rclone Home Manager services                                   | `alpha`                  |
-| `secrets/proxy.sops.yaml`          | `cloudflare`                    | Authorize Cloudflare DNS-01 certificate updates                                                                                                                                                    | Traefik                                                        | `pi`, `epsilon`          |
-| `secrets/proxy.sops.yaml`          | `qbittorrentAuth`               | Configure qBittorrent proxy authentication                                                                                                                                                         | Traefik                                                        | `epsilon`                |
-| `secrets/proxy.sops.yaml`          | `cloudflareTunnelCredentials`   | Connect the epsilon-edge Cloudflare Tunnel                                                                                                                                                         | cloudflared                                                    | `epsilon`                |
-| `secrets/authelia.sops.yaml`       | `authelia/jwtSecret`            | Sign Authelia identity-verification tokens                                                                                                                                                         | Authelia                                                       | `epsilon`                |
-| `secrets/authelia.sops.yaml`       | `authelia/oidcHmacSecret`       | Protect Authelia OIDC authorization data                                                                                                                                                           | Authelia                                                       | `epsilon`                |
-| `secrets/authelia.sops.yaml`       | `authelia/oidcJwksKey`          | Sign Authelia OIDC tokens                                                                                                                                                                          | Authelia                                                       | `epsilon`                |
-| `secrets/authelia.sops.yaml`       | `authelia/sessionSecret`        | Encrypt and authenticate Authelia sessions                                                                                                                                                         | Authelia                                                       | `epsilon`                |
-| `secrets/authelia.sops.yaml`       | `authelia/smtpPassword`         | Authenticate Authelia to its SMTP relay                                                                                                                                                            | Authelia                                                       | `epsilon`                |
-| `secrets/authelia.sops.yaml`       | `authelia/storageEncryptionKey` | Encrypt sensitive Authelia storage fields                                                                                                                                                          | Authelia                                                       | `epsilon`                |
-| `secrets/authelia-users.sops.yaml` | `usersDatabase`                 | Seed Authelia's initial users database when the writable runtime file is absent                                                                                                                    | Authelia                                                       | `epsilon`                |
-| `secrets/users-pi.sops.yaml`       | `repparwPasswordHash`           | Bootstrap the Pi account password when the user is created; existing passwords remain mutable                                                                                                      | NixOS user creation                                            | `pi`                     |
-| `secrets/users-epsilon.sops.yaml`  | `repparwPasswordHash`           | Bootstrap the epsilon account password when the user is created; existing passwords remain mutable                                                                                                 | NixOS user creation                                            | `epsilon`                |
-| `secrets/archisteamfarm.sops.yaml` | `steamPassword`                 | Authenticate the managed Steam account                                                                                                                                                             | ArchiSteamFarm                                                 | `epsilon`                |
-| `secrets/archisteamfarm.sops.yaml` | `steamUsername`                 | Identify the managed Steam account (substituted into the bot config at runtime via `replace-secret`; ASF only accepts a literal `SteamLogin`)                                                      | ArchiSteamFarm                                                 | `epsilon`                |
-| `secrets/home.sops.yaml`           | `homeWanIp`                     | Home WAN IP: populates the `home-wan` nft set and the `wg-home` endpoint at boot via the `home-wan` service (firewall/WG strings render at evaluation time, so SOPS feeds them at runtime instead) | home uplink provisioning                                       | `epsilon`                |
-| `secrets/bluetooth.sops.yaml`      | `btDevice`                      | Bluetooth MAC targeted by `bttoggle`, read as a fallback when `TOGGLE_BT_DEVICE` is unset                                                                                                          | bttoggle helper                                                | `alpha`                  |
-| `secrets/jellyfin.sops.yaml`       | `jellyfinBackupKey`             | Authorize Jellyfin backup creation                                                                                                                                                                 | Jellyfin backup tooling                                        | `alpha`                  |
-| `secrets/wg.sops.yaml`             | `wgEpsilonPrivateKey`           | Identify the epsilon edge peer of the WireGuard home tunnel                                                                                                                                        | wg-quick home tunnel                                           | `epsilon`                |
-| `secrets/wg.sops.yaml`             | `wgEpsilonPresharedKey`         | Authenticate the WireGuard home-tunnel peer                                                                                                                                                        | wg-quick home tunnel                                           | `epsilon`                |
-| `secrets/hermes.sops.yaml`         | `hermes-env`                    | Discord token for the Hermes gateway plus fleet-wide Discord notify (fleet-update, backup, fleet-health, and the free-games-claimer notifier source it)                                            | `services.hermes-agent` environmentFiles, fleet notify scripts | fleet-wide               |
-| `secrets/hermes.sops.yaml`         | `hermes-llm-env`                | Provider/tool keys and the short-lived T3 MCP `T3_MCP_TOKEN` (`mcp-client`, `orchestration:read` + `orchestration:operate`)                                                                        | Hermes runtime `.env` in its Epsilon container                 | `epsilon`                |
-| `secrets/hermes-arr.sops.yaml`     | `arr-api-keys`                  | Authenticate Sonarr/Radarr queue-triage requests                                                                                                                                                   | Hermes tool subprocesses                                       | `epsilon`                |
+- The `.sops.yaml` policy describes **intended recipients** for new or
+  rekeyed ciphertext; each encrypted file's embedded recipients determine
+  who can **currently decrypt it**. After changing recipient policy, rekey
+  the existing ciphertext and test the consuming host.
+- Runtime writable credentials can override bootstrap values. A successful
+  rebuild does not prove a service adopted a rotated token or that an
+  existing account password has been overwritten.
 
-| `secrets/grafana-cloud-alpha.sops.yaml` | `token` | Write-only Cloud metrics/log uploads | Alloy via systemd credentials | `alpha` |
-| `secrets/grafana-cloud-pi.sops.yaml` | `token` | Write-only Cloud metrics/log uploads | Alloy via systemd credentials | `pi` |
-| `secrets/grafana-cloud-epsilon.sops.yaml` | `token` | Write-only Cloud metrics/log uploads | Alloy via systemd credentials | `epsilon` |
-| `secrets/grafana-cloud-epsilon.sops.yaml` | `grafana-cloud-backup-token` | Read-only Cloud configuration exports, including contact-point secrets | Grafana backup service via systemd credentials | `epsilon` |
-| `secrets/grafana-cloud-epsilon.sops.yaml` | `grafana-git-sync-app` | GitHub App private key and IDs for Git Sync recovery | Injected privately when recreating the Cloud connection; not a host service credential | operator |
-The account-password bootstrap files, Authelia users seed, Cloud monitoring
-credentials, WireGuard home-tunnel keys, and Hermes ARR credentials are scoped
-to the personal recovery recipient and the consuming host. The remaining files
-use the legacy shared creation rule in `.sops.yaml`. When changing a creation rule,
-run `sops updatekeys` on the affected files and verify their embedded recipient
-metadata matches the rule.
-
-NixOS decrypts with the machine SSH host key at
-`/etc/ssh/ssh_host_ed25519_key`; the personal Age recipient in `.sops.yaml` is
-recovery access and is not used during activation. Docs, plans, and commits
-should refer to SOPS secret names or source modules, never secret values.
+The procedures below document cases where updating a secret alone does
+not complete the operation.
 
 ## Hermes T3 MCP token rotation
 
@@ -147,7 +104,3 @@ the user-owned `btDevice` secret file when `TOGGLE_BT_DEVICE` is unset.
 
 - `modules/aspects/secrets.nix`
 - `secrets/`
-
-## Related
-
-- [Repository layout](repository-layout.md)

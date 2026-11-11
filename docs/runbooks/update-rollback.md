@@ -65,4 +65,3 @@ extlinux via the Pi firmware.
 
 - [Fleet operations](fleet-operations.md)
 - [Troubleshooting](../troubleshooting.md)
-- [Den aspect composition](../architecture/den-aspect-composition.md)

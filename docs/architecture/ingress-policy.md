@@ -1,51 +1,28 @@
 ---
 type: Architecture Concept
-title: Ingress Policy
-description: How one ingress-policy seam generates Traefik and Authelia configuration.
-when: Read when changing service routing, proxy authentication, or ingress exceptions.
+title: Ingress policy decisions
+description: Reasons for centralized routing and authorization.
+when: Read when reviewing authentication bypasses, public exposure, or ingress design.
 resource: modules/_services/ingress-policy.nix
 tags: [architecture, services, proxy, authentication]
 ---
 
-# Ingress Policy
+# Ingress policy decisions
 
-`modules/_services/ingress-policy.nix` owns public routing and authorization
-decisions. Its interface accepts the domain, validated service definitions,
-and internal service URL resolver. It produces two adapter projections:
+Routing and authorization must be derived from the same validated service
+definitions. Otherwise a Traefik route could accidentally bypass a separate
+Authelia policy, or a newly exposed service could silently inherit the wrong
+access rule. [The ingress policy](../../modules/_services/ingress-policy.nix)
+generates both projections and rejects unsupported external authentication
+modes rather than guessing a fallback. Its default authorization policy is
+deny.
 
-- Traefik routers, backends, and middleware configuration.
-- Ordered Authelia access-control rules.
+Authentication exceptions and health-check bypasses are security decisions.
+Review their intended consumers and explicit route/path restrictions before
+broadening them. Keep any such exception in the shared policy, rather than
+introducing one-off proxy routes in a service module.
 
-Ordinary service routes derive from each definition's `hostname`, `port`, and
-`auth` mode. `bypass` uses no forward-auth middleware; `one_factor` and
-`two_factor` use Authelia and produce matching access rules. `external`
-requires an explicit policy implementation and otherwise fails evaluation.
-
-Exceptional routes remain inside the policy implementation: the qBittorrent
-UI/API split and the apex Glance route. Everything else, including Home
-Assistant (hostname `home`, `bypass` auth), is an ordinary route derived from
-metadata emitted by its owning service aspect; there is no service-specific
-routing code. Identity providers, secrets, and application configuration
-remain in their owning service modules.
-
-## Adapters
-
-`modules/_services/proxy.nix` owns Traefik's static configuration and installs
-the Traefik projection. `modules/_services/authelia.nix` owns identity and
-session configuration and installs the Authelia projection.
-
-`modules/aspects/edge-tunnel.nix` connects Cloudflare Tunnel to Traefik's
-loopback HTTPS listener on Epsilon. Its hostname allowlist comes from the
-service registry, excluding Jellyfin, plus the `grafana` and legacy
-`metrics` hostnames. Traefik redirects both to Grafana Cloud. TLS verification
-and the existing Authelia rules apply along this path. Jellyfin keeps its
-DNS-only home address; qBittorrent's UI/API uses the tunnel while its peer
-traffic keeps its existing ports. Epsilon accepts direct HTTPS only from
-the trusted home uplink and its private Glance container for local probes.
-The apex DNS record points to the tunnel, so Epsilon no longer runs the
-apex ddclient updater.
-
-Direct WAN exposure outside the tunnel is limited to three router mappings:
-the WireGuard listener (UDP 51820), the TCP 443 forward to pi's Traefik for
-Jellyfin, and the TCP 54535 forward to alpha for qBittorrent peer traffic.
-The router's WAN management interface stays disabled.
+Public ingress normally uses Cloudflare Tunnel, with separate direct paths
+only where their purpose requires them. Local access, DNS, certificate
+handling, and the actual allowlists live in the Nix modules. Do not maintain
+a second list of public endpoints or firewall ports in this document.

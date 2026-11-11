@@ -37,5 +37,4 @@ bind mounts from `/home/containers/config`.
 
 ## Related
 
-- [Service model](../services/service-model.md)
-- [Host profiles](../hosts.md)
+- [Offsite host recovery](host-recovery.md)

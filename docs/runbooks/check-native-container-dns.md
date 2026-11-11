@@ -1,49 +1,39 @@
 ---
 type: Runbook
-title: Check Native Container DNS
-description: Diagnose DNS resolution for private NixOS containers.
-when: Read when diagnosing DNS failures in native NixOS containers.
+title: Diagnose native container DNS
+description: Distinguish host resolver, container gateway, and firewall failures.
+when: Read when a native NixOS container cannot resolve domain names.
 resource: modules/aspects/services/default.nix
 tags: [runbook, dns, containers, services]
 ---
 
-# Check Native Container DNS
+# Diagnose native container DNS
 
-Private containers use `networking.useHostResolvConf = false`. Expected
-resolvers differ per host:
+Containers intentionally use the host's bridge resolver rather than an
+independent upstream DNS configuration. This keeps name resolution and
+network-policy decisions under the host's control. Resolver listeners,
+gateway addresses, and firewall permissions are declared in the service
+aspects and the host's effective NixOS configuration; do not copy the
+per-host address table into a runbook.
 
-- `alpha` exposes resolved on all addresses
-  (`DNSStubListenerExtra = "0.0.0.0"`); containers target the host bridge at
-  `10.231.136.1`.
-- `epsilon` exposes resolved on its bridge gateway (`10.231.137.1`);
-  containers resolve through the host, which forwards upstream.
-- `pi` runs resolved as a container resolver on all addresses
-  (`DNSStubListenerExtra = "0.0.0.0"`); containers target the host bridge at
-  `10.231.136.1`, which caches and forwards upstream.
+Check host resolution and the listener first:
 
-1. Check host-side DNS first:
+```sh
+resolvectl status
+ss -lunpt | rg ':53'
+systemctl status systemd-resolved.service
+```
 
-   ```sh
-   resolvectl status
-   ss -lunpt | rg ':53'
-   systemctl status systemd-resolved.service
-   ```
+Then check the affected container:
 
-2. Check the container resolver and a known lookup:
+```sh
+sudo nixos-container run <service> -- cat /etc/resolv.conf
+sudo nixos-container run <service> -- getent hosts cache.nixos.org
+sudo nixos-container run <service> -- resolvectl query cache.nixos.org
+```
 
-   ```sh
-   sudo nixos-container run <service> -- cat /etc/resolv.conf
-   sudo nixos-container run <service> -- getent hosts cache.nixos.org
-   sudo nixos-container run <service> -- resolvectl query cache.nixos.org
-   ```
-
-3. If lookup fails, verify the container points at its host's expected
-   resolver (`10.231.136.1` on alpha and pi, `10.231.137.1` on epsilon),
-   the host firewall accepts
-   `ve-*` DNS traffic, and
-   `services.resolved.settings.Resolve.DNSStubListenerExtra` still carries the
-   host's expected listeners.
-
-## Related
-
-- [Service model](../services/service-model.md)
+If the host resolves but the container does not, compare the container's
+nameserver with its host bridge address, then inspect firewall rules on
+`ve-*` interfaces and the active resolved listener. A failed lookup
+alone does not establish whether the problem is routing, firewall policy,
+the resolver, or the upstream DNS provider.
