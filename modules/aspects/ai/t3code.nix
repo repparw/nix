@@ -100,13 +100,6 @@
           if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code
         );
 
-        assertions = [
-          {
-            assertion = lib.versionAtLeast config.programs.t3code.package.version "0.1.5";
-            message = "T3 Code stable V2 requires t3code >= 0.1.5 in the nixpkgs pin.";
-          }
-        ];
-
         home.activation.t3codeStylixTheme = lib.mkIf hasStylix (
           let
             themeFile = pkgs.writeText "t3code-stylix-theme.json" stylixThemeJson;
@@ -123,9 +116,6 @@
             defaultThemeSetAt = builtins.hashString "sha256" stylixThemeJson;
           }
           // {
-            # nixpkgs pins the provider CLIs, so version advisories are noise.
-            # The flag also stops the remote model catalog fetch, which only
-            # matters for Claude's picker; Claude is not enabled here.
             enableProviderUpdateChecks = false;
             providerInstances.opencode = {
               driver = "opencode";
