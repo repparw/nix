@@ -1,3 +1,5 @@
+# One-time validation for Codex before retiring the pinned Nixpkgs workaround.
+# x86 Codex and Voxtype CPU+ONNX already passed native builds on this PR.
 name: native-rust-repair-smoke
 on:
   pull_request:
@@ -11,25 +13,9 @@ permissions:
 
 jobs:
   native-build:
-    name: ${{ matrix.package }} (${{ matrix.system }})
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - package: codex
-            system: x86_64-linux
-            runner: ubuntu-24.04
-            attribute: nixosConfigurations.alpha.pkgs.codex
-          - package: codex
-            system: aarch64-linux
-            runner: ubuntu-24.04-arm
-            attribute: nixosConfigurations.epsilon.pkgs.codex
-          - package: voxtype
-            system: x86_64-linux
-            runner: ubuntu-24.04
-            attribute: nixosConfigurations.alpha.config.home-manager.users.repparw.services.voxtype.package
+    name: codex (aarch64-linux)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
@@ -37,7 +23,5 @@ jobs:
         with:
           name: repparw
           skipPush: true
-      - name: Build selected native package
-        env:
-          ATTRIBUTE: ${{ matrix.attribute }}
-        run: nix build --cores 1 --max-jobs 1 --no-link --print-build-logs --no-update-lock-file ".#$ATTRIBUTE"
+      - name: Build Codex natively on ARM
+        run: nix build --cores 1 --max-jobs 1 --no-link --print-build-logs --no-update-lock-file .#nixosConfigurations.epsilon.pkgs.codex
