@@ -9,12 +9,14 @@ _: {
       nixpkgs.overlays = [
         (final: prev: {
           codex = prev.codex.overrideAttrs (old: {
-            buildInputs = (old.buildInputs or [ ]) ++ (with final; [
-              aws-lc
-              oniguruma
-              sqlite
-              zstd
-            ]);
+            buildInputs =
+              (old.buildInputs or [ ])
+              ++ (with final; [
+                aws-lc
+                oniguruma
+                sqlite
+                zstd
+              ]);
           });
         })
       ];
