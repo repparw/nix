@@ -29,7 +29,13 @@
         home.packages = with pkgs; [
           godot
           tasks-org
-          zapfast
+          # Remove the override once nixpkgs#585883 reaches the pinned revision.
+          (zapfast.overrideAttrs (old: {
+            buildInputs = old.buildInputs ++ [
+              openssl
+              sqlcipher
+            ];
+          }))
         ];
 
         gtk.enable = true;
