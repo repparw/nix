@@ -25,20 +25,12 @@
         c = config.lib.stylix.colors.withHashtag;
 
         # Dictation runs Moondream Parakeet Ultra (25-language TDT, incl. es)
-        # through the parakeet engine; the onnx build keeps the Vulkan whisper
-        # backend for the [whisper] fallback and per-recording --model
-        # overrides. See docs/research/parakeet-ultra-evaluation.md.
-        # Pinned Vulkan shader generation currently emits unresolved ggml
-        # symbols. Keep Parakeet ONNX as the default; Whisper temporarily uses
-        # CPU until the upstream Vulkan build is fixed.
-        voxtypeDictation = (pkgs.voxtype.override { onnxSupport = true; }).overrideAttrs (old: {
-          buildInputs =
-            (old.buildInputs or [ ])
-            ++ (with pkgs; [
-              oniguruma
-              sqlite
-            ]);
-        });
+        # as a GGUF through transcribe.cpp in the voxtype-gguf-worker, with
+        # the Vulkan backend; the same build keeps the Vulkan whisper backend
+        # for the [whisper] fallback. nixpkgs still carries 1.1.1, which has
+        # no GGUF support, so 1.2.0 is built locally for now. See
+        # docs/research/parakeet-ultra-evaluation.md.
+        voxtypeDictation = pkgs.callPackage ../../_packages/voxtype-vulkan-gguf.nix { };
 
         hexToggle = pkgs.writeShellApplication {
           name = "hex-toggle";
@@ -50,7 +42,7 @@
             hex dictation toggle
           '';
         };
-        parakeetUltra = pkgs.callPackage ../../_packages/parakeet-ultra-onnx.nix { };
+        parakeetUltra = pkgs.callPackage ../../_packages/parakeet-ultra-gguf.nix { };
 
         voxtypeQsQml = pkgs.fetchFromGitHub {
           owner = "peteonrails";
@@ -184,7 +176,10 @@
             engine = "parakeet";
             parakeet = {
               model = "${parakeetUltra}";
-              model_type = "tdt";
+              # The worker reports the backend transcribe.cpp actually bound in
+              # $XDG_RUNTIME_DIR/voxtype/gguf_backend.json; pinning it here
+              # keeps the daemon off the CPU path if Vulkan is unavailable.
+              gguf_backend = "vulkan";
             };
             whisper = {
               model = "small";
