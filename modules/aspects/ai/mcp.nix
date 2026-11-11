@@ -74,8 +74,6 @@
             ''
               export HOME="$TMPDIR/browse-home"
               mkdir -p "$HOME"
-              # Version-agnostic on purpose: this check must keep passing when
-              # the pin is bumped or replaced by nixpkgs' browse.
               test -n "$(${lib.getExe browse} --version)"
               status=0
               printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"nix-ci","version":"1"}}}' \
