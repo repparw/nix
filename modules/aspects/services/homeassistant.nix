@@ -47,20 +47,12 @@
             extraConfig =
               { pkgs, ... }:
               let
-                # Upstream workaround: tplinkrouterc6u 5.38.0 merges stale
-                # smart_network history entries (onlineTime 0) into the
-                # active-client list, so a phone that left Wi-Fi stays in the
-                # inventory and its tracker remains "home". The patch skips
-                # those entries; the AX23 v2 SG response carries no explicit
-                # online flag (the TL-XDR6088 issue upstream closed without
-                # merging #107). Retire the patch and switch to the nixpkgs
-                # package once upstream stops merging onlineTime-0
-                # smart_network-only clients (AlexandrErohin/
-                # TP-Link-Archer-C6U#106 tracks the related behavior).
-                # Named "-patched" so a future nixpkgs
-                # python3Packages.tplinkrouterc6u cannot shadow it in the
-                # extraPackages with-scope.
-                tplinkrouterc6u-patched = pkgs.python3Packages.callPackage ../../_packages/tplinkrouterc6u.nix { };
+                # The integration's v2.45.0 manifest pins tplinkrouterc6u
+                # 5.38.0, which needs the stale smart_network client fix.
+                # Upstream fixed it in v5.39.0 (TP-Link-Archer-C6U#260).
+                # Drop the patch when the integration accepts v5.39.0.
+                tplinkrouterc6u-patched =
+                  pkgs.home-assistant.python3Packages.callPackage ../../_packages/tplinkrouterc6u.nix { };
               in
               {
                 # The nspawn unit PATH omits system packages, so the
@@ -110,9 +102,6 @@
                       litellm
                       pyyaml # ai_automation_suggester
                       pkgs.openssh
-                    ]
-                    ++ [
-                      tplinkrouterc6u-patched # tplink_router
                     ];
                 };
                 networking.firewall.allowedTCPPorts = [ 8123 ];
