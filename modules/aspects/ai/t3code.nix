@@ -153,10 +153,10 @@
           '';
         };
 
-        # Home Manager builds ExecStart from programs.t3code.package and
-        # server.extraArgs; only the restart policy is ours.
+        # A competing T3 server exits 78 when the state directory is already
+        # owned; keep the unit from restarting into the same refusal.
         systemd.user.services.t3code.Service = {
-          Restart = lib.mkForce "always";
+          RestartPreventExitStatus = 78;
         };
       };
   };
