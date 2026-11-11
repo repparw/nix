@@ -36,11 +36,7 @@
             "reflect"
             "setup-pstack"
           ];
-          pocockSource = pkgs.applyPatches {
-            name = "mattpocock-skills";
-            src = inputs.mattpocock-skills;
-            patches = [ ./patches/mattpocock-skills.patch ];
-          };
+          pocockSource = inputs.mattpocock-skills;
           noCommentsSource = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/backnotprop/pstack/25abb38559ddbabec563646224d09eff9a250eca/skills/no-comments/SKILL.md";
             hash = "sha256-pyUFl3HRV3/Fn70mbi91/n9UeiOj3MEFJFnbVK4QwMI=";
