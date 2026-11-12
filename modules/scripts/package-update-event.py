@@ -24,7 +24,6 @@ MARKER = re.compile(r"^\[[A-Z*.]+\]\s+#\d+\s+(\S+)\s+(.+)$")
 ARROW = " -> "
 NONE = "<none>"
 
-# Relevant packages by closure-name prefix, from the fleet's triage tiers.
 RELEVANT = (
     "linux", "mesa", "systemd", "nix",
     "firefox", "chromium", "gamescope", "moonshine", "steam", "niri",
@@ -48,11 +47,7 @@ def parse_diff(diff):
         name, transition = match.group(1), match.group(2)
         old, separator, new = transition.partition(ARROW)
         if not separator:
-            # Added/Removed package sections and the closure-size line carry
-            # no version transition; additions and removals are omitted.
             continue
-        # <none> = a path without version metadata on that side; keep the
-        # remaining versions verbatim (multi-output lists stay comma-joined).
         old = ", ".join(part.strip() for part in old.replace(NONE, "").split(",") if part.strip())
         new = ", ".join(part.strip() for part in new.replace(NONE, "").split(",") if part.strip())
         if not relevant(name) or name in seen:

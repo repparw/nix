@@ -55,8 +55,6 @@
             })
             // {
               fetcher = "curl";
-              # Suggestion payloads embed full per-package version and
-              # maintainer metadata; single pages now exceed the 2 MiB default.
               maxResponseBytes = 16 * 1024 * 1024;
               packages = [
                 "authelia"
@@ -112,8 +110,6 @@
               message = "**NixOS {{version}} release notes updated**\n{{url}}\n\n**New modules:**\n{{newModules}}\n\n**Breaking changes:**\n{{breakingChanges}}\n\n**Other notable changes:**\n{{otherChanges}}";
             }
             // {
-              # Unstable release notes are a single accumulating page, 1.6 MiB
-              # as of 2026-11-05 and growing toward the 2 MiB default.
               maxResponseBytes = 16 * 1024 * 1024;
             }
           )
@@ -127,7 +123,7 @@
         changeDetection = pkgs.writeShellApplication {
           name = "change-detection";
           runtimeInputs = [
-            pkgs.nodejs-runtime
+            pkgs.nodejs_24
             pkgs.curl
           ];
           text = ''
@@ -149,9 +145,7 @@
             fi
           '';
           serviceConfig.Type = "oneshot";
-          path = [ pkgs.nodejs-runtime ];
-          # Posts through the fleet bot identity (token + channel), like every
-          # other watcher, instead of a per-aspect webhook.
+          path = [ pkgs.nodejs_24 ];
           script = ''
             # shellcheck disable=SC1091
             source /run/secrets/hermes-env

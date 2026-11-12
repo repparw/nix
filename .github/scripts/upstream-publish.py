@@ -264,7 +264,7 @@ def sweep(registry, readiness, repo):
     for name, spec in registry.items():
         status = readiness.get(name, "unavailable (missing detector)")
         try:
-            if spec["mode"] not in ("atomic", "post-lock", "notify-only", "host-owned", "completed"):
+            if spec["mode"] not in ("atomic", "post-lock", "notify-only", "host-owned"):
                 raise ValueError("unsupported watcher mode")
             if status == "PINNED-READY" and spec["mode"] == "post-lock":
                 results[name] = publish(name, spec, repo)

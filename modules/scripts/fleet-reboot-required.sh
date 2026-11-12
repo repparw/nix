@@ -36,8 +36,6 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-# Existence is checked before readlink so a missing link reports unknown
-# state (2) instead of comparing two literal paths that never match.
 for root in "$booted" "$staged"; do
   for name in initrd kernel kernel-modules; do
     if [ ! -e "$root/$name" ]; then
@@ -47,8 +45,6 @@ for root in "$booted" "$staged"; do
   done
 done
 
-# Compare resolved targets, not generation names: both sides point at the
-# same store paths while converged regardless of their link names.
 for name in initrd kernel kernel-modules; do
   if [ "$(readlink -f "$booted/$name")" != "$(readlink -f "$staged/$name")" ]; then
     exit 0

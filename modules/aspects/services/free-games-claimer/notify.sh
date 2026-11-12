@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Runs with '+' privileges from ExecStopPost, not as the browser user.
 set -euo pipefail
 umask 077
 
@@ -64,6 +63,5 @@ if [ "$message" != "$header" ]; then
   discord-notify post "$message"
 fi
 
-# Keep previous state if any post fails, so the complete batch is replayable.
 jq '.state' <<<"$diffout" >"$state/notify-state.json.new"
 mv "$state/notify-state.json.new" "$state/notify-state.json"

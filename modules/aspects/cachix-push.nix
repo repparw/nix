@@ -8,9 +8,6 @@
     }:
     let
       socketPath = "/run/cachix-push/daemon.sock";
-      # The push only talks to the local daemon socket; the daemon uploads
-      # asynchronously. A missing or failing daemon must never fail a build,
-      # so every failure is swallowed here.
       hookScript = pkgs.writeShellScript "cachix-post-build-hook" ''
         set -f
         export IFS=" "

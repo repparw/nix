@@ -4,10 +4,6 @@
   ...
 }:
 let
-  # Steam is single-instance per user; stop the desktop instance so it cannot
-  # steal Big Picture from a private compositor. Both the Moonshine stream and
-  # the controller-driven desk launch need gamescope to own the session, so both
-  # go through this.
   stopDesktopSteam = ''
     if pgrep -x steam >/dev/null; then
       steam -shutdown >/dev/null 2>&1 || true
@@ -18,17 +14,6 @@ let
     fi
   '';
 
-  # Shared by the 8bitdo
-  # launcher, which must not take over the desk mid-session, and by the
-  # restore watcher, which must not revive the tray under a fresh session.
-  #
-  # The journal alone cannot be trusted: a crashed or killed daemon leaves a
-  # stale "Starting session streams" with no matching "stopped" line behind,
-  # which would report a phantom stream forever. So require the daemon to be
-  # running and only consider session lines at or after its start. Within
-  # those, the state machine is exact: the latest terminal line is either
-  # streams starting (active) or stopped+waiting (idle). No lines at all
-  # fails open.
   moonshineStreaming = ''
     moonshine_streaming() {
       local since last
@@ -66,9 +51,6 @@ in
             cp ${pkgs.steam-unwrapped}/share/icons/hicolor/256x256/apps/steam.png $out/steam.png
           '';
 
-          # SteamOS session switching is not available on the Niri host.
-          # Treat Steam's session/power requests as leaving the isolated stream,
-          # never as permission to power off or replace the host desktop.
           steam-session-select = pkgs.writeShellApplication {
             name = "steamos-session-select";
             runtimeInputs = [ config.programs.steam.package ];
@@ -85,10 +67,6 @@ in
               config.programs.steam.package
             ];
             text = ''
-              # Big Picture only. -steamos3 was a trial SteamOS mode; it enrolls
-              # the client in the retired steamdeck_stable beta on every launch,
-              # so Steam showed a "beta has ended" dialog each time. Session
-              # switching is already handled by the steamos-session-select shim.
               exec steam -tenfoot
             '';
           };
@@ -109,10 +87,6 @@ in
 
               export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${pkgs.gamescope}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
-              # Workaround for hgaiser/moonshine#93 (HDR/DX11 black screen):
-              # wrap Steam in Gamescope at the client's resolution. Gamescope owns
-              # the surface Moonshine's compositor sees, so games present to
-              # Gamescope instead of creating their own (HDR 1x1) WSI swapchain.
               w=''${MOONSHINE_CLIENT_WIDTH:-1920}
               h=''${MOONSHINE_CLIENT_HEIGHT:-1080}
               rate=''${MOONSHINE_CLIENT_FRAMERATE:-60}
@@ -130,7 +104,6 @@ in
               # appear. See ValveSoftware/gamescope#1537.
               unset DISABLE_GAMESCOPE_WSI
 
-              # Disk masking lives in the steam package (gaming.nix), so no sandbox here.
               gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
               exec ${pkgs.gamescope}/bin/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
             '';
@@ -149,8 +122,6 @@ in
             '';
           };
 
-          # Vicinae cannot serve the stream (its daemon is bound to the login
-          # session's display), so fuzzel is used instead.
           moonshine-desktop = pkgs.writeShellApplication {
             name = "moonshine-desktop";
             runtimeInputs = [
@@ -174,14 +145,6 @@ in
               }
               trap cleanup EXIT
 
-              # Moonshine launches with systemd's default environment, which
-              # has neither the login session's profile directories nor the
-              # system profile. niri spawns binds with this script's PATH and
-              # fuzzel lists desktop entries from XDG_DATA_DIRS, so mirror the
-              # login composition (/etc/profile, /etc/set-environment) to keep
-              # stream keybinds and the fuzzel app list working. The display
-              # manager's -desktops aggregate only holds xsessions entries and
-              # is skipped.
               home_dir="''${HOME:-/home/${sessionUser}}"
               export XDG_DATA_DIRS="''${home_dir}/.nix-profile/share:/nix/profile/share:''${home_dir}/.local/state/nix/profile/share:/etc/profiles/per-user/${sessionUser}/share:/nix/var/nix/profiles/default/share:/run/current-system/sw/share:''${home_dir}/.local/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
               export PATH="''${PATH}:/run/wrappers/bin:''${home_dir}/.nix-profile/bin:/nix/profile/bin:''${home_dir}/.local/state/nix/profile/bin:/etc/profiles/per-user/${sessionUser}/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
@@ -259,12 +222,6 @@ in
                     title = "Steam Big Picture";
                     boxart = "${moonshine-boxart}/steam.png";
                     command = [ "${moonshine-steam}/bin/moonshine-steam" ];
-                    # moonshine-steam runs stopDesktopSteam, so the tray client
-                    # it kills has to come back when the session ends. Moonshine
-                    # runs post_command as ExecStopPost on the session's own
-                    # transient unit, so it covers every teardown - a client
-                    # disconnect and an app exit alike - and needs no process
-                    # left running to watch for it.
                     post_command = [ [ "${steam-restore-trigger}/bin/steam-restore-trigger" ] ];
                     stdout = "journal";
                     stderr = "journal";
@@ -329,18 +286,6 @@ in
               'BEGIN { printf "[%7.3fs] %s\n", b - a, m }' >&2
           }
 
-          # The 2.4GHz dongle re-enumerates as 2dc8:310a whenever the controller
-          # powers on, including from a wall charger, so enumeration alone cannot
-          # tell charging from playing. xpad maps 0x310a as a plain Xbox 360 pad
-          # and reports no battery state, so the only distinguishing signal is
-          # real button input.
-          #
-          # Match on the USB ids, not the product name: the same controller
-          # enumerates as "8BitDo IDLE" while powered down and only as "8BitDo
-          # Ultimate 2C Wireless Controller" when active, so a name glob misses
-          # it and wait_button then times out silently. by-id survives
-          # re-enumeration and the -event-joystick suffix keeps the sibling
-          # keyboard and mouse nodes out of the way.
           joystick_node() {
             local node event
             for node in /dev/input/by-id/*event-joystick; do
@@ -403,23 +348,6 @@ in
             return 1
           }
 
-          # Never interrupt a live session. On controller reconnect the dongle
-          # re-enumerates, which alone starts this service, and the power-on
-          # press clears the button gate while the user is mid-game and their
-          # input is already flowing to that game. So this has to run before
-          # every branch: a close+relaunch in the TV branch restarts the video
-          # stream even when Moonshine keeps the compositor and app up, which
-          # is a visible blip in a session nobody asked to touch.
-          #
-          # Recovering a genuinely wedged stream is then two steps - quit the
-          # app on the TV, or wait out stream.timeout, and the next press
-          # works. That trade was deliberate: the old TV-first ordering could
-          # only ever restart the stream, never the wedged app, and it cost a
-          # blink on every controller return from out of range.
-          #
-          # Checked after the press rather than before it, so the arming window
-          # stays useful: a session that ends before the press still gets the
-          # launch it would have had.
           wait_button 30 || { log "no press; exiting without action"; exit 0; }
 
           ${moonshineStreaming}
@@ -467,14 +395,6 @@ in
 
           niri msg action focus-monitor DP-1 >/dev/null
 
-          # Big Picture always runs under gamescope here, so HDR, 1080p162 and
-          # adaptive sync apply the same way they do for a stream. An existing
-          # gamescope session (plain BP, no game) is reused as-is; anything
-          # else means taking over, so stop the desktop Steam client first.
-          # Without this, single-instance Steam would just switch itself to BP
-          # outside the new compositor and leave gamescope empty. The guards
-          # above already ruled out a live stream and a running game, so the
-          # only casualty here is a tray/downloading client, which resumes.
           if pgrep -x gamescope >/dev/null; then
             log "reusing the running gamescope session"
             exec ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
@@ -483,33 +403,14 @@ in
           log "taking over: stopping desktop steam, starting gamescope"
           ${stopDesktopSteam}
 
-          # Foreground, not exec: the tail below has to run once the session
-          # ends, and exec would replace this script with gamescope.
           ${lib.getExe pkgs.gamescope} --steam -H 1080 -r 162 --adaptive-sync -- \
             ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf || true
 
-          # Revive the tray client through its own unit. Doing it here would
-          # keep this service active forever - the udev rule re-triggers it on
-          # every controller re-enumeration and a start on an already active
-          # unit is a no-op, so the button would go dead - and would place the
-          # client in this service's cgroup, where the next stop kills it.
           log "session ended; restoring desktop steam"
           systemctl --user start steam-tray
         '';
       };
 
-      # Guarded launcher for the tray client. Moonshine's post_command starts
-      # this unit when a session ends, so the hold has to live here rather than
-      # there: it must not block the transient session unit's stop job, but it
-      # does have to outlast a relaunch before deciding.
-      #
-      # A relaunch from the TV, or a button press with the TV on, produces a
-      # session stop immediately followed by a session start. Restoring in that
-      # window would only have the next session's stopDesktopSteam kill it
-      # again and stall that session for as long as steam takes to shut down.
-      # Ten seconds is longer than the TV close+relaunch gap, so a relaunch has
-      # logged "Starting session streams" by the time this runs, and the guard
-      # simply leaves the unit inactive.
       steam-tray-launch = pkgs.writeShellApplication {
         name = "steam-tray-launch";
         runtimeInputs = [
@@ -559,11 +460,6 @@ in
         };
       };
 
-      # A separate unit because restoring it inline would pin the caller active and, in the
-      # launcher's case, put the client in its cgroup. The launch script keeps
-      # its own guards (live-stream hold, already-running check), so a boot
-      # start alongside those paths stays safe. No Restart=, so quitting the
-      # tray stays honoured; a crash is recovered by the next session end.
       systemd.user.services.steam-tray = {
         Unit = {
           Description = "Desktop Steam (tray)";

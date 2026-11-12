@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 SOURCE = Path(sys.argv.pop(1)).read_text()
-STRIP = SOURCE[SOURCE.index("strip_ansi() {") : SOURCE.index("\n# Why the current")]
+STRIP = SOURCE[SOURCE.index("strip_ansi() {") : SOURCE.index('\nfailure_reason=""')]
 REPORT = SOURCE[SOURCE.index("notify_failure() {") : SOURCE.index("\nnotify_file() {")]
 
 

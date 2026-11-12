@@ -65,8 +65,6 @@ class RebootRequired(unittest.TestCase):
         self.assertEqual(self.run_predicate().returncode, 0)
 
     def test_regular_file_instead_of_shared_target_is_pending(self):
-        # A plain file resolves to its own path, never to the running
-        # kernel's store path, so the boot chain is not the staged one.
         self.link_booted()
         self.link_staged()
         (self.staged / "kernel").unlink()

@@ -54,7 +54,8 @@
     "mode": "post-lock",
     "input": "nixpkgs",
     "cleanup": "qbittorrent.patch",
-    "coupling": "apply"
+    "coupling": "apply",
+    "probe": "nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package"
   },
   "wpaperd-fix": {
     "mode": "post-lock",
@@ -69,25 +70,8 @@
       "source",
       "wsi-build"
     ],
-    "coupling": "apply"
-  },
-  "moonshine-pr227": {
-    "mode": "completed",
-    "input": "nixpkgs",
-    "cleanup": "moonshine-pr227.patch",
-    "validation": [
-      "source-guard",
-      "package-build",
-      "generated-unit"
-    ]
-  },
-  "nodejs-security": {
-    "mode": "post-lock",
-    "input": "nixpkgs",
-    "cleanup": "nodejs-security.patch",
-    "validation": [
-      "package-build"
-    ]
+    "coupling": "apply",
+    "probe": "nixosConfigurations.alpha.pkgs.gamescope"
   },
   "sonarr-jellyfin": {
     "mode": "host-owned",

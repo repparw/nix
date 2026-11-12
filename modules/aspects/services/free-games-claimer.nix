@@ -23,13 +23,11 @@
         discordNotify = servicesLib.mkDiscordNotify pkgs cfg.discordChannelId;
         claimDiff = pkgs.writeText "claim-diff.jq" (builtins.readFile ./free-games-claimer/claim-diff.jq);
 
-        # Xvfb and VNC exist only while a claim is running. SSH can forward
-        # localhost:5900 for initial authentication and occasional captchas.
         claimScript = pkgs.writeShellApplication {
           name = "free-games-claim";
           runtimeInputs = with pkgs; [
             coreutils
-            nodejs-runtime
+            nodejs_24
             xorg-server
             x11vnc
           ];
@@ -49,7 +47,6 @@
             # forward localhost:5900 for Epic logins and captchas.
             xvfb_pid=
             vnc_pid=
-            # Invoked via the trap below; shellcheck does not count that as a call.
             # shellcheck disable=SC2329
             cleanup() {
               if [ -n "$vnc_pid" ]; then
@@ -88,8 +85,6 @@
               else
                 store_rc=$?
                 printf '%s\n' "$store_rc" > "$logs/$store.status"
-                # Keep the transient marker for systemd's targeted retry.
-                # Any non-transient failure wins if both stores fail.
                 if [ "$store_rc" -eq 75 ]; then
                   if [ "$rc" -eq 0 ]; then rc=75; fi
                 else
@@ -103,7 +98,6 @@
           '';
         };
 
-        # The browser user never receives the fleet Discord token.
         notifyScript = pkgs.writeShellApplication {
           name = "free-games-notify";
           runtimeInputs = with pkgs; [
@@ -142,8 +136,6 @@
           description = "Claim free games on Epic and GOG";
           wants = [ "network-online.target" ];
           after = [ "network-online.target" ];
-          # Rate-limit all starts (including manual starts) to four in a
-          # rolling 23-hour window; next day's timer starts after 24 hours.
           unitConfig = {
             StartLimitIntervalSec = "23h";
             StartLimitBurst = 4;
@@ -171,7 +163,6 @@
             User = "fgc";
             Group = "fgc";
             ExecStart = "${claimScript}/bin/free-games-claim";
-            # A root-only post-stop hook handles both successes and failures.
             ExecStopPost = "+${notifyScript}/bin/free-games-notify";
             TimeoutStartSec = "2h";
             MemoryMax = "3G";
@@ -189,7 +180,6 @@
           description = "Run the free-games claimer daily";
           wantedBy = [ "timers.target" ];
           timerConfig = {
-            # The Pi host already uses America/Argentina/Buenos_Aires.
             OnCalendar = "*-*-* 18:10:00";
             Persistent = true;
             RandomizedDelaySec = "30min";

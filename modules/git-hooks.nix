@@ -69,12 +69,10 @@
                 }
               );
             };
-            # Keep Markdown changes aligned with the treefmt CI check.
             prettier = {
               enable = true;
               files = "\\.md$";
             };
-            # Surface broken agent-doc links before CI, without Nix evaluation.
             agent-docs = {
               enable = true;
               name = "agent-docs";
@@ -175,7 +173,6 @@
       devShells.default = pkgs.mkShell {
         nativeBuildInputs = [
           config.pre-commit.settings.package
-          # OpenTofu manages the OCI cloud resources in infra/.
           pkgs.opentofu
         ];
         shellHook = ''

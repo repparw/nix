@@ -103,23 +103,6 @@ def validate(name, architecture):
         attribute = {"tasks-org": "alpha.pkgs.tasks-org", "wpaperd-fix": "alpha.pkgs.wpaperd",
                      "qbittorrent": "alpha.config.containers.qbittorrent.config.services.qbittorrent.package"}[name]
         build(attribute)
-    elif name == "moonshine-pr227":
-        # The candidate removes the declarative test-build aspect: the
-        # generated unit must select the unpatched upstream package, the
-        # reload-guard source predicate must hold (the same one readiness
-        # used), and the unpatched package must build.
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("readiness", ROOT / ".github/scripts/upstream-readiness.py")
-        detector = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(detector)
-        lock = json.loads((ROOT / "flake.lock").read_text())
-        revision = detector.pin(lock, "nixpkgs")
-        require(detector.moonshine_reload_guard("hgaiser/moonshine", revision),
-                "pinned upstream Moonshine lacks the reload guard")
-        package = evaluate("alpha.config.services.moonshine.package.outPath")
-        require(package == evaluate("alpha.pkgs.moonshine.outPath"),
-                "Alpha must select the unpatched upstream Moonshine")
-        build("alpha.pkgs.moonshine")
     elif name == "t3code-stable010":
         # The candidate completes the direct cutover: the bridging aspect
         # is gone, the version assertion guards the pin, and every host
@@ -148,13 +131,6 @@ def validate(name, architecture):
         require(match and tuple(int(part) for part in match.groups()) >= detector.T3CODE_STABLE_MIN_VERSION,
                 f"pinned t3code {version} is below the bridge version")
         build("alpha.config.home-manager.users.repparw.programs.t3code.package")
-    elif name == "nodejs-security":
-        # The retired overlay family must be absent, and the fleet package
-        # must build against the pinned Bun and Node.
-        residual = json.loads(command("nix", "eval", "--json", "--no-update-lock-file",
-                                      ".#nixosConfigurations.alpha.pkgs", "--apply", "p: p ? bun-security"))
-        require(not residual, "bun-security must be retired from the fleet packages")
-        build("alpha.pkgs.opencode")
     else:
         raise ValueError(f"no package validation for {name}")
 

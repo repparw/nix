@@ -40,8 +40,6 @@ elif name == 'ssh':
     if not command:
         sys.exit(99)
     if command[0] == 'fleet-reboot-required':
-        # A rebooted epsilon resolves to its staged boot chain again unless
-        # the scenario keeps it mismatched to exercise the verify gate.
         if state.get('epsilon_rebooted') and config.get('epsilon_kernel_converges', True):
             predicate('clear')
         predicate(config.get('epsilon_state', 'clear'))
@@ -119,8 +117,6 @@ class RebootSequence(unittest.TestCase):
         return result
 
     def remote_reboots(self):
-        # The exact subcommand argument, so predicate calls
-        # ("fleet-reboot-required") are not mistaken for reboots.
         return [
             c for c in self.calls
             if c[0] == "ssh" and "reboot" in c[1:]
@@ -208,7 +204,6 @@ class RebootSequence(unittest.TestCase):
         self.assertEqual(self.local_reboots(), [])
 
     def test_post_deploy_check_waits_for_lock_release(self):
-        # Simulate fleet-update holding the lock when it queues the service.
         handle = open(self.lock, "w")
         self.addCleanup(handle.close)
         fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
