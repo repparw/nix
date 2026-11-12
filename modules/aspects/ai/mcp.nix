@@ -36,16 +36,22 @@
   };
 
   den.aspects.ai.provides.browse-desktop.homeManager =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
       browse = pkgs.callPackage ../../_packages/opencode-browse.nix {
         nodejs-runtime = pkgs.nodejs-runtime;
       };
+      browseMcp = pkgs.writeShellScriptBin "browse-mcp" ''
+        exec ${lib.getExe pkgs.python3} ${../../scripts/browse-mcp-lazy.py} \
+          ${lib.getExe browse} \
+          ${lib.getExe' config.programs.helium.package "helium"} \
+          ${lib.getExe' pkgs.procps "pgrep"}
+      '';
     in
     {
       programs.mcp.servers.browse = {
-        command = lib.getExe browse;
-        args = [ "mcp" ];
+        command = lib.getExe browseMcp;
+        args = [ ];
         env = {
           OPENCODE_BROWSER_AUTO_UPDATE = "off";
         };
@@ -69,6 +75,7 @@
               nativeBuildInputs = [
                 pkgs.jq
                 pkgs.coreutils
+                pkgs.python3
               ];
             }
             ''
@@ -81,6 +88,8 @@
               test "$status" -eq 0 || test "$status" -eq 130
               jq -se 'any(.[]; .id == 1 and .result.serverInfo.name == "browse")' \
                 "$TMPDIR/initialize.json"
+              BROWSE_MCP_LAZY_SCRIPT=${../../scripts/browse-mcp-lazy.py} \
+                ${lib.getExe pkgs.python3} ${../../_tests/browse-mcp-lazy.test.py}
               touch "$out"
             '';
       };
