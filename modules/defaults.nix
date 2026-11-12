@@ -5,6 +5,9 @@
 
     schema.host.includes = [
       den.batteries.hostname
+      # v0.20 separates user and host content. Keep explicit user-to-host
+      # provisions working after the migration cutoff; v0.19 lacks this battery.
+    ] ++ lib.optional (den.batteries ? mutual-provider) den.batteries.mutual-provider ++ [
       den.aspects.networking
       den.aspects.secrets
       den.aspects.fleet-cli
