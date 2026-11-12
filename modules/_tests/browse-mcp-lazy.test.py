@@ -20,7 +20,7 @@ class LazyBrowseTests(unittest.TestCase):
         self.marker = self.root / "helium-started"
         self.browse = self.root / "browse"
         self.browse.write_text(
-            "#!/usr/bin/env python3\n"
+            f"#!{sys.executable}\n"
             "import json, os, pathlib, sys\n"
             "marker = pathlib.Path(os.environ['BROWSE_HELIUM_TEST_MARKER'])\n"
             "if sys.argv[1] == 'mcp':\n"
@@ -33,13 +33,13 @@ class LazyBrowseTests(unittest.TestCase):
         self.browse.chmod(0o755)
         self.helium = self.root / "helium"
         self.helium.write_text(
-            "#!/usr/bin/env python3\n"
+            f"#!{sys.executable}\n"
             "import os, pathlib\n"
             "pathlib.Path(os.environ['BROWSE_HELIUM_TEST_MARKER']).touch()\n"
         )
         self.helium.chmod(0o755)
         self.pgrep = self.root / "pgrep"
-        self.pgrep.write_text("#!/bin/sh\nexit 1\n")
+        self.pgrep.write_text(f"#!{sys.executable}\nimport sys\nsys.exit(1)\n")
         self.pgrep.chmod(0o755)
 
     def run_requests(self, *messages):
