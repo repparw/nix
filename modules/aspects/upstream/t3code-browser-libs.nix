@@ -8,7 +8,7 @@
   # expose the same set system-wide. Completion: delete this file and its
   # include in ai/default.nix (upstream watcher t3code-browser-libs).
   den.aspects.ai.provides.t3code-browser-libs = {
-    nixos =
+    provides.to-hosts.nixos =
       { pkgs, ... }:
       {
         programs.nix-ld.libraries = with pkgs; [

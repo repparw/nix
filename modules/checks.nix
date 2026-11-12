@@ -1,4 +1,9 @@
-{ inputs, lib, ... }:
+{
+  inputs,
+  lib,
+  den,
+  ...
+}:
 {
   perSystem =
     { config, pkgs, ... }:
@@ -121,6 +126,16 @@
 
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
+
+          # Service inventory covers every Den host, including hosts without services.
+          service-host-inventory =
+            let
+              hosts = lib.concatMapAttrs (_system: machines: machines) den.hosts;
+              expected = lib.mapAttrs (_: host: host.serviceAddress) hosts;
+              actual = inputs.self.nixosConfigurations.pi.config.modules.services.hostAddresses;
+            in
+            assert actual == expected;
+            pkgs.writeText "service-host-inventory.json" (builtins.toJSON actual);
 
           fleet-failed-units =
             let

@@ -5,7 +5,7 @@
 }:
 {
   den.aspects.rclone = {
-    nixos = { config, ... }: {
+    provides.to-hosts.nixos = { config, ... }: {
       sops.secrets = builtins.listToAttrs (
         map
           (name: {

@@ -17,6 +17,13 @@ in
       let
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         cfg = config.modules.services;
+        # Align strict local readiness with the monitoring agent's inventory.
+        localUnits =
+          map (name: "container@${name}") (
+            lib.attrNames (lib.filterAttrs (_: container: container.autoStart) config.containers)
+          )
+          ++ lib.optional config.services.traefik.enable "traefik";
+        remoteHosts = lib.filter (host: host != cfg.hostName) (lib.attrNames cfg.hostAddresses);
         vhostProbes = lib.concatStringsSep "\n" (
           map
             (
@@ -25,15 +32,13 @@ in
                 service = cfg.definitions.${name};
                 fqdn = "${service.hostname}.${cfg.domain}";
               in
-              if name == "homeassistant" then
+              if service.probePublicRoute then
                 ''
-                  http home-assistant ${servicesLib.serviceUrl cfg config name} ""
-                  # Public Home Assistant traffic passes through Cloudflare
-                  # Tunnel to Epsilon, not Pi's LAN Traefik. Keep the public
-                  # route out of --local readiness checks.
-                  remote epsilon home https://${fqdn}/ 200''
+                  http ${lib.escapeShellArg name} ${lib.escapeShellArg (servicesLib.serviceUrl cfg config name)} ""
+                  # The registry requests backend and public-route checks.
+                  remote ${lib.escapeShellArg cfg.publicEdgeHost} ${lib.escapeShellArg service.hostname} https://${fqdn}/ 200''
               else if service.healthcheck != null then
-                "            remote \"${service.host} epsilon\" ${name} ${
+                "            remote \"${service.host} ${cfg.publicEdgeHost}\" ${name} ${
                               servicesLib.publicHealthUrl cfg config name
                             } 200"
               else if service.container && service.host != cfg.hostName then
@@ -75,7 +80,7 @@ in
               failures=$((failures + 1))
             }
 
-            for unit in container@homeassistant traefik; do
+            for unit in ${lib.escapeShellArgs localUnits}; do
               if ! systemctl is-active --quiet "$unit"; then
                 fail "$unit" "systemd inactive"
               fi
@@ -107,13 +112,9 @@ in
             if [ "$strict" != 1 ]; then
               check_units ${lib.escapeShellArg config.networking.hostName} ""
               if [ "$local_only" != 1 ]; then
-                ${lib.concatMapStringsSep "\n"
-                  (host: "check_units ${lib.escapeShellArg host} ${lib.escapeShellArg cfg.hostAddresses.${host}}")
-                  [
-                    "alpha"
-                    "epsilon"
-                  ]
-                }
+                ${lib.concatMapStringsSep "\n" (
+                  host: "check_units ${lib.escapeShellArg host} ${lib.escapeShellArg cfg.hostSshAddresses.${host}}"
+                ) remoteHosts}
               fi
               if [ -e /var/lib/auto-update/PAUSE ]; then
                 fail auto-update "automation paused"
@@ -161,7 +162,7 @@ in
             if [ "$strict" != 1 ] && [ "$local_only" != 1 ]; then
               http grafana-cloud ${config.modules.monitoring.cloudUrl}/api/health 200
             fi
-            remote epsilon apex https://${cfg.domain}/ 200
+            remote ${lib.escapeShellArg cfg.publicEdgeHost} apex https://${cfg.domain}/ 200
             [ "$failures" -eq 0 ]
           '';
         };

@@ -5,12 +5,8 @@
 {
   den.aspects.pi = {
     includes = [
-      den.aspects.monitoring._.persist
-      den.aspects.monitoring._.cloud
-      den.aspects.fleet-unit-state
+      den.aspects.managed-server
       den.aspects.pi._.backup
-      den.aspects.persistence
-      den.aspects.service-host
       den.aspects.nixos-services._.free-games-claimer
       den.aspects.nixos-services._.homeassistant
       den.aspects.nixos-services._.fleet-health
@@ -18,8 +14,6 @@
       den.aspects.fleet-controller
       den.aspects.pi-generation-retention
       den.aspects.lan-edge
-      den.aspects.deploy-target
-      den.aspects.passwordless-sudo
     ];
 
     provides.backup = {

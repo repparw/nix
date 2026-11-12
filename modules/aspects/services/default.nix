@@ -36,12 +36,8 @@
           builtins.listToAttrs entries;
       definitions = lib.mapAttrs (_: lib.mkDefault) generatedDefinitions;
 
-      hostMeta = builtins.listToAttrs (
-        map (entry: {
-          name = entry.source.host.name;
-          value = entry.source.host;
-        }) service-registry
-      );
+      # Include hosts without service registrations in the fleet inventory.
+      hostMeta = lib.concatMapAttrs (_system: hosts: hosts) den.hosts;
       hostAddresses = lib.mapAttrs (
         name: host:
         host.serviceAddress or (throw "service host ${name} is missing serviceAddress topology metadata")
