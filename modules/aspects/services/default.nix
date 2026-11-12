@@ -89,9 +89,7 @@
         arr
         jellyfin
       ]
-      ++ [
-        den.aspects.service-host
-      ];
+      ;
 
     nixos =
       {

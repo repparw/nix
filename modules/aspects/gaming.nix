@@ -8,7 +8,7 @@
       extraGroups = [ "gamemode" ];
     };
 
-    nixos =
+    provides.to-hosts.nixos =
       { pkgs, ... }:
       let
         # Launcher environments also cover systemd and streamed sessions.

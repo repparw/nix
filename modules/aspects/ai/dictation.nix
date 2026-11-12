@@ -1,7 +1,7 @@
 { den, ... }:
 {
   den.aspects.ai.provides.dictation = {
-    nixos =
+    provides.to-hosts.nixos =
       { config, ... }:
       {
         hardware.uinput.enable = true;
