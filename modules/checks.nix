@@ -140,8 +140,7 @@
             assert lib.attrNames hosts == hostNames;
             assert lib.all (
               inventory:
-              inventory.hostAddresses == expectedAddresses
-              && inventory.hostSshAddresses == expectedSshAddresses
+              inventory.hostAddresses == expectedAddresses && inventory.hostSshAddresses == expectedSshAddresses
             ) inventories;
             pkgs.writeText "service-host-inventory.json" (
               builtins.toJSON {
