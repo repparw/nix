@@ -96,11 +96,7 @@ the extension version. CI pings Discord when the pin is ready. Browser
 verification and removal of Obsidian Reader remain completion steps because
 this checkout has no Obsidian Reader declaration to remove.
 
-The Moonshine PR227 test build is declarative alpha config
-(`modules/aspects/upstream/moonshine-pr227-test.nix`, #147): the generated unit
-selects the test package, so activation and rollback belong to deploy-rs and
-the `waiting-source` predicate requires the pinned upstream source to carry
-the UnitRemoved reload guard before the cleanup candidate may publish. The
+The Moonshine PR227 test build and its upstream watcher are retired. The
 runtime predicates of the host-owned watchers moved to Pi: the
 `fleet-readiness-probe` service evaluates the running Sonarr version, the
 Sonarr log gate, and Moonshine's runtime-vs-generated-unit match over SSH,
