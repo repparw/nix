@@ -42,10 +42,17 @@ let
   };
   module = import ../ci-packages.nix {
     inherit lib;
-    inputs.self.nixosConfigurations = {
-      alpha = host "x86_64-linux";
-      pi = host "aarch64-linux";
-      epsilon = host "aarch64-linux";
+    inputs = {
+      self.nixosConfigurations = {
+        alpha = host "x86_64-linux";
+        pi = host "aarch64-linux";
+        epsilon = host "aarch64-linux";
+      };
+      # Exercise the ARM explicit-package list without importing Nixpkgs.
+      # This catches incorrect relative package paths before main-packages.
+      nixpkgs.legacyPackages.aarch64-linux.callPackage = path: _:
+        assert builtins.pathExists path;
+        pkgs.hello;
     };
   };
   paths = system: map (package: package.drvPath) (lib.attrValues module.flake.ciPackages.${system});
@@ -59,5 +66,5 @@ in
 assert lib.sort builtins.lessThan (paths "x86_64-linux") == lib.sort builtins.lessThan expected;
 assert
   lib.sort builtins.lessThan (paths "aarch64-linux")
-  == lib.sort builtins.lessThan (expected ++ expected);
+  == lib.sort builtins.lessThan (expected ++ expected ++ [ pkgs.hello.drvPath ]);
 pkgs.runCommand "check-ci-package-targets" { } "touch $out"
