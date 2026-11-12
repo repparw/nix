@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 SOURCE = Path(sys.argv.pop(1)).resolve()
@@ -114,6 +115,35 @@ class Retention(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(self.profile.with_name("system-3-link").exists())
         self.assertFalse(any(call[0] == "nix-env" for call in self.calls))
+
+    def test_sweeps_stale_adhoc_roots_and_keeps_fresh_protected_and_dirs(self):
+        stale = self.gcroots / "pi-main-797"
+        stale.symlink_to(self.targets[5])
+        fresh = self.gcroots / "fresh-probe"
+        fresh.symlink_to(self.targets[6])
+        protects_current = self.gcroots / "stale-but-current"
+        protects_current.symlink_to(self.targets[2])
+        old = time.time() - 30 * 86400
+        for link in (stale, protects_current):
+            os.utime(link, ns=(int(old * 1e9),) * 2, follow_symlinks=False)
+        directory = self.gcroots / "fleet-update"
+        directory.mkdir()
+        (directory / "prepared").symlink_to(self.targets[7])
+        result = self.run_cli()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(stale.exists())
+        self.assertTrue(fresh.exists())
+        self.assertTrue(protects_current.exists())
+        self.assertTrue((directory / "prepared").exists())
+
+    def test_plan_mode_sweeps_nothing(self):
+        stale = self.gcroots / "pi-main-797"
+        stale.symlink_to(self.targets[5])
+        old = time.time() - 30 * 86400
+        os.utime(stale, ns=(int(old * 1e9),) * 2, follow_symlinks=False)
+        result = self.run_cli("plan")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(stale.exists())
 
     def test_plan_never_deletes_or_collects(self):
         result = self.run_cli("plan")

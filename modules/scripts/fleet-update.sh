@@ -490,6 +490,12 @@ prepare_host() {
   store="ssh-ng://root@$(host_address "$host")"
   NIX_SSHOPTS="${ssh_options[*]}" nix copy -s --to "$store" --derivation "$drv" || return 1
   remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || return 1
+  # Clear unrooted debris before building. A near-full target store either
+  # trips ENOSPC mid-closure or fires nix's min-free auto-GC, which deletes
+  # freshly substituted paths while the build still needs them (observed
+  # 2026-11-10 to 11-11 on pi). Non-fatal: the build may still fit.
+  remote "$host" nix-collect-garbage >/dev/null 2>&1 \
+    || echo "warning: pre-build gc failed on $host; continuing" >&2
   # Persist nix's raw internal-json stream: it is compact and greppable.
   # Piping it through nom re-rendered the whole dependency tree on every
   # progress event, which grew prepare logs past a gigabyte per host and
@@ -528,6 +534,12 @@ progress "CI passed for ${revision:0:8}"
 printf '%s\n' "$revision" > "$state/target-revision"
 
 current_system=$(nix eval --impure --raw --expr builtins.currentSystem)
+# Keep only the newest two preparation directories: the latest for the
+# follow-up activation or rollback, the previous one for debugging a failed
+# run. Anything older is pure /persist refill — the 2026-11-10 disk-full
+# incident was years of these directories accumulating with their logs.
+find "$state" -maxdepth 1 -type d -name 'preparation-*' -printf '%T@ %p\n' 2>/dev/null \
+  | sort -rn | tail -n +3 | cut -d' ' -f2- | xargs -r rm -rf --
 preparation=$(mktemp -d "$state/preparation-$revision.XXXXXX")
 printf '%s\n' "$preparation" > "$state/latest-preparation"
 for host in "${hosts[@]}"; do
