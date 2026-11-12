@@ -60,7 +60,7 @@ def plan(old, candidate, registry, readiness_fn=None, probe_fn=None,
     probe_fn = probe_fn or nix_build_ok
 
     for name, spec in registry.items():
-        if spec["mode"] not in ("post-lock", "host-owned", "notify-only", "completed"):
+        if spec["mode"] not in ("post-lock", "host-owned", "notify-only"):
             raise ValueError(f"unsupported watcher mode: {name}")
 
     pin_moved = pin(old, "nixpkgs") != pin(candidate, "nixpkgs")

@@ -186,13 +186,12 @@ class PlanTests(unittest.TestCase):
         spec.loader.exec_module(readiness)
         expected = set(readiness.PR_WAITS) | {
             "qbittorrent", "wpaperd-fix",
-            "gamescope-vkroots", "moonshine-pr227", "sonarr-jellyfin",
+            "gamescope-vkroots", "sonarr-jellyfin",
             "t3code-stable010",
             "t3code-browser-libs",
             "opencode-v2",
             "tridactyl-reader",
             "fsr4-rdna2",
-            "nodejs-security",
             "ashell-aws-lc",
         }
         self.assertEqual(set(self.registry), expected)

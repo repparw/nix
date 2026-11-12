@@ -124,29 +124,6 @@ class Readiness(unittest.TestCase):
         with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), patch.object(watch, "contains", return_value=False):
             self.assertEqual(watch.detect("tasks-org", LOCK), "merged-not-pinned")
 
-    def test_moonshine_requires_reload_guard_before_ready(self):
-        # PR227 merged and pinned is not enough: the pinned source must also
-        # carry the reload guard, or the test build must be retained.
-        files = {
-            "pkgs/by-name/mo/moonshine/package.nix": 'version = "0.16.1"; tag = "v${finalAttrs.version}";',
-            "moonshine-core/src/session/compositor/mod.rs": "mod held_commits;",
-            "moonshine-core/src/session/compositor/handlers.rs": "held_commits::hold_until_rendered",
-            "moonshine-core/src/session/compositor/held_commits.rs": "DMA_BUF_IOCTL_EXPORT_SYNC_FILE",
-            "moonshine-core/src/session/application.rs": "fn handle() { if id == unit_name { let s = current_unit_state(); } }",
-        }
-        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
-                patch.object(watch, "package_contains", return_value=True), \
-                patch.object(watch, "source", side_effect=lambda repo, path, ref: files[path]):
-            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "PINNED-READY")
-        unguarded = dict(files, **{"moonshine-core/src/session/application.rs": "fn handle() { if id == unit_name { teardown(); } }"})
-        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
-                patch.object(watch, "package_contains", return_value=True), \
-                patch.object(watch, "source", side_effect=lambda repo, path, ref: unguarded[path]):
-            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "waiting-source")
-        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
-                patch.object(watch, "package_contains", return_value=False):
-            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "merged-not-pinned")
-
     def test_unavailable_does_not_become_completed_or_ready(self):
         with patch.object(watch, "detect", side_effect=subprocess.CalledProcessError(1, "gh")):
             self.assertEqual(watch.inspect("nautilus-module", LOCK), "unavailable (CalledProcessError)")
@@ -207,46 +184,6 @@ class Readiness(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory, patch.object(watch, "ROOT", Path(directory)), patch.object(watch, "detect") as detect:
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")
             detect.assert_not_called()
-
-    def test_nodejs_security_requires_node_shared_deps_and_bun(self):
-        bun = {"merged": True, "merge_commit_sha": "bun-merge-sha"}
-        # Node, Brotli, c-ares and the Bun bump must all be contained by the
-        # pin: the cleanup retires the whole overlay family in one candidate.
-        for results in ([False], [True, False], [True, True, False], [True, True, True, False]):
-            with self.subTest(results=results), \
-                    patch.object(watch, "api", return_value=bun), \
-                    patch.object(watch, "contains", side_effect=results):
-                self.assertEqual(watch.detect("nodejs-security", LOCK), "merged-not-pinned")
-        with patch.object(watch, "api", return_value=bun), \
-                patch.object(watch, "contains", return_value=True) as probe:
-            self.assertEqual(watch.detect("nodejs-security", LOCK), "PINNED-READY")
-            self.assertEqual(probe.call_count, 4)
-        with patch.object(watch, "api", return_value={"merged": False, "merge_commit_sha": "x"}):
-            self.assertEqual(watch.detect("nodejs-security", LOCK), "waiting-upstream")
-        # Exercise unavailable API handling against an active workaround, even
-        # after the real checkout has been cleaned up by an automated PR.
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            target = root / watch.WORKAROUNDS["nodejs-security"][0]
-            target.parent.mkdir(parents=True)
-            target.write_text("nodejs-security.nix ../../_packages/nodejs-security.nix")
-            with patch.object(watch, "ROOT", root), \
-                    patch.object(watch, "api", side_effect=ValueError("missing ancestry")):
-                self.assertTrue(watch.inspect("nodejs-security", LOCK).startswith("unavailable"))
-
-    def test_nodejs_security_cleanup_completion_reads_the_aspect(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            (root / "modules/aspects/upstream").mkdir(parents=True)
-            aspect = root / watch.WORKAROUNDS["nodejs-security"][0]
-            with patch.object(watch, "ROOT", root), patch.object(watch, "detect") as detect:
-                self.assertEqual(watch.inspect("nodejs-security", LOCK), "completed")
-                detect.assert_not_called()
-            aspect.write_text("{ nodejs-runtime = callPackage ../../_packages/nodejs-security.nix {}; }")
-            with patch.object(watch, "ROOT", root), \
-                    patch.object(watch, "detect", return_value="merged-not-pinned"):
-                self.assertEqual(watch.inspect("nodejs-security", LOCK), "merged-not-pinned")
-
 
     def test_t3code_cleanup_completion_preserves_permanent_aspects(self):
         for name in ("t3code-connect", "t3code-split"):

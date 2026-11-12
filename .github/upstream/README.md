@@ -77,12 +77,6 @@ The package-specific gates are:
 | qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                                            |
 | wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
-| nodejs-security   | Retired overlay family and `nodejs-runtime` alias absent from the fleet; alpha's OpenCode builds against the pinned Bun and Node        |
-| moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
-
-The nodejs-security watcher completed with the pinned Node and Bun packages
-retired. Its recipe kept the `nodejs-runtime` alias, so the alias was removed
-separately and its consumers now select the pinned `nodejs_24` directly.
 
 Nautilus is notify-only. Ready notices print in every upstream-watch run
 summary and, once per status change, post to the fleet Discord channel
@@ -143,8 +137,8 @@ publication, interruption recovery, drift rejection, and notification deduplicat
 
 `upstream-plan.py plan --old BASE --candidate CANDIDATE` runs **before** the lock
 updater publishes to main. Watcher contracts live in `watchers.json`.
-Watchers with `coupling: apply` (qbittorrent, gamescope-vkroots,
-moonshine-pr227) break the moment the candidate pin carries their fix — or any
+Watchers with `coupling: apply` (qbittorrent, gamescope-vkroots) break the
+moment the candidate pin carries their fix — or any
 context-shifting bump of their package — so their cleanup rides the lock
 candidate instead of racing the post-lock sweep. Readiness runs against the
 candidate tree; `PINNED-READY` diverts publication into a combined atomic

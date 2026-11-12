@@ -73,24 +73,6 @@
     "coupling": "apply",
     "probe": "nixosConfigurations.alpha.pkgs.gamescope"
   },
-  "moonshine-pr227": {
-    "mode": "completed",
-    "input": "nixpkgs",
-    "cleanup": "moonshine-pr227.patch",
-    "validation": [
-      "source-guard",
-      "package-build",
-      "generated-unit"
-    ]
-  },
-  "nodejs-security": {
-    "mode": "completed",
-    "input": "nixpkgs",
-    "cleanup": "nodejs-security.patch",
-    "validation": [
-      "package-build"
-    ]
-  },
   "sonarr-jellyfin": {
     "mode": "host-owned",
     "input": "nixpkgs"
