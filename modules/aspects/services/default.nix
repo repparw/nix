@@ -83,13 +83,10 @@
     };
 
   den.aspects.media-stack = {
-    includes =
-      with den.aspects.nixos-services._;
-      [
-        arr
-        jellyfin
-      ]
-      ;
+    includes = with den.aspects.nixos-services._; [
+      arr
+      jellyfin
+    ];
 
     nixos =
       {
