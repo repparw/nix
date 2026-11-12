@@ -172,17 +172,9 @@
             mode = "0700";
           }
         ];
-        # The aspect's random-seed symlink cannot transition on this host: /
-        # and /persist are the same filesystem during the migration, so the
-        # live symlink would point at itself (ELOOP) and fail every deploy-rs
-        # switch. The seed is regenerated per boot instead; directory binds
-        # are unaffected. Revisit if the backing volume ever splits from /.
-        environment.persistence."/persist".files = lib.mkForce [ ];
 
         users.users.repparw = {
           uid = 1000;
-          # users.mutableUsers stays true: this is a creation-time bootstrap,
-          # not an activation-time password reset.
           hashedPasswordFile = config.sops.secrets.repparwPasswordHash.path;
           extraGroups = [ "wheel" ];
           subUidRanges = [
@@ -329,12 +321,7 @@
         networking = {
           nat = {
             enable = true;
-            internalInterfaces = [ "ve-+" ];
             externalInterface = "eth0";
-            # NOTE: the iifname "ve-+" rule the module renders does not match
-            # these veths (observed 2026-08-23: UNREPLIED SYN_SENT conntrack
-            # entries while the rule was present). The working masquerade for
-            # the container subnet lives in nftables.tables.container-nat below.
           };
 
           nftables.tables.container-nat = {

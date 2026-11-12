@@ -293,13 +293,13 @@ def detect(name, lock):
         bun = api("repos/NixOS/nixpkgs/pulls/577354")
         if not bun.get("merged"):
             return "waiting-upstream"
-        fixes = (
-            "2794b31601c683d494c898a548e3c5237fa2242e",  # Node 24.22.1
-            "664dc1852b684a2db1d7734514030739fc557b91",  # Brotli 1.2.1, carries the out-of-bound-write fix
-            "dfbfe7d499556a3acea67ccc4888c2ef489bade0",  # c-ares 1.34.9
-        )
+        fixes = {
+            "node": "2794b31601c683d494c898a548e3c5237fa2242e",
+            "brotli": "664dc1852b684a2db1d7734514030739fc557b91",
+            "c-ares": "dfbfe7d499556a3acea67ccc4888c2ef489bade0",
+        }
         ready = contains("NixOS/nixpkgs", bun["merge_commit_sha"], revision)
-        ready = ready and all(contains("NixOS/nixpkgs", fix, revision) for fix in fixes)
+        ready = ready and all(contains("NixOS/nixpkgs", fix, revision) for fix in fixes.values())
         return "PINNED-READY" if ready else "merged-not-pinned"
     if name == "fsr4-rdna2":
         return fsr4_rdna2_status(lock)

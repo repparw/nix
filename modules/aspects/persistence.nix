@@ -17,6 +17,8 @@
     }:
     let
       cfg = config.modules.persistence;
+      separateFilesystems =
+        cfg.enable && config.fileSystems."/".device != config.fileSystems."/persist".device;
     in
     {
       imports = [ (inputs.impermanence + "/nixos.nix") ];
@@ -78,22 +80,18 @@
               mode = "0700";
             }
           ];
-          files = lib.optional (!cfg.mutableAccounts) "/etc/machine-id" ++ [
-            {
+          files =
+            lib.optional (!cfg.mutableAccounts) "/etc/machine-id"
+            ++ lib.optional separateFilesystems {
               file = "/var/lib/systemd/random-seed";
               method = "symlink";
-            }
-          ];
+            };
         };
 
-        # User-password secrets must decrypt before users are created. Read
-        # the key from the early backing mount instead of waiting for /etc/ssh.
         sops.age.sshKeyPaths = lib.mkIf cfg.enable (
           lib.mkForce [ "/persist/etc/ssh/ssh_host_ed25519_key" ]
         );
         fileSystems."/".neededForBoot = lib.mkIf cfg.enable true;
-        # A filesystem declaration alone cannot prove migration happened. Refuse
-        # an empty/wrong backing volume before activation can initialize state.
         boot.initrd.systemd.services.check-persistence-state = lib.mkIf cfg.enable {
           requiredBy = [ "initrd-nixos-activation.service" ];
           before = [ "initrd-nixos-activation.service" ];

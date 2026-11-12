@@ -13,31 +13,28 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 REGISTRY = ROOT / ".github/upstream/watchers.json"
 
-# Apply-coupled workarounds break the moment the candidate pin carries their
-# fix (or any context-shifting package bump): their cleanup must ride the lock
-# candidate instead of racing the post-lock sweep. The probe attribute builds
-# each active fleet package with stubbed compile phases, which still executes the
-# apply-coupled logic: fetchpatch, substituteInPlace, and patch application.
-APPLY_COUPLED_PROBES = {
-    "qbittorrent": "nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package",
-    "gamescope-vkroots": "nixosConfigurations.alpha.pkgs.gamescope",
-}
-
-
 def pin(lock, name):
     node = lock["nodes"]["root"]["inputs"][name]
     return lock["nodes"][node]["locked"]["rev"]
 
 
 
+PROBE_PHASES = ["unpackPhase", "patchPhase", "installPhase"]
+
+
 def nix_probe_expression(attribute):
     # This probe checks source compatibility; binary checks belong to full builds.
+    phases = " ".join(f'"{phase}"' for phase in PROBE_PHASES)
     return (
         'let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT"); '
-        f'in (f.{attribute}).overrideAttrs (_: {{ '
-        'phases = [ "unpackPhase" "patchPhase" "installPhase" ]; '
+        f'probed = (f.{attribute}).overrideAttrs (_: {{ '
+        f'phases = [ {phases} ]; '
         'installPhase = "mkdir -p $out; touch $out/probed"; '
-        '})'
+        '}); '
+        'in if ((probed ? patches) && probed.patches != [ ]) '
+        '|| ((probed ? prePatch) && probed.prePatch != "") '
+        '|| ((probed ? postPatch) && probed.postPatch != "") '
+        'then probed else throw "probe target does not carry the apply-coupled workaround"'
     )
 
 
@@ -90,7 +87,7 @@ def plan(old, candidate, registry, readiness_fn=None, probe_fn=None,
         if status == "PINNED-READY":
             atomic_names.append(name)
         elif pin_moved and build_probe:
-            ok, detail = probe_fn(APPLY_COUPLED_PROBES[name])
+            ok, detail = probe_fn(spec["probe"])
             if not ok:
                 return {"action": "blocked", "atomic": [],
                         "reason": f"{name} workaround no longer applies to the candidate pin: {detail}"}

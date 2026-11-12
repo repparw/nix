@@ -88,6 +88,13 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(sorted(seen), sorted(["nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package",
                                                "nixosConfigurations.alpha.pkgs.gamescope"]))
 
+    def test_apply_coupled_entries_declare_probes(self):
+        apply_names = sorted(name for name, spec in self.registry.items()
+                             if spec.get("coupling") == "apply")
+        self.assertEqual(apply_names, ["gamescope-vkroots", "qbittorrent"])
+        for name in apply_names:
+            self.assertTrue(self.registry[name]["probe"], name)
+
 
     def test_unchanged_pin_skips_readiness(self):
         def explode(_):
@@ -110,7 +117,7 @@ class PlanTests(unittest.TestCase):
             returncode = 0
             stderr = ""
         with patch.object(planner.subprocess, "run", return_value=Done()) as run:
-            ok, _ = planner.nix_build_ok(planner.APPLY_COUPLED_PROBES["qbittorrent"])
+            ok, _ = planner.nix_build_ok(self.registry["qbittorrent"]["probe"])
         self.assertTrue(ok)
         args = run.call_args.args[0]
         self.assertIn("--expr", args)
@@ -143,10 +150,22 @@ class PlanTests(unittest.TestCase):
 
     @unittest.skipUnless(os.environ.get("NIX_PROBE_SMOKE") == "1",
                          "requires the CI Nix installer and flake inputs")
+    def test_real_nix_probe_build_fails_without_the_workaround(self):
+        fixture = ROOT / ".github/upstream/fixtures/probe"
+        with patch.object(planner, "ROOT", fixture), patch.dict(
+                os.environ, {"UPSTREAM_PROBE_REPO": str(ROOT)}):
+            ok, detail = planner.nix_build_ok("absent")
+        self.assertFalse(ok)
+        self.assertIn("workaround", detail)
+
+    @unittest.skipUnless(os.environ.get("NIX_PROBE_SMOKE") == "1",
+                         "requires the CI Nix installer and flake inputs")
     def test_real_nix_evaluation_of_probe_attributes(self):
         # No package compilation: .drvPath forces evaluation of the exact
         # overridden derivation used by nix_build_ok for each fleet package.
-        for watcher, attribute in planner.APPLY_COUPLED_PROBES.items():
+        probes = {name: spec["probe"] for name, spec in self.registry.items()
+                  if spec.get("coupling") == "apply"}
+        for watcher, attribute in probes.items():
             with self.subTest(watcher=watcher):
                 expression = f"({planner.nix_probe_expression(attribute)}).drvPath"
                 result = subprocess.run(

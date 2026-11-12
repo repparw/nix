@@ -40,28 +40,20 @@ class LockUpdate(unittest.TestCase):
         self.git("clone", str(self.remote), str(self.checkout))
         self.git("config", "user.name", "fixture", cwd=self.checkout)
         self.git("config", "user.email", "fixture@example.test", cwd=self.checkout)
-        # The real lock updater invokes this planner from the checkout, not
-        # the test runner's source tree. Carry the production implementation
-        # and exact fixture into every disposable repository.
         for path in (".github/scripts/upstream-plan.py", ".github/scripts/upstream-readiness.py",
                      ".github/upstream/watchers.json"):
             dst = self.checkout / path
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(REPO / path, dst)
-            # Nix-store source fixtures are read-only; the disposable checkout
-            # must be writable for the fixture registry and atomic cleanup.
             dst.chmod(0o644)
 
-        # A fixture registry: one apply-coupled watcher whose workaround file,
-        # cleanup recipe, and readiness endpoints the fake gh can answer.
         registry = {
 
             "qbittorrent": {"mode": "post-lock", "input": "nixpkgs",
-                                "cleanup": "fixture-cleanup.patch", "coupling": "apply"},
+                                "cleanup": "fixture-cleanup.patch", "coupling": "apply",
+                                "probe": "nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package"},
         }
         (self.checkout / ".github/upstream/watchers.json").write_text(json.dumps(registry, indent=2))
-        # The fixture id must be a real readiness detector, and the file must
-        # carry that detector's workaround marker (or inspect reports completed).
         workaround = self.checkout / "modules/aspects/upstream/qbittorrent.nix"
         workaround.parent.mkdir(parents=True, exist_ok=True)
         workaround.write_text("keep\nqbittorrent-nox.overrideAttrs\nworkaround\n")

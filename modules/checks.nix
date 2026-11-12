@@ -122,6 +122,21 @@
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
 
+          host-nat =
+            let
+              pi = inputs.self.nixosConfigurations.pi.config;
+              masquerade = pi.networking.nftables.tables.container-nat.content;
+            in
+            assert !(lib.elem "ve-+" pi.networking.nat.internalInterfaces);
+            assert lib.hasInfix "${pi.modules.services.bridgePrefix}.0/24 oifname \"eth0\" masquerade"
+              masquerade;
+            pkgs.writeText "host-nat-evaluation.json" (
+              builtins.toJSON {
+                inherit (pi.networking.nat) internalInterfaces;
+                containerNat = masquerade;
+              }
+            );
+
           fleet-failed-units =
             let
               expectedJobs = {
@@ -402,14 +417,28 @@
                 touch $out
               '';
 
-          # Static validation of the OCI root module in infra/: formatting
-          # plus schema validation against the pinned provider, fetched from
-          # the upstream release so the check needs no network or registry.
           tofu =
             let
+              ociVersion =
+                let
+                  lockFile = builtins.readFile ../infra/.terraform.lock.hcl;
+                  marker = "provider \"registry.opentofu.org/oracle/oci\" {";
+                  parts = lib.splitString marker lockFile;
+                  block = builtins.head (lib.splitString "}" (lib.last parts));
+                  versions = builtins.filter (v: v != null) (
+                    map (builtins.match "[[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]+)\"[[:space:]]*") (
+                      lib.splitString "\n" block
+                    )
+                  );
+                in
+                if parts == [ lockFile ] then
+                  throw "checks.tofu: infra/.terraform.lock.hcl has no registry.opentofu.org/oracle/oci provider block"
+                else if versions == [ ] then
+                  throw "checks.tofu: the oracle/oci provider block in infra/.terraform.lock.hcl has no version"
+                else
+                  builtins.head (builtins.head versions);
               ociProvider = pkgs.fetchurl {
-                # Keep in sync with infra/.terraform.lock.hcl (same zh hash).
-                url = "https://github.com/oracle/terraform-provider-oci/releases/download/v6.37.0/terraform-provider-oci_6.37.0_linux_amd64.zip";
+                url = "https://github.com/oracle/terraform-provider-oci/releases/download/v${ociVersion}/terraform-provider-oci_${ociVersion}_linux_amd64.zip";
                 sha256 = "3e3017f035fac18114e0b1d29c72430958054def0f800c22d36e1144d0c76422";
               };
             in
@@ -427,7 +456,7 @@
                 # OpenTofu's -plugin-dir search path expects the provider
                 # binary as a file at
                 # <dir>/<host>/<namespace>/<type>/<version>/<os>_<arch>/.
-                plugin_dir=$TMPDIR/plugins/registry.opentofu.org/oracle/oci/6.37.0/linux_amd64
+                plugin_dir=$TMPDIR/plugins/registry.opentofu.org/oracle/oci/${ociVersion}/linux_amd64
                 mkdir -p "$plugin_dir"
                 unzip -q -j ${ociProvider} -d "$plugin_dir"
 

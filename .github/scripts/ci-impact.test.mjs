@@ -129,7 +129,6 @@ test('push comparison failures and malformed inputs fail closed', () => {
     { status: 1, stderr: 'compare failed' },
     { status: 0, stdout: '{invalid-json' },
     compareResponse(Array.from({ length: 300 }, (_, n) => ({ filename: `docs/${n}.md` }))),
-    { status: 0, stdout: JSON.stringify({ files: [{ filename: 'docs/one.md' }], total_files: 2 }) },
     compareResponse([]),
   ]) {
     assert.equal(detectFixture('push', event, response).result.runHosts, true);

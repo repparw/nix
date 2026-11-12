@@ -21,5 +21,12 @@
     {
       valid = package "before\n";
       incompatible = package "different-source\n";
+      absent = pkgs.stdenv.mkDerivation {
+        pname = "watcher-probe-fixture-absent";
+        version = "1.0";
+        src = pkgs.writeTextDir "value" "anything\n";
+        buildPhase = "echo unexpected-compilation >&2; exit 1";
+        meta.mainProgram = "watcher-probe-fixture";
+      };
     };
 }

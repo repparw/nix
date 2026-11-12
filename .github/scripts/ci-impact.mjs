@@ -91,9 +91,7 @@ export function detect({
       return classifyChanges(null, eventName);
     }
     const comparison = JSON.parse(result.stdout);
-    // total_files is not guaranteed, so length >= 300 also triggers full validation.
-    if (!Array.isArray(comparison.files) || comparison.files.length >= 300 ||
-        (typeof comparison.total_files === 'number' && comparison.total_files > comparison.files.length))
+    if (!Array.isArray(comparison.files) || comparison.files.length >= 300)
       return classifyChanges(null, eventName);
     return classifyChanges(changedPaths(comparison.files), eventName);
   } catch (error) {

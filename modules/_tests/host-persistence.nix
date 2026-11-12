@@ -25,6 +25,12 @@ let
         { fileSystems."/persist".neededForBoot = lib.mkForce false; }
       ];
     }).config;
+  sameFs =
+    (hosts.pi.extendModules {
+      modules = [
+        { fileSystems."/".device = lib.mkForce pi.fileSystems."/persist".device; }
+      ];
+    }).config;
   piResult =
     assert pi.modules.persistence.enable;
     assert pi.modules.persistence.mutableAccounts;
@@ -51,10 +57,9 @@ let
     assert lib.any (entry: entry.directory or null == "/var/lib/host-recovery") (
       pi.environment.persistence."/persist".directories
     );
-    # The random-seed symlink entry is deliberately absent on pi: with / and
-    # /persist on one filesystem it would be self-referential (ELOOP) and
-    # break every live switch; see modules/hosts/pi.nix.
-    assert pi.environment.persistence."/persist".files == [ ];
+    assert lib.any (entry: entry.file == "/var/lib/systemd/random-seed" && entry.method == "symlink") (
+      pi.environment.persistence."/persist".files
+    );
     assert pi.users.mutableUsers;
     assert lib.any (mount: mount.where == "/var/lib/host-recovery") piMounts;
     assert lib.all (path: lib.elem path pi.services.restic.backups.offsite.paths) [
@@ -126,9 +131,9 @@ let
     assert lib.any (entry: entry.directory or null == "/var/log") (
       epsilon.environment.persistence."/persist".directories
     );
-    # Same same-fs landmine as pi: the random-seed symlink must stay absent
-    # during the migration; see modules/hosts/epsilon.nix.
-    assert epsilon.environment.persistence."/persist".files == [ ];
+    assert lib.any (entry: entry.file == "/var/lib/systemd/random-seed" && entry.method == "symlink") (
+      epsilon.environment.persistence."/persist".files
+    );
     assert epsilon.users.mutableUsers;
     assert lib.any (mount: mount.where == "/var/lib/host-recovery") epsilonMounts;
     assert lib.any (mount: mount.where == "/var/lib/credential-remediation") epsilonMounts;
@@ -178,6 +183,7 @@ assert lib.any (
 assert lib.any (
   assertion: !assertion.assertion && lib.hasPrefix "Mutable passwords require" assertion.message
 ) unprepared.assertions;
+assert sameFs.environment.persistence."/persist".files == [ ];
 pkgs.writeText "host-persistence-evaluation.json" (
   builtins.toJSON {
     pi = piResult;
