@@ -128,7 +128,7 @@ def main():
                 break
     finally:
         child.stdin.close()
-        return child.wait()
+    return child.wait()
 
 
 if __name__ == "__main__":
