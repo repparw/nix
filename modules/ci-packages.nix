@@ -34,6 +34,20 @@ let
     "pi"
     "epsilon"
   ];
+  # These services package Node applications without exposing a services.*.package
+  # option, so the generic package collector cannot discover them.
+  # The unit test injects only self, so avoid evaluating real nixpkgs there.
+  explicitPackages =
+    system:
+    lib.optionals ((inputs ? nixpkgs) && system == "aarch64-linux") (
+      let
+        pkgs = inputs.nixpkgs.legacyPackages.${system};
+      in
+      [
+        (pkgs.callPackage ./_packages/free-games-claimer.nix { })
+        (pkgs.callPackage ./_packages/epicgames-freegames-node.nix { })
+      ]
+    );
   targetsFor =
     system:
     lib.listToAttrs (
@@ -43,9 +57,10 @@ let
           value = package;
         })
         (
-          lib.concatMap (host: packagesFor host.config host.options.services) (
+          (lib.concatMap (host: packagesFor host.config host.options.services) (
             lib.filter (host: host.config.nixpkgs.hostPlatform.system == system) hosts
-          )
+          ))
+          ++ (explicitPackages system)
         )
     );
 in
