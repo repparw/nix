@@ -8,9 +8,6 @@
       ...
     }:
     let
-      # Container units on epsilon, derived from the fleet service registry
-      # (host == epsilon with container = true) instead of a hardcoded list,
-      # so the reboot gate cannot drift when services move between hosts.
       epsilonContainers = lib.concatStringsSep " " (
         map (name: "container@${name}") (
           lib.attrNames (
@@ -73,8 +70,6 @@
 
       systemd.services.fleet-headless-reboot = {
         description = "Sequentially reboot headless hosts into staged kernel/initrd generations";
-        # Type=exec deployment units remain active during the child process:
-        # ordering is advisory; the reboot script also waits for the lock.
         after = [
           "network-online.target"
           "fleet-deploy-run.service"
@@ -88,8 +83,6 @@
         };
       };
 
-      # Safety net for the post-deploy trigger: catches whatever a deploy
-      # deferred (busy backup) or skipped (manual rebuild without a deploy).
       systemd.timers.fleet-headless-reboot = {
         wantedBy = [ "timers.target" ];
         timerConfig = {

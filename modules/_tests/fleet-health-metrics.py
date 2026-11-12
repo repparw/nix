@@ -52,8 +52,6 @@ class MetricsTests(unittest.TestCase):
             self.assertIn('name="unit\\"\\\\name"', path.read_text())
 
     def test_reboot_metric_follows_predicate_exit_codes(self):
-        # The shell predicate owns link comparison (fleet-reboot-required
-        # test.py); the collector only maps its exit codes onto the metric.
         def outcome(code, stderr=b""):
             return lambda *_args, **_kwargs: SimpleNamespace(
                 returncode=code, stderr=stderr, stdout=b""

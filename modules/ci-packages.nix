@@ -34,6 +34,22 @@ let
     "pi"
     "epsilon"
   ];
+  # Aspects whose services don't expose enable/package options are invisible
+  # to the collector above. List them explicitly so main-packages pushes them
+  # and pi deploys substitute instead of building the node stacks on target
+  # (#521). The epicgames-freegames-node package arrives with the #542 trial
+  # PR and joins this list there. The _tests/ci-packages.nix harness uses
+  # a lightweight callPackage stub to verify these paths without real builds.
+  explicitPackages =
+    system:
+    lib.optionals ((inputs ? nixpkgs) && system == "aarch64-linux") (
+      let
+        pkgs = inputs.nixpkgs.legacyPackages.${system};
+      in
+      [
+        (pkgs.callPackage ./_packages/free-games-claimer.nix { })
+      ]
+    );
   targetsFor =
     system:
     lib.listToAttrs (
@@ -43,18 +59,16 @@ let
           value = package;
         })
         (
-          lib.concatMap (host: packagesFor host.config host.options.services) (
+          (lib.concatMap (host: packagesFor host.config host.options.services) (
             lib.filter (host: host.config.nixpkgs.hostPlatform.system == system) hosts
-          )
+          ))
+          ++ (explicitPackages system)
         )
     );
 in
 {
-  # Individual package targets let nix-fast-build skip cached results without
-  # realizing system paths, activation scripts, or host toplevels.
   flake.ciPackages = lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] targetsFor;
 
-  # Revision-specific, small build to exercise the native pipeline on PRs.
   flake.ciPackageSmoke = lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (
     system:
     let

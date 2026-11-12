@@ -3,11 +3,6 @@
   buildNpmPackage,
   fetchFromGitHub,
 }:
-# Fork of vogler/free-games-claimer carrying the patchright migration that
-# keeps Epic/GOG claiming functional as of 2026-09; pinned to a known-good
-# revision. Runtime browser is Nixpkgs Chromium via FGC_CHROME_PATH (see the
-# free-games-claimer service aspect), not the branded Chrome the upstream
-# Docker image downloads.
 (buildNpmPackage {
   pname = "free-games-claimer";
   version = "1.4.0-unstable-2026-09-21";
@@ -21,7 +16,6 @@
 
   npmDepsHash = "sha256-wrKbkiVt+cg0ziF6w33TH4qij6Jd1Lmb/+JNRIjnreU=";
 
-  # The package has no build step; the store scripts are run directly.
   dontNpmBuild = true;
 
   # The storefront scripts request branded Chrome (`channel: 'chrome'`).
@@ -34,7 +28,6 @@
       --replace-fail "channel: 'chrome'," \
         "executablePath: process.env.FGC_CHROME_PATH,"
 
-    # Keep the package in the Nix store and redirect only mutable browser data.
     substituteInPlace src/util.js \
       --replace-fail "path.resolve(__dirname, '..', 'data', s)" \
         "path.resolve(process.env.FGC_DATA_DIR || path.resolve(__dirname, '..', 'data'), s)"
@@ -45,7 +38,6 @@
       --replace-fail "db.data[user][title].status ||= status;" \
         "db.data[user][title].status = status;"
 
-    # Test native headless first. The service's SHOW=1 switch restores headed.
     substituteInPlace epic-games.js gog.js \
       --replace-fail "headless: false," "headless: cfg.headless,"
 
@@ -77,8 +69,6 @@
       --replace-fail "console.error('Could not determine GOG login state - page structure changed?');" \
         "throw new Error('GOG: cannot determine saved login state.');"
 
-    # Generic exceptions always fail without retries (even after an earlier
-    # retryable game failure). Only known transient checkout outcomes use 75.
     substituteInPlace epic-games.js gog.js \
       --replace-fail "process.exitCode ||= 1;" "process.exitCode = 1;"
     substituteInPlace epic-games.js \

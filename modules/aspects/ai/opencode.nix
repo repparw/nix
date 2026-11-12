@@ -1,6 +1,5 @@
 { den, ... }:
 {
-  # Packaged by nixpkgs (the channel and pin both track the anomalyco v2
   # release); the vendored 2.0.26 workaround was retired per issue #229.
   den.aspects.ai.provides.opencode = {
     homeManager =
@@ -14,17 +13,6 @@
         json5 = pkgs.python3Packages.toPythonApplication pkgs.python3Packages.json5;
       in
       {
-        # Plugins are live state in ~/.config/opencode/plugins/ (seeded by
-        # hand from the repo history during the live-state migration); the
-        # runtime providers (nous-portal, explabs, orcarouter) and the
-        # session default model come from those plugins.
-        # Compute the opencode provider instance's hidden models at activation
-        # time from the live Zen and OpenRouter catalogs. Everything is hidden
-        # except: endpoints containing "free", OpenRouter's ~latest dynamic
-        # slugs, and nvidia/*. Runs after the module's own $dynamic * $static
-        # merge (which would replace the GUI's hiddenModels array); keeps are
-        # subtracted so re-surfaced models survive later activations. Fails
-        # open: a failed or empty catalog fetch leaves settings.json alone.
         # The GUI prunes stale entries when it saves.
         home.activation.t3codeModelHides = lib.hm.dag.entryAfter [ "t3codeSettingsActivation" ] (
           let
@@ -90,12 +78,6 @@
           skills = { };
           web.enable = false;
           settings = {
-            # small_model has no plugin surface (the runtime derives it from
-            # model families), so it stays the one declared model setting;
-            # everything else model-related is runtime state: the session
-            # default comes from model-defaults.ts, and providers are
-            # registered by their plugins (nous-live, explabs-free,
-            # orca-router) — see those files.
             small_model = "opencode/muse-spark-1.3-contributor-free";
             # GitHub Student/Free Copilot plans only allow Auto model
             # selection; this plugin adds the github-copilot/auto router

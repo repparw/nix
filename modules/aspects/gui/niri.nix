@@ -32,6 +32,11 @@
         programs.niri.enable = lib.mkDefault true;
         programs.wshowkeys.enable = true;
 
+        programs.gpu-screen-recorder = {
+          enable = true;
+          ui.enable = true;
+        };
+
         # KDE Connect's remote-input (mouse/keyboard from a phone) needs a
         # portal backend that implements RemoteDesktop on wlroots compositors.
         # The GNOME portal backend does not implement RemoteDesktop on Niri,
@@ -40,8 +45,6 @@
         xdg.portal.config.niri."org.freedesktop.impl.portal.RemoteDesktop" = "luminous";
 
         environment.etc."xdg/xdg-desktop-portal-luminous/config.toml".text = ''
-          # Avoid blocking remote input on a permission dialog that may not
-          # be reachable from the phone-initiated flow.
           remote_permission_check = false
           screenshot_permission_check = false
         '';
@@ -59,38 +62,10 @@
           spawn = command;
         };
         spawn = command: { spawn = command; };
-        # Moonshine's Desktop stream boots a nested niri with this same
-        # config. Its sockets belong to the stream, so importing them into
-        # the login session's user manager would poison the real desktop.
-        sessionEnv = pkgs.writeShellApplication {
-          name = "niri-session-env";
-          runtimeInputs = [ pkgs.systemd ];
-          text = ''
-            if [ -z "''${MOONSHINE_CLIENT_WIDTH:-}" ]; then
-              exec systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP NIRI_SOCKET
-            fi
-          '';
-        };
       in
       {
         home.packages = with pkgs; [
           ndrop
-          sessionEnv
-
-          (writeShellApplication {
-            name = "record";
-            runtimeInputs = [
-              wl-screenrec
-              slurp
-              niri
-              jq
-              libnotify
-              wl-clipboard
-              util-linux
-              gawk
-            ];
-            text = builtins.readFile ./niri-record.sh;
-          })
 
           (writeShellApplication {
             name = "grabtext";
@@ -171,7 +146,14 @@
             };
             debug.honor-xdg-activation-with-invalid-serial = { };
 
-            spawn-sh-at-startup = "niri-session-env";
+            # Niri --session imports the compositor environment into the
+            # user manager itself. Moonshine launches plain nested Niri;
+            # avoid starting a second GUI controller there.
+            spawn-sh-at-startup = ''
+              if [ -z "''${MOONSHINE_CLIENT_WIDTH:-}" ]; then
+                exec gsr-ui
+              fi
+            '';
 
             binds = {
               "Mod+Return" = titledSpawn "Terminal" [ "xdg-terminal-exec" ];
@@ -232,9 +214,6 @@
                 "--method"
                 "com.t3tools.SnapShot.Capture"
               ];
-              # Raises the running Spotifast window, or starts the client
-              # when nothing is running: a second launch hands over to the
-              # live instance instead of starting a duplicate.
               "Mod+M" = titledSpawn "Spotifast" [ "spotifast" ];
               "Mod+N" = titledSpawn "Notes (Neovim)" [
                 "xdg-terminal-exec"
@@ -342,13 +321,22 @@
                 _props.hotkey-overlay-title = "Screenshot Area";
                 screenshot._props.show-pointer = false;
               };
-              "Ctrl+Print" = titledSpawn "Record Screen" [
-                "record"
-                "screen"
+              # GSR UI's completion-to-clipboard workflow still needs testing.
+              "Ctrl+Print" = titledSpawn "Toggle Recording" [
+                "gsr-ui-cli"
+                "toggle-record"
+              ];
+              "Ctrl+Alt+Print" = titledSpawn "Recording Controls" [
+                "gsr-ui-cli"
+                "toggle-show"
+              ];
+              "Ctrl+Shift+Print" = titledSpawn "Record Window" [
+                "gsr-ui-cli"
+                "toggle-record-window"
               ];
               "Ctrl+Mod+Shift+Print" = titledSpawn "Record Area" [
-                "record"
-                "area"
+                "gsr-ui-cli"
+                "toggle-record-region"
               ];
 
               XF86AudioPlay = {
@@ -476,9 +464,6 @@
 
         services.wpaperd.enable = true;
 
-        # The Moonshine Desktop stream has no $TERMINAL and a minimal PATH,
-        # so pin the terminal fuzzel uses for console entries. Same HOME as
-        # the login session, so this also applies locally.
         xdg.configFile."fuzzel/fuzzel.ini".text = ''
           [main]
           terminal = ${lib.getExe pkgs.xdg-terminal-exec} --

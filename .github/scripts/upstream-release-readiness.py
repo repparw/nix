@@ -42,9 +42,7 @@ WATCHER = "opencode-v2"
 UPSTREAM = "anomalyco/opencode"
 TESTED_VERSION = "2.0.26"
 TESTED_TAG = f"v{TESTED_VERSION}"
-# v2-specific attrs first; plain `opencode` is included because nixpkgs may
-# eventually move v2 into it. Order is the tie-break for equal versions.
-CANDIDATE_ATTRS = ("opencode2", "opencode_2", "opencode")
+CANDIDATE_PRIORITY = {"opencode2": 0, "opencode_2": 1, "opencode": 2}
 PACKAGING_PRS = (569770, 572946)
 OVERLAY_MARKER = Path("modules/_packages/opencode.nix")
 READY = "PINNED-READY"
@@ -159,17 +157,16 @@ def version_tuple(version):
 def probe_revision(repository, revision, tested_commit):
     """Inspect one nixpkgs revision for a real upstream v2 opencode source."""
     candidates = {}
-    for attr in CANDIDATE_ATTRS:
+    for attr in CANDIDATE_PRIORITY:
         text = try_source(repository, f"pkgs/by-name/op/{attr}/package.nix", revision)
         candidates[attr] = parse_package(text) if text is not None else None
         if candidates[attr] is not None:
             candidates[attr]["attr"] = attr
-    # Highest packaged version wins; attr order in CANDIDATE_ATTRS breaks ties.
-    chosen = None
-    for attr in CANDIDATE_ATTRS:
-        candidate = candidates[attr]
-        if candidate is not None and (chosen is None or version_tuple(candidate["version"]) > version_tuple(chosen["version"])):
-            chosen = candidate
+    chosen = max(
+        (candidate for candidate in candidates.values() if candidate is not None),
+        key=lambda candidate: (version_tuple(candidate["version"]), -CANDIDATE_PRIORITY[candidate["attr"]]),
+        default=None,
+    )
     real_v2 = False
     if chosen:
         if version_tuple(chosen["version"]) >= version_tuple(TESTED_VERSION):

@@ -36,11 +36,6 @@ if [ -f "$FIXTURE/ssh-fail" ]; then
 fi
 case "$*" in
   *"fleet-readiness-completion"*)
-    # Execute the real remote script through a shell instead of matching
-    # arguments: a fake systemctl models the unit's lifecycle so the
-    # LoadState protocol and its outcome classification run for real.
-    # Per-connection state: a fresh ssh attempt starts with the unit loaded
-    # unless the fixtures say otherwise.
     : > "$FIXTURE/show-count" 2>/dev/null
     body=$(cat)
     fakebin="$FIXTURE/fakebin"
@@ -222,10 +217,6 @@ class Readiness(unittest.TestCase):
             self.assertEqual(self.events(state)[0]["status"], "waiting")
 
     def test_moonshine_ready_is_config_match_not_test_build_absence(self):
-        # While the declarative test-build aspect is enabled, the generated
-        # unit intentionally selects the test package; the probe reports
-        # ready because the runtime matches config and no external override
-        # remains — not because the test build is gone.
         self.setUpProbe()
         state = self.root / "moonshine-config-match"
         self.run_probe(state, watcher="moonshine-pr227-runtime", response=READY_MOONSHINE.replace(
@@ -257,8 +248,6 @@ class Readiness(unittest.TestCase):
         state = self.root / "state"
         self.run_probe(state, watcher="moonshine-pr227-runtime", response=WAITING_MOONSHINE)
         self.assertEqual(len(self.events(state)), 1)
-        # Simulate a crash between enqueueing the event and writing the
-        # last-status record: the replay must fail the duplicate link closed.
         (state / "readiness" / "last-moonshine-pr227-runtime.json").unlink()
         self.run_probe(state, watcher="moonshine-pr227-runtime", response=WAITING_MOONSHINE)
         events = self.events(state)
@@ -288,7 +277,6 @@ class Readiness(unittest.TestCase):
         events = {event["watcher"]: event for event in self.events(state)}
         self.assertEqual(sorted(events), ["moonshine-pr227-runtime", "sonarr-jellyfin"])
         self.assertEqual(events["sonarr-jellyfin"]["status"], "ready")
-        # A response for Sonarr is not positive evidence about Moonshine.
         self.assertEqual(events["moonshine-pr227-runtime"]["status"], "waiting")
 
     def test_events_carry_complete_protocol(self):
@@ -361,10 +349,6 @@ class Readiness(unittest.TestCase):
         self.assertFalse((self.fix / "discord-calls").exists())
 
     def test_delivered_ready_event_runs_alpha_completion(self):
-        # Alpha's sonarr timer is retired: the deliverer owns the completion
-        # action now, strictly after Discord accepts the post. Completion is
-        # confirmed by the units disappearing from the manager, not by the
-        # start's exit code.
         self.setUpProbe()
         state = self.root / "state"
         result = self.run_probe(state, watcher="sonarr-jellyfin", response=READY_SONARR)
@@ -376,9 +360,6 @@ class Readiness(unittest.TestCase):
         self.assertEqual((self.fix / "discord-calls").read_text().count("post"), 1)
 
     def test_failed_completion_retries_action_but_not_notification(self):
-        # The Discord acknowledgment is persisted separately: later cycles
-        # re-run only the action, so a persistently failing Alpha cannot
-        # flood Discord with duplicate readiness posts.
         self.setUpProbe()
         state = self.root / "state"
         self.run_probe(state, watcher="sonarr-jellyfin", response=READY_SONARR)
@@ -398,8 +379,6 @@ class Readiness(unittest.TestCase):
         self.assertEqual(len(list((state / "readiness-events").glob("*.json"))), 0)
 
     def test_regressed_conditions_keep_completion_pending(self):
-        # A start that returns success while the watcher gates out without
-        # the cutover is not completion: units remaining means pending.
         self.setUpProbe()
         state = self.root / "state"
         self.run_probe(state, watcher="sonarr-jellyfin", response=READY_SONARR)
@@ -426,8 +405,6 @@ class Readiness(unittest.TestCase):
         self.assertEqual(len(list((state / "readiness-events").glob("*.json"))), 0)
 
     def test_manager_unanswered_is_retryable_not_finished(self):
-        # Silence must never read as a finished cutover: an unreachable
-        # manager or transport failure keeps the event queued.
         self.setUpProbe()
         state = self.root / "state"
         self.run_probe(state, watcher="sonarr-jellyfin", response=READY_SONARR)

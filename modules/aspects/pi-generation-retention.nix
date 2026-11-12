@@ -24,7 +24,11 @@
       nix.gc.dates = lib.mkForce "daily";
       nix.gc.options = lib.mkForce "";
       systemd.services.nix-gc.script = lib.mkForce ''
-        exec ${lib.getExe retention} apply --keep 5
+        # Three generations: current, booted, and one rollback. The 40G nvme
+        # cannot hold five closures plus the working set for a deploy
+        # (observed 2026-11-10 to 11-11: builds ENOSPC or the min-free
+        # auto-GC deletes in-flight substitutes mid-build).
+        exec ${lib.getExe retention} apply --keep 3
       '';
     };
 }

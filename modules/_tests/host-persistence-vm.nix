@@ -5,8 +5,6 @@
 let
   backup = (import ../aspects/backup.nix { den = null; }).den.aspects.backup.nixos;
   persistence = (import ../aspects/persistence.nix { inherit inputs; }).den.aspects.persistence.nixos;
-  # Disposable test credentials, generated in the build sandbox. No production
-  # key, password or SOPS file is used by this VM.
   fixture =
     pkgs.runCommand "persistence-test-credentials"
       {
@@ -157,8 +155,6 @@ pkgs.testers.runNixOSTest {
     machine = { config, ... }: {
       imports = [ common ];
       virtualisation.emptyDiskImages = [ 512 ];
-      # Only the test's blank virtual disk is formatted. Production migration
-      # must populate an existing backing filesystem separately.
       boot.initrd.systemd.storePaths = [
         pkgs.e2fsprogs
         pkgs.util-linux
@@ -195,7 +191,6 @@ pkgs.testers.runNixOSTest {
     };
     missing = { ... }: {
       imports = [ common ];
-      # No persistent disk: account activation and application startup must fail.
     };
   };
   testScript = ''

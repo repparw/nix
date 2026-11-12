@@ -68,11 +68,6 @@ let
   mkFleetUpdate =
     pkgs:
     let
-      # Fleet facts as the controller evaluates them. service-definitions.nix
-      # (imported by service-host on every fleet host) is the canonical source;
-      # pi is the serialized fleet controller (deployBase.nodes below), so its
-      # config resolves the option defaults the script is built from. Lazy
-      # read: the fixed-point materializes before the package value is forced.
       controllerConfig = inputs.self.nixosConfigurations.pi.config;
       servicesLib = import ./_services/lib.nix { inherit lib pkgs; };
       # The event parser is a store path substituted into the script text. It
@@ -181,9 +176,6 @@ in
       config = {
         modules.fleet-update.package = mkFleetUpdate pkgs;
         modules.fleet-update.targetAddresses = lib.mapAttrs (_: node: node.hostname) deployBase.nodes;
-        # Definitions come from the fleet-wide service registry (every host
-        # sees all services with their owning host); the empty fallback
-        # keeps a service-less deploy target evaluable.
         modules.fleet-update.containerUnits = map (name: "container@${name}") (
           lib.attrNames (
             lib.filterAttrs (_: service: service.host == config.networking.hostName && service.container) (
@@ -229,8 +221,6 @@ in
         program = lib.getExe pkgs.deploy-rs;
         meta.description = "Deploy a configured node with deploy-rs";
       };
-      # Manual deploys of verified local trees can avoid rerunning flake checks.
-      # This command deliberately does not verify the checkout or CI status.
       apps.deploy = {
         type = "app";
         program = lib.getExe (

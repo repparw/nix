@@ -28,8 +28,7 @@
         # as a GGUF through transcribe.cpp in the voxtype-gguf-worker, with
         # the Vulkan backend; the same build keeps the Vulkan whisper backend
         # for the [whisper] fallback. nixpkgs still carries 1.1.1, which has
-        # no GGUF support, so 1.2.0 is built locally for now. See
-        # docs/research/parakeet-ultra-evaluation.md.
+        # no GGUF support, so 1.2.0 is built locally for now.
         voxtypeDictation = pkgs.callPackage ../../_packages/voxtype-vulkan-gguf.nix { };
 
         hexToggle = pkgs.writeShellApplication {
@@ -87,15 +86,9 @@
         };
 
         home.packages = [
-          # Side-by-side Hex trial. Voxtype remains the default dictation service.
           pkgs.anomaly-hex
           hexToggle
           voxtypeToggle
-
-          # Model-evaluation harness (WER + latency over a fixed sample set);
-          # used for the parakeet-ultra comparison and reusable for future
-          # dictation-model experiments.
-          (pkgs.callPackage ../../_packages/vox-bench.nix { })
 
           (pkgs.writeShellApplication {
             name = "translate-selection";

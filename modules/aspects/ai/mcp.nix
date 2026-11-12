@@ -8,7 +8,7 @@
     homeManager =
       { pkgs, ... }:
       let
-        stitch = pkgs.callPackage ../../_packages/kof-stitch-mcp.nix { nodejs = pkgs.nodejs-runtime; };
+        stitch = pkgs.callPackage ../../_packages/kof-stitch-mcp.nix { nodejs = pkgs.nodejs_24; };
       in
       {
         home.packages = [
@@ -36,33 +36,33 @@
   };
 
   den.aspects.ai.provides.browse-desktop.homeManager =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
-      browse = pkgs.callPackage ../../_packages/opencode-browse.nix {
-        nodejs-runtime = pkgs.nodejs-runtime;
-      };
+      browse = pkgs.callPackage ../../_packages/opencode-browse.nix { };
+      browseMcp = pkgs.writeShellScriptBin "browse-mcp" ''
+        exec ${lib.getExe pkgs.python3} ${../../scripts/browse-mcp-lazy.py} \
+          ${lib.getExe browse} \
+          ${lib.getExe' config.programs.helium.package "helium"} \
+          ${lib.getExe' pkgs.procps "pgrep"}
+      '';
     in
     {
       programs.mcp.servers.browse = {
-        command = lib.getExe browse;
-        args = [ "mcp" ];
+        command = lib.getExe browseMcp;
+        args = [ ];
         env = {
           OPENCODE_BROWSER_AUTO_UPDATE = "off";
         };
       };
     };
 
-  # Exercise the real packaged CLI, not the host-eval stubs.
   perSystem =
     { pkgs, ... }:
     {
       checks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         browse-mcp =
           let
-            browse = pkgs.callPackage ../../_packages/opencode-browse.nix {
-              # perSystem packages do not inherit host-scoped overlays.
-              nodejs-runtime = pkgs.nodejs_24;
-            };
+            browse = pkgs.callPackage ../../_packages/opencode-browse.nix { };
           in
           pkgs.runCommand "check-browse-mcp"
             {

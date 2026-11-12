@@ -66,7 +66,6 @@ def snapshot_database(source, staged):
         with sqlite3.connect(temporary.as_uri() + "?mode=ro", uri=True) as snapshot:
             if snapshot.execute("PRAGMA quick_check").fetchall() != [("ok",)]:
                 raise ValueError(f"SQLite snapshot failed validation: {source}")
-        # Retain the metadata captured by rsync for restores.
         os.chown(temporary, original.st_uid, original.st_gid)
         shutil.copystat(staged, temporary, follow_symlinks=False)
         os.replace(temporary, staged)
@@ -80,8 +79,6 @@ def snapshot_database(source, staged):
 
 def prepare(home, stage):
     databases = []
-    # os.walk does not follow directory symlinks. Ignore file symlinks too;
-    # rsync preserves them and they are not databases copied by this backup.
     for directory, _, files in os.walk(stage, followlinks=False):
         for filename in files:
             staged = Path(directory) / filename
@@ -91,8 +88,6 @@ def prepare(home, stage):
                 databases.append(staged.relative_to(stage))
     for relative in sorted(databases):
         source = home / relative
-        # This fails the export instead of publishing an old raw copy if a
-        # live source vanished, changed type, or cannot be snapshotted.
         if not is_sqlite(source):
             raise ValueError(f"SQLite source changed during backup: {source}")
         snapshot_database(source, stage / relative)

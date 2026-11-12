@@ -5,16 +5,56 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import time
 
 
 def command(*args):
     return subprocess.check_output(args, text=True).splitlines()
 
 
+def sweep_stale_roots(gcroots, protected_targets, max_age_days, now, remove):
+    """Report (and optionally remove) abandoned top-level root links.
+
+    Generational pruning alone never reclaims closures pinned by one-off
+    root links from manual deploys and superseded controller iterations
+    (pi-main-*, fleet-private-probe-*, pi-services-backup-send* were still
+    rooted on the 40G nvme in November 2026). Only top-level symlinks are
+    considered: fleet-update/, per-container/, auto/ and per-user/ are
+    directories owned elsewhere, boot-critical links are protected by name,
+    and links still resolving to the current or booted system stay regardless
+    of age. With remove=False nothing is deleted, so plan mode can preview.
+    """
+    removed = []
+    cutoff = now - max_age_days * 86400
+    for entry in sorted(gcroots.iterdir()):
+        if entry.name in ("booted-system", "current-system"):
+            continue
+        if not entry.is_symlink():
+            continue
+        try:
+            stat = entry.lstat()
+            resolved = entry.resolve(strict=True)
+        except OSError:
+            resolved = None
+        if resolved is not None and resolved in protected_targets:
+            continue
+        if stat.st_mtime <= cutoff:
+            if remove:
+                try:
+                    entry.unlink()
+                except OSError as error:
+                    print(f"warning: could not remove stale root {entry}: {error}", file=sys.stderr)
+                    continue
+            removed.append(entry.name)
+    return removed
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=["plan", "apply"])
     parser.add_argument("--keep", type=int, default=5)
+    parser.add_argument("--root-age", type=int, default=14,
+                        help="sweep top-level gcroot links older than this many days")
     parser.add_argument("--profile", type=Path, default=Path("/nix/var/nix/profiles/system"))
     parser.add_argument("--current", type=Path, default=Path("/run/current-system"))
     parser.add_argument("--booted", type=Path, default=Path("/run/booted-system"))
@@ -31,11 +71,16 @@ def main():
             print("Pi retention deferred: another fleet operation holds the lock")
             return
 
-        # Nix protects these roots independently of profile-generation links.
         protected = {args.current.resolve(strict=True), args.booted.resolve(strict=True)}
         for name, target in [("current-system", args.current), ("booted-system", args.booted)]:
             if (args.gcroots / name).resolve(strict=True) != target.resolve(strict=True):
                 raise ValueError(f"GC root {name} does not protect its runtime system")
+        swept = sweep_stale_roots(
+            args.gcroots, protected, args.root_age, time.time(), remove=args.mode == "apply"
+        )
+        if swept:
+            label = "Swept stale gcroots:" if args.mode == "apply" else "Stale gcroots eligible for sweep:"
+            print(label, " ".join(sorted(swept)), flush=True)
         selected = args.profile.resolve(strict=True)
         generations = []
         pattern = re.compile(re.escape(args.profile.name) + r"-([0-9]+)-link")
@@ -48,8 +93,6 @@ def main():
         generations.sort(reverse=True)
         keep = {number for number, _ in generations[:args.keep]}
         for number, target in generations:
-            # deploy-rs profiles can wrap the real NixOS system. Compare the
-            # closure, not just the wrapper path, with current/booted systems.
             closure = {Path(path) for path in command("nix-store", "--query", "--requisites", str(target))}
             if target == selected or protected.intersection(closure):
                 keep.add(number)
@@ -59,8 +102,6 @@ def main():
         if args.mode == "apply":
             if prune:
                 subprocess.run(["nix-env", "--profile", str(args.profile), "--delete-generations", *prune], check=True)
-            # No -d or --delete-older-than: leave all other profiles, preparation
-            # roots, and fleet-update/previous rollback roots untouched.
             subprocess.run(["nix-collect-garbage"], check=True)
 
 

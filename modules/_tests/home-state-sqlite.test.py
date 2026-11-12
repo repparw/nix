@@ -1,4 +1,3 @@
-"""Check automatic SQLite detection and WAL-safe home-state staging."""
 
 from contextlib import ExitStack
 import os
@@ -33,7 +32,7 @@ class HomeStateSQLite(unittest.TestCase):
         self.assertEqual(db.execute("PRAGMA journal_mode=WAL").fetchone(), ("wal",))
         db.execute("CREATE TABLE session (value TEXT)")
         db.execute("INSERT INTO session VALUES (?)", (value,))
-        db.commit()  # Connection stays open; its WAL is not checkpointed.
+        db.commit()
         self.assertTrue(Path(str(source) + "-wal").exists())
         staged = self.stage / relative
         staged.parent.mkdir(parents=True, exist_ok=True)
@@ -82,11 +81,9 @@ class HomeStateSQLite(unittest.TestCase):
 
     def test_changed_or_corrupt_source_fails_instead_of_copying(self):
         staged = self.add_database(".local/share/opencode/opencode.db", "session")
-        # An rsync copy of the old SQLite file must not be accepted when its
-        # live database has disappeared before the consistent snapshot.
         (self.home / ".local/share/opencode/opencode.db").rename(self.root / "removed.db")
         self.run_handler(success=False)
-        self.assertTrue(staged.exists())  # Outer staging script discards this tree.
+        self.assertTrue(staged.exists())
 
 
 if __name__ == "__main__":

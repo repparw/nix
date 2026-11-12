@@ -17,9 +17,6 @@ if [ ! -r "$deploy_key" ]; then
 fi
 
 exec 9>"${FLEET_UPDATE_LOCK:-/run/fleet-update.lock}"
-# fleet-update queues this service before exiting and releasing its flock.
-# Wait briefly so the post-deploy check actually runs after lock release;
-# fail visibly on timeout and let the nightly timer provide a retry.
 if ! flock -w "${FLEET_REBOOT_LOCK_WAIT_SECONDS:-300}" 9; then
   echo "fleet-headless-reboot: fleet lock not released before timeout; nightly timer will retry" >&2
   exit 1
@@ -35,7 +32,6 @@ ssh_options=(
 )
 
 remote_epsilon() {
-  # Arguments are intentionally expanded by this client-side wrapper.
   # shellcheck disable=SC2029
   ssh "${ssh_options[@]}" "root@$epsilon" "$@"
 }
@@ -61,8 +57,6 @@ epsilon_healthy() {
     running | degraded) ;;
     *) return 1 ;;
   esac
-  # Container units derive from the service registry; traefik is
-  # the native edge ingress and stays outside the container gate.
   remote_epsilon systemctl is-active --quiet \
     @FLEET_EPSILON_CONTAINERS@ traefik.service \
     || return 1
@@ -88,8 +82,6 @@ backup_is_busy() {
 
 wait_epsilon_reboot() {
   local old_boot_id="$1" boot_id passes=0
-  # 20 minutes for a Pi-class host to come back over SSH; overridable so
-  # the fixture test can exercise the timeout path.
   local deadline=$((SECONDS + ${FLEET_REBOOT_WAIT_SECONDS:-1200}))
   while [ "$SECONDS" -lt "$deadline" ]; do
     boot_id=$(remote_epsilon cat /proc/sys/kernel/random/boot_id 2>/dev/null || true)

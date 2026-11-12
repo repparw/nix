@@ -329,8 +329,6 @@ in
               return 1
             }
 
-            # Bounded so one churny catalog cannot blow past Discord's
-            # per-message limit.
             compact() {
               sed '/^[[:space:]]*$/d' | sed -n '1,8p' | tr '\n' ' ' |
                 sed 's/[[:space:]]*$//; s/[[:space:]]\{1,\}/, /g' | cut -c 1-400
@@ -339,9 +337,6 @@ in
             parts=""
             changed=0
 
-            # Snapshots only move into place after a successful announcement:
-            # a Discord outage must not swallow the change, and the failed
-            # unit is reported by the Cloud failed-jobs alert.
             stage=$(mktemp -d "$state_dir/.stage.XXXXXX")
             trap 'rm -rf "$stage"' EXIT
 
@@ -354,8 +349,6 @@ in
                 echo "free-model-watch: $name baseline recorded ($(printf '%s\n' "$current" | grep -c .) models)"
                 return 0
               fi
-              # Both sides must be collated the same way; LC_ALL=C is pinned for
-              # the script and repeated here so the pair stays correct on its own.
               previous=$(sed '/^[[:space:]]*$/d' "$state_file" | LC_ALL=C sort -u)
               added=$(LC_ALL=C comm -13 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')
               removed=$(LC_ALL=C comm -23 <(printf '%s\n' "$previous") <(printf '%s\n' "$current") | sed '/^[[:space:]]*$/d')

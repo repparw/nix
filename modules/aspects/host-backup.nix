@@ -16,7 +16,6 @@
             "/var/lib/systemd/timers"
             "/var/lib/host-recovery"
           ]
-          # Restic stops at a different device, including nested boot partitions.
           ++ lib.filter (path: lib.hasPrefix "/boot/" path) (
             lib.attrNames (
               lib.filterAttrs (
@@ -59,7 +58,6 @@
             "--limit-upload=2048"
           ];
         };
-        # Keep existing checkpoints readable and backed up after retiring the tool.
         systemd.tmpfiles.rules = [ "d /var/lib/host-recovery 0700 root root -" ];
       };
   };
