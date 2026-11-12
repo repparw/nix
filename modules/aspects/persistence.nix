@@ -5,9 +5,6 @@
     flake = false;
   };
 
-  # This aspect records the first, deliberately conservative persistence set.
-  # Hosts still need a migrated /persist volume and a separate root-layout
-  # change before enabling it. Merely including the aspect moves no data.
   den.aspects.persistence.nixos =
     {
       config,
@@ -47,8 +44,6 @@
             # Keep the directory for the first migration, before user activation.
             (if cfg.mutableAccounts then "/etc" else "/etc/ssh")
             "/var/lib/nixos"
-            # Keep existing container roots until each service has passed
-            # an independent ephemeral-container restart/restore test.
             "/var/lib/nixos-containers"
             "/var/lib/systemd/timers"
             {
@@ -59,7 +54,6 @@
               directory = "/var/lib/fail2ban";
               mode = "0750";
             }
-            # Retain checkpoints made by the retired manual recovery tool.
             {
               directory = "/var/lib/host-recovery";
               mode = "0700";

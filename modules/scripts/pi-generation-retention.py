@@ -71,7 +71,6 @@ def main():
             print("Pi retention deferred: another fleet operation holds the lock")
             return
 
-        # Nix protects these roots independently of profile-generation links.
         protected = {args.current.resolve(strict=True), args.booted.resolve(strict=True)}
         for name, target in [("current-system", args.current), ("booted-system", args.booted)]:
             if (args.gcroots / name).resolve(strict=True) != target.resolve(strict=True):
@@ -94,8 +93,6 @@ def main():
         generations.sort(reverse=True)
         keep = {number for number, _ in generations[:args.keep]}
         for number, target in generations:
-            # deploy-rs profiles can wrap the real NixOS system. Compare the
-            # closure, not just the wrapper path, with current/booted systems.
             closure = {Path(path) for path in command("nix-store", "--query", "--requisites", str(target))}
             if target == selected or protected.intersection(closure):
                 keep.add(number)
@@ -105,8 +102,6 @@ def main():
         if args.mode == "apply":
             if prune:
                 subprocess.run(["nix-env", "--profile", str(args.profile), "--delete-generations", *prune], check=True)
-            # No -d or --delete-older-than: leave all other profiles, preparation
-            # roots, and fleet-update/previous rollback roots untouched.
             subprocess.run(["nix-collect-garbage"], check=True)
 
 

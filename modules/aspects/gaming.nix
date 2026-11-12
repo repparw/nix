@@ -11,13 +11,10 @@
     nixos =
       { pkgs, ... }:
       let
-        # Launcher environments also cover systemd and streamed sessions.
-        # Per-game settings can override this before starting GE-Proton.
         gamingEnvironment = {
           PROTON_FSR4_UPGRADE = "1";
         };
 
-        # Clear Steam's inherited controller hide list for Heroic launches.
         heroicSteam = pkgs.runCommand "heroic-steam" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
           mkdir -p $out/bin
           makeWrapper ${pkgs.heroic}/bin/heroic $out/bin/heroic \
@@ -27,8 +24,6 @@
       {
         nixpkgs.overlays = [
           (_final: prev: {
-            # Cover every Heroic entry point: the desktop launcher and the
-            # Steam shortcuts games are launched through.
             heroic = prev.heroic.override {
               extraPkgs = pkgs': [ pkgs'.gamemode ];
               extraEnv = gamingEnvironment;
@@ -43,8 +38,6 @@
             enable = true;
             remotePlay.openFirewall = true;
             localNetworkGameTransfers.openFirewall = true;
-            # Avoid Steam's mount scan waking idle disks. Keep /run/media
-            # visible: masking it fails when the mountpoint is absent.
             package = pkgs.steam.override {
               extraEnv = gamingEnvironment;
               extraBwrapArgs = [
@@ -52,8 +45,6 @@
                 "--tmpfs /home/containers/media"
               ];
             };
-            # Non-Steam Heroic shortcuts resolve `heroic` by name and need
-            # `gamemoderun` on PATH, so provide both inside Steam's FHS.
             extraPackages = [
               heroicSteam
               pkgs.gamemode
@@ -68,7 +59,6 @@
         ];
 
         services.udev.extraRules = ''
-          # Keep Deck-8 system keys out of joystick discovery.
           SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="Churrosoft Deck-8 System Control", ENV{ID_INPUT_JOYSTICK}=""
 
           # Remove the kernel deadzone and fuzz from 8BitDo Hall effect sticks.

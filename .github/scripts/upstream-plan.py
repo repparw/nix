@@ -63,7 +63,6 @@ def plan(old, candidate, registry, readiness_fn=None, probe_fn=None,
         if spec["mode"] not in ("post-lock", "host-owned", "notify-only", "completed"):
             raise ValueError(f"unsupported watcher mode: {name}")
 
-    # Apply-coupled watchers: their cleanup rides this lock candidate.
     pin_moved = pin(old, "nixpkgs") != pin(candidate, "nixpkgs")
     atomic_names = []
     apply_names = [name for name, spec in registry.items() if spec.get("coupling") == "apply"]
@@ -104,7 +103,6 @@ def plan(old, candidate, registry, readiness_fn=None, probe_fn=None,
 
 
 def _candidate_readiness(names):
-    # Run only the apply-coupled detectors against this candidate's lock.
     import importlib.util
     spec = importlib.util.spec_from_file_location(
         "candidate-readiness", ROOT / ".github/scripts/upstream-readiness.py")

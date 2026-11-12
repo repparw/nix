@@ -250,8 +250,6 @@ in
             printf 'current_system: %s\n' "''${current:-unknown}"
             printf 'booted_system: %s\n' "''${booted:-unknown}"
             printf 'profile_system: %s\n' "''${profile:-unknown}"
-            # The shared predicate decides: 0 = staged boot chain differs
-            # (reboot owed), 1 = converged, anything else = unknown.
             reboot=unknown
             rc=0
             fleet-reboot-required >/dev/null 2>&1 || rc=$?
@@ -387,8 +385,6 @@ in
             fi
           }
 
-          # Internal entry points keep local and SSH execution on the same
-          # implementation without exposing these helpers through discovery.
           case "''${1-}" in
             __backup-status-local)
               shift

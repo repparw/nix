@@ -23,7 +23,6 @@ resource "tplink_dhcp_reservation" "entries" {
   }
 }
 
-# Port forwarding (virtual server) rules, keyed by rule name.
 resource "tplink_port_forward" "rules" {
   for_each = var.port_forwards
 

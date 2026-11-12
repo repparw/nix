@@ -60,8 +60,6 @@
       lanNames = lib.mapAttrsToList (_: fqdn) (
         lib.filterAttrs (_: service: service.lanEdge or false) vhosts
       );
-      # Only LAN-edge vhosts need static host overrides. Public services use
-      # DNS and Cloudflare; SSH uses the direct hostSshAddresses separately.
     in
     {
       imports = [

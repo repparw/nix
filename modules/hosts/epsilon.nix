@@ -68,8 +68,6 @@
           key = "repparwPasswordHash";
           neededForUsers = true;
         };
-        # users.mutableUsers stays true: this is a creation-time bootstrap,
-        # not an activation-time password reset.
         users.users.repparw.hashedPasswordFile = config.sops.secrets.repparwPasswordHash.path;
 
         modules.services.bridgePrefix = "10.231.137";
@@ -104,9 +102,6 @@
           "/var/log"
         ];
 
-        # Resolve monitored virtual hosts through their actual HTTPS edges.
-        # The guest retains the normal external URLs as clickable links, but
-        # avoids looping through public DNS/Cloudflare for its own probes.
         containers.glance.config.networking.hosts =
           let
             monitored = lib.attrValues (

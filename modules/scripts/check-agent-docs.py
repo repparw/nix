@@ -183,7 +183,6 @@ def validate_file(root: Path, rel: Path) -> list[str]:
             else:
                 errors.append(f"{rel}: frontmatter has neither `type` nor `name`")
 
-    # Validate links even when frontmatter is missing or malformed.
     validate_links(rel, body, root, errors)
     return errors
 

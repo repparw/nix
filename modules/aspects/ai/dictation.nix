@@ -86,7 +86,6 @@
         };
 
         home.packages = [
-          # Side-by-side Hex trial. Voxtype remains the default dictation service.
           pkgs.anomaly-hex
           hexToggle
           voxtypeToggle

@@ -99,7 +99,6 @@ in
             host = parsed.hostname or ""
             if ":" in host:
                 host = f"[{host}]"
-            # Native Wayland ignores --class. Match Chromium's derived app ID.
             app_name = f"{host}_{parsed.path or '/'}".replace("/", "_").replace(" ", "_")
             chrome_id = f"chrome-{app_name}-Default" if host else app_id
             os.execv("${ndrop}/bin/ndrop", [
@@ -315,11 +314,9 @@ in
             enable = true;
             package = heliumPackage;
             flags = [
-              # Upstream's wrapper does not expand NIXOS_OZONE_WL.
               "--ozone-platform-hint=auto"
               "--force-renderer-accessibility"
               "--silent-debugger-extension-api"
-              # All windows share a profile and must use the same encryption backend.
               "--password-store=basic"
             ];
           };

@@ -29,8 +29,6 @@
             failures=0
             count=0
             for dir in "$projects"/*/; do
-              # Clones only: worktrees share their main checkout's object
-              # store, so fetching the main repo covers them.
               [ -d "$dir/.git" ] || continue
               [ -n "$(git -C "$dir" remote)" ] || continue
               count=$((count + 1))

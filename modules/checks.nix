@@ -10,11 +10,6 @@
           evalHost =
             host:
             let
-              # The real, unstubbed toplevel: evaluating its drvPath is pure and
-              # measured at 20-35s per host, so CI sees evaluation breakage in
-              # every subtree (nixvim, helium, hermes) instead of masking it
-              # behind stubs. unsafeDiscardStringContext keeps the tiny check
-              # derivation from depending on the whole closure.
               evaluatedDrvPath =
                 builtins.unsafeDiscardStringContext
                   inputs.self.nixosConfigurations.${host}.config.system.build.toplevel.drvPath;
@@ -240,7 +235,6 @@
                 chmod -R +w src
                 cd src
                 treefmt --tree-root . --walk filesystem --fail-on-change || {
-                  # Print the formatter's exact output for actionable CI errors.
                   ${pkgs.diffutils}/bin/diff -ru ${inputs.self} . | head -n 300 || true
                   exit 1
                 }
@@ -259,11 +253,6 @@
                 touch $out
               '';
 
-          # Alpha's home-state staging: exercises the production
-          # prepare-home-state script against a fixture home — including the
-          # critical-file guards for the OpenTofu state — and asserts the
-          # evaluated alpha configuration keeps offsite coverage without HDD
-          # backup jobs.
           home-state-backup =
             let
               prepareHomeState = import ./_scripts/prepare-home-state.nix { inherit pkgs lib; };
@@ -315,9 +304,6 @@
                 printf '{}' > $home/.config/vesktop/settings.json
                 printf 'history\n' > $home/.local/share/fish/fish_history
                 printf 'x' > $home/.config/sops/age/keys.txt
-                # The never-backed-up neighbors of the state file; the state
-                # itself is created later so the bootstrap scenario can run
-                # without it.
                 printf 'x' > $state_dir/.terraform/provider-cache
                 printf 'x' > $state_dir/terraform.tfvars
                 printf 'x' > $state_dir/terraform.tfplan
@@ -325,11 +311,9 @@
                 chmod 600 $router_dir/inventory.auto.tfvars
                 printf 'x' > $router_dir/imports.tf
 
-                # Evaluated alpha configuration coverage.
                 home_state='${builtins.toJSON alphaHomeState}'
                 printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
                 printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/router/inventory.auto.tfvars")' >/dev/null
-                # Existing selection must stay untouched (spot check).
                 for kept in .config/moonshine/ .config/net.imput.helium/ .config/opencode/plugins/ .local/share/opencode/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
                   printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
                 done
@@ -338,16 +322,12 @@
                 restic_paths='${builtins.toJSON resticPaths}'
                 printf '%s' "$restic_paths" | jq -e 'index("/var/lib/home-state-backup/offsite")' >/dev/null
 
-                # Bootstrap: a missing critical source without a prior backup
-                # marker is tolerated (host without tofu yet).
                 ${staging}
                 staged=$state_root/offsite
                 test ! -e $staged/Projects/nix/infra/terraform.tfstate
                 test -f $staged/.config/vesktop/settings.json
                 test ! -e $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
 
-                # Off-site staging: state plus the rest of the allowlist,
-                # never the neighbors.
                 printf '{"version": 4, "serial": 1, "resources": [{"type": "oci_core_instance", "name": "epsilon"}]}' > $state
                 chmod 600 $state
                 ${staging}
@@ -359,8 +339,6 @@
                 test -f $staged/.config/vesktop/settings.json
                 test -f $staged/.local/share/fish/fish_history
                 test -f $staged/.export-complete
-                # OpenCode: back up live plugin files, credentials and
-                # consistent SQLite databases, but exclude regenerable outputs.
                 mkdir -p $home/.config/opencode/plugins
                 mkdir -p $home/.local/share/opencode/log $home/.local/share/opencode/tool-output
                 printf 'export default {}\n' > $home/.config/opencode/plugins/local.ts
@@ -383,8 +361,6 @@
                 test ! -e $staged/Projects/nix/infra/.terraform
                 test ! -e $staged/.config/sops/age
 
-                # A corrupt state fails the export and preserves the previous
-                # valid staged generation.
                 previous_stamp=$(cat $staged/.export-complete)
                 printf 'not json {{' > $state
                 if ${staging}; then
@@ -394,8 +370,6 @@
                 test "$(cat $staged/.export-complete)" = "$previous_stamp"
                 jq -e . $staged/Projects/nix/infra/terraform.tfstate >/dev/null
 
-                # After a successful backup, a missing critical source is an
-                # alarm, not a silent gap.
                 rm $state
                 if ${staging}; then
                   echo 'disappeared state must fail the export' >&2
@@ -404,7 +378,6 @@
                 test -f $staged/Projects/nix/infra/terraform.tfstate
                 test "$(cat $staged/.export-complete)" = "$previous_stamp"
 
-                # Never capture while OpenTofu holds the state lock.
                 printf '{"version": 4, "serial": 2, "resources": []}' > $state
                 touch $state_dir/.terraform.tfstate.lock.info
                 if ${staging}; then

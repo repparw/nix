@@ -75,8 +75,6 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(len(mod.parse_diff(transitions(*lines))), 32)
 
     def test_real_alpha_deploy_diff(self):
-        # Verbatim shape from the 2026-10-14 alpha deploy; nothing in that
-        # particular diff hits the triage tiers, so nothing is extracted.
         diff = transitions(
             "<<< /nix/var/nix/profiles/system-2785-link",
             ">>> /run/current-system",
@@ -94,7 +92,6 @@ class ParserTests(unittest.TestCase):
         self.assertEqual(mod.parse_diff(diff), [])
 
     def test_real_alpha_deploy_diff_extracts_triaged(self):
-        # Same diff shape with a triaged package present.
         diff = transitions(
             "Version changes:",
             "[U.]  #07  nixos-system-alpha  old -> new",

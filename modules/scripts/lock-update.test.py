@@ -462,8 +462,6 @@ class LockUpdate(unittest.TestCase):
         self.assertTrue((self.root / "main-raced").exists())
         self.assertIn("Atomic lock fast-forward was rejected", result.stderr)
 
-        # The racing main commit wins, but it still has the old lock tree. The
-        # validated lock candidate must not be reachable from main.
         raced_main = self.main_sha()
         self.assertNotEqual(raced_main, self.main)
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), lock_fixture("old"))
@@ -586,7 +584,6 @@ class LockUpdate(unittest.TestCase):
                  str(self.remote), str(fresh))
         self.git("config", "user.name", "fixture", cwd=fresh)
         self.git("config", "user.email", "fixture@example.test", cwd=fresh)
-        # Unlike the first checkout this one has never fetched the atomic tip.
         self.checkout = fresh
         second = self.update(change=False)
         self.assertEqual(second.returncode, 0, second.stderr)
@@ -599,7 +596,6 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(first.returncode, 0, first.stderr)
         tip = self.git("--git-dir", str(self.remote), "rev-parse",
                        "automation/atomic-cleanup")
-        # Simulate GitHub merging the candidate without deleting its branch.
         self.git("--git-dir", str(self.remote), "update-ref",
                  "refs/heads/main", tip, self.main)
         (self.root / "atomic-merged").write_text("1")
@@ -637,7 +633,6 @@ class LockUpdate(unittest.TestCase):
                         and r[r.index("--ref") + 1] == "automation/atomic-cleanup")
         self.assertNotIn("build_arm_authelia", dispatch)
         self.assertIn("upstream_watcher=qbittorrent", dispatch)
-        # Atomic candidates approve enforced checks before exact-head merging.
         self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests))
         approvals = [r for r in self.requests if r[0] == "api" and any(a.endswith("/approve") for a in r)]
         self.assertEqual(len(approvals), 2)
@@ -660,7 +655,6 @@ class LockUpdate(unittest.TestCase):
         message = self.git("--git-dir", str(self.remote), "log", "-1", "--format=%s", tip)
         self.assertIn("updated lock (qbittorrent)", message)
         new_main = self.advance_main()
-        # Clear the prior successful merge request before refreshing.
         (self.root / "auto-merged").unlink()
         second = self.update(atomic_ready=True)
         self.assertEqual(second.returncode, 0, second.stderr)
@@ -674,9 +668,7 @@ class LockUpdate(unittest.TestCase):
                        f"{refreshed}:modules/aspects/upstream/qbittorrent.nix")
         self.assertEqual(arr, "keep")
 
-        # The existing PR is reused, not recreated.
         self.assertFalse(any(r[:2] == ["pr", "create"] for r in self.requests))
-        # Fresh exact-SHA CI on the rebuilt tip, then an exact-head merge.
         dispatches = [r for r in self.requests if r[:2] == ["workflow", "run"]]
         self.assertEqual({r[2] for r in dispatches}, {"ci.yml", "pr-title.yml"})
         for invocation in dispatches:
@@ -738,8 +730,6 @@ class LockUpdate(unittest.TestCase):
         self.assertNotEqual(first.returncode, 0)
         tip = self.git("--git-dir", str(self.remote), "rev-parse",
                        "automation/atomic-cleanup")
-        # A successful manual workflow dispatch at the right SHA can validate
-        # a different watcher. It must not count for this candidate.
         (self.root / "wrong-atomic-manifest").write_text(
             f"validate sha={tip} watchers=moonshine-pr227 arm=false")
         self.git("switch", "main", cwd=self.checkout)
@@ -768,9 +758,6 @@ class LockUpdate(unittest.TestCase):
         first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
-        # An in-progress exact-SHA run must not arm auto-merge: the merge
-        # itself stays gated until the required validation (including the
-        # native ARM build in PR CI) is green.
         second = self.update(change=False, atomic_ci="pending")
         self.assertNotEqual(second.returncode, 0)
         self.assertIn("Timed out waiting for atomic exact-SHA validation", second.stderr)
@@ -794,7 +781,6 @@ class LockUpdate(unittest.TestCase):
         first = self.update(atomic_ready=True)
         self.assertEqual(first.returncode, 0, first.stderr)
         original = self.atomic_sha()
-        # Amend only flake.lock, keeping every cleanup byte-identical.
         self.git("fetch", "--quiet", "origin", "automation/atomic-cleanup", cwd=self.checkout)
         self.git("switch", "--quiet", "--detach", "FETCH_HEAD", cwd=self.checkout)
         lock = json.loads((self.checkout / "flake.lock").read_text())
@@ -814,17 +800,12 @@ class LockUpdate(unittest.TestCase):
                          "the tampered tip must not be overwritten")
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
-        # Provenance still points at the published candidate, not the tamper.
         record = json.loads(self.git(
             "--git-dir", str(self.remote), "show",
             "automation/atomic-cleanup-provenance:provenance.json", cwd=self.checkout))
         self.assertEqual(record["sha"], original)
 
     def test_forged_provenance_lock_rejected_by_replan(self):
-        # An attacker with write access forges a consistent provenance record
-        # and PR-body trailer for a lock-tampered tip. The independent
-        # planner re-run on the recovered lock is the backstop: it must
-        # diverge and fail closed.
         first = self.update(atomic_ready=True)
         self.assertEqual(first.returncode, 0, first.stderr)
         self.git("fetch", "--quiet", "origin", "automation/atomic-cleanup", cwd=self.checkout)
@@ -865,8 +846,6 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_identical_tree_new_sha_rejected(self):
-        # A stacked commit that reapplies the legitimate cleanup
-        # byte-for-byte still changes the SHA: never auto-merged.
         first = self.update(atomic_ready=True)
         self.assertEqual(first.returncode, 0, first.stderr)
         original = self.atomic_sha()
@@ -890,8 +869,6 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_approval_failure_never_arms_atomic_automerge(self):
-        # Approvals run before arming: a failed approval must leave
-        # auto-merge disarmed even though exact-SHA validation is green.
         first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
@@ -901,9 +878,6 @@ class LockUpdate(unittest.TestCase):
                          "failed approval must never arm auto-merge")
 
     def test_missing_approval_token_fails_closed_with_guidance(self):
-        # Without LOCK_UPDATE_APPROVAL_TOKEN an approval-gated run cannot be
-        # approved by the default token. The flow must name the secret and
-        # leave auto-merge disarmed instead of failing cryptically.
         first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
@@ -953,15 +927,12 @@ class LockUpdate(unittest.TestCase):
 
 
     def test_atomic_sentinel_drives_package_validation(self):
-        # Atomic PRs carry the sentinel; the validation job resolves bundled
-        # watchers from the candidate commit and validates each one.
         self.assertIn("automation/atomic-cleanup", CI)
         self.assertIn("automation/atomic-cleanup", VALIDATION)
         self.assertIn("updated lock", VALIDATION)
 
 
     def test_lock_publisher_shell_is_parseable(self):
-        # Workflow YAML checks alone do not parse the embedded bash script.
         result = subprocess.run(["bash", "-n"], input=SCRIPT, capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
 
@@ -985,7 +956,6 @@ class LockUpdate(unittest.TestCase):
                     env=os.environ | {"GITHUB_SHA": sha, "EXPECTED_SHA": expected},
                 )
                 self.assertEqual(result.returncode == 0, success)
-        # Both upstream-package and Hermes native builds select the PR head.
         self.assertEqual(VALIDATION.count("ref: ${{ github.sha }}"), checkout_count - 2)
         self.assertEqual(VALIDATION.count("ref: ${{ github.event.pull_request.head.sha || github.sha }}"), 2)
         self.assertIn("  pull_request:", CI)

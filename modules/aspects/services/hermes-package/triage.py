@@ -122,7 +122,6 @@ def ingest(home, raw):
     if os.geteuid() == 0:
         if owner.st_uid == 0:
             raise ValueError("Hermes home must have an unprivileged owner")
-        # Enter before dropping privileges: private ancestors may be inaccessible.
         os.chdir(home)
         home = Path(".")
         os.setgroups([])
@@ -137,8 +136,6 @@ def ingest(home, raw):
     destination = inbox / (event["event_id"] + ".json")
     receipt = receipts / destination.name
     canonical = json.dumps(event, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
-    # mkstemp expands dir to an absolute path, losing the entered-directory
-    # access across private ancestors after the UID change.
     temporary = inbox / (".ingest-" + secrets.token_hex(16))
     fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
@@ -172,9 +169,6 @@ def ingest(home, raw):
 
 
 def fingerprint(event):
-    # Host plus the sorted upgrade set: the same upgrade set observed again,
-    # under any deployment revision, deduplicates into one incident. The
-    # revision stays event metadata, not identity.
     packages = sorted((p["name"], p["from"], p["to"]) for p in event["packages"])
     fields = [event["host"], packages]
     return hashlib.sha256(json.dumps(fields, separators=(",", ":")).encode()).hexdigest()
@@ -198,8 +192,6 @@ def gate(home, known_waits, job, now=None):
             for key in dispatch["fingerprints"]:
                 incident = state["incidents"][key]
                 if completed and job.get("last_status") == "ok" and not failed:
-                    # Research/delivery completion is not verification that the
-                    # upgrade was acted on; it only means it was reported once.
                     incident["status"] = "reported"
                 else:
                     incident["status"] = "pending"

@@ -11,10 +11,6 @@ let
   epsilon = hosts.epsilon.config;
   piMounts = persistenceMounts pi;
   epsilonMounts = persistenceMounts epsilon;
-  # The unprepared probe proves the refusal paths on a persistence-disabled
-  # base: pi and epsilon now carry prepared /persist volumes and enabled
-  # persistence in their base configurations, so the boot flag is forced off
-  # to reproduce the "unprepared backing volume" state.
   unprepared =
     (hosts.epsilon.extendModules {
       modules = [

@@ -82,7 +82,6 @@ class Retention(unittest.TestCase):
         self.booted.symlink_to(self.targets[1])
         (self.gcroots / "current-system").symlink_to(self.current)
         (self.gcroots / "booted-system").symlink_to(self.booted)
-        # These external roots must never be deleted by profile pruning.
         (self.gcroots / "prepared-system").symlink_to(self.targets[3])
         (self.gcroots / "previous").symlink_to(self.targets[3])
         self.env = os.environ | {"FIXTURE": str(self.root), "PATH": str(self.bin) + ":" + os.environ["PATH"]}

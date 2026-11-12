@@ -140,8 +140,6 @@ class GateTests(unittest.TestCase):
         triage.ingest(self.home, json.dumps(event()).encode())
         first = triage.gate(self.home, {}, self.job(last_run_at=100), now=1000)
         self.assertTrue(first["wakeAgent"])
-        # The reported job failed: the incident must return to pending with a
-        # retry delay (now + 900 at minimum), not be marked reported.
         during_backoff = triage.gate(self.home, {}, self.job(last_run_at=200, last_error="boom"), now=1100)
         self.assertFalse(during_backoff["wakeAgent"], "backoff must defer the retry")
         after = triage.gate(self.home, {}, self.job(last_run_at=300, last_error="boom"), now=2000)
@@ -150,20 +148,16 @@ class GateTests(unittest.TestCase):
     def test_successful_dispatch_reports_and_deduplicates(self):
         triage.ingest(self.home, json.dumps(event()).encode())
         triage.gate(self.home, {}, self.job(last_run_at=100), now=1000)
-        # The next run observes the completed dispatch: reported, not re-selected.
         done = triage.gate(self.home, {}, self.job(last_run_at=200), now=2000)
         self.assertFalse(done["wakeAgent"])
         state = json.loads((self.home / "package-updates" / "state.json").read_text())
         incident = next(iter(state["incidents"].values()))
         self.assertEqual(incident["status"], "reported")
-        # A new event with the same upgrade set deduplicates by fingerprint.
         triage.ingest(self.home, json.dumps(event(identity="b", timestamp_us=1791600000000000)).encode())
         later = triage.gate(self.home, {}, self.job(last_run_at=300), now=3000)
         self.assertFalse(later["wakeAgent"])
 
     def test_fingerprint_ignores_revision(self):
-        # The stated policy is deduplication by host and upgrade set. The same
-        # upgrade arriving in a later deployment revision must not research twice.
         first = event(identity="a", revision="26.11.20261010.aaa")
         second = event(identity="b", revision="26.11.20261017.bbb", timestamp_us=1791700000000000)
         self.assertEqual(triage.fingerprint(first), triage.fingerprint(second))
