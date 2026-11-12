@@ -29,7 +29,7 @@
           name = "free-games-claim";
           runtimeInputs = with pkgs; [
             coreutils
-            nodejs-runtime
+            nodejs_24
             xorg-server
             x11vnc
           ];

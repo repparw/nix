@@ -77,8 +77,12 @@ The package-specific gates are:
 | qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                                            |
 | wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
 | gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
-| nodejs-security   | Retired overlay family absent from the fleet; alpha's OpenCode builds against the pinned Bun and Node                                   |
+| nodejs-security   | Retired overlay family and `nodejs-runtime` alias absent from the fleet; alpha's OpenCode builds against the pinned Bun and Node        |
 | moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
+
+The nodejs-security watcher completed with the pinned Node and Bun packages
+retired. Its recipe kept the `nodejs-runtime` alias, so the alias was removed
+separately and its consumers now select the pinned `nodejs_24` directly.
 
 Nautilus is notify-only. Ready notices print in every upstream-watch run
 summary and, once per status change, post to the fleet Discord channel

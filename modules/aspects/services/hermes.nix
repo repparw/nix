@@ -21,8 +21,8 @@
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         crashTriage = import ./hermes-crash/_package.nix { inherit pkgs; };
         packageTriage = import ./hermes-package/_package.nix { inherit pkgs; };
-        # Containers have their own package set; select the host's security overlay.
-        hermesNodejs = pkgs.nodejs-runtime;
+        # Containers have their own package set; use the pinned Node 24 runtime.
+        hermesNodejs = pkgs.nodejs_24;
       in
       {
         environment.systemPackages = [

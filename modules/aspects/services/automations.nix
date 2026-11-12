@@ -127,7 +127,7 @@
         changeDetection = pkgs.writeShellApplication {
           name = "change-detection";
           runtimeInputs = [
-            pkgs.nodejs-runtime
+            pkgs.nodejs_24
             pkgs.curl
           ];
           text = ''
@@ -149,7 +149,7 @@
             fi
           '';
           serviceConfig.Type = "oneshot";
-          path = [ pkgs.nodejs-runtime ];
+          path = [ pkgs.nodejs_24 ];
           # Posts through the fleet bot identity (token + channel), like every
           # other watcher, instead of a per-aspect webhook.
           script = ''

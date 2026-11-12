@@ -20,7 +20,6 @@
         fleet-reboot
         nixvim
         nixpkgs
-        nodejs-security
         cargo-system-libs
         nix
         system
