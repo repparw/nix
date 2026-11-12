@@ -127,15 +127,27 @@
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
 
-          # Service inventory covers every Den host, including hosts without services.
+          # Every host must see the same topology, including machines that
+          # publish no services and SSH addresses distinct from service IPs.
           service-host-inventory =
             let
               hosts = lib.concatMapAttrs (_system: machines: machines) den.hosts;
-              expected = lib.mapAttrs (_: host: host.serviceAddress) hosts;
-              actual = inputs.self.nixosConfigurations.pi.config.modules.services.hostAddresses;
+              hostNames = lib.attrNames inputs.self.nixosConfigurations;
+              expectedAddresses = lib.mapAttrs (_: host: host.serviceAddress) hosts;
+              expectedSshAddresses = lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) hosts;
+              inventories = map (name: inputs.self.nixosConfigurations.${name}.config.modules.services) hostNames;
             in
-            assert actual == expected;
-            pkgs.writeText "service-host-inventory.json" (builtins.toJSON actual);
+            assert lib.attrNames hosts == hostNames;
+            assert lib.all (
+              inventory:
+              inventory.hostAddresses == expectedAddresses
+              && inventory.hostSshAddresses == expectedSshAddresses
+            ) inventories;
+            pkgs.writeText "service-host-inventory.json" (
+              builtins.toJSON {
+                inherit expectedAddresses expectedSshAddresses;
+              }
+            );
 
           fleet-failed-units =
             let
