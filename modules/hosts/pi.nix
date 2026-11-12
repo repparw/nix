@@ -51,9 +51,6 @@
           neededForUsers = true;
         };
 
-        # Pi is the deployment controller: it probes the runtime readiness of
-        # host-owned upstream waits (Sonarr/Jellyfin, Moonshine PR227) after
-        # each Alpha convergence and on its own timer.
         modules.fleet-readiness.enable = true;
         modules.monitoring.health.disks =
           map
@@ -116,7 +113,6 @@
             ExecStart = pkgs.writeShellScript "eth0-rp1-recovery" ''
               set -eu
               stamp=/run/eth0-rp1-recovery/last-bounce
-              # cooldown: at most one bounce per 3 minutes
               if [ -e "$stamp" ]; then
                 last=$(cat "$stamp" 2>/dev/null || echo 0)
                 now=$(date +%s)
@@ -124,9 +120,7 @@
                   exit 0
                 fi
               fi
-              # link administratively down: intentional, hands off
               ip -o link show eth0 | grep -q 'state UP' || exit 0
-              # never bounce under the fleet deploy controller
               if systemctl -q is-active fleet-deploy-run.service; then
                 exit 0
               fi
@@ -172,17 +166,9 @@
             mode = "0700";
           }
         ];
-        # The aspect's random-seed symlink cannot transition on this host: /
-        # and /persist are the same filesystem during the migration, so the
-        # live symlink would point at itself (ELOOP) and fail every deploy-rs
-        # switch. The seed is regenerated per boot instead; directory binds
-        # are unaffected. Revisit if the backing volume ever splits from /.
-        environment.persistence."/persist".files = lib.mkForce [ ];
 
         users.users.repparw = {
           uid = 1000;
-          # users.mutableUsers stays true: this is a creation-time bootstrap,
-          # not an activation-time password reset.
           hashedPasswordFile = config.sops.secrets.repparwPasswordHash.path;
           extraGroups = [ "wheel" ];
           subUidRanges = [
@@ -250,10 +236,6 @@
         ];
 
         services.fstrim.enable = true;
-        # Disk swap previously lived on the NVMe home partition as an 8G file
-        # and never took pages (zram absorbed all swapping) while the partition
-        # sat near its 90% health threshold. Zram is the only swap device now,
-        # sized up to compensate for the removed file.
         zramSwap = {
           enable = true;
           algorithm = "zstd";
@@ -302,7 +284,6 @@
               "defaults"
               "noatime"
             ]
-            # A missing NVMe must not boot into an empty HA/user data directory.
             ++ lib.optional (!config.modules.persistence.enable) "nofail"
             ++ [
               # BCM2712 PCIe link training can take >90s on this board;
@@ -329,12 +310,7 @@
         networking = {
           nat = {
             enable = true;
-            internalInterfaces = [ "ve-+" ];
             externalInterface = "eth0";
-            # NOTE: the iifname "ve-+" rule the module renders does not match
-            # these veths (observed 2026-08-23: UNREPLIED SYN_SENT conntrack
-            # entries while the rule was present). The working masquerade for
-            # the container subnet lives in nftables.tables.container-nat below.
           };
 
           nftables.tables.container-nat = {
@@ -364,10 +340,6 @@
             ];
           };
 
-          # Containers resolve through resolved's cache instead of querying
-          # public DNS directly from the masqueraded bridge. The cache and
-          # StaleRetentionSec keep OAuth/API refreshes working through short
-          # upstream DNS outages.
           firewall.extraInputRules = ''
             iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
           '';

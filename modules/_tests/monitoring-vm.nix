@@ -22,8 +22,6 @@ pkgs.testers.runNixOSTest {
       imports = [ monitoring.dashboard.nixos ];
       options.modules.services = pkgs.lib.mkOption { type = pkgs.lib.types.attrs; };
       options.modules.monitoring.cloudUrl = pkgs.lib.mkOption { type = pkgs.lib.types.str; };
-      # The production aspect keeps historical bind mounts; the fixture has no
-      # impermanent root, so declare this unused option without enabling binds.
       options.environment.persistence = pkgs.lib.mkOption { type = pkgs.lib.types.attrs; };
       config = {
         modules.services.domain = "example.test";
@@ -43,8 +41,6 @@ pkgs.testers.runNixOSTest {
             tls = { };
           };
         };
-        # Test-only HTTPS sink stands in for Grafana Cloud. Production hosts
-        # have none of these receiver services or ports.
         services.prometheus = {
           enable = true;
           listenAddress = "127.0.0.1";
@@ -112,7 +108,6 @@ pkgs.testers.runNixOSTest {
         default = { };
       };
       options.modules.fleet-unit-state.snapshot = lib.mkOption { type = lib.types.package; };
-      # This isolated VM imports the health aspect without the fleet default.
       options.modules.fleet-reboot.predicate = lib.mkOption { type = lib.types.package; };
       config = {
         modules.fleet-unit-state.snapshot = pkgs.writeShellScriptBin "fleet-unit-snapshot" "exit 0";
@@ -266,9 +261,6 @@ pkgs.testers.runNixOSTest {
         outage = "cloud-outage-" + secrets.token_hex(6)
         client.succeed("logger -t monitoring-fixture " + shlex.quote(outage))
         client.succeed("printf 'monitoring_fixture_value 43\\n' > /var/lib/fleet-metrics/textfile/test.prom")
-        # A nonempty queue may contain older samples. Wait a whole scrape
-        # interval and prove the unique journal marker reached disk before
-        # restoring the receiver.
         client.wait_until_succeeds("grep -aFl " + shlex.quote(outage.rsplit("-", 1)[1]) + " /var/lib/alloy/data-alloy/loki.write.cloud/wal/[0-9]* >/dev/null", timeout=90)
         client.sleep(65)
         client.wait_until_succeeds("curl -fsS http://127.0.0.1:12345/metrics | grep '^prometheus_remote_storage_samples_pending{' | grep -v ' 0$'", timeout=30)
@@ -280,8 +272,6 @@ pkgs.testers.runNixOSTest {
         retry(lambda _last: len(prom('monitoring_fixture_value{host="pi"} == 43')) == 1, timeout_seconds=180)
 
     with subtest("agent state and uploaded telemetry survive a tmpfs-root reboot"):
-        # File persistence does not establish lossless replay of unsent data.
-        # The separate outage test verifies retries without restarting Alloy.
         client.succeed("touch /var/lib/alloy/persistence-canary")
         client.shutdown()
         client.start()

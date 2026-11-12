@@ -3,10 +3,6 @@
   den.aspects.fleet-reboot.nixos =
     { lib, pkgs, ... }:
     let
-      # One predicate for every consumer: the health collector exports it as
-      # fleet_reboot_required, the headless reboot sequence gates on it, and
-      # fleet debug prints it. Every host carries it so the sequence can
-      # evaluate a remote host over plain ssh without a heredoc copy.
       predicate = pkgs.writeShellApplication {
         name = "fleet-reboot-required";
         runtimeInputs = [ pkgs.coreutils ];

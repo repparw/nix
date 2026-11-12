@@ -175,7 +175,6 @@ cat "$SEQUENCE_DIR/$count.json"
             (Path(self.env["STATE_DIRECTORY"]) / ".free-models.msgid").read_text().strip(),
             "msg-2",
         )
-        # A superseded notice is deleted, not stacked.
         self.assertEqual(self.actions()[1], "delete msg-1")
 
     def test_unchanged_catalog_is_silent(self):
@@ -379,7 +378,6 @@ cat "$INSTANCE_FIXTURE"
         self.assertIn("announcing the catalog change failed", result.stderr)
         self.assertFalse((Path(self.env["STATE_DIRECTORY"]) / ".free-models.msgid").exists())
         self.assertEqual(self.snapshot().splitlines(), BASELINE)
-        # A retry once Discord answers again announces the same change.
         result = self.run_watch()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(len([line for line in self.actions() if line.startswith("post")]), 2)

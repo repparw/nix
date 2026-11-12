@@ -56,7 +56,6 @@
       };
     };
 
-  # Exercise the real packaged CLI, not the host-eval stubs.
   perSystem =
     { pkgs, ... }:
     {

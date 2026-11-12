@@ -642,7 +642,6 @@ export async function checkNixpkgsSecurityIssues(watcher, previous, fetchImpl) {
         }
       }
     }
-    // Initial run deliberately baselines the latest page, without replaying history.
     if (!previous?.latestIssue || foundCheckpoint) break;
     if (data.next === null) throw new Error("Security tracker checkpoint disappeared");
     url = trackerPageUrl(data.next);

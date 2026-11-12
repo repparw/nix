@@ -96,8 +96,6 @@ class ClaimDiffTest(unittest.TestCase):
         first = run_diff(claimed, {}, {})
         self.assertEqual(first["lines"], ["✅ epic: G — u"])
 
-        # the failed DB never notified because the state moved straight to
-        # claimed; simulate the intermediate state explicitly instead
         mid = run_diff(failed, {}, {})
         self.assertEqual(mid["lines"], ["⚠️ epic: G (failed) — u"])
         transition = run_diff(claimed, {}, mid["state"])

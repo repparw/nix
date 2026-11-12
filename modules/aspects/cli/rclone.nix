@@ -40,7 +40,6 @@
         cloudDir = "${config.home.homeDirectory}/.cloud";
       in
       {
-        # Fix: rclone-config service must remain active after exit for mount dependencies
         systemd.user.services.rclone-config.Service.RemainAfterExit = "yes";
         programs.rclone = {
           enable = true;

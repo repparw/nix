@@ -35,8 +35,6 @@
                 option
               ]) backup.extraOptions
             );
-            # Backup-only arguments are not passed to forget. Preserve Pi's
-            # upload limit when prune repacks and uploads repository data.
             pruneUploadArgs = lib.filter (lib.hasPrefix "--limit-upload=") backup.extraBackupArgs;
             pruneCommand =
               resticCommand
@@ -165,8 +163,6 @@
             default = null;
           };
         };
-        # Keep the export freshness and retention guards identical for both
-        # independently scheduled repositories.
         config.systemd.services.restic-backups-offsite = mkBackupHooks "offsite";
         config.systemd.services.restic-backups-claro = lib.mkIf (config.services.restic.backups ? claro) (
           mkBackupHooks "claro"
@@ -256,8 +252,6 @@
               "**/Service Worker/**"
             ]
             ++ bcfg.excludes;
-            # Use the same conservative concurrency for backup and prune.
-            # Prune needs two connections; the default of five is unnecessary.
             extraOptions = [
               "rclone.program=${lib.getExe pkgs.rclone}"
               "rclone.connections=2"
@@ -271,9 +265,6 @@
             };
           };
 
-          # A second normal Restic job, not a union remote or a custom
-          # repository replication script. It remains usable if Google Drive
-          # cannot be reached.
           services.restic.backups.claro = {
             inherit (config.services.restic.backups.offsite)
               paths

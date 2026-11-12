@@ -21,7 +21,6 @@
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         crashTriage = import ./hermes-crash/_package.nix { inherit pkgs; };
         packageTriage = import ./hermes-package/_package.nix { inherit pkgs; };
-        # Containers have their own package set; use the pinned Node 24 runtime.
         hermesNodejs = pkgs.nodejs_24;
       in
       {
@@ -39,22 +38,14 @@
           uid = 327680;
         };
 
-        # Agent LLM/tool keys only. `hermes-env` stays fleet-wide because
-        # fleet-update, backup, and fleet-health source it for the Discord
-        # token; this secret is declared here so only epsilon (the Hermes
-        # host) decrypts provider keys.
         sops.secrets."hermes-llm-env" = {
           sopsFile = ../../../secrets/hermes.sops.yaml;
           uid = 327680;
-          # Token rotation must refresh Hermes' generated .env and MCP client.
           restartUnits = [ "container@hermes.service" ];
         };
 
         sops.secrets."arr-api-keys" = {
-          # Kept in its own valid SOPS document so this branch can be refreshed
-          # without rewriting the newer Hermes provider-secret document.
           sopsFile = ../../../secrets/hermes-arr.sops.yaml;
-          # Tools run as hermes (container UID 345), not container root.
           uid = 327680 + 345;
         };
 
@@ -144,8 +135,6 @@
                   ffmpeg
                   hermesNodejs
                   ripgrep
-                  # Agent-authored cron scripts in /var/lib/hermes/.hermes/scripts
-                  # (arr_queue_monitor.py) import yaml and dotenv at module scope.
                   (python313.withPackages (ps: [
                     python313Packages.ddgs
                     python313Packages.pyyaml

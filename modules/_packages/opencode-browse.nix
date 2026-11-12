@@ -20,7 +20,6 @@ stdenv.mkDerivation {
     hash = "sha256-iRizxHd+UfZP0SFDxgC0Kw2wI0R1MtYgfNUtiAPErmw=";
   };
 
-  # Browse leaves these runtime dependencies external in its npm bundle.
   ws = fetchurl {
     url = "https://registry.npmjs.org/ws/-/ws-8.22.0.tgz";
     hash = "sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==";

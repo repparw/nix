@@ -61,7 +61,6 @@ def snapshot_database(source, destination):
 
 def prepare(source, state, uid, gid):
     source = source.resolve(strict=True)
-    # An empty or accidentally moved live tree must not erase Alpha's backup.
     if not (source / "hass/home-assistant_v2.db").is_file():
         raise ValueError("required Home Assistant database is missing")
     state.mkdir(mode=0o711, parents=True, exist_ok=True)
@@ -114,7 +113,6 @@ def prepare(source, state, uid, gid):
         manifest = temporary / ".pi-services-export.json"
         manifest.write_text(json.dumps(dict(sqlite=databases, excluded=sorted(EXCLUDED))) + "\n")
         os.chmod(manifest, 0o600)
-        # Keep staging root-owned until all privileged reads have completed.
         for directory, directories, names in os.walk(temporary):
             for name in directories + names:
                 os.chown(Path(directory) / name, uid, gid)

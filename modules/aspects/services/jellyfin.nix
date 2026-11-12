@@ -94,8 +94,6 @@
               install -m 644 ${autheliaPluginLogo} "$pluginDir/logo.png"
             fi
 
-            # Self-heal a dir seeded before the install -m fix: the plugin
-            # manager must be able to rewrite meta.json on every start.
             chmod 644 "$pluginDir/Authelia-Auth.dll" "$pluginDir/meta.json" "$pluginDir/logo.png" 2>/dev/null || true
 
             if [ -e "$marker" ]; then
@@ -193,9 +191,6 @@
                   openFirewall = true;
                 };
 
-                # Seed the plugin and (once) migrate account providers before
-                # the server opens the database. Runs as the jellyfin user so
-                # the sqlite side files keep their ownership.
                 systemd.services.jellyfin.serviceConfig.ExecStartPre = [
                   (lib.getExe initAutheliaAuth)
                 ];

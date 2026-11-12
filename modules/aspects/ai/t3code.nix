@@ -52,10 +52,6 @@ in
           }
         ];
 
-        # t3code keeps custom themes in Electron/browser localStorage and only
-        # imports them through the UI (Settings -> Appearance -> Add a theme).
-        # Derive an importable theme file from the stylix palette and install
-        # it under the desktop userData dir; re-import after a stylix change.
         home.file.".config/t3code-v2/themes/stylix.json" = lib.mkIf hasStylix {
           text = builtins.toJSON {
             version = 1;
@@ -148,8 +144,6 @@ in
           ];
         };
 
-        # Home Manager builds ExecStart from programs.t3code.package and
-        # server.extraArgs; only retain our explicit restart/environment policy.
         systemd.user.services.t3code.Service = {
           Restart = lib.mkForce "always";
           Environment = (lib.mapAttrsToList (name: value: "${name}=${value}") providerEnvironment) ++ [

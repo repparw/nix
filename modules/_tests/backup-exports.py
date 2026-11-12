@@ -1,4 +1,3 @@
-"""Exercise scheduled freshness and synchronous export failure behavior."""
 
 import importlib.util
 import json

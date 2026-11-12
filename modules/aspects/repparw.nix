@@ -35,9 +35,6 @@
               backupFileExtension = "hm-backup";
             };
 
-            # Propagate XDG env vars to all processes (SSH, nix-shell, agents)
-            # that do not source home-manager's hm-session-vars.sh. Paths come
-            # from home-manager's own xdg module to avoid hardcoding.
             environment.variables = {
               NPM_CONFIG_CACHE = "${xdg.cacheHome}/npm";
               NPM_CONFIG_USERCONFIG = "${xdg.configHome}/npm/npmrc";
