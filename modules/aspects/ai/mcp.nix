@@ -36,16 +36,22 @@
   };
 
   den.aspects.ai.provides.browse-desktop.homeManager =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     let
       browse = pkgs.callPackage ../../_packages/opencode-browse.nix {
         nodejs-runtime = pkgs.nodejs-runtime;
       };
+      browseMcp = pkgs.writeShellScriptBin "browse-mcp" ''
+        exec ${lib.getExe pkgs.python3} ${../../scripts/browse-mcp-lazy.py} \
+          ${lib.getExe browse} \
+          ${lib.getExe' config.programs.helium.package "helium"} \
+          ${lib.getExe' pkgs.procps "pgrep"}
+      '';
     in
     {
       programs.mcp.servers.browse = {
-        command = lib.getExe browse;
-        args = [ "mcp" ];
+        command = lib.getExe browseMcp;
+        args = [ ];
         env = {
           OPENCODE_BROWSER_AUTO_UPDATE = "off";
         };
