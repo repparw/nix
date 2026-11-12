@@ -82,7 +82,7 @@
     ]
   },
   "nodejs-security": {
-    "mode": "post-lock",
+    "mode": "completed",
     "input": "nixpkgs",
     "cleanup": "nodejs-security.patch",
     "validation": [

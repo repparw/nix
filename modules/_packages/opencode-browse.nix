@@ -3,7 +3,7 @@
   stdenv,
   fetchurl,
   makeWrapper,
-  nodejs-runtime,
+  nodejs_24,
 }:
 
 stdenv.mkDerivation {
@@ -61,7 +61,7 @@ stdenv.mkDerivation {
     extractTgz "$pixelmatch" $out/lib/browse/node_modules/pixelmatch
     extractTgz "$pngjs" $out/lib/browse/node_modules/pngjs
     mkdir -p $out/bin
-    makeWrapper ${nodejs-runtime}/bin/node $out/bin/browse \
+    makeWrapper ${nodejs_24}/bin/node $out/bin/browse \
       --add-flags "$out/lib/browse/dist/cli.mjs" \
       --set NODE_PATH "$out/lib/browse/node_modules" \
       --set OPENCODE_BROWSER_AUTO_UPDATE off
