@@ -32,8 +32,6 @@
         programs.niri.enable = lib.mkDefault true;
         programs.wshowkeys.enable = true;
 
-        # The KMS recorder needs the NixOS capability wrappers, not just
-        # the UI package on PATH.
         programs.gpu-screen-recorder = {
           enable = true;
           ui.enable = true;
