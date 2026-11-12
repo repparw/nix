@@ -38,9 +38,8 @@ let
   # to the collector above. List them explicitly so main-packages pushes them
   # and pi deploys substitute instead of building the node stacks on target
   # (#521). The epicgames-freegames-node package arrives with the #542 trial
-  # PR and joins this list there. The _tests/ci-packages.nix harness stubs
-  # inputs without nixpkgs, so skip the explicit list there rather than pull
-  # real packages into it.
+  # PR and joins this list there. The _tests/ci-packages.nix harness uses
+  # a lightweight callPackage stub to verify these paths without real builds.
   explicitPackages =
     system:
     lib.optionals ((inputs ? nixpkgs) && system == "aarch64-linux") (
@@ -48,7 +47,7 @@ let
         pkgs = inputs.nixpkgs.legacyPackages.${system};
       in
       [
-        (pkgs.callPackage ../_packages/free-games-claimer.nix { })
+        (pkgs.callPackage ./_packages/free-games-claimer.nix { })
       ]
     );
   targetsFor =
