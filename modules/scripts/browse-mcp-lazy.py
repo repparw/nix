@@ -49,7 +49,9 @@ def running(pgrep):
 
 
 def prepare_browser(browse, helium, pgrep):
-    if connected(browse):
+    # Avoid starting the Node.js status CLI on every browser tool call.
+    # Browse itself handles reconnection when Helium is already running.
+    if running(pgrep) or connected(browse):
         return
 
     runtime = Path(os.environ.get("XDG_RUNTIME_DIR", f"/tmp/browse-{os.getuid()}"))
