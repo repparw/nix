@@ -50,7 +50,8 @@ let
       };
       # Exercise the ARM explicit-package list without importing Nixpkgs.
       # This catches incorrect relative package paths before main-packages.
-      nixpkgs.legacyPackages.aarch64-linux.callPackage = path: _:
+      nixpkgs.legacyPackages.aarch64-linux.callPackage =
+        path: _:
         assert builtins.pathExists path;
         pkgs.hello;
     };
