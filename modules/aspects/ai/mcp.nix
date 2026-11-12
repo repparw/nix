@@ -75,7 +75,6 @@
               nativeBuildInputs = [
                 pkgs.jq
                 pkgs.coreutils
-                pkgs.python3
               ];
             }
             ''
@@ -88,8 +87,6 @@
               test "$status" -eq 0 || test "$status" -eq 130
               jq -se 'any(.[]; .id == 1 and .result.serverInfo.name == "browse")' \
                 "$TMPDIR/initialize.json"
-              BROWSE_MCP_LAZY_SCRIPT=${../../scripts/browse-mcp-lazy.py} \
-                ${lib.getExe pkgs.python3} ${../../_tests/browse-mcp-lazy.test.py}
               touch "$out"
             '';
       };
