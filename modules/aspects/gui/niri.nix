@@ -32,6 +32,11 @@
         programs.niri.enable = lib.mkDefault true;
         programs.wshowkeys.enable = true;
 
+        programs.gpu-screen-recorder = {
+          enable = true;
+          ui.enable = true;
+        };
+
         # KDE Connect's remote-input (mouse/keyboard from a phone) needs a
         # portal backend that implements RemoteDesktop on wlroots compositors.
         # The GNOME portal backend does not implement RemoteDesktop on Niri,
@@ -59,38 +64,10 @@
           spawn = command;
         };
         spawn = command: { spawn = command; };
-        # Moonshine's Desktop stream boots a nested niri with this same
-        # config. Its sockets belong to the stream, so importing them into
-        # the login session's user manager would poison the real desktop.
-        sessionEnv = pkgs.writeShellApplication {
-          name = "niri-session-env";
-          runtimeInputs = [ pkgs.systemd ];
-          text = ''
-            if [ -z "''${MOONSHINE_CLIENT_WIDTH:-}" ]; then
-              exec systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_SESSION_TYPE XDG_CURRENT_DESKTOP NIRI_SOCKET
-            fi
-          '';
-        };
       in
       {
         home.packages = with pkgs; [
           ndrop
-          sessionEnv
-
-          (writeShellApplication {
-            name = "record";
-            runtimeInputs = [
-              wl-screenrec
-              slurp
-              niri
-              jq
-              libnotify
-              wl-clipboard
-              util-linux
-              gawk
-            ];
-            text = builtins.readFile ./niri-record.sh;
-          })
 
           (writeShellApplication {
             name = "grabtext";
@@ -171,7 +148,14 @@
             };
             debug.honor-xdg-activation-with-invalid-serial = { };
 
-            spawn-sh-at-startup = "niri-session-env";
+            # Niri --session imports the compositor environment into the
+            # user manager itself. Moonshine launches plain nested Niri;
+            # avoid starting a second GUI controller there.
+            spawn-sh-at-startup = ''
+              if [ -z "''${MOONSHINE_CLIENT_WIDTH:-}" ]; then
+                exec gsr-ui
+              fi
+            '';
 
             binds = {
               "Mod+Return" = titledSpawn "Terminal" [ "xdg-terminal-exec" ];
@@ -342,13 +326,22 @@
                 _props.hotkey-overlay-title = "Screenshot Area";
                 screenshot._props.show-pointer = false;
               };
-              "Ctrl+Print" = titledSpawn "Record Screen" [
-                "record"
-                "screen"
+              # GSR UI's completion-to-clipboard workflow still needs testing.
+              "Ctrl+Print" = titledSpawn "Toggle Recording" [
+                "gsr-ui-cli"
+                "toggle-record"
+              ];
+              "Ctrl+Alt+Print" = titledSpawn "Recording Controls" [
+                "gsr-ui-cli"
+                "toggle-show"
+              ];
+              "Ctrl+Shift+Print" = titledSpawn "Record Window" [
+                "gsr-ui-cli"
+                "toggle-record-window"
               ];
               "Ctrl+Mod+Shift+Print" = titledSpawn "Record Area" [
-                "record"
-                "area"
+                "gsr-ui-cli"
+                "toggle-record-region"
               ];
 
               XF86AudioPlay = {
