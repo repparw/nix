@@ -34,8 +34,9 @@ let
   # replacing its system, to avoid restarting the controller mid-deployment.
   # Host membership and the non-controller order follow Den's inventory.
   controllerHost = "pi";
-  deployOrder =
-    lib.filter (name: name != controllerHost) (lib.attrNames sshAddresses) ++ [ controllerHost ];
+  deployOrder = lib.filter (name: name != controllerHost) (lib.attrNames sshAddresses) ++ [
+    controllerHost
+  ];
   hostAddressJson = builtins.toJSON sshAddresses;
 
   deployNode = hostname: {
