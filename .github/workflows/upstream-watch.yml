@@ -93,6 +93,8 @@ jobs:
               echo 'GitHub App token required to publish cleanup PRs; refusing GITHUB_TOKEN fallback.' >&2
               exit 1
             fi
-            gh auth setup-git
           fi
+          # Notifications also push a delivery-state ref; they may use the
+          # built-in token, whereas cleanup PRs require the App token.
+          gh auth setup-git
           python3 .github/scripts/upstream-publish.py --readiness "$RUNNER_TEMP/upstream-readiness.json"
