@@ -1,6 +1,5 @@
 {
   den,
-  lib,
   ...
 }:
 {
@@ -8,7 +7,6 @@
     homeManager =
       {
         config,
-        lib,
         pkgs,
         ...
       }:
@@ -85,16 +83,6 @@
         home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
 
         home.file.".local/bin/sudo".source = shim;
-
-        # Interactive Fish abbreviation, scoped to graphical, non-SSH sessions
-        # so SSH terminals keep the real sudo.
-        programs.fish.interactiveShellInit = ''
-          if not set -q SSH_CONNECTION; and not set -q SSH_CLIENT; and not set -q SSH_TTY
-            if set -q WAYLAND_DISPLAY; or set -q DISPLAY
-              abbr --add sudo run0
-            end
-          end
-        '';
       };
   };
 }
