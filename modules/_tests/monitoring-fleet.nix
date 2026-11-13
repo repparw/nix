@@ -16,9 +16,6 @@ let
     builtins.head (
       lib.splitString "\n}" (builtins.elemAt (lib.splitString ''prometheus.scrape "${name}" {'' text) 1)
     );
-  # The journal relabel block holds every rule the journal source applies
-  # before an entry leaves the host. Its rules are the filter that decides
-  # what reaches Grafana Cloud.
   journalRules =
     text:
     let
@@ -172,9 +169,6 @@ assert lib.all (host: (cfg host).systemd.timers ? fleet-health-metrics) hosts;
 assert lib.all (
   host: lib.hasInfix "node_systemd_unit_state;(inactive|activating|deactivating)" (alloyConfig host)
 ) hosts;
-# The journal filter drops only the units whose journals are bulk noise.
-# Every other unit keeps its entries, and the kept entries keep the unit
-# label that identifies them.
 assert lib.all (
   host:
   let
@@ -189,8 +183,6 @@ assert
   (lib.findFirst (disk: disk.mount == "/persist") null
     (cfg "epsilon").modules.monitoring.health.disks
   ).crit == 85;
-# pi's /persist is a 15 GB card that the auto-update prepare log filled on
-# 2026-11-10, so it warns earlier than the other mounts.
 assert
   map (disk: disk.mount) (cfg "pi").modules.monitoring.health.disks == [
     "/persist"

@@ -81,10 +81,6 @@ class MetricsTests(unittest.TestCase):
         self.assertEqual(state["since"], 100)
 
     def test_facts_are_published_when_the_state_write_fails(self):
-        # The state directory sits on the filesystem that fills up (pi's
-        # /persist) while the textfile directory is on tmpfs, so the facts
-        # have to be published first and a failed state write must not
-        # take the exporter down with it.
         writes = []
 
         def fake_write(path, text):
