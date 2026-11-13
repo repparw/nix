@@ -42,6 +42,7 @@
   # TypeScript entrypoint directly. Relocate the app (with its bundled
   # dependencies) to share/, where the entrypoint is stripped normally.
   postInstall = ''
+    mkdir -p "$out/share"
     mv "$out/lib/node_modules/epicgames-freegames-node" "$out/share/epicgames-freegames-node"
     rmdir --ignore-fail-on-non-empty "$out/lib/node_modules" "$out/lib" 2>/dev/null || true
   '';
