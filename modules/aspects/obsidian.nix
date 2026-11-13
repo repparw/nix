@@ -6,7 +6,7 @@
   den.aspects.obsidian = {
     includes = [ den.aspects.rclone ];
 
-    nixos =
+    provides.to-hosts.nixos =
       { config, ... }:
       {
         sops.secrets.rcloneObsidianCrypt = {

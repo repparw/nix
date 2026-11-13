@@ -8,7 +8,7 @@
   den.aspects.fish = {
     includes = [ (den.batteries.user-shell "fish") ];
 
-    nixos =
+    provides.to-hosts.nixos =
       {
         config,
         lib,
