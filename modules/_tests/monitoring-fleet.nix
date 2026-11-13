@@ -16,6 +16,19 @@ let
     builtins.head (
       lib.splitString "\n}" (builtins.elemAt (lib.splitString ''prometheus.scrape "${name}" {'' text) 1)
     );
+  # The journal relabel block holds every rule the journal source applies
+  # before an entry leaves the host. Its rules are the filter that decides
+  # what reaches Grafana Cloud.
+  journalRules =
+    text:
+    let
+      block = builtins.head (
+        lib.splitString "\n}" (builtins.elemAt (lib.splitString ''loki.relabel "journal" {'' text) 1)
+      );
+    in
+    lib.splitString "\n  rule {" block;
+  journalDropRules = text: builtins.filter (rule: lib.hasInfix ''= "drop"'' rule) (journalRules text);
+  noiseUnitRegex = ''"^(init\\.scope|session-[0-9]+\\.scope|cachix-push-daemon\\.service|bluetooth\\.service)$"'';
   cloudFixture = signal: {
     url =
       if signal == "metrics" then
@@ -75,7 +88,8 @@ let
     && lib.hasInfix ''scrape_interval = "60s"'' (scrapeBlock "alloy_cloud" text)
     && lib.hasInfix "prometheus.relabel.alloy.receiver" (scrapeBlock "alloy_cloud" text)
     && lib.hasInfix ''regex = ".*_bucket"'' text
-    && lib.hasInfix "max_backoff_retries = 0" text
+    && lib.hasInfix "max_backoff_retries = 10" text
+    && !(lib.hasInfix "max_backoff_retries = 0" text)
     &&
       lib.all
         (
@@ -158,10 +172,46 @@ assert lib.all (host: (cfg host).systemd.timers ? fleet-health-metrics) hosts;
 assert lib.all (
   host: lib.hasInfix "node_systemd_unit_state;(inactive|activating|deactivating)" (alloyConfig host)
 ) hosts;
+# The journal filter drops only the units whose journals are bulk noise.
+# Every other unit keeps its entries, and the kept entries keep the unit
+# label that identifies them.
+assert lib.all (
+  host:
+  let
+    drops = journalDropRules (alloyConfig host);
+  in
+  builtins.length drops == 1
+  && lib.hasInfix ''source_labels = ["__journal__systemd_unit"]'' (builtins.head drops)
+  && lib.hasInfix noiseUnitRegex (builtins.head drops)
+) hosts;
+assert lib.all (host: lib.hasInfix ''target_label  = "unit"'' (alloyConfig host)) hosts;
 assert
   (lib.findFirst (disk: disk.mount == "/persist") null
     (cfg "epsilon").modules.monitoring.health.disks
   ).crit == 85;
+# pi's /persist is a 15 GB card that the auto-update prepare log filled on
+# 2026-11-10, so it warns earlier than the other mounts.
+assert
+  map (disk: disk.mount) (cfg "pi").modules.monitoring.health.disks == [
+    "/persist"
+    "/nix"
+    "/home/repparw"
+  ];
+assert
+  (lib.findFirst (disk: disk.mount == "/persist") null (cfg "pi").modules.monitoring.health.disks)
+  == {
+    mount = "/persist";
+    warn = 75;
+    crit = 85;
+    sleeping = false;
+  };
+assert
+  (lib.findFirst (disk: disk.mount == "/nix") null (cfg "pi").modules.monitoring.health.disks) == {
+    mount = "/nix";
+    warn = 90;
+    crit = 93;
+    sleeping = false;
+  };
 assert
   (lib.findFirst (disk: disk.mount == "/mnt/hdd") null (cfg "alpha").modules.monitoring.health.disks)
   .sleeping;

@@ -84,6 +84,13 @@ less /var/lib/auto-update/fail-alpha.log
 journalctl -u fleet-deploy-run --no-pager
 ```
 
+Preparation evidence is bounded. The per-host prepare log keeps only its tail,
+so the explanation of a failed build is at the end of the log, and the run
+refuses to start when the state filesystem has no room for that log. A full
+card therefore aborts the update instead of truncating it again. The
+[controller implementation](../../modules/scripts/fleet-update.sh) owns the
+exact bounds.
+
 Use [manual rollback](update-rollback.md) if automatic recovery did not
 restore the affected host. The [controller implementation](../../modules/scripts/fleet-update.sh)
 is authoritative for current ordering, timeouts and retry behavior.

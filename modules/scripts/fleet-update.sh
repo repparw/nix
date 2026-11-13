@@ -14,6 +14,11 @@ lock_wait=0
 requested_host=all
 host_selected=0
 state="${FLEET_UPDATE_STATE:-/var/lib/auto-update}"
+# The prepare log grew without bound: on pi the state directory is the 15 GB
+# SD card, and the 2026-11-10 run wrote a 4.7 GB nix log there, filled the
+# card, truncated Alloy's WAL and started a 67.6 GB replay to Grafana Cloud.
+# Keep the tail, which is where the build failure is explained.
+prepare_log_max_bytes="${FLEET_UPDATE_PREPARE_LOG_MAX_BYTES:-16777216}"
 package_event="@PACKAGE_EVENT_SCRIPT@"
 
 enqueue_package_events() {
@@ -122,6 +127,10 @@ fail() {
 notify_failure() {
   [ -r /run/secrets/hermes-env ] || return 0
   local header="$1" log="$2" budget=1200 fence detail body sanitized detail_units
+  # Discord's bot upload limit is 8 MiB. A capped prepare log can still be
+  # larger than that, and a rejected upload loses the evidence entirely, so
+  # fall back to the inline detail when the file is too large.
+  local attach_limit=$((8 * 1024 * 1024))
   local -a attachment=()
   # shellcheck disable=SC1091
   source /run/secrets/hermes-env
@@ -172,7 +181,7 @@ notify_failure() {
     ) | .chars | implode
   ')
   if [[ "$detail" == *$'\n'* ]]; then detail=${detail%$'\n'*}; fi
-  if [ -s "$log" ]; then
+  if [ -s "$log" ] && [ "$(wc -c <"$log")" -le "$attach_limit" ]; then
     body=$(printf '%s\n%swhat failed\n%s\n%s\n(full output attached)' \
       "$header" "$fence" "$detail" "$fence")
     attachment=(-F "files[0]=@$log")
@@ -365,8 +374,23 @@ soak() {
 }
 
 free_kb() { df -k /nix | awk 'NR == 2 { print $4 }'; }
-if [ "$(free_kb)" -lt $((6 * 1024 * 1024)) ]; then
-  notify ":warning: fleet update aborted: $(df -h /nix | awk 'NR == 2 { print $4 }') free on /nix"
+nix_free_kb=$(free_kb || true)
+if [ -n "$nix_free_kb" ] && [ "$nix_free_kb" -lt $((6 * 1024 * 1024)) ]; then
+  nix_free_h=$(df -h /nix | awk 'NR == 2 { print $4 }')
+  echo "fleet update aborted: $nix_free_h free on /nix" >&2
+  notify ":warning: fleet update aborted: $nix_free_h free on /nix"
+  exit 1
+fi
+
+# The prepare logs land in the state directory, not /nix. On pi that is the
+# 15 GB SD card, and the 2026-11-10 prepare log filled it. Refuse to start a
+# preparation that has no room to keep its own evidence.
+state_free_kb() { df -k "$state" 2>/dev/null | awk 'NR == 2 { print $4 }'; }
+state_kb=$(state_free_kb || true)
+if [ -n "$state_kb" ] && [ "$state_kb" -lt $((2 * 1024 * 1024)) ]; then
+  state_free_h=$(df -h "$state" 2>/dev/null | awk 'NR == 2 { print $4 }')
+  echo "fleet update aborted: $state_free_h free on $state" >&2
+  notify ":warning: fleet update aborted: $state_free_h free on $state"
   exit 1
 fi
 
@@ -468,9 +492,13 @@ prepare_host() {
   # Persist nix's raw internal-json stream: it is compact and greppable.
   # Piping it through nom re-rendered the whole dependency tree on every
   # progress event, which grew prepare logs past a gigabyte per host and
-  # buried the actual build error under repeated progress frames.
+  # buried the actual build error under repeated progress frames. Verbose
+  # mode does the same: the same dry run logged 40,418 bytes with -v and
+  # 548 bytes without it, and the 2026-11-10 pi run wrote 4.7 GB into
+  # /var/lib/auto-update and filled the SD card. The build error is in the
+  # message events, so the per-file result frames are not needed.
   built=$(remote "$host" nix build "$drv^out" --out-link /nix/var/nix/gcroots/fleet-update/prepared \
-    --print-out-paths --log-format internal-json -v) || return 1
+    --print-out-paths --log-format internal-json) || return 1
   [ "$built" = "$profile" ] || { echo "error: $host prepared unexpected profile: $built" >&2; return 1; }
   remote "$host" test -f "$profile/activate-rs" || return 1
   remote "$host" test -f "$profile/deploy-rs-activate" || return 1
@@ -534,13 +562,27 @@ declare -A prepare_pids
 for host in "${hosts[@]}"; do
   mkdir -p "$preparation/$host"
   progress "preparing $host (copy/build); log: $preparation/prepare-$host.log"
-  prepare_host "$host" > "$preparation/prepare-$host.log" 2>&1 &
+  # Bound the prepare log. nix does not limit its log size and the state
+  # directory is a small card on pi, so keep only the tail: the failure
+  # explanation is at the end of the stream. tail reads the whole stream and
+  # never signals the producer, so the build still runs to completion. The
+  # exit status travels in a separate file because the pipeline's status
+  # belongs to tail.
+  (
+    set -o pipefail
+    status=0
+    prepare_host "$host" 2>&1 | tail -c "$prepare_log_max_bytes" > "$preparation/prepare-$host.log" \
+      || status=$?
+    printf '%s\n' "$status" > "$preparation/prepare-$host.status"
+  ) &
   prepare_pids["$host"]=$!
 done
 
 failed_preparation=""
 for host in "${hosts[@]}"; do
-  if wait "${prepare_pids[$host]}"; then
+  wait "${prepare_pids[$host]}" || true
+  prepare_status=$(cat "$preparation/prepare-$host.status" 2>/dev/null || echo 1)
+  if [ "$prepare_status" = "0" ]; then
     container_units_json[$host]=$(jq -c '.containerUnits' "$preparation/$host.json")
     progress "prepared $host"
   else

@@ -46,18 +46,27 @@
         };
 
         modules.fleet-readiness.enable = true;
-        modules.monitoring.health.disks =
-          map
-            (mount: {
-              inherit mount;
-              warn = 90;
-              crit = 93;
-            })
-            [
-              "/persist"
-              "/nix"
-              "/home/repparw"
-            ];
+        modules.monitoring.health.disks = [
+          {
+            mount = "/persist";
+            # /persist is pi's 15 GB SD card. The 2026-11-10 auto-update
+            # prepare log filled it, and the disk gauge could not report
+            # while it was full, so warn well below the point where a build
+            # can no longer run.
+            warn = 75;
+            crit = 85;
+          }
+          {
+            mount = "/nix";
+            warn = 90;
+            crit = 93;
+          }
+          {
+            mount = "/home/repparw";
+            warn = 90;
+            crit = 93;
+          }
+        ];
         modules.persistence.enable = true;
         modules.persistence.mutableAccounts = true;
 

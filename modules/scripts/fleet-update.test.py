@@ -26,7 +26,12 @@ if name == 'git':
     elif 'push' in args or 'revert' in args or 'commit' in args:
         sys.exit(99)
 elif name == 'df':
-    print('Filesystem 1K-blocks Used Available Use% Mounted\nfixture 90000000 1 80000000 1% /nix')
+    path = args[-1] if args else ''
+    if config.get('state_free_kb') is not None and path == config.get('state_path'):
+        print(f'Filesystem 1K-blocks Used Available Use% Mounted\n'
+              f'fixture 90000000 89000000 {config["state_free_kb"]} 99% {path}')
+    else:
+        print('Filesystem 1K-blocks Used Available Use% Mounted\nfixture 90000000 1 80000000 1% /nix')
 elif name == 'curl':
     if any('api.github.com' in a for a in args):
         if config.get('api_error'):
@@ -81,6 +86,11 @@ elif name == 'ssh':
         if config.get('prepare_failure') == host:
             print('error: preparation build failed', file=sys.stderr)
             sys.exit(1)
+        if config.get('prepare_output_bytes'):
+            # Emulate a build that writes a huge log: the prepare log has to
+            # stay bounded even when the producer is unbounded.
+            sys.stderr.write('x' * config['prepare_output_bytes'])
+            sys.stderr.write('FINAL-MARKER\n')
         print(f'/nix/store/{host}-profile-26.11')
     elif command[0] == 'nom':
         print('bash: nom: command not found', file=sys.stderr)
@@ -143,18 +153,18 @@ class Deployment(unittest.TestCase):
         script = script.replace("@PACKAGE_EVENT_SCRIPT@", str(Path(__file__).with_name("package-update-event.py")))
         self.script.write_text("set -euo pipefail\n" + script)
 
-    def deploy(self, ci=None, arguments=None, **config):
+    def deploy(self, ci=None, arguments=None, env=None, **config):
         (self.root / "config").write_text(json.dumps(dict(ci=ci or {"workflow_runs": [run()]}) | config))
-        env = os.environ | {
+        environment = os.environ | {
             "PATH": f"{self.bin}:{os.environ['PATH']}",
             "FIXTURE": str(self.root),
             "FLEET_UPDATE_LOCK": str(self.root / "lock"),
             "FLEET_UPDATE_ROOTS": str(self.root / "roots"),
             "FLEET_DEPLOY_KEY": str(self.script),
             "FLEET_SOAK_ATTEMPTS": "2",
-        }
+        } | (env or {})
         result = subprocess.run(["bash", str(self.script), "deploy", "--state", str(self.state),
-                                 *(arguments or [])], env=env, text=True, capture_output=True)
+                                 *(arguments or [])], env=environment, text=True, capture_output=True)
         self.assertTrue((self.root / "calls").exists(), result.stdout + result.stderr)
         self.calls = [json.loads(line) for line in (self.root / "calls").read_text().splitlines()]
         return result
@@ -358,6 +368,27 @@ class Deployment(unittest.TestCase):
         evidence = Path((self.state / 'latest-preparation').read_text().strip())
         self.assertIn('preparation build failed', (evidence / 'prepare-alpha.log').read_text())
         self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text())['outcome'], 'failed')
+
+    def test_prepare_log_is_capped_and_keeps_the_failure_tail(self):
+        # The 2026-11-10 pi run wrote 4.7 GB of nix output into the 15 GB
+        # /persist card. The prepare log has to stay bounded, and the tail
+        # is the part that explains a failure.
+        result = self.deploy(prepare_output_bytes=200000,
+                             env={"FLEET_UPDATE_PREPARE_LOG_MAX_BYTES": "4096"})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        evidence = Path((self.state / "latest-preparation").read_text().strip())
+        for host in ["epsilon", "alpha", "pi"]:
+            log = evidence / f"prepare-{host}.log"
+            self.assertLessEqual(log.stat().st_size, 4096)
+            self.assertIn("FINAL-MARKER", log.read_text())
+
+    def test_state_filesystem_without_room_aborts_before_preparation(self):
+        result = self.deploy(state_path=str(self.state), state_free_kb=1024)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("free on", result.stderr)
+        self.assertFalse(any(c[0] == "ssh" and "build" in c for c in self.calls))
+        self.assertFalse(any(c[0] == "deploy" for c in self.calls))
+        self.assertFalse((self.state / "latest-preparation").exists())
 
     def test_preparation_builds_run_concurrently_before_activation(self):
         # Every remote build waits for all three to start. Sequential

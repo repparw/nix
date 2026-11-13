@@ -50,6 +50,49 @@ adds retained failures, completed backup timestamps, export status, and disk fac
 - Verify actual active-series usage in `grafanacloud-usage` after changing labels
   or targets; the application datasource's instantaneous series count differs.
 
+### Cloud log allowance
+
+The free log tier allows a fixed amount per calendar month, not a rolling
+window: the meter resets at the start of each month, and bytes sent in one
+month do not offset the next.
+
+The bill counts the bytes the distributor received, which is much more than
+what is stored. A repeated batch is billed on every copy even when the stored
+volume barely grows, so a stored-volume query cannot show how much of the
+allowance was consumed.
+
+An exhausted allowance is not an overage charge. The distributor answers with
+`ingestion rate limit exceeded for user <id> (limit: 0 bytes/sec)` and
+discards the batch without billing it, and ingestion stays blocked until the
+next month. Read the received rate and the billable total in Cloud before
+treating missing logs as a configuration problem.
+
+### Recover a stuck write-ahead log
+
+A full filesystem truncates Alloy's write-ahead log mid-record. On the next
+start the reader can re-read the same segment over and over, and every retry
+is billed again. The symptom is `loki_write_sent_bytes_total` climbing far
+above the journal volume while `loki_write_batch_retries_total` grows, plus a
+reader error in the Alloy journal:
+
+```sh
+journalctl -u alloy --since "1 hour ago" --no-pager | grep -i "error tailing WAL"
+```
+
+Stop the amplification before touching the log, because every retry costs
+allowance:
+
+```sh
+systemctl stop alloy
+df -h /persist          # Pi's card; free the space that truncated the log
+ls -l /var/lib/private/alloy/data-path/loki.write.cloud/wal/
+rm -rf /var/lib/private/alloy/data-path/loki.write.cloud/wal
+systemctl start alloy
+```
+
+Removing the WAL discards the logs it held. That is the cheaper trade than
+re-sending them, and the freed disk space is the reason to do it.
+
 ## Verify configuration changes
 
 ```sh

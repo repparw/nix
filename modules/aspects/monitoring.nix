@@ -157,6 +157,18 @@
           loki.relabel "journal" {
             forward_to = []
 
+            // Drop units whose journals are bulk noise rather than
+            // operational evidence. Measured over 24 h on 2026-11-12:
+            // cachix-push-daemon logs one "Skipping /nix/store/..." line per
+            // store path (38,778 lines on alpha), init.scope carries the
+            // fleet's own health exporter chatter (7,266 on alpha, 7,002 on
+            // pi), bluetooth repeats one A2DP failure (2,192 on alpha) and
+            // session scopes are per-login chatter.
+            rule {
+              source_labels = ["__journal__systemd_unit"]
+              regex         = "^(init\\.scope|session-[0-9]+\\.scope|cachix-push-daemon\\.service|bluetooth\\.service)$"
+              action        = "drop"
+            }
             rule {
               source_labels = ["__journal__systemd_unit"]
               target_label  = "unit"
@@ -189,7 +201,14 @@
                 enabled = true
               }
               endpoint {
-                max_backoff_retries = 0
+                // A bounded retry budget, not an open-ended loop. Zero means
+                // retry forever, which on 2026-11-10 to 2026-11-12 re-sent
+                // one stuck WAL batch to Grafana Cloud about 2,400 times:
+                // 67.6 GB and 913.7 M entries, more than the free tier's
+                // 50 GB allowance. Ten retries span roughly nine minutes of
+                // backoff; after that the batch is dropped and counted in
+                // loki_write_dropped_entries_total.
+                max_backoff_retries = 10
                 url = ${builtins.toJSON cfg.cloud.logs.url}
                 basic_auth {
                   username = ${builtins.toJSON cfg.cloud.logs.username}
