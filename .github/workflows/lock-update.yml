@@ -47,7 +47,7 @@ jobs:
           # Approval identity for approval-gated runs. Empty until the owner
           # stores LOCK_UPDATE_APPROVAL_TOKEN (see the step env above).
           approval_token="${LOCK_UPDATE_APPROVAL_TOKEN:-}"
-          test -n "$approval_token" || { echo 'Missing GitHub App token; refusing to publish automated PRs.' >&2; exit 1; }
+          test -n "$approval_token" || { echo 'Missing GitHub App token (LOCK_UPDATE_APPROVAL_TOKEN); refusing to publish automated PRs.' >&2; exit 1; }
           gh auth setup-git
 
           latest_ci() {
@@ -431,7 +431,7 @@ jobs:
               echo 'main advanced during atomic refresh; refusing to publish.' >&2
               return 1
             fi
-            git push --quiet "--force-with-lease=refs/heads/$atomic_branch:$atomic_revision" \
+            GH_TOKEN="$approval_token" git push --quiet "--force-with-lease=refs/heads/$atomic_branch:$atomic_revision" \
               origin "$rebuilt:refs/heads/$atomic_branch"
             atomic_revision=$rebuilt
             atomic_base=$new_main
