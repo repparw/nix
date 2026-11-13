@@ -52,7 +52,13 @@
           };
 
           gamemode.enable = true;
-          gamescope.enable = true;
+          gamescope = {
+            enable = true;
+            # Lets gamescope renice itself to -20 and ask for realtime priority
+            # Vulkan queues. gamescope 3.17 retries with regular priority queues
+            # when the driver refuses them (VK_ERROR_NOT_PERMITTED_KHR).
+            capSysNice = true;
+          };
         };
         environment.systemPackages = with pkgs; [
           heroic
