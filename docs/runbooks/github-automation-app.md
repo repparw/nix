@@ -67,6 +67,20 @@ silently use `GITHUB_TOKEN`. Notification-only upstream readiness can still
 use the built-in token. Existing approval-gated PR runs are not automatically
 unblocked by changing credentials for future publishes.
 
+## Retired approval-token workflow
+
+The old `LOCK_UPDATE_APPROVAL_TOKEN` PAT secret is unused. If it exists in
+repository Actions secrets, delete it after this change is merged. A token
+cannot be revoked by removing code, so also revoke an actual PAT from GitHub
+Developer settings if you created one.
+
+App-authored PRs run normal CI without a manual approval step. If GitHub
+returns `action_required` for a required PR workflow, lock-update now stops
+and reports the unexpected gate instead of attempting to approve it. Direct
+Git commit authors still use the existing `github-actions[bot]` address
+to preserve strict managed-tip verification; the PR publishing identity is
+the GitHub App.
+
 ## Rotation and recovery
 
 Generate a second private key in the App settings, replace the repository

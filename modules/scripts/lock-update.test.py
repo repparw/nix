@@ -175,7 +175,7 @@ class LockUpdate(unittest.TestCase):
             "            workflow = 'pr-title.yml' if 'pr-title.yml/runs' in endpoint else 'ci.yml'\n"
             "            run = 32 if workflow == 'pr-title.yml' else 31\n"
             "            head_sha = next((a.split('=', 1)[1] for a in args if a.startswith('head_sha=')), '')\n"
-            "            conclusion = os.environ['FIXTURE_PR_CI'] if (root / f'approved-{run}').exists() else 'action_required'\n"
+            "            conclusion = os.environ['FIXTURE_PR_CI']\n"
             "            print(json.dumps({'id': run, 'status': 'completed', 'conclusion': conclusion, 'head_sha': head_sha, 'head_branch': 'automation/atomic-cleanup', 'event': 'pull_request', 'path': '.github/workflows/' + workflow}))\n"
             "        elif 'pr-title.yml/runs' in endpoint:\n"
             "            want = next((a.split('=', 1)[1] for a in args if a.startswith('head_sha=')), '')\n"
@@ -206,14 +206,11 @@ class LockUpdate(unittest.TestCase):
             "            sys.exit(0)\n"
             "        print(json.dumps({'state': 'open', 'head': {'repo': {'full_name': 'fixture/nix'}, 'ref': 'automation/flake-lock', 'sha': 'wrong' if os.environ['FIXTURE_WRONG_PR_HEAD'] == '1' else sha}, 'base': {'ref': 'main'}}))\n"
             "        sys.exit(0)\n"
-            "    if endpoint.endswith('/approve'):\n"
-            "        if os.environ['FIXTURE_APPROVAL_FAIL'] == '1': sys.exit(1)\n"
-            "        (root / ('approved-' + endpoint.split('/')[-2])).write_text('1')\n"
-            "        sys.exit(0)\n"
+
             "    if 'event=pull_request' in args:\n"
             "        workflow = 'pr-title.yml' if 'pr-title.yml/runs' in endpoint else 'ci.yml'\n"
             "        run = 12 if workflow == 'pr-title.yml' else 11\n"
-            "        conclusion = os.environ['FIXTURE_PR_CI'] if (root / f'approved-{run}').exists() else 'action_required'\n"
+            "        conclusion = os.environ['FIXTURE_PR_CI']\n"
             "        print(json.dumps({'id': run, 'status': 'completed', 'conclusion': conclusion, 'head_sha': sha, 'head_branch': 'automation/flake-lock', 'event': 'pull_request', 'path': '.github/workflows/' + ('other.yml' if os.environ['FIXTURE_WRONG_RUN_PATH'] == '1' else workflow)}))\n"
             "        sys.exit(0)\n"
             "    if any('pr-title.yml/runs' in arg for arg in args):\n"
@@ -289,7 +286,6 @@ class LockUpdate(unittest.TestCase):
         late_branch_race=False,
         candidate_dispatch_fail=False,
         pre_merge_main_race=False,
-        approval_fail=False,
         wrong_pr_head=False,
         wrong_run_path=False,
         pr_ci="success",
@@ -297,7 +293,7 @@ class LockUpdate(unittest.TestCase):
         atomic_dispatch_fail=False,
         atomic_wrong_head=False,
         atomic_ci="success",
-        approval_token="dummy-secret",
+        app_token="dummy-secret",
     ):
         env = os.environ | {
             "PATH": f"{self.bin}:{os.environ['PATH']}",
@@ -314,14 +310,13 @@ class LockUpdate(unittest.TestCase):
             "FIXTURE_ATOMIC_DISPATCH_FAIL": str(int(atomic_dispatch_fail)),
             "FIXTURE_ATOMIC_WRONG_HEAD": str(int(atomic_wrong_head)),
             "FIXTURE_PRE_MERGE_MAIN_RACE": str(int(pre_merge_main_race)),
-            "FIXTURE_APPROVAL_FAIL": str(int(approval_fail)),
             "FIXTURE_WRONG_PR_HEAD": str(int(wrong_pr_head)),
             "FIXTURE_WRONG_RUN_PATH": str(int(wrong_run_path)),
             "FIXTURE_PR_CI": pr_ci,
             "FIXTURE_ATOMIC_READY": str(int(atomic_ready)),
             "FIXTURE_ATOMIC_CI": atomic_ci,
             "FIXTURE_ATOMIC_TITLE_DISPATCH_FAIL": "0",
-            "LOCK_UPDATE_APPROVAL_TOKEN": approval_token,
+            "GH_AUTOMATION_APP_TOKEN": app_token,
             "REAL_GIT": self.real_git,
             "FIXTURE_REMOTE": str(self.remote),
             "FIXTURE_MAIN": self.main,
@@ -333,7 +328,7 @@ class LockUpdate(unittest.TestCase):
             "LOCK_UPDATE_POLL_ATTEMPTS": "3",
         }
         (self.root / "requests").write_text("")
-        for marker in [*self.root.glob("dispatched-*"), *self.root.glob("approved-*"), self.root / "main-raced"]:
+        for marker in [*self.root.glob("dispatched-*"), self.root / "main-raced"]:
             if marker.name.startswith("dispatched-atomic"):
                 continue
             if marker.exists():
@@ -482,16 +477,17 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertEqual(self.main_sha(), self.main)
 
-    def test_approves_both_required_pr_runs_before_publishing(self):
+    def test_required_pr_runs_pass_without_manual_approvals(self):
         result = self.update()
         self.assertEqual(result.returncode, 0, result.stderr)
-        approvals = [r for r in self.requests if r[0] == "api" and any(a.endswith('/approve') for a in r)]
-        self.assertEqual(len(approvals), 2)
+        self.assertFalse(any(r[0] == "api" and any(a.endswith('/approve') for a in r)
+                             for r in self.requests))
         self.assertEqual(self.main_sha(), self.branch_sha())
 
-    def test_approval_failure_cannot_publish_despite_successful_dispatches(self):
-        result = self.update(approval_fail=True)
+    def test_action_required_does_not_publish_despite_successful_dispatches(self):
+        result = self.update(pr_ci="action_required")
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn("requests manual approval", result.stderr)
         self.assertEqual(self.main_sha(), self.main)
 
     def test_normal_pr_failure_cannot_publish_despite_successful_dispatches(self):
@@ -499,13 +495,13 @@ class LockUpdate(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.main_sha(), self.main)
 
-    def test_stale_pr_cannot_be_approved(self):
+    def test_stale_pr_cannot_merge(self):
         result = self.update(wrong_pr_head=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.main_sha(), self.main)
         self.assertFalse(any(r[0] == "api" and any(a.endswith('/approve') for a in r) for r in self.requests))
 
-    def test_unexpected_workflow_cannot_be_approved(self):
+    def test_unexpected_workflow_cannot_merge(self):
         result = self.update(wrong_run_path=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.main_sha(), self.main)
@@ -527,9 +523,8 @@ class LockUpdate(unittest.TestCase):
         ci_dispatch = next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]
                            and r[r.index("--ref") + 1] == "automation/atomic-cleanup")
         self.assertIn("upstream_watcher=qbittorrent", ci_dispatch)
-        approvals = [r for r in self.requests if r[0] == "api" and any(a.endswith("/approve") for a in r)]
-        self.assertEqual(len(approvals), 2,
-                         "enforced atomic checks need approval like trusted lock updates")
+        self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
+                             for r in self.requests))
         self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests),
                         "the atomic candidate must be merge-automated")
 
@@ -635,18 +630,18 @@ class LockUpdate(unittest.TestCase):
         self.assertNotIn("build_arm_authelia", dispatch)
         self.assertIn("upstream_watcher=qbittorrent", dispatch)
         self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests))
-        approvals = [r for r in self.requests if r[0] == "api" and any(a.endswith("/approve") for a in r)]
-        self.assertEqual(len(approvals), 2)
+        self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
+                             for r in self.requests))
 
 
-    def test_stale_atomic_pr_head_cannot_be_approved(self):
+    def test_stale_atomic_pr_head_cannot_merge(self):
         first = self.update(atomic_ready=True)
         self.assertEqual(first.returncode, 0, first.stderr)
         second = self.update(atomic_wrong_head=True)
         self.assertNotEqual(second.returncode, 0)
         self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
                              for r in self.requests),
-                         "a diverged PR head must never be approved")
+                         "a diverged PR head must never merge")
 
     def test_atomic_refresh_reapplies_recipe_when_main_advances(self):
 
@@ -675,8 +670,8 @@ class LockUpdate(unittest.TestCase):
         for invocation in dispatches:
             self.assertIn(f"expected_sha={refreshed}", invocation)
         self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests))
-        self.assertTrue((self.root / "approved-31").exists())
-        self.assertTrue((self.root / "approved-32").exists())
+        self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
+                             for r in self.requests))
         record = json.loads(self.git(
             "--git-dir", str(self.remote), "show",
             "automation/atomic-cleanup-provenance:provenance.json"))
@@ -776,7 +771,7 @@ class LockUpdate(unittest.TestCase):
                          "failed validation must never arm auto-merge")
         self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
                               for r in self.requests),
-                         "failed validation must not approve PR checks either")
+                         "failed validation must not attempt workflow approval")
 
     def test_lockfile_only_amendment_rejected(self):
         first = self.update(atomic_ready=True)
@@ -869,27 +864,28 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
-    def test_approval_failure_never_arms_atomic_automerge(self):
+    def test_action_required_never_arms_atomic_automerge(self):
         first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
-        second = self.update(change=False, approval_fail=True)
+        second = self.update(change=False, pr_ci="action_required")
         self.assertNotEqual(second.returncode, 0)
+        self.assertIn("requests manual approval", second.stderr)
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests),
-                         "failed approval must never arm auto-merge")
+                         "action_required must never arm auto-merge")
 
-    def test_missing_approval_token_fails_closed_with_guidance(self):
+    def test_missing_app_token_fails_closed_with_guidance(self):
         first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
-        second = self.update(change=False, approval_token="")
+        second = self.update(change=False, app_token="")
         self.assertNotEqual(second.returncode, 0)
-        self.assertIn("LOCK_UPDATE_APPROVAL_TOKEN", second.stderr)
+        self.assertIn("GH_AUTOMATION_APP_TOKEN", second.stderr)
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests),
-                         "missing approval identity must never arm auto-merge")
+                         "missing app identity must never arm auto-merge")
         self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
                               for r in self.requests),
-                         "missing approval identity must not attempt approval")
+                         "missing app identity must not attempt approval")
 
     def test_creation_records_provenance(self):
         result = self.update(atomic_ready=True)

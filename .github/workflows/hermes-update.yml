@@ -34,23 +34,22 @@ jobs:
         with:
           client-id: ${{ vars.GH_AUTOMATION_APP_CLIENT_ID }}
           private-key: ${{ secrets.GH_AUTOMATION_APP_PRIVATE_KEY }}
-          permission-actions: write
           permission-contents: write
           permission-pull-requests: write
       - name: Open the stable-release bump PR
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          LOCK_UPDATE_APPROVAL_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_AUTOMATION_APP_TOKEN: ${{ steps.app-token.outputs.token }}
         shell: bash
         run: |
           set -euo pipefail
           branch=automation/hermes-stable
           poll_seconds=${HERMES_UPDATE_POLL_SECONDS:-15}
           poll_attempts=${HERMES_UPDATE_POLL_ATTEMPTS:-420}
-          approval_token="${LOCK_UPDATE_APPROVAL_TOKEN:-}"
-          test -n "$approval_token" || { echo 'Missing GitHub App token; refusing to publish automated PRs.' >&2; exit 1; }
-          GH_TOKEN="$approval_token" gh auth setup-git
+          app_token="${GH_AUTOMATION_APP_TOKEN:-}"
+          test -n "$app_token" || { echo 'Missing GitHub App token; refusing to publish automated PRs.' >&2; exit 1; }
+          GH_TOKEN="$app_token" gh auth setup-git
 
           # Reuse only a dispatch with the native-Hermes validation manifest.
           # A passing ordinary CI run on the same SHA does not qualify.
@@ -214,7 +213,7 @@ jobs:
                 --limit 1 --json headRefOid --jq '.[0].headRefOid // empty')
               if [ "$existing" = "$merged_tip" ] || [ "$existing" = "$closed_tip" ] \
                 || [ "$current" = "$latest" ]; then
-                GH_TOKEN="$approval_token" git push "--force-with-lease=refs/heads/$branch:$existing" \
+                GH_TOKEN="$app_token" git push "--force-with-lease=refs/heads/$branch:$existing" \
                   origin ":refs/heads/$branch"
                 existing=""
               else
@@ -243,7 +242,7 @@ jobs:
           if [ "$current" = "$latest" ]; then
             if [ -n "$pr" ]; then
               gh pr close "$pr" --comment "main already pins $latest; closing this candidate."
-              GH_TOKEN="$approval_token" git push "--force-with-lease=refs/heads/$branch:$existing" \
+              GH_TOKEN="$app_token" git push "--force-with-lease=refs/heads/$branch:$existing" \
                 origin ":refs/heads/$branch"
             fi
             echo "hermes-agent already pinned to $latest."
@@ -309,7 +308,7 @@ jobs:
               echo "main advanced while preparing the Hermes candidate; retry." >&2
               exit 1
             fi
-            GH_TOKEN="$approval_token" git push "--force-with-lease=refs/heads/$branch:$existing" \
+            GH_TOKEN="$app_token" git push "--force-with-lease=refs/heads/$branch:$existing" \
               origin "HEAD:refs/heads/$branch"
           fi
 
@@ -325,11 +324,10 @@ jobs:
           )
           if [ -n "$pr" ]; then
             if [ -z "$unchanged" ] || [ -n "$publication_incomplete" ]; then
-              GH_TOKEN="$approval_token" gh pr edit "$pr" --title "chore(hermes): update to $latest" --body "$body"
+              GH_TOKEN="$app_token" gh pr edit "$pr" --title "chore(hermes): update to $latest" --body "$body"
             fi
           else
-            create_token="$approval_token"
-            url=$(GH_TOKEN="$create_token" gh pr create --base main --head "$branch" \
+            url=$(GH_TOKEN="$app_token" gh pr create --base main --head "$branch" \
               --title "chore(hermes): update to $latest" --body "$body")
             pr=${url##*/}
           fi

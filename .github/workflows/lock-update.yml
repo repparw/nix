@@ -30,25 +30,24 @@ jobs:
         with:
           client-id: ${{ vars.GH_AUTOMATION_APP_CLIENT_ID }}
           private-key: ${{ secrets.GH_AUTOMATION_APP_PRIVATE_KEY }}
-          permission-actions: write
           permission-contents: write
           permission-pull-requests: write
       - name: Update, validate, and publish the lock PR
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          LOCK_UPDATE_APPROVAL_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_AUTOMATION_APP_TOKEN: ${{ steps.app-token.outputs.token }}
         shell: bash
         run: |
           set -euo pipefail
           branch=automation/flake-lock
           poll_seconds=${LOCK_UPDATE_POLL_SECONDS:-15}
           poll_attempts=${LOCK_UPDATE_POLL_ATTEMPTS:-160}
-          # Approval identity for approval-gated runs. Empty until the owner
-          # stores LOCK_UPDATE_APPROVAL_TOKEN (see the step env above).
-          approval_token="${LOCK_UPDATE_APPROVAL_TOKEN:-}"
-          test -n "$approval_token" || { echo 'Missing GitHub App token (LOCK_UPDATE_APPROVAL_TOKEN); refusing to publish automated PRs.' >&2; exit 1; }
-          GH_TOKEN="$approval_token" gh auth setup-git
+          # App installation token from the preceding action. A missing token
+          # is a configuration error, not permission to use GITHUB_TOKEN.
+          app_token="${GH_AUTOMATION_APP_TOKEN:-}"
+          test -n "$app_token" || { echo 'Missing GH_AUTOMATION_APP_TOKEN; refusing to publish automated PRs.' >&2; exit 1; }
+          GH_TOKEN="$app_token" gh auth setup-git
 
           latest_ci() {
             local ref="$1" sha="$2"
@@ -91,21 +90,6 @@ jobs:
             wait_for_ci "$ref" "$sha" >/dev/null
           }
 
-          # Shared approval identity. The default GITHUB_TOKEN cannot approve
-          # approval-gated workflow runs created by its own PRs, so approval
-          # requires the dedicated token and fails closed without it.
-          approve_workflow_run() {
-            local run_id="$1"
-            if [ -z "$approval_token" ]; then
-              echo "Required workflow run $run_id needs approval but LOCK_UPDATE_APPROVAL_TOKEN is not configured." >&2
-              echo "Add a fine-grained PAT (Actions: read+write on repparw/nix) or an App installation token" >&2
-              echo "with actions:write as that secret; refusing to approve and leaving auto-merge disarmed." >&2
-              return 1
-            fi
-            GH_TOKEN="$approval_token" gh api --method POST \
-              "repos/$GH_REPO/actions/runs/$run_id/approve" >/dev/null
-          }
-
           # Shared tip check for both publishers: the remote branch tip must
           # equal the verified revision, the open PR must point at that exact
           # SHA on main, and the base-to-tip file set must match. $1 branch,
@@ -114,7 +98,7 @@ jobs:
             local vbranch="$1" vbase="$2" vrev="$3" vpr="$4" want="$5"
             if [ "$(git ls-remote --heads origin "$vbranch" | cut -f1)" != "$vrev" ] \
               || [ "$(git diff --name-only "$vbase" "$vrev" | sort)" != "$want" ]; then
-              echo "Candidate on $vbranch changed or contains unexpected files; refusing workflow approval." >&2
+              echo "Candidate on $vbranch changed or contains unexpected files; refusing merge." >&2
               return 1
             fi
             gh api "repos/$GH_REPO/pulls/$vpr" | jq -e \
@@ -127,13 +111,13 @@ jobs:
             verify_pr_head "$branch" "$main_sha" "$revision" "$pr" flake.lock
           }
 
-          # Shared required-workflow poller for both publishers. Approves an
-          # approval-gated run only after the shared tip check passes, and
-          # succeeds only when the run completes successfully. $1 workflow,
-          # $2 branch, $3 base, $4 revision, $5 PR number, $6 file list.
+          # Both publishers require their App-authored PR's own CI and title
+          # workflows to succeed. Never approve action_required runs here:
+          # that means publishing did not use the intended App identity.
+          # $1 workflow, $2 branch, $3 revision, $4 PR number.
           wait_for_pr_checks() {
-            local workflow="$1" wbranch="$2" wbase="$3" wrev="$4" wpr="$5" want="$6"
-            local row run_id status conclusion approved='' attempt=0
+            local workflow="$1" wbranch="$2" wrev="$3" wpr="$4"
+            local row run_id status conclusion attempt=0
             while [ "$attempt" -lt "$poll_attempts" ]; do
               row=$(gh api --method GET "repos/$GH_REPO/actions/workflows/$workflow/runs" \
                 -f branch="$wbranch" -f head_sha="$wrev" -f event=pull_request \
@@ -146,11 +130,8 @@ jobs:
                 status=$(jq -r .status <<< "$row")
                 conclusion=$(jq -r '.conclusion // ""' <<< "$row")
                 if [ "$conclusion" = action_required ]; then
-                  if [ "$approved" != "$run_id" ]; then
-                    verify_pr_head "$wbranch" "$wbase" "$wrev" "$wpr" "$want"
-                    approve_workflow_run "$run_id"
-                    approved=$run_id
-                  fi
+                  echo "Required PR workflow $workflow run $run_id requests manual approval; check that $wbranch was pushed by the GitHub App." >&2
+                  return 1
                 elif [ "$status" = completed ]; then
                   if [ "$conclusion" = success ]; then return 0; fi
                   echo "Required PR workflow $workflow run $run_id concluded $conclusion on $wrev." >&2
@@ -165,16 +146,14 @@ jobs:
           }
 
           wait_for_lock_pr_workflow() {
-            wait_for_pr_checks "$1" "$branch" "$main_sha" "$revision" "$pr" flake.lock
+            wait_for_pr_checks "$1" "$branch" "$revision" "$pr"
           }
 
           wait_for_atomic_pr_workflow() {
-            local want
-            want=$(printf '%s\n' flake.lock $(atomic_recipe_paths "$atomic_watchers") | sort)
-            wait_for_pr_checks "$1" "$atomic_branch" "$atomic_base" "$atomic_revision" "$atomic_pr" "$want"
+            wait_for_pr_checks "$1" "$atomic_branch" "$atomic_revision" "$atomic_pr"
           }
 
-          approve_lock_checks() {
+          require_lock_checks() {
             wait_for_lock_pr_workflow ci.yml
             wait_for_lock_pr_workflow pr-title.yml
           }
@@ -188,8 +167,8 @@ jobs:
             done | sort -u
           }
 
-          # Trusted-candidate check for the atomic branch: approve only this
-          # verified candidate's own CI and title runs. Globals: atomic_pr,
+          # Trusted-candidate check for the atomic branch before merging.
+          # Globals: atomic_pr,
           # atomic_revision, atomic_base, atomic_watchers, atomic_branch.
           verify_atomic_pr() {
             local want
@@ -197,7 +176,7 @@ jobs:
             verify_pr_head "$atomic_branch" "$atomic_base" "$atomic_revision" "$atomic_pr" "$want"
           }
 
-          approve_atomic_checks() {
+          require_atomic_checks() {
             wait_for_atomic_pr_workflow ci.yml
             wait_for_atomic_pr_workflow pr-title.yml
           }
@@ -246,7 +225,7 @@ jobs:
             trailer=$(atomic_trailer "$atomic_base" "$atomic_revision" "$atomic_watchers")
             body=$(printf '%s\n' "$body" | grep -v 'atomic-provenance base=' || true)
             body=$(printf '%s\n%s\n%s' "$body" '' "$trailer")
-            GH_TOKEN="$approval_token" gh pr edit "$atomic_pr" --repo "$GH_REPO" --body "$body"
+            GH_TOKEN="$app_token" gh pr edit "$atomic_pr" --repo "$GH_REPO" --body "$body"
           }
 
           # Prove the recovered tip is exactly the candidate automation
@@ -431,7 +410,7 @@ jobs:
               echo 'main advanced during atomic refresh; refusing to publish.' >&2
               return 1
             fi
-            GH_TOKEN="$approval_token" git push --quiet "--force-with-lease=refs/heads/$atomic_branch:$atomic_revision" \
+            GH_TOKEN="$app_token" git push --quiet "--force-with-lease=refs/heads/$atomic_branch:$atomic_revision" \
               origin "$rebuilt:refs/heads/$atomic_branch"
             atomic_revision=$rebuilt
             atomic_base=$new_main
@@ -481,12 +460,10 @@ jobs:
           }
 
           # Reconcile an already published atomic branch without editing it.
-          # Bot-created PRs do not emit normal pull_request workflows, so
-          # dispatches may need recovery after a partial workflow failure.
-          # Dispatches missing exact-SHA validation and waits until it is
-          # green. Never merges: the caller merges only after the
-          # required PR checks are approved as well, and the merge itself is
-          # gated by the required PR CI (including bundled package validations).
+          # Reconcile missing exact-SHA validation after partial publication
+          # or a previous CI failure. Never merges: the caller merges only
+          # after the normal App-triggered PR checks also pass, including
+          # the bundled package validations.
           reconcile_atomic_ci() {
             local pr="$1" sha="$2" watchers="${3:-}" title_runs ci_runs
             local watcher upstream_watchers='' required_jobs=0 manifest
@@ -582,7 +559,7 @@ jobs:
               verify_atomic_plan || exit 1
             fi
             reconcile_atomic_ci "$atomic_pr" "$atomic_revision" "$atomic_watchers" || exit 1
-            approve_atomic_checks || exit 1
+            require_atomic_checks || exit 1
             merge_atomic_candidate || exit 1
             echo "Atomic cleanup PR #$atomic_pr owns the next lock publication; refusing to compete."
             exit 0
@@ -598,7 +575,7 @@ jobs:
               echo "Unowned atomic branch $atomic_branch at $stale_tip; refusing deletion." >&2
               exit 1
             fi
-            GH_TOKEN="$approval_token" git push "--force-with-lease=refs/heads/$atomic_branch:$stale_tip" \
+            GH_TOKEN="$app_token" git push "--force-with-lease=refs/heads/$atomic_branch:$stale_tip" \
               origin ":refs/heads/$atomic_branch"
             # Retire the provenance record with the branch it describes.
             prov_tip=$(git ls-remote --heads origin "$provenance_ref" | cut -f1)
@@ -688,12 +665,9 @@ jobs:
                 echo 'main advanced during atomic candidate preparation; refusing to publish stale branch.' >&2
                 exit 1
               fi
-              GH_TOKEN="$approval_token" git push "--force-with-lease=refs/heads/$atomic_branch:" origin "HEAD:refs/heads/$atomic_branch"
-              # PRs created with the dedicated token run the normal required
-              # workflows without the approval gate; without it the default
-              # token keeps current behavior and approvals fail closed.
-              create_token="$approval_token"
-              url=$(GH_TOKEN="$create_token" gh pr create --base main --head "$atomic_branch" \
+              GH_TOKEN="$app_token" git push "--force-with-lease=refs/heads/$atomic_branch:" origin "HEAD:refs/heads/$atomic_branch"
+              # App-authored PRs trigger their normal required workflows.
+              url=$(GH_TOKEN="$app_token" gh pr create --base main --head "$atomic_branch" \
                 --title 'fix(upstream): retire apply-coupled workarounds with updated lock' \
                 --body "$(printf '%s\n\n%s' "Atomic lock+cleanup candidate for: $watcher_list. Each included watcher is ready on this candidate pin. Merging happens only after exact-SHA CI is green and main is current, including required package validation." \
                   "$(atomic_trailer "$main_sha" "$revision" "$watcher_list")")")
@@ -702,11 +676,10 @@ jobs:
               atomic_base=$main_sha
               atomic_watchers=$watcher_list
               write_atomic_provenance "" || exit 1
-              # Exact-SHA validation must be green, then required PR checks
-              # approved, and only then may the exact head merge. The merge itself
-              # stays gated by the required PR CI.
+              # Exact-SHA validation and required PR checks must pass before
+              # the exact head may merge.
               reconcile_atomic_ci "$atomic_pr" "$revision" "$watcher_list" || exit 1
-              approve_atomic_checks || exit 1
+              require_atomic_checks || exit 1
               merge_atomic_candidate || exit 1
               # Close the now-obsolete lock-only PR only after combined
               # publication and CI dispatch succeed.
@@ -734,12 +707,11 @@ jobs:
             git switch -C "$branch"
             git commit -m 'flake.lock: Update'
             revision=$(git rev-parse HEAD)
-            GH_TOKEN="$approval_token" git push "--force-with-lease=refs/heads/$branch:$expected" origin "HEAD:refs/heads/$branch"
+            GH_TOKEN="$app_token" git push "--force-with-lease=refs/heads/$branch:$expected" origin "HEAD:refs/heads/$branch"
           fi
 
           if [ -z "$pr" ]; then
-            create_token="$approval_token"
-            url=$(GH_TOKEN="$create_token" gh pr create --base main --head "$branch" --title 'flake.lock: Update' \
+            url=$(GH_TOKEN="$app_token" gh pr create --base main --head "$branch" --title 'flake.lock: Update' \
               --body 'Update flake inputs. The updater explicitly validates this exact lock commit, then atomically fast-forwards main to that same validated SHA if main is unchanged.')
             pr=${url##*/}
           fi
@@ -770,10 +742,10 @@ jobs:
           fi
           gh run watch "$title_run" --exit-status
 
-          # Dispatched checks do not enter the PR's protection rollup. Approve
-          # only this verified lock candidate's normal CI and title runs.
+          # Dispatched checks do not enter the PR's protection rollup.
+          # Require this lock candidate's own CI and title checks.
           verify_lock_pr
-          approve_lock_checks
+          require_lock_checks
 
           if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$main_sha" ]; then
             echo 'main changed while lock CI was running; leaving the validated PR for the next refresh.' >&2
