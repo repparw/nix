@@ -5,9 +5,6 @@
     flake = false;
   };
 
-  # This aspect records the first, deliberately conservative persistence set.
-  # Hosts still need a migrated /persist volume and a separate root-layout
-  # change before enabling it. Merely including the aspect moves no data.
   den.aspects.persistence.nixos =
     {
       config,
@@ -17,6 +14,8 @@
     }:
     let
       cfg = config.modules.persistence;
+      separateFilesystems =
+        cfg.enable && config.fileSystems."/".device != config.fileSystems."/persist".device;
     in
     {
       imports = [ (inputs.impermanence + "/nixos.nix") ];
@@ -45,8 +44,6 @@
             # Keep the directory for the first migration, before user activation.
             (if cfg.mutableAccounts then "/etc" else "/etc/ssh")
             "/var/lib/nixos"
-            # Keep existing container roots until each service has passed
-            # an independent ephemeral-container restart/restore test.
             "/var/lib/nixos-containers"
             "/var/lib/systemd/timers"
             {
@@ -57,7 +54,6 @@
               directory = "/var/lib/fail2ban";
               mode = "0750";
             }
-            # Retain checkpoints made by the retired manual recovery tool.
             {
               directory = "/var/lib/host-recovery";
               mode = "0700";
@@ -78,22 +74,18 @@
               mode = "0700";
             }
           ];
-          files = lib.optional (!cfg.mutableAccounts) "/etc/machine-id" ++ [
-            {
+          files =
+            lib.optional (!cfg.mutableAccounts) "/etc/machine-id"
+            ++ lib.optional separateFilesystems {
               file = "/var/lib/systemd/random-seed";
               method = "symlink";
-            }
-          ];
+            };
         };
 
-        # User-password secrets must decrypt before users are created. Read
-        # the key from the early backing mount instead of waiting for /etc/ssh.
         sops.age.sshKeyPaths = lib.mkIf cfg.enable (
           lib.mkForce [ "/persist/etc/ssh/ssh_host_ed25519_key" ]
         );
         fileSystems."/".neededForBoot = lib.mkIf cfg.enable true;
-        # A filesystem declaration alone cannot prove migration happened. Refuse
-        # an empty/wrong backing volume before activation can initialize state.
         boot.initrd.systemd.services.check-persistence-state = lib.mkIf cfg.enable {
           requiredBy = [ "initrd-nixos-activation.service" ];
           before = [ "initrd-nixos-activation.service" ];

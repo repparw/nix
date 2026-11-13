@@ -4,7 +4,7 @@
 }:
 {
   den.aspects.ai.provides.t3code-connect = {
-    nixos = {
+    provides.to-hosts.nixos = {
       # Remove only this overlay when nixpkgs#555921 reaches the pin.
       nixpkgs.overlays = [
         (

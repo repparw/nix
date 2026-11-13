@@ -59,7 +59,6 @@ class CollectorTests(unittest.TestCase):
                 self.assertEqual(len(queued), 1)
                 event = json.loads(queued[0].read_text())
                 self.assertEqual(event['frame_signature'], 'func (lib.so)')
-                # A replay cannot replace the durable payload with a now-missing stack.
                 info.return_value.stdout = ''
                 collector.collect(state, 'alpha', [])
                 self.assertEqual(json.loads(queued[0].read_text()), event)

@@ -47,12 +47,6 @@ let
           200 | 204)
             echo "discord-notify: deleted msg $id (http $code)" >&2
             ;;
-          # 404 Unknown Message means the message is already gone, which is the
-          # state the caller asked for. Treating it as retryable pinned the
-          # msgid file forever: every probe re-attempted a deletion that can
-          # never succeed. Exiting zero lets the caller clear its own state.
-          # A 5xx or a transport failure stays retryable, because the message
-          # may well still be there.
           404)
             echo "discord-notify: msg $id already absent (http 404), treating as cleared" >&2
             ;;
@@ -112,10 +106,6 @@ in
         jq
         gnused
       ];
-      # The channel id is public repository configuration, while the bot
-      # token comes from the hermes-env secret. Exported before the script
-      # sources that secret: hosts whose secret omits DISCORD_CHANNEL_ID
-      # (pi) still post, and a secret that carries the key still wins.
       text = "export DISCORD_CHANNEL_ID=" + lib.escapeShellArg channel + "\n" + discordNotifyText;
     };
 
@@ -132,9 +122,6 @@ in
         name: service:
         let
           browserUrl = "https://${service.hostname}.${cfg.domain}";
-          # Probe public-facing, unauthenticated services through the same HTTPS
-          # edge used by visitors. Other services use their internal backend
-          # endpoints to avoid mistaking an authentication redirect for health.
           checkUrl =
             if service.healthcheck != null then
               "${browserUrl}${service.healthcheck}"

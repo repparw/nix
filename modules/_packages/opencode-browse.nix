@@ -3,7 +3,7 @@
   stdenv,
   fetchurl,
   makeWrapper,
-  nodejs-runtime,
+  nodejs_24,
 }:
 
 stdenv.mkDerivation {
@@ -20,7 +20,6 @@ stdenv.mkDerivation {
     hash = "sha256-iRizxHd+UfZP0SFDxgC0Kw2wI0R1MtYgfNUtiAPErmw=";
   };
 
-  # Browse leaves these runtime dependencies external in its npm bundle.
   ws = fetchurl {
     url = "https://registry.npmjs.org/ws/-/ws-8.22.0.tgz";
     hash = "sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==";
@@ -61,7 +60,7 @@ stdenv.mkDerivation {
     extractTgz "$pixelmatch" $out/lib/browse/node_modules/pixelmatch
     extractTgz "$pngjs" $out/lib/browse/node_modules/pngjs
     mkdir -p $out/bin
-    makeWrapper ${nodejs-runtime}/bin/node $out/bin/browse \
+    makeWrapper ${nodejs_24}/bin/node $out/bin/browse \
       --add-flags "$out/lib/browse/dist/cli.mjs" \
       --set NODE_PATH "$out/lib/browse/node_modules" \
       --set OPENCODE_BROWSER_AUTO_UPDATE off

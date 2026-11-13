@@ -67,11 +67,8 @@ let
     );
 in
 {
-  # Individual package targets let nix-fast-build skip cached results without
-  # realizing system paths, activation scripts, or host toplevels.
   flake.ciPackages = lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] targetsFor;
 
-  # Revision-specific, small build to exercise the native pipeline on PRs.
   flake.ciPackageSmoke = lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (
     system:
     let

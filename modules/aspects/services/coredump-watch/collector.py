@@ -70,7 +70,6 @@ def collect(state, host, muted):
         for line in process.stdout:
             entry = json.loads(line)
             if Path(entry.get('COREDUMP_EXE', '')).name not in muted:
-                # Select this occurrence, not another process that reused the PID.
                 info = subprocess.run(['coredumpctl', '--no-pager', 'info', f"COREDUMP_PID={entry.get('COREDUMP_PID', '')}",
                                        f"_BOOT_ID={entry.get('_BOOT_ID', '')}",
                                        f"COREDUMP_TIMESTAMP={entry.get('COREDUMP_TIMESTAMP', '')}"],
@@ -78,14 +77,12 @@ def collect(state, host, muted):
                 try:
                     event = event_from(entry, host, frame_signature(info.stdout))
                 except (KeyError, ValueError, TypeError):
-                    # A malformed journal record cannot inject text into the model.
                     print('coredumps: skipped incomplete metadata')
                 else:
                     name = event['event_id'] + '.json'
                     pending = state / 'coredumps-outbox' / name
                     if not pending.exists() and not (state / 'coredumps-seen' / name).exists():
                         atomic_json(pending, event)
-            # Durable local spool is the commit point; delivery retries independently.
             atomic_json(cursor_file, dict(cursor=entry['__CURSOR']))
             count += 1
             if count == 128:
@@ -93,7 +90,6 @@ def collect(state, host, muted):
                 break
         result = process.wait(timeout=10)
         if result and count < 128:
-            # Vacuumed cursors are retried with an overlapping bounded baseline.
             if cursor:
                 cursor_file.unlink(missing_ok=True)
             raise RuntimeError('journal query failed; retry on next run')

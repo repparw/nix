@@ -203,6 +203,18 @@ class Detector(unittest.TestCase):
                 state = watch.probe_revision("NixOS/nixpkgs", CHANNEL_REV, TESTED_COMMIT)
             self.assertEqual((state["attr"], state["version"]), ("opencode2", "2.0.27"))
 
+    def test_equal_versions_break_ties_by_explicit_priority(self):
+        with patch.object(watch, "contains", return_value=True):
+            tied = lambda _r, path, _rev: package("2.0.26") if path.split("/")[3] in ("opencode2", "opencode_2") else None
+            with patch.object(watch, "try_source", side_effect=tied):
+                state = watch.probe_revision("NixOS/nixpkgs", CHANNEL_REV, TESTED_COMMIT)
+            self.assertEqual((state["attr"], state["version"]), ("opencode2", "2.0.26"))
+
+            lower = lambda _r, path, _rev: package("2.0.26") if path.split("/")[3] in ("opencode_2", "opencode") else None
+            with patch.object(watch, "try_source", side_effect=lower):
+                state = watch.probe_revision("NixOS/nixpkgs", CHANNEL_REV, TESTED_COMMIT)
+            self.assertEqual((state["attr"], state["version"]), ("opencode_2", "2.0.26"))
+
     def test_tag_lineage_gates_on_tested_commit_ancestry(self):
         for status, base, expected in [
             ("ahead", TESTED_COMMIT, True),

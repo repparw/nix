@@ -3,24 +3,30 @@
   den = {
     schema.user.classes = lib.mkDefault [ "homeManager" ];
 
+    # Opt in to Den v0.20's scoped user content semantics. Explicit
+    # cross-scope providers below preserve intended host settings.
+    migrations.user-host-content.acknowledged = true;
+
     schema.host.includes = [
       den.batteries.hostname
+      den.batteries.mutual-provider
       den.aspects.networking
       den.aspects.secrets
       den.aspects.fleet-cli
+      # Every host participates in fleet monitoring, deploy, and service discovery.
+      den.aspects.monitoring._.cloud
+      den.aspects.fleet-unit-state
+      den.aspects.deploy-target
+      den.aspects.service-host
     ];
 
     default = {
       includes = with den.aspects; [
         nix-index
         monitoring._.agent
-        # The health collector above and the headless reboot sequence both
-        # gate on this predicate; it ships fleet-wide so fleet debug and the
-        # controller's remote check find it on any host.
         fleet-reboot
         nixvim
         nixpkgs
-        nodejs-security
         cargo-system-libs
         nix
         system

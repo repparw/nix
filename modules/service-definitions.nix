@@ -54,6 +54,11 @@ let
         default = null;
         description = "Unauthenticated liveness path. When set, the edge bypasses it and monitors probe https://host/healthcheck.";
       };
+      probePublicRoute = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Probe the backend locally and separately verify the public route through publicEdgeHost (for tunneled services).";
+      };
       lanEdge = mkOption {
         type = types.bool;
         default = false;
@@ -76,6 +81,9 @@ let
         (service.hostname != null && service.port == null)
         || (service.monitor && (service.hostname == null || service.port == null))
         || (service.healthcheck != null && (service.hostname == null || service.port == null))
+        || (
+          service.probePublicRoute && (!service.monitor || service.hostname == null || service.port == null)
+        )
       ) definitions;
       invalidHostnames = lib.attrNames (
         lib.filterAttrs (_: service: !hasValidHostname service.hostname) definitions
@@ -138,9 +146,6 @@ in
       default = "repparw.com";
     };
 
-    # Discord channel every fleet watcher delivers to (health probe,
-    # coredump/disk/reboot watch, update reports, backup size report).
-    # The bot token itself stays in the hermes-env sops secret.
     discordChannelId = mkOption {
       type = types.str;
       default = "1515064288191053979";

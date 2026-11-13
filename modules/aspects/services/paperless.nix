@@ -26,15 +26,6 @@
         service = cfg.definitions.paperless;
       in
       {
-        # Host-decrypted state dir for the container bind mount. Owned by the
-        # mapped container user (see privateUsers below), not root: the
-        # module's in-container tmpfiles cannot chown across an unmapped
-        # mount, and Django refuses to start when PAPERLESS_DATA_DIR is not
-        # writeable (boot loops forever, nspawn never signals READY).
-        # `d` creates the dir; `z` recursively heals ownership of migrated
-        # trees (a host root chown cannot touch files under the active
-        # idmapped bind mount, but tmpfiles runs while the container is
-        # stopped during switch, and before it starts at boot).
         systemd.tmpfiles.rules = [
           "d ${cfg.configDir}/paper 0755 393531 393531 -"
           "z ${cfg.configDir}/paper 0755 393531 393531 -"
@@ -49,13 +40,6 @@
         containers.paperless = servicesLib.mkContainer {
           inherit cfg;
           name = "paperless";
-          # User namespace: container uid 0 -> host 393216 (= 6 x 65536,
-          # systemd's upper-16-bit recommendation). Deterministic instead of
-          # `pick` so the state-dir ownership above stays valid across
-          # reboots; `pick` ranges are not guaranteed stable and a re-pick
-          # silently revokes the container user's write access to its own
-          # data dir (Django system check fails, boot loops, no READY).
-          # Container paperless (315) becomes host 393531.
           privateUsers = 393216;
           bindMounts = {
             "/var/lib/paperless" = {

@@ -5,7 +5,7 @@
 }:
 {
   den.aspects.file-manager = {
-    nixos = {
+    provides.to-hosts.nixos = {
       services.gvfs.enable = true;
     };
 

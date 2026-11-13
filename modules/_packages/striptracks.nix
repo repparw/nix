@@ -36,9 +36,6 @@ stdenv.mkDerivation rec {
     cp root/usr/local/bin/striptracks.sh $out/bin/striptracks.sh
     chmod +x $out/bin/striptracks.sh
 
-    # Keep upstream's executable wrapper (including its shebang), but use the
-    # script's :org pseudo-language so Sonarr resolves each series' original
-    # language dynamically. Keep the existing English-only subtitle policy.
     cp root/usr/local/bin/striptracks-eng.sh $out/bin/striptracks
     chmod +x $out/bin/striptracks
 

@@ -37,6 +37,14 @@ jobs:
         run: |
           set -euo pipefail
           attr=".#nixosConfigurations.${HOST}.config.home-manager.users.repparw.programs.t3code.package"
+          # On ARM, validate the selected wrapper derivation, then build its
+          # actual server payload. The full wrapper adds Codex to PATH; pulling
+          # its uncached Rust closure into two PR smoke jobs is prohibitively
+          # expensive and does not test T3's server package itself.
+          if [ "$HOST" != alpha ]; then
+            nix eval --raw "${attr}.drvPath" >/dev/null
+            attr="${attr}.unwrapped"
+          fi
           path=$(nix build --no-link --print-out-paths -L "$attr")
           test -x "$path/bin/t3"
           T3CODE_DISABLE_PROVIDER_UPDATE_NOTIFICATIONS=1 timeout 30 "$path/bin/t3" --version

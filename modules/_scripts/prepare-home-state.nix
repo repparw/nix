@@ -1,31 +1,15 @@
-# Builder for Alpha's home-state staging script (consumed by hosts/alpha.nix).
-# Parameterized so the home-state-backup check can exercise the exact
-# production script against a fixture home. Lives under _scripts/ so
-# import-tree does not treat it as a module.
 {
   pkgs,
   lib,
 }:
 {
-  # Absolute home and staging root; both are baked into the script.
   home,
   stateRoot,
-  # Home-relative paths staged for offsite backup.
   paths,
-  # Rsync exclude patterns applied below the --relative anchor.
   excludes ? [ ],
-  # Subset of paths guarded as critical. When a source exists it must be
-  # unlocked by OpenTofu, staged non-empty, and parseable, or the whole
-  # export fails and the previous staged generation is preserved. A missing
-  # source is tolerated until the first successful backup of that path has
-  # written a marker under stateRoot/.critical-seen; afterwards a missing
-  # source fails the export (the fleet-unit-state retained failure is the
-  # alert), so a deleted critical file cannot silently drop out of coverage.
   criticalPaths ? [ ],
 }:
 let
-  # Marker names are the relative path with separators flattened; they live
-  # outside the offsite generation tree and survive replacements.
   markerOf = path: builtins.replaceStrings [ "/" ] [ "__" ] path;
 in
 pkgs.writeShellScript "prepare-home-state" ''
@@ -47,7 +31,6 @@ pkgs.writeShellScript "prepare-home-state" ''
   trap 'rm -rf "$temporary"' EXIT
   mkdir -p "$temporary/.config" "$temporary/.local" "$seen_dir"
   ${lib.concatMapStrings (path: ''
-    # Critical source guard: ${path}
     critical_source=${lib.escapeShellArg "${home}/${path}"}
     if [ -e "$critical_source" ]; then
       critical_lock="$(dirname "$critical_source")/.$(basename "$critical_source").lock.info"
@@ -66,7 +49,6 @@ pkgs.writeShellScript "prepare-home-state" ''
     ${lib.escapeShellArgs (map (p: "${home}/./${p}") paths)} \
     "$temporary/"
   ${lib.concatMapStrings (path: ''
-    # Critical staged validation: ${path}
     critical_source=${lib.escapeShellArg "${home}/${path}"}
     if [ -e "$critical_source" ]; then
       critical_staged="$temporary"/${lib.escapeShellArg path}

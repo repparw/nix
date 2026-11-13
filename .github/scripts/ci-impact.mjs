@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 
 const documentation = 'formatting agent-docs';
 const lightweight = 'formatting sops-files change-detection agent-docs worktree-bootstrap-guard check-flake-file deploy-schema ci-workflow tofu home-state-backup';
-const configuration = 'cachix-push ci-package-targets service-definitions host-persistence pi-image-configuration backup-exports monitoring-fleet btrfs-health fleet-failed-units pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage browse-mcp';
+const configuration = 'cachix-push ci-package-targets service-definitions service-host-inventory host-persistence pi-image-configuration backup-exports monitoring-fleet btrfs-health fleet-failed-units pi-services-export coredump-collector hermes-crash-triage free-model-watch hermes-package-triage browse-mcp';
 
 const full = reason => ({
   runHosts: true,
@@ -46,9 +46,7 @@ export function classifyChanges(paths, eventName = 'pull_request') {
   // truncated comparisons must still prebuild rather than risk cache misses.
   const knownPaths = Array.isArray(paths) && paths.length > 0 && paths.length < 300 &&
     paths.every(p => typeof p === 'string' && p);
-  // Main pushes always run the full safety net.
   if (eventName === 'push') return full('full validation for push');
-  // Exact-SHA dispatch and unexpected events cannot skip validation.
   if (eventName !== 'pull_request') return full(`full validation for ${eventName}`);
   if (!knownPaths) return full('unknown or truncated comparison');
   if (paths.every(documentationOnly)) {
@@ -91,9 +89,7 @@ export function detect({
       return classifyChanges(null, eventName);
     }
     const comparison = JSON.parse(result.stdout);
-    // total_files is not guaranteed, so length >= 300 also triggers full validation.
-    if (!Array.isArray(comparison.files) || comparison.files.length >= 300 ||
-        (typeof comparison.total_files === 'number' && comparison.total_files > comparison.files.length))
+    if (!Array.isArray(comparison.files) || comparison.files.length >= 300)
       return classifyChanges(null, eventName);
     return classifyChanges(changedPaths(comparison.files), eventName);
   } catch (error) {

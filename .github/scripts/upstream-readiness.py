@@ -29,9 +29,6 @@ WORKAROUNDS = {
     "qbittorrent": ("modules/aspects/upstream/qbittorrent.nix", None),
     "wpaperd-fix": ("modules/aspects/upstream/wpaperd-fix.nix", None),
     "gamescope-vkroots": ("modules/aspects/upstream/gamescope-vkroots.nix", None),
-    "t3code-stable010": ("modules/aspects/upstream/t3code-stable010.nix", None),
-    "moonshine-pr227": ("modules/aspects/upstream/moonshine-pr227-test.nix", None),
-    "nodejs-security": ("modules/aspects/upstream/nodejs-security.nix", "../../_packages/nodejs-security.nix"),
 }
 
 
@@ -96,64 +93,6 @@ def gamescope_fixed():
     return flagged_queues_fixed((Path(result.stdout.strip()) / "vkroots.h").read_text())
 
 
-def unit_removed_block(application_rs):
-    # Port of the watcher's awk guard: extract the brace-matched block after
-    # `if id == unit_name` and require the current-state recheck inside it.
-    start = application_rs.find("if id == unit_name")
-    if start == -1:
-        return ""
-    depth = 0
-    begun = False
-    for index in range(application_rs.find("{", start), len(application_rs)):
-        character = application_rs[index]
-        if character == "{":
-            depth += 1
-            begun = True
-        elif character == "}":
-            depth -= 1
-            if begun and depth == 0:
-                return application_rs[start:index + 1]
-    return ""
-
-
-def moonshine_reload_guard(repo, revision):
-    # Mirrors the watch-moonshine-pr227 source gate (issue #147): the held
-    # commits fence plus a UnitRemoved handler that rechecks the current
-    # application state before tearing it down. A differently-implemented
-    # equivalent keeps the status at waiting-source for human review.
-    package_text = source("NixOS/nixpkgs", "pkgs/by-name/mo/moonshine/package.nix", revision)
-    ref = source_ref(package_text)
-    require_all = (
-        ("moonshine-core/src/session/compositor/mod.rs", "mod held_commits;"),
-        ("moonshine-core/src/session/compositor/handlers.rs", "held_commits::hold_until_rendered"),
-        ("moonshine-core/src/session/compositor/held_commits.rs", "DMA_BUF_IOCTL_EXPORT_SYNC_FILE"),
-    )
-    for path, marker in require_all:
-        if marker not in source(repo, path, ref):
-            return False
-    return "current_unit_state" in unit_removed_block(source(repo, "moonshine-core/src/session/application.rs", ref))
-
-
-
-# The stable-version bridge needs release and pin evidence before retirement.
-T3CODE_V2_COMMIT = "de343914273eceb852a1d1d739cd1d38df7796ee"
-T3CODE_STABLE_MIN_VERSION = (0, 1, 5)
-T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
-
-
-def t3code_stable_tag(package_revision):
-    try:
-        text = source("NixOS/nixpkgs", T3CODE_UNWRAPPED, package_revision)
-    except subprocess.CalledProcessError as error:
-        if "HTTP 404" not in (error.stderr or ""):
-            raise
-        text = source("NixOS/nixpkgs", "pkgs/by-name/t3/t3code-cli/unwrapped.nix", package_revision)
-    tag = source_ref(text)
-    # Never treat a nightly, preview, non-semver, or arbitrary revision as a
-    # stable packaged release. This also rejects unexpected package shapes.
-    return tag if re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) else None
-
-
 T3CODE_PACKAGE = "pkgs/by-name/t3/t3code/package.nix"
 
 
@@ -167,43 +106,6 @@ def t3code_browser_wrapped(revision):
             all(library in text for library in ("libgbm", "nss", "libxkbcommon")))
 
 
-def t3code_stable_v2_status(lock, minimum_version=(0, 0, 0)):
-    upstream = "pingdotgg/t3code"
-    latest = api(f"repos/{upstream}/releases/latest")
-    if not isinstance(latest, dict) or not isinstance(latest.get("tag_name"), str):
-        raise ValueError("cannot identify latest stable T3 Code release")
-    tag = latest["tag_name"]
-    if latest.get("draft") is not False or latest.get("prerelease") is not False:
-        raise ValueError("latest stable release is not verified")
-    if not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag):
-        raise ValueError("unexpected stable release tag")
-    if not contains(upstream, T3CODE_V2_COMMIT, tag):
-        return "waiting-upstream"
-
-    channel = api("repos/NixOS/nixpkgs/commits/nixos-unstable")
-    channel_revision = channel["sha"]
-    if not re.fullmatch(r"[a-f0-9]{40}", channel_revision):
-        raise ValueError("invalid channel revision")
-    def eligible(tag):
-        return (tag is not None and
-                tuple(map(int, tag[1:].split("."))) >= minimum_version and
-                contains(upstream, T3CODE_V2_COMMIT, tag))
-
-    channel_tag = t3code_stable_tag(channel_revision)
-    if not eligible(channel_tag):
-        return "waiting-unstable"
-
-    pinned_tag = t3code_stable_tag(pin(lock, "nixpkgs"))
-    if not eligible(pinned_tag):
-        return "merged-not-pinned"
-
-    # Pin tags also need an actual, non-prerelease GitHub release. Tag
-    # ancestry alone could otherwise accept a manually published preview.
-    release = api(f"repos/{upstream}/releases/tags/{pinned_tag}")
-    if (release.get("tag_name") != pinned_tag or
-            release.get("draft") is not False or release.get("prerelease") is not False):
-        raise ValueError("pinned T3 Code release is not stable")
-    return "PINNED-READY"
 
 GE_UPSTREAM = "GloriousEggroll/proton-ge-custom"
 GE_PACKAGE = "pkgs/by-name/pr/proton-ge-bin/package.nix"
@@ -284,23 +186,6 @@ def fsr4_rdna2_status(lock):
 
 
 def detect(name, lock):
-    if name == "nodejs-security":
-        revision = pin(lock, "nixpkgs")
-        # A Node release alone is insufficient: Nix links Brotli and c-ares
-        # as shared libraries, and OpenCode embeds the Bun runtime. The
-        # cleanup retires the whole #341 overlay family at once, so every
-        # piece must be contained by the pin before it fires.
-        bun = api("repos/NixOS/nixpkgs/pulls/577354")
-        if not bun.get("merged"):
-            return "waiting-upstream"
-        fixes = (
-            "2794b31601c683d494c898a548e3c5237fa2242e",  # Node 24.22.1
-            "664dc1852b684a2db1d7734514030739fc557b91",  # Brotli 1.2.1, carries the out-of-bound-write fix
-            "dfbfe7d499556a3acea67ccc4888c2ef489bade0",  # c-ares 1.34.9
-        )
-        ready = contains("NixOS/nixpkgs", bun["merge_commit_sha"], revision)
-        ready = ready and all(contains("NixOS/nixpkgs", fix, revision) for fix in fixes)
-        return "PINNED-READY" if ready else "merged-not-pinned"
     if name == "fsr4-rdna2":
         return fsr4_rdna2_status(lock)
     if name == "tridactyl-reader":
@@ -335,9 +220,6 @@ def detect(name, lock):
         detector = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(detector)
         return detector.inspect(name, lock)["status"]
-    if name == "t3code-stable010":
-        # Removing the bridge must not downgrade the installed stable version.
-        return t3code_stable_v2_status(lock, minimum_version=T3CODE_STABLE_MIN_VERSION)
     if name in PR_WAITS:
         repo, number, input_name = PR_WAITS[name]
         pr = api(f"repos/{repo}/pulls/{number}")
@@ -366,17 +248,6 @@ def detect(name, lock):
         if not pr.get("merged"):
             return "waiting-upstream"
         return "PINNED-READY" if package_contains(package, repo, pr["merge_commit_sha"], revision) else "merged-not-pinned"
-    if name == "moonshine-pr227":
-        repo, number, package = "hgaiser/moonshine", 227, "moonshine"
-        pr = api(f"repos/{repo}/pulls/{number}")
-        if not pr.get("merged"):
-            return "waiting-upstream"
-        if not package_contains(package, repo, pr["merge_commit_sha"], revision):
-            return "merged-not-pinned"
-        # The alpha test build also carries the local reload guard; retiring
-        # it before upstream implements equivalent behavior would reintroduce
-        # the reload disconnect. Require the exact guarded source.
-        return "PINNED-READY" if moonshine_reload_guard(repo, revision) else "waiting-source"
     if name == "wpaperd-fix":
         fixed = package_contains("wpaperd", "danyspin97/wpaperd", "442b962df717dfb6e3d86a3a4bfd1111882323b8", revision)
     elif name == "gamescope-vkroots":

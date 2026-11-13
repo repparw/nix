@@ -35,16 +35,8 @@ in
             state_dir="''${STATE_DIRECTORY:-/var/lib/t3-token-watch}"
             state_file="$state_dir/last-band"
 
-            # The watcher runs as root for /run/secrets/hermes-env, but the T3
-            # state directory belongs to repparw: list sessions through that
-            # account instead of touching the live server state as root.
-            # pkgs.t3code resolves through the t3code-stable010 overlay that
-            # alpha's repparw aspect applies; this watcher is alpha-only.
             export HOME=/home/repparw
             export T3CODE_HOME=/home/repparw/.t3
-            # Read structured output to match the exact client label. Multiple
-            # matching sessions are ambiguous: alpha cannot determine which
-            # bearer token Hermes has loaded on epsilon.
             sessions=$(runuser -u repparw -- ${pkgs.t3code}/bin/t3 auth session list --json 2>&1) || {
               echo "t3-token-watch: t3 auth session list failed: $sessions" >&2
               exit 1
@@ -97,10 +89,6 @@ in
               fi
             fi
 
-            # Threshold warnings fire once per band. Unverified credentials
-            # and unresolved overlaps repeat weekly until the operator checks
-            # the real Hermes MCP connection and completes the rotation.
-            # Persist notification state only after posting successfully.
             last=$(cat "$state_file" 2>/dev/null || true)
             if [ "$band" = "$last" ]; then
               if [ "$band" != overlap ] && [ "$band" != unverified ]; then
@@ -149,7 +137,6 @@ in
         systemd.timers.t3-token-watch = {
           wantedBy = [ "timers.target" ];
           timerConfig = {
-            # Daily scan; threshold bands deduplicate, unresolved credentials repeat weekly.
             OnCalendar = "daily";
             Persistent = true;
           };

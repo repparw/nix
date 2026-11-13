@@ -1,7 +1,7 @@
 { den, ... }:
 {
   den.aspects.ai.provides.dictation = {
-    nixos =
+    provides.to-hosts.nixos =
       { config, ... }:
       {
         hardware.uinput.enable = true;
@@ -86,7 +86,6 @@
         };
 
         home.packages = [
-          # Side-by-side Hex trial. Voxtype remains the default dictation service.
           pkgs.anomaly-hex
           hexToggle
           voxtypeToggle

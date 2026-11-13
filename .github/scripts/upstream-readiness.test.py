@@ -124,29 +124,6 @@ class Readiness(unittest.TestCase):
         with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), patch.object(watch, "contains", return_value=False):
             self.assertEqual(watch.detect("tasks-org", LOCK), "merged-not-pinned")
 
-    def test_moonshine_requires_reload_guard_before_ready(self):
-        # PR227 merged and pinned is not enough: the pinned source must also
-        # carry the reload guard, or the test build must be retained.
-        files = {
-            "pkgs/by-name/mo/moonshine/package.nix": 'version = "0.16.1"; tag = "v${finalAttrs.version}";',
-            "moonshine-core/src/session/compositor/mod.rs": "mod held_commits;",
-            "moonshine-core/src/session/compositor/handlers.rs": "held_commits::hold_until_rendered",
-            "moonshine-core/src/session/compositor/held_commits.rs": "DMA_BUF_IOCTL_EXPORT_SYNC_FILE",
-            "moonshine-core/src/session/application.rs": "fn handle() { if id == unit_name { let s = current_unit_state(); } }",
-        }
-        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
-                patch.object(watch, "package_contains", return_value=True), \
-                patch.object(watch, "source", side_effect=lambda repo, path, ref: files[path]):
-            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "PINNED-READY")
-        unguarded = dict(files, **{"moonshine-core/src/session/application.rs": "fn handle() { if id == unit_name { teardown(); } }"})
-        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
-                patch.object(watch, "package_contains", return_value=True), \
-                patch.object(watch, "source", side_effect=lambda repo, path, ref: unguarded[path]):
-            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "waiting-source")
-        with patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "fix"}), \
-                patch.object(watch, "package_contains", return_value=False):
-            self.assertEqual(watch.detect("moonshine-pr227", LOCK), "merged-not-pinned")
-
     def test_unavailable_does_not_become_completed_or_ready(self):
         with patch.object(watch, "detect", side_effect=subprocess.CalledProcessError(1, "gh")):
             self.assertEqual(watch.inspect("nautilus-module", LOCK), "unavailable (CalledProcessError)")
@@ -208,46 +185,6 @@ class Readiness(unittest.TestCase):
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")
             detect.assert_not_called()
 
-    def test_nodejs_security_requires_node_shared_deps_and_bun(self):
-        bun = {"merged": True, "merge_commit_sha": "bun-merge-sha"}
-        # Node, Brotli, c-ares and the Bun bump must all be contained by the
-        # pin: the cleanup retires the whole overlay family in one candidate.
-        for results in ([False], [True, False], [True, True, False], [True, True, True, False]):
-            with self.subTest(results=results), \
-                    patch.object(watch, "api", return_value=bun), \
-                    patch.object(watch, "contains", side_effect=results):
-                self.assertEqual(watch.detect("nodejs-security", LOCK), "merged-not-pinned")
-        with patch.object(watch, "api", return_value=bun), \
-                patch.object(watch, "contains", return_value=True) as probe:
-            self.assertEqual(watch.detect("nodejs-security", LOCK), "PINNED-READY")
-            self.assertEqual(probe.call_count, 4)
-        with patch.object(watch, "api", return_value={"merged": False, "merge_commit_sha": "x"}):
-            self.assertEqual(watch.detect("nodejs-security", LOCK), "waiting-upstream")
-        # Exercise unavailable API handling against an active workaround, even
-        # after the real checkout has been cleaned up by an automated PR.
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            target = root / watch.WORKAROUNDS["nodejs-security"][0]
-            target.parent.mkdir(parents=True)
-            target.write_text("nodejs-security.nix ../../_packages/nodejs-security.nix")
-            with patch.object(watch, "ROOT", root), \
-                    patch.object(watch, "api", side_effect=ValueError("missing ancestry")):
-                self.assertTrue(watch.inspect("nodejs-security", LOCK).startswith("unavailable"))
-
-    def test_nodejs_security_cleanup_completion_reads_the_aspect(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            (root / "modules/aspects/upstream").mkdir(parents=True)
-            aspect = root / watch.WORKAROUNDS["nodejs-security"][0]
-            with patch.object(watch, "ROOT", root), patch.object(watch, "detect") as detect:
-                self.assertEqual(watch.inspect("nodejs-security", LOCK), "completed")
-                detect.assert_not_called()
-            aspect.write_text("{ nodejs-runtime = callPackage ../../_packages/nodejs-security.nix {}; }")
-            with patch.object(watch, "ROOT", root), \
-                    patch.object(watch, "detect", return_value="merged-not-pinned"):
-                self.assertEqual(watch.inspect("nodejs-security", LOCK), "merged-not-pinned")
-
-
     def test_t3code_cleanup_completion_preserves_permanent_aspects(self):
         for name in ("t3code-connect", "t3code-split"):
             with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
@@ -263,117 +200,14 @@ class Readiness(unittest.TestCase):
                 with patch.object(watch, "ROOT", root), patch.object(watch, "detect", return_value="waiting-upstream"):
                     self.assertEqual(watch.inspect(name, LOCK), "waiting-upstream")
 
-    def test_t3code_stable_v2_release_channel_and_pin_gates(self):
-        stable = 'version = "0.1.5"; tag = "v0.1.5";'
-        outdated = 'version = "0.1.4"; tag = "v0.1.4";'
-        released = {"tag_name": "v0.1.5", "draft": False, "prerelease": False}
-        def run(eligible, channel=stable, pinned=stable, verified=True):
-            def api(endpoint):
-                if endpoint.endswith("/releases/latest"):
-                    return released
-                if endpoint.endswith("/commits/nixos-unstable"):
-                    return {"sha": "a" * 40}
-                if "/releases/tags/" in endpoint:
-                    return released if verified else {**released, "prerelease": True}
-                raise AssertionError(endpoint)
-            def source(repository, path, revision):
-                self.assertEqual(path, watch.T3CODE_UNWRAPPED)
-                return channel if revision == "a" * 40 else pinned
-            with patch.object(watch, "api", side_effect=api), patch.object(
-                watch, "source", side_effect=source
-            ), patch.object(
-                watch, "contains", side_effect=lambda _repo, _fix, tag: tag in eligible
-            ):
-                return watch.detect("t3code-stable010", LOCK)
 
-        self.assertEqual(run(set()), "waiting-upstream")
-        self.assertEqual(run({"v0.1.5"}, channel=outdated), "waiting-unstable")
-        self.assertEqual(run({"v0.1.5"}, pinned=outdated), "merged-not-pinned")
-        self.assertEqual(run({"v0.1.5"}), "PINNED-READY")
-        with self.assertRaises(ValueError):
-            run({"v0.1.5"}, verified=False)
-
-    def test_t3code_version_detection_survives_the_package_split(self):
-        missing = subprocess.CalledProcessError(1, ["gh"], stderr="HTTP 404: Not Found")
-        with patch.object(watch, "source", side_effect=[missing,
-                          'version = "0.1.0"; tag = "v${finalAttrs.version}";']) as source:
-            self.assertEqual(watch.t3code_stable_tag("pin"), "v0.1.0")
-            self.assertEqual(source.call_args.args[1], "pkgs/by-name/t3/t3code-cli/unwrapped.nix")
-        unavailable = subprocess.CalledProcessError(1, ["gh"], stderr="HTTP 503")
-        with patch.object(watch, "source", side_effect=unavailable) as source:
-            with self.assertRaises(subprocess.CalledProcessError):
-                watch.t3code_stable_tag("pin")
-            self.assertEqual(source.call_count, 1)
-
-    def test_t3code_stable_v2_never_accepts_a_prerelease_or_malformed_metadata(self):
-        stable = 'version = "0.1.5"; tag = "v0.1.5";'
-        with patch.object(watch, "api", return_value={
-            "tag_name": "v0.1.5-nightly.20261012.3021",
-            "draft": False, "prerelease": False
-        }):
-            with self.assertRaises(ValueError):
-                watch.detect("t3code-stable010", LOCK)
-        with patch.object(watch, "source", return_value=stable):
-            self.assertEqual(watch.t3code_stable_tag("pin"), "v0.1.5")
-        for package in ['version = "0.1.5"; tag = "v0.1.5-preview";',
-                        'version = "0.1.5-nightly"; tag = "v0.1.5-nightly";']:
-            with patch.object(watch, "source", return_value=package):
-                self.assertIsNone(watch.t3code_stable_tag("pin"))
-
-    def test_t3code_stable_v2_missing_upstream_metadata_fails_closed(self):
-        with patch.object(watch, "api", return_value={}):
-            with self.assertRaises(ValueError):
-                watch.detect("t3code-stable010", LOCK)
-
-    def test_t3code_stable010_reuses_the_stable_v2_gate(self):
-        for status in ("waiting-upstream", "merged-not-pinned", "PINNED-READY"):
-            with patch.object(watch, "t3code_stable_v2_status", return_value=status) as gate:
-                self.assertEqual(watch.detect("t3code-stable010", LOCK), status)
-                gate.assert_called_once_with(LOCK, minimum_version=watch.T3CODE_STABLE_MIN_VERSION)
-        with patch.object(watch, "t3code_stable_v2_status", side_effect=ValueError("boom")):
-            with self.assertRaises(ValueError):
-                watch.detect("t3code-stable010", LOCK)
-
-    def test_t3code_bridge_and_retirement_floor_agree(self):
-        # The post-lock cleanup must never retire a newer local bridge for an
-        # older package on the root pin.
-        import re
+    def test_retired_t3code_bridge_keeps_version_floor(self):
         root = Path(__file__).resolve().parents[2]
-        bridge = root / "modules/aspects/upstream/t3code-stable010.nix"
-        cleanup = (root / ".github/upstream/cleanup/t3code-stable010.patch").read_text()
-        # Before retirement the bridge is the source of the version floor.
-        # After retirement the patch retains that source, and the installed
-        # Home Manager module must enforce the same floor itself.
-        source = bridge.read_text() if bridge.exists() else cleanup
-        match = re.search(r'\bversion\s*=\s*"(\d+)\.(\d+)\.(\d+)";', source)
-        self.assertIsNotNone(match)
-        minimum = tuple(map(int, match.groups()))
-        self.assertEqual(watch.T3CODE_STABLE_MIN_VERSION, minimum)
-        version = ".".join(map(str, minimum))
-        assertion_source = cleanup if bridge.exists() else (
-            root / "modules/aspects/ai/t3code.nix"
-        ).read_text()
+        self.assertFalse((root / "modules/aspects/upstream/t3code-stable010.nix").exists())
         self.assertIn(
-            f'lib.versionAtLeast config.programs.t3code.package.version "{version}"',
-            assertion_source,
+            'lib.versionAtLeast config.programs.t3code.package.version "0.1.5"',
+            (root / "modules/aspects/ai/t3code.nix").read_text(),
         )
-
-    def test_t3code_bridge_cleanup_cannot_downgrade_the_installed_release(self):
-        def api(endpoint):
-            if endpoint.endswith("/commits/nixos-unstable"):
-                return {"sha": "a" * 40}
-            tag = endpoint.rsplit("/", 1)[-1] if "/releases/tags/" in endpoint else "v0.1.5"
-            return {"tag_name": tag, "draft": False, "prerelease": False}
-        for channel, pinned, expected in (
-                ("v0.1.4", "v0.1.4", "waiting-unstable"),
-                ("v0.1.5", "v0.1.4", "merged-not-pinned"),
-                ("v0.1.5", "v0.1.5", "PINNED-READY"),
-                ("v0.1.10", "v0.1.10", "PINNED-READY")):
-            with self.subTest(channel=channel, pinned=pinned), \
-                    patch.object(watch, "api", side_effect=api), \
-                    patch.object(watch, "contains", return_value=True), \
-                    patch.object(watch, "t3code_stable_tag", side_effect=[channel, pinned]):
-                self.assertEqual(watch.detect("t3code-stable010", LOCK), expected)
 
     def test_cleanup_recipes_are_well_formed_and_narrow(self):
         root = Path(__file__).resolve().parents[2]

@@ -8,7 +8,7 @@
       url = "github:cursor/plugins";
       flake = false;
     };
-    den.url = "github:denful/den/latest";
+    den.url = "github:denful/den/v0.20.0";
     deploy-rs = {
       url = "github:serokell/deploy-rs";
       inputs.nixpkgs.follows = "nixpkgs";

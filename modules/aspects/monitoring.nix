@@ -1,13 +1,10 @@
 { den, ... }:
 {
   den.aspects.monitoring.provides.agent.includes = [ den.aspects.monitoring._.health ];
-  # Alloy collects host metrics and filtered journals for Grafana Cloud.
   den.aspects.monitoring.provides.agent.nixos =
     { config, lib, ... }:
     let
       cfg = config.modules.monitoring.agent;
-      # The upstream Linux collector also ignores other pseudo filesystems
-      # by fs type; the mount list is only for paths that can trigger probes.
       excludedMounts = [
         "/dev"
         "/proc"
@@ -93,8 +90,6 @@
         };
 
         environment.etc."alloy/config.alloy".text = ''
-          // The same Alloy process collects node_exporter metrics. This
-          // exporter is internal to Alloy, so no per-host metrics port is open.
           prometheus.exporter.unix "node" {
             enable_collectors = ["systemd"]
 
@@ -137,7 +132,6 @@
               scrape_interval = "60s"
             }
 
-            // Retain delivery counters, but omit internal histogram buckets.
             prometheus.relabel "alloy" {
               forward_to = [prometheus.remote_write.cloud.receiver]
               rule {
@@ -160,8 +154,6 @@
             }
           ''}
 
-          // Journald metadata is internal until explicitly promoted to labels.
-          // Keep labels low-cardinality (never PID, cursor, command line).
           loki.relabel "journal" {
             forward_to = []
 
@@ -198,8 +190,6 @@
             max_age       = "12h"
           }
 
-          // Redact common leaked credentials. This is best-effort, not
-          // proof that arbitrary sensitive content cannot be collected.
           loki.secretfilter "journal" {
             forward_to    = [${lib.optionalString cloudLogsEnabled "loki.write.cloud.receiver"}]
             redact_percent = 100
@@ -234,8 +224,6 @@
           lib.optional cloudMetricsEnabled "grafana-cloud-metrics-token:${cfg.cloud.metrics.tokenFile}"
           ++ lib.optional cloudLogsEnabled "grafana-cloud-logs-token:${cfg.cloud.logs.tokenFile}";
 
-        # Writers of future fleet-specific .prom gauges use this shared
-        # directory, independent of the telemetry agent implementation.
         systemd.tmpfiles.rules = [
           "d /var/lib/fleet-metrics/textfile 0755 root root - -"
         ];
@@ -260,8 +248,6 @@
 
   };
 
-  # Grafana Cloud write credential. Each host has its own token scoped to
-  # metrics:write and logs:write, encrypted in the host-specific sops file.
   den.aspects.monitoring.provides.cloud.nixos = { config, lib, ... }: {
     sops.secrets.grafana-cloud-write-token = {
       sopsFile = ../../secrets + "/grafana-cloud-${config.networking.hostName}.sops.yaml";

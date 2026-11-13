@@ -138,7 +138,6 @@
                     exit 1
                 fi
 
-                # A date without a time represents an all-day task.
                 if [[ "''${datetime,,}" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2}|today|tomorrow|(next[[:space:]]+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday))$ ]]; then
                     due_line="DUE;VALUE=DATE:$(date -d "@$due_epoch" +%Y%m%d)"
                 else

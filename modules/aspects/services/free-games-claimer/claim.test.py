@@ -41,8 +41,6 @@ class ClaimExitTest(unittest.TestCase):
                 "esac\n"
             )
             node.chmod(0o755)
-            # The wrapper waits for the X11 socket, so the Xvfb mock has to
-            # bind one; x11vnc is never awaited by the wrapper.
             xvfb = mockbin / "Xvfb"
             xvfb.write_text(
                 "#!/usr/bin/env bash\n"

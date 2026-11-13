@@ -11,15 +11,9 @@
 
   den.aspects.epsilon = {
     includes = [
-      den.aspects.fleet-unit-state
+      den.aspects.managed-server
       den.aspects.monitoring._.dashboard
-      den.aspects.monitoring._.persist
-      den.aspects.monitoring._.cloud
-      den.aspects.deploy-target
-      den.aspects.passwordless-sudo
       den.aspects.epsilon._.backup
-      den.aspects.persistence
-      den.aspects.service-host
       den.aspects.nixos-services._.edge
       den.aspects.nixos-services._.hermes
       den.aspects.nixos-services._.automations
@@ -68,8 +62,6 @@
           key = "repparwPasswordHash";
           neededForUsers = true;
         };
-        # users.mutableUsers stays true: this is a creation-time bootstrap,
-        # not an activation-time password reset.
         users.users.repparw.hashedPasswordFile = config.sops.secrets.repparwPasswordHash.path;
 
         modules.services.bridgePrefix = "10.231.137";
@@ -84,12 +76,6 @@
         modules.backup.paths = [ "/home/containers/config" ];
         modules.persistence.enable = true;
         modules.persistence.mutableAccounts = true;
-        # The aspect's random-seed symlink cannot transition on this host: /
-        # and /persist are the same filesystem during the migration, so the
-        # live symlink would point at itself (ELOOP) and fail every deploy-rs
-        # switch. The seed is regenerated per boot instead; directory binds
-        # are unaffected. Revisit if the backing volume ever splits from /.
-        environment.persistence."/persist".files = lib.mkForce [ ];
 
         environment.persistence."/persist".directories = [
           {
@@ -110,9 +96,6 @@
           "/var/log"
         ];
 
-        # Resolve monitored virtual hosts through their actual HTTPS edges.
-        # The guest retains the normal external URLs as clickable links, but
-        # avoids looping through public DNS/Cloudflare for its own probes.
         containers.glance.config.networking.hosts =
           let
             monitored = lib.attrValues (

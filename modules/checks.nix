@@ -1,4 +1,9 @@
-{ inputs, lib, ... }:
+{
+  inputs,
+  lib,
+  den,
+  ...
+}:
 {
   perSystem =
     { config, pkgs, ... }:
@@ -10,11 +15,6 @@
           evalHost =
             host:
             let
-              # The real, unstubbed toplevel: evaluating its drvPath is pure and
-              # measured at 20-35s per host, so CI sees evaluation breakage in
-              # every subtree (nixvim, helium, hermes) instead of masking it
-              # behind stubs. unsafeDiscardStringContext keeps the tiny check
-              # derivation from depending on the whole closure.
               evaluatedDrvPath =
                 builtins.unsafeDiscardStringContext
                   inputs.self.nixosConfigurations.${host}.config.system.build.toplevel.drvPath;
@@ -122,6 +122,42 @@
           host-persistence = import ./_tests/host-persistence.nix { inherit inputs lib pkgs; };
           host-persistence-vm = import ./_tests/host-persistence-vm.nix { inherit inputs pkgs; };
 
+          host-nat =
+            let
+              pi = inputs.self.nixosConfigurations.pi.config;
+              masquerade = pi.networking.nftables.tables.container-nat.content;
+            in
+            assert !(lib.elem "ve-+" pi.networking.nat.internalInterfaces);
+            assert lib.hasInfix "${pi.modules.services.bridgePrefix}.0/24 oifname \"eth0\" masquerade"
+              masquerade;
+            pkgs.writeText "host-nat-evaluation.json" (
+              builtins.toJSON {
+                inherit (pi.networking.nat) internalInterfaces;
+                containerNat = masquerade;
+              }
+            );
+
+          # Every host must see the same topology, including machines that
+          # publish no services and SSH addresses distinct from service IPs.
+          service-host-inventory =
+            let
+              hosts = lib.concatMapAttrs (_system: machines: machines) den.hosts;
+              hostNames = lib.attrNames inputs.self.nixosConfigurations;
+              expectedAddresses = lib.mapAttrs (_: host: host.serviceAddress) hosts;
+              expectedSshAddresses = lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) hosts;
+              inventories = map (name: inputs.self.nixosConfigurations.${name}.config.modules.services) hostNames;
+            in
+            assert lib.attrNames hosts == hostNames;
+            assert lib.all (
+              inventory:
+              inventory.hostAddresses == expectedAddresses && inventory.hostSshAddresses == expectedSshAddresses
+            ) inventories;
+            pkgs.writeText "service-host-inventory.json" (
+              builtins.toJSON {
+                inherit expectedAddresses expectedSshAddresses;
+              }
+            );
+
           fleet-failed-units =
             let
               expectedJobs = {
@@ -225,7 +261,6 @@
                 chmod -R +w src
                 cd src
                 treefmt --tree-root . --walk filesystem --fail-on-change || {
-                  # Print the formatter's exact output for actionable CI errors.
                   ${pkgs.diffutils}/bin/diff -ru ${inputs.self} . | head -n 300 || true
                   exit 1
                 }
@@ -244,11 +279,6 @@
                 touch $out
               '';
 
-          # Alpha's home-state staging: exercises the production
-          # prepare-home-state script against a fixture home — including the
-          # critical-file guards for the OpenTofu state — and asserts the
-          # evaluated alpha configuration keeps offsite coverage without HDD
-          # backup jobs.
           home-state-backup =
             let
               prepareHomeState = import ./_scripts/prepare-home-state.nix { inherit pkgs lib; };
@@ -300,9 +330,6 @@
                 printf '{}' > $home/.config/vesktop/settings.json
                 printf 'history\n' > $home/.local/share/fish/fish_history
                 printf 'x' > $home/.config/sops/age/keys.txt
-                # The never-backed-up neighbors of the state file; the state
-                # itself is created later so the bootstrap scenario can run
-                # without it.
                 printf 'x' > $state_dir/.terraform/provider-cache
                 printf 'x' > $state_dir/terraform.tfvars
                 printf 'x' > $state_dir/terraform.tfplan
@@ -310,11 +337,9 @@
                 chmod 600 $router_dir/inventory.auto.tfvars
                 printf 'x' > $router_dir/imports.tf
 
-                # Evaluated alpha configuration coverage.
                 home_state='${builtins.toJSON alphaHomeState}'
                 printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
                 printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/router/inventory.auto.tfvars")' >/dev/null
-                # Existing selection must stay untouched (spot check).
                 for kept in .config/moonshine/ .config/net.imput.helium/ .config/opencode/plugins/ .local/share/opencode/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
                   printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
                 done
@@ -323,16 +348,12 @@
                 restic_paths='${builtins.toJSON resticPaths}'
                 printf '%s' "$restic_paths" | jq -e 'index("/var/lib/home-state-backup/offsite")' >/dev/null
 
-                # Bootstrap: a missing critical source without a prior backup
-                # marker is tolerated (host without tofu yet).
                 ${staging}
                 staged=$state_root/offsite
                 test ! -e $staged/Projects/nix/infra/terraform.tfstate
                 test -f $staged/.config/vesktop/settings.json
                 test ! -e $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
 
-                # Off-site staging: state plus the rest of the allowlist,
-                # never the neighbors.
                 printf '{"version": 4, "serial": 1, "resources": [{"type": "oci_core_instance", "name": "epsilon"}]}' > $state
                 chmod 600 $state
                 ${staging}
@@ -344,8 +365,6 @@
                 test -f $staged/.config/vesktop/settings.json
                 test -f $staged/.local/share/fish/fish_history
                 test -f $staged/.export-complete
-                # OpenCode: back up live plugin files, credentials and
-                # consistent SQLite databases, but exclude regenerable outputs.
                 mkdir -p $home/.config/opencode/plugins
                 mkdir -p $home/.local/share/opencode/log $home/.local/share/opencode/tool-output
                 printf 'export default {}\n' > $home/.config/opencode/plugins/local.ts
@@ -368,8 +387,6 @@
                 test ! -e $staged/Projects/nix/infra/.terraform
                 test ! -e $staged/.config/sops/age
 
-                # A corrupt state fails the export and preserves the previous
-                # valid staged generation.
                 previous_stamp=$(cat $staged/.export-complete)
                 printf 'not json {{' > $state
                 if ${staging}; then
@@ -379,8 +396,6 @@
                 test "$(cat $staged/.export-complete)" = "$previous_stamp"
                 jq -e . $staged/Projects/nix/infra/terraform.tfstate >/dev/null
 
-                # After a successful backup, a missing critical source is an
-                # alarm, not a silent gap.
                 rm $state
                 if ${staging}; then
                   echo 'disappeared state must fail the export' >&2
@@ -389,7 +404,6 @@
                 test -f $staged/Projects/nix/infra/terraform.tfstate
                 test "$(cat $staged/.export-complete)" = "$previous_stamp"
 
-                # Never capture while OpenTofu holds the state lock.
                 printf '{"version": 4, "serial": 2, "resources": []}' > $state
                 touch $state_dir/.terraform.tfstate.lock.info
                 if ${staging}; then
@@ -402,14 +416,28 @@
                 touch $out
               '';
 
-          # Static validation of the OCI root module in infra/: formatting
-          # plus schema validation against the pinned provider, fetched from
-          # the upstream release so the check needs no network or registry.
           tofu =
             let
+              ociVersion =
+                let
+                  lockFile = builtins.readFile ../infra/.terraform.lock.hcl;
+                  marker = "provider \"registry.opentofu.org/oracle/oci\" {";
+                  parts = lib.splitString marker lockFile;
+                  block = builtins.head (lib.splitString "}" (lib.last parts));
+                  versions = builtins.filter (v: v != null) (
+                    map (builtins.match "[[:space:]]*version[[:space:]]*=[[:space:]]*\"([^\"]+)\"[[:space:]]*") (
+                      lib.splitString "\n" block
+                    )
+                  );
+                in
+                if parts == [ lockFile ] then
+                  throw "checks.tofu: infra/.terraform.lock.hcl has no registry.opentofu.org/oracle/oci provider block"
+                else if versions == [ ] then
+                  throw "checks.tofu: the oracle/oci provider block in infra/.terraform.lock.hcl has no version"
+                else
+                  builtins.head (builtins.head versions);
               ociProvider = pkgs.fetchurl {
-                # Keep in sync with infra/.terraform.lock.hcl (same zh hash).
-                url = "https://github.com/oracle/terraform-provider-oci/releases/download/v6.37.0/terraform-provider-oci_6.37.0_linux_amd64.zip";
+                url = "https://github.com/oracle/terraform-provider-oci/releases/download/v${ociVersion}/terraform-provider-oci_${ociVersion}_linux_amd64.zip";
                 sha256 = "3e3017f035fac18114e0b1d29c72430958054def0f800c22d36e1144d0c76422";
               };
             in
@@ -427,7 +455,7 @@
                 # OpenTofu's -plugin-dir search path expects the provider
                 # binary as a file at
                 # <dir>/<host>/<namespace>/<type>/<version>/<os>_<arch>/.
-                plugin_dir=$TMPDIR/plugins/registry.opentofu.org/oracle/oci/6.37.0/linux_amd64
+                plugin_dir=$TMPDIR/plugins/registry.opentofu.org/oracle/oci/${ociVersion}/linux_amd64
                 mkdir -p "$plugin_dir"
                 unzip -q -j ${ociProvider} -d "$plugin_dir"
 

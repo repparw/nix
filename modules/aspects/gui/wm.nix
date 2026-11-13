@@ -123,7 +123,7 @@
         };
 
         systemd.user.services.vicinae.Service.Environment = [
-          "VICINAE_NODE_BIN=${pkgs.nodejs-runtime}/bin/node"
+          "VICINAE_NODE_BIN=${pkgs.nodejs_24}/bin/node"
         ];
 
         xdg.configFile."vicinae/settings.json".enable = lib.mkForce false;

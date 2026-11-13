@@ -19,7 +19,6 @@ state="${FLEET_UPDATE_STATE:-/var/lib/auto-update}"
 # card, truncated Alloy's WAL and started a 67.6 GB replay to Grafana Cloud.
 # Keep the tail, which is where the build failure is explained.
 prepare_log_max_bytes="${FLEET_UPDATE_PREPARE_LOG_MAX_BYTES:-16777216}"
-# Substituted at build time from the Nix store by modules/deploy.nix.
 package_event="@PACKAGE_EVENT_SCRIPT@"
 
 enqueue_package_events() {
@@ -29,8 +28,6 @@ enqueue_package_events() {
   for host in "$@"; do
     [ -s "$state/diff-$host.txt" ] || continue
     entry="$package_outbox/$revision-$host.json"
-    # A pending entry already carries the serialized event; reuse it so a
-    # retry cannot produce a new identity under the same host/revision.
     [ -s "$entry" ] && continue
     python3 "$package_event" "$host" "$revision" "$state/diff-$host.txt" --outbox-entry "$entry" >/dev/null 2>&1 || continue
   done
@@ -79,7 +76,6 @@ if [ "$force" = 1 ] && [ "$host_selected" = 0 ]; then
   echo "--force requires an explicit --host" >&2
   exit 2
 fi
-# Keep progress visible even while the preflight/capture output is logged.
 exec 3>&2
 progress() {
   printf '[%s] fleet-update: %s\n' "$(date +%H:%M:%S)" "$*" >&3
@@ -110,8 +106,6 @@ fi
 
 api="https://discord.com/api/v10/channels/@FLEET_DISCORD_CHANNEL@/messages"
 notify() {
-  # Simple content posts share the fleet's discord-notify; the multipart
-  # failure reports below keep their own curl because they attach files.
   discord-notify post "$1" >/dev/null 2>&1 || true
 }
 
@@ -122,9 +116,6 @@ strip_ansi() {
   awk 'BEGIN { esc = sprintf("%c", 27) } { gsub(esc "\\[[0-9;?]*[A-Za-z]", ""); gsub(/\r/, ""); print }'
 }
 
-# Why the current transaction is failing, in one line, for the rollback
-# notification. Set by fail() and by health_once() so a soak failure names the
-# probe that broke rather than just the host.
 failure_reason=""
 
 fail() {
@@ -133,10 +124,6 @@ fail() {
   return 1
 }
 
-# A failure is only actionable with the failing command's own output, and the
-# transient deploy unit's journal does not survive the controller rebooting.
-# Post the best single explanation available and attach the log when the
-# explanation had to be truncated to fit.
 notify_failure() {
   [ -r /run/secrets/hermes-env ] || return 0
   local header="$1" log="$2" budget=1200 fence detail body sanitized detail_units
@@ -147,14 +134,8 @@ notify_failure() {
   local -a attachment=()
   # shellcheck disable=SC1091
   source /run/secrets/hermes-env
-  # Built in double quotes: shellcheck reads backticks in single quotes
-  # as command substitution that will never expand (SC2016).
   fence="\`\`\`"
 
-  # A soak failure is fully described by the probe that broke, and the log it
-  # would otherwise quote is the activation that just succeeded. A build
-  # failure is described by its own output, which already names the host. So
-  # pick one, never both: the reason only appears when it is the better story.
   detail=""
   case "$failure_reason" in
     soak:*) detail=$failure_reason ;;
@@ -199,7 +180,6 @@ notify_failure() {
         else .units += $width | .chars += [$c] end
     ) | .chars | implode
   ')
-  # Prefer complete lines when available, but keep a long single-line error.
   if [[ "$detail" == *$'\n'* ]]; then detail=${detail%$'\n'*}; fi
   if [ -s "$log" ] && [ "$(wc -c <"$log")" -le "$attach_limit" ]; then
     body=$(printf '%s\n%swhat failed\n%s\n%s\n(full output attached)' \
@@ -226,8 +206,6 @@ notify_file() {
   header="$1"
   file="$2"
   budget=1600
-  # Built in double quotes: shellcheck reads backticks in single quotes
-  # as command substitution that will never expand (SC2016).
   fence="\`\`\`"
   raw=$(<"$file")
   sanitized=${raw//\`/\'}
@@ -290,7 +268,6 @@ host_address() {
 remote() {
   local host="$1"
   shift
-  # Arguments are intentionally expanded by this client-side wrapper.
   # shellcheck disable=SC2029
   ssh "${ssh_options[@]}" "root@$(host_address "$host")" "$@"
 }
@@ -299,11 +276,6 @@ http_code() {
   [ "$(curl -sS -m 10 -o /dev/null -w '%{http_code}' "$1" || true)" = "$2" ]
 }
 
-# Container units owned by a host, derived from the service registry of the
-# deployed revision (definitions with container = true) instead of a
-# hardcoded list, so the soak gate cannot drift when services move between
-# hosts. Evaluated once per host per run and cached; the raw JSON stays in
-# the cache so a legitimately empty list is not re-evaluated.
 declare -A container_units_json
 container_units() { # host -> space-separated container@name units; 1 on eval failure
   local host="$1"
@@ -329,7 +301,6 @@ health_once() {
     return 1
   fi
   if [ -n "$units" ]; then
-    # Unit names are intentionally expanded by this client-side wrapper.
     # shellcheck disable=SC2086,SC2029
     if ! remote "$host" systemctl is-active --quiet $units; then
       for unit in $units; do
@@ -345,8 +316,6 @@ health_once() {
       return 1
     fi
   fi
-  # The native edge ingress is not a container; it stays outside the
-  # derived container gate.
   case "$host" in
     epsilon | pi)
       if ! remote "$host" systemctl is-active --quiet traefik.service; then
@@ -512,14 +481,14 @@ prepare_host() {
   profile=$(jq -r --arg host "$host" '.deployment.nodes[$host].profiles.system.path' "$preparation/$host.json")
   system=$(jq -r '.systemPath' "$preparation/$host.json")
   store="ssh-ng://root@$(host_address "$host")"
-  NIX_SSHOPTS="${ssh_options[*]}" nix copy -s --to "$store" --derivation "$drv" || return 1
   remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || return 1
-  # Clear unrooted debris before building. A near-full target store either
-  # trips ENOSPC mid-closure or fires nix's min-free auto-GC, which deletes
-  # freshly substituted paths while the build still needs them (observed
-  # 2026-11-10 to 11-11 on pi). Non-fatal: the build may still fit.
+  # Clear unrooted debris before copying the derivation. Collecting garbage
+  # after nix copy could remove the just-copied, not-yet-rooted .drv and make
+  # the subsequent remote build fail before it starts.
+  # Non-fatal: the build may still fit if GC fails.
   remote "$host" nix-collect-garbage >/dev/null 2>&1 \
     || echo "warning: pre-build gc failed on $host; continuing" >&2
+  NIX_SSHOPTS="${ssh_options[*]}" nix copy -s --to "$store" --derivation "$drv" || return 1
   # Persist nix's raw internal-json stream: it is compact and greppable.
   # Piping it through nom re-rendered the whole dependency tree on every
   # progress event, which grew prepare logs past a gigabyte per host and
@@ -591,7 +560,6 @@ progress "preflight passed"
 # preparation results so a failure can be attributed without racing on state.
 declare -A prepare_pids
 for host in "${hosts[@]}"; do
-  # Each captured deployment has its own flake, so activation never rereads main.
   mkdir -p "$preparation/$host"
   progress "preparing $host (copy/build); log: $preparation/prepare-$host.log"
   # Bound the prepare log. nix does not limit its log size and the state
@@ -636,8 +604,6 @@ fi
 
 declare -A before_generation
 failure_host=""
-# One log per host, overwritten each run, so the evidence for the failure being
-# reported is the evidence for that failure rather than a stale earlier one.
 failure_log=""
 for host in epsilon pi alpha; do rm -f "$state/fail-$host.log"; done
 
@@ -646,8 +612,6 @@ deploy_one() {
   failure_log="$state/fail-$host.log"
   failure_reason=""
 
-  # Clear any stale diff so the failure report below never posts a
-  # previous revision's diff for this host.
   rm -f "$state/diff-$host.txt"
 
   running_revision=$(remote "$host" nixos-version --configuration-revision 2>/dev/null || true)
@@ -684,9 +648,6 @@ deploy_one() {
     return 1
   }
   touch "$state/reached-$revision-$host" || return 1
-  # The build and activation output is the only record of why this failed, and
-  # it has to outlive the transient unit, so keep it beside the other state.
-  # pipefail propagates deploy-rs' own status through tee.
   progress "$host: activating ${revision:0:8}"
   if ! deploy "$preparation/$host#$host" --skip-checks 2>&1 | tee "$failure_log"; then
     fail "build or activation of $host failed"
@@ -711,9 +672,6 @@ deploy_one() {
     strip_ansi < "$state/diff-$host.txt" > "$state/diff-$host.tmp" \
       && mv "$state/diff-$host.tmp" "$state/diff-$host.txt"
   fi
-  # Per-host success posts were channel noise: the diff stays on disk for
-  # the failure report below, and the converged one-liner is the only
-  # success signal. Diffs surface on failure only.
   progress "$host: healthy at ${revision:0:8}"
 }
 
@@ -729,8 +687,6 @@ done
 
 if [ -n "$failure_host" ]; then
   progress "deployment failed on $failure_host; rolling back activated hosts"
-  # Preserve the existing breaker policy: soak failures allow one retry;
-  # other deployment failures pause on the first cycle.
   case "$failure_reason" in
     soak:*) trip=2 ;;
     *) trip=1 ;;
@@ -767,27 +723,18 @@ if [ -n "$failure_host" ]; then
     progress "rollback completed"
   fi
 
-  # The reason and the failing command's own output first, then the closure
-  # diff when the host got far enough to have one. A build failure clears the
-  # diff, so a broken build posts only the error.
   notify_failure ":rotating_light: fleet deployment failed at $failure_host (${revision:0:8}); rollback initiated, $streak consecutive$note" \
     "$failure_log"
   notify_file ":rotating_light: diff for failed host $failure_host (${revision:0:8})" "$state/diff-$failure_host.txt"
   exit 1
 fi
 
-# Hosts that converged on this revision, captured before rollback-root
-# cleanup removes the markers. This is the event-eligibility record; the
-# rollback markers are not durable deployment history.
 converged=()
 for host in "${hosts[@]}"; do
   [ -e "$state/reached-$revision-$host" ] && converged+=("$host")
 done
 
 enqueue_package_events "${converged[@]}" || true
-# Request the same Pi-managed systemd unit as the periodic timer. --no-block
-# returns without waiting for network/SSH, so readiness never holds up deploy.
-# Failures remain best-effort; the periodic timer retries independently.
 if [[ " ${converged[*]:-} " == *" alpha "* ]]; then
   systemctl --no-block start fleet-readiness-probe.service >/dev/null 2>&1 || true
 fi
@@ -800,7 +747,4 @@ if [ "$requested_host" = all ]; then
 else
   progress "selected host $requested_host completed at ${revision:0:8}"
 fi
-# The reboot check is best-effort after a successful deployment. Its service
-# waits on the fleet lock so it cannot race this process's lock release.
-# The 03:00 timer retries if this trigger fails or is deferred.
 systemctl --no-block start fleet-headless-reboot.service >/dev/null 2>&1 || true

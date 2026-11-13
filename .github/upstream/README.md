@@ -68,17 +68,14 @@ aggregate also includes actual package builds and generated behavior checks
 from `upstream-validate.py`. T3 split candidates use native x86 and ARM jobs.
 The package-specific gates are:
 
-| Watcher           | Additional verification                                                                                                                 |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme                                |
-| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop                               |
-| t3code-stable010  | Generated units serve the root-pin package (Alpha stock, Pi/Epsilon split server) with the version assertion; Alpha's x86 t3code builds |
-| tasks-org         | Build the upstream Tasks.org package                                                                                                    |
-| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                                                            |
-| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                                                             |
-| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true                                      |
-| nodejs-security   | Retired overlay family absent from the fleet; alpha's OpenCode builds against the pinned Bun and Node                                   |
-| moonshine-pr227   | Pinned source contains PR227 and the UnitRemoved reload guard; Alpha selects the unpatched package and it builds                        |
+| Watcher           | Additional verification                                                                                   |
+| ----------------- | --------------------------------------------------------------------------------------------------------- |
+| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme  |
+| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop |
+| tasks-org         | Build the upstream Tasks.org package                                                                      |
+| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                              |
+| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                               |
+| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true        |
 
 Nautilus is notify-only. Ready notices print in every upstream-watch run
 summary and, once per status change, post to the fleet Discord channel
@@ -98,11 +95,7 @@ the extension version. CI pings Discord when the pin is ready. Browser
 verification and removal of Obsidian Reader remain completion steps because
 this checkout has no Obsidian Reader declaration to remove.
 
-The Moonshine PR227 test build is declarative alpha config
-(`modules/aspects/upstream/moonshine-pr227-test.nix`, #147): the generated unit
-selects the test package, so activation and rollback belong to deploy-rs and
-the `waiting-source` predicate requires the pinned upstream source to carry
-the UnitRemoved reload guard before the cleanup candidate may publish. The
+The Moonshine PR227 test build and its upstream watcher are retired. The
 runtime predicates of the host-owned watchers moved to Pi: the
 `fleet-readiness-probe` service evaluates the running Sonarr version, the
 Sonarr log gate, and Moonshine's runtime-vs-generated-unit match over SSH,
@@ -139,8 +132,8 @@ publication, interruption recovery, drift rejection, and notification deduplicat
 
 `upstream-plan.py plan --old BASE --candidate CANDIDATE` runs **before** the lock
 updater publishes to main. Watcher contracts live in `watchers.json`.
-Watchers with `coupling: apply` (qbittorrent, gamescope-vkroots,
-moonshine-pr227) break the moment the candidate pin carries their fix — or any
+Watchers with `coupling: apply` (qbittorrent, gamescope-vkroots) break the
+moment the candidate pin carries their fix — or any
 context-shifting bump of their package — so their cleanup rides the lock
 candidate instead of racing the post-lock sweep. Readiness runs against the
 candidate tree; `PINNED-READY` diverts publication into a combined atomic
@@ -157,28 +150,9 @@ swap fast-forward remain unchanged. If ancestry is unavailable, or a candidate
 contains the fix before the authoritative channel, publication fails closed.
 Independent cleanup candidates retain their own validation gates.
 
-## T3 Code stable version bridge (#288, #289)
+## T3 Code stable version floor
 
-The `t3code-stable010` watcher retains its ID and tracks the stable 0.1.5 bridge. It builds the desktop package from the
-existing Nixpkgs recipe with verified release source and pnpm hashes;
-the same override applies on all architectures. The separate split aspect
-selects the server-only package on Pi and Epsilon. Its detector requires a stable orchestrator-v2 release at least as new as 0.1.5 in the root Nixpkgs pin before dropping the bridge,
-because an earlier drop downgrades Alpha to V1 0.0.45 and breaks Android/web
-clients. The post-lock cleanup is the complete cutover: it deletes the
-bridge aspect, removes its entity includes so every host serves the
-root-pin package (Alpha stock, Pi/Epsilon the `t3code-split` server-only
-build) and arms the `t3code >= 0.1.5`
-version assertion in `t3code.nix` that keeps a pin regression from silently
-downgrading `statev2.sqlite`. The `t3code-split` watcher independently keeps
-the server-only layer until nixpkgs#555814 reaches the pin, then selects
-`pkgs.t3code-cli`. Connect's `.env` build patch stays in its own overlay until
-nixpkgs#555921 reaches the pin. Neither cleanup removes the shared launcher
-or the Home Manager desktop entry. All three cleanup recipes are tested in
-every order, and the version detector accepts both Nixpkgs package layouts.
-A cleanup that conflicts with edited modules fails closed for review.
-Candidate validation requires the `PINNED-READY` pin, checks every
-generated `t3code-web` unit against the selected CLI (or the combined package
-before the upstream split), and builds
-Alpha's x86 `t3code`. The separate nightly migration watcher is retired;
-the stable-version bridge retains its own release and pin gates. Preserve
-`statev2.sqlite` and active conversations while the bridge is dropped.
+The stable bridge is retired. Keep the version assertion in
+[`t3code.nix`](../../modules/aspects/ai/t3code.nix): a pin regression below
+0.1.5 can downgrade `statev2.sqlite` and break existing clients.
+The independent split and Connect workarounds retain their own gates.

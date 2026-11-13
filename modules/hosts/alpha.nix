@@ -6,13 +6,9 @@
 {
   den.aspects.alpha = {
     includes = [
-      den.aspects.monitoring._.cloud
-      den.aspects.fleet-unit-state
       den.aspects.alpha._.backup
       den.aspects.btrfs-maintenance
-      den.aspects.gaming
       den.aspects.logid
-      den.aspects.streaming
       den.aspects.networking._.wan-ingress-shaping
       den.aspects.media-stack
       den.aspects.nixos-services._.firmware
@@ -20,7 +16,6 @@
       den.aspects.nixos-services._.free-model-watch
       den.aspects.nixos-services._.t3-token-watch
       den.aspects.cachix-push
-      den.aspects.deploy-target
     ];
 
     provides.backup = {
@@ -58,11 +53,7 @@
       }:
       let
         home = config.users.users.repparw.home;
-        # Staged by the prepare-home-state script (modules/_scripts/) to
-        # ${stateRoot}/offsite; see modules.backup.homeState in
-        # aspects/backup.nix for the selection policy.
         stateRoot = "/var/lib/home-state-backup";
-        # A failed export never replaces its previous tree.
         prepareHomeState = import ../_scripts/prepare-home-state.nix { inherit pkgs lib; } {
           inherit home stateRoot;
           paths = config.modules.backup.homeState;
@@ -80,9 +71,6 @@
         ];
 
         nix.settings = {
-          # Bound, not unlimited: alpha serves interactive and realtime
-          # streaming workloads. Total worst-case build load is
-          # max-jobs x cores ~= 6 threads; substitution is unaffected.
           max-jobs = 2;
           cores = 3;
           min-free = 100 * 1024 * 1024 * 1024;
@@ -116,14 +104,7 @@
             ".config/codex/skills/"
             ".config/codex/plugins/"
             ".config/codex/goals_1.sqlite"
-            # Live OpenCode plugins are intentionally not managed by Nix.
             ".config/opencode/plugins/"
-            # Whole Helium profile: extension state (Vimium exclusions,
-            # DeArrow, ImprovedTube) lives in per-extension LevelDB dirs that
-            # would otherwise need enumerating, and update wipes have proven
-            # that guessing the file list loses data. SQLite files are
-            # snapshotted consistently during staging, and homeStateExcludes
-            # prunes caches and telemetry.
             ".config/net.imput.helium/"
             ".config/fish/fish_variables"
             ".config/mpv/watch_later"
@@ -142,20 +123,9 @@
             ".config/bbport-launcher/"
             "Games/bbport/source/data/bbport.ini"
             "Games/bbport/source/data/user/"
-            # OpenTofu state for the OCI adoption (infra/, PR-managed in Git
-            # only as configuration): guarded as critical, see
-            # infra/README.md. terraform.tfstate.backup is intentionally not
-            # staged — restic snapshots already provide generation history.
             "Projects/nix/infra/terraform.tfstate"
-            # Router adoption state (infra/router/): same pattern, see
-            # infra/router/README.md.
             "Projects/nix/infra/router/terraform.tfstate"
-            # Declarative router inventory: local and gitignored, backed up
-            # alongside state but not parsed as OpenTofu JSON state.
             "Projects/nix/infra/router/inventory.auto.tfvars"
-            # OpenCode session and credential state: SQLite databases are
-            # snapshotted consistently during staging. Logs and tool outputs
-            # are regenerable.
             ".local/share/opencode/"
           ];
           homeStateExcludes =
@@ -178,7 +148,6 @@
               "DeferredBrowserMetrics"
               "Variations"
             ]
-            # Regenerable opencode artifacts, not session state.
             ++ map (dir: "/.local/share/opencode/${dir}") [
               "log/"
               "tool-output/"
@@ -425,8 +394,6 @@
 
         networking.firewall.extraInputRules = ''
           iifname "eth0" ip saddr { ${config.modules.services.hostAddresses.pi}, ${config.modules.services.hostAddresses.epsilon} } tcp dport { 3000, 8081 } accept comment "edge ingress -> native alpha listeners"
-          # Epsilon's Hermes container is masqueraded to the wg-home address
-          # before reaching Alpha; do not expose T3 MCP to the full LAN.
           iifname "eth0" ip saddr ${config.modules.services.hostAddresses.epsilon} tcp dport 3773 accept comment "Hermes -> T3 MCP"
         '';
 

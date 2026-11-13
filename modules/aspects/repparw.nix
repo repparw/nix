@@ -10,6 +10,7 @@
       den.batteries.define-user
       den.batteries.primary-user
       den.aspects.shell
+      den.aspects.fish
       den.aspects.editors
       den.aspects.tmux
       den.aspects.git
@@ -35,9 +36,6 @@
               backupFileExtension = "hm-backup";
             };
 
-            # Propagate XDG env vars to all processes (SSH, nix-shell, agents)
-            # that do not source home-manager's hm-session-vars.sh. Paths come
-            # from home-manager's own xdg module to avoid hardcoding.
             environment.variables = {
               NPM_CONFIG_CACHE = "${xdg.cacheHome}/npm";
               NPM_CONFIG_USERCONFIG = "${xdg.configHome}/npm/npmrc";
@@ -79,4 +77,9 @@
       home.preferXdgDirectories = true;
     };
   };
+
+  # Den selects these host-qualified user aspects automatically.
+  den.aspects."repparw@alpha".includes = [ den.aspects.workstation-user ];
+  den.aspects."repparw@pi".includes = [ den.aspects.headless-user ];
+  den.aspects."repparw@epsilon".includes = [ den.aspects.headless-user ];
 }

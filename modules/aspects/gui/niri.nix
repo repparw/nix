@@ -45,8 +45,6 @@
         xdg.portal.config.niri."org.freedesktop.impl.portal.RemoteDesktop" = "luminous";
 
         environment.etc."xdg/xdg-desktop-portal-luminous/config.toml".text = ''
-          # Avoid blocking remote input on a permission dialog that may not
-          # be reachable from the phone-initiated flow.
           remote_permission_check = false
           screenshot_permission_check = false
         '';
@@ -216,9 +214,6 @@
                 "--method"
                 "com.t3tools.SnapShot.Capture"
               ];
-              # Raises the running Spotifast window, or starts the client
-              # when nothing is running: a second launch hands over to the
-              # live instance instead of starting a duplicate.
               "Mod+M" = titledSpawn "Spotifast" [ "spotifast" ];
               "Mod+N" = titledSpawn "Notes (Neovim)" [
                 "xdg-terminal-exec"
@@ -469,9 +464,6 @@
 
         services.wpaperd.enable = true;
 
-        # The Moonshine Desktop stream has no $TERMINAL and a minimal PATH,
-        # so pin the terminal fuzzel uses for console entries. Same HOME as
-        # the login session, so this also applies locally.
         xdg.configFile."fuzzel/fuzzel.ini".text = ''
           [main]
           terminal = ${lib.getExe pkgs.xdg-terminal-exec} --
