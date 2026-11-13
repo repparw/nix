@@ -457,14 +457,14 @@ prepare_host() {
   profile=$(jq -r --arg host "$host" '.deployment.nodes[$host].profiles.system.path' "$preparation/$host.json")
   system=$(jq -r '.systemPath' "$preparation/$host.json")
   store="ssh-ng://root@$(host_address "$host")"
-  NIX_SSHOPTS="${ssh_options[*]}" nix copy -s --to "$store" --derivation "$drv" || return 1
   remote "$host" mkdir -p /nix/var/nix/gcroots/fleet-update || return 1
-  # Clear unrooted debris before building. A near-full target store either
-  # trips ENOSPC mid-closure or fires nix's min-free auto-GC, which deletes
-  # freshly substituted paths while the build still needs them (observed
-  # 2026-11-10 to 11-11 on pi). Non-fatal: the build may still fit.
+  # Clear unrooted debris before copying the derivation. Collecting garbage
+  # after nix copy could remove the just-copied, not-yet-rooted .drv and make
+  # the subsequent remote build fail before it starts.
+  # Non-fatal: the build may still fit if GC fails.
   remote "$host" nix-collect-garbage >/dev/null 2>&1 \
     || echo "warning: pre-build gc failed on $host; continuing" >&2
+  NIX_SSHOPTS="${ssh_options[*]}" nix copy -s --to "$store" --derivation "$drv" || return 1
   # Persist nix's raw internal-json stream: it is compact and greppable.
   # Piping it through nom re-rendered the whole dependency tree on every
   # progress event, which grew prepare logs past a gigabyte per host and
