@@ -88,6 +88,7 @@
           # needed at all.
           systemd.services.epic-freegames-portal = {
             description = "Epic free-games device-auth portal (claabs)";
+            wantedBy = [ "multi-user.target" ];
             wants = [ "network-online.target" ];
             after = [
               "network-online.target"
