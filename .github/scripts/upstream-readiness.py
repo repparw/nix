@@ -93,11 +93,6 @@ def gamescope_fixed():
     return flagged_queues_fixed((Path(result.stdout.strip()) / "vkroots.h").read_text())
 
 
-
-
-
-
-
 T3CODE_PACKAGE = "pkgs/by-name/t3/t3code/package.nix"
 
 
