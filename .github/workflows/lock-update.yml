@@ -30,7 +30,6 @@ jobs:
         with:
           client-id: ${{ vars.GH_AUTOMATION_APP_CLIENT_ID }}
           private-key: ${{ secrets.GH_AUTOMATION_APP_PRIVATE_KEY }}
-          permission-actions: write
           permission-contents: write
           permission-pull-requests: write
       - name: Update, validate, and publish the lock PR
