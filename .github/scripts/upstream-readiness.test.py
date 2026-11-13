@@ -201,13 +201,12 @@ class Readiness(unittest.TestCase):
                     self.assertEqual(watch.inspect(name, LOCK), "waiting-upstream")
 
 
-    def test_retired_t3code_bridge_keeps_version_floor(self):
+    def test_retired_t3code_bridge_stays_retired(self):
         root = Path(__file__).resolve().parents[2]
+        # The watcher and its cleanup patch are gone, so the module does not
+        # carry the version floor either.
         self.assertFalse((root / "modules/aspects/upstream/t3code-stable010.nix").exists())
-        self.assertIn(
-            'lib.versionAtLeast config.programs.t3code.package.version "0.1.5"',
-            (root / "modules/aspects/ai/t3code.nix").read_text(),
-        )
+        self.assertFalse((root / ".github/upstream/cleanup/t3code-stable010.patch").exists())
 
     def test_cleanup_recipes_are_well_formed_and_narrow(self):
         root = Path(__file__).resolve().parents[2]

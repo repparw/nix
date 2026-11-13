@@ -88,7 +88,7 @@
             terminalBackground = c.base00;
             terminalForeground = c.base05;
             terminalCursor = c.base0D;
-            terminalSelection = c.base02;
+            terminalSelection = "${c.base0D}4d";
             terminalScrollbar = c.base02;
             terminalScrollbarHover = c.base03;
           };
@@ -96,16 +96,6 @@
       in
       lib.mkMerge [
         {
-          # The retired stable010 bridge is the source of this floor; keep it
-          # here so a pin downgrade fails evaluation instead of installing a
-          # release without the stable V2 behavior.
-          assertions = [
-            {
-              assertion = lib.versionAtLeast config.programs.t3code.package.version "0.1.5";
-              message = "T3 Code stable V2 requires t3code >= 0.1.5 in the nixpkgs pin.";
-            }
-          ];
-
           programs.t3code = {
             enable = true;
             package = lib.mkDefault (if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code);
