@@ -47,11 +47,15 @@
               if [ "$#" -ge 2 ] && [ "$2" = "--" ]; then
                 cmd=''${3-}
               fi
-              # If the command itself looks like an option, this is a form we
-              # do not translate; let the real sudo handle the original args.
-              if [ -n "$cmd" ] && [ "''${cmd#-}" != "''${cmd}" ]; then
+              # Unsupported forms fall back to the real sudo: no command, a
+              # command that looks like an option, or an environment
+              # assignment such as FOO=bar.
+              if [ -z "$cmd" ]; then
                 exec "$real_sudo" "$@"
               fi
+              case "$cmd" in
+                -*|[A-Za-z_]*=*) exec "$real_sudo" "$@" ;;
+              esac
               shift
               if [ "$#" -gt 0 ] && [ "$1" = "--" ]; then
                 shift
@@ -65,7 +69,7 @@
             fi
 
             case "$1" in
-              -*)
+              -*|[A-Za-z_]*=*)
                 exec "$real_sudo" "$@"
                 ;;
               *)
