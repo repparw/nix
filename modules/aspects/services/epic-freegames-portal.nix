@@ -19,6 +19,35 @@
         cfg = config.modules.services;
         stateDir = "${cfg.configDir}/epic-freegames-portal";
         portal = pkgs.callPackage ../../_packages/epicgames-freegames-node.nix { };
+        portalStart = pkgs.writeShellApplication {
+          name = "epic-freegames-portal-start";
+          runtimeInputs = with pkgs; [
+            coreutils
+            nodejs_26
+            xorg-server
+          ];
+          text = ''
+            export DISPLAY=:98
+            Xvfb :98 -screen 0 1920x1080x24 -nolisten tcp &
+            xvfb_pid=$!
+            for _ in $(seq 1 50); do
+              [ -S /tmp/.X11-unix/X98 ] && break
+              kill -0 "$xvfb_pid" 2>/dev/null || exit 1
+              sleep 0.1
+            done
+            if [ ! -S /tmp/.X11-unix/X98 ]; then
+              echo "Xvfb failed to start" >&2
+              exit 1
+            fi
+            # Invoked via the trap below; shellcheck does not count that as a call.
+            # shellcheck disable=SC2329
+            cleanup() {
+              kill "$xvfb_pid" 2>/dev/null || true
+            }
+            trap cleanup EXIT
+            node ${portal}/lib/node_modules/epicgames-freegames-node/src/index.ts
+          '';
+        };
         configFile = pkgs.writeText "epic-freegames-portal-config.json" (
           builtins.toJSON {
             # Detection runs four times a day like upstream's default; each
@@ -108,35 +137,7 @@
               Group = "epicfgc";
               Restart = "on-failure";
               RestartSec = "5min";
-              ExecStart = pkgs.writeShellApplication {
-                name = "epic-freegames-portal-start";
-                runtimeInputs = with pkgs; [
-                  coreutils
-                  nodejs_26
-                  xorg-server
-                ];
-                text = ''
-                  export DISPLAY=:98
-                  Xvfb :98 -screen 0 1920x1080x24 -nolisten tcp &
-                  xvfb_pid=$!
-                  for _ in $(seq 1 50); do
-                    [ -S /tmp/.X11-unix/X98 ] && break
-                    kill -0 "$xvfb_pid" 2>/dev/null || exit 1
-                    sleep 0.1
-                  done
-                  if [ ! -S /tmp/.X11-unix/X98 ]; then
-                    echo "Xvfb failed to start" >&2
-                    exit 1
-                  fi
-                  # Invoked via the trap below; shellcheck does not count that as a call.
-                  # shellcheck disable=SC2329
-                  cleanup() {
-                    kill "$xvfb_pid" 2>/dev/null || true
-                  }
-                  trap cleanup EXIT
-                  node ${portal}/lib/node_modules/epicgames-freegames-node/src/index.ts
-                '';
-              };
+              ExecStart = lib.getExe portalStart;
               MemoryMax = "2G";
               UMask = "0077";
               NoNewPrivileges = true;
