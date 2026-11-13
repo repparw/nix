@@ -201,12 +201,6 @@ class Readiness(unittest.TestCase):
                     self.assertEqual(watch.inspect(name, LOCK), "waiting-upstream")
 
 
-
-
-
-
-
-
     def test_retired_t3code_bridge_keeps_version_floor(self):
         root = Path(__file__).resolve().parents[2]
         self.assertFalse((root / "modules/aspects/upstream/t3code-stable010.nix").exists())
