@@ -15,7 +15,9 @@
     };
     systems.url = "github:nix-systems/default";
 
-    den.url = "github:denful/den/latest";
+    # Den v0.20 requires a separately verified fleet migration (see #534).
+    # Hold the working v0.19 release so lock-update can advance other inputs.
+    den.url = "github:denful/den/v0.19.0";
     flake-file.url = "github:vic/flake-file";
     git-hooks = {
       url = "github:cachix/git-hooks.nix";
