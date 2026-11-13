@@ -62,7 +62,7 @@ jobs:
         run: |
           if jq -e --slurpfile registry .github/upstream/watchers.json '
             to_entries | any(.[];
-              .value.status == "PINNED-READY"
+              .value == "PINNED-READY"
               and $registry[0][.key].mode == "post-lock"
             )' "$RUNNER_TEMP/upstream-readiness.json" >/dev/null; then
             echo 'needs_app=true' >> "$GITHUB_OUTPUT"
