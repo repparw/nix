@@ -18,7 +18,7 @@ for check in $CI_CHECKS; do
   echo "::group::$check"
   started=$SECONDS
   if nix build ".#checks.x86_64-linux.$check" \
-    --show-trace --no-update-lock-file --no-link --print-build-logs 2>&1 | tee "ci-logs/$check.log"; then
+    --no-update-lock-file --no-link --print-build-logs 2>&1 | tee "ci-logs/$check.log"; then
     result=success
   else
     result=failure
