@@ -30,14 +30,11 @@ let
     _: hosts: lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) hosts
   ) den.hosts;
 
-  # Preserve the current safety order: edge, workstation, then Pi controller.
-  # Changing fleet topology requires reviewing this order rather than silently
-  # deploying an unreviewed host or skipping it.
-  deployOrder = [
-    "epsilon"
-    "alpha"
-    "pi"
-  ];
+  # The running fleet updater lives on pi. Activate other hosts before
+  # replacing its system, to avoid restarting the controller mid-deployment.
+  # Host membership and the non-controller order follow Den's inventory.
+  controllerHost = "pi";
+  deployOrder = lib.filter (name: name != controllerHost) (lib.attrNames sshAddresses) ++ [ controllerHost ];
   hostAddressJson = builtins.toJSON sshAddresses;
 
   deployNode = hostname: {
@@ -75,9 +72,9 @@ let
 
   mkFleetUpdate =
     pkgs:
-    assert lib.sort lib.lessThan (lib.attrNames sshAddresses) == lib.sort lib.lessThan deployOrder;
+    assert lib.hasAttr controllerHost sshAddresses;
     let
-      controllerConfig = inputs.self.nixosConfigurations.pi.config;
+      controllerConfig = inputs.self.nixosConfigurations.${controllerHost}.config;
       servicesLib = import ./_services/lib.nix { inherit lib pkgs; };
       controllerServices = controllerConfig.modules.services;
       jellyfinService = controllerServices.definitions.jellyfin;
@@ -85,7 +82,9 @@ let
         if jellyfinService.healthcheck == null then
           throw "Jellyfin must have a registered healthcheck for fleet deployment"
         else
-          "${servicesLib.serviceUrl controllerServices controllerConfig "jellyfin"}${jellyfinService.healthcheck}";
+          "${
+            servicesLib.serviceUrl controllerServices controllerConfig "jellyfin"
+          }${jellyfinService.healthcheck}";
       # The event parser is a store path substituted into the script text. It
       # cannot be discovered next to the executable: writeShellApplication
       # embeds only this script, so a runtime search of the store bin
@@ -174,7 +173,7 @@ in
         };
         controllerHost = lib.mkOption {
           type = lib.types.str;
-          default = deployBase.nodes.pi.hostname;
+          default = deployBase.nodes.${controllerHost}.hostname;
           readOnly = true;
           description = "Address of the serialized fleet deployment controller";
         };
