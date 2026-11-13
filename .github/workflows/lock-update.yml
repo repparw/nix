@@ -26,13 +26,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          # Dedicated identity for approving approval-gated workflow runs.
-          # The default GITHUB_TOKEN cannot approve runs its own PRs created
-          # (actions: write is not sufficient). Store a fine-grained PAT
-          # (Actions: read+write on repparw/nix) or a GitHub App installation
-          # token with actions:write as LOCK_UPDATE_APPROVAL_TOKEN. Until the
-          # owner adds it, any approval-gated run fails closed with a clear
-          # reason instead of auto-merging.
+          # Dedicated identity for bot-authored PRs and approval-gated runs.
+          # GITHUB_TOKEN cannot approve its own bot PRs. A fine-grained PAT
+          # scoped to repparw/nix needs Actions, Contents, and Pull requests
+          # all set to read+write: lock-update and hermes-update create PRs,
+          # and upstream-watch also uses it for branch pushes and PR creation.
+          # A GitHub App installation token is also supported, but must be
+          # minted per run (it expires); do not store one as a static secret.
+          # Without a configured token, approvals fail closed.
           LOCK_UPDATE_APPROVAL_TOKEN: ${{ secrets.LOCK_UPDATE_APPROVAL_TOKEN }}
         shell: bash
         run: |
