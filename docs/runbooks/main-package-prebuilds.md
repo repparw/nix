@@ -28,6 +28,15 @@ runtime closures. It also deduplicates repeated derivations. A missing package
 still needs its build inputs; those downloads are unavoidable for that build.
 Final system assembly remains on the hosts.
 
+After package publication, each native runner dry-runs the **full NixOS toplevel**
+for its hosts (Alpha on x86; Pi and Epsilon on ARM). The
+`ci-logs/cache-preflight-<host>.txt` artifacts show which outputs Nix would
+still build or substitute. The dry run does not build or upload the system,
+so this checks coverage without broadening Cachix publication to activation
+assemblies or SOPS vaults. Host-specific assembly outputs are expected to
+remain local; unexpected application or service builds indicate gaps in the
+package collector or a separate build failure.
+
 Successful local package outputs are published synchronously with the existing
 cache-scoped Actions token. Outputs with `.sops.yml` or `.sops.yaml` paths in
 their runtime closure are skipped. A closure inspection error or upload error
