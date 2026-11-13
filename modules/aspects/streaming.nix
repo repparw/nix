@@ -105,7 +105,10 @@ in
               unset DISABLE_GAMESCOPE_WSI
 
               gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
-              exec ${pkgs.gamescope}/bin/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
+              # GameMode wraps the compositor so the whole session (gamescope,
+              # Steam client and game) keeps the performance governor, the best
+              # effort I/O priority and the screensaver inhibit while it runs.
+              exec ${config.programs.gamemode.package}/bin/gamemoderun ${pkgs.gamescope}/bin/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
             '';
           };
           # Moonshine runs this as ExecStopPost on the session's transient unit,
@@ -403,7 +406,7 @@ in
           log "taking over: stopping desktop steam, starting gamescope"
           ${stopDesktopSteam}
 
-          ${lib.getExe pkgs.gamescope} --steam -H 1080 -r 162 --adaptive-sync -- \
+          ${osConfig.programs.gamemode.package}/bin/gamemoderun ${lib.getExe pkgs.gamescope} --steam -H 1080 -r 162 --adaptive-sync -- \
             ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf || true
 
           log "session ended; restoring desktop steam"

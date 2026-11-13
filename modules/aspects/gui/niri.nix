@@ -51,7 +51,12 @@
       };
 
     homeManager =
-      { config, pkgs, ... }:
+      {
+        config,
+        osConfig,
+        pkgs,
+        ...
+      }:
       let
         titledAction = title: action: {
           _props.hotkey-overlay-title = title;
@@ -249,7 +254,7 @@
               "Mod+Z" = titledSpawn "MPV Clipboard" [ "mpvclip" ];
 
               "Ctrl+Alt+Shift+A".spawn-sh =
-                "gamescope --steam -H 1080 --adaptive-sync --fps-limit 162 -- steam -tenfoot -pipewire-dmabuf";
+                "${osConfig.programs.gamemode.package}/bin/gamemoderun gamescope --steam -H 1080 --adaptive-sync --fps-limit 162 -- steam -tenfoot -pipewire-dmabuf";
               "Ctrl+Alt+Shift+E" = spawn [ "Discord" ];
               "Ctrl+Alt+Shift+F" = spawn [
                 "wpctl"
