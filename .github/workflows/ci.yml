@@ -1,8 +1,9 @@
 name: ci
-# GitHub exposes this as workflow_runs[].display_title. Recovery verifies
-# the exact requested package validations before reusing an existing run.
+# Dispatches retain their exact validation manifest in display_title because
+# lock-update/Hermes recovery match that string. Ordinary PR/push runs instead
+# get compact titles for the Actions UI.
 run-name: >-
-  validate sha=${{ inputs.expected_sha || 'none' }} watchers=${{ inputs.upstream_watcher || 'none' }}${{ inputs.hermes_update && ' hermes=true' || '' }}
+  ${{ github.event_name == 'pull_request' && format('PR #{0}: {1}', github.event.pull_request.number, github.event.pull_request.title) || (github.event_name == 'push' && 'main push' || format('validate sha={0} watchers={1}{2}', inputs.expected_sha || 'none', inputs.upstream_watcher || 'none', inputs.hermes_update && ' hermes=true' || '')) }}
 on:
   push:
     branches: [main]
