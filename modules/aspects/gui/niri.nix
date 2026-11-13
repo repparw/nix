@@ -144,7 +144,6 @@
               skip-at-startup = { };
               hide-not-bound = { };
             };
-            debug.honor-xdg-activation-with-invalid-serial = { };
 
             # Niri --session imports the compositor environment into the
             # user manager itself. Moonshine launches plain nested Niri;
