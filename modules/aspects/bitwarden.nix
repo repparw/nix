@@ -14,7 +14,7 @@
   # system authentication" in the desktop app, "Unlock with biometrics" in
   # each extension, and tray-start preferences remain manual one-time steps.
   den.aspects.desktop.provides.bitwarden = {
-    nixos =
+    provides.to-hosts.nixos =
       { pkgs, ... }:
       {
         # System-wide so the polkit action lands in

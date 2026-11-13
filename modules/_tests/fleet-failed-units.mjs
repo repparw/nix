@@ -19,7 +19,7 @@ function fixture() {
     FLEET_UNIT_STATE_DIRECTORY: evidence, MOCK_ROOT: root };
   function mock(name, body) { writeFileSync(join(bin, name), `#!${process.env.TEST_BASH || '/usr/bin/env bash'}\nset -euo pipefail\n${body}\n`, { mode: 0o755 }); }
   mock('systemctl', `case "$1" in
-    is-active) [ ! -f "$MOCK_ROOT/unit-inactive" ];;
+    is-active) printf '%s\\n' "$*" >> "$MOCK_ROOT/units-checked"; [ ! -f "$MOCK_ROOT/unit-inactive" ];;
     is-failed) echo inactive; exit 0;;
     list-units) [ ! -f "$MOCK_ROOT/list-error" ]; cat "$MOCK_ROOT/live";;
     *) exit 2;; esac`);
@@ -30,7 +30,8 @@ function fixture() {
       printf '%s' "$(cat "$MOCK_ROOT/http-status" 2>/dev/null || echo 200)"
     fi`);
   mock('fleet-unit-snapshot', '[ ! -f "$MOCK_ROOT/pi-error" ]; cat "$MOCK_ROOT/pi"');
-  mock('ssh', `for arg in "$@"; do case "$arg" in root@*) target="$arg";; esac; done
+  mock('ssh', `printf '%s\\n' "$*" >> "$MOCK_ROOT/ssh-requests"
+    for arg in "$@"; do case "$arg" in root@*) target="$arg";; esac; done
     case "$target" in root@192.168.0.18) host=alpha;; *) host=epsilon;; esac
     if [[ " $* " == *" bash -s -- "* ]]; then
       cat >/dev/null
@@ -68,6 +69,29 @@ test('snapshot failure is visible and local mode avoids remote snapshots', () =>
     assert.equal(f.sweep(['--local']).status, 0);
     f.set('pi-error', ''); assert.notEqual(f.sweep(['--local']).status, 0);
     assert.equal(f.messages(), '');
+  } finally { f.cleanup(); }
+});
+
+
+test('failed-unit snapshots use SSH addresses, while private backends use service addresses', () => {
+  const f = fixture(); try {
+    const r = f.sweep();
+    assert.equal(r.status, 0, r.stderr);
+    const ssh = readFileSync(join(f.root, 'ssh-requests'), 'utf8');
+    assert.match(ssh, /root@192\.168\.0\.18 fleet-unit-snapshot/);
+    assert.match(ssh, /root@146\.181\.42\.97 fleet-unit-snapshot/);
+    assert.doesNotMatch(ssh, /root@10\.5\.5\.3 fleet-unit-snapshot/);
+    assert.match(ssh, /root@10\.5\.5\.3 bash -s -- paperless 8000/);
+  } finally { f.cleanup(); }
+});
+
+test('strict health checks retain container and proxy systemd readiness', () => {
+  const f = fixture(); try {
+    const r = f.sweep(['--strict', '--local']);
+    assert.equal(r.status, 0, r.stderr);
+    const units = readFileSync(join(f.root, 'units-checked'), 'utf8');
+    assert.match(units, /is-active --quiet container@homeassistant/);
+    assert.match(units, /is-active --quiet traefik/);
   } finally { f.cleanup(); }
 });
 
