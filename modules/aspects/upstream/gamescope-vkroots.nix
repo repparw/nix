@@ -2,9 +2,7 @@
 {
   # The permanent streaming aspect enables WSI. Apply this extra source fix
   # afterwards, while keeping its retirement independent from WSI itself.
-  den.aspects.streaming.provides.to-hosts =
-    { ... }:
-    {
+  den.aspects.streaming.provides.to-hosts = {
       nixos =
         { lib, ... }:
         {
