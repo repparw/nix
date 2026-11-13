@@ -351,11 +351,12 @@ class Deployment(unittest.TestCase):
         self.assertFalse((self.root / "pi").exists())
 
     def test_already_running_revision_must_pass_health(self):
-        (self.root / "alpha").write_text("new")
-        result = self.deploy(unhealthy="alpha")
+        (self.root / "epsilon").write_text("new")
+        result = self.deploy(unhealthy="epsilon")
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((self.state / "deployed-revision").exists())
-        self.assertFalse(any(c[0] == "deploy" for c in self.calls))
+        self.assertEqual([c[1].split("#")[-1] for c in self.calls if c[0] == "deploy"], ["alpha"])
+        self.assertEqual((self.root / "alpha").read_text(), "old")
 
     def test_failed_preparation_stops_before_any_activation(self):
         result = self.deploy(prepare_failure='alpha')
