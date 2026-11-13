@@ -26,6 +26,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: main
+          # PR refreshes must use the same dedicated actor as PR creation,
+          # otherwise a GITHUB_TOKEN push can require fresh CI approval.
+          token: ${{ secrets.LOCK_UPDATE_APPROVAL_TOKEN || github.token }}
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
       - name: Open the stable-release bump PR
         env:
