@@ -111,6 +111,18 @@
             package = lib.mkDefault (if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code);
 
             userSettings = {
+              # T3's built-in Antigravity provider needs the standalone ACP
+              # runtime, not the Antigravity IDE or CLI. nixpkgs keeps its
+              # localharness_external helper next to this executable.
+              providerInstances.antigravity = {
+                driver = "antigravity";
+                enabled = true;
+                config = {
+                  enabled = true;
+                  binaryPath = "${pkgs.antigravity-acp}/bin/agy_acp_server.par";
+                };
+              };
+
               providerInstances.opencode = {
                 driver = "opencode";
                 enabled = true;
