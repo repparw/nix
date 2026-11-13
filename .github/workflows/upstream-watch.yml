@@ -34,6 +34,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: main
+          # The dedicated actor must also push branch refreshes. Pushing with
+          # GITHUB_TOKEN can put PR synchronize workflows back behind approval.
+          token: ${{ secrets.LOCK_UPDATE_APPROVAL_TOKEN || github.token }}
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
       # Scheduled and main-branch runs are trusted publishers; daemon uploads
       # never fail the watch when the cache is unreachable.
@@ -54,7 +57,9 @@ jobs:
       - name: Publish independent cleanup candidates and readiness notifications
         if: always() && !cancelled() && steps.readiness.outcome == 'success'
         env:
-          GH_TOKEN: ${{ github.token }}
+          # PRs created with the default GITHUB_TOKEN require manual approval
+          # before their pull_request checks can run (GitHub's 2026 bot gate).
+          GH_TOKEN: ${{ secrets.LOCK_UPDATE_APPROVAL_TOKEN || github.token }}
           GH_REPO: ${{ github.repository }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
