@@ -146,8 +146,14 @@ class Deployment(unittest.TestCase):
         (self.bin / "python3").symlink_to(sys.executable)
         self.script = self.root / "fleet-update"
         script = SOURCE.replace("/run/secrets/hermes-env", str(self.root / "missing-secret"))
-        for host in ["alpha", "pi", "epsilon"]:
-            script = script.replace(f"@FLEET_{host.upper()}_ADDRESS@", host)
+        script = script.replace("@FLEET_JELLYFIN_HOST@", "alpha")
+        script = script.replace("@FLEET_JELLYFIN_HEALTH_URL@", "http://alpha:8096/health")
+        script = script.replace("@FLEET_HOST_JSON@", json.dumps(
+            {host: host for host in ["alpha", "pi", "epsilon"]}
+        ))
+        script = script.replace("@FLEET_HOST_OPTIONS@", "alpha|epsilon|pi")
+        script = script.replace("@FLEET_DEPLOY_ORDER@", "alpha epsilon pi")
+        script = script.replace("@FLEET_ROLLBACK_ORDER@", "pi epsilon alpha")
         script = script.replace("@PACKAGE_EVENT_SCRIPT@", str(Path(__file__).with_name("package-update-event.py")))
         self.script.write_text("set -euo pipefail\n" + script)
 
@@ -192,7 +198,7 @@ class Deployment(unittest.TestCase):
         result = self.deploy(ci={"workflow_runs": [run(event="workflow_dispatch")]})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"],
-                         ["epsilon", "alpha", "pi"])
+                         ["alpha", "epsilon", "pi"])
 
     def test_exact_lock_candidate_dispatch_allows_deploy_after_fast_forward(self):
         result = self.deploy(ci={"workflow_runs": [
@@ -200,7 +206,7 @@ class Deployment(unittest.TestCase):
         ]})
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"],
-                         ["epsilon", "alpha", "pi"])
+                         ["alpha", "epsilon", "pi"])
 
     def test_all_hosts_converge_after_ci(self):
         result = self.deploy()
@@ -208,18 +214,18 @@ class Deployment(unittest.TestCase):
         output = result.stderr
         milestones = [
             "fetching main", "checking CI for main", "CI passed",
-            "running deployment preflight", "capturing epsilon configuration",
-            "capturing alpha configuration", "capturing pi configuration",
-            "preflight passed", "preparing epsilon", "preparing alpha", "preparing pi",
-            "prepared epsilon", "prepared alpha", "prepared pi",
-            "epsilon: activating", "epsilon: verifying health", "epsilon: healthy",
+            "running deployment preflight", "capturing alpha configuration",
+            "capturing epsilon configuration", "capturing pi configuration",
+            "preflight passed", "preparing alpha", "preparing epsilon", "preparing pi",
+            "prepared alpha", "prepared epsilon", "prepared pi",
             "alpha: activating", "alpha: verifying health", "alpha: healthy",
+            "epsilon: activating", "epsilon: verifying health", "epsilon: healthy",
             "pi: activating", "pi: verifying health", "pi: healthy",
             "fleet converged",
         ]
         offsets = [output.index("fleet-update: " + message) for message in milestones]
         self.assertEqual(offsets, sorted(offsets), output)
-        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["epsilon", "alpha", "pi"])
+        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["alpha", "epsilon", "pi"])
         first_activation = next(i for i, c in enumerate(self.calls) if c[0] == 'deploy')
         prepared = [c for c in self.calls[:first_activation] if c[0] == 'ssh' and 'build' in c]
         self.assertEqual(len(prepared), 3)
@@ -243,7 +249,7 @@ class Deployment(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(pause.read_text(), "existing operator pause\n")
         self.assertEqual((self.state / "deployed-revision").read_text().strip(), REVISION)
-        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["epsilon", "alpha", "pi"])
+        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["alpha", "epsilon", "pi"])
 
     def test_force_requires_explicit_host_selection(self):
         result = subprocess.run(["bash", str(self.script), "deploy", "--force"],
@@ -252,7 +258,7 @@ class Deployment(unittest.TestCase):
         self.assertIn("explicit --host", result.stderr)
 
     def test_preflight_failure_on_first_host_cannot_be_hidden_by_later_hosts(self):
-        result = self.deploy(eval_failure="epsilon")
+        result = self.deploy(eval_failure="alpha")
         self.assertNotEqual(result.returncode, 0)
         self.assert_no_activation()
         self.assertIn("host evaluation failed", (self.state / "preflight.log").read_text())
@@ -261,13 +267,13 @@ class Deployment(unittest.TestCase):
                    for p in evidence.glob('result-*.json')}
         self.assertEqual(results, {
             'epsilon': dict(host='epsilon', revision=REVISION, systemPath=None,
-                            profilePath=None, outcome='failed', stage='capture'),
+                            profilePath=None, outcome='not_attempted'),
             'alpha': dict(host='alpha', revision=REVISION, systemPath=None,
-                          profilePath=None, outcome='not_attempted'),
+                          profilePath=None, outcome='failed', stage='capture'),
             'pi': dict(host='pi', revision=REVISION, systemPath=None,
                        profilePath=None, outcome='not_attempted'),
         })
-        self.assertIn('host evaluation failed', (evidence / 'capture-epsilon.log').read_text())
+        self.assertIn('host evaluation failed', (evidence / 'capture-alpha.log').read_text())
 
     def test_invalid_captured_metadata_records_failure_and_unattempted_hosts(self):
         result = self.deploy(invalid_metadata='alpha')
@@ -282,8 +288,7 @@ class Deployment(unittest.TestCase):
                               profilePath=None, outcome='not_attempted'))
         self.assertEqual(json.loads((evidence / 'result-epsilon.json').read_text()),
                          dict(host='epsilon', revision=REVISION,
-                              systemPath='/nix/store/epsilon-system-26.11',
-                              profilePath='/nix/store/epsilon-profile-26.11', outcome='not_attempted'))
+                              systemPath=None, profilePath=None, outcome='not_attempted'))
         self.assertEqual(json.loads((evidence / 'alpha.json').read_text())['systemPath'], 'invalid-path')
         self.assertIn('captured metadata for alpha is invalid', (evidence / 'capture-alpha.log').read_text())
         self.assertFalse((evidence / 'capture-pi.log').exists())
@@ -325,7 +330,7 @@ class Deployment(unittest.TestCase):
     def test_failed_alpha_prevents_controller_activation(self):
         result = self.deploy(deploy_failure="alpha")
         self.assertNotEqual(result.returncode, 0)
-        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["epsilon", "alpha"])
+        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["alpha"])
         self.assertFalse((self.root / "pi").exists())
 
     def test_failed_rollback_keeps_roots_and_pauses(self):
@@ -350,7 +355,8 @@ class Deployment(unittest.TestCase):
         result = self.deploy(unhealthy="epsilon")
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((self.state / "deployed-revision").exists())
-        self.assertFalse(any(c[0] == "deploy" for c in self.calls))
+        self.assertEqual([c[1].split("#")[-1] for c in self.calls if c[0] == "deploy"], ["alpha"])
+        self.assertEqual((self.root / "alpha").read_text(), "old")
 
     def test_failed_preparation_stops_before_any_activation(self):
         result = self.deploy(prepare_failure='alpha')
@@ -372,7 +378,7 @@ class Deployment(unittest.TestCase):
                              env={"FLEET_UPDATE_PREPARE_LOG_MAX_BYTES": "4096"})
         self.assertEqual(result.returncode, 0, result.stderr)
         evidence = Path((self.state / "latest-preparation").read_text().strip())
-        for host in ["epsilon", "alpha", "pi"]:
+        for host in ["alpha", "epsilon", "pi"]:
             log = evidence / f"prepare-{host}.log"
             self.assertLessEqual(log.stat().st_size, 4096)
             self.assertIn("FINAL-MARKER", log.read_text())
@@ -390,14 +396,14 @@ class Deployment(unittest.TestCase):
         # preparation times out rather than passing this fixture.
         result = self.deploy(parallel_preparation=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        for host in ["epsilon", "alpha", "pi"]:
+        for host in ["alpha", "epsilon", "pi"]:
             self.assertTrue((self.root / f"prepare-started-{host}").exists())
         first_deploy = next(i for i, call in enumerate(self.calls) if call[0] == "deploy")
         builds = [call for call in self.calls[:first_deploy]
                   if call[0] == "ssh" and "build" in call]
         self.assertEqual(len(builds), 3)
         self.assertEqual([call[1].split("#")[-1] for call in self.calls
-                          if call[0] == "deploy"], ["epsilon", "alpha", "pi"])
+                          if call[0] == "deploy"], ["alpha", "epsilon", "pi"])
 
     def test_parallel_preparation_waits_for_all_results_on_failure(self):
         result = self.deploy(parallel_preparation=True, prepare_failure="alpha")
@@ -405,7 +411,7 @@ class Deployment(unittest.TestCase):
         self.assertFalse(any(call[0] == "deploy" for call in self.calls))
         evidence = Path((self.state / "latest-preparation").read_text().strip())
         self.assertEqual({host: json.loads((evidence / f"result-{host}.json").read_text())["outcome"]
-                          for host in ["epsilon", "alpha", "pi"]},
+                          for host in ["alpha", "epsilon", "pi"]},
                          {"epsilon": "prepared", "alpha": "failed", "pi": "prepared"})
         self.assertTrue((self.state / "PAUSE").exists())
 
