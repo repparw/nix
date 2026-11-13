@@ -48,7 +48,7 @@ jobs:
           # stores LOCK_UPDATE_APPROVAL_TOKEN (see the step env above).
           approval_token="${LOCK_UPDATE_APPROVAL_TOKEN:-}"
           test -n "$approval_token" || { echo 'Missing GitHub App token (LOCK_UPDATE_APPROVAL_TOKEN); refusing to publish automated PRs.' >&2; exit 1; }
-          gh auth setup-git
+          GH_TOKEN="$approval_token" gh auth setup-git
 
           latest_ci() {
             local ref="$1" sha="$2"
