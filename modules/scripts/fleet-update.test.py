@@ -87,8 +87,6 @@ elif name == 'ssh':
             print('error: preparation build failed', file=sys.stderr)
             sys.exit(1)
         if config.get('prepare_output_bytes'):
-            # Emulate a build that writes a huge log: the prepare log has to
-            # stay bounded even when the producer is unbounded.
             sys.stderr.write('x' * config['prepare_output_bytes'])
             sys.stderr.write('FINAL-MARKER\n')
         print(f'/nix/store/{host}-profile-26.11')
@@ -370,9 +368,6 @@ class Deployment(unittest.TestCase):
         self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text())['outcome'], 'failed')
 
     def test_prepare_log_is_capped_and_keeps_the_failure_tail(self):
-        # The 2026-11-10 pi run wrote 4.7 GB of nix output into the 15 GB
-        # /persist card. The prepare log has to stay bounded, and the tail
-        # is the part that explains a failure.
         result = self.deploy(prepare_output_bytes=200000,
                              env={"FLEET_UPDATE_PREPARE_LOG_MAX_BYTES": "4096"})
         self.assertEqual(result.returncode, 0, result.stderr)

@@ -14,10 +14,6 @@ lock_wait=0
 requested_host=all
 host_selected=0
 state="${FLEET_UPDATE_STATE:-/var/lib/auto-update}"
-# The prepare log grew without bound: on pi the state directory is the 15 GB
-# SD card, and the 2026-11-10 run wrote a 4.7 GB nix log there, filled the
-# card, truncated Alloy's WAL and started a 67.6 GB replay to Grafana Cloud.
-# Keep the tail, which is where the build failure is explained.
 prepare_log_max_bytes="${FLEET_UPDATE_PREPARE_LOG_MAX_BYTES:-16777216}"
 package_event="@PACKAGE_EVENT_SCRIPT@"
 
@@ -382,9 +378,6 @@ if [ -n "$nix_free_kb" ] && [ "$nix_free_kb" -lt $((6 * 1024 * 1024)) ]; then
   exit 1
 fi
 
-# The prepare logs land in the state directory, not /nix. On pi that is the
-# 15 GB SD card, and the 2026-11-10 prepare log filled it. Refuse to start a
-# preparation that has no room to keep its own evidence.
 state_free_kb() { df -k "$state" 2>/dev/null | awk 'NR == 2 { print $4 }'; }
 state_kb=$(state_free_kb || true)
 if [ -n "$state_kb" ] && [ "$state_kb" -lt $((2 * 1024 * 1024)) ]; then
@@ -562,12 +555,6 @@ declare -A prepare_pids
 for host in "${hosts[@]}"; do
   mkdir -p "$preparation/$host"
   progress "preparing $host (copy/build); log: $preparation/prepare-$host.log"
-  # Bound the prepare log. nix does not limit its log size and the state
-  # directory is a small card on pi, so keep only the tail: the failure
-  # explanation is at the end of the stream. tail reads the whole stream and
-  # never signals the producer, so the build still runs to completion. The
-  # exit status travels in a separate file because the pipeline's status
-  # belongs to tail.
   (
     set -o pipefail
     status=0

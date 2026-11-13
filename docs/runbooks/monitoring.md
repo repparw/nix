@@ -84,7 +84,7 @@ allowance:
 
 ```sh
 systemctl stop alloy
-df -h /persist          # Pi's card; free the space that truncated the log
+df -h /persist
 ls -l /var/lib/private/alloy/data-path/loki.write.cloud/wal/
 rm -rf /var/lib/private/alloy/data-path/loki.write.cloud/wal
 systemctl start alloy

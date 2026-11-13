@@ -49,10 +49,6 @@
         modules.monitoring.health.disks = [
           {
             mount = "/persist";
-            # /persist is pi's 15 GB SD card. The 2026-11-10 auto-update
-            # prepare log filled it, and the disk gauge could not report
-            # while it was full, so warn well below the point where a build
-            # can no longer run.
             warn = 75;
             crit = 85;
           }

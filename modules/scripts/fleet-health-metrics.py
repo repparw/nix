@@ -133,18 +133,10 @@ def main():
     else:
         lines, state = host_metrics(settings, state, now)
     lines += metric("fleet_health_collection_timestamp_seconds", now, collector=kind)
-    # Publish the facts before the state file, and let a failed state write
-    # stand alone. The state directory is on the filesystem that fills up
-    # (pi's /persist), while the textfile directory is on tmpfs, so writing
-    # the state first made a full card abort the run before the disk gauge
-    # was exported: on 2026-11-10 the disk exporter failed for the whole
-    # six-hour fill window, exactly when its reading was needed.
     atomic_write(Path("/var/lib/fleet-metrics/textfile") / f"fleet-{kind}.prom", lines)
     try:
         atomic_write(state_path, json.dumps(state))
     except OSError as error:
-        # Losing the state file only costs continuity of the tracked facts,
-        # such as when a sleeping medium was last observed.
         print(f"could not update {state_path}: {error}", file=sys.stderr)
 
 
