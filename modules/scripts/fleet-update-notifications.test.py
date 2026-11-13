@@ -68,6 +68,14 @@ class Notifications(unittest.TestCase):
         self.assertIn("error:", body)
         self.assertTrue(attached)
 
+    def test_log_larger_than_the_upload_limit_is_reported_inline(self):
+        # Discord rejects uploads above 8 MiB, and a rejected upload loses
+        # the alert entirely, so an oversized log has to be reported inline.
+        body, attached = self.report("build or activation of alpha failed",
+                                     "error: failed\n" + "x" * (9 * 1024 * 1024))
+        self.assertIn("error: failed", body)
+        self.assertFalse(attached)
+
     def test_long_reason_without_log_uses_json(self):
         body, attached = self.report("soak: " + "probe failed " * 300)
         self.assertIn("soak:", body)

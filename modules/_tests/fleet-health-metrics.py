@@ -1,5 +1,7 @@
 import importlib.util
+import io
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -79,6 +81,30 @@ class MetricsTests(unittest.TestCase):
         self.assertIn("fleet_backup_last_success_timestamp_seconds 0", text)
         self.assertIn('fleet_backup_export_complete{export="paperless"} 1', text)
         self.assertEqual(state["since"], 100)
+
+    def test_facts_are_published_when_the_state_write_fails(self):
+        # The state directory sits on the filesystem that fills up (pi's
+        # /persist) while the textfile directory is on tmpfs, so the facts
+        # have to be published first and a failed state write must not
+        # take the exporter down with it.
+        writes = []
+
+        def fake_write(path, text):
+            writes.append(str(path))
+            if str(path).endswith("host.json"):
+                raise OSError(28, "No space left on device")
+
+        with patch.object(sys, "argv", ["collector", "settings.json"]), \
+             patch.object(collector, "atomic_write", side_effect=fake_write), \
+             patch.object(collector, "host_metrics", return_value=("fleet_failed_units 0\n", {"since": 1})), \
+             patch.object(Path, "exists", return_value=False), \
+             patch.object(Path, "read_text", return_value="{}"), \
+             patch.object(sys, "stderr", io.StringIO()) as stderr, \
+             patch.dict(os.environ, {"STATE_DIRECTORY": "/state"}):
+            collector.main()
+
+        self.assertEqual(writes, ["/var/lib/fleet-metrics/textfile/fleet-host.prom", "/state/host.json"])
+        self.assertIn("could not update /state/host.json", stderr.getvalue())
 
     def test_failed_unit_metric_is_per_unit_and_absent_when_healthy(self):
         settings = {"requiredUnits": [], "exports": [], "probes": []}
