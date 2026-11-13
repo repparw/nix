@@ -24,6 +24,10 @@ def post_to_discord(message):
         f"https://discord.com/api/v10/channels/{CHANNEL_ID}/messages",
         data=json.dumps(message).encode(),
         headers={
+            # Discord's edge rejects the default Python-urllib User-Agent
+            # with a bare 403 before auth; the fleet's curl-based
+            # discord-notify posts to the same channel and token fine.
+            "User-Agent": "epic-freegames-relay (+https://github.com/repparw/nix)",
             "Authorization": f"Bot {TOKEN}",
             "Content-Type": "application/json",
         },
