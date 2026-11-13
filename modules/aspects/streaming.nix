@@ -64,10 +64,13 @@ in
             name = "moonshine-steam-game-session";
             runtimeInputs = [
               steam-session-select
+              config.programs.gamemode.package
               config.programs.steam.package
             ];
             text = ''
-              exec steam -tenfoot
+              # GameMode registers Steam and the game as clients. gamescope
+              # cannot be one: the NixOS security wrapper strips LD_PRELOAD.
+              exec gamemoderun steam -tenfoot
             '';
           };
 
@@ -78,14 +81,14 @@ in
           moonshine-steam = pkgs.writeShellApplication {
             name = "moonshine-steam";
             runtimeInputs = [
-              pkgs.gamescope
+              config.programs.gamescope.package
               pkgs.procps
               config.programs.steam.package
             ];
             text = ''
               ${stopDesktopSteam}
 
-              export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${pkgs.gamescope}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+              export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${config.programs.gamescope.package}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 
               w=''${MOONSHINE_CLIENT_WIDTH:-1920}
               h=''${MOONSHINE_CLIENT_HEIGHT:-1080}
@@ -105,10 +108,9 @@ in
               unset DISABLE_GAMESCOPE_WSI
 
               gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
-              # GameMode wraps the compositor so the whole session (gamescope,
-              # Steam client and game) keeps the performance governor, the best
-              # effort I/O priority and the screensaver inhibit while it runs.
-              exec ${config.programs.gamemode.package}/bin/gamemoderun ${pkgs.gamescope}/bin/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
+              # The security wrapper carries cap_sys_nice, which lets gamescope
+              # renice itself to -20 and request realtime priority Vulkan queues.
+              exec ${config.security.wrapperDir}/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
             '';
           };
           # Moonshine runs this as ExecStopPost on the session's transient unit,
@@ -400,14 +402,15 @@ in
 
           if pgrep -x gamescope >/dev/null; then
             log "reusing the running gamescope session"
-            exec ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
+            exec ${osConfig.programs.gamemode.package}/bin/gamemoderun \
+              ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
           fi
 
           log "taking over: stopping desktop steam, starting gamescope"
           ${stopDesktopSteam}
 
-          ${osConfig.programs.gamemode.package}/bin/gamemoderun ${lib.getExe pkgs.gamescope} --steam -H 1080 -r 162 --adaptive-sync -- \
-            ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf || true
+          ${osConfig.security.wrapperDir}/gamescope --steam -H 1080 -r 162 --adaptive-sync -- \
+            ${osConfig.programs.gamemode.package}/bin/gamemoderun ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf || true
 
           log "session ended; restoring desktop steam"
           systemctl --user start steam-tray

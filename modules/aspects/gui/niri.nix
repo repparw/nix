@@ -254,7 +254,7 @@
               "Mod+Z" = titledSpawn "MPV Clipboard" [ "mpvclip" ];
 
               "Ctrl+Alt+Shift+A".spawn-sh =
-                "${osConfig.programs.gamemode.package}/bin/gamemoderun gamescope --steam -H 1080 --adaptive-sync --fps-limit 162 -- steam -tenfoot -pipewire-dmabuf";
+                "${osConfig.security.wrapperDir}/gamescope --steam -H 1080 --adaptive-sync --fps-limit 162 -- ${osConfig.programs.gamemode.package}/bin/gamemoderun steam -tenfoot -pipewire-dmabuf";
               "Ctrl+Alt+Shift+E" = spawn [ "Discord" ];
               "Ctrl+Alt+Shift+F" = spawn [
                 "wpctl"
