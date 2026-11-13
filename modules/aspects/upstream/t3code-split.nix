@@ -2,7 +2,7 @@
 {
   # Keep server-only selection separate from the version and Connect overlays.
   den.aspects.ai.provides.t3code-split = {
-    nixos = { lib, ... }: {
+    provides.to-hosts.nixos = { lib, ... }: {
       nixpkgs.overlays = lib.mkAfter [
         (final: prev: {
           t3code-server =
