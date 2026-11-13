@@ -23,14 +23,22 @@ let
       ];
     };
 
-  deployPkgs = {
-    aarch64-linux = mkDeployPkgs "aarch64-linux";
-    x86_64-linux = mkDeployPkgs "x86_64-linux";
-  };
+  # Host systems and addresses come from Den; deployment ordering is separate.
+  hostSystems = lib.concatMapAttrs (system: hosts: lib.mapAttrs (_: _: system) hosts) den.hosts;
+  deployPkgs = lib.mapAttrs (system: _: mkDeployPkgs system) den.hosts;
+  sshAddresses = lib.concatMapAttrs (
+    _: hosts: lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) hosts
+  ) den.hosts;
 
-  sshAddresses = lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) (
-    lib.concatMapAttrs (_system: hosts: hosts) den.hosts
-  );
+  # Preserve the current safety order: edge, workstation, then Pi controller.
+  # Changing fleet topology requires reviewing this order rather than silently
+  # deploying an unreviewed host or skipping it.
+  deployOrder = [
+    "epsilon"
+    "alpha"
+    "pi"
+  ];
+  hostAddressJson = builtins.toJSON sshAddresses;
 
   deployNode = hostname: {
     inherit hostname;
@@ -67,9 +75,17 @@ let
 
   mkFleetUpdate =
     pkgs:
+    assert lib.sort lib.lessThan (lib.attrNames sshAddresses) == lib.sort lib.lessThan deployOrder;
     let
       controllerConfig = inputs.self.nixosConfigurations.pi.config;
       servicesLib = import ./_services/lib.nix { inherit lib pkgs; };
+      controllerServices = controllerConfig.modules.services;
+      jellyfinService = controllerServices.definitions.jellyfin;
+      jellyfinHealthUrl =
+        if jellyfinService.healthcheck == null then
+          throw "Jellyfin must have a registered healthcheck for fleet deployment"
+        else
+          "${servicesLib.serviceUrl controllerServices controllerConfig "jellyfin"}${jellyfinService.healthcheck}";
       # The event parser is a store path substituted into the script text. It
       # cannot be discovered next to the executable: writeShellApplication
       # embeds only this script, so a runtime search of the store bin
@@ -95,17 +111,23 @@ let
       text =
         builtins.replaceStrings
           [
-            "@FLEET_ALPHA_ADDRESS@"
-            "@FLEET_PI_ADDRESS@"
-            "@FLEET_EPSILON_ADDRESS@"
+            "@FLEET_JELLYFIN_HOST@"
+            "@FLEET_JELLYFIN_HEALTH_URL@"
+            "@FLEET_HOST_JSON@"
+            "@FLEET_HOST_OPTIONS@"
+            "@FLEET_DEPLOY_ORDER@"
+            "@FLEET_ROLLBACK_ORDER@"
             "@FLEET_DOMAIN@"
             "@FLEET_DISCORD_CHANNEL@"
             "@PACKAGE_EVENT_SCRIPT@"
           ]
           [
-            deployBase.nodes.alpha.hostname
-            deployBase.nodes.pi.hostname
-            deployBase.nodes.epsilon.hostname
+            jellyfinService.host
+            jellyfinHealthUrl
+            hostAddressJson
+            (lib.concatStringsSep "|" (lib.attrNames sshAddresses))
+            (lib.concatStringsSep " " deployOrder)
+            (lib.concatStringsSep " " (lib.reverseList deployOrder))
             controllerConfig.modules.services.domain
             controllerConfig.modules.services.discordChannelId
             (toString packageEvent)
@@ -191,24 +213,23 @@ in
     };
 
   flake.deploy = lib.recursiveUpdate deployBase {
-    nodes = {
-      epsilon.profiles.system.path = deployPkgs.aarch64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.epsilon;
-      pi.profiles.system.path = deployPkgs.aarch64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.pi;
-      alpha.profiles.system.path = deployPkgs.x86_64-linux.deploy-rs.lib.activate.nixos inputs.self.nixosConfigurations.alpha;
-    };
+    nodes = lib.mapAttrs (hostname: system: {
+      profiles.system.path =
+        deployPkgs.${system}.deploy-rs.lib.activate.nixos
+          inputs.self.nixosConfigurations.${hostname};
+    }) hostSystems;
   };
 
-  flake.checks = {
-    aarch64-linux = {
-      deploy-schema = mkDeploySchemaCheck deployPkgs.aarch64-linux;
-      deploy-activate-epsilon = mkActivationCheck deployPkgs.aarch64-linux "epsilon";
-      deploy-activate-pi = mkActivationCheck deployPkgs.aarch64-linux "pi";
-    };
-    x86_64-linux = {
-      deploy-schema = mkDeploySchemaCheck deployPkgs.x86_64-linux;
-      deploy-activate-alpha = mkActivationCheck deployPkgs.x86_64-linux "alpha";
-    };
-  };
+  flake.checks = lib.mapAttrs (
+    system: hosts:
+    {
+      deploy-schema = mkDeploySchemaCheck deployPkgs.${system};
+    }
+    // lib.mapAttrs' (
+      hostname: _:
+      lib.nameValuePair "deploy-activate-${hostname}" (mkActivationCheck deployPkgs.${system} hostname)
+    ) hosts
+  ) den.hosts;
 
   perSystem =
     { pkgs, ... }:

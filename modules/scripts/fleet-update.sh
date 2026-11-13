@@ -1,5 +1,12 @@
 # shellcheck shell=bash
-usage="usage: fleet-update deploy [--host all|alpha|pi|epsilon] [--force] [--wait-lock SECONDS] [--state DIR]"
+usage="usage: fleet-update deploy [--host all|@FLEET_HOST_OPTIONS@] [--force] [--wait-lock SECONDS] [--state DIR]"
+# Generated from den.hosts in modules/deploy.nix. The addresses remain
+# in JSON so host names and values are never treated as shell code.
+fleet_host_json='@FLEET_HOST_JSON@'
+jellyfin_host='@FLEET_JELLYFIN_HOST@'
+jellyfin_health_url='@FLEET_JELLYFIN_HEALTH_URL@'
+read -r -a fleet_deploy_order <<< '@FLEET_DEPLOY_ORDER@'
+read -r -a fleet_rollback_order <<< '@FLEET_ROLLBACK_ORDER@'
 
 [ "$#" -gt 0 ] || { echo "$usage" >&2; exit 2; }
 action="$1"
@@ -60,10 +67,10 @@ while [ "$#" -gt 0 ]; do
   shift
 done
 
-case "$requested_host" in
-  all | alpha | pi | epsilon) ;;
-  *) echo "$usage" >&2; exit 2 ;;
-esac
+if [ "$requested_host" != all ] && ! jq -e --arg host "$requested_host" 'has($host)' <<< "$fleet_host_json" >/dev/null; then
+  echo "$usage" >&2
+  exit 2
+fi
 case "$lock_wait" in
   '' | *[!0-9]*) echo "--wait-lock requires whole seconds" >&2; exit 2 ;;
 esac
@@ -254,11 +261,7 @@ ssh_options=(
 )
 
 host_address() {
-  case "$1" in
-    alpha) echo @FLEET_ALPHA_ADDRESS@ ;;
-    pi) echo @FLEET_PI_ADDRESS@ ;;
-    epsilon) echo @FLEET_EPSILON_ADDRESS@ ;;
-  esac
+  jq -er --arg host "$1" '.[$host]' <<< "$fleet_host_json"
 }
 
 remote() {
@@ -341,14 +344,16 @@ health_once() {
           return 1
         }
       ;;
-    alpha)
-      http_code http://@FLEET_ALPHA_ADDRESS@:8096/health 200 ||
-        {
-          fail "soak: jellyfin health on $host did not return 200"
-          return 1
-        }
-      ;;
   esac
+
+  # Derive Jellyfin's owner and health URL from the Den service registry,
+  # so moving the service does not silently drop its deployment soak check.
+  if [ "$host" = "$jellyfin_host" ]; then
+    http_code "$jellyfin_health_url" 200 || {
+      fail "soak: jellyfin health on $host did not return 200"
+      return 1
+    }
+  fi
 }
 
 soak() {
@@ -389,7 +394,7 @@ fi
 
 cleanup_rollback_roots() {
   local host
-  for host in epsilon pi alpha; do
+  for host in "${fleet_deploy_order[@]}"; do
     if remote "$host" rm -f "/nix/var/nix/gcroots/fleet-update/previous" 2>/dev/null; then
       rm -f "$state/reached-$revision-$host"
     fi
@@ -507,7 +512,7 @@ prepare_host() {
 }
 
 if [ "$requested_host" = all ]; then
-  hosts=(epsilon alpha pi)
+  hosts=("${fleet_deploy_order[@]}")
 else
   hosts=("$requested_host")
 fi
@@ -592,7 +597,7 @@ fi
 declare -A before_generation
 failure_host=""
 failure_log=""
-for host in epsilon pi alpha; do rm -f "$state/fail-$host.log"; done
+for host in "${fleet_deploy_order[@]}"; do rm -f "$state/fail-$host.log"; done
 
 deploy_one() {
   local host="$1" running_revision before saved_before after_generation
@@ -691,7 +696,7 @@ if [ -n "$failure_host" ]; then
   fi
 
   rollback_failed=0
-  for host in pi alpha epsilon; do
+  for host in "${fleet_rollback_order[@]}"; do
     [ -e "$state/reached-$revision-$host" ] || continue
     before=$(cat "$state/before-$revision-$host" 2>/dev/null || true)
     if [[ "$before" != /nix/store/* ]] \

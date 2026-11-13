@@ -146,8 +146,14 @@ class Deployment(unittest.TestCase):
         (self.bin / "python3").symlink_to(sys.executable)
         self.script = self.root / "fleet-update"
         script = SOURCE.replace("/run/secrets/hermes-env", str(self.root / "missing-secret"))
-        for host in ["alpha", "pi", "epsilon"]:
-            script = script.replace(f"@FLEET_{host.upper()}_ADDRESS@", host)
+        script = script.replace("@FLEET_JELLYFIN_HOST@", "alpha")
+        script = script.replace("@FLEET_JELLYFIN_HEALTH_URL@", "http://alpha:8096/health")
+        script = script.replace("@FLEET_HOST_JSON@", json.dumps(
+            {host: host for host in ["alpha", "pi", "epsilon"]}
+        ))
+        script = script.replace("@FLEET_HOST_OPTIONS@", "alpha|epsilon|pi")
+        script = script.replace("@FLEET_DEPLOY_ORDER@", "epsilon alpha pi")
+        script = script.replace("@FLEET_ROLLBACK_ORDER@", "pi alpha epsilon")
         script = script.replace("@PACKAGE_EVENT_SCRIPT@", str(Path(__file__).with_name("package-update-event.py")))
         self.script.write_text("set -euo pipefail\n" + script)
 
