@@ -16,7 +16,7 @@
     systems.url = "github:nix-systems/default";
 
     # Den v0.20 uses explicit cross-scope host delivery and migration acknowledgement.
-    den.url = "github:denful/den/v0.20.0";
+    den.url = "github:denful/den/latest";
     flake-file.url = "github:vic/flake-file";
     git-hooks = {
       url = "github:cachix/git-hooks.nix";
