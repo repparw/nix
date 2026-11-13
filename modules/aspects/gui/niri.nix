@@ -21,11 +21,6 @@
               };
             });
 
-            ashell = prev.ashell.overrideAttrs (old: {
-              nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.pkg-config ];
-              buildInputs = (old.buildInputs or [ ]) ++ [ final.aws-lc ];
-            });
-
           })
         ];
 
