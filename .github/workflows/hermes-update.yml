@@ -318,7 +318,7 @@ jobs:
 
           - Resolution: the pinned tag in the canonical flake-file spec (modules/hosts/epsilon.nix) moves, write-flake regenerates flake.nix, and nix flake update hermes-agent re-pins the input and its own sub-inputs; no other lock input moves.
           - Node runtime: the fleet's patched Node override (modules/_packages/hermes-agent.nix) keeps applying, and the dispatched exact-SHA CI below validates the rebuilt package.
-          - Merging stays manual on purpose: this changes the fleet's agent runtime. Required PR checks may need a one-click approval while LOCK_UPDATE_APPROVAL_TOKEN is unset.
+          - Merging stays manual on purpose: this changes the fleet's agent runtime. The GitHub App publishes the PR so required checks run without a manual workflow-approval gate.
           
           <!-- hermes-update-sha=$revision -->
           BODY
