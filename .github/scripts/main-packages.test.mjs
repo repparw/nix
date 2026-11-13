@@ -14,9 +14,12 @@ test('main package builds use pinned native tooling and skip cached targets', ()
   assert.match(workflow, /workflow_run:\s+workflows: \[lock-update\]\s+types: \[completed\]/);
   assert.match(workflow, /github\.event\.workflow_run\.conclusion == 'success'/);
   assert.match(workflow, /github\.event\.workflow_run\.head_sha != github\.sha/);
-  assert.doesNotMatch(workflow, /pull_request|system\.build\.toplevel|--cachix-cache/);
+  assert.doesNotMatch(workflow, /pull_request|--cachix-cache/);
   assert.match(workflow, /--flake "\.#ciPackages\.\$SYSTEM"/);
   assert.match(workflow, /--skip-cached/);
+  assert.match(workflow, /nix build --dry-run --no-link --no-update-lock-file/);
+  assert.match(workflow, /nixosConfigurations\.\$host\.config\.system\.build\.toplevel/);
+  assert.match(workflow, /cache-preflight-\$host\.txt/);
   assert.match(workflow, /runner: ubuntu-24.04-arm/);
   assert.match(workflow, /runner: ubuntu-24.04\n/);
   assert.match(workflow, /cancel-in-progress: false/);
