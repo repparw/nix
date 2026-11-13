@@ -103,34 +103,6 @@ def validate(name, architecture):
         attribute = {"tasks-org": "alpha.pkgs.tasks-org", "wpaperd-fix": "alpha.pkgs.wpaperd",
                      "qbittorrent": "alpha.config.containers.qbittorrent.config.services.qbittorrent.package"}[name]
         build(attribute)
-    elif name == "t3code-stable010":
-        # The candidate completes the direct cutover: the bridging aspect
-        # is gone, the version assertion guards the pin, and every host
-        # serves the root-pin package (Alpha stock, Pi/Epsilon the split
-        # server-only build).
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("readiness", ROOT / ".github/scripts/upstream-readiness.py")
-        detector = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(detector)
-        lock = json.loads((ROOT / "flake.lock").read_text())
-        require(detector.t3code_stable_v2_status(
-                    lock, minimum_version=detector.T3CODE_STABLE_MIN_VERSION) == "PINNED-READY",
-                "root pin must carry a stable release at least as new as the bridge")
-        for host in ("alpha", "pi", "epsilon"):
-            service = unit(host, "t3code")
-            require("--mode web" in service["Service"]["ExecStart"], "missing web arguments")
-            package = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.outPath")
-            has_cli = json.loads(command("nix", "eval", "--json", "--no-update-lock-file",
-                                         f".#nixosConfigurations.{host}.pkgs", "--apply", "p: p ? t3code-cli"))
-            cli = evaluate(f"{host}.pkgs.t3code-cli.outPath") if has_cli else package
-            require(service["Service"]["ExecStart"].startswith(cli + "/bin/t3 "),
-                    f"{host} must serve the selected CLI")
-        version = command("nix", "eval", "--raw", "--no-update-lock-file",
-                          ".#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.t3code.package.version")
-        match = re.match(r"(\d+)\.(\d+)\.(\d+)", version)
-        require(match and tuple(int(part) for part in match.groups()) >= detector.T3CODE_STABLE_MIN_VERSION,
-                f"pinned t3code {version} is below the bridge version")
-        build("alpha.config.home-manager.users.repparw.programs.t3code.package")
     else:
         raise ValueError(f"no package validation for {name}")
 

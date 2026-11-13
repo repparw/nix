@@ -29,7 +29,6 @@ WORKAROUNDS = {
     "qbittorrent": ("modules/aspects/upstream/qbittorrent.nix", None),
     "wpaperd-fix": ("modules/aspects/upstream/wpaperd-fix.nix", None),
     "gamescope-vkroots": ("modules/aspects/upstream/gamescope-vkroots.nix", None),
-    "t3code-stable010": ("modules/aspects/upstream/t3code-stable010.nix", None),
 }
 
 
@@ -94,25 +93,6 @@ def gamescope_fixed():
     return flagged_queues_fixed((Path(result.stdout.strip()) / "vkroots.h").read_text())
 
 
-# The stable-version bridge needs release and pin evidence before retirement.
-T3CODE_V2_COMMIT = "de343914273eceb852a1d1d739cd1d38df7796ee"
-T3CODE_STABLE_MIN_VERSION = (0, 1, 5)
-T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
-
-
-def t3code_stable_tag(package_revision):
-    try:
-        text = source("NixOS/nixpkgs", T3CODE_UNWRAPPED, package_revision)
-    except subprocess.CalledProcessError as error:
-        if "HTTP 404" not in (error.stderr or ""):
-            raise
-        text = source("NixOS/nixpkgs", "pkgs/by-name/t3/t3code-cli/unwrapped.nix", package_revision)
-    tag = source_ref(text)
-    # Never treat a nightly, preview, non-semver, or arbitrary revision as a
-    # stable packaged release. This also rejects unexpected package shapes.
-    return tag if re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag) else None
-
-
 T3CODE_PACKAGE = "pkgs/by-name/t3/t3code/package.nix"
 
 
@@ -126,43 +106,6 @@ def t3code_browser_wrapped(revision):
             all(library in text for library in ("libgbm", "nss", "libxkbcommon")))
 
 
-def t3code_stable_v2_status(lock, minimum_version=(0, 0, 0)):
-    upstream = "pingdotgg/t3code"
-    latest = api(f"repos/{upstream}/releases/latest")
-    if not isinstance(latest, dict) or not isinstance(latest.get("tag_name"), str):
-        raise ValueError("cannot identify latest stable T3 Code release")
-    tag = latest["tag_name"]
-    if latest.get("draft") is not False or latest.get("prerelease") is not False:
-        raise ValueError("latest stable release is not verified")
-    if not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag):
-        raise ValueError("unexpected stable release tag")
-    if not contains(upstream, T3CODE_V2_COMMIT, tag):
-        return "waiting-upstream"
-
-    channel = api("repos/NixOS/nixpkgs/commits/nixos-unstable")
-    channel_revision = channel["sha"]
-    if not re.fullmatch(r"[a-f0-9]{40}", channel_revision):
-        raise ValueError("invalid channel revision")
-    def eligible(tag):
-        return (tag is not None and
-                tuple(map(int, tag[1:].split("."))) >= minimum_version and
-                contains(upstream, T3CODE_V2_COMMIT, tag))
-
-    channel_tag = t3code_stable_tag(channel_revision)
-    if not eligible(channel_tag):
-        return "waiting-unstable"
-
-    pinned_tag = t3code_stable_tag(pin(lock, "nixpkgs"))
-    if not eligible(pinned_tag):
-        return "merged-not-pinned"
-
-    # Pin tags also need an actual, non-prerelease GitHub release. Tag
-    # ancestry alone could otherwise accept a manually published preview.
-    release = api(f"repos/{upstream}/releases/tags/{pinned_tag}")
-    if (release.get("tag_name") != pinned_tag or
-            release.get("draft") is not False or release.get("prerelease") is not False):
-        raise ValueError("pinned T3 Code release is not stable")
-    return "PINNED-READY"
 
 GE_UPSTREAM = "GloriousEggroll/proton-ge-custom"
 GE_PACKAGE = "pkgs/by-name/pr/proton-ge-bin/package.nix"
@@ -277,9 +220,6 @@ def detect(name, lock):
         detector = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(detector)
         return detector.inspect(name, lock)["status"]
-    if name == "t3code-stable010":
-        # Removing the bridge must not downgrade the installed stable version.
-        return t3code_stable_v2_status(lock, minimum_version=T3CODE_STABLE_MIN_VERSION)
     if name in PR_WAITS:
         repo, number, input_name = PR_WAITS[name]
         pr = api(f"repos/{repo}/pulls/{number}")
