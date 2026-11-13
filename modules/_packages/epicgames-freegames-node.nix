@@ -36,6 +36,16 @@
         "executablePath: process.env.BROWSER_PATH,"
   '';
 
+  # buildNpmPackage installs to lib/node_modules, but Node 26 refuses to
+  # type-strip any TypeScript under a node_modules path
+  # (ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING) and upstream runs its own
+  # TypeScript entrypoint directly. Relocate the app (with its bundled
+  # dependencies) to share/, where the entrypoint is stripped normally.
+  postInstall = ''
+    mv "$out/lib/node_modules/epicgames-freegames-node" "$out/share/epicgames-freegames-node"
+    rmdir --ignore-fail-on-non-empty "$out/lib/node_modules" "$out/lib" 2>/dev/null || true
+  '';
+
   meta = {
     description = "Detects free Epic Games Store games and sends a device-auth/checkout link";
     homepage = "https://github.com/claabs/epicgames-freegames-node";

@@ -45,7 +45,7 @@
               kill "$xvfb_pid" 2>/dev/null || true
             }
             trap cleanup EXIT
-            node ${portal}/lib/node_modules/epicgames-freegames-node/src/index.ts
+            node ${portal}/share/epicgames-freegames-node/src/index.ts
           '';
         };
         configFile = pkgs.writeText "epic-freegames-portal-config.json" (
