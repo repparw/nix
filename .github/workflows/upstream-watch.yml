@@ -34,6 +34,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: main
+          # Read-only checkout. PR publishing configures Git with the App token.
+          persist-credentials: false
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
       # Scheduled and main-branch runs are trusted publishers; daemon uploads
       # never fail the watch when the cache is unreachable.
@@ -51,11 +53,48 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 .github/scripts/upstream-readiness.py --json > "$RUNNER_TEMP/upstream-readiness.json"
+      # Notify-only readiness doesn't need App credentials. Mint a token only
+      # if an independently mergeable cleanup PR must be created or refreshed.
+      - name: Detect publishable cleanup candidates
+        id: publication
+        if: steps.readiness.outcome == 'success'
+        shell: bash
+        run: |
+          if jq -e --slurpfile registry .github/upstream/watchers.json '
+            to_entries | any(.[];
+              .value == "PINNED-READY"
+              and $registry[0][.key].mode == "post-lock"
+            )' "$RUNNER_TEMP/upstream-readiness.json" >/dev/null; then
+            echo 'needs_app=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create GitHub App installation token for PRs
+        id: app-token
+        if: steps.publication.outputs.needs_app == 'true'
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.GH_AUTOMATION_APP_CLIENT_ID }}
+          private-key: ${{ secrets.GH_AUTOMATION_APP_PRIVATE_KEY }}
+          permission-actions: write
+          permission-contents: write
+          permission-pull-requests: write
       - name: Publish independent cleanup candidates and readiness notifications
-        if: always() && !cancelled() && steps.readiness.outcome == 'success'
+        if: always() && !cancelled() && steps.readiness.outcome == 'success' && (steps.publication.outputs.needs_app != 'true' || steps.app-token.outcome == 'success')
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
+          GH_APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_TOKEN_REQUIRED: ${{ steps.publication.outputs.needs_app }}
           GH_REPO: ${{ github.repository }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
-        run: python3 .github/scripts/upstream-publish.py --readiness "$RUNNER_TEMP/upstream-readiness.json"
+        shell: bash
+        run: |
+          if [ "$PR_TOKEN_REQUIRED" = true ]; then
+            if [ -z "$GH_APP_TOKEN" ]; then
+              echo 'GitHub App token required to publish cleanup PRs; refusing GITHUB_TOKEN fallback.' >&2
+              exit 1
+            fi
+          fi
+          # Notifications also push a delivery-state ref; they may use the
+          # built-in token, whereas cleanup PRs require the App token.
+          gh auth setup-git
+          python3 .github/scripts/upstream-publish.py --readiness "$RUNNER_TEMP/upstream-readiness.json"
