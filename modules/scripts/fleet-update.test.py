@@ -351,8 +351,8 @@ class Deployment(unittest.TestCase):
         self.assertFalse((self.root / "pi").exists())
 
     def test_already_running_revision_must_pass_health(self):
-        (self.root / "epsilon").write_text("new")
-        result = self.deploy(unhealthy="epsilon")
+        (self.root / "alpha").write_text("new")
+        result = self.deploy(unhealthy="alpha")
         self.assertNotEqual(result.returncode, 0)
         self.assertFalse((self.state / "deployed-revision").exists())
         self.assertFalse(any(c[0] == "deploy" for c in self.calls))
