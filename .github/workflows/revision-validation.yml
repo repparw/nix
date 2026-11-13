@@ -127,6 +127,55 @@ jobs:
         env:
           CI_CHECKS: alpha pi epsilon
         run: bash .github/scripts/run-checks.sh
+      - name: Compare Den migration semantics with pre-cutover main
+        env:
+          DEN_BASE_REV: 516e6b1cbe39ddab01dc356c8c8a8c3ef1f24641
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "$DEN_BASE_REV"
+          before="$RUNNER_TEMP/den-before"
+          git worktree add --detach "$before" "$DEN_BASE_REV"
+          snapshot=$(cat <<'NIX'
+          let
+            f = builtins.getFlake (builtins.getEnv "FLEET_SNAPSHOT_ROOT");
+            lib = f.inputs.nixpkgs.lib;
+            sortedPackages = list: lib.sort lib.lessThan (map lib.getName list);
+            hostSnapshot = host:
+              let
+                cfg = f.nixosConfigurations.${host}.config;
+                hm = cfg.home-manager.users.repparw;
+              in
+              {
+                userId = cfg.users.users.repparw.uid;
+                userGroups = lib.sort lib.lessThan cfg.users.users.repparw.extraGroups;
+                systemPackages = sortedPackages cfg.environment.systemPackages;
+                homePackages = sortedPackages hm.home.packages;
+                systemdServices = builtins.attrNames cfg.systemd.services;
+                homeServices = builtins.attrNames hm.systemd.user.services;
+                containers = builtins.attrNames cfg.containers;
+                serviceDefinitions = builtins.attrNames cfg.modules.services.definitions;
+                flags = {
+                  fish = hm.programs.fish.enable or false;
+                  t3code = hm.programs.t3code.enable or false;
+                  steam = cfg.programs.steam.enable or false;
+                  moonshine = cfg.services.moonshine.enable or false;
+                  keyring = cfg.services.gnome.gnome-keyring.enable or false;
+                  uinput = cfg.hardware.uinput.enable or false;
+                };
+              };
+          in builtins.listToAttrs (map (host: { name = host; value = hostSnapshot host; }) [
+            "alpha" "pi" "epsilon"
+          ])
+          NIX
+          )
+          FLEET_SNAPSHOT_ROOT="$before" nix eval --json --impure --expr "$snapshot" > "$RUNNER_TEMP/den-before.json"
+          FLEET_SNAPSHOT_ROOT="$GITHUB_WORKSPACE" nix eval --json --impure --expr "$snapshot" > "$RUNNER_TEMP/den-after.json"
+          if ! diff -u <(jq -S . "$RUNNER_TEMP/den-before.json") <(jq -S . "$RUNNER_TEMP/den-after.json"); then
+            echo 'Den v0.20 changed evaluated host or Home Manager settings; review the diff before merging.' >&2
+            exit 1
+          fi
+          echo 'Den host and Home Manager semantic snapshots are identical.'
+
       - name: Upload evaluation logs
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
