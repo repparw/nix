@@ -4,7 +4,7 @@ diff --git a/modules/aspects/upstream/t3code-connect.nix b/modules/aspects/upstr
 @@ -5,36 +5,6 @@
  {
    den.aspects.ai.provides.t3code-connect = {
--    nixos = {
+-    provides.to-hosts.nixos = {
 -      # Remove only this overlay when nixpkgs#555921 reaches the pin.
 -      nixpkgs.overlays = [
 -        (

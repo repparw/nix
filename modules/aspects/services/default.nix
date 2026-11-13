@@ -36,12 +36,8 @@
           builtins.listToAttrs entries;
       definitions = lib.mapAttrs (_: lib.mkDefault) generatedDefinitions;
 
-      hostMeta = builtins.listToAttrs (
-        map (entry: {
-          name = entry.source.host.name;
-          value = entry.source.host;
-        }) service-registry
-      );
+      # Include hosts without service registrations in the fleet inventory.
+      hostMeta = lib.concatMapAttrs (_system: hosts: hosts) den.hosts;
       hostAddresses = lib.mapAttrs (
         name: host:
         host.serviceAddress or (throw "service host ${name} is missing serviceAddress topology metadata")
@@ -85,15 +81,10 @@
     };
 
   den.aspects.media-stack = {
-    includes =
-      with den.aspects.nixos-services._;
-      [
-        arr
-        jellyfin
-      ]
-      ++ [
-        den.aspects.service-host
-      ];
+    includes = with den.aspects.nixos-services._; [
+      arr
+      jellyfin
+    ];
 
     nixos =
       {

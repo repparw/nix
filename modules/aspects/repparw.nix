@@ -10,6 +10,7 @@
       den.batteries.define-user
       den.batteries.primary-user
       den.aspects.shell
+      den.aspects.fish
       den.aspects.editors
       den.aspects.tmux
       den.aspects.git
@@ -76,4 +77,9 @@
       home.preferXdgDirectories = true;
     };
   };
+
+  # Den selects these host-qualified user aspects automatically.
+  den.aspects."repparw@alpha".includes = [ den.aspects.workstation-user ];
+  den.aspects."repparw@pi".includes = [ den.aspects.headless-user ];
+  den.aspects."repparw@epsilon".includes = [ den.aspects.headless-user ];
 }

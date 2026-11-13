@@ -8,7 +8,7 @@
       extraGroups = [ "gamemode" ];
     };
 
-    nixos =
+    provides.to-hosts.nixos =
       { pkgs, ... }:
       let
         gamingEnvironment = {

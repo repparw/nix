@@ -3,11 +3,21 @@
   den = {
     schema.user.classes = lib.mkDefault [ "homeManager" ];
 
+    # Opt in to Den v0.20's scoped user content semantics. Explicit
+    # cross-scope providers below preserve intended host settings.
+    migrations.user-host-content.acknowledged = true;
+
     schema.host.includes = [
       den.batteries.hostname
+      den.batteries.mutual-provider
       den.aspects.networking
       den.aspects.secrets
       den.aspects.fleet-cli
+      # Every host participates in fleet monitoring, deploy, and service discovery.
+      den.aspects.monitoring._.cloud
+      den.aspects.fleet-unit-state
+      den.aspects.deploy-target
+      den.aspects.service-host
     ];
 
     default = {

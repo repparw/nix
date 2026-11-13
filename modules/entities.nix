@@ -1,42 +1,22 @@
-{ den, ... }:
+{ ... }:
 {
+  # Fleet topology; user roles are selected by the host-qualified Den aspects.
   den.hosts = {
     x86_64-linux.alpha = {
       serviceAddress = "192.168.0.18";
-      users.repparw.aspect = {
-        includes = [
-          den.aspects.repparw
-          den.aspects.fish
-          den.aspects.desktop
-          den.aspects.gaming
-          den.aspects.streaming
-          den.aspects.spotifast
-        ];
-      };
+      users.repparw = { };
     };
 
     aarch64-linux = {
       epsilon = {
         serviceAddress = "10.5.5.3";
         sshAddress = "146.181.42.97";
-        users.repparw.aspect = {
-          includes = [
-            den.aspects.repparw
-            den.aspects.fish
-            den.aspects.ai._.t3code-split
-          ];
-        };
+        users.repparw = { };
       };
 
       pi = {
         serviceAddress = "192.168.0.4";
-        users.repparw.aspect = {
-          includes = [
-            den.aspects.repparw
-            den.aspects.fish
-            den.aspects.ai._.t3code-split
-          ];
-        };
+        users.repparw = { };
       };
     };
   };
