@@ -35,7 +35,7 @@ read-only API access and approved non-PR operations.
    - [Variable](https://github.com/repparw/nix/settings/variables/actions):
      `GH_AUTOMATION_APP_CLIENT_ID` = the App's Client ID
    - [Secret](https://github.com/repparw/nix/settings/secrets/actions):
-     `GH_AUTOMATION_APP_PRIVATE_KEY` = the *entire* PEM private key,
+     `GH_AUTOMATION_APP_PRIVATE_KEY` = the _entire_ PEM private key,
      including the BEGIN/END lines and newlines.
 
 Do not store an installation token as a secret. GitHub App installation tokens
