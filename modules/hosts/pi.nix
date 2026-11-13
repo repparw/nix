@@ -105,6 +105,7 @@
             pkgs.iproute2
             pkgs.iputils
             pkgs.util-linux
+            pkgs.gawk
           ];
           serviceConfig = {
             Type = "oneshot";
