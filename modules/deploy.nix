@@ -99,6 +99,7 @@ let
         coreutils
         curl
         deploy-rs
+        findutils
         git
         gawk
         jq
