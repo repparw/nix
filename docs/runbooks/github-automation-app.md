@@ -1,3 +1,12 @@
+---
+type: Runbook
+title: GitHub App for repository automation
+description: Authenticate automated pull request publishing using short-lived GitHub App installation tokens.
+when: Registering or rotating the App that publishes lock-update, Hermes and upstream-cleanup PRs.
+resource: .github/workflows/lock-update.yml
+tags: [github, actions, automation, security]
+---
+
 # GitHub App for repository automation
 
 The scheduled `upstream-watch`, `lock-update`, and `hermes-update` workflows
