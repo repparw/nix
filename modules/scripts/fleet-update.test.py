@@ -178,6 +178,24 @@ class Deployment(unittest.TestCase):
         self.assertFalse((self.state / "PAUSE").exists())
         self.assertFalse((self.state / "rollback-streak").exists())
 
+    def test_jellyfin_soak_probe_tracks_registry_host(self):
+        # Simulate moving the registered service from alpha to pi. The soak
+        # check must follow its owner rather than remain tied to alpha.
+        source = self.script.read_text()
+        self.assertIn("jellyfin_host='alpha'", source)
+        source = source.replace("jellyfin_host='alpha'", "jellyfin_host='pi'")
+        source = source.replace(
+            "jellyfin_health_url='http://alpha:8096/health'",
+            "jellyfin_health_url='http://pi:8096/health'",
+        )
+        self.script.write_text(source)
+        result = self.deploy(arguments=["--host", "pi"])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(any(
+            call[0] == "curl" and "http://pi:8096/health" in call
+            for call in self.calls
+        ), "the registered host must receive the Jellyfin liveness probe")
+
     def test_ci_missing_pending_failed_wrong_sha_and_pr_do_not_activate(self):
         fixtures = [[], [run(status="in_progress", conclusion=None)], [run(conclusion="failure")],
                     [run(head_sha="c" * 40)], [run(event="pull_request")], [run(event="schedule")],
