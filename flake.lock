@@ -95,7 +95,7 @@
       },
       "original": {
         "owner": "denful",
-        "ref": "v0.20.0",
+        "ref": "latest",
         "repo": "den",
         "type": "github"
       }
