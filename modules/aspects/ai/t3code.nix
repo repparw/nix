@@ -14,8 +14,6 @@
     ];
 
     provides.to-hosts.nixos = {
-      # chrome-headless-shell is not in nixpkgs and T3 downloads it at runtime,
-      # so the generic ELF needs the nix-ld interpreter.
       programs.nix-ld.enable = true;
     };
 
@@ -32,9 +30,6 @@
           package = lib.mkDefault (if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code);
 
           userSettings = {
-            # Each instance ID gets its own Antigravity profile, so the
-            # second instance signs in to a different Google account while
-            # sharing the executable.
             providerInstances.antigravity = {
               driver = "antigravity";
               enabled = true;
