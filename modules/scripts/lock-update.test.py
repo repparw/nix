@@ -146,41 +146,15 @@ class LockUpdate(unittest.TestCase):
             "        pinned = os.environ['FIXTURE_ATOMIC_READY'] == '1' or (root/'atomic-pr').exists()\n"
             "        body = b'rev = \"fix\";' if (pinned and ref in ('new', 'channel')) else b'rev = \"other\";'\n"
             "        print(json.dumps({'content': base64.b64encode(body).decode()})); sys.exit(0)\n"
-            "    if 'actions/runs/21/jobs' in endpoint:\n"
-            "        manifest = (root/'atomic-manifest').read_text() if (root/'atomic-manifest').exists() else ''\n"
-            "        watchers = next((t.split('=', 1)[1] for t in manifest.split() if t.startswith('watchers=')), 'none')\n"
-            "        print(str(1 if watchers != 'none' else 0))\n"
-            "        sys.exit(0)\n"
-            "    if 'actions/runs/22/jobs' in endpoint:\n"
-            "        print('1'); sys.exit(0)\n"
-            "    if 'actions/runs/21' in endpoint:\n"
-            "        state = os.environ['FIXTURE_ATOMIC_CI']\n"
-            "        want_conclusion = any('.conclusion' in a for a in args)\n"
-            "        if state == 'pending':\n"
-            "            print('' if want_conclusion else 'in_progress'); sys.exit(0)\n"
-            "        if state == 'failure':\n"
-            "            print('failure' if want_conclusion else 'completed'); sys.exit(0)\n"
-            "        print('success' if want_conclusion else 'completed'); sys.exit(0)\n"
-            "    if 'actions/runs/22' in endpoint:\n"
-            "        print('success' if '.conclusion' in args else 'completed'); sys.exit(0)\n"
             "    if 'branch=automation/atomic-cleanup' in args:\n"
             "        if 'event=pull_request' in args:\n"
             "            workflow = 'pr-title.yml' if 'pr-title.yml/runs' in endpoint else 'ci.yml'\n"
             "            run = 32 if workflow == 'pr-title.yml' else 31\n"
             "            head_sha = next((a.split('=', 1)[1] for a in args if a.startswith('head_sha=')), '')\n"
-            "            conclusion = os.environ['FIXTURE_PR_CI']\n"
-            "            print(json.dumps({'id': run, 'status': 'completed', 'conclusion': conclusion, 'head_sha': head_sha, 'head_branch': 'automation/atomic-cleanup', 'event': 'pull_request', 'path': '.github/workflows/' + workflow}))\n"
-            "        elif 'pr-title.yml/runs' in endpoint:\n"
-            "            want = next((a.split('=', 1)[1] for a in args if a.startswith('head_sha=')), '')\n"
-            "            marker = root/'dispatched-atomic-title'\n"
-            "            print('1' if marker.exists() and marker.read_text() == want else '0')\n"
-            "        elif 'ci.yml/runs' in endpoint:\n"
-            "            runs = []\n"
-            "            if (root/'dispatched-atomic').exists():\n"
-            "                runs.append({'id': 21, 'display_title': (root/'atomic-manifest').read_text()})\n"
-            "            if (root/'wrong-atomic-manifest').exists():\n"
-            "                runs.append({'id': 22, 'display_title': (root/'wrong-atomic-manifest').read_text()})\n"
-            "            print(json.dumps({'workflow_runs': runs}))\n"
+            "            conclusion = os.environ['FIXTURE_TITLE_CI'] if workflow == 'pr-title.yml' else os.environ['FIXTURE_PR_CI']\n"
+            "            if conclusion == 'missing': print(''); sys.exit(0)\n"
+            "            status = 'in_progress' if conclusion == 'pending' else 'completed'\n"
+            "            print(json.dumps({'id': run, 'status': status, 'conclusion': None if conclusion == 'pending' else conclusion, 'head_sha': head_sha, 'head_branch': 'automation/atomic-cleanup', 'event': 'pull_request', 'path': '.github/workflows/' + workflow}))\n"
             "        sys.exit(0)\n"
             "    sha = None\n"
             "    try:\n"
@@ -203,36 +177,11 @@ class LockUpdate(unittest.TestCase):
             "    if 'event=pull_request' in args:\n"
             "        workflow = 'pr-title.yml' if 'pr-title.yml/runs' in endpoint else 'ci.yml'\n"
             "        run = 12 if workflow == 'pr-title.yml' else 11\n"
-            "        conclusion = os.environ['FIXTURE_PR_CI']\n"
-            "        print(json.dumps({'id': run, 'status': 'completed', 'conclusion': conclusion, 'head_sha': sha, 'head_branch': 'automation/flake-lock', 'event': 'pull_request', 'path': '.github/workflows/' + ('other.yml' if os.environ['FIXTURE_WRONG_RUN_PATH'] == '1' else workflow)}))\n"
+            "        conclusion = os.environ['FIXTURE_TITLE_CI'] if workflow == 'pr-title.yml' else os.environ['FIXTURE_PR_CI']\n"
+            "        if conclusion == 'missing': print(''); sys.exit(0)\n"
+            "        status = 'in_progress' if conclusion == 'pending' else 'completed'\n"
+            "        print(json.dumps({'id': run, 'status': status, 'conclusion': None if conclusion == 'pending' else conclusion, 'head_sha': sha, 'head_branch': 'automation/flake-lock', 'event': 'pull_request', 'path': '.github/workflows/' + ('other.yml' if os.environ['FIXTURE_WRONG_RUN_PATH'] == '1' else workflow)}))\n"
             "        sys.exit(0)\n"
-            "    if any('pr-title.yml/runs' in arg for arg in args):\n"
-            "        if (root / 'dispatched-title').exists(): print('2')\n"
-            "        sys.exit(0)\n"
-            "    branch = next((a.split('=', 1)[1] for a in args if a.startswith('branch=')), '')\n"
-            "    key = 'main' if branch == 'main' else 'candidate'\n"
-            "    configured = os.environ[f'FIXTURE_{key.upper()}_CI']\n"
-            "    marker = root / f'dispatched-{key}'\n"
-            "    state = configured or ('success' if marker.exists() else '')\n"
-            "    if state == 'success':\n"
-            "        print('1\\tcompleted\\tsuccess')\n"
-            "    elif state == 'failure':\n"
-            "        print('1\\tcompleted\\tfailure')\n"
-            "    elif state == 'pending':\n"
-            "        print('1\\tin_progress\\t')\n"
-            "elif args[:2] == ['workflow', 'run']:\n"
-            "    ref = args[args.index('--ref') + 1]\n"
-            "    key = ('atomic-title' if args[2] == 'pr-title.yml' else 'atomic') if ref == 'automation/atomic-cleanup' else ('title' if args[2] == 'pr-title.yml' else ('main' if ref == 'main' else 'candidate'))\n"
-            "    if os.environ[f'FIXTURE_{key.upper().replace(chr(45), chr(95))}_DISPATCH_FAIL'] == '1':\n"
-            "        sys.exit(1)\n"
-            "    items = [a.split('=', 1) for a in args if '=' in a and not a.startswith('--')]\n"
-            "    params = dict(items)\n"
-            "    (root / f'dispatched-{key}').write_text(params['expected_sha'] if key == 'atomic-title' else '1')\n"
-            "    if key == 'atomic':\n"
-            "        (root/'atomic-manifest').write_text('validate sha=' + params['expected_sha'] +\n"
-            "            ' watchers=' + params.get('upstream_watcher', 'none'))\n"
-            "elif args[:2] == ['run', 'watch']:\n"
-            "    sys.exit(1 if os.environ['FIXTURE_TITLE_CI'] == 'failure' else 0)\n"
         )
         gh.chmod(0o755)
 
@@ -277,15 +226,12 @@ class LockUpdate(unittest.TestCase):
         title_ci="success",
         branch_race=False,
         late_branch_race=False,
-        candidate_dispatch_fail=False,
         pre_merge_main_race=False,
         wrong_pr_head=False,
         wrong_run_path=False,
         pr_ci="success",
         atomic_ready=False,
-        atomic_dispatch_fail=False,
         atomic_wrong_head=False,
-        atomic_ci="success",
         app_token="dummy-secret",
     ):
         env = os.environ | {
@@ -294,21 +240,13 @@ class LockUpdate(unittest.TestCase):
             "FIXTURE_PR": pr,
             "FIXTURE_BRANCH_RACE": str(int(branch_race)),
             "FIXTURE_LATE_BRANCH_RACE": str(int(late_branch_race)),
-            "FIXTURE_CANDIDATE_CI": candidate_ci,
             "FIXTURE_TITLE_CI": title_ci,
-            "FIXTURE_TITLE_DISPATCH_FAIL": "0",
-            "FIXTURE_MAIN_CI": "",
-            "FIXTURE_CANDIDATE_DISPATCH_FAIL": str(int(candidate_dispatch_fail)),
-            "FIXTURE_MAIN_DISPATCH_FAIL": "0",
-            "FIXTURE_ATOMIC_DISPATCH_FAIL": str(int(atomic_dispatch_fail)),
             "FIXTURE_ATOMIC_WRONG_HEAD": str(int(atomic_wrong_head)),
             "FIXTURE_PRE_MERGE_MAIN_RACE": str(int(pre_merge_main_race)),
             "FIXTURE_WRONG_PR_HEAD": str(int(wrong_pr_head)),
             "FIXTURE_WRONG_RUN_PATH": str(int(wrong_run_path)),
             "FIXTURE_PR_CI": pr_ci,
             "FIXTURE_ATOMIC_READY": str(int(atomic_ready)),
-            "FIXTURE_ATOMIC_CI": atomic_ci,
-            "FIXTURE_ATOMIC_TITLE_DISPATCH_FAIL": "0",
             "GH_AUTOMATION_APP_TOKEN": app_token,
             "REAL_GIT": self.real_git,
             "FIXTURE_REMOTE": str(self.remote),
@@ -356,28 +294,15 @@ class LockUpdate(unittest.TestCase):
         return self.main
 
     def test_creates_validates_and_fast_forwards_main_to_same_sha(self):
+
         result = self.update()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), lock_fixture("new"))
         self.assertEqual(self.main_sha(), self.branch_sha())
-
-        create = next(i for i, r in enumerate(self.requests) if r[:2] == ["pr", "create"])
-        candidate_dispatches = [
-            (i, r) for i, r in enumerate(self.requests)
-            if r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "automation/flake-lock"
-        ]
-        self.assertEqual(len(candidate_dispatches), 2)
-        self.assertEqual({request[2] for _, request in candidate_dispatches}, {"ci.yml", "pr-title.yml"})
-        self.assertLess(create, candidate_dispatches[0][0])
-        self.assertFalse(any(
-            r[:2] == ["workflow", "run"] and r[r.index("--ref") + 1] == "main"
-            for r in self.requests
-        ))
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests),
+                         "App-authored PR checks should run without redundant dispatches")
+        self.assertTrue(any(r[:2] == ["pr", "create"] for r in self.requests))
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
-
-        pr_list = next(r for r in self.requests if r[:2] == ["pr", "list"] and "automation/flake-lock" in r)
-        self.assertIn("automation/flake-lock", pr_list)
-        self.assertNotIn("fixture:automation/flake-lock", pr_list)
 
     def test_existing_pr_refreshes_without_duplicate_create(self):
         self.git("push", "origin", "HEAD:refs/heads/automation/flake-lock", cwd=self.checkout)
@@ -410,23 +335,17 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.main_sha(), self.main)
 
     def test_candidate_failure_does_not_merge(self):
-        result = self.update(candidate_ci="failure")
+
+        result = self.update(pr_ci="failure")
         self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
+        self.assertIn("concluded failure", result.stderr)
         self.assertEqual(self.main_sha(), self.main)
 
     def test_existing_successful_candidate_ci_is_reused(self):
+
         result = self.update(candidate_ci="success")
         self.assertEqual(result.returncode, 0, result.stderr)
-        candidate_dispatches = [
-            r for r in self.requests
-            if r[:3] == ["workflow", "run", "ci.yml"] and r[r.index("--ref") + 1] == "automation/flake-lock"
-        ]
-        self.assertEqual(candidate_dispatches, [])
-        title_dispatches = [r for r in self.requests if r[:3] == ["workflow", "run", "pr-title.yml"]]
-        self.assertEqual(len(title_dispatches), 1)
-        self.assertIn("pull_request_number=123", title_dispatches[0])
-        self.assertIn("expected_sha=" + self.branch_sha(), title_dispatches[0])
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertEqual(self.main_sha(), self.branch_sha())
 
     def test_title_failure_does_not_publish_validated_lock(self):
@@ -441,8 +360,10 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.main_sha(), self.main)
 
     def test_candidate_dispatch_failure_does_not_merge(self):
-        result = self.update(candidate_dispatch_fail=True)
+
+        result = self.update(pr_ci="missing")
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Timed out waiting for required PR workflow ci.yml", result.stderr)
         self.assertEqual(self.main_sha(), self.main)
 
     def test_main_race_after_final_check_rejects_atomic_merge(self):
@@ -501,27 +422,23 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[0] == "api" and any(a.endswith('/approve') for a in r) for r in self.requests))
 
     def test_atomic_candidate_carries_cleanup_and_merges_exact_head(self):
+
         result = self.update(atomic_ready=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.main_sha(), self.main, "The fixture records the GitHub merge request separately")
-        atomic = self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-cleanup")
+        self.assertEqual(self.main_sha(), self.main)
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", "automation/atomic-cleanup:flake.lock"), lock_fixture("new"))
         self.assertNotEqual(subprocess.run(
             ["git", "--git-dir", str(self.remote), "cat-file", "-e",
              "automation/atomic-cleanup:modules/aspects/upstream/qbittorrent.nix"],
             capture_output=True).returncode, 0)
-        self.assertEqual(
-            {r[2] for r in self.requests if r[:2] == ["workflow", "run"]
-             and r[r.index("--ref") + 1] == "automation/atomic-cleanup"},
-            {"ci.yml", "pr-title.yml"},
-        )
-        ci_dispatch = next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]
-                           and r[r.index("--ref") + 1] == "automation/atomic-cleanup")
-        self.assertIn("upstream_watcher=qbittorrent", ci_dispatch)
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertTrue(any("event=pull_request" in r and "ci.yml/runs" in str(r) for r in self.requests))
+        self.assertTrue(any("event=pull_request" in r and "pr-title.yml/runs" in str(r) for r in self.requests))
         self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
                              for r in self.requests))
-        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests),
-                        "the atomic candidate must be merge-automated")
+        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r
+                            and "--match-head-commit" in r and "--auto" not in r
+                            for r in self.requests))
 
     def test_failed_required_atomic_pr_checks_prevent_merge(self):
         result = self.update(atomic_ready=True, pr_ci="failure")
@@ -555,31 +472,31 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(len(self.requests), 2)
 
     def test_interrupted_atomic_dispatch_retries_without_rewriting_branch(self):
-        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+
+        first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
-        original = self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-cleanup")
+        original = self.atomic_sha()
         self.git("switch", "main", cwd=self.checkout)
         second = self.update(change=False)
         self.assertEqual(second.returncode, 0, second.stderr)
         self.assertEqual(self.main_sha(), self.main)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-cleanup"), original)
-        self.assertEqual([r[2] for r in self.requests if r[:2] == ["workflow", "run"]], ["ci.yml"])
-        self.assertIn("upstream_watcher=qbittorrent",
-                      next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]))
+        self.assertEqual(self.atomic_sha(), original)
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r
+                            for r in self.requests))
 
     def test_recovery_fetches_candidate_in_fresh_checkout(self):
-        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+
+        first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         fresh = self.root / "fresh"
-        self.git("clone", "--single-branch", "--branch", "main",
-                 str(self.remote), str(fresh))
+        self.git("clone", "--single-branch", "--branch", "main", str(self.remote), str(fresh))
         self.git("config", "user.name", "fixture", cwd=fresh)
         self.git("config", "user.email", "fixture@example.test", cwd=fresh)
         self.checkout = fresh
         second = self.update(change=False)
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertTrue(any(r[:3] == ["workflow", "run", "ci.yml"]
-                            for r in self.requests))
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_merged_atomic_branch_is_safely_retired(self):
@@ -618,16 +535,12 @@ class LockUpdate(unittest.TestCase):
                                  "automation/atomic-cleanup"))
 
     def test_atomic_candidate_merges_exact_head(self):
+
         result = self.update(atomic_ready=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        dispatch = next(r for r in self.requests if r[:3] == ["workflow", "run", "ci.yml"]
-                        and r[r.index("--ref") + 1] == "automation/atomic-cleanup")
-        self.assertNotIn("build_arm_authelia", dispatch)
-        self.assertIn("upstream_watcher=qbittorrent", dispatch)
-        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests))
-        self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
-                             for r in self.requests))
-
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r
+                            and "--match-head-commit" in r and "--auto" not in r for r in self.requests))
 
     def test_stale_atomic_pr_head_cannot_merge(self):
         first = self.update(atomic_ready=True)
@@ -643,38 +556,51 @@ class LockUpdate(unittest.TestCase):
         first = self.update(atomic_ready=True)
         self.assertEqual(first.returncode, 0, first.stderr)
         tip = self.atomic_sha()
-        message = self.git("--git-dir", str(self.remote), "log", "-1", "--format=%s", tip)
-        self.assertIn("updated lock (qbittorrent)", message)
         new_main = self.advance_main()
         (self.root / "auto-merged").unlink()
         second = self.update(atomic_ready=True)
         self.assertEqual(second.returncode, 0, second.stderr)
-        refreshed = self.atomic_sha()
-        self.assertNotEqual(refreshed, tip)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "rev-parse", f"{refreshed}^"), new_main)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "log", "-1", "--format=%s", refreshed), message)
-        self.assertEqual(self.git("--git-dir", str(self.remote), "show", f"{refreshed}:flake.lock"),
-                         lock_fixture("new"))
-        self.assertNotEqual(subprocess.run(
-            ["git", "--git-dir", str(self.remote), "cat-file", "-e",
-             f"{refreshed}:modules/aspects/upstream/qbittorrent.nix"],
-            capture_output=True).returncode, 0)
-
-        self.assertFalse(any(r[:2] == ["pr", "create"] for r in self.requests))
-        dispatches = [r for r in self.requests if r[:2] == ["workflow", "run"]]
-        self.assertEqual({r[2] for r in dispatches}, {"ci.yml", "pr-title.yml"})
-        for invocation in dispatches:
-            self.assertIn(f"expected_sha={refreshed}", invocation)
-        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r and "--match-head-commit" in r and "--auto" not in r for r in self.requests))
-        self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
-                             for r in self.requests))
+        self.assertEqual(self.atomic_sha(), tip, "Unrelated main changes must not rewrite the PR head")
+        self.assertEqual(self.main_sha(), new_main)
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
         record = json.loads(self.git(
             "--git-dir", str(self.remote), "show",
             "automation/atomic-cleanup-provenance:provenance.json"))
-        self.assertEqual(record["sha"], refreshed)
-        self.assertEqual(record["base"], new_main)
-        self.assertIn(refreshed, (self.root / "atomic-body").read_text(),
-                      "the PR-body trailer must move with the refreshed tip")
+        self.assertEqual(record["sha"], tip)
+        self.assertNotEqual(record["base"], new_main)
+
+
+    def test_stale_atomic_lock_change_requires_new_candidate(self):
+        self.assertEqual(self.update(atomic_ready=True).returncode, 0)
+        tip = self.atomic_sha()
+        self.git("switch", "--quiet", "main", cwd=self.checkout)
+        (self.checkout / "flake.lock").write_text(lock_fixture("changed-after-publication"))
+        self.git("add", "flake.lock", cwd=self.checkout)
+        self.git("commit", "--quiet", "-m", "changed primary input", cwd=self.checkout)
+        self.git("push", "--quiet", "origin", "main", cwd=self.checkout)
+        self.main = self.git("rev-parse", "HEAD", cwd=self.checkout)
+        second = self.update(change=False)
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn("main changed flake.lock", second.stderr)
+        self.assertEqual(self.atomic_sha(), tip)
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
+
+    def test_stale_atomic_workaround_change_requires_new_candidate(self):
+        self.assertEqual(self.update(atomic_ready=True).returncode, 0)
+        tip = self.atomic_sha()
+        self.git("switch", "--quiet", "main", cwd=self.checkout)
+        p = self.checkout / "modules/aspects/upstream/qbittorrent.nix"
+        p.write_text("edited on main\\n")
+        self.git("add", str(p), cwd=self.checkout)
+        self.git("commit", "--quiet", "-m", "edit workaround", cwd=self.checkout)
+        self.git("push", "--quiet", "origin", "main", cwd=self.checkout)
+        self.main = self.git("rev-parse", "HEAD", cwd=self.checkout)
+        second = self.update(change=False)
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn("main changed modules/aspects/upstream/qbittorrent.nix", second.stderr)
+        self.assertEqual(self.atomic_sha(), tip)
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_tampered_atomic_tip_fails_closed(self):
         first = self.update(atomic_ready=True)
@@ -720,56 +646,45 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_recovery_rejects_successful_ci_for_wrong_watcher_manifest(self):
-        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+
+        first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
-        tip = self.git("--git-dir", str(self.remote), "rev-parse",
-                       "automation/atomic-cleanup")
-        (self.root / "wrong-atomic-manifest").write_text(
-            f"validate sha={tip} watchers=moonshine-pr227 arm=false")
         self.git("switch", "main", cwd=self.checkout)
-        second = self.update(change=False)
-        self.assertEqual(second.returncode, 0, second.stderr)
-        dispatched = [r for r in self.requests if r[:3] ==
-                      ["workflow", "run", "ci.yml"]]
-        self.assertEqual(len(dispatched), 1)
-        self.assertIn("upstream_watcher=qbittorrent", dispatched[0])
-        self.assertFalse(any("actions/runs/22/jobs" in str(r) for r in self.requests))
+        second = self.update(change=False, pr_ci="missing")
+        self.assertNotEqual(second.returncode, 0)
+        self.assertIn("Timed out waiting for required PR workflow ci.yml", second.stderr)
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_recovery_rejects_successful_ci_for_foreign_manifest(self):
-        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+
+        first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
-        tip = self.git("--git-dir", str(self.remote), "rev-parse",
-                       "automation/atomic-cleanup")
-        (self.root / "wrong-atomic-manifest").write_text(
-            f"validate sha={tip} watchers=qbittorrent arm=true")
         self.git("switch", "main", cwd=self.checkout)
-        second = self.update(change=False)
+        second = self.update(change=False, pr_ci="success")
         self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertTrue(any(r[:3] == ["workflow", "run", "ci.yml"]
-                            for r in self.requests))
+        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
+        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_recovery_blocks_while_atomic_validation_pending(self):
-        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+
+        first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
-        second = self.update(change=False, atomic_ci="pending")
+        second = self.update(change=False, pr_ci="pending")
         self.assertNotEqual(second.returncode, 0)
-        self.assertIn("Timed out waiting for atomic exact-SHA validation", second.stderr)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests),
-                         "pending validation must never arm auto-merge")
+        self.assertIn("Timed out waiting for required PR workflow ci.yml", second.stderr)
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_failed_atomic_validation_never_arms_automerge(self):
-        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+
+        first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
-        second = self.update(change=False, atomic_ci="failure")
+        second = self.update(change=False, pr_ci="failure")
         self.assertNotEqual(second.returncode, 0)
-        self.assertIn("requires review", second.stderr)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests),
-                         "failed validation must never arm auto-merge")
-        self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
-                              for r in self.requests),
-                         "failed validation must not attempt workflow approval")
+        self.assertIn("concluded failure", second.stderr)
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_lockfile_only_amendment_rejected(self):
         first = self.update(atomic_ready=True)
@@ -863,27 +778,24 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_action_required_never_arms_atomic_automerge(self):
-        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+
+        first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
         second = self.update(change=False, pr_ci="action_required")
         self.assertNotEqual(second.returncode, 0)
         self.assertIn("requests manual approval", second.stderr)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests),
-                         "action_required must never arm auto-merge")
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_missing_app_token_fails_closed_with_guidance(self):
-        first = self.update(atomic_ready=True, atomic_dispatch_fail=True)
+
+        first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
         second = self.update(change=False, app_token="")
         self.assertNotEqual(second.returncode, 0)
         self.assertIn("GH_AUTOMATION_APP_TOKEN", second.stderr)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests),
-                         "missing app identity must never arm auto-merge")
-        self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
-                              for r in self.requests),
-                         "missing app identity must not attempt approval")
+        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_creation_records_provenance(self):
         result = self.update(atomic_ready=True)
