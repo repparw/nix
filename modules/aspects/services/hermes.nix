@@ -21,6 +21,7 @@
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         crashTriage = import ./hermes-crash/_package.nix { inherit pkgs; };
         packageTriage = import ./hermes-package/_package.nix { inherit pkgs; };
+        alertTriage = import ./hermes-alert/_package.nix { inherit pkgs; };
         hermesNodejs = pkgs.nodejs_24;
       in
       {
@@ -84,6 +85,14 @@
               hostPath = toString packageTriage.enroll;
               isReadOnly = true;
             };
+            "/var/lib/hermes/.hermes/scripts/alert_triage_cron.py" = {
+              hostPath = toString alertTriage.gate;
+              isReadOnly = true;
+            };
+            "/var/lib/hermes/.hermes/scripts/alert_triage_enroll.py" = {
+              hostPath = toString alertTriage.enroll;
+              isReadOnly = true;
+            };
             "/var/lib/hermes" = {
               hostPath = "/home/repparw/services/hermes";
               isReadOnly = false;
@@ -99,6 +108,11 @@
             "/run/secrets/arr-api-keys" = {
               hostPath = config.sops.secrets."arr-api-keys".path;
               isReadOnly = true;
+            };
+          } // lib.optionalAttrs config.modules.grafana-alert-triage.enable {
+            "/var/lib/hermes/.hermes/alert-triage" = {
+              hostPath = "/var/lib/grafana-alert-triage";
+              isReadOnly = false;
             };
           };
           extraConfig =
