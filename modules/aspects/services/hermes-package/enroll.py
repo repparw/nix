@@ -25,7 +25,7 @@ def main():
         raise RuntimeError("multiple package triage jobs already exist")
     fields = {
         "name": NAME, "prompt": PROMPT, "script": "package_triage_cron.py",
-        "deliver": "discord", "enabled_toolsets": ["web", "no_mcp"],
+        "deliver": "whatsapp", "enabled_toolsets": ["web", "no_mcp"],
         "model": "stepfun/step-5-preview:free", "provider": "nous",
     }
     if jobs:

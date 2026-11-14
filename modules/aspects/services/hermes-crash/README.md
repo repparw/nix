@@ -22,8 +22,7 @@ not be used to suppress it.
 After deployment, explicitly run `crash_triage_enroll.py` with the installed
 Hermes Python environment, as the container's Hermes user. Enrollment is
 idempotent and preserves an existing job's schedule and enabled state. It uses
-the same Discord home channel as Arr, with only the `web` toolset and MCP
-disabled. The persisted job survives gateway restarts; deployment does not
+WhatsApp delivery, with only the `web` toolset and MCP disabled. The persisted job survives gateway restarts; deployment does not
 automatically create or resume jobs.
 
 For an immediate run, call `cron.jobs.trigger_job("Fleet crash triage")` in
