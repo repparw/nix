@@ -16,6 +16,7 @@
       den.aspects.epsilon._.backup
       den.aspects.nixos-services._.edge
       den.aspects.nixos-services._.hermes
+      den.aspects.nixos-services._.grafana-alert-triage
       den.aspects.nixos-services._.automations
       den.aspects.nixos-services._.archisteamfarm
       den.aspects.nixos-services._.paperless
