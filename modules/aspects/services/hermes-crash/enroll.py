@@ -30,8 +30,6 @@ def main():
     fields = {
         "name": NAME, "prompt": PROMPT, "script": "crash_triage_cron.py",
         "deliver": "whatsapp", "enabled_toolsets": ["web", "no_mcp"],
-        # Clear any old pin so cron.model / cron.model_provider in live config apply.
-        "model": None, "provider": None,
     }
     if jobs:
         job = update_job(jobs[0]["id"], fields)
