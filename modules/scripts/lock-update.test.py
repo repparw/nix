@@ -682,7 +682,8 @@ class LockUpdate(unittest.TestCase):
         self.git("fetch", "--quiet", "origin", "automation/atomic-cleanup", cwd=self.checkout)
         self.git("switch", "--quiet", "--detach", "FETCH_HEAD", cwd=self.checkout)
         arr = self.checkout / "modules/aspects/upstream/qbittorrent.nix"
-        arr.write_text(arr.read_text() + "extra\n")
+        arr.parent.mkdir(parents=True, exist_ok=True)
+        arr.write_text("tampered\n")
         self.git("add", ".", cwd=self.checkout)
         self.git("commit", "--quiet", "--amend", "--no-edit", cwd=self.checkout)
         tampered = self.git("rev-parse", "HEAD", cwd=self.checkout)
@@ -702,6 +703,7 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(first.returncode, 0, first.stderr)
         self.git("fetch", "--quiet", "origin", "automation/atomic-cleanup", cwd=self.checkout)
         self.git("switch", "--quiet", "--detach", "FETCH_HEAD", cwd=self.checkout)
+        (self.checkout / "modules").mkdir(parents=True, exist_ok=True)
         (self.checkout / "modules/human-fixup.nix").write_text("fixup\n")
         self.git("add", ".", cwd=self.checkout)
         self.git("commit", "--quiet", "-m", "human fixup", cwd=self.checkout)
