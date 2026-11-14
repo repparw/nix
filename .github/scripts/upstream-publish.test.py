@@ -26,15 +26,9 @@ class Publication(unittest.TestCase):
         self.git("config", "user.name", "Fixture")
         self.git("config", "user.email", "fixture@example.invalid")
         self.git("config", "core.hooksPath", "/dev/null")
-        module = self.root / "modules/fixture.nix"
+        module = self.root / "modules/aspects/upstream/fixture.nix"
         module.parent.mkdir()
         module.write_text("keep\nworkaround\n")
-        recipes = self.root / ".github/upstream/cleanup"
-        recipes.mkdir(parents=True)
-        self.recipe = recipes / "fixture.patch"
-        self.recipe.write_text("diff --git a/modules/fixture.nix b/modules/fixture.nix\n"
-                               "--- a/modules/fixture.nix\n+++ b/modules/fixture.nix\n"
-                               "@@ -1,2 +1 @@\n keep\n-workaround\n")
         self.git("add", ".")
         self.git("commit", "--quiet", "-m", "base")
         self.git("remote", "add", "origin", str(self.remote))
@@ -81,7 +75,7 @@ class Publication(unittest.TestCase):
         os.environ["DISCORD_CHANNEL_ID"] = "fixture-channel"
         self.addCleanup(os.environ.pop, "DISCORD_BOT_TOKEN", None)
         self.addCleanup(os.environ.pop, "DISCORD_CHANNEL_ID", None)
-        self.contract = {"mode": "post-lock", "cleanup": "fixture.patch"}
+        self.contract = {"mode": "post-lock"}
 
     def git(self, *args):
         return subprocess.run(["git", *args], cwd=self.root, check=True,
@@ -115,8 +109,10 @@ class Publication(unittest.TestCase):
         for invocation in self.dispatches:
             self.assertIn(f"expected_sha={first['sha']}", invocation)
         self.assertIn("upstream_watcher=fixture", self.dispatches[1])
-        self.assertEqual(self.git("show", f"{first['sha']}:modules/fixture.nix"), "keep")
-        self.assertEqual((self.root / "modules/fixture.nix").read_text(), "keep\nworkaround\n")
+        self.assertNotEqual(subprocess.run(
+            ["git", "cat-file", "-e", f"{first['sha']}:modules/aspects/upstream/fixture.nix"],
+            cwd=self.root, capture_output=True).returncode, 0)
+        self.assertEqual((self.root / "modules/aspects/upstream/fixture.nix").read_text(), "keep\nworkaround\n")
         self.assertEqual(self.publish(), first)
         self.assertEqual(len(self.dispatches), 2)
 
@@ -152,7 +148,9 @@ class Publication(unittest.TestCase):
         self.assertEqual(tip, second["sha"])
         self.git("fetch", "--quiet", "origin",
                  f"+refs/heads/automation/upstream-fixture:refs/remotes/origin/automation/upstream-fixture")
-        self.assertEqual(self.git("show", f"{second['sha']}:modules/fixture.nix"), "keep")
+        self.assertNotEqual(subprocess.run(
+            ["git", "cat-file", "-e", f"{second['sha']}:modules/aspects/upstream/fixture.nix"],
+            cwd=self.root, capture_output=True).returncode, 0)
         self.assertEqual(self.git("show", f"{second['sha']}:modules/unrelated.nix"), "later")
         self.assertEqual(self.prs[0]["number"], 42, "the open PR must be reused")
         self.assertEqual(len(self.automerges), 2)
@@ -163,12 +161,12 @@ class Publication(unittest.TestCase):
     def test_tampered_candidate_requires_review(self):
         first = self.publish()
         # Simulate a human edit on the candidate branch: the tip no longer
-        # equals the recipe applied to its parent.
+        # equals a single-file deletion from its parent.
         candidate_sha = first["sha"]
         clone = Path(self.temporary.name) / "tamper"
         subprocess.run(["git", "clone", "--quiet", "--reference", str(self.root),
                         str(self.remote), str(clone), "--branch", "automation/upstream-fixture"], check=True)
-        (clone / "modules/fixture.nix").write_text("keep\nworkaround\nextra\n")
+        (clone / "modules/aspects/upstream/fixture.nix").write_text("keep\nworkaround\nextra\n")
         subprocess.run(["git", "-C", str(clone), "add", "."], check=True)
         subprocess.run(["git", "-C", str(clone), "-c", "user.name=T", "-c", "user.email=t@t",
                         "-c", "core.hooksPath=/dev/null", "commit", "--quiet",
@@ -209,26 +207,18 @@ class Publication(unittest.TestCase):
 
     def test_conflicting_main_advance_fails_closed(self):
         first = self.publish()
-        # Main reworks the patched lines, so the recipe matches neither the
+        # Main changes the owned file, so the deletion matches neither the
         # new main nor the stale tip's parent reconstruction.
-        (self.root / "modules/fixture.nix").write_text("keep\nreworked\n")
+        (self.root / "modules/aspects/upstream/fixture.nix").write_text("keep\nreworked\n")
         self.git("add", ".")
         self.git("commit", "--quiet", "-m", "main moved on")
         self.git("push", "--quiet", "origin", "main")
-        # The recipe no longer applies to the new main: the stale candidate
+        # The file changed on new main: the stale candidate
         # must be left alone for review, never force-updated.
         with self.assertRaises(subprocess.CalledProcessError):
             self.publish()
         self.assertEqual(self.git("ls-remote", "--heads", "origin", "automation/upstream-fixture").split()[0], first["sha"])
         self.assertEqual(len(self.automerges), 1)
-
-    def test_changed_recipe_refuses_to_overwrite(self):
-        first = self.publish()
-        self.recipe.write_text(self.recipe.read_text().replace("-workaround", "-different"))
-        with self.assertRaises(subprocess.CalledProcessError):
-            self.publish()
-        self.assertEqual(self.git("ls-remote", "--heads", "origin", "automation/upstream-fixture").split()[0], first["sha"])
-        self.assertEqual(len(self.dispatches), 2)
 
     def test_closed_candidate_is_not_reopened(self):
         first = self.publish()
@@ -259,12 +249,12 @@ class Publication(unittest.TestCase):
         self.assertEqual(len(self.dispatches), 2)
 
     def test_one_conflict_does_not_block_other_watchers(self):
-        registry = {"broken": {"mode": "post-lock", "cleanup": "missing.patch"},
+        registry = {"broken": {"mode": "post-lock"},
                     "fixture": self.contract}
         result, failed = publisher.sweep(registry, {name: "PINNED-READY" for name in registry}, "fixture/repo")
         self.assertTrue(failed)
         self.assertEqual(result["fixture"]["pr"], 42)
-        self.assertEqual(result["broken"]["status"], "needs-attention (FileNotFoundError)")
+        self.assertEqual(result["broken"]["status"], "needs-attention (CalledProcessError)")
 
     def test_notification_is_durable_and_deduplicated(self):
         self.assertEqual(publisher.notify("fixture", {}, "fixture/repo", "PINNED-READY")["status"], "notified")
