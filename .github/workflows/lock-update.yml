@@ -469,7 +469,7 @@ jobs:
               # App-authored PRs trigger their normal required workflows.
               url=$(GH_TOKEN="$app_token" gh pr create --base main --head "$atomic_branch" \
                 --title 'fix(upstream): retire apply-coupled workarounds with updated lock' \
-                --body "$(printf '%s\n\n%s' "Atomic lock+cleanup candidate for: $watcher_list. Each included watcher is ready on this candidate pin. Merging happens only after exact-SHA CI is green and main is current, including required package validation." \
+                --body "$(printf '%s\n\n%s' "Atomic lock+cleanup candidate for: $watcher_list. Each included watcher is ready on this candidate pin. Merge requires passing PR checks and package validation on the exact head SHA; lock and cleanup inputs on main must remain unchanged." \
                   "$(atomic_trailer "$main_sha" "$revision" "$watcher_list")")")
               atomic_pr=${url##*/}
               atomic_revision=$revision
