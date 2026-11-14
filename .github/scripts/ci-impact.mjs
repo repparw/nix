@@ -9,6 +9,7 @@ const configuration = 'cachix-push ci-package-targets service-definitions servic
 const full = reason => ({
   runHosts: true,
   runPersistenceVm: true,
+  runUpstreamTests: true,
   // Isolate the two expensive Nix checks without one runner per small check.
   checkMatrix: { include: [
     { group: 'lightweight', checks: lightweight },
@@ -37,6 +38,17 @@ const affectsPersistence = path =>
   path.startsWith('modules/_tests/host-persistence') ||
   path.startsWith('.github/scripts/ci-impact');
 
+// Watcher fixtures are relevant when their own code or the pinned inputs move.
+const affectsUpstream = path =>
+  ['flake.lock', 'flake.nix', 'modules/checks.nix',
+    '.github/workflows/ci.yml', '.github/workflows/revision-validation.yml',
+    '.github/workflows/lock-update.yml', '.github/workflows/upstream-watch.yml',
+    '.github/scripts/ci-impact.mjs', '.github/scripts/ci-impact.test.mjs',
+    'modules/scripts/lock-update.test.py'].includes(path) ||
+  path.startsWith('.github/upstream/') ||
+  path.startsWith('.github/scripts/upstream-') ||
+  path.startsWith('modules/aspects/upstream/');
+
 // A rename can remove a persistence input even when the new name is unrelated.
 export const changedPaths = files =>
   files.flatMap(file => [file.filename, file.previous_filename].filter(Boolean));
@@ -53,6 +65,7 @@ export function classifyChanges(paths, eventName = 'pull_request') {
     return {
       runHosts: false,
       runPersistenceVm: false,
+      runUpstreamTests: false,
       checkMatrix: { include: [{ group: 'documentation', checks: documentation }] },
       reason: 'documentation-only change',
     };
@@ -60,6 +73,7 @@ export function classifyChanges(paths, eventName = 'pull_request') {
   return {
     runHosts: true,
     runPersistenceVm: paths.some(affectsPersistence),
+    runUpstreamTests: paths.some(affectsUpstream),
     checkMatrix: full().checkMatrix,
     reason: 'selected by changed paths',
   };
@@ -103,6 +117,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const outputs = [
     `run_hosts=${impact.runHosts}`,
     `run_persistence_vm=${impact.runPersistenceVm}`,
+    `run_upstream_tests=${impact.runUpstreamTests}`,
     `check_matrix=${JSON.stringify(impact.checkMatrix)}`,
   ].join('\n') + '\n';
   appendFileSync(process.env.GITHUB_OUTPUT, outputs);

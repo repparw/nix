@@ -175,60 +175,18 @@ class Readiness(unittest.TestCase):
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")
             detect.assert_not_called()
 
-    def test_t3code_cleanup_completion_preserves_permanent_aspects(self):
-        for name in ("t3code-connect", "t3code-split"):
-            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                relative, marker = watch.WORKAROUNDS[name]
-                module = root / relative
-                module.parent.mkdir(parents=True)
-                module.write_text("{ homeManager = {}; }")
-                with patch.object(watch, "ROOT", root), patch.object(watch, "detect") as detect:
-                    self.assertEqual(watch.inspect(name, LOCK), "completed")
-                    detect.assert_not_called()
-                module.write_text(marker)
-                with patch.object(watch, "ROOT", root), patch.object(watch, "detect", return_value="waiting-upstream"):
-                    self.assertEqual(watch.inspect(name, LOCK), "waiting-upstream")
-
-
-    def test_cleanup_recipes_are_well_formed_and_narrow(self):
-        root = Path(__file__).resolve().parents[2]
-        for recipe in sorted((root / '.github/upstream/cleanup').glob('*.patch')):
-            with self.subTest(recipe=recipe.name):
-                subprocess.run(['git', 'apply', '--numstat', str(recipe)], cwd=root, check=True, capture_output=True)
-                patch_text = recipe.read_text()
-                self.assertNotIn('diff --git a/flake.lock', patch_text)
-                self.assertNotIn('diff --git a/.github/', patch_text)
-                self.assertIn('diff --git a/modules/', patch_text)
-
-
-    def test_relocated_upstream_cleanups_apply_and_are_owned(self):
-        # Active post-lock workarounds live under upstream/ and have exact
-        # cleanup recipes.
-        # Check against the actual worktree so a moved helper and its cleanup
-        # cannot drift apart and silently break publication.
+    def test_post_lock_workarounds_have_one_removable_file(self):
         root = Path(__file__).resolve().parents[2]
         registry = json.loads((root / ".github/upstream/watchers.json").read_text())
         for name, spec in registry.items():
             if spec["mode"] != "post-lock":
                 continue
             with self.subTest(watcher=name):
-                relative, _marker = watch.WORKAROUNDS[name]
-                self.assertTrue(relative.startswith("modules/aspects/upstream/"), name)
-                path = root / relative
-                if not path.exists() or (_marker is not None and _marker not in path.read_text()):
-                    # A previously applied cleanup may leave the permanent
-                    # aspect but remove its temporary overlay marker. In both
-                    # cases the watcher reports completion and must not try to
-                    # reapply the removal patch.
+                relative = f"modules/aspects/upstream/{name}.nix"
+                self.assertEqual(watch.WORKAROUNDS[name][0], relative)
+                self.assertNotIn("cleanup", spec)
+                if not (root / relative).exists():
                     self.assertEqual(watch.inspect(name, LOCK), "completed")
-                    continue
-                recipe = root / ".github/upstream/cleanup" / spec["cleanup"]
-                subprocess.run(
-                    ["git", "apply", "--check", str(recipe)],
-                    cwd=root, check=True, capture_output=True, text=True,
-                )
-
 
 
 if __name__ == "__main__":

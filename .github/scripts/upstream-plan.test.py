@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """Focused tests for lock candidate atomic plan and fail-closed cleanup."""
 import importlib.util
-import itertools
 import json
 import os
 from pathlib import Path
-import shutil
 import subprocess
 import tempfile
 import unittest
@@ -198,39 +196,8 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(self.registry["nautilus-module"]["mode"], "notify-only")
         for name, spec in self.registry.items():
             if spec["mode"] == "post-lock":
-                self.assertTrue((ROOT / ".github/upstream/cleanup" / spec["cleanup"]).exists(), name)
+                self.assertTrue((ROOT / "modules/aspects/upstream" / f"{name}.nix").exists(), name)
 
-    def test_t3code_cleanups_preserve_independent_layers_in_every_order(self):
-        names = ["t3code-connect", "t3code-split"]
-        if (ROOT / "modules/aspects/upstream/t3code-stable010.nix").exists():
-            names.append("t3code-stable010")
-        files = [f"modules/aspects/upstream/{name}.nix" for name in names] + [
-            "modules/aspects/ai/t3code.nix", "modules/entities.nix"]
-        for order in itertools.permutations(names):
-            with self.subTest(order=order), tempfile.TemporaryDirectory() as directory:
-                candidate = Path(directory)
-                subprocess.run(["git", "init", "-q"], cwd=candidate, check=True)
-                for relative in files:
-                    destination = candidate / relative
-                    destination.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(ROOT / relative, destination)
-                for name in order:
-                    cleanup = ROOT / ".github/upstream/cleanup" / f"{name}.patch"
-                    subprocess.run(["git", "apply", "--check", str(cleanup)], cwd=candidate, check=True)
-                    subprocess.run(["git", "apply", str(cleanup)], cwd=candidate, check=True)
-                    connect = (candidate / files[0]).read_text()
-                    split = (candidate / files[1]).read_text()
-                    self.assertIn("exec ${lib.getExe' config.programs.t3code.package \"t3code-desktop\"}", connect)
-                    self.assertIn('x-scheme-handler/t3code', connect)
-                    self.assertEqual('cp .env.example .env' in connect,
-                                     "t3code-connect" not in order[:order.index(name) + 1])
-                    self.assertEqual('t3code-server =' in split,
-                                     "t3code-split" not in order[:order.index(name) + 1])
-                self.assertFalse((candidate / "modules/aspects/upstream/t3code-stable010.nix").exists())
-                self.assertNotIn(
-                    "t3code-stable010", (candidate / "modules/entities.nix").read_text()
-                )
-                self.assertIn("pkgs.t3code-cli", split)
 
 
 if __name__ == "__main__":

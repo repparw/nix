@@ -41,6 +41,7 @@ class LockUpdate(unittest.TestCase):
         self.git("config", "user.name", "fixture", cwd=self.checkout)
         self.git("config", "user.email", "fixture@example.test", cwd=self.checkout)
         for path in (".github/scripts/upstream-plan.py", ".github/scripts/upstream-readiness.py",
+                     ".github/scripts/upstream_cleanup.py",
                      ".github/upstream/watchers.json"):
             dst = self.checkout / path
             dst.parent.mkdir(parents=True, exist_ok=True)
@@ -50,21 +51,13 @@ class LockUpdate(unittest.TestCase):
         registry = {
 
             "qbittorrent": {"mode": "post-lock", "input": "nixpkgs",
-                                "cleanup": "fixture-cleanup.patch", "coupling": "apply",
+                                "coupling": "apply",
                                 "probe": "nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package"},
         }
         (self.checkout / ".github/upstream/watchers.json").write_text(json.dumps(registry, indent=2))
         workaround = self.checkout / "modules/aspects/upstream/qbittorrent.nix"
         workaround.parent.mkdir(parents=True, exist_ok=True)
         workaround.write_text("keep\nqbittorrent-nox.overrideAttrs\nworkaround\n")
-        recipe = self.checkout / ".github/upstream/cleanup/fixture-cleanup.patch"
-        recipe.parent.mkdir(parents=True, exist_ok=True)
-        recipe.write_text(
-            "diff --git a/modules/aspects/upstream/qbittorrent.nix b/modules/aspects/upstream/qbittorrent.nix\n"
-            "--- a/modules/aspects/upstream/qbittorrent.nix\n"
-            "+++ b/modules/aspects/upstream/qbittorrent.nix\n"
-            "@@ -1,3 +1 @@\n keep\n-qbittorrent-nox.overrideAttrs\n-workaround\n")
-
         (self.checkout / "flake.lock").write_text(lock_fixture("old"))
         self.git("add", ".", cwd=self.checkout)
         self.git("commit", "-m", "fixture", cwd=self.checkout)
@@ -513,8 +506,10 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.main_sha(), self.main, "The fixture records the GitHub merge request separately")
         atomic = self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-cleanup")
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", "automation/atomic-cleanup:flake.lock"), lock_fixture("new"))
-        arr = self.git("--git-dir", str(self.remote), "show", "automation/atomic-cleanup:modules/aspects/upstream/qbittorrent.nix")
-        self.assertEqual(arr, "keep")
+        self.assertNotEqual(subprocess.run(
+            ["git", "--git-dir", str(self.remote), "cat-file", "-e",
+             "automation/atomic-cleanup:modules/aspects/upstream/qbittorrent.nix"],
+            capture_output=True).returncode, 0)
         self.assertEqual(
             {r[2] for r in self.requests if r[:2] == ["workflow", "run"]
              and r[r.index("--ref") + 1] == "automation/atomic-cleanup"},
@@ -660,9 +655,10 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.git("--git-dir", str(self.remote), "log", "-1", "--format=%s", refreshed), message)
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", f"{refreshed}:flake.lock"),
                          lock_fixture("new"))
-        arr = self.git("--git-dir", str(self.remote), "show",
-                       f"{refreshed}:modules/aspects/upstream/qbittorrent.nix")
-        self.assertEqual(arr, "keep")
+        self.assertNotEqual(subprocess.run(
+            ["git", "--git-dir", str(self.remote), "cat-file", "-e",
+             f"{refreshed}:modules/aspects/upstream/qbittorrent.nix"],
+            capture_output=True).returncode, 0)
 
         self.assertFalse(any(r[:2] == ["pr", "create"] for r in self.requests))
         dispatches = [r for r in self.requests if r[:2] == ["workflow", "run"]]
@@ -686,7 +682,8 @@ class LockUpdate(unittest.TestCase):
         self.git("fetch", "--quiet", "origin", "automation/atomic-cleanup", cwd=self.checkout)
         self.git("switch", "--quiet", "--detach", "FETCH_HEAD", cwd=self.checkout)
         arr = self.checkout / "modules/aspects/upstream/qbittorrent.nix"
-        arr.write_text(arr.read_text() + "extra\n")
+        arr.parent.mkdir(parents=True, exist_ok=True)
+        arr.write_text("tampered\n")
         self.git("add", ".", cwd=self.checkout)
         self.git("commit", "--quiet", "--amend", "--no-edit", cwd=self.checkout)
         tampered = self.git("rev-parse", "HEAD", cwd=self.checkout)
@@ -706,6 +703,7 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(first.returncode, 0, first.stderr)
         self.git("fetch", "--quiet", "origin", "automation/atomic-cleanup", cwd=self.checkout)
         self.git("switch", "--quiet", "--detach", "FETCH_HEAD", cwd=self.checkout)
+        (self.checkout / "modules").mkdir(parents=True, exist_ok=True)
         (self.checkout / "modules/human-fixup.nix").write_text("fixup\n")
         self.git("add", ".", cwd=self.checkout)
         self.git("commit", "--quiet", "-m", "human fixup", cwd=self.checkout)

@@ -8,6 +8,8 @@ import re
 import subprocess
 import tempfile
 
+from upstream_cleanup import module_path, remove_module
+
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -19,13 +21,6 @@ def run(*args, cwd=ROOT, env=None):
 def gh_json(*args):
     return json.loads(run("gh", *args))
 
-
-def patch_paths(patch):
-    paths = re.findall(r"^diff --git a/(\S+) b/(\S+)$", patch.read_text(), re.M)
-    if not paths or any(a != b or not a.startswith("modules/") or ".." in Path(a).parts
-                        for a, b in paths):
-        raise ValueError("cleanup must contain only module changes without renames")
-    return {a for a, _ in paths}
 
 
 def dispatch_missing(repo, branch, sha, number, watcher):
@@ -55,21 +50,20 @@ def arm_automerge(repo, number):
             raise ValueError(f"auto-merge request failed: {output.strip()[:200]}") from None
 
 
-def expected_tree(candidate, base, patch):
-    # The exact tree the recipe produces when applied to `base`.
+def expected_tree(candidate, base, path):
+    # Reconstruct the exact tree after deleting a tracked workaround file.
     environment = {**os.environ, "GIT_INDEX_FILE": str(candidate.parent / f"expected-index-{base[:8]}")}
+    run("git", "cat-file", "-e", f"{base}:{path}", cwd=candidate)
     run("git", "read-tree", base, cwd=candidate, env=environment)
-    run("git", "apply", "--cached", str(patch), cwd=candidate, env=environment)
+    run("git", "update-index", "--force-remove", path, cwd=candidate, env=environment)
     return run("git", "write-tree", cwd=candidate, env=environment)
 
 
 def publish(name, spec, repo):
     if not re.fullmatch(r"[a-z0-9-]+", name):
         raise ValueError("invalid watcher id")
-    patch = ROOT / ".github/upstream/cleanup" / spec["cleanup"]
-    if patch.parent != ROOT / ".github/upstream/cleanup" or patch.suffix != ".patch":
-        raise ValueError("invalid cleanup path")
-    paths = patch_paths(patch)
+    path = module_path(name, spec)
+    paths = {path}
     branch = f"automation/upstream-{name}"
     prs = gh_json("pr", "list", "--repo", repo, "--head", branch, "--base", "main",
                   "--state", "open", "--json", "number,headRefOid")
@@ -100,19 +94,23 @@ def publish(name, spec, repo):
                 run("git", "fetch", "--quiet", "origin", "refs/heads/main", cwd=candidate)
                 main_sha = run("git", "rev-parse", "FETCH_HEAD", cwd=candidate)
                 branch_tree = run("git", "rev-parse", "HEAD^{tree}", cwd=candidate)
-                main_expected = expected_tree(candidate, main_sha, patch)
+                parent = run("git", "rev-parse", "HEAD^", cwd=candidate)
+                if parent != main_sha:
+                    original = run("git", "rev-parse", f"{parent}:{path}", cwd=candidate)
+                    current = run("git", "rev-parse", f"{main_sha}:{path}", cwd=candidate)
+                    if original != current:
+                        raise ValueError("workaround changed on main; needs review")
+                main_expected = expected_tree(candidate, main_sha, path)
                 if branch_tree != main_expected:
-                    tip_expected = expected_tree(candidate, "HEAD^", patch)
+                    tip_expected = expected_tree(candidate, "HEAD^", path)
                     single = run("git", "rev-list", "--count", "HEAD^..HEAD", cwd=candidate)
                     if branch_tree != tip_expected or single != "1":
                         raise ValueError("candidate differs from the exact cleanup recipe")
                     run("git", "checkout", "--quiet", "--detach", main_sha, cwd=candidate)
-                    run("git", "apply", "--check", str(patch), cwd=candidate)
-                    run("git", "apply", str(patch), cwd=candidate)
-                    changed = set(run("git", "diff", "--name-only", cwd=candidate).splitlines())
+                    remove_module(name, spec, candidate)
+                    changed = set(run("git", "diff", "--cached", "--name-only", cwd=candidate).splitlines())
                     if changed != paths:
                         raise ValueError("cleanup changed unexpected paths")
-                    run("git", "add", "--", *sorted(paths), cwd=candidate)
                     run("git", "-c", "user.name=github-actions[bot]", "-c",
                         "user.email=41898282+github-actions[bot]@users.noreply.github.com",
                         "-c", "core.hooksPath=/dev/null", "commit", "-m",
@@ -122,12 +120,10 @@ def publish(name, spec, repo):
                         "origin", f"HEAD:refs/heads/{branch}", cwd=candidate)
                     sha = refreshed
             else:
-                run("git", "apply", "--check", str(patch), cwd=candidate)
-                run("git", "apply", str(patch), cwd=candidate)
-                changed = set(run("git", "diff", "--name-only", cwd=candidate).splitlines())
+                remove_module(name, spec, candidate)
+                changed = set(run("git", "diff", "--cached", "--name-only", cwd=candidate).splitlines())
                 if changed != paths:
                     raise ValueError("cleanup changed unexpected paths")
-                run("git", "add", "--", *sorted(paths), cwd=candidate)
                 run("git", "-c", "user.name=github-actions[bot]", "-c",
                     "user.email=41898282+github-actions[bot]@users.noreply.github.com",
                     "-c", "core.hooksPath=/dev/null", "commit", "-m",
@@ -143,7 +139,7 @@ def publish(name, spec, repo):
                 body = Path(directory) / "body.md"
                 body.write_text(f"Retires the {name} workaround after the upstream fix reached "
                                 "the flake's checked-out pin.\n\n"
-                                f"Cleanup recipe: `.github/upstream/cleanup/{patch.name}`.\n"
+                                f"Removed file: `{path}`.\n"
                                 f"Candidate: `{sha}`.\n\n"
                                 "CI validates the exact revision, evaluates the fleet, and runs "
                                 "the package-specific checks. Auto-merge fires when the required "

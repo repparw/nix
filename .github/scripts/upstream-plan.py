@@ -10,6 +10,8 @@ import os
 from pathlib import Path
 import subprocess
 
+from upstream_cleanup import remove_module
+
 ROOT = Path(__file__).resolve().parents[2]
 REGISTRY = ROOT / ".github/upstream/watchers.json"
 
@@ -112,16 +114,8 @@ def _candidate_readiness(names):
     return {name: module.inspect(name, lock) for name in names}
 
 def apply_recipe(name, spec):
-    """Apply an apply-coupled cleanup recipe to the workspace tree."""
-    patch = ROOT / ".github/upstream/cleanup" / spec["cleanup"]
-    if patch.parent != ROOT / ".github/upstream/cleanup" or patch.suffix != ".patch":
-        raise ValueError("invalid cleanup path")
-    run_apply = subprocess.run(["git", "apply", "--check", str(patch)],
-                               capture_output=True, text=True, cwd=ROOT)
-    if run_apply.returncode != 0:
-        raise ValueError(f"{name} cleanup does not apply to the candidate: {run_apply.stderr[-300:]}")
-    subprocess.run(["git", "apply", str(patch)], check=True, cwd=ROOT)
-
+    """Stage removal of the exact self-contained workaround file."""
+    remove_module(name, spec, ROOT)
 
 
 def main():
