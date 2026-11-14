@@ -70,18 +70,6 @@ in
 {
   flake.ciPackages = lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] targetsFor;
 
-  flake.ciPackageSmoke = lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (
-    system:
-    let
-      pkgs = inputs.nixpkgs.legacyPackages.${system};
-      revision = builtins.substring 0 12 (inputs.self.rev or "unversioned");
-    in
-    {
-      smoke = pkgs.runCommand "main-package-smoke-${revision}" { } ''
-        printf '%s\\n' '${system}' > "$out"
-      '';
-    }
-  );
   perSystem = { pkgs, ... }: {
     packages.nix-fast-build = pkgs.nix-fast-build;
     checks.ci-package-targets = import ./_tests/ci-packages.nix { inherit pkgs; };
