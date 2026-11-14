@@ -121,15 +121,14 @@
             };
           };
 
-          # The portal daemon schedules its own detection runs (upstream cron
-          # in-process) and drives a headed patchright Chromium for cookie and
-          # device-auth flows, so it needs a virtual display. The first login
-          # posts a device-auth link; approving it in any browser stores a
-          # long-lived refresh token, after which no storefront browsing is
-          # needed at all.
+          # claabs v6 is run-once: it starts its web server, redeems every
+          # account, closes the server, and exits. The web portal therefore
+          # only listens while a pass is active, so device-auth links sent in
+          # the same pass resolve on the LAN and later ones wait for the next
+          # run. Detection is scheduled 4x/day like upstream's default, off
+          # set from the claimer's 18:10 GOG slot.
           systemd.services.epic-freegames-portal = {
             description = "Epic free-games device-auth portal (claabs)";
-            wantedBy = [ "multi-user.target" ];
             wants = [ "network-online.target" ];
             after = [
               "network-online.target"
@@ -144,11 +143,9 @@
               mkdir -p "$CONFIG_DIR/users"
             '';
             serviceConfig = {
-              Type = "simple";
+              Type = "oneshot";
               User = "epicfgc";
               Group = "epicfgc";
-              Restart = "on-failure";
-              RestartSec = "5min";
               ExecStart = lib.getExe portalStart;
               MemoryMax = "2G";
               UMask = "0077";
@@ -157,6 +154,16 @@
               ProtectSystem = "strict";
               ProtectHome = "read-only";
               ReadWritePaths = [ stateDir ];
+            };
+          };
+
+          systemd.timers.epic-freegames-portal = {
+            description = "Run the Epic free-games device-auth portal";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "*-*-* 00,06,12,18:40:00";
+              Persistent = true;
+              RandomizedDelaySec = "10min";
             };
           };
         };
