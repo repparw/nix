@@ -62,9 +62,15 @@
                 url = "http://127.0.0.1:3999";
               }
             ];
-            # The device-auth redirect portal. For the trial it is reachable
-            # through an SSH tunnel: ssh -N -L 3000:127.0.0.1:3000 pi
-            webPortalConfig.baseUrl = "http://localhost:3000";
+            # Discord action links must resolve from other devices on the LAN.
+            # Keep the portal on the Pi; do not expose it through the public edge.
+            webPortalConfig = {
+              baseUrl = "http://${cfg.hostAddresses.pi}:3000";
+              listenOpts = {
+                host = "0.0.0.0";
+                port = 3000;
+              };
+            };
           }
         );
       in
@@ -76,6 +82,12 @@
         };
 
         config = {
+          # Allow the short-lived device-auth redirects from trusted LAN clients.
+          # The Discord relay on 127.0.0.1:3999 remains loopback-only.
+          networking.firewall.extraInputRules = ''
+            iifname "eth0" ip saddr 192.168.0.0/24 tcp dport 3000 accept comment "LAN Epic device-auth portal"
+          '';
+
           users.users.epicfgc = {
             isSystemUser = true;
             group = "epicfgc";
