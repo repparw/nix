@@ -27,7 +27,7 @@ class Publication(unittest.TestCase):
         self.git("config", "user.email", "fixture@example.invalid")
         self.git("config", "core.hooksPath", "/dev/null")
         module = self.root / "modules/aspects/upstream/fixture.nix"
-        module.parent.mkdir()
+        module.parent.mkdir(parents=True)
         module.write_text("keep\nworkaround\n")
         self.git("add", ".")
         self.git("commit", "--quiet", "-m", "base")
