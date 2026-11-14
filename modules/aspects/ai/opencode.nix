@@ -13,9 +13,6 @@
         json5 = pkgs.python3Packages.toPythonApplication pkgs.python3Packages.json5;
       in
       {
-        # Merge the models.dev hide list into settings.json after the t3code
-        # module's $dynamic * $static merge, which would otherwise replace the
-        # GUI's hiddenModels array. Fails open on a catalog fetch error.
         home.activation.t3codeModelHides = lib.hm.dag.entryAfter [ "t3codeSettingsActivation" ] (
           let
             jq = lib.getExe pkgs.jq;
