@@ -7,7 +7,13 @@
 {
   den.aspects.ai.provides.t3code = {
     # The Stylix theme is a style concern, but it follows this application.
-    includes = [ den.aspects.style.provides.t3code-theme ];
+    # It is offered only where the style aspect is part of the user's
+    # composition, so the palette is always there when the theme applies.
+    includes = [
+      (den.lib.policy.when (
+        { user, ... }: user.hasAspect den.aspects.style
+      ) den.aspects.style.provides.t3code-theme)
+    ];
 
     provides.to-hosts.nixos = {
       # T3 launches the chrome-headless-shell it downloads at runtime. That is
