@@ -11,26 +11,22 @@
   },
   "t3code-connect": {
     "mode": "post-lock",
-    "input": "nixpkgs",
-    "cleanup": "t3code-connect.patch"
+    "input": "nixpkgs"
   },
   "t3code-browser-libs": {
     "mode": "post-lock",
-    "input": "nixpkgs",
-    "cleanup": "t3code-browser-libs.patch"
+    "input": "nixpkgs"
   },
   "t3code-split": {
     "mode": "post-lock",
     "input": "nixpkgs",
-    "cleanup": "t3code-split.patch",
     "validation": [
       "native-arm-cli"
     ]
   },
   "tasks-org": {
     "mode": "post-lock",
-    "input": "nixpkgs",
-    "cleanup": "tasks-org.patch"
+    "input": "nixpkgs"
   },
   "nautilus-module": {
     "mode": "notify-only",
@@ -39,19 +35,16 @@
   "qbittorrent": {
     "mode": "post-lock",
     "input": "nixpkgs",
-    "cleanup": "qbittorrent.patch",
     "coupling": "apply",
     "probe": "nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package"
   },
   "wpaperd-fix": {
     "mode": "post-lock",
-    "input": "nixpkgs",
-    "cleanup": "wpaperd-fix.patch"
+    "input": "nixpkgs"
   },
   "gamescope-vkroots": {
     "mode": "post-lock",
     "input": "nixpkgs",
-    "cleanup": "gamescope-vkroots.patch",
     "validation": [
       "source",
       "wsi-build"

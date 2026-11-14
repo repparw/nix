@@ -196,7 +196,7 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(self.registry["nautilus-module"]["mode"], "notify-only")
         for name, spec in self.registry.items():
             if spec["mode"] == "post-lock":
-                self.assertTrue((ROOT / ".github/upstream/cleanup" / spec["cleanup"]).exists(), name)
+                self.assertTrue((ROOT / "modules/aspects/upstream" / f"{name}.nix").exists(), name)
 
 
 

@@ -175,7 +175,7 @@ class Readiness(unittest.TestCase):
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")
             detect.assert_not_called()
 
-    def test_post_lock_recipes_delete_only_their_workaround(self):
+    def test_post_lock_workarounds_have_one_removable_file(self):
         root = Path(__file__).resolve().parents[2]
         registry = json.loads((root / ".github/upstream/watchers.json").read_text())
         for name, spec in registry.items():
@@ -183,17 +183,9 @@ class Readiness(unittest.TestCase):
                 continue
             with self.subTest(watcher=name):
                 relative = f"modules/aspects/upstream/{name}.nix"
-                recipe = root / ".github/upstream/cleanup" / spec["cleanup"]
-                patch_text = recipe.read_text()
-                self.assertTrue(patch_text.startswith(
-                    f"diff --git a/{relative} b/{relative}\n"))
-                self.assertEqual(patch_text.count("diff --git "), 1)
-                self.assertIn("deleted file mode 100644", patch_text)
-                self.assertNotIn("diff --git a/flake.lock", patch_text)
-                if (root / relative).exists():
-                    subprocess.run(["git", "apply", "--check", str(recipe)],
-                                   cwd=root, check=True, capture_output=True, text=True)
-                else:
+                self.assertEqual(watch.WORKAROUNDS[name][0], relative)
+                self.assertNotIn("cleanup", spec)
+                if not (root / relative).exists():
                     self.assertEqual(watch.inspect(name, LOCK), "completed")
 
 
