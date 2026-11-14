@@ -29,6 +29,7 @@ jobs:
       check_matrix: ${{ steps.impact.outputs.check_matrix }}
       run_hosts: ${{ steps.impact.outputs.run_hosts }}
       run_persistence_vm: ${{ steps.impact.outputs.run_persistence_vm }}
+      run_upstream_tests: ${{ steps.impact.outputs.run_upstream_tests }}
     steps:
       - name: Verify requested revision
         if: inputs.expected_sha != ''
@@ -76,7 +77,7 @@ jobs:
           CI_CHECKS: ${{ matrix.checks }}
         run: bash .github/scripts/run-checks.sh
       - name: Test upstream watcher predicates and publication lifecycle
-        if: matrix.group == 'lightweight'
+        if: matrix.group == 'lightweight' && needs.changes.outputs.run_upstream_tests == 'true'
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: |

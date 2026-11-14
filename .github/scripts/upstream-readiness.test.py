@@ -175,61 +175,26 @@ class Readiness(unittest.TestCase):
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")
             detect.assert_not_called()
 
-    def test_t3code_cleanup_completion_requires_file_removal(self):
-        for name in ("t3code-connect", "t3code-split", "t3code-browser-libs"):
-            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                relative, marker = watch.WORKAROUNDS[name]
-                self.assertIsNone(marker)
-                module = root / relative
-                with patch.object(watch, "ROOT", root), patch.object(watch, "detect") as detect:
-                    self.assertEqual(watch.inspect(name, LOCK), "completed")
-                    detect.assert_not_called()
-                module.parent.mkdir(parents=True)
-                module.write_text("{ }: { }\n")
-                with patch.object(watch, "ROOT", root), patch.object(
-                        watch, "detect", return_value="waiting-upstream"):
-                    self.assertEqual(watch.inspect(name, LOCK), "waiting-upstream")
-
-
-    def test_cleanup_recipes_are_well_formed_and_narrow(self):
-        root = Path(__file__).resolve().parents[2]
-        for recipe in sorted((root / '.github/upstream/cleanup').glob('*.patch')):
-            with self.subTest(recipe=recipe.name):
-                subprocess.run(['git', 'apply', '--numstat', str(recipe)], cwd=root, check=True, capture_output=True)
-                patch_text = recipe.read_text()
-                self.assertNotIn('diff --git a/flake.lock', patch_text)
-                self.assertNotIn('diff --git a/.github/', patch_text)
-                self.assertIn('diff --git a/modules/', patch_text)
-
-
-    def test_relocated_upstream_cleanups_apply_and_are_owned(self):
-        # Active post-lock workarounds live under upstream/ and have exact
-        # cleanup recipes.
-        # Check against the actual worktree so a moved helper and its cleanup
-        # cannot drift apart and silently break publication.
+    def test_post_lock_recipes_delete_only_their_workaround(self):
         root = Path(__file__).resolve().parents[2]
         registry = json.loads((root / ".github/upstream/watchers.json").read_text())
         for name, spec in registry.items():
             if spec["mode"] != "post-lock":
                 continue
             with self.subTest(watcher=name):
-                relative, _marker = watch.WORKAROUNDS[name]
-                self.assertTrue(relative.startswith("modules/aspects/upstream/"), name)
-                path = root / relative
-                if not path.exists() or (_marker is not None and _marker not in path.read_text()):
-                    # A previously applied cleanup may leave the permanent
-                    # aspect but remove its temporary overlay marker. In both
-                    # cases the watcher reports completion and must not try to
-                    # reapply the removal patch.
-                    self.assertEqual(watch.inspect(name, LOCK), "completed")
-                    continue
+                relative = f"modules/aspects/upstream/{name}.nix"
                 recipe = root / ".github/upstream/cleanup" / spec["cleanup"]
-                subprocess.run(
-                    ["git", "apply", "--check", str(recipe)],
-                    cwd=root, check=True, capture_output=True, text=True,
-                )
-
+                patch_text = recipe.read_text()
+                self.assertTrue(patch_text.startswith(
+                    f"diff --git a/{relative} b/{relative}\n"))
+                self.assertEqual(patch_text.count("diff --git "), 1)
+                self.assertIn("deleted file mode 100644", patch_text)
+                self.assertNotIn("diff --git a/flake.lock", patch_text)
+                if (root / relative).exists():
+                    subprocess.run(["git", "apply", "--check", str(recipe)],
+                                   cwd=root, check=True, capture_output=True, text=True)
+                else:
+                    self.assertEqual(watch.inspect(name, LOCK), "completed")
 
 
 if __name__ == "__main__":

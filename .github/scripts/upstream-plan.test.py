@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """Focused tests for lock candidate atomic plan and fail-closed cleanup."""
 import importlib.util
-import itertools
 import json
 import os
 from pathlib import Path
-import shutil
 import subprocess
 import tempfile
 import unittest
@@ -200,40 +198,6 @@ class PlanTests(unittest.TestCase):
             if spec["mode"] == "post-lock":
                 self.assertTrue((ROOT / ".github/upstream/cleanup" / spec["cleanup"]).exists(), name)
 
-    def test_t3code_cleanups_delete_only_their_temporary_module(self):
-        names = ("t3code-connect", "t3code-split", "t3code-browser-libs")
-        permanent = (
-            "modules/aspects/ai/t3code.nix",
-            "modules/aspects/ai/default.nix",
-            "modules/aspects/roles.nix",
-        )
-        for order in itertools.permutations(names):
-            with self.subTest(order=order), tempfile.TemporaryDirectory() as directory:
-                candidate = Path(directory)
-                subprocess.run(["git", "init", "-q"], cwd=candidate, check=True)
-                files = list(permanent) + [
-                    f"modules/aspects/upstream/{name}.nix" for name in names]
-                for relative in files:
-                    destination = candidate / relative
-                    destination.parent.mkdir(parents=True, exist_ok=True)
-                    shutil.copy2(ROOT / relative, destination)
-                for name in order:
-                    cleanup = ROOT / ".github/upstream/cleanup" / f"{name}.patch"
-                    subprocess.run(["git", "apply", "--check", str(cleanup)],
-                                   cwd=candidate, check=True)
-                    subprocess.run(["git", "apply", str(cleanup)],
-                                   cwd=candidate, check=True)
-                    for watcher in names:
-                        self.assertEqual(
-                            (candidate / f"modules/aspects/upstream/{watcher}.nix").exists(),
-                            watcher not in order[:order.index(name) + 1])
-                    for relative in permanent:
-                        self.assertEqual((candidate / relative).read_text(),
-                                         (ROOT / relative).read_text())
-                roles = (candidate / permanent[2]).read_text()
-                t3code = (candidate / permanent[0]).read_text()
-                self.assertIn("pkgs ? t3code-cli", roles)
-                self.assertIn('x-scheme-handler/t3code', t3code)
 
 
 if __name__ == "__main__":

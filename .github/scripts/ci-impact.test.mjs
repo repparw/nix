@@ -49,6 +49,22 @@ test('persistence, recovery, boot and CI infrastructure changes run the VM', () 
   }
 });
 
+test('watcher tests run only for relevant changes', () => {
+  for (const path of [
+    'flake.lock', '.github/upstream/watchers.json',
+    '.github/upstream/cleanup/tasks-org.patch',
+    '.github/scripts/upstream-plan.py', '.github/scripts/upstream-readiness.test.py',
+    'modules/aspects/upstream/tasks-org.nix', '.github/workflows/lock-update.yml',
+    '.github/workflows/revision-validation.yml', '.github/scripts/ci-impact.mjs',
+  ]) assert.equal(classifyChanges([path]).runUpstreamTests, true, path);
+  for (const path of [
+    'modules/aspects/gui/niri.nix', 'modules/aspects/services/hermes.nix',
+    '.agents/skills/watch-upstream/SKILL.md', 'docs/runbooks/host-persistence.md',
+  ]) assert.equal(classifyChanges([path]).runUpstreamTests, false, path);
+  assert.equal(classifyChanges(null).runUpstreamTests, true);
+  assert.equal(classifyChanges(['README.md'], 'push').runUpstreamTests, true);
+});
+
 test('renames trigger checks for both the old and new file paths', () => {
   verify(changedPaths([{
     filename: 'modules/aspects/renamed.nix',

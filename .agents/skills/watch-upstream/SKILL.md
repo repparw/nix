@@ -37,7 +37,10 @@ selected source or behavior.
 
 Cleanup recipes live in `.github/upstream/cleanup/`. Normally, a
 recipe deletes only its temporary module and any temporary patch asset.
-Do not make it edit permanent defaults, roles, or owner aspects. Keep it narrow:
+The generic cleanup check covers exact file deletion; do not add per-watcher
+tests for that operation. Keep focused tests for upstream detection and
+actual package behavior after removal. Do not edit permanent defaults,
+roles, or owner aspects. Keep each recipe narrow:
 `git apply --check` must pass against the exact candidate base, unrelated
 configuration is preserved, and a conflict requires review rather than a
 forced patch. Evaluate every affected host and its generated units, and gate
