@@ -25,13 +25,6 @@ idempotent and preserves an existing job's schedule and enabled state. It uses
 WhatsApp delivery, with only the `web` toolset and MCP disabled. The persisted job survives gateway restarts; deployment does not
 automatically create or resume jobs.
 
-For new jobs, enrollment leaves the model and provider unspecified so
-they inherit the live Hermes cron defaults (`cron.model` and
-`cron.model_provider`). Existing jobs retain any model/provider pins;
-clear those once with `hermes cron edit <job> --unpin` to make them follow
-the defaults. Changing the defaults then affects all unpinned cron jobs
-in the Hermes profile without rebuilding or re-enrolling.
-
 For an immediate run, call `cron.jobs.trigger_job("Fleet crash triage")` in
 that environment. The running gateway executes it on its next scheduler tick,
 including normal output persistence and delivery handling. Historical crash

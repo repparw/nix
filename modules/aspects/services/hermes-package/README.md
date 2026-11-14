@@ -56,13 +56,6 @@ deployment does not automatically create or resume jobs.
 For an immediate run, call `cron.jobs.trigger_job("Fleet package triage")` in
 that environment.
 
-For new jobs, enrollment leaves the model and provider unspecified so
-they inherit the live Hermes cron defaults (`cron.model` and
-`cron.model_provider`). Existing jobs retain any model/provider pins;
-clear those once with `hermes cron edit <job> --unpin` to make them follow
-the defaults. Changing the defaults then affects all unpinned cron jobs
-in the Hermes profile without rebuilding or re-enrolling.
-
 ## Limitations
 
 - Reporting describes packages that actually converged at the named revision; hosts that deferred a
