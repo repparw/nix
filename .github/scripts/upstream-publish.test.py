@@ -166,6 +166,7 @@ class Publication(unittest.TestCase):
         clone = Path(self.temporary.name) / "tamper"
         subprocess.run(["git", "clone", "--quiet", "--reference", str(self.root),
                         str(self.remote), str(clone), "--branch", "automation/upstream-fixture"], check=True)
+        (clone / "modules/aspects/upstream").mkdir(parents=True, exist_ok=True)
         (clone / "modules/aspects/upstream/fixture.nix").write_text("keep\nworkaround\nextra\n")
         subprocess.run(["git", "-C", str(clone), "add", "."], check=True)
         subprocess.run(["git", "-C", str(clone), "-c", "user.name=T", "-c", "user.email=t@t",
@@ -190,6 +191,7 @@ class Publication(unittest.TestCase):
         clone = Path(self.temporary.name) / "stack"
         subprocess.run(["git", "clone", "--quiet", "--reference", str(self.root),
                         str(self.remote), str(clone), "--branch", "automation/upstream-fixture"], check=True)
+        (clone / "modules").mkdir(parents=True, exist_ok=True)
         (clone / "modules/extra.nix").write_text("human\n")
         subprocess.run(["git", "-C", str(clone), "add", "."], check=True)
         subprocess.run(["git", "-C", str(clone), "-c", "user.name=T", "-c", "user.email=t@t",
@@ -215,7 +217,7 @@ class Publication(unittest.TestCase):
         self.git("push", "--quiet", "origin", "main")
         # The file changed on new main: the stale candidate
         # must be left alone for review, never force-updated.
-        with self.assertRaises(subprocess.CalledProcessError):
+        with self.assertRaises(ValueError):
             self.publish()
         self.assertEqual(self.git("ls-remote", "--heads", "origin", "automation/upstream-fixture").split()[0], first["sha"])
         self.assertEqual(len(self.automerges), 1)
