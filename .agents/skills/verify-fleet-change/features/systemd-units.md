@@ -3,17 +3,18 @@
 For service, timer, mount, and dependency changes, check the rendered unit. Do
 not stop at `services.<name>.enable` evaluating to true.
 
-This example prints the offsite backup service on a selected host:
+This example asserts that Alpha's offsite backup service is a one-shot unit:
 
 ```sh
-nix eval --raw --no-update-lock-file '.#nixosConfigurations.alpha.config.systemd.units."restic-backups-offsite.service".text'
+nix eval --raw --no-update-lock-file '.#nixosConfigurations.alpha.config.systemd.units."restic-backups-offsite.service".text' | grep -Fx 'Type=oneshot'
 ```
 
-Change the host and quoted unit name for your task. Inspect the fields that
-matter, such as `ExecStart`, `ExecStartPre`, `After`, `Requires`, `Environment`,
-or timer fields, and compare them with the intended behavior. For agentic
-validation, assert the exact expected value or ordering instead of simply
-printing the unit. Check another host if the aspect composes differently there.
+The command fails when the expected service type is absent. Replace the host,
+unit name, and assertion with the behavior you need to verify, including
+`ExecStart`, `ExecStartPre`, `After`, `Requires`, `Environment`, or timer
+fields. If an ordering change spans multiple lines, compare the relevant
+fields together rather than matching a single keyword. Check another host if
+the aspect composes differently there.
 
 The rendered text shows what systemd would receive from this configuration. It
 does not show that the dependencies exist at runtime, that the unit starts, or
