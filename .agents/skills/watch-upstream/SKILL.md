@@ -24,6 +24,7 @@ For a new watcher, register its input and lifecycle mode in
 `watchers.json`; add its readiness detector and choose focused validation
 while implementing the workaround. Identify the owning Den aspect, affected
 hosts, and the options or packages it changes:
+
 - For configuration changes, evaluate the relevant resolved NixOS or Home
   Manager options on the affected hosts, not the whole system closure. Where
   both sides evaluate on the same pin, compare values with the workaround
