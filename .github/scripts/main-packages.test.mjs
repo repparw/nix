@@ -7,7 +7,6 @@ import test from 'node:test';
 
 const root = resolve(import.meta.dirname, '../..');
 const workflow = readFileSync(join(root, '.github/workflows/main-packages.yml'), 'utf8');
-const smokeWorkflow = readFileSync(join(root, '.github/workflows/package-prebuild-smoke.yml'), 'utf8');
 
 test('main package builds use pinned native tooling and skip cached targets', () => {
   assert.match(workflow, /branches: \[main\]/);
@@ -23,16 +22,6 @@ test('main package builds use pinned native tooling and skip cached targets', ()
   assert.match(workflow, /test "\$GITHUB_SHA" = "\$EXPECTED_SHA"/);
   assert.match(workflow, /test -s ci-logs\/packages\.json/);
   assert.match(workflow, /hashFiles\('ci-logs\/packages\.json'\)/);
-});
-
-test('PR smoke tests both native systems and avoids cache publishing credentials', () => {
-  assert.match(smokeWorkflow, /pull_request:/);
-  assert.match(smokeWorkflow, /ciPackageSmoke\.\$SYSTEM/);
-  assert.match(smokeWorkflow, /--skip-cached/);
-  assert.match(smokeWorkflow, /runner: ubuntu-24\.04-arm/);
-  assert.match(smokeWorkflow, /nix-store --query --requisites/);
-  assert.match(smokeWorkflow, /publish-main-packages\.sh/);
-  assert.doesNotMatch(smokeWorkflow, /secrets\.CACHIX_AUTH_TOKEN/);
 });
 
 function publish({ failure = '', malformed = false, manifest = true } = {}) {

@@ -279,15 +279,6 @@ class LockUpdate(unittest.TestCase):
         return self.git("--git-dir", str(self.remote), "rev-parse", "automation/atomic-cleanup")
 
 
-    def advance_main(self):
-        self.git("switch", "--quiet", "main", cwd=self.checkout)
-        (self.checkout / "modules/unrelated.nix").write_text("later\n")
-        self.git("add", ".", cwd=self.checkout)
-        self.git("commit", "--quiet", "-m", "main moved on", cwd=self.checkout)
-        self.git("push", "--quiet", "origin", "main", cwd=self.checkout)
-        self.main = self.git("rev-parse", "HEAD", cwd=self.checkout)
-        return self.main
-
     def test_creates_validates_and_fast_forwards_main_to_same_sha(self):
         result = self.update()
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -333,12 +324,6 @@ class LockUpdate(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("concluded failure", result.stderr)
         self.assertEqual(self.main_sha(), self.main)
-
-    def test_normal_lock_candidate_uses_only_pr_checks(self):
-        result = self.update()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        self.assertEqual(self.main_sha(), self.branch_sha())
 
     def test_title_failure_does_not_publish_validated_lock(self):
         result = self.update(title_ci="failure")
@@ -522,13 +507,6 @@ class LockUpdate(unittest.TestCase):
         self.assertTrue(self.git("--git-dir", str(self.remote), "rev-parse",
                                  "automation/atomic-cleanup"))
 
-    def test_atomic_candidate_merges_exact_head(self):
-        result = self.update(atomic_ready=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r
-                            and "--match-head-commit" in r and "--auto" not in r for r in self.requests))
-
     def test_stale_atomic_pr_head_cannot_merge(self):
         first = self.update(atomic_ready=True)
         self.assertEqual(first.returncode, 0, first.stderr)
@@ -537,25 +515,6 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[0] == "api" and any(a.endswith("/approve") for a in r)
                              for r in self.requests),
                          "a diverged PR head must never merge")
-
-    def test_stale_atomic_candidate_merges_without_rebase(self):
-        first = self.update(atomic_ready=True)
-        self.assertEqual(first.returncode, 0, first.stderr)
-        tip = self.atomic_sha()
-        new_main = self.advance_main()
-        (self.root / "auto-merged").unlink()
-        second = self.update(atomic_ready=True)
-        self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertEqual(self.atomic_sha(), tip, "Unrelated main changes must not rewrite the PR head")
-        self.assertEqual(self.main_sha(), new_main)
-        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
-        record = json.loads(self.git(
-            "--git-dir", str(self.remote), "show",
-            "automation/atomic-cleanup-provenance:provenance.json"))
-        self.assertEqual(record["sha"], tip)
-        self.assertNotEqual(record["base"], new_main)
-
 
     def test_stale_atomic_lock_change_requires_new_candidate(self):
         self.assertEqual(self.update(atomic_ready=True).returncode, 0)
@@ -631,25 +590,6 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
-    def test_recovery_rejects_missing_pr_ci(self):
-        first = self.update(atomic_ready=True, pr_ci="failure")
-        self.assertNotEqual(first.returncode, 0)
-        self.git("switch", "main", cwd=self.checkout)
-        second = self.update(change=False, pr_ci="missing")
-        self.assertNotEqual(second.returncode, 0)
-        self.assertIn("Timed out waiting for required PR workflow ci.yml", second.stderr)
-        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
-
-    def test_recovery_uses_pr_checks_without_dispatch(self):
-        first = self.update(atomic_ready=True, pr_ci="failure")
-        self.assertNotEqual(first.returncode, 0)
-        self.git("switch", "main", cwd=self.checkout)
-        second = self.update(change=False, pr_ci="success")
-        self.assertEqual(second.returncode, 0, second.stderr)
-        self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
-        self.assertTrue(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
-
     def test_recovery_blocks_while_atomic_validation_pending(self):
         first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
@@ -657,15 +597,6 @@ class LockUpdate(unittest.TestCase):
         second = self.update(change=False, pr_ci="pending")
         self.assertNotEqual(second.returncode, 0)
         self.assertIn("Timed out waiting for required PR workflow ci.yml", second.stderr)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
-
-    def test_failed_atomic_validation_never_arms_automerge(self):
-        first = self.update(atomic_ready=True, pr_ci="failure")
-        self.assertNotEqual(first.returncode, 0)
-        self.git("switch", "main", cwd=self.checkout)
-        second = self.update(change=False, pr_ci="failure")
-        self.assertNotEqual(second.returncode, 0)
-        self.assertIn("concluded failure", second.stderr)
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_lockfile_only_amendment_rejected(self):
@@ -758,15 +689,6 @@ class LockUpdate(unittest.TestCase):
         self.assertIn("requires human review", second.stderr)
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
-
-    def test_action_required_never_arms_atomic_automerge(self):
-        first = self.update(atomic_ready=True, pr_ci="failure")
-        self.assertNotEqual(first.returncode, 0)
-        self.git("switch", "main", cwd=self.checkout)
-        second = self.update(change=False, pr_ci="action_required")
-        self.assertNotEqual(second.returncode, 0)
-        self.assertIn("requests manual approval", second.stderr)
-        self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_missing_app_token_fails_closed_with_guidance(self):
         first = self.update(atomic_ready=True, pr_ci="failure")

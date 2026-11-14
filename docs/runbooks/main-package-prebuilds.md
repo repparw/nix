@@ -34,17 +34,6 @@ their runtime closure are skipped. A closure inspection error or upload error
 fails publication. The token is not passed to the build step, and no cache
 signing identity or fleet trust settings change.
 
-## Bounded integration smoke test
-
-A separate PR workflow, `package-prebuild-smoke`, builds a revision-specific
-tiny derivation on native x86 and ARM runners when the implementation changes.
-It exercises `nix-fast-build --skip-cached`, actual local closure inspection,
-JSON parsing, and publisher path selection. A fake Cachix command records the
-publish arguments; the PR job does not receive a publishing token.
-
-The regular main workflow is responsible for real Cachix publication. Its
-first post-merge run validates this separately from the PR smoke test.
-
 ## Run a reviewed revision
 
 Use the workflow's manual dispatch with the selected ref and its exact commit:
