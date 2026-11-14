@@ -44,12 +44,9 @@
           ''
         );
         programs.opencode = {
-          package = pkgs.opencode;
           enable = true;
           enableMcpIntegration = true;
           mutableSettings = true;
-          skills = { };
-          web.enable = false;
           settings = {
             small_model = "opencode/muse-spark-1.3-contributor-free";
             # GitHub Student/Free Copilot plans only allow Auto model
@@ -66,7 +63,6 @@
                 "*" = "ask";
               };
             };
-            formatter = false;
           };
         };
       };
