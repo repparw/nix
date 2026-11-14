@@ -298,7 +298,7 @@ jobs:
           merge_atomic_candidate() {
             verify_atomic_pr || return 1
             verify_atomic_main_compatibility || return 1
-            gh pr merge "$atomic_pr" --repo "$GH_REPO" --squash \\
+            gh pr merge "$atomic_pr" --repo "$GH_REPO" --squash \
               --match-head-commit "$atomic_revision"
           }
 
