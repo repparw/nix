@@ -20,7 +20,7 @@ For a Home Manager option, evaluate the nested configuration. This is cheaper
 than building an activation package:
 
 ```sh
-nix eval '.#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.opencode.settings.agent' --json --no-update-lock-file
+nix eval '.#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.opencode.settings' --json --no-update-lock-file
 ```
 
 Replace the host and option with your target. Compare the result with the
