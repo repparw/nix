@@ -66,6 +66,12 @@ let
 in
 assert lib.sort builtins.lessThan (paths "x86_64-linux") == lib.sort builtins.lessThan expected;
 assert
-  lib.sort builtins.lessThan (paths "aarch64-linux")
-  == lib.sort builtins.lessThan (expected ++ expected ++ [ pkgs.hello.drvPath ]);
+  lib.sort builtins.lessThan (paths "aarch64-linux") == lib.sort builtins.lessThan (
+    expected
+    ++ expected
+    ++ [
+      pkgs.hello.drvPath
+      pkgs.hello.drvPath
+    ]
+  );
 pkgs.runCommand "check-ci-package-targets" { } "touch $out"

@@ -48,6 +48,7 @@ let
       in
       [
         (pkgs.callPackage ./_packages/free-games-claimer.nix { })
+        (pkgs.callPackage ./_packages/epicgames-freegames-node.nix { })
       ]
     );
   targetsFor =
