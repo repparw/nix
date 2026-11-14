@@ -10,21 +10,23 @@ nix eval .#nixosConfigurations --apply builtins.attrNames --json --no-update-loc
 ```
 
 Query the effective option, not just its declaration in the source. This example
-reads the fleet's host name:
+asserts Alpha's host name:
 
 ```sh
-nix eval '.#nixosConfigurations.alpha.config.networking.hostName' --raw --no-update-lock-file
+test "$(nix eval --raw --no-update-lock-file '.#nixosConfigurations.alpha.config.networking.hostName')" = alpha
 ```
 
-For a Home Manager option, evaluate the nested configuration. This is cheaper
-than building an activation package:
+For a Home Manager option, evaluate the nested configuration and assert the
+expected value. This is cheaper than building an activation package:
 
 ```sh
-nix eval '.#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.opencode.settings' --json --no-update-lock-file
+nix eval --json --no-update-lock-file '.#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.opencode.settings.permission' | jq -e '."browse_*"."*" == "ask"'
 ```
 
-Replace the host and option with your target. Compare the result with the
-behavior you expect, not with an earlier printout.
+These examples **fail** if the expected hostname or permission is absent.
+Replace the host, option, and expected value with the specific behavior the
+change is meant to produce. A command that only prints a value is not a
+regression test.
 
 For a change to shared defaults or aspect composition, check the relevant option
 on each affected host. Evaluating the toplevel derivation path catches

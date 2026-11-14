@@ -18,8 +18,8 @@ manual `host-recovery` command has been retired. Existing snapshots and local
 Before a storage change, inspect the evaluated job and the live mount layout:
 
 ```sh
-nix eval .#nixosConfigurations.pi.config.services.restic.backups.offsite.paths --json
-nix eval .#nixosConfigurations.pi.config.services.restic.backups.offsite.exclude --json
+nix eval --json --no-update-lock-file '.#nixosConfigurations.pi.config.services.restic.backups.offsite.paths'
+nix eval --json --no-update-lock-file '.#nixosConfigurations.pi.config.services.restic.backups.offsite.exclude'
 findmnt
 ```
 

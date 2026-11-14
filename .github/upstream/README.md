@@ -1,159 +1,64 @@
-# Upstream watcher migration
+# Upstream watchers
 
-## FSR 4.1 on Alpha's RDNA2 GPU (#323)
+The watcher registry at [watchers.json](watchers.json) is the source of truth for
+active watcher IDs, inputs, lifecycle modes, and apply coupling. The detectors
+and validators in [../scripts](../scripts) implement the package-specific
+checks. Do not copy their details into this document.
 
-`fsr4-rdna2` is notify-only. Until a source-reviewed and runtime-tested
-support commit is recorded in `watchers.json`, stable GE-Proton releases
-newer than the recorded baseline with FSR4/RDNA2 changes produce a
-deduplicated `upstream-review-required:<tag>` Discord notice. These notices
-are candidates, not compatibility claims. AMD's Windows driver and Vulkan
-announcements alone do not satisfy readiness. Discovery inspects up to 100
-releases and fails closed if that bound is exhausted; advance the baseline
-after reviewing candidates.
+## Ownership
 
-After the issue records the actual model, RADV requirements, real package
-build and Alpha game verification (including Steam and Heroic/UMU), set
-`support_commit` to the full reviewed GE-Proton SHA. CI then requires exact
-ancestry in a stable upstream release and in the actual upstream release
-archives packaged by both the root input's channel and root pin. A newer
-version alone never produces `PINNED-READY`. Package layout changes and API
-errors fail closed. Runtime completion and the choice of per-game/global
-FSR activation remain with the issue owner; this watcher has no cleanup or
-global configuration mutation.
+- [upstream-watch.yml](../workflows/upstream-watch.yml) checks the `main` pins
+  every two hours, after successful lock updates, and on manual dispatch.
+  [upstream-readiness.py](../scripts/upstream-readiness.py) only detects status.
+- `post-lock` watchers retire one self-contained workaround file,
+  `modules/aspects/upstream/<watcher>.nix`, either through an independent
+  cleanup PR or an apply-coupled lock candidate. Permanent aspects and host
+  includes stay unchanged.
+- `notify-only` watchers report readiness in the workflow summary and post
+  a deduplicated Discord notification when the status changes. Delivery state
+  lives on `automation/upstream-notify-state`. A notification is not proof of
+  a working deployment.
+- [lock-update.yml](../workflows/lock-update.yml) owns input changes.
+  [upstream-plan.py](../scripts/upstream-plan.py) checks `coupling: apply`
+  watchers **before** publishing a candidate lock. An upstream fix or
+  incompatible package change must be handled in the same candidate as the
+  workaround removal, or the update is blocked.
+- Pi owns runtime readiness and completion for host-specific watchers through
+  `fleet-readiness-probe` and `fleet-readiness-deliver`. GitHub pin
+  readiness does not replace host checks.
 
-`upstream-watch.yml` inspects the current `main` pins every two hours, after
-successful lock publication, after manual lock merges, and on manual dispatch.
-The lock updater owns input changes.
+## Safety rules
 
-The OpenCode v2 package watcher was retired after #505 and #229. Active watcher
-readiness notices go to the run summary and Discord. Package readiness does
-not replace fleet runtime verification.
+Readiness requires evidence from the exact selected source or commit ancestry;
+version strings and release notes alone are not enough. A notify-only discovery
+candidate, such as an FSR4/RDNA2 release, still needs real hardware and runtime
+verification before it can be treated as supported.
 
-Independent `post-lock` contracts publish one-file deletion PRs from the
-checked-out main revision. The filename matches the watcher ID, so no stored
-patch or per-watcher cleanup recipe is needed. The publisher checks the exact
-tree and refuses to overwrite a modified candidate or workaround file.
-One failed cleanup does not prevent other watchers from processing.
+Cleanup publication must preserve the expected candidate tree and branch
+ownership. Never overwrite modified reviewer branches or proceed on missing
+evidence. GitHub Actions validates the exact SHA and merges only after required
+checks pass on a branch current with `main`. Apply-coupled cleanups also
+require candidate-lock provenance and their package compatibility checks.
 
-Post-lock workarounds live under `modules/aspects/upstream/`. Each module
-contributes to its permanent owner through `den.aspects.<owner>.provides.<aspect>`,
-without changing the provided aspect's name or explicit host includes.
-The qBittorrent, Gamescope vkroots, Tasks.org, wpaperd, and T3 Code
-workarounds contribute directly to permanent aspects, without separate
-inclusion entries. Each workaround file can therefore be added or removed
-without editing any default, role, or permanent aspect. T3 Code's permanent
-desktop URL handler and headless CLI selection live in `ai/t3code.nix` and
-`roles.nix` respectively, outside `upstream/`. Each cleanup stages a
-single `git rm modules/aspects/upstream/<watcher>.nix` and verifies the
-exact candidate diff before publication.
+For a new or edited workaround, test the workaround's behavior before opening
+the PR, then verify what single-file removal does. Against a pin with the fix,
+test the replacement package when evaluation is insufficient. Record what was
+tested and what still needs runtime evidence. See
+[watch-upstream](../../.agents/skills/watch-upstream/SKILL.md) for the authoring
+and retirement procedure.
 
-The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
-the exact expected candidate tree before reusing an existing branch and
-dispatches only missing checks. This also recovers interruptions between
-branch publication, PR creation, and dispatch.
+## Checks
 
-Candidates are merge-automated: GitHub merges exactly when the required
-checks pass and the branch is current with main (strict up-to-date). When
-main advances first, the publisher re-applies the recipe onto the new main
-and revalidates — but only when the branch tip is provably its own earlier
-candidate (the recipe applied to its parent); a tampered or changed
-candidate requires review, and a recipe that no longer applies fails
-closed. Nothing is merged with pending or failed checks.
+Run the focused fixture tests after changing detectors, publication, or the
+atomic planner:
 
-Before disabling a local timer, verify its replacement's live CI run and all
-of that watcher's completion checks. Fixtures prove the publication algorithm,
-but do not prove a production cleanup or runtime cutover. Close replaced drafts
-only after their replacement candidates pass validation.
+```sh
+python3 .github/scripts/upstream-readiness.test.py
+python3 .github/scripts/upstream-publish.test.py
+python3 .github/scripts/upstream-plan.test.py
+```
 
-Candidate CI evaluates every host without updating the lock. The required
-aggregate also includes actual package builds and generated behavior checks
-from `upstream-validate.py`. T3 split candidates use native x86 and ARM jobs.
-The package-specific gates are:
-
-| Watcher           | Additional verification                                                                                   |
-| ----------------- | --------------------------------------------------------------------------------------------------------- |
-| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme  |
-| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop |
-| tasks-org         | Build the upstream Tasks.org package                                                                      |
-| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                              |
-| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                               |
-| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true        |
-
-Nautilus is notify-only. Ready notices print in every upstream-watch run
-summary and, once per status change, post to the fleet Discord channel
-through the approved bot identity (`DISCORD_BOT_TOKEN` +
-`DISCORD_CHANNEL_ID`); delivery state lives on the
-`automation/upstream-notify-state` ref, so a persistent status pings exactly
-once. Workaround-holding watchers are `post-lock` instead — their cleanup PR
-is the notice, and the removed workaround file disarms the watcher.
-Sonarr/Jellyfin runtime checks are owned by the Pi adapter below, not by the
-GitHub watcher registry.
-
-`tridactyl-reader` is notify-only for #316. It reads `tridactyl-vim` from the
-pinned `firefox-addons` manifest and checks whether that release tag contains
-tridactyl/tridactyl#5515. Nixpkgs' native messaging host does not determine
-the extension version. CI pings Discord when the pin is ready. Browser
-verification and removal of Obsidian Reader remain completion steps because
-this checkout has no Obsidian Reader declaration to remove.
-
-The Moonshine PR227 test build and its upstream watcher are retired. The
-runtime predicates of the host-owned watchers moved to Pi: the
-`fleet-readiness-probe` service evaluates the running Sonarr version, the
-Sonarr log gate, and Moonshine's runtime-vs-generated-unit match over SSH,
-enqueues a durable event per status change, and
-`fleet-readiness-deliver` posts queued events to Discord on an independent
-timer. It also runs after each Alpha convergence, non-blocking for the
-deployment. The replacement is verified on Pi (durable per-watcher states
-plus a drained event queue), so Alpha's `watch-moonshine-pr227` and
-`watch-sonarr-jellyfin` timers are disarmed; their units and scripts remain
-on Alpha and only Sonarr completion itself deletes them. The Sonarr/Jellyfin
-completion action moved with it: the deliverer runs Alpha's one-shot watch
-service after Discord accepts a delivered `sonarr-jellyfin` `ready` event.
-Notification and action are acknowledged separately: once a post is
-accepted, its acknowledgment is persisted and retry cycles re-run only the
-action, so an unreachable Alpha or a failing action never re-posts the
-notification. Completion is verified against Alpha's manager, not the
-start's exit code: the outcome is terminal only when the manager reports
-the completion-owned units not-found (the watcher self-deletes them once
-the scan drop and restart succeed); a start that gated out, a regressed
-pre-gate run, or silence from the transport keeps the event queued for
-retry, so the weekly Jellyfin scan drop cannot be orphaned by the
-retirement.
-
-Gamescope inspects `inputs.nixpkgs.legacyPackages`, bypassing repository
-overlays. Alpha's patched package cannot establish upstream readiness. Its
-cleanup retains WSI, removes only the queue workaround, and builds with
-`enableWsi=true`. It requires no GPU or Alpha runtime test.
-
-Run `python3 .github/scripts/upstream-readiness.test.py` for detector fixtures
-and `python3 .github/scripts/upstream-publish.test.py` for independent
-publication, interruption recovery, drift rejection, and notification deduplication.
-
-## Lock candidate planner (apply-coupled cleanups)
-
-`upstream-plan.py plan --old BASE --candidate CANDIDATE` runs **before** the lock
-updater publishes to main. Watcher contracts live in `watchers.json`.
-Watchers with `coupling: apply` (qbittorrent, gamescope-vkroots) break the
-moment the candidate pin carries their fix — or any
-context-shifting bump of their package — so their file removal rides the lock
-candidate instead of racing the post-lock sweep. Readiness runs against the
-candidate tree; `PINNED-READY` diverts publication into a combined atomic
-candidate. A watcher that is not ready but whose package the pin moved gets a
-stubbed-phase compatibility build of the actual fleet package; failure blocks
-the lock, and so does an unavailable readiness API. Only active apply-coupled
-watchers can divert the lock update; their file deletions are
-validated on the exact candidate commit. Atomic publication preserves the
-exact-SHA CI, provenance, fail-closed recovery, strict up-to-date and
-GitHub approval gates described by the lock-update workflow.
-
-If the atomic predicate is negative, the original lock-only CI and compare-and-
-swap fast-forward remain unchanged. If ancestry is unavailable, or a candidate
-contains the fix before the authoritative channel, publication fails closed.
-Independent cleanup candidates retain their own validation gates.
-
-## T3 Code stable version floor
-
-The stable bridge is retired. Keep the version assertion in
-[`t3code.nix`](../../modules/aspects/ai/t3code.nix): a pin regression below
-0.1.5 can downgrade `statev2.sqlite` and break existing clients.
-The independent split and Connect workarounds retain their own gates.
+These tests verify the automation's logic. They do not establish package
+builds, deployment readiness, or live notification delivery. Cleanup-candidate
+CI uses [upstream-validate.py](../scripts/upstream-validate.py) for targeted
+package builds and generated behavior checks.

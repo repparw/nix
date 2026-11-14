@@ -63,8 +63,8 @@ separation, and Prowlarr keeps live state in its container root.
 ## Verify changes
 
 ```sh
-nix build .#checks.x86_64-linux.host-persistence --no-link
-nix build .#checks.x86_64-linux.host-persistence-vm --no-link
+nix build --no-link --no-update-lock-file '.#checks.x86_64-linux.host-persistence'
+nix build --no-link --no-update-lock-file '.#checks.x86_64-linux.host-persistence-vm'
 ```
 
 The [evaluation checks](../../modules/_tests/host-persistence.nix) cover inventory,

@@ -14,10 +14,10 @@ fleet and runs runtime readiness probes for host-owned watchers.
 - `upstream-watch.yml` runs detection.
 - `lock-update.yml` publishes lock updates and runs the atomic planner.
 
-Before you add, change, or retire a watcher, read
-[the migration contract](../../../.github/upstream/README.md). It sets the
-publication policy, the gates for each watcher, and the requirements for
-cutting over a timer or publisher.
+Before you add, change, or retire a watcher, consult the
+[current watcher overview](../../../.github/upstream/README.md), the relevant
+entry in `watchers.json`, and its detector and validation code. The registry
+and implementation own the details of each watcher's gates.
 
 ## Where workaround code goes
 
@@ -94,9 +94,9 @@ checkout. Follow the migration contract's merge policy, which covers exact-SHA
 validation, branch ownership, strict base freshness, and fail-closed approval
 checks.
 
-Retire a host-owned watcher only after its documented runtime completion
-condition is proven. Run the watcher test scripts that the migration contract
-names. For runtime inspection or deployment, use
+Retire a host-owned watcher only after its runtime completion condition is
+proven. Run the affected watcher fixtures listed in the overview. For runtime
+inspection or deployment, use
 [fleet-operations](../fleet-operations/SKILL.md).
 
 Register every PR you work on in T3 Code.

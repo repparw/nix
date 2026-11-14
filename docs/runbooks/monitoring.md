@@ -96,7 +96,7 @@ re-sending them, and the freed disk space is the reason to do it.
 ## Verify configuration changes
 
 ```sh
-nix build .#checks.x86_64-linux.monitoring-fleet --no-link
+nix build --no-link --no-update-lock-file '.#checks.x86_64-linux.monitoring-fleet'
 ```
 
 Use the [monitoring VM](../../modules/_tests/monitoring-vm.nix) for delivery,

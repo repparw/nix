@@ -46,20 +46,35 @@ extlinux via the Pi firmware.
    records in `/var/lib/fleet-unit-state/`.
 2. Main still records the desired revision. Fix or explicitly revert a bad
    configuration through a PR and wait for CI on the resulting main commit.
-   If deployment was paused by the breaker, inspect and resume:
+   On Pi, inspect whether the controller is paused before changing its state:
 
    ```sh
-   ssh root@192.168.0.4 'rm /var/lib/auto-update/PAUSE'    # resume automation
-   ssh root@192.168.0.4 'touch /var/lib/auto-update/PAUSE' # pause manually
+   test -e /var/lib/auto-update/PAUSE && echo paused || echo not-paused
    ```
 
-3. Verify before the next cycle:
+3. Verify the fix with focused Nix evaluations or existing checks from the
+   [verification skill](../../.agents/skills/verify-fleet-change/SKILL.md)
+   and confirm CI for the **exact** main commit. A full `nix flake check`
+   is not a substitute for checking the behavior that failed.
+
+4. Resuming automation and deploying are separate live operations. They
+   require explicit authorization. After inspecting the failure and resolving
+   the breaker, use the [fleet operations skill](../../.agents/skills/fleet-operations/SKILL.md)
+   on Pi. If authorized, an operator may resume a paused controller with:
 
    ```sh
-   nix flake check
-   nix run .#deploy-rs -- .#alpha --dry-activate
-   ssh root@192.168.0.4 'fleet-update deploy --host alpha'
+   sudo rm /var/lib/auto-update/PAUSE
    ```
+
+   An explicitly authorized selected-host deployment runs on Pi:
+
+   ```sh
+   fleet-update deploy --host alpha --wait-lock 7200
+   ```
+
+   Do not use `--dry-activate` as a read-only validation step: it can build
+   outputs and contact the target. The controller transaction is the production
+   deployment path.
 
 ## Related
 

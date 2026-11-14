@@ -8,10 +8,10 @@ observes. Do not guess its coverage from its name.
 For example, the fleet monitoring check is already in the flake's checks output:
 
 ```sh
-nix build '.#checks.x86_64-linux.monitoring-fleet' --no-link --no-update-lock-file --print-out-paths
+nix build --no-link --no-update-lock-file '.#checks.x86_64-linux.monitoring-fleet'
 ```
 
-This runs the existing check on a compatible build host. Substitute the check
+The command fails if the check cannot build or its assertions fail. Substitute the check
 and system for your task. Do not assume the machine you are on can build every
 architecture or run KVM tests. If a test uses mocks, stubs, or disposable VMs,
 say so in your report.
