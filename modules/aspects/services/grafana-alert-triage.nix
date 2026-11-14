@@ -58,7 +58,7 @@
         # Reuse the existing Cloudflare Tunnel's apex hostname: no new public
         # DNS record or port. Traefik routes this exact path to loopback only.
         services.traefik.dynamicConfigOptions.http.routers.grafana-alert-triage = {
-          rule = "Host(\`${config.modules.services.domain}\`) && Path(\`/hooks/grafana\`)";
+          rule = "Host(`${config.modules.services.domain}`) && Path(`/hooks/grafana`)";
           priority = 1000;
           entryPoints = [ "tunnel" ];
           service = "grafana-alert-triage";
