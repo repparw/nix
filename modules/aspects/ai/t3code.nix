@@ -7,8 +7,6 @@
 {
   den.aspects.ai.provides.t3code = {
     # The Stylix theme is a style concern, but it follows this application.
-    # It is offered only where the style aspect is part of the user's
-    # composition, so the palette is always there when the theme applies.
     includes = [
       (den.lib.policy.when (
         { user, ... }: user.hasAspect den.aspects.style
