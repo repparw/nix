@@ -1,7 +1,12 @@
 { den, ... }:
 {
   den.aspects.nixos-services.provides.grafana-alert-triage.nixos =
-    { config, lib, pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     let
       cfg = config.modules.grafana-alert-triage;
       alertTriage = import ./hermes-alert/_package.nix { inherit pkgs; };
@@ -30,7 +35,10 @@
 
         systemd.tmpfiles.rules = [ "d ${directory} 0700 ${hermesHostUid} ${hermesHostUid} - -" ];
         environment.persistence."/persist".directories = [
-          { directory = directory; mode = "0700"; }
+          {
+            directory = directory;
+            mode = "0700";
+          }
         ];
 
         systemd.services.grafana-alert-triage = {
