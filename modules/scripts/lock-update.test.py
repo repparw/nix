@@ -222,7 +222,6 @@ class LockUpdate(unittest.TestCase):
         change=True,
         event="workflow_dispatch",
         pr="",
-        candidate_ci="",
         title_ci="success",
         branch_race=False,
         late_branch_race=False,
@@ -259,11 +258,7 @@ class LockUpdate(unittest.TestCase):
             "LOCK_UPDATE_POLL_ATTEMPTS": "3",
         }
         (self.root / "requests").write_text("")
-        for marker in [*self.root.glob("dispatched-*"), self.root / "main-raced"]:
-            if marker.name.startswith("dispatched-atomic"):
-                continue
-            if marker.exists():
-                marker.unlink()
+        (self.root / "main-raced").unlink(missing_ok=True)
         result = subprocess.run(
             ["bash", "-c", SCRIPT],
             cwd=self.checkout,
@@ -294,7 +289,6 @@ class LockUpdate(unittest.TestCase):
         return self.main
 
     def test_creates_validates_and_fast_forwards_main_to_same_sha(self):
-
         result = self.update()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.git("--git-dir", str(self.remote), "show", "main:flake.lock"), lock_fixture("new"))
@@ -335,15 +329,13 @@ class LockUpdate(unittest.TestCase):
         self.assertEqual(self.main_sha(), self.main)
 
     def test_candidate_failure_does_not_merge(self):
-
         result = self.update(pr_ci="failure")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("concluded failure", result.stderr)
         self.assertEqual(self.main_sha(), self.main)
 
-    def test_existing_successful_candidate_ci_is_reused(self):
-
-        result = self.update(candidate_ci="success")
+    def test_normal_lock_candidate_uses_only_pr_checks(self):
+        result = self.update()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertEqual(self.main_sha(), self.branch_sha())
@@ -359,8 +351,7 @@ class LockUpdate(unittest.TestCase):
         self.assertIn("Lock branch changed", result.stderr)
         self.assertEqual(self.main_sha(), self.main)
 
-    def test_candidate_dispatch_failure_does_not_merge(self):
-
+    def test_missing_pr_ci_prevents_merge(self):
         result = self.update(pr_ci="missing")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Timed out waiting for required PR workflow ci.yml", result.stderr)
@@ -398,13 +389,13 @@ class LockUpdate(unittest.TestCase):
                              for r in self.requests))
         self.assertEqual(self.main_sha(), self.branch_sha())
 
-    def test_action_required_does_not_publish_despite_successful_dispatches(self):
+    def test_action_required_does_not_publish(self):
         result = self.update(pr_ci="action_required")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("requests manual approval", result.stderr)
         self.assertEqual(self.main_sha(), self.main)
 
-    def test_normal_pr_failure_cannot_publish_despite_successful_dispatches(self):
+    def test_normal_pr_failure_cannot_publish(self):
         result = self.update(pr_ci="failure")
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.main_sha(), self.main)
@@ -422,7 +413,6 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[0] == "api" and any(a.endswith('/approve') for a in r) for r in self.requests))
 
     def test_atomic_candidate_carries_cleanup_and_merges_exact_head(self):
-
         result = self.update(atomic_ready=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.main_sha(), self.main)
@@ -471,8 +461,7 @@ class LockUpdate(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(len(self.requests), 2)
 
-    def test_interrupted_atomic_dispatch_retries_without_rewriting_branch(self):
-
+    def test_failed_atomic_pr_checks_recover_without_rewriting_branch(self):
         first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         original = self.atomic_sha()
@@ -486,7 +475,6 @@ class LockUpdate(unittest.TestCase):
                             for r in self.requests))
 
     def test_recovery_fetches_candidate_in_fresh_checkout(self):
-
         first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         fresh = self.root / "fresh"
@@ -535,7 +523,6 @@ class LockUpdate(unittest.TestCase):
                                  "automation/atomic-cleanup"))
 
     def test_atomic_candidate_merges_exact_head(self):
-
         result = self.update(atomic_ready=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
@@ -551,8 +538,7 @@ class LockUpdate(unittest.TestCase):
                              for r in self.requests),
                          "a diverged PR head must never merge")
 
-    def test_atomic_refresh_reapplies_recipe_when_main_advances(self):
-
+    def test_stale_atomic_candidate_merges_without_rebase(self):
         first = self.update(atomic_ready=True)
         self.assertEqual(first.returncode, 0, first.stderr)
         tip = self.atomic_sha()
@@ -645,8 +631,7 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
-    def test_recovery_rejects_successful_ci_for_wrong_watcher_manifest(self):
-
+    def test_recovery_rejects_missing_pr_ci(self):
         first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
@@ -656,8 +641,7 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["workflow", "run"] for r in self.requests))
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
-    def test_recovery_rejects_successful_ci_for_foreign_manifest(self):
-
+    def test_recovery_uses_pr_checks_without_dispatch(self):
         first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
@@ -667,7 +651,6 @@ class LockUpdate(unittest.TestCase):
         self.assertTrue(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_recovery_blocks_while_atomic_validation_pending(self):
-
         first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
@@ -677,7 +660,6 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_failed_atomic_validation_never_arms_automerge(self):
-
         first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
@@ -778,7 +760,6 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--disable-auto" not in r for r in self.requests))
 
     def test_action_required_never_arms_atomic_automerge(self):
-
         first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
@@ -788,7 +769,6 @@ class LockUpdate(unittest.TestCase):
         self.assertFalse(any(r[:2] == ["pr", "merge"] and "--match-head-commit" in r for r in self.requests))
 
     def test_missing_app_token_fails_closed_with_guidance(self):
-
         first = self.update(atomic_ready=True, pr_ci="failure")
         self.assertNotEqual(first.returncode, 0)
         self.git("switch", "main", cwd=self.checkout)
