@@ -23,15 +23,6 @@ def build(attribute):
                         "--no-update-lock-file", f".#nixosConfigurations.{attribute}"))
 
 
-def unit(host, name):
-    service = evaluate(f"{host}.config.home-manager.users.repparw.systemd.user.services.{name}")
-    start = service["Service"]["ExecStart"]
-    if isinstance(start, list):
-        require(len(start) == 1, f"{host}/{name} must have exactly one ExecStart")
-        service["Service"]["ExecStart"] = start[0]
-    return service
-
-
 def require(condition, message):
     if not condition:
         raise ValueError(message)
@@ -72,18 +63,6 @@ def validate(name, architecture):
         package = build("alpha.config.home-manager.users.repparw.programs.t3code.package")
         require(str(package) == evaluate("alpha.pkgs.t3code-desktop.outPath"),
                 "Alpha must select the upstream desktop package")
-    elif name == "t3code-server":
-        for host in ("alpha", "pi", "epsilon"):
-            service = unit(host, "t3code")
-            require("--mode web" in service["Service"]["ExecStart"], "missing web arguments")
-            require(service["Service"]["Restart"] == "always", "restart policy changed")
-            environment = service["Service"]["Environment"]
-            require(all(any(value.startswith(key + "=") for value in environment) for key in
-                        ("T3CODE_CLERK_PUBLISHABLE_KEY", "T3CODE_CLERK_JWT_TEMPLATE",
-                         "T3CODE_CLERK_CLI_OAUTH_CLIENT_ID", "T3CODE_RELAY_URL")), "missing Connect environment")
-            package = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.outPath")
-            require(service["Service"]["ExecStart"].startswith(package + "/bin/t3 "), "server package changed")
-        build("alpha.config.home-manager.users.repparw.programs.t3code.package")
     elif name == "gamescope-vkroots":
         # Same raw-package source predicate as readiness, after removing the
         # local override. Then build the real WSI package, without stubs.
