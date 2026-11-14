@@ -15,8 +15,7 @@
     # Always select the CLI on headless hosts. Until nixpkgs#555814 is pinned,
     # the temporary upstream overlay provides t3code-server instead.
     homeManager = { pkgs, ... }: {
-      programs.t3code.package =
-        if pkgs ? t3code-cli then pkgs.t3code-cli else pkgs.t3code-server;
+      programs.t3code.package = if pkgs ? t3code-cli then pkgs.t3code-cli else pkgs.t3code-server;
     };
   };
 
