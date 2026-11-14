@@ -20,29 +20,33 @@ role, or permanent aspect's `includes` list. Keep permanent behavior outside
 `upstream/` so retiring a workaround requires no permanent configuration edit.
 The flake already discovers new module files.
 
-For a new watcher, register its input and lifecycle mode in
-`watchers.json`; add its readiness detector and choose focused validation
-while implementing the workaround. Identify the owning Den aspect, affected
-hosts, and the options or packages it changes:
+Before opening a PR that adds a workaround or watcher, verify both
+sides of its lifecycle in a disposable worktree:
 
-- For configuration changes, evaluate the relevant resolved NixOS or Home
-  Manager options on the affected hosts, not the whole system closure. Where
-  both sides evaluate on the same pin, compare values with the workaround
-  present and removed. Document any intentional differences.
-- For derivation overrides, compare intended behavior rather than output
-  paths or derivation hashes. Build the affected package after cleanup and
-  check its actual behavior, including generated service or desktop entries
-  where relevant.
-- If a meaningful check requires runtime access, record the manual completion
-  gate instead of inventing a generic parity assertion.
+- With the workaround present, evaluate the affected NixOS or Home Manager
+  options and test that the workaround actually fixes the problem. Build or
+  exercise the affected package when evaluation alone is insufficient.
+- Remove only `modules/aspects/upstream/<watcher>.nix` and inspect the
+  resulting configuration on the affected hosts. Check relevant resolved
+  options or generated entries rather than building an entire system just to
+  compare configuration. Against a pin containing the upstream fix, build or
+  exercise the replacement package and verify the intended behavior survives
+  removal. Do not require derivation hashes or intentionally changed options
+  to remain equal.
+- If the upstream fix is not yet available, verify the single-file removal
+  mechanically and record what can only be checked once the fixed pin exists.
 
-Keep these checks specific to what the workaround changes. Do not add generic
-aspect-diff infrastructure or per-watcher deletion tests. Keep the reason for
-the workaround in its source file. Update the migration contract only when
-publication policy, safety boundaries, or completion procedures change, not
-for routine watcher additions or removals. Do not open a per-watcher tracker
-issue: ready notices go to the run summary and, once per status change, to
-the fleet Discord channel through the approved bot identity.
+These are case-by-case checks performed while preparing the PR, not a
+requirement to add a custom CI job or permanent test for each watcher. State
+what was verified and what remains untested in the PR description.
+
+Register the watcher's input and lifecycle mode in `watchers.json`, and add
+its readiness detector. Keep the reason for the workaround in its source file.
+Update the migration contract only when publication policy, safety boundaries,
+or completion procedures change, not for routine watcher additions or
+removals. Do not open a per-watcher tracker issue: ready notices go to the run
+summary and, once per status change, to the fleet Discord channel through the
+approved bot identity.
 
 Add detection to `.github/scripts/upstream-readiness.py`. Detectors read the
 checked-out `main` pins, never publish, and fail closed when evidence is
@@ -54,11 +58,13 @@ selected source or behavior.
 Each removable watcher owns `modules/aspects/upstream/<watcher>.nix`.
 The generic cleanup operation stages one `git rm` and checks the exact
 candidate tree. Do not add per-watcher deletion tests or stored patch files.
-Keep focused tests for upstream detection and the selected behavior
-checks after removal. Do not edit permanent defaults, roles, or owner aspects.
-If the file or candidate changed since publication, require review rather
-than overwriting it. Evaluate affected host configuration and gate on real
-package builds in `upstream-validate.py`, not configuration stubs. Reuse an existing cleanup PR without overwriting reviewer changes.
+Keep upstream-readiness checks and existing cleanup-candidate validation,
+but do not add per-watcher deletion tests. Do not edit permanent defaults,
+roles, or owner aspects. If the file or candidate changed since publication,
+require review rather than overwriting it. Cleanup-candidate CI evaluates
+affected host configuration and gates on real package builds in
+`upstream-validate.py`, not configuration stubs. Reuse an existing cleanup
+PR without overwriting reviewer changes.
 Dispatch CI on the exact SHA; bot-token pushes do not start workflows. Judge
 completion on current `main`, never a mutable checkout. Follow the migration
 contract's merge policy, including exact-SHA validation, branch ownership,
