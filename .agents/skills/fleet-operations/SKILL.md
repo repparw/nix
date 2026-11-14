@@ -5,44 +5,60 @@ description: Inspect and operate the running NixOS fleet. Use for host diagnosti
 
 # Fleet operations
 
-Use this skill for **live** fleet operations. For proposed configuration
-changes and pre-deployment evaluation, use
-[verify-fleet-change](../verify-fleet-change/SKILL.md). Evaluation and builds
-do not prove runtime health.
+Use this skill for live fleet operations. To check a proposed configuration
+change before deployment, use
+[verify-fleet-change](../verify-fleet-change/SKILL.md). Evaluations and builds
+do not show that a running host is healthy.
 
-Discover the actual installed fleet commands instead of assuming this skill
-describes every supported command:
+This skill does not describe every supported command. To list the commands
+installed on the host, run:
 
 ```sh
 fleet commands --json
 ```
 
-## Select the operation and its boundary
+## Choose the operation
 
-Identify the target host(s), the observed symptom or requested outcome, and
-whether the operation is read-only. Inspect first; do not infer a healthy
-fleet from an unreachable host, a missing status file, or a successful build.
+Name the target hosts, the symptom or requested outcome, and whether the
+operation only reads state. Inspect before you change anything. An unreachable
+host, a missing status file, or a successful build does not show that the fleet
+is healthy.
 
-- **Health or alerts:** use `fleet health probe`, `fleet debug <host>`,
-  and the [retained-failure reference](../../../docs/runbooks/fleet-operations.md#retained-failures-and-health).
-- **Backup status or failed exports:** use `fleet backup status`; inspect
-  the [offsite coverage rules](../../../docs/runbooks/fleet-operations.md#offsite-backup-coverage-and-consistency)
-  before taking action.
-- **Production deployment or retry:** follow the
+Pick the route that fits the task.
+
+- **Health or alerts.** Run `fleet health probe` and `fleet debug <host>`. Read
+  the [retained-failure reference](../../../docs/runbooks/fleet-operations.md#retained-failures-and-health).
+- **Backup status or failed exports.** Run `fleet backup status`. Read the
+  [offsite coverage rules](../../../docs/runbooks/fleet-operations.md#offsite-backup-coverage-and-consistency)
+  before you act.
+- **Production deployment or retry.** Follow the
   [controller transaction](../../../docs/runbooks/fleet-operations.md#controller-deployment-and-recovery).
-  Never substitute a direct deploy-rs switch for the controller transaction.
-- **Storage pressure or generation cleanup:** consult
+  Never replace it with a direct deploy-rs switch.
+- **Storage pressure or generation cleanup.** Read the
   [storage safeguards](../../../docs/runbooks/fleet-operations.md#storage-and-firmware-safeguards).
-- **Firmware maintenance:** discover updates first; treat refresh and install
-  as state-changing operations, separate from ordinary fleet deployments.
+- **Firmware.** List the available updates first. Refreshing and installing
+  change state, so treat them separately from ordinary fleet deployments.
 
-Do not start services, back up or prune data, change PAUSE, deploy, roll back,
-collect garbage, or update firmware unless authorized for that action.
-`--force` needs explicit authorization to bypass PAUSE.
-A deploy-rs `--dry-activate` is **not read-only**: it may build outputs and
-contact the target, and also requires authorization.
+## Actions that need authorization
+
+Do not take any of these actions unless you are authorized for that specific
+action:
+
+- Start services.
+- Back up or prune data.
+- Change PAUSE.
+- Deploy or roll back.
+- Collect garbage.
+- Update firmware.
+
+Using `--force` to bypass PAUSE needs its own explicit authorization. A
+deploy-rs `--dry-activate` run is not read-only. It can build outputs and
+contact the target, so it also needs authorization.
 
 ## Inspect without changing the fleet
+
+Run only the commands that fit the task, and replace `alpha` with the affected
+host.
 
 ```sh
 fleet health probe
@@ -51,20 +67,20 @@ fleet backup status
 fleet debug alpha
 ```
 
-Choose only the relevant command(s) and replace `alpha` with the affected
-host. `--strict` checks deployment readiness; it does not make unrelated
-failed jobs or Grafana Cloud availability deployment prerequisites. `fleet
-debug` produces a bounded host diagnostic bundle. Report unreachable or
-permission-limited observations as unknown, not as passing.
+`--strict` checks deployment readiness. It does not treat unrelated failed jobs
+or Grafana Cloud availability as deployment prerequisites. `fleet debug`
+produces a bounded diagnostic bundle for the host. Report anything you could not
+reach, or lacked permission to read, as unknown rather than passing.
 
-For retained scheduled-job failures, inspect
-`/var/lib/fleet-unit-state/` on the owning host. A successful rerun clears
-retained failure evidence; `systemctl reset-failed` alone does not. Read
-[monitoring](../../../docs/runbooks/monitoring.md) for missing telemetry.
+Failed scheduled jobs leave evidence in `/var/lib/fleet-unit-state/` on the
+host that owns the job. Only a successful rerun clears that evidence.
+`systemctl reset-failed` does not. For missing telemetry, read
+[monitoring](../../../docs/runbooks/monitoring.md).
 
-## Run a requested backup and establish completeness
+## Run a backup and check that it is complete
 
-On the host that owns the relevant backup unit, after authorization:
+Run these commands on the host that owns the backup unit, and only after
+authorization.
 
 ```sh
 sudo systemctl start --wait restic-backups-offsite.service
@@ -72,68 +88,78 @@ journalctl -u restic-backups-offsite.service -n 100 --no-pager
 sudo cat /var/lib/backup-exports/offsite.json
 ```
 
-Inspect both the unit result and export report. An uploaded Restic snapshot
-does not establish a **complete** application backup: stale or failed
-producers can mark the report incomplete and prevent pruning. A successful
-unit status is not a substitute for checking export coverage and freshness.
+Check both the unit result and the export report. An uploaded Restic snapshot
+does not mean the application backup is complete. A stale or failed producer can
+mark the report incomplete, and that blocks pruning. A successful unit status
+does not replace checking export coverage and freshness.
 
-After an authorized OpenTofu state change on Alpha, run the backup
-units in the documented order for offsite staging and upload. Use the [state recovery reference](../../../docs/runbooks/host-recovery.md#restore-the-opentofu-state);
-do not attach backups as hooks to `tofu apply`.
+After an authorized OpenTofu state change on Alpha, run the backup units in the
+documented order. They stage the state for offsite and then upload it. See the
+[state recovery reference](../../../docs/runbooks/host-recovery.md#restore-the-opentofu-state).
+Do not attach backups to `tofu apply` as hooks.
 
-Restoring host or service data is a separate, higher-risk workflow. Read
+Restoring host or service data is a separate workflow with higher risk. Read
 [host recovery](../../../docs/runbooks/host-recovery.md) or
-[service restore](../../../docs/runbooks/restore-service-backups.md), and
-prefer isolated restore rehearsal over overwriting live state.
+[service restore](../../../docs/runbooks/restore-service-backups.md). Prefer a
+restore rehearsal in an isolated environment over overwriting live state.
 
 ## Deploy only with explicit approval
 
-Pi is the fleet deployment controller; confirm its current address in
-`modules/deploy.nix` or evaluated fleet options. The controller checks CI
-for the exact current `main`, prepares selected hosts, and uses deploy-rs
-with health checks and rollback. On Pi, the authorized operation is:
+Pi is the fleet deployment controller. Confirm its current address in
+`modules/deploy.nix` or in the evaluated fleet options. The controller checks
+CI for the exact current `main`, prepares the selected hosts, and runs deploy-rs
+with health checks and rollback.
+
+With authorization, run this on Pi:
 
 ```sh
 fleet-update deploy --host alpha --wait-lock 7200
 ```
 
-Replace the host with the explicitly selected scope. Run this **on the
-controller**, not on an arbitrary host. A selected-host deployment does not establish fleet-wide convergence. Inspect
-`/var/lib/auto-update/latest-preparation`, host failure logs, and controller
-journals before retrying.
+Replace the host with the scope you were given. Run the command on the
+controller, not on another host. Deploying selected hosts does not show that the
+whole fleet has converged. Before you retry, read
+`/var/lib/auto-update/latest-preparation`, the host failure logs, and the
+controller journals.
 
-To review a local tree with deploy-rs, only when separately authorized:
+Reviewing a local tree with deploy-rs is a separate operation that needs its own
+authorization:
 
 ```sh
 nix run .#deploy-rs -- .#alpha --dry-activate
 ```
 
-That path is distinct from the controller's production transaction.
-For a local tree already verified at its exact contents, `nix run .#deploy -- .#alpha`
-skips deploy-rs' repeated flake checks. It does not perform verification
-itself; use `nix run .#deploy-rs -- .#alpha` for unverified changes. Both
-are authorized operational actions, not PR checks.
-See [rollback and recovery](../../../docs/runbooks/update-rollback.md)
-before manually restoring a generation or resuming a paused controller.
+This is not the controller's production transaction.
+
+If you have already verified the exact contents of a local tree,
+`nix run .#deploy -- .#alpha` skips the repeated flake checks in deploy-rs. It
+does not verify anything itself. For unverified changes, use
+`nix run .#deploy-rs -- .#alpha`. Both commands are operational actions that
+need authorization. Neither is a PR check.
+
+Before you manually restore a generation or resume a paused controller, read
+[rollback and recovery](../../../docs/runbooks/update-rollback.md).
 
 ## Maintain only the requested resource
 
-Preview Pi generation retention first (on Pi):
+On Pi, preview generation retention first:
 
 ```sh
 pi-generation-retention plan
 ```
 
-Apply retention or run `nix-gc.service` only with authorization. Avoid
-`nix-collect-garbage -d`, which bypasses Pi's retention policy.
-For firmware, inspect with `fwupdmgr get-updates`; refresh, installation,
-and any required restart must be separately scheduled and authorized.
-Use the [storage/firmware reference](../../../docs/runbooks/fleet-operations.md#storage-and-firmware-safeguards)
-for host-specific constraints.
+Apply retention or run `nix-gc.service` only with authorization. Do not run
+`nix-collect-garbage -d`, because it bypasses Pi's retention policy.
+
+For firmware, list updates with `fwupdmgr get-updates`. Schedule and authorize
+the refresh, the installation, and any required restart separately. Host-specific
+limits are in the
+[storage and firmware reference](../../../docs/runbooks/fleet-operations.md#storage-and-firmware-safeguards).
 
 ## Report
 
-Record target hosts, operation, approval boundary, commands, before/after
-observations, actual exit statuses, missing evidence, and remaining risks.
-For deployment include the exact revision, reached hosts, and
-post-activation health; never claim fleet-wide success from one healthy host.
+Record the target hosts, the operation, what the authorization covered, the
+commands, the observations before and after, the exit status of each command,
+missing evidence, and remaining risks. For a deployment, also record the exact
+revision, the hosts reached, and health after activation. Do not report
+fleet-wide success from one healthy host.

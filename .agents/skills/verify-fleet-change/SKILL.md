@@ -5,60 +5,65 @@ description: Verify proposed NixOS fleet and Home Manager changes against observ
 
 # Verify fleet changes
 
-Verify the behavior the change is meant to produce, not just whether Nix evaluates.
-This skill covers the proposed configuration in the checkout. It does not
-activate a host or establish running-fleet health.
+Check that the change does what it is meant to do. A configuration that
+evaluates is not enough. This skill covers the proposed configuration in the
+checkout. It does not activate a host, and it does not show that the running
+fleet is healthy.
 
 ## Define the claim
 
-Read the changed source and relevant aspect composition. Before choosing a
-command, identify:
+Read the changed source and how the affected aspects compose. Before you pick a
+command, write down four things.
 
-- **Claim:** the specific behavior expected after the change.
-- **Scope:** affected hosts/users, and hosts that should stay unchanged.
-- **Observation:** an effective option, generated unit/file, package output,
-  or existing test whose value would distinguish success from failure.
-- **Boundary:** what that observation cannot prove without a build or runtime check.
+- **Claim.** The specific behavior you expect after the change.
+- **Scope.** The hosts and users affected, and the hosts that should stay the
+  same.
+- **Observation.** An effective option, generated unit or file, package output,
+  or existing test whose value differs between success and failure.
+- **Limits.** What that observation cannot prove without a build or a runtime
+  check.
 
-Choose the narrowest useful observation from the
+Pick the narrowest useful observation from the
 [verification routes](features/README.md). For a shared aspect or default,
-cover every affected host, not only the machine running the agent. Discover
-hosts from the flake rather than assuming a copied list.
+check every affected host, not only the machine you are working on. Get the host
+list from the flake instead of copying one from somewhere else.
 
-## Execute and compare
+## Run the check and compare
 
-Run the selected probe on the actual checkout. Compare the observed value
-with the claimed outcome; a successful exit status or a derivation path alone
-is not evidence of the intended behavior. Check an unaffected host or
-previous value when the change could cause a regression.
+Run the probe on the actual checkout and compare the result with the claim. A
+zero exit status or a derivation path does not show the intended behavior. If
+the change could cause a regression, also check an unaffected host or the
+previous value.
 
-For changes not yet committed, verify the working tree locally: CI validates
-a committed revision, not uncommitted edits. New Nix files must be Git-tracked
-for flake evaluation to include them; check the working-tree status before
-claiming a successful evaluation covers newly created files. Once a PR exists,
-consult CI for its exact head before repeating expensive checks. Use existing
-focused tests in [modules/checks.nix](../../../modules/checks.nix) or nearby
-test files; do not duplicate the entire CI matrix.
+For uncommitted changes, verify the working tree locally. CI validates a
+committed revision, not uncommitted edits. Flake evaluation includes a new Nix
+file only if Git tracks it, so check the working tree status before you claim
+that a successful evaluation covers newly created files. When a PR exists, check
+CI for its exact head before you repeat expensive checks.
 
-If evaluation fails, inspect the error, source diff, and aspect composition
-before changing inputs or the lockfile. Never update `flake.lock` as an
-incidental verification step.
+Use the existing focused tests in [modules/checks.nix](../../../modules/checks.nix)
+or in nearby test files. Do not duplicate the whole CI matrix.
 
-Prefer evaluation and targeted generated outputs. Build a selected package
-or Home Manager activation output only if its actual contents must be inspected;
-a full system closure is a last resort when activation is imminent and CI
-cannot provide the needed proof. Honor host-wide Nix `max-jobs` and `cores`
-limits; do not override them.
+If evaluation fails, read the error, the source diff, and the aspect
+composition before you touch inputs or the lockfile. Never update `flake.lock`
+as a side effect of verification.
+
+Prefer evaluation and targeted generated outputs. Build a single package or Home
+Manager activation output only when you must inspect its contents. Build a full
+system closure only as a last resort, when activation is imminent and CI cannot
+give the proof you need. Keep to the host-wide Nix `max-jobs` and `cores`
+limits, and do not override them.
 
 ## Report
 
-State the claim, checked revision or working-tree state, affected hosts, exact
-commands, observed values, expectation, and pass/fail result. Identify any
-skipped hosts or unverified effects. CI's stubbed host evaluation is not a
-native system build. Temporary logs are optional for quick evaluations; retain
-build failure output when needed, and don't delete unrelated `result` links
-or store paths.
+State the claim, the checked revision or working tree state, the affected hosts,
+the exact commands, the observed values, the expected values, and whether the
+check passed. Name any hosts you skipped and any effects you did not verify.
+CI's stubbed host evaluation is not a native system build.
 
-Do not deploy, activate, use `--dry-activate`, or mutate remote host state.
-For authorized activation and live service verification use
+Temporary logs are optional for quick evaluations. Keep build failure output
+when you need it, and do not delete unrelated `result` links or store paths.
+
+Do not deploy, activate, use `--dry-activate`, or change remote host state. For
+authorized activation and live service checks, use
 [fleet-operations](../fleet-operations/SKILL.md).
