@@ -25,10 +25,9 @@ global configuration mutation.
 successful lock publication, after manual lock merges, and on manual dispatch.
 The lock updater owns input changes.
 
-The registry includes the stable T3 orchestrator-v2 gate and the
-[OpenCode v2 package detector](opencode-release-watch.md). Readiness notices
-go to the run summary and Discord. Package readiness does not complete either
-fleet runtime migration.
+The OpenCode v2 package watcher was retired after #505 and #229. Active watcher
+readiness notices go to the run summary and Discord. Package readiness does
+not replace fleet runtime verification.
 
 Independent `post-lock` contracts publish separate review-required PRs using
 the recipes in `cleanup/`. Each candidate starts at the same checked-out main
@@ -84,9 +83,8 @@ through the approved bot identity (`DISCORD_BOT_TOKEN` +
 `automation/upstream-notify-state` ref, so a persistent status pings exactly
 once. Workaround-holding watchers are `post-lock` instead — their cleanup PR
 is the notice, and the removed workaround file disarms the watcher.
-Sonarr/Jellyfin depends on
-the running service version and remains host-owned; its local timer is
-retired in favor of the verified Pi adapter below.
+Sonarr/Jellyfin runtime checks are owned by the Pi adapter below, not by the
+GitHub watcher registry.
 
 `tridactyl-reader` is notify-only for #316. It reads `tridactyl-vim` from the
 pinned `firefox-addons` manifest and checks whether that release tag contains
