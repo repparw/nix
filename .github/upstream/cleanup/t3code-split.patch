@@ -1,12 +1,12 @@
 diff --git a/modules/aspects/upstream/t3code-split.nix b/modules/aspects/upstream/t3code-split.nix
+deleted file mode 100644
 --- a/modules/aspects/upstream/t3code-split.nix
-+++ b/modules/aspects/upstream/t3code-split.nix
-@@ -1,54 +1,10 @@
- { den, ... }:
- {
--  # Keep server-only selection separate from the version and Connect overlays.
-   den.aspects.ai.provides.t3code-split = {
--    provides.to-hosts.nixos = { lib, ... }: {
++++ /dev/null
+@@ -1,46 +0,0 @@
+-{ den, ... }:
+-{
+-  # Temporary server-only build overlay; headless package selection is permanent in roles.nix.
+-  den.aspects.headless-user.provides.to-hosts.nixos = { lib, ... }: {
 -      nixpkgs.overlays = lib.mkAfter [
 -        (final: prev: {
 -          t3code-server =
@@ -48,12 +48,4 @@ diff --git a/modules/aspects/upstream/t3code-split.nix b/modules/aspects/upstrea
 -        })
 -      ];
 -    };
--
-     homeManager =
-       { pkgs, ... }:
-       {
--        programs.t3code.package = pkgs.t3code-server;
-+        programs.t3code.package = pkgs.t3code-cli;
-       };
-   };
- }
+-}

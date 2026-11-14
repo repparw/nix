@@ -175,19 +175,20 @@ class Readiness(unittest.TestCase):
             self.assertEqual(watch.inspect("tasks-org", LOCK), "completed")
             detect.assert_not_called()
 
-    def test_t3code_cleanup_completion_preserves_permanent_aspects(self):
-        for name in ("t3code-connect", "t3code-split"):
+    def test_t3code_cleanup_completion_requires_file_removal(self):
+        for name in ("t3code-connect", "t3code-split", "t3code-browser-libs"):
             with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 relative, marker = watch.WORKAROUNDS[name]
+                self.assertIsNone(marker)
                 module = root / relative
-                module.parent.mkdir(parents=True)
-                module.write_text("{ homeManager = {}; }")
                 with patch.object(watch, "ROOT", root), patch.object(watch, "detect") as detect:
                     self.assertEqual(watch.inspect(name, LOCK), "completed")
                     detect.assert_not_called()
-                module.write_text(marker)
-                with patch.object(watch, "ROOT", root), patch.object(watch, "detect", return_value="waiting-upstream"):
+                module.parent.mkdir(parents=True)
+                module.write_text("{ }: { }\n")
+                with patch.object(watch, "ROOT", root), patch.object(
+                        watch, "detect", return_value="waiting-upstream"):
                     self.assertEqual(watch.inspect(name, LOCK), "waiting-upstream")
 
 

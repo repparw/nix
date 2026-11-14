@@ -9,8 +9,6 @@
       mcp
       opencode
       skills
-      t3code-browser-libs
-      t3code-connect
       t3code
     ];
 

@@ -1,11 +1,15 @@
 diff --git a/modules/aspects/upstream/t3code-connect.nix b/modules/aspects/upstream/t3code-connect.nix
+deleted file mode 100644
 --- a/modules/aspects/upstream/t3code-connect.nix
-+++ b/modules/aspects/upstream/t3code-connect.nix
-@@ -5,36 +5,6 @@
- {
-   den.aspects.ai.provides.t3code-connect = {
--    provides.to-hosts.nixos = {
--      # Remove only this overlay when nixpkgs#555921 reaches the pin.
++++ /dev/null
+@@ -1,36 +0,0 @@
+-{
+-  den,
+-  ...
+-}:
+-{
+-  den.aspects.ai.provides.t3code.provides.to-hosts.nixos = {
+-      # Temporary Connect build fix. Remove this file when nixpkgs#555921 reaches the pin.
 -      nixpkgs.overlays = [
 -        (
 -          final: prev:
@@ -34,7 +38,4 @@ diff --git a/modules/aspects/upstream/t3code-connect.nix b/modules/aspects/upstr
 -        )
 -      ];
 -    };
-   };
- 
-   # Desktop-session half of Connect: the launcher and the t3code:// handler
-   # only matter where a graphical browser runs. Hosts pick this up through
+-}

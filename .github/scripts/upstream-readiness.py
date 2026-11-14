@@ -17,11 +17,11 @@ PR_WAITS = {
 }
 WORKAROUNDS = {
 
-    "t3code-connect": ("modules/aspects/upstream/t3code-connect.nix", "cp .env.example .env"),
-    "t3code-split": ("modules/aspects/upstream/t3code-split.nix", "t3code-server ="),
+    "t3code-connect": ("modules/aspects/upstream/t3code-connect.nix", None),
+    "t3code-split": ("modules/aspects/upstream/t3code-split.nix", None),
     "tasks-org": ("modules/aspects/upstream/tasks-org.nix", None),
     "t3code-browser-libs": (
-        "modules/aspects/upstream/t3code-browser-libs.nix", "programs.nix-ld.libraries"),
+        "modules/aspects/upstream/t3code-browser-libs.nix", None),
     "qbittorrent": ("modules/aspects/upstream/qbittorrent.nix", None),
     "wpaperd-fix": ("modules/aspects/upstream/wpaperd-fix.nix", None),
     "gamescope-vkroots": ("modules/aspects/upstream/gamescope-vkroots.nix", None),

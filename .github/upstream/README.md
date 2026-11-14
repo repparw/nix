@@ -38,11 +38,14 @@ One failed recipe does not prevent other watchers from processing.
 Post-lock workarounds live under `modules/aspects/upstream/`. Each module
 contributes to its permanent owner through `den.aspects.<owner>.provides.<aspect>`,
 without changing the provided aspect's name or explicit host includes.
-The four former inline overrides (qBittorrent, Gamescope vkroots, Tasks.org,
-wpaperd) are separate provided modules, not imports from their permanent
-modules. Their cleanup recipes can therefore delete just the temporary
-provider (plus any attached patch asset). The test suite checks each recipe
-against the worktree. The T3 Code server migration retired its watcher in #402.
+The qBittorrent, Gamescope vkroots, Tasks.org, wpaperd, and T3 Code
+workarounds contribute directly to permanent aspects, without separate
+inclusion entries. Each workaround file can therefore be added or removed
+without editing any default, role, or permanent aspect. T3 Code's permanent
+desktop URL handler and headless CLI selection live in `ai/t3code.nix` and
+`roles.nix` respectively, outside `upstream/`. Cleanup recipes delete only
+the temporary workaround file (plus any attached patch asset). The test suite
+checks each recipe against the worktree.
 
 The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
 the exact expected candidate tree before reusing an existing branch and

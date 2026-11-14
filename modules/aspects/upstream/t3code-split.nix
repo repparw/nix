@@ -1,8 +1,7 @@
 { den, ... }:
 {
-  # Keep server-only selection separate from the version and Connect overlays.
-  den.aspects.ai.provides.t3code-split = {
-    provides.to-hosts.nixos = { lib, ... }: {
+  # Temporary server-only build overlay; headless package selection is permanent in roles.nix.
+  den.aspects.headless-user.provides.to-hosts.nixos = { lib, ... }: {
       nixpkgs.overlays = lib.mkAfter [
         (final: prev: {
           t3code-server =
@@ -44,11 +43,4 @@
         })
       ];
     };
-
-    homeManager =
-      { pkgs, ... }:
-      {
-        programs.t3code.package = pkgs.t3code-server;
-      };
-  };
 }
