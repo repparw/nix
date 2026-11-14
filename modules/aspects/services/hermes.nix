@@ -109,7 +109,8 @@
               hostPath = config.sops.secrets."arr-api-keys".path;
               isReadOnly = true;
             };
-          } // lib.optionalAttrs config.modules.grafana-alert-triage.enable {
+          }
+          // lib.optionalAttrs config.modules.grafana-alert-triage.enable {
             "/var/lib/hermes/.hermes/alert-triage" = {
               hostPath = "/var/lib/grafana-alert-triage";
               isReadOnly = false;
