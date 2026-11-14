@@ -29,3 +29,20 @@ For an immediate run, call `cron.jobs.trigger_job("Fleet crash triage")` in
 that environment. The running gateway executes it on its next scheduler tick,
 including normal output persistence and delivery handling. Historical crash
 metadata alone does not establish a current service outage.
+
+## Troubleshooting
+
+Alpha's `fleet-health-coredumps.service` collects metadata every 15 minutes.
+Check `journalctl -u fleet-health-coredumps.service` and
+`/var/lib/fleet-health/coredumps-outbox` when intake stops. Its cursor is
+independent of delivery receipts: failed SSH delivery retains the event, and
+the next run can replay up to 24 hours of history after a missing journal
+cursor. Receipts deduplicate replays. Events contain neither process arguments,
+environment variables, nor core memory.
+
+On Epsilon, inspect the `Fleet crash triage` cron job's output,
+`last_error`, and `last_delivery_error`. Inside Hermes,
+`.hermes/crash/inbox` contains pending events and
+`.hermes/crash/state.json` tracks counts, investigations, and retries. The
+host-side state is under
+`/home/repparw/services/hermes/.hermes/crash`. Treat it as private.
