@@ -56,6 +56,13 @@ deployment does not automatically create or resume jobs.
 For an immediate run, call `cron.jobs.trigger_job("Fleet package triage")` in
 that environment.
 
+To change the model for these jobs, configure the live Hermes cron defaults
+(`hermes config set cron.model <model>` and
+`hermes config set cron.model_provider <provider>`). The enrollment script
+leaves the job's model and provider unpinned, so every run uses the current
+cron defaults without rebuilding or editing individual jobs. The shared
+defaults affect all unpinned cron jobs in this Hermes profile.
+
 ## Limitations
 
 - Reporting describes packages that actually converged at the named revision; hosts that deferred a

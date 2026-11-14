@@ -26,7 +26,8 @@ def main():
     fields = {
         "name": NAME, "prompt": PROMPT, "script": "package_triage_cron.py",
         "deliver": "whatsapp", "enabled_toolsets": ["web", "no_mcp"],
-        "model": "stepfun/step-5-preview:free", "provider": "nous",
+        # Clear any old pin so cron.model / cron.model_provider in live config apply.
+        "model": None, "provider": None,
     }
     if jobs:
         job = update_job(jobs[0]["id"], fields)
