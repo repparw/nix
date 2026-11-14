@@ -144,7 +144,6 @@
         ...
       }:
       let
-        hasStylix = config.lib ? stylix;
         c = config.lib.stylix.colors.withHashtag;
         mutedText = "${c.base05}cc";
         stylixThemeJson = builtins.toJSON {
@@ -216,7 +215,7 @@
           };
         };
       in
-      lib.mkIf (hasStylix && (config.programs.t3code.enable or false)) {
+      {
         # The environment-theme loader opens files with O_NOFOLLOW, so a
         # Home Manager home.file symlink is ignored. Publish a regular file
         # atomically and replace any symlink left by older configurations.
