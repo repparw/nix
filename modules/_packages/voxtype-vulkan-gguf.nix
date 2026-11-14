@@ -63,6 +63,13 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # (Cargo.toml [features]); the default `itn` feature stays enabled.
   buildFeatures = [ "gpu-vulkan" ];
 
+  # cmake-rs inherits Cargo's NUM_JOBS and passes it as CMake --parallel,
+  # which takes precedence over CMAKE_BUILD_PARALLEL_LEVEL. Parallel ggml
+  # Vulkan shader generation can silently omit SPIR-V outputs under runner
+  # resource pressure, leaving unresolved matmul_* symbols at link time.
+  # Bound both Cargo invocations so the nested CMake shader build is serial.
+  cargoBuildFlags = [ "--jobs=1" ];
+
   nativeBuildInputs = [
     cmake
     clang
@@ -96,7 +103,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   preBuild = ''
     # NOTE: whisper.cpp/transcribe.cpp cmake need some help in the sandbox
-    export CMAKE_BUILD_PARALLEL_LEVEL=$NIX_BUILD_CORES
+    export CMAKE_BUILD_PARALLEL_LEVEL=1
     export VULKAN_SDK="${shaderc.bin}"
     export Vulkan_INCLUDE_DIR="${vulkan-headers}/include"
     export Vulkan_LIBRARY="${vulkan-loader}/lib/libvulkan.so"
@@ -107,7 +114,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # with the matching Vulkan feature. Same target/profile as cargoBuildHook so
   # the shared dependencies are not rebuilt.
   postBuild = ''
-    cargo build --offline \
+    cargo build --offline --jobs 1 \
       --target ${stdenv.hostPlatform.rust.cargoShortTarget} \
       --profile release \
       -p voxtype-gguf-worker --features vulkan
