@@ -115,6 +115,17 @@
                 touch $out
               '';
 
+          run0-shim =
+            let
+              script =
+                pkgs.writeText "sudo-run0-shim.sh"
+                  inputs.self.nixosConfigurations.alpha.config.home-manager.users.repparw.home.file.".local/bin/sudo".source.text;
+            in
+            pkgs.runCommand "check-run0-shim" { nativeBuildInputs = [ pkgs.shellcheck ]; } ''
+              shellcheck --shell=bash ${script}
+              touch $out
+            '';
+
           monitoring-vm = import ./_tests/monitoring-vm.nix { inherit inputs pkgs; };
 
           monitoring-fleet = import ./_tests/monitoring-fleet.nix { inherit inputs lib pkgs; };
