@@ -158,12 +158,16 @@ jobs:
             wait_for_lock_pr_workflow pr-title.yml
           }
 
-          # Recipe paths (without the lock) for a comma-separated watcher list.
+          # All post-lock cleanups remove a single identically named file.
           atomic_recipe_paths() {
             local watcher
             for watcher in ${1//,/ }; do
-              git apply --numstat ".github/upstream/cleanup/$(jq -r --arg w "$watcher" \
-                '.[$w].cleanup' .github/upstream/watchers.json)" | awk '{print $3}'
+              if [[ ! "$watcher" =~ ^[a-z0-9-]+$ ]] || \
+                [ "$(jq -r --arg w "$watcher" '.[$w].mode // ""' .github/upstream/watchers.json)" != post-lock ]; then
+                echo "Invalid cleanup watcher: $watcher" >&2
+                return 1
+              fi
+              printf 'modules/aspects/upstream/%s.nix\n' "$watcher"
             done | sort -u
           }
 
@@ -330,40 +334,23 @@ jobs:
               --match-head-commit "$atomic_revision"
           }
 
-          # Prove the published tip carries exactly the planned recipe: the
-          # file set must match and every cleanup must equal the recipe
-          # applied to the tip's parent, byte-for-byte. Single-commit
-          # ancestry on the recorded base is proven separately by
-          # verify_atomic_provenance. A tampered or changed candidate needs
-          # a human and is never overwritten, rearmed, or approved.
-          # Globals in: atomic_revision, atomic_base, atomic_watchers.
+          # Provenance fixes the exact candidate SHA. Check only that the
+          # candidate updates the lock and deletes the named workaround files.
+          # A changed or unexpected path needs review, never auto-merge.
           verify_atomic_recipe() {
-            local names want scratch watcher patch path
-            want=$(printf '%s\n' flake.lock $(atomic_recipe_paths "$atomic_watchers") | sort)
-            names=$(git diff --name-only "$atomic_base" "$atomic_revision" | sort)
-            if [ "$names" != "$want" ]; then
-              echo "Atomic tip touches unexpected paths; requires human review." >&2
+            local expected actual path
+            expected=$(
+              printf 'M\tflake.lock\n'
+              for path in $(atomic_recipe_paths "$atomic_watchers"); do
+                printf 'D\t%s\n' "$path"
+              done
+            )
+            expected=$(printf '%s\n' "$expected" | sort)
+            actual=$(git diff --no-renames --name-status "$atomic_base" "$atomic_revision" | sort)
+            if [ "$actual" != "$expected" ]; then
+              echo "Atomic tip differs from lock + file removals; requires human review." >&2
               return 1
             fi
-            # Reproduce the recipe on the tip's parent and compare every
-            # cleanup path byte-for-byte with the published tip.
-            scratch=$(mktemp -d "${TMPDIR:-/tmp}/atomic-verify-XXXXXXXX")
-            git worktree add --quiet --detach "$scratch" "$atomic_base"
-            for watcher in ${atomic_watchers//,/ }; do
-              patch="$(git rev-parse --show-toplevel)/.github/upstream/cleanup/$(jq -r --arg w "$watcher" \
-                '.[$w].cleanup' .github/upstream/watchers.json)"
-              git -C "$scratch" apply --check "$patch" \
-              && git -C "$scratch" apply "$patch" \
-              || { git worktree remove --force "$scratch"; return 1; }
-            done
-            for path in $(atomic_recipe_paths "$atomic_watchers"); do
-              if ! git show "$atomic_revision:$path" | cmp -s - "$scratch/$path"; then
-                echo "Atomic tip differs from the exact cleanup recipe; requires human review." >&2
-                git worktree remove --force "$scratch"
-                return 1
-              fi
-            done
-            git worktree remove --force "$scratch"
           }
 
           # Re-plan and re-apply the atomic recipe onto the new main after it
@@ -393,10 +380,17 @@ jobs:
               return 1
             fi
             for watcher in ${atomic_watchers//,/ }; do
+              # If the workaround was edited since publication, do not remove
+              # new code automatically when refreshing the stale candidate.
+              path="modules/aspects/upstream/$watcher.nix"
+              if [ "$(git rev-parse "$atomic_base:$path")" != "$(git rev-parse "$new_main:$path")" ]; then
+                echo "Workaround changed on main: $path; requires review." >&2
+                return 1
+              fi
               python3 .github/scripts/upstream-plan.py apply --id "$watcher" \
                 --registry .github/upstream/watchers.json || return 1
             done
-            git add -- flake.lock $(atomic_recipe_paths "$atomic_watchers")
+            git add -- flake.lock
             if [ "$(git diff --cached --name-only | sort)" != "$want" ]; then
               echo "Refreshed atomic candidate changed unexpected files; requires human review." >&2
               return 1
@@ -626,10 +620,8 @@ jobs:
               exit 1
               ;;
             atomic)
-              # A stable separate branch, not the updater's routinely
-              # refreshed lock-only branch. Every planned apply-coupled
-              # cleanup rides this candidate; per-watcher validation runs in
-              # CI and merging happens only when green and current (#265),
+              # A separate branch combines the updated lock and file deletions.
+              # Native validation runs on the exact candidate before merging;
 
               jq -e '.automerge == true' <<<"$plan" >/dev/null || {
                 echo "Atomic plan is not merge-automated; fail closed." >&2
@@ -652,7 +644,7 @@ jobs:
                 python3 .github/scripts/upstream-plan.py apply --id "$watcher" --registry .github/upstream/watchers.json
               done
               recipe_paths=$(atomic_recipe_paths "$watcher_list")
-              git add -- flake.lock $recipe_paths
+              git add -- flake.lock
               changed=$(git diff --cached --name-only | sort)
               expected_paths=$(printf '%s\n' flake.lock $recipe_paths | sort)
               if [ "$changed" != "$expected_paths" ]; then
