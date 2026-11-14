@@ -27,7 +27,6 @@
         fleet-reboot
         nixvim
         nixpkgs
-        cargo-system-libs
         nix
         system
       ];
