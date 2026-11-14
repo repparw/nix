@@ -94,18 +94,18 @@ def publish(name, spec, repo):
                 run("git", "fetch", "--quiet", "origin", "refs/heads/main", cwd=candidate)
                 main_sha = run("git", "rev-parse", "FETCH_HEAD", cwd=candidate)
                 branch_tree = run("git", "rev-parse", "HEAD^{tree}", cwd=candidate)
+                parent = run("git", "rev-parse", "HEAD^", cwd=candidate)
+                if parent != main_sha:
+                    original = run("git", "rev-parse", f"{parent}:{path}", cwd=candidate)
+                    current = run("git", "rev-parse", f"{main_sha}:{path}", cwd=candidate)
+                    if original != current:
+                        raise ValueError("workaround changed on main; needs review")
                 main_expected = expected_tree(candidate, main_sha, path)
                 if branch_tree != main_expected:
                     tip_expected = expected_tree(candidate, "HEAD^", path)
                     single = run("git", "rev-list", "--count", "HEAD^..HEAD", cwd=candidate)
                     if branch_tree != tip_expected or single != "1":
                         raise ValueError("candidate differs from the exact cleanup recipe")
-                    # Reject a rewritten workaround rather than deleting new main
-                    # content that was never covered by the published candidate.
-                    original = run("git", "rev-parse", f"HEAD^:{path}", cwd=candidate)
-                    current = run("git", "rev-parse", f"{main_sha}:{path}", cwd=candidate)
-                    if original != current:
-                        raise ValueError("workaround changed on main; needs review")
                     run("git", "checkout", "--quiet", "--detach", main_sha, cwd=candidate)
                     remove_module(name, spec, candidate)
                     changed = set(run("git", "diff", "--cached", "--name-only", cwd=candidate).splitlines())
