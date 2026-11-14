@@ -75,12 +75,12 @@ export function detect({
     'api', '--method', 'GET', `repos/${repository}/compare/${base}...${head}`,
   ], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }),
 } = {}) {
-  if (eventName !== 'pull_request' && eventName !== 'push')
-    return classifyChanges(null, eventName);
+  // Pushes always need full validation; do not fetch a comparison we will ignore.
+  if (eventName !== 'pull_request') return classifyChanges(null, eventName);
   try {
     const event = JSON.parse(readFileSync(eventPath, 'utf8'));
-    const base = eventName === 'push' ? event.before : event.pull_request?.base?.sha;
-    const head = eventName === 'push' ? event.after : event.pull_request?.head?.sha;
+    const base = event.pull_request?.base?.sha;
+    const head = event.pull_request?.head?.sha;
     if (!/^[a-f0-9]{40}$/i.test(base ?? '') || !/^[a-f0-9]{40}$/i.test(head ?? '') ||
         !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo ?? '')) return classifyChanges(null, eventName);
     const result = compare(repo, base, head);

@@ -264,11 +264,11 @@ def sweep(registry, readiness, repo):
     for name, spec in registry.items():
         status = readiness.get(name, "unavailable (missing detector)")
         try:
-            if spec["mode"] not in ("atomic", "post-lock", "notify-only", "host-owned"):
+            if spec["mode"] not in ("atomic", "post-lock", "notify-only"):
                 raise ValueError("unsupported watcher mode")
             if status == "PINNED-READY" and spec["mode"] == "post-lock":
                 results[name] = publish(name, spec, repo)
-            elif status == "PINNED-READY" and spec["mode"] in ("notify-only", "host-owned"):
+            elif status == "PINNED-READY" and spec["mode"] == "notify-only":
                 results[name] = notify(name, spec, repo, status)
             elif (name == "fsr4-rdna2" and spec["mode"] == "notify-only"
                   and status.startswith("upstream-review-required:")):

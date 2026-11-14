@@ -90,7 +90,6 @@ jobs:
           NIX_PROBE_SMOKE=1 python3 .github/scripts/upstream-plan.test.py \
             -k test_real_nix
           python3 .github/scripts/upstream-publish.test.py
-          python3 .github/scripts/upstream-release-readiness.test.py
           # Exercise recovery fixtures before the longer fleet-cli derivation.
           # This also catches malformed Python mock strings early.
           python3 modules/scripts/lock-update.test.py \

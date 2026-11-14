@@ -103,12 +103,12 @@ function detectFixture(eventName, event, response = compareResponse([])) {
   }
 }
 
-test('real push event JSON selects the correct diff for full validation', () => {
+test('push events skip comparison and run full validation', () => {
   const event = { before, after, ref: 'refs/heads/main' };
   const observed = detectFixture('push', event, compareResponse([
     { filename: 'modules/git-hooks.nix', status: 'modified' },
   ]));
-  assert.deepEqual(observed.calls, [{ repository: 'repparw/nix', base: before, head: after }]);
+  assert.deepEqual(observed.calls, []);
   assert.equal(observed.result.runHosts, true);
   assert.equal(observed.result.runPersistenceVm, true);
   assert.deepEqual(observed.result.checkMatrix.include.map(x => x.group), both);
@@ -123,7 +123,7 @@ test('real pull request event JSON selects PR base/head, not push SHAs', () => {
   assert.equal(observed.result.runHosts, true);
 });
 
-test('push comparison failures and malformed inputs fail closed', () => {
+test('push events ignore malformed event data and comparison responses', () => {
   const event = { before, after };
   for (const response of [
     { status: 1, stderr: 'compare failed' },
@@ -131,11 +131,29 @@ test('push comparison failures and malformed inputs fail closed', () => {
     compareResponse(Array.from({ length: 300 }, (_, n) => ({ filename: `docs/${n}.md` }))),
     compareResponse([]),
   ]) {
-    assert.equal(detectFixture('push', event, response).result.runHosts, true);
+    const observed = detectFixture('push', event, response);
+    assert.equal(observed.result.runHosts, true);
+    assert.deepEqual(observed.calls, []);
   }
   const invalid = detectFixture('push', { before: '0'.repeat(40), after: 'not-a-sha' },
     compareResponse([{ filename: 'docs/one.md' }]));
   assert.deepEqual(invalid.calls, []);
+  assert.equal(detect({ eventName: 'push', eventPath: '/nonexistent-fixture',
+    repo: 'invalid', compare: () => { throw Error('Must not compare'); } }).runHosts, true);
   assert.equal(detect({ eventName: 'workflow_dispatch', eventPath: '/nonexistent-fixture',
     repo: 'repparw/nix', compare: () => { throw Error('Must not compare'); } }).runHosts, true);
+});
+
+test('pull request comparison failures fail closed', () => {
+  const event = { pull_request: { base: { sha: before }, head: { sha: after } } };
+  for (const response of [
+    { status: 1, stderr: 'compare failed' },
+    { status: 0, stdout: '{invalid-json' },
+    compareResponse(Array.from({ length: 300 }, (_, n) => ({ filename: `docs/${n}.md` }))),
+    compareResponse([]),
+  ]) {
+    const observed = detectFixture('pull_request', event, response);
+    assert.equal(observed.result.runHosts, true);
+    assert.equal(observed.result.runPersistenceVm, true);
+  }
 });
