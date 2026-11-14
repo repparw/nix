@@ -1,26 +1,7 @@
-# Compute the T3 Code opencode provider's hiddenModels from the models.dev
-# catalog (the catalog OpenCode itself uses). Emits {hides, keeps}:
-#   hides - model slugs to add to providerModelPreferences.opencode.hiddenModels
-#   keeps - slugs to subtract first, so re-surfaced models survive
-#
-# Rules, per provider:
-#   openrouter, huggingface, nvidia, google, mistral
-#       Keep the latest model per family. A "-latest" alias wins over numbered
-#       models in its family; otherwise the newest release_date wins (ties are
-#       all kept, matching the server's isLegacy). Deprecated models and
-#       non-latest numbered models are hidden. Models without a family are
-#       kept. Paid models stay visible.
-#   opencode (Zen), orcarouter
-#       Free-inference providers: keep only zero-cost models, still subject to
-#       the latest-per-family rule. Paid models are hidden.
-#   groq, opencode-go
-#       Dropped entirely: every model is hidden.
-#   cloudflare-workers-ai
-#       No latest-per-family rule. Only the eight paid-only models are hidden.
-#
-# nous-portal and explabs are plugin providers absent from models.dev; their
-# plugins register only :free routes, so they need no entry here. One paid
-# muse-ember is kept for API usage.
+# Emit {hides, keeps} for the opencode provider's hiddenModels from the
+# models.dev catalog. hides are added to the list; keeps are subtracted first
+# so re-surfaced models survive. nous-portal and explabs are plugin providers
+# absent from models.dev; one paid muse-ember is kept for API usage.
 
 def free:
   (.cost == null) or ((.cost.input // 0) == 0 and (.cost.output // 0) == 0);

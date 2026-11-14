@@ -13,21 +13,9 @@
         json5 = pkgs.python3Packages.toPythonApplication pkgs.python3Packages.json5;
       in
       {
-        # Plugins are live state in ~/.config/opencode/plugins/ (seeded by
-        # hand from the repo history during the live-state migration); the
-        # runtime providers (nous-portal, explabs, orcarouter) and the
-        # session default model come from those plugins.
-        # Compute the opencode provider instance's hidden models at activation
-        # time from the models.dev catalog (the catalog OpenCode itself uses).
-        # The rules live in opencode-model-hides.jq: legacy models are hidden
-        # per provider/family, paid models are hidden from the free-inference
-        # providers, groq and opencode-go are dropped, and Cloudflare hides
-        # only its paid-only blacklist. Runs after the module's own
-        # $dynamic * $static merge (which would replace the GUI's
-        # hiddenModels array); keeps are subtracted so re-surfaced models
-        # survive later activations. Fails open: a failed or empty catalog
-        # fetch leaves settings.json alone. The GUI prunes stale entries when
-        # it saves.
+        # Merge the models.dev hide list into settings.json after the t3code
+        # module's $dynamic * $static merge, which would otherwise replace the
+        # GUI's hiddenModels array. Fails open on a catalog fetch error.
         home.activation.t3codeModelHides = lib.hm.dag.entryAfter [ "t3codeSettingsActivation" ] (
           let
             jq = lib.getExe pkgs.jq;
