@@ -15,16 +15,13 @@ PR_WAITS = {
     "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
     "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
 }
+# Watcher IDs identify their temporary files without a separate path registry.
 WORKAROUNDS = {
-
-    "t3code-connect": ("modules/aspects/upstream/t3code-connect.nix", None),
-    "t3code-split": ("modules/aspects/upstream/t3code-split.nix", None),
-    "tasks-org": ("modules/aspects/upstream/tasks-org.nix", None),
-    "t3code-browser-libs": (
-        "modules/aspects/upstream/t3code-browser-libs.nix", None),
-    "qbittorrent": ("modules/aspects/upstream/qbittorrent.nix", None),
-    "wpaperd-fix": ("modules/aspects/upstream/wpaperd-fix.nix", None),
-    "gamescope-vkroots": ("modules/aspects/upstream/gamescope-vkroots.nix", None),
+    name: (f"modules/aspects/upstream/{name}.nix", None)
+    for name, spec in json.loads(
+        (ROOT / ".github/upstream/watchers.json").read_text()
+    ).items()
+    if spec["mode"] == "post-lock"
 }
 
 
