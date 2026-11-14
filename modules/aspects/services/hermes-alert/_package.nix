@@ -17,12 +17,15 @@ in
     runpy.run_path(${builtins.toJSON (toString source)}, run_name="__main__")
   '';
   enroll = pkgs.writeText "alert_triage_enroll.py" (builtins.readFile ./enroll.py);
-  check = pkgs.runCommand "check-grafana-alert-triage" {
-    nativeBuildInputs = [ pkgs.python3 ];
-  } ''
-    cp ${./triage.py} triage.py
-    cp ${./test_triage.py} test_triage.py
-    python3 test_triage.py ./triage.py
-    touch $out
-  '';
+  check =
+    pkgs.runCommand "check-grafana-alert-triage"
+      {
+        nativeBuildInputs = [ pkgs.python3 ];
+      }
+      ''
+        cp ${./triage.py} triage.py
+        cp ${./test_triage.py} test_triage.py
+        python3 test_triage.py ./triage.py
+        touch $out
+      '';
 }
