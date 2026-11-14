@@ -1,6 +1,6 @@
 ---
 name: fleet-operations
-description: Inspect and operate the running NixOS fleet. Use for host diagnostics, retained failures, backup checks and manual runs, production deployment, storage maintenance, or firmware updates; require authorization before changes to live state.
+description: Inspect and operate the running NixOS fleet. Use for host diagnostics, retained failures, backup checks and manual runs, production deployment, storage maintenance, or firmware updates. Get authorization before changing live state.
 ---
 
 # Fleet operations

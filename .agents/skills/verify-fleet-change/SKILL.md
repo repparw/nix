@@ -1,6 +1,6 @@
 ---
 name: verify-fleet-change
-description: Verify proposed NixOS fleet and Home Manager changes against observable effective configuration, generated files, systemd units, and focused tests. Use after editing modules or aspects and before requesting review or deployment.
+description: Verify proposed NixOS fleet and Home Manager changes by checking effective option values, generated files, systemd units, and existing tests. Use after editing modules or aspects and before requesting review or deployment.
 ---
 
 # Verify fleet changes

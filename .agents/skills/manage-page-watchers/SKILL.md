@@ -1,6 +1,6 @@
 ---
 name: manage-page-watchers
-description: Add, modify, or troubleshoot web-page change detection in the fleet automations service, including extraction, runtime overrides, and notification state.
+description: Add, change, or troubleshoot web-page change detection in the fleet automations service, including value extraction, runtime overrides, saved baselines, and notifications.
 ---
 
 # Manage page watchers

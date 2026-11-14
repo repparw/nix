@@ -1,6 +1,6 @@
 ---
 name: watch-upstream
-description: Track an upstream fix in this flake's inputs, prepare validated cleanup, and retire the workaround after its completion gates pass.
+description: Track an upstream fix in this flake's inputs, prepare a validated cleanup, and retire the workaround after its completion checks pass.
 ---
 
 # Watch upstream
