@@ -20,8 +20,8 @@ role, or permanent aspect's `includes` list. Keep permanent behavior outside
 `upstream/` so retiring a workaround requires no permanent configuration edit.
 The flake already discovers new module files.
 
-For a new watcher, register its input, cleanup recipe, and lifecycle mode in
-`watchers.json`; add its readiness detector and focused validation. Keep the
+For a new watcher, register its input and lifecycle mode in
+`watchers.json`; add its readiness detector and focused package validation. Keep the
 reason for the workaround in its source file. Update the migration contract
 only when publication policy, safety boundaries, or completion procedures
 change, not for routine watcher additions or removals. Do not open a
@@ -35,15 +35,12 @@ completed. A version or release date alone never proves a fix: require commit
 ancestry (`merge_base_commit.sha` equals the fix commit) or verify the exact
 selected source or behavior.
 
-Cleanup recipes live in `.github/upstream/cleanup/`. Normally, a
-recipe deletes only its temporary module and any temporary patch asset.
-The generic cleanup check covers exact file deletion; do not add per-watcher
-tests for that operation. Keep focused tests for upstream detection and
-actual package behavior after removal. Do not edit permanent defaults,
-roles, or owner aspects. Keep each recipe narrow:
-`git apply --check` must pass against the exact candidate base, unrelated
-configuration is preserved, and a conflict requires review rather than a
-forced patch. Evaluate every affected host and its generated units, and gate
+Each removable watcher owns `modules/aspects/upstream/<watcher>.nix`.
+The generic cleanup operation stages one `git rm` and checks the exact
+candidate tree. Do not add per-watcher deletion tests or stored patch files.
+Keep focused tests for upstream detection and package behavior after removal.
+Do not edit permanent defaults, roles, or owner aspects. If the file or
+candidate changed since publication, require review rather than overwriting it. Evaluate every affected host and its generated units, and gate
 on the real package builds in `upstream-validate.py`, not configuration
 stubs. Reuse an existing cleanup PR without overwriting reviewer changes.
 Dispatch CI on the exact SHA; bot-token pushes do not start workflows. Judge

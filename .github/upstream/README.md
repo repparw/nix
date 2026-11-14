@@ -29,11 +29,11 @@ The OpenCode v2 package watcher was retired after #505 and #229. Active watcher
 readiness notices go to the run summary and Discord. Package readiness does
 not replace fleet runtime verification.
 
-Independent `post-lock` contracts publish separate review-required PRs using
-the recipes in `cleanup/`. Each candidate starts at the same checked-out main
-revision.
-`git apply --check` must pass before publication. A conflict requires review.
-One failed recipe does not prevent other watchers from processing.
+Independent `post-lock` contracts publish one-file deletion PRs from the
+checked-out main revision. The filename matches the watcher ID, so no stored
+patch or per-watcher cleanup recipe is needed. The publisher checks the exact
+tree and refuses to overwrite a modified candidate or workaround file.
+One failed cleanup does not prevent other watchers from processing.
 
 Post-lock workarounds live under `modules/aspects/upstream/`. Each module
 contributes to its permanent owner through `den.aspects.<owner>.provides.<aspect>`,
@@ -43,9 +43,9 @@ workarounds contribute directly to permanent aspects, without separate
 inclusion entries. Each workaround file can therefore be added or removed
 without editing any default, role, or permanent aspect. T3 Code's permanent
 desktop URL handler and headless CLI selection live in `ai/t3code.nix` and
-`roles.nix` respectively, outside `upstream/`. Cleanup recipes delete only
-the temporary workaround file (plus any attached patch asset). The test suite
-checks each recipe against the worktree.
+`roles.nix` respectively, outside `upstream/`. Each cleanup stages a
+single `git rm modules/aspects/upstream/<watcher>.nix` and verifies the
+exact candidate diff before publication.
 
 The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
 the exact expected candidate tree before reusing an existing branch and
@@ -135,13 +135,13 @@ publication, interruption recovery, drift rejection, and notification deduplicat
 updater publishes to main. Watcher contracts live in `watchers.json`.
 Watchers with `coupling: apply` (qbittorrent, gamescope-vkroots) break the
 moment the candidate pin carries their fix — or any
-context-shifting bump of their package — so their cleanup rides the lock
+context-shifting bump of their package — so their file removal rides the lock
 candidate instead of racing the post-lock sweep. Readiness runs against the
 candidate tree; `PINNED-READY` diverts publication into a combined atomic
 candidate. A watcher that is not ready but whose package the pin moved gets a
 stubbed-phase compatibility build of the actual fleet package; failure blocks
 the lock, and so does an unavailable readiness API. Only active apply-coupled
-watchers can divert the lock update; their recipe-defined changes are
+watchers can divert the lock update; their file deletions are
 validated on the exact candidate commit. Atomic publication preserves the
 exact-SHA CI, provenance, fail-closed recovery, strict up-to-date and
 GitHub approval gates described by the lock-update workflow.
