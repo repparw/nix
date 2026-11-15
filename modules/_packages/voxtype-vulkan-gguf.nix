@@ -105,16 +105,16 @@ rustPlatform.buildRustPackage (finalAttrs: {
     substituteInPlace "$shaderGen" \
       --replace-fail \
       '    compiles.push_back(std::async(
-        string_to_spv_func, name, input_filepath, out_path, defines, coopmat, generate_dep_file, std::move(slot)));' \
+            string_to_spv_func, name, input_filepath, out_path, defines, coopmat, generate_dep_file, std::move(slot)));' \
       '    string_to_spv_func(name, input_filepath, out_path, defines, coopmat, generate_dep_file, std::move(slot));'
     substituteInPlace "$shaderGen" \
       --replace-fail \
       '            if (data.empty()) {
-                continue;
-            }' \
+                    continue;
+                }' \
       '            if (data.empty()) {
-                throw std::runtime_error("Missing compiled Vulkan shader: " + name + " (" + path + ")");
-            }'
+                    throw std::runtime_error("Missing compiled Vulkan shader: " + name + " (" + path + ")");
+                }'
   '';
 
   preBuild = ''
