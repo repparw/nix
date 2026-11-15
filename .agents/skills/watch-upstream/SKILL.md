@@ -14,10 +14,9 @@ fleet and runs runtime readiness probes for host-owned watchers.
 - `upstream-watch.yml` runs detection.
 - `lock-update.yml` publishes lock updates and runs the atomic planner.
 
-Before you add, change, or retire a watcher, read
-[current watcher overview](../../../.github/upstream/README.md), the relevant
-entry in `watchers.json`, and its detector and validation code. The registry
-and implementation own the details of each watcher's gates.
+Before you add, change, or retire a watcher, read the entry in
+`.github/upstream/watchers.json` and the relevant detector, planner, publisher,
+and validation code. These are the sources of truth for the watcher.
 
 ## Where workaround code goes
 
@@ -53,9 +52,9 @@ what you verified and what remains untested.
 
 Add the watcher's input and lifecycle mode to `watchers.json`, and add its
 readiness detector. Keep the reason for the workaround in its source file.
-Update the watcher overview only when the publication policy, safety rules, or
-completion procedures change. Do not update it when you add or remove a routine
-watcher.
+Do not maintain a second watcher catalog in Markdown. For `coupling: apply`,
+the lock planner must include the cleanup with the candidate input update or
+block publication.
 
 Do not open a tracker issue for each watcher. Ready notices go to the run
 summary. When the status changes, they also go once to the fleet Discord
@@ -90,12 +89,14 @@ stubs.
 
 Dispatch CI on the exact SHA, because pushes made with the bot token do not
 start workflows. Judge completion on the current `main`, never on a mutable
-checkout. Follow the safety rules in the watcher overview. They cover exact-SHA
-validation, branch ownership, and merging only when required checks pass on a
-branch current with `main`.
+checkout. Merge only when the required checks pass on the exact SHA and the branch is
+current with `main`. Never overwrite modified reviewer branches or proceed on
+missing evidence. A notify-only readiness notice is not a runtime proof.
 
 Retire a host-owned watcher only after its runtime completion condition is
-proven. Run the affected watcher fixtures listed in the overview. For runtime
+proven. When changing detection, publication, or planning, run the affected fixtures:
+`upstream-readiness.test.py`, `upstream-publish.test.py`, and
+`upstream-plan.test.py` under `.github/scripts/`. For runtime
 inspection or deployment, use
 [fleet-operations](../fleet-operations/SKILL.md).
 
