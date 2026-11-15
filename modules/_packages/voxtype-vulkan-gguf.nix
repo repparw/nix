@@ -106,8 +106,6 @@ rustPlatform.buildRustPackage (finalAttrs: {
       --replace-fail \
       'uint32_t N = std::max(1u, std::min(16u, std::thread::hardware_concurrency()));' \
       'uint32_t N = 1;'
-
-
   '';
 
   preBuild = ''
