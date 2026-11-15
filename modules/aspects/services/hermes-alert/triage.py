@@ -39,12 +39,20 @@ def normalize(payload, now=None):
         if not isinstance(item, dict) or not isinstance(item.get("labels"), dict):
             continue
         labels = item["labels"]
-        host, service = labels.get("host"), compact(labels.get("service"), 80)
-        opted_in = labels.get("agent_triage") in ("true", "1")
-        critical = labels.get("severity") == "critical" and service
+        host = labels.get("host")
+        opted_in = (
+            labels.get("agent_triage") in ("true", "1")
+            or labels.get("hermes_triage") == "actionable-v1"
+        )
+        explicit_service = compact(labels.get("service"), 80)
+        # The staged fleet_failed_unit alert uses "name" for systemd units.
+        service = explicit_service or (
+            compact(labels.get("name"), 80) if opted_in else ""
+        )
+        critical = labels.get("severity") == "critical" and explicit_service
         if host not in HOSTS or not (opted_in or critical):
             continue
-        if service and not re.fullmatch(r"[\w.-]{1,80}", service, re.ASCII):
+        if service and not re.fullmatch(r"[\w.@:-]{1,80}", service, re.ASCII):
             continue
         fingerprint, starts = item.get("fingerprint"), item.get("startsAt")
         if (not isinstance(fingerprint, str) or

@@ -46,6 +46,42 @@ class Triage(unittest.TestCase):
         item["alerts"][0]["labels"]["agent_triage"] = "true"
         self.assertEqual(len(triage.normalize(item, 10)), 1)
 
+    def test_staged_grafana_rule_labels(self):
+        failed_unit = webhook(severity="critical", service="")
+        labels = failed_unit["alerts"][0]["labels"]
+        labels.pop("service")
+        labels.update({
+            "alertname": "Hermes persistent failed unit",
+            "name": "restic-backups-offsite.service",
+            "hermes_triage": "actionable-v1",
+        })
+        events = triage.normalize(failed_unit, 10)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["service"], "restic-backups-offsite.service")
+
+        paused = webhook(severity="warning", service="", host="pi")
+        labels = paused["alerts"][0]["labels"]
+        labels.pop("service")
+        labels.update({
+            "alertname": "Hermes deployment automation paused",
+            "hermes_triage": "actionable-v1",
+        })
+        events = triage.normalize(paused, 10)
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["host"], "pi")
+        self.assertEqual(events[0]["service"], "")
+
+        # A severity=critical signal with a unit-name label does not opt in
+        # other fleet alerts unless the dedicated triage label is present.
+        labels = failed_unit["alerts"][0]["labels"]
+        labels.pop("hermes_triage")
+        self.assertEqual(triage.normalize(failed_unit, 10), [])
+        labels["hermes_triage"] = "other"
+        self.assertEqual(triage.normalize(failed_unit, 10), [])
+        labels["hermes_triage"] = "actionable-v1"
+        labels["name"] = "../unsafe.service"
+        self.assertEqual(triage.normalize(failed_unit, 10), [])
+
     def test_dedup_delivery_and_resolution(self):
         payload = webhook()
         self.assertEqual(triage.ingest(self.state, payload, now=100), 1)
