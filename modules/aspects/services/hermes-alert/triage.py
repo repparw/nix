@@ -15,6 +15,11 @@ import time
 JOB = "Fleet alert triage"
 HOSTS = {"alpha", "epsilon", "pi"}
 MAX_BODY = 65536
+MAX_EVENTS = 1024
+
+
+class QueueFullError(Exception):
+    """Transient backpressure: Grafana should retry instead of dropping events."""
 
 
 def compact(value, limit):
@@ -83,6 +88,11 @@ def atomic_write(path, payload):
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(tmp, path)
+        directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
     finally:
         if os.path.exists(tmp):
             os.unlink(tmp)
@@ -94,8 +104,10 @@ def ingest(state, payload, now=None):
         return 0
     inbox = state / "events"
     private_dir(inbox)
-    if len(list(inbox.glob("*.json"))) >= 1024:
-        raise ValueError("event queue full")
+    existing = {path.stem for path in inbox.glob("*.json")}
+    incoming = {event["id"] for event in events}
+    if len(existing | incoming) > MAX_EVENTS:
+        raise QueueFullError("event queue full")
     for event in events:
         path = inbox / (event["id"] + ".json")
         if path.is_symlink():
@@ -163,6 +175,10 @@ class Handler(BaseHTTPRequestHandler):
     state = None
     token_file = None
 
+    def setup(self):
+        self.request.settimeout(10)
+        super().setup()
+
     def reply(self, code):
         self.send_response(code)
         self.send_header("Content-Length", "0")
@@ -172,7 +188,10 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path != "/hooks/grafana":
             return self.reply(404)
-        token = self.token_file.read_text().strip()
+        try:
+            token = self.token_file.read_text().strip()
+        except OSError:
+            return self.reply(503)
         if len(token) < 32 or not hmac.compare_digest(
             self.headers.get("Authorization", ""), "Bearer " + token
         ):
@@ -185,6 +204,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(413)
             payload = json.loads(self.rfile.read(length))
             ingested = ingest(self.state, payload)
+        except QueueFullError:
+            return self.reply(503)
         except (ValueError, TypeError, KeyError):
             return self.reply(422)
         except OSError:
