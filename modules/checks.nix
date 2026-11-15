@@ -85,6 +85,8 @@
           hermes-crash-triage = (import ./aspects/services/hermes-crash/_package.nix { inherit pkgs; }).check;
           hermes-package-triage =
             (import ./aspects/services/hermes-package/_package.nix { inherit pkgs; }).check;
+          grafana-alert-triage =
+            (import ./aspects/services/hermes-alert/_package.nix { inherit pkgs; }).check;
           coredump-collector =
             pkgs.runCommand "check-coredump-collector" { nativeBuildInputs = [ pkgs.python3 ]; }
               ''
