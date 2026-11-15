@@ -88,14 +88,31 @@
               --send-clipboard
           '';
         };
+
+        platformTools = pkgs.androidenv.androidPkgs.platform-tools;
+        scrcpyWithPlatformTools = pkgs.scrcpy.override {
+          android-tools = platformTools;
+        };
       in
       {
         home.packages = [
           kdeconnect
           sendClipboard
-          pkgs.scrcpy
-          pkgs.android-tools
+          scrcpyWithPlatformTools
+          platformTools
         ];
+
+        systemd.user.services.adb-server = {
+          Unit.Description = "ADB server with wireless debugging discovery";
+          Service = {
+            Type = "simple";
+            ExecStartPre = "-${platformTools}/bin/adb kill-server";
+            ExecStart = "${platformTools}/bin/adb server nodaemon";
+            Restart = "always";
+            RestartSec = 2;
+          };
+          Install.WantedBy = [ "default.target" ];
+        };
 
         systemd.user.services.kdeconnect = {
           Unit = {
