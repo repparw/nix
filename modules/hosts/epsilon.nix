@@ -65,6 +65,15 @@
         };
         users.users.repparw.hashedPasswordFile = config.sops.secrets.repparwPasswordHash.path;
 
+        sops.secrets.grafana-alert-triage-token = {
+          sopsFile = ../../secrets/grafana-alert-triage-epsilon.sops.yaml;
+          restartUnits = [ "grafana-alert-triage.service" ];
+        };
+        modules.grafana-alert-triage = {
+          enable = true;
+          tokenFile = config.sops.secrets.grafana-alert-triage-token.path;
+        };
+
         modules.services.bridgePrefix = "10.231.137";
         modules.monitoring.health.disks = [
           {
