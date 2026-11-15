@@ -35,11 +35,6 @@ version strings and release notes alone are not enough. A notify-only discovery
 candidate, such as an FSR4/RDNA2 release, still needs real hardware and runtime
 verification before it can be treated as supported.
 
-For T3 Code, a pin regression below version 0.1.5 risks downgrading
-`statev2.sqlite` and breaking existing clients. The current
-[`t3code.nix`](../../modules/aspects/ai/t3code.nix) has no version assertion,
-so verify package and database compatibility before approving a downgrade.
-
 Cleanup publication must preserve the expected candidate tree and branch
 ownership. Never overwrite modified reviewer branches or proceed on missing
 evidence. GitHub Actions validates the exact SHA and merges only after required
