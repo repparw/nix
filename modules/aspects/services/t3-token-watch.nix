@@ -112,7 +112,7 @@ in
               critical) header="🔴 T3 MCP token expires in under 2 days" ;;
               warn) header="🟡 T3 MCP token expires within 7 days" ;;
             esac
-            renew="Renew: on alpha, issue a fresh \`mcp-client\` session (orchestration:read + orchestration:operate, 365d), update \`T3_MCP_TOKEN\` in the SOPS \`hermes-llm-env\` value, deploy epsilon, verify Hermes MCP, then revoke the old session."
+            renew="Renew: on each relay host (alpha, epsilon, pi) issue a fresh \`mcp-client\` session labeled \`hermes-t3-mcp\` with the full scope set and a 365d TTL, update the matching \`T3_*_MCP_TOKEN\` in the SOPS \`hermes-llm-env\` value, deploy epsilon, verify Hermes MCP against that relay, then revoke the old session."
             discord-notify post "$(printf '%s\n%s\n%s' "$header" "$detail" "$renew")" >/dev/null
             printf '%s\n' "$band" > "$state_file"
             if [ "$band" = overlap ] || [ "$band" = unverified ]; then

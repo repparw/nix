@@ -31,17 +31,33 @@ not complete the operation.
 
 ## Hermes T3 MCP token rotation
 
-The `hermes-t3-mcp` bearer session on alpha is issued for 365 days and
-loaded into Hermes on epsilon from `hermes-llm-env`. Its read and operate
-scopes allow it to direct T3 threads, so revoke it immediately if compromised.
+Hermes connects to three T3 MCP relays, and each relay validates the bearer
+token against its own host's local auth store, so a token issued on one host is
+rejected by the others. The `hermes-llm-env` SOPS value carries one
+`mcp-client` session per relay, each labeled `hermes-t3-mcp` and issued for 365
+days with the full scope set (`orchestration:read/operate`, `settings:write`,
+`providers:manage`, `environment:maintain`, `preview:operate`,
+`diagnostics:read`, `terminal:read/operate`, `source-control:write`,
+`filesystem:read/write`, `relay:read/write`, `access:read/write`).
 
-1. Issue a new `mcp-client` session on alpha with the same label, scopes
-   (`orchestration:read` and `orchestration:operate`), and a 365-day TTL.
-2. Replace only `T3_MCP_TOKEN` in the SOPS `hermes-llm-env` value and
-   deploy epsilon. The secret has a `container@hermes.service` restart trigger.
-3. Verify an actual Hermes-initiated T3 MCP tool call on epsilon using the
-   newly deployed configuration. Issuing the session or checking it from alpha
-   does **not** prove that Hermes loaded the new credential.
+| Env var                | Relay host |
+| ---------------------- | ---------- |
+| `T3_MCP_TOKEN`         | alpha      |
+| `T3_EPSILON_MCP_TOKEN` | epsilon    |
+| `T3_PI_MCP_TOKEN`      | pi         |
+
+The full scopes let Hermes direct T3 threads and manage the relays it uses, so
+revoke a compromised token immediately.
+
+1. On each relay host, issue a new `mcp-client` session with the label
+   `hermes-t3-mcp`, the full scope set, and a 365-day TTL.
+2. Replace the matching `T3_*_MCP_TOKEN` line in the SOPS `hermes-llm-env`
+   value and deploy epsilon. The secret has a `container@hermes.service` restart
+   trigger, and activation rewrites `.env` from this value.
+3. Verify an actual Hermes-initiated T3 MCP tool call on epsilon against each
+   relay using the newly deployed configuration. Issuing the session or
+   checking it from the issuing host does **not** prove that Hermes loaded the
+   new credential.
 4. On alpha, identify the **new** session ID from `t3 auth session list --json`
    (check its `issuedAt` and `expiresAt`). After step 3 succeeds, acknowledge
    this specific ID in the watcher's state directory:
@@ -54,17 +70,18 @@ scopes allow it to direct T3 threads, so revoke it immediately if compromised.
    The session ID is metadata, **not** the bearer token. Never store the bearer
    token in this file.
 
-5. Revoke the old session on alpha, then confirm `t3 auth session list --json`
-   reports exactly one active session with label `hermes-t3-mcp`. Run
-   `sudo systemctl start t3-token-watch` and check that its
-   `/var/lib/t3-token-watch/last-band` state is `ok`.
+5. Revoke the old sessions on each host, then confirm
+   `t3 auth session list --json` reports exactly one active session with label
+   `hermes-t3-mcp` per host. Run `sudo systemctl start t3-token-watch` and
+   check that its `/var/lib/t3-token-watch/last-band` state is `ok`.
 
-Alpha's daily `t3-token-watch` cannot inspect the credential loaded by
-Hermes on epsilon. It reports overlapping sessions and replacement session
-IDs lacking the post-deployment acknowledgment, with weekly reminders until
-resolved. The watcher only tracks expiry when one labeled session remains and
-its ID matches the acknowledged one. A healthy expiry report does **not**
-replace the MCP probe in step 3.
+Alpha's daily `t3-token-watch` can only inspect alpha's auth store. It tracks
+the alpha token's expiry and reports overlapping sessions and replacement
+session IDs lacking the post-deployment acknowledgment, with weekly reminders
+until resolved. The watcher only tracks expiry when one labeled session remains
+on alpha and its ID matches the acknowledged one. A healthy expiry report does
+**not** replace the MCP probe in step 3 and says nothing about the epsilon or pi
+tokens.
 
 ## Account password and Authelia user provisioning
 
