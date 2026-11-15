@@ -45,8 +45,11 @@ modules.grafana-alert-triage = {
 };
 ```
 
-The SOPS secret itself must be declared separately with runtime-only delivery.
-The listener uses systemd LoadCredential to read it and runs as Epsilon's
+Declare the SOPS secret separately with runtime-only delivery and
+`restartUnits = [ "grafana-alert-triage.service" ];`, so a token rotation
+restarts the receiver and refreshes its systemd credential. A missing or
+unreadable credential must leave the receiver unavailable, not unauthenticated.
+The listener uses systemd LoadCredential and runs as Epsilon's
 user-namespace-mapped Hermes UID (328025), not root.
 
 After deploying Epsilon, configure the Grafana Cloud contact point, enroll
