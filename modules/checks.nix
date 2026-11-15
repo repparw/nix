@@ -96,6 +96,41 @@
                 touch $out
               '';
 
+          antigravity-cli-runtime = import ./_tests/antigravity-cli-runtime.nix { inherit pkgs; };
+
+          t3code-provider-state = import ./_tests/t3code-provider-state.nix { inherit pkgs; };
+
+          t3code-providers =
+            let
+              expectedProviders = [
+                "antigravity"
+                "antigravity_2"
+                "codex"
+                "codex_2"
+                "opencode"
+              ];
+              records = map (
+                host:
+                let
+                  instances =
+                    inputs.self.nixosConfigurations.${host}.config.home-manager.users.repparw.programs.t3code.userSettings.providerInstances;
+                in
+                {
+                  inherit host;
+                  providers = lib.attrNames instances;
+                  antigravityBinary = builtins.unsafeDiscardStringContext instances.antigravity.config.binaryPath;
+                  antigravity2Binary = builtins.unsafeDiscardStringContext instances.antigravity_2.config.binaryPath;
+                }
+              ) (lib.attrNames inputs.self.nixosConfigurations);
+            in
+            assert lib.all (
+              record:
+              record.providers == expectedProviders
+              && record.antigravityBinary == record.antigravity2Binary
+              && lib.hasSuffix "-antigravity-cli-runtime-1.5.9/bin/agy" record.antigravityBinary
+            ) records;
+            pkgs.writeText "t3code-providers.json" (builtins.toJSON records);
+
           btrfs-health =
             let
               script = pkgs.writeText "btrfs-health-root.sh" inputs.self.nixosConfigurations.alpha.config.systemd.services.btrfs-health-root.script;
