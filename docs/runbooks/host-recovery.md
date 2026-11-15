@@ -30,7 +30,7 @@ files under `/etc`, `/root`, the whole user home, container roots, NixOS UID
 allocation, timer stamps, legacy recovery artifacts, and Traefik state.
 Host-specific additions cover bound application state and controller state.
 Alpha keeps its separate, narrower policy with prepared application backups.
-Alpha's home-state staging also carries the fleet's OpenTofu state; see
+Alpha's home-state staging also carries the fleet's OpenTofu state. See
 [Restore the OpenTofu state](#restore-the-opentofu-state).
 
 Daily jobs use `--one-file-system`. Restic compares device IDs: it traverses
@@ -52,8 +52,8 @@ The [scheduled offsite operation](fleet-operations.md) refreshes its registered
 native producers before upload. Start `restic-backups-offsite.service` to run
 that same path manually.
 Other live pi and epsilon filesystem copies do not stop databases. Old
-`application-state.tar` checkpoints, when present, describe their capture time;
-this change does not refresh them. See [Restore service backups](restore-service-backups.md).
+`application-state.tar` checkpoints, when present, describe their capture time.
+This change does not refresh them. See [Restore service backups](restore-service-backups.md).
 Before repartitioning or discarding state beyond daily scope, make and verify
 an independent checkpoint of that state and preserve the boot layout.
 
@@ -61,9 +61,9 @@ an independent checkpoint of that state and preserve the boot layout.
 
 The fleet's OCI cloud resources are managed by OpenTofu from `infra/` in this
 repository. The authoritative local state lives on alpha at
-`~repparw/Projects/nix/infra/terraform.tfstate` (mode 0600); the compartment
+`~repparw/Projects/nix/infra/terraform.tfstate` (mode 0600). The compartment
 OCID it needs at plan time sits next to it in `terraform.tfvars`. The state is
-a live pointer to Oracle Cloud resources — treat it as more valuable than the
+a live pointer to Oracle Cloud resources. Treat it as more valuable than the
 repository: re-cloning Git recovers the configuration, while losing the state
 loses drift history and the imported-resource identities.
 
@@ -76,7 +76,7 @@ Coverage:
 - `terraform.tfstate.backup` (OpenTofu's automatic pre-change copy) is
   deliberately not staged: restic snapshots already provide generation
   history.
-- State, tfvars, and provider caches are gitignored — never commit or
+- State, tfvars, and provider caches are gitignored. Never commit or
   SOPS-encrypt state files into the repository. Even with no credentials in
   the currently managed resources, state files can contain sensitive data
   (resource metadata, addresses, secrets passed via tooling) and grow into it
@@ -99,14 +99,14 @@ sha256sum "$restored" ~/Projects/nix/infra/terraform.tfstate
 ```
 
 Historical HDD copies may remain at
-`/mnt/hdd/backup/Projects/nix/infra/terraform.tfstate`; the HDD backup jobs
+`/mnt/hdd/backup/Projects/nix/infra/terraform.tfstate`. The HDD backup jobs
 are retired. Validate any historical copy with `tofu state list -state=...`
 and check its age before using it.
 
 Prefer a restored snapshot over re-importing: the snapshot preserves the
 exact serial and resource identities the fleet last applied. Re-running the
 import mappings in `infra/imports.tf` is the fallback when no snapshot is
-available — it re-derives state from the live cloud, but silently adopts any
+available. It re-derives state from the live cloud, but silently adopts any
 out-of-band drift as the new baseline.
 
 After any `tofu apply`, import, state migration, or manual state repair on
@@ -121,7 +121,7 @@ Run this manually rather than from a hook: a failed backup must never fail or
 retry an otherwise successful infrastructure change. The staging script
 refuses to publish a generation while OpenTofu holds the state lock, and
 after the first successful backup it refuses to publish a generation at all
-if the state file has disappeared — the failed unit is retained by fleet
+if the state file has disappeared. The failed unit is retained by fleet
 health until repaired, so a deleted state cannot silently drop out of
 coverage.
 
@@ -173,9 +173,9 @@ to a running host. Recreate swap rather than restoring its contents.
 
 The personal Age recipient in `.sops.yaml` matches the Age conversion of
 alpha's user SSH public key, `~/.ssh/id_ed25519.pub`. Its corresponding private
-SSH key can recreate the Age identity; a separate Age key file is unnecessary.
+SSH key can recreate the Age identity. A separate Age key file is unnecessary.
 The owner reports three SSH keys stored in Bitwarden. Confirm the matching
-entry by testing a copy retrieved from the vault; possession of the key on
+entry by testing a copy retrieved from the vault. Possession of the key on
 alpha alone does not verify the off-fleet backup.
 
 Locate that identity in a password manager or offline storage. Compare its

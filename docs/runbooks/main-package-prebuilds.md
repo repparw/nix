@@ -39,9 +39,16 @@ no cache signing identity or fleet trust setting changes.
 Use the workflow's manual dispatch with the selected ref and its exact commit:
 
 ```sh
-branch=main # replace with the reviewed ref
-expected_sha=$(git rev-parse "$branch") # verify this is the reviewed commit
-gh workflow run main-packages.yml --ref "$branch" -f "expected_sha=$expected_sha"
+(
+  branch=main # replace with the ref selected during review
+  expected_sha='PASTE_REVIEWED_COMMIT_SHA' # do not calculate this from the branch
+  actual_sha=$(git ls-remote --heads origin "$branch" | cut -f1)
+  if [ -z "$actual_sha" ] || [ "$actual_sha" != "$expected_sha" ]; then
+    printf 'Ref %s moved since review or cannot be resolved\n' "$branch" >&2
+    exit 1
+  fi
+  gh workflow run main-packages.yml --ref "$branch" -f "expected_sha=$expected_sha"
+)
 ```
 
 GitHub requires the workflow to exist on the default branch before manual

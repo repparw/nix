@@ -48,8 +48,8 @@ If evaluation fails, read the error, the source diff, and the aspect
 composition before you touch inputs or the lockfile. Never update `flake.lock`
 as a side effect of verification.
 
-Prefer evaluation and targeted generated outputs. Build a single package or Home
-Manager activation output only when you must inspect its contents. Build a full
+Prefer evaluation and targeted generated outputs. Build a single package or a
+single generated Home Manager file only when you must inspect its contents. Build a full
 system closure only as a last resort, when activation is imminent and CI cannot
 give the proof you need. Keep to the host-wide Nix `max-jobs` and `cores`
 limits, and do not override them.

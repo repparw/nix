@@ -13,7 +13,7 @@ Service backup exports are gathered under `modules.services.backupDir`, which
 defaults to `/home/containers/backup`. Most service backup paths are read-only
 bind mounts from `/home/containers/config`.
 
-Stop, restore, and restart operations change live state. Obtain explicit
+Stop, restore, and restart operations change live state. Get explicit
 authorization for the selected service before proceeding.
 
 1. Find the backup source and stop the affected service:

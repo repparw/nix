@@ -14,7 +14,7 @@ fleet and runs runtime readiness probes for host-owned watchers.
 - `upstream-watch.yml` runs detection.
 - `lock-update.yml` publishes lock updates and runs the atomic planner.
 
-Before you add, change, or retire a watcher, consult the
+Before you add, change, or retire a watcher, read
 [current watcher overview](../../../.github/upstream/README.md), the relevant
 entry in `watchers.json`, and its detector and validation code. The registry
 and implementation own the details of each watcher's gates.
@@ -53,9 +53,9 @@ what you verified and what remains untested.
 
 Add the watcher's input and lifecycle mode to `watchers.json`, and add its
 readiness detector. Keep the reason for the workaround in its source file.
-Update the migration contract only when the publication policy, safety limits,
-or completion procedures change. Do not update it when you add or remove a
-routine watcher.
+Update the watcher overview only when the publication policy, safety rules, or
+completion procedures change. Do not update it when you add or remove a routine
+watcher.
 
 Do not open a tracker issue for each watcher. Ready notices go to the run
 summary. When the status changes, they also go once to the fleet Discord
@@ -90,9 +90,9 @@ stubs.
 
 Dispatch CI on the exact SHA, because pushes made with the bot token do not
 start workflows. Judge completion on the current `main`, never on a mutable
-checkout. Follow the migration contract's merge policy, which covers exact-SHA
-validation, branch ownership, strict base freshness, and fail-closed approval
-checks.
+checkout. Follow the safety rules in the watcher overview. They cover exact-SHA
+validation, branch ownership, and merging only when required checks pass on a
+branch current with `main`.
 
 Retire a host-owned watcher only after its runtime completion condition is
 proven. Run the affected watcher fixtures listed in the overview. For runtime

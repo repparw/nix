@@ -23,7 +23,7 @@ expected value. This is cheaper than building an activation package:
 nix eval --json --no-update-lock-file '.#nixosConfigurations.alpha.config.home-manager.users.repparw.programs.opencode.settings.permission' | jq -e '."browse_*"."*" == "ask"'
 ```
 
-These examples **fail** if the expected hostname or permission is absent.
+These examples fail if the expected hostname or permission is absent.
 Replace the host, option, and expected value with the specific behavior the
 change is meant to produce. A command that only prints a value is not a
 regression test.

@@ -41,14 +41,14 @@ so a Cloud outage cannot prevent fleet recovery. Never print credential files.
 cadence and metric/log filters. [Host collection](../../modules/aspects/monitoring-health.nix)
 adds retained failures, completed backup timestamps, export status, and disk facts.
 
-- Sleeping media retain their last mounted observation and timestamp; monitoring
+- Sleeping media retain their last mounted observation and timestamp. Monitoring
   does not wake them. Btrfs unallocated chunks are distinct from total free space.
 - Journal redaction recognizes credential patterns, not arbitrary private text.
   Container journals need separate collection.
 - Persisted Alloy state does not guarantee replay: unsent logs can be lost when
   Alloy restarts during an outage ([Alloy #7112](https://github.com/grafana/alloy/issues/7112)).
 - Verify actual active-series usage in `grafanacloud-usage` after changing labels
-  or targets; the application datasource's instantaneous series count differs.
+  or targets. The application datasource's instantaneous series count differs.
 
 ### Cloud log allowance
 

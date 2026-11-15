@@ -22,7 +22,7 @@ backup scope.
 
 When a session expires or a captcha appears, use SSH port forwarding to reach
 the claimer's temporary VNC server, which listens only on loopback. Starting
-the service changes live state, so obtain authorization first. Run these in
+the service changes live state, so get authorization first. Run these in
 separate terminals:
 
 ```sh

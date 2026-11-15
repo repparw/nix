@@ -9,7 +9,7 @@ checks. Do not copy their details into this document.
 
 - [upstream-watch.yml](../workflows/upstream-watch.yml) checks the `main` pins
   when `flake.lock` changes on `main`, after successful lock-update runs, and
-  on manual dispatch. It no longer uses periodic polling.
+  on manual dispatch. It does not poll on a schedule.
   [upstream-readiness.py](../scripts/upstream-readiness.py) only detects status.
 - `post-lock` watchers retire one self-contained workaround file,
   `modules/aspects/upstream/<watcher>.nix`, either through an independent
@@ -21,7 +21,7 @@ checks. Do not copy their details into this document.
   a working deployment.
 - [lock-update.yml](../workflows/lock-update.yml) owns input changes.
   [upstream-plan.py](../scripts/upstream-plan.py) checks `coupling: apply`
-  watchers **before** publishing a candidate lock. An upstream fix or
+  watchers before publishing a candidate lock. An upstream fix or
   incompatible package change must be handled in the same candidate as the
   workaround removal, or the update is blocked.
 - Pi owns runtime readiness and completion for host-specific watchers through
@@ -34,6 +34,11 @@ Readiness requires evidence from the exact selected source or commit ancestry;
 version strings and release notes alone are not enough. A notify-only discovery
 candidate, such as an FSR4/RDNA2 release, still needs real hardware and runtime
 verification before it can be treated as supported.
+
+For T3 Code, a pin regression below version 0.1.5 risks downgrading
+`statev2.sqlite` and breaking existing clients. The current
+[`t3code.nix`](../../modules/aspects/ai/t3code.nix) has no version assertion,
+so verify package and database compatibility before approving a downgrade.
 
 Cleanup publication must preserve the expected candidate tree and branch
 ownership. Never overwrite modified reviewer branches or proceed on missing

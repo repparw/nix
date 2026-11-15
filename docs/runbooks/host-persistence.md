@@ -25,18 +25,18 @@ persistence. The inventory and mount ordering live in
   binds cannot accommodate atomic PAM/NixOS replacements
   ([Impermanence #120](https://github.com/nix-community/impermanence/issues/120)).
 - SOPS reads `/persist/etc/ssh/ssh_host_ed25519_key` during early boot. Preserve
-  that key; a replacement cannot decrypt secrets encrypted to the old identity.
+  that key. A replacement cannot decrypt secrets encrypted to the old identity.
   `/var/lib/nixos` must be available before allocating users.
 - Pi requires its existing home NVMe in the initrd. Missing storage must stop
   boot rather than expose empty Home Assistant or user directories.
 - Preserve full `/boot`, not just firmware or EFI partitions. Epsilon's GRUB
   uses the backing boot path and copied kernels for its persistent store layout.
-- Epsilon retains `/var/lib/credential-remediation`; persisted service drop-ins
+- Epsilon retains `/var/lib/credential-remediation`. Persisted service drop-ins
   depend on its helpers. Review that dependency before removing the directory.
 
 Container roots, whole homes, and legacy archives beneath `/persist` remain
 conservative preservation choices. They are not automatically disposable.
-Persistence and offsite backup scope are separate; `/persist` itself is not a
+Persistence and offsite backup scope are separate. `/persist` itself is not a
 blanket backup root.
 
 ## Prepare a storage change
@@ -56,8 +56,8 @@ blanket backup root.
    verify service recovery before trialling another host.
 
 For Alpha, first separate desktop and service state from the root subvolume.
-Its `/home`, `/nix`, and application data currently share root subvolume `@`;
-root rollback would encompass that data. An unmounted `@home` is not proof of
+Its `/home`, `/nix`, and application data currently share root subvolume `@`.
+Root rollback would encompass that data. An unmounted `@home` is not proof of
 separation, and Prowlarr keeps live state in its container root.
 
 ## Verify changes
@@ -71,7 +71,7 @@ The [evaluation checks](../../modules/_tests/host-persistence.nix) cover invento
 account consent, mount ordering, and backup coverage. The
 [VM test](../../modules/_tests/host-persistence-vm.nix) exercises passwords,
 identity, SOPS, application state, incomplete exports, isolated restores, and
-failed-boot recovery. It uses disposable x86 credentials and storage; real ARM
+failed-boot recovery. It uses disposable x86 credentials and storage. Real ARM
 firmware, production services, device attachment, and interactive logins still
 need their own validation. Use the [verification skill](../../.agents/skills/verify-fleet-change/SKILL.md)
 for builds and the [fleet skill](../../.agents/skills/fleet-operations/SKILL.md)

@@ -12,7 +12,7 @@ option value, not necessarily the serialized file. Home Manager
 may add defaults, merge other options, or transform values when writing the file.
 For example, OpenCode can merge MCP servers and add a JSON schema.
 
-If the claim concerns the **exact generated contents**, build only the target
+If the claim concerns the exact generated contents, build only the target
 file's `source` and assert properties of the resulting JSON:
 
 ```sh
@@ -29,5 +29,5 @@ has an inline `text` option instead of a generated `source`, query its effective
 
 This builds far less than the full Home Manager activation output. It still does
 not prove that Home Manager activated the file at its target path, or that the
-application loaded it. For ownership, activation, and runtime behavior, check
-the appropriate evidence separately.
+application loaded it. Check ownership and activation on the host after an authorized activation,
+and check runtime behavior in the application.

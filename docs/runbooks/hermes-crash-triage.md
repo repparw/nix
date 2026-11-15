@@ -16,10 +16,9 @@ over the existing fleet SSH identity. If delivery fails, the event stays in the
 outbox. A matching durable receipt removes it.
 
 Hermes reads the private inbox at `/var/lib/hermes/.hermes/crash/inbox`. The
-native gate counts occurrences and selects new fingerprints for investigation.
-Fingerprints combine executable/build, signal, and stack information. The gate
-treats previously unseen fingerprints as new; repeated occurrences do not wake
-the model. When research or delivery fails, the investigation stays pending
+native gate counts occurrences. A fingerprint combines the executable and
+build, the signal, and the stack. The gate selects only fingerprints it has not
+seen before for investigation. Repeated occurrences do not wake the model. When research or delivery fails, the investigation stays pending
 with a retry delay. Successful research means the crash was investigated, not
 repaired.
 
