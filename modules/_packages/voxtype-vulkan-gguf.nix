@@ -118,8 +118,8 @@ rustPlatform.buildRustPackage (finalAttrs: {
     # Propagate glslc failures rather than hiding them until the final linker step.
     substituteInPlace "$shaderGen" \
       --replace-fail \
-      'std::cerr << "\\n\\n" << stderr_str << std::endl;' \
-      'std::cerr << "\\n\\n" << stderr_str << std::endl; throw std::runtime_error("Vulkan shader compilation failed: " + name);'
+      'std::cerr << "\n\n" << stderr_str << std::endl;' \
+      'std::cerr << "\n\n" << stderr_str << std::endl; throw std::runtime_error("Vulkan shader compilation failed: " + name);'
     substituteInPlace "$shaderGen" \
       --replace-fail \
       'std::cerr << "Error executing command for " << name << ": " << e.what() << std::endl;' \
