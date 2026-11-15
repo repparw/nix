@@ -89,7 +89,6 @@
           '';
         };
 
-        # scrcpy wraps adb on PATH; use the same mDNS-capable binary everywhere.
         platformTools = pkgs.androidenv.androidPkgs.platform-tools;
         scrcpyWithPlatformTools = pkgs.scrcpy.override {
           android-tools = platformTools;
@@ -103,13 +102,10 @@
           platformTools
         ];
 
-        # Keep one adb server alive so mDNS can discover the phone when awake
-        # and retain its connection while Android is dozing.
         systemd.user.services.adb-server = {
           Unit.Description = "ADB server with wireless debugging discovery";
           Service = {
             Type = "simple";
-            # Replace any server left running by the previous adb package.
             ExecStartPre = "-${platformTools}/bin/adb kill-server";
             ExecStart = "${platformTools}/bin/adb server nodaemon";
             Restart = "always";
