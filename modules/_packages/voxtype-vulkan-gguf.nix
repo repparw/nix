@@ -115,6 +115,15 @@ rustPlatform.buildRustPackage (finalAttrs: {
       '            if (data.empty()) {
                     throw std::runtime_error("Missing compiled Vulkan shader: " + name + " (" + path + ")");
                 }'
+    # Propagate glslc failures rather than hiding them until the final linker step.
+    substituteInPlace "$shaderGen" \
+      --replace-fail \
+      'std::cerr << "\\n\\n" << stderr_str << std::endl;' \
+      'std::cerr << "\\n\\n" << stderr_str << std::endl; throw std::runtime_error("Vulkan shader compilation failed: " + name);'
+    substituteInPlace "$shaderGen" \
+      --replace-fail \
+      'std::cerr << "Error executing command for " << name << ": " << e.what() << std::endl;' \
+      'std::cerr << "Error executing command for " << name << ": " << e.what() << std::endl; throw;'
   '';
 
   preBuild = ''
