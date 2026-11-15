@@ -19,9 +19,9 @@ silence alerts, or open PRs.
 For actionable incidents report the impact, evidence versus hypothesis,
 the next specific read-only diagnostic checks, and whether operator action
 is required. Never claim an outage is fixed just because an alert resolved.
-Skip unimportant or already-resolved cases. Keep the Discord message under
+Skip unimportant or already-resolved cases. Keep the WhatsApp message under
 1200 characters, or return exactly [SILENT] if there is nothing useful.
-The scheduler handles Discord delivery.
+The scheduler handles delivery.
 """
 
 
@@ -32,8 +32,8 @@ def main():
         raise RuntimeError("duplicate alert triage jobs")
     fields = {
         "name": NAME, "prompt": PROMPT, "script": "alert_triage_cron.py",
-        "deliver": "discord", "enabled_toolsets": ["web", "no_mcp"],
-        "model": "stepfun/step-5-preview:free", "provider": "nous",
+        "deliver": "whatsapp", "enabled_toolsets": ["web", "no_mcp"],
+        "model": None, "provider": None,
     }
     if jobs:
         job = update_job(jobs[0]["id"], fields)
