@@ -89,45 +89,33 @@
           '';
         };
 
-        phoneConnect = pkgs.writeShellApplication {
-          name = "phone-connect";
-          runtimeInputs = with pkgs; [
-            android-tools
-            python3
-          ];
-          text = ''
-            exec python3 ${./phone-connect.py} "$@"
-          '';
+        # scrcpy wraps adb on PATH; use the same mDNS-capable binary everywhere.
+        platformTools = pkgs.androidenv.androidPkgs.platform-tools;
+        scrcpyWithPlatformTools = pkgs.scrcpy.override {
+          android-tools = platformTools;
         };
       in
       {
         home.packages = [
           kdeconnect
-          phoneConnect
           sendClipboard
-          pkgs.scrcpy
-          pkgs.android-tools
+          scrcpyWithPlatformTools
+          platformTools
         ];
 
-        systemd.user.services.adb-phone-connect = {
-          Unit = {
-            Description = "Reconnect adb to the phone";
-          };
+        # Keep one adb server alive so mDNS can discover the phone when awake
+        # and retain its connection while Android is dozing.
+        systemd.user.services.adb-server = {
+          Unit.Description = "ADB server with wireless debugging discovery";
           Service = {
-            Type = "oneshot";
-            ExecStart = "${phoneConnect}/bin/phone-connect --quiet";
+            Type = "simple";
+            # Replace any server left running by the previous adb package.
+            ExecStartPre = "-${platformTools}/bin/adb kill-server";
+            ExecStart = "${platformTools}/bin/adb server nodaemon";
+            Restart = "always";
+            RestartSec = 2;
           };
-        };
-
-        systemd.user.timers.adb-phone-connect = {
-          Unit = {
-            Description = "Periodically reconnect adb to the phone";
-          };
-          Timer = {
-            OnStartupSec = "2min";
-            OnUnitActiveSec = "1h";
-          };
-          Install.WantedBy = [ "timers.target" ];
+          Install.WantedBy = [ "default.target" ];
         };
 
         systemd.user.services.kdeconnect = {

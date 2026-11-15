@@ -225,7 +225,7 @@
               "Mod+S" = titledSpawn "Scrcpy" [
                 "sh"
                 "-c"
-                "SDL_RENDER_DRIVER=opengl scrcpy -s $(phone-connect) -S"
+                "SDL_RENDER_DRIVER=opengl scrcpy --select-tcpip -S"
               ];
               "Mod+T" = titledSpawn "Top" [
                 "xdg-terminal-exec"
