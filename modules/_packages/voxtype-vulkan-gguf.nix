@@ -119,10 +119,9 @@ root = Path(sys.argv[1])
 relative = "whisper.cpp/ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
 manifest = root / ".cargo-checksum.json"
 checksums = json.loads(manifest.read_text())
-if relative not in checksums["files"]:
-    raise SystemExit(f"Missing Cargo checksum for {relative}")
-checksums["files"][relative] = hashlib.sha256((root / relative).read_bytes()).hexdigest()
-manifest.write_text(json.dumps(checksums, separators=(",", ":")))
+if relative in checksums.get("files", {}):
+    checksums["files"][relative] = hashlib.sha256((root / relative).read_bytes()).hexdigest()
+    manifest.write_text(json.dumps(checksums, separators=(",", ":")))
 PY
   '';
 
