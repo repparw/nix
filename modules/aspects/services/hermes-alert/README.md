@@ -16,9 +16,11 @@ alerts or change deployment/rollback behavior.
    `https://repparw.com/hooks/grafana`, method POST, authorization header
    scheme `Bearer`, and a separate 32+-character random token in
    **Authentication Header Credentials** (not the URL). This must match the
-   Epsilon `modules.grafana-alert-triage.tokenFile` secret. Alternatively,
-   use a separate contact point only after proving that a matching child
-   notification policy will not bypass the existing Discord route.
+   Epsilon `modules.grafana-alert-triage.tokenFile` secret. Leave **Disable
+   resolved message** off for this webhook integration, since resolved events
+   cancel pending investigations. Alternatively, use a separate contact point
+   only after proving that a matching child notification policy will not bypass
+   the existing Discord route.
 3. The receiver accepts only firing/resolved alert instances with known fleet
    `host` labels. It queues only explicitly opted-in
    `agent_triage="true"` (or `"1"`) alerts, or
