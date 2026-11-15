@@ -195,4 +195,3 @@ pi/epsilon/alpha does not establish independent recovery.
 - [Change host persistence](host-persistence.md)
 - [Fleet operations](fleet-operations.md)
 - [Restore service backups](restore-service-backups.md)
-- [Secret inventory](../architecture/secret-inventory.md)

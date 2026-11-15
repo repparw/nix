@@ -74,7 +74,7 @@ in
               days=$((remaining / 86400))
               if [ "$session_id" != "$verified_id" ]; then
                 band=unverified
-                detail="The sole T3 MCP session labeled \`${sessionLabel}\` has not been verified against Hermes on epsilon (expires $expiry, $days day(s) remaining). Run a real Hermes-initiated MCP request, then acknowledge the session ID on alpha as documented in the secret inventory. Do not assume the token currently used by Hermes is valid."
+                detail="The sole T3 MCP session labeled \`${sessionLabel}\` has not been verified against Hermes on epsilon (expires $expiry, $days day(s) remaining). Run a real Hermes-initiated MCP request, then write the session ID into `/var/lib/t3-token-watch/verified-session-id` on alpha. Do not assume the token currently used by Hermes is valid."
               elif (( remaining <= 0 )); then
                 band=expired
               elif (( days < 2 )); then

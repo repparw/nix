@@ -24,7 +24,7 @@ command, write down four things.
   check.
 
 Pick the narrowest useful observation from the
-[validation examples](examples.md). For a shared aspect or default,
+[verification routes](features/README.md). For a shared aspect or default,
 check every affected host, not only the machine you are working on. Get the host
 list from the flake instead of copying one from somewhere else.
 
