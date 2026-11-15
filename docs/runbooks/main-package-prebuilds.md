@@ -34,18 +34,6 @@ existing cache-scoped Actions token. It skips outputs that have `.sops.yml` or
 upload error fails publication. The build step does not receive the token, and
 no cache signing identity or fleet trust setting changes.
 
-## Bounded integration smoke test
-
-A separate PR workflow, `package-prebuild-smoke`, runs when the implementation
-changes. It builds a revision-specific tiny derivation on native x86 and ARM
-runners. It exercises `nix-fast-build --skip-cached`, actual local closure
-inspection, JSON parsing, and publisher path selection. A fake Cachix command
-records the publish arguments, and the PR job does not receive a publishing
-token.
-
-The regular main workflow does the real Cachix publication. Its first run after
-merge validates that part separately from the PR smoke test.
-
 ## Run a reviewed revision
 
 Use the workflow's manual dispatch with the selected ref and its exact commit:

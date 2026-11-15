@@ -8,7 +8,8 @@ checks. Do not copy their details into this document.
 ## Ownership
 
 - [upstream-watch.yml](../workflows/upstream-watch.yml) checks the `main` pins
-  every two hours, after successful lock updates, and on manual dispatch.
+  when `flake.lock` changes on `main`, after successful lock-update runs, and
+  on manual dispatch. It no longer uses periodic polling.
   [upstream-readiness.py](../scripts/upstream-readiness.py) only detects status.
 - `post-lock` watchers retire one self-contained workaround file,
   `modules/aspects/upstream/<watcher>.nix`, either through an independent
