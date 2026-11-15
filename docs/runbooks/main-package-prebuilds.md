@@ -9,58 +9,62 @@ tags: [ci, nix, cachix, builds]
 
 # Main package prebuilds
 
-The `main-packages` workflow runs on main pushes that change modules, flake
+The `main-packages` workflow runs on pushes to main that change modules, flake
 inputs, or the workflow and publishing script. A native x86 runner handles
-Alpha; a native ARM runner handles Pi and Epsilon together. Runs are serialized
-per ref so later revisions can reuse earlier uploads. This workflow is separate
-from the required validation gate and does not deploy hosts.
+Alpha, and a native ARM runner handles Pi and Epsilon together. Runs are
+serialized per ref, so later revisions can reuse earlier uploads. This workflow
+is separate from the required validation gate, and it does not deploy hosts.
 
-`ciPackages.<system>` selects installed system and Home Manager packages,
-enabled services with visible top-level `enable` and `package` options, and
-the corresponding packages in declarative containers. It does not enumerate
-arbitrary package references embedded in service command strings or nested
+`ciPackages.<system>` selects the installed system and Home Manager packages,
+the enabled services that have visible top-level `enable` and `package`
+options, and the matching packages in declarative containers. It does not
+enumerate arbitrary package references inside service command strings or nested
 service instance options. It excludes system toplevels and activation
-assemblies. This is package prebuilding, not validation of a full system closure.
+assemblies. This prebuilds packages. It does not validate a full system closure.
 
 The flake's pinned Nixpkgs supplies `nix-fast-build`. Its `--skip-cached` option
 checks substituter metadata and skips cached targets without downloading their
 runtime closures. It also deduplicates repeated derivations. A missing package
-still needs its build inputs; those downloads are unavoidable for that build.
-Final system assembly remains on the hosts.
+still needs its build inputs, and those downloads are unavoidable for that
+build. Final system assembly stays on the hosts.
 
-Successful local package outputs are published synchronously with the existing
-cache-scoped Actions token. Outputs with `.sops.yml` or `.sops.yaml` paths in
-their runtime closure are skipped. A closure inspection error or upload error
-fails publication. The token is not passed to the build step, and no cache
-signing identity or fleet trust settings change.
+The workflow publishes successful local package outputs synchronously, using the
+existing cache-scoped Actions token. It skips outputs that have `.sops.yml` or
+`.sops.yaml` paths in their runtime closure. A closure inspection error or an
+upload error fails publication. The build step does not receive the token, and
+no cache signing identity or fleet trust setting changes.
 
 ## Bounded integration smoke test
 
-A separate PR workflow, `package-prebuild-smoke`, builds a revision-specific
-tiny derivation on native x86 and ARM runners when the implementation changes.
-It exercises `nix-fast-build --skip-cached`, actual local closure inspection,
-JSON parsing, and publisher path selection. A fake Cachix command records the
-publish arguments; the PR job does not receive a publishing token.
+A separate PR workflow, `package-prebuild-smoke`, runs when the implementation
+changes. It builds a revision-specific tiny derivation on native x86 and ARM
+runners. It exercises `nix-fast-build --skip-cached`, actual local closure
+inspection, JSON parsing, and publisher path selection. A fake Cachix command
+records the publish arguments, and the PR job does not receive a publishing
+token.
 
-The regular main workflow is responsible for real Cachix publication. Its
-first post-merge run validates this separately from the PR smoke test.
+The regular main workflow does the real Cachix publication. Its first run after
+merge validates that part separately from the PR smoke test.
 
 ## Run a reviewed revision
 
 Use the workflow's manual dispatch with the selected ref and its exact commit:
 
 ```sh
-gh workflow run main-packages.yml --ref <branch> -f expected_sha=<commit>
+branch=main # replace with the reviewed ref
+expected_sha=$(git rev-parse "$branch") # verify this is the reviewed commit
+gh workflow run main-packages.yml --ref "$branch" -f "expected_sha=$expected_sha"
 ```
 
 GitHub requires the workflow to exist on the default branch before manual
 dispatch is available. The SHA guard rejects a branch that moved since review.
-No PR-triggered native package sweep is added.
+This setup adds no PR-triggered native package sweep.
 
-Inspect the per-architecture job summary and `main-packages-<system>` artifact.
-`packages.json` records evaluation, cache status, and build results;
-`package-outputs` records the local outputs considered for publication.
-An all-cached run should have no build results. For failures, distinguish
-evaluation, missing-package builds, runner disk exhaustion, and upload errors
-before retrying. The jobs have a three-hour limit and use one evaluation worker,
-an 8 GiB evaluation budget, one build job, and two cores per build.
+Inspect the per-architecture job summary and the `main-packages-<system>`
+artifact. `packages.json` records evaluation, cache status, and build results.
+`package-outputs` records the local outputs considered for publication. A run
+where everything is cached should have no build results. For failures, tell
+apart evaluation errors, missing-package builds, runner disk exhaustion, and
+upload errors before you retry. The jobs have a three-hour limit and use one
+evaluation worker, an 8 GiB evaluation budget, one build job, and two cores per
+build.

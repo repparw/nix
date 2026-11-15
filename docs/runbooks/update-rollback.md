@@ -1,13 +1,13 @@
 ---
 type: Runbook
-title: Update Rollback
+title: Update rollback
 description: Recover any fleet node from a bad deploy-rs activation, failed soak, or manual switch.
 when: Read when a node misbehaves after activation, or when the staged fleet updater reports a rollback that needs inspection or recovery.
 resource: modules/deploy.nix
 tags: [runbook, recovery, updates, pi, alpha, epsilon, deploy-rs]
 ---
 
-# Update Rollback
+# Update rollback
 
 Pi's 05:30 consumer requires successful CI for exact current main, then
 prepares every selected host concurrently before activating epsilon, alpha,
@@ -34,7 +34,58 @@ switch), select the known-good generation on the affected node:
 
 ```sh
 nix-env --list-generations --profile /nix/var/nix/profiles/system
-sudo /nix/var/nix/profiles/system-<generation>-link/bin/switch-to-configuration switch
+# After explicit authorization, enter the inspected known-good generation:
+read -r -p 'Known-good generation number: ' generation
+printf '%s' "$generation" | grep -Eq '^[0-9]+
+sudo "/nix/var/nix/profiles/system-${generation}-link/bin/switch-to-configuration" switch
+```
+
+A reboot-old-entry works too: alpha and epsilon use EFI loaders; pi uses
+extlinux via the Pi firmware.
+
+## After a rollback
+
+1. Inspect the per-host failure log, service journal, and retained job
+   records in `/var/lib/fleet-unit-state/`.
+2. Main still records the desired revision. Fix or explicitly revert a bad
+   configuration through a PR and wait for CI on the resulting main commit.
+   On Pi, inspect whether the controller is paused before changing its state:
+
+   ```sh
+   test -e /var/lib/auto-update/PAUSE && echo paused || echo not-paused
+   ```
+
+3. Verify the fix with focused Nix evaluations or existing checks from the
+   [verification skill](../../.agents/skills/verify-fleet-change/SKILL.md)
+   and confirm CI for the **exact** main commit. A full `nix flake check`
+   is not a substitute for checking the behavior that failed.
+
+4. Resuming automation and deploying are separate live operations. They
+   require explicit authorization. After inspecting the failure and resolving
+   the breaker, use the [fleet operations skill](../../.agents/skills/fleet-operations/SKILL.md)
+   on Pi. If authorized, an operator may resume a paused controller with:
+
+   ```sh
+   sudo rm /var/lib/auto-update/PAUSE
+   ```
+
+   An explicitly authorized selected-host deployment runs on Pi:
+
+   ```sh
+   fleet-update deploy --host alpha --wait-lock 7200
+   ```
+
+   Do not use `--dry-activate` as a read-only validation step: it can build
+   outputs and contact the target. The controller transaction is the production
+   deployment path.
+
+## Related
+
+- [Fleet operations](fleet-operations.md)
+- [Troubleshooting](../troubleshooting.md)
+ || exit 1
+test -L "/nix/var/nix/profiles/system-${generation}-link" || exit 1
+sudo "/nix/var/nix/profiles/system-${generation}-link/bin/switch-to-configuration" switch
 ```
 
 A reboot-old-entry works too: alpha and epsilon use EFI loaders; pi uses

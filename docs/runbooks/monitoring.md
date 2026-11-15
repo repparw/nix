@@ -80,7 +80,8 @@ journalctl -u alloy --since "1 hour ago" --no-pager | grep -i "error tailing WAL
 ```
 
 Stop the amplification before touching the log, because every retry costs
-allowance:
+allowance. Stopping Alloy and removing its WAL change live state and require
+explicit authorization:
 
 ```sh
 systemctl stop alloy

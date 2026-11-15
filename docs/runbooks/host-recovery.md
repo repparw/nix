@@ -10,8 +10,9 @@ tags: [runbook, recovery, backups, pi, epsilon, impermanence]
 # Restore host state from offsite backups
 
 Use native Restic to inspect and restore the daily offsite snapshots. The
-manual `host-recovery` command has been retired. Existing snapshots and local
-`/var/lib/host-recovery` artifacts remain intact and covered by daily backups.
+manual `host-recovery` command is retired. Existing snapshots and local
+`/var/lib/host-recovery` artifacts remain intact and stay covered by the daily
+backups.
 
 ## Inspect scope and consistency
 

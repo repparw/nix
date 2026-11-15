@@ -9,7 +9,7 @@ tags: [impermanence, persistence, pi, epsilon, recovery, backups]
 
 # Change host persistence
 
-Pi and Epsilon use tmpfs roots backed by `/persist`; Alpha does not enable
+Pi and Epsilon use tmpfs roots backed by `/persist`. Alpha does not enable
 persistence. The inventory and mount ordering live in
 [persistence.nix](../../modules/aspects/persistence.nix), with additions in
 [pi.nix](../../modules/hosts/pi.nix) and [epsilon.nix](../../modules/hosts/epsilon.nix).
