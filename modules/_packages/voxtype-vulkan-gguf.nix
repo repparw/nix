@@ -94,9 +94,45 @@ rustPlatform.buildRustPackage (finalAttrs: {
     ) "-C target-cpu=x86-64-v3";
   };
 
+  # The vendored shader generator retains a future for every glslc invocation,
+  # even when its concurrency limit is one. Run the compiles synchronously to
+  # avoid exhausting thread/process resources during the large matmul shader set.
+  # A failed glslc invocation otherwise leaves empty generated C++ files, which
+  # only fail at the final link with undefined matmul_*_{data,len} symbols.
+  postPatch = ''
+    shaderGen="$cargoDepsCopy/source-registry-0/whisper-rs-sys-0.15.0/whisper.cpp/ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
+    test -f "$shaderGen"
+    substituteInPlace "$shaderGen" \
+      --replace-fail \
+      '    compiles.push_back(std::async(
+            string_to_spv_func, name, input_filepath, out_path, defines, coopmat, generate_dep_file, std::move(slot)));' \
+      '    string_to_spv_func(name, input_filepath, out_path, defines, coopmat, generate_dep_file, std::move(slot));'
+    substituteInPlace "$shaderGen" \
+      --replace-fail \
+      '            if (data.empty()) {
+                    continue;
+                }' \
+      '            if (data.empty()) {
+                    throw std::runtime_error("Missing compiled Vulkan shader: " + name + " (" + path + ")");
+                }'
+    # Propagate glslc failures rather than hiding them until the final linker step.
+    substituteInPlace "$shaderGen" \
+      --replace-fail \
+      'std::cerr << "\n\n" << stderr_str << std::endl;' \
+      'std::cerr << "\n\n" << stderr_str << std::endl; throw std::runtime_error("Vulkan shader compilation failed: " + name);'
+    substituteInPlace "$shaderGen" \
+      --replace-fail \
+      'std::cerr << "Error executing command for " << name << ": " << e.what() << std::endl;' \
+      'std::cerr << "Error executing command for " << name << ": " << e.what() << std::endl; throw;'
+  '';
+
   preBuild = ''
-    # NOTE: whisper.cpp/transcribe.cpp cmake need some help in the sandbox
-    export CMAKE_BUILD_PARALLEL_LEVEL=$NIX_BUILD_CORES
+    # cargoBuildHook reads NIX_BUILD_CORES after preBuild to set Cargo -j.
+    # cmake-rs propagates that Cargo job count as CMake --parallel, which
+    # overrides CMAKE_BUILD_PARALLEL_LEVEL. Bound both so the Vulkan shader
+    # generator doesn't drop outputs under parallel build pressure.
+    export NIX_BUILD_CORES=1
+    export CMAKE_BUILD_PARALLEL_LEVEL=1
     export VULKAN_SDK="${shaderc.bin}"
     export Vulkan_INCLUDE_DIR="${vulkan-headers}/include"
     export Vulkan_LIBRARY="${vulkan-loader}/lib/libvulkan.so"
@@ -107,7 +143,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # with the matching Vulkan feature. Same target/profile as cargoBuildHook so
   # the shared dependencies are not rebuilt.
   postBuild = ''
-    cargo build --offline \
+    cargo build --offline --jobs 1 \
       --target ${stdenv.hostPlatform.rust.cargoShortTarget} \
       --profile release \
       -p voxtype-gguf-worker --features vulkan
