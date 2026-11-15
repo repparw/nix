@@ -94,18 +94,27 @@ rustPlatform.buildRustPackage (finalAttrs: {
     ) "-C target-cpu=x86-64-v3";
   };
 
-  # The shader generator has its own glslc process pool, independent of
-  # Cargo's and CMake's job limits. On memory-constrained native CI runners,
-  # failed shader compiles can leave declarations without definitions and
-  # only fail at final link with undefined matmul_* symbols.
+  # The vendored shader generator retains a future for every glslc invocation,
+  # even when its concurrency limit is one. Run the compiles synchronously to
+  # avoid exhausting thread/process resources during the large matmul shader set.
+  # A failed glslc invocation otherwise leaves empty generated C++ files, which
+  # only fail at the final link with undefined matmul_*_{data,len} symbols.
   postPatch = ''
-    vendorCrate="$cargoDepsCopy/source-registry-0/whisper-rs-sys-0.15.0"
-    shaderGen="$vendorCrate/whisper.cpp/ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
+    shaderGen="$cargoDepsCopy/source-registry-0/whisper-rs-sys-0.15.0/whisper.cpp/ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
     test -f "$shaderGen"
     substituteInPlace "$shaderGen" \
       --replace-fail \
-      'uint32_t N = std::max(1u, std::min(16u, std::thread::hardware_concurrency()));' \
-      'uint32_t N = 1;'
+      '    compiles.push_back(std::async(
+        string_to_spv_func, name, input_filepath, out_path, defines, coopmat, generate_dep_file, std::move(slot)));' \
+      '    string_to_spv_func(name, input_filepath, out_path, defines, coopmat, generate_dep_file, std::move(slot));'
+    substituteInPlace "$shaderGen" \
+      --replace-fail \
+      '            if (data.empty()) {
+                continue;
+            }' \
+      '            if (data.empty()) {
+                throw std::runtime_error("Missing compiled Vulkan shader: " + name + " (" + path + ")");
+            }'
   '';
 
   preBuild = ''
