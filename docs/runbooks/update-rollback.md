@@ -35,7 +35,8 @@ switch), select the known-good generation on the affected node:
 ```sh
 nix-env --list-generations --profile /nix/var/nix/profiles/system
 # After explicit authorization, enter the inspected known-good generation:
-read -r -p 'Known-good generation number: ' generation
+printf 'Known-good generation number: ' >&2
+IFS= read -r generation
 printf '%s' "$generation" | grep -Eq '^[0-9]+
 sudo "/nix/var/nix/profiles/system-${generation}-link/bin/switch-to-configuration" switch
 ```

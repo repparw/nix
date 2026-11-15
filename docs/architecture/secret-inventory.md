@@ -47,7 +47,8 @@ direct T3 threads, so revoke it immediately if it is compromised.
    specific ID in the watcher's state directory:
 
    ```sh
-   read -r -p "Verified new session ID: " new_session_id
+   printf 'Verified new session ID: ' >&2
+   IFS= read -r new_session_id
    test -n "$new_session_id" || exit 1
    sudo install -d -m 0755 /var/lib/t3-token-watch
    printf '%s\n' "$new_session_id" | sudo tee /var/lib/t3-token-watch/verified-session-id >/dev/null
