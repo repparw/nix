@@ -88,14 +88,47 @@
               --send-clipboard
           '';
         };
+
+        phoneConnect = pkgs.writeShellApplication {
+          name = "phone-connect";
+          runtimeInputs = with pkgs; [
+            android-tools
+            python3
+          ];
+          text = ''
+            exec python3 ${./phone-connect.py} "$@"
+          '';
+        };
       in
       {
         home.packages = [
           kdeconnect
+          phoneConnect
           sendClipboard
           pkgs.scrcpy
           pkgs.android-tools
         ];
+
+        systemd.user.services.adb-phone-connect = {
+          Unit = {
+            Description = "Reconnect adb to the phone";
+          };
+          Service = {
+            Type = "oneshot";
+            ExecStart = "${phoneConnect}/bin/phone-connect --quiet";
+          };
+        };
+
+        systemd.user.timers.adb-phone-connect = {
+          Unit = {
+            Description = "Periodically reconnect adb to the phone";
+          };
+          Timer = {
+            OnStartupSec = "2min";
+            OnUnitActiveSec = "1h";
+          };
+          Install.WantedBy = [ "timers.target" ];
+        };
 
         systemd.user.services.kdeconnect = {
           Unit = {
