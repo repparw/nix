@@ -11,6 +11,7 @@
   libclang,
   makeBinaryWrapper,
   pkg-config,
+  python3,
 
   alsa-lib,
   dotool,
@@ -93,6 +94,37 @@ rustPlatform.buildRustPackage (finalAttrs: {
       stdenv.hostPlatform.isLinux && stdenv.hostPlatform.isx86_64
     ) "-C target-cpu=x86-64-v3";
   };
+
+  # The shader generator has its own glslc process pool, independent of
+  # Cargo's and CMake's job limits. On memory-constrained native CI runners,
+  # failed shader compiles can leave declarations without definitions and
+  # only fail at final link with undefined matmul_* symbols.
+  postPatch = ''
+    vendorCrate="$cargoDepsCopy/source-registry-0/whisper-rs-sys-0.15.0"
+    shaderGen="$vendorCrate/whisper.cpp/ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
+    test -f "$shaderGen"
+    substituteInPlace "$shaderGen" \
+      --replace-fail \
+      'uint32_t N = std::max(1u, std::min(16u, std::thread::hardware_concurrency()));' \
+      'uint32_t N = 1;'
+
+    # Keep the vendored Cargo checksum consistent with the local source fix.
+    ${python3}/bin/python3 - "$vendorCrate" <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+relative = "whisper.cpp/ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
+manifest = root / ".cargo-checksum.json"
+checksums = json.loads(manifest.read_text())
+if relative not in checksums["files"]:
+    raise SystemExit(f"Missing Cargo checksum for {relative}")
+checksums["files"][relative] = hashlib.sha256((root / relative).read_bytes()).hexdigest()
+manifest.write_text(json.dumps(checksums, separators=(",", ":")))
+PY
+  '';
 
   preBuild = ''
     # cargoBuildHook reads NIX_BUILD_CORES after preBuild to set Cargo -j.
