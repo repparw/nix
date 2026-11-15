@@ -27,6 +27,13 @@ let
     });
 in
 upstream.override (previous: {
+  # Agent-authored scripts run under HERMES_PYTHON, upstream's sealed uv2nix
+  # venv. That venv parses YAML through ruamel.yaml behind hermes' own shim
+  # and never exposes `import yaml`, so cron scripts importing PyYAML fail
+  # with ModuleNotFoundError. Ship it via the documented extraPythonPackages
+  # override (PYTHONPATH suffix on the wrappers); python-dotenv is already a
+  # core dependency on the pinned interpreter.
+  extraPythonPackages = [ upstream.passthru.python.pkgs.pyyaml ];
   # Upstream v0.23.1 requires Node >=26. Preserve its pinned Node tool.
   pmPackages = lib.mapAttrs (_: fixPmArtifact) previous.pmPackages;
 })
