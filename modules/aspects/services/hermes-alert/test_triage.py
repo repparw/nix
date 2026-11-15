@@ -122,6 +122,13 @@ class Triage(unittest.TestCase):
         self.assertEqual(post(b"{", "Bearer " + "q" * 48), 422)
         self.assertEqual(post(payload, "Bearer " + "q" * 48), 202)
         self.assertEqual(len(list((self.state / "events").glob("*.json"))), 1)
+        original_limit = triage.MAX_EVENTS
+        triage.MAX_EVENTS = 1
+        self.addCleanup(setattr, triage, "MAX_EVENTS", original_limit)
+        another = webhook()
+        another["alerts"][0]["fingerprint"] = "abcdef9876543210"
+        self.assertEqual(post(json.dumps(another).encode(), "Bearer " + "q" * 48), 503)
+        self.assertEqual(post(payload, "Bearer " + "q" * 48), 202)
 
 
 if __name__ == "__main__":
