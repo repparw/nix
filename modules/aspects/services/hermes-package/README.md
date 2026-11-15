@@ -37,8 +37,7 @@ available upstream.
 5. The research prompt directs Hermes to primary upstream sources only: it
    verifies each transition against the release notes for that exact version,
    prioritizes the fleet's high-interest packages, and replies `[SILENT]` when
-   nothing is noteworthy. Delivery is Discord via the same channel pattern as
-   Arr; a silent run means no message.
+   nothing is noteworthy. Hermes delivers reports through WhatsApp; a silent run means no message.
 
 ## Suppression
 

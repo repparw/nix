@@ -87,11 +87,14 @@ let
           "${
             servicesLib.serviceUrl controllerServices controllerConfig "jellyfin"
           }${jellyfinService.healthcheck}";
-      # The event parser is a store path substituted into the script text. It
-      # cannot be discovered next to the executable: writeShellApplication
-      # embeds only this script, so a runtime search of the store bin
-      # directory would find nothing.
-      packageEvent = ./scripts/package-update-event.py;
+      # Package the parser as a runtime dependency. Embedding its raw source
+      # path in the generated shell script did not keep it alive after GC.
+      packageEvent = pkgs.writeTextFile {
+        name = "fleet-package-event";
+        destination = "/bin/package-update-event.py";
+        executable = true;
+        text = builtins.readFile ./scripts/package-update-event.py;
+      };
     in
     pkgs.writeShellApplication {
       name = "fleet-update";
@@ -106,6 +109,7 @@ let
         nix
         openssh
         python3
+        packageEvent
         systemd
         util-linux
         (servicesLib.mkDiscordNotify pkgs controllerConfig.modules.services.discordChannelId)
@@ -132,7 +136,7 @@ let
             (lib.concatStringsSep " " (lib.reverseList deployOrder))
             controllerConfig.modules.services.domain
             controllerConfig.modules.services.discordChannelId
-            (toString packageEvent)
+            "${packageEvent}/bin/package-update-event.py"
           ]
           (builtins.readFile ./scripts/fleet-update.sh);
     };
