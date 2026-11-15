@@ -73,6 +73,20 @@ class Triage(unittest.TestCase):
         self.assertFalse(triage.gate(self.state, self.job, now=121)["wakeAgent"])
         self.assertTrue(triage.gate(self.state, self.job, now=1021)["wakeAgent"])
 
+    def test_full_queue_preserves_existing_updates_and_requests_retry(self):
+        original_limit = triage.MAX_EVENTS
+        triage.MAX_EVENTS = 1
+        self.addCleanup(setattr, triage, "MAX_EVENTS", original_limit)
+        first = webhook()
+        triage.ingest(self.state, first, now=100)
+        self.assertEqual(triage.ingest(self.state, first, now=110), 1)
+        self.assertEqual(triage.ingest(self.state, webhook(status="resolved"), now=120), 1)
+        second = webhook()
+        second["alerts"][0]["fingerprint"] = "abcdef9876543210"
+        with self.assertRaises(triage.QueueFullError):
+            triage.ingest(self.state, second, now=130)
+        self.assertEqual(len(list((self.state / "events").glob("*.json"))), 1)
+
     def test_invalid_and_oversized_alert_group(self):
         with self.assertRaises(ValueError):
             triage.normalize({"alerts": [{}] * 65}, 10)
