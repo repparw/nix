@@ -11,7 +11,6 @@
   libclang,
   makeBinaryWrapper,
   pkg-config,
-  python3,
 
   alsa-lib,
   dotool,
@@ -108,21 +107,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
       'uint32_t N = std::max(1u, std::min(16u, std::thread::hardware_concurrency()));' \
       'uint32_t N = 1;'
 
-    # Keep the vendored Cargo checksum consistent with the local source fix.
-    ${python3}/bin/python3 - "$vendorCrate" <<'PY'
-import hashlib
-import json
-from pathlib import Path
-import sys
 
-root = Path(sys.argv[1])
-relative = "whisper.cpp/ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
-manifest = root / ".cargo-checksum.json"
-checksums = json.loads(manifest.read_text())
-if relative in checksums.get("files", {}):
-    checksums["files"][relative] = hashlib.sha256((root / relative).read_bytes()).hexdigest()
-    manifest.write_text(json.dumps(checksums, separators=(",", ":")))
-PY
   '';
 
   preBuild = ''
