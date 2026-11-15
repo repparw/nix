@@ -16,15 +16,23 @@ alerts or change deployment/rollback behavior.
    `https://repparw.com/hooks/grafana`, method POST, authorization header
    scheme `Bearer`, and a separate 32+-character random token in
    **Authentication Header Credentials** (not the URL). This must match the
-   Epsilon `modules.grafana-alert-triage.tokenFile` secret. Leave **Disable
+   Epsilon `modules.grafana-alert-triage.tokenFile` secret. Grafana's
+   native bearer header is sufficient for this endpoint. Do not configure
+   a separate HMAC-signature translation service or enable Grafana HMAC
+   for this integration. Leave **Disable
    resolved message** off for this webhook integration, since resolved events
    cancel pending investigations. Alternatively, use a separate contact point
    only after proving that a matching child notification policy will not bypass
    the existing Discord route.
 3. The receiver accepts only firing/resolved alert instances with known fleet
-   `host` labels. It queues only explicitly opted-in
-   `agent_triage="true"` (or `"1"`) alerts, or
-   `severity="critical"` alerts with a `service` label.
+   `host` labels. It queues explicitly opted-in alerts with
+   `agent_triage="true"` (or `"1"`) or
+   `hermes_triage="actionable-v1"`. The latter matches the two paused
+   Grafana Cloud rules `hermes_persistent_failed_unit` and
+   `hermes_deployment_paused`, created in the separate Grafana setup.
+   It also accepts `severity="critical"` alerts with an explicit
+   `service` label. For opted-in systemd alerts, the `name` label is
+   used as the service name when `service` is missing.
 4. Events are validated, length-limited, deduplicated by alert fingerprint
    and start time, and stored under
    `/var/lib/grafana-alert-triage/events`. Resolved alerts cancel pending
@@ -36,8 +44,8 @@ alerts or change deployment/rollback behavior.
 
 ## Activation is intentionally separate
 
-This PR does not add a token to the repository or enable the listener. After
-review, create a dedicated encrypted SOPS token and provision it on Epsilon.
+The receiver stays disabled by default. To activate it, create a dedicated
+encrypted SOPS token and provision it on Epsilon.
 Then configure:
 
 ```nix
