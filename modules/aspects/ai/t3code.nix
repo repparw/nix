@@ -24,65 +24,71 @@
         config,
         ...
       }:
+      let
+        antigravityRuntime = pkgs.callPackage ../../_packages/antigravity-cli-runtime.nix { };
+        providerState = import ../../_packages/t3code-provider-state.nix { inherit pkgs; };
+
+        providerInstances = {
+          antigravity = {
+            driver = "antigravity";
+            enabled = true;
+            config = {
+              enabled = true;
+              binaryPath = "${antigravityRuntime.runtime}/bin/agy";
+            };
+          };
+
+          antigravity_2 = {
+            driver = "antigravity";
+            displayName = "Antigravity 2";
+            enabled = true;
+            config = {
+              enabled = true;
+              binaryPath = "${antigravityRuntime.runtime}/bin/agy";
+            };
+          };
+
+          # Both Codex instances share one CODEX_HOME for settings and
+          # models; the second account keeps its auth in the shadow home.
+          codex = {
+            driver = "codex";
+            enabled = true;
+            config = {
+              enabled = true;
+              binaryPath = "codex";
+              homePath = "${config.xdg.configHome}/codex";
+            };
+          };
+
+          codex_2 = {
+            driver = "codex";
+            displayName = "2";
+            enabled = true;
+            config = {
+              enabled = true;
+              setupMode = "existing";
+              binaryPath = "codex";
+              homePath = "${config.xdg.configHome}/codex";
+              shadowHomePath = "${config.xdg.configHome}/codex-ubritos1";
+            };
+          };
+
+          opencode = {
+            driver = "opencode";
+            enabled = true;
+            config = {
+              enabled = true;
+              binaryPath = "${config.programs.opencode.package}/bin/opencode";
+            };
+          };
+        };
+      in
       {
         programs.t3code = {
           enable = true;
           package = lib.mkDefault (if pkgs ? t3code-desktop then pkgs.t3code-desktop else pkgs.t3code);
 
-          userSettings = {
-            providerInstances.antigravity = {
-              driver = "antigravity";
-              enabled = true;
-              config = {
-                enabled = true;
-                binaryPath = "${pkgs.antigravity-acp}/bin/agy_acp_server.par";
-              };
-            };
-
-            providerInstances.antigravity_2 = {
-              driver = "antigravity";
-              displayName = "Antigravity 2";
-              enabled = true;
-              config = {
-                enabled = true;
-                binaryPath = "${pkgs.antigravity-acp}/bin/agy_acp_server.par";
-              };
-            };
-
-            # Both Codex instances share one CODEX_HOME for settings and
-            # models; the second account keeps its auth in the shadow home.
-            providerInstances.codex = {
-              driver = "codex";
-              enabled = true;
-              config = {
-                enabled = true;
-                binaryPath = "codex";
-                homePath = "${config.xdg.configHome}/codex";
-              };
-            };
-
-            providerInstances.codex_2 = {
-              driver = "codex";
-              displayName = "2";
-              enabled = true;
-              config = {
-                enabled = true;
-                setupMode = "existing";
-                binaryPath = "codex";
-                homePath = "${config.xdg.configHome}/codex";
-                shadowHomePath = "${config.xdg.configHome}/codex-ubritos1";
-              };
-            };
-
-            providerInstances.opencode = {
-              driver = "opencode";
-              enabled = true;
-              config = {
-                enabled = true;
-                binaryPath = "${config.programs.opencode.package}/bin/opencode";
-              };
-            };
-          };
+          userSettings.providerInstances = providerInstances;
 
           server = {
             enable = true;
@@ -91,6 +97,33 @@
             '';
           };
         };
+
+        # Home Manager merges mutable settings instead of replacing them, so
+        # omitted provider instances would otherwise survive in the live file.
+        home.activation.t3codeProviderStateActivation =
+          lib.hm.dag.entryAfter
+            [
+              "t3codeSettingsActivation"
+            ]
+            ''
+              if [[ -v DRY_RUN ]]; then
+                echo 'Would reconcile T3 Code provider instances and stale caches.'
+              else
+                provider_state=$(
+                  ${providerState.cleanupScript} \
+                    ${lib.escapeShellArg "${config.home.homeDirectory}/.t3/userdata/settings.json"} \
+                    ${lib.escapeShellArg "${config.home.homeDirectory}/.t3/caches"} \
+                    ${lib.escapeShellArg (builtins.toJSON (lib.attrNames providerInstances))} \
+                    ${lib.escapeShellArg "${config.home.homeDirectory}/.t3/userdata/provider-instances.sha256"}
+                )
+                if [ "$provider_state" = changed ]; then
+                  if ! systemctl --user restart t3code.service; then
+                    rm -f ${lib.escapeShellArg "${config.home.homeDirectory}/.t3/userdata/provider-instances.sha256"}
+                    exit 1
+                  fi
+                fi
+              fi
+            '';
       };
   };
 
