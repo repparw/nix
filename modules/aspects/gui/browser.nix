@@ -87,17 +87,6 @@ in
         imports = [ inputs.helium-nix.homeModules.default ];
 
         home.packages = [
-          (pkgs.writeShellApplication {
-            name = "teleprompt";
-            runtimeInputs = [
-              pkgs.nodejs
-              pkgs.niri
-              heliumPackage
-            ];
-            text = ''
-              exec node ${../../scripts/teleprompt}/teleprompt.mjs "$@"
-            '';
-          })
           (pkgs.writers.writePython3Bin "webapp" { flakeIgnore = [ "E501" ]; } ''
             import os
             import sys

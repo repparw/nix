@@ -66,6 +66,7 @@
       {
         home.packages = with pkgs; [
           ndrop
+          teleprompter
 
           (writeShellApplication {
             name = "grabtext";
@@ -95,6 +96,12 @@
             text = builtins.readFile ./niri-swap-active-monitor-windows.sh;
           })
         ];
+
+        dconf.settings."io/github/nokse22/teleprompter" = {
+          font = "Sans 24";
+          # The app stores ten times the words-per-minute value.
+          speed = 1100;
+        };
 
         wayland.windowManager.niri = {
           enable = true;
@@ -383,6 +390,20 @@
             };
 
             _children = [
+              {
+                window-rule = {
+                  match._props.app-id = "^io[.]github[.]nokse22[.]teleprompter$";
+                  open-floating = true;
+                  open-on-output = "DP-1";
+                  default-column-width.fixed = 600;
+                  default-window-height.fixed = 360;
+                  default-floating-position._props = {
+                    x = 660;
+                    y = 0;
+                    relative-to = "top-left";
+                  };
+                };
+              }
               {
                 output = {
                   _args = [ "DP-1" ];
