@@ -49,11 +49,10 @@
             extraConfig =
               { pkgs, ... }:
               let
-                # The integration's v2.45.0 manifest pins tplinkrouterc6u
-                # 5.38.0, which needs the stale smart_network client fix.
-                # Upstream fixed it in v5.39.0 (TP-Link-Archer-C6U#260).
-                # Drop the patch when the integration accepts v5.39.0.
-                tplinkrouterc6u-patched =
+                # Keep the client package custom because it is not present in
+                # the pinned nixpkgs. Upstream v5.40.0 includes the stale
+                # smart_network history fix used by the AX23 v2 presence test.
+                tplinkrouterc6u-custom =
                   pkgs.home-assistant.python3Packages.callPackage ../../_packages/tplinkrouterc6u.nix
                     { };
               in
@@ -90,11 +89,13 @@
                       # (credentials, 60 s polling, 300 s offline timeout)
                       # stays in the host storage.
                       (pkgs.callPackage ../../_packages/tplink-router-ha.nix {
-                        tplinkrouterc6u = tplinkrouterc6u-patched;
+                        tplinkrouterc6u = tplinkrouterc6u-custom;
                       })
                     ];
                   extraPackages =
-                    ps: with ps; [
+                    ps:
+                    with ps;
+                    [
                       aiogithubapi # hacs
                       aiofiles
                       jinja2
@@ -103,6 +104,9 @@
                       litellm
                       pyyaml # ai_automation_suggester
                       pkgs.openssh
+                    ]
+                    ++ [
+                      tplinkrouterc6u-custom # tplink_router
                     ];
                 };
                 networking.firewall.allowedTCPPorts = [ 8123 ];

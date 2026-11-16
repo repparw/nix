@@ -12,16 +12,16 @@
 buildHomeAssistantComponent rec {
   owner = "AlexandrErohin";
   domain = "tplink_router";
-  version = "2.45.0";
+  version = "2.46.0";
 
   src = fetchFromGitHub {
     owner = "AlexandrErohin";
     repo = "home-assistant-tplink-router";
     tag = "v${version}";
-    hash = "sha256-PAMeHBy5mjDqPFnCkuZsLkfhzTE5lPndKU7r1rLaUxM=";
+    hash = "sha256-Mc/Y3RwglF0oFoofYBnu1pNSWyhPFn83SbakZPuezX4=";
   };
 
-  # The manifest pins tplinkrouterc6u==5.38.0; pass the patched client from
+  # The manifest pins tplinkrouterc6u==5.40.0; pass the custom package from
   # the homeassistant aspect so the runtime import resolves to it.
   dependencies = [ tplinkrouterc6u ];
 
