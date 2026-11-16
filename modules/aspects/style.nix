@@ -23,31 +23,13 @@
           let
             theme = "${pkgs.base16-schemes}/share/themes/tokyodark-terminal.yaml";
 
-            baseUrl = "https://codeberg.org/exorcist/wallpapers/raw/commit/7b9a7511705ecd7f055fb007c467a2a66f612ca3";
-
-            wallpaperOptions = {
-              gruvbox = {
-                dalek = "sha256-Rd30EHETeTS2+h2/8ii/+Gc29dpFHQgeYajIHqO3C9c=";
-                penguin = "sha256-rTE57xA9FD6AuUCRH3HKJhXDNwm5fu4WMBeW9ocUM+A=";
-                dead-robot = "sha256-WYWVgp6w4mQIzJOZXncacCSl4tm3sum3vJxvZ8gn+9I=";
-                forest-4 = "sha256-mqrwRvJmRLK3iyEiXmaw5UQPftEaqg33NhwzpZvyXws=";
-                houses = "sha256-p5Mo1xA4jBZh6PPP0HK2YsuEBkP/gA27YDvxtuUrPHE=";
-                solar-system-2 = "sha256-8aVsWogIUuu6rEvGtEJ1y0NojJhEkbeAU87yPFn0d1g=";
-                terminal-redux = "sha256-1AbBA2Lufl2gxxfn6zzkQ3/yS6gXer0rOvYMP9EdHnE=";
-              };
-              stalenhag = {
-                "10 - tt8vpLm" = "sha256-KO11mCmICedw8icmfM1J3BehX13OGQbQNkd/8S+J6WU=";
-              };
+            # Codeberg exorcist/wallpapers was deleted. The pinned GitLab
+            # source retains the same verified forest image as the old mirror.
+            inputImage = pkgs.fetchurl {
+              url = "https://gitlab.com/exorcist365/wallpapers/-/raw/8d2860ac6c05cec0f78d5c9d07510f4ff5da90dc/gruvbox/forest-4.jpg";
+              hash = "sha256-mqrwRvJmRLK3iyEiXmaw5UQPftEaqg33NhwzpZvyXws=";
             };
 
-            fetchSelectedWallpaper =
-              group: name:
-              pkgs.fetchurl {
-                url = "${baseUrl}/${group}/${lib.escapeURL name}.jpg";
-                hash = wallpaperOptions.${group}.${name};
-              };
-
-            inputImage = fetchSelectedWallpaper "stalenhag" "10 - tt8vpLm";
             brightness = -15;
             contrast = 0;
             fillColor = "black";
