@@ -42,48 +42,16 @@
           url = "https://raw.githubusercontent.com/nikarh/jellyfin-plugin-authelia/master/logo.png";
           sha256 = "sha256-s9ILReVI7jol/MWI5t1kG4i6caHp1Is7iVKbcD42kV4=";
         };
-        autheliaProviderId = "Jellyfin.Plugin.Authelia_Auth.AutheliaAuthenticationProviderPlugin";
-        defaultProviderId = "Jellyfin.Server.Implementations.Users.DefaultAuthenticationProvider";
-        autheliaUserNames = [
-          "galo"
-          "bruni"
-          "edgar"
-          "repparw"
-          "valen"
-        ];
-        autheliaUserList = lib.concatStringsSep ", " (map (name: "'${name}'") autheliaUserNames);
-
-        # Runs before the server as the service user. Two responsibilities:
-        #
-        # 1. Seed the pinned plugin binaries when the live plugins tree is
-        #    missing them (the 2026-09/10 upgrade window removed them). The
-        #    plugin manager keeps owning the tree afterwards: auto-updates,
-        #    meta.json reconciliation, and dashboard uninstalls all keep
-        #    working. A deliberately uninstalled plugin reappears on the next
-        #    start while this pin exists - remove the pin to hand the tree
-        #    back to the dashboard.
-        #
-        # 2. One-time migration of existing accounts to the Authelia provider.
-        #    Jellyfin routes each login to the provider stored on the user, so
-        #    accounts stay on the default provider until re-pointed; the plugin
-        #    only ever sees unknown usernames. Only accounts still on the
-        #    default provider are touched, and the marker file keeps later
-        #    restarts (or deliberate dashboard provider changes) from
-        #    overriding live assignments. Local password hashes are preserved,
-        #    so flipping a user back to the
-        #    Jellyfin.Server.Implementations.Users.DefaultAuthenticationProvider
-        #    id in the database instantly restores native authentication.
-        initAutheliaAuth = pkgs.writeShellApplication {
-          name = "jellyfin-authelia-init";
-          runtimeInputs = with pkgs; [
-            coreutils
-            sqlite
-          ];
+        # Keep the pinned plugin installed across server restarts. The plugin
+        # manager owns the live tree, but this pin restores missing binaries.
+        # The old account-provider migration is intentionally not repeated.
+        seedAutheliaPlugin = pkgs.writeShellApplication {
+          name = "jellyfin-authelia-seed";
+          runtimeInputs = [ pkgs.coreutils ];
           text = ''
             set -euo pipefail
             pluginDir='/var/lib/jellyfin/plugins/Authelia Authentication_1.0.17.0'
             db=/var/lib/jellyfin/data/jellyfin.db
-            marker=/var/lib/jellyfin/data/.authelia-provider-migrated
 
             if [ ! -f "$pluginDir/Authelia-Auth.dll" ]; then
               echo "seeding Authelia Authentication 1.0.17.0 from the declarative source"
@@ -96,15 +64,7 @@
 
             chmod 644 "$pluginDir/Authelia-Auth.dll" "$pluginDir/meta.json" "$pluginDir/logo.png" 2>/dev/null || true
 
-            if [ -e "$marker" ]; then
-              exit 0
-            fi
-            changed=$(sqlite3 "$db" "UPDATE Users SET AuthenticationProviderId = '${autheliaProviderId}'
-              WHERE Username IN (${autheliaUserList})
-                AND AuthenticationProviderId = '${defaultProviderId}';
-              SELECT changes();")
-            echo "re-pointed $changed account(s) to the Authelia authentication provider"
-            touch "$marker"
+
           '';
         };
         createBackup = pkgs.writeShellApplication {
@@ -192,7 +152,7 @@
                 };
 
                 systemd.services.jellyfin.serviceConfig.ExecStartPre = [
-                  (lib.getExe initAutheliaAuth)
+                  (lib.getExe seedAutheliaPlugin)
                 ];
 
                 hardware.graphics = {
