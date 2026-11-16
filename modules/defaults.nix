@@ -3,10 +3,6 @@
   den = {
     schema.user.classes = lib.mkDefault [ "homeManager" ];
 
-    # Opt in to Den v0.20's scoped user content semantics. Explicit
-    # cross-scope providers below preserve intended host settings.
-    migrations.user-host-content.acknowledged = true;
-
     schema.host.includes = [
       den.batteries.hostname
       den.batteries.mutual-provider
