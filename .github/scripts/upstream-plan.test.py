@@ -188,6 +188,7 @@ class PlanTests(unittest.TestCase):
             "t3code-browser-libs",
             "tridactyl-reader",
             "fsr4-rdna2",
+            "epic-storefront",
         }
         self.assertEqual(set(self.registry), expected)
 

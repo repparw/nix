@@ -23,13 +23,6 @@
   # system package manager, so route every launch through an explicit
   # executable instead; the service sets FGC_CHROME_PATH.
   postPatch = ''
-    # Epic removed the purchase test ID and checkout wrapper in November 2026.
-    # Backport https://github.com/vogler/free-games-claimer/pull/599 to this pin,
-    # including the purchase selector used to detect checkout completion.
-    substituteInPlace epic-games.js \
-      --replace-fail '[data-testid="purchase-cta-button"]' '[class*="sidebarBuyButton"]' \
-      --replace-fail '#webPurchaseContainer iframe' 'iframe[src*="/checkout"]'
-
     substituteInPlace aliexpress.js epic-games.js gog.js prime-gaming.js \
       steam-games.js steam.js unrealengine.js \
       --replace-fail "channel: 'chrome'," \

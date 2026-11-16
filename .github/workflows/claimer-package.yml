@@ -6,6 +6,7 @@ on:
       - 'modules/_packages/epicgames-freegames-node.nix'
       - 'modules/aspects/services/free-games-claimer.nix'
       - 'modules/aspects/services/free-games-claimer/**'
+      - 'modules/aspects/upstream/epic-storefront.nix'
       - 'modules/aspects/services/epic-freegames-portal.nix'
       - 'modules/aspects/services/epic-freegames-portal/**'
       - 'modules/ci-packages.nix'
@@ -36,9 +37,8 @@ jobs:
           package=$(nix build --impure --no-link --show-trace --print-out-paths --expr '
             let
               flake = builtins.getFlake (toString ./.);
-              pkgs = flake.inputs.nixpkgs.legacyPackages.aarch64-linux;
             in
-              pkgs.callPackage ./modules/_packages/free-games-claimer.nix { }
+              flake.nixosConfigurations.pi.pkgs.free-games-claimer
           ')
           node --check "$package/lib/node_modules/free-games-claimer/epic-games.js"
           node --check "$package/lib/node_modules/free-games-claimer/gog.js"

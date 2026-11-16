@@ -18,7 +18,7 @@
       let
         cfg = config.modules.services;
         stateDir = "${cfg.configDir}/free-games-claimer";
-        claimer = pkgs.callPackage ../../_packages/free-games-claimer.nix { };
+        claimer = pkgs.free-games-claimer;
         servicesLib = import ../../_services/lib.nix { inherit lib pkgs; };
         discordNotify = servicesLib.mkDiscordNotify pkgs cfg.discordChannelId;
         claimDiff = pkgs.writeText "claim-diff.jq" (builtins.readFile ./free-games-claimer/claim-diff.jq);
@@ -113,6 +113,12 @@
         };
       in
       {
+        nixpkgs.overlays = [
+          (final: _prev: {
+            free-games-claimer = final.callPackage ../../_packages/free-games-claimer.nix { };
+          })
+        ];
+
         users.groups.fgc.gid = 348;
         users.users.fgc = {
           isSystemUser = true;

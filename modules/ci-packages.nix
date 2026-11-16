@@ -47,7 +47,7 @@ let
         pkgs = inputs.nixpkgs.legacyPackages.${system};
       in
       [
-        (pkgs.callPackage ./_packages/free-games-claimer.nix { })
+        inputs.self.nixosConfigurations.pi.pkgs.free-games-claimer
         (pkgs.callPackage ./_packages/epicgames-freegames-node.nix { })
       ]
     );

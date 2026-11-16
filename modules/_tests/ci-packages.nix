@@ -38,6 +38,7 @@ let
   };
   host = system: {
     inherit options;
+    pkgs.free-games-claimer = pkgs.hello;
     config = lib.recursiveUpdate config { nixpkgs.hostPlatform.system = system; };
   };
   module = import ../ci-packages.nix {

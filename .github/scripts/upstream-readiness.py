@@ -179,7 +179,33 @@ def fsr4_rdna2_status(lock):
     return "PINNED-READY" if ge_package_contains(pin(lock, "nixpkgs"), commit) else "merged-not-pinned"
 
 
+def epic_storefront_fixed(text):
+    return ("purchase-cta-button" not in text and
+            "#webPurchaseContainer" not in text and
+            text.count('[class*="sidebarBuyButton"]') >= 4 and
+            text.count('iframe[src*="/checkout"]') >= 2)
+
+
+def epic_storefront_status():
+    pr = api("repos/vogler/free-games-claimer/pulls/599")
+    if not pr.get("merged"):
+        return "waiting-upstream"
+    package = (ROOT / "modules/_packages/free-games-claimer.nix").read_text()
+    # This package is pinned here, outside flake.lock. Inspect the exact fork
+    # source, without our postPatch, rather than inferring readiness from age.
+    revision = source_ref(package)
+    owner = re.search(r'\bowner\s*=\s*"([^"]+)";', package)
+    repo = re.search(r'\brepo\s*=\s*"([^"]+)";', package)
+    if not owner or not repo:
+        raise ValueError("cannot identify claimer source repository")
+    if not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise ValueError("claimer source must be pinned to a full commit")
+    return "PINNED-READY" if epic_storefront_fixed(source(f"{owner.group(1)}/{repo.group(1)}", "epic-games.js", revision)) else "merged-not-pinned"
+
+
 def detect(name, lock):
+    if name == "epic-storefront":
+        return epic_storefront_status()
     if name == "fsr4-rdna2":
         return fsr4_rdna2_status(lock)
     if name == "tridactyl-reader":
