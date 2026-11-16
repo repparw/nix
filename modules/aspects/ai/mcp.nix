@@ -40,9 +40,9 @@
     { config, pkgs, ... }:
     let
       browseMcp = pkgs.writeShellScriptBin "browse-mcp" ''
-        exec ${lib.getExe pkgs.python3} ${../../scripts/browse-mcp-lazy.py} \\
-          ${lib.getExe pkgs.opencode-browse} \\
-          ${lib.getExe' config.programs.helium.package "helium"} \\
+        exec ${lib.getExe pkgs.python3} ${../../scripts/browse-mcp-lazy.py} \
+          ${lib.getExe pkgs.opencode-browse} \
+          ${lib.getExe' config.programs.helium.package "helium"} \
           ${lib.getExe' pkgs.procps "pgrep"}
       '';
     in
@@ -75,8 +75,8 @@
               {
                 printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"opencode","version":"1"}}}'
                 printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
-              } | timeout 15 ${lib.getExe pkgs.python3} ${../../scripts/browse-mcp-lazy.py} \\
-                ${lib.getExe browse} /missing-helium ${lib.getExe' pkgs.procps "pgrep"} \\
+              } | timeout 15 ${lib.getExe pkgs.python3} ${../../scripts/browse-mcp-lazy.py} \
+                ${lib.getExe browse} /missing-helium ${lib.getExe' pkgs.procps "pgrep"} \
                 > "$TMPDIR/response.json"
               jq -se '
                 any(.[]; .id == 1 and .result.serverInfo.name == "browse" and .result.serverInfo.version == "${browse.version}")
