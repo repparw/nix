@@ -12,13 +12,9 @@ fi
 info=$(bluetoothctl info "$device" 2>&1 || true)
 
 is_connected() { [[ $info == *"Connected: yes"* ]]; }
-is_blocked() { [[ $info == *"Blocked: yes"* ]]; }
 refresh_info() { info=$(bluetoothctl info "$device" 2>&1 || true); }
 
-block_quiet() { bluetoothctl block "$device" >/dev/null 2>&1 || true; }
-
 do_connect() {
-  bluetoothctl unblock "$device"
   if ! timeout 20 bluetoothctl connect "$device"; then
     exit 3
   fi
@@ -42,8 +38,7 @@ do_connect() {
 }
 
 do_disconnect() {
-  bluetoothctl disconnect "$device" >/dev/null 2>&1 || true
-  block_quiet
+  bluetoothctl disconnect "$device"
 }
 
 case "$action" in
@@ -54,7 +49,7 @@ case "$action" in
     do_disconnect
     ;;
   toggle)
-    if is_connected && ! is_blocked; then
+    if is_connected; then
       do_disconnect
     else
       do_connect
@@ -62,8 +57,7 @@ case "$action" in
     ;;
   status)
     if is_connected; then connected=1; else connected=0; fi
-    if is_blocked; then blocked=1; else blocked=0; fi
-    printf '{"mac":"%s","blocked":%d,"connected":%d}\n' "$device" "$blocked" "$connected"
+    printf '{"mac":"%s","connected":%d}\n' "$device" "$connected"
     ;;
   *)
     echo "Unknown action: $action. Use: connect|disconnect|toggle|status" >&2

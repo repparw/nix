@@ -24,7 +24,7 @@ elif args[0] == "connect":
 elif args[0] == "disconnect":
     s["connected"] = False
 elif args[0] in ("block", "unblock"):
-    s["blocked"] = args[0] == "block"
+    sys.exit("unexpected block/unblock request")
 p.write_text(json.dumps(s))
 '''
 
@@ -51,30 +51,35 @@ class BluetoothToggle(unittest.TestCase):
             )
             return result, json.loads(state.read_text())
 
-    def test_failed_connection_remains_unblocked(self):
+    def test_failed_connection_is_reported(self):
         for stage in ("device", "audio"):
             with self.subTest(stage=stage):
-                result, state = self.run_toggle("connect", blocked=True, fail=stage)
+                result, state = self.run_toggle("connect", fail=stage)
                 self.assertEqual(result.returncode, 3)
-                self.assertFalse(state["blocked"])
                 self.assertIn("test transport failure", result.stdout + result.stderr)
 
-    def test_toggle_recovers_connected_but_blocked_device(self):
-        result, state = self.run_toggle("toggle", connected=True, blocked=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(state, dict(connected=True, blocked=False))
-
-    def test_intentional_disconnect_blocks_autoconnect(self):
+    def test_disconnect_leaves_device_unblocked(self):
         for action in ("disconnect", "toggle"):
             with self.subTest(action=action):
                 result, state = self.run_toggle(action, connected=True)
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertEqual(state, dict(connected=False, blocked=True))
+                self.assertEqual(state, dict(connected=False, blocked=False))
 
-    def test_connect_unblocks_and_connects(self):
-        result, state = self.run_toggle("connect", blocked=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(state, dict(connected=True, blocked=False))
+    def test_connect_leaves_device_unblocked(self):
+        for action in ("connect", "toggle"):
+            with self.subTest(action=action):
+                result, state = self.run_toggle(action)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(state, dict(connected=True, blocked=False))
+
+    def test_status_reports_connection(self):
+        for connected in (False, True):
+            with self.subTest(connected=connected):
+                result, _ = self.run_toggle("status", connected=connected)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(json.loads(result.stdout), {
+                    "mac": "00:11:22:33:44:55", "connected": int(connected),
+                })
 
 
 if __name__ == "__main__":
