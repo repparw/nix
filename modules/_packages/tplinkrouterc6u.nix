@@ -8,9 +8,6 @@
   setuptools,
 }:
 
-# Custom package for the home-assistant TP-Link Router integration. The
-# package is not available in the pinned nixpkgs, while the integration's
-# manifest requires this exact client release.
 buildPythonPackage rec {
   pname = "tplinkrouterc6u";
   version = "5.40.0";
@@ -32,8 +29,6 @@ buildPythonPackage rec {
     requests
   ];
 
-  # Upstream ships no runnable test suite; the import covers the client
-  # module while integration behavior is validated at runtime.
   pythonImportsCheck = [ "tplinkrouterc6u" ];
   doCheck = false;
 
