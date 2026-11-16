@@ -3,6 +3,10 @@
   den = {
     schema.user.classes = lib.mkDefault [ "homeManager" ];
 
+    # Den's transition default is intentionally disabled: user-owned NixOS
+    # settings must reach hosts through explicit providers.
+    schema.host.excludes = [ den.batteries.user-aspects ];
+
     schema.host.includes = [
       den.batteries.hostname
       den.batteries.mutual-provider
