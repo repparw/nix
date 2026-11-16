@@ -66,6 +66,7 @@
       {
         home.packages = with pkgs; [
           ndrop
+          teleprompter
 
           (writeShellApplication {
             name = "grabtext";
@@ -215,6 +216,7 @@
                 "-c"
                 "cd \"$HOME/Documents/obsidian\" && note=\"$(find . -type f -name '*.md' -not -path './.git/*' -not -path './.obsidian/*' -not -path './.trash/*' -printf '%T@ %p\\n' | sort -nr | head -n1 | cut -d' ' -f2-)\" && exec nvim -- \"$note\""
               ];
+              "Mod+P" = titledSpawn "Teleprompter" [ "teleprompter" ];
               "Mod+S" = titledSpawn "Scrcpy" [
                 "sh"
                 "-c"
@@ -376,6 +378,20 @@
             };
 
             _children = [
+              {
+                window-rule = {
+                  match._props.app-id = "^io[.]github[.]nokse22[.]teleprompter$";
+                  open-floating = true;
+                  open-on-output = "DP-1";
+                  default-column-width.fixed = 600;
+                  default-window-height.fixed = 360;
+                  default-floating-position._props = {
+                    x = 0;
+                    y = 0;
+                    relative-to = "top";
+                  };
+                };
+              }
               {
                 output = {
                   _args = [ "DP-1" ];
