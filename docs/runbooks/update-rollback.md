@@ -1,36 +1,35 @@
 ---
 type: Runbook
 title: Update Rollback
-description: Recover any fleet node from a bad deploy-rs activation, failed soak, or manual switch.
-when: Read when a node misbehaves after activation, or when the staged fleet updater reports a rollback that needs inspection or recovery.
+description: Recover a fleet node after a failed deploy-rs activation or manual switch.
+when: Read when a node misbehaves after activation or native rollback needs inspection.
 resource: modules/deploy.nix
 tags: [runbook, recovery, updates, pi, alpha, epsilon, deploy-rs]
 ---
 
 # Update Rollback
 
-Pi's 05:30 consumer requires successful CI for exact current main, then
-prepares every selected host concurrently before activating epsilon, alpha,
-and finally pi. Full pipeline detail
-lives in the [fleet operations runbook](fleet-operations.md).
+Pi's 05:30 timer requires successful CI for the exact current main SHA.
+deploy-rs builds selected hosts concurrently and activates them sequentially,
+with no custom host ordering or application-health soak. See
+[fleet operations](fleet-operations.md).
 
 ## Automatic rollback
 
-The updater handles the common cases itself. deploy-rs magic rollback covers a
-failed activation. The controller saves and roots each host's pre-update system
-before attempting activation. A failed deployment restores those systems on
-every host reached during this revision, without reverting main. Check the
-controller and retry journals before the next cycle:
+deploy-rs attempts to roll back failed or unconfirmed activations. This
+is not a distributed atomic transaction; rollback may itself fail. The
+controller does not maintain additional rollback roots or perform a second
+round of activation. Inspect the journal and affected host:
 
 ```sh
-less /var/lib/auto-update/fail-alpha.log  # on Pi; replace alpha with the failed host
-journalctl -u fleet-deploy-run -b   # transient entries may be absent after reboot
+journalctl -u fleet-deploy-run -b --no-pager
+fleet debug alpha
 ```
 
 ## Manual rollback
 
-For a regression that surfaces outside the soak window (or after a manual
-switch), select the known-good generation on the affected node:
+For a regression discovered after activation (or after a manual
+switch), select a known-good generation on the affected node:
 
 ```sh
 nix-env --list-generations --profile /nix/var/nix/profiles/system
@@ -42,23 +41,19 @@ extlinux via the Pi firmware.
 
 ## After a rollback
 
-1. Inspect the per-host failure log, service journal, and retained job
-   records in `/var/lib/fleet-unit-state/`.
-2. Main still records the desired revision. Fix or explicitly revert a bad
-   configuration through a PR and wait for CI on the resulting main commit.
-   If deployment was paused by the breaker, inspect and resume:
-
-   ```sh
-   ssh root@192.168.0.4 'rm /var/lib/auto-update/PAUSE'    # resume automation
-   ssh root@192.168.0.4 'touch /var/lib/auto-update/PAUSE' # pause manually
-   ```
-
-3. Verify before the next cycle:
+1. Inspect the service journal and retained job records in
+   `/var/lib/fleet-unit-state/`.
+2. Fix or explicitly revert the bad configuration through a PR. The next
+   new main commit is eligible after its exact-SHA CI passes; the same
+   failed SHA is skipped by the automatic timer.
+3. To retry the unchanged SHA explicitly, run `fleet-update deploy --force`
+   on Pi. For a single host, use `fleet-update deploy alpha`.
+   Verify before an authorized retry:
 
    ```sh
    nix flake check
    nix run .#deploy-rs -- .#alpha --dry-activate
-   ssh root@192.168.0.4 'fleet-update deploy --host alpha'
+   ssh root@192.168.0.4 'fleet-update deploy alpha'
    ```
 
 ## Related

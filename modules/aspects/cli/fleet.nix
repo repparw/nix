@@ -287,17 +287,10 @@ in
             echo
             echo '== update state =='
             if [ -r /var/lib/auto-update ] && [ -x /var/lib/auto-update ]; then
-              if [ -e /var/lib/auto-update/PAUSE ]; then
-                echo 'automation: PAUSED'
-              else
-                echo 'automation: active'
+              if [ -r /var/lib/auto-update/last-attempted-revision ]; then
+                printf 'last-attempted-revision: '
+                cat /var/lib/auto-update/last-attempted-revision
               fi
-              for state_file in target-revision deployed-revision rollback-streak; do
-                if [ -r "/var/lib/auto-update/$state_file" ]; then
-                  printf '%s: ' "$state_file"
-                  cat "/var/lib/auto-update/$state_file"
-                fi
-              done
               for diff_file in /var/lib/auto-update/diff-*.txt; do
                 [ -r "$diff_file" ] || continue
                 echo "--- $diff_file (tail) ---"

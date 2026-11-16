@@ -56,48 +56,40 @@ See [OpenTofu state recovery](host-recovery.md#restore-the-opentofu-state).
 
 ## Controller deployment and recovery
 
-The controller enforces successful CI for the **exact current main revision**.
-All selected targets must be prepared before any activation; host activation
-then proceeds with per-host service health checks. A successful build,
-SSH confirmation or one healthy host does not establish fleet convergence.
-The last fully verified revision is recorded separately from desired Git
-`main`; failure does not revert Git.
+Pi's 05:30 timer resolves the current GitHub `main` revision through Nix
+and checks that the exact SHA passed CI. Unchanged revisions are attempted
+only once by the unattended timer, even after failure; a new commit is
+eligible for the next run. Use `fleet-update deploy --force` for an
+authorized retry of the same revision.
 
-After a successful deployment, the controller may reboot headless Epsilon and
-Pi to activate staged kernel or initrd changes. Backup and health gates can
-defer those reboots; Alpha remains manual. The
-[headless reboot implementation](../../modules/scripts/fleet-headless-reboot.sh)
-owns the exact sequence and retry behavior.
+deploy-rs builds selected hosts, activates their system profiles, and
+handles activation/SSH rollback. There are no custom per-service health
+gates or fallback rollbacks. Application failures are monitored
+independently and investigated, not automatically rolled back.
 
-A failed activation uses deploy-rs rollback and the controller restores
-earlier systems on reached hosts. Preparation and activation errors pause
-automation immediately; repeated soak errors trip a separate breaker.
-Rollback roots are deliberately retained when recovery fails. Do not delete
-them, clear `/var/lib/auto-update/PAUSE`, or repeat a forced deployment merely
-to hide the error.
+The controller and headless reboot service share a lock so deployments
+and reboots cannot overlap. Local worktree commands (`nix run .#deploy` and
+`nix run .#deploy-rs`) archive the worktree to the controller and launch a
+transient systemd deployment under that same lock. If the SSH connection
+drops, the controller-owned job continues; inspect its named
+`fleet-worktree-deploy-*.service` journal before retrying. After a successful
+scheduled deployment, the existing headless reboot service may reboot
+Epsilon or Pi for new kernel/initrd generations when backups permit. Alpha
+remains manual; the nightly 03:00 reboot timer is the fallback.
 
-Investigate on the controller:
+Inspect the controller log after a failure:
 
 ```sh
-cat /var/lib/auto-update/latest-preparation
-less /var/lib/auto-update/fail-alpha.log
 journalctl -u fleet-deploy-run --no-pager
+fleet debug pi
 ```
 
-Preparation evidence is bounded. The per-host prepare log keeps only its tail,
-so the explanation of a failed build is at the end of the log, and the run
-refuses to start when the state filesystem has no room for that log. A full
-card therefore aborts the update instead of truncating it again. The
-[controller implementation](../../modules/scripts/fleet-update.sh) owns the
-exact bounds.
-
-Use [manual rollback](update-rollback.md) if automatic recovery did not
-restore the affected host. The [controller implementation](../../modules/scripts/fleet-update.sh)
-is authoritative for current ordering, timeouts and retry behavior.
-
-`--force` bypasses PAUSE without deleting it, but still requires explicit
-authorization. Direct `deploy-rs` or `--dry-activate` is a separate live
-operation, not a substitute for controller deployment or PR verification.
+If deploy-rs cannot restore an earlier generation, follow
+[manual rollback](update-rollback.md). The last automatic attempt SHA
+is kept in `/var/lib/auto-update/last-attempted-revision`. Its paired
+`last-attempt-status` is 2 while running, 1 on failure, and 0 on success;
+Grafana Cloud uses these durable facts to report failures and stalled runs. Direct deploy-rs and
+`--dry-activate` are separate authorized live operations, not PR checks.
 The [verification skill](../../.agents/skills/verify-fleet-change/SKILL.md)
 does not change live hosts.
 

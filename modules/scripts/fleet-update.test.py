@@ -1,5 +1,6 @@
-"""Run the deployment entry point against fake GitHub, Nix and SSH endpoints."""
+"""Exercise the fleet's thin CI-gated deploy-rs wrapper with fake external commands."""
 
+import fcntl
 import json
 import os
 from pathlib import Path
@@ -11,122 +12,53 @@ import unittest
 SOURCE = Path(sys.argv.pop(1)).read_text()
 REVISION = "a" * 40
 STUB = r'''
-import json, os, sys, time
+import json, os, sys
 from pathlib import Path
-root = Path(os.environ['FIXTURE'])
+
+root = Path(os.environ["FIXTURE"])
 name = Path(sys.argv[0]).name
 args = sys.argv[1:]
-with (root / 'calls').open('a') as log:
-    log.write(json.dumps([name, *args]) + '\n')
-config = json.loads((root / 'config').read_text())
-revision = 'a' * 40
-if name == 'git':
-    if 'rev-parse' in args:
-        print('false' if '--is-shallow-repository' in args else revision)
-    elif 'push' in args or 'revert' in args or 'commit' in args:
-        sys.exit(99)
-elif name == 'df':
-    path = args[-1] if args else ''
-    if config.get('state_free_kb') is not None and path == config.get('state_path'):
-        print(f'Filesystem 1K-blocks Used Available Use% Mounted\n'
-              f'fixture 90000000 89000000 {config["state_free_kb"]} 99% {path}')
-    else:
-        print('Filesystem 1K-blocks Used Available Use% Mounted\nfixture 90000000 1 80000000 1% /nix')
-elif name == 'curl':
-    if any('api.github.com' in a for a in args):
-        if config.get('api_error'):
-            sys.exit(22)
-        print(json.dumps(config['ci']))
-    else:
-        print('200')
-elif name == 'nix':
-    if args[0] == 'build' and config.get('schema_failure'):
-        print('error: invalid deployment schema', file=sys.stderr)
+config = json.loads((root / "config").read_text())
+revision = config.get("revision", "a" * 40)
+with (root / "calls").open("a") as log:
+    log.write(json.dumps([name, *args]) + "\n")
+
+if name == "nix":
+    if config.get("metadata_error"):
         sys.exit(1)
-    if args[0] == 'eval':
-        target = ' '.join(args)
-        if 'builtins.getFlake' in target and config.get('eval_failure') and config['eval_failure'] in target:
-            print('error: host evaluation failed', file=sys.stderr)
-            sys.exit(1)
-        if 'currentSystem' in target:
-            print('x86_64-linux')
-        elif 'containerUnits' in target and 'builtins.getFlake' not in target:
-            print('[]')
-        elif 'builtins.getFlake' in target:
-            host = next(h for h in ['epsilon', 'alpha', 'pi'] if f'nixosConfigurations.{h}.' in target)
-            print(json.dumps(dict(revision=revision,
-                systemPath='invalid-path' if config.get('invalid_metadata') == host else f'/nix/store/{host}-system-26.11',
-                containerUnits=[],
-                deployment=dict(remoteBuild=True, nodes={host: dict(hostname=host,
-                    profiles=dict(system=dict(path=f'/nix/store/{host}-profile-26.11',
-                                              drvPath=f'/nix/store/{host}-profile-26.11.drv', user='root')))}))))
-elif name == 'deploy':
-    host = args[0].split('#')[-1]
-    (root / host).write_text('new')
-    if config.get('deploy_failure') == host:
-        print('error: activation connection lost', file=sys.stderr)
+    print(json.dumps({"revision": revision, "locked": {"rev": revision}}))
+elif name == "curl":
+    if config.get("api_error"):
+        sys.exit(22)
+    print(json.dumps(config["ci"]))
+elif name == "deploy":
+    if config.get("native_build_failure"):
+        print("error: remote derivation build failed", file=sys.stderr)
         sys.exit(1)
-elif name == 'ssh':
-    index = next(i for i, a in enumerate(args) if a.startswith('root@'))
-    host = args[index].removeprefix('root@')
+    if config.get("native_activation_failure"):
+        print("error: activation failed", file=sys.stderr)
+        sys.exit(1)
+    targets = args[args.index("--targets") + 1:args.index("--skip-checks")]
+    hosts = [target.split("#")[-1] for target in targets if "#" in target]
+    if not hosts:
+        hosts = ["alpha", "epsilon", "pi"]
+    for host in hosts:
+        (root / host).write_text("new")
+elif name == "ssh":
+    index = next(i for i, arg in enumerate(args) if arg.startswith("root@"))
+    host = args[index].removeprefix("root@")
     command = args[index + 1:]
-    current = (root / host).read_text() if (root / host).exists() else 'old'
-    if command[0].endswith('/sw/bin/nixos-version'):
-        print('c' * 40 if config.get('inconsistent_revision') == host else revision)
-    elif command[0] == 'nix' and command[1] == 'build':
-        if config.get('parallel_preparation'):
-            (root / f'prepare-started-{host}').touch()
-            deadline = time.monotonic() + 12
-            while not all((root / f'prepare-started-{h}').exists()
-                          for h in ['epsilon', 'alpha', 'pi']):
-                if time.monotonic() >= deadline:
-                    print('error: remote builds did not overlap', file=sys.stderr)
-                    sys.exit(1)
-                time.sleep(0.02)
-        if config.get('prepare_failure') == host:
-            print('error: preparation build failed', file=sys.stderr)
-            sys.exit(1)
-        if config.get('prepare_output_bytes'):
-            sys.stderr.write('x' * config['prepare_output_bytes'])
-            sys.stderr.write('FINAL-MARKER\n')
-        print(f'/nix/store/{host}-profile-26.11')
-    elif command[0] == 'nom':
-        print('bash: nom: command not found', file=sys.stderr)
-        sys.exit(127)
-    elif command[0] == 'nixos-version':
-        print(revision if current == 'new' else 'b' * 40)
-    elif command[0] == 'nvd' and command[1] == 'diff':
+    if command[:2] == ["readlink", "/run/current-system"]:
+        status = (root / host).read_text() if (root / host).exists() else "old"
+        print(f"/nix/store/{host}-{status}")
+    elif command[:2] == ["nvd", "diff"]:
         print("[U.]  #01  mesa  26.2.2 -> 26.2.4")
-    elif command[0] == 'readlink':
-        print(f'/nix/store/{host}-{current}')
-    elif command[0] == 'systemctl' and command[1] == 'is-system-running':
-        print('running')
-    elif command[0] == 'systemctl' and config.get('unhealthy') == host:
-        sys.exit(1)
-    elif command[0] == 'systemd-inhibit':
-        print('[{"mode":"block","what":"sleep","who":"fixture"}]')
-    elif command[0].endswith('/bin/switch-to-configuration'):
-        if config.get('rollback_failure') == host:
-            sys.exit(1)
-        (root / host).write_text('old')
-    elif 'hermes-package-ingest' in command[0]:
-        if config.get('hermes_down'):
-            sys.exit(255)
-        payload = json.loads(sys.stdin.read())
-        with (root / "received").open("a") as received:
-            received.write(json.dumps(payload) + "\n")
-        print(json.dumps({"event_id": "wrong" if config.get("wrong_ack") else payload["event_id"]}))
-elif name == 'nom':
-    sys.stderr.write(sys.stdin.read())
-elif name == 'systemctl':
-    if config.get('readiness_failure'):
-        sys.exit(1)
 '''
 
 
-def run(number=1, status="completed", conclusion="success", **fields):
-    return dict(run_number=number, head_sha=REVISION, head_branch="main", event="push",
-                status=status, conclusion=conclusion) | fields
+def run(revision=REVISION, status="completed", conclusion="success", **fields):
+    return dict(run_number=1, head_sha=revision, head_branch="main",
+                event="push", status=status, conclusion=conclusion) | fields
 
 
 class Deployment(unittest.TestCase):
@@ -135,391 +67,118 @@ class Deployment(unittest.TestCase):
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name)
         self.state = self.root / "state"
-        (self.state / "src" / ".git").mkdir(parents=True)
         self.bin = self.root / "bin"
         self.bin.mkdir()
         stub = self.bin / "stub"
         stub.write_text(f"#!{sys.executable}\n" + STUB)
         stub.chmod(0o755)
-        for name in ["git", "df", "curl", "nix", "deploy", "ssh", "sleep", "systemctl", "nom"]:
+        for name in ("nix", "curl", "deploy", "ssh", "systemctl", "discord-notify"):
             (self.bin / name).symlink_to(stub)
         (self.bin / "python3").symlink_to(sys.executable)
+        (self.root / "calls").touch()
         self.script = self.root / "fleet-update"
-        script = SOURCE.replace("/run/secrets/hermes-env", str(self.root / "missing-secret"))
-        script = script.replace("@FLEET_JELLYFIN_HOST@", "alpha")
-        script = script.replace("@FLEET_JELLYFIN_HEALTH_URL@", "http://alpha:8096/health")
-        script = script.replace("@FLEET_HOST_JSON@", json.dumps(
-            {host: host for host in ["alpha", "pi", "epsilon"]}
+        script = SOURCE.replace("@FLEET_HOST_JSON@", json.dumps(
+            {host: host for host in ("alpha", "epsilon", "pi")}
         ))
-        script = script.replace("@FLEET_HOST_OPTIONS@", "alpha|epsilon|pi")
-        script = script.replace("@FLEET_DEPLOY_ORDER@", "alpha epsilon pi")
-        script = script.replace("@FLEET_ROLLBACK_ORDER@", "pi epsilon alpha")
-        script = script.replace("@PACKAGE_EVENT_SCRIPT@", str(Path(__file__).with_name("package-update-event.py")))
+        script = script.replace("@PACKAGE_EVENT_SCRIPT@",
+                                str(Path(__file__).with_name("package-update-event.py")))
         self.script.write_text("set -euo pipefail\n" + script)
 
     def deploy(self, ci=None, arguments=None, env=None, **config):
-        (self.root / "config").write_text(json.dumps(dict(ci=ci or {"workflow_runs": [run()]}) | config))
+        configuration = {"ci": ci if ci is not None else {"workflow_runs": [run()]}} | config
+        (self.root / "config").write_text(json.dumps(configuration))
         environment = os.environ | {
             "PATH": f"{self.bin}:{os.environ['PATH']}",
             "FIXTURE": str(self.root),
             "FLEET_UPDATE_LOCK": str(self.root / "lock"),
-            "FLEET_UPDATE_ROOTS": str(self.root / "roots"),
             "FLEET_DEPLOY_KEY": str(self.script),
-            "FLEET_SOAK_ATTEMPTS": "2",
         } | (env or {})
-        result = subprocess.run(["bash", str(self.script), "deploy", "--state", str(self.state),
-                                 *(arguments or [])], env=environment, text=True, capture_output=True)
-        self.assertTrue((self.root / "calls").exists(), result.stdout + result.stderr)
+        result = subprocess.run(["bash", str(self.script), "deploy",
+                                 "--state", str(self.state), *(arguments or [])],
+                                env=environment, text=True, capture_output=True)
         self.calls = [json.loads(line) for line in (self.root / "calls").read_text().splitlines()]
         return result
 
-    def assert_no_activation(self):
-        self.assertFalse(any(c[0] in ["deploy", "ssh"] for c in self.calls))
+    def calls_to(self, name):
+        return [c for c in self.calls if c[0] == name]
+
+    def test_all_hosts_use_one_native_deploy_without_custom_activation_or_soak(self):
+        result = self.deploy()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        native = self.calls_to("deploy")
+        self.assertEqual(len(native), 1)
+        self.assertEqual(native[0][1:3],
+                         ["--targets", f"github:repparw/nix/{REVISION}"])
+        self.assertIn("--skip-checks", native[0])
+        self.assertEqual(self.calls_to("nix")[0][1:4], ["flake", "metadata", "--json"])
+        self.assertIn("--no-progress", native[0])
+        self.assertFalse(any("systemctl is-active" in " ".join(c) for c in self.calls))
+        self.assertEqual((self.state / "last-attempted-revision").read_text().strip(), REVISION)
+        self.assertEqual((self.state / "last-attempt-status").read_text().strip(), "0")
+        self.assertEqual({p.name for p in (self.state / "package-events").glob("*.json")},
+                         {f"{REVISION}-{host}.json" for host in ("alpha", "epsilon", "pi")})
+        self.assertEqual(len([c for c in self.calls_to("systemctl") if
+                              "fleet-headless-reboot.service" in c]), 1)
+
+    def test_failed_revision_is_not_retried_automatically(self):
+        first = self.deploy(native_build_failure=True)
+        self.assertNotEqual(first.returncode, 0)
+        self.assertEqual((self.state / "last-attempt-status").read_text().strip(), "1")
+        self.assertEqual((self.state / "last-attempted-revision").read_text().strip(), REVISION)
+        second = self.deploy(native_build_failure=True)
+        self.assertEqual(second.returncode, 0, second.stderr)
+        self.assertEqual(len(self.calls_to("deploy")), 1)
+        self.assertFalse((self.state / "deployed-revision").exists())
         self.assertFalse((self.state / "PAUSE").exists())
-        self.assertFalse((self.state / "rollback-streak").exists())
 
-    def test_ci_missing_pending_failed_wrong_sha_and_pr_do_not_activate(self):
-        fixtures = [[], [run(status="in_progress", conclusion=None)], [run(conclusion="failure")],
-                    [run(head_sha="c" * 40)], [run(event="pull_request")], [run(event="schedule")],
-                    [run(event="workflow_dispatch", head_branch="feature")],
-                    [run(head_branch="automation/flake-lock")],
-                    [run(), run(2, status="queued", conclusion=None)]]
-        for runs in fixtures:
-            with self.subTest(runs=runs):
-                result = self.deploy(ci={"workflow_runs": runs})
-                self.assertNotEqual(result.returncode, 0, result.stderr)
-                self.assert_no_activation()
-
-    def test_api_failure_does_not_activate(self):
-        self.assertNotEqual(self.deploy(api_error=True).returncode, 0)
-        self.assert_no_activation()
-
-    def test_exact_main_workflow_dispatch_allows_deploy(self):
-        result = self.deploy(ci={"workflow_runs": [run(event="workflow_dispatch")]})
+    def test_new_main_commit_is_attempted_after_failure(self):
+        self.assertNotEqual(self.deploy(native_build_failure=True).returncode, 0)
+        other = "b" * 40
+        result = self.deploy(revision=other, ci={"workflow_runs": [run(revision=other)]})
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"],
-                         ["alpha", "epsilon", "pi"])
+        self.assertEqual(len(self.calls_to("deploy")), 2)
+        self.assertEqual((self.state / "last-attempted-revision").read_text().strip(), other)
 
-    def test_exact_lock_candidate_dispatch_allows_deploy_after_fast_forward(self):
-        result = self.deploy(ci={"workflow_runs": [
-            run(event="workflow_dispatch", head_branch="automation/flake-lock")
-        ]})
+    def test_explicit_force_retries_same_revision(self):
+        self.assertNotEqual(self.deploy(native_activation_failure=True).returncode, 0)
+        result = self.deploy(arguments=["--force"])
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"],
-                         ["alpha", "epsilon", "pi"])
+        self.assertEqual(len(self.calls_to("deploy")), 2)
 
-    def test_all_hosts_converge_after_ci(self):
-        result = self.deploy()
+    def test_selected_host_deploys_only_that_target(self):
+        result = self.deploy(arguments=["pi"])
         self.assertEqual(result.returncode, 0, result.stderr)
-        output = result.stderr
-        milestones = [
-            "fetching main", "checking CI for main", "CI passed",
-            "running deployment preflight", "capturing alpha configuration",
-            "capturing epsilon configuration", "capturing pi configuration",
-            "preflight passed", "preparing alpha", "preparing epsilon", "preparing pi",
-            "prepared alpha", "prepared epsilon", "prepared pi",
-            "alpha: activating", "alpha: verifying health", "alpha: healthy",
-            "epsilon: activating", "epsilon: verifying health", "epsilon: healthy",
-            "pi: activating", "pi: verifying health", "pi: healthy",
-            "fleet converged",
-        ]
-        offsets = [output.index("fleet-update: " + message) for message in milestones]
-        self.assertEqual(offsets, sorted(offsets), output)
-        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["alpha", "epsilon", "pi"])
-        first_activation = next(i for i, c in enumerate(self.calls) if c[0] == 'deploy')
-        prepared = [c for c in self.calls[:first_activation] if c[0] == 'ssh' and 'build' in c]
-        self.assertEqual(len(prepared), 3)
-        evidence = Path((self.state / 'latest-preparation').read_text().strip())
-        results = [json.loads(p.read_text()) for p in evidence.glob('result-*.json')]
-        self.assertEqual({r['host'] for r in results}, {'epsilon', 'alpha', 'pi'})
-        self.assertTrue(all(r['revision'] == REVISION and r['outcome'] == 'prepared' for r in results))
-        self.assertEqual((self.state / "deployed-revision").read_text().strip(), REVISION)
-        self.assertEqual(list(self.state.glob("reached-*")), [])
-        self.assertFalse(any(c[0] == "git" and c[1] in ["push", "revert", "commit"] for c in self.calls))
+        self.assertEqual(self.calls_to("deploy")[0][1:3],
+                         ["--targets", f"github:repparw/nix/{REVISION}#pi"])
+        self.assertFalse((self.state / "last-attempted-revision").exists())
+        self.assertEqual(len(list((self.state / "package-events").glob("*.json"))), 1)
 
-    def test_force_still_requires_ci(self):
-        result = self.deploy(ci={"workflow_runs": []}, arguments=["--host", "alpha", "--force"])
-        self.assertNotEqual(result.returncode, 0)
-        self.assert_no_activation()
-
-    def test_explicit_forced_fleet_deploy_preserves_pause(self):
-        pause = self.state / "PAUSE"
-        pause.write_text("existing operator pause\n")
-        result = self.deploy(arguments=["--host", "all", "--force"])
+    def test_multiple_positional_hosts_share_one_deploy_invocation(self):
+        result = self.deploy(arguments=["epsilon", "alpha"])
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(pause.read_text(), "existing operator pause\n")
-        self.assertEqual((self.state / "deployed-revision").read_text().strip(), REVISION)
-        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["alpha", "epsilon", "pi"])
+        self.assertEqual(len(self.calls_to("deploy")), 1)
+        self.assertEqual(self.calls_to("deploy")[0][1:4], [
+            "--targets",
+            f"github:repparw/nix/{REVISION}#epsilon",
+            f"github:repparw/nix/{REVISION}#alpha",
+        ])
+        self.assertFalse((self.state / "last-attempted-revision").exists())
+        self.assertEqual(len(list((self.state / "package-events").glob("*.json"))), 2)
 
-    def test_force_requires_explicit_host_selection(self):
-        result = subprocess.run(["bash", str(self.script), "deploy", "--force"],
-                                text=True, capture_output=True)
-        self.assertEqual(result.returncode, 2)
-        self.assertIn("explicit --host", result.stderr)
+    def test_unknown_or_duplicate_hosts_are_rejected(self):
+        for args in (["unknown"], ["pi", "pi"], ["--host", "pi"]):
+            with self.subTest(args=args):
+                result = self.deploy(arguments=args)
+                self.assertEqual(result.returncode, 2)
+                self.assertEqual(self.calls_to("deploy"), [])
 
-    def test_preflight_failure_on_first_host_cannot_be_hidden_by_later_hosts(self):
-        result = self.deploy(eval_failure="alpha")
-        self.assertNotEqual(result.returncode, 0)
-        self.assert_no_activation()
-        self.assertIn("host evaluation failed", (self.state / "preflight.log").read_text())
-        evidence = Path((self.state / 'latest-preparation').read_text().strip())
-        results = {p.stem.removeprefix('result-'): json.loads(p.read_text())
-                   for p in evidence.glob('result-*.json')}
-        self.assertEqual(results, {
-            'epsilon': dict(host='epsilon', revision=REVISION, systemPath=None,
-                            profilePath=None, outcome='not_attempted'),
-            'alpha': dict(host='alpha', revision=REVISION, systemPath=None,
-                          profilePath=None, outcome='failed', stage='capture'),
-            'pi': dict(host='pi', revision=REVISION, systemPath=None,
-                       profilePath=None, outcome='not_attempted'),
-        })
-        self.assertIn('host evaluation failed', (evidence / 'capture-alpha.log').read_text())
-
-    def test_invalid_captured_metadata_records_failure_and_unattempted_hosts(self):
-        result = self.deploy(invalid_metadata='alpha')
-        self.assertNotEqual(result.returncode, 0)
-        self.assert_no_activation()
-        evidence = Path((self.state / 'latest-preparation').read_text().strip())
-        self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text()),
-                         dict(host='alpha', revision=REVISION, systemPath=None,
-                              profilePath=None, outcome='failed', stage='capture'))
-        self.assertEqual(json.loads((evidence / 'result-pi.json').read_text()),
-                         dict(host='pi', revision=REVISION, systemPath=None,
-                              profilePath=None, outcome='not_attempted'))
-        self.assertEqual(json.loads((evidence / 'result-epsilon.json').read_text()),
-                         dict(host='epsilon', revision=REVISION,
-                              systemPath=None, profilePath=None, outcome='not_attempted'))
-        self.assertEqual(json.loads((evidence / 'alpha.json').read_text())['systemPath'], 'invalid-path')
-        self.assertIn('captured metadata for alpha is invalid', (evidence / 'capture-alpha.log').read_text())
-        self.assertFalse((evidence / 'capture-pi.log').exists())
-
-    def test_capture_failure_records_only_selected_host_and_preserves_prior_evidence(self):
-        previous = self.state / 'preparation-prior'
-        previous.mkdir()
-        prior_files = {previous / f'result-{host}.json': json.dumps(dict(host=host, outcome='prepared'))
-                       for host in ['epsilon', 'alpha', 'pi']}
-        for path, contents in prior_files.items():
-            path.write_text(contents)
-        result = self.deploy(eval_failure='alpha', arguments=['--host', 'alpha'])
-        self.assertNotEqual(result.returncode, 0)
-        self.assert_no_activation()
-        evidence = Path((self.state / 'latest-preparation').read_text().strip())
-        self.assertEqual([p.name for p in evidence.glob('result-*.json')], ['result-alpha.json'])
-        self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text())['outcome'], 'failed')
-        for path, contents in prior_files.items():
-            self.assertEqual(path.read_text(), contents)
-
-    def test_schema_failure_does_not_activate(self):
-        result = self.deploy(schema_failure=True)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("fleet-update: preflight failed; see ", result.stderr)
-        self.assertNotIn("fleet-update: fleet converged", result.stderr)
-        self.assert_no_activation()
-
-    def test_failed_activation_restores_failed_host_and_previous_hosts(self):
-        result = self.deploy(deploy_failure="pi")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("fleet-update: deployment failed on pi; rolling back activated hosts", result.stderr)
-        self.assertNotIn("fleet-update: fleet converged", result.stderr)
-        self.assertEqual((self.root / "pi").read_text(), "old")
-        self.assertEqual((self.root / "alpha").read_text(), "old")
-        self.assertEqual((self.root / "epsilon").read_text(), "old")
-        self.assertTrue((self.state / "PAUSE").exists())
-        self.assertFalse(any(c[0] == "git" and c[1] in ["push", "revert", "commit"] for c in self.calls))
-
-    def test_failed_alpha_prevents_controller_activation(self):
-        result = self.deploy(deploy_failure="alpha")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual([c[1].split('#')[-1] for c in self.calls if c[0] == "deploy"], ["alpha"])
-        self.assertFalse((self.root / "pi").exists())
-
-    def test_failed_rollback_keeps_roots_and_pauses(self):
-        result = self.deploy(deploy_failure="pi", rollback_failure="pi")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertTrue((self.state / "PAUSE").exists())
-        self.assertFalse(any(c[0] == "ssh" and "rm" in c for c in self.calls))
-
-    def test_selected_host_failure_rolls_back_prior_selected_host(self):
-        result = self.deploy(arguments=["--host", "epsilon"])
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse((self.state / "deployed-revision").exists())
-        self.assertEqual((self.root / "epsilon").read_text(), "new")
-        result = self.deploy(deploy_failure="alpha", arguments=["--host", "alpha"])
-        self.assertNotEqual(result.returncode, 0)
-        self.assertEqual((self.root / "epsilon").read_text(), "old")
-        self.assertEqual((self.root / "alpha").read_text(), "old")
-        self.assertFalse((self.root / "pi").exists())
-
-    def test_already_running_revision_must_pass_health(self):
-        (self.root / "epsilon").write_text("new")
-        result = self.deploy(unhealthy="epsilon")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertFalse((self.state / "deployed-revision").exists())
-        self.assertEqual([c[1].split("#")[-1] for c in self.calls if c[0] == "deploy"], ["alpha"])
-        self.assertEqual((self.root / "alpha").read_text(), "old")
-
-    def test_failed_preparation_stops_before_any_activation(self):
-        result = self.deploy(prepare_failure='alpha')
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("fleet-update: preparation failed on alpha", result.stderr)
-        self.assertNotIn("fleet-update: alpha: activating", result.stderr)
-        self.assertNotIn("fleet-update: fleet converged", result.stderr)
-        self.assertFalse(any(c[0] == 'deploy' for c in self.calls))
-        self.assertFalse(any(c[0] == 'ssh' and 'switch-to-configuration' in ' '.join(c) for c in self.calls))
-        self.assertTrue((self.state / 'PAUSE').exists())
-        self.assertEqual(self.reboots(), [])
-        self.assertEqual(list(self.state.glob('reached-*')), [])
-        evidence = Path((self.state / 'latest-preparation').read_text().strip())
-        self.assertIn('preparation build failed', (evidence / 'prepare-alpha.log').read_text())
-        self.assertEqual(json.loads((evidence / 'result-alpha.json').read_text())['outcome'], 'failed')
-
-    def test_prepare_log_is_capped_and_keeps_the_failure_tail(self):
-        result = self.deploy(prepare_output_bytes=200000,
-                             env={"FLEET_UPDATE_PREPARE_LOG_MAX_BYTES": "4096"})
-        self.assertEqual(result.returncode, 0, result.stderr)
-        evidence = Path((self.state / "latest-preparation").read_text().strip())
-        for host in ["alpha", "epsilon", "pi"]:
-            log = evidence / f"prepare-{host}.log"
-            self.assertLessEqual(log.stat().st_size, 4096)
-            self.assertIn("FINAL-MARKER", log.read_text())
-
-    def test_state_filesystem_without_room_aborts_before_preparation(self):
-        result = self.deploy(state_path=str(self.state), state_free_kb=1024)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn("free on", result.stderr)
-        self.assertFalse(any(c[0] == "ssh" and "build" in c for c in self.calls))
-        self.assertFalse(any(c[0] == "deploy" for c in self.calls))
-        self.assertFalse((self.state / "latest-preparation").exists())
-
-    def test_preparation_builds_run_concurrently_before_activation(self):
-        # Every remote build waits for all three to start. Sequential
-        # preparation times out rather than passing this fixture.
-        result = self.deploy(parallel_preparation=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        for host in ["alpha", "epsilon", "pi"]:
-            self.assertTrue((self.root / f"prepare-started-{host}").exists())
-        first_deploy = next(i for i, call in enumerate(self.calls) if call[0] == "deploy")
-        builds = [call for call in self.calls[:first_deploy]
-                  if call[0] == "ssh" and "build" in call]
-        self.assertEqual(len(builds), 3)
-        self.assertEqual([call[1].split("#")[-1] for call in self.calls
-                          if call[0] == "deploy"], ["alpha", "epsilon", "pi"])
-
-    def test_parallel_preparation_waits_for_all_results_on_failure(self):
-        result = self.deploy(parallel_preparation=True, prepare_failure="alpha")
-        self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(any(call[0] == "deploy" for call in self.calls))
-        evidence = Path((self.state / "latest-preparation").read_text().strip())
-        self.assertEqual({host: json.loads((evidence / f"result-{host}.json").read_text())["outcome"]
-                          for host in ["alpha", "epsilon", "pi"]},
-                         {"epsilon": "prepared", "alpha": "failed", "pi": "prepared"})
-        self.assertTrue((self.state / "PAUSE").exists())
-
-    def ingested(self):
-        return [c for c in self.calls if c[0] == "ssh" and "hermes-package-ingest" in " ".join(c)]
-
-    def probes(self):
-        return [c for c in self.calls if c[0] == "systemctl" and "fleet-readiness-probe.service" in c]
-
-    def reboots(self):
-        return [c for c in self.calls if c[0] == "systemctl" and "fleet-headless-reboot.service" in c]
-
-    def outbox(self):
-        directory = self.state / "package-events"
-        return sorted(directory.glob("*.json")) if directory.exists() else []
-
-    def deliver(self, **config):
-        (self.root / "config").write_text(json.dumps(config))
-        script = self.root / "deliver"
-        source = Path(__file__).with_name("package-update-deliver.sh").read_text().replace("@FLEET_EPSILON_ADDRESS@", "epsilon")
-        script.write_text("set -euo pipefail\n" + source)
-        env = os.environ | {"PATH": f"{self.bin}:{os.environ['PATH']}", "FIXTURE": str(self.root), "FLEET_UPDATE_STATE": str(self.state), "FLEET_DEPLOY_KEY": str(self.script)}
-        result = subprocess.run(["bash", str(script)], env=env, text=True, capture_output=True)
-        self.calls = [json.loads(line) for line in (self.root / "calls").read_text().splitlines()]
-        return result
-
-    def test_full_convergence_enqueues_before_cleanup_without_transport(self):
-        result = self.deploy()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(len(self.outbox()), 3)
-        self.assertEqual(self.ingested(), [])
-        self.assertEqual(list(self.state.glob("reached-*")), [])
-        self.assertEqual({json.loads(path.read_text())["host"] for path in self.outbox()}, {"alpha", "pi", "epsilon"})
-        self.assertEqual(self.deliver().returncode, 0)
-        self.assertEqual(len(self.ingested()), 3)
-        self.assertEqual(self.outbox(), [])
-
-    def test_alpha_convergence_triggers_readiness_probe_once(self):
-        result = self.deploy()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.probes(), [["systemctl", "--no-block", "start", "fleet-readiness-probe.service"]])
-
-    def test_convergence_triggers_headless_reboot_sequence_once(self):
-        result = self.deploy()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(
-            self.reboots(),
-            [["systemctl", "--no-block", "start", "fleet-headless-reboot.service"]],
-        )
-
-    def test_activity_is_not_probed_before_activation(self):
-        result = self.deploy()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse(any(c[0] == "ssh" and "systemd-inhibit" in c for c in self.calls))
-        self.assertEqual(len(self.reboots()), 1)
-        self.assertEqual(len(self.probes()), 1)
-
-    def test_paused_controller_does_not_deploy_without_force(self):
-        (self.state / "PAUSE").touch()
-        (self.root / "calls").touch()
-        result = self.deploy()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertFalse(any(c[0] == "deploy" for c in self.calls))
-        self.assertFalse((self.state / "deployed-revision").exists())
-
-    def test_readiness_probe_failure_does_not_fail_deployment(self):
-        result = self.deploy(readiness_failure=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(len(self.probes()), 1)
-        self.assertEqual({json.loads(path.read_text())["host"] for path in self.outbox()}, {"alpha", "pi", "epsilon"})
-
-    def test_selected_host_convergence_queues_only_reached_host(self):
-        result = self.deploy(arguments=["--host", "alpha"])
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual({json.loads(path.read_text())["host"] for path in self.outbox()}, {"alpha"})
-        self.assertEqual(self.ingested(), [])
-
-    def test_intake_unavailability_retains_exact_bytes_for_independent_retry(self):
-        self.assertEqual(self.deploy().returncode, 0)
-        before = {path.name: path.read_bytes() for path in self.outbox()}
-        self.assertEqual(self.deliver(hermes_down=True).returncode, 0)
-        self.assertEqual(before, {path.name: path.read_bytes() for path in self.outbox()})
-        self.assertEqual(self.deliver().returncode, 0)
-        self.assertEqual(self.outbox(), [])
-        received = [json.loads(line) for line in (self.root / "received").read_text().splitlines()]
-        self.assertEqual(sorted(received, key=lambda event: event["host"]), sorted([json.loads(value) for value in before.values()], key=lambda event: event["host"]))
-
-    def test_wrong_ack_retains_events(self):
-        self.assertEqual(self.deploy().returncode, 0)
-        self.assertEqual(self.deliver(wrong_ack=True).returncode, 0)
-        self.assertEqual(len(self.outbox()), 3)
-
-    def test_pending_events_retry_without_deploy_even_when_paused(self):
-        self.assertEqual(self.deploy().returncode, 0)
-        (self.state / "PAUSE").touch()
-        (self.root / "calls").unlink()
-        self.assertEqual(self.deliver().returncode, 0)
-        self.assertEqual(self.outbox(), [])
-        self.assertEqual(len(self.ingested()), 3)
-        self.assertFalse(any(call[0] in ("git", "nix", "deploy") for call in self.calls))
-
-    def test_inconsistent_prepared_revision_stops_before_any_activation(self):
-        result = self.deploy(inconsistent_revision='pi')
-        self.assertNotEqual(result.returncode, 0)
-        self.assertFalse(any(c[0] == 'deploy' for c in self.calls))
-        evidence = Path((self.state / 'latest-preparation').read_text().strip())
-        self.assertEqual(json.loads((evidence / 'result-pi.json').read_text())['revision'], 'c' * 40)
-        self.assertIn('expected ' + REVISION, (evidence / 'prepare-pi.log').read_text())
+    def test_lock_prevents_concurrent_deployment(self):
+        with (self.root / "lock").open("w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = self.deploy()
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(self.calls_to("deploy"), [])
+            self.assertFalse((self.state / "last-attempted-revision").exists())
 
 
 if __name__ == "__main__":
