@@ -117,7 +117,10 @@
                     ${lib.escapeShellArg "${config.home.homeDirectory}/.t3/userdata/provider-instances.sha256"}
                 )
                 if [ "$provider_state" = changed ]; then
-                  if ! systemctl --user restart t3code.service; then
+                  # Home Manager's system activation runs with a minimal PATH;
+                  # a bare systemctl is not found there (NixOS/nixpkgs pattern:
+                  # use the store path, like fleet-controller's scripts).
+                  if ! ${lib.getExe' pkgs.systemd "systemctl"} --user restart t3code.service; then
                     rm -f ${lib.escapeShellArg "${config.home.homeDirectory}/.t3/userdata/provider-instances.sha256"}
                     exit 1
                   fi
