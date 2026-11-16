@@ -54,10 +54,13 @@ def ensure_browser(browse, helium, pgrep):
             try:
                 subprocess.run([browse, "tabs"], stdout=subprocess.DEVNULL,
                                stderr=subprocess.DEVNULL, timeout=8)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+            try:
                 subprocess.Popen([helium], stdin=subprocess.DEVNULL,
                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                  start_new_session=True)
-            except (OSError, subprocess.TimeoutExpired) as error:
+            except OSError as error:
                 print(f"browse-mcp: could not start Helium: {error}", file=sys.stderr)
                 return
         deadline = time.monotonic() + 12
