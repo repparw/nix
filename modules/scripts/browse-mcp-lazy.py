@@ -9,17 +9,8 @@ import subprocess
 import sys
 import time
 
-# These tools need a connected browser. Metadata and session inspection do not.
-BROWSER_TOOLS = {
-    "execute",
-    "session_new",
-    "session_adopt",
-    "network",
-    "recording",
-    "flight_recorder",
-    "secrets_run",
-    "secrets_refresh",
-}
+# Metadata and settings do not need a connected browser.
+NO_BROWSER_TOOLS = {"status", "settings"}
 
 
 def connected(browse):
@@ -30,7 +21,8 @@ def connected(browse):
             timeout=3,
             check=False,
         )
-        return bool(json.loads(result.stdout).get("extension", {}).get("connected"))
+        status = json.loads(result.stdout)
+        return bool(status.get("connected") or (status.get("extension") or {}).get("connected"))
     except (OSError, ValueError, subprocess.TimeoutExpired, AttributeError):
         return False
 
@@ -63,7 +55,7 @@ def prepare_browser(browse, helium, pgrep):
             # Browse's relay starts on demand. Start it before Helium so the
             # extension can reconnect while the browser is opening.
             subprocess.run(
-                [browse, "settings", "get", "--json"],
+                [browse, "tabs"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 timeout=12,
@@ -98,13 +90,22 @@ def prepare_browser(browse, helium, pgrep):
 def needs_browser(line):
     try:
         message = json.loads(line)
-        return (
-            isinstance(message, dict)
-            and message.get("method") == "tools/call"
-            and isinstance(message.get("params"), dict)
-            and message["params"].get("name") in BROWSER_TOOLS
-        )
-    except ValueError:
+        if not isinstance(message, dict) or message.get("method") != "tools/call":
+            return False
+        params = message.get("params")
+        if not isinstance(params, dict):
+            return False
+        name = params.get("name")
+        if not isinstance(name, str) or name in NO_BROWSER_TOOLS:
+            return False
+        if name == "tabs":
+            arguments = params.get("arguments")
+            action = arguments.get("action", "list") if isinstance(arguments, dict) else "list"
+            return action == "new"
+        # OpenCode now exposes browser tools directly (navigate, click, snapshot,
+        # etc.); other clients still use execute. Include future tools by default.
+        return True
+    except (TypeError, ValueError):
         return False
 
 
