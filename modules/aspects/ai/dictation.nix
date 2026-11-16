@@ -1,36 +1,9 @@
 { den, ... }:
 {
   den.aspects.ai.provides.dictation = {
-    provides.to-hosts.nixos =
-      { config, ... }:
-      {
-        hardware.uinput.enable = true;
-
-        programs.ydotool = {
-          enable = true;
-          group = "uinput";
-        };
-
-        users.groups.uinput.members = [ config.users.users.repparw.name ];
-      };
-
     homeManager =
-      {
-        lib,
-        pkgs,
-        config,
-        ...
-      }:
+      { pkgs, ... }:
       let
-        c = config.lib.stylix.colors.withHashtag;
-
-        # Dictation runs Moondream Parakeet Ultra (25-language TDT, incl. es)
-        # as a GGUF through transcribe.cpp in the voxtype-gguf-worker, with
-        # the Vulkan backend; the same build keeps the Vulkan whisper backend
-        # for the [whisper] fallback. nixpkgs still carries 1.1.1, which has
-        # no GGUF support, so 1.2.0 is built locally for now.
-        voxtypeDictation = pkgs.callPackage ../../_packages/voxtype-vulkan-gguf.nix { };
-
         hexToggle = pkgs.writeShellApplication {
           name = "hex-toggle";
           runtimeInputs = [ pkgs.anomaly-hex ];
@@ -41,54 +14,13 @@
             hex dictation toggle
           '';
         };
-        parakeetUltra = pkgs.callPackage ../../_packages/parakeet-ultra-gguf.nix { };
-
-        voxtypeQsQml = pkgs.fetchFromGitHub {
-          owner = "peteonrails";
-          repo = "voxtype";
-          rev = "dda37ca72b71294d08b0c5bb49c5b24ca590d847";
-          hash = "sha256-OT0tVSi9x3U7NwgZU00mojXk3RRWxuFoezpdSknLmmU=";
-        };
-
-        voxtypeToggle = pkgs.writeShellApplication {
-          name = "voxtype-toggle";
-          runtimeInputs = with pkgs; [
-            coreutils
-            voxtypeDictation
-          ];
-          text = ''
-            set -euo pipefail
-
-            state_file="''${XDG_RUNTIME_DIR:-/tmp}/voxtype/state"
-
-            read_state() {
-              cat "$state_file" 2>/dev/null || printf 'idle'
-            }
-
-            case "$(read_state)" in
-              recording|streaming)
-                voxtype record stop
-                ;;
-              transcribing)
-                voxtype record cancel || true
-                ;;
-              *)
-                voxtype record start || exit 1
-                ;;
-            esac
-          '';
-        };
       in
       {
-        xdg.dataFile."voxtype/quickshell" = {
-          source = "${voxtypeQsQml}/quickshell";
-          recursive = true;
-        };
-
         home.packages = [
           pkgs.anomaly-hex
+          pkgs.wl-clipboard
+          pkgs.wtype
           hexToggle
-          voxtypeToggle
 
           (pkgs.writeShellApplication {
             name = "translate-selection";
@@ -161,85 +93,6 @@
             '';
           })
         ];
-
-        services.voxtype = {
-          enable = true;
-          package = voxtypeDictation;
-          settings = {
-            engine = "parakeet";
-            parakeet = {
-              model = "${parakeetUltra}";
-              # The worker reports the backend transcribe.cpp actually bound in
-              # $XDG_RUNTIME_DIR/voxtype/gguf_backend.json; pinning it here
-              # keeps the daemon off the CPU path if Vulkan is unavailable.
-              gguf_backend = "vulkan";
-            };
-            whisper = {
-              model = "small";
-              language = [
-                "en"
-                "es"
-              ];
-              initial_prompt = "NixOS, Nixpkgs, Home Manager, flakes, FlakeHub, sops-nix, dendritic, den, Niri, Voxtype, Wayland.";
-            };
-            audio.feedback.enabled = true;
-            audio.duck_media = true;
-            audio.max_duration_secs = 120;
-            output.notification.on_transcription = false;
-            text = {
-              spoken_punctuation = true;
-            };
-            vad = {
-              enabled = true;
-              backend = "energy";
-            };
-            osd = {
-              frontend = "quickshell";
-              layout = "wide";
-              frame = {
-                background = "none";
-                border = "none";
-                halo = false;
-              };
-              visual.layers = [
-                {
-                  type = "pulse";
-                  source = "rms";
-                  color = c.base0D;
-                  x = 0.03;
-                  y = 0.08;
-                  width = 0.94;
-                  height = 0.64;
-                  gain = 1.2;
-                  opacity = 0.14;
-                  radius = 10;
-                }
-                {
-                  type = "waveform";
-                  color = c.base0C;
-                  order = 10;
-                  x = 0.03;
-                  y = 0.2;
-                  width = 0.94;
-                  height = 0.6;
-                  opacity = 0.9;
-                }
-              ];
-            };
-          };
-          environment.PATH = lib.makeBinPath (
-            with pkgs;
-            [
-              coreutils
-              which
-              wl-clipboard
-              wtype
-              quickshell
-              pulseaudio # pactl for Voxtype media ducking
-              voxtypeDictation
-            ]
-          );
-        };
 
       };
   };

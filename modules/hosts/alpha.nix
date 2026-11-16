@@ -117,7 +117,6 @@
             ".local/state/nvim/shada"
             ".local/state/nvim/file_frecency.bin"
             ".local/state/nvim/avante/"
-            ".local/share/voxtype/meetings/"
             ".local/share/shadPS4/savedata/"
             ".local/share/shadPS4/keys.json"
             ".config/bbport-launcher/"
