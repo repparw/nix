@@ -44,14 +44,12 @@
         };
         # Keep the pinned plugin installed across server restarts. The plugin
         # manager owns the live tree, but this pin restores missing binaries.
-        # The old account-provider migration is intentionally not repeated.
         seedAutheliaPlugin = pkgs.writeShellApplication {
           name = "jellyfin-authelia-seed";
           runtimeInputs = [ pkgs.coreutils ];
           text = ''
             set -euo pipefail
             pluginDir='/var/lib/jellyfin/plugins/Authelia Authentication_1.0.17.0'
-            db=/var/lib/jellyfin/data/jellyfin.db
 
             if [ ! -f "$pluginDir/Authelia-Auth.dll" ]; then
               echo "seeding Authelia Authentication 1.0.17.0 from the declarative source"
@@ -63,8 +61,6 @@
             fi
 
             chmod 644 "$pluginDir/Authelia-Auth.dll" "$pluginDir/meta.json" "$pluginDir/logo.png" 2>/dev/null || true
-
-
           '';
         };
         createBackup = pkgs.writeShellApplication {
