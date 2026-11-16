@@ -1,4 +1,8 @@
-{ den, inputs, ... }:
+{
+  den,
+  inputs,
+  ...
+}:
 {
   # Follow the moving package expression in NixOS/nixpkgs#585097's head
   # branch, but lock its contents through the normal flake update workflow.
