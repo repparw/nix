@@ -200,9 +200,6 @@
             extraConfig = {
               services.qbittorrent.group = "media";
               users.groups.media.gid = 900;
-              systemd.services.qbittorrent.preStart = lib.mkBefore ''
-                rm -f /var/lib/qBittorrent/qBittorrent/config/lockfile
-              '';
               systemd.services.qbittorrent.serviceConfig.UMask = lib.mkForce "0002";
             };
             serviceConfig = {
