@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><title>Teleprompt</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#11151b;color:#edf3fa;font:24px/1.6 sans-serif}header{height:32px;display:flex;align-items:center;gap:8px;padding:0 12px;font:12px sans-serif;background:#202936}button,input{font:inherit}input{width:48px}#read{height:calc(100vh - 32px);overflow:auto;padding:12px 24px 80px;scroll-behavior:auto}#text{white-space:pre-wrap}textarea{width:100%;height:75px;background:#11151b;color:white;font:16px sans-serif}dialog{width:90%;background:#202936;color:white;border:1px solid #8192a6}#hint{color:#b9d2ec}::selection{background:#355e83}
+</style>
+<header><button id="edit">Script</button><button id="play">Play</button><button id="reset">Reset</button><label>px/s <input id="speed" type="number" min="1" max="80" value="18"></label><span id="hint">Paused · Space play · ↑↓ scroll · Home reset · E edit</span></header>
+<main id="read" tabindex="0"><div id="text">Welcome. This is a fake practice script.
+
+I build reliable software by understanding the problem, testing assumptions, and keeping the solution simple.
+
+When I pause, the prompt can pause too. I can scroll back to repeat a sentence, or move forward when I skip a paragraph.
+
+Thank you for listening.</div></main>
+<dialog id="editor"><form method="dialog"><label>Script (kept only in this window)<textarea id="script"></textarea></label><button value="save">Use script</button><button value="cancel">Cancel</button></form></dialog>
+<script>
+const read=document.querySelector('#read'),text=document.querySelector('#text'),editor=document.querySelector('#editor'),script=document.querySelector('#script');let playing=false,last=0,offset=0;
+function pause(){playing=false;document.querySelector('#play').textContent='Play';document.querySelector('#hint').textContent='Paused · Space play · ↑↓ scroll · Home reset · E edit'}
+function toggle(){playing=!playing;last=0;offset=read.scrollTop;document.querySelector('#play').textContent=playing?'Pause':'Play';document.querySelector('#hint').textContent=playing?'Scrolling · Space pause':'Paused · Space play · ↑↓ scroll · Home reset · E edit';read.focus()}
+function edit(){pause();script.value=text.textContent;editor.showModal()}
+document.querySelector('#edit').onclick=edit;document.querySelector('#play').onclick=toggle;document.querySelector('#reset').onclick=()=>{pause();read.scrollTop=0;read.focus()};
+editor.addEventListener('close',()=>{if(editor.returnValue==='save'){text.textContent=script.value;read.scrollTop=0}read.focus()});
+document.addEventListener('keydown',e=>{if(editor.open||e.target.matches('input,textarea'))return;if(e.code==='Space'){e.preventDefault();toggle()}else if(e.key.toLowerCase()==='e'){e.preventDefault();edit()}else if(['ArrowDown','ArrowUp','PageDown','PageUp','Home','End'].includes(e.key)){pause();read.focus()}});
+read.addEventListener('wheel',pause,{passive:true});document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
+function frame(t){if(playing){if(last){offset+=Math.min(t-last,100)*Math.max(1,Math.min(80,Number(document.querySelector('#speed').value)||18))/1000;read.scrollTop=offset;if(read.scrollTop>=read.scrollHeight-read.clientHeight)pause()}last=t}requestAnimationFrame(frame)}requestAnimationFrame(frame);read.focus();
+</script>
