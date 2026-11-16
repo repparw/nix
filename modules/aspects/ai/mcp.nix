@@ -74,13 +74,19 @@
             ''
               export HOME="$TMPDIR/browse-home"
               mkdir -p "$HOME"
-              status=0
-              printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"nix-ci","version":"1"}}}' \
-                | timeout 15 ${lib.getExe browse} mcp > "$TMPDIR/initialize.json" || status=$?
-              # The CLI exits 130 when the input pipe closes after responding.
-              test "$status" -eq 0 || test "$status" -eq 130
-              jq -se 'any(.[]; .id == 1 and .result.serverInfo.name == "browse")' \
-                "$TMPDIR/initialize.json"
+              {
+                printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"opencode","version":"1"}}}'
+                printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+              } | timeout 15 ${lib.getExe browse} mcp > "$TMPDIR/response.json"
+              jq -se '
+                any(.[]; .id == 1 and .result.serverInfo.name == "browse" and .result.serverInfo.version == "0.1.0")
+                and any(.[]; .id == 2 and (
+                  [.result.tools[].name] as $tools
+                  | ($tools | index("navigate") != null)
+                    and ($tools | index("snapshot") != null)
+                    and ($tools | index("execute") == null)
+                ))
+              ' "$TMPDIR/response.json"
               touch "$out"
             '';
       };
