@@ -103,12 +103,6 @@
           })
         ];
 
-        dconf.settings."io/github/nokse22/teleprompter" = {
-          font = "Sans 24";
-          # The app stores ten times the words-per-minute value.
-          speed = 1100;
-        };
-
         wayland.windowManager.niri = {
           enable = true;
           package = pkgs.niri;
@@ -404,9 +398,9 @@
                   default-column-width.fixed = 600;
                   default-window-height.fixed = 180;
                   default-floating-position._props = {
-                    x = 660;
+                    x = 0;
                     y = 0;
-                    relative-to = "top-left";
+                    relative-to = "top";
                   };
                 };
               }
