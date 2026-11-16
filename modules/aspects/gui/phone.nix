@@ -106,7 +106,6 @@
           Unit.Description = "ADB server with wireless debugging discovery";
           Service = {
             Type = "simple";
-            ExecStartPre = "-${platformTools}/bin/adb kill-server";
             ExecStart = "${platformTools}/bin/adb server nodaemon";
             Restart = "always";
             RestartSec = 2;
