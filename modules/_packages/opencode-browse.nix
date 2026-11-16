@@ -3,6 +3,7 @@
   stdenv,
   fetchurl,
   autoPatchelfHook,
+  makeWrapper,
   jq,
   coreutils,
 }:
@@ -43,6 +44,7 @@ stdenv.mkDerivation (finalAttrs: {
   dontBuild = true;
 
   nativeBuildInputs = [
+    makeWrapper
     jq
     coreutils
   ]
@@ -54,6 +56,11 @@ stdenv.mkDerivation (finalAttrs: {
     runHook preInstall
     install -Dm755 bin/browse "$out/bin/browse"
     runHook postInstall
+  '';
+
+  # Nix owns updates; do not let the upstream updater replace this binary.
+  postFixup = ''
+    wrapProgram "$out/bin/browse" --set OPENCODE_BROWSER_AUTO_UPDATE off
   '';
 
   doInstallCheck = true;
