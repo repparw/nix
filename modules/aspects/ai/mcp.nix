@@ -1,5 +1,6 @@
 {
   den,
+  inputs,
   lib,
   ...
 }:
@@ -36,33 +37,21 @@
   };
 
   den.aspects.ai.provides.browse-desktop.homeManager =
-    { config, pkgs, ... }:
-    let
-      browse = pkgs.callPackage ../../_packages/opencode-browse.nix { };
-      browseMcp = pkgs.writeShellScriptBin "browse-mcp" ''
-        exec ${lib.getExe pkgs.python3} ${../../scripts/browse-mcp-lazy.py} \
-          ${lib.getExe browse} \
-          ${lib.getExe' config.programs.helium.package "helium"} \
-          ${lib.getExe' pkgs.procps "pgrep"}
-      '';
-    in
+    { pkgs, ... }:
     {
       programs.mcp.servers.browse = {
-        command = lib.getExe browseMcp;
+        command = lib.getExe pkgs.opencode-browse;
         args = [ ];
-        env = {
-          OPENCODE_BROWSER_AUTO_UPDATE = "off";
-        };
       };
     };
 
   perSystem =
     { pkgs, ... }:
     {
-      checks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      checks = lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
         browse-mcp =
           let
-            browse = pkgs.callPackage ../../_packages/opencode-browse.nix { };
+            browse = inputs.self.nixosConfigurations.alpha.pkgs.opencode-browse;
           in
           pkgs.runCommand "check-browse-mcp"
             {
@@ -79,7 +68,7 @@
                 printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
               } | timeout 15 ${lib.getExe browse} mcp > "$TMPDIR/response.json"
               jq -se '
-                any(.[]; .id == 1 and .result.serverInfo.name == "browse" and .result.serverInfo.version == "0.1.0")
+                any(.[]; .id == 1 and .result.serverInfo.name == "browse" and .result.serverInfo.version == "${browse.version}")
                 and any(.[]; .id == 2 and (
                   [.result.tools[].name] as $tools
                   | ($tools | index("navigate") != null)
