@@ -667,6 +667,18 @@
         "type": "github"
       }
     },
+    "opencode-browse-pr": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-xZaf6SYq2umrP3qbQNRnneWrG+1T3GHeVV/Qt+xa09I=",
+        "type": "file",
+        "url": "https://raw.githubusercontent.com/repparw/nixpkgs/refs/heads/feat/opencode-browse-0.0.15/pkgs/by-name/op/opencode-browse/package.nix"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://raw.githubusercontent.com/repparw/nixpkgs/refs/heads/feat/opencode-browse-0.0.15/pkgs/by-name/op/opencode-browse/package.nix"
+      }
+    },
     "pyproject-build-systems": {
       "inputs": {
         "nixpkgs": [
@@ -738,6 +750,7 @@
         "nixpkgs": "nixpkgs",
         "nixvim": "nixvim",
         "nixvim-config": "nixvim-config",
+        "opencode-browse-pr": "opencode-browse-pr",
         "sops-nix": "sops-nix",
         "stylix": "stylix",
         "systems": "systems_2"

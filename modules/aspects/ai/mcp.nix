@@ -1,5 +1,6 @@
 {
   den,
+  inputs,
   lib,
   ...
 }:
@@ -38,10 +39,9 @@
   den.aspects.ai.provides.browse-desktop.homeManager =
     { config, pkgs, ... }:
     let
-      browse = pkgs.callPackage ../../_packages/opencode-browse.nix { };
       browseMcp = pkgs.writeShellScriptBin "browse-mcp" ''
         exec ${lib.getExe pkgs.python3} ${../../scripts/browse-mcp-lazy.py} \
-          ${lib.getExe browse} \
+          ${lib.getExe pkgs.opencode-browse} \
           ${lib.getExe' config.programs.helium.package "helium"} \
           ${lib.getExe' pkgs.procps "pgrep"}
       '';
@@ -50,37 +50,43 @@
       programs.mcp.servers.browse = {
         command = lib.getExe browseMcp;
         args = [ ];
-        env = {
-          OPENCODE_BROWSER_AUTO_UPDATE = "off";
-        };
       };
     };
 
   perSystem =
     { pkgs, ... }:
     {
-      checks = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+      checks = lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
         browse-mcp =
           let
-            browse = pkgs.callPackage ../../_packages/opencode-browse.nix { };
+            browse = inputs.self.nixosConfigurations.alpha.pkgs.opencode-browse;
           in
           pkgs.runCommand "check-browse-mcp"
             {
               nativeBuildInputs = [
                 pkgs.jq
                 pkgs.coreutils
+                pkgs.python3
               ];
             }
             ''
               export HOME="$TMPDIR/browse-home"
               mkdir -p "$HOME"
-              status=0
-              printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"nix-ci","version":"1"}}}' \
-                | timeout 15 ${lib.getExe browse} mcp > "$TMPDIR/initialize.json" || status=$?
-              # The CLI exits 130 when the input pipe closes after responding.
-              test "$status" -eq 0 || test "$status" -eq 130
-              jq -se 'any(.[]; .id == 1 and .result.serverInfo.name == "browse")' \
-                "$TMPDIR/initialize.json"
+              {
+                printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"opencode","version":"1"}}}'
+                printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+              } | timeout 15 ${lib.getExe pkgs.python3} ${../../scripts/browse-mcp-lazy.py} \
+                ${lib.getExe browse} /missing-helium ${lib.getExe' pkgs.procps "pgrep"} \
+                > "$TMPDIR/response.json"
+              jq -se '
+                any(.[]; .id == 1 and .result.serverInfo.name == "browse" and .result.serverInfo.version == "${browse.version}")
+                and any(.[]; .id == 2 and (
+                  [.result.tools[].name] as $tools
+                  | ($tools | index("navigate") != null)
+                    and ($tools | index("snapshot") != null)
+                    and ($tools | index("execute") == null)
+                ))
+              ' "$TMPDIR/response.json"
               touch "$out"
             '';
       };

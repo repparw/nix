@@ -24,6 +24,10 @@
       "native-arm-cli"
     ]
   },
+  "opencode-browse": {
+    "mode": "notify-only",
+    "input": "nixpkgs"
+  },
   "tasks-org": {
     "mode": "post-lock",
     "input": "nixpkgs"
