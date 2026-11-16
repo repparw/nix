@@ -74,6 +74,12 @@ def validate(name, architecture):
         expression = 'let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT"); in f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope.override { enableWsi = true; }'
         subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--expr", expression],
                        env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, check=True)
+    elif name == "opencode-browse":
+        package = build("alpha.pkgs.opencode-browse")
+        executable = evaluate("alpha.config.home-manager.users.repparw.programs.mcp.servers.browse.command")
+        require(executable == str(package / "bin/browse"),
+                "Browse MCP must use the unoverlaid nixpkgs package")
+        # The package's installCheckPhase tests the CLI version and MCP handshake.
     elif name in ("tasks-org", "wpaperd-fix", "qbittorrent"):
         attribute = {"tasks-org": "alpha.pkgs.tasks-org", "wpaperd-fix": "alpha.pkgs.wpaperd",
                      "qbittorrent": "alpha.config.containers.qbittorrent.config.services.qbittorrent.package"}[name]
