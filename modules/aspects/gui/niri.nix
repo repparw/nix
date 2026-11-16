@@ -321,17 +321,17 @@
                 screenshot._props.show-pointer = false;
               };
               # GSR UI's completion-to-clipboard workflow still needs testing.
-              "Ctrl+Print" = titledSpawn "Toggle Recording" [
+              "Ctrl+Print" = titledSpawn "Toggle Portal Recording" [
                 "gsr-ui-cli"
-                "toggle-record"
+                "toggle-record-window"
               ];
               "Ctrl+Alt+Print" = titledSpawn "Recording Controls" [
                 "gsr-ui-cli"
                 "toggle-show"
               ];
-              "Ctrl+Shift+Print" = titledSpawn "Record Window" [
+              "Ctrl+Shift+Print" = titledSpawn "Toggle Direct Recording" [
                 "gsr-ui-cli"
-                "toggle-record-window"
+                "toggle-record"
               ];
               "Ctrl+Mod+Shift+Print" = titledSpawn "Record Area" [
                 "gsr-ui-cli"
