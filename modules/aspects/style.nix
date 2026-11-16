@@ -27,7 +27,7 @@
             # source retains the same verified forest image as the old mirror.
             inputImage = pkgs.fetchurl {
               url = "https://gitlab.com/exorcist365/wallpapers/-/raw/8d2860ac6c05cec0f78d5c9d07510f4ff5da90dc/gruvbox/forest-4.jpg";
-              hash = "sha256-mqrwRvJmRLK3iyEiXmaw5UQPftEaqg33YxwzpZvyXws=";
+              hash = "sha256-mqrwRvJmRLK3iyEiXmaw5UQPftEaqg33NhwzpZvyXws=";
             };
 
             brightness = -15;
