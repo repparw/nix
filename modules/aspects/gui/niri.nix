@@ -66,13 +66,7 @@
       {
         home.packages = with pkgs; [
           ndrop
-          (teleprompter.overrideAttrs (old: {
-            # GTK otherwise refuses a compact near-camera window, even with Niri size overrides.
-            postPatch = (old.postPatch or "") + ''
-              substituteInPlace src/window.ui \
-                --replace-fail '<property name="height-request">360</property>' '<property name="height-request">180</property>'
-            '';
-          }))
+          teleprompter
 
           (writeShellApplication {
             name = "grabtext";
@@ -396,7 +390,7 @@
                   open-floating = true;
                   open-on-output = "DP-1";
                   default-column-width.fixed = 600;
-                  default-window-height.fixed = 180;
+                  default-window-height.fixed = 360;
                   default-floating-position._props = {
                     x = 0;
                     y = 0;
