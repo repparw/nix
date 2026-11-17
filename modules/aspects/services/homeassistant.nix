@@ -80,7 +80,18 @@
                   customComponents =
                     with pkgs.home-assistant-custom-components;
                     [
-                      auth_oidc
+                      # Home Assistant 2026.11 stores person data in a
+                      # PersonData dataclass, but the auth_oidc tests still
+                      # index it as a tuple and fail to build on aarch64 and
+                      # x86_64. This is the upstream fix from NixOS/nixpkgs
+                      # 961415f8cca2; drop the override once the locked
+                      # nixpkgs contains that commit.
+                      (auth_oidc.overrideAttrs (old: {
+                        postPatch = (old.postPatch or "") + ''
+                          substituteInPlace tests/test_hass_auth_provider.py \
+                            --replace-fail "hass.data[PERSON_DOMAIN][1]" "hass.data[PERSON_DOMAIN].storage_collection"
+                        '';
+                      }))
                       adaptive_lighting
                     ]
                     ++ [
