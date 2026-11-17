@@ -25,8 +25,9 @@
     ]
   },
   "opencode-browse": {
-    "mode": "notify-only",
-    "input": "nixpkgs"
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "regenerate-flake": true
   },
   "tasks-org": {
     "mode": "post-lock",
