@@ -9,6 +9,16 @@ if [[ ! "$CI_CHECKS" =~ [a-z0-9] ]]; then
 fi
 
 mkdir -p ci-logs
+run_check() {
+  local target=".#checks.x86_64-linux.$1"
+  if [[ ${CI_OFFLINE_EVAL:-0} == 1 ]]; then
+    local drv
+    drv=$(nix eval --offline --no-update-lock-file --raw "$target.drvPath") || return 1
+    target="$drv^*"
+  fi
+  nix build "$target" --no-update-lock-file --no-link --print-build-logs
+}
+
 failed=0
 for check in $CI_CHECKS; do
   if [[ ! "$check" =~ ^[a-z0-9-]+$ ]]; then
@@ -17,8 +27,7 @@ for check in $CI_CHECKS; do
   fi
   echo "::group::$check"
   started=$SECONDS
-  if nix build ".#checks.x86_64-linux.$check" \
-    --no-update-lock-file --no-link --print-build-logs 2>&1 | tee "ci-logs/$check.log"; then
+  if run_check "$check" 2>&1 | tee "ci-logs/$check.log"; then
     result=success
   else
     result=failure

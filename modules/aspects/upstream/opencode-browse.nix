@@ -4,10 +4,10 @@
   ...
 }:
 {
-  # Follow the moving package expression in NixOS/nixpkgs#585097's head
-  # branch, but lock its contents through the normal flake update workflow.
+  # Pin the package expression from NixOS/nixpkgs#585097 so a branch update
+  # cannot change the file behind the lock hash.
   flake-file.inputs.opencode-browse-pr = {
-    url = "https://raw.githubusercontent.com/repparw/nixpkgs/refs/heads/feat/opencode-browse-0.0.15/pkgs/by-name/op/opencode-browse/package.nix";
+    url = "https://raw.githubusercontent.com/repparw/nixpkgs/55e2f197377de729a2fed0179ae4fa57781ae0bd/pkgs/by-name/op/opencode-browse/package.nix";
     flake = false;
   };
 
