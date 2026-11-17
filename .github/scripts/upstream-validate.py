@@ -74,6 +74,9 @@ def validate(name, architecture):
         expression = 'let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT"); in f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope.override { enableWsi = true; }'
         subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--expr", expression],
                        env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, check=True)
+    elif name == "opencode-browse":
+        command("nix", "build", "--no-link", "--no-update-lock-file",
+                ".#checks.x86_64-linux.browse-mcp")
     elif name in ("tasks-org", "wpaperd-fix", "qbittorrent"):
         attribute = {"tasks-org": "alpha.pkgs.tasks-org", "wpaperd-fix": "alpha.pkgs.wpaperd",
                      "qbittorrent": "alpha.config.containers.qbittorrent.config.services.qbittorrent.package"}[name]

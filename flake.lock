@@ -667,18 +667,6 @@
         "type": "github"
       }
     },
-    "opencode-browse-pr": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-e+C6opRMbjW6t3EDo+NmQBbUYT837NXXYmkV34uYTqI=",
-        "type": "file",
-        "url": "https://raw.githubusercontent.com/repparw/nixpkgs/55e2f197377de729a2fed0179ae4fa57781ae0bd/pkgs/by-name/op/opencode-browse/package.nix"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://raw.githubusercontent.com/repparw/nixpkgs/55e2f197377de729a2fed0179ae4fa57781ae0bd/pkgs/by-name/op/opencode-browse/package.nix"
-      }
-    },
     "pyproject-build-systems": {
       "inputs": {
         "nixpkgs": [
@@ -750,7 +738,6 @@
         "nixpkgs": "nixpkgs",
         "nixvim": "nixvim",
         "nixvim-config": "nixvim-config",
-        "opencode-browse-pr": "opencode-browse-pr",
         "sops-nix": "sops-nix",
         "stylix": "stylix",
         "systems": "systems_2"
