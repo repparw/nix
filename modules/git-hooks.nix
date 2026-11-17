@@ -47,6 +47,7 @@
     {
       pre-commit = {
         settings = {
+          package = pkgs.prek;
           hooks = {
             convco = {
               enable = true;
@@ -69,9 +70,12 @@
                 }
               );
             };
-            prettier = {
+            format = {
               enable = true;
-              files = "\\.md$";
+              entry = "${pkgs.lib.getExe config.formatter} --tree-root . --walk filesystem --no-cache --fail-on-change";
+              files = "\\.(nix|md|sh)$";
+              require_serial = true;
+              before = [ "write-flake" ];
             };
             agent-docs = {
               enable = true;
@@ -81,20 +85,10 @@
               pass_filenames = false;
               files = "^(AGENTS\\.md|docs/.*\\.md|\\.agents/.*\\.md|modules/scripts/check-agent-docs(\\.test)?\\.py)$";
             };
-            nixfmt = {
-              enable = true;
-              package = pkgs.nixfmt;
-            };
-            deadnix = {
-              enable = true;
-              args = [
-                "--edit"
-                "--no-lambda-arg"
-                "--no-lambda-pattern-names"
-              ];
-            };
             shellcheck = {
               enable = true;
+              # treefmt handles *.sh; retain shebang-detected scripts without that extension.
+              excludes = [ "\\.sh$" ];
               types_or = [
                 "shell"
                 "bash"
