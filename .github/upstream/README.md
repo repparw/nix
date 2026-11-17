@@ -35,6 +35,14 @@ patch or per-watcher cleanup recipe is needed. The publisher checks the exact
 tree and refuses to overwrite a modified candidate or workaround file.
 One failed cleanup does not prevent other watchers from processing.
 
+`epic-storefront` uses `input: repository-package` because its source revision
+is pinned in the repository package expression, outside `flake.lock`. It waits
+for vogler/free-games-claimer#599 to merge, then inspects `epic-games.js` at the
+exact selected fork revision. All purchase selectors, including checkout
+completion, and both checkout iframe selectors must contain the fix. Cleanup
+removes only its upstream module and builds the package without that overlay;
+a newer nixpkgs pin or an upstream merge alone cannot retire the workaround.
+
 Post-lock workarounds live under `modules/aspects/upstream/`. Each module
 contributes to its permanent owner through `den.aspects.<owner>.provides.<aspect>`,
 without changing the provided aspect's name or explicit host includes.

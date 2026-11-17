@@ -1,4 +1,8 @@
 {
+  "epic-storefront": {
+    "mode": "post-lock",
+    "input": "repository-package"
+  },
   "fsr4-rdna2": {
     "mode": "notify-only",
     "input": "nixpkgs",

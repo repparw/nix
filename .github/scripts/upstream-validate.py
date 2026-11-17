@@ -74,6 +74,21 @@ def validate(name, architecture):
         expression = 'let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT"); in f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope.override { enableWsi = true; }'
         subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--expr", expression],
                        env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, check=True)
+    elif name == "epic-storefront":
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("readiness", ROOT / ".github/scripts/upstream-readiness.py")
+        detector = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(detector)
+        require(detector.epic_storefront_status() == "PINNED-READY", "claimer source pin lacks the storefront fix")
+        expression = '''let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT");
+          pkgs = f.inputs.nixpkgs.legacyPackages.x86_64-linux;
+          in pkgs.callPackage ./modules/_packages/free-games-claimer.nix {}'''
+        package = Path(subprocess.run(
+            ["nix", "build", "--impure", "--no-link", "--no-update-lock-file", "--print-out-paths", "--expr", expression],
+            env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)},
+            capture_output=True, text=True, check=True).stdout.strip())
+        require(detector.epic_storefront_fixed((package / "lib/node_modules/free-games-claimer/epic-games.js").read_text()),
+                "built claimer lacks the storefront fix after cleanup")
     elif name in ("tasks-org", "wpaperd-fix", "qbittorrent"):
         attribute = {"tasks-org": "alpha.pkgs.tasks-org", "wpaperd-fix": "alpha.pkgs.wpaperd",
                      "qbittorrent": "alpha.config.containers.qbittorrent.config.services.qbittorrent.package"}[name]

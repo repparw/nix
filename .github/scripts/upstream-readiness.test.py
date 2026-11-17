@@ -14,6 +14,22 @@ LOCK = {"nodes": {"root": {"inputs": {"nixpkgs": "np", "home-manager": "hm"}}, "
 
 
 class Readiness(unittest.TestCase):
+    def test_epic_waits_for_merge_and_exact_repository_package_source(self):
+        fixed = '[class*="sidebarBuyButton"]' * 4 + 'iframe[src*="/checkout"]' * 2
+        with patch.object(watch, "api", return_value={"merged": False}), patch.object(watch, "source") as probe:
+            self.assertEqual(watch.detect("epic-storefront", LOCK), "waiting-upstream")
+            probe.assert_not_called()
+        for text, expected in ((fixed, "PINNED-READY"),
+                               (fixed + "purchase-cta-button", "merged-not-pinned"),
+                               (fixed.replace('iframe[src*="/checkout"]', ''), "merged-not-pinned"),
+                               (fixed.replace('[class*="sidebarBuyButton"]', '', 1), "merged-not-pinned")):
+            with self.subTest(expected=expected), patch.object(watch, "api", return_value={"merged": True}), \
+                    patch.object(watch, "source", return_value=text) as probe:
+                self.assertEqual(watch.detect("epic-storefront", LOCK), expected)
+                probe.assert_called_once_with("FroggMaster/free-games-claimer", "epic-games.js", "dc756d6244c323219a7be5d7ac0abcfe4a2fcc96")
+        with patch.object(watch, "api", side_effect=ValueError("unavailable")):
+            self.assertTrue(watch.inspect("epic-storefront", LOCK).startswith("unavailable"))
+
     def fsr_spec(self, commit=None):
         return patch.object(watch.Path, "read_text", return_value=json.dumps({
             "fsr4-rdna2": {"baseline_release": "GE-Proton11-11", "support_commit": commit}}))
