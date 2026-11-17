@@ -79,10 +79,6 @@
         nixvim.follows = "nixvim";
       };
     };
-    opencode-browse-pr = {
-      url = "https://raw.githubusercontent.com/repparw/nixpkgs/55e2f197377de729a2fed0179ae4fa57781ae0bd/pkgs/by-name/op/opencode-browse/package.nix";
-      flake = false;
-    };
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
