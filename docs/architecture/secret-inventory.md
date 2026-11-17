@@ -29,28 +29,42 @@ There are two distinct authorities:
 The procedures below document cases where updating a secret alone does
 not complete the operation.
 
-## Hermes T3 MCP connection
+## Hermes T3 MCP token rotation
 
-Hermes on epsilon uses one OAuth 2.0 MCP connection, `t3code`, to Epsilon's
-relay with the Auto scope set (`orchestration:read` and
-`orchestration:operate`). Alpha and Pi are reached through Epsilon's linked
-environments rather than separate credentials. Effective access is the lower of
-the client scopes and the link's access level, so remote work stays at Auto.
-Tokens live in Hermes' home under `.hermes/mcp-tokens/`; they are neither
-committed nor stored in SOPS.
+The `hermes-t3-mcp` bearer session on alpha is issued for 365 days and
+loaded into Hermes on epsilon from `hermes-llm-env`. Its read and operate
+scopes allow it to direct T3 threads, so revoke it immediately if compromised.
 
-Re-enrollment needs a human approval step. `hermes mcp login t3code` binds a
-loopback callback listener on port 27890 and prints an authorize URL. Open it
-in a browser signed in to the relay, or paste a short-lived code from
-`t3 auth pairing create --scope orchestration:read --scope
-orchestration:operate`, choose Auto, and approve. In the headless container,
-forward that loopback port to the browser's machine or paste the redirect URL
-into the prompt. Do not script the approval.
+1. Issue a new `mcp-client` session on alpha with the same label, scopes
+   (`orchestration:read` and `orchestration:operate`), and a 365-day TTL.
+2. Replace only `T3_MCP_TOKEN` in the SOPS `hermes-llm-env` value and
+   deploy epsilon. The secret has a `container@hermes.service` restart trigger.
+3. Verify an actual Hermes-initiated T3 MCP tool call on epsilon using the
+   newly deployed configuration. Issuing the session or checking it from alpha
+   does **not** prove that Hermes loaded the new credential.
+4. On alpha, identify the **new** session ID from `t3 auth session list --json`
+   (check its `issuedAt` and `expiresAt`). After step 3 succeeds, acknowledge
+   this specific ID in the watcher's state directory:
 
-If the connection breaks, re-enroll before touching anything else: the legacy
-per-host bearer tokens are gone, so there is no fallback credential. Prove
-recovery with a real Hermes-initiated call, such as `hermes chat -q` reading
-`t3_environment_links`.
+   ```sh
+   sudo install -d -m 0755 /var/lib/t3-token-watch
+   printf '%s\n' '<new-session-id>' | sudo tee /var/lib/t3-token-watch/verified-session-id >/dev/null
+   ```
+
+   The session ID is metadata, **not** the bearer token. Never store the bearer
+   token in this file.
+
+5. Revoke the old session on alpha, then confirm `t3 auth session list --json`
+   reports exactly one active session with label `hermes-t3-mcp`. Run
+   `sudo systemctl start t3-token-watch` and check that its
+   `/var/lib/t3-token-watch/last-band` state is `ok`.
+
+Alpha's daily `t3-token-watch` cannot inspect the credential loaded by
+Hermes on epsilon. It reports overlapping sessions and replacement session
+IDs lacking the post-deployment acknowledgment, with weekly reminders until
+resolved. The watcher only tracks expiry when one labeled session remains and
+its ID matches the acknowledged one. A healthy expiry report does **not**
+replace the MCP probe in step 3.
 
 ## Account password and Authelia user provisioning
 
