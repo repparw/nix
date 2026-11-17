@@ -72,9 +72,12 @@ jobs:
           skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
           useDaemon: true
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-      - name: Fetch locked flake inputs
+      - name: Prepare offline evaluation
         if: matrix.group == 'configuration'
-        run: nix flake archive --no-update-lock-file
+        run: |
+          nix flake archive --no-update-lock-file
+          # Stylix reads this package's theme YAML during evaluation.
+          nix build --no-update-lock-file --no-link --inputs-from . nixpkgs#base16-schemes
       - name: Run attributed checks
         env:
           CI_CHECKS: ${{ matrix.checks }}
@@ -127,8 +130,10 @@ jobs:
         with:
           ref: ${{ github.sha }}
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
-      - name: Fetch locked flake inputs
-        run: nix flake archive --no-update-lock-file
+      - name: Prepare offline evaluation
+        run: |
+          nix flake archive --no-update-lock-file
+          nix build --no-update-lock-file --no-link --inputs-from . nixpkgs#base16-schemes
       - name: Evaluate all hosts with stubs
         env:
           CI_CHECKS: alpha pi epsilon
