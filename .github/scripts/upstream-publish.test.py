@@ -42,6 +42,16 @@ class Publication(unittest.TestCase):
         original = publisher.run
 
         def execute(*arguments, cwd=None, env=None):
+            if arguments[0] == "nix":
+                # Simulate flake-file regeneration and lock pruning; the
+                # publisher's Git tree checks run against real worktrees.
+                if arguments[1:] == ("run", "--no-update-lock-file", ".#write-flake"):
+                    (Path(cwd) / "flake.nix").write_text("generated\\n".replace("\\n", "\n"))
+                elif arguments[1:] == ("flake", "lock", "--offline"):
+                    (Path(cwd) / "flake.lock").write_text("pruned\\n".replace("\\n", "\n"))
+                else:
+                    raise AssertionError(arguments)
+                return ""
             if arguments[0] != "gh":
                 return original(*arguments, cwd=cwd or self.root, env=env)
             args = list(arguments[1:])
@@ -83,6 +93,62 @@ class Publication(unittest.TestCase):
 
     def publish(self):
         return publisher.publish("fixture", self.contract, "fixture/repo")
+
+    def test_regenerating_cleanup_is_exact_and_refreshable(self):
+        self.contract["regenerate-flake"] = True
+        (self.root / "flake.nix").write_text("old generated\\n".replace("\\n", "\n"))
+        (self.root / "flake.lock").write_text("old pin\\n".replace("\\n", "\n"))
+        self.git("add", "flake.nix", "flake.lock")
+        self.git("commit", "--quiet", "-m", "temporary input")
+        self.git("push", "--quiet", "origin", "main")
+
+        first = self.publish()
+        self.assertEqual(self.git("show", f"{first['sha']}:flake.nix"), "generated")
+        self.assertEqual(self.git("show", f"{first['sha']}:flake.lock"), "pruned")
+        self.assertEqual(
+            self.git("diff-tree", "--no-commit-id", "--name-only", "-r", first["sha"]).splitlines(),
+            ["flake.lock", "flake.nix", "modules/aspects/upstream/fixture.nix"],
+        )
+        self.assertEqual(self.publish(), first)
+
+        (self.root / "modules/other.nix").write_text("new change\\n".replace("\\n", "\n"))
+        self.git("add", "modules/other.nix")
+        self.git("commit", "--quiet", "-m", "main advanced")
+        self.git("push", "--quiet", "origin", "main")
+        refreshed = self.publish()
+        self.assertNotEqual(refreshed["sha"], first["sha"])
+        self.assertEqual(self.git("show", f"{refreshed['sha']}:modules/other.nix"), "new change")
+        self.assertEqual(self.git("show", f"{refreshed['sha']}:flake.lock"), "pruned")
+        self.assertEqual(len(self.dispatches), 4)
+
+    def test_regenerated_candidate_tamper_fails_closed(self):
+        self.contract["regenerate-flake"] = True
+        (self.root / "flake.nix").write_text("old generated\\n".replace("\\n", "\n"))
+        (self.root / "flake.lock").write_text("old pin\\n".replace("\\n", "\n"))
+        self.git("add", "flake.nix", "flake.lock")
+        self.git("commit", "--quiet", "-m", "temporary input")
+        self.git("push", "--quiet", "origin", "main")
+        first = self.publish()
+
+        clone = Path(self.temporary.name) / "tamper-generated"
+        subprocess.run(
+            ["git", "clone", "--quiet", str(self.remote), str(clone),
+             "--branch", "automation/upstream-fixture"], check=True)
+        (clone / "flake.nix").write_text("unrelated generated edit\\n".replace("\\n", "\n"))
+        subprocess.run(["git", "-C", str(clone), "add", "flake.nix"], check=True)
+        subprocess.run(
+            ["git", "-C", str(clone), "-c", "user.name=T", "-c", "user.email=t@t",
+             "-c", "core.hooksPath=/dev/null", "commit", "--quiet", "--amend",
+             "-m", "tampered"], check=True)
+        subprocess.run(
+            ["git", "-C", str(clone), "push", "--quiet", "--force", "origin",
+             "automation/upstream-fixture"], check=True)
+        with self.assertRaises(ValueError):
+            self.publish()
+        self.assertNotEqual(
+            self.git("ls-remote", "--heads", "origin", "automation/upstream-fixture").split()[0],
+            first["sha"],
+        )
 
     def test_fsr_candidates_notify_once_without_claiming_pin_readiness(self):
         registry = {"fsr4-rdna2": {"mode": "notify-only"}}
