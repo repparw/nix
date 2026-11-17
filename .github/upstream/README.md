@@ -29,12 +29,10 @@ The OpenCode v2 package watcher was retired after #505 and #229. Active watcher
 readiness notices go to the run summary and Discord. Package readiness does
 not replace fleet runtime verification.
 
-Independent `post-lock` contracts publish deletion PRs from the checked-out
-main revision. The filename matches the watcher ID. A workaround that also
-declares a temporary flake input sets `regenerate-flake: true` to regenerate
-`flake.nix` and prune `flake.lock` after deletion. The publisher reproduces
-the exact resulting tree and refuses to overwrite a modified candidate or
-workaround file.
+Independent `post-lock` contracts publish one-file deletion PRs from the
+checked-out main revision. The filename matches the watcher ID, so no stored
+patch or per-watcher cleanup recipe is needed. The publisher checks the exact
+tree and refuses to overwrite a modified candidate or workaround file.
 One failed cleanup does not prevent other watchers from processing.
 
 Post-lock workarounds live under `modules/aspects/upstream/`. Each module
@@ -45,9 +43,9 @@ workarounds contribute directly to permanent aspects, without separate
 inclusion entries. Each workaround file can therefore be added or removed
 without editing any default, role, or permanent aspect. T3 Code's permanent
 desktop URL handler and headless CLI selection live in `ai/t3code.nix` and
-`roles.nix` respectively, outside `upstream/`. Each cleanup stages `git rm modules/aspects/upstream/<watcher>.nix` and
-verifies the exact candidate diff before publication, plus the generated flake
-files only when requested by the watcher.
+`roles.nix` respectively, outside `upstream/`. Each cleanup stages a
+single `git rm modules/aspects/upstream/<watcher>.nix` and verifies the
+exact candidate diff before publication.
 
 The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
 the exact expected candidate tree before reusing an existing branch and
