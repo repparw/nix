@@ -50,40 +50,8 @@ def arm_automerge(repo, number):
             raise ValueError(f"auto-merge request failed: {output.strip()[:200]}") from None
 
 
-def recipe_paths(name, spec):
-    paths = {module_path(name, spec)}
-    if spec.get("regenerate-flake"):
-        paths.update(("flake.nix", "flake.lock"))
-    return paths
-
-
-def apply_recipe(name, spec, candidate):
-    remove_module(name, spec, candidate)
-    if spec.get("regenerate-flake"):
-        # The removed module also declared a temporary flake input.
-        # Regenerate the derived file and prune the unused lock node.
-        run("nix", "run", "--no-update-lock-file", ".#write-flake", cwd=candidate)
-        run("nix", "flake", "lock", "--offline", cwd=candidate)
-        run("git", "add", "--", "flake.nix", "flake.lock", cwd=candidate)
-    changed = set(run("git", "diff", "--cached", "--name-only", cwd=candidate).splitlines())
-    if changed != recipe_paths(name, spec):
-        raise ValueError("cleanup changed unexpected paths")
-
-
-def expected_tree(candidate, base, name, spec):
-    path = module_path(name, spec)
-    if spec.get("regenerate-flake"):
-        # Reproduce the full recipe on a clean checkout of the claimed base,
-        # not the candidate tip. This also detects edits to generated files.
-        with tempfile.TemporaryDirectory(prefix="upstream-expected-", dir=candidate.parent) as directory:
-            checkout = Path(directory) / "checkout"
-            run("git", "worktree", "add", "--detach", str(checkout), base, cwd=candidate)
-            try:
-                apply_recipe(name, spec, checkout)
-                return run("git", "write-tree", cwd=checkout)
-            finally:
-                run("git", "worktree", "remove", "--force", str(checkout), cwd=candidate)
-    # Fast path for one-file deletion candidates.
+def expected_tree(candidate, base, path):
+    # Reconstruct the exact tree after deleting a tracked workaround file.
     environment = {**os.environ, "GIT_INDEX_FILE": str(candidate.parent / f"expected-index-{base[:8]}")}
     run("git", "cat-file", "-e", f"{base}:{path}", cwd=candidate)
     run("git", "read-tree", base, cwd=candidate, env=environment)
@@ -95,7 +63,7 @@ def publish(name, spec, repo):
     if not re.fullmatch(r"[a-z0-9-]+", name):
         raise ValueError("invalid watcher id")
     path = module_path(name, spec)
-    paths = recipe_paths(name, spec)
+    paths = {path}
     branch = f"automation/upstream-{name}"
     prs = gh_json("pr", "list", "--repo", repo, "--head", branch, "--base", "main",
                   "--state", "open", "--json", "number,headRefOid")
@@ -132,14 +100,17 @@ def publish(name, spec, repo):
                     current = run("git", "rev-parse", f"{main_sha}:{path}", cwd=candidate)
                     if original != current:
                         raise ValueError("workaround changed on main; needs review")
-                main_expected = expected_tree(candidate, main_sha, name, spec)
+                main_expected = expected_tree(candidate, main_sha, path)
                 if branch_tree != main_expected:
-                    tip_expected = expected_tree(candidate, "HEAD^", name, spec)
+                    tip_expected = expected_tree(candidate, "HEAD^", path)
                     single = run("git", "rev-list", "--count", "HEAD^..HEAD", cwd=candidate)
                     if branch_tree != tip_expected or single != "1":
                         raise ValueError("candidate differs from the exact cleanup recipe")
                     run("git", "checkout", "--quiet", "--detach", main_sha, cwd=candidate)
-                    apply_recipe(name, spec, candidate)
+                    remove_module(name, spec, candidate)
+                    changed = set(run("git", "diff", "--cached", "--name-only", cwd=candidate).splitlines())
+                    if changed != paths:
+                        raise ValueError("cleanup changed unexpected paths")
                     run("git", "-c", "user.name=github-actions[bot]", "-c",
                         "user.email=41898282+github-actions[bot]@users.noreply.github.com",
                         "-c", "core.hooksPath=/dev/null", "commit", "-m",
@@ -149,7 +120,10 @@ def publish(name, spec, repo):
                         "origin", f"HEAD:refs/heads/{branch}", cwd=candidate)
                     sha = refreshed
             else:
-                apply_recipe(name, spec, candidate)
+                remove_module(name, spec, candidate)
+                changed = set(run("git", "diff", "--cached", "--name-only", cwd=candidate).splitlines())
+                if changed != paths:
+                    raise ValueError("cleanup changed unexpected paths")
                 run("git", "-c", "user.name=github-actions[bot]", "-c",
                     "user.email=41898282+github-actions[bot]@users.noreply.github.com",
                     "-c", "core.hooksPath=/dev/null", "commit", "-m",
@@ -165,7 +139,7 @@ def publish(name, spec, repo):
                 body = Path(directory) / "body.md"
                 body.write_text(f"Retires the {name} workaround after the upstream fix reached "
                                 "the flake's checked-out pin.\n\n"
-                                f"Changed files: {', '.join(sorted(paths))}.\n"
+                                f"Removed file: `{path}`.\n"
                                 f"Candidate: `{sha}`.\n\n"
                                 "CI validates the exact revision, evaluates the fleet, and runs "
                                 "the package-specific checks. Auto-merge fires when the required "
