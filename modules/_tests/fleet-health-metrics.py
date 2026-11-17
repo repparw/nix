@@ -80,6 +80,26 @@ class MetricsTests(unittest.TestCase):
         self.assertIn('fleet_backup_export_complete{export="paperless"} 1', text)
         self.assertEqual(state["since"], 100)
 
+    def test_deployment_outcome_is_reported_only_for_controller(self):
+        settings = {"requiredUnits": [], "exports": [], "probes": [],
+                    "deploymentController": True}
+        def exists(path):
+            return str(path).endswith("last-attempt-status")
+        with patch.object(collector, "command", return_value=""), \
+             patch.object(collector, "reboot_required", return_value=0), \
+             patch.object(Path, "exists", exists), \
+             patch.object(Path, "read_text", return_value="1\n"), \
+             patch.object(Path, "stat", return_value=SimpleNamespace(st_mtime=1234)):
+            text, _ = collector.host_metrics(settings, {}, 100)
+        self.assertIn("fleet_deployment_last_attempt_status 1", text)
+        self.assertIn("fleet_deployment_last_attempt_timestamp_seconds 1234", text)
+        settings["deploymentController"] = False
+        with patch.object(collector, "command", return_value=""), \
+             patch.object(collector, "reboot_required", return_value=0), \
+             patch.object(Path, "exists", exists):
+            text, _ = collector.host_metrics(settings, {}, 100)
+        self.assertNotIn("fleet_deployment_last_attempt", text)
+
     def test_facts_are_published_when_the_state_write_fails(self):
         writes = []
 
@@ -116,7 +136,6 @@ class MetricsTests(unittest.TestCase):
             healthy, _ = collector.host_metrics(settings, {}, 101)
         self.assertNotIn("fleet_failed_unit{", healthy)
         self.assertIn("fleet_failed_units 0", healthy)
-        self.assertIn("fleet_deployment_paused 0", healthy)
 
 
 unittest.main()

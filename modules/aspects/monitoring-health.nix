@@ -50,6 +50,7 @@
             ++ lib.optional config.services.traefik.enable "traefik.service";
           exports = lib.attrNames config.modules.backup.exports;
           probes = map (probe: probe.service) probes;
+          deploymentController = config.systemd.services ? fleet-deploy;
         }
       );
       collector = pkgs.writeShellApplication {

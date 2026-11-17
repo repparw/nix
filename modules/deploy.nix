@@ -23,20 +23,22 @@ let
       ];
     };
 
-  # Host systems and addresses come from Den; deployment ordering is separate.
+  # Host systems and addresses come from Den.
   hostSystems = lib.concatMapAttrs (system: hosts: lib.mapAttrs (_: _: system) hosts) den.hosts;
   deployPkgs = lib.mapAttrs (system: _: mkDeployPkgs system) den.hosts;
   sshAddresses = lib.concatMapAttrs (
     _: hosts: lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) hosts
   ) den.hosts;
 
-  # The running fleet updater lives on pi. Activate other hosts before
-  # replacing its system, to avoid restarting the controller mid-deployment.
-  # Host membership and the non-controller order follow Den's inventory.
-  controllerHost = "pi";
-  deployOrder = lib.filter (name: name != controllerHost) (lib.attrNames sshAddresses) ++ [
-    controllerHost
-  ];
+  # Derive the controller from the host that owns the deployment timer.
+  controllerHosts = lib.filter (
+    host: inputs.self.nixosConfigurations.${host}.config.systemd.services ? fleet-deploy
+  ) (lib.attrNames sshAddresses);
+  controllerHost =
+    if builtins.length controllerHosts == 1 then
+      builtins.head controllerHosts
+    else
+      throw "Expected exactly one host with fleet-deploy.service";
   hostAddressJson = builtins.toJSON sshAddresses;
 
   deployNode = hostname: {
@@ -78,17 +80,7 @@ let
     let
       controllerConfig = inputs.self.nixosConfigurations.${controllerHost}.config;
       servicesLib = import ./_services/lib.nix { inherit lib pkgs; };
-      controllerServices = controllerConfig.modules.services;
-      jellyfinService = controllerServices.definitions.jellyfin;
-      jellyfinHealthUrl =
-        if jellyfinService.healthcheck == null then
-          throw "Jellyfin must have a registered healthcheck for fleet deployment"
-        else
-          "${
-            servicesLib.serviceUrl controllerServices controllerConfig "jellyfin"
-          }${jellyfinService.healthcheck}";
-      # Package the parser as a runtime dependency. Embedding its raw source
-      # path in the generated shell script did not keep it alive after GC.
+      # Keep the parser in the fleet updater's runtime closure across GC.
       packageEvent = pkgs.writeTextFile {
         name = "fleet-package-event";
         destination = "/bin/package-update-event.py";
@@ -102,11 +94,9 @@ let
         coreutils
         curl
         deploy-rs
-        findutils
-        git
+        nix
         gawk
         jq
-        nix
         openssh
         python3
         packageEvent
@@ -117,28 +107,72 @@ let
       text =
         builtins.replaceStrings
           [
-            "@FLEET_JELLYFIN_HOST@"
-            "@FLEET_JELLYFIN_HEALTH_URL@"
             "@FLEET_HOST_JSON@"
-            "@FLEET_HOST_OPTIONS@"
-            "@FLEET_DEPLOY_ORDER@"
-            "@FLEET_ROLLBACK_ORDER@"
-            "@FLEET_DOMAIN@"
-            "@FLEET_DISCORD_CHANNEL@"
             "@PACKAGE_EVENT_SCRIPT@"
           ]
           [
-            jellyfinService.host
-            jellyfinHealthUrl
             hostAddressJson
-            (lib.concatStringsSep "|" (lib.attrNames sshAddresses))
-            (lib.concatStringsSep " " deployOrder)
-            (lib.concatStringsSep " " (lib.reverseList deployOrder))
-            controllerConfig.modules.services.domain
-            controllerConfig.modules.services.discordChannelId
             "${packageEvent}/bin/package-update-event.py"
           ]
           (builtins.readFile ./scripts/fleet-update.sh);
+    };
+
+  # Archive the WIP flake to the controller, then run deploy-rs inside a
+  # controller-owned transient service. The remote service retains flock
+  # even if the initiating SSH connection is interrupted.
+  mkLocalDeploy =
+    pkgs: skipChecks:
+    pkgs.writeShellApplication {
+      name = if skipChecks then "deploy" else "deploy-rs-locked";
+      runtimeInputs = with pkgs; [
+        nix
+        jq
+        openssh
+        coreutils
+      ];
+      text = ''
+        controller=${lib.escapeShellArg sshAddresses.${controllerHost}}
+        controller_system=${lib.escapeShellArg hostSystems.${controllerHost}}
+        ssh_options=(-i /home/repparw/.ssh/id_ed25519
+          -o BatchMode=yes -o IdentitiesOnly=yes
+          -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10
+          -o ServerAliveInterval=15 -o ServerAliveCountMax=3)
+
+        # Transfer the exact local source and locked inputs to Pi first.
+        # No fleet operation is locked during this potentially long copy.
+        export NIX_SSHOPTS="''${ssh_options[*]}"
+        source=$(nix flake archive --json --to "ssh-ng://root@$controller" . |
+          jq -er '.path | select(test("^/nix/store/[a-z0-9]+-[^/]+$"))')
+
+        targets=()
+        for arg in "$@"; do
+          case "$arg" in
+            .) targets+=("$source") ;;
+            .#*) targets+=("$source#''${arg#.#}") ;;
+            *) targets+=("$arg") ;;
+          esac
+        done
+        if [ "''${#targets[@]}" -eq 0 ]; then
+          targets=("$source")
+        fi
+        ${lib.optionalString skipChecks "targets+=(--skip-checks)"}
+
+        unit="fleet-worktree-deploy-$(date +%s%N)-$$"
+        echo "Controller-owned deployment: $unit (logs: journalctl -u $unit)" >&2
+        remote=(systemd-run --wait --collect --unit="$unit"
+          --property=Type=exec --property=RuntimeMaxSec=360min
+          flock -w 10800 /run/fleet-update.lock
+          nix run "$source#packages.$controller_system.deploy-rs" --
+          "''${targets[@]}")
+        # OpenSSH joins arguments into a remote shell command. Quote each one
+        # to preserve the flake paths and optional deploy-rs arguments.
+        printf -v command '%q ' "''${remote[@]}"
+        # shellcheck disable=SC2029
+        ssh "''${ssh_options[@]}" "root@$controller" "$command" || {
+          echo "Deployment may still be running on Pi; check journalctl -u $unit before retrying" >&2
+          exit 1
+        }
+      '';
     };
 
   mkDeploySchemaCheck =
@@ -189,28 +223,11 @@ in
           readOnly = true;
           description = "Deploy target addresses used by controller-side fleet automation";
         };
-        containerUnits = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          readOnly = true;
-          description = ''
-            Container units owned by this host, derived from service
-            definitions with container = true. Fleet health gates eval this
-            per target so the checked unit list cannot drift from the
-            registry when services move between hosts.
-          '';
-        };
       };
 
       config = {
         modules.fleet-update.package = mkFleetUpdate pkgs;
         modules.fleet-update.targetAddresses = lib.mapAttrs (_: node: node.hostname) deployBase.nodes;
-        modules.fleet-update.containerUnits = map (name: "container@${name}") (
-          lib.attrNames (
-            lib.filterAttrs (_: service: service.host == config.networking.hostName && service.container) (
-              config.modules.services.definitions or { }
-            )
-          )
-        );
         systemd.tmpfiles.rules = [ "d /run/deploy-rs 0700 root root -" ];
         users.users.root.openssh.authorizedKeys.keys =
           config.users.users.repparw.openssh.authorizedKeys.keys;
@@ -245,20 +262,13 @@ in
 
       apps.deploy-rs = {
         type = "app";
-        program = lib.getExe pkgs.deploy-rs;
-        meta.description = "Deploy a configured node with deploy-rs";
+        program = lib.getExe (mkLocalDeploy pkgs false);
+        meta.description = "Deploy a local tree with deploy-rs and the fleet lock";
       };
       apps.deploy = {
         type = "app";
-        program = lib.getExe (
-          pkgs.writeShellApplication {
-            name = "deploy";
-            text = ''
-              exec ${lib.getExe pkgs.deploy-rs} "$@" --skip-checks
-            '';
-          }
-        );
-        meta.description = "Deploy a verified local tree without repeating flake checks";
+        program = lib.getExe (mkLocalDeploy pkgs true);
+        meta.description = "Deploy a verified local tree with the fleet lock, skipping repeated flake checks";
       };
       apps.fleet-update = {
         type = "app";

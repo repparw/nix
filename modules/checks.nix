@@ -607,9 +607,12 @@
                   pkgs.bash
                   pkgs.git
                   pkgs.util-linux
+                  pkgs.shellcheck
                 ];
               }
               ''
+                shellcheck --shell=bash ${inputs.self.apps.x86_64-linux.deploy.program}
+                shellcheck --shell=bash ${inputs.self.apps.x86_64-linux.deploy-rs.program}
                 fleet --help >/dev/null
                 fleet health --help >/dev/null
                 fleet backup --help >/dev/null
@@ -637,7 +640,6 @@
                   exit 1
                 fi
 
-                python3 ${./scripts/fleet-update-notifications.test.py} ${./scripts/fleet-update.sh}
                 python3 ${./scripts}/fleet-update.test.py ${./scripts/fleet-update.sh}
                 python3 ${./scripts/fleet-readiness.test.py} ${./scripts/fleet-readiness-probe.sh} ${./scripts/fleet-readiness-deliver.sh}
                 python3 ${./scripts/fleet-reboot-required.test.py} ${./scripts/fleet-reboot-required.sh}
