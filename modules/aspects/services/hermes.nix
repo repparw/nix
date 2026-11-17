@@ -120,8 +120,18 @@
             { pkgs, ... }:
             {
               services.resolved.enable = true;
-              systemd.services.hermes-agent.environment.HERMES_MANAGED = lib.mkForce "false";
-              systemd.services.hermes-backend.environment.HERMES_MANAGED = lib.mkForce "false";
+              # Keep .env as live Hermes state; inject deployment credentials
+              # into the processes instead of regenerating the profile file.
+              systemd.services = lib.genAttrs [ "hermes-agent" "hermes-backend" ] (_: {
+                environment = {
+                  HERMES_MANAGED = lib.mkForce "false";
+                  AGENT_BROWSER_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
+                };
+                serviceConfig.EnvironmentFile = [
+                  "/run/secrets/hermes-env"
+                  "/run/secrets/hermes-llm-env"
+                ];
+              });
               # Upstream's activation writes a `.managed` marker, which makes
               # interactive shells refuse config changes. Keep runtime platform
               # toggles editable by removing the marker after upstream writes it.
@@ -139,10 +149,6 @@
                 package = pkgs.callPackage ../../_packages/hermes-agent.nix {
                   upstream = inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.messaging;
                 };
-                environmentFiles = [
-                  "/run/secrets/hermes-env"
-                  "/run/secrets/hermes-llm-env"
-                ];
                 extraPackages = with pkgs; [
                   agent-browser
                   chromium
@@ -156,7 +162,6 @@
                     python313Packages.python-dotenv
                   ]))
                 ];
-                environment.AGENT_BROWSER_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
               };
 
               users.users.hermes.uid = 345;

@@ -14,7 +14,6 @@
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.free-model-watch
-      den.aspects.nixos-services._.t3-token-watch
       den.aspects.cachix-push
     ];
 
