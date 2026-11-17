@@ -4,10 +4,10 @@
   ...
 }:
 {
-  # Pin NixOS/nixpkgs#585097's expression to a commit so fresh CI fetches
-  # still match the lockfile after the PR branch advances.
+  # Follow the moving package expression in NixOS/nixpkgs#585097's head
+  # branch, but lock its contents through the normal flake update workflow.
   flake-file.inputs.opencode-browse-pr = {
-    url = "https://raw.githubusercontent.com/repparw/nixpkgs/dc035f952bdbaadadcb159d0b7362f8cb76a8bc9/pkgs/by-name/op/opencode-browse/package.nix";
+    url = "https://raw.githubusercontent.com/repparw/nixpkgs/refs/heads/feat/opencode-browse-0.0.15/pkgs/by-name/op/opencode-browse/package.nix";
     flake = false;
   };
 

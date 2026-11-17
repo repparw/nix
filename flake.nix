@@ -80,7 +80,7 @@
       };
     };
     opencode-browse-pr = {
-      url = "https://raw.githubusercontent.com/repparw/nixpkgs/dc035f952bdbaadadcb159d0b7362f8cb76a8bc9/pkgs/by-name/op/opencode-browse/package.nix";
+      url = "https://raw.githubusercontent.com/repparw/nixpkgs/refs/heads/feat/opencode-browse-0.0.15/pkgs/by-name/op/opencode-browse/package.nix";
       flake = false;
     };
     sops-nix = {
