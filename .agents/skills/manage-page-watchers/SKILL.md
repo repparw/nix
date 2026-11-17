@@ -1,54 +1,61 @@
 ---
 name: manage-page-watchers
-description: Add, modify, or troubleshoot web-page change detection in the fleet automations service, including extraction, runtime overrides, and notification state.
+description: Add, change, or troubleshoot web-page change detection in the fleet automations service, including value extraction, runtime overrides, saved baselines, and notifications.
 ---
 
 # Manage page watchers
 
-Use this for HTTP page-change watchers. For upstream dependency fixes and
-workaround retirement, use [watch-upstream](../watch-upstream/SKILL.md).
+Use this skill for watchers that detect changes on HTTP pages. For upstream
+dependency fixes and for retiring workarounds, use
+[watch-upstream](../watch-upstream/SKILL.md).
 
-## Edit and validate
+## Edit and test a watcher
 
-Read the watcher helpers and `defaultWatchers` in
-[automations.nix](../../../modules/aspects/services/automations.nix), then the
-relevant [implementation](../../../modules/aspects/services/automations/change-detection.mjs)
-and [tests](../../../modules/aspects/services/automations/change-detection.test.mjs).
+Start with the watcher helpers and `defaultWatchers` in
+[automations.nix](../../../modules/aspects/services/automations.nix). Then read
+the [implementation](../../../modules/aspects/services/automations/change-detection.mjs)
+and its [tests](../../../modules/aspects/services/automations/change-detection.test.mjs).
 
-Preserve the slug of an existing watcher so its history remains useful. For a
-new watcher, choose a unique slug and extract a stable semantic value such as
-a version. Inspect the response using the watcher's actual URL and transport;
-use `fetcher = "curl"` when Node fetch gets different content. Follow the helper's
-supported arguments. When fetching and notification URLs differ, use `fetchUrl`
-for extraction and `url` for the link people open.
+Keep the slug of an existing watcher so its history stays useful. For a new
+watcher, pick a unique slug and extract a stable value from the page, such as a
+version number. Inspect the response using the watcher's real URL and transport.
+Set `fetcher = "curl"` when Node fetch returns different content than curl.
+Use only the arguments the helper supports. When the fetch URL and the
+notification URL differ, use `fetchUrl` for extraction and `url` for the link
+people open.
 
-Custom extractors need validation, display formatting, and fixtures for expected
-and malformed responses. Invalid content must fail rather than invent a value.
-Run the local tests from the repository root:
+Give a custom extractor validation, display formatting, and test fixtures for
+both expected and malformed responses. If the content is invalid, the extractor
+must fail instead of returning a value it made up. Run the tests from the
+repository root:
 
 ```sh
 node --test modules/aspects/services/automations/change-detection.test.mjs
 ```
 
-Use [verify-fleet-change](../verify-fleet-change/SKILL.md) for generated configuration
-and builds, then [fleet-operations](../fleet-operations/SKILL.md) for authorized
-activation and runtime verification. A live `change-detection.service` run can
-post to Discord; local fixtures do not need a live notification. Within an
-authorized live check, inspect its journal and `change-detection.timer`, confirm
-the intended result, and remove any temporary delivery-test override afterward.
+To check generated configuration and builds, use
+[verify-fleet-change](../verify-fleet-change/SKILL.md). For authorized
+activation and runtime checks, use
+[fleet-operations](../fleet-operations/SKILL.md).
+
+A live run of `change-detection.service` can post to Discord. Local fixtures do
+not need a live notification. In an authorized live check, read the journal and
+`change-detection.timer`, confirm the result is what you intended, and
+afterward remove any temporary override you added to test delivery.
 
 ## Diagnose overrides and baselines
 
-`/home/containers/config/automations/change-watchers.json` must exist; use `[]`
-without overrides. An entry replaces the entire default with the same slug.
-`{"slug":"example-watcher","enabled":false}` disables that default when placed
-in the override array.
+The file `/home/containers/config/automations/change-watchers.json` must exist.
+With no overrides, it contains `[]`. An entry replaces the whole default that
+has the same slug. To disable a default, add
+`{"slug":"example-watcher","enabled":false}` to the override array.
 
-The adjacent `change-detection-state.json` holds baselines. A new slug establishes
-its baseline silently; later value changes notify. Fetch or extraction failure
-can stop later watchers. Inspect the response, journal, and overrides before
-changing patterns or state. Narrow noisy extraction to the intended field;
-preserve existing baselines when correcting a URL or parser failure.
+The adjacent `change-detection-state.json` holds the baselines. A new slug sets
+its baseline without notifying. Later value changes notify. A fetch or
+extraction failure can stop the watchers that run after it. Before you change
+patterns or state, inspect the response, the journal, and the overrides. Narrow
+a noisy extraction to the field you care about. When you fix a URL or parser
+failure, keep the existing baselines.
 
-When editing or diagnosing `nixpkgs-security-fleet`, or interpreting its alerts,
+When you edit or diagnose `nixpkgs-security-fleet`, or interpret its alerts,
 read the [security tracker reference](references/security-tracker.md).

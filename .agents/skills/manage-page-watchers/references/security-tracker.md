@@ -1,13 +1,18 @@
 # Accepted security issues
 
-`nixpkgs-security-fleet` reads the public Nixpkgs tracker issues API with expanded
-package mappings. Its `packages` list is a curated fleet watchlist, not an installed
-closure inventory. Python package-set prefixes and selected versioned runtime
-attributes are normalized before matching; titles are not searched for keywords.
-The first run silently baselines the latest page. Later runs follow HTTPS pages
-back to the previous issue checkpoint, notify once per CVE/package family, and
-retain the checkpoint on fetch, schema, pagination, or delivery failure. A missing
-checkpoint or more than 50 pages requires investigation rather than silently
-skipping issues. This monitors newly created accepted issues, not later edits to
-older issues or proof of a vulnerable deployed version. Check actual versions,
-backported patches, and pinned inputs before treating a notification as exposure.
+The `nixpkgs-security-fleet` watcher reads the public Nixpkgs tracker issues
+API, with expanded package mappings. Its `packages` list is a curated watchlist
+for the fleet. It is not an inventory of the installed closure. Before matching,
+the watcher normalizes Python package-set prefixes and selected versioned
+runtime attributes. It does not search titles for keywords.
+
+The first run sets a baseline from the latest page without notifying. Later runs
+follow HTTPS pages back to the previous issue checkpoint and notify once for
+each CVE and package family. The watcher keeps the checkpoint when a fetch,
+schema, pagination, or delivery failure occurs. A missing checkpoint, or more
+than 50 pages, needs investigation. Do not skip those issues silently.
+
+The watcher monitors newly created accepted issues. It does not monitor later
+edits to older issues, and it does not prove that a deployed version is
+vulnerable. Before you treat a notification as exposure, check the actual
+versions, backported patches, and pinned inputs.

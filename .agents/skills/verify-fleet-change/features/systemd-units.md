@@ -1,21 +1,23 @@
 # Generated systemd units
 
-For service, timer, mount, and dependency changes, verify the **rendered unit**
-rather than merely checking that `services.<name>.enable` evaluates to true.
+For service, timer, mount, and dependency changes, check the rendered unit. Do
+not stop at `services.<name>.enable` evaluating to true.
 
-For example, inspect the offsite backup service from a selected host:
+This example asserts that Alpha's offsite backup service is a one-shot unit:
 
 ```sh
-nix eval '.#nixosConfigurations.alpha.config.systemd.units."restic-backups-offsite.service".text' --raw --no-update-lock-file
+nix eval --raw --no-update-lock-file '.#nixosConfigurations.alpha.config.systemd.units."restic-backups-offsite.service".text' | grep -Fx 'Type=oneshot'
 ```
 
-Change the host and quoted unit name for the task. Read the relevant
-`ExecStart`, `ExecStartPre`, `After`, `Requires`, `Environment`, or
-timer fields as appropriate, and compare them with the intended behavior.
-Check a second host if the same aspect is composed differently there.
+The command fails when the expected service type is absent. Replace the host,
+unit name, and assertion with the behavior you need to verify, including
+`ExecStart`, `ExecStartPre`, `After`, `Requires`, `Environment`, or timer
+fields. If an ordering change spans multiple lines, compare the relevant
+fields together rather than matching a single keyword. Check another host if
+the aspect composes differently there.
 
-Rendered text proves what systemd would receive from this configuration;
-it does not prove that dependencies exist at runtime, the unit starts, or
-the service succeeds. If correctness depends on execution or failure paths,
-select the closest [focused check](focused-checks.md) and inspect its actual
-assertions before running it.
+The rendered text shows what systemd would receive from this configuration. It
+does not show that the dependencies exist at runtime, that the unit starts, or
+that the service succeeds. If correctness depends on execution or failure paths,
+pick the closest [focused check](focused-checks.md) and read its assertions
+before you run it.
