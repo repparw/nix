@@ -5,6 +5,13 @@
   ...
 }:
 {
+  # Keep the PR input independent of the removable overlay. Once nixpkgs
+  # includes Browse, the watcher only needs to delete that overlay.
+  flake-file.inputs.opencode-browse-pr = {
+    url = "https://raw.githubusercontent.com/repparw/nixpkgs/refs/heads/feat/opencode-browse-0.0.15/pkgs/by-name/op/opencode-browse/package.nix";
+    flake = false;
+  };
+
   den.aspects.ai.provides.mcp = {
     homeManager =
       { pkgs, ... }:
