@@ -45,9 +45,9 @@ workarounds contribute directly to permanent aspects, without separate
 inclusion entries. Each workaround file can therefore be added or removed
 without editing any default, role, or permanent aspect. T3 Code's permanent
 desktop URL handler and headless CLI selection live in `ai/t3code.nix` and
-`roles.nix` respectively, outside `upstream/`. Each cleanup stages a
-single `git rm modules/aspects/upstream/<watcher>.nix` and verifies the
-exact candidate diff before publication.
+`roles.nix` respectively, outside `upstream/`. Each cleanup stages `git rm modules/aspects/upstream/<watcher>.nix` and
+verifies the exact candidate diff before publication, plus the generated flake
+files only when requested by the watcher.
 
 The publisher uses `automation/upstream-<watcher>` branches. It reconstructs
 the exact expected candidate tree before reusing an existing branch and
