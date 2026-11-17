@@ -82,6 +82,268 @@ in
                 sed -i '/^MimeType=/d' "$out/share/applications/helium.desktop"
               '';
             });
+
+        hasStylix = config.lib ? stylix;
+        readerColors = if hasStylix then config.lib.stylix.colors.withHashtag else null;
+
+        # Simple.css / reader variables mapped onto the base16 palette, per the
+        # Stylix style guide: base00 background, base01 alternate background,
+        # base02 selection/border, base05 text, base04 alternate text.
+        readerPalette = {
+          "--bg" = "base00";
+          "--accent-bg" = "base01";
+          "--text" = "base05";
+          "--text-light" = "base04";
+          "--text-muted" = "base04";
+          "--text-faint" = "base03";
+          "--border" = "base02";
+          "--accent" = "base05";
+          "--accent-hover" = "base0E";
+          "--code" = "base05";
+          "--preformatted" = "base05";
+          "--code-bg" = "base01";
+          "--code-border" = "base02";
+          "--selection" = "base02";
+          "--disabled" = "base01";
+        };
+
+        # Tridactyl reader theme derived from the Stylix base16 palette. Keeps
+        # the Obsidian reader typography (system-ui, 16px, 1.6 line height,
+        # 38em measure, heading scale) but takes every color from the scheme
+        # configured in modules/aspects/style.nix.
+        tridactylReaderCss =
+          if readerColors == null then
+            null
+          else
+            ''
+              /*
+               * Tridactyl reader theme derived from the Stylix palette.
+               *
+               * Tridactyl injects this file as a <style> element inside the
+               * #reader-content iframe, after reader.css and content.css, so
+               * these rules override Simple.css.
+               */
+
+              :root {
+                  color-scheme: dark;
+
+                  --sans-font: system-ui, -apple-system, sans-serif;
+                  --mono-font: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+                  --standard-border-radius: 0.6rem;
+                  --radius: 0.6rem;
+
+              ${lib.concatStringsSep "\n" (
+                lib.mapAttrsToList (name: base: "    ${name}: ${readerColors.${base}};") readerPalette
+              )}
+
+                  --marked: transparent;
+
+                  --font-size: calc(16px + 0.25vw);
+                  --line-height: 1.6;
+                  --content-width: 38em;
+                  --p-spacing: 1rem;
+              }
+
+              html {
+                  font-family: var(--sans-font);
+              }
+
+              body#tridactyl-reader {
+                  background-color: var(--bg);
+                  color: var(--text);
+                  font-family: var(--sans-font);
+                  font-size: var(--font-size);
+                  line-height: var(--line-height);
+                  text-align: left;
+                  hyphens: none;
+                  margin: 0;
+                  padding: 0;
+                  -webkit-font-smoothing: antialiased;
+              }
+
+              ::selection {
+                  background-color: var(--selection);
+              }
+
+              body#tridactyl-reader > header {
+                  background-color: transparent;
+                  border-bottom: 0;
+                  text-align: left;
+                  padding: max(4rem, 4vh) 0 0;
+                  width: var(--content-width);
+                  max-width: calc(100% - 2rem);
+                  margin: 0 auto max(2rem, 3vh);
+              }
+
+              body#tridactyl-reader > header h1 {
+                  font-size: 1.6em;
+                  font-weight: 700;
+                  letter-spacing: -0.02em;
+                  line-height: 1.2;
+                  margin: 0 0 0.5em;
+                  max-width: none;
+                  text-wrap: pretty;
+              }
+
+              body#tridactyl-reader > header p {
+                  color: var(--text-muted);
+                  font-size: 0.9em;
+                  line-height: 1.5;
+                  margin: 0 0 0.25em;
+                  max-width: none;
+              }
+
+              body#tridactyl-reader > header p:first-of-type:not(:last-of-type) {
+                  color: var(--text);
+                  font-weight: 500;
+              }
+
+              body#tridactyl-reader > main {
+                  width: var(--content-width);
+                  max-width: calc(100% - 2rem);
+                  margin: 0 auto;
+                  padding: 0 0 4rem;
+              }
+
+              h1, h2, h3, h4, h5, h6 {
+                  color: var(--text);
+                  font-weight: 700;
+                  text-wrap: pretty;
+                  overflow-wrap: break-word;
+              }
+
+              h1 { font-size: 1.6em; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 0.5em; }
+              h2 { font-size: 1.3em; letter-spacing: -0.015em; line-height: 1.2; margin: 1.8em 0 0.5em; }
+              h3 { font-size: 1.225em; line-height: 1.3; margin: 2em 0 0.5em; }
+              h4 { font-size: 1.15em; line-height: 1.4; margin: 2em 0 0; }
+              h5 { font-size: 1em; line-height: 1.6; margin: 0 0 1em; }
+              h6 { font-size: 1em; line-height: 1.6; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 1em; }
+
+              h1 + h2, h2 + h2, h2 + h3, h3 + h4 { margin-top: 0; }
+
+              p { margin: 0 0 var(--p-spacing); }
+
+              a, a:visited { color: var(--accent); text-decoration: underline; }
+              a:hover { color: var(--accent-hover); text-decoration: underline; }
+              sup a { color: var(--text-muted); text-decoration: none; }
+
+              ol, ul {
+                  padding: 0.5rem 0 1rem 0;
+                  padding-inline-start: 1em;
+                  margin: 0;
+                  margin-inline-start: 0.5em;
+              }
+
+              ol > li, ul > li { padding: 0.15rem 0; }
+              ol > li::marker, ul > li::marker { color: var(--text-faint); }
+              ul > li { list-style: disc; }
+              ul > li::marker { font-size: 95%; }
+              ol > li p, ul > li p { margin-top: 0; margin-bottom: 0; }
+
+              blockquote {
+                  margin: var(--p-spacing) 0;
+                  padding-inline-start: 1.5rem;
+                  border-left: 2px solid var(--text-faint);
+                  color: inherit;
+                  font-style: normal;
+              }
+
+              hr {
+                  background-color: var(--border);
+                  width: 100%;
+                  border: 0;
+                  height: 1px;
+                  margin: 1.5em 0;
+              }
+
+              code, pre, kbd, samp, tt {
+                  font-family: var(--mono-font);
+                  font-size: 0.8em;
+                  color: var(--text);
+                  background-color: var(--code-bg);
+                  border: 1px solid var(--code-border);
+                  border-radius: 4px;
+              }
+
+              code, kbd, samp, tt { padding: 0.1em 0.25em; }
+
+              pre {
+                  white-space: pre;
+                  max-width: 100%;
+                  overflow-x: auto;
+                  padding: 0.75rem 1rem;
+                  margin: var(--p-spacing) 0;
+              }
+
+              pre code, pre pre, pre kbd, pre samp, pre tt {
+                  font-size: inherit;
+                  border: 0;
+                  background-color: transparent;
+                  padding: 0;
+              }
+
+              table {
+                  font-size: 0.9em;
+                  line-height: calc(var(--line-height) * 0.9);
+                  border-collapse: collapse;
+                  max-width: 100%;
+                  width: auto;
+                  margin: 1.5rem 0;
+              }
+
+              table tr td, table tr th {
+                  padding: 0.25em 0.5em;
+                  border: 1px solid var(--border);
+                  text-align: left;
+              }
+
+              table th { font-weight: 700; background-color: transparent; }
+              table tr:nth-child(even) { background-color: transparent; }
+
+              table caption {
+                  font-weight: 700;
+                  margin-bottom: 0.5rem;
+                  color: var(--text);
+                  text-align: left;
+              }
+
+              img, video { max-width: 100%; height: auto; border-radius: var(--radius); }
+              figure { margin: 1em 0; overflow-x: auto; }
+
+              figcaption, caption {
+                  color: var(--text-muted);
+                  font-size: 85%;
+                  line-height: calc(var(--line-height) * 0.9);
+                  margin-top: 0.5em;
+                  margin-bottom: 1em;
+                  text-align: left;
+              }
+
+              small[class*="caption"] { color: var(--text-muted); font-size: 85%; }
+
+              mark {
+                  color: var(--text);
+                  background-color: transparent;
+                  padding: 0;
+                  border-radius: 0;
+              }
+
+              article, section, fieldset { border: 0; border-radius: 0; padding: 0; margin: 0; }
+
+              aside {
+                  float: none;
+                  width: auto;
+                  margin: var(--p-spacing) 0;
+                  padding: 0;
+                  background-color: transparent;
+                  border: 0;
+                  border-radius: 0;
+                  font-size: inherit;
+              }
+
+              details, summary { background-color: transparent; border: 0; padding: 0; margin: 0; }
+              summary { font-weight: 700; cursor: pointer; }
+            '';
       in
       {
         imports = [ inputs.helium-nix.homeModules.default ];
@@ -109,6 +371,9 @@ in
         ];
 
         home.file = {
+          ".config/tridactyl/themes/stylix.css" = lib.mkIf hasStylix {
+            text = tridactylReaderCss;
+          };
           ".config/tridactyl/tridactylrc".text = ''
             " General Settings
             set configversion 2.0
@@ -148,6 +413,11 @@ in
             ${lib.optionalString (
               osConfig.modules.services.domain or null != null
             ) "seturl jellyfin.${osConfig.modules.services.domain} modeindicator false"}
+
+            " Reader theme (must run after the seturl lines above: colourscheme's
+            " seturl is shimmed to the active tab's content script, which is only
+            " guaranteed to be loaded by the end of the rc).
+            colourscheme --module=reader stylix
           '';
         };
         programs = {
