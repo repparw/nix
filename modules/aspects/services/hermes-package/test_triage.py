@@ -107,6 +107,21 @@ class IngestTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             triage.ingest(self.home, json.dumps(event(revision="other")).encode())
 
+    def test_receipt_prevents_collision_after_inbox_consumed(self):
+        triage.ingest(self.home, json.dumps(event()).encode())
+        triage.gate(self.home, {}, {"last_run_at": None, "last_status": None}, now=1000)
+        self.assertFalse(list((self.home / "package-updates/inbox").glob("*.json")))
+        self.assertEqual(triage.ingest(self.home, json.dumps(event()).encode()),
+                         {"event_id": "a" * 64})
+        with self.assertRaises(ValueError):
+            triage.ingest(self.home, json.dumps(event(revision="different")).encode())
+
+    def test_decode_rejects_duplicate_fields_and_oversize(self):
+        with self.assertRaises(ValueError):
+            triage.decode(b" " * (triage.MAX_BYTES + 1))
+        with self.assertRaises(ValueError):
+            triage.decode(b'{"host":"alpha","host":"pi"}')
+
 
 class GateTests(unittest.TestCase):
     def setUp(self):
