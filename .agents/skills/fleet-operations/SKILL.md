@@ -36,9 +36,10 @@ fleet from an unreachable host, a missing status file, or a successful build.
 - **Firmware maintenance:** discover updates first; treat refresh and install
   as state-changing operations, separate from ordinary fleet deployments.
 
-Do not start services, back up or prune data, change PAUSE, deploy, roll back,
+Do not start services, back up or prune data, deploy, roll back,
 collect garbage, or update firmware unless authorized for that action.
-`--force` needs explicit authorization to bypass PAUSE.
+`--force` explicitly retries a revision already attempted by the unattended
+timer. It does not bypass CI verification.
 A deploy-rs `--dry-activate` is **not read-only**: it may build outputs and
 contact the target, and also requires authorization.
 
@@ -89,18 +90,17 @@ prefer isolated restore rehearsal over overwriting live state.
 ## Deploy only with explicit approval
 
 Pi is the fleet deployment controller; confirm its current address in
-`modules/deploy.nix` or evaluated fleet options. The controller checks CI
-for the exact current `main`, prepares selected hosts, and uses deploy-rs
-with health checks and rollback. On Pi, the authorized operation is:
+`modules/deploy.nix` or evaluated fleet options. The controller verifies CI for the exact current `main` revision and uses
+native deploy-rs activation and rollback. Application health is monitored
+independently. On Pi, the authorized operation is:
 
 ```sh
-fleet-update deploy --host alpha --wait-lock 7200
+fleet-update deploy alpha --wait-lock 7200
 ```
 
 Replace the host with the explicitly selected scope. Run this **on the
 controller**, not on an arbitrary host. A selected-host deployment does not establish fleet-wide convergence. Inspect
-`/var/lib/auto-update/latest-preparation`, host failure logs, and controller
-journals before retrying.
+the controller journal and the affected host before retrying.
 
 To review a local tree with deploy-rs, only when separately authorized:
 
@@ -112,9 +112,15 @@ That path is distinct from the controller's production transaction.
 For a local tree already verified at its exact contents, `nix run .#deploy -- .#alpha`
 skips deploy-rs' repeated flake checks. It does not perform verification
 itself; use `nix run .#deploy-rs -- .#alpha` for unverified changes. Both
-are authorized operational actions, not PR checks.
+commands archive the local Git worktree and its locked inputs into Pi's Nix
+store. A Pi-owned transient systemd service runs deploy-rs under the same
+fleet lock as scheduled deployments and reboots. The job survives SSH
+disconnects; check its named journal unit before retrying an interrupted
+command. Untracked changes must be added to Git's index to enter the flake
+archive. Direct invocation of the bare `deploy` binary does not acquire the
+fleet lock. All are authorized operational actions, not PR checks.
 See [rollback and recovery](../../../docs/runbooks/update-rollback.md)
-before manually restoring a generation or resuming a paused controller.
+before manually restoring a generation or retrying a failed revision.
 
 ## Maintain only the requested resource
 

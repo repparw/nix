@@ -116,9 +116,6 @@ in
                   host: "check_units ${lib.escapeShellArg host} ${lib.escapeShellArg cfg.hostSshAddresses.${host}}"
                 ) remoteHosts}
               fi
-              if [ -e /var/lib/auto-update/PAUSE ]; then
-                fail auto-update "automation paused"
-              fi
             fi
 
             http() {

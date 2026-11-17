@@ -96,9 +96,17 @@ def reboot_required(run=subprocess.run):
 def host_metrics(settings, state, now):
     failed_units = command("fleet-unit-snapshot").splitlines()
     lines = [metric("fleet_failed_units", len(failed_units)),
-             metric("fleet_deployment_paused", int(Path("/var/lib/auto-update/PAUSE").exists())),
              metric("fleet_reboot_required", reboot_required())]
     lines += [metric("fleet_failed_unit", 1, name=unit) for unit in failed_units]
+    if settings.get("deploymentController", False):
+        status_file = Path("/var/lib/auto-update/last-attempt-status")
+        if status_file.exists():
+            status = int(status_file.read_text().strip())
+            if status not in (0, 1, 2):
+                raise ValueError("invalid deployment attempt status")
+            lines += [metric("fleet_deployment_last_attempt_status", status),
+                      metric("fleet_deployment_last_attempt_timestamp_seconds",
+                             int(status_file.stat().st_mtime))]
     for unit in settings["requiredUnits"]:
         status = subprocess.run(["systemctl", "is-active", "--quiet", unit], timeout=10, check=False).returncode
         if status not in (0, 3, 4):
