@@ -15,6 +15,7 @@ import time
 # descriptions and action results. Keep its diagnostics and handoff capability,
 # but don't present tool advice as a rule imposed on the calling agent.
 GUIDANCE_REWRITES = (
+    ("Never solve a captcha yourself; hand it off.", "Use handoff for user verification when needed."),
     (
         "When only a person can proceed — login, 2FA, passkey, captcha or payment confirmation — call `handoff` with the `tab` and what the user should do, and wait. Never solve a captcha yourself and never retry-loop a blocked site.",
         "Use `handoff` with the `tab` when a step needs a person, such as 2FA or payment confirmation. Challenges can require user verification. Stop rather than retry-loop a site block.",
