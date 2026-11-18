@@ -740,7 +740,8 @@
         "nixvim-config": "nixvim-config",
         "sops-nix": "sops-nix",
         "stylix": "stylix",
-        "systems": "systems_2"
+        "systems": "systems_2",
+        "wallpapers": "wallpapers"
       }
     },
     "sops-nix": {
@@ -955,6 +956,22 @@
       "original": {
         "owner": "pyproject-nix",
         "repo": "uv2nix",
+        "type": "github"
+      }
+    },
+    "wallpapers": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794953509,
+        "narHash": "sha256-IUC0lvtPqj2o6NTRd/RFoEOz5l1FdVigAS3LuyBE/KM=",
+        "owner": "repparw",
+        "repo": "wallpapers",
+        "rev": "154e4b22eff76bd513e4843f047bdf5957a2f1e0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "repparw",
+        "repo": "wallpapers",
         "type": "github"
       }
     }

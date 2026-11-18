@@ -92,5 +92,9 @@
       };
     };
     systems.url = "github:nix-systems/default";
+    wallpapers = {
+      url = "github:repparw/wallpapers";
+      flake = false;
+    };
   };
 }
