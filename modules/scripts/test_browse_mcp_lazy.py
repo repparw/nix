@@ -67,7 +67,7 @@ class GuidanceTest(unittest.TestCase):
     def test_stdio_round_trip(self):
         with tempfile.TemporaryDirectory() as directory:
             fake = Path(directory) / "browse"
-            fake.write_text('#!/usr/bin/env python3\n'
+            fake.write_text(f'#!{sys.executable}\n'
                 'import json,sys\n'
                 'assert sys.argv[1:] == ["mcp"]\n'
                 f'instructions = {browse.GUIDANCE_REWRITES[0][0]!r}\n'
@@ -77,7 +77,8 @@ class GuidanceTest(unittest.TestCase):
             fake.chmod(0o755)
             completed = subprocess.run([sys.executable, str(SCRIPT), str(fake), "/missing-helium", "/bin/false"],
                 input=b'{"jsonrpc":"2.0","id":1,"method":"initialize"}\n',
-                capture_output=True, timeout=10, check=True)
+                capture_output=True, timeout=10)
+            self.assertEqual(completed.returncode, 0, completed.stderr.decode())
             self.assertEqual(len(completed.stdout.splitlines()), 1)
             self.assertNotIn("Never solve", completed.stdout.decode())
             self.assertIn("handoff", completed.stdout.decode())
