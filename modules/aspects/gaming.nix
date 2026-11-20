@@ -4,10 +4,6 @@
 }:
 {
   den.aspects.gaming = {
-    user = _: {
-      extraGroups = [ "gamemode" ];
-    };
-
     provides.to-hosts.nixos =
       { pkgs, ... }:
       let
@@ -25,7 +21,6 @@
         nixpkgs.overlays = [
           (_final: prev: {
             heroic = prev.heroic.override {
-              extraPkgs = pkgs': [ pkgs'.gamemode ];
               extraEnv = gamingEnvironment;
             };
           })
@@ -45,13 +40,9 @@
                 "--tmpfs /home/containers/media"
               ];
             };
-            extraPackages = [
-              heroicSteam
-              pkgs.gamemode
-            ];
+            extraPackages = [ heroicSteam ];
           };
 
-          gamemode.enable = true;
           gamescope = {
             enable = true;
             # Lets gamescope renice itself to -20 and ask for realtime priority
