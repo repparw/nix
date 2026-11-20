@@ -98,8 +98,6 @@
 
           antigravity-cli-runtime = import ./_tests/antigravity-cli-runtime.nix { inherit pkgs; };
 
-          t3code-provider-state = import ./_tests/t3code-provider-state.nix { inherit pkgs; };
-
           t3code-providers =
             let
               expectedProviders = [
