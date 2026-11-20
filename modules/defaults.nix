@@ -3,9 +3,9 @@
   den = {
     schema.user.classes = lib.mkDefault [ "homeManager" ];
 
-    # Opt in to Den v0.20's scoped user content semantics. Explicit
-    # cross-scope providers below preserve intended host settings.
-    migrations.user-host-content.acknowledged = true;
+    # Den's transition default is intentionally disabled: user-owned NixOS
+    # settings must reach hosts through explicit providers.
+    schema.host.excludes = [ den.batteries.user-aspects ];
 
     schema.host.includes = [
       den.batteries.hostname
