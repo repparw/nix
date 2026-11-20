@@ -64,13 +64,10 @@ in
             name = "moonshine-steam-game-session";
             runtimeInputs = [
               steam-session-select
-              config.programs.gamemode.package
               config.programs.steam.package
             ];
             text = ''
-              # GameMode registers Steam and the game as clients. gamescope
-              # cannot be one: the NixOS security wrapper strips LD_PRELOAD.
-              exec gamemoderun steam -tenfoot
+              exec steam -tenfoot
             '';
           };
 
@@ -383,15 +380,14 @@ in
 
           if pgrep -x gamescope >/dev/null; then
             log "reusing the running gamescope session"
-            exec ${osConfig.programs.gamemode.package}/bin/gamemoderun \
-              ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
+            exec ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
           fi
 
           log "taking over: stopping desktop steam, starting gamescope"
           ${stopDesktopSteam}
 
           ${osConfig.security.wrapperDir}/gamescope --steam -H 1080 -r 162 --adaptive-sync -- \
-            ${osConfig.programs.gamemode.package}/bin/gamemoderun ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf || true
+            ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf || true
 
           log "session ended; restoring desktop steam"
           systemctl --user start steam-tray
