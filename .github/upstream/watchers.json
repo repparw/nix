@@ -46,6 +46,10 @@
     "mode": "post-lock",
     "input": "nixpkgs"
   },
+  "moonshine-0-18": {
+    "mode": "post-lock",
+    "input": "nixpkgs"
+  },
   "gamescope-vkroots": {
     "mode": "post-lock",
     "input": "nixpkgs",

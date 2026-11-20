@@ -136,6 +136,30 @@ class Readiness(unittest.TestCase):
     def test_version_tag_expression_is_resolved_exactly(self):
         self.assertEqual(watch.source_ref('version = "1.3.0"; tag = finalAttrs.version;'), "1.3.0")
 
+    def test_moonshine_watcher_uses_pinned_package_version_not_wsi(self):
+        for version, expected in (("0.17.2", "merged-not-pinned"),
+                                  ("0.18.0", "PINNED-READY"),
+                                  ("0.18.1", "PINNED-READY"),
+                                  ("0.19.0", "PINNED-READY")):
+            package = ('pname = "ferriscope-wsi"; version = "0.1.0";\\n'
+                       f'pname = "moonshine"; version = "{version}";')
+            with self.subTest(version=version), \\
+                    patch.object(watch, "source", return_value=package) as fetched:
+                self.assertEqual(watch.detect("moonshine-0-18", LOCK), expected)
+                fetched.assert_called_once_with(
+                    "NixOS/nixpkgs", "pkgs/by-name/mo/moonshine/package.nix", "nix-pin")
+
+    def test_moonshine_watcher_rejects_ambiguous_package_metadata(self):
+        for package in ('version = "0.18.0";',
+                        'pname = "ferriscope-wsi"; version = "0.18.0";',
+                        'pname = "moonshine"; version = "0.18.0-beta";',
+                        'pname = "moonshine"; version = "0.18.0";\\n'
+                        'pname = "moonshine"; version = "0.18.0";'):
+            with self.subTest(package=package), \\
+                    patch.object(watch, "source", return_value=package):
+                with self.assertRaises(ValueError):
+                    watch.moonshine_pinned_version("nix-pin")
+
     def test_gamescope_requires_both_lookup_sites_and_flag_branch(self):
         site = 'if (queueInfo.flags) { VkDeviceQueueInfo2 q2; dispatch->GetDeviceQueue2(device, &q2, &queue); } else dispatch->GetDeviceQueue(device, family, j, &queue);'
         self.assertFalse(watch.flagged_queues_fixed('void GetDeviceQueue2();'))
