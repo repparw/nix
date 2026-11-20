@@ -14,7 +14,6 @@ PR_WAITS = {
     "t3code-split": ("NixOS/nixpkgs", 555814, "nixpkgs"),
     "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
     "opencode-browse": ("NixOS/nixpkgs", 585097, "nixpkgs"),
-    "paperless-torch": ("NixOS/nixpkgs", 587638, "nixpkgs"),
     "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
 }
 # Watcher IDs identify their temporary files without a separate path registry.

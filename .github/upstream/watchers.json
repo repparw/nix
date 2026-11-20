@@ -32,10 +32,6 @@
     "mode": "post-lock",
     "input": "nixpkgs"
   },
-  "paperless-torch": {
-    "mode": "post-lock",
-    "input": "nixpkgs"
-  },
   "nautilus-module": {
     "mode": "notify-only",
     "input": "nixpkgs"

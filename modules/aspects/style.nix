@@ -13,6 +13,11 @@
     };
   };
 
+  flake-file.inputs.wallpapers = {
+    url = "github:repparw/wallpapers";
+    flake = false;
+  };
+
   den.aspects.style = {
     nixos =
       { pkgs, config, ... }:
@@ -23,12 +28,8 @@
           let
             theme = "${pkgs.base16-schemes}/share/themes/tokyodark-terminal.yaml";
 
-            # Codeberg exorcist/wallpapers was deleted. The pinned GitLab
-            # source retains the same verified forest image as the old mirror.
-            inputImage = pkgs.fetchurl {
-              url = "https://gitlab.com/exorcist365/wallpapers/-/raw/8d2860ac6c05cec0f78d5c9d07510f4ff5da90dc/gruvbox/forest-4.jpg";
-              hash = "sha256-mqrwRvJmRLK3iyEiXmaw5UQPftEaqg33NhwzpZvyXws=";
-            };
+            # Original generated image from the repparw/wallpapers input.
+            inputImage = "${inputs.wallpapers}/wallpapers/violet-monolith.png";
 
             brightness = -15;
             contrast = 0;
