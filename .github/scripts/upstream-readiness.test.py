@@ -143,7 +143,7 @@ class Readiness(unittest.TestCase):
                                   ("0.19.0", "PINNED-READY")):
             package = ('pname = "ferriscope-wsi"; version = "0.1.0";\n'
                        f'pname = "moonshine"; version = "{version}";')
-            with self.subTest(version=version), \\
+            with self.subTest(version=version), \
                     patch.object(watch, "source", return_value=package) as fetched:
                 self.assertEqual(watch.detect("moonshine-0-18", LOCK), expected)
                 fetched.assert_called_once_with(
@@ -155,7 +155,7 @@ class Readiness(unittest.TestCase):
                         'pname = "moonshine"; version = "0.18.0-beta";',
                         'pname = "moonshine"; version = "0.18.0";\n'
                         'pname = "moonshine"; version = "0.18.0";'):
-            with self.subTest(package=package), \\
+            with self.subTest(package=package), \
                     patch.object(watch, "source", return_value=package):
                 with self.assertRaises(ValueError):
                     watch.moonshine_pinned_version("nix-pin")
