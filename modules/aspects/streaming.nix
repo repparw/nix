@@ -94,17 +94,8 @@ in
               h=''${MOONSHINE_CLIENT_HEIGHT:-1080}
               rate=''${MOONSHINE_CLIENT_FRAMERATE:-60}
 
-              # Moonshine's Vulkan WSI layer is installed where the loader scans
-              # (the system profile share dir, on XDG_DATA_DIRS), so games pick
-              # it up and present their swapchains straight to the Moonshine
-              # compositor instead of being captured and colour-converted.
-              # Moonshine sets ENABLE_MOONSHINE_WSI=1 itself; DISABLE_* takes
-              # precedence over it, so it must stay unset.
-              unset DISABLE_MOONSHINE_WSI
-
-              # Steam Overlay only hooks X11 windows, while gamescope-wsi bypasses
-              # Xwayland for game swapchains, so the overlay is not expected to
-              # appear. See ValveSoftware/gamescope#1537.
+              # Ferriscope disables Gamescope WSI for its own clients. The
+              # nested Gamescope session needs that layer for HDR swapchains.
               unset DISABLE_GAMESCOPE_WSI
 
               gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
