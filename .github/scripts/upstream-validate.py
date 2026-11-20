@@ -67,7 +67,7 @@ def validate(name, architecture):
         # Validate the real packaged version after deleting the temporary
         # module, then prove the service selects that upstream package.
         version = evaluate("alpha.pkgs.moonshine.version")
-        require(bool(re.fullmatch(r"[0-9]+\\.[0-9]+\\.[0-9]+", version)),
+        require(bool(re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)),
                 "unexpected upstream Moonshine version")
         require(tuple(map(int, version.split("."))) >= (0, 18, 0),
                 "pinned Moonshine is older than 0.18.0")
