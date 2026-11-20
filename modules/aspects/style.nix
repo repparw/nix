@@ -120,16 +120,11 @@
     # theme lives in the style aspect because it is a palette concern; the
     # t3code aspect pulls it in so the theme follows the application.
     provides.t3code-theme.homeManager =
-      {
-        config,
-        lib,
-        pkgs,
-        ...
-      }:
+      { config, ... }:
       let
         c = config.lib.stylix.colors.withHashtag;
         mutedText = "${c.base05}cc";
-        stylixThemeJson = builtins.toJSON {
+        stylixTheme = {
           version = 1;
           name = "Stylix";
           appearance = "dark";
@@ -199,24 +194,9 @@
         };
       in
       {
-        # The environment-theme loader opens files with O_NOFOLLOW, so a
-        # Home Manager home.file symlink is ignored. Publish a regular file
-        # atomically and replace any symlink left by older configurations.
-        home.activation.t3codeStylixTheme = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-          theme_dir="${config.home.homeDirectory}/.t3/userdata/themes"
-          theme_source="${pkgs.writeText "t3code-stylix-theme.json" stylixThemeJson}"
-          ${pkgs.coreutils}/bin/mkdir -p "$theme_dir"
-          if [ -L "$theme_dir/stylix.json" ] || ! ${pkgs.coreutils}/bin/cmp -s "$theme_source" "$theme_dir/stylix.json"; then
-            theme_tmp=$(${pkgs.coreutils}/bin/mktemp "$theme_dir/.stylix.json.XXXXXXXX")
-            ${pkgs.coreutils}/bin/cp "$theme_source" "$theme_tmp"
-            ${pkgs.coreutils}/bin/chmod 0644 "$theme_tmp"
-            ${pkgs.coreutils}/bin/mv -fT "$theme_tmp" "$theme_dir/stylix.json"
-          fi
-        '';
-
-        programs.t3code.userSettings = {
-          defaultTheme = "stylix";
-          defaultThemeSetAt = builtins.hashString "sha256" stylixThemeJson;
+        programs.t3code = {
+          themes.stylix = stylixTheme;
+          userSettings.defaultTheme = "stylix";
         };
       };
   };
