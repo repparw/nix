@@ -7,10 +7,10 @@ import json
 import os
 from pathlib import Path
 import re
-import secrets
 import sys
-import tempfile
 import time
+
+from hermes_event_ingest import atomic_write, decode_event, ingest_event, private_dir
 
 JOB_NAME = "Fleet crash triage"
 MAX_BYTES = 32768
@@ -58,105 +58,11 @@ def validate(event):
 
 
 def decode(raw):
-    if len(raw) > MAX_BYTES:
-        raise ValueError("event exceeds size limit")
-    def pairs(items):
-        result = {}
-        for key, value in items:
-            if key in result:
-                raise ValueError("duplicate event fields")
-            result[key] = value
-        return result
-    return validate(json.loads(raw, object_pairs_hook=pairs))
-
-
-def private_dir(path):
-    path.mkdir(mode=0o700, exist_ok=True)
-    if path.is_symlink() or not path.is_dir():
-        raise ValueError("invalid private directory")
-    os.chmod(path, 0o700)
-    directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
-    try:
-        os.fsync(directory)
-    finally:
-        os.close(directory)
-
-
-def atomic_write(path, data):
-    fd, temporary = tempfile.mkstemp(prefix=".write-", dir=path.parent)
-    try:
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(data)
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, path)
-        directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
-        try:
-            os.fsync(directory)
-        finally:
-            os.close(directory)
-    finally:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
+    return decode_event(raw, MAX_BYTES, validate)
 
 
 def ingest(home, raw):
-    event = decode(raw)
-    if home.is_symlink() or not home.is_dir():
-        raise ValueError("Hermes home is unavailable")
-    # The host command runs as root, but all queue writes use the shifted
-    # Hermes owner. A writable inbox must not become a root file-write API.
-    owner = home.stat()
-    if os.geteuid() == 0:
-        if owner.st_uid == 0:
-            raise ValueError("Hermes home must have an unprivileged owner")
-        # Enter before dropping privileges: private ancestors may be inaccessible.
-        os.chdir(home)
-        home = Path(".")
-        os.setgroups([])
-        os.setgid(owner.st_gid)
-        os.setuid(owner.st_uid)
-    crash = home / "crash"
-    private_dir(crash)
-    inbox = crash / "inbox"
-    private_dir(inbox)
-    receipts = crash / "receipts"
-    private_dir(receipts)
-    destination = inbox / (event["event_id"] + ".json")
-    receipt = receipts / destination.name
-    canonical = json.dumps(event, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
-    # mkstemp expands dir to an absolute path, losing the entered-directory
-    # access across private ancestors after the UID change.
-    temporary = inbox / (".ingest-" + secrets.token_hex(16))
-    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    try:
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(canonical)
-            stream.flush()
-            os.fsync(stream.fileno())
-        try:
-            os.link(temporary, receipt)
-        except FileExistsError:
-            if receipt.is_symlink() or receipt.read_bytes() != canonical:
-                raise ValueError("event identity collision")
-        try:
-            os.link(receipt, destination)
-        except FileExistsError:
-            if destination.is_symlink() or destination.read_bytes() != canonical:
-                raise ValueError("event identity collision")
-        receipts_fd = os.open(receipts, os.O_RDONLY | os.O_DIRECTORY)
-        try:
-            os.fsync(receipts_fd)
-        finally:
-            os.close(receipts_fd)
-        directory = os.open(inbox, os.O_RDONLY | os.O_DIRECTORY)
-        try:
-            os.fsync(directory)
-        finally:
-            os.close(directory)
-    finally:
-        os.unlink(temporary)
-    return {"event_id": event["event_id"]}
+    return ingest_event(home, raw, "crash", decode)
 
 
 def fingerprint(event):
