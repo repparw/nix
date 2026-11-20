@@ -51,15 +51,6 @@ in
             cp ${pkgs.steam-unwrapped}/share/icons/hicolor/256x256/apps/steam.png $out/steam.png
           '';
 
-          steam-session-select = pkgs.writeShellApplication {
-            name = "steamos-session-select";
-            runtimeInputs = [ config.programs.steam.package ];
-            text = ''
-              echo "moonshine: SteamOS session request: $*" >&2
-              exec steam -shutdown
-            '';
-          };
-
           steam-stop-desktop = pkgs.writeShellApplication {
             name = "steam-stop-desktop";
             runtimeInputs = [
@@ -186,20 +177,7 @@ in
                     steam_integration = true;
                     pre_command = [ [ (lib.getExe steam-stop-desktop) ] ];
                     post_command = [ [ "${steam-restore-trigger}/bin/steam-restore-trigger" ] ];
-                    env = {
-                      # Steam calls steamos-session-select for Switch to Desktop.
-                      PATH = lib.concatStringsSep ":" [
-                        "${steam-session-select}/bin"
-                        config.security.wrapperDir
-                        "${config.users.users.${sessionUser}.home}/.nix-profile/bin"
-                        "/nix/profile/bin"
-                        "${config.users.users.${sessionUser}.home}/.local/state/nix/profile/bin"
-                        "/etc/profiles/per-user/${sessionUser}/bin"
-                        "/nix/var/nix/profiles/default/bin"
-                        "/run/current-system/sw/bin"
-                      ];
-                      XDG_DATA_DIRS = "${config.services.moonshine.package}/share:/run/current-system/sw/share";
-                    };
+                    env.XDG_DATA_DIRS = "${config.services.moonshine.package}/share:/run/current-system/sw/share";
                     stdout = "journal";
                     stderr = "journal";
                   }
