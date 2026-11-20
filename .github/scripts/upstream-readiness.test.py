@@ -141,7 +141,7 @@ class Readiness(unittest.TestCase):
                                   ("0.18.0", "PINNED-READY"),
                                   ("0.18.1", "PINNED-READY"),
                                   ("0.19.0", "PINNED-READY")):
-            package = ('pname = "ferriscope-wsi"; version = "0.1.0";\\n'
+            package = ('pname = "ferriscope-wsi"; version = "0.1.0";\n'
                        f'pname = "moonshine"; version = "{version}";')
             with self.subTest(version=version), \\
                     patch.object(watch, "source", return_value=package) as fetched:
@@ -153,7 +153,7 @@ class Readiness(unittest.TestCase):
         for package in ('version = "0.18.0";',
                         'pname = "ferriscope-wsi"; version = "0.18.0";',
                         'pname = "moonshine"; version = "0.18.0-beta";',
-                        'pname = "moonshine"; version = "0.18.0";\\n'
+                        'pname = "moonshine"; version = "0.18.0";\n'
                         'pname = "moonshine"; version = "0.18.0";'):
             with self.subTest(package=package), \\
                     patch.object(watch, "source", return_value=package):
