@@ -51,63 +51,19 @@ in
             cp ${pkgs.steam-unwrapped}/share/icons/hicolor/256x256/apps/steam.png $out/steam.png
           '';
 
-          steam-session-select = pkgs.writeShellApplication {
-            name = "steamos-session-select";
-            runtimeInputs = [ config.programs.steam.package ];
-            text = ''
-              echo "moonshine: SteamOS session request: $*" >&2
-              exec steam -shutdown
-            '';
-          };
-
-          moonshine-steam-game-session = pkgs.writeShellApplication {
-            name = "moonshine-steam-game-session";
+          steam-stop-desktop = pkgs.writeShellApplication {
+            name = "steam-stop-desktop";
             runtimeInputs = [
-              steam-session-select
-              config.programs.steam.package
-            ];
-            text = ''
-              exec steam -tenfoot
-            '';
-          };
-
-          # Run Steam through Gamescope so Moonshine always captures one stable HDR
-          # surface. Steam's overlay does not composite with gamescope-wsi; that is
-          # ValveSoftware/gamescope#1537, still open, and the local PoC that
-          # addressed it was dropped. Expect no Steam overlay in this session.
-          moonshine-steam = pkgs.writeShellApplication {
-            name = "moonshine-steam";
-            runtimeInputs = [
-              config.programs.gamescope.package
+              pkgs.coreutils
               pkgs.procps
               config.programs.steam.package
             ];
             text = ''
               ${stopDesktopSteam}
-
-              export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${config.programs.gamescope.package}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
-
-              w=''${MOONSHINE_CLIENT_WIDTH:-1920}
-              h=''${MOONSHINE_CLIENT_HEIGHT:-1080}
-              rate=''${MOONSHINE_CLIENT_FRAMERATE:-60}
-
-              # Moonshine's Vulkan WSI layer is installed where the loader scans
-              # (the system profile share dir, on XDG_DATA_DIRS), so games pick
-              # it up and present their swapchains straight to the Moonshine
-              # compositor instead of being captured and colour-converted.
-              # Moonshine sets ENABLE_MOONSHINE_WSI=1 itself; DISABLE_* takes
-              # precedence over it, so it must stay unset.
-              unset DISABLE_MOONSHINE_WSI
-
-              # Steam Overlay only hooks X11 windows, while gamescope-wsi bypasses
-              # Xwayland for game swapchains, so the overlay is not expected to
-              # appear. See ValveSoftware/gamescope#1537.
-              unset DISABLE_GAMESCOPE_WSI
-
-              gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
-              # The security wrapper carries cap_sys_nice, which lets gamescope
-              # renice itself to -20 and request realtime priority Vulkan queues.
-              exec ${config.security.wrapperDir}/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
+              if pgrep -x steam >/dev/null; then
+                echo "Desktop Steam did not stop" >&2
+                exit 1
+              fi
             '';
           };
           # Moonshine runs this as ExecStopPost on the session's transient unit,
@@ -214,8 +170,14 @@ in
                   {
                     title = "Steam Big Picture";
                     boxart = "${moonshine-boxart}/steam.png";
-                    command = [ "${moonshine-steam}/bin/moonshine-steam" ];
+                    command = [
+                      (lib.getExe config.programs.steam.package)
+                      "steam://open/bigpicture"
+                    ];
+                    steam_integration = true;
+                    pre_command = [ [ (lib.getExe steam-stop-desktop) ] ];
                     post_command = [ [ "${steam-restore-trigger}/bin/steam-restore-trigger" ] ];
+                    env.XDG_DATA_DIRS = "${config.services.moonshine.package}/share:/run/current-system/sw/share";
                     stdout = "journal";
                     stderr = "journal";
                   }
