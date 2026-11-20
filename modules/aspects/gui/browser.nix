@@ -88,14 +88,13 @@ in
 
         # Simple.css / reader variables mapped onto the base16 palette, per the
         # Stylix style guide: base00 background, base01 alternate background,
-        # base02 selection/border, base05 text, base04 alternate text.
+        # base02 selection/border, base05 text. The secondary and faint text
+        # roles are mixed with base05 below to keep them readable even when
+        # base03/base04 are close to the background.
         readerPalette = {
           "--bg" = "base00";
           "--accent-bg" = "base01";
           "--text" = "base05";
-          "--text-light" = "base04";
-          "--text-muted" = "base04";
-          "--text-faint" = "base03";
           "--border" = "base02";
           "--accent" = "base05";
           "--accent-hover" = "base0E";
@@ -135,6 +134,11 @@ in
               ${lib.concatStringsSep "\n" (
                 lib.mapAttrsToList (name: base: "    ${name}: ${readerColors.${base}};") readerPalette
               )}
+
+                  /* Keep reader metadata, captions, and list markers readable. */
+                  --text-light: color-mix(in srgb, var(--text) 70%, ${readerColors.base04} 30%);
+                  --text-muted: var(--text-light);
+                  --text-faint: color-mix(in srgb, var(--text) 70%, ${readerColors.base03} 30%);
 
                   --marked: transparent;
 
