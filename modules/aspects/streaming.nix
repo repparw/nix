@@ -60,48 +60,19 @@ in
             '';
           };
 
-          moonshine-steam-game-session = pkgs.writeShellApplication {
-            name = "moonshine-steam-game-session";
+          steam-stop-desktop = pkgs.writeShellApplication {
+            name = "steam-stop-desktop";
             runtimeInputs = [
-              steam-session-select
-              config.programs.gamemode.package
-              config.programs.steam.package
-            ];
-            text = ''
-              # GameMode registers Steam and the game as clients. gamescope
-              # cannot be one: the NixOS security wrapper strips LD_PRELOAD.
-              exec gamemoderun steam -tenfoot
-            '';
-          };
-
-          # Run Steam through Gamescope so Moonshine always captures one stable HDR
-          # surface. Steam's overlay does not composite with gamescope-wsi; that is
-          # ValveSoftware/gamescope#1537, still open, and the local PoC that
-          # addressed it was dropped. Expect no Steam overlay in this session.
-          moonshine-steam = pkgs.writeShellApplication {
-            name = "moonshine-steam";
-            runtimeInputs = [
-              config.programs.gamescope.package
+              pkgs.coreutils
               pkgs.procps
               config.programs.steam.package
             ];
             text = ''
               ${stopDesktopSteam}
-
-              export XDG_DATA_DIRS="${config.services.moonshine.package}/share:${config.programs.gamescope.package}/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
-
-              w=''${MOONSHINE_CLIENT_WIDTH:-1920}
-              h=''${MOONSHINE_CLIENT_HEIGHT:-1080}
-              rate=''${MOONSHINE_CLIENT_FRAMERATE:-60}
-
-              # Ferriscope disables Gamescope WSI for its own clients. The
-              # nested Gamescope session needs that layer for HDR swapchains.
-              unset DISABLE_GAMESCOPE_WSI
-
-              gs_args=(--steam -f -b -W "$w" -H "$h" -w "$w" -h "$h" -r "$rate" --hdr-enabled)
-              # The security wrapper carries cap_sys_nice, which lets gamescope
-              # renice itself to -20 and request realtime priority Vulkan queues.
-              exec ${config.security.wrapperDir}/gamescope "''${gs_args[@]}" -- ${moonshine-steam-game-session}/bin/moonshine-steam-game-session
+              if pgrep -x steam >/dev/null; then
+                echo "Desktop Steam did not stop" >&2
+                exit 1
+              fi
             '';
           };
           # Moonshine runs this as ExecStopPost on the session's transient unit,
@@ -208,8 +179,27 @@ in
                   {
                     title = "Steam Big Picture";
                     boxart = "${moonshine-boxart}/steam.png";
-                    command = [ "${moonshine-steam}/bin/moonshine-steam" ];
+                    command = [
+                      (lib.getExe config.programs.steam.package)
+                      "steam://open/bigpicture"
+                    ];
+                    steam_integration = true;
+                    pre_command = [ [ (lib.getExe steam-stop-desktop) ] ];
                     post_command = [ [ "${steam-restore-trigger}/bin/steam-restore-trigger" ] ];
+                    env = {
+                      # Steam calls steamos-session-select for Switch to Desktop.
+                      PATH = lib.concatStringsSep ":" [
+                        "${steam-session-select}/bin"
+                        config.security.wrapperDir
+                        "${config.users.users.${sessionUser}.home}/.nix-profile/bin"
+                        "/nix/profile/bin"
+                        "${config.users.users.${sessionUser}.home}/.local/state/nix/profile/bin"
+                        "/etc/profiles/per-user/${sessionUser}/bin"
+                        "/nix/var/nix/profiles/default/bin"
+                        "/run/current-system/sw/bin"
+                      ];
+                      XDG_DATA_DIRS = "${config.services.moonshine.package}/share:/run/current-system/sw/share";
+                    };
                     stdout = "journal";
                     stderr = "journal";
                   }
