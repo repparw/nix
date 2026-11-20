@@ -185,6 +185,7 @@ class PlanTests(unittest.TestCase):
         expected = set(readiness.PR_WAITS) | {
             "qbittorrent", "wpaperd-fix",
             "gamescope-vkroots",
+            "moonshine-0-18",
             "t3code-browser-libs",
             "tridactyl-reader",
             "fsr4-rdna2",
