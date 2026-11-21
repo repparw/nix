@@ -59,17 +59,11 @@ Use [host recovery](host-recovery.md) and
 procedure; inspect the evaluated backup roots rather than trusting a list
 in Markdown.
 
-After an authorized OpenTofu state change on Alpha, refresh the staging tree
-before the offsite upload:
-
-```sh
-sudo systemctl start --wait home-state-backup-offsite.service
-sudo systemctl start --wait restic-backups-offsite.service
-```
-
-Verify both commands and the export report. Do not make successful
-`tofu apply` depend on backup success by wrapping it in a backup hook.
-See [OpenTofu state recovery](host-recovery.md#restore-the-opentofu-state).
+OpenTofu state files are copied as ordinary selected home files during the
+next scheduled export. They receive no special lock check or JSON validation.
+A state change during copying could result in an unusable individual snapshot,
+so restore an earlier or subsequent backup if needed. See
+[OpenTofu state recovery](host-recovery.md#restore-the-opentofu-state).
 
 ## Controller deployment and recovery
 
