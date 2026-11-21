@@ -351,7 +351,6 @@
                   "/.local/share/opencode/log/"
                   "/.local/share/opencode/tool-output/"
                 ];
-                criticalPaths = [ "Projects/nix/infra/terraform.tfstate" ];
               };
               # Cut the string context: these evaluated values are plain
               # paths and the check derivation must not depend on the host
@@ -407,7 +406,6 @@
                 staged=$state_root/offsite
                 test ! -e $staged/Projects/nix/infra/terraform.tfstate
                 test -f $staged/.config/vesktop/settings.json
-                test ! -e $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
 
                 printf '{"version": 4, "serial": 1, "resources": [{"type": "oci_core_instance", "name": "epsilon"}]}' > $state
                 chmod 600 $state
@@ -458,47 +456,30 @@
                 test "$(sqlite3 $staged/.local/share/opencode/opencode.db 'SELECT value FROM session')" = saved
                 test ! -e $staged/.local/share/opencode/log
                 test ! -e $staged/.local/share/opencode/tool-output
-                test -f $state_root/.critical-seen/Projects__nix__infra__terraform.tfstate
                 test ! -e $staged/Projects/nix/infra/terraform.tfvars
                 test ! -e $staged/Projects/nix/infra/terraform.tfplan
                 test ! -e $staged/Projects/nix/infra/router/imports.tf
                 test ! -e $staged/Projects/nix/infra/.terraform
                 test ! -e $staged/.config/sops/age
 
-                previous_stamp=$(cat $staged/.export-complete)
+                # OpenTofu state is an ordinary selected file. Even malformed
+                # JSON or the provider's lock sentinel cannot block backup.
                 printf 'not json {{' > $state
-                if ${staging}; then
-                  echo 'corrupt state must fail the export' >&2
-                  exit 1
-                fi
-                test "$(cat $staged/.export-complete)" = "$previous_stamp"
-                jq -e . $staged/Projects/nix/infra/terraform.tfstate >/dev/null
+                ${staging}
+                cmp $state $staged/Projects/nix/infra/terraform.tfstate
+                jq -e '.status == "complete"' $staged/.export-status.json >/dev/null
 
+                # A deleted ordinary file is absent from the new generation.
                 rm $state
-                if ${staging}; then
-                  echo 'disappeared state must fail the export' >&2
-                  exit 1
-                fi
-                test -f $staged/Projects/nix/infra/terraform.tfstate
-                test "$(cat $staged/.export-complete)" = "$previous_stamp"
+                ${staging}
+                test ! -e $staged/Projects/nix/infra/terraform.tfstate
 
                 printf '{"version": 4, "serial": 2, "resources": []}' > $state
                 touch $state_dir/.terraform.tfstate.lock.info
-                if ${staging}; then
-                  echo 'locked state must fail the export' >&2
-                  exit 1
-                fi
+                ${staging}
+                cmp $state $staged/Projects/nix/infra/terraform.tfstate
+                test ! -e $staged/Projects/nix/infra/.terraform.tfstate.lock.info
                 rm $state_dir/.terraform.tfstate.lock.info
-
-                # A retry must never bypass the critical OpenTofu lock guard.
-                touch $staged/.sqlite-retry-needed
-                touch $state_dir/.terraform.tfstate.lock.info
-                if ${staging} --retry; then
-                  echo 'SQLite retry bypassed the critical state lock' >&2
-                  exit 1
-                fi
-                test -f $staged/.sqlite-retry-needed
-                rm $state_dir/.terraform.tfstate.lock.info $staged/.sqlite-retry-needed
 
                 PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
                 PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/prepare-backup-exports.test.py} ${./scripts/prepare-backup-exports.py}
