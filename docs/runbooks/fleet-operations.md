@@ -40,6 +40,13 @@ timer retries only missing/stale databases and starts a new offsite upload
 after recovery. Degraded backups cannot advance the complete-backup success
 stamp or permit pruning.
 
+Alpha's offsite and Claro Restic services hold a shared advisory lock at
+`/var/lib/home-state-backup/.stage.lock` throughout each backup traversal.
+The home-state exporter takes the exclusive lock before publishing a new
+generation; the timer defers retries if the lock is busy. Start backups via
+their managed systemd units or the configured Restic package, not a raw
+`restic backup` invocation that bypasses the staging lock.
+
 Inspect `/var/lib/home-state-backup/offsite/.export-status.json` for failed
 databases and their last verified times, and `/var/lib/backup-exports/offsite.json`
 for the complete backup verdict. Confirm native database integrity and perform
