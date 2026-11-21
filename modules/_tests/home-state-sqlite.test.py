@@ -95,7 +95,7 @@ class HomeStateSQLite(unittest.TestCase):
         self.assertFalse(Path(str(staged) + "-wal").exists())
 
 
-    def test_held_sqlite_lock_retains_verified_prior_and_retry_recovers(self):
+    def test_held_sqlite_lock_retains_verified_prior_and_full_export_recovers(self):
         rel = ".config/net.imput.helium/Default/DIPS"
         staged = self.add_database(rel, "live new")
         healthy = ".local/share/opencode/opencode.db"
@@ -124,25 +124,20 @@ class HomeStateSQLite(unittest.TestCase):
         self.assertEqual(status["databases"][rel]["verifiedAt"], 1700000000)
         with sqlite3.connect(staged) as db:
             self.assertEqual(db.execute("SELECT value FROM session").fetchall(), [("prior",)])
-        self.assertTrue((self.stage / ".sqlite-retry-needed").exists())
+        self.assertFalse((self.stage / ".export-complete").exists())
         self.assertEqual(note.read_text(), '{"theme":"dark"}')
         with sqlite3.connect(self.stage / healthy) as db:
             self.assertEqual(db.execute("SELECT value FROM session").fetchall(), [("healthy",)])
-        healthy_stamp = status["databases"][healthy]["verifiedAt"]
 
         live.rollback()
-        result = subprocess.run([sys.executable, str(HANDLER), "--retry",
-                                 str(self.home), str(self.stage)],
-                                capture_output=True, text=True, timeout=60)
-        self.assertEqual(result.returncode, 0, result.stderr)
+        self.run_handler()
         recovered = json.loads((self.stage / ".export-status.json").read_text())
-        self.assertEqual(recovered["status"], "degraded")
-        self.assertTrue(recovered["recoveryPending"])
+        self.assertEqual(recovered["status"], "complete")
         self.assertEqual(recovered["failures"], [])
-        self.assertEqual(recovered["databases"][healthy]["verifiedAt"], healthy_stamp)
+        self.assertEqual(recovered["databases"][healthy]["status"], "fresh")
         with sqlite3.connect(staged) as db:
             self.assertEqual(db.execute("SELECT value FROM session").fetchall(), [("live new",)])
-        self.assertFalse((self.stage / ".sqlite-retry-needed").exists())
+        self.assertTrue((self.stage / ".export-complete").exists())
 
     def test_invalid_previous_sidecars_are_not_reused(self):
         rel = "browser/DIPS"
