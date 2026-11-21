@@ -9,6 +9,7 @@
   excludes ? [ ],
   criticalPaths ? [ ],
   guardResticUploads ? true,
+  systemctl ? lib.getExe' pkgs.systemd "systemctl",
 }:
 let
   markerOf = path: builtins.replaceStrings [ "/" ] [ "__" ] path;
@@ -38,7 +39,7 @@ pkgs.writeShellScript "prepare-home-state" ''
   ${lib.optionalString guardResticUploads ''
     guard_restic_uploads() {
       for unit in restic-backups-offsite.service restic-backups-claro.service; do
-        substate=$(${lib.getExe' pkgs.systemd "systemctl"} show --value -p SubState "$unit")
+        substate=$(${systemctl} show --value -p SubState "$unit")
         case "$substate" in
           dead|failed|start-pre) ;;
           *)
