@@ -291,6 +291,7 @@
         # full fresh generation; systemd coalesces concurrent start jobs.
         systemd.services.home-state-sqlite-retry = {
           description = "Retry degraded Alpha home-state via full offsite backup";
+          serviceConfig.Type = "oneshot";
           script = ''
             status=${stateRoot}/offsite/.export-status.json
             if ! ${pkgs.jq}/bin/jq -e '.status == "degraded"' "$status" >/dev/null 2>&1; then
