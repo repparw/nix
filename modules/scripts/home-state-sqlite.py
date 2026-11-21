@@ -157,9 +157,10 @@ def publish_status(stage, entries, retry=False):
     (stage / STATUS).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     if failures:
         (stage / RETRY).touch()
-        (stage / ".export-complete").unlink(missing_ok=True)
     else:
         (stage / RETRY).unlink(missing_ok=True)
+    if failures or pending_full_export:
+        (stage / ".export-complete").unlink(missing_ok=True)
     print(f"home-state: {len(entries) - len(failures)} SQLite snapshots fresh, "
           f"{len(failures)} degraded", file=sys.stderr)
 
