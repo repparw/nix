@@ -37,6 +37,17 @@ def artifacts(spec):
     return found
 
 
+def export_quality(spec):
+    """Optional producer quality report; degraded is not a complete restore."""
+    path = spec.get("statusFile")
+    if path is None:
+        return {"status": "complete"}
+    report = json.loads(Path(path).read_text())
+    if report.get("schemaVersion") != 1 or report.get("status") not in ("complete", "degraded"):
+        raise ValueError(f"invalid native export status: {path}")
+    return report
+
+
 def prepare(exports, report_path):
     report = {"startedAt": int(time.time()), "exports": {}, "status": "complete"}
     for name, spec in exports.items():
@@ -56,9 +67,16 @@ def prepare(exports, report_path):
                 refreshed = artifacts(spec).difference(before)
                 if not refreshed:
                     raise RuntimeError("exporter produced no new or refreshed nonempty artifact within maxAgeSeconds")
-            report["exports"][name] = {"status": "complete", "artifacts": sorted(item[0] for item in refreshed)}
-            print(f"Verified fresh backup export: {name}", flush=True)
-        except (OSError, subprocess.CalledProcessError, RuntimeError) as error:
+            quality = export_quality(spec)
+            result = {"status": quality["status"], "artifacts": sorted(item[0] for item in refreshed)}
+            if quality["status"] == "degraded":
+                report["status"] = "incomplete"
+                result["databaseFailures"] = quality.get("failures", [])
+                print(f"Backup export degraded: {name}: {len(result['databaseFailures'])} databases",
+                      file=sys.stderr, flush=True)
+            report["exports"][name] = result
+            print(f"Verified {quality['status']} backup export: {name}", flush=True)
+        except (OSError, ValueError, subprocess.CalledProcessError, RuntimeError) as error:
             report["status"] = "incomplete"
             report["exports"][name] = {"status": "failed", "error": str(error)}
             print(f"Backup export failed: {name}: {error}", file=sys.stderr, flush=True)
@@ -70,7 +88,7 @@ if __name__ == "__main__":
     if sys.argv[1] == "--check":
         report = json.loads(Path(sys.argv[2]).read_text())
         if report["status"] != "complete":
-            failed = ", ".join(name for name, result in report["exports"].items() if result["status"] == "failed")
-            sys.exit(f"Offsite snapshot uploaded but incomplete; failed exports: {failed}")
+            failed = ", ".join(name for name, result in report["exports"].items() if result["status"] != "complete")
+            sys.exit(f"Offsite snapshot uploaded but incomplete; failed/degraded exports: {failed}")
     else:
         prepare(json.loads(Path(sys.argv[1]).read_text()), Path(sys.argv[2]))
