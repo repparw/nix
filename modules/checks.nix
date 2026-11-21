@@ -396,10 +396,10 @@
                 jobs='${builtins.toJSON rsyncJobs}'
                 printf '%s' "$jobs" | jq -e '(index("bupstate") == null) and (index("buptohdd") == null)' >/dev/null
                 paths='${builtins.toJSON resticPaths}'
-                printf '%s' "$paths" | jq -e 'index("/var/lib/home-state-backup/offsite")' >/dev/null
+                printf '%s' "$paths" | jq -e 'index("/run/home-state-backup/offsite")' >/dev/null
                 for args in '${builtins.toJSON offsiteArgs}' '${builtins.toJSON claroArgs}'; do
                   printf '%s' "$args" | jq -e \
-                    'index("--files-from-raw=/var/lib/home-state-backup/offsite/.home-files") != null' >/dev/null
+                    'index("--files-from-raw=/run/home-state-backup/offsite/.home-files") != null' >/dev/null
                 done
 
                 ${staging}
