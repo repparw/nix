@@ -49,16 +49,13 @@ def export_quality(spec):
     if (report.get("schemaVersion") != 1
             or status not in ("complete", "degraded")
             or not isinstance(report.get("databases"), dict)
-            or not isinstance(report.get("failures"), list)
-            or not isinstance(report.get("recoveryPending", False), bool)):
+            or not isinstance(report.get("failures"), list)):
         raise ValueError(f"invalid native export status: {path}")
     if status == "complete":
-        # A full run writes this marker after snapshot validation, before
-        # publishing the entire generation. SQLite-only retries never do.
         marker = Path(spec["path"]) / ".export-complete"
-        if report["failures"] or report.get("recoveryPending", False) or not marker.is_file() or not marker.stat().st_size:
+        if report["failures"] or not marker.is_file() or not marker.stat().st_size:
             raise ValueError(f"native export is not a verified full generation: {path}")
-    elif not report["failures"] and not report.get("recoveryPending", False):
+    elif not report["failures"]:
         raise ValueError(f"degraded export has no recorded reason: {path}")
     return report
 
