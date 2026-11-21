@@ -84,11 +84,16 @@ def prepare(exports, report_path):
     report_path.write_text(json.dumps(report, indent=2) + "\n")
 
 
+def check(report_path):
+    report = json.loads(report_path.read_text())
+    if report["status"] != "complete":
+        failed = ", ".join(name for name, result in report["exports"].items()
+                           if result["status"] != "complete")
+        sys.exit(f"Offsite snapshot uploaded but incomplete; failed/degraded exports: {failed}")
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "--check":
-        report = json.loads(Path(sys.argv[2]).read_text())
-        if report["status"] != "complete":
-            failed = ", ".join(name for name, result in report["exports"].items() if result["status"] != "complete")
-            sys.exit(f"Offsite snapshot uploaded but incomplete; failed/degraded exports: {failed}")
+        check(Path(sys.argv[2]))
     else:
         prepare(json.loads(Path(sys.argv[1]).read_text()), Path(sys.argv[2]))
