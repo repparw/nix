@@ -107,7 +107,12 @@
             ".config/codex/plugins/"
             ".config/codex/goals_1.sqlite"
             ".config/opencode/plugins/"
-            ".config/net.imput.helium/"
+            # Only personal Helium state worth recovering. Excludes cookies,
+            # DIPS, caches and other live Chromium databases.
+            ".config/net.imput.helium/Default/Bookmarks"
+            ".config/net.imput.helium/Default/Preferences"
+            ".config/net.imput.helium/Default/Sessions/"
+            ".config/net.imput.helium/Local State"
             ".config/fish/fish_variables"
             ".config/mpv/watch_later"
             ".config/Raspberry Pi/Raspberry Pi Imager.conf"
@@ -129,27 +134,8 @@
             "Projects/nix/infra/router/inventory.auto.tfvars"
             ".local/share/opencode/"
           ];
-          homeStateExcludes =
-            map (dir: "/.config/net.imput.helium/${dir}") [
-              "Default/History*"
-              "Default/Service Worker/CacheStorage"
-              "Default/Service Worker/ScriptCache"
-              "Default/GPUCache"
-              "Default/DawnWebGPUCache"
-              "Default/DawnGraphiteCache"
-              "GPUPersistentCache"
-              "GrShaderCache"
-              "ShaderCache"
-              "GraphiteDawnCache"
-              "component_crx_cache"
-              "extensions_crx_cache"
-              "CertificateRevocation"
-              "Dictionaries"
-              "segmentation_platform"
-              "DeferredBrowserMetrics"
-              "Variations"
-            ]
-            ++ map (dir: "/.local/share/opencode/${dir}") [
+          homeStateExcludes = map (dir: "/.local/share/opencode/${dir}") [
+
               "log/"
               "tool-output/"
             ];
