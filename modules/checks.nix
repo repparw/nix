@@ -367,6 +367,7 @@
                   pkgs.coreutils
                   pkgs.jq
                   pkgs.rsync
+                  pkgs.util-linux
                   pkgs.python3
                   pkgs.sqlite
                 ];
