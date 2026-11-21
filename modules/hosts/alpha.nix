@@ -286,29 +286,22 @@
           ExecStart = "${prepareHomeState}";
         };
 
-        # Retry only SQLite databases left stale by a prior home-state run.
-        # Normal Restic hooks will rebuild the full stage before uploading a
-        # recovered generation. Never interrupt an ongoing offsite upload.
+        # While the last home export is degraded, request the regular
+        # offsite backup every 15 minutes. Its normal pre-start builds a
+        # full fresh generation; systemd coalesces concurrent start jobs.
         systemd.services.home-state-sqlite-retry = {
-          description = "Retry degraded Alpha home-state SQLite snapshots";
-          serviceConfig = {
-            Type = "oneshot";
-            TimeoutStartSec = "90min";
-          };
+          description = "Retry degraded Alpha home-state via full offsite backup";
           script = ''
-            set -euo pipefail
-            if [ ! -f ${stateRoot}/offsite/.sqlite-retry-needed ]; then
+            status=${stateRoot}/offsite/.export-status.json
+            if ! ${pkgs.jq}/bin/jq -e '.status == "degraded"' "$status" >/dev/null 2>&1; then
               exit 0
             fi
-            ${prepareHomeState} --retry
-            if [ ! -f ${stateRoot}/offsite/.sqlite-retry-needed ]; then
-              ${pkgs.systemd}/bin/systemctl start --wait restic-backups-offsite.service
-            fi
+            ${pkgs.systemd}/bin/systemctl start --no-block restic-backups-offsite.service
           '';
         };
 
         systemd.timers.home-state-sqlite-retry = {
-          description = "Retry locked home-state SQLite databases every 15 minutes";
+          description = "Retry degraded home-state backup every 15 minutes";
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnCalendar = "*:0/15";
