@@ -176,6 +176,17 @@ def prepare(home, stage, previous=None, retry=False):
                     continue
                 if is_sqlite(staged):
                     paths.append(staged.relative_to(stage))
+        # Previously tracked databases must not silently disappear if rsync
+        # skips a source, or its header changes. Preserve the last verified
+        # snapshot, and keep the export degraded until fresh again.
+        known = set(paths)
+        for name in old_entries:
+            relative = Path(name)
+            if relative.is_absolute() or ".." in relative.parts:
+                raise ValueError(f"unsafe previous SQLite path: {name}")
+            if relative not in known:
+                paths.append(relative)
+                known.add(relative)
     for relative in sorted(paths):
         source = home / relative
         staged = stage / relative
