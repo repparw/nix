@@ -8,8 +8,6 @@
   paths,
   excludes ? [ ],
   criticalPaths ? [ ],
-  guardResticUploads ? true,
-  systemctl ? lib.getExe' pkgs.systemd "systemctl",
 }:
 let
   markerOf = path: builtins.replaceStrings [ "/" ] [ "__" ] path;
@@ -30,27 +28,17 @@ pkgs.writeShellScript "prepare-home-state" ''
   parent=${lib.escapeShellArg stateRoot}
   destination="$parent/offsite"
   seen_dir="$parent/.critical-seen"
-  # Serialize retry and regular staging. Publish with an atomic exchange.
+  # Restic holds this same lock in shared mode for its entire backup.
+  # A retry skips without error if a backup owns the lock.
   exec 9>"$parent/.stage.lock"
-  flock -x 9
-  # The exporter runs from Restic's start-pre phase. Reject a new stage
-  # while either destination is reading this directory (SubState=start).
-  # Fail closed if systemd cannot tell us the state.
-  ${lib.optionalString guardResticUploads ''
-    guard_restic_uploads() {
-      for unit in restic-backups-offsite.service restic-backups-claro.service; do
-        substate=$(${systemctl} show --value -p SubState "$unit")
-        case "$substate" in
-          dead|failed|start-pre) ;;
-          *)
-            echo "home-state: Restic $unit is $substate; refusing to replace a live export" >&2
-            exit 1
-            ;;
-        esac
-      done
-    }
-    guard_restic_uploads
-  ''}
+  if [ "''${1:-}" = --retry ]; then
+    if ! flock --exclusive --nonblock 9; then
+      printf 'home-state: Restic or staging is active; retry deferred\n' >&2
+      exit 0
+    fi
+  else
+    flock --exclusive 9
+  fi
   temporary=$(mktemp -d "$parent/.prepare-offsite.XXXXXX")
   trap 'rm -rf "$temporary"' EXIT
 
@@ -69,21 +57,6 @@ pkgs.writeShellScript "prepare-home-state" ''
     fi
   '') criticalPaths}
   if [ "''${1:-}" = --retry ]; then
-    # This check happens *under* the staging lock. Each Restic pre-start
-    # must acquire the same lock before its upload can begin. Together these
-    # prevent an in-progress Restic traversal from seeing a stage exchange,
-    # including when its pre-start races with the retry timer.
-    test -f "$destination/.sqlite-retry-needed" || exit 0
-    for unit in restic-backups-offsite.service restic-backups-claro.service; do
-      active_state=$(${lib.getExe' pkgs.systemd "systemctl"} show --value -p ActiveState "$unit")
-      case "$active_state" in
-        inactive|failed) ;;
-        *)
-          echo "Restic $unit is $active_state; deferring SQLite retry" >&2
-          exit 0
-          ;;
-      esac
-    done
     # Reuse the verified staging tree and refresh critical state too.
     cp -a --reflink=auto "$destination/." "$temporary/"
     ${lib.optionalString (criticalPaths != [ ]) ''
@@ -125,6 +98,5 @@ pkgs.writeShellScript "prepare-home-state" ''
   if [ "''${1:-}" != --retry ] && [ ! -f "$temporary/.sqlite-retry-needed" ]; then
     date --iso-8601=ns > "$temporary/.export-complete"
   fi
-  ${lib.optionalString guardResticUploads "guard_restic_uploads"}
   python3 ${../scripts/home-state-sqlite.py} --publish "$temporary" "$destination"
 ''
