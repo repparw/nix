@@ -134,11 +134,10 @@
             "Projects/nix/infra/router/inventory.auto.tfvars"
             ".local/share/opencode/"
           ];
-          homeStateExcludes = map (dir: "/.local/share/opencode/${dir}") [
-
-              "log/"
-              "tool-output/"
-            ];
+          homeStateExcludes = [
+            "/.local/share/opencode/log/"
+            "/.local/share/opencode/tool-output/"
+          ];
           homeStateStagingScript = prepareHomeState;
         };
 
