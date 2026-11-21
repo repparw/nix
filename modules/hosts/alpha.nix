@@ -311,11 +311,19 @@
             if [ ! -f ${stateRoot}/offsite/.sqlite-retry-needed ]; then
               exit 0
             fi
-            if ${pkgs.systemd}/bin/systemctl is-active --quiet restic-backups-offsite.service \
-              || ${pkgs.systemd}/bin/systemctl is-active --quiet restic-backups-claro.service; then
-              echo 'An offsite upload is active; deferring SQLite retry'
-              exit 0
-            fi
+            # Restic oneshot units stay "activating" throughout their upload;
+            # is-active returns false for that state. Defer on any busy or
+            # unknown state rather than swapping a stage during an upload.
+            for unit in restic-backups-offsite.service restic-backups-claro.service; do
+              active_state=$(${pkgs.systemd}/bin/systemctl show --value -p ActiveState "$unit")
+              case "$active_state" in
+                inactive|failed) ;;
+                *)
+                  echo "Restic $unit is $active_state; deferring SQLite retry"
+                  exit 0
+                  ;;
+              esac
+            done
             ${prepareHomeState} --retry
             if [ ! -f ${stateRoot}/offsite/.sqlite-retry-needed ]; then
               ${pkgs.systemd}/bin/systemctl start --wait restic-backups-offsite.service
