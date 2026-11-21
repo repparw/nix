@@ -43,9 +43,12 @@ class HomeStateSQLite(unittest.TestCase):
         os.chmod(staged, 0o600)
         return staged
 
-    def run_handler(self, success=True):
-        result = subprocess.run([sys.executable, str(HANDLER), str(self.home), str(self.stage), str(self.previous)],
-                                capture_output=True, text=True, timeout=60)
+    def run_handler(self, success=True, selected=None):
+        args = [sys.executable, str(HANDLER), str(self.home),
+                str(self.stage), str(self.previous)]
+        if selected is not None:
+            args.append(json.dumps(selected))
+        result = subprocess.run(args, capture_output=True, text=True, timeout=60)
         if success:
             self.assertEqual(result.returncode, 0, result.stderr)
         else:
@@ -168,7 +171,7 @@ class HomeStateSQLite(unittest.TestCase):
         }))
         staged.unlink()
         (self.home / rel).unlink()
-        self.run_handler()
+        self.run_handler(selected=[".config/net.imput.helium/"])
         report = json.loads((self.stage / ".export-status.json").read_text())
         self.assertEqual(report["status"], "degraded")
         self.assertEqual(report["databases"][rel]["status"], "stale")
@@ -176,6 +179,35 @@ class HomeStateSQLite(unittest.TestCase):
         with sqlite3.connect(staged) as db:
             self.assertEqual(db.execute("SELECT value FROM session").fetchall(),
                              [("last good",)])
+
+    def test_retired_dips_database_is_not_reintroduced(self):
+        rel = ".config/net.imput.helium/Default/DIPS"
+        old = self.previous / rel
+        old.parent.mkdir(parents=True)
+        with sqlite3.connect(old) as db:
+            db.execute("CREATE TABLE example (value TEXT)")
+            db.execute("INSERT INTO example VALUES ('previous')")
+
+        (self.previous / ".export-status.json").write_text(json.dumps({
+            "schemaVersion": 1, "status": "complete",
+            "databases": {rel: {"status": "fresh", "verifiedAt": 1700000000}},
+        }))
+        bookmarks = self.stage / ".config/net.imput.helium/Default/Bookmarks"
+        bookmarks.parent.mkdir(parents=True)
+        bookmarks.write_text('{"roots":{}}')
+        selected = [
+            ".config/net.imput.helium/Default/Bookmarks",
+            ".config/net.imput.helium/Default/Preferences",
+            ".config/net.imput.helium/Default/Sessions/",
+            ".config/net.imput.helium/Local State",
+        ]
+        self.run_handler(selected=selected)
+        status = json.loads((self.stage / ".export-status.json").read_text())
+        self.assertEqual(status["status"], "complete")
+        self.assertEqual(status["databases"], {})
+        self.assertEqual(status["failures"], [])
+        self.assertFalse((self.stage / rel).exists())
+        self.assertEqual(bookmarks.read_text(), '{"roots":{}}')
 
     def test_publish_atomically_exchanges_generations(self):
         self.previous.mkdir()
