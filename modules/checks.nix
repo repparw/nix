@@ -322,6 +322,8 @@
               staging = prepareHomeState {
                 home = "/tmp/home-state-fixture-home";
                 stateRoot = "/tmp/home-state-fixture-root";
+                # No systemd manager inside Nix build sandboxes.
+                guardResticUploads = false;
                 paths = [
                   ".config/vesktop/settings.json"
                   ".config/opencode/plugins/"
