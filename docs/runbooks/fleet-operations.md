@@ -28,55 +28,38 @@ Missing telemetry and unreachable hosts are _unknown_, not green. Consult
 
 ## Offsite backup coverage and consistency
 
-A successful Restic upload is not necessarily a usable application restore.
-The export report at `/var/lib/backup-exports/offsite.json` distinguishes
-fresh application exports from missing, failed or stale producers. An
-incomplete export prevents pruning; it does not make the uploaded data complete.
+A successful Restic upload does not necessarily mean every application export
+is usable. Missing, failed, or degraded exports do not count as complete
+backups and must not permit retention pruning. The previous complete recovery
+point remains important until a new one has been verified.
 
-Alpha's curated ordinary home files are read **directly** by Restic. The
-home exporter writes a NUL-delimited `.home-files` list for
-`--files-from-raw`; no full copy of the selected home tree is made.
-Only SQLite databases are snapshotted using `VACUUM INTO` under
-`/run/home-state-backup/offsite`, a private 2 GiB tmpfs mount with swapping
-disabled. Ordinary home files are not duplicated, and SQLite export copies
-do not write to disk. Snapshots are validated with `PRAGMA quick_check`.
-A failed export can reuse the last verified local copy from the same boot
-with its original verification timestamp, or omit the database and mark
-the export **degraded**. The local fallback is lost on reboot; older Restic
-snapshots remain available.
-Every 15 minutes, a degraded export triggers the normal full offsite backup.
-Degraded backups cannot advance the complete-backup stamp or permit pruning.
+Alpha backs up ordinary curated home files directly to avoid unnecessary
+local copies. Live SQLite databases need consistent snapshots: raw copies can
+miss committed WAL changes or be corrupted by concurrent writes. Their
+temporary snapshots use memory rather than disk to limit SSD writes. Memory
+copies disappear on reboot, so a fallback from before the reboot is unavailable
+locally, though earlier Restic snapshots remain available.
 
-The offsite and Claro Restic services hold a shared advisory lock at
-`/run/home-state-backup/.stage.lock` while reading the SQLite export.
-The exporter takes an exclusive lock to publish a new SQLite generation and
-file list. This lock does not freeze ordinary home files. Run backups through
-the managed systemd units so the file list and snapshots are prepared first.
-On restore, ordinary files return to their original home paths; the SQLite
-snapshots are stored separately under the exported `/run/home-state-backup/offsite`
-tree and must be copied to the matching home-relative paths.
+When a SQLite export cannot be refreshed, the backup may contain the last
+verified copy or no copy of that database. It is marked degraded and retried,
+not treated as a new complete recovery point. A lock prevents publication
+while Restic reads the SQLite snapshots, but ordinary files remain live.
 
-Inspect `/run/home-state-backup/offsite/.export-status.json` for failed
-databases and verification times, and `/var/lib/backup-exports/offsite.json`
-for the complete-backup verdict. Confirm native database integrity and perform
-an isolated restore before relying on a recovery point.
+Helium's backup intentionally retains bookmarks, preferences, and recoverable
+tabs, rather than browser tracking databases, caches, or cookies. Restoring
+those files does not restore authenticated website sessions.
 
-Alpha includes only Helium's `Default/Bookmarks`, `Default/Preferences`,
-`Default/Sessions/`, and `Local State` in the curated home backup. It excludes
-`DIPS`, cookies, other browser databases and caches. Restoring these files
-recovers bookmarks, preferences and potentially open tabs, but not
-authenticated website sessions.
+OpenTofu state is copied as an ordinary file because applies are manual and
+overlap with scheduled backups is unlikely. A coincident state write can make
+one recovery point unusable; an earlier or subsequent backup may be needed.
+See [OpenTofu state recovery](host-recovery.md#restore-the-opentofu-state).
 
-Persistence is not offsite backup coverage. Bound paths, nested devices,
-`--one-file-system` and live SQLite data can affect what Restic captures.
+Persistence alone is not offsite backup coverage. Mount boundaries and live
+application data can affect what a backup contains. Check the actual backup
+report and perform an isolated restore before relying on a recovery point.
 Use [host recovery](host-recovery.md) and
-[service restoration](restore-service-backups.md) for the restore procedure.
-Inspect the evaluated backup roots rather than trusting a list in Markdown.
-
-OpenTofu state files are read directly by Restic as ordinary selected home
-files. There is no special provider-lock check or JSON validation. A state
-change during backup may affect one recovery point; use another snapshot if
-needed. See [OpenTofu state recovery](host-recovery.md#restore-the-opentofu-state).
+[service restoration](restore-service-backups.md) for recovery procedures;
+the Nix configuration and export scripts define the implementation.
 
 ## Controller deployment and recovery
 
