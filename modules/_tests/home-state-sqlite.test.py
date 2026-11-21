@@ -1,5 +1,6 @@
 
 from contextlib import ExitStack
+import json
 import os
 from pathlib import Path
 import shutil
@@ -19,6 +20,7 @@ class HomeStateSQLite(unittest.TestCase):
         self.root = Path(tmp.name)
         self.home = self.root / "home"
         self.stage = self.root / "stage"
+        self.previous = self.root / "previous"
         self.home.mkdir()
         self.stage.mkdir()
         self.connections = ExitStack()
@@ -42,7 +44,7 @@ class HomeStateSQLite(unittest.TestCase):
         return staged
 
     def run_handler(self, success=True):
-        result = subprocess.run([sys.executable, str(HANDLER), str(self.home), str(self.stage)],
+        result = subprocess.run([sys.executable, str(HANDLER), str(self.home), str(self.stage), str(self.previous)],
                                 capture_output=True, text=True, timeout=60)
         if success:
             self.assertEqual(result.returncode, 0, result.stderr)
@@ -66,7 +68,7 @@ class HomeStateSQLite(unittest.TestCase):
         outside.write_text("external")
         (regular.parent / "shortcut").symlink_to(outside)
         result = self.run_handler()
-        self.assertIn("snapshotted 3 SQLite databases", result.stderr)
+        self.assertIn("3 SQLite snapshots fresh", result.stderr)
         for path, value in paths:
             staged = self.stage / path
             with sqlite3.connect(staged) as snapshot:
@@ -79,12 +81,78 @@ class HomeStateSQLite(unittest.TestCase):
         self.assertTrue((regular.parent / "shortcut").is_symlink())
         self.assertEqual(outside.read_text(), "external")
 
-    def test_changed_or_corrupt_source_fails_instead_of_copying(self):
+    def test_changed_source_is_degraded_not_published_as_raw_sqlite(self):
         staged = self.add_database(".local/share/opencode/opencode.db", "session")
         (self.home / ".local/share/opencode/opencode.db").rename(self.root / "removed.db")
-        self.run_handler(success=False)
-        self.assertTrue(staged.exists())
+        self.run_handler()
+        report = json.loads((self.stage / ".export-status.json").read_text())
+        self.assertEqual(report["status"], "degraded")
+        self.assertEqual(report["failures"][0]["status"], "missing")
+        self.assertFalse(staged.exists())
+        self.assertFalse(Path(str(staged) + "-wal").exists())
 
+
+    def test_held_sqlite_lock_retains_verified_prior_and_retry_recovers(self):
+        rel = ".config/net.imput.helium/Default/DIPS"
+        staged = self.add_database(rel, "live new")
+        # The preceding generation contains a self-contained verified copy.
+        old = self.previous / rel
+        old.parent.mkdir(parents=True)
+        with sqlite3.connect(old) as db:
+            db.execute("CREATE TABLE session (value TEXT)")
+            db.execute("INSERT INTO session VALUES ('prior')")
+        (self.previous / ".export-complete").write_text("old")
+        os.utime(self.previous / ".export-complete", (1700000000, 1700000000))
+
+        self.connections.close()
+        live = sqlite3.connect(self.home / rel)
+        self.addCleanup(live.close)
+        self.assertEqual(live.execute("PRAGMA journal_mode=DELETE").fetchone(), ("delete",))
+        live.execute("BEGIN EXCLUSIVE")
+        self.run_handler()
+        status = json.loads((self.stage / ".export-status.json").read_text())
+        self.assertEqual(status["status"], "degraded")
+        self.assertEqual(status["databases"][rel]["status"], "stale")
+        self.assertEqual(status["databases"][rel]["verifiedAt"], 1700000000)
+        with sqlite3.connect(staged) as db:
+            self.assertEqual(db.execute("SELECT value FROM session").fetchall(), [("prior",)])
+        self.assertTrue((self.stage / ".sqlite-retry-needed").exists())
+
+        live.rollback()
+        result = subprocess.run([sys.executable, str(HANDLER), "--retry",
+                                 str(self.home), str(self.stage)],
+                                capture_output=True, text=True, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        recovered = json.loads((self.stage / ".export-status.json").read_text())
+        self.assertEqual(recovered["status"], "complete")
+        with sqlite3.connect(staged) as db:
+            self.assertEqual(db.execute("SELECT value FROM session").fetchall(), [("live new",)])
+        self.assertFalse((self.stage / ".sqlite-retry-needed").exists())
+
+    def test_invalid_previous_sidecars_are_not_reused(self):
+        rel = "browser/DIPS"
+        staged = self.add_database(rel, "live")
+        old = self.previous / rel
+        old.parent.mkdir(parents=True)
+        shutil.copy2(staged, old)
+        (old.parent / "DIPS-wal").write_bytes(b"unsafe")
+        (self.previous / ".export-complete").touch()
+        (self.home / rel).unlink()
+        self.run_handler()
+        status = json.loads((self.stage / ".export-status.json").read_text())
+        self.assertEqual(status["databases"][rel]["status"], "missing")
+        self.assertFalse(staged.exists())
+
+    def test_publish_atomically_exchanges_generations(self):
+        self.previous.mkdir()
+        (self.previous / "old").write_text("old")
+        (self.stage / "new").write_text("new")
+        result = subprocess.run([sys.executable, str(HANDLER), "--publish",
+                                 str(self.stage), str(self.previous)],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue((self.previous / "new").exists())
+        self.assertTrue((self.stage / "old").exists())
 
 if __name__ == "__main__":
     unittest.main()
