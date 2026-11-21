@@ -24,7 +24,8 @@
           alpha-home = {
             unit = "home-state-backup-offsite.service";
             path = "/var/lib/home-state-backup/offsite";
-            pattern = ".export-complete";
+            pattern = ".export-status.json";
+            statusFile = "/var/lib/home-state-backup/offsite/.export-status.json";
           };
           jellyfin = {
             unit = "jellyfin-backup.service";
@@ -294,6 +295,42 @@
           StateDirectoryMode = "0700";
           TimeoutStartSec = "15min";
           ExecStart = "${prepareHomeState}";
+        };
+
+        # Retry only SQLite databases left stale by a prior home-state run.
+        # Normal Restic hooks will rebuild the full stage before uploading a
+        # recovered generation. Never interrupt an ongoing offsite upload.
+        systemd.services.home-state-sqlite-retry = {
+          description = "Retry degraded Alpha home-state SQLite snapshots";
+          serviceConfig = {
+            Type = "oneshot";
+            TimeoutStartSec = "90min";
+          };
+          script = ''
+            set -euo pipefail
+            if [ ! -f ${stateRoot}/offsite/.sqlite-retry-needed ]; then
+              exit 0
+            fi
+            if ${pkgs.systemd}/bin/systemctl is-active --quiet restic-backups-offsite.service \
+              || ${pkgs.systemd}/bin/systemctl is-active --quiet restic-backups-claro.service; then
+              echo 'An offsite upload is active; deferring SQLite retry'
+              exit 0
+            fi
+            ${prepareHomeState} --retry
+            if [ ! -f ${stateRoot}/offsite/.sqlite-retry-needed ]; then
+              ${pkgs.systemd}/bin/systemctl start --wait restic-backups-offsite.service
+            fi
+          '';
+        };
+
+        systemd.timers.home-state-sqlite-retry = {
+          description = "Retry locked home-state SQLite databases every 15 minutes";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*:0/15";
+            RandomizedDelaySec = "3min";
+            Persistent = false;
+          };
         };
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl
