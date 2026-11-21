@@ -133,7 +133,9 @@ class HomeStateSQLite(unittest.TestCase):
                                 capture_output=True, text=True, timeout=60)
         self.assertEqual(result.returncode, 0, result.stderr)
         recovered = json.loads((self.stage / ".export-status.json").read_text())
-        self.assertEqual(recovered["status"], "complete")
+        self.assertEqual(recovered["status"], "degraded")
+        self.assertTrue(recovered["recoveryPending"])
+        self.assertEqual(recovered["failures"], [])
         self.assertEqual(recovered["databases"][healthy]["verifiedAt"], healthy_stamp)
         with sqlite3.connect(staged) as db:
             self.assertEqual(db.execute("SELECT value FROM session").fetchall(), [("live new",)])
