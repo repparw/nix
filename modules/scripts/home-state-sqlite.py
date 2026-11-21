@@ -165,7 +165,18 @@ def publish_status(stage, entries, retry=False):
           f"{len(failures)} degraded", file=sys.stderr)
 
 
-def prepare(home, stage, previous=None, retry=False):
+def still_selected(relative, selected):
+    """Retain old database tracking only for paths still in backup scope."""
+    if selected is None:
+        return True
+    name = relative.as_posix()
+    return any(
+        name == item.rstrip("/") or (item.endswith("/") and name.startswith(item))
+        for item in selected
+    )
+
+
+def prepare(home, stage, previous=None, retry=False, selected=None):
     old_entries = load_previous(stage if retry else previous)
     if retry:
         entries = dict(old_entries)
@@ -189,7 +200,9 @@ def prepare(home, stage, previous=None, retry=False):
             relative = Path(name)
             if relative.is_absolute() or ".." in relative.parts:
                 raise ValueError(f"unsafe previous SQLite path: {name}")
-            if relative not in known:
+            # A configuration change may deliberately drop an old database
+            # (e.g. Chromium DIPS). Do not resurrect it or report it missing.
+            if still_selected(relative, selected) and relative not in known:
                 paths.append(relative)
                 known.add(relative)
     for relative in sorted(paths):
@@ -238,4 +251,5 @@ if __name__ == "__main__":
     elif sys.argv[1] == "--retry":
         prepare(Path(sys.argv[2]), Path(sys.argv[3]), retry=True)
     else:
-        prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]))
+        selected = json.loads(sys.argv[4]) if len(sys.argv) > 4 else None
+        prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), selected=selected)
