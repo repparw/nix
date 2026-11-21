@@ -144,20 +144,6 @@
             type = lib.types.listOf lib.types.str;
             default = [ ];
           };
-          homeStateCritical = lib.mkOption {
-            description = ''
-              Subset of homeState guarded as critical: when a source exists it
-              must be unlocked by its owning tool, staged non-empty, and
-              parseable, or the export fails and the previous staged
-              generation is preserved. A missing source is tolerated until the
-              first successful backup has recorded it under
-              stateRoot/.critical-seen; afterwards a missing source fails the
-              export so a deleted critical file is flagged by fleet health
-              instead of silently dropping out of coverage.
-            '';
-            type = lib.types.listOf lib.types.str;
-            default = [ ];
-          };
           homeStateStagingScript = lib.mkOption {
             description = ''
               The prepare-home-state script staging homeState, as set by the
