@@ -48,6 +48,9 @@ The offsite and Claro Restic services hold a shared advisory lock at
 The exporter takes an exclusive lock to publish a new SQLite generation and
 file list. This lock does not freeze ordinary home files. Run backups through
 the managed systemd units so the file list and snapshots are prepared first.
+On restore, ordinary files return to their original home paths; the SQLite
+snapshots are stored separately under the exported `/var/lib/home-state-backup/offsite`
+tree and must be copied to the matching home-relative paths.
 
 Inspect `/var/lib/home-state-backup/offsite/.export-status.json` for failed
 databases and verification times, and `/var/lib/backup-exports/offsite.json`
