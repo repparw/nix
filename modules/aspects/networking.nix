@@ -1,5 +1,7 @@
-_: {
+{ den, ... }: {
   den.aspects.networking = {
+    includes = [ den.aspects.nixos-services._.tailscale ];
+
     nixos =
       { lib, ... }:
       {
