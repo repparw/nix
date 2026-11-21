@@ -18,7 +18,7 @@ import sys
 import tempfile
 import time
 
-MAGIC = b"SQLite format 3\\0"
+MAGIC = b"SQLite format 3\0"
 SIDECARS = ("-wal", "-shm", "-journal")
 STATUS = ".export-status.json"
 RETRY = ".sqlite-retry-needed"
@@ -150,7 +150,7 @@ def publish_status(stage, entries):
         "databases": entries,
         "failures": failures,
     }
-    (stage / STATUS).write_text(json.dumps(report, indent=2, sort_keys=True) + "\\n")
+    (stage / STATUS).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     if failures:
         (stage / RETRY).touch()
         (stage / ".export-complete").unlink(missing_ok=True)
