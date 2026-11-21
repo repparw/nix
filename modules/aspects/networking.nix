@@ -31,8 +31,6 @@ _: {
           tailscale = {
             enable = true;
             disableTaildrop = true;
-            openFirewall = false;
-            useRoutingFeatures = "none";
             extraDaemonFlags = [ "--config=${tailscaleSettings}" ];
           };
         };
