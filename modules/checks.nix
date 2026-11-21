@@ -450,6 +450,16 @@
                 fi
                 rm $state_dir/.terraform.tfstate.lock.info
 
+                # A retry must never bypass the critical OpenTofu lock guard.
+                touch $staged/.sqlite-retry-needed
+                touch $state_dir/.terraform.tfstate.lock.info
+                if ${staging} --retry; then
+                  echo 'SQLite retry bypassed the critical state lock' >&2
+                  exit 1
+                fi
+                test -f $staged/.sqlite-retry-needed
+                rm $state_dir/.terraform.tfstate.lock.info $staged/.sqlite-retry-needed
+
                 PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
                 PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/prepare-backup-exports.test.py} ${./scripts/prepare-backup-exports.py}
                 touch $out
