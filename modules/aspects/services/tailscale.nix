@@ -24,19 +24,11 @@
         extraDaemonFlags = [ "--config=${settings}" ];
       };
 
-      networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 22 ];
+      networking.firewall.trustedInterfaces = [ "tailscale0" ];
 
       networking.nftables.tables.tailscale = {
         family = "inet";
         content = ''
-          chain input {
-            type filter hook input priority filter - 1; policy accept;
-            iifname "tailscale0" ct state established,related return
-            iifname "tailscale0" meta l4proto { icmp, ipv6-icmp } return
-            iifname "tailscale0" tcp dport 22 return
-            iifname "tailscale0" drop
-          }
-
           chain forward {
             type filter hook forward priority filter - 1; policy accept;
             iifname "tailscale0" drop
