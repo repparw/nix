@@ -60,6 +60,9 @@
           excludes = config.modules.backup.homeStateExcludes;
           criticalPaths = config.modules.backup.homeStateCritical;
         };
+        stageLockedRestic = import ../_scripts/stage-locked-restic.nix { inherit pkgs lib; } {
+          lockFile = "${stateRoot}/.stage.lock";
+        };
       in
       {
         imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
@@ -289,6 +292,12 @@
 
         };
 
+        # The restic backup process holds a shared lock for its entire file
+        # traversal. The home-state publisher requires the exclusive lock.
+        # Both units read the same staging tree, so both must use this package.
+        services.restic.backups.offsite.package = stageLockedRestic;
+        services.restic.backups.claro.package = stageLockedRestic;
+
         systemd.services.home-state-backup-offsite.serviceConfig = {
           Type = "oneshot";
           StateDirectory = "home-state-backup";
@@ -311,19 +320,6 @@
             if [ ! -f ${stateRoot}/offsite/.sqlite-retry-needed ]; then
               exit 0
             fi
-            # Restic oneshot units stay "activating" throughout their upload;
-            # is-active returns false for that state. Defer on any busy or
-            # unknown state rather than swapping a stage during an upload.
-            for unit in restic-backups-offsite.service restic-backups-claro.service; do
-              active_state=$(${pkgs.systemd}/bin/systemctl show --value -p ActiveState "$unit")
-              case "$active_state" in
-                inactive|failed) ;;
-                *)
-                  echo "Restic $unit is $active_state; deferring SQLite retry"
-                  exit 0
-                  ;;
-              esac
-            done
             ${prepareHomeState} --retry
             if [ ! -f ${stateRoot}/offsite/.sqlite-retry-needed ]; then
               ${pkgs.systemd}/bin/systemctl start --wait restic-backups-offsite.service
