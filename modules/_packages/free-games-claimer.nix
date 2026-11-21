@@ -2,31 +2,39 @@
   lib,
   buildNpmPackage,
   fetchFromGitHub,
+  fetchurl,
 }:
-(buildNpmPackage {
+let
+  # Upstream dev still uses GOG's retired menuUsername login selector.
+  gogScript = fetchurl {
+    url = "https://raw.githubusercontent.com/FroggMaster/free-games-claimer/dc756d6244c323219a7be5d7ac0abcfe4a2fcc96/gog.js";
+    hash = "sha256-Wlwrtuq8C2IZKurYd+iSDUl7QWgT1iJ9MSXlntaUC8Y=";
+  };
+in
+buildNpmPackage {
   pname = "free-games-claimer";
-  version = "1.4.0-unstable-2026-09-21";
+  version = "1.4.0-unstable-2026-11-05";
 
   src = fetchFromGitHub {
-    owner = "FroggMaster";
+    owner = "vogler";
     repo = "free-games-claimer";
-    rev = "dc756d6244c323219a7be5d7ac0abcfe4a2fcc96";
-    hash = "sha256-RKu04xT4N8uxaWrCiHN/O9thYgiicFPXRhkCh7lsIFw=";
+    rev = "ecac99e583d3a100db8668953081c8af1df7356d";
+    hash = "sha256-GU+Y8ZZBGapYDAhDH54fmpGYIFbl1vNe8Ir5hlq2rm4=";
   };
 
-  npmDepsHash = "sha256-wrKbkiVt+cg0ziF6w33TH4qij6Jd1Lmb/+JNRIjnreU=";
+  npmDepsHash = "sha256-6Xy+owWdgI201iyieg1zEdsfKaHPWosv3tGTDhFFpH4=";
 
   dontNpmBuild = true;
 
-  # The storefront scripts request branded Chrome (`channel: 'chrome'`).
-  # Branded Chrome has no aarch64 Linux build and its install path assumes a
-  # system package manager, so route every launch through an explicit
-  # executable instead; the service sets FGC_CHROME_PATH.
   postPatch = ''
-    substituteInPlace aliexpress.js epic-games.js gog.js prime-gaming.js \
-      steam-games.js steam.js unrealengine.js \
-      --replace-fail "channel: 'chrome'," \
-        "executablePath: process.env.FGC_CHROME_PATH,"
+    cp ${gogScript} gog.js
+    substituteInPlace gog.js \
+      --replace-fail "import { launchContext } from './src/browser.js';" "import { chromium } from 'patchright';" \
+      --replace-fail "launchContext(cfg, {" "chromium.launchPersistentContext(cfg.dir.browser, {" \
+      --replace-fail "channel: 'chrome'," ""
+    substituteInPlace epic-games.js gog.js \
+      --replace-fail "launchPersistentContext(cfg.dir.browser, {" \
+        "launchPersistentContext(cfg.dir.browser, { executablePath: process.env.FGC_CHROME_PATH,"
 
     substituteInPlace src/util.js \
       --replace-fail "path.resolve(__dirname, '..', 'data', s)" \
@@ -72,10 +80,11 @@
     substituteInPlace epic-games.js gog.js \
       --replace-fail "process.exitCode ||= 1;" "process.exitCode = 1;"
     substituteInPlace epic-games.js \
-      --replace-fail "db.data[user][game_id].status = 'failed';" \
-        "const challenged = (await iframe.locator('#h_captcha_challenge_checkout_free_prod iframe, .payment__errors:has-text(\"Failed to challenge captcha\")').count().catch(() => 1)) > 0; process.exitCode = challenged || e.name !== 'TimeoutError' ? 1 : (process.exitCode || 75); db.data[user][game_id].status = 'failed';" \
+      --replace-fail "game.status = 'failed';" \
+        "const challenged = (await iframe.locator('#h_captcha_challenge_checkout_free_prod iframe, .payment__errors:has-text(\"Failed to challenge captcha\")').count().catch(() => 1)) > 0; process.exitCode = challenged || e.name !== 'TimeoutError' ? 1 : (process.exitCode || 75); game.status = 'failed';" \
       --replace-fail "console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');" \
         "process.exitCode = 1; console.error('  Got hcaptcha challenge! Lost trust due to too many login attempts? You can solve the captcha in the browser or get a new IP address.');"
+
     substituteInPlace gog.js \
       --replace-fail "notify_games.push({ title, url, status });" \
         "const outcome = String(status).toLowerCase(); if (!['claimed', 'existed', 'giveaway has ended'].includes(outcome)) { process.exitCode = ['internal server error', 'service unavailable', 'bad gateway', 'gateway timeout', 'too many requests'].includes(outcome) ? (process.exitCode || 75) : 1; } notify_games.push({ title, url, status });"
@@ -83,7 +92,7 @@
 
   meta = {
     description = "Automatically claims free games on the Epic Games Store and GOG";
-    homepage = "https://github.com/FroggMaster/free-games-claimer";
+    homepage = "https://github.com/vogler/free-games-claimer";
     license = lib.licenses.agpl3Only;
   };
-})
+}

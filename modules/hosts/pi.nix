@@ -8,7 +8,6 @@
       den.aspects.managed-server
       den.aspects.pi._.backup
       den.aspects.nixos-services._.free-games-claimer
-      den.aspects.nixos-services._.epic-freegames-portal
       den.aspects.nixos-services._.homeassistant
       den.aspects.nixos-services._.fleet-health
       den.aspects.nixos-services._.fleet-readiness
@@ -40,8 +39,6 @@
         ...
       }:
       {
-        modules.services.epic-freegames-portal.email = "ubritos@gmail.com";
-
         sops.secrets.repparwPasswordHash = {
           sopsFile = ../../secrets/users-pi.sops.yaml;
           key = "repparwPasswordHash";

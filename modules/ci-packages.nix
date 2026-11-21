@@ -37,9 +37,6 @@ let
   # Aspects whose services don't expose enable/package options are invisible
   # to the collector above. List them explicitly so main-packages pushes them
   # and pi deploys substitute instead of building the node stacks on target
-  # (#521). The epicgames-freegames-node package arrives with the #542 trial
-  # PR and joins this list there. The _tests/ci-packages.nix harness uses
-  # a lightweight callPackage stub to verify these paths without real builds.
   explicitPackages =
     system:
     lib.optionals ((inputs ? nixpkgs) && system == "aarch64-linux") (
@@ -48,7 +45,6 @@ let
       in
       [
         (pkgs.callPackage ./_packages/free-games-claimer.nix { })
-        (pkgs.callPackage ./_packages/epicgames-freegames-node.nix { })
       ]
     );
   targetsFor =

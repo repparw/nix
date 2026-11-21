@@ -193,6 +193,22 @@ def moonshine_pinned_version(revision):
 
 
 def detect(name, lock):
+    if name == "free-games-claimer":
+        repo = "vogler/free-games-claimer"
+        fix = "ecac99e583d3a100db8668953081c8af1df7356d"
+        release = api(f"repos/{repo}/releases/latest")
+        tag = release["tag_name"]
+        if release["draft"] or release["prerelease"] or not re.fullmatch(r"v[0-9]+(?:\.[0-9]+)*", tag):
+            raise ValueError("unexpected claimer release")
+        if not contains(repo, fix, tag):
+            return "waiting-upstream"
+        package = (ROOT / "modules/_packages/free-games-claimer.nix").read_text()
+        revision = re.search(r'^    rev = "([0-9a-f]{40})";$', package, re.M)
+        if not revision:
+            raise ValueError("unexpected claimer source pin")
+        if "-unstable-" not in package and contains(repo, tag, revision[1]):
+            return "completed"
+        return f"upstream-review-required:{tag}"
     if name == "fsr4-rdna2":
         return fsr4_rdna2_status(lock)
     if name == "tridactyl-reader":
