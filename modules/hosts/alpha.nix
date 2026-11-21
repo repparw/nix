@@ -58,7 +58,6 @@
           inherit home stateRoot;
           paths = config.modules.backup.homeState;
           excludes = config.modules.backup.homeStateExcludes;
-          criticalPaths = config.modules.backup.homeStateCritical;
         };
         stageLockedRestic = import ../_scripts/stage-locked-restic.nix { inherit pkgs lib; } {
           lockFile = "${stateRoot}/.stage.lock";
@@ -154,10 +153,6 @@
               "log/"
               "tool-output/"
             ];
-          homeStateCritical = [
-            "Projects/nix/infra/terraform.tfstate"
-            "Projects/nix/infra/router/terraform.tfstate"
-          ];
           homeStateStagingScript = prepareHomeState;
         };
 
