@@ -157,7 +157,26 @@ let
 in
 assert !(hosts.alpha.config.modules ? persistence);
 assert !(hosts.alpha.options.modules.backup ? hostRecovery);
-assert hosts.alpha.config.services.restic.backups.offsite.extraBackupArgs == [ ];
+assert hosts.alpha.config.services.restic.backups.offsite.extraBackupArgs == [
+  "--files-from-raw=/run/home-state-backup/offsite/.home-files"
+];
+assert hosts.alpha.config.services.restic.backups.claro.extraBackupArgs
+  == hosts.alpha.config.services.restic.backups.offsite.extraBackupArgs;
+assert hosts.alpha.config.fileSystems."/run/home-state-backup".fsType == "tmpfs";
+assert hosts.alpha.config.fileSystems."/run/home-state-backup".device == "tmpfs";
+assert lib.all
+  (option: lib.elem option hosts.alpha.config.fileSystems."/run/home-state-backup".options)
+  [
+    "size=2G"
+    "mode=0700"
+    "noswap"
+  ];
+assert hosts.alpha.config.systemd.services.home-state-backup-offsite.unitConfig.RequiresMountsFor
+  == "/run/home-state-backup";
+assert hosts.alpha.config.systemd.services.restic-backups-offsite.unitConfig.RequiresMountsFor
+  == "/run/home-state-backup";
+assert hosts.alpha.config.systemd.services.restic-backups-claro.unitConfig.RequiresMountsFor
+  == "/run/home-state-backup";
 assert lib.all (
   host:
   !(lib.any (p: (p.meta.mainProgram or "") == "host-recovery") host.config.environment.systemPackages)
