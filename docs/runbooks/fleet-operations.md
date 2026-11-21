@@ -52,6 +52,13 @@ databases and their last verified times, and `/var/lib/backup-exports/offsite.js
 for the complete backup verdict. Confirm native database integrity and perform
 an isolated restore before relying on a recovery point.
 
+Alpha includes only Helium's `Default/Bookmarks`, `Default/Preferences`,
+`Default/Sessions/`, and `Local State` in the curated home-state backup.
+It deliberately omits `DIPS`, cookies, browser databases and caches. Previously
+tracked Helium databases are retired when no longer selected, rather than
+counted as missing. Restoring these files recovers bookmarks, preferences and
+potentially open tabs, but not authenticated website sessions.
+
 Persistence is not offsite backup coverage. Bound paths, nested devices,
 `--one-file-system` and live SQLite data can affect what Restic captures.
 Use [host recovery](host-recovery.md) and
