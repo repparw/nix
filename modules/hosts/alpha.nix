@@ -272,9 +272,13 @@
 
         };
 
-        # The restic backup process holds a shared lock for its entire file
-        # traversal. The home-state publisher requires the exclusive lock.
-        # Both units read the same staging tree, so both must use this package.
+        # Back up selected ordinary home files in place. The exporter writes
+        # this NUL-delimited list and the SQLite-only snapshot directory.
+        # Claro inherits offsite's extraBackupArgs.
+        services.restic.backups.offsite.extraBackupArgs = lib.mkAfter [
+          "--files-from-raw=${stateRoot}/offsite/.home-files"
+        ];
+        # Only the small SQLite export can be replaced during an upload.
         services.restic.backups.offsite.package = stageLockedRestic;
         services.restic.backups.claro.package = stageLockedRestic;
 
