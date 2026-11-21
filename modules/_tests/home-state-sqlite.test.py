@@ -95,6 +95,11 @@ class HomeStateSQLite(unittest.TestCase):
     def test_held_sqlite_lock_retains_verified_prior_and_retry_recovers(self):
         rel = ".config/net.imput.helium/Default/DIPS"
         staged = self.add_database(rel, "live new")
+        healthy = ".local/share/opencode/opencode.db"
+        self.add_database(healthy, "healthy")
+        note = self.stage / ".config/vesktop/settings.json"
+        note.parent.mkdir(parents=True)
+        note.write_text('{"theme":"dark"}')
         # The preceding generation contains a self-contained verified copy.
         old = self.previous / rel
         old.parent.mkdir(parents=True)
@@ -117,6 +122,10 @@ class HomeStateSQLite(unittest.TestCase):
         with sqlite3.connect(staged) as db:
             self.assertEqual(db.execute("SELECT value FROM session").fetchall(), [("prior",)])
         self.assertTrue((self.stage / ".sqlite-retry-needed").exists())
+        self.assertEqual(note.read_text(), '{"theme":"dark"}')
+        with sqlite3.connect(self.stage / healthy) as db:
+            self.assertEqual(db.execute("SELECT value FROM session").fetchall(), [("healthy",)])
+        healthy_stamp = status["databases"][healthy]["verifiedAt"]
 
         live.rollback()
         result = subprocess.run([sys.executable, str(HANDLER), "--retry",
@@ -125,6 +134,7 @@ class HomeStateSQLite(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         recovered = json.loads((self.stage / ".export-status.json").read_text())
         self.assertEqual(recovered["status"], "complete")
+        self.assertEqual(recovered["databases"][healthy]["verifiedAt"], healthy_stamp)
         with sqlite3.connect(staged) as db:
             self.assertEqual(db.execute("SELECT value FROM session").fetchall(), [("live new",)])
         self.assertFalse((self.stage / ".sqlite-retry-needed").exists())
