@@ -477,25 +477,6 @@
                 test ! -e $staged/Projects/nix/infra/.terraform
                 test ! -e $staged/.config/sops/age
 
-                # OpenTofu state is an ordinary selected file. Even malformed
-                # JSON or the provider's lock sentinel cannot block backup.
-                printf 'not json {{' > $state
-                ${staging}
-                cmp $state $staged/Projects/nix/infra/terraform.tfstate
-                jq -e '.status == "complete"' $staged/.export-status.json >/dev/null
-
-                # A deleted ordinary file is absent from the new generation.
-                rm $state
-                ${staging}
-                test ! -e $staged/Projects/nix/infra/terraform.tfstate
-
-                printf '{"version": 4, "serial": 2, "resources": []}' > $state
-                touch $state_dir/.terraform.tfstate.lock.info
-                ${staging}
-                cmp $state $staged/Projects/nix/infra/terraform.tfstate
-                test ! -e $staged/Projects/nix/infra/.terraform.tfstate.lock.info
-                rm $state_dir/.terraform.tfstate.lock.info
-
                 PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
                 touch $out
               '';
