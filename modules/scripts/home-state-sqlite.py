@@ -1,9 +1,8 @@
 """Build self-contained SQLite snapshots in Alpha home-state exports.
 
-Raw rsync copies of WAL databases are not restore-safe. Each detected database
-must be replaced with a validated online snapshot, or a previously verified
-snapshot with its original verification time and degraded status. Never ship a
-raw copy after a snapshot failure. Publishing is an atomic directory exchange.
+Ordinary selected home files are listed for Restic to read directly.
+Only SQLite databases get validated online snapshots or last verified copies.
+Publishing those small snapshots and the direct-file list is atomic.
 """
 
 import ctypes
@@ -170,29 +169,80 @@ def still_selected(relative, selected):
     )
 
 
-def prepare(home, stage, previous=None, selected=None):
+def selected_files(home, selected, excludes):
+    """Enumerate curated files without copying them or following symlinks."""
+    prefixes = [path.strip("/") for path in excludes]
+
+    def excluded(relative):
+        name = relative.as_posix()
+        return any(name == prefix or name.startswith(prefix + "/")
+                   for prefix in prefixes)
+
+    result = set()
+    for item in selected:
+        relative = Path(item)
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ValueError(f"unsafe selected home path: {item}")
+        source = home / relative
+        if excluded(relative):
+            continue
+        if source.is_symlink() or source.is_file():
+            result.add(relative)
+        elif source.is_dir():
+            for directory, dirs, files in os.walk(source, followlinks=False):
+                parent = Path(directory).relative_to(home)
+                keep = []
+                for name in dirs:
+                    child = parent / name
+                    if excluded(child):
+                        continue
+                    if (home / child).is_symlink():
+                        result.add(child)
+                    else:
+                        keep.append(name)
+                dirs[:] = keep
+                for name in files:
+                    child = parent / name
+                    if not excluded(child):
+                        result.add(child)
+    return result
+
+
+def prepare(home, stage, previous=None, selected=None, excludes=None):
+    """Only SQLite needs a copy. Restic reads ordinary files in place."""
+    if selected is None:
+        raise ValueError("curated home paths are required")
+    candidates = selected_files(home, selected, excludes or [])
     old_entries = load_previous(previous)
-    entries = {}
-    paths = []
-    for directory, _, files in os.walk(stage, followlinks=False):
-        for filename in files:
-            staged = Path(directory) / filename
-            if not stat.S_ISREG(staged.lstat().st_mode):
-                continue
-            if is_sqlite(staged):
-                paths.append(staged.relative_to(stage))
-    # Keep tracking missing databases that are still selected.
-    known = set(paths)
+    databases = set()
+    for relative in candidates:
+        source = home / relative
+        if not source.is_symlink() and source.is_file() and is_sqlite(source):
+            databases.add(relative)
+
+    # A known database that disappears or changes header remains a degraded
+    # snapshot, unless it was deliberately removed from the backup selection.
     for name in old_entries:
         relative = Path(name)
         if relative.is_absolute() or ".." in relative.parts:
             raise ValueError(f"unsafe previous SQLite path: {name}")
-        if still_selected(relative, selected) and relative not in known:
-            paths.append(relative)
-            known.add(relative)
-    for relative in sorted(paths):
+        if still_selected(relative, selected):
+            databases.add(relative)
+
+    sidecars = {Path(str(relative) + suffix)
+                for relative in databases for suffix in SIDECARS}
+    ordinary = sorted(candidates - databases - sidecars)
+    # NUL delimiters and --files-from-raw preserve spaces, glob characters,
+    # and even newlines in paths. No copies of these files are staged.
+    (stage / ".home-files").write_bytes(
+        b"".join(os.fsencode(home / relative) + b"\0" for relative in ordinary)
+    )
+
+    entries = {}
+    for relative in sorted(databases):
         source = home / relative
         staged = stage / relative
+        staged.parent.mkdir(parents=True, exist_ok=True)
         try:
             snapshot_database(source, staged)
             entries[str(relative)] = {"status": "fresh", "verifiedAt": int(time.time())}
@@ -231,4 +281,6 @@ if __name__ == "__main__":
         publish(Path(sys.argv[2]), Path(sys.argv[3]))
     else:
         selected = json.loads(sys.argv[4]) if len(sys.argv) > 4 else None
-        prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), selected=selected)
+        excludes = json.loads(sys.argv[5]) if len(sys.argv) > 5 else []
+        prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]),
+                selected=selected, excludes=excludes)
