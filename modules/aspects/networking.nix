@@ -42,16 +42,6 @@ _: {
           useNetworkd = true;
           useDHCP = false;
           nftables.enable = true;
-          nftables.tables.tailscale = {
-            family = "inet";
-            content = ''
-              chain forward {
-                type filter hook forward priority filter - 1; policy accept;
-                iifname "tailscale0" drop
-                oifname "tailscale0" drop
-              }
-            '';
-          };
           usePredictableInterfaceNames = false;
           firewall.checkReversePath = false;
           firewall.trustedInterfaces = [ "tailscale0" ];
