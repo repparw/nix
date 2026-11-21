@@ -42,15 +42,13 @@ class BackupQuality(unittest.TestCase):
         self.assertEqual(data["exports"]["alpha-home"]["status"], "degraded")
         self.assertEqual(len(data["exports"]["alpha-home"]["databaseFailures"]), 1)
         with self.assertRaises(SystemExit):
-            report = mod.check(self.report) if hasattr(mod, "check") else None
-            if report is None and not hasattr(mod, "check"):
-                if data["status"] != "complete":
-                    raise SystemExit("degraded")
+            mod.check(self.report)
 
     def test_complete_export_allows_success(self):
         self.update_status("complete")
         mod.prepare({"alpha-home": self.export}, self.report)
         self.assertEqual(json.loads(self.report.read_text())["status"], "complete")
+        mod.check(self.report)
 
     def test_missing_or_invalid_quality_is_failure_not_success(self):
         mod.prepare({"alpha-home": self.export}, self.report)
