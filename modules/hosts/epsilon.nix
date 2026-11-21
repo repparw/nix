@@ -11,7 +11,6 @@
 
   den.aspects.epsilon = {
     includes = [
-      den.aspects.nixos-services._.tailscale
       den.aspects.managed-server
       den.aspects.monitoring._.dashboard
       den.aspects.epsilon._.backup

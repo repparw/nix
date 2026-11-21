@@ -6,7 +6,6 @@
 {
   den.aspects.alpha = {
     includes = [
-      den.aspects.nixos-services._.tailscale
       den.aspects.alpha._.backup
       den.aspects.btrfs-maintenance
       den.aspects.logid
