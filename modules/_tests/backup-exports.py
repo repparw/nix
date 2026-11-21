@@ -79,4 +79,31 @@ class ExportsTest(unittest.TestCase):
         self.assertEqual(report["exports"]["scheduled"]["status"], "complete")
 
 
+    def test_degraded_home_export_is_not_complete(self):
+        status = self.source / ".export-status.json"
+        status.write_text(json.dumps({
+            "schemaVersion": 1, "status": "degraded",
+            "databases": {},
+            "failures": [{"path": "opencode.db", "status": "stale", "verifiedAt": 1700000000}],
+        }))
+        home = self.spec | {"pattern": status.name, "statusFile": str(status)}
+        report = self.run_exports({"home": home})
+        self.assertEqual(report["status"], "incomplete")
+        self.assertEqual(report["exports"]["home"]["status"], "degraded")
+        with self.assertRaises(SystemExit):
+            exports.check(self.report)
+
+    def test_complete_home_export_requires_marker(self):
+        status = self.source / ".export-status.json"
+        status.write_text(json.dumps({
+            "schemaVersion": 1, "status": "complete",
+            "databases": {}, "failures": [],
+        }))
+        home = self.spec | {"pattern": status.name, "statusFile": str(status)}
+        self.assertEqual(self.run_exports({"home": home})["status"], "incomplete")
+        (self.source / ".export-complete").write_text("verified\n")
+        self.assertEqual(self.run_exports({"home": home})["status"], "complete")
+        exports.check(self.report)
+
+
 unittest.main()
