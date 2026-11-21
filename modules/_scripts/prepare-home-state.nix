@@ -8,6 +8,7 @@
   paths,
   excludes ? [ ],
   criticalPaths ? [ ],
+  guardResticUploads ? true,
 }:
 let
   markerOf = path: builtins.replaceStrings [ "/" ] [ "__" ] path;
@@ -31,6 +32,24 @@ pkgs.writeShellScript "prepare-home-state" ''
   # Serialize retry and regular staging. Publish with an atomic exchange.
   exec 9>"$parent/.stage.lock"
   flock -x 9
+  # The exporter runs from Restic's start-pre phase. Reject a new stage
+  # while either destination is reading this directory (SubState=start).
+  # Fail closed if systemd cannot tell us the state.
+  ${lib.optionalString guardResticUploads ''
+    guard_restic_uploads() {
+      for unit in restic-backups-offsite.service restic-backups-claro.service; do
+        substate=$(${lib.getExe' pkgs.systemd "systemctl"} show --value -p SubState "$unit")
+        case "$substate" in
+          dead|failed|start-pre) ;;
+          *)
+            echo "home-state: Restic $unit is $substate; refusing to replace a live export" >&2
+            exit 1
+            ;;
+        esac
+      done
+    }
+    guard_restic_uploads
+  ''}
   temporary=$(mktemp -d "$parent/.prepare-offsite.XXXXXX")
   trap 'rm -rf "$temporary"' EXIT
 
@@ -105,5 +124,6 @@ pkgs.writeShellScript "prepare-home-state" ''
   if [ "''${1:-}" != --retry ] && [ ! -f "$temporary/.sqlite-retry-needed" ]; then
     date --iso-8601=ns > "$temporary/.export-complete"
   fi
+  ${lib.optionalString guardResticUploads "guard_restic_uploads"}
   python3 ${../scripts/home-state-sqlite.py} --publish "$temporary" "$destination"
 ''
