@@ -139,16 +139,20 @@ def preserve_old(previous, relative, staged, entries):
         return None
 
 
-def publish_status(stage, entries):
+def publish_status(stage, entries, retry=False):
     failures = [dict(path=name, **entry) for name, entry in sorted(entries.items())
                 if entry["status"] != "fresh"]
-    status = "degraded" if failures else "complete"
+    # A targeted retry does not refresh non-SQLite files or validate critical
+    # state against all sources. Only a subsequent full export may say complete.
+    pending_full_export = retry and not failures
+    status = "degraded" if failures or pending_full_export else "complete"
     report = {
         "schemaVersion": 1,
         "status": status,
         "generatedAt": int(time.time()),
         "databases": entries,
         "failures": failures,
+        "recoveryPending": pending_full_export,
     }
     (stage / STATUS).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     if failures:
@@ -209,7 +213,7 @@ def prepare(home, stage, previous=None, retry=False):
             sidecars_remove(staged)
             entries[str(relative)] = {"status": kind, "verifiedAt": timestamp, "error": reason}
             print(f"home-state: SQLite {kind}: {relative}: {reason}", file=sys.stderr)
-    publish_status(stage, entries)
+    publish_status(stage, entries, retry=retry)
 
 
 def publish(stage, destination):
