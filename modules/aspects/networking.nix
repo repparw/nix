@@ -19,7 +19,7 @@ _: {
             enable = true;
             disableTaildrop = true;
             extraSetFlags = [
-              "--accept-dns=false"
+              "--accept-dns=true"
               "--accept-routes=false"
               "--netfilter-mode=off"
             ];
