@@ -36,23 +36,27 @@ incomplete export prevents pruning; it does not make the uploaded data complete.
 Alpha's curated ordinary home files are read **directly** by Restic. The
 home exporter writes a NUL-delimited `.home-files` list for
 `--files-from-raw`; no full copy of the selected home tree is made.
-Only SQLite databases are snapshotted under
-`/var/lib/home-state-backup/offsite`. SQLite snapshots are self-contained and
-verified. Failed snapshots reuse their last verified copy with its original
-timestamp or are omitted. The status report is marked **degraded**.
+Only SQLite databases are snapshotted using `VACUUM INTO` under
+`/run/home-state-backup/offsite`, a private 2 GiB tmpfs mount with swapping
+disabled. Ordinary home files are not duplicated, and SQLite export copies
+do not write to disk. Snapshots are validated with `PRAGMA quick_check`.
+A failed export can reuse the last verified local copy from the same boot
+with its original verification timestamp, or omit the database and mark
+the export **degraded**. The local fallback is lost on reboot; older Restic
+snapshots remain available.
 Every 15 minutes, a degraded export triggers the normal full offsite backup.
 Degraded backups cannot advance the complete-backup stamp or permit pruning.
 
 The offsite and Claro Restic services hold a shared advisory lock at
-`/var/lib/home-state-backup/.stage.lock` while reading the SQLite export.
+`/run/home-state-backup/.stage.lock` while reading the SQLite export.
 The exporter takes an exclusive lock to publish a new SQLite generation and
 file list. This lock does not freeze ordinary home files. Run backups through
 the managed systemd units so the file list and snapshots are prepared first.
 On restore, ordinary files return to their original home paths; the SQLite
-snapshots are stored separately under the exported `/var/lib/home-state-backup/offsite`
+snapshots are stored separately under the exported `/run/home-state-backup/offsite`
 tree and must be copied to the matching home-relative paths.
 
-Inspect `/var/lib/home-state-backup/offsite/.export-status.json` for failed
+Inspect `/run/home-state-backup/offsite/.export-status.json` for failed
 databases and verification times, and `/var/lib/backup-exports/offsite.json`
 for the complete-backup verdict. Confirm native database integrity and perform
 an isolated restore before relying on a recovery point.
