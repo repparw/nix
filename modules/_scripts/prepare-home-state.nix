@@ -87,7 +87,8 @@ pkgs.writeShellScript "prepare-home-state" ''
   else
     python3 ${../scripts/home-state-sqlite.py} ${lib.escapeShellArg home} "$temporary" "$destination"
   fi
-  if [ ! -f "$temporary/.sqlite-retry-needed" ]; then
+  # A targeted retry still needs a full export before it may claim complete.
+  if [ "''${1:-}" != --retry ] && [ ! -f "$temporary/.sqlite-retry-needed" ]; then
     date --iso-8601=ns > "$temporary/.export-complete"
   fi
   python3 ${../scripts/home-state-sqlite.py} --publish "$temporary" "$destination"
