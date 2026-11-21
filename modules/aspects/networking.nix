@@ -15,6 +15,15 @@ _: {
             openFirewall = true;
             settings.PasswordAuthentication = false;
           };
+          tailscale = {
+            enable = true;
+            disableTaildrop = true;
+            extraSetFlags = [
+              "--accept-dns=false"
+              "--accept-routes=false"
+              "--netfilter-mode=off"
+            ];
+          };
         };
 
         systemd.network = {
@@ -35,6 +44,7 @@ _: {
           nftables.enable = true;
           usePredictableInterfaceNames = false;
           firewall.checkReversePath = false;
+          firewall.trustedInterfaces = [ "tailscale0" ];
           nameservers = [
             "1.1.1.1#cloudflare-dns.com"
             "1.0.0.1#cloudflare-dns.com"
