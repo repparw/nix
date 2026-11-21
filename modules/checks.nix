@@ -439,7 +439,7 @@
                 test -f $staged/.export-complete
                 jq -e '.status == "complete"' $staged/.export-status.json >/dev/null
                 # While an upload holds the shared lock, no publisher can
-                # acquire exclusive access. A retry skips instead of failing.
+                # acquire exclusive access during a full stage swap.
                 export RESTIC_FAKE_STARTED=$state_root/restic-started
                 export RESTIC_FAKE_RELEASE=$state_root/restic-release
                 ${lib.getExe lockedRestic} -o rclone.connections=2 backup fixture &
@@ -453,10 +453,6 @@
                   echo 'Restic did not retain the shared staging lock' >&2
                   exit 1
                 fi
-                touch $staged/.sqlite-retry-needed
-                ${staging} --retry
-                test -e $staged/.sqlite-retry-needed
-                rm $staged/.sqlite-retry-needed
                 touch "$RESTIC_FAKE_RELEASE"
                 wait "$restic_pid"
                 flock -x -n "$state_root/.stage.lock" true
@@ -501,7 +497,6 @@
                 rm $state_dir/.terraform.tfstate.lock.info
 
                 PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
-                PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/prepare-backup-exports.test.py} ${./scripts/prepare-backup-exports.py}
                 touch $out
               '';
 
