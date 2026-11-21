@@ -32,8 +32,18 @@ A successful Restic upload is not necessarily a usable application restore.
 The export report at `/var/lib/backup-exports/offsite.json` distinguishes
 fresh application exports from missing, failed or stale producers. An
 incomplete export prevents pruning; it does not make the uploaded data
-complete. Confirm native database integrity and perform an isolated restore
-before relying on a recovery point.
+complete. Alpha's home-state exporter publishes fresh files and verified
+SQLite snapshots even when one database stays locked. Failed SQLite snapshots
+use a previous verified copy with its original timestamp, or are omitted if
+none exists. The export is marked **degraded**, not complete. A 15-minute
+timer retries only missing/stale databases and starts a new offsite upload
+after recovery. Degraded backups cannot advance the complete-backup success
+stamp or permit pruning.
+
+Inspect `/var/lib/home-state-backup/offsite/.export-status.json` for failed
+databases and their last verified times, and `/var/lib/backup-exports/offsite.json`
+for the complete backup verdict. Confirm native database integrity and perform
+an isolated restore before relying on a recovery point.
 
 Persistence is not offsite backup coverage. Bound paths, nested devices,
 `--one-file-system` and live SQLite data can affect what Restic captures.
