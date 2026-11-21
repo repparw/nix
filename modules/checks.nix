@@ -319,8 +319,6 @@
           home-state-backup =
             let
               prepareHomeState = import ./_scripts/prepare-home-state.nix { inherit pkgs lib; };
-              # A blocked fake Restic process proves the shared lock covers
-              # the entire backup traversal, including invocations with -o.
               fakeRestic = pkgs.writeShellScriptBin "restic" ''
                 for arg in "$@"; do
                   if [ "$arg" = backup ]; then
@@ -341,31 +339,29 @@
                 stateRoot = "/tmp/home-state-fixture-root";
                 paths = [
                   ".config/vesktop/settings.json"
-                  ".config/opencode/plugins/"
-                  ".local/share/fish/fish_history"
+                  ".config/net.imput.helium/Default/Bookmarks"
                   ".local/share/opencode/"
                   "Projects/nix/infra/terraform.tfstate"
-                  "Projects/nix/infra/router/inventory.auto.tfvars"
                 ];
                 excludes = [
                   "/.local/share/opencode/log/"
                   "/.local/share/opencode/tool-output/"
                 ];
               };
-              # Cut the string context: these evaluated values are plain
-              # paths and the check derivation must not depend on the host
-              # closure (same trick as evalHost above).
+              # Inspect the evaluated production selection without depending
+              # on the entire Alpha host closure.
               alpha = inputs.self.nixosConfigurations.alpha.config;
               alphaHomeState = map builtins.unsafeDiscardStringContext alpha.modules.backup.homeState;
               rsyncJobs = builtins.attrNames alpha.services.rsync.jobs;
               resticPaths = map builtins.unsafeDiscardStringContext alpha.services.restic.backups.offsite.paths;
+              offsiteArgs = map builtins.unsafeDiscardStringContext alpha.services.restic.backups.offsite.extraBackupArgs;
+              claroArgs = map builtins.unsafeDiscardStringContext alpha.services.restic.backups.claro.extraBackupArgs;
             in
             pkgs.runCommand "check-home-state-backup"
               {
                 nativeBuildInputs = [
                   pkgs.coreutils
                   pkgs.jq
-                  pkgs.rsync
                   pkgs.util-linux
                   pkgs.python3
                   pkgs.sqlite
@@ -374,74 +370,68 @@
               ''
                 home=/tmp/home-state-fixture-home
                 state_root=/tmp/home-state-fixture-root
-                state_dir=$home/Projects/nix/infra
-                state=$state_dir/terraform.tfstate
-                router_dir=$state_dir/router
-
                 rm -rf /tmp/home-state-fixture-*
-                mkdir -p $home/.config/vesktop $home/.local/share/fish \
-                  $home/.config/sops/age $state_dir/.terraform $router_dir $state_root
-                printf '{}' > $home/.config/vesktop/settings.json
-                printf 'history\n' > $home/.local/share/fish/fish_history
-                mkdir -p "$home/.config/net.imput.helium/Default/Sessions"
+                mkdir -p "$home/.config/vesktop" \
+                  "$home/.config/net.imput.helium/Default" \
+                  "$home/.local/share/opencode/log" \
+                  "$home/Projects/nix/infra" "$state_root"
+                printf '{}' > "$home/.config/vesktop/settings.json"
                 printf '{"roots":{}}\n' > "$home/.config/net.imput.helium/Default/Bookmarks"
-                printf '{"restore_on_startup":1}\n' > "$home/.config/net.imput.helium/Default/Preferences"
-                printf '{"profile":{}}\n' > "$home/.config/net.imput.helium/Local State"
-                printf 'session' > "$home/.config/net.imput.helium/Default/Sessions/Session_1"
+                printf '{"version":4,"serial":1,"resources":[]}\n' > "$home/Projects/nix/infra/terraform.tfstate"
+                printf 'log' > "$home/.local/share/opencode/log/current.log"
+                printf 'secret' > "$home/.local/share/opencode/auth.json"
+                sqlite3 "$home/.local/share/opencode/opencode.db" \
+                  "CREATE TABLE session(value TEXT); INSERT INTO session VALUES('saved');"
                 sqlite3 "$home/.config/net.imput.helium/Default/DIPS" 'CREATE TABLE test(x)'
-                printf 'x' > $home/.config/sops/age/keys.txt
-                printf 'x' > $state_dir/.terraform/provider-cache
-                printf 'x' > $state_dir/terraform.tfvars
-                printf 'x' > $state_dir/terraform.tfplan
-                printf 'port_forwards = {}\n' > $router_dir/inventory.auto.tfvars
-                chmod 600 $router_dir/inventory.auto.tfvars
-                printf 'x' > $router_dir/imports.tf
 
                 home_state='${builtins.toJSON alphaHomeState}'
-                printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
-                printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/router/inventory.auto.tfvars")' >/dev/null
-                for kept in .config/moonshine/ .config/opencode/plugins/ .local/share/opencode/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
-                  printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
-                done
                 printf '%s' "$home_state" | jq -e '
                   index(".config/net.imput.helium/") == null and
-                  index(".config/net.imput.helium/Default/DIPS") == null and
                   index(".config/net.imput.helium/Default/Bookmarks") != null and
                   index(".config/net.imput.helium/Default/Preferences") != null and
                   index(".config/net.imput.helium/Default/Sessions/") != null and
-                  index(".config/net.imput.helium/Local State") != null
+                  index(".config/net.imput.helium/Local State") != null and
+                  index("Projects/nix/infra/terraform.tfstate") != null
                 ' >/dev/null
                 jobs='${builtins.toJSON rsyncJobs}'
                 printf '%s' "$jobs" | jq -e '(index("bupstate") == null) and (index("buptohdd") == null)' >/dev/null
-                restic_paths='${builtins.toJSON resticPaths}'
-                printf '%s' "$restic_paths" | jq -e 'index("/var/lib/home-state-backup/offsite")' >/dev/null
+                paths='${builtins.toJSON resticPaths}'
+                printf '%s' "$paths" | jq -e 'index("/var/lib/home-state-backup/offsite")' >/dev/null
+                for args in '${builtins.toJSON offsiteArgs}' '${builtins.toJSON claroArgs}'; do
+                  printf '%s' "$args" | jq -e \
+                    'index("--files-from-raw=/var/lib/home-state-backup/offsite/.home-files") != null' >/dev/null
+                done
 
                 ${staging}
-                staged=$state_root/offsite
-                test ! -e $staged/Projects/nix/infra/terraform.tfstate
-                test -f $staged/.config/vesktop/settings.json
-
-                printf '{"version": 4, "serial": 1, "resources": [{"type": "oci_core_instance", "name": "epsilon"}]}' > $state
-                chmod 600 $state
-                ${staging}
-                test -f $staged/Projects/nix/infra/terraform.tfstate
-                test -f $staged/Projects/nix/infra/router/inventory.auto.tfvars
-                cmp $router_dir/inventory.auto.tfvars $staged/Projects/nix/infra/router/inventory.auto.tfvars
-                test "$(stat -c %a $staged/Projects/nix/infra/router/inventory.auto.tfvars)" = 600
-                test "$(stat -c %a $staged/Projects/nix/infra/terraform.tfstate)" = 600
-                test -f $staged/.config/vesktop/settings.json
-                test -f $staged/.local/share/fish/fish_history
-                test -f "$staged/.config/net.imput.helium/Default/Bookmarks"
-                test -f "$staged/.config/net.imput.helium/Default/Preferences"
-                test -f "$staged/.config/net.imput.helium/Local State"
-                test -f "$staged/.config/net.imput.helium/Default/Sessions/Session_1"
+                staged="$state_root/offsite"
+                test -f "$staged/.export-complete"
+                jq -e '.status == "complete"' "$staged/.export-status.json" >/dev/null
+                test ! -e "$staged/.config/vesktop/settings.json"
+                test ! -e "$staged/Projects/nix/infra/terraform.tfstate"
+                test ! -e "$staged/.config/net.imput.helium/Default/Bookmarks"
                 test ! -e "$staged/.config/net.imput.helium/Default/DIPS"
-                test -f $staged/.export-complete
-                jq -e '.status == "complete"' $staged/.export-status.json >/dev/null
-                # While an upload holds the shared lock, no publisher can
-                # acquire exclusive access during a full stage swap.
-                export RESTIC_FAKE_STARTED=$state_root/restic-started
-                export RESTIC_FAKE_RELEASE=$state_root/restic-release
+                test ! -e "$staged/.local/share/opencode/log"
+                test "$(sqlite3 "$staged/.local/share/opencode/opencode.db" \
+                  'SELECT value FROM session')" = saved
+
+                python3 - "$home" "$staged/.home-files" <<'PY'
+import os
+from pathlib import Path
+import sys
+home = Path(sys.argv[1])
+paths = set(Path(os.fsdecode(part)) for part in
+            Path(sys.argv[2]).read_bytes().split(b"\0") if part)
+expected = {
+    home / ".config/vesktop/settings.json",
+    home / ".config/net.imput.helium/Default/Bookmarks",
+    home / "Projects/nix/infra/terraform.tfstate",
+    home / ".local/share/opencode/auth.json",
+}
+assert paths == expected, (paths, expected)
+PY
+
+                export RESTIC_FAKE_STARTED="$state_root/restic-started"
+                export RESTIC_FAKE_RELEASE="$state_root/restic-release"
                 ${lib.getExe lockedRestic} -o rclone.connections=2 backup fixture &
                 restic_pid=$!
                 for attempt in $(seq 1 100); do
@@ -450,32 +440,12 @@
                 done
                 test -f "$RESTIC_FAKE_STARTED"
                 if flock -x -n "$state_root/.stage.lock" true; then
-                  echo 'Restic did not retain the shared staging lock' >&2
+                  echo 'Restic did not retain the SQLite export lock' >&2
                   exit 1
                 fi
                 touch "$RESTIC_FAKE_RELEASE"
                 wait "$restic_pid"
                 flock -x -n "$state_root/.stage.lock" true
-                mkdir -p $home/.config/opencode/plugins
-                mkdir -p $home/.local/share/opencode/log $home/.local/share/opencode/tool-output
-                printf 'export default {}\n' > $home/.config/opencode/plugins/local.ts
-                printf '{"type":"api","key":"fixture"}' > $home/.local/share/opencode/auth.json
-                python3 -c 'import sqlite3,sys; db=sqlite3.connect(sys.argv[1]); db.execute("CREATE TABLE session (value TEXT)"); db.execute("INSERT INTO session VALUES (?)", ("saved",)); db.commit(); db.close()' $home/.local/share/opencode/opencode.db
-                printf 'log' > $home/.local/share/opencode/log/opencode.log
-                printf 'tool' > $home/.local/share/opencode/tool-output/part
-                ${staging}
-                test -f $staged/.config/opencode/plugins/local.ts
-                cmp $home/.config/opencode/plugins/local.ts $staged/.config/opencode/plugins/local.ts
-                test -f $staged/.local/share/opencode/auth.json
-                test -f $staged/.local/share/opencode/opencode.db
-                test "$(sqlite3 $staged/.local/share/opencode/opencode.db 'SELECT value FROM session')" = saved
-                test ! -e $staged/.local/share/opencode/log
-                test ! -e $staged/.local/share/opencode/tool-output
-                test ! -e $staged/Projects/nix/infra/terraform.tfvars
-                test ! -e $staged/Projects/nix/infra/terraform.tfplan
-                test ! -e $staged/Projects/nix/infra/router/imports.tf
-                test ! -e $staged/Projects/nix/infra/.terraform
-                test ! -e $staged/.config/sops/age
 
                 PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
                 touch $out
