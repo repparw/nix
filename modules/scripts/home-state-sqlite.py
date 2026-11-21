@@ -1,4 +1,4 @@
-"""Build and retry self-contained SQLite snapshots in Alpha home-state exports.
+"""Build self-contained SQLite snapshots in Alpha home-state exports.
 
 Raw rsync copies of WAL databases are not restore-safe. Each detected database
 must be replaced with a validated online snapshot, or a previously verified
@@ -21,7 +21,6 @@ import time
 MAGIC = b"SQLite format 3\0"
 SIDECARS = ("-wal", "-shm", "-journal")
 STATUS = ".export-status.json"
-RETRY = ".sqlite-retry-needed"
 
 
 def secure_open(path, flags):
@@ -139,28 +138,23 @@ def preserve_old(previous, relative, staged, entries):
         return None
 
 
-def publish_status(stage, entries, retry=False):
+def publish_status(stage, entries):
     failures = [dict(path=name, **entry) for name, entry in sorted(entries.items())
                 if entry["status"] != "fresh"]
-    # A targeted retry does not refresh non-SQLite files or validate critical
-    # state against all sources. Only a subsequent full export may say complete.
-    pending_full_export = retry and not failures
-    status = "degraded" if failures or pending_full_export else "complete"
+    status = "degraded" if failures else "complete"
     report = {
         "schemaVersion": 1,
         "status": status,
         "generatedAt": int(time.time()),
         "databases": entries,
         "failures": failures,
-        "recoveryPending": pending_full_export,
     }
     (stage / STATUS).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+    marker = stage / ".export-complete"
     if failures:
-        (stage / RETRY).touch()
+        marker.unlink(missing_ok=True)
     else:
-        (stage / RETRY).unlink(missing_ok=True)
-    if failures or pending_full_export:
-        (stage / ".export-complete").unlink(missing_ok=True)
+        marker.write_text(str(int(time.time())) + "\n")
     print(f"home-state: {len(entries) - len(failures)} SQLite snapshots fresh, "
           f"{len(failures)} degraded", file=sys.stderr)
 
@@ -176,35 +170,26 @@ def still_selected(relative, selected):
     )
 
 
-def prepare(home, stage, previous=None, retry=False, selected=None):
-    old_entries = load_previous(stage if retry else previous)
-    if retry:
-        entries = dict(old_entries)
-        paths = [Path(name) for name, entry in old_entries.items()
-                 if entry["status"] != "fresh"]
-    else:
-        entries = {}
-        paths = []
-        for directory, _, files in os.walk(stage, followlinks=False):
-            for filename in files:
-                staged = Path(directory) / filename
-                if not stat.S_ISREG(staged.lstat().st_mode):
-                    continue
-                if is_sqlite(staged):
-                    paths.append(staged.relative_to(stage))
-        # Previously tracked databases must not silently disappear if rsync
-        # skips a source, or its header changes. Preserve the last verified
-        # snapshot, and keep the export degraded until fresh again.
-        known = set(paths)
-        for name in old_entries:
-            relative = Path(name)
-            if relative.is_absolute() or ".." in relative.parts:
-                raise ValueError(f"unsafe previous SQLite path: {name}")
-            # A configuration change may deliberately drop an old database
-            # (e.g. Chromium DIPS). Do not resurrect it or report it missing.
-            if still_selected(relative, selected) and relative not in known:
-                paths.append(relative)
-                known.add(relative)
+def prepare(home, stage, previous=None, selected=None):
+    old_entries = load_previous(previous)
+    entries = {}
+    paths = []
+    for directory, _, files in os.walk(stage, followlinks=False):
+        for filename in files:
+            staged = Path(directory) / filename
+            if not stat.S_ISREG(staged.lstat().st_mode):
+                continue
+            if is_sqlite(staged):
+                paths.append(staged.relative_to(stage))
+    # Keep tracking missing databases that are still selected.
+    known = set(paths)
+    for name in old_entries:
+        relative = Path(name)
+        if relative.is_absolute() or ".." in relative.parts:
+            raise ValueError(f"unsafe previous SQLite path: {name}")
+        if still_selected(relative, selected) and relative not in known:
+            paths.append(relative)
+            known.add(relative)
     for relative in sorted(paths):
         source = home / relative
         staged = stage / relative
@@ -214,11 +199,7 @@ def prepare(home, stage, previous=None, retry=False, selected=None):
         except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired,
                 sqlite3.DatabaseError, ValueError) as error:
             reason = str(error)[-240:]
-            if retry:
-                old = old_entries[str(relative)]
-                timestamp = old.get("verifiedAt") if old["status"] == "stale" else None
-            else:
-                timestamp = preserve_old(previous, relative, staged, old_entries)
+            timestamp = preserve_old(previous, relative, staged, old_entries)
             if timestamp is None:
                 staged.unlink(missing_ok=True)
                 kind = "missing"
@@ -227,7 +208,7 @@ def prepare(home, stage, previous=None, retry=False, selected=None):
             sidecars_remove(staged)
             entries[str(relative)] = {"status": kind, "verifiedAt": timestamp, "error": reason}
             print(f"home-state: SQLite {kind}: {relative}: {reason}", file=sys.stderr)
-    publish_status(stage, entries, retry=retry)
+    publish_status(stage, entries)
 
 
 def publish(stage, destination):
@@ -248,8 +229,6 @@ def publish(stage, destination):
 if __name__ == "__main__":
     if sys.argv[1] == "--publish":
         publish(Path(sys.argv[2]), Path(sys.argv[3]))
-    elif sys.argv[1] == "--retry":
-        prepare(Path(sys.argv[2]), Path(sys.argv[3]), retry=True)
     else:
         selected = json.loads(sys.argv[4]) if len(sys.argv) > 4 else None
         prepare(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), selected=selected)
