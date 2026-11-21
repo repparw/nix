@@ -402,6 +402,7 @@
                 test -f $staged/.config/vesktop/settings.json
                 test -f $staged/.local/share/fish/fish_history
                 test -f $staged/.export-complete
+                jq -e '.status == "complete"' $staged/.export-status.json >/dev/null
                 mkdir -p $home/.config/opencode/plugins
                 mkdir -p $home/.local/share/opencode/log $home/.local/share/opencode/tool-output
                 printf 'export default {}\n' > $home/.config/opencode/plugins/local.ts
@@ -450,6 +451,7 @@
                 rm $state_dir/.terraform.tfstate.lock.info
 
                 PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
+                PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/prepare-backup-exports.test.py} ${./scripts/prepare-backup-exports.py}
                 touch $out
               '';
 
