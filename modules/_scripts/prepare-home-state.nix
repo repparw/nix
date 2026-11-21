@@ -58,7 +58,12 @@ pkgs.writeShellScript "prepare-home-state" ''
         "$temporary/"
     ''}
   else
-${oldRsync}  fi
+  rsync --archive --relative --ignore-missing-args \
+    ${lib.concatMapStringsSep " " (e: "--exclude=${lib.escapeShellArg e}") excludes} \
+    -- \
+    ${lib.escapeShellArgs (map (p: "${home}/./${p}") paths)} \
+    "$temporary/"
+  fi
   ${lib.concatMapStrings (path: ''
     critical_source=${lib.escapeShellArg "${home}/${path}"}
     if [ -e "$critical_source" ]; then
