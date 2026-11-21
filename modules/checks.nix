@@ -368,87 +368,87 @@
                 ];
               }
               ''
-                home=/tmp/home-state-fixture-home
-                state_root=/tmp/home-state-fixture-root
-                rm -rf /tmp/home-state-fixture-*
-                mkdir -p "$home/.config/vesktop" \
-                  "$home/.config/net.imput.helium/Default" \
-                  "$home/.local/share/opencode/log" \
-                  "$home/Projects/nix/infra" "$state_root"
-                printf '{}' > "$home/.config/vesktop/settings.json"
-                printf '{"roots":{}}\n' > "$home/.config/net.imput.helium/Default/Bookmarks"
-                printf '{"version":4,"serial":1,"resources":[]}\n' > "$home/Projects/nix/infra/terraform.tfstate"
-                printf 'log' > "$home/.local/share/opencode/log/current.log"
-                printf 'secret' > "$home/.local/share/opencode/auth.json"
-                sqlite3 "$home/.local/share/opencode/opencode.db" \
-                  "CREATE TABLE session(value TEXT); INSERT INTO session VALUES('saved');"
-                sqlite3 "$home/.config/net.imput.helium/Default/DIPS" 'CREATE TABLE test(x)'
+                                home=/tmp/home-state-fixture-home
+                                state_root=/tmp/home-state-fixture-root
+                                rm -rf /tmp/home-state-fixture-*
+                                mkdir -p "$home/.config/vesktop" \
+                                  "$home/.config/net.imput.helium/Default" \
+                                  "$home/.local/share/opencode/log" \
+                                  "$home/Projects/nix/infra" "$state_root"
+                                printf '{}' > "$home/.config/vesktop/settings.json"
+                                printf '{"roots":{}}\n' > "$home/.config/net.imput.helium/Default/Bookmarks"
+                                printf '{"version":4,"serial":1,"resources":[]}\n' > "$home/Projects/nix/infra/terraform.tfstate"
+                                printf 'log' > "$home/.local/share/opencode/log/current.log"
+                                printf 'secret' > "$home/.local/share/opencode/auth.json"
+                                sqlite3 "$home/.local/share/opencode/opencode.db" \
+                                  "CREATE TABLE session(value TEXT); INSERT INTO session VALUES('saved');"
+                                sqlite3 "$home/.config/net.imput.helium/Default/DIPS" 'CREATE TABLE test(x)'
 
-                home_state='${builtins.toJSON alphaHomeState}'
-                printf '%s' "$home_state" | jq -e '
-                  index(".config/net.imput.helium/") == null and
-                  index(".config/net.imput.helium/Default/Bookmarks") != null and
-                  index(".config/net.imput.helium/Default/Preferences") != null and
-                  index(".config/net.imput.helium/Default/Sessions/") != null and
-                  index(".config/net.imput.helium/Local State") != null and
-                  index("Projects/nix/infra/terraform.tfstate") != null
-                ' >/dev/null
-                jobs='${builtins.toJSON rsyncJobs}'
-                printf '%s' "$jobs" | jq -e '(index("bupstate") == null) and (index("buptohdd") == null)' >/dev/null
-                paths='${builtins.toJSON resticPaths}'
-                printf '%s' "$paths" | jq -e 'index("/run/home-state-backup/offsite")' >/dev/null
-                for args in '${builtins.toJSON offsiteArgs}' '${builtins.toJSON claroArgs}'; do
-                  printf '%s' "$args" | jq -e \
-                    'index("--files-from-raw=/run/home-state-backup/offsite/.home-files") != null' >/dev/null
-                done
+                                home_state='${builtins.toJSON alphaHomeState}'
+                                printf '%s' "$home_state" | jq -e '
+                                  index(".config/net.imput.helium/") == null and
+                                  index(".config/net.imput.helium/Default/Bookmarks") != null and
+                                  index(".config/net.imput.helium/Default/Preferences") != null and
+                                  index(".config/net.imput.helium/Default/Sessions/") != null and
+                                  index(".config/net.imput.helium/Local State") != null and
+                                  index("Projects/nix/infra/terraform.tfstate") != null
+                                ' >/dev/null
+                                jobs='${builtins.toJSON rsyncJobs}'
+                                printf '%s' "$jobs" | jq -e '(index("bupstate") == null) and (index("buptohdd") == null)' >/dev/null
+                                paths='${builtins.toJSON resticPaths}'
+                                printf '%s' "$paths" | jq -e 'index("/run/home-state-backup/offsite")' >/dev/null
+                                for args in '${builtins.toJSON offsiteArgs}' '${builtins.toJSON claroArgs}'; do
+                                  printf '%s' "$args" | jq -e \
+                                    'index("--files-from-raw=/run/home-state-backup/offsite/.home-files") != null' >/dev/null
+                                done
 
-                ${staging}
-                staged="$state_root/offsite"
-                test -f "$staged/.export-complete"
-                jq -e '.status == "complete"' "$staged/.export-status.json" >/dev/null
-                test ! -e "$staged/.config/vesktop/settings.json"
-                test ! -e "$staged/Projects/nix/infra/terraform.tfstate"
-                test ! -e "$staged/.config/net.imput.helium/Default/Bookmarks"
-                test ! -e "$staged/.config/net.imput.helium/Default/DIPS"
-                test ! -e "$staged/.local/share/opencode/log"
-                test "$(sqlite3 "$staged/.local/share/opencode/opencode.db" \
-                  'SELECT value FROM session')" = saved
+                                ${staging}
+                                staged="$state_root/offsite"
+                                test -f "$staged/.export-complete"
+                                jq -e '.status == "complete"' "$staged/.export-status.json" >/dev/null
+                                test ! -e "$staged/.config/vesktop/settings.json"
+                                test ! -e "$staged/Projects/nix/infra/terraform.tfstate"
+                                test ! -e "$staged/.config/net.imput.helium/Default/Bookmarks"
+                                test ! -e "$staged/.config/net.imput.helium/Default/DIPS"
+                                test ! -e "$staged/.local/share/opencode/log"
+                                test "$(sqlite3 "$staged/.local/share/opencode/opencode.db" \
+                                  'SELECT value FROM session')" = saved
 
-                python3 - "$home" "$staged/.home-files" <<'PY'
-import os
-from pathlib import Path
-import sys
-home = Path(sys.argv[1])
-paths = set(Path(os.fsdecode(part)) for part in
-            Path(sys.argv[2]).read_bytes().split(b"\0") if part)
-expected = {
-    home / ".config/vesktop/settings.json",
-    home / ".config/net.imput.helium/Default/Bookmarks",
-    home / "Projects/nix/infra/terraform.tfstate",
-    home / ".local/share/opencode/auth.json",
-}
-assert paths == expected, (paths, expected)
-PY
+                                python3 - "$home" "$staged/.home-files" <<'PY'
+                import os
+                from pathlib import Path
+                import sys
+                home = Path(sys.argv[1])
+                paths = set(Path(os.fsdecode(part)) for part in
+                            Path(sys.argv[2]).read_bytes().split(b"\0") if part)
+                expected = {
+                    home / ".config/vesktop/settings.json",
+                    home / ".config/net.imput.helium/Default/Bookmarks",
+                    home / "Projects/nix/infra/terraform.tfstate",
+                    home / ".local/share/opencode/auth.json",
+                }
+                assert paths == expected, (paths, expected)
+                PY
 
-                export RESTIC_FAKE_STARTED="$state_root/restic-started"
-                export RESTIC_FAKE_RELEASE="$state_root/restic-release"
-                ${lib.getExe lockedRestic} -o rclone.connections=2 backup fixture &
-                restic_pid=$!
-                for attempt in $(seq 1 100); do
-                  test -f "$RESTIC_FAKE_STARTED" && break
-                  sleep 0.1
-                done
-                test -f "$RESTIC_FAKE_STARTED"
-                if flock -x -n "$state_root/.stage.lock" true; then
-                  echo 'Restic did not retain the SQLite export lock' >&2
-                  exit 1
-                fi
-                touch "$RESTIC_FAKE_RELEASE"
-                wait "$restic_pid"
-                flock -x -n "$state_root/.stage.lock" true
+                                export RESTIC_FAKE_STARTED="$state_root/restic-started"
+                                export RESTIC_FAKE_RELEASE="$state_root/restic-release"
+                                ${lib.getExe lockedRestic} -o rclone.connections=2 backup fixture &
+                                restic_pid=$!
+                                for attempt in $(seq 1 100); do
+                                  test -f "$RESTIC_FAKE_STARTED" && break
+                                  sleep 0.1
+                                done
+                                test -f "$RESTIC_FAKE_STARTED"
+                                if flock -x -n "$state_root/.stage.lock" true; then
+                                  echo 'Restic did not retain the SQLite export lock' >&2
+                                  exit 1
+                                fi
+                                touch "$RESTIC_FAKE_RELEASE"
+                                wait "$restic_pid"
+                                flock -x -n "$state_root/.stage.lock" true
 
-                PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
-                touch $out
+                                PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
+                                touch $out
               '';
 
           tofu =
