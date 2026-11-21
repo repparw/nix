@@ -153,6 +153,28 @@ class HomeStateSQLite(unittest.TestCase):
         self.assertEqual(status["databases"][rel]["status"], "missing")
         self.assertFalse(staged.exists())
 
+    def test_previously_tracked_database_missing_from_stage_is_degraded(self):
+        rel = ".config/net.imput.helium/Default/DIPS"
+        staged = self.add_database(rel, "last good")
+        self.connections.close()
+        old = self.previous / rel
+        old.parent.mkdir(parents=True)
+        shutil.copy2(self.home / rel, old)
+        (self.previous / ".export-status.json").write_text(json.dumps({
+            "schemaVersion": 1, "status": "complete",
+            "databases": {rel: {"status": "fresh", "verifiedAt": 1700000000}},
+        }))
+        staged.unlink()
+        (self.home / rel).unlink()
+        self.run_handler()
+        report = json.loads((self.stage / ".export-status.json").read_text())
+        self.assertEqual(report["status"], "degraded")
+        self.assertEqual(report["databases"][rel]["status"], "stale")
+        self.assertEqual(report["databases"][rel]["verifiedAt"], 1700000000)
+        with sqlite3.connect(staged) as db:
+            self.assertEqual(db.execute("SELECT value FROM session").fetchall(),
+                             [("last good",)])
+
     def test_publish_atomically_exchanges_generations(self):
         self.previous.mkdir()
         (self.previous / "old").write_text("old")
