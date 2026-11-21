@@ -1,20 +1,7 @@
 _: {
   den.aspects.networking = {
     nixos =
-      { lib, pkgs, ... }:
-      let
-        tailscaleSettings = pkgs.writeText "tailscale.json" (
-          builtins.toJSON {
-            version = "alpha0";
-            acceptDNS = false;
-            acceptRoutes = false;
-            advertiseRoutes = [ ];
-            exitNode = "";
-            netfilterMode = "off";
-            runSSHServer = false;
-          }
-        );
-      in
+      { lib, ... }:
       {
         programs.mosh = {
           enable = true;
@@ -31,7 +18,11 @@ _: {
           tailscale = {
             enable = true;
             disableTaildrop = true;
-            extraDaemonFlags = [ "--config=${tailscaleSettings}" ];
+            extraSetFlags = [
+              "--accept-dns=false"
+              "--accept-routes=false"
+              "--netfilter-mode=off"
+            ];
           };
         };
 
