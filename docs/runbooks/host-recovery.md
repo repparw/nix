@@ -29,7 +29,7 @@ files under `/etc`, `/root`, the whole user home, container roots, NixOS UID
 allocation, timer stamps, legacy recovery artifacts, and Traefik state.
 Host-specific additions cover bound application state and controller state.
 Alpha keeps its separate, narrower policy with prepared application backups.
-Alpha's home-state staging also carries the fleet's OpenTofu state; see
+Alpha includes curated OpenTofu state in its home backup; see
 [Restore the OpenTofu state](#restore-the-opentofu-state).
 
 Daily jobs use `--one-file-system`. Restic compares device IDs: it traverses
@@ -58,71 +58,20 @@ an independent checkpoint of that state and preserve the boot layout.
 
 ## Restore the OpenTofu state
 
-The fleet's OCI cloud resources are managed by OpenTofu from `infra/` in this
-repository. The authoritative local state lives on alpha at
-`~repparw/Projects/nix/infra/terraform.tfstate` (mode 0600); the compartment
-OCID it needs at plan time sits next to it in `terraform.tfvars`. The state is
-a live pointer to Oracle Cloud resources — treat it as more valuable than the
-repository: re-cloning Git recovers the configuration, while losing the state
-loses drift history and the imported-resource identities.
+Alpha backs up the local OpenTofu state at its original home path. State is not
+recoverable from the Git repository alone: it records resource identities and
+the last applied state. It may also contain secrets, so keep it out of Git.
 
-Coverage:
+To recover, follow the isolated Restic restore procedure below and inspect the
+restored `home/repparw/Projects/nix/infra/terraform.tfstate` with
+`tofu state list -state=...` before replacing the live file. Prefer a verified
+snapshot over re-importing resources; imports may accept out-of-band drift as
+the new baseline.
 
-- **Off-site (encrypted):** alpha stages the state into
-  `/var/lib/home-state-backup/offsite/Projects/nix/infra/terraform.tfstate`
-  and the daily `restic-backups-offsite` job uploads the whole staging tree to
-  `rclone:gd-crypt:restic/alpha`.
-- `terraform.tfstate.backup` (OpenTofu's automatic pre-change copy) is
-  deliberately not staged: restic snapshots already provide generation
-  history.
-- State, tfvars, and provider caches are gitignored — never commit or
-  SOPS-encrypt state files into the repository. Even with no credentials in
-  the currently managed resources, state files can contain sensitive data
-  (resource metadata, addresses, secrets passed via tooling) and grow into it
-  silently.
-
-Recovery into an isolated directory (never over the live path), as root on
-alpha:
-
-```sh
-export RESTIC_REPOSITORY=rclone:gd-crypt:restic/alpha
-export RESTIC_PASSWORD_FILE=/run/secrets/resticPassword
-export RCLONE_CONFIG=/run/secrets/rendered/rclone.conf
-restic snapshots --tag home-state-verify  # or list all and pick by date
-RESTORE_DIR=$(umask 077; mktemp -d /var/tmp/tfstate-restore.XXXXXX)
-restic restore --verify "$SNAPSHOT_ID" --target "$RESTORE_DIR" \
-  --include /var/lib/home-state-backup/offsite/Projects/nix/infra/terraform.tfstate
-restored="$RESTORE_DIR/var/lib/home-state-backup/offsite/Projects/nix/infra/terraform.tfstate"
-tofu state list -state="$restored"   # expect the eight managed resources
-sha256sum "$restored" ~/Projects/nix/infra/terraform.tfstate
-```
-
-Historical HDD copies may remain at
-`/mnt/hdd/backup/Projects/nix/infra/terraform.tfstate`; the HDD backup jobs
-are retired. Validate any historical copy with `tofu state list -state=...`
-and check its age before using it.
-
-Prefer a restored snapshot over re-importing: the snapshot preserves the
-exact serial and resource identities the fleet last applied. Re-running the
-import mappings in `infra/imports.tf` is the fallback when no snapshot is
-available — it re-derives state from the live cloud, but silently adopts any
-out-of-band drift as the new baseline.
-
-After any `tofu apply`, import, state migration, or manual state repair on
-alpha, capture a fresh offsite backup immediately:
-
-```sh
-sudo systemctl start --wait home-state-backup-offsite.service
-sudo systemctl start --wait restic-backups-offsite.service
-```
-
-Run this manually rather than from a hook: a failed backup must never fail or
-retry an otherwise successful infrastructure change. The staging script
-refuses to publish a generation while OpenTofu holds the state lock, and
-after the first successful backup it refuses to publish a generation at all
-if the state file has disappeared — the failed unit is retained by fleet
-health until repaired, so a deleted state cannot silently drop out of
-coverage.
+After an apply, import, or state repair, manually run
+`sudo systemctl start --wait restic-backups-offsite.service`.
+Do not make a successful infrastructure change depend on backup success.
+The backup reads state directly, so avoid concurrent state writes.
 
 ## Restore into an isolated directory
 

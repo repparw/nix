@@ -310,32 +310,6 @@
         systemd.services.restic-backups-offsite.unitConfig.RequiresMountsFor = stateRoot;
         systemd.services.restic-backups-claro.unitConfig.RequiresMountsFor = stateRoot;
 
-        # While the last home export is degraded, request the regular
-        # offsite backup every 15 minutes. Its normal pre-start builds a
-        # full fresh generation; systemd coalesces concurrent start jobs.
-        systemd.services.home-state-sqlite-retry = {
-          description = "Retry degraded Alpha home-state via full offsite backup";
-          unitConfig.RequiresMountsFor = stateRoot;
-          serviceConfig.Type = "oneshot";
-          script = ''
-            status=${stateRoot}/offsite/.export-status.json
-            if ! ${pkgs.jq}/bin/jq -e '.status == "degraded"' "$status" >/dev/null 2>&1; then
-              exit 0
-            fi
-            ${pkgs.systemd}/bin/systemctl start --no-block restic-backups-offsite.service
-          '';
-        };
-
-        systemd.timers.home-state-sqlite-retry = {
-          description = "Retry degraded home-state backup every 15 minutes";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "*:0/15";
-            RandomizedDelaySec = "3min";
-            Persistent = false;
-          };
-        };
-
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl
         # --set standby are clamped by a vendor minimum that never engages);
         # STANDBY IMMEDIATE (hdparm -y) is the only lever. Guard with findmnt

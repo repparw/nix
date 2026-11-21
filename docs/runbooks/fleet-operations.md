@@ -28,38 +28,24 @@ Missing telemetry and unreachable hosts are _unknown_, not green. Consult
 
 ## Offsite backup coverage and consistency
 
-A successful Restic upload does not necessarily mean every application export
-is usable. Missing, failed, or degraded exports do not count as complete
-backups and must not permit retention pruning. The previous complete recovery
-point remains important until a new one has been verified.
+A successful Restic upload does not guarantee a complete application restore.
+Failed or degraded exports must not allow retention pruning. Earlier complete
+Restic snapshots remain available even when an export fails.
 
-Alpha backs up ordinary curated home files directly to avoid unnecessary
-local copies. Live SQLite databases need consistent snapshots: raw copies can
-miss committed WAL changes or be corrupted by concurrent writes. Their
-temporary snapshots use memory rather than disk to limit SSD writes. Memory
-copies disappear on reboot, so a fallback from before the reboot is unavailable
-locally, though earlier Restic snapshots remain available.
+Alpha backs up curated ordinary home files directly, but live SQLite databases
+need consistent snapshots because their WAL files may contain committed changes.
+SQLite snapshots use tmpfs to avoid unnecessary SSD writes; they disappear on
+reboot. If a database cannot be refreshed, the backup may contain a last
+verified copy or omit it and is reported as degraded. The normal daily backup
+schedule provides the next attempt.
 
-When a SQLite export cannot be refreshed, the backup may contain the last
-verified copy or no copy of that database. It is marked degraded and retried,
-not treated as a new complete recovery point. A lock prevents publication
-while Restic reads the SQLite snapshots, but ordinary files remain live.
+OpenTofu state is read live, so avoid overlapping a manual state change with a
+backup. Helium intentionally excludes cookies, caches, and tracking state:
+restoring its selected files will not restore website logins.
 
-Helium's backup intentionally retains bookmarks, preferences, and recoverable
-tabs, rather than browser tracking databases, caches, or cookies. Restoring
-those files does not restore authenticated website sessions.
-
-OpenTofu state is copied as an ordinary file because applies are manual and
-overlap with scheduled backups is unlikely. A coincident state write can make
-one recovery point unusable; an earlier or subsequent backup may be needed.
-See [OpenTofu state recovery](host-recovery.md#restore-the-opentofu-state).
-
-Persistence alone is not offsite backup coverage. Mount boundaries and live
-application data can affect what a backup contains. Check the actual backup
-report and perform an isolated restore before relying on a recovery point.
+The Nix configuration and export scripts define backup selection and behavior.
 Use [host recovery](host-recovery.md) and
-[service restoration](restore-service-backups.md) for recovery procedures;
-the Nix configuration and export scripts define the implementation.
+[service restoration](restore-service-backups.md) to recover data.
 
 ## Controller deployment and recovery
 

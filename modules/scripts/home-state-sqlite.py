@@ -18,6 +18,7 @@ import tempfile
 import time
 
 MAGIC = b"SQLite format 3\0"
+SQLITE_EXTENSIONS = {".db", ".sqlite", ".sqlite3"}
 SIDECARS = ("-wal", "-shm", "-journal")
 STATUS = ".export-status.json"
 
@@ -214,23 +215,32 @@ def prepare(home, stage, previous=None, selected=None, excludes=None):
         raise ValueError("curated home paths are required")
     candidates = selected_files(home, selected, excludes or [])
     old_entries = load_previous(previous)
-    databases = set()
-    for relative in candidates:
-        source = home / relative
-        if not source.is_symlink() and source.is_file() and is_sqlite(source):
-            databases.add(relative)
-
-    # A known database that disappears or changes header remains a degraded
-    # snapshot, unless it was deliberately removed from the backup selection.
+    known = set()
     for name in old_entries:
         relative = Path(name)
         if relative.is_absolute() or ".." in relative.parts:
             raise ValueError(f"unsafe previous SQLite path: {name}")
         if still_selected(relative, selected):
+            known.add(relative)
+
+    databases = set()
+    for relative in candidates:
+        source = home / relative
+        if relative in known:
+            databases.add(relative)
+        elif (not source.is_symlink() and source.is_file()
+              and (relative.suffix.lower() in SQLITE_EXTENSIONS or is_sqlite(source))):
+            # Extensions catch damaged headers; magic finds extensionless databases.
             databases.add(relative)
 
+    # Retire deleted databases discovered under selected directories.
+    # Keep explicitly selected databases expected until removed from configuration.
+    exact_paths = {Path(item) for item in selected if not item.endswith("/")}
+    databases.update(known & exact_paths)
+
+    # Exclude orphaned WAL files even when their database has been retired.
     sidecars = {Path(str(relative) + suffix)
-                for relative in databases for suffix in SIDECARS}
+                for relative in databases | known for suffix in SIDECARS}
     ordinary = sorted(candidates - databases - sidecars)
     # NUL delimiters and --files-from-raw preserve spaces, glob characters,
     # and even newlines in paths. No copies of these files are staged.

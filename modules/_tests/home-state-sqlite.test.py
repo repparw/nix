@@ -147,6 +147,54 @@ class HomeStateBackup(unittest.TestCase):
         self.assertFalse((self.stage / rel).exists())
         self.assertIn(os.fsencode(bookmarks), self.listed())
 
+    def test_retired_database_does_not_degrade_or_backup_orphaned_wal(self):
+        rel = ".local/share/opencode/retired.db"
+        old = self.previous / rel
+        old.parent.mkdir(parents=True)
+        with sqlite3.connect(old) as db:
+            db.execute("CREATE TABLE example(value TEXT)")
+        (self.previous / ".export-status.json").write_text(json.dumps({
+            "schemaVersion": 1,
+            "databases": {rel: {"status": "fresh", "verifiedAt": 1700000000}},
+        }))
+        wal = self.write(rel + "-wal", "orphaned WAL")
+        report = self.run_export()
+        self.assertEqual(report["status"], "complete")
+        self.assertEqual(report["databases"], {})
+        self.assertNotIn(os.fsencode(wal), self.listed())
+        self.assertFalse((self.stage / rel).exists())
+
+    def test_corrupt_sqlite_extensions_are_not_backed_up_raw(self):
+        broken = [self.write(f".local/share/opencode/broken{suffix}", "bad header")
+                  for suffix in (".db", ".sqlite", ".sqlite3")]
+        report = self.run_export()
+        self.assertEqual(report["status"], "degraded")
+        self.assertEqual(len(report["failures"]), len(broken))
+        for path in broken:
+            self.assertEqual(report["databases"][str(path.relative_to(self.home))]["status"],
+                             "missing")
+            self.assertNotIn(os.fsencode(path), self.listed())
+            self.assertFalse((self.stage / path.relative_to(self.home)).exists())
+
+    def test_corrupt_known_extensionless_database_uses_verified_fallback(self):
+        rel = ".local/share/opencode/session-store"
+        bad = self.write(rel, "bad header")
+        old = self.previous / rel
+        old.parent.mkdir(parents=True)
+        with sqlite3.connect(old) as db:
+            db.execute("CREATE TABLE session(value TEXT)")
+            db.execute("INSERT INTO session VALUES ('prior')")
+        (self.previous / ".export-status.json").write_text(json.dumps({
+            "schemaVersion": 1,
+            "databases": {rel: {"status": "fresh", "verifiedAt": 1700000000}},
+        }))
+        report = self.run_export()
+        self.assertEqual(report["status"], "degraded")
+        self.assertEqual(report["databases"][rel]["status"], "stale")
+        self.assertNotIn(os.fsencode(bad), self.listed())
+        with sqlite3.connect(self.stage / rel) as db:
+            self.assertEqual(db.execute("SELECT value FROM session").fetchone(), ("prior",))
+
     def test_publish_swaps_small_export(self):
         self.previous.mkdir()
         (self.previous / "old").write_text("old")
