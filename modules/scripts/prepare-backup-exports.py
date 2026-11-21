@@ -37,6 +37,32 @@ def artifacts(spec):
     return found
 
 
+def export_quality(spec):
+    """Optional producer quality report; degraded is not a complete restore."""
+    path = spec.get("statusFile")
+    if path is None:
+        return {"status": "complete"}
+    report = json.loads(Path(path).read_text())
+    if not isinstance(report, dict):
+        raise ValueError(f"invalid native export status: {path}")
+    status = report.get("status")
+    if (report.get("schemaVersion") != 1
+            or status not in ("complete", "degraded")
+            or not isinstance(report.get("databases"), dict)
+            or not isinstance(report.get("failures"), list)
+            or not isinstance(report.get("recoveryPending", False), bool)):
+        raise ValueError(f"invalid native export status: {path}")
+    if status == "complete":
+        # A full run writes this marker after snapshot validation, before
+        # publishing the entire generation. SQLite-only retries never do.
+        marker = Path(spec["path"]) / ".export-complete"
+        if report["failures"] or report.get("recoveryPending", False) or not marker.is_file() or not marker.stat().st_size:
+            raise ValueError(f"native export is not a verified full generation: {path}")
+    elif not report["failures"] and not report.get("recoveryPending", False):
+        raise ValueError(f"degraded export has no recorded reason: {path}")
+    return report
+
+
 def prepare(exports, report_path):
     report = {"startedAt": int(time.time()), "exports": {}, "status": "complete"}
     for name, spec in exports.items():
@@ -56,9 +82,17 @@ def prepare(exports, report_path):
                 refreshed = artifacts(spec).difference(before)
                 if not refreshed:
                     raise RuntimeError("exporter produced no new or refreshed nonempty artifact within maxAgeSeconds")
-            report["exports"][name] = {"status": "complete", "artifacts": sorted(item[0] for item in refreshed)}
-            print(f"Verified fresh backup export: {name}", flush=True)
-        except (OSError, subprocess.CalledProcessError, RuntimeError) as error:
+            quality = export_quality(spec)
+            result = {"status": quality["status"], "artifacts": sorted(item[0] for item in refreshed)}
+            if quality["status"] == "degraded":
+                report["status"] = "incomplete"
+                result["databaseFailures"] = quality.get("failures", [])
+                print(f"Backup export degraded: {name}: {len(result['databaseFailures'])} databases",
+                      file=sys.stderr, flush=True)
+            report["exports"][name] = result
+            print(f"Verified {quality['status']} backup export: {name}", flush=True)
+        except (OSError, ValueError, TypeError, KeyError,
+                subprocess.CalledProcessError, RuntimeError) as error:
             report["status"] = "incomplete"
             report["exports"][name] = {"status": "failed", "error": str(error)}
             print(f"Backup export failed: {name}: {error}", file=sys.stderr, flush=True)
@@ -66,11 +100,16 @@ def prepare(exports, report_path):
     report_path.write_text(json.dumps(report, indent=2) + "\n")
 
 
+def check(report_path):
+    report = json.loads(report_path.read_text())
+    if report["status"] != "complete":
+        failed = ", ".join(name for name, result in report["exports"].items()
+                           if result["status"] != "complete")
+        sys.exit(f"Offsite snapshot uploaded but incomplete; failed/degraded exports: {failed}")
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "--check":
-        report = json.loads(Path(sys.argv[2]).read_text())
-        if report["status"] != "complete":
-            failed = ", ".join(name for name, result in report["exports"].items() if result["status"] == "failed")
-            sys.exit(f"Offsite snapshot uploaded but incomplete; failed exports: {failed}")
+        check(Path(sys.argv[2]))
     else:
         prepare(json.loads(Path(sys.argv[1]).read_text()), Path(sys.argv[2]))

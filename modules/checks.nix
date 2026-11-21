@@ -319,6 +319,23 @@
           home-state-backup =
             let
               prepareHomeState = import ./_scripts/prepare-home-state.nix { inherit pkgs lib; };
+              # A blocked fake Restic process proves the shared lock covers
+              # the entire backup traversal, including invocations with -o.
+              fakeRestic = pkgs.writeShellScriptBin "restic" ''
+                for arg in "$@"; do
+                  if [ "$arg" = backup ]; then
+                    touch "$RESTIC_FAKE_STARTED"
+                    while [ ! -e "$RESTIC_FAKE_RELEASE" ]; do
+                      ${pkgs.coreutils}/bin/sleep 0.1
+                    done
+                    break
+                  fi
+                done
+              '';
+              lockedRestic = import ./_scripts/stage-locked-restic.nix { inherit pkgs lib; } {
+                lockFile = "/tmp/home-state-fixture-root/.stage.lock";
+                restic = fakeRestic;
+              };
               staging = prepareHomeState {
                 home = "/tmp/home-state-fixture-home";
                 stateRoot = "/tmp/home-state-fixture-root";
@@ -350,6 +367,7 @@
                   pkgs.coreutils
                   pkgs.jq
                   pkgs.rsync
+                  pkgs.util-linux
                   pkgs.python3
                   pkgs.sqlite
                 ];
@@ -402,6 +420,29 @@
                 test -f $staged/.config/vesktop/settings.json
                 test -f $staged/.local/share/fish/fish_history
                 test -f $staged/.export-complete
+                jq -e '.status == "complete"' $staged/.export-status.json >/dev/null
+                # While an upload holds the shared lock, no publisher can
+                # acquire exclusive access. A retry skips instead of failing.
+                export RESTIC_FAKE_STARTED=$state_root/restic-started
+                export RESTIC_FAKE_RELEASE=$state_root/restic-release
+                ${lib.getExe lockedRestic} -o rclone.connections=2 backup fixture &
+                restic_pid=$!
+                for attempt in $(seq 1 100); do
+                  test -f "$RESTIC_FAKE_STARTED" && break
+                  sleep 0.1
+                done
+                test -f "$RESTIC_FAKE_STARTED"
+                if flock -x -n "$state_root/.stage.lock" true; then
+                  echo 'Restic did not retain the shared staging lock' >&2
+                  exit 1
+                fi
+                touch $staged/.sqlite-retry-needed
+                ${staging} --retry
+                test -e $staged/.sqlite-retry-needed
+                rm $staged/.sqlite-retry-needed
+                touch "$RESTIC_FAKE_RELEASE"
+                wait "$restic_pid"
+                flock -x -n "$state_root/.stage.lock" true
                 mkdir -p $home/.config/opencode/plugins
                 mkdir -p $home/.local/share/opencode/log $home/.local/share/opencode/tool-output
                 printf 'export default {}\n' > $home/.config/opencode/plugins/local.ts
@@ -449,7 +490,18 @@
                 fi
                 rm $state_dir/.terraform.tfstate.lock.info
 
+                # A retry must never bypass the critical OpenTofu lock guard.
+                touch $staged/.sqlite-retry-needed
+                touch $state_dir/.terraform.tfstate.lock.info
+                if ${staging} --retry; then
+                  echo 'SQLite retry bypassed the critical state lock' >&2
+                  exit 1
+                fi
+                test -f $staged/.sqlite-retry-needed
+                rm $state_dir/.terraform.tfstate.lock.info $staged/.sqlite-retry-needed
+
                 PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/home-state-sqlite.test.py} ${./scripts/home-state-sqlite.py}
+                PYTHONDONTWRITEBYTECODE=1 python3 ${./_tests/prepare-backup-exports.test.py} ${./scripts/prepare-backup-exports.py}
                 touch $out
               '';
 

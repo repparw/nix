@@ -97,6 +97,11 @@
                   };
                   path = lib.mkOption { type = lib.types.str; };
                   pattern = lib.mkOption { type = lib.types.str; };
+                  statusFile = lib.mkOption {
+                    type = lib.types.nullOr lib.types.str;
+                    default = null;
+                    description = "Optional producer quality report; degraded exports must not count as complete.";
+                  };
                   maxAgeSeconds = lib.mkOption {
                     type = lib.types.ints.positive;
                     default = 3600;
