@@ -51,7 +51,7 @@ pkgs.writeShellScript "prepare-home-state" ''
   if [ "''${1:-}" = --retry ]; then
     python3 ${../scripts/home-state-sqlite.py} --retry ${lib.escapeShellArg home} "$temporary"
   else
-    python3 ${../scripts/home-state-sqlite.py} ${lib.escapeShellArg home} "$temporary" "$destination"
+    python3 ${../scripts/home-state-sqlite.py} ${lib.escapeShellArg home} "$temporary" "$destination" ${lib.escapeShellArg (builtins.toJSON paths)}
   fi
   # A targeted retry still needs a full export before it may claim complete.
   if [ "''${1:-}" != --retry ] && [ ! -f "$temporary/.sqlite-retry-needed" ]; then
