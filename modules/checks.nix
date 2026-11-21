@@ -319,11 +319,18 @@
           home-state-backup =
             let
               prepareHomeState = import ./_scripts/prepare-home-state.nix { inherit pkgs lib; };
+              mockSystemctl = pkgs.writeShellScript "mock-backup-systemctl" ''
+                test "$1" = show
+                test "$2" = --value
+                test "$3" = -p
+                test "$4" = SubState
+                printf '%s\n' "''${MOCK_RESTIC_SUBSTATE:-dead}"
+              '';
               staging = prepareHomeState {
                 home = "/tmp/home-state-fixture-home";
                 stateRoot = "/tmp/home-state-fixture-root";
-                # No systemd manager inside Nix build sandboxes.
-                guardResticUploads = false;
+                # Exercise the production guard with controlled systemd states.
+                systemctl = mockSystemctl;
                 paths = [
                   ".config/vesktop/settings.json"
                   ".config/opencode/plugins/"
@@ -404,6 +411,16 @@
                 test -f $staged/.config/vesktop/settings.json
                 test -f $staged/.local/share/fish/fish_history
                 test -f $staged/.export-complete
+                jq -e '.status == "complete"' $staged/.export-status.json >/dev/null
+                # An in-flight Restic upload must never have its stage replaced.
+                stage_marker=$(cat $staged/.export-complete)
+                if MOCK_RESTIC_SUBSTATE=start ${staging}; then
+                  echo 'staging replaced a directory during an active upload' >&2
+                  exit 1
+                fi
+                test "$(cat $staged/.export-complete)" = "$stage_marker"
+                # The backup unit is activating during its pre-start exporter.
+                MOCK_RESTIC_SUBSTATE=start-pre ${staging}
                 jq -e '.status == "complete"' $staged/.export-status.json >/dev/null
                 mkdir -p $home/.config/opencode/plugins
                 mkdir -p $home/.local/share/opencode/log $home/.local/share/opencode/tool-output
