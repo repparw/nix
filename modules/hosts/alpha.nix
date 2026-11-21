@@ -138,7 +138,7 @@
             "/.local/share/opencode/log/"
             "/.local/share/opencode/tool-output/"
           ];
-          homeStateStagingScript = prepareHomeState;
+          homeStateExportScript = prepareHomeState;
         };
 
         modules.coredump-watch = {
