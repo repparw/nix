@@ -5,7 +5,7 @@
 {
   den.aspects.pi = {
     includes = [
-      den.aspects.nixos-services._.tailscale-trial
+      den.aspects.nixos-services._.tailscale
       den.aspects.managed-server
       den.aspects.pi._.backup
       den.aspects.nixos-services._.free-games-claimer

@@ -1,9 +1,9 @@
 { ... }:
 {
-  den.aspects.nixos-services._.tailscale-trial.nixos =
+  den.aspects.nixos-services._.tailscale.nixos =
     { pkgs, ... }:
     let
-      settings = pkgs.writeText "tailscale-trial.json" (
+      settings = pkgs.writeText "tailscale.json" (
         builtins.toJSON {
           version = "alpha0";
           acceptDNS = false;
@@ -26,7 +26,7 @@
 
       networking.firewall.interfaces.tailscale0.allowedTCPPorts = [ 22 ];
 
-      networking.nftables.tables.tailscale-trial = {
+      networking.nftables.tables.tailscale = {
         family = "inet";
         content = ''
           chain input {
