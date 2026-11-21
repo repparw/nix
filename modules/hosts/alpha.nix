@@ -23,9 +23,9 @@
         modules.backup.exports = {
           alpha-home = {
             unit = "home-state-backup-offsite.service";
-            path = "/var/lib/home-state-backup/offsite";
+            path = "/run/home-state-backup/offsite";
             pattern = ".export-status.json";
-            statusFile = "/var/lib/home-state-backup/offsite/.export-status.json";
+            statusFile = "/run/home-state-backup/offsite/.export-status.json";
           };
           jellyfin = {
             unit = "jellyfin-backup.service";
@@ -53,7 +53,7 @@
       }:
       let
         home = config.users.users.repparw.home;
-        stateRoot = "/var/lib/home-state-backup";
+        stateRoot = "/run/home-state-backup";
         prepareHomeState = import ../_scripts/prepare-home-state.nix { inherit pkgs lib; } {
           inherit home stateRoot;
           paths = config.modules.backup.homeState;
@@ -205,6 +205,21 @@
         virtualisation.vmVariant.boot.zswap.enable = lib.mkForce false;
 
         fileSystems = {
+          # Keep SQLite VACUUM INTO exports in RAM, with bounded usage and
+          # no swap writes. Ordinary home files go straight into Restic.
+          "${stateRoot}" = {
+            device = "tmpfs";
+            fsType = "tmpfs";
+            options = [
+              "size=2G"
+              "mode=0700"
+              "noswap"
+              "nodev"
+              "nosuid"
+              "noexec"
+            ];
+          };
+
           "/" = {
             device = "/dev/disk/by-uuid/51c5e80b-e22e-4d62-a3e2-ebb531deb05b";
             fsType = "btrfs";
@@ -282,19 +297,25 @@
         services.restic.backups.offsite.package = stageLockedRestic;
         services.restic.backups.claro.package = stageLockedRestic;
 
-        systemd.services.home-state-backup-offsite.serviceConfig = {
-          Type = "oneshot";
-          StateDirectory = "home-state-backup";
-          StateDirectoryMode = "0700";
-          TimeoutStartSec = "15min";
-          ExecStart = "${prepareHomeState}";
+        # The mount must exist before the exporter or either Restic unit
+        # can read its SQLite snapshots and generated file list.
+        systemd.services.home-state-backup-offsite = {
+          unitConfig.RequiresMountsFor = stateRoot;
+          serviceConfig = {
+            Type = "oneshot";
+            TimeoutStartSec = "15min";
+            ExecStart = "${prepareHomeState}";
+          };
         };
+        systemd.services.restic-backups-offsite.unitConfig.RequiresMountsFor = stateRoot;
+        systemd.services.restic-backups-claro.unitConfig.RequiresMountsFor = stateRoot;
 
         # While the last home export is degraded, request the regular
         # offsite backup every 15 minutes. Its normal pre-start builds a
         # full fresh generation; systemd coalesces concurrent start jobs.
         systemd.services.home-state-sqlite-retry = {
           description = "Retry degraded Alpha home-state via full offsite backup";
+          unitConfig.RequiresMountsFor = stateRoot;
           serviceConfig.Type = "oneshot";
           script = ''
             status=${stateRoot}/offsite/.export-status.json
