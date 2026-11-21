@@ -1,9 +1,20 @@
-{ den, ... }: {
+_: {
   den.aspects.networking = {
-    includes = [ den.aspects.nixos-services._.tailscale ];
-
     nixos =
-      { lib, ... }:
+      { lib, pkgs, ... }:
+      let
+        tailscaleSettings = pkgs.writeText "tailscale.json" (
+          builtins.toJSON {
+            version = "alpha0";
+            acceptDNS = false;
+            acceptRoutes = false;
+            advertiseRoutes = [ ];
+            exitNode = "";
+            netfilterMode = "off";
+            runSSHServer = false;
+          }
+        );
+      in
       {
         programs.mosh = {
           enable = true;
@@ -16,6 +27,13 @@
             enable = true;
             openFirewall = true;
             settings.PasswordAuthentication = false;
+          };
+          tailscale = {
+            enable = true;
+            disableTaildrop = true;
+            openFirewall = false;
+            useRoutingFeatures = "none";
+            extraDaemonFlags = [ "--config=${tailscaleSettings}" ];
           };
         };
 
@@ -35,8 +53,19 @@
           useNetworkd = true;
           useDHCP = false;
           nftables.enable = true;
+          nftables.tables.tailscale = {
+            family = "inet";
+            content = ''
+              chain forward {
+                type filter hook forward priority filter - 1; policy accept;
+                iifname "tailscale0" drop
+                oifname "tailscale0" drop
+              }
+            '';
+          };
           usePredictableInterfaceNames = false;
           firewall.checkReversePath = false;
+          firewall.trustedInterfaces = [ "tailscale0" ];
           nameservers = [
             "1.1.1.1#cloudflare-dns.com"
             "1.0.0.1#cloudflare-dns.com"
