@@ -19,6 +19,7 @@ pkgs.writeShellScript "prepare-home-state" ''
       pkgs.coreutils
       pkgs.jq
       pkgs.rsync
+      pkgs.util-linux
       pkgs.python3
       pkgs.sqlite
     ]
@@ -27,8 +28,24 @@ pkgs.writeShellScript "prepare-home-state" ''
   parent=${lib.escapeShellArg stateRoot}
   destination="$parent/offsite"
   seen_dir="$parent/.critical-seen"
+  # Serialize retry and regular staging. Publish with an atomic exchange.
+  exec 9>"$parent/.stage.lock"
+  flock -x 9
   temporary=$(mktemp -d "$parent/.prepare-offsite.XXXXXX")
   trap 'rm -rf "$temporary"' EXIT
+
+  if [ "''${1:-}" = --retry ]; then
+    # Retry only databases still stale or missing. Already-verified files stay.
+    test -f "$destination/.sqlite-retry-needed" || exit 0
+    cp -a --reflink=auto "$destination/." "$temporary/"
+    python3 ${../scripts/home-state-sqlite.py} --retry ${lib.escapeShellArg home} "$temporary"
+    if [ ! -f "$temporary/.sqlite-retry-needed" ]; then
+      date --iso-8601=ns > "$temporary/.export-complete"
+    fi
+    python3 ${../scripts/home-state-sqlite.py} --publish "$temporary" "$destination"
+    exit 0
+  fi
+
   mkdir -p "$temporary/.config" "$temporary/.local" "$seen_dir"
   ${lib.concatMapStrings (path: ''
     critical_source=${lib.escapeShellArg "${home}/${path}"}
@@ -68,8 +85,9 @@ pkgs.writeShellScript "prepare-home-state" ''
   # A raw rsync copy is not a consistent SQLite snapshot when a writer
   # has an active WAL. Replace every detected SQLite file with a validated,
   # self-contained online snapshot before publishing the staging tree.
-  python3 ${../scripts/home-state-sqlite.py} ${lib.escapeShellArg home} "$temporary"
-  date --iso-8601=ns > "$temporary/.export-complete"
-  rm -rf "$destination"
-  mv "$temporary" "$destination"
+  python3 ${../scripts/home-state-sqlite.py} ${lib.escapeShellArg home} "$temporary" "$destination"
+  if [ ! -f "$temporary/.sqlite-retry-needed" ]; then
+    date --iso-8601=ns > "$temporary/.export-complete"
+  fi
+  python3 ${../scripts/home-state-sqlite.py} --publish "$temporary" "$destination"
 ''
