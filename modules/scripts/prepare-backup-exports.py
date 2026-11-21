@@ -43,8 +43,23 @@ def export_quality(spec):
     if path is None:
         return {"status": "complete"}
     report = json.loads(Path(path).read_text())
-    if report.get("schemaVersion") != 1 or report.get("status") not in ("complete", "degraded"):
+    if not isinstance(report, dict):
         raise ValueError(f"invalid native export status: {path}")
+    status = report.get("status")
+    if (report.get("schemaVersion") != 1
+            or status not in ("complete", "degraded")
+            or not isinstance(report.get("databases"), dict)
+            or not isinstance(report.get("failures"), list)
+            or not isinstance(report.get("recoveryPending", False), bool)):
+        raise ValueError(f"invalid native export status: {path}")
+    if status == "complete":
+        # A full run writes this marker after snapshot validation, before
+        # publishing the entire generation. SQLite-only retries never do.
+        marker = Path(spec["path"]) / ".export-complete"
+        if report["failures"] or report.get("recoveryPending", False) or not marker.is_file() or not marker.stat().st_size:
+            raise ValueError(f"native export is not a verified full generation: {path}")
+    elif not report["failures"] and not report.get("recoveryPending", False):
+        raise ValueError(f"degraded export has no recorded reason: {path}")
     return report
 
 
@@ -76,7 +91,8 @@ def prepare(exports, report_path):
                       file=sys.stderr, flush=True)
             report["exports"][name] = result
             print(f"Verified {quality['status']} backup export: {name}", flush=True)
-        except (OSError, ValueError, subprocess.CalledProcessError, RuntimeError) as error:
+        except (OSError, ValueError, TypeError, KeyError,
+                subprocess.CalledProcessError, RuntimeError) as error:
             report["status"] = "incomplete"
             report["exports"][name] = {"status": "failed", "error": str(error)}
             print(f"Backup export failed: {name}: {error}", file=sys.stderr, flush=True)
