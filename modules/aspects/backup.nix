@@ -131,25 +131,19 @@
           };
           homeState = lib.mkOption {
             description = ''
-              Home-relative paths staged by the home-state backup for the
-              offsite staging tree. Curated small irreplaceable
-              state; everything else is nix-declared, OAuth/session
-              (re-login), or regenerable cache.
+              Curated home-relative paths backed up directly by Restic.
+              Selected SQLite files are snapshotted separately.
             '';
             type = lib.types.listOf lib.types.str;
             default = [ ];
           };
           homeStateExcludes = lib.mkOption {
-            description = "Rsync exclude patterns applied below the homeState --relative anchor.";
+            description = "Home-relative directories omitted from the direct backup file list.";
             type = lib.types.listOf lib.types.str;
             default = [ ];
           };
-          homeStateStagingScript = lib.mkOption {
-            description = ''
-              The prepare-home-state script staging homeState, as set by the
-              host that defines the staging units. Exposed for manual runs
-              and recovery verification.
-            '';
+          homeStateExportScript = lib.mkOption {
+            description = "Exporter for SQLite snapshots and the direct Restic file list.";
             type = lib.types.nullOr lib.types.package;
             default = null;
           };
