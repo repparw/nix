@@ -384,9 +384,9 @@
                 printf '{}' > $home/.config/vesktop/settings.json
                 printf 'history\n' > $home/.local/share/fish/fish_history
                 mkdir -p "$home/.config/net.imput.helium/Default/Sessions"
-                printf '{"roots":{}}\\n' > "$home/.config/net.imput.helium/Default/Bookmarks"
-                printf '{"restore_on_startup":1}\\n' > "$home/.config/net.imput.helium/Default/Preferences"
-                printf '{"profile":{}}\\n' > "$home/.config/net.imput.helium/Local State"
+                printf '{"roots":{}}\n' > "$home/.config/net.imput.helium/Default/Bookmarks"
+                printf '{"restore_on_startup":1}\n' > "$home/.config/net.imput.helium/Default/Preferences"
+                printf '{"profile":{}}\n' > "$home/.config/net.imput.helium/Local State"
                 printf 'session' > "$home/.config/net.imput.helium/Default/Sessions/Session_1"
                 sqlite3 "$home/.config/net.imput.helium/Default/DIPS" 'CREATE TABLE test(x)'
                 printf 'x' > $home/.config/sops/age/keys.txt
