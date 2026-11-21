@@ -35,15 +35,16 @@ incomplete export prevents pruning; it does not make the uploaded data
 complete. Alpha's home-state exporter publishes fresh files and verified
 SQLite snapshots even when one database stays locked. Failed SQLite snapshots
 use a previous verified copy with its original timestamp, or are omitted if
-none exists. The export is marked **degraded**, not complete. A 15-minute
-timer retries only missing/stale databases and starts a new offsite upload
-after recovery. Degraded backups cannot advance the complete-backup success
-stamp or permit pruning.
+none exists. The export is marked **degraded**, not complete. While
+the latest home export is degraded, a 15-minute timer requests the existing
+full offsite backup service, which recreates every selected file and SQLite
+snapshot. Degraded backups cannot advance the complete-backup success stamp
+or permit pruning.
 
 Alpha's offsite and Claro Restic services hold a shared advisory lock at
 `/var/lib/home-state-backup/.stage.lock` throughout each backup traversal.
 The home-state exporter takes the exclusive lock before publishing a new
-generation; the timer defers retries if the lock is busy. Start backups via
+generation; retries use the same lock-protected full export. Start backups via
 their managed systemd units or the configured Restic package, not a raw
 `restic backup` invocation that bypasses the staging lock.
 
