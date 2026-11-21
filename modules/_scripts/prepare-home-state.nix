@@ -34,18 +34,6 @@ pkgs.writeShellScript "prepare-home-state" ''
   temporary=$(mktemp -d "$parent/.prepare-offsite.XXXXXX")
   trap 'rm -rf "$temporary"' EXIT
 
-  if [ "''${1:-}" = --retry ]; then
-    # Retry only databases still stale or missing. Already-verified files stay.
-    test -f "$destination/.sqlite-retry-needed" || exit 0
-    cp -a --reflink=auto "$destination/." "$temporary/"
-    python3 ${../scripts/home-state-sqlite.py} --retry ${lib.escapeShellArg home} "$temporary"
-    if [ ! -f "$temporary/.sqlite-retry-needed" ]; then
-      date --iso-8601=ns > "$temporary/.export-complete"
-    fi
-    python3 ${../scripts/home-state-sqlite.py} --publish "$temporary" "$destination"
-    exit 0
-  fi
-
   mkdir -p "$temporary/.config" "$temporary/.local" "$seen_dir"
   ${lib.concatMapStrings (path: ''
     critical_source=${lib.escapeShellArg "${home}/${path}"}
@@ -60,11 +48,17 @@ pkgs.writeShellScript "prepare-home-state" ''
       exit 1
     fi
   '') criticalPaths}
-  rsync --archive --relative --ignore-missing-args \
-    ${lib.concatMapStringsSep " " (e: "--exclude=${lib.escapeShellArg e}") excludes} \
-    -- \
-    ${lib.escapeShellArgs (map (p: "${home}/./${p}") paths)} \
-    "$temporary/"
+  if [ "''${1:-}" = --retry ]; then
+    # Reuse the verified staging tree and refresh critical state too.
+    test -f "$destination/.sqlite-retry-needed" || exit 0
+    cp -a --reflink=auto "$destination/." "$temporary/"
+    ${lib.optionalString (criticalPaths != [ ]) ''
+      rsync --archive --relative --ignore-missing-args -- \
+        ${lib.escapeShellArgs (map (p: "${home}/./${p}") criticalPaths)} \
+        "$temporary/"
+    ''}
+  else
+${oldRsync}  fi
   ${lib.concatMapStrings (path: ''
     critical_source=${lib.escapeShellArg "${home}/${path}"}
     if [ -e "$critical_source" ]; then
@@ -82,10 +76,12 @@ pkgs.writeShellScript "prepare-home-state" ''
       printf '%s\n' "$(date --iso-8601=ns)" > "$seen_dir/${markerOf path}"
     fi
   '') criticalPaths}
-  # A raw rsync copy is not a consistent SQLite snapshot when a writer
-  # has an active WAL. Replace every detected SQLite file with a validated,
-  # self-contained online snapshot before publishing the staging tree.
-  python3 ${../scripts/home-state-sqlite.py} ${lib.escapeShellArg home} "$temporary" "$destination"
+  # Replace raw SQLite copies with verified, self-contained snapshots.
+  if [ "''${1:-}" = --retry ]; then
+    python3 ${../scripts/home-state-sqlite.py} --retry ${lib.escapeShellArg home} "$temporary"
+  else
+    python3 ${../scripts/home-state-sqlite.py} ${lib.escapeShellArg home} "$temporary" "$destination"
+  fi
   if [ ! -f "$temporary/.sqlite-retry-needed" ]; then
     date --iso-8601=ns > "$temporary/.export-complete"
   fi
