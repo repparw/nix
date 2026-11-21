@@ -49,8 +49,22 @@ pkgs.writeShellScript "prepare-home-state" ''
     fi
   '') criticalPaths}
   if [ "''${1:-}" = --retry ]; then
-    # Reuse the verified staging tree and refresh critical state too.
+    # This check happens *under* the staging lock. Each Restic pre-start
+    # must acquire the same lock before its upload can begin. Together these
+    # prevent an in-progress Restic traversal from seeing a stage exchange,
+    # including when its pre-start races with the retry timer.
     test -f "$destination/.sqlite-retry-needed" || exit 0
+    for unit in restic-backups-offsite.service restic-backups-claro.service; do
+      active_state=$(${lib.getExe' pkgs.systemd "systemctl"} show --value -p ActiveState "$unit")
+      case "$active_state" in
+        inactive|failed) ;;
+        *)
+          echo "Restic $unit is $active_state; deferring SQLite retry" >&2
+          exit 0
+          ;;
+      esac
+    done
+    # Reuse the verified staging tree and refresh critical state too.
     cp -a --reflink=auto "$destination/." "$temporary/"
     ${lib.optionalString (criticalPaths != [ ]) ''
       rsync --archive --relative --ignore-missing-args -- \
