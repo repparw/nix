@@ -383,6 +383,12 @@
                   $home/.config/sops/age $state_dir/.terraform $router_dir $state_root
                 printf '{}' > $home/.config/vesktop/settings.json
                 printf 'history\n' > $home/.local/share/fish/fish_history
+                mkdir -p "$home/.config/net.imput.helium/Default/Sessions"
+                printf '{"roots":{}}\\n' > "$home/.config/net.imput.helium/Default/Bookmarks"
+                printf '{"restore_on_startup":1}\\n' > "$home/.config/net.imput.helium/Default/Preferences"
+                printf '{"profile":{}}\\n' > "$home/.config/net.imput.helium/Local State"
+                printf 'session' > "$home/.config/net.imput.helium/Default/Sessions/Session_1"
+                sqlite3 "$home/.config/net.imput.helium/Default/DIPS" 'CREATE TABLE test(x)'
                 printf 'x' > $home/.config/sops/age/keys.txt
                 printf 'x' > $state_dir/.terraform/provider-cache
                 printf 'x' > $state_dir/terraform.tfvars
@@ -394,9 +400,17 @@
                 home_state='${builtins.toJSON alphaHomeState}'
                 printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/terraform.tfstate")' >/dev/null
                 printf '%s' "$home_state" | jq -e 'index("Projects/nix/infra/router/inventory.auto.tfvars")' >/dev/null
-                for kept in .config/moonshine/ .config/net.imput.helium/ .config/opencode/plugins/ .local/share/opencode/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
+                for kept in .config/moonshine/ .config/opencode/plugins/ .local/share/opencode/ .local/share/shadPS4/keys.json Games/bbport/source/data/user/; do
                   printf '%s' "$home_state" | jq -e --arg kept "$kept" 'index($kept)' >/dev/null
                 done
+                printf '%s' "$home_state" | jq -e '
+                  index(".config/net.imput.helium/") == null and
+                  index(".config/net.imput.helium/Default/DIPS") == null and
+                  index(".config/net.imput.helium/Default/Bookmarks") != null and
+                  index(".config/net.imput.helium/Default/Preferences") != null and
+                  index(".config/net.imput.helium/Default/Sessions/") != null and
+                  index(".config/net.imput.helium/Local State") != null
+                ' >/dev/null
                 jobs='${builtins.toJSON rsyncJobs}'
                 printf '%s' "$jobs" | jq -e '(index("bupstate") == null) and (index("buptohdd") == null)' >/dev/null
                 restic_paths='${builtins.toJSON resticPaths}'
@@ -417,6 +431,11 @@
                 test "$(stat -c %a $staged/Projects/nix/infra/terraform.tfstate)" = 600
                 test -f $staged/.config/vesktop/settings.json
                 test -f $staged/.local/share/fish/fish_history
+                test -f "$staged/.config/net.imput.helium/Default/Bookmarks"
+                test -f "$staged/.config/net.imput.helium/Default/Preferences"
+                test -f "$staged/.config/net.imput.helium/Local State"
+                test -f "$staged/.config/net.imput.helium/Default/Sessions/Session_1"
+                test ! -e "$staged/.config/net.imput.helium/Default/DIPS"
                 test -f $staged/.export-complete
                 jq -e '.status == "complete"' $staged/.export-status.json >/dev/null
                 # While an upload holds the shared lock, no publisher can
