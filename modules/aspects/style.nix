@@ -29,7 +29,7 @@
             theme = "${pkgs.base16-schemes}/share/themes/tokyodark-terminal.yaml";
 
             # Original generated image from the repparw/wallpapers input.
-            inputImage = "${inputs.wallpapers}/wallpapers/violet-monolith.png";
+            inputImage = "${inputs.wallpapers}/wallpapers/sci-fi/violet-monolith.png";
 
             brightness = -15;
             contrast = 0;
