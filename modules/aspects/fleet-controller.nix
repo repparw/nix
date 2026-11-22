@@ -102,14 +102,13 @@
             echo "fleet-deploy-run.service is already active"
             exit 0
           fi
-          # A transient unit whose ExecStart fails immediately can stay loaded
-          # but inactive once its leftover /run fragment is read again, and
-          # systemd-run then refuses to create it for every later cycle. Drop
-          # the stale fragment so a failure cannot wedge the timer.
-          if [ "$(${lib.getExe' pkgs.systemd "systemctl"} show --property=LoadState --value fleet-deploy-run.service)" = loaded ]; then
+          # A failed transient unit can report LoadState=error while its
+          # fragment remains. The inactive check above protects a live run.
+          if [ -e /run/systemd/transient/fleet-deploy-run.service ]; then
             echo "discarding the stale fleet-deploy-run.service fragment"
             rm -f /run/systemd/transient/fleet-deploy-run.service
             ${lib.getExe' pkgs.systemd "systemctl"} daemon-reload
+            ${lib.getExe' pkgs.systemd "systemctl"} reset-failed fleet-deploy-run.service 2>/dev/null || true
           fi
           if ${lib.getExe' pkgs.systemd "systemd-run"} \
             --unit=fleet-deploy-run \
