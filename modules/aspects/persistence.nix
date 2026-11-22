@@ -58,6 +58,13 @@
               directory = "/var/lib/host-recovery";
               mode = "0700";
             }
+            # The Tailscale node key is the host's tailnet identity. Losing it
+            # on every boot would force re-enrollment and drop the node from
+            # the tailnet until an operator intervenes.
+            {
+              directory = "/var/lib/tailscale";
+              mode = "0700";
+            }
           ]
           ++ lib.optionals config.services.timesyncd.enable [
             {
