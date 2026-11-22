@@ -95,6 +95,7 @@
               targets = {
                 x11.enable = false;
                 sxiv.enable = false;
+                wayprompt.enable = false;
                 gtk.flatpakSupport.enable = false;
                 nixvim = {
                   transparentBackground = {
