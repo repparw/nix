@@ -560,40 +560,51 @@
                 by_id = {hook["id"]: hook for hook in hooks}
 
                 assert len(by_id) == len(hooks), "duplicate hook ID"
-                assert "prettier" in by_id and "agent-docs" in by_id, "missing hook"
-                assert re.search(by_id["prettier"]["files"], "README.md")
-                assert not re.search(by_id["prettier"]["files"], "modules/checks.nix")
+                assert "format" in by_id and "shellcheck" in by_id and "agent-docs" in by_id, "missing hook"
+                assert re.search(by_id["format"]["files"], "README.md")
+                assert re.search(by_id["format"]["files"], "modules/checks.nix")
+                assert not re.search(by_id["format"]["files"], "decisions.tsv")
                 assert by_id["agent-docs"]["pass_filenames"] is False
                 assert re.search(by_id["agent-docs"]["files"], ".agents/skills/probe/SKILL.md")
                 assert not re.search(by_id["agent-docs"]["files"], "README.md")
                 PY
 
-                # Smoke-test both hooks against disposable, staged fixture files.
+                # Smoke-test generated hooks against disposable, staged fixture files.
                 mkdir -p hook-fixture/.agents/skills/probe
                 cd hook-fixture
                 git init -q
                 printf '%s\n' '---' 'name: probe' 'description: Example skill.' '---' > .agents/skills/probe/SKILL.md
                 printf '%s\n' '# Example' > README.md
                 git add .
-                export PRE_COMMIT_HOME="$TMPDIR/pre-commit-home"
-                pre-commit run agent-docs --config "$hook_config" --files .agents/skills/probe/SKILL.md
+                export PREK_HOME="$TMPDIR/prek-home"
+                runner=${pkgs.lib.getExe config.pre-commit.settings.package}
+                "$runner" run agent-docs --config "$hook_config" --files .agents/skills/probe/SKILL.md
 
                 printf '%s\n' '[broken](nonexistent.md)' >> .agents/skills/probe/SKILL.md
                 git add .agents/skills/probe/SKILL.md
-                if pre-commit run agent-docs --config "$hook_config" --files .agents/skills/probe/SKILL.md; then
+                if "$runner" run agent-docs --config "$hook_config" --files .agents/skills/probe/SKILL.md; then
                   echo 'agent-docs hook accepted a broken relative link' >&2
                   exit 1
                 fi
 
                 printf '%s\n' '# Example' "" '* item' > README.md
                 git add README.md
-                if pre-commit run prettier --config "$hook_config" --files README.md; then
-                  echo 'prettier hook did not report a formatting change' >&2
+                if "$runner" run format --config "$hook_config" --files README.md; then
+                  echo 'format hook did not report a formatting change' >&2
                   exit 1
                 fi
                 grep -q -- '- item' README.md
                 git add README.md
-                pre-commit run prettier --config "$hook_config" --files README.md
+                "$runner" run format --config "$hook_config" --files README.md
+
+                # ShellCheck still covers executable scripts without a .sh extension.
+                printf '%s\n' '#!/usr/bin/env bash' 'echo $UNQUOTED' > probe-shell
+                chmod +x probe-shell
+                git add probe-shell
+                if "$runner" run shellcheck --config "$hook_config" --files probe-shell; then
+                  echo 'shellcheck missed an extensionless shell script' >&2
+                  exit 1
+                fi
                 touch $out
               '';
 

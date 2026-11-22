@@ -70,6 +70,7 @@
               ];
             }
             ''
+              ${lib.getExe pkgs.python3} -m unittest discover -s ${../../scripts} -p test_browse_mcp_lazy.py
               export HOME="$TMPDIR/browse-home"
               mkdir -p "$HOME"
               {
@@ -87,6 +88,24 @@
                     and ($tools | index("execute") == null)
                 ))
               ' "$TMPDIR/response.json"
+              # Codex and other non-OpenCode clients receive the execute tool.
+              {
+                printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"codex","version":"1"}}}'
+                printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+              } | timeout 15 ${lib.getExe pkgs.python3} ${../../scripts/browse-mcp-lazy.py} \
+                ${lib.getExe browse} /missing-helium ${lib.getExe' pkgs.procps "pgrep"} \
+                > "$TMPDIR/execute-response.json"
+              jq -se '
+                any(.[]; .id == 1 and (
+                  (.result.instructions | contains("Never solve") | not)
+                  and (.result.instructions | contains("handoff"))
+                ))
+                and any(.[]; .id == 2 and any(.result.tools[];
+                  .name == "execute"
+                  and (.description | contains("never solve") | not)
+                  and (.inputSchema.properties.code.description | contains("when only the user") | not)
+                ))
+              ' "$TMPDIR/execute-response.json"
               touch "$out"
             '';
       };

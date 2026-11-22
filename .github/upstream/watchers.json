@@ -25,14 +25,10 @@
     ]
   },
   "opencode-browse": {
-    "mode": "notify-only",
-    "input": "nixpkgs"
-  },
-  "tasks-org": {
     "mode": "post-lock",
     "input": "nixpkgs"
   },
-  "paperless-torch": {
+  "tasks-org": {
     "mode": "post-lock",
     "input": "nixpkgs"
   },
@@ -47,6 +43,10 @@
     "probe": "nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package"
   },
   "wpaperd-fix": {
+    "mode": "post-lock",
+    "input": "nixpkgs"
+  },
+  "moonshine-0-18": {
     "mode": "post-lock",
     "input": "nixpkgs"
   },

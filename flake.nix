@@ -38,7 +38,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     hermes-agent = {
-      url = "github:NousResearch/hermes-agent/v0.23.1";
+      url = "github:NousResearch/hermes-agent/v0.23.3";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
@@ -79,10 +79,6 @@
         nixvim.follows = "nixvim";
       };
     };
-    opencode-browse-pr = {
-      url = "https://raw.githubusercontent.com/repparw/nixpkgs/refs/heads/feat/opencode-browse-0.0.15/pkgs/by-name/op/opencode-browse/package.nix";
-      flake = false;
-    };
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -96,5 +92,9 @@
       };
     };
     systems.url = "github:nix-systems/default";
+    wallpapers = {
+      url = "github:repparw/wallpapers";
+      flake = false;
+    };
   };
 }

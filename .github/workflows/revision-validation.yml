@@ -72,9 +72,16 @@ jobs:
           skipPush: ${{ github.actor == 'dependabot[bot]' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
           useDaemon: true
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Prepare offline evaluation
+        if: matrix.group == 'configuration'
+        run: |
+          nix flake archive --no-update-lock-file
+          # Stylix reads this package's theme YAML during evaluation.
+          nix build --no-update-lock-file --no-link --inputs-from . nixpkgs#base16-schemes
       - name: Run attributed checks
         env:
           CI_CHECKS: ${{ matrix.checks }}
+          CI_OFFLINE_EVAL: ${{ matrix.group == 'configuration' && '1' || '0' }}
         run: bash .github/scripts/run-checks.sh
       - name: Test upstream watcher predicates and publication lifecycle
         if: matrix.group == 'lightweight' && needs.changes.outputs.run_upstream_tests == 'true'
@@ -123,9 +130,14 @@ jobs:
         with:
           ref: ${{ github.sha }}
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - name: Prepare offline evaluation
+        run: |
+          nix flake archive --no-update-lock-file
+          nix build --no-update-lock-file --no-link --inputs-from . nixpkgs#base16-schemes
       - name: Evaluate all hosts with stubs
         env:
           CI_CHECKS: alpha pi epsilon
+          CI_OFFLINE_EVAL: '1'
         run: bash .github/scripts/run-checks.sh
       - name: Upload evaluation logs
         if: always()

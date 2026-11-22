@@ -63,6 +63,18 @@ def validate(name, architecture):
         package = build("alpha.config.home-manager.users.repparw.programs.t3code.package")
         require(str(package) == evaluate("alpha.pkgs.t3code-desktop.outPath"),
                 "Alpha must select the upstream desktop package")
+    elif name == "moonshine-0-18":
+        # Validate the real packaged version after deleting the temporary
+        # module, then prove the service selects that upstream package.
+        version = evaluate("alpha.pkgs.moonshine.version")
+        require(bool(re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)),
+                "unexpected upstream Moonshine version")
+        require(tuple(map(int, version.split("."))) >= (0, 18, 0),
+                "pinned Moonshine is older than 0.18.0")
+        require(evaluate("alpha.config.services.moonshine.package.outPath") ==
+                evaluate("alpha.pkgs.moonshine.outPath"),
+                "Moonshine service still has a package override")
+        build("alpha.config.services.moonshine.package")
     elif name == "gamescope-vkroots":
         # Same raw-package source predicate as readiness, after removing the
         # local override. Then build the real WSI package, without stubs.
@@ -74,6 +86,12 @@ def validate(name, architecture):
         expression = 'let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT"); in f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope.override { enableWsi = true; }'
         subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--expr", expression],
                        env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, check=True)
+    elif name == "paperless-torch":
+        # Verify the real Paperless package in its container without the override.
+        build("epsilon.config.containers.paperless.config.services.paperless.package")
+    elif name == "opencode-browse":
+        command("nix", "build", "--no-link", "--no-update-lock-file",
+                ".#checks.x86_64-linux.browse-mcp")
     elif name in ("tasks-org", "wpaperd-fix", "qbittorrent"):
         attribute = {"tasks-org": "alpha.pkgs.tasks-org", "wpaperd-fix": "alpha.pkgs.wpaperd",
                      "qbittorrent": "alpha.config.containers.qbittorrent.config.services.qbittorrent.package"}[name]

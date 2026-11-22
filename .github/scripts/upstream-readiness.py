@@ -14,7 +14,6 @@ PR_WAITS = {
     "t3code-split": ("NixOS/nixpkgs", 555814, "nixpkgs"),
     "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
     "opencode-browse": ("NixOS/nixpkgs", 585097, "nixpkgs"),
-    "paperless-torch": ("NixOS/nixpkgs", 587638, "nixpkgs"),
     "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
 }
 # Watcher IDs identify their temporary files without a separate path registry.
@@ -180,6 +179,19 @@ def fsr4_rdna2_status(lock):
     return "PINNED-READY" if ge_package_contains(pin(lock, "nixpkgs"), commit) else "merged-not-pinned"
 
 
+def moonshine_pinned_version(revision):
+    # Check the selected root nixpkgs package, not the temporary service
+    # override or ferriscope-wsi's separately versioned derivation.
+    package = source("NixOS/nixpkgs", "pkgs/by-name/mo/moonshine/package.nix", revision)
+    versions = re.findall(
+        r'\bpname\s*=\s*"moonshine";\s*version\s*=\s*"([0-9]+\.[0-9]+\.[0-9]+)";',
+        package,
+    )
+    if len(versions) != 1:
+        raise ValueError("cannot identify pinned Moonshine package version")
+    return tuple(int(part) for part in versions[0].split("."))
+
+
 def detect(name, lock):
     if name == "fsr4-rdna2":
         return fsr4_rdna2_status(lock)
@@ -215,6 +227,9 @@ def detect(name, lock):
         if not pr.get("merged"):
             return "waiting-upstream"
         return "PINNED-READY" if contains(repo, pr["merge_commit_sha"], pin(lock, input_name)) else "merged-not-pinned"
+    if name == "moonshine-0-18":
+        return ("PINNED-READY" if moonshine_pinned_version(pin(lock, "nixpkgs")) >= (0, 18, 0)
+                else "merged-not-pinned")
     if name == "t3code-browser-libs":
         pr = api("repos/NixOS/nixpkgs/pulls/575675")
         if not pr.get("merged"):
