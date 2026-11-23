@@ -228,22 +228,24 @@ def preserve_old(previous, relative, staged, entries):
     try:
         verify_snapshot(previous, relative)
         timestamp = previous_timestamp(previous, relative, entries)
-        if timestamp is None:
-            return None  # Cannot truthfully report the age of this recovery point.
-        staged.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            # Hardlink on the same tmpfs: uses zero extra RAM and preserves uid/gid.
-            os.link(old, staged)
-        except OSError as error:
-            if error.errno != errno.EXDEV:
-                raise
-            shutil.copy2(old, staged, follow_symlinks=False)
-            old_stat = old.stat(follow_symlinks=False)
-            os.chown(staged, old_stat.st_uid, old_stat.st_gid)
-        sidecars_remove(staged)
-        return timestamp
     except (OSError, sqlite3.DatabaseError, ValueError):
         return None
+    if timestamp is None:
+        return None  # Cannot truthfully report the age of this recovery point.
+    # Once verified, an inability to preserve this fallback must abort the
+    # preparation rather than publishing a stage that drops the old snapshot.
+    staged.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        # Hardlink on the same tmpfs: uses zero extra RAM and preserves uid/gid.
+        os.link(old, staged)
+    except OSError as error:
+        if error.errno != errno.EXDEV:
+            raise
+        shutil.copy2(old, staged, follow_symlinks=False)
+        old_stat = old.stat(follow_symlinks=False)
+        os.chown(staged, old_stat.st_uid, old_stat.st_gid)
+    sidecars_remove(staged)
+    return timestamp
 
 
 def publish_status(stage, entries):
