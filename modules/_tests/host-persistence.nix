@@ -8,12 +8,19 @@ let
     host: condition: message:
     lib.assertMsg condition "${host}: ${message}";
   hosts = inputs.self.nixosConfigurations;
-  persistenceMounts =
-    config: lib.filter (mount: lib.hasPrefix "/persist/" mount.what) config.systemd.mounts;
-  pi = hosts.pi.config;
-  epsilon = hosts.epsilon.config;
-  piMounts = persistenceMounts pi;
-  epsilonMounts = persistenceMounts epsilon;
+  mkHost =
+    host:
+    let
+      config = hosts.${host}.config;
+    in
+    {
+      inherit host config;
+      mounts = lib.filter (mount: lib.hasPrefix "/persist/" mount.what) config.systemd.mounts;
+    };
+  piHost = mkHost "pi";
+  epsilonHost = mkHost "epsilon";
+  pi = piHost.config;
+  epsilon = epsilonHost.config;
   unprepared =
     (hosts.epsilon.extendModules {
       modules = [
@@ -31,11 +38,14 @@ let
       ];
     }).config;
   assertCommonPersistence =
-    host: config:
+    {
+      host,
+      config,
+      mounts,
+    }:
     let
       persistence = config.environment.persistence."/persist";
       root = config.fileSystems."/";
-      mounts = persistenceMounts config;
     in
     assert require host (config.modules.persistence.enable) "host persistence must be enabled";
     assert require host (config.modules.persistence.mutableAccounts) "mutable accounts must be enabled";
@@ -69,10 +79,13 @@ let
     assert require host (config.users.mutableUsers) "users must be mutable";
     true;
   assertServicePersistence =
-    host: config:
+    {
+      host,
+      config,
+      mounts,
+    }:
     let
       persistence = config.environment.persistence."/persist";
-      mounts = persistenceMounts config;
     in
     assert require host (lib.any (
       entry: entry.directory or null == "/var/lib/tailscale"
@@ -109,7 +122,11 @@ let
       "offsite backup must exclude container Nix stores";
     true;
   mkPersistenceResult =
-    host: config:
+    {
+      host,
+      config,
+      mounts,
+    }:
     let
       failures = lib.filter (assertion: !assertion.assertion) config.assertions;
     in
@@ -119,12 +136,12 @@ let
     {
       disabledByDefault = false;
       tmpfsRoot = true;
-      persistentMounts = map (mount: mount.where) (persistenceMounts config);
+      persistentMounts = map (mount: mount.where) mounts;
       earlySopsKey = builtins.head config.sops.age.sshKeyPaths;
     };
   piResult =
-    assert assertCommonPersistence "pi" pi;
-    assert assertServicePersistence "pi" pi;
+    assert assertCommonPersistence piHost;
+    assert assertServicePersistence piHost;
     assert assertOffsiteBackup "pi" pi.services.restic.backups.offsite;
     assert require "pi" (pi.fileSystems."/home/repparw".neededForBoot
     ) "/home/repparw must be available at boot";
@@ -132,12 +149,12 @@ let
       !(lib.elem "nofail" pi.fileSystems."/home/repparw".options)
     ) "/home/repparw must mount without nofail";
     assert require "pi" (
-      !(lib.any (mount: mount.where == "/home/repparw") piMounts)
+      !(lib.any (mount: mount.where == "/home/repparw") piHost.mounts)
     ) "/home/repparw must use its own filesystem";
-    mkPersistenceResult "pi" pi;
+    mkPersistenceResult piHost;
   epsilonResult =
-    assert assertCommonPersistence "epsilon" epsilon;
-    assert assertServicePersistence "epsilon" epsilon;
+    assert assertCommonPersistence epsilonHost;
+    assert assertServicePersistence epsilonHost;
     assert assertOffsiteBackup "epsilon" epsilon.services.restic.backups.offsite;
     assert require "epsilon" (
       epsilon.fileSystems."/persist".device
@@ -174,10 +191,10 @@ let
     ) "/boot must mount after the initrd";
     assert require "epsilon" (lib.any (
       mount: mount.where == "/home/repparw"
-    ) epsilonMounts) "/home/repparw must have a persistence mount";
+    ) epsilonHost.mounts) "/home/repparw must have a persistence mount";
     assert require "epsilon" (lib.any (
       mount: mount.where == "/var/log"
-    ) epsilonMounts) "/var/log must have a persistence mount";
+    ) epsilonHost.mounts) "/var/log must have a persistence mount";
     assert require "epsilon"
       (lib.elem "sysroot-nix.mount" epsilon.boot.initrd.systemd.services.initrd-nixos-activation.requires)
       "initrd activation must require sysroot-nix.mount";
@@ -189,8 +206,8 @@ let
     )) "/var/log must be declared persistent";
     assert require "epsilon" (lib.any (
       mount: mount.where == "/var/lib/credential-remediation"
-    ) epsilonMounts) "credential remediation must have a persistence mount";
-    mkPersistenceResult "epsilon" epsilon;
+    ) epsilonHost.mounts) "credential remediation must have a persistence mount";
+    mkPersistenceResult epsilonHost;
 in
 assert require "alpha" (!(hosts.alpha.config.modules ? persistence)) "persistence must be absent";
 assert require "alpha" (
