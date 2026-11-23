@@ -53,6 +53,9 @@ let
     assert lib.any (entry: entry.directory or null == "/var/lib/host-recovery") (
       pi.environment.persistence."/persist".directories
     );
+    assert lib.any (entry: entry.directory or null == "/var/lib/tailscale") (
+      pi.environment.persistence."/persist".directories
+    );
     assert lib.any (entry: entry.file == "/var/lib/systemd/random-seed" && entry.method == "symlink") (
       pi.environment.persistence."/persist".files
     );
@@ -125,6 +128,9 @@ let
       mount: mount.where == "/sysroot/var/lib/nixos" && mount.what == "/sysroot/persist/var/lib/nixos"
     ) epsilon.boot.initrd.systemd.mounts;
     assert lib.any (entry: entry.directory or null == "/var/log") (
+      epsilon.environment.persistence."/persist".directories
+    );
+    assert lib.any (entry: entry.directory or null == "/var/lib/tailscale") (
       epsilon.environment.persistence."/persist".directories
     );
     assert lib.any (entry: entry.file == "/var/lib/systemd/random-seed" && entry.method == "symlink") (
