@@ -71,7 +71,17 @@ the new baseline.
 After an apply, import, or state repair, manually run
 `sudo systemctl start --wait restic-backups-offsite.service`.
 Do not make a successful infrastructure change depend on backup success.
-The backup reads state directly, so avoid concurrent state writes.
+The exporter verifies OpenTofu state is unlocked, parseable JSON, and still
+present once recorded, without staging a second copy on disk.
+
+Note that Alpha snapshots split ordinary home files and SQLite databases across
+two paths in the archive: ordinary files live under `home/repparw/...`, while
+consistent SQLite snapshots live under `run/home-state-backup/offsite/...`.
+When restoring an application that uses both (such as OpenCode), merge both
+trees into the isolated restore directory before copying anything live.
+Only after verifying a successful replacement offsite snapshot, manually remove
+legacy staging data under `/var/lib/home-state-backup/offsite/` if present. It may
+contain old state files and credentials, so do not retain it indefinitely.
 
 ## Restore into an isolated directory
 

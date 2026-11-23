@@ -337,6 +337,7 @@
               staging = prepareHomeState {
                 home = "/tmp/home-state-fixture-home";
                 stateRoot = "/tmp/home-state-fixture-root";
+                persistentStateDir = "/tmp/home-state-fixture-persistent";
                 paths = [
                   ".config/vesktop/settings.json"
                   ".config/net.imput.helium/Default/Bookmarks"
@@ -347,6 +348,7 @@
                   "/.local/share/opencode/log/"
                   "/.local/share/opencode/tool-output/"
                 ];
+                criticalPaths = [ "Projects/nix/infra/terraform.tfstate" ];
               };
               # Inspect the evaluated production selection without depending
               # on the entire Alpha host closure.
@@ -399,7 +401,7 @@
                                 printf '%s' "$paths" | jq -e 'index("/run/home-state-backup/offsite")' >/dev/null
                                 for args in '${builtins.toJSON offsiteArgs}' '${builtins.toJSON claroArgs}'; do
                                   printf '%s' "$args" | jq -e \
-                                    'index("--files-from-raw=/run/home-state-backup/offsite/.home-files") != null' >/dev/null
+                                    'index("--files-from-raw=/run/home-state-backup/offsite/.home-files") != null and index("--exclude-file=/run/home-state-backup/offsite/.home-excludes") != null' >/dev/null
                                 done
 
                                 ${staging}
@@ -414,7 +416,7 @@
                                 test "$(sqlite3 "$staged/.local/share/opencode/opencode.db" \
                                   'SELECT value FROM session')" = saved
 
-                                python3 - "$home" "$staged/.home-files" <<'PY'
+                                python3 - "$home" "$staged/.home-files" "$staged/.home-excludes" <<'PY'
                 import os
                 from pathlib import Path
                 import sys
@@ -425,9 +427,17 @@
                     home / ".config/vesktop/settings.json",
                     home / ".config/net.imput.helium/Default/Bookmarks",
                     home / "Projects/nix/infra/terraform.tfstate",
-                    home / ".local/share/opencode/auth.json",
+                    home / ".local/share/opencode",
                 }
                 assert paths == expected, (paths, expected)
+                excludes = set(Path(sys.argv[3]).read_text().splitlines())
+                for required in (
+                    str(home / ".local/share/opencode/log"),
+                    str(home / ".local/share/opencode/tool-output"),
+                    str(home / ".local/share/opencode/opencode.db"),
+                    str(home / ".local/share/opencode/opencode.db-wal"),
+                ):
+                    assert required in excludes, (required, excludes)
                 PY
 
                                 export RESTIC_FAKE_STARTED="$state_root/restic-started"

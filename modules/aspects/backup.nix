@@ -16,10 +16,24 @@
       }:
       let
         exports = config.modules.backup.exports;
-        exportReport = "/var/lib/backup-exports/offsite.json";
+        mkExportReport = name: "/var/lib/backup-exports/${name}.json";
+        mkPrepareExports =
+          name:
+          pkgs.writeShellApplication {
+            name = "prepare-${name}-exports";
+            runtimeInputs = [
+              pkgs.python3
+              pkgs.systemd
+            ];
+            text = ''
+              exec python3 ${../scripts/prepare-backup-exports.py} ${pkgs.writeText "backup-exports.json" (builtins.toJSON exports)} ${mkExportReport name}
+            '';
+          };
         mkBackupHooks =
           name:
           let
+            exportReport = mkExportReport name;
+            prepareExports = mkPrepareExports name;
             backup = config.services.restic.backups.${name};
             resticCommand = lib.escapeShellArgs (
               lib.optionals backup.inhibitsSleep [
@@ -57,16 +71,6 @@
               StateDirectoryMode = "0700";
             };
           };
-        prepareExports = pkgs.writeShellApplication {
-          name = "prepare-offsite-exports";
-          runtimeInputs = [
-            pkgs.python3
-            pkgs.systemd
-          ];
-          text = ''
-            exec python3 ${../scripts/prepare-backup-exports.py} ${pkgs.writeText "backup-exports.json" (builtins.toJSON exports)} ${exportReport}
-          '';
-        };
       in
       {
         options.modules.backup = {
@@ -142,6 +146,16 @@
             type = lib.types.listOf lib.types.str;
             default = [ ];
           };
+          homeStateCritical = lib.mkOption {
+            description = ''
+              Subset of homeState guarded as critical without staging copies:
+              when a source exists it must be unlocked and parseable, and once
+              recorded under persistentStateDir/.critical-seen a missing source
+              fails the export so it cannot silently drop out of coverage.
+            '';
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
           homeStateExportScript = lib.mkOption {
             description = "Exporter for SQLite snapshots and the direct Restic file list.";
             type = lib.types.nullOr lib.types.package;
@@ -153,8 +167,11 @@
           mkBackupHooks "claro"
         );
         config.services.restic.backups.offsite.paths = lib.mkIf (exports != { }) (
-          lib.mkAfter [ exportReport ]
+          lib.mkAfter [ (mkExportReport "offsite") ]
         );
+        config.services.restic.backups.claro.paths = lib.mkIf (
+          exports != { } && (config.services.restic.backups ? claro)
+        ) (lib.mkAfter [ (mkExportReport "claro") ]);
       };
 
     provides.restic = {

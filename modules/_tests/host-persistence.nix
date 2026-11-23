@@ -160,6 +160,7 @@ assert !(hosts.alpha.options.modules.backup ? hostRecovery);
 assert
   hosts.alpha.config.services.restic.backups.offsite.extraBackupArgs == [
     "--files-from-raw=/run/home-state-backup/offsite/.home-files"
+    "--exclude-file=/run/home-state-backup/offsite/.home-excludes"
   ];
 assert
   hosts.alpha.config.services.restic.backups.claro.extraBackupArgs

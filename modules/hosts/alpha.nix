@@ -54,10 +54,12 @@
       let
         home = config.users.users.repparw.home;
         stateRoot = "/run/home-state-backup";
+        persistentStateDir = "/var/lib/home-state-backup";
         prepareHomeState = import ../_scripts/prepare-home-state.nix { inherit pkgs lib; } {
-          inherit home stateRoot;
+          inherit home stateRoot persistentStateDir;
           paths = config.modules.backup.homeState;
           excludes = config.modules.backup.homeStateExcludes;
+          criticalPaths = config.modules.backup.homeStateCritical;
         };
         stageLockedRestic = import ../_scripts/stage-locked-restic.nix { inherit pkgs lib; } {
           lockFile = "${stateRoot}/.stage.lock";
@@ -137,6 +139,10 @@
           homeStateExcludes = [
             "/.local/share/opencode/log/"
             "/.local/share/opencode/tool-output/"
+          ];
+          homeStateCritical = [
+            "Projects/nix/infra/terraform.tfstate"
+            "Projects/nix/infra/router/terraform.tfstate"
           ];
           homeStateExportScript = prepareHomeState;
         };
@@ -292,6 +298,7 @@
         # Claro inherits offsite's extraBackupArgs.
         services.restic.backups.offsite.extraBackupArgs = lib.mkAfter [
           "--files-from-raw=${stateRoot}/offsite/.home-files"
+          "--exclude-file=${stateRoot}/offsite/.home-excludes"
         ];
         # Only the small SQLite export can be replaced during an upload.
         services.restic.backups.offsite.package = stageLockedRestic;
@@ -303,6 +310,8 @@
           unitConfig.RequiresMountsFor = stateRoot;
           serviceConfig = {
             Type = "oneshot";
+            StateDirectory = "home-state-backup";
+            StateDirectoryMode = "0700";
             TimeoutStartSec = "15min";
             ExecStart = "${prepareHomeState}";
           };
