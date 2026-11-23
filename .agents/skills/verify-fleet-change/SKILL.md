@@ -37,8 +37,13 @@ a committed revision, not uncommitted edits. New Nix files must be Git-tracked
 for flake evaluation to include them; check the working-tree status before
 claiming a successful evaluation covers newly created files. Once a PR exists,
 consult CI for its exact head before repeating expensive checks. Use existing
-focused tests in [modules/checks.nix](../../../modules/checks.nix) or nearby
-test files; do not duplicate the entire CI matrix.
+focused tests in the owning aspect's `perSystem.checks`,
+[modules/checks.nix](../../../modules/checks.nix), or nearby test files; do not
+duplicate the entire CI matrix. Run one-off verification as ad-hoc `nix eval` /
+`nix build` commands; never add a `perSystem.checks` entry just to confirm
+option or package wiring. Add a permanent check only for custom scripts,
+transforms, or recurring regressions, co-located in the owning aspect and wired
+into [ci-impact.mjs](../../../.github/scripts/ci-impact.mjs).
 
 If evaluation fails, inspect the error, source diff, and aspect composition
 before changing inputs or the lockfile. Never update `flake.lock` as an

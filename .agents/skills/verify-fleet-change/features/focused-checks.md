@@ -1,9 +1,10 @@
 # Existing tests and build evidence
 
-Find the test closest to the behavior being changed. Start from
-[modules/checks.nix](../../../../modules/checks.nix) and the task's adjacent
-`_tests` or `.test` source. Read the assertions to establish what the
-check really observes; do not infer coverage from a check's name.
+Find the test closest to the behavior being changed. Start from the owning
+aspect's `perSystem.checks`, [modules/checks.nix](../../../../modules/checks.nix),
+and the task's adjacent `_tests` or `.test` source. Read the assertions to
+establish what the check really observes; do not infer coverage from a check's
+name.
 
 For example, the fleet monitoring check is already exposed through the
 flake's checks output:
