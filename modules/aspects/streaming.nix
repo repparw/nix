@@ -158,7 +158,7 @@ in
               settings = {
                 name = config.networking.hostName;
 
-                stream.timeout = 300;
+                stream.timeout = 1200;
                 application = [
                   {
                     title = "Desktop";
