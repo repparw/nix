@@ -52,30 +52,35 @@
           '';
         in
         {
-          programs.opencode.skills =
-            lib.mapAttrs (name: _: skillsDir + "/${name}") (
-              lib.filterAttrs (name: type: type == "directory" && !(builtins.elem name excludedSkills)) (
-                builtins.readDir skillsDir
-              )
-            )
-            // {
-              deslop = teamSkill "deslop";
-              no-comments = "${noCommentsSkill}";
-              control-cli = teamSkill "control-cli";
-              control-ui = teamSkill "control-ui";
-              retro = "${pocockSource}/skills/engineering/retro";
-              writing-for-agents = "${pocockSource}/skills/productivity/writing-for-agents";
-              diagnosing-bugs = "${pocockSource}/skills/engineering/diagnosing-bugs";
-              pr = "${pocockSource}/skills/engineering/pr";
-            };
-
           programs.codex = {
             enable = true;
             package = null;
-            skills = config.programs.opencode.skills;
             enableMcpIntegration = true;
             mutableSettings = true;
           };
+
+          home.file =
+            lib.mapAttrs' (name: source: lib.nameValuePair ".agents/skills/${name}" { inherit source; }) (
+              lib.mapAttrs (name: _: skillsDir + "/${name}") (
+                lib.filterAttrs (name: type: type == "directory" && !(builtins.elem name excludedSkills)) (
+                  builtins.readDir skillsDir
+                )
+              )
+              // {
+                deslop = teamSkill "deslop";
+                no-comments = "${noCommentsSkill}";
+                control-cli = teamSkill "control-cli";
+                control-ui = teamSkill "control-ui";
+                retro = "${pocockSource}/skills/engineering/retro";
+                writing-for-agents = "${pocockSource}/skills/productivity/writing-for-agents";
+                diagnosing-bugs = "${pocockSource}/skills/engineering/diagnosing-bugs";
+                pr = "${pocockSource}/skills/engineering/pr";
+              }
+            )
+            // {
+              ".gemini/config/skills".source =
+                config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.agents/skills";
+            };
         };
     };
 }
