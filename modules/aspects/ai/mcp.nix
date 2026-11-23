@@ -15,6 +15,7 @@
         home.packages = [
           pkgs.mcp-nixos
           pkgs.google-cloud-sdk
+          pkgs.gws
         ];
 
         programs.mcp = {
