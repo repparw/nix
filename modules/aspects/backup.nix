@@ -169,9 +169,6 @@
         config.services.restic.backups.offsite.paths = lib.mkIf (exports != { }) (
           lib.mkAfter [ (mkExportReport "offsite") ]
         );
-        config.services.restic.backups.claro.paths = lib.mkIf (
-          exports != { } && (config.services.restic.backups ? claro)
-        ) (lib.mkAfter [ (mkExportReport "claro") ]);
       };
 
     provides.restic = {
@@ -269,7 +266,6 @@
 
           services.restic.backups.claro = {
             inherit (config.services.restic.backups.offsite)
-              paths
               exclude
               passwordFile
               rcloneConfigFile
@@ -279,6 +275,13 @@
               extraBackupArgs
               checkOpts
               ;
+            # Avoid inheriting offsite's report or creating a Claro submodule
+            # on hosts where the Claro backup is not configured.
+            paths =
+              lib.filter
+                (path: path != "/var/lib/backup-exports/offsite.json")
+                config.services.restic.backups.offsite.paths
+              ++ lib.optionals (bcfg.exports != { }) [ "/var/lib/backup-exports/claro.json" ];
             repository = "rclone:claro:restic/${config.networking.hostName}";
             pruneOpts = lib.optionals (bcfg.exports == { }) bcfg.retentionArgs;
             timerConfig = {
