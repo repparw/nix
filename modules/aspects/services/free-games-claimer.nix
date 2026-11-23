@@ -44,7 +44,8 @@
             # on Xvfb. GOG has no such gate and runs truly headless; SHOW=1
             # through a systemd override flips it to headed for login
             # recovery. Xvfb and VNC exist only while a claim runs; SSH
-            # forward localhost:5900 for Epic logins and captchas.
+            # forward localhost:5900 for Epic logins and captchas. The
+            # login recovery procedure is docs/services/free-games-claimer.md.
             xvfb_pid=
             vnc_pid=
             # shellcheck disable=SC2329
