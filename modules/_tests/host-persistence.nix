@@ -27,41 +27,50 @@ let
         { fileSystems."/".device = lib.mkForce pi.fileSystems."/persist".device; }
       ];
     }).config;
-  piResult =
-    assert pi.modules.persistence.enable;
-    assert pi.modules.persistence.mutableAccounts;
-    assert pi.environment.persistence."/persist".enable;
-    assert pi.fileSystems."/persist".neededForBoot;
-    assert pi.fileSystems."/".device == "tmpfs";
-    assert pi.fileSystems."/".fsType == "tmpfs";
-    assert pi.fileSystems."/".neededForBoot;
-    assert lib.elem "x-initrd.mount" pi.fileSystems."/".options;
-    assert lib.elem "mode=0755" pi.fileSystems."/".options;
-    assert lib.elem "size=50%" pi.fileSystems."/".options;
-    assert pi.sops.age.sshKeyPaths == [ "/persist/etc/ssh/ssh_host_ed25519_key" ];
-    assert lib.any (mount: mount.where == "/etc" && mount.what == "/persist/etc") piMounts;
-    assert lib.elem "sysroot-etc.mount"
-      pi.boot.initrd.systemd.services.initrd-nixos-activation.requires;
-    assert lib.elem "initrd-nixos-activation.service"
-      pi.boot.initrd.systemd.services.check-persistence-state.requiredBy;
-    assert lib.any (
+  assertCommonPersistence =
+    host: config: mounts:
+    let
+      require = condition: message: lib.assertMsg condition "${host}: ${message}";
+      persistence = config.environment.persistence."/persist";
+      root = config.fileSystems."/";
+      backup = config.services.restic.backups.offsite;
+    in
+    assert require (config.modules.persistence.enable) "host persistence must be enabled";
+    assert require (config.modules.persistence.mutableAccounts) "mutable accounts must be enabled";
+    assert require persistence.enable "/persist persistence must be enabled";
+    assert require (config.fileSystems."/persist".neededForBoot) "/persist must be available at boot";
+    assert require (root.device == "tmpfs") "the root device must be tmpfs";
+    assert require (root.fsType == "tmpfs") "the root filesystem must be tmpfs";
+    assert require (root.neededForBoot) "root must be available at boot";
+    assert require (lib.elem "x-initrd.mount" root.options) "root must mount in the initrd";
+    assert require (lib.elem "mode=0755" root.options) "root must use mode 0755";
+    assert require (lib.elem "size=50%" root.options) "root tmpfs must have a 50% size limit";
+    assert require (
+      config.sops.age.sshKeyPaths == [ "/persist/etc/ssh/ssh_host_ed25519_key" ]
+    ) "SOPS must read the SSH host key from /persist";
+    assert require (lib.any (
+      mount: mount.where == "/etc" && mount.what == "/persist/etc"
+    ) mounts) "/etc must mount from /persist/etc";
+    assert require
+      (lib.elem "sysroot-etc.mount" config.boot.initrd.systemd.services.initrd-nixos-activation.requires)
+      "initrd activation must require sysroot-etc.mount";
+    assert require
+      (lib.elem "initrd-nixos-activation.service" config.boot.initrd.systemd.services.check-persistence-state.requiredBy)
+      "initrd activation must require the persistence state check";
+    assert require (lib.any (
       mount: mount.where == "/sysroot/var/lib/nixos" && mount.what == "/sysroot/persist/var/lib/nixos"
-    ) pi.boot.initrd.systemd.mounts;
-    assert pi.fileSystems."/home/repparw".neededForBoot;
-    assert !(lib.elem "nofail" pi.fileSystems."/home/repparw".options);
-    assert !(lib.any (mount: mount.where == "/home/repparw") piMounts);
-    assert lib.any (entry: entry.directory or null == "/var/lib/host-recovery") (
-      pi.environment.persistence."/persist".directories
-    );
-    assert lib.any (entry: entry.directory or null == "/var/lib/tailscale") (
-      pi.environment.persistence."/persist".directories
-    );
-    assert lib.any (entry: entry.file == "/var/lib/systemd/random-seed" && entry.method == "symlink") (
-      pi.environment.persistence."/persist".files
-    );
-    assert pi.users.mutableUsers;
-    assert lib.any (mount: mount.where == "/var/lib/host-recovery") piMounts;
-    assert lib.all (path: lib.elem path pi.services.restic.backups.offsite.paths) [
+    ) config.boot.initrd.systemd.mounts) "/var/lib/nixos must mount from /persist in the initrd";
+    assert require (lib.any (
+      entry: entry.file == "/var/lib/systemd/random-seed" && entry.method == "symlink"
+    ) persistence.files) "the random seed must persist as a symlink";
+    assert require (lib.any (
+      entry: entry.directory or null == "/var/lib/tailscale"
+    ) persistence.directories) "Tailscale state must persist";
+    assert require (config.users.mutableUsers) "users must be mutable";
+    assert require (lib.any (
+      mount: mount.where == "/var/lib/host-recovery"
+    ) mounts) "/var/lib/host-recovery must have a persistence mount";
+    assert require (lib.all (path: lib.elem path backup.paths) [
       "/etc"
       "/boot"
       "/root"
@@ -72,10 +81,25 @@ let
       "/var/lib/host-recovery"
       "/home/containers/config"
       "/var/lib/traefik"
-    ];
-    assert lib.elem "/home/repparw/.swapfile" pi.services.restic.backups.offsite.exclude;
-    assert lib.elem "/var/lib/nixos-containers/*/nix" pi.services.restic.backups.offsite.exclude;
-    assert lib.all (assertion: assertion.assertion) pi.assertions;
+    ]) "offsite backup must include the shared paths";
+    assert require (lib.elem "/home/repparw/.swapfile" backup.exclude)
+      "offsite backup must exclude the swapfile";
+    assert require (lib.elem "/var/lib/nixos-containers/*/nix" backup.exclude)
+      "offsite backup must exclude container Nix stores";
+    assert require (lib.all (
+      assertion: assertion.assertion
+    ) config.assertions) "NixOS configuration assertions must pass";
+    assert require (lib.elem "--one-file-system" backup.extraBackupArgs)
+      "offsite backup must use --one-file-system";
+    true;
+  piResult =
+    assert assertCommonPersistence "pi" pi piMounts;
+    assert pi.fileSystems."/home/repparw".neededForBoot;
+    assert !(lib.elem "nofail" pi.fileSystems."/home/repparw".options);
+    assert !(lib.any (mount: mount.where == "/home/repparw") piMounts);
+    assert lib.any (entry: entry.directory or null == "/var/lib/host-recovery") (
+      pi.environment.persistence."/persist".directories
+    );
     {
       disabledByDefault = false;
       tmpfsRoot = true;
@@ -83,19 +107,10 @@ let
       earlySopsKey = builtins.head pi.sops.age.sshKeyPaths;
     };
   epsilonResult =
-    assert epsilon.modules.persistence.enable;
-    assert epsilon.modules.persistence.mutableAccounts;
-    assert epsilon.environment.persistence."/persist".enable;
+    assert assertCommonPersistence "epsilon" epsilon epsilonMounts;
     assert
       epsilon.fileSystems."/persist".device
       == "/dev/disk/by-partuuid/daa9a574-99f0-449e-b43a-463650870efb";
-    assert epsilon.fileSystems."/persist".neededForBoot;
-    assert epsilon.fileSystems."/".device == "tmpfs";
-    assert epsilon.fileSystems."/".fsType == "tmpfs";
-    assert epsilon.fileSystems."/".neededForBoot;
-    assert lib.elem "x-initrd.mount" epsilon.fileSystems."/".options;
-    assert lib.elem "mode=0755" epsilon.fileSystems."/".options;
-    assert lib.elem "size=50%" epsilon.fileSystems."/".options;
     # The initrd owns the /nix bind. GRUB must resolve the backing
     # filesystem, or its runtime mount detection emits /store/... paths.
     assert !(epsilon.fileSystems ? "/nix");
@@ -112,48 +127,16 @@ let
     assert epsilon.fileSystems."/boot".device == "/persist/boot";
     assert lib.elem "bind" epsilon.fileSystems."/boot".options;
     assert !epsilon.fileSystems."/boot".neededForBoot;
-    assert epsilon.sops.age.sshKeyPaths == [ "/persist/etc/ssh/ssh_host_ed25519_key" ];
-    assert lib.any (mount: mount.where == "/etc" && mount.what == "/persist/etc") epsilonMounts;
     assert lib.any (mount: mount.where == "/home/repparw") epsilonMounts;
     assert lib.any (mount: mount.where == "/var/log") epsilonMounts;
     assert lib.elem "sysroot-nix.mount"
       epsilon.boot.initrd.systemd.services.initrd-nixos-activation.requires;
     assert lib.elem "sysroot-var-lib-nixos.mount"
       epsilon.boot.initrd.systemd.services.initrd-nixos-activation.requires;
-    assert lib.elem "sysroot-etc.mount"
-      epsilon.boot.initrd.systemd.services.initrd-nixos-activation.requires;
-    assert lib.elem "initrd-nixos-activation.service"
-      epsilon.boot.initrd.systemd.services.check-persistence-state.requiredBy;
-    assert lib.any (
-      mount: mount.where == "/sysroot/var/lib/nixos" && mount.what == "/sysroot/persist/var/lib/nixos"
-    ) epsilon.boot.initrd.systemd.mounts;
     assert lib.any (entry: entry.directory or null == "/var/log") (
       epsilon.environment.persistence."/persist".directories
     );
-    assert lib.any (entry: entry.directory or null == "/var/lib/tailscale") (
-      epsilon.environment.persistence."/persist".directories
-    );
-    assert lib.any (entry: entry.file == "/var/lib/systemd/random-seed" && entry.method == "symlink") (
-      epsilon.environment.persistence."/persist".files
-    );
-    assert epsilon.users.mutableUsers;
-    assert lib.any (mount: mount.where == "/var/lib/host-recovery") epsilonMounts;
     assert lib.any (mount: mount.where == "/var/lib/credential-remediation") epsilonMounts;
-    assert lib.all (path: lib.elem path epsilon.services.restic.backups.offsite.paths) [
-      "/etc"
-      "/boot"
-      "/root"
-      "/home/repparw"
-      "/var/lib/nixos"
-      "/var/lib/nixos-containers"
-      "/var/lib/systemd/timers"
-      "/var/lib/host-recovery"
-      "/home/containers/config"
-      "/var/lib/traefik"
-    ];
-    assert lib.elem "/home/repparw/.swapfile" epsilon.services.restic.backups.offsite.exclude;
-    assert lib.elem "/var/lib/nixos-containers/*/nix" epsilon.services.restic.backups.offsite.exclude;
-    assert lib.all (assertion: assertion.assertion) epsilon.assertions;
     {
       disabledByDefault = false;
       tmpfsRoot = true;
@@ -168,12 +151,6 @@ assert lib.all (
   host:
   !(lib.any (p: (p.meta.mainProgram or "") == "host-recovery") host.config.environment.systemPackages)
 ) (lib.attrValues hosts);
-assert lib.all
-  (config: lib.elem "--one-file-system" config.services.restic.backups.offsite.extraBackupArgs)
-  [
-    pi
-    epsilon
-  ];
 assert lib.elem "/boot/firmware" pi.services.restic.backups.offsite.paths;
 assert lib.elem "/boot/efi" epsilon.services.restic.backups.offsite.paths;
 assert
