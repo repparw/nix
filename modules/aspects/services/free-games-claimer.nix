@@ -153,7 +153,6 @@
           };
           preStart = ''
             mkdir -p "$FGC_DATA_DIR/browser" "$FGC_DATA_DIR/screenshots/epic-games/failed" "$FGC_DATA_DIR/screenshots/gog"
-            rm -f "$FGC_DATA_DIR/browser/SingletonLock"
           '';
           serviceConfig = {
             Type = "oneshot";
