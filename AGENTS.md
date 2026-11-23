@@ -4,9 +4,7 @@ Source of truth: Nix modules, scripts, and tests. Read the relevant source
 before proposing or changing behavior. For Den composition, prefer
 `includes` for aspects and `imports` for actual Nix module imports; keep
 fleet topology in `modules/entities.nix`, shared behavior in aspects, and
-host-specific behavior in host modules. Co-locate aspect-specific
-`perSystem.checks` in the owning aspect; reserve `modules/checks.nix` for
-cross-cutting fleet and repo checks.
+host-specific behavior in host modules.
 
 - Never commit plaintext secrets. Use `sops-nix`.
 - Use `nh search` for nixpkgs and Home Assistant packages, options, issues, and PRs.
