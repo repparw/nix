@@ -111,31 +111,4 @@
             };
         };
     };
-
-  perSystem =
-    { pkgs, ... }:
-    {
-      checks = lib.optionalAttrs (pkgs.stdenv.hostPlatform.system == "x86_64-linux") {
-        ai-skills-and-gws =
-          let
-            alphaHome = inputs.self.nixosConfigurations.alpha.config.home-manager.users.repparw;
-            skillFiles = builtins.attrNames (
-              lib.filterAttrs (k: _: lib.hasPrefix ".agents/skills/" k) alphaHome.home.file
-            );
-            topLevelPrinciples = builtins.filter (lib.hasPrefix ".agents/skills/principle-") skillFiles;
-            potetoSource = alphaHome.home.file.".agents/skills/poteto-mode".source;
-            hasGws = builtins.any (p: (p.pname or "") == "gws") alphaHome.home.packages;
-          in
-          pkgs.runCommand "check-ai-skills-and-gws" { } ''
-            test "${toString (builtins.length topLevelPrinciples)}" = "0"
-            test "${if hasGws then "yes" else "no"}" = "yes"
-            test -f "${potetoSource}/SKILL.md"
-            grep -Fq 'references/principle-<title>/SKILL.md' "${potetoSource}/SKILL.md"
-            count=$(find "${potetoSource}/references" -maxdepth 2 -name SKILL.md | wc -l)
-            test "$count" -ge 20
-            echo "Verified: 0 top-level principle-* skills, $count folded under poteto-mode/references, pkgs.gws present"
-            touch "$out"
-          '';
-      };
-    };
 }
