@@ -312,7 +312,9 @@
             Type = "oneshot";
             StateDirectory = "home-state-backup";
             StateDirectoryMode = "0700";
-            TimeoutStartSec = "15min";
+            # Claro can hold the shared snapshot lock for the full upload.
+            # Do not kill an otherwise safe publish while that reader runs.
+            TimeoutStartSec = "infinity";
             ExecStart = "${prepareHomeState}";
           };
         };
