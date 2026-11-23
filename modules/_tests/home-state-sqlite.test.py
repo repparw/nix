@@ -1,11 +1,14 @@
+import errno
 import json
 import os
+import runpy
 from pathlib import Path
 import sqlite3
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 HANDLER = Path(sys.argv.pop(1))
 
@@ -305,6 +308,21 @@ class HomeStateBackup(unittest.TestCase):
         # Missing after seen must fail
         state.unlink()
         self.run_export(persistent=self.persistent, critical=crit, expect_ok=False)
+
+    def test_failed_fallback_link_keeps_last_verified_snapshot(self):
+        rel = Path(".local/share/opencode/opencode.db")
+        self.database(str(rel), "prior")
+        report = self.run_export()
+        original = self.stage / rel
+        handler = runpy.run_path(str(HANDLER))
+        new_path = self.root / "next-stage" / rel
+        with mock.patch.object(
+            handler["os"], "link", side_effect=OSError(errno.ENOSPC, "out of space")
+        ):
+            with self.assertRaises(OSError):
+                handler["preserve_old"](self.stage, rel, new_path, report["databases"])
+        with sqlite3.connect(original) as db:
+            self.assertEqual(db.execute("SELECT value FROM session").fetchone(), ("prior",))
 
     def test_publish_swaps_small_export(self):
         self.previous.mkdir()
