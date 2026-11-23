@@ -38,7 +38,11 @@ pkgs.writeShellScript "prepare-home-state" ''
     "$destination" \
     ${lib.escapeShellArg (builtins.toJSON paths)} \
     ${lib.escapeShellArg (builtins.toJSON excludes)} \
-    ${lib.optionalString (persistentStateDir != null) "--persistent-dir ${lib.escapeShellArg persistentStateDir}"} \
+    ${
+      lib.optionalString (
+        persistentStateDir != null
+      ) "--persistent-dir ${lib.escapeShellArg persistentStateDir}"
+    } \
     --critical ${lib.escapeShellArg (builtins.toJSON criticalPaths)}
   # Restic holds .stage.lock shared while reading the published SQLite snapshots.
   # Acquire exclusive only for the atomic swap so VACUUM INTO never stalls behind uploads.
