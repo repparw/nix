@@ -23,8 +23,9 @@
         modules.backup.exports = {
           alpha-home = {
             unit = "home-state-backup-offsite.service";
-            path = "/var/lib/home-state-backup/offsite";
-            pattern = ".export-complete";
+            path = "/run/home-state-backup/offsite";
+            pattern = ".export-status.json";
+            statusFile = "/run/home-state-backup/offsite/.export-status.json";
           };
           jellyfin = {
             unit = "jellyfin-backup.service";
@@ -52,12 +53,16 @@
       }:
       let
         home = config.users.users.repparw.home;
-        stateRoot = "/var/lib/home-state-backup";
+        stateRoot = "/run/home-state-backup";
+        persistentStateDir = "/var/lib/home-state-backup";
         prepareHomeState = import ../_scripts/prepare-home-state.nix { inherit pkgs lib; } {
-          inherit home stateRoot;
+          inherit home stateRoot persistentStateDir;
           paths = config.modules.backup.homeState;
           excludes = config.modules.backup.homeStateExcludes;
           criticalPaths = config.modules.backup.homeStateCritical;
+        };
+        stageLockedRestic = import ../_scripts/stage-locked-restic.nix { inherit pkgs lib; } {
+          lockFile = "${stateRoot}/.stage.lock";
         };
       in
       {
@@ -104,7 +109,12 @@
             ".config/codex/plugins/"
             ".config/codex/goals_1.sqlite"
             ".config/opencode/plugins/"
-            ".config/net.imput.helium/"
+            # Only personal Helium state worth recovering. Excludes cookies,
+            # DIPS, caches and other live Chromium databases.
+            ".config/net.imput.helium/Default/Bookmarks"
+            ".config/net.imput.helium/Default/Preferences"
+            ".config/net.imput.helium/Default/Sessions/"
+            ".config/net.imput.helium/Local State"
             ".config/fish/fish_variables"
             ".config/mpv/watch_later"
             ".config/Raspberry Pi/Raspberry Pi Imager.conf"
@@ -126,35 +136,15 @@
             "Projects/nix/infra/router/inventory.auto.tfvars"
             ".local/share/opencode/"
           ];
-          homeStateExcludes =
-            map (dir: "/.config/net.imput.helium/${dir}") [
-              "Default/History*"
-              "Default/Service Worker/CacheStorage"
-              "Default/Service Worker/ScriptCache"
-              "Default/GPUCache"
-              "Default/DawnWebGPUCache"
-              "Default/DawnGraphiteCache"
-              "GPUPersistentCache"
-              "GrShaderCache"
-              "ShaderCache"
-              "GraphiteDawnCache"
-              "component_crx_cache"
-              "extensions_crx_cache"
-              "CertificateRevocation"
-              "Dictionaries"
-              "segmentation_platform"
-              "DeferredBrowserMetrics"
-              "Variations"
-            ]
-            ++ map (dir: "/.local/share/opencode/${dir}") [
-              "log/"
-              "tool-output/"
-            ];
+          homeStateExcludes = [
+            "/.local/share/opencode/log/"
+            "/.local/share/opencode/tool-output/"
+          ];
           homeStateCritical = [
             "Projects/nix/infra/terraform.tfstate"
             "Projects/nix/infra/router/terraform.tfstate"
           ];
-          homeStateStagingScript = prepareHomeState;
+          homeStateExportScript = prepareHomeState;
         };
 
         modules.coredump-watch = {
@@ -221,6 +211,21 @@
         virtualisation.vmVariant.boot.zswap.enable = lib.mkForce false;
 
         fileSystems = {
+          # Keep SQLite VACUUM INTO exports in RAM, with bounded usage and
+          # no swap writes. Ordinary home files go straight into Restic.
+          "${stateRoot}" = {
+            device = "tmpfs";
+            fsType = "tmpfs";
+            options = [
+              "size=2G"
+              "mode=0700"
+              "noswap"
+              "nodev"
+              "nosuid"
+              "noexec"
+            ];
+          };
+
           "/" = {
             device = "/dev/disk/by-uuid/51c5e80b-e22e-4d62-a3e2-ebb531deb05b";
             fsType = "btrfs";
@@ -288,13 +293,33 @@
 
         };
 
-        systemd.services.home-state-backup-offsite.serviceConfig = {
-          Type = "oneshot";
-          StateDirectory = "home-state-backup";
-          StateDirectoryMode = "0700";
-          TimeoutStartSec = "15min";
-          ExecStart = "${prepareHomeState}";
+        # Back up selected ordinary home files in place. The exporter writes
+        # this NUL-delimited list and the SQLite-only snapshot directory.
+        # Claro inherits offsite's extraBackupArgs.
+        services.restic.backups.offsite.extraBackupArgs = lib.mkAfter [
+          "--files-from-raw=${stateRoot}/offsite/.home-files"
+          "--exclude-file=${stateRoot}/offsite/.home-excludes"
+        ];
+        # Only the small SQLite export can be replaced during an upload.
+        services.restic.backups.offsite.package = stageLockedRestic;
+        services.restic.backups.claro.package = stageLockedRestic;
+
+        # The mount must exist before the exporter or either Restic unit
+        # can read its SQLite snapshots and generated file list.
+        systemd.services.home-state-backup-offsite = {
+          unitConfig.RequiresMountsFor = stateRoot;
+          serviceConfig = {
+            Type = "oneshot";
+            StateDirectory = "home-state-backup";
+            StateDirectoryMode = "0700";
+            # Claro can hold the shared snapshot lock for the full upload.
+            # Do not kill an otherwise safe publish while that reader runs.
+            TimeoutStartSec = "infinity";
+            ExecStart = "${prepareHomeState}";
+          };
         };
+        systemd.services.restic-backups-offsite.unitConfig.RequiresMountsFor = stateRoot;
+        systemd.services.restic-backups-claro.unitConfig.RequiresMountsFor = stateRoot;
 
         # The WD80EAZZ ignores the ATA standby timer (hdparm -S and smartctl
         # --set standby are clamped by a vendor minimum that never engages);

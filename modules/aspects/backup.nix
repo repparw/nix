@@ -16,10 +16,24 @@
       }:
       let
         exports = config.modules.backup.exports;
-        exportReport = "/var/lib/backup-exports/offsite.json";
+        mkExportReport = name: "/var/lib/backup-exports/${name}.json";
+        mkPrepareExports =
+          name:
+          pkgs.writeShellApplication {
+            name = "prepare-${name}-exports";
+            runtimeInputs = [
+              pkgs.python3
+              pkgs.systemd
+            ];
+            text = ''
+              exec python3 ${../scripts/prepare-backup-exports.py} ${pkgs.writeText "backup-exports.json" (builtins.toJSON exports)} ${mkExportReport name}
+            '';
+          };
         mkBackupHooks =
           name:
           let
+            exportReport = mkExportReport name;
+            prepareExports = mkPrepareExports name;
             backup = config.services.restic.backups.${name};
             resticCommand = lib.escapeShellArgs (
               lib.optionals backup.inhibitsSleep [
@@ -57,16 +71,6 @@
               StateDirectoryMode = "0700";
             };
           };
-        prepareExports = pkgs.writeShellApplication {
-          name = "prepare-offsite-exports";
-          runtimeInputs = [
-            pkgs.python3
-            pkgs.systemd
-          ];
-          text = ''
-            exec python3 ${../scripts/prepare-backup-exports.py} ${pkgs.writeText "backup-exports.json" (builtins.toJSON exports)} ${exportReport}
-          '';
-        };
       in
       {
         options.modules.backup = {
@@ -97,6 +101,11 @@
                   };
                   path = lib.mkOption { type = lib.types.str; };
                   pattern = lib.mkOption { type = lib.types.str; };
+                  statusFile = lib.mkOption {
+                    type = lib.types.nullOr lib.types.str;
+                    default = null;
+                    description = "Optional producer quality report; degraded exports must not count as complete.";
+                  };
                   maxAgeSeconds = lib.mkOption {
                     type = lib.types.ints.positive;
                     default = 3600;
@@ -126,39 +135,29 @@
           };
           homeState = lib.mkOption {
             description = ''
-              Home-relative paths staged by the home-state backup for the
-              offsite staging tree. Curated small irreplaceable
-              state; everything else is nix-declared, OAuth/session
-              (re-login), or regenerable cache.
+              Curated home-relative paths backed up directly by Restic.
+              Selected SQLite files are snapshotted separately.
             '';
             type = lib.types.listOf lib.types.str;
             default = [ ];
           };
           homeStateExcludes = lib.mkOption {
-            description = "Rsync exclude patterns applied below the homeState --relative anchor.";
+            description = "Home-relative directories omitted from the direct backup file list.";
             type = lib.types.listOf lib.types.str;
             default = [ ];
           };
           homeStateCritical = lib.mkOption {
             description = ''
-              Subset of homeState guarded as critical: when a source exists it
-              must be unlocked by its owning tool, staged non-empty, and
-              parseable, or the export fails and the previous staged
-              generation is preserved. A missing source is tolerated until the
-              first successful backup has recorded it under
-              stateRoot/.critical-seen; afterwards a missing source fails the
-              export so a deleted critical file is flagged by fleet health
-              instead of silently dropping out of coverage.
+              Subset of homeState guarded as critical without staging copies:
+              when a source exists it must be unlocked and parseable, and once
+              recorded under persistentStateDir/.critical-seen a missing source
+              fails the export so it cannot silently drop out of coverage.
             '';
             type = lib.types.listOf lib.types.str;
             default = [ ];
           };
-          homeStateStagingScript = lib.mkOption {
-            description = ''
-              The prepare-home-state script staging homeState, as set by the
-              host that defines the staging units. Exposed for manual runs
-              and recovery verification.
-            '';
+          homeStateExportScript = lib.mkOption {
+            description = "Exporter for SQLite snapshots and the direct Restic file list.";
             type = lib.types.nullOr lib.types.package;
             default = null;
           };
@@ -168,7 +167,7 @@
           mkBackupHooks "claro"
         );
         config.services.restic.backups.offsite.paths = lib.mkIf (exports != { }) (
-          lib.mkAfter [ exportReport ]
+          lib.mkAfter [ (mkExportReport "offsite") ]
         );
       };
 
@@ -267,7 +266,6 @@
 
           services.restic.backups.claro = {
             inherit (config.services.restic.backups.offsite)
-              paths
               exclude
               passwordFile
               rcloneConfigFile
@@ -277,6 +275,13 @@
               extraBackupArgs
               checkOpts
               ;
+            # Avoid inheriting offsite's report or creating a Claro submodule
+            # on hosts where the Claro backup is not configured.
+            paths =
+              lib.filter
+                (path: path != "/var/lib/backup-exports/offsite.json")
+                config.services.restic.backups.offsite.paths
+              ++ lib.optionals (bcfg.exports != { }) [ "/var/lib/backup-exports/claro.json" ];
             repository = "rclone:claro:restic/${config.networking.hostName}";
             pruneOpts = lib.optionals (bcfg.exports == { }) bcfg.retentionArgs;
             timerConfig = {

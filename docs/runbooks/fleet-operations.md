@@ -28,31 +28,24 @@ Missing telemetry and unreachable hosts are _unknown_, not green. Consult
 
 ## Offsite backup coverage and consistency
 
-A successful Restic upload is not necessarily a usable application restore.
-The export report at `/var/lib/backup-exports/offsite.json` distinguishes
-fresh application exports from missing, failed or stale producers. An
-incomplete export prevents pruning; it does not make the uploaded data
-complete. Confirm native database integrity and perform an isolated restore
-before relying on a recovery point.
+A successful Restic upload does not guarantee a complete application restore.
+Failed or degraded exports must not allow retention pruning. Earlier complete
+Restic snapshots remain available even when an export fails.
 
-Persistence is not offsite backup coverage. Bound paths, nested devices,
-`--one-file-system` and live SQLite data can affect what Restic captures.
+Alpha backs up curated ordinary home files directly, but live SQLite databases
+need consistent snapshots because their WAL files may contain committed changes.
+SQLite snapshots use tmpfs to avoid unnecessary SSD writes; they disappear on
+reboot. If a database cannot be refreshed, the backup may contain a last
+verified copy or omit it and is reported as degraded. The normal daily backup
+schedule provides the next attempt.
+
+OpenTofu state is read live, so avoid overlapping a manual state change with a
+backup. Helium intentionally excludes cookies, caches, and tracking state:
+restoring its selected files will not restore website logins.
+
+The Nix configuration and export scripts define backup selection and behavior.
 Use [host recovery](host-recovery.md) and
-[service restoration](restore-service-backups.md) for the actual restore
-procedure; inspect the evaluated backup roots rather than trusting a list
-in Markdown.
-
-After an authorized OpenTofu state change on Alpha, refresh the staging tree
-before the offsite upload:
-
-```sh
-sudo systemctl start --wait home-state-backup-offsite.service
-sudo systemctl start --wait restic-backups-offsite.service
-```
-
-Verify both commands and the export report. Do not make successful
-`tofu apply` depend on backup success by wrapping it in a backup hook.
-See [OpenTofu state recovery](host-recovery.md#restore-the-opentofu-state).
+[service restoration](restore-service-backups.md) to recover data.
 
 ## Controller deployment and recovery
 
