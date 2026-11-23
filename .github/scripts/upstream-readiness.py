@@ -88,6 +88,10 @@ def gamescope_fixed():
 
 
 T3CODE_PACKAGE = "pkgs/by-name/t3/t3code/package.nix"
+T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
+# v0.1.11 commit on pingdotgg/t3code main, containing the OpenCode cold-start
+# catalog fixes (#35049, #33640).
+T3CODE_0_1_11_COMMIT = "59651c1761f6c63e9b6056839067066968e6a406"
 
 
 def t3code_browser_wrapped(revision):
@@ -230,6 +234,13 @@ def detect(name, lock):
     if name == "moonshine-0-18":
         return ("PINNED-READY" if moonshine_pinned_version(pin(lock, "nixpkgs")) >= (0, 18, 0)
                 else "merged-not-pinned")
+    if name == "t3code-0-1-11":
+        revision = pin(lock, "nixpkgs")
+        ref = source_ref(source("NixOS/nixpkgs", T3CODE_UNWRAPPED, revision))
+        if contains("pingdotgg/t3code", T3CODE_0_1_11_COMMIT, ref):
+            return "PINNED-READY"
+        pr = api("repos/NixOS/nixpkgs/pulls/589125")
+        return "merged-not-pinned" if pr.get("merged") else "waiting-upstream"
     if name == "t3code-browser-libs":
         pr = api("repos/NixOS/nixpkgs/pulls/575675")
         if not pr.get("merged"):

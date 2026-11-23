@@ -13,6 +13,10 @@
     "mode": "post-lock",
     "input": "nixpkgs"
   },
+  "t3code-0-1-11": {
+    "mode": "post-lock",
+    "input": "nixpkgs"
+  },
   "t3code-browser-libs": {
     "mode": "post-lock",
     "input": "nixpkgs"

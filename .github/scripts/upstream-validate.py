@@ -63,6 +63,16 @@ def validate(name, architecture):
         package = build("alpha.config.home-manager.users.repparw.programs.t3code.package")
         require(str(package) == evaluate("alpha.pkgs.t3code-desktop.outPath"),
                 "Alpha must select the upstream desktop package")
+    elif name == "t3code-0-1-11":
+        split = json.loads(command("nix", "eval", "--json", "--no-update-lock-file",
+                                   ".#nixosConfigurations.alpha.pkgs", "--apply", "p: p ? t3code-cli"))
+        for host in ("alpha", "pi", "epsilon"):
+            version = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.version")
+            require(bool(re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)),
+                    f"unexpected {host} T3 Code version")
+            require(tuple(map(int, version.split("."))) >= (0, 1, 11),
+                    f"{host} T3 Code is older than 0.1.11")
+        build("alpha.pkgs.t3code-desktop" if split else "alpha.pkgs.t3code")
     elif name == "moonshine-0-18":
         # Validate the real packaged version after deleting the temporary
         # module, then prove the service selects that upstream package.

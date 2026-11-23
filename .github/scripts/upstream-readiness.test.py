@@ -160,6 +160,29 @@ class Readiness(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     watch.moonshine_pinned_version("nix-pin")
 
+    def test_t3code_0_1_11_requires_source_ancestry_and_distinguishes_pr_state(self):
+        unwrapped_old = 'version = "0.1.8"; tag = "v${finalAttrs.version}";'
+        unwrapped_new = 'version = "0.1.11"; tag = "v${finalAttrs.version}";'
+        with patch.object(watch, "source", return_value=unwrapped_new) as fetched, \
+                patch.object(watch, "contains", return_value=True) as contains, \
+                patch.object(watch, "api") as api:
+            self.assertEqual(watch.detect("t3code-0-1-11", LOCK), "PINNED-READY")
+            fetched.assert_called_once_with("NixOS/nixpkgs", watch.T3CODE_UNWRAPPED, "nix-pin")
+            contains.assert_called_once_with("pingdotgg/t3code", watch.T3CODE_0_1_11_COMMIT, "v0.1.11")
+            api.assert_not_called()
+        for merged, expected in ((False, "waiting-upstream"), (True, "merged-not-pinned")):
+            with self.subTest(merged=merged), \
+                    patch.object(watch, "source", return_value=unwrapped_old), \
+                    patch.object(watch, "contains", return_value=False) as contains, \
+                    patch.object(watch, "api", return_value={"merged": merged}) as api:
+                self.assertEqual(watch.detect("t3code-0-1-11", LOCK), expected)
+                contains.assert_called_once_with("pingdotgg/t3code", watch.T3CODE_0_1_11_COMMIT, "v0.1.8")
+                api.assert_called_once_with("repos/NixOS/nixpkgs/pulls/589125")
+
+    def test_t3code_0_1_11_fails_closed_on_missing_source_metadata(self):
+        with patch.object(watch, "source", return_value='pname = "t3code-unwrapped";'):
+            self.assertEqual(watch.inspect("t3code-0-1-11", LOCK), "unavailable (ValueError)")
+
     def test_gamescope_requires_both_lookup_sites_and_flag_branch(self):
         site = 'if (queueInfo.flags) { VkDeviceQueueInfo2 q2; dispatch->GetDeviceQueue2(device, &q2, &queue); } else dispatch->GetDeviceQueue(device, family, j, &queue);'
         self.assertFalse(watch.flagged_queues_fixed('void GetDeviceQueue2();'))
