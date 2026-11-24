@@ -2,7 +2,24 @@
 {
   den.aspects.activity-tracking = {
     homeManager =
-      { lib, pkgs, ... }:
+      { config, lib, pkgs, osConfig, ... }:
+      let
+        syncDir = "${config.xdg.dataHome}/activitywatch/sync-outbox";
+        remote = "${config.home.username}@${osConfig.modules.services.hostSshAddresses.epsilon}";
+        sync = pkgs.writeShellApplication {
+          name = "activitywatch-sync";
+          runtimeInputs = [ pkgs.openssh pkgs.rsync ];
+          text = ''
+            umask 077
+            mkdir -p ${lib.escapeShellArg syncDir}
+            # The basic 0.13 sync command omits browser buckets.
+            ${pkgs.aw-server-rust}/bin/aw-sync --sync-dir ${lib.escapeShellArg syncDir} sync-advanced --mode push
+            export RSYNC_RSH="ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15"
+            rsync -rt --chmod=D700,F600 --mkpath ${lib.escapeShellArg (syncDir + "/")} ${lib.escapeShellArg (remote + ":.local/share/activitywatch/sync-alpha/")}
+            ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 ${lib.escapeShellArg remote} activitywatch-import-alpha
+          '';
+        };
+      in
       {
         services.activitywatch = {
           enable = true;
@@ -13,14 +30,11 @@
           ];
         };
 
-        # Start the Wayland watcher only once the graphical session has its
-        # compositor environment. It supplies both window and AFK buckets.
+        # The Wayland watcher supplies both window and AFK buckets.
         systemd.user.services.activitywatch-wayland = {
           Unit = {
             Description = "ActivityWatch Wayland window and idle watcher";
-            After = [
-              "activitywatch.service"
-            ];
+            After = [ "activitywatch.service" ];
             Wants = [ "activitywatch.service" ];
             PartOf = [ "graphical-session.target" ];
           };
@@ -34,13 +48,48 @@
         };
 
         systemd.user.services.activitywatch.Service.UMask = "0077";
+
+        # Keep the authoritative desktop database local. Retry transfers
+        # periodically; no network connection is required for collection.
+        systemd.user.services.activitywatch-sync = {
+          Unit = {
+            Description = "Sync desktop ActivityWatch data to Epsilon";
+            After = [ "activitywatch.service" ];
+            Wants = [ "activitywatch.service" ];
+          };
+          Service = {
+            Type = "oneshot";
+            ExecStart = lib.getExe sync;
+            UMask = "0077";
+            TimeoutStartSec = "10min";
+          };
+        };
+        systemd.user.timers.activitywatch-sync = {
+          Timer = {
+            OnStartupSec = "5min";
+            OnUnitInactiveSec = "15min";
+          };
+          Install.WantedBy = [ "timers.target" ];
+        };
       };
 
     provides.server.nixos =
       { lib, pkgs, ... }:
       {
-        # Keep the central UI and API private. Access with SSH port forwarding.
-        # Sync transport is separate and must not expose the raw HTTP API.
+        # Private UI/API: access with SSH port forwarding, never public ingress.
+        environment.systemPackages = [
+          pkgs.rsync
+          (pkgs.writeShellApplication {
+            name = "activitywatch-import-alpha";
+            runtimeInputs = [ pkgs.util-linux ];
+            text = ''
+              umask 077
+              sync_dir="$HOME/.local/share/activitywatch/sync-alpha"
+              exec flock "$sync_dir/.import.lock" ${pkgs.aw-server-rust}/bin/aw-sync --sync-dir "$sync_dir" sync-advanced --mode pull
+            '';
+          })
+        ];
+
         systemd.services.activitywatch = {
           description = "Central ActivityWatch server";
           wantedBy = [ "multi-user.target" ];
