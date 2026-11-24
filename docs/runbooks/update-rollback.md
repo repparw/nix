@@ -39,6 +39,15 @@ sudo /nix/var/nix/profiles/system-<generation>-link/bin/switch-to-configuration 
 A reboot-old-entry works too: alpha and epsilon use EFI loaders; pi uses
 extlinux via the Pi firmware.
 
+## Do not roll back across schema migrations
+
+Moonfin showing "no content found" and every library query returning 500
+while Jellyfin still answers `/health` means the running binary is older
+than the database schema: an incidental lock change rolled nixpkgs, and
+with it Jellyfin, back behind a schema the database already migrated to.
+The database is fine. Selecting an older generation makes this worse.
+Bump nixpkgs to a Jellyfin that matches the schema, rebuild, and activate.
+
 ## After a rollback
 
 1. Inspect the service journal and retained job records in
@@ -59,4 +68,3 @@ extlinux via the Pi firmware.
 ## Related
 
 - [Fleet operations](fleet-operations.md)
-- [Troubleshooting](../troubleshooting.md)

@@ -22,7 +22,11 @@ could otherwise violate, and recovery procedures that must work when the
 normal system is unavailable. Update those pages only when the _decision,
 safety boundary, or operator procedure_ changes. Keep commands next to
 the procedure they are needed for, and link to source instead of copying it.
-Historical research notes are snapshots, not live configuration references.
+Keep historical research notes in the Obsidian vault. They are snapshots, not
+live configuration references.
+
+Keep task-specific pages narrow. Link to details in other files rather than
+combining unrelated procedures. Read those details only when the task needs them.
 
 Find relevant documentation by task and filename; there is no mandatory
 documentation index to synchronize. A missing doc page does not imply that

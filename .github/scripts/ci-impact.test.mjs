@@ -15,7 +15,7 @@ function verify(paths, { hosts, vm, groups }) {
 const both = ['lightweight', 'configuration', 'shellcheck', 'fleet-cli'];
 test('documentation-only PRs select only formatting and documentation checks', () => {
   for (const paths of [['docs/runbooks/host-persistence.md', 'README.md'],
-    ['docs/research/audio.md'], ['.github/upstream/README.md'],
+    ['docs/runbooks/monitoring.md'],
     ['AGENTS.md'], ['.agents/skills/verify-nixos-config/SKILL.md']]) {
     const result = classifyChanges(paths);
     assert.equal(result.runHosts, false);
