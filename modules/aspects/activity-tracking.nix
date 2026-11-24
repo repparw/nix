@@ -2,13 +2,22 @@
 {
   den.aspects.activity-tracking = {
     homeManager =
-      { config, lib, pkgs, osConfig, ... }:
+      {
+        config,
+        lib,
+        pkgs,
+        osConfig,
+        ...
+      }:
       let
         syncDir = "${config.xdg.dataHome}/activitywatch/sync-outbox";
         remote = "${config.home.username}@${osConfig.modules.services.hostSshAddresses.epsilon}";
         sync = pkgs.writeShellApplication {
           name = "activitywatch-sync";
-          runtimeInputs = [ pkgs.openssh pkgs.rsync ];
+          runtimeInputs = [
+            pkgs.openssh
+            pkgs.rsync
+          ];
           text = ''
             umask 077
             mkdir -p ${lib.escapeShellArg syncDir}
