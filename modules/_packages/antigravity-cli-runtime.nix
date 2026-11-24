@@ -126,6 +126,24 @@ let
       fi
     fi
 
+    shared_config="''${HOME:-}/.gemini/config"
+    if [ -n "''${HOME:-}" ] && [ -d "$shared_config" ]; then
+      profile_config="$profile/config"
+      ${coreutils}/bin/mkdir -p "$profile_config"
+      for entry in skills rules; do
+        source_path="$shared_config/$entry"
+        target_path="$profile_config/$entry"
+        if [ -e "$source_path" ] || [ -L "$source_path" ]; then
+          if [ -d "$target_path" ] && [ ! -L "$target_path" ]; then
+            ${coreutils}/bin/rmdir "$target_path" 2>/dev/null || true
+          fi
+          if [ ! -e "$target_path" ] || [ -L "$target_path" ]; then
+            ${coreutils}/bin/ln -sfn "$source_path" "$target_path"
+          fi
+        fi
+      done
+    fi
+
     shift
     exec "$real_cli" acp \
       --gemini-dir "$profile" \
