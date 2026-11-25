@@ -144,7 +144,6 @@
               dataDir = "/config";
             };
             extraConfig = {
-              systemd.tmpfiles.rules = [ ];
               services.bazarr.group = "media";
               users.groups.media.gid = 900;
               systemd.services.bazarr.serviceConfig.UMask = lib.mkForce "0002";

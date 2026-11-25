@@ -1,8 +1,6 @@
 { den, ... }:
 {
   den.aspects.ai.provides.speech = {
-    nixos = { };
-
     homeManager =
       {
         pkgs,
