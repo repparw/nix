@@ -1,6 +1,5 @@
 { den, ... }:
 {
-  # release); the vendored 2.0.26 workaround was retired per issue #229.
   den.aspects.ai.provides.opencode = {
     homeManager =
       {

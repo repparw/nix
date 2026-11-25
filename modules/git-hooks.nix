@@ -12,15 +12,6 @@
     { config, pkgs, ... }:
     let
       agentDocsPython = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
-      # convco 0.7.2 requires libgit2-experimental for SHA-256 repositories.
-      # The pinned nixpkgs build forces system libgit2 without providing it.
-      # Build the bundled libgit2 until nixpkgs includes the matching library.
-      convco = pkgs.convco.overrideAttrs (old: {
-        preBuild = ''
-          export LIBGIT2_NO_VENDOR=0
-        ''
-        + (old.preBuild or "");
-      });
       bootstrapMarker = "# Managed by modules/git-hooks.nix: worktree bootstrap";
       # [ ! -e ] is true for both absent paths and dangling symlinks.
       # Preserve existing, readable foreign hooks.
@@ -51,7 +42,7 @@
           hooks = {
             convco = {
               enable = true;
-              package = convco;
+              package = pkgs.convco;
               entry = pkgs.lib.getExe (
                 pkgs.writeShellApplication {
                   name = "convco-hook";
@@ -65,7 +56,7 @@
                         ;;
                     esac
 
-                    ${pkgs.lib.getExe convco} check --from-stdin < "$message_file"
+                    ${pkgs.lib.getExe pkgs.convco} check --from-stdin < "$message_file"
                   '';
                 }
               );
@@ -162,7 +153,7 @@
         touch "$out"
       '';
 
-      packages.convco-ci = convco;
+      packages.convco-ci = pkgs.convco;
 
       devShells.default = pkgs.mkShell {
         nativeBuildInputs = [
