@@ -144,6 +144,7 @@
             HOME = stateDir;
             FGC_STATE_DIR = stateDir;
             FGC_DATA_DIR = "${stateDir}/data";
+            EG_MOBILE = "0";
             FGC_CHROME_PATH = "${pkgs.chromium}/bin/chromium";
             SHOW = "0";
             WIDTH = "1920";

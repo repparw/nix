@@ -243,6 +243,12 @@ def notify(name, spec, repo, status):
                    "This is a candidate, not confirmed support or pinned readiness. "
                    "Record the tested upstream support commit in watchers.json to arm exact-ancestry "
                    "tracking through the channel and root pin. No global FSR setting was changed.")
+    elif name == "free-games-claimer" and status.startswith("upstream-review-required:"):
+        tag = status.split(":", 1)[1]
+        if not re.fullmatch(r"v[0-9]+(?:\.[0-9]+)*", tag):
+            raise ValueError("invalid claimer release")
+        content = (f"Free Games Claimer {tag} includes the Epic checkout fix. "
+                   f"Review the dev pin against https://github.com/vogler/free-games-claimer/releases/tag/{tag}")
     else:
         content = (f"CI detected `{status}` for `{name}` on main: the checked-out pin "
                    "contains the upstream fix. Deployment and runtime completion remain "
@@ -266,7 +272,7 @@ def sweep(registry, readiness, repo):
                 results[name] = publish(name, spec, repo)
             elif status == "PINNED-READY" and spec["mode"] == "notify-only":
                 results[name] = notify(name, spec, repo, status)
-            elif (name == "fsr4-rdna2" and spec["mode"] == "notify-only"
+            elif (name in ("fsr4-rdna2", "free-games-claimer") and spec["mode"] == "notify-only"
                   and status.startswith("upstream-review-required:")):
                 results[name] = notify(name, spec, repo, status)
             else:

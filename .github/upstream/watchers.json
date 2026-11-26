@@ -1,4 +1,8 @@
 {
+  "free-games-claimer": {
+    "mode": "notify-only",
+    "input": "modules/_packages/free-games-claimer.nix"
+  },
   "fsr4-rdna2": {
     "mode": "notify-only",
     "input": "nixpkgs",
