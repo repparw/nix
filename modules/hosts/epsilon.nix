@@ -222,106 +222,27 @@
         networking.firewall.extraForwardRules = ''
           iifname "ve-*" oifname "eth0" accept comment "container internet egress"
           iifname "eth0" oifname "ve-*" ct state established,related accept comment "container internet replies"
-          iifname "ve-glance" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept comment "glance monitor checks via home tunnel"
+          iifname "ve-glance" oifname "tailscale0" ip daddr { ${config.modules.services.hostAddresses.alpha}, ${config.modules.services.hostAddresses.pi} } accept comment "glance monitor checks via tailscale"
           iifname "ve-glance" oifname "ve-paperless" ip daddr ${config.containers.paperless.localAddress} tcp dport ${toString config.modules.services.definitions.paperless.port} accept comment "glance paperless monitor check"
-          iifname "ve-hermes" oifname "wg-home" ip daddr { 192.168.0.0/24 } accept comment "hermes egress to home (DDNS/state)"
-          iifname "wg-home" oifname { "ve-glance", "ve-hermes" } ct state established,related accept comment "container home-tunnel replies"
+          iifname "ve-hermes" oifname "tailscale0" ip daddr { ${config.modules.services.hostAddresses.alpha}, ${config.modules.services.hostAddresses.pi} } accept comment "hermes egress to home hosts via tailscale"
+          iifname "tailscale0" oifname { "ve-glance", "ve-hermes" } ct state established,related accept comment "container tailscale replies"
         '';
         networking.firewall.extraInputRules = ''
-          iifname "eth0" meta mark 0x484f4d45 tcp dport 443 accept comment "home uplink https"
-          iifname "eth0" meta mark 0x484f4d45 tcp dport 22 accept comment "home uplink ssh"
-          iifname "eth0" meta mark 0x484f4d45 udp dport 60002 accept comment "home uplink mosh"
           iifname "ve-glance" ip daddr ${config.modules.services.bridgePrefix}.1 tcp dport 443 accept comment "Glance local HTTPS service probes"
           iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
         '';
-        # Home-uplink allowlists cannot take a SOPS value: firewall strings
-        # render at evaluation time. An accept verdict in an earlier base
-        # chain does not bypass later base chains. An empty set matches
-        # nothing, so a missing secret fails closed.
-        networking.nftables.tables.home-wan = {
-          family = "inet";
-          content = ''
-            set home_wan {
-              type ipv4_addr
-            }
-
-            chain input {
-              type filter hook input priority filter - 1; policy accept;
-              iifname "eth0" ip saddr @home_wan meta mark set 0x484f4d45 comment "tag home uplink"
-              iifname "eth0" ip saddr @home_wan tcp dport 443 accept comment "fleet health over split DNS"
-              iifname "eth0" ip saddr @home_wan tcp dport 22 accept comment "ssh from home"
-              iifname "eth0" ip saddr @home_wan udp dport 60002 accept comment "mosh from home"
-            }
-          '';
-        };
         networking.nftables.tables.container-egress-nat = {
           family = "ip";
           content = ''
             chain postrouting {
               type nat hook postrouting priority 100; policy accept;
-              ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname { "eth0", "wg-home" } masquerade
+              ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname { "eth0", "tailscale0" } masquerade
             }
           '';
         };
 
         programs.mosh.openFirewall = lib.mkForce false;
         services.openssh.openFirewall = lib.mkForce false;
-        networking.firewall.interfaces."wg-home".allowedTCPPorts = [ 22 ];
-        networking.firewall.interfaces."wg-home".allowedUDPPorts = [ 60002 ];
-
-        sops.secrets = {
-          wgEpsilonPrivateKey.sopsFile = ../../secrets/wg.sops.yaml;
-          wgEpsilonPresharedKey.sopsFile = ../../secrets/wg.sops.yaml;
-          homeWanIp = {
-            sopsFile = ../../secrets/home.sops.yaml;
-            restartUnits = [ "home-wan.service" ];
-          };
-        };
-
-        systemd.services.home-wan = {
-          description = "Provision home uplink (firewall set + WireGuard endpoint) from secret";
-          after = [
-            "sops-install-secrets.service"
-            "nftables.service"
-            "systemd-networkd.service"
-          ];
-          wants = [ "sops-install-secrets.service" ];
-          wantedBy = [ "multi-user.target" ];
-          restartTriggers = [ config.sops.secrets.homeWanIp.path ];
-          serviceConfig.Type = "oneshot";
-          script = ''
-            set -euo pipefail
-            wanIp=$(tr -d '[:space:]' < ${config.sops.secrets.homeWanIp.path})
-            if [[ ! "$wanIp" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-              echo "home-wan: refusing to provision, secret is not an IPv4 address" >&2
-              exit 1
-            fi
-            ${pkgs.nftables}/bin/nft flush set inet home-wan home_wan
-            ${pkgs.nftables}/bin/nft add element inet home-wan home_wan "{ $wanIp }"
-            for ((i = 0; i < 60; i++)); do
-              [ -e /sys/class/net/wg-home ] && break
-              ${pkgs.coreutils}/bin/sleep 2
-            done
-            ${pkgs.wireguard-tools}/bin/wg set wg-home peer "qvjDMgSHda89kuJ0vBL44LAdP681dXMczkSyfk9BnSc=" endpoint "$wanIp:51820"
-          '';
-        };
-
-        networking.wireguard.interfaces.wg-home = {
-          ips = [ "10.5.5.3/32" ];
-          privateKeyFile = config.sops.secrets.wgEpsilonPrivateKey.path;
-          peers = [
-            {
-              publicKey = "qvjDMgSHda89kuJ0vBL44LAdP681dXMczkSyfk9BnSc=";
-              presharedKeyFile = config.sops.secrets.wgEpsilonPresharedKey.path;
-              allowedIPs = [
-                "10.5.5.0/24"
-                "192.168.0.0/24"
-                "10.231.136.0/24"
-              ];
-              persistentKeepalive = 25;
-            }
-          ];
-        };
 
         networking.firewall.interfaces.eth0.allowedTCPPorts = [ ];
 

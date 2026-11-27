@@ -79,9 +79,8 @@ test('failed-unit snapshots use SSH addresses, while private backends use servic
     assert.equal(r.status, 0, r.stderr);
     const ssh = readFileSync(join(f.root, 'ssh-requests'), 'utf8');
     assert.match(ssh, /root@192\.168\.0\.18 fleet-unit-snapshot/);
-    assert.match(ssh, /root@146\.181\.42\.97 fleet-unit-snapshot/);
-    assert.doesNotMatch(ssh, /root@10\.5\.5\.3 fleet-unit-snapshot/);
-    assert.match(ssh, /root@10\.5\.5\.3 bash -s -- paperless 8000/);
+    assert.match(ssh, /root@100\.98\.41\.63 fleet-unit-snapshot/);
+    assert.match(ssh, /root@100\.98\.41\.63 bash -s -- paperless 8000/);
   } finally { f.cleanup(); }
 });
 
@@ -131,7 +130,7 @@ test('home HTTPS probe uses public DNS, rejects HTTP errors, and skips --local',
 test('private container checks run on the owning host and reject backend errors', () => {
   const f = fixture(); try {
     const r = f.sweep(['--strict']); assert.equal(r.status, 0, r.stderr);
-    assert.match(readFileSync(join(f.root, 'backend-probes'), 'utf8'), /root@10\.5\.5\.3 bash -s -- paperless 8000/);
+    assert.match(readFileSync(join(f.root, 'backend-probes'), 'utf8'), /root@100\.98\.41\.63 bash -s -- paperless 8000/);
     f.set('backend-status', '503');
     const failed = f.sweep(['--strict']); assert.notEqual(failed.status, 0);
     assert.match(failed.stderr, /paperless: private backend returned 503/);

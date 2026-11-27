@@ -91,14 +91,10 @@ mutable file before intentionally removing it to request a fresh seed.
 
 ## Eval-time values via runtime provisioning (not SOPS-at-eval)
 
-SOPS only materializes at activation, but firewall strings and the
-WireGuard endpoint render at evaluation time. For those, the committed
-config carries structure only (an empty `home-wan` nft set, an endpoint-less
-peer) and a `home-wan` oneshot fills both from `homeWanIp` at boot,
-re-running when the secret changes. An empty set matches nothing, so a
-missing secret fails closed; a malformed one fails the unit loudly. The
-Bluetooth MAC rides the same pattern one level simpler: `bttoggle` reads
-the user-owned `btDevice` secret file when `TOGGLE_BT_DEVICE` is unset.
+SOPS only materializes at activation, so values that must stay out of the Nix
+store are read at runtime rather than interpolated at evaluation time. For
+example, `bttoggle` reads the user-owned `btDevice` secret file when
+`TOGGLE_BT_DEVICE` is unset.
 
 ## Source
 
