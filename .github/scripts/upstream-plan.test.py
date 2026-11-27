@@ -24,7 +24,7 @@ def lock(pin):
 class PlanTests(unittest.TestCase):
     def setUp(self):
 
-        self.registry = json.loads((ROOT / ".github/upstream/watchers.json").read_text())
+        self.registry = json.loads((ROOT / "modules/aspects/upstream/watchers.json").read_text())
 
     def evaluate(self, old="old", new="new", readiness=None, probe=None,
                  build_probe=True):
@@ -182,7 +182,8 @@ class PlanTests(unittest.TestCase):
             "upstream_readiness", ROOT / ".github/scripts/upstream-readiness.py")
         readiness = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(readiness)
-        expected = set(readiness.PR_WAITS) | {
+        declarative_prs = {k for k, v in self.registry.items() if "pr" in v and "repo" in v}
+        expected = declarative_prs | {
             "qbittorrent", "wpaperd-fix",
             "gamescope-vkroots",
             "moonshine-0-18",
@@ -200,6 +201,62 @@ class PlanTests(unittest.TestCase):
             if spec["mode"] == "post-lock":
                 self.assertTrue((ROOT / "modules/aspects/upstream" / f"{name}.nix").exists(), name)
 
+
+
+    def test_bundle_coupled_ready_diverts_without_probe(self):
+        self.registry["pure-pr"] = {
+            "mode": "post-lock",
+            "input": "nixpkgs",
+            "repo": "NixOS/nixpkgs",
+            "pr": 589125,
+            "coupling": "bundle",
+        }
+        probed = []
+        result = self.evaluate(
+            readiness=lambda name: "PINNED-READY" if name == "pure-pr" else "waiting-upstream",
+            probe=lambda attr: (probed.append(attr) or True, ""),
+        )
+        self.assertEqual(result["action"], "atomic")
+        self.assertEqual(result["atomic"], ["pure-pr"])
+        self.assertTrue(result["automerge"])
+
+    def test_bundle_coupled_waiting_stays_normal_and_never_probes(self):
+        self.registry = {
+            "pure-pr": {
+                "mode": "post-lock",
+                "input": "nixpkgs",
+                "repo": "NixOS/nixpkgs",
+                "pr": 589125,
+                "coupling": "bundle",
+            }
+        }
+        probed = []
+        result = self.evaluate(
+            readiness=lambda name: "waiting-upstream",
+            probe=lambda attr: (probed.append(attr) or False, "should not probe"),
+        )
+        self.assertEqual(result["action"], "normal")
+        self.assertEqual(probed, [])
+
+    def test_bundle_coupling_rejects_gated_or_incomplete_spec(self):
+        self.registry["gated-bundle"] = {
+            "mode": "post-lock",
+            "input": "nixpkgs",
+            "repo": "NixOS/nixpkgs",
+            "pr": 589125,
+            "validation": ["source"],
+            "coupling": "bundle",
+        }
+        with self.assertRaisesRegex(ValueError, "ungated PR waits"):
+            self.evaluate()
+
+        self.registry["gated-bundle"] = {
+            "mode": "post-lock",
+            "input": "nixpkgs",
+            "coupling": "bundle",
+        }
+        with self.assertRaisesRegex(ValueError, "declarative repo and pr"):
+            self.evaluate()
 
 
 if __name__ == "__main__":

@@ -51,7 +51,7 @@ test('persistence, recovery, boot and CI infrastructure changes run the VM', () 
 
 test('watcher tests run only for relevant changes', () => {
   for (const path of [
-    'flake.lock', '.github/upstream/watchers.json',
+    'flake.lock', 'modules/aspects/upstream/watchers.json',
     '.github/upstream/cleanup/tasks-org.patch',
     '.github/scripts/upstream-plan.py', '.github/scripts/upstream-readiness.test.py',
     'modules/aspects/upstream/tasks-org.nix', '.github/workflows/lock-update.yml',

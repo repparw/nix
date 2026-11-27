@@ -29,6 +29,8 @@ The OpenCode v2 package watcher was retired after #505 and #229. Active watcher
 readiness notices go to the run summary and Discord. Package readiness does
 not replace fleet runtime verification.
 
+Simple PR-wait watchers declare `repo` and `pr` directly in `modules/aspects/upstream/watchers.json` without editing Python. Ungated pure PR waits may set `"coupling": "bundle"` so `upstream-plan.py` bundles their single-file `git rm` directly into the `lock-update.yml` atomic PR once `PINNED-READY` without probing or blocking `flake.lock` while waiting. Watchers with custom `upstream-validate.py` build gates remain on isolated `post-lock` cleanup PRs (or `"coupling": "apply"` when a patch must drop atomically).
+
 Independent `post-lock` contracts publish one-file deletion PRs from the
 checked-out main revision. The filename matches the watcher ID, so no stored
 patch or per-watcher cleanup recipe is needed. The publisher checks the exact
@@ -132,7 +134,7 @@ publication, interruption recovery, drift rejection, and notification deduplicat
 ## Lock candidate planner (apply-coupled cleanups)
 
 `upstream-plan.py plan --old BASE --candidate CANDIDATE` runs **before** the lock
-updater publishes to main. Watcher contracts live in `watchers.json`.
+updater publishes to main. Watcher contracts live in `modules/aspects/upstream/watchers.json` alongside the workaround modules.
 Watchers with `coupling: apply` (qbittorrent, gamescope-vkroots) break the
 moment the candidate pin carries their fix — or any
 context-shifting bump of their package — so their file removal rides the lock
