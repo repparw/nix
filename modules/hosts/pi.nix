@@ -305,10 +305,7 @@
 
         nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 
-        systemd.network.networks."10-eth" = {
-          address = [ "192.168.0.4/24" ];
-          routes = [ { Gateway = "192.168.0.1"; } ];
-        };
+        systemd.network.networks."10-eth".address = [ "192.168.0.4/24" ];
 
         networking = {
           nat = {

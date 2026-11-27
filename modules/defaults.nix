@@ -2,6 +2,19 @@
 {
   den = {
     schema.user.classes = lib.mkDefault [ "homeManager" ];
+    schema.host.options.location = lib.mkOption {
+      type = lib.types.enum [
+        "home"
+        "cloud"
+      ];
+      description = "Where the host connects to the network.";
+    };
+
+    policies.home-ethernet =
+      { host, ... }:
+      lib.optional ((host.location or null) == "home") (
+        den.lib.policy.include den.aspects.networking._.home-ethernet
+      );
 
     # Opt in to Den v0.20's scoped user content semantics. Explicit
     # cross-scope providers below preserve intended host settings.
@@ -11,6 +24,7 @@
       den.batteries.hostname
       den.batteries.mutual-provider
       den.aspects.networking
+      den.policies.home-ethernet
       den.aspects.secrets
       den.aspects.fleet-cli
       # Every host participates in fleet monitoring, deploy, and service discovery.

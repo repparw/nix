@@ -1,11 +1,13 @@
 _: {
   den.aspects.networking = {
-    provides.lan-server-ipv6.nixos = {
+    provides.home-ethernet.nixos = {
       systemd.network.networks."10-eth" = {
         matchConfig.Name = "eth0";
+        routes = [ { Gateway = "192.168.0.1"; } ];
         networkConfig = {
           DHCP = "no";
-          # Container masquerading can enable forwarding and disable implicit RA reception.
+          # networkd disables router discovery by default when container
+          # masquerading turns on global IPv6 forwarding.
           IPv6AcceptRA = true;
           IPv6PrivacyExtensions = false;
         };
