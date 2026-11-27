@@ -13,7 +13,8 @@
     includes = [
       den.aspects.managed-server
       den.aspects.monitoring._.dashboard
-      den.aspects.epsilon._.backup
+      den.aspects.host-backup
+      den.aspects.monitoring._.backup
       den.aspects.nixos-services._.edge
       den.aspects.nixos-services._.hermes
       den.aspects.nixos-services._.grafana-alert-triage
@@ -21,28 +22,6 @@
       den.aspects.nixos-services._.archisteamfarm
       den.aspects.nixos-services._.paperless
     ];
-    provides.backup = {
-      includes = [
-        den.aspects.host-backup
-        den.aspects.monitoring._.backup
-      ];
-      nixos = { config, ... }: {
-        modules.backup.exports = {
-          miniflux = {
-            unit = "miniflux-backup.service";
-            machine = "miniflux";
-            path = config.modules.services.definitions.miniflux.backup.path;
-            pattern = "miniflux-backup-*.sql.gz";
-          };
-          paperless = {
-            unit = "paperless-exporter.service";
-            machine = "paperless";
-            path = config.modules.services.definitions.paperless.backup.path;
-            pattern = "manifest.json";
-          };
-        };
-      };
-    };
     nixos =
       {
         config,
@@ -83,7 +62,23 @@
           }
         ];
 
-        modules.backup.paths = [ "/home/containers/config" ];
+        modules.backup = {
+          paths = [ "/home/containers/config" ];
+          exports = {
+            miniflux = {
+              unit = "miniflux-backup.service";
+              machine = "miniflux";
+              path = config.modules.services.definitions.miniflux.backup.path;
+              pattern = "miniflux-backup-*.sql.gz";
+            };
+            paperless = {
+              unit = "paperless-exporter.service";
+              machine = "paperless";
+              path = config.modules.services.definitions.paperless.backup.path;
+              pattern = "manifest.json";
+            };
+          };
+        };
         modules.persistence.enable = true;
         modules.persistence.mutableAccounts = true;
 
