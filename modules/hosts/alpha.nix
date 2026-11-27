@@ -6,6 +6,7 @@
 {
   den.aspects.alpha = {
     includes = [
+      den.aspects.networking._.lan-server-ipv6
       den.aspects.backup
       den.aspects.btrfs-maintenance
       den.aspects.logid
@@ -324,7 +325,6 @@
           };
           networks = {
             "10-eth" = {
-              matchConfig.Name = "eth0";
               address = [ "192.168.0.18/24" ];
               routes = [ { Gateway = "192.168.0.1"; } ];
               dns = [

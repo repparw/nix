@@ -6,6 +6,7 @@
   den.aspects.pi = {
     includes = [
       den.aspects.managed-server
+      den.aspects.networking._.lan-server-ipv6
       den.aspects.host-backup
       den.aspects.pi-services-backup
       den.aspects.nixos-services._.free-games-claimer
@@ -304,6 +305,11 @@
 
         nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 
+        systemd.network.networks."10-eth" = {
+          address = [ "192.168.0.4/24" ];
+          routes = [ { Gateway = "192.168.0.1"; } ];
+        };
+
         networking = {
           nat = {
             enable = true;
@@ -318,17 +324,6 @@
                 ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname "eth0" masquerade
               }
             '';
-          };
-
-          interfaces.eth0.ipv4.addresses = [
-            {
-              address = "192.168.0.4";
-              prefixLength = 24;
-            }
-          ];
-          defaultGateway = {
-            address = "192.168.0.1";
-            interface = "eth0";
           };
 
           firewall.interfaces.eth0 = {

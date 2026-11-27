@@ -1,5 +1,31 @@
 _: {
   den.aspects.networking = {
+    provides.lan-server-ipv6.nixos = {
+      systemd.network.networks."10-eth" = {
+        matchConfig.Name = "eth0";
+        networkConfig = {
+          DHCP = "no";
+          # Container masquerading can enable forwarding and disable implicit RA reception.
+          IPv6AcceptRA = true;
+          IPv6PrivacyExtensions = false;
+        };
+        ipv6AcceptRAConfig = {
+          UseDNS = false;
+          DHCPv6Client = false;
+        };
+      };
+
+      networking.nftables.tables.lan-server-ipv6 = {
+        family = "ip6";
+        content = ''
+          chain input {
+            type filter hook input priority filter - 1; policy accept;
+            iifname "eth0" ip6 daddr 2000::/3 meta l4proto { tcp, udp } ct state { new, untracked } counter drop comment "keep LAN services off global IPv6"
+          }
+        '';
+      };
+    };
+
     nixos =
       { lib, ... }:
       {
