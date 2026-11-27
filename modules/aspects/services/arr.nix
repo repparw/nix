@@ -204,19 +204,8 @@
             serviceConfig = {
               enable = true;
               openFirewall = true;
-              torrentingPort = 54535;
             };
             forwardPorts = [
-              {
-                protocol = "tcp";
-                hostPort = 54535;
-                containerPort = 54535;
-              }
-              {
-                protocol = "udp";
-                hostPort = 54535;
-                containerPort = 54535;
-              }
               {
                 protocol = "tcp";
                 hostPort = 18080;
