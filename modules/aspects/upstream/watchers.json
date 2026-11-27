@@ -1,0 +1,77 @@
+{
+  "fsr4-rdna2": {
+    "mode": "notify-only",
+    "input": "nixpkgs",
+    "baseline_release": "GE-Proton11-11",
+    "support_commit": null
+  },
+  "tridactyl-reader": {
+    "mode": "notify-only",
+    "input": "firefox-addons"
+  },
+  "t3code-connect": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "repo": "NixOS/nixpkgs",
+    "pr": 555921
+  },
+  "t3code-0-1-11": {
+    "mode": "post-lock",
+    "input": "nixpkgs"
+  },
+  "t3code-browser-libs": {
+    "mode": "post-lock",
+    "input": "nixpkgs"
+  },
+  "t3code-split": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "validation": [
+      "native-arm-cli"
+    ],
+    "repo": "NixOS/nixpkgs",
+    "pr": 555814
+  },
+  "opencode-browse": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "repo": "NixOS/nixpkgs",
+    "pr": 585097
+  },
+  "tasks-org": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "repo": "NixOS/nixpkgs",
+    "pr": 518221
+  },
+  "nautilus-module": {
+    "mode": "notify-only",
+    "input": "nixpkgs",
+    "repo": "NixOS/nixpkgs",
+    "pr": 319535
+  },
+  "qbittorrent": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "coupling": "apply",
+    "probe": "nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package"
+  },
+  "wpaperd-fix": {
+    "mode": "post-lock",
+    "input": "nixpkgs"
+  },
+  "moonshine-0-18": {
+    "mode": "post-lock",
+    "input": "nixpkgs"
+  },
+  "gamescope-vkroots": {
+    "mode": "post-lock",
+    "input": "nixpkgs",
+    "validation": [
+      "source",
+      "wsi-build"
+    ],
+    "coupling": "apply",
+    "probe": "nixosConfigurations.alpha.pkgs.gamescope"
+  }
+}

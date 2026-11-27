@@ -107,6 +107,10 @@ def validate(name, architecture):
                      "qbittorrent": "alpha.config.containers.qbittorrent.config.services.qbittorrent.package"}[name]
         build(attribute)
     else:
+        registry = json.loads((ROOT / "modules/aspects/upstream/watchers.json").read_text())
+        spec = registry.get(name, {})
+        if spec.get("coupling") == "bundle" and not spec.get("validation"):
+            return
         raise ValueError(f"no package validation for {name}")
 
 

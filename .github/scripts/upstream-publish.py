@@ -284,7 +284,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--readiness", type=Path, required=True)
     args = parser.parse_args()
-    registry = json.loads((ROOT / ".github/upstream/watchers.json").read_text())
+    registry = json.loads((ROOT / "modules/aspects/upstream/watchers.json").read_text())
     readiness = json.loads(args.readiness.read_text())
     repo = os.environ["GH_REPO"]
     results, failed = sweep(registry, readiness, repo)
@@ -299,4 +299,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

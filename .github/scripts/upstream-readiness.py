@@ -8,20 +8,17 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-PR_WAITS = {
+REGISTRY_PATH = Path("modules/aspects/upstream/watchers.json")
 
-    "t3code-connect": ("NixOS/nixpkgs", 555921, "nixpkgs"),
-    "t3code-split": ("NixOS/nixpkgs", 555814, "nixpkgs"),
-    "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
-    "opencode-browse": ("NixOS/nixpkgs", 585097, "nixpkgs"),
-    "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
-}
+
+def load_registry():
+    return json.loads((ROOT / REGISTRY_PATH).read_text())
+
+
 # Watcher IDs identify their temporary files without a separate path registry.
 WORKAROUNDS = {
     name: (f"modules/aspects/upstream/{name}.nix", None)
-    for name, spec in json.loads(
-        (ROOT / ".github/upstream/watchers.json").read_text()
-    ).items()
+    for name, spec in load_registry().items()
     if spec["mode"] == "post-lock"
 }
 
@@ -139,7 +136,7 @@ def ge_package_contains(revision, commit):
 
 
 def fsr4_rdna2_status(lock):
-    spec = json.loads((ROOT / ".github/upstream/watchers.json").read_text())["fsr4-rdna2"]
+    spec = load_registry()["fsr4-rdna2"]
     commit = spec.get("support_commit")
     if commit is None:
         # Discovery only. Release prose can flag a candidate, never establish
@@ -224,8 +221,11 @@ def detect(name, lock):
                 not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)):
             raise ValueError("unexpected Tridactyl release metadata")
         return "PINNED-READY" if contains("tridactyl/tridactyl", pr["merge_commit_sha"], version) else "merged-not-pinned"
-    if name in PR_WAITS:
-        repo, number, input_name = PR_WAITS[name]
+    spec = load_registry().get(name, {})
+    if "pr" in spec:
+        repo = spec["repo"]
+        number = spec["pr"]
+        input_name = spec["input"]
         pr = api(f"repos/{repo}/pulls/{number}")
         if not pr.get("merged"):
             return "waiting-upstream"
@@ -283,7 +283,7 @@ def main():
     args = parser.parse_args()
     lock = json.loads((ROOT / "flake.lock").read_text())
     # The registry owns watcher IDs and lifecycle policy. Detection never writes.
-    registry = json.loads((ROOT / ".github/upstream/watchers.json").read_text())
+    registry = load_registry()
     results = {name: inspect(name, lock) for name in registry}
     if args.json:
         print(json.dumps(results, sort_keys=True))
@@ -294,4 +294,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
