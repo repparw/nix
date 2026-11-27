@@ -1,6 +1,18 @@
 { pkgs }:
 let
   runtime = pkgs.callPackage ../_packages/antigravity-cli-runtime.nix { };
+
+  mcpRuntime = pkgs.callPackage ../_packages/antigravity-cli-runtime.nix {
+    mcpConfig = pkgs.writeText "profile-mcp-config.json" (
+      builtins.toJSON {
+        mcpServers.nixos = {
+          command = "/bin/mcp-nixos";
+          args = [ ];
+          env = { };
+        };
+      }
+    );
+  };
 in
 pkgs.runCommand "check-antigravity-cli-runtime"
   {
@@ -99,6 +111,29 @@ pkgs.runCommand "check-antigravity-cli-runtime"
     test ! -L "$custom_profile/config/skills"
     test -f "$custom_profile/config/skills/local-only"
     test "$(readlink "$custom_profile/config/rules")" = "$fake_home/.gemini/config/rules"
+
+    mcp_profile=$(mktemp -d)
+    HOME="$fake_home" GEMINI_HOME="$mcp_profile" ARGS_FILE="$arguments" \
+      ${mcpRuntime.launcher} "$fake_cli" acp
+    # A regular file, not a symlink: the T3 Code text-generation gate
+    # rejects symlinks when reading profile MCP config.
+    test -f "$mcp_profile/config/mcp_config.json"
+    test ! -L "$mcp_profile/config/mcp_config.json"
+    jq -e '.mcpServers.nixos.command == "/bin/mcp-nixos"' \
+      "$mcp_profile/config/mcp_config.json" >/dev/null
+    test "$(stat -c %a "$mcp_profile/config/mcp_config.json")" = 600
+
+    # Declarative config wins over manual edits on every launch.
+    printf 'stale\n' >"$mcp_profile/config/mcp_config.json"
+    HOME="$fake_home" GEMINI_HOME="$mcp_profile" ARGS_FILE="$arguments" \
+      ${mcpRuntime.launcher} "$fake_cli" acp
+    jq -e '.mcpServers.nixos' "$mcp_profile/config/mcp_config.json" >/dev/null
+
+    # Without a fleet MCP config the profile keeps whatever it had.
+    plain_profile=$(mktemp -d)
+    HOME="$fake_home" GEMINI_HOME="$plain_profile" ARGS_FILE="$arguments" \
+      ${runtime.launcher} "$fake_cli" acp
+    test ! -e "$plain_profile/config/mcp_config.json"
 
     touch $out
   ''

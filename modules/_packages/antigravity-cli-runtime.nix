@@ -9,6 +9,10 @@
   bash,
   coreutils,
   jq,
+  # Optional store path to a JSON file with the MCP servers every T3 Code
+  # Antigravity profile must expose. Installed as a regular file: T3 Code's
+  # text-generation gate rejects symlinks.
+  mcpConfig ? null,
 }:
 let
   version = "1.5.9";
@@ -143,6 +147,12 @@ let
         fi
       done
     fi
+
+    ${lib.optionalString (mcpConfig != null) ''
+      profile_config="$profile/config"
+      ${coreutils}/bin/mkdir -p "$profile_config"
+      ${coreutils}/bin/install -m 600 ${mcpConfig} "$profile_config/mcp_config.json"
+    ''}
 
     shift
     exec "$real_cli" acp \

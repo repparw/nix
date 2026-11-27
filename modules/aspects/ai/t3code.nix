@@ -25,7 +25,32 @@
         ...
       }:
       let
-        antigravityRuntime = pkgs.callPackage ../../_packages/antigravity-cli-runtime.nix { };
+        # T3 Code gives each Antigravity instance a private GEMINI_HOME and
+        # deliberately does not link ~/.gemini/config/mcp_config.json into it
+        # (pingdotgg/t3code discussion #13117), so the shared fleet servers
+        # are installed into every profile by the runtime launcher. The file
+        # must be a regular file: the text-generation gate rejects symlinks,
+        # and any configured server disables Antigravity-backed background
+        # text generation such as thread titles and commit messages
+        # (pingdotgg/t3code issue #42608) — those helpers need another
+        # system model once this config is present.
+        fleetMcpServers = lib.filterAttrs (_: server: server.command != null) config.programs.mcp.servers;
+
+        antigravityMcpConfig =
+          if fleetMcpServers == { } then
+            null
+          else
+            (pkgs.formats.json { }).generate "antigravity-profile-mcp-config.json" {
+              mcpServers = lib.mapAttrs (_: server: {
+                command = server.command;
+                args = server.args;
+                env = server.env;
+              }) fleetMcpServers;
+            };
+
+        antigravityRuntime = pkgs.callPackage ../../_packages/antigravity-cli-runtime.nix {
+          mcpConfig = antigravityMcpConfig;
+        };
 
         providerInstances = {
           antigravity = {
@@ -91,9 +116,25 @@
 
           server = {
             enable = true;
-            environmentFile = pkgs.writeText "t3code-environment" ''
-              CODEX_HOME=${config.xdg.configHome}/codex
-            '';
+            # The headless unit launches `opencode serve` children, and
+            # home.sessionVariables only reach login sessions. Without this
+            # file, OPENCODE_CONFIG reached the unit only when an interactive
+            # session leaked it into the systemd user manager, so opencode
+            # started without the declarative MCP layer after a reboot.
+            environmentFile = pkgs.writeText "t3code-environment" (
+              lib.concatStringsSep "\n" (
+                [
+                  "CODEX_HOME=${config.xdg.configHome}/codex"
+                ]
+                ++ lib.optional (
+                  config.programs.opencode.enable && config.programs.opencode.mutableSettings
+                ) "OPENCODE_CONFIG=${config.xdg.configHome}/opencode/home-manager.json"
+                ++ lib.optional (
+                  config.programs.opencode.tui != { }
+                ) "OPENCODE_TUI_CONFIG=${config.xdg.configHome}/opencode/home-manager-tui.json"
+              )
+              + "\n"
+            );
           };
         };
       };
