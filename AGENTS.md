@@ -10,6 +10,11 @@ host-specific behavior in host modules.
 - Use `nh search` for nixpkgs and Home Assistant packages, options, issues, and PRs.
 - Check upstream issues before adding a local workaround. For merged fixes,
   verify the exact pinned `flake.lock` revision.
+- For router/LAN/streaming diagnostics, check `infra/router/` for TP-Link AP
+  state and `modules/aspects/networking.nix` (`wan-ingress-shaping` limits all
+  `eth0` ingress, including LAN peers).
+- For physical LG C3 GUI actions or state probes, use `tv/bin/tv-lock` and
+  `tv/bin/tv-snapshot` from `repparw/homelab-devices`.
 
 ## Documentation policy
 
