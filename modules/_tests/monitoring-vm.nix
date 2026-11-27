@@ -14,6 +14,28 @@ let
       -keyout "$out/key.pem" -out "$out/cert.pem" \
       -subj /CN=cloud.example.test -addext subjectAltName=DNS:cloud.example.test
   '';
+  # Stands in for a localhost exporter (e.g. the Starlink dish exporter):
+  # one allowlisted metric, one metric that the budget relabel must drop.
+  fixtureExporter = pkgs.writers.writePython3 "extra-scrape-fixture" { } ''
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    BODY = (
+        b"starlink_status_pop_ping_latency_ms 21.5\n"
+        b"starlink_status_secret_dish_id 1\n"
+    )
+
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; version=0.0.4")
+            self.send_header("Content-Length", str(len(BODY)))
+            self.end_headers()
+            self.wfile.write(BODY)
+
+
+    HTTPServer(("127.0.0.1", 18080), Handler).serve_forever()
+  '';
 in
 pkgs.testers.runNixOSTest {
   name = "cloud-only-monitoring";
@@ -167,6 +189,25 @@ pkgs.testers.runNixOSTest {
             };
           };
           extraExcludedMounts = [ "/mnt/hdd" ];
+          extraScrapes = [
+            {
+              name = "starlink";
+              address = "127.0.0.1:18080";
+              scrapeTimeout = "30s";
+              metricAllowlist = [
+                "starlink_status_pop_ping_latency_ms"
+                "up"
+              ];
+            }
+          ];
+        };
+        systemd.services.extra-scrape-fixture = {
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            ExecStart = "${fixtureExporter}";
+            DynamicUser = true;
+            Restart = "on-failure";
+          };
         };
         services.journald.settings.Journal = {
           Storage = "volatile";
@@ -244,6 +285,12 @@ pkgs.testers.runNixOSTest {
         assert prom('node_systemd_unit_state{state="active"}')
         assert not prom('node_systemd_unit_state{state=~"inactive|activating|deactivating"}')
         assert not prom('{service="fixture",__name__=~"probe_http_duration_seconds|probe_dns_lookup_time_seconds"}')
+        retry(
+            lambda _last: len(prom('starlink_status_pop_ping_latency_ms{job="starlink",host="pi"} == 21.5')) == 1,
+            timeout_seconds=150,
+        )
+        retry(lambda _last: len(prom('up{job="starlink",host="pi"} == 1')) == 1, timeout_seconds=150)
+        assert not prom('{job="starlink",__name__=~"starlink_status_secret_dish_id"}')
         marker = "cloud-redaction-" + secrets.token_hex(6)
         token = "ghp_" + secrets.token_hex(18)
         client.succeed("logger -t monitoring-fixture " + shlex.quote(marker + " " + token))

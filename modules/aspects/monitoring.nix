@@ -59,6 +59,33 @@
           default = [ ];
           description = "Additional literal filesystem mountpoints omitted from Alloy collection.";
         };
+        extraScrapes = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.submodule {
+              options = {
+                name = lib.mkOption {
+                  type = lib.types.strMatching "[a-zA-Z_][a-zA-Z0-9_]*";
+                  description = "Alloy scrape and relabel component name, also used as the job label.";
+                };
+                address = lib.mkOption {
+                  type = lib.types.str;
+                  description = "host:port of the local exporter to scrape.";
+                };
+                scrapeTimeout = lib.mkOption {
+                  type = lib.types.str;
+                  default = "10s";
+                  description = "Per-scrape timeout; must exceed the exporter's own upstream call latency.";
+                };
+                metricAllowlist = lib.mkOption {
+                  type = lib.types.nonEmptyListOf lib.types.str;
+                  description = "Metric names forwarded to Cloud; every other metric from this scrape is dropped.";
+                };
+              };
+            }
+          );
+          default = [ ];
+          description = "Local exporter scrapes at the 60s cadence, forwarded through an explicit metric allowlist.";
+        };
       };
 
       config = {
@@ -80,7 +107,18 @@
         ++ lib.optional cloudLogsEnabled {
           assertion = lib.hasPrefix "https://" cfg.cloud.logs.url;
           message = "modules.monitoring.agent.cloud.logs.url must use HTTPS";
-        };
+        }
+        ++ [
+          {
+            assertion =
+              lib.length cfg.extraScrapes == lib.length (lib.unique (map (scrape: scrape.name) cfg.extraScrapes));
+            message = "modules.monitoring.agent.extraScrapes names must be unique";
+          }
+          {
+            assertion = lib.all (scrape: scrape.scrapeTimeout != "") cfg.extraScrapes;
+            message = "modules.monitoring.agent.extraScrapes timeouts must be non-empty";
+          }
+        ];
         services.alloy = {
           enable = true;
           extraFlags = [
@@ -140,6 +178,26 @@
                 action = "drop"
               }
             }
+
+            ${lib.concatMapStrings (scrape: ''
+              prometheus.scrape "${scrape.name}" {
+                targets         = [{ "__address__" = ${builtins.toJSON scrape.address} }]
+                forward_to      = [prometheus.relabel.${scrape.name}_budget.receiver]
+                job_name        = "${scrape.name}"
+                scrape_interval = "60s"
+                scrape_timeout  = "${scrape.scrapeTimeout}"
+              }
+
+              prometheus.relabel "${scrape.name}_budget" {
+                forward_to = [prometheus.remote_write.cloud.receiver]
+
+                rule {
+                  source_labels = ["__name__"]
+                  regex         = ${builtins.toJSON (lib.concatStringsSep "|" scrape.metricAllowlist)}
+                  action        = "keep"
+                }
+              }
+            '') cfg.extraScrapes}
 
             prometheus.remote_write "cloud" {
               external_labels = { host = "${config.networking.hostName}" }
