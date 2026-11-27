@@ -13,6 +13,7 @@
     includes = [
       den.aspects.managed-server
       den.aspects.monitoring._.dashboard
+      den.aspects.activity-tracking._.server
       den.aspects.epsilon._.backup
       den.aspects.nixos-services._.edge
       den.aspects.nixos-services._.hermes

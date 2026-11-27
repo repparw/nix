@@ -7,6 +7,7 @@
   den.aspects.desktop = {
     includes = [
       den.aspects.gui
+      den.aspects.activity-tracking
       den.aspects.file-manager
       den.aspects.obsidian
       den.aspects.spotifast
