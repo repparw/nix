@@ -6,8 +6,6 @@ _: {
         routes = [ { Gateway = "192.168.0.1"; } ];
         networkConfig = {
           DHCP = "no";
-          # networkd disables router discovery by default when container
-          # masquerading turns on global IPv6 forwarding.
           IPv6AcceptRA = true;
           IPv6PrivacyExtensions = false;
         };
