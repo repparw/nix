@@ -140,13 +140,6 @@ in
     in
     {
       config = {
-        # WSI is a persistent preference; the temporary vkroots fix is in upstream/gamescope-vkroots.nix.
-        nixpkgs.overlays = [
-          (_final: prev: {
-            gamescope = prev.gamescope.override { enableWsi = true; };
-          })
-        ];
-
         services.moonshine = {
           enable = true;
           firewallInterfaces = [ "eth0" ];
@@ -208,12 +201,10 @@ in
           pkgs.coreutils
           pkgs.evtest
           pkgs.gawk
+          pkgs.gnugrep
           pkgs.jq
-          pkgs.niri
           pkgs.openssh
-          pkgs.procps
           pkgs.systemd
-          osConfig.programs.steam.package
         ];
         text = ''
           ssh_tv() {
@@ -274,20 +265,6 @@ in
             return "$status"
           }
 
-          session_unlocked() {
-            local session _uid user class seat hint
-            while read -r session _uid user _; do
-              [ "$user" = "$USER" ] || continue
-              class="$(loginctl show-session "$session" -p Class --value 2>/dev/null || true)"
-              seat="$(loginctl show-session "$session" -p Seat --value 2>/dev/null || true)"
-              hint="$(loginctl show-session "$session" -p LockedHint --value 2>/dev/null || true)"
-              if [ "$class" = user ] && [ -n "$seat" ] && [ "$hint" = no ]; then
-                return 0
-              fi
-            done < <(loginctl list-sessions --no-legend)
-            return 1
-          }
-
           wait_button 30 || { log "no press; exiting without action"; exit 0; }
 
           ${moonshineStreaming}
@@ -305,49 +282,20 @@ in
           fi
           log "tv power: $([ "$tv_on" -eq 1 ] && echo on || echo off)"
 
-          if [ "$tv_on" -eq 1 ]; then
-            # webOS only delivers launch params on a cold start: a lingering
-            # Moonlight is re-foregrounded via webOSRelaunch with params
-            # dropped, landing on the app picker instead of Steam. Close first
-            # (a failed close just means it was not running), then launch.
-            log "branch: tv (cold-launch Moonlight)"
-            ssh_tv ${lib.escapeShellArg closeRemote} >/dev/null 2>&1 || true
-            sleep 1
-            ssh_tv ${lib.escapeShellArg launchRemote} >/dev/null
-            log "branch: tv done"
+          if [ "$tv_on" -ne 1 ]; then
+            log "tv is off; exiting without action"
             exit 0
           fi
 
-          session_unlocked || { log "no unlocked seat session; exiting"; exit 0; }
-          [ -n "''${WAYLAND_DISPLAY:-}" ] || { log "no wayland display; exiting"; exit 0; }
-
-          # Already on the desk inside a Steam game: the button press is input
-          # to that game, not a request to relaunch anything. Steam spawns a
-          # `reaper SteamLaunch AppId=...` child for a running (or launching)
-          # game; plain Big Picture has none, and still gets focus + raise.
-          if pgrep -f "reaper SteamLaunch" >/dev/null; then
-            log "steam game already running on the desk; leaving it alone"
-            exit 0
-          fi
-
-          log "branch: desk"
-
-
-          niri msg action focus-monitor DP-1 >/dev/null
-
-          if pgrep -x gamescope >/dev/null; then
-            log "reusing the running gamescope session"
-            exec ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf
-          fi
-
-          log "taking over: stopping desktop steam, starting gamescope"
-          ${stopDesktopSteam}
-
-          ${osConfig.security.wrapperDir}/gamescope --steam -H 1080 -r 162 --adaptive-sync -- \
-            ${lib.getExe osConfig.programs.steam.package} -tenfoot -pipewire-dmabuf || true
-
-          log "session ended; restoring desktop steam"
-          systemctl --user start steam-tray
+          # webOS only delivers launch params on a cold start: a lingering
+          # Moonlight is re-foregrounded via webOSRelaunch with params
+          # dropped, landing on the app picker instead of Steam. Close first
+          # (a failed close just means it was not running), then launch.
+          log "branch: tv (cold-launch Moonlight)"
+          ssh_tv ${lib.escapeShellArg closeRemote} >/dev/null 2>&1 || true
+          sleep 1
+          ssh_tv ${lib.escapeShellArg launchRemote} >/dev/null
+          log "branch: tv done"
         '';
       };
 
@@ -388,7 +336,7 @@ in
 
       systemd.user.services."8bitdo-tv-moonlight" = {
         Unit = {
-          Description = "Start Steam via TV Moonlight or local Big Picture when the 8BitDo connects and a button is pressed";
+          Description = "Start Steam via TV Moonlight when the 8BitDo connects and a button is pressed";
           After = [
             "network-online.target"
             "graphical-session.target"

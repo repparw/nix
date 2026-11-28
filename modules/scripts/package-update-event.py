@@ -26,7 +26,7 @@ NONE = "<none>"
 
 RELEVANT = (
     "linux", "mesa", "systemd", "nix",
-    "firefox", "chromium", "gamescope", "moonshine", "steam", "niri",
+    "firefox", "chromium", "moonshine", "steam", "niri",
     "neovim", "heroic", "jellyfin", "authelia",
 )
 

@@ -242,8 +242,10 @@
               ];
               "Mod+Z" = titledSpawn "MPV Clipboard" [ "mpvclip" ];
 
-              "Ctrl+Alt+Shift+A".spawn-sh =
-                "${osConfig.security.wrapperDir}/gamescope --steam -H 1080 --adaptive-sync --fps-limit 162 -- steam -tenfoot -pipewire-dmabuf";
+              "Ctrl+Alt+Shift+A" = spawn [
+                (lib.getExe osConfig.programs.steam.package)
+                "steam://open/bigpicture"
+              ];
               "Ctrl+Alt+Shift+E" = spawn [ "Discord" ];
               "Ctrl+Alt+Shift+F" = spawn [
                 "wpctl"
@@ -437,9 +439,13 @@
               }
               {
                 window-rule._children = [
-                  { match._props.app-id = "^(gamescope)$"; }
+                  {
+                    match._props = {
+                      app-id = "^steam$";
+                      title = "^Steam Big Picture Mode$";
+                    };
+                  }
                   { open-fullscreen = true; }
-                  { variable-refresh-rate = true; }
                   { open-on-output = "DP-1"; }
                 ];
               }
@@ -448,6 +454,7 @@
                   { match._props.app-id = "^(steam_app_.*)$"; }
                   { open-fullscreen = true; }
                   { variable-refresh-rate = true; }
+                  { open-on-output = "DP-1"; }
                 ];
               }
               {
