@@ -1,12 +1,18 @@
 # Virtual networking for Epsilon: one VCN with a single public subnet and an
-# internet gateway. These were Oracle-created defaults (except the security
-# list rules, which carry epsilon's edge policy) and are adopted as-is.
+# internet gateway.
 
 resource "oci_core_vcn" "main" {
   compartment_id = var.compartment_id
   cidr_blocks    = ["10.0.0.0/16"]
   display_name   = "vcn-20260128-1948"
   dns_label      = "vcn01281953"
+  is_ipv6enabled = true
+}
+
+# OCI provider 6.37.0 keeps the old empty prefix list in the update plan.
+data "oci_core_vcn" "main" {
+  vcn_id     = oci_core_vcn.main.id
+  depends_on = [oci_core_vcn.main]
 }
 
 resource "oci_core_internet_gateway" "main" {
@@ -20,6 +26,7 @@ resource "oci_core_subnet" "main" {
   compartment_id             = var.compartment_id
   vcn_id                     = oci_core_vcn.main.id
   cidr_block                 = "10.0.0.0/24"
+  ipv6cidr_block             = cidrsubnet(data.oci_core_vcn.main.ipv6cidr_blocks[0], 8, 0)
   display_name               = "subnet-20260128-1948"
   dns_label                  = "subnet01281953"
   prohibit_public_ip_on_vnic = false
@@ -38,6 +45,13 @@ resource "oci_core_default_route_table" "main" {
     destination_type  = "CIDR_BLOCK"
     network_entity_id = oci_core_internet_gateway.main.id
   }
+
+  route_rules {
+    description       = ""
+    destination       = "::/0"
+    destination_type  = "CIDR_BLOCK"
+    network_entity_id = oci_core_internet_gateway.main.id
+  }
 }
 
 resource "oci_core_default_security_list" "main" {
@@ -48,6 +62,14 @@ resource "oci_core_default_security_list" "main" {
   egress_security_rules {
     description      = ""
     destination      = "0.0.0.0/0"
+    destination_type = "CIDR_BLOCK"
+    protocol         = "all"
+    stateless        = false
+  }
+
+  egress_security_rules {
+    description      = ""
+    destination      = "::/0"
     destination_type = "CIDR_BLOCK"
     protocol         = "all"
     stateless        = false
@@ -80,41 +102,15 @@ resource "oci_core_default_security_list" "main" {
   }
 
   ingress_security_rules {
-    description = ""
-    protocol    = "6"
-    source      = "0.0.0.0/0"
+    description = "IPv6 Path MTU Discovery"
+    protocol    = "58"
+    source      = "::/0"
     source_type = "CIDR_BLOCK"
     stateless   = false
 
-    tcp_options {
-      min = 22
-      max = 22
-    }
-  }
-
-  ingress_security_rules {
-    description = "HTTPS public (traefik edge)"
-    protocol    = "6"
-    source      = "0.0.0.0/0"
-    source_type = "CIDR_BLOCK"
-    stateless   = false
-
-    tcp_options {
-      min = 443
-      max = 443
-    }
-  }
-
-  ingress_security_rules {
-    description = "mosh client (single pinned port)"
-    protocol    = "17"
-    source      = "0.0.0.0/0"
-    source_type = "CIDR_BLOCK"
-    stateless   = false
-
-    udp_options {
-      min = 60002
-      max = 60002
+    icmp_options {
+      code = 0
+      type = 2
     }
   }
 }

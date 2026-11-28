@@ -4,7 +4,7 @@ output "instance_id" {
 }
 
 output "instance_public_ip" {
-  description = "Reserved public IP terminating Epsilon's public edge."
+  description = "Reserved public IPv4 address of Epsilon's primary VNIC."
   value       = oci_core_public_ip.epsilon.ip_address
 }
 
