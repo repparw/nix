@@ -7,18 +7,6 @@
   den.aspects.nixos-services.provides.arr = {
     service-registry = [
       {
-        name = "bazarr";
-        definition = {
-          hostname = "bazarr";
-          port = 6767;
-          auth = "one_factor";
-          container = true;
-          monitor = true;
-          healthcheck = "/health";
-          backupRelativePath = "bazarr/backup";
-        };
-      }
-      {
         name = "prowlarr";
         definition = {
           hostname = "prowlarr";
@@ -137,32 +125,6 @@
       in
       {
         containers = lib.mapAttrs mkArrContainer {
-          bazarr = {
-            serviceConfig = {
-              enable = true;
-              openFirewall = true;
-              dataDir = "/config";
-            };
-            extraConfig = {
-              services.bazarr.group = "media";
-              users.groups.media.gid = 900;
-              systemd.services.bazarr.serviceConfig.UMask = lib.mkForce "0002";
-            };
-            forwardPorts = [
-              {
-                protocol = "tcp";
-                hostPort = 6767;
-                containerPort = 6767;
-              }
-            ];
-            extraBindMounts = {
-              "/config" = {
-                hostPath = "${cfg.configDir}/bazarr";
-                isReadOnly = false;
-              };
-            };
-          };
-
           prowlarr = {
             mediaBind = false;
             serviceConfig = {
