@@ -16,6 +16,7 @@
       den.aspects.fleet-controller
       den.aspects.pi-generation-retention
       den.aspects.lan-edge
+      den.aspects.starlink-monitor
     ];
 
     nixos =
