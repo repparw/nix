@@ -186,7 +186,7 @@ class PlanTests(unittest.TestCase):
             "qbittorrent", "wpaperd-fix",
             "gamescope-vkroots",
             "moonshine-0-18",
-            "t3code-0-1-11",
+            "t3code-0-1-13",
             "t3code-browser-libs",
             "tridactyl-reader",
             "fsr4-rdna2",
