@@ -58,7 +58,6 @@
               maxResponseBytes = 16 * 1024 * 1024;
               packages = [
                 "authelia"
-                "bazarr"
                 "brotli"
                 "bun"
                 "c-ares"
