@@ -5,8 +5,8 @@
 {
   den.aspects.pi = {
     includes = [
+      den.aspects.networking._.home
       den.aspects.managed-server
-      den.aspects.networking._.lan-server-ipv6
       den.aspects.host-backup
       den.aspects.pi-services-backup
       den.aspects.nixos-services._.free-games-claimer
@@ -305,8 +305,6 @@
 
         nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
 
-        systemd.network.networks."10-eth".address = [ "192.168.0.4/24" ];
-
         networking = {
           nat = {
             enable = true;
@@ -321,12 +319,6 @@
                 ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname "eth0" masquerade
               }
             '';
-          };
-
-          firewall.interfaces.eth0 = {
-            allowedUDPPorts = [
-              60001
-            ];
           };
 
           firewall.extraInputRules = ''
