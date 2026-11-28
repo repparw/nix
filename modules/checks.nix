@@ -173,23 +173,25 @@
             );
 
           # Every host must see the same topology, including machines that
-          # publish no services and SSH addresses distinct from service IPs.
+          # publish no services and LAN addresses only where configured.
           service-host-inventory =
             let
               hosts = lib.concatMapAttrs (_system: machines: machines) den.hosts;
               hostNames = lib.attrNames inputs.self.nixosConfigurations;
               expectedAddresses = lib.mapAttrs (_: host: host.serviceAddress) hosts;
-              expectedSshAddresses = lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) hosts;
+              expectedLanAddresses = lib.mapAttrs (_: host: host.lanAddress) (
+                lib.filterAttrs (_: host: host ? lanAddress) hosts
+              );
               inventories = map (name: inputs.self.nixosConfigurations.${name}.config.modules.services) hostNames;
             in
             assert lib.attrNames hosts == hostNames;
             assert lib.all (
               inventory:
-              inventory.hostAddresses == expectedAddresses && inventory.hostSshAddresses == expectedSshAddresses
+              inventory.hostAddresses == expectedAddresses && inventory.hostLanAddresses == expectedLanAddresses
             ) inventories;
             pkgs.writeText "service-host-inventory.json" (
               builtins.toJSON {
-                inherit expectedAddresses expectedSshAddresses;
+                inherit expectedAddresses expectedLanAddresses;
               }
             );
 

@@ -103,7 +103,7 @@ let
         host:
         let
           networking = (cfg host).networking;
-          piAddress = (cfg host).modules.services.hostSshAddresses.pi;
+          piAddress = (cfg host).modules.services.hostLanAddresses.pi;
           names = lib.concatLists (lib.attrValues networking.hosts);
         in
         lib.elem "jellyfin.repparw.com" (networking.hosts.${piAddress} or [ ])

@@ -1,18 +1,47 @@
 _: {
   den.aspects.networking = {
+    provides.home = { host, ... }: {
+      nixos = {
+        systemd.network.networks."10-eth" = {
+          matchConfig.Name = "eth0";
+          address = [ "${host.lanAddress}/24" ];
+          routes = [ { Gateway = "192.168.0.1"; } ];
+          networkConfig = {
+            DHCP = "no";
+            IPv6AcceptRA = true;
+            IPv6PrivacyExtensions = false;
+          };
+          ipv6AcceptRAConfig = {
+            UseDNS = false;
+            DHCPv6Client = false;
+          };
+        };
+
+        networking.nftables.tables.lan-server-ipv6 = {
+          family = "ip6";
+          content = ''
+            chain input {
+              type filter hook input priority filter - 1; policy accept;
+              iifname "eth0" ip6 daddr 2000::/3 meta l4proto { tcp, udp } ct state { new, untracked } counter drop comment "keep LAN services off global IPv6"
+            }
+          '';
+        };
+      };
+    };
+
     nixos =
       { lib, ... }:
       {
         programs.mosh = {
           enable = true;
-          openFirewall = true;
+          openFirewall = false;
         };
 
         services = {
           fail2ban.enable = true;
           openssh = {
             enable = true;
-            openFirewall = true;
+            openFirewall = false;
             settings.PasswordAuthentication = false;
           };
           tailscale = {

@@ -161,25 +161,25 @@ in
     hostAddresses = mkOption {
       type = types.attrsOf types.str;
       default = { };
-      description = "Known machines and their LAN addresses for cross-host backend resolution.";
+      description = "Known hosts and their Tailscale addresses for cross-host access.";
     };
 
-    hostSshAddresses = mkOption {
+    hostLanAddresses = mkOption {
       type = types.attrsOf types.str;
       default = { };
-      description = "SSH/deploy/LAN-DNS addresses. Defaults to serviceAddress when a host omits sshAddress.";
+      description = "LAN addresses for hosts with a configured home uplink.";
     };
 
     lanEdgeHost = mkOption {
       type = types.str;
       default = "pi";
-      description = "Host whose sshAddress LAN clients use for lanEdge vhosts.";
+      description = "Host whose LAN address clients use for LAN edge virtual hosts.";
     };
 
     publicEdgeHost = mkOption {
       type = types.str;
       default = "epsilon";
-      description = "Host whose sshAddress LAN clients use for public vhosts.";
+      description = "Host that serves public edge virtual hosts.";
     };
 
     bridgePrefix = mkOption {

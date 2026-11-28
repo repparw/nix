@@ -32,7 +32,7 @@ function fixture() {
   mock('fleet-unit-snapshot', '[ ! -f "$MOCK_ROOT/pi-error" ]; cat "$MOCK_ROOT/pi"');
   mock('ssh', `printf '%s\\n' "$*" >> "$MOCK_ROOT/ssh-requests"
     for arg in "$@"; do case "$arg" in root@*) target="$arg";; esac; done
-    case "$target" in root@192.168.0.18) host=alpha;; *) host=epsilon;; esac
+    case "$target" in root@100.80.210.20) host=alpha;; *) host=epsilon;; esac
     if [[ " $* " == *" bash -s -- "* ]]; then
       cat >/dev/null
       [ ! -f "$MOCK_ROOT/backend-error" ]
@@ -73,12 +73,12 @@ test('snapshot failure is visible and local mode avoids remote snapshots', () =>
 });
 
 
-test('failed-unit snapshots use SSH addresses, while private backends use service addresses', () => {
+test('failed-unit snapshots and private backends use service addresses', () => {
   const f = fixture(); try {
     const r = f.sweep();
     assert.equal(r.status, 0, r.stderr);
     const ssh = readFileSync(join(f.root, 'ssh-requests'), 'utf8');
-    assert.match(ssh, /root@192\.168\.0\.18 fleet-unit-snapshot/);
+    assert.match(ssh, /root@100\.80\.210\.20 fleet-unit-snapshot/);
     assert.match(ssh, /root@100\.98\.41\.63 fleet-unit-snapshot/);
     assert.match(ssh, /root@100\.98\.41\.63 bash -s -- paperless 8000/);
   } finally { f.cleanup(); }
