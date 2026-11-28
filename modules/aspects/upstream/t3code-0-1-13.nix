@@ -1,8 +1,6 @@
 { den, ... }:
 {
-  # Temporary backport of NixOS/nixpkgs#589125 (1a0ac3d6dff7) until the fleet
-  # pin includes T3 Code 0.1.11, which fixes OpenCode's cold-start model-catalog
-  # timeout (pingdotgg/t3code#35049, pingdotgg/t3code#33640).
+  # Temporary backport of NixOS/nixpkgs#589125 until the fleet pin includes 0.1.13.
   den.aspects.ai.provides.t3code.provides.to-hosts.nixos =
     { lib, ... }:
     {
@@ -10,15 +8,15 @@
         (
           final: prev:
           let
-            t3codeUnwrapped0111 = prev.t3code.unwrapped.overrideAttrs (
+            t3codeUnwrapped = prev.t3code.unwrapped.overrideAttrs (
               finalAttrs: old: {
-                version = "0.1.11";
+                version = "0.1.13";
 
                 src = prev.fetchFromGitHub {
                   owner = "pingdotgg";
                   repo = "t3code";
                   tag = "v${finalAttrs.version}";
-                  hash = "sha256-oI8gyTWFgtTmVK+0cVQaEcfO8EzxUUOW5s8JFG/z/U8=";
+                  hash = "sha256-Frk9YQmkR5MrIo0+eMmYqFkit/Y2tf3JkOXy1c6srbs=";
                 };
 
                 nativeBuildInputs =
@@ -44,7 +42,7 @@
                     ;
 
                   fetcherVersion = 5;
-                  hash = "sha256-s/vm8Ox4o/AYpNC/amYP1KFWwh7SY5bCmVBuIJn9f/c=";
+                  hash = "sha256-5ncmrXOIU3sxrB6XaauC/6PPL4YyHaUO62ST1y1O2B8=";
                 };
 
                 preBuild = (old.preBuild or "") + ''
@@ -85,10 +83,31 @@
           if prev ? t3code && !(prev ? t3code-cli) then
             {
               t3code =
-                if prev.lib.versionOlder prev.t3code.version "0.1.11" then
-                  prev.t3code.override {
-                    t3code-unwrapped = t3codeUnwrapped0111;
-                  }
+                if prev.lib.versionOlder prev.t3code.version "0.1.13" then
+                  (prev.t3code.override {
+                    t3code-unwrapped = t3codeUnwrapped;
+                    t3code-resource-monitor = prev.t3code.resourceMonitor.overrideAttrs (old: {
+                      inherit (t3codeUnwrapped) src version;
+                      sourceRoot = "${t3codeUnwrapped.src.name}/native/resource-monitor";
+                      cargoDeps = prev.rustPlatform.fetchCargoVendor {
+                        inherit (t3codeUnwrapped) src;
+                        inherit (old) pname;
+                        inherit (t3codeUnwrapped) version;
+                        sourceRoot = "${t3codeUnwrapped.src.name}/native/resource-monitor";
+                        hash = "sha256-QartZALjE2BxgfKcV3CJjtG6oSNE/Vcbz2ESx1UrRbk=";
+                      };
+                    });
+                  }).overrideAttrs
+                    (old: {
+                      buildCommand =
+                        old.buildCommand
+                        + prev.lib.optionalString prev.stdenv.hostPlatform.isLinux ''
+                          if [[ -x "$out/bin/t3code-desktop" ]]; then
+                            wrapProgram "$out/bin/t3code-desktop" \
+                              --set-default T3CODE_DESKTOP_LAUNCHER_PATH "$out/bin/t3code-desktop"
+                          fi
+                        '';
+                    })
                 else
                   prev.t3code;
             }
