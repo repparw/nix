@@ -345,14 +345,13 @@
 
         services.resolved.settings.Resolve.DNSOverTLS = true;
 
-        networking.wireless.iwd = {
-          enable = true;
-          settings = {
-            General.AddressRandomization = "network";
-            Settings.AutoConnect = true;
-          };
-        };
-        systemd.services.iwd.wantedBy = lib.mkForce [ ];
+        networking.firewall.extraInputRules = ''
+          iifname "eth0" ip saddr ${config.modules.services.hostLanAddresses.pi} tcp dport { 3000, 8081 } accept comment "edge ingress -> native alpha listeners"
+        '';
+
+        networking.firewall.extraForwardRules = ''
+          iifname "eth0" ip saddr ${config.modules.services.hostLanAddresses.pi} oifname "ve-*" accept comment "edge ingress -> published container backends"
+        '';
 
       };
   };

@@ -24,6 +24,10 @@ _: {
               type filter hook input priority filter - 1; policy accept;
               iifname "eth0" ip6 daddr 2000::/3 meta l4proto { tcp, udp } ct state { new, untracked } counter drop comment "keep LAN services off global IPv6"
             }
+            chain forward {
+              type filter hook forward priority filter - 1; policy accept;
+              iifname "eth0" ip6 daddr 2000::/3 meta l4proto { tcp, udp } ct state { new, untracked } counter drop comment "keep forwarded traffic off global IPv6"
+            }
           '';
         };
       };
@@ -34,14 +38,14 @@ _: {
       {
         programs.mosh = {
           enable = true;
-          openFirewall = false;
+          openFirewall = true;
         };
 
         services = {
           fail2ban.enable = true;
           openssh = {
             enable = true;
-            openFirewall = false;
+            openFirewall = true;
             settings.PasswordAuthentication = false;
           };
           tailscale = {

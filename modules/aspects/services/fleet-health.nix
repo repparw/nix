@@ -113,7 +113,10 @@ in
               check_units ${lib.escapeShellArg config.networking.hostName} ""
               if [ "$local_only" != 1 ]; then
                 ${lib.concatMapStringsSep "\n" (
-                  host: "check_units ${lib.escapeShellArg host} ${lib.escapeShellArg cfg.hostAddresses.${host}}"
+                  host:
+                  "check_units ${lib.escapeShellArg host} ${
+                    lib.escapeShellArg (cfg.hostLanAddresses.${host} or cfg.hostAddresses.${host})
+                  }"
                 ) remoteHosts}
               fi
             fi

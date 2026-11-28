@@ -246,6 +246,11 @@
           '';
         };
 
+        programs.mosh.openFirewall = lib.mkForce false;
+        services.openssh.openFirewall = lib.mkForce false;
+
+        networking.firewall.interfaces.eth0.allowedTCPPorts = [ ];
+
       };
   };
 

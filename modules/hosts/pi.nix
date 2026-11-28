@@ -321,6 +321,12 @@
             '';
           };
 
+          firewall.interfaces.eth0 = {
+            allowedUDPPorts = [
+              60001
+            ];
+          };
+
           firewall.extraInputRules = ''
             iifname "ve-*" ip daddr ${config.modules.services.bridgePrefix}.1 meta l4proto { tcp, udp } th dport 53 accept comment "container DNS"
           '';

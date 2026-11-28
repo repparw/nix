@@ -1,9 +1,9 @@
 { den, lib, ... }:
 let
-  serviceAddresses = lib.mapAttrs (_: host: host.serviceAddress) (
+  sshAddresses = lib.mapAttrs (_: host: host.lanAddress or host.serviceAddress) (
     lib.concatMapAttrs (_system: hosts: hosts) den.hosts
   );
-  hostNames = lib.attrNames serviceAddresses;
+  hostNames = lib.attrNames sshAddresses;
 in
 {
   den.aspects.fleet-cli.nixos =
@@ -15,7 +15,7 @@ in
     let
       controllerAddress = config.modules.fleet-update.controllerHost;
       controllerNames = lib.attrNames (
-        lib.filterAttrs (_: address: address == controllerAddress) serviceAddresses
+        lib.filterAttrs (_: address: address == controllerAddress) sshAddresses
       );
       controllerName =
         if builtins.length controllerNames == 1 then
@@ -135,7 +135,7 @@ in
       ) sortedSpecs;
 
       hostAddressCases = lib.concatMapStringsSep "\n" (host: ''
-        ${lib.escapeShellArg host}) printf '%s\n' ${lib.escapeShellArg serviceAddresses.${host}} ;;
+        ${lib.escapeShellArg host}) printf '%s\n' ${lib.escapeShellArg sshAddresses.${host}} ;;
       '') hostNames;
       hostWords = lib.concatMapStringsSep " " lib.escapeShellArg hostNames;
 
