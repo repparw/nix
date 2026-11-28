@@ -84,7 +84,7 @@
             {
               t3code =
                 if prev.lib.versionOlder prev.t3code.version "0.1.13" then
-                  prev.t3code.override {
+                  (prev.t3code.override {
                     t3code-unwrapped = t3codeUnwrapped;
                     t3code-resource-monitor = prev.t3code.resourceMonitor.overrideAttrs (old: {
                       inherit (t3codeUnwrapped) src version;
@@ -97,7 +97,17 @@
                         hash = "sha256-QartZALjE2BxgfKcV3CJjtG6oSNE/Vcbz2ESx1UrRbk=";
                       };
                     });
-                  }
+                  }).overrideAttrs
+                    (old: {
+                      buildCommand =
+                        old.buildCommand
+                        + prev.lib.optionalString prev.stdenv.hostPlatform.isLinux ''
+                          if [[ -x "$out/bin/t3code-desktop" ]]; then
+                            wrapProgram "$out/bin/t3code-desktop" \
+                              --set-default T3CODE_DESKTOP_LAUNCHER_PATH "$out/bin/t3code-desktop"
+                          fi
+                        '';
+                    })
                 else
                   prev.t3code;
             }
