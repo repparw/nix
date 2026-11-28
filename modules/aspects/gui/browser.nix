@@ -83,6 +83,86 @@ in
               '';
             });
 
+        webThreads = {
+          gemini-task = {
+            title = "Gemini Task";
+            url = "https://gemini.google.com/app?task=";
+            aliases = [
+              "g"
+              "gem"
+            ];
+          };
+          gemini-chat = {
+            title = "Gemini Chat";
+            url = "https://gemini.google.com/app?q=";
+            aliases = [ "gc" ];
+          };
+          chatgpt = {
+            title = "ChatGPT";
+            url = "https://chatgpt.com/?q=";
+            aliases = [ "gpt" ];
+          };
+        };
+
+        webThreadsExtension = pkgs.runCommandLocal "vicinae-web-threads-extension" { } ''
+          mkdir -p "$out/assets"
+          cp ${
+            pkgs.writeText "vicinae-web-threads-package.json" (
+              builtins.toJSON {
+                "$schema" =
+                  "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json";
+                name = "web-threads";
+                title = "Web Threads";
+                description = "Start Gemini and ChatGPT threads in Firefox";
+                categories = [ "Productivity" ];
+                license = "MIT";
+                author = "repparw";
+                dependencies."@vicinae/api" = "0.16.8";
+                commands = lib.mapAttrsToList (name: thread: {
+                  inherit name;
+                  title = "New ${thread.title}";
+                  description = "Start a new ${thread.title} thread";
+                  mode = "no-view";
+                  arguments = [
+                    {
+                      name = "prompt";
+                      placeholder = "Prompt";
+                      type = "text";
+                      required = true;
+                    }
+                  ];
+                }) webThreads;
+              }
+            )
+          } "$out/package.json"
+          ${lib.concatStringsSep "\n" (
+            lib.mapAttrsToList (name: thread: ''
+              cp ${pkgs.writeText "vicinae-${name}.js" ''
+                const { closeMainWindow, showToast, Toast } = require("@vicinae/api");
+                const { execFile } = require("node:child_process");
+                const { promisify } = require("node:util");
+
+                async function main({ arguments: { prompt } }) {
+                  if (!prompt?.trim()) {
+                    await showToast({ style: Toast.Style.Failure, title: "Enter a prompt" });
+                    return;
+                  }
+
+                  try {
+                    const url = "${thread.url}" + encodeURIComponent(prompt);
+                    await promisify(execFile)("${lib.getExe config.programs.firefox.finalPackage}", ["--new-tab", url]);
+                    await closeMainWindow();
+                  } catch {
+                    await showToast({ style: Toast.Style.Failure, title: "Could not open Firefox" });
+                  }
+                }
+
+                module.exports = { default: main };
+              ''} "$out/${name}.js"
+            '') webThreads
+          )}
+        '';
+
         hasStylix = config.lib ? stylix;
         readerColors = if hasStylix then config.lib.stylix.colors.withHashtag else null;
 
@@ -374,7 +454,10 @@ in
           '')
         ];
 
+        programs.vicinae.extensions = [ webThreadsExtension ];
+
         home.file = {
+          ".config/tridactyl/web-threads.js".source = ./web-threads.js;
           ".config/tridactyl/themes/stylix.css" = lib.mkIf hasStylix {
             text = tridactylReaderCss;
           };
@@ -391,6 +474,13 @@ in
 
             set searchurls.n https://mynixos.com/search?q=%s
             set searchurls., https://search.nixos.org/packages?channel=unstable&query=%s
+            ${lib.concatMapStringsSep "\n" (
+              thread:
+              lib.concatMapStringsSep "\n" (alias: "set searchurls.${alias} ${thread.url}%s") thread.aliases
+            ) (lib.attrValues webThreads)}
+
+            autocmd DocStart ^https://gemini[.]google[.]com/app[?] js -r web-threads.js
+            autocmd DocStart ^https://chatgpt[.]com/[?] js -r web-threads.js
 
             " Binds
             bind ;c hint -c [class*="expand"],[class*="togg"],[class="comment_folder"]
@@ -553,31 +643,39 @@ in
                   };
                   search = {
                     force = true;
-                    engines = {
-                      "Nix options" = {
-                        urls = [ { template = "https://mynixos.com/search?q={searchTerms}"; } ];
-                        definedAliases = [ "n" ];
+                    engines =
+                      (lib.mapAttrs' (
+                        _: thread:
+                        lib.nameValuePair thread.title {
+                          urls = [ { template = thread.url + "{searchTerms}"; } ];
+                          definedAliases = thread.aliases;
+                        }
+                      ) webThreads)
+                      // {
+                        "Nix options" = {
+                          urls = [ { template = "https://mynixos.com/search?q={searchTerms}"; } ];
+                          definedAliases = [ "n" ];
+                        };
+                        "Nixpkgs" = {
+                          urls = [ { template = "https://search.nixos.org/packages?channel=unstable&query={searchTerms}"; } ];
+                          definedAliases = [
+                            "np"
+                            ","
+                          ];
+                        };
+                        "IMDb" = {
+                          urls = [ { template = "https://www.imdb.com/find?q={searchTerms}&s=all"; } ];
+                          definedAliases = [ "imdb" ];
+                        };
+                        "youtube" = {
+                          urls = [ { template = "https://www.youtube.com/results?search_query={searchTerms}"; } ];
+                          definedAliases = [ "y" ];
+                        };
+                        "GitHub" = {
+                          urls = [ { template = "https://github.com/search?q={searchTerms}"; } ];
+                          definedAliases = [ "gh" ];
+                        };
                       };
-                      "Nixpkgs" = {
-                        urls = [ { template = "https://search.nixos.org/packages?channel=unstable&query={searchTerms}"; } ];
-                        definedAliases = [
-                          "np"
-                          ","
-                        ];
-                      };
-                      "IMDb" = {
-                        urls = [ { template = "https://www.imdb.com/find?q={searchTerms}&s=all"; } ];
-                        definedAliases = [ "imdb" ];
-                      };
-                      "youtube" = {
-                        urls = [ { template = "https://www.youtube.com/results?search_query={searchTerms}"; } ];
-                        definedAliases = [ "y" ];
-                      };
-                      "GitHub" = {
-                        urls = [ { template = "https://github.com/search?q={searchTerms}"; } ];
-                        definedAliases = [ "gh" ];
-                      };
-                    };
                     default = "google";
                   };
                 };
