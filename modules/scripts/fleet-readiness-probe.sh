@@ -127,7 +127,7 @@ REMOTE
 [ -e /run/systemd/system/moonshine.service.d/91-pr227-test.conf ] && runtime=true || runtime=false
 [ -e /etc/systemd/system.control/moonshine.service.d/91-pr227-test.conf ] && persistent=true || persistent=false
 [ -e /nix/var/nix/gcroots/moonshine-pr227-persistent ] && root=true || root=false
-if systemd-inhibit --list --json=short 2>/dev/null | grep -q '"who":"Moonshine"' || pgrep -x gamescope-wl >/dev/null 2>&1; then
+if systemd-inhibit --list --json=short 2>/dev/null | grep -q '"who":"Moonshine"'; then
   active=true
 else
   active=false

@@ -11,9 +11,9 @@ available upstream.
    (`$FLEET_UPDATE_STATE/diff-<host>.txt`) through
    `modules/scripts/package-update-event.py`, which emits a protocol-v1 event
    containing only relevant packages with a real version transition — filtered
-   from the fleet's triage tiers (kernel, Mesa, systemd, Nix, plus Gamescope,
-   Moonshine, Steam, Niri, Neovim, Heroic, Jellyfin, Firefox, Chromium,
-   Authelia). Path additions and removals, size-only rebuilds, and unknown
+   from the fleet's triage tiers (kernel, Mesa, systemd, Nix, plus Moonshine,
+   Steam, Niri, Neovim, Heroic, Jellyfin, Firefox, Chromium, Authelia). Path
+   additions and removals, size-only rebuilds, and unknown
    packages are omitted; the raw diff stays on disk.
 
 2. Pi persists each serialized event atomically in a private outbox before
