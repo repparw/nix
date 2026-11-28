@@ -1,6 +1,5 @@
 { ... }:
 {
-  # Fleet topology; user roles are selected by the host-qualified Den aspects.
   den.hosts = {
     x86_64-linux.alpha = {
       serviceAddress = "100.80.210.20";
