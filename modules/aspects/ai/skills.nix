@@ -1,6 +1,7 @@
 {
   den,
   inputs,
+  lib,
   ...
 }:
 {
@@ -36,6 +37,28 @@
             "reflect"
             "setup-pstack"
           ];
+          pstackEntries = builtins.readDir skillsDir;
+          principleNames = builtins.attrNames (
+            lib.filterAttrs (name: type: type == "directory" && lib.hasPrefix "principle-" name) pstackEntries
+          );
+          potetoModeSkill = pkgs.runCommand "pstack-poteto-mode-skill" { } ''
+            cp -r ${skillsDir}/poteto-mode "$out"
+            chmod -R u+w "$out"
+            mkdir -p "$out/references"
+            ${lib.concatMapStringsSep "\n" (name: ''
+              cp -r ${skillsDir}/${name} "$out/references/${name}"
+            '') principleNames}
+            ${lib.getExe pkgs.python3} - "$out/SKILL.md" <<'PY'
+            import pathlib, sys
+
+            path = pathlib.Path(sys.argv[1])
+            text = path.read_text()
+            old = "Read the leaf skill in full for any principle you apply. Each entry names when it applies. Each leaf is the **principle-<title>** skill"
+            new = "Read the leaf reference in full for any principle you apply. Each entry names when it applies. Each leaf lives at `references/principle-<title>/SKILL.md` inside this skill's folder"
+            assert old in text, "expected Principles pointer line in poteto-mode/SKILL.md"
+            path.write_text(text.replace(old, new, 1))
+            PY
+          '';
           pocockSource = inputs.mattpocock-skills;
           noCommentsSource = pkgs.fetchurl {
             url = "https://raw.githubusercontent.com/backnotprop/pstack/25abb38559ddbabec563646224d09eff9a250eca/skills/no-comments/SKILL.md";
@@ -52,30 +75,40 @@
           '';
         in
         {
-          programs.opencode.skills =
-            lib.mapAttrs (name: _: skillsDir + "/${name}") (
-              lib.filterAttrs (name: type: type == "directory" && !(builtins.elem name excludedSkills)) (
-                builtins.readDir skillsDir
-              )
-            )
-            // {
-              deslop = teamSkill "deslop";
-              no-comments = "${noCommentsSkill}";
-              control-cli = teamSkill "control-cli";
-              control-ui = teamSkill "control-ui";
-              retro = "${pocockSource}/skills/engineering/retro";
-              writing-for-agents = "${pocockSource}/skills/productivity/writing-for-agents";
-              diagnosing-bugs = "${pocockSource}/skills/engineering/diagnosing-bugs";
-              pr = "${pocockSource}/skills/engineering/pr";
-            };
-
           programs.codex = {
             enable = true;
             package = null;
-            skills = config.programs.opencode.skills;
             enableMcpIntegration = true;
             mutableSettings = true;
           };
+
+          home.file =
+            lib.mapAttrs' (name: source: lib.nameValuePair ".agents/skills/${name}" { inherit source; }) (
+              lib.mapAttrs (name: _: skillsDir + "/${name}") (
+                lib.filterAttrs (
+                  name: type:
+                  type == "directory"
+                  && !(builtins.elem name excludedSkills)
+                  && !(lib.hasPrefix "principle-" name)
+                  && name != "poteto-mode"
+                ) pstackEntries
+              )
+              // {
+                poteto-mode = "${potetoModeSkill}";
+                deslop = teamSkill "deslop";
+                no-comments = "${noCommentsSkill}";
+                control-cli = teamSkill "control-cli";
+                control-ui = teamSkill "control-ui";
+                retro = "${pocockSource}/skills/engineering/retro";
+                writing-for-agents = "${pocockSource}/skills/productivity/writing-for-agents";
+                diagnosing-bugs = "${pocockSource}/skills/engineering/diagnosing-bugs";
+                pr = "${pocockSource}/skills/engineering/pr";
+              }
+            )
+            // {
+              ".gemini/config/skills".source =
+                config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.agents/skills";
+            };
         };
     };
 }

@@ -26,7 +26,6 @@
       }:
       let
         antigravityRuntime = pkgs.callPackage ../../_packages/antigravity-cli-runtime.nix { };
-        providerState = import ../../_packages/t3code-provider-state.nix { inherit pkgs; };
 
         providerInstances = {
           antigravity = {
@@ -97,36 +96,6 @@
             '';
           };
         };
-
-        # Home Manager merges mutable settings instead of replacing them, so
-        # omitted provider instances would otherwise survive in the live file.
-        home.activation.t3codeProviderStateActivation =
-          lib.hm.dag.entryAfter
-            [
-              "t3codeSettingsActivation"
-            ]
-            ''
-              if [[ -v DRY_RUN ]]; then
-                echo 'Would reconcile T3 Code provider instances and stale caches.'
-              else
-                provider_state=$(
-                  ${providerState.cleanupScript} \
-                    ${lib.escapeShellArg "${config.home.homeDirectory}/.t3/userdata/settings.json"} \
-                    ${lib.escapeShellArg "${config.home.homeDirectory}/.t3/caches"} \
-                    ${lib.escapeShellArg (builtins.toJSON (lib.attrNames providerInstances))} \
-                    ${lib.escapeShellArg "${config.home.homeDirectory}/.t3/userdata/provider-instances.sha256"}
-                )
-                if [ "$provider_state" = changed ]; then
-                  # Home Manager's system activation runs with a minimal PATH;
-                  # a bare systemctl is not found there (NixOS/nixpkgs pattern:
-                  # use the store path, like fleet-controller's scripts).
-                  if ! ${lib.getExe' pkgs.systemd "systemctl"} --user restart t3code.service; then
-                    rm -f ${lib.escapeShellArg "${config.home.homeDirectory}/.t3/userdata/provider-instances.sha256"}
-                    exit 1
-                  fi
-                fi
-              fi
-            '';
       };
   };
 

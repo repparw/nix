@@ -6,7 +6,7 @@ description: Track an upstream fix in this flake's inputs, prepare validated cle
 # Watch upstream
 
 GitHub Actions owns detection and cleanup publication. Watcher contracts live
-in `.github/upstream/watchers.json`; `upstream-watch.yml` runs detection,
+in `modules/aspects/upstream/watchers.json`; `upstream-watch.yml` runs detection,
 `lock-update.yml` owns lock publication and the atomic planner, and Pi owns
 fleet deployment plus runtime readiness probes for host-owned watchers.
 Before adding, changing, or retiring a watcher, read
@@ -40,8 +40,11 @@ These are case-by-case checks performed while preparing the PR, not a
 requirement to add a custom CI job or permanent test for each watcher. State
 what was verified and what remains untested in the PR description.
 
-Register the watcher's input and lifecycle mode in `watchers.json`, and add
-its readiness detector. Keep the reason for the workaround in its source file.
+Register the watcher's input and lifecycle mode in `modules/aspects/upstream/watchers.json`.
+For plain PR waits, declare `repo` and `pr` directly in `watchers.json` (no Python detector needed),
+and optionally set `"coupling": "bundle"` for ungated PR waits so `lock-update.yml` drops the file
+atomically once `PINNED-READY`. Add a Python detector in `.github/scripts/upstream-readiness.py` only
+for non-PR or custom source/release checks. Keep the reason for the workaround in its source file.
 Update the migration contract only when publication policy, safety boundaries,
 or completion procedures change, not for routine watcher additions or
 removals. Do not open a per-watcher tracker issue: ready notices go to the run

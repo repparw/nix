@@ -6,17 +6,18 @@
   den.aspects.gui.provides.todo = {
     homeManager =
       {
-        config,
+        lib,
         osConfig,
         pkgs,
         ...
       }:
       let
         caldavList = "https://leo.it.tab.digital/remote.php/dav/calendars/ubritos%40gmail.com/personal";
+        # Reuse the Nextcloud app password provisioned by ../cli/rclone.nix.
         passwordFile = osConfig.sops.secrets.rcloneNextcloud.path;
 
-        todoExtension = pkgs.runCommandLocal "vicinae-todo-extension" { } ''
-          mkdir -p "$out/assets"
+        todoExtension = pkgs.runCommandLocal "todo" { } ''
+          mkdir -p "$out"
           cp ${
             pkgs.writeText "vicinae-todo-package.json" (
               builtins.toJSON {
@@ -24,10 +25,11 @@
                   "https://raw.githubusercontent.com/vicinaehq/vicinae/refs/heads/main/extra/schemas/extension.json";
                 name = "todo";
                 title = "Todo";
-                description = "Create tasks in the Nextcloud lists used by tasks-org";
+                description = "Create tasks in the personal Nextcloud list";
                 categories = [ "Productivity" ];
                 license = "MIT";
                 author = "repparw";
+                # Vicinae supplies this API at runtime.
                 dependencies."@vicinae/api" = "0.16.8";
                 commands = [
                   {
@@ -57,12 +59,13 @@
           cp ${pkgs.writeText "vicinae-todo-add.js" ''
             "use strict";
 
-            const { closeMainWindow, showToast, Toast } = require("@vicinae/api");
+            const { showHUD, showToast, Toast } = require("@vicinae/api");
+            const { closeMainWindow } = require("@raycast/api");
             const { execFile } = require("node:child_process");
             const { promisify } = require("node:util");
 
             const execFileAsync = promisify(execFile);
-            const todo = "${config.home.profileDirectory}/bin/t";
+            const todo = "${lib.getExe t}";
 
             function getArguments(props) {
               const args = props?.arguments ?? {};
@@ -84,14 +87,12 @@
                 return;
               }
 
+              const toast = await showToast({
+                style: Toast.Style.Animated,
+                title: "Creating task...",
+              });
               try {
-                await execFileAsync(todo, due ? [task, due] : [task]);
-                await showToast({
-                  style: Toast.Style.Success,
-                  title: "Task created",
-                  message: due ? task + " - " + due : task,
-                });
-                await closeMainWindow();
+                await execFileAsync(todo, due ? [task, due] : [task], { timeout: 35_000 });
               } catch (error) {
                 const message =
                   error?.stderr?.trim() ||
@@ -99,11 +100,21 @@
                   error?.message ||
                   String(error);
 
-                await showToast({
-                  style: Toast.Style.Failure,
-                  title: "Failed to create task",
-                  message,
-                });
+                toast.title = "Failed to create task";
+                toast.message = message;
+                toast.style = Toast.Style.Failure;
+                return;
+              }
+
+              if (typeof showHUD === "function") {
+                await toast.hide();
+                await showHUD("Task created");
+              } else {
+                toast.title = "Task created";
+                toast.message = due ? task + " - " + due : task;
+                toast.style = Toast.Style.Success;
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+                await closeMainWindow();
               }
             }
 
@@ -119,30 +130,58 @@
             util-linux
           ];
           text = ''
-            if [[ $# -lt 1 || $# -gt 2 || -z "$1" ]]; then
+            trim() {
+                local value="$1"
+                value="''${value#"''${value%%[![:space:]]*}"}"
+                printf '%s' "''${value%"''${value##*[![:space:]]}"}"
+            }
+
+            task_summary=$(trim "''${1-}")
+            if [[ $# -lt 1 || $# -gt 2 || -z "$task_summary" ]]; then
                 echo 'Usage: t "TASK SUMMARY" [DATETIME]' >&2
                 exit 1
             fi
 
-            if [[ ! -f "${passwordFile}" ]]; then
-                echo "Error: Nextcloud secret file not found at ${passwordFile}" >&2
-                exit 1
-            fi
-
-            task_summary=$1
+            datetime=$(trim "''${2-}")
             due_line=""
-            if [[ $# -eq 2 && -n $2 ]]; then
-                datetime=$2
-                if ! due_epoch=$(date -d "$datetime" +%s 2>/dev/null); then
+            timed_due=false
+            if [[ -n "$datetime" ]]; then
+                # GNU date accepts relative offsets without the leading "in".
+                date_input="''${datetime,,}"
+                if [[ "$date_input" =~ ^in[[:space:]]+ ]]; then
+                    date_input="''${date_input#"''${BASH_REMATCH[0]}"}"
+                fi
+                if [[ "$date_input" =~ (^|[[:space:]])(noon|midnight)($|[[:space:]]) ]]; then
+                    clock=12:00
+                    if [[ "''${BASH_REMATCH[2]}" == midnight ]]; then
+                        clock=00:00
+                    fi
+                    date_input="''${date_input/"''${BASH_REMATCH[0]}"/"''${BASH_REMATCH[1]}$clock''${BASH_REMATCH[3]}"}"
+                fi
+                if ! due_epoch=$(date -d "$date_input" +%s 2>/dev/null); then
                     echo "Error: Invalid due date: $datetime" >&2
                     exit 1
                 fi
 
-                if [[ "''${datetime,,}" =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2}|today|tomorrow|(next[[:space:]]+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday))$ ]]; then
-                    due_line="DUE;VALUE=DATE:$(date -d "@$due_epoch" +%Y%m%d)"
-                else
+                time_pattern='[0-9]:[0-9]|[0-9]t[0-9]|^@|(^|[^[:alpha:]])([ap]\.?m\.?|hours?|mins?|minutes?|secs?|seconds?)($|[^[:alpha:]])'
+                if [[ "$date_input" =~ $time_pattern ]]; then
+                    timed_due=true
                     due_line="DUE:$(date -u -d "@$due_epoch" +%Y%m%dT%H%M%SZ)"
+                else
+                    due_line="DUE;VALUE=DATE:$(date -d "@$due_epoch" +%Y%m%d)"
                 fi
+            fi
+
+            if [[ ! -r "${passwordFile}" ]]; then
+                echo "Error: Nextcloud secret file is unreadable at ${passwordFile}" >&2
+                exit 1
+            fi
+            # Accept a secret with or without a final newline.
+            IFS= read -r nc_app_pass < "${passwordFile}" || true
+            nc_app_pass="''${nc_app_pass%$'\r'}"
+            if [[ -z "$nc_app_pass" ]]; then
+                echo "Error: Nextcloud secret file is empty at ${passwordFile}" >&2
+                exit 1
             fi
 
             escape_ical_text() {
@@ -185,7 +224,6 @@
             task_text=$(escape_ical_text "$task_summary")
             task_uid=$(uuidgen)
             dtstamp=$(date -u +%Y%m%dT%H%M%SZ)
-            nc_app_pass=$(cat "${passwordFile}")
             curl_user=$(escape_curl_config "ubritos@gmail.com:$nc_app_pass")
 
             ical_lines=(
@@ -195,13 +233,15 @@
                 "BEGIN:VTODO"
                 "UID:$task_uid"
                 "DTSTAMP:$dtstamp"
+                "CREATED:$dtstamp"
+                "STATUS:NEEDS-ACTION"
+                "PERCENT-COMPLETE:0"
                 "SUMMARY:$task_text"
             )
             if [[ -n "$due_line" ]]; then
                 ical_lines+=("$due_line")
             fi
-            ical_lines+=("PRIORITY:9" "PERCENT-COMPLETE:0")
-            if [[ -n "$due_line" ]]; then
+            if [[ "$timed_due" == true ]]; then
                 ical_lines+=(
                     "BEGIN:VALARM"
                     "ACTION:DISPLAY"
@@ -215,14 +255,17 @@
                 "END:VCALENDAR"
             )
 
+            response_file=$(mktemp)
+            trap 'rm -f -- "$response_file"' EXIT
             if ! http_code=$(
                 for line in "''${ical_lines[@]}"; do
                     fold_ical_line "$line"
                 done |
-                    curl -sS -o /dev/null -w '%{http_code}' \
+                    curl -sS -o "$response_file" -w '%{http_code}' \
                         --connect-timeout 10 --max-time 30 \
                         --config <(printf 'user = "%s"\n' "$curl_user") \
                         -X PUT \
+                        -H 'If-None-Match: *' \
                         -H 'Content-Type: text/calendar; charset=utf-8' \
                         --data-binary @- \
                         "${caldavList}/$task_uid.ics"
@@ -235,6 +278,11 @@
                 echo "Task created: $task_summary"
             else
                 echo "Error: Failed to create task (HTTP status: $http_code)." >&2
+                response=$(head -c 512 "$response_file" | tr '\r\n\t' ' ' | LC_ALL=C tr -d '[:cntrl:]')
+                response=$(trim "$response")
+                if [[ -n "$response" ]]; then
+                    printf '%s\n' "$response" >&2
+                fi
                 exit 1
             fi
           '';

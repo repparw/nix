@@ -29,6 +29,8 @@ The OpenCode v2 package watcher was retired after #505 and #229. Active watcher
 readiness notices go to the run summary and Discord. Package readiness does
 not replace fleet runtime verification.
 
+Simple PR-wait watchers declare `repo` and `pr` directly in `modules/aspects/upstream/watchers.json` without editing Python. Ungated pure PR waits may set `"coupling": "bundle"` so `upstream-plan.py` bundles their single-file `git rm` directly into the `lock-update.yml` atomic PR once `PINNED-READY` without probing or blocking `flake.lock` while waiting. Watchers with custom `upstream-validate.py` build gates remain on isolated `post-lock` cleanup PRs (or `"coupling": "apply"` when a patch must drop atomically).
+
 Independent `post-lock` contracts publish one-file deletion PRs from the
 checked-out main revision. The filename matches the watcher ID, so no stored
 patch or per-watcher cleanup recipe is needed. The publisher checks the exact
@@ -38,7 +40,7 @@ One failed cleanup does not prevent other watchers from processing.
 Post-lock workarounds live under `modules/aspects/upstream/`. Each module
 contributes to its permanent owner through `den.aspects.<owner>.provides.<aspect>`,
 without changing the provided aspect's name or explicit host includes.
-The qBittorrent, Gamescope vkroots, Tasks.org, wpaperd, and T3 Code
+The qBittorrent, Tasks.org, wpaperd, and T3 Code
 workarounds contribute directly to permanent aspects, without separate
 inclusion entries. Each workaround file can therefore be added or removed
 without editing any default, role, or permanent aspect. T3 Code's permanent
@@ -70,14 +72,13 @@ aggregate also includes actual package builds and generated behavior checks
 from `upstream-validate.py`. T3 split candidates use native x86 and ARM jobs.
 The package-specific gates are:
 
-| Watcher           | Additional verification                                                                                   |
-| ----------------- | --------------------------------------------------------------------------------------------------------- |
-| t3code-connect    | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme  |
-| t3code-split      | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop |
-| tasks-org         | Build the upstream Tasks.org package                                                                      |
-| qbittorrent       | Pinned source tag contains upstream #24055; build the unpatched no-X package                              |
-| wpaperd-fix       | Pinned source contains 442b962; build the unpatched package                                               |
-| gamescope-vkroots | Inspect source after Nixpkgs patches at both flagged-queue lookup sites; build with enableWsi=true        |
+| Watcher        | Additional verification                                                                                   |
+| -------------- | --------------------------------------------------------------------------------------------------------- |
+| t3code-connect | Desktop and server bundles contain the configured Connect identifiers; desktop entry supports the scheme  |
+| t3code-split   | Native ARM CLI builds, Pi/Epsilon select it with no Electron in the closure; Alpha selects/builds desktop |
+| tasks-org      | Build the upstream Tasks.org package                                                                      |
+| qbittorrent    | Pinned source tag contains upstream #24055; build the unpatched no-X package                              |
+| wpaperd-fix    | Pinned source contains 442b962; build the unpatched package                                               |
 
 Nautilus is notify-only. Ready notices print in every upstream-watch run
 summary and, once per status change, post to the fleet Discord channel
@@ -120,11 +121,6 @@ pre-gate run, or silence from the transport keeps the event queued for
 retry, so the weekly Jellyfin scan drop cannot be orphaned by the
 retirement.
 
-Gamescope inspects `inputs.nixpkgs.legacyPackages`, bypassing repository
-overlays. Alpha's patched package cannot establish upstream readiness. Its
-cleanup retains WSI, removes only the queue workaround, and builds with
-`enableWsi=true`. It requires no GPU or Alpha runtime test.
-
 Run `python3 .github/scripts/upstream-readiness.test.py` for detector fixtures
 and `python3 .github/scripts/upstream-publish.test.py` for independent
 publication, interruption recovery, drift rejection, and notification deduplication.
@@ -132,8 +128,8 @@ publication, interruption recovery, drift rejection, and notification deduplicat
 ## Lock candidate planner (apply-coupled cleanups)
 
 `upstream-plan.py plan --old BASE --candidate CANDIDATE` runs **before** the lock
-updater publishes to main. Watcher contracts live in `watchers.json`.
-Watchers with `coupling: apply` (qbittorrent, gamescope-vkroots) break the
+updater publishes to main. Watcher contracts live in `modules/aspects/upstream/watchers.json` alongside the workaround modules.
+Watchers with `coupling: apply` (qbittorrent) break the
 moment the candidate pin carries their fix — or any
 context-shifting bump of their package — so their file removal rides the lock
 candidate instead of racing the post-lock sweep. Readiness runs against the

@@ -53,7 +53,7 @@ extlinux via the Pi firmware.
    ```sh
    nix flake check
    nix run .#deploy-rs -- .#alpha --dry-activate
-   ssh root@192.168.0.4 'fleet-update deploy alpha'
+   ssh root@pi 'fleet-update deploy alpha'
    ```
 
 ## Related

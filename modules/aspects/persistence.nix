@@ -58,6 +58,10 @@
               directory = "/var/lib/host-recovery";
               mode = "0700";
             }
+            {
+              directory = "/var/lib/tailscale";
+              mode = "0700";
+            }
           ]
           ++ lib.optionals config.services.timesyncd.enable [
             {

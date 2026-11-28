@@ -113,7 +113,7 @@ in
               check_units ${lib.escapeShellArg config.networking.hostName} ""
               if [ "$local_only" != 1 ]; then
                 ${lib.concatMapStringsSep "\n" (
-                  host: "check_units ${lib.escapeShellArg host} ${lib.escapeShellArg cfg.hostSshAddresses.${host}}"
+                  host: "check_units ${lib.escapeShellArg host} ${lib.escapeShellArg cfg.hostAddresses.${host}}"
                 ) remoteHosts}
               fi
             fi
@@ -222,7 +222,7 @@ in
           modules.coredump-watch.script = coredumpsScript;
 
           programs.ssh.knownHosts.hermes-crash-intake = lib.mkIf cfg.enable {
-            hostNames = [ config.modules.services.hostSshAddresses.epsilon ];
+            hostNames = [ config.modules.services.hostAddresses.epsilon ];
             publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINE+UZW7+eImXJ4pM8P0onKRk9hNnEcJeBCpSv+GhPRy";
           };
 
@@ -236,7 +236,7 @@ in
             environment = {
               HOSTNAME = config.networking.hostName;
               MUTE_JSON = builtins.toJSON cfg.mute;
-              HERMES_TARGET = "root@${config.modules.services.hostSshAddresses.epsilon}";
+              HERMES_TARGET = "root@${config.modules.services.hostAddresses.epsilon}";
               HERMES_SSH_IDENTITY = "/home/repparw/.ssh/id_ed25519";
             };
             serviceConfig = {

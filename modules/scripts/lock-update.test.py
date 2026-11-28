@@ -42,7 +42,7 @@ class LockUpdate(unittest.TestCase):
         self.git("config", "user.email", "fixture@example.test", cwd=self.checkout)
         for path in (".github/scripts/upstream-plan.py", ".github/scripts/upstream-readiness.py",
                      ".github/scripts/upstream_cleanup.py",
-                     ".github/upstream/watchers.json"):
+                     "modules/aspects/upstream/watchers.json"):
             dst = self.checkout / path
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(REPO / path, dst)
@@ -54,7 +54,7 @@ class LockUpdate(unittest.TestCase):
                                 "coupling": "apply",
                                 "probe": "nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package"},
         }
-        (self.checkout / ".github/upstream/watchers.json").write_text(json.dumps(registry, indent=2))
+        (self.checkout / "modules/aspects/upstream/watchers.json").write_text(json.dumps(registry, indent=2))
         workaround = self.checkout / "modules/aspects/upstream/qbittorrent.nix"
         workaround.parent.mkdir(parents=True, exist_ok=True)
         workaround.write_text("keep\nqbittorrent-nox.overrideAttrs\nworkaround\n")

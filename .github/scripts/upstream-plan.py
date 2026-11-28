@@ -13,7 +13,7 @@ import subprocess
 from upstream_cleanup import remove_module
 
 ROOT = Path(__file__).resolve().parents[2]
-REGISTRY = ROOT / ".github/upstream/watchers.json"
+REGISTRY = ROOT / "modules/aspects/upstream/watchers.json"
 
 def pin(lock, name):
     node = lock["nodes"]["root"]["inputs"][name]
@@ -64,20 +64,41 @@ def plan(old, candidate, registry, readiness_fn=None, probe_fn=None,
     for name, spec in registry.items():
         if spec["mode"] not in ("post-lock", "notify-only"):
             raise ValueError(f"unsupported watcher mode: {name}")
+        coupling = spec.get("coupling")
+        if coupling is not None and coupling not in ("apply", "bundle"):
+            raise ValueError(f"unsupported watcher coupling: {name}")
+        if coupling == "bundle":
+            if spec["mode"] != "post-lock":
+                raise ValueError(f"{name}: bundle coupling requires post-lock mode")
+            if spec.get("validation"):
+                raise ValueError(f"{name}: bundle coupling is only for ungated PR waits")
+            if not spec.get("repo") or not spec.get("pr"):
+                raise ValueError(f"{name}: bundle coupling requires declarative repo and pr")
 
-    pin_moved = pin(old, "nixpkgs") != pin(candidate, "nixpkgs")
+    moved_inputs = {}
+    def input_moved(input_name):
+        if input_name not in moved_inputs:
+            moved_inputs[input_name] = pin(old, input_name) != pin(candidate, input_name)
+        return moved_inputs[input_name]
+
     atomic_names = []
     apply_names = [name for name, spec in registry.items() if spec.get("coupling") == "apply"]
-    # No apply-coupled nixpkgs workaround can become newly ready if the pin
-    # did not change. Inspect exactly the relevant watchers once per candidate.
-    if pin_moved and readiness_fn is None:
-        statuses = _candidate_readiness(apply_names)
+    bundle_names = [name for name, spec in registry.items() if spec.get("coupling") == "bundle"]
+    moved_coupled = [
+        name for name in (*apply_names, *bundle_names)
+        if input_moved(registry[name]["input"])
+    ]
+    # No coupled workaround can become newly ready if its input pin did not
+    # change. Inspect exactly the relevant watchers once per candidate.
+    if moved_coupled and readiness_fn is None:
+        statuses = _candidate_readiness(moved_coupled)
         readiness_fn = statuses.__getitem__
+
     for name in apply_names:
         spec = registry[name]
         if spec["mode"] != "post-lock":
             raise ValueError(f"{name}: apply coupling requires post-lock mode")
-        if not pin_moved:
+        if not input_moved(spec["input"]):
             continue
         status = readiness_fn(name)
         if isinstance(status, str) and status.startswith("unavailable"):
@@ -87,11 +108,22 @@ def plan(old, candidate, registry, readiness_fn=None, probe_fn=None,
             continue  # the workaround is already gone from the candidate tree
         if status == "PINNED-READY":
             atomic_names.append(name)
-        elif pin_moved and build_probe:
+        elif build_probe:
             ok, detail = probe_fn(spec["probe"])
             if not ok:
                 return {"action": "blocked", "atomic": [],
                         "reason": f"{name} workaround no longer applies to the candidate pin: {detail}"}
+
+    for name in bundle_names:
+        spec = registry[name]
+        if not input_moved(spec["input"]):
+            continue
+        status = readiness_fn(name)
+        if isinstance(status, str) and status.startswith("unavailable"):
+            return {"action": "blocked", "atomic": [],
+                    "reason": f"{name} readiness unavailable: {status}"}
+        if status == "PINNED-READY":
+            atomic_names.append(name)
 
     if atomic_names:
         # The combined candidate merge-automates under the #265 policy:
@@ -135,8 +167,8 @@ def main():
         registry = json.loads(args.registry.read_text())
 
         spec = registry.get(args.id, {})
-        if spec.get("coupling") != "apply":
-            raise SystemExit(f"{args.id} is not an apply-coupled cleanup")
+        if spec.get("coupling") not in ("apply", "bundle"):
+            raise SystemExit(f"{args.id} is not a coupled cleanup")
         apply_recipe(args.id, spec)
         return
     result = plan(json.loads(args.old.read_text()),

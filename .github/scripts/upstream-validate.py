@@ -63,6 +63,16 @@ def validate(name, architecture):
         package = build("alpha.config.home-manager.users.repparw.programs.t3code.package")
         require(str(package) == evaluate("alpha.pkgs.t3code-desktop.outPath"),
                 "Alpha must select the upstream desktop package")
+    elif name == "t3code-0-1-13":
+        split = json.loads(command("nix", "eval", "--json", "--no-update-lock-file",
+                                   ".#nixosConfigurations.alpha.pkgs", "--apply", "p: p ? t3code-cli"))
+        for host in ("alpha", "pi", "epsilon"):
+            version = evaluate(f"{host}.config.home-manager.users.repparw.programs.t3code.package.version")
+            require(bool(re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)),
+                    f"unexpected {host} T3 Code version")
+            require(tuple(map(int, version.split("."))) >= (0, 1, 13),
+                    f"{host} T3 Code is older than 0.1.13")
+        build("alpha.pkgs.t3code-desktop" if split else "alpha.pkgs.t3code")
     elif name == "moonshine-0-18":
         # Validate the real packaged version after deleting the temporary
         # module, then prove the service selects that upstream package.
@@ -75,17 +85,6 @@ def validate(name, architecture):
                 evaluate("alpha.pkgs.moonshine.outPath"),
                 "Moonshine service still has a package override")
         build("alpha.config.services.moonshine.package")
-    elif name == "gamescope-vkroots":
-        # Same raw-package source predicate as readiness, after removing the
-        # local override. Then build the real WSI package, without stubs.
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("readiness", ROOT / ".github/scripts/upstream-readiness.py")
-        detector = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(detector)
-        require(detector.gamescope_fixed(), "flagged queue fix absent from patched upstream source")
-        expression = 'let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT"); in f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope.override { enableWsi = true; }'
-        subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--expr", expression],
-                       env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, check=True)
     elif name == "paperless-torch":
         # Verify the real Paperless package in its container without the override.
         build("epsilon.config.containers.paperless.config.services.paperless.package")
@@ -97,6 +96,10 @@ def validate(name, architecture):
                      "qbittorrent": "alpha.config.containers.qbittorrent.config.services.qbittorrent.package"}[name]
         build(attribute)
     else:
+        registry = json.loads((ROOT / "modules/aspects/upstream/watchers.json").read_text())
+        spec = registry.get(name, {})
+        if spec.get("coupling") == "bundle" and not spec.get("validation"):
+            return
         raise ValueError(f"no package validation for {name}")
 
 

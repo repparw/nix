@@ -1,6 +1,5 @@
 { den, ... }:
 {
-  # release); the vendored 2.0.26 workaround was retired per issue #229.
   den.aspects.ai.provides.opencode = {
     homeManager =
       {
@@ -11,6 +10,7 @@
       }:
       let
         json5 = pkgs.python3Packages.toPythonApplication pkgs.python3Packages.json5;
+        defuddle = lib.getExe pkgs.defuddle;
       in
       {
         home.activation.t3codeModelHides = lib.hm.dag.entryAfter [ "t3codeSettingsActivation" ] (
@@ -43,6 +43,43 @@
             fi
           ''
         );
+        xdg.configFile."opencode/plugins/webfetch-defuddle.ts".text = ''
+          import { execFile } from "node:child_process"
+          import { promisify } from "node:util"
+          import { Plugin } from "@opencode/plugin"
+
+          const run = promisify(execFile)
+          const DEFUDDLE = ${builtins.toJSON defuddle}
+          const MAX_CHARS = 50_000
+
+          export default Plugin.define({
+            id: "local.webfetch-defuddle",
+            async setup(ctx) {
+              await ctx.tool.transform((editor) => {
+                editor.add({
+                  name: "webfetch",
+                  description: "Fetch a web page as clean Markdown using defuddle.",
+                  input: {
+                    type: "object",
+                    properties: { url: { type: "string" } },
+                    required: ["url"],
+                    additionalProperties: false,
+                  },
+                  execute: async (input, { signal }) => {
+                    const { url } = input as { url: string }
+                    const { stdout } = await run(DEFUDDLE, ["parse", url, "--md"], {
+                      signal,
+                      timeout: 30_000,
+                    })
+                    const text = stdout.trim()
+                    if (!text) throw new Error("defuddle returned empty output")
+                    return { content: text.slice(0, MAX_CHARS) }
+                  },
+                })
+              })
+            },
+          })
+        '';
         programs.opencode = {
           enable = true;
           enableMcpIntegration = true;

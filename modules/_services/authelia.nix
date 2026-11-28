@@ -185,10 +185,8 @@ in
           "SMTP_PASSWORD:/run/secrets/authelia/SMTP_PASSWORD"
           "INITIAL_USERS_DATABASE:/run/secrets/authelia/USERS_DATABASE"
         ];
-        # "+" runs this as root before the User= drop, so it applies
-        # inside the container's 1:1 userns to the host-side directory.
+        # Seed an absent users database without altering existing writable state.
         ExecStartPre = [
-          "+${pkgs.coreutils}/bin/chown -R 999:999 /config"
           "+${pkgs.writeShellScript "authelia-seed-users-database" ''
             if [ ! -e /config/users_database.yml ]; then
               ${pkgs.coreutils}/bin/install --owner=999 --group=999 --mode=0600 ${credentialsDir}/INITIAL_USERS_DATABASE /config/users_database.yml

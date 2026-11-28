@@ -6,42 +6,17 @@
 {
   den.aspects.alpha = {
     includes = [
-      den.aspects.alpha._.backup
+      den.aspects.networking._.home
+      den.aspects.backup
       den.aspects.btrfs-maintenance
       den.aspects.logid
-      den.aspects.networking._.wan-ingress-shaping
       den.aspects.media-stack
+      den.aspects.workstation
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.free-model-watch
       den.aspects.cachix-push
     ];
-
-    provides.backup = {
-      includes = [ den.aspects.backup ];
-      nixos = { config, ... }: {
-        modules.backup.exports = {
-          alpha-home = {
-            unit = "home-state-backup-offsite.service";
-            path = "/run/home-state-backup/offsite";
-            pattern = ".export-status.json";
-            statusFile = "/run/home-state-backup/offsite/.export-status.json";
-          };
-          jellyfin = {
-            unit = "jellyfin-backup.service";
-            path = config.modules.services.definitions.jellyfin.backup.path;
-            pattern = "jellyfin-backup-*.zip";
-          };
-        }
-        // lib.genAttrs [ "sonarr" "radarr" "prowlarr" "bazarr" ] (name: {
-          path =
-            config.modules.services.definitions.${name}.backup.path
-            + lib.optionalString (name != "bazarr") "/scheduled";
-          pattern = "${name}_backup_*.zip";
-          maxAgeSeconds = 26 * 60 * 60;
-        });
-      };
-    };
 
     nixos =
       {
@@ -145,6 +120,26 @@
             "Projects/nix/infra/router/terraform.tfstate"
           ];
           homeStateExportScript = prepareHomeState;
+          exports = {
+            alpha-home = {
+              unit = "home-state-backup-offsite.service";
+              path = "/run/home-state-backup/offsite";
+              pattern = ".export-status.json";
+              statusFile = "/run/home-state-backup/offsite/.export-status.json";
+            };
+            jellyfin = {
+              unit = "jellyfin-backup.service";
+              path = config.modules.services.definitions.jellyfin.backup.path;
+              pattern = "jellyfin-backup-*.zip";
+            };
+          }
+          // lib.genAttrs [ "sonarr" "radarr" "prowlarr" "bazarr" ] (name: {
+            path =
+              config.modules.services.definitions.${name}.backup.path
+              + lib.optionalString (name != "bazarr") "/scheduled";
+            pattern = "${name}_backup_*.zip";
+            maxAgeSeconds = 26 * 60 * 60;
+          });
         };
 
         modules.coredump-watch = {
@@ -286,6 +281,8 @@
         boot.kernel.sysctl."vm.swappiness" = 10;
 
         services = {
+          displayManager.autoLogin.user = "repparw";
+          moonshine.user = "repparw";
           udev.extraRules = ''
             # Disable USB autosuspend for Intel AX210 Bluetooth to fix sleep/wake
             ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0032", ATTR{power/control}="on"
@@ -353,44 +350,11 @@
           };
           networks = {
             "10-eth" = {
-              matchConfig.Name = "eth0";
-              address = [ "192.168.0.18/24" ];
-              routes = [ { Gateway = "192.168.0.1"; } ];
               dns = [
                 "1.1.1.1"
                 "1.0.0.1"
               ];
               linkConfig.RequiredForOnline = "routable";
-              extraConfig = ''
-                [HierarchyTokenBucket]
-                Parent=root
-                Handle=1
-                DefaultClass=20
-
-                [HierarchyTokenBucketClass]
-                Parent=1:0
-                ClassId=1:10
-                Rate=6500K
-                CeilRate=6500K
-                QuantumBytes=1514
-
-                [HierarchyTokenBucketClass]
-                Parent=1:0
-                ClassId=1:20
-                Rate=1G
-                CeilRate=1G
-                QuantumBytes=1514
-
-                [CAKE]
-                Parent=1:10
-                Handle=10
-                Bandwidth=6500K
-                PriorityQueueingPreset=diffserv4
-
-                [FairQueueingControlledDelay]
-                Parent=1:20
-                Handle=20
-              '';
             };
             "20-wifi" = {
               matchConfig.Name = "wlan0";
@@ -406,39 +370,14 @@
 
         services.resolved.settings.Resolve.DNSOverTLS = true;
 
-        networking.firewall.interfaces.eth0 = {
-          allowedTCPPorts = [
-            54535
-          ];
-          allowedUDPPorts = [
-            54535
-          ];
+        networking.wireless.iwd = {
+          enable = true;
+          settings = {
+            General.AddressRandomization = "network";
+            Settings.AutoConnect = true;
+          };
         };
-
-        networking.firewall.extraInputRules = ''
-          iifname "eth0" ip saddr { ${config.modules.services.hostAddresses.pi}, ${config.modules.services.hostAddresses.epsilon} } tcp dport { 3000, 8081 } accept comment "edge ingress -> native alpha listeners"
-          iifname "eth0" ip saddr ${config.modules.services.hostAddresses.epsilon} tcp dport 3773 accept comment "Hermes -> T3 MCP"
-        '';
-
-        networking.firewall.extraForwardRules = ''
-          iifname "eth0" ip saddr { ${config.modules.services.hostAddresses.pi}, ${config.modules.services.hostAddresses.epsilon} } oifname "ve-*" accept comment "edge ingress -> published container backends"
-        '';
-
-        networking.nftables.tables.qos = {
-          family = "inet";
-          content = ''
-            chain classify_output {
-              type route hook output priority mangle; policy accept;
-              oifname "eth0" rt ip nexthop 192.168.0.1 meta priority set 1:10
-            }
-
-            chain classify_forward {
-              type filter hook forward priority mangle; policy accept;
-              oifname "eth0" rt ip nexthop 192.168.0.1 meta priority set 1:10
-              iifname "ve-qbittorrent" oifname "eth0" rt ip nexthop 192.168.0.1 ip dscp set cs1 comment "Classify qBittorrent as CAKE bulk traffic"
-            }
-          '';
-        };
+        systemd.services.iwd.wantedBy = lib.mkForce [ ];
 
       };
   };

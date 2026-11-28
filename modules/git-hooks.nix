@@ -12,15 +12,6 @@
     { config, pkgs, ... }:
     let
       agentDocsPython = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
-      # convco 0.7.2 requires libgit2-experimental for SHA-256 repositories.
-      # The pinned nixpkgs build forces system libgit2 without providing it.
-      # Build the bundled libgit2 until nixpkgs includes the matching library.
-      convco = pkgs.convco.overrideAttrs (old: {
-        preBuild = ''
-          export LIBGIT2_NO_VENDOR=0
-        ''
-        + (old.preBuild or "");
-      });
       bootstrapMarker = "# Managed by modules/git-hooks.nix: worktree bootstrap";
       # [ ! -e ] is true for both absent paths and dangling symlinks.
       # Preserve existing, readable foreign hooks.
@@ -47,10 +38,11 @@
     {
       pre-commit = {
         settings = {
+          package = pkgs.prek;
           hooks = {
             convco = {
               enable = true;
-              package = convco;
+              package = pkgs.convco;
               entry = pkgs.lib.getExe (
                 pkgs.writeShellApplication {
                   name = "convco-hook";
@@ -64,14 +56,17 @@
                         ;;
                     esac
 
-                    ${pkgs.lib.getExe convco} check --from-stdin < "$message_file"
+                    ${pkgs.lib.getExe pkgs.convco} check --from-stdin < "$message_file"
                   '';
                 }
               );
             };
-            prettier = {
+            format = {
               enable = true;
-              files = "\\.md$";
+              entry = "${pkgs.lib.getExe config.formatter} --tree-root . --walk filesystem --no-cache --fail-on-change";
+              files = "\\.(nix|md|sh)$";
+              require_serial = true;
+              before = [ "write-flake" ];
             };
             agent-docs = {
               enable = true;
@@ -81,20 +76,10 @@
               pass_filenames = false;
               files = "^(AGENTS\\.md|docs/.*\\.md|\\.agents/.*\\.md|modules/scripts/check-agent-docs(\\.test)?\\.py)$";
             };
-            nixfmt = {
-              enable = true;
-              package = pkgs.nixfmt;
-            };
-            deadnix = {
-              enable = true;
-              args = [
-                "--edit"
-                "--no-lambda-arg"
-                "--no-lambda-pattern-names"
-              ];
-            };
             shellcheck = {
               enable = true;
+              # treefmt handles *.sh; retain shebang-detected scripts without that extension.
+              excludes = [ "\\.sh$" ];
               types_or = [
                 "shell"
                 "bash"
@@ -168,7 +153,7 @@
         touch "$out"
       '';
 
-      packages.convco-ci = convco;
+      packages.convco-ci = pkgs.convco;
 
       devShells.default = pkgs.mkShell {
         nativeBuildInputs = [

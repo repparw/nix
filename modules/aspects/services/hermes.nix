@@ -184,7 +184,7 @@
               type filter hook forward priority filter; policy accept;
 
               ip saddr ${config.containers.hermes.localAddress} ip daddr ${config.containers.hermes.hostAddress} meta l4proto { tcp, udp } th dport 53 counter accept
-              ip saddr ${config.containers.hermes.localAddress} ip daddr 192.168.0.0/24 counter accept
+              ip saddr ${config.containers.hermes.localAddress} ip daddr { ${config.modules.services.hostAddresses.alpha}, ${config.modules.services.hostAddresses.pi} } counter accept
 
               ip saddr ${config.containers.hermes.localAddress} ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16, 127.0.0.0/8 } counter log prefix "hermes-egress-block: " drop
 

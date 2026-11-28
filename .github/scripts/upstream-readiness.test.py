@@ -160,39 +160,28 @@ class Readiness(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     watch.moonshine_pinned_version("nix-pin")
 
-    def test_gamescope_requires_both_lookup_sites_and_flag_branch(self):
-        site = 'if (queueInfo.flags) { VkDeviceQueueInfo2 q2; dispatch->GetDeviceQueue2(device, &q2, &queue); } else dispatch->GetDeviceQueue(device, family, j, &queue);'
-        self.assertFalse(watch.flagged_queues_fixed('void GetDeviceQueue2();'))
-        self.assertFalse(watch.flagged_queues_fixed(site))
-        self.assertTrue(watch.flagged_queues_fixed(site + site))
+    def test_t3code_0_1_13_requires_source_ancestry_and_distinguishes_pr_state(self):
+        unwrapped_old = 'version = "0.1.8"; tag = "v${finalAttrs.version}";'
+        unwrapped_new = 'version = "0.1.13"; tag = "v${finalAttrs.version}";'
+        with patch.object(watch, "source", return_value=unwrapped_new) as fetched, \
+                patch.object(watch, "contains", return_value=True) as contains, \
+                patch.object(watch, "api") as api:
+            self.assertEqual(watch.detect("t3code-0-1-13", LOCK), "PINNED-READY")
+            fetched.assert_called_once_with("NixOS/nixpkgs", watch.T3CODE_UNWRAPPED, "nix-pin")
+            contains.assert_called_once_with("pingdotgg/t3code", watch.T3CODE_0_1_13_COMMIT, "v0.1.13")
+            api.assert_not_called()
+        for merged, expected in ((False, "waiting-upstream"), (True, "merged-not-pinned")):
+            with self.subTest(merged=merged), \
+                    patch.object(watch, "source", return_value=unwrapped_old), \
+                    patch.object(watch, "contains", return_value=False) as contains, \
+                    patch.object(watch, "api", return_value={"merged": merged}) as api:
+                self.assertEqual(watch.detect("t3code-0-1-13", LOCK), expected)
+                contains.assert_called_once_with("pingdotgg/t3code", watch.T3CODE_0_1_13_COMMIT, "v0.1.8")
+                api.assert_called_once_with("repos/NixOS/nixpkgs/pulls/589125")
 
-    def test_gamescope_checks_raw_pin_without_repository_overlays(self):
-        with tempfile.TemporaryDirectory() as directory:
-            output = Path(directory)
-            (output / 'vkroots.h').write_text('void GetDeviceQueue2();')
-            with patch.object(watch.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, directory)) as run:
-                self.assertFalse(watch.gamescope_fixed())
-            expression = run.call_args.args[0][-1]
-            self.assertIn('f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope', expression)
-            self.assertNotIn('nixosConfigurations', expression)
-
-    def test_gamescope_uses_unoverlaid_root_nixpkgs_input(self):
-        # Regression for the false PINNED-READY when using Alpha's overlay.
-        captured = {}
-        with tempfile.TemporaryDirectory() as directory:
-            out = Path(directory)
-            (out / "vkroots.h").write_text(
-                "deviceDispatch->GetDeviceQueue(device, queueInfo.queueFamilyIndex, j, &queue);"
-            )
-            def fake_run(command, **kwargs):
-                captured["expression"] = command[command.index("--expr") + 1]
-                captured["env"] = kwargs["env"]
-                return subprocess.CompletedProcess(command, 0, f"{out}\n", "")
-            with patch.object(watch.subprocess, "run", side_effect=fake_run):
-                self.assertFalse(watch.gamescope_fixed())
-        self.assertIn("f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope", captured["expression"])
-        self.assertNotIn("nixosConfigurations", captured["expression"])
-        self.assertEqual(captured["env"]["UPSTREAM_WATCH_ROOT"], str(watch.ROOT))
+    def test_t3code_0_1_13_fails_closed_on_missing_source_metadata(self):
+        with patch.object(watch, "source", return_value='pname = "t3code-unwrapped";'):
+            self.assertEqual(watch.inspect("t3code-0-1-13", LOCK), "unavailable (ValueError)")
 
     def test_completed_reads_checked_out_tree(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(watch, "ROOT", Path(directory)), patch.object(watch, "detect") as detect:
@@ -201,7 +190,7 @@ class Readiness(unittest.TestCase):
 
     def test_post_lock_workarounds_have_one_removable_file(self):
         root = Path(__file__).resolve().parents[2]
-        registry = json.loads((root / ".github/upstream/watchers.json").read_text())
+        registry = json.loads((root / "modules/aspects/upstream/watchers.json").read_text())
         for name, spec in registry.items():
             if spec["mode"] != "post-lock":
                 continue
@@ -213,6 +202,20 @@ class Readiness(unittest.TestCase):
                     self.assertEqual(watch.inspect(name, LOCK), "completed")
 
 
+    def test_declarative_pr_wait_from_watchers_json(self):
+        fake_registry = {
+            "example-pr": {
+                "mode": "post-lock",
+                "input": "nixpkgs",
+                "repo": "NixOS/nixpkgs",
+                "pr": 589125,
+            }
+        }
+        with patch.object(watch, "load_registry", return_value=fake_registry), \
+             patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "abc123"}), \
+             patch.object(watch, "contains", return_value=True):
+            self.assertEqual(watch.detect("example-pr", LOCK), "PINNED-READY")
+
+
 if __name__ == "__main__":
     unittest.main()
-

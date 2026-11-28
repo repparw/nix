@@ -5,8 +5,10 @@
 {
   den.aspects.pi = {
     includes = [
+      den.aspects.networking._.home
       den.aspects.managed-server
-      den.aspects.pi._.backup
+      den.aspects.host-backup
+      den.aspects.pi-services-backup
       den.aspects.nixos-services._.free-games-claimer
       den.aspects.nixos-services._.epic-freegames-portal
       den.aspects.nixos-services._.homeassistant
@@ -16,21 +18,6 @@
       den.aspects.pi-generation-retention
       den.aspects.lan-edge
     ];
-
-    provides.backup = {
-      includes = [
-        den.aspects.host-backup
-        den.aspects.pi-services-backup
-      ];
-      nixos = {
-        modules.backup.exports.pi-services = {
-          unit = "pi-services-backup.service";
-          path = "/var/lib/pi-services-backup/current";
-          pattern = ".pi-services-export.json";
-        };
-        modules.backup.paths = [ "/var/lib/pi-services-backup" ];
-      };
-    };
 
     nixos =
       {
@@ -148,13 +135,21 @@
           };
         };
 
-        modules.backup.paths = [
-          "/home/containers/config"
-          "/var/lib/auto-update"
-          "/var/lib/fleet-health"
-          "/var/lib/bluetooth"
-          "/var/lib/systemd/rfkill"
-        ];
+        modules.backup = {
+          paths = [
+            "/var/lib/pi-services-backup"
+            "/home/containers/config"
+            "/var/lib/auto-update"
+            "/var/lib/fleet-health"
+            "/var/lib/bluetooth"
+            "/var/lib/systemd/rfkill"
+          ];
+          exports.pi-services = {
+            unit = "pi-services-backup.service";
+            path = "/var/lib/pi-services-backup/current";
+            pattern = ".pi-services-export.json";
+          };
+        };
 
         environment.persistence."/persist".directories = [
           "/home/containers/config"
@@ -324,23 +319,6 @@
                 ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname "eth0" masquerade
               }
             '';
-          };
-
-          interfaces.eth0.ipv4.addresses = [
-            {
-              address = "192.168.0.4";
-              prefixLength = 24;
-            }
-          ];
-          defaultGateway = {
-            address = "192.168.0.1";
-            interface = "eth0";
-          };
-
-          firewall.interfaces.eth0 = {
-            allowedUDPPorts = [
-              60001
-            ];
           };
 
           firewall.extraInputRules = ''

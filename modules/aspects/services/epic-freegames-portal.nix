@@ -65,7 +65,7 @@
             # Discord action links must resolve from other devices on the LAN.
             # Keep the portal on the Pi; do not expose it through the public edge.
             webPortalConfig = {
-              baseUrl = "http://${cfg.hostAddresses.pi}:3000";
+              baseUrl = "http://${cfg.hostLanAddresses.pi}:3000";
               listenOpts = {
                 host = "0.0.0.0";
                 port = 3000;

@@ -9,6 +9,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+import upstream_cleanup
+
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("upstream_plan", ROOT / ".github/scripts/upstream-plan.py")
 planner = importlib.util.module_from_spec(spec)
@@ -24,7 +26,7 @@ def lock(pin):
 class PlanTests(unittest.TestCase):
     def setUp(self):
 
-        self.registry = json.loads((ROOT / ".github/upstream/watchers.json").read_text())
+        self.registry = json.loads((ROOT / "modules/aspects/upstream/watchers.json").read_text())
 
     def evaluate(self, old="old", new="new", readiness=None, probe=None,
                  build_probe=True):
@@ -51,8 +53,7 @@ class PlanTests(unittest.TestCase):
         result = self.evaluate(readiness=readiness)
         self.assertEqual(result["action"], "atomic")
         self.assertTrue(result["automerge"])
-        self.assertIn("qbittorrent", result["atomic"])
-        self.assertNotIn("gamescope-vkroots", result["atomic"])
+        self.assertEqual(result["atomic"], ["qbittorrent"])
 
     def test_apply_coupled_unavailable_blocks_the_lock(self):
         result = self.evaluate(readiness=lambda name: "unavailable (CalledProcessError)")
@@ -83,13 +84,12 @@ class PlanTests(unittest.TestCase):
     def test_apply_coupled_probe_runs_only_for_active_watchers(self):
         seen = []
         self.evaluate(probe=lambda attribute: (seen.append(attribute), (True, ""))[1])
-        self.assertEqual(sorted(seen), sorted(["nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package",
-                                               "nixosConfigurations.alpha.pkgs.gamescope"]))
+        self.assertEqual(seen, ["nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package"])
 
     def test_apply_coupled_entries_declare_probes(self):
         apply_names = sorted(name for name, spec in self.registry.items()
                              if spec.get("coupling") == "apply")
-        self.assertEqual(apply_names, ["gamescope-vkroots", "qbittorrent"])
+        self.assertEqual(apply_names, ["qbittorrent"])
         for name in apply_names:
             self.assertTrue(self.registry[name]["probe"], name)
 
@@ -108,7 +108,7 @@ class PlanTests(unittest.TestCase):
         with patch.object(planner, "_candidate_readiness", side_effect=statuses):
             planner.plan(lock("old"), lock("new"), self.registry,
                          probe_fn=lambda _: (True, ""))
-        self.assertEqual(selected, [["qbittorrent", "gamescope-vkroots"]])
+        self.assertEqual(selected, [["qbittorrent"]])
 
     def test_real_probe_constructs_nix_expression_and_preserves_patch_phase(self):
         class Done:
@@ -182,10 +182,11 @@ class PlanTests(unittest.TestCase):
             "upstream_readiness", ROOT / ".github/scripts/upstream-readiness.py")
         readiness = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(readiness)
-        expected = set(readiness.PR_WAITS) | {
+        declarative_prs = {k for k, v in self.registry.items() if "pr" in v and "repo" in v}
+        expected = declarative_prs | {
             "qbittorrent", "wpaperd-fix",
-            "gamescope-vkroots",
             "moonshine-0-18",
+            "t3code-0-1-13",
             "t3code-browser-libs",
             "tridactyl-reader",
             "fsr4-rdna2",
@@ -197,8 +198,70 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(self.registry["nautilus-module"]["mode"], "notify-only")
         for name, spec in self.registry.items():
             if spec["mode"] == "post-lock":
-                self.assertTrue((ROOT / "modules/aspects/upstream" / f"{name}.nix").exists(), name)
+                self.assertEqual(upstream_cleanup.module_path(name, spec),
+                                 f"modules/aspects/upstream/{name}.nix")
 
+    def test_registry_allows_retired_post_lock_watcher(self):
+        self.registry = {
+            name: self.registry[name] for name in ("nautilus-module", "qbittorrent")
+        }
+        with tempfile.TemporaryDirectory() as checkout, patch(f"{__name__}.ROOT", Path(checkout)):
+            self.test_registry_explicitly_limits_publication()
+
+    def test_bundle_coupled_ready_diverts_without_probe(self):
+        self.registry["pure-pr"] = {
+            "mode": "post-lock",
+            "input": "nixpkgs",
+            "repo": "NixOS/nixpkgs",
+            "pr": 589125,
+            "coupling": "bundle",
+        }
+        probed = []
+        result = self.evaluate(
+            readiness=lambda name: "PINNED-READY" if name == "pure-pr" else "waiting-upstream",
+            probe=lambda attr: (probed.append(attr) or True, ""),
+        )
+        self.assertEqual(result["action"], "atomic")
+        self.assertEqual(result["atomic"], ["pure-pr"])
+        self.assertTrue(result["automerge"])
+
+    def test_bundle_coupled_waiting_stays_normal_and_never_probes(self):
+        self.registry = {
+            "pure-pr": {
+                "mode": "post-lock",
+                "input": "nixpkgs",
+                "repo": "NixOS/nixpkgs",
+                "pr": 589125,
+                "coupling": "bundle",
+            }
+        }
+        probed = []
+        result = self.evaluate(
+            readiness=lambda name: "waiting-upstream",
+            probe=lambda attr: (probed.append(attr) or False, "should not probe"),
+        )
+        self.assertEqual(result["action"], "normal")
+        self.assertEqual(probed, [])
+
+    def test_bundle_coupling_rejects_gated_or_incomplete_spec(self):
+        self.registry["gated-bundle"] = {
+            "mode": "post-lock",
+            "input": "nixpkgs",
+            "repo": "NixOS/nixpkgs",
+            "pr": 589125,
+            "validation": ["source"],
+            "coupling": "bundle",
+        }
+        with self.assertRaisesRegex(ValueError, "ungated PR waits"):
+            self.evaluate()
+
+        self.registry["gated-bundle"] = {
+            "mode": "post-lock",
+            "input": "nixpkgs",
+            "coupling": "bundle",
+        }
+        with self.assertRaisesRegex(ValueError, "declarative repo and pr"):
+            self.evaluate()
 
 
 if __name__ == "__main__":

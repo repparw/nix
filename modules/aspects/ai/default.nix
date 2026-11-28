@@ -8,6 +8,7 @@
     includes = with den.aspects.ai._; [
       mcp
       opencode
+      rules
       skills
       t3code
     ];

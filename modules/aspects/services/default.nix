@@ -42,15 +42,13 @@
         name: host:
         host.serviceAddress or (throw "service host ${name} is missing serviceAddress topology metadata")
       ) hostMeta;
-      hostSshAddresses = lib.mapAttrs (
-        name: host:
-        host.sshAddress or host.serviceAddress
-          or (throw "service host ${name} is missing sshAddress and serviceAddress topology metadata")
-      ) hostMeta;
+      hostLanAddresses = lib.mapAttrs (_: host: host.lanAddress) (
+        lib.filterAttrs (_: host: host ? lanAddress) hostMeta
+      );
       svc = config.modules.services;
       domain = svc.domain;
       lanIp =
-        hostSshAddresses.${svc.lanEdgeHost} or (throw "lanEdgeHost ${svc.lanEdgeHost} missing ssh address");
+        hostLanAddresses.${svc.lanEdgeHost} or (throw "lanEdgeHost ${svc.lanEdgeHost} missing LAN address");
       vhosts = lib.filterAttrs (_: service: (service.hostname or null) != null) generatedDefinitions;
       fqdn = service: "${service.hostname}.${domain}";
       lanNames = lib.mapAttrsToList (_: fqdn) (
@@ -71,7 +69,7 @@
         };
 
         modules.services = {
-          inherit definitions hostAddresses hostSshAddresses;
+          inherit definitions hostAddresses hostLanAddresses;
         };
 
         networking.hosts = lib.mkIf (config.networking.hostName != svc.publicEdgeHost) {

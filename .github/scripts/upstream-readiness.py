@@ -8,20 +8,17 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-PR_WAITS = {
+REGISTRY_PATH = Path("modules/aspects/upstream/watchers.json")
 
-    "t3code-connect": ("NixOS/nixpkgs", 555921, "nixpkgs"),
-    "t3code-split": ("NixOS/nixpkgs", 555814, "nixpkgs"),
-    "tasks-org": ("NixOS/nixpkgs", 518221, "nixpkgs"),
-    "opencode-browse": ("NixOS/nixpkgs", 585097, "nixpkgs"),
-    "nautilus-module": ("NixOS/nixpkgs", 319535, "nixpkgs"),
-}
+
+def load_registry():
+    return json.loads((ROOT / REGISTRY_PATH).read_text())
+
+
 # Watcher IDs identify their temporary files without a separate path registry.
 WORKAROUNDS = {
     name: (f"modules/aspects/upstream/{name}.nix", None)
-    for name, spec in json.loads(
-        (ROOT / ".github/upstream/watchers.json").read_text()
-    ).items()
+    for name, spec in load_registry().items()
     if spec["mode"] == "post-lock"
 }
 
@@ -65,29 +62,10 @@ def package_contains(package, repository, merge, revision):
     return contains(repository, merge, source_ref(package_text))
 
 
-def flagged_queues_fixed(header):
-    # Both lookup sites must select GetDeviceQueue2 using that queue's flags,
-    # while preserving the legacy call for unflagged queues. An unrelated
-    # declaration of GetDeviceQueue2 is insufficient.
-    bodies = re.findall(r"if\s*\(\s*queueInfo.flags\s*\)\s*\{(.*?)\}\s*else\s*(?:\{)?(.*?GetDeviceQueue\([^;]*;)", header, re.S)
-    return len(bodies) >= 2 and all("VkDeviceQueueInfo2" in body and "GetDeviceQueue2(" in body for body, _ in bodies)
-
-
-def gamescope_fixed():
-    # Run only unpack + package patches. Use raw pkgs.gamescope, without the
-    # repository's gamescopeHdr postPatch. No GPU, activation, or lock mutation.
-    expression = '''let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT");
-    g = f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope.override { enableWsi = true; };
-    in g.overrideAttrs (_: { pname = "gamescope-upstream-source-check";
-      configurePhase = "true"; buildPhase = "true"; doCheck = false;
-      installPhase = "mkdir -p $out; cp subprojects/vkroots/vkroots.h $out/vkroots.h";
-      fixupPhase = "true"; })'''
-    import os
-    result = subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--print-out-paths", "--expr", expression], env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, capture_output=True, text=True, timeout=900, check=True)
-    return flagged_queues_fixed((Path(result.stdout.strip()) / "vkroots.h").read_text())
-
-
 T3CODE_PACKAGE = "pkgs/by-name/t3/t3code/package.nix"
+T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
+# Stable v0.1.13 release commit in pingdotgg/t3code.
+T3CODE_0_1_13_COMMIT = "bc0f04da94f64b5e487c598761a43b4cf06b2ac9"
 
 
 def t3code_browser_wrapped(revision):
@@ -136,7 +114,7 @@ def ge_package_contains(revision, commit):
 
 
 def fsr4_rdna2_status(lock):
-    spec = json.loads((ROOT / ".github/upstream/watchers.json").read_text())["fsr4-rdna2"]
+    spec = load_registry()["fsr4-rdna2"]
     commit = spec.get("support_commit")
     if commit is None:
         # Discovery only. Release prose can flag a candidate, never establish
@@ -221,8 +199,11 @@ def detect(name, lock):
                 not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)):
             raise ValueError("unexpected Tridactyl release metadata")
         return "PINNED-READY" if contains("tridactyl/tridactyl", pr["merge_commit_sha"], version) else "merged-not-pinned"
-    if name in PR_WAITS:
-        repo, number, input_name = PR_WAITS[name]
+    spec = load_registry().get(name, {})
+    if "pr" in spec:
+        repo = spec["repo"]
+        number = spec["pr"]
+        input_name = spec["input"]
         pr = api(f"repos/{repo}/pulls/{number}")
         if not pr.get("merged"):
             return "waiting-upstream"
@@ -230,6 +211,13 @@ def detect(name, lock):
     if name == "moonshine-0-18":
         return ("PINNED-READY" if moonshine_pinned_version(pin(lock, "nixpkgs")) >= (0, 18, 0)
                 else "merged-not-pinned")
+    if name == "t3code-0-1-13":
+        revision = pin(lock, "nixpkgs")
+        ref = source_ref(source("NixOS/nixpkgs", T3CODE_UNWRAPPED, revision))
+        if contains("pingdotgg/t3code", T3CODE_0_1_13_COMMIT, ref):
+            return "PINNED-READY"
+        pr = api("repos/NixOS/nixpkgs/pulls/589125")
+        return "merged-not-pinned" if pr.get("merged") else "waiting-upstream"
     if name == "t3code-browser-libs":
         pr = api("repos/NixOS/nixpkgs/pulls/575675")
         if not pr.get("merged"):
@@ -247,8 +235,6 @@ def detect(name, lock):
         return "PINNED-READY" if package_contains(package, repo, pr["merge_commit_sha"], revision) else "merged-not-pinned"
     if name == "wpaperd-fix":
         fixed = package_contains("wpaperd", "danyspin97/wpaperd", "442b962df717dfb6e3d86a3a4bfd1111882323b8", revision)
-    elif name == "gamescope-vkroots":
-        fixed = gamescope_fixed()
     else:
         raise ValueError(f"unknown watcher {name}")
     return "PINNED-READY" if fixed else "merged-not-pinned"
@@ -273,7 +259,7 @@ def main():
     args = parser.parse_args()
     lock = json.loads((ROOT / "flake.lock").read_text())
     # The registry owns watcher IDs and lifecycle policy. Detection never writes.
-    registry = json.loads((ROOT / ".github/upstream/watchers.json").read_text())
+    registry = load_registry()
     results = {name: inspect(name, lock) for name in registry}
     if args.json:
         print(json.dumps(results, sort_keys=True))
@@ -284,4 +270,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

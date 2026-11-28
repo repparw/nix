@@ -82,5 +82,23 @@ pkgs.runCommand "check-antigravity-cli-runtime"
     fi
     test ! -e "$invalid_profile/antigravity-acp/antigravity-oauth-token"
 
+    fake_home=$(mktemp -d)
+    mkdir -p "$fake_home/.gemini/config/skills" "$fake_home/.gemini/config/rules"
+    linked_profile=$(mktemp -d)
+    mkdir -p "$linked_profile/config/skills"
+    HOME="$fake_home" GEMINI_HOME="$linked_profile" ARGS_FILE="$arguments" \
+      ${runtime.launcher} "$fake_cli" acp
+    test "$(readlink "$linked_profile/config/skills")" = "$fake_home/.gemini/config/skills"
+    test "$(readlink "$linked_profile/config/rules")" = "$fake_home/.gemini/config/rules"
+
+    custom_profile=$(mktemp -d)
+    mkdir -p "$custom_profile/config/skills"
+    touch "$custom_profile/config/skills/local-only"
+    HOME="$fake_home" GEMINI_HOME="$custom_profile" ARGS_FILE="$arguments" \
+      ${runtime.launcher} "$fake_cli" acp
+    test ! -L "$custom_profile/config/skills"
+    test -f "$custom_profile/config/skills/local-only"
+    test "$(readlink "$custom_profile/config/rules")" = "$fake_home/.gemini/config/rules"
+
     touch $out
   ''
