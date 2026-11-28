@@ -190,7 +190,7 @@ class Readiness(unittest.TestCase):
 
     def test_post_lock_workarounds_have_one_removable_file(self):
         root = Path(__file__).resolve().parents[2]
-        registry = json.loads((root / ".github/upstream/watchers.json").read_text())
+        registry = json.loads((root / "modules/aspects/upstream/watchers.json").read_text())
         for name, spec in registry.items():
             if spec["mode"] != "post-lock":
                 continue
@@ -202,6 +202,20 @@ class Readiness(unittest.TestCase):
                     self.assertEqual(watch.inspect(name, LOCK), "completed")
 
 
+    def test_declarative_pr_wait_from_watchers_json(self):
+        fake_registry = {
+            "example-pr": {
+                "mode": "post-lock",
+                "input": "nixpkgs",
+                "repo": "NixOS/nixpkgs",
+                "pr": 589125,
+            }
+        }
+        with patch.object(watch, "load_registry", return_value=fake_registry), \
+             patch.object(watch, "api", return_value={"merged": True, "merge_commit_sha": "abc123"}), \
+             patch.object(watch, "contains", return_value=True):
+            self.assertEqual(watch.detect("example-pr", LOCK), "PINNED-READY")
+
+
 if __name__ == "__main__":
     unittest.main()
-
