@@ -6,7 +6,7 @@
 {
   den.aspects.alpha = {
     includes = [
-      den.aspects.alpha._.backup
+      den.aspects.backup
       den.aspects.btrfs-maintenance
       den.aspects.logid
       den.aspects.media-stack
@@ -15,31 +15,6 @@
       den.aspects.nixos-services._.free-model-watch
       den.aspects.cachix-push
     ];
-
-    provides.backup = {
-      includes = [ den.aspects.backup ];
-      nixos = { config, ... }: {
-        modules.backup.exports = {
-          alpha-home = {
-            unit = "home-state-backup-offsite.service";
-            path = "/var/lib/home-state-backup/offsite";
-            pattern = ".export-complete";
-          };
-          jellyfin = {
-            unit = "jellyfin-backup.service";
-            path = config.modules.services.definitions.jellyfin.backup.path;
-            pattern = "jellyfin-backup-*.zip";
-          };
-        }
-        // lib.genAttrs [ "sonarr" "radarr" "prowlarr" "bazarr" ] (name: {
-          path =
-            config.modules.services.definitions.${name}.backup.path
-            + lib.optionalString (name != "bazarr") "/scheduled";
-          pattern = "${name}_backup_*.zip";
-          maxAgeSeconds = 26 * 60 * 60;
-        });
-      };
-    };
 
     nixos =
       {
@@ -154,6 +129,25 @@
             "Projects/nix/infra/router/terraform.tfstate"
           ];
           homeStateStagingScript = prepareHomeState;
+          exports = {
+            alpha-home = {
+              unit = "home-state-backup-offsite.service";
+              path = "/var/lib/home-state-backup/offsite";
+              pattern = ".export-complete";
+            };
+            jellyfin = {
+              unit = "jellyfin-backup.service";
+              path = config.modules.services.definitions.jellyfin.backup.path;
+              pattern = "jellyfin-backup-*.zip";
+            };
+          }
+          // lib.genAttrs [ "sonarr" "radarr" "prowlarr" "bazarr" ] (name: {
+            path =
+              config.modules.services.definitions.${name}.backup.path
+              + lib.optionalString (name != "bazarr") "/scheduled";
+            pattern = "${name}_backup_*.zip";
+            maxAgeSeconds = 26 * 60 * 60;
+          });
         };
 
         modules.coredump-watch = {
