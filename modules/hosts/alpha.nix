@@ -10,6 +10,7 @@
       den.aspects.btrfs-maintenance
       den.aspects.logid
       den.aspects.media-stack
+      den.aspects.workstation
       den.aspects.nixos-services._.firmware
       den.aspects.nixos-services._.coredump-watch
       den.aspects.nixos-services._.free-model-watch
@@ -274,6 +275,8 @@
         boot.kernel.sysctl."vm.swappiness" = 10;
 
         services = {
+          displayManager.autoLogin.user = "repparw";
+          moonshine.user = "repparw";
           udev.extraRules = ''
             # Disable USB autosuspend for Intel AX210 Bluetooth to fix sleep/wake
             ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0032", ATTR{power/control}="on"

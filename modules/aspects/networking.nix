@@ -32,13 +32,6 @@ _: {
         };
 
         networking = {
-          wireless.iwd = {
-            enable = true;
-            settings = {
-              General.AddressRandomization = "network";
-              Settings.AutoConnect = true;
-            };
-          };
           useNetworkd = true;
           useDHCP = false;
           nftables.enable = true;
@@ -66,8 +59,6 @@ _: {
             StaleRetentionSec = "15min";
           };
         };
-
-        systemd.services.iwd.wantedBy = lib.mkForce [ ];
       };
   };
 }

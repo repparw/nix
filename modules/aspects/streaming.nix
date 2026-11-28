@@ -29,170 +29,165 @@ let
   '';
 in
 {
-  den.aspects.streaming.provides.to-hosts =
-    { user, ... }:
+  den.aspects.streaming.nixos =
     {
-      nixos =
-        {
-          config,
-          pkgs,
-          ...
-        }:
-        let
-          sessionUser = user.name;
+      config,
+      pkgs,
+      ...
+    }:
+    let
+      sessionUser = config.services.moonshine.user;
 
-          moonshine-boxart = pkgs.runCommand "moonshine-boxart" { nativeBuildInputs = [ pkgs.librsvg ]; } ''
-            mkdir -p $out
-            rsvg-convert \
-              --width 512 \
-              --height 512 \
-              ${pkgs.niri.src}/docs/wiki/logo/niri-icon.svg \
-              > $out/desktop.png
-            cp ${pkgs.steam-unwrapped}/share/icons/hicolor/256x256/apps/steam.png $out/steam.png
-          '';
+      moonshine-boxart = pkgs.runCommand "moonshine-boxart" { nativeBuildInputs = [ pkgs.librsvg ]; } ''
+        mkdir -p $out
+        rsvg-convert \
+          --width 512 \
+          --height 512 \
+          ${pkgs.niri.src}/docs/wiki/logo/niri-icon.svg \
+          > $out/desktop.png
+        cp ${pkgs.steam-unwrapped}/share/icons/hicolor/256x256/apps/steam.png $out/steam.png
+      '';
 
-          steam-stop-desktop = pkgs.writeShellApplication {
-            name = "steam-stop-desktop";
-            runtimeInputs = [
-              pkgs.coreutils
-              pkgs.procps
-              config.programs.steam.package
-            ];
-            text = ''
-              ${stopDesktopSteam}
-              if pgrep -x steam >/dev/null; then
-                echo "Desktop Steam did not stop" >&2
-                exit 1
-              fi
-            '';
-          };
-          # Moonshine runs this as ExecStopPost on the session's transient unit,
-          # whose environment is built by Moonshine itself and does not promise
-          # DBUS_SESSION_BUS_ADDRESS. So pin it before starting the user unit:
-          # without it systemctl --user silently talks to no bus and the restore
-          # never happens.
-          steam-restore-trigger = pkgs.writeShellApplication {
-            name = "steam-restore-trigger";
-            runtimeInputs = [ pkgs.systemd ];
-            text = ''
-              export DBUS_SESSION_BUS_ADDRESS="''${DBUS_SESSION_BUS_ADDRESS:-unix:path=''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/bus}"
-              exec systemctl --user start steam-tray
-            '';
-          };
+      steam-stop-desktop = pkgs.writeShellApplication {
+        name = "steam-stop-desktop";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.procps
+          config.programs.steam.package
+        ];
+        text = ''
+          ${stopDesktopSteam}
+          if pgrep -x steam >/dev/null; then
+            echo "Desktop Steam did not stop" >&2
+            exit 1
+          fi
+        '';
+      };
+      # Moonshine runs this as ExecStopPost on the session's transient unit,
+      # whose environment is built by Moonshine itself and does not promise
+      # DBUS_SESSION_BUS_ADDRESS. So pin it before starting the user unit:
+      # without it systemctl --user silently talks to no bus and the restore
+      # never happens.
+      steam-restore-trigger = pkgs.writeShellApplication {
+        name = "steam-restore-trigger";
+        runtimeInputs = [ pkgs.systemd ];
+        text = ''
+          export DBUS_SESSION_BUS_ADDRESS="''${DBUS_SESSION_BUS_ADDRESS:-unix:path=''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/bus}"
+          exec systemctl --user start steam-tray
+        '';
+      };
 
-          moonshine-desktop = pkgs.writeShellApplication {
-            name = "moonshine-desktop";
-            runtimeInputs = [
-              pkgs.coreutils
-              pkgs.foot
-              pkgs.xdg-terminal-exec
-              pkgs.fuzzel
-              pkgs.gnugrep
-              pkgs.gnused
-              pkgs.jq
-              pkgs.niri
-            ];
-            text = ''
-              work="$(mktemp -d)"
-              niri_pid=""
-              tail_pid=""
-              cleanup() {
-                if [ -n "$tail_pid" ]; then kill "$tail_pid" 2>/dev/null || true; fi
-                if [ -n "$niri_pid" ]; then kill "$niri_pid" 2>/dev/null || true; fi
-                rm -rf "$work"
+      moonshine-desktop = pkgs.writeShellApplication {
+        name = "moonshine-desktop";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.foot
+          pkgs.xdg-terminal-exec
+          pkgs.fuzzel
+          pkgs.gnugrep
+          pkgs.gnused
+          pkgs.jq
+          pkgs.niri
+        ];
+        text = ''
+          work="$(mktemp -d)"
+          niri_pid=""
+          tail_pid=""
+          cleanup() {
+            if [ -n "$tail_pid" ]; then kill "$tail_pid" 2>/dev/null || true; fi
+            if [ -n "$niri_pid" ]; then kill "$niri_pid" 2>/dev/null || true; fi
+            rm -rf "$work"
+          }
+          trap cleanup EXIT
+
+          home_dir="''${HOME:-/home/${sessionUser}}"
+          export XDG_DATA_DIRS="''${home_dir}/.nix-profile/share:/nix/profile/share:''${home_dir}/.local/state/nix/profile/share:/etc/profiles/per-user/${sessionUser}/share:/nix/var/nix/profiles/default/share:/run/current-system/sw/share:''${home_dir}/.local/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+          export PATH="''${PATH}:/run/wrappers/bin:''${home_dir}/.nix-profile/bin:/nix/profile/bin:''${home_dir}/.local/state/nix/profile/bin:/etc/profiles/per-user/${sessionUser}/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
+
+          niri >"$work/niri.log" 2>&1 &
+          niri_pid=$!
+          tail -n +1 -f "$work/niri.log" &
+          tail_pid=$!
+
+          sock=""
+          for _ in $(seq 1 200); do
+            sock="$(grep -Eo '/run/user/[0-9]+/niri\.wayland-[^[:space:]"]+\.sock' "$work/niri.log" 2>/dev/null | head -n 1 || true)"
+            if [ -n "$sock" ] && [ -S "$sock" ]; then break; fi
+            sock=""
+            if ! kill -0 "$niri_pid" 2>/dev/null; then break; fi
+            sleep 0.1
+          done
+          if [ -z "$sock" ]; then
+            echo "moonshine-desktop: nested niri published no IPC socket" >&2
+            exit 1
+          fi
+          display="$(basename "$sock" | sed -E 's/^niri\.(wayland-[0-9]+)\.[0-9]+\.sock$/\1/')"
+          export NIRI_SOCKET="$sock"
+          export WAYLAND_DISPLAY="$display"
+          echo "moonshine-desktop: nested niri on $WAYLAND_DISPLAY ($NIRI_SOCKET)" >&2
+
+          while kill -0 "$niri_pid" 2>/dev/null; do
+            windows="$(niri msg --json windows 2>/dev/null | jq -r 'length' 2>/dev/null || echo '?')"
+            if [ "$windows" = "0" ]; then
+              fuzzel || true
+              sleep 1
+            else
+              sleep 2
+            fi
+          done
+        '';
+      };
+    in
+    {
+      config = {
+        # WSI is a persistent preference; the temporary vkroots fix is in upstream/gamescope-vkroots.nix.
+        nixpkgs.overlays = [
+          (_final: prev: {
+            gamescope = prev.gamescope.override { enableWsi = true; };
+          })
+        ];
+
+        services.moonshine = {
+          enable = true;
+          firewallInterfaces = [ "eth0" ];
+
+          settings = {
+            name = config.networking.hostName;
+
+            stream.timeout = 1200;
+            application = [
+              {
+                title = "Desktop";
+                boxart = "${moonshine-boxart}/desktop.png";
+                command = [ "${moonshine-desktop}/bin/moonshine-desktop" ];
+                stdout = "journal";
+                stderr = "journal";
               }
-              trap cleanup EXIT
-
-              home_dir="''${HOME:-/home/${sessionUser}}"
-              export XDG_DATA_DIRS="''${home_dir}/.nix-profile/share:/nix/profile/share:''${home_dir}/.local/state/nix/profile/share:/etc/profiles/per-user/${sessionUser}/share:/nix/var/nix/profiles/default/share:/run/current-system/sw/share:''${home_dir}/.local/share:''${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
-              export PATH="''${PATH}:/run/wrappers/bin:''${home_dir}/.nix-profile/bin:/nix/profile/bin:''${home_dir}/.local/state/nix/profile/bin:/etc/profiles/per-user/${sessionUser}/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin"
-
-              niri >"$work/niri.log" 2>&1 &
-              niri_pid=$!
-              tail -n +1 -f "$work/niri.log" &
-              tail_pid=$!
-
-              sock=""
-              for _ in $(seq 1 200); do
-                sock="$(grep -Eo '/run/user/[0-9]+/niri\.wayland-[^[:space:]"]+\.sock' "$work/niri.log" 2>/dev/null | head -n 1 || true)"
-                if [ -n "$sock" ] && [ -S "$sock" ]; then break; fi
-                sock=""
-                if ! kill -0 "$niri_pid" 2>/dev/null; then break; fi
-                sleep 0.1
-              done
-              if [ -z "$sock" ]; then
-                echo "moonshine-desktop: nested niri published no IPC socket" >&2
-                exit 1
-              fi
-              display="$(basename "$sock" | sed -E 's/^niri\.(wayland-[0-9]+)\.[0-9]+\.sock$/\1/')"
-              export NIRI_SOCKET="$sock"
-              export WAYLAND_DISPLAY="$display"
-              echo "moonshine-desktop: nested niri on $WAYLAND_DISPLAY ($NIRI_SOCKET)" >&2
-
-              while kill -0 "$niri_pid" 2>/dev/null; do
-                windows="$(niri msg --json windows 2>/dev/null | jq -r 'length' 2>/dev/null || echo '?')"
-                if [ "$windows" = "0" ]; then
-                  fuzzel || true
-                  sleep 1
-                else
-                  sleep 2
-                fi
-              done
-            '';
-          };
-        in
-        {
-          config = {
-            # WSI is a persistent preference; the temporary vkroots fix is in upstream/gamescope-vkroots.nix.
-            nixpkgs.overlays = [
-              (_final: prev: {
-                gamescope = prev.gamescope.override { enableWsi = true; };
-              })
-            ];
-
-            services.moonshine = {
-              enable = true;
-              user = sessionUser;
-              firewallInterfaces = [ "eth0" ];
-
-              settings = {
-                name = config.networking.hostName;
-
-                stream.timeout = 1200;
-                application = [
-                  {
-                    title = "Desktop";
-                    boxart = "${moonshine-boxart}/desktop.png";
-                    command = [ "${moonshine-desktop}/bin/moonshine-desktop" ];
-                    stdout = "journal";
-                    stderr = "journal";
-                  }
-                  {
-                    title = "Steam Big Picture";
-                    boxart = "${moonshine-boxart}/steam.png";
-                    command = [
-                      (lib.getExe config.programs.steam.package)
-                      "steam://open/bigpicture"
-                    ];
-                    steam_integration = true;
-                    pre_command = [ [ (lib.getExe steam-stop-desktop) ] ];
-                    post_command = [ [ "${steam-restore-trigger}/bin/steam-restore-trigger" ] ];
-                    env.XDG_DATA_DIRS = "${config.services.moonshine.package}/share:/run/current-system/sw/share";
-                    stdout = "journal";
-                    stderr = "journal";
-                  }
+              {
+                title = "Steam Big Picture";
+                boxart = "${moonshine-boxart}/steam.png";
+                command = [
+                  (lib.getExe config.programs.steam.package)
+                  "steam://open/bigpicture"
                 ];
-              };
-            };
-
-            services.udev.extraRules = ''
-              ACTION=="add", SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_JOYSTICK}=="1", ATTRS{idVendor}=="2dc8", ATTRS{idProduct}=="310a", TAG+="systemd", ENV{SYSTEMD_USER_WANTS}+="8bitdo-tv-moonlight.service"
-            '';
+                steam_integration = true;
+                pre_command = [ [ (lib.getExe steam-stop-desktop) ] ];
+                post_command = [ [ "${steam-restore-trigger}/bin/steam-restore-trigger" ] ];
+                env.XDG_DATA_DIRS = "${config.services.moonshine.package}/share:/run/current-system/sw/share";
+                stdout = "journal";
+                stderr = "journal";
+              }
+            ];
           };
         };
+
+        services.udev.extraRules = ''
+          ACTION=="add", SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_JOYSTICK}=="1", ATTRS{idVendor}=="2dc8", ATTRS{idProduct}=="310a", TAG+="systemd", ENV{SYSTEMD_USER_WANTS}+="8bitdo-tv-moonlight.service"
+        '';
+      };
     };
 
-  den.aspects.streaming.homeManager =
+  den.aspects.streaming.provides.to-users.homeManager =
     { osConfig, pkgs, ... }:
     let
       moonlightAppId = "com.limelight.webos";

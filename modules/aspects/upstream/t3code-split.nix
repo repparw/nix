@@ -1,7 +1,7 @@
 { den, ... }:
 {
   # Temporary server-only build overlay; headless package selection is permanent in roles.nix.
-  den.aspects.headless-user.provides.to-hosts.nixos = { lib, ... }: {
+  den.aspects.managed-server.nixos = { lib, ... }: {
     nixpkgs.overlays = lib.mkAfter [
       (final: prev: {
         t3code-server =

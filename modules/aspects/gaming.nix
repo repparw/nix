@@ -4,7 +4,7 @@
 }:
 {
   den.aspects.gaming = {
-    provides.to-hosts.nixos =
+    nixos =
       { pkgs, ... }:
       let
         gamingEnvironment = {
@@ -63,7 +63,7 @@
           ATTRS{idVendor}=="2dc8", ATTRS{idProduct}=="310a", RUN+="${pkgs.linuxConsoleTools}/bin/evdev-joystick --evdev /dev/input/%k --deadzone 0 --fuzz 0"
         '';
       };
-    homeManager =
+    provides.to-users.homeManager =
       { pkgs, ... }:
       {
         home.file.".local/share/Steam/compatibilitytools.d/GE-Proton".source =
