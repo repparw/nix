@@ -21,16 +21,21 @@ Everything lives in the tenancy root compartment of `repparw`
 (region `sa-santiago-1`, availability domain `rTqj:SA-SANTIAGO-1-AD-1`); the
 tenancy contains no other compartments or instances.
 
-| Resource                              | Address                               | Notes                                                  |
-| ------------------------------------- | ------------------------------------- | ------------------------------------------------------ |
-| Compute instance `epsilon`            | `oci_core_instance.epsilon`           | `VM.Standard.A1.Flex`, 2 OCPU / 12 GB                  |
-| Reserved public IP `epsilon-reserved` | `oci_core_public_ip.epsilon`          | `146.181.42.97`, attached to the primary VNIC          |
-| VCN `vcn-20260128-1948`               | `oci_core_vcn.main`                   | 10.0.0.0/16                                            |
-| Subnet                                | `oci_core_subnet.main`                | 10.0.0.0/24, public                                    |
-| Internet gateway                      | `oci_core_internet_gateway.main`      | default gateway of the VCN                             |
-| Default route table                   | `oci_core_default_route_table.main`   | 0.0.0.0/0 → internet gateway                           |
-| Default security list                 | `oci_core_default_security_list.main` | SSH 22, HTTPS 443 (traefik edge), mosh 60002/udp, ICMP |
-| Default DHCP options                  | `oci_core_default_dhcp_options.main`  | VCN resolver + search domain                           |
+| Resource                              | Address                               | Notes                                                 |
+| ------------------------------------- | ------------------------------------- | ----------------------------------------------------- |
+| Compute instance `epsilon`            | `oci_core_instance.epsilon`           | `VM.Standard.A1.Flex`, 2 OCPU / 12 GB                 |
+| Reserved public IP `epsilon-reserved` | `oci_core_public_ip.epsilon`          | `146.181.42.97`, attached to the primary VNIC         |
+| VCN `vcn-20260128-1948`               | `oci_core_vcn.main`                   | IPv4 and Oracle-allocated IPv6                        |
+| Subnet                                | `oci_core_subnet.main`                | Public dual-stack subnet                              |
+| Internet gateway                      | `oci_core_internet_gateway.main`      | default gateway of the VCN                            |
+| Default route table                   | `oci_core_default_route_table.main`   | IPv4 and IPv6 default routes via the internet gateway |
+| Default security list                 | `oci_core_default_security_list.main` | Stateful egress and ICMP ingress                      |
+| IPv6 address                          | `oci_core_ipv6.epsilon`               | Assigned to the existing primary VNIC                 |
+| Default DHCP options                  | `oci_core_default_dhcp_options.main`  | VCN resolver + search domain                          |
+
+Use Tailscale for SSH and mosh. Public HTTPS uses Cloudflare Tunnel, which
+connects to Traefik on loopback. The OCI security list permits replies to
+outbound connections and ICMP needed for path MTU discovery.
 
 Intentionally unmanaged:
 
@@ -128,6 +133,7 @@ cd infra
 tofu init
 tofu import oci_core_instance.epsilon          ocid1.instance.oc1.<region>...
 tofu import oci_core_public_ip.epsilon         ocid1.publicip.oc1.<region>...
+tofu import oci_core_ipv6.epsilon              ocid1.ipv6.oc1.<region>...
 tofu import oci_core_vcn.main                  ocid1.vcn.oc1.<region>...
 tofu import oci_core_subnet.main               ocid1.subnet.oc1.<region>...
 tofu import oci_core_internet_gateway.main     ocid1.internetgateway.oc1.<region>...
@@ -137,7 +143,8 @@ tofu import oci_core_default_dhcp_options.main ocid1.dhcpoptions.oc1.<region>...
 tofu plan                                      # must end in "No changes"
 ```
 
-Exact OCIDs are in `imports.tf`.
+OCIDs for the original resources are in `imports.tf`. Find the IPv6 OCID
+under the primary VNIC's IPv6 addresses in the OCI console.
 
 ## Reviewing drift
 
@@ -164,9 +171,8 @@ diff before adopting or reverting it; do not refresh-and-apply blindly.
   shape, and the tenancy may never get the quota back.
 - The boot volume holds the only NixOS installation. Restic covers service
   state, not the system itself.
-- `146.181.42.97` is a **reserved** public IP. It can survive a rebuild only
-  if the instance is rebuilt carefully around it; losing it means republishing
-  DNS, Cloudflare, and firewall settings everywhere.
+- `146.181.42.97` is a **reserved** public IPv4 address. Preserve its
+  reservation if the instance ever needs to be rebuilt.
 
 `lifecycle { prevent_destroy = true }` is set on the instance, the reserved
 public IP (and would be on the boot volume if it were managed). This protects

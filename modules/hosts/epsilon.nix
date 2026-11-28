@@ -195,7 +195,17 @@
 
         zramSwap.enable = true;
 
-        networking.interfaces.eth0.useDHCP = true;
+        systemd.network.networks."10-eth" = {
+          matchConfig.Name = "eth0";
+          networkConfig = {
+            DHCP = "yes";
+            IPv6AcceptRA = true;
+            IPv6PrivacyExtensions = false;
+          };
+          dhcpV4Config.UseDNS = false;
+          dhcpV6Config.UseDNS = false;
+          ipv6AcceptRAConfig.UseDNS = false;
+        };
         services.resolved.settings.Resolve.DNSStubListenerExtra =
           "${config.modules.services.bridgePrefix}.1";
 

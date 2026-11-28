@@ -1,9 +1,7 @@
-# Epsilon itself: the compute instance, its boot volume, and the reserved
-# public IP that the edge services are addressed by.
+# Epsilon's compute instance and the public IP addresses on its primary VNIC.
 #
 # The instance must never be recreated: Always Free A1 capacity is scarce and
-# the boot volume holds the NixOS installation. Every resource here carries
-# `prevent_destroy`.
+# the boot volume holds the NixOS installation.
 
 # The Ubuntu 24.04 image the instance was launched from (then converted in
 # place with nixos-infect). Pinned by OCID on purpose: following Oracle's
@@ -15,6 +13,12 @@ locals {
 data "oci_core_vnic_attachments" "epsilon" {
   compartment_id = var.compartment_id
   instance_id    = oci_core_instance.epsilon.id
+}
+
+# Assign IPv6 to the existing VNIC. Changing assign_ipv6ip would replace epsilon.
+resource "oci_core_ipv6" "epsilon" {
+  vnic_id         = data.oci_core_vnic_attachments.epsilon.vnic_attachments[0].vnic_id
+  ipv6subnet_cidr = oci_core_subnet.main.ipv6cidr_block
 }
 
 # The primary VNIC has a single private IP; the reserved public IP attaches to
@@ -107,8 +111,6 @@ resource "oci_core_public_ip" "epsilon" {
   private_ip_id  = [for ip in data.oci_core_private_ips.epsilon_vnic.private_ips : ip.id if ip.is_primary][0]
 
   lifecycle {
-    # The address is what Cloudflare and DNS resolve to; losing it means
-    # republishing every public endpoint.
     prevent_destroy = true
   }
 }
