@@ -228,11 +228,14 @@ def detect(name, lock):
         return "PINNED-READY" if t3code_browser_wrapped(revision) else "waiting-source"
     revision = pin(lock, "nixpkgs")
     if name == "qbittorrent":
-        repo, number, package = "qbittorrent/qBittorrent", 24055, "qbittorrent"
-        pr = api(f"repos/{repo}/pulls/{number}")
-        if not pr.get("merged"):
+        repo = "qbittorrent/qBittorrent"
+        prs = [api(f"repos/{repo}/pulls/{number}") for number in (24055, 24828)]
+        merges = [pr["merge_commit_sha"] for pr in prs if pr["merged"]]
+        if not merges:
             return "waiting-upstream"
-        return "PINNED-READY" if package_contains(package, repo, pr["merge_commit_sha"], revision) else "merged-not-pinned"
+        # Nixpkgs defines qbittorrent-nox as qbittorrent with GUI support disabled.
+        ref = source_ref(source("NixOS/nixpkgs", "pkgs/by-name/qb/qbittorrent/package.nix", revision))
+        return "PINNED-READY" if any(contains(repo, merge, ref) for merge in merges) else "merged-not-pinned"
     if name == "wpaperd-fix":
         fixed = package_contains("wpaperd", "danyspin97/wpaperd", "442b962df717dfb6e3d86a3a4bfd1111882323b8", revision)
     else:

@@ -14,6 +14,40 @@ LOCK = {"nodes": {"root": {"inputs": {"nixpkgs": "np", "home-manager": "hm"}}, "
 
 
 class Readiness(unittest.TestCase):
+    def test_qbittorrent_checks_both_upstream_prs_against_the_pinned_source(self):
+        repo = "qbittorrent/qBittorrent"
+        for merged, pinned, expected in (
+            ((), None, "waiting-upstream"),
+            ((24055,), None, "merged-not-pinned"),
+            ((24828,), None, "merged-not-pinned"),
+            ((24055,), 24055, "PINNED-READY"),
+            ((24828,), 24828, "PINNED-READY"),
+            ((24055, 24828), 24828, "PINNED-READY"),
+        ):
+            prs = {
+                f"repos/{repo}/pulls/{number}": {
+                    "merged": number in merged,
+                    "merge_commit_sha": f"merge-{number}",
+                }
+                for number in (24055, 24828)
+            }
+            with self.subTest(merged=merged, pinned=pinned), \
+                    patch.object(watch, "api", side_effect=prs.__getitem__) as api, \
+                    patch.object(watch, "source", return_value='rev = "release-5.3.0";') as source, \
+                    patch.object(watch, "contains", side_effect=lambda _, merge, __: merge == f"merge-{pinned}") as contains:
+                self.assertEqual(watch.detect("qbittorrent", LOCK), expected)
+                self.assertEqual([call.args[0] for call in api.call_args_list], list(prs))
+                self.assertEqual(
+                    [call.args for call in contains.call_args_list],
+                    [(repo, f"merge-{number}", "release-5.3.0") for number in merged],
+                )
+                if merged:
+                    source.assert_called_once_with(
+                        "NixOS/nixpkgs", "pkgs/by-name/qb/qbittorrent/package.nix", "nix-pin"
+                    )
+                else:
+                    source.assert_not_called()
+
     def fsr_spec(self, commit=None):
         return patch.object(watch.Path, "read_text", return_value=json.dumps({
             "fsr4-rdna2": {"baseline_release": "GE-Proton11-11", "support_commit": commit}}))

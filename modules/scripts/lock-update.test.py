@@ -140,6 +140,8 @@ class LockUpdate(unittest.TestCase):
             "        print(json.dumps({'sha':'channel'})); sys.exit(0)\n"
             "    if '/pulls/24055' in endpoint:\n"
             "        print(json.dumps({'merged': True, 'merge_commit_sha': 'fix'})); sys.exit(0)\n"
+            "    if endpoint == 'repos/qbittorrent/qBittorrent/pulls/24828':\n"
+            "        print(json.dumps({'merged': False})); sys.exit(0)\n"
             "    if '/contents/' in endpoint:\n"
             "        import base64\n"
             "        ref = endpoint.split('ref=')[1].split('&')[0] if 'ref=' in endpoint else ''\n"
