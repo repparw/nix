@@ -9,6 +9,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+import upstream_cleanup
+
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("upstream_plan", ROOT / ".github/scripts/upstream-plan.py")
 planner = importlib.util.module_from_spec(spec)
@@ -199,9 +201,15 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(self.registry["nautilus-module"]["mode"], "notify-only")
         for name, spec in self.registry.items():
             if spec["mode"] == "post-lock":
-                self.assertTrue((ROOT / "modules/aspects/upstream" / f"{name}.nix").exists(), name)
+                self.assertEqual(upstream_cleanup.module_path(name, spec),
+                                 f"modules/aspects/upstream/{name}.nix")
 
-
+    def test_registry_allows_retired_post_lock_watcher(self):
+        self.registry = {
+            name: self.registry[name] for name in ("nautilus-module", "qbittorrent")
+        }
+        with tempfile.TemporaryDirectory() as checkout, patch(f"{__name__}.ROOT", Path(checkout)):
+            self.test_registry_explicitly_limits_publication()
 
     def test_bundle_coupled_ready_diverts_without_probe(self):
         self.registry["pure-pr"] = {
