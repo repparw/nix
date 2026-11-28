@@ -19,7 +19,6 @@ let
   hasServiceHost = name: builtins.hasAttr name definitions && definitions.${name}.hostname != null;
   serviceHost = name: "${definitions.${name}.hostname}.${domain}";
   apiServiceNames = lib.filter hasServiceHost [
-    "bazarr"
     "paperless"
     "qbittorrent"
     "radarr"
