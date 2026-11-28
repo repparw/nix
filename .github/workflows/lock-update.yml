@@ -122,7 +122,7 @@ jobs:
             local watcher
             for watcher in ${1//,/ }; do
               if [[ ! "$watcher" =~ ^[a-z0-9-]+$ ]] || \
-                [ "$(jq -r --arg w "$watcher" '.[$w].mode // ""' .github/upstream/watchers.json)" != post-lock ]; then
+                [ "$(jq -r --arg w "$watcher" '.[$w].mode // ""' modules/aspects/upstream/watchers.json)" != post-lock ]; then
                 echo "Invalid cleanup watcher: $watcher" >&2
                 return 1
               fi
@@ -449,7 +449,7 @@ jobs:
               git switch -c "$atomic_branch"
               watcher_list=$(jq -r '.atomic | join(",")' <<<"$plan")
               for watcher in $(jq -r '.atomic[]' <<<"$plan"); do
-                python3 .github/scripts/upstream-plan.py apply --id "$watcher" --registry .github/upstream/watchers.json
+                python3 .github/scripts/upstream-plan.py apply --id "$watcher" --registry modules/aspects/upstream/watchers.json
               done
               recipe_paths=$(atomic_recipe_paths "$watcher_list")
               git add -- flake.lock
