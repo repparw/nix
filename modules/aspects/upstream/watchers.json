@@ -63,15 +63,5 @@
   "moonshine-0-18": {
     "mode": "post-lock",
     "input": "nixpkgs"
-  },
-  "gamescope-vkroots": {
-    "mode": "post-lock",
-    "input": "nixpkgs",
-    "validation": [
-      "source",
-      "wsi-build"
-    ],
-    "coupling": "apply",
-    "probe": "nixosConfigurations.alpha.pkgs.gamescope"
   }
 }

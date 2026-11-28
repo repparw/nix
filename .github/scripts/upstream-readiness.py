@@ -62,28 +62,6 @@ def package_contains(package, repository, merge, revision):
     return contains(repository, merge, source_ref(package_text))
 
 
-def flagged_queues_fixed(header):
-    # Both lookup sites must select GetDeviceQueue2 using that queue's flags,
-    # while preserving the legacy call for unflagged queues. An unrelated
-    # declaration of GetDeviceQueue2 is insufficient.
-    bodies = re.findall(r"if\s*\(\s*queueInfo.flags\s*\)\s*\{(.*?)\}\s*else\s*(?:\{)?(.*?GetDeviceQueue\([^;]*;)", header, re.S)
-    return len(bodies) >= 2 and all("VkDeviceQueueInfo2" in body and "GetDeviceQueue2(" in body for body, _ in bodies)
-
-
-def gamescope_fixed():
-    # Run only unpack + package patches. Use raw pkgs.gamescope, without the
-    # repository's gamescopeHdr postPatch. No GPU, activation, or lock mutation.
-    expression = '''let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT");
-    g = f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope.override { enableWsi = true; };
-    in g.overrideAttrs (_: { pname = "gamescope-upstream-source-check";
-      configurePhase = "true"; buildPhase = "true"; doCheck = false;
-      installPhase = "mkdir -p $out; cp subprojects/vkroots/vkroots.h $out/vkroots.h";
-      fixupPhase = "true"; })'''
-    import os
-    result = subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--print-out-paths", "--expr", expression], env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, capture_output=True, text=True, timeout=900, check=True)
-    return flagged_queues_fixed((Path(result.stdout.strip()) / "vkroots.h").read_text())
-
-
 T3CODE_PACKAGE = "pkgs/by-name/t3/t3code/package.nix"
 T3CODE_UNWRAPPED = "pkgs/by-name/t3/t3code/unwrapped.nix"
 # Stable v0.1.13 release commit in pingdotgg/t3code.
@@ -257,8 +235,6 @@ def detect(name, lock):
         return "PINNED-READY" if package_contains(package, repo, pr["merge_commit_sha"], revision) else "merged-not-pinned"
     if name == "wpaperd-fix":
         fixed = package_contains("wpaperd", "danyspin97/wpaperd", "442b962df717dfb6e3d86a3a4bfd1111882323b8", revision)
-    elif name == "gamescope-vkroots":
-        fixed = gamescope_fixed()
     else:
         raise ValueError(f"unknown watcher {name}")
     return "PINNED-READY" if fixed else "merged-not-pinned"

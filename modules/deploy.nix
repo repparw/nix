@@ -26,20 +26,20 @@ let
   # Host systems and addresses come from Den.
   hostSystems = lib.concatMapAttrs (system: hosts: lib.mapAttrs (_: _: system) hosts) den.hosts;
   deployPkgs = lib.mapAttrs (system: _: mkDeployPkgs system) den.hosts;
-  sshAddresses = lib.concatMapAttrs (
-    _: hosts: lib.mapAttrs (_: host: host.sshAddress or host.serviceAddress) hosts
+  serviceAddresses = lib.concatMapAttrs (
+    _: hosts: lib.mapAttrs (_: host: host.serviceAddress) hosts
   ) den.hosts;
 
   # Derive the controller from the host that owns the deployment timer.
   controllerHosts = lib.filter (
     host: inputs.self.nixosConfigurations.${host}.config.systemd.services ? fleet-deploy
-  ) (lib.attrNames sshAddresses);
+  ) (lib.attrNames serviceAddresses);
   controllerHost =
     if builtins.length controllerHosts == 1 then
       builtins.head controllerHosts
     else
       throw "Expected exactly one host with fleet-deploy.service";
-  hostAddressJson = builtins.toJSON sshAddresses;
+  hostAddressJson = builtins.toJSON serviceAddresses;
 
   deployNode = hostname: {
     inherit hostname;
@@ -64,7 +64,7 @@ let
       "-o"
       "StrictHostKeyChecking=accept-new"
     ];
-    nodes = lib.mapAttrs (_: deployNode) sshAddresses;
+    nodes = lib.mapAttrs (_: deployNode) serviceAddresses;
   };
 
   deploySchema = deployBase // {
@@ -76,7 +76,7 @@ let
 
   mkFleetUpdate =
     pkgs:
-    assert lib.hasAttr controllerHost sshAddresses;
+    assert lib.hasAttr controllerHost serviceAddresses;
     let
       controllerConfig = inputs.self.nixosConfigurations.${controllerHost}.config;
       servicesLib = import ./_services/lib.nix { inherit lib pkgs; };
@@ -131,7 +131,7 @@ let
         coreutils
       ];
       text = ''
-        controller=${lib.escapeShellArg sshAddresses.${controllerHost}}
+        controller=${lib.escapeShellArg serviceAddresses.${controllerHost}}
         controller_system=${lib.escapeShellArg hostSystems.${controllerHost}}
         ssh_options=(-i /home/repparw/.ssh/id_ed25519
           -o BatchMode=yes -o IdentitiesOnly=yes

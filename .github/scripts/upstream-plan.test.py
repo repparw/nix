@@ -53,8 +53,7 @@ class PlanTests(unittest.TestCase):
         result = self.evaluate(readiness=readiness)
         self.assertEqual(result["action"], "atomic")
         self.assertTrue(result["automerge"])
-        self.assertIn("qbittorrent", result["atomic"])
-        self.assertNotIn("gamescope-vkroots", result["atomic"])
+        self.assertEqual(result["atomic"], ["qbittorrent"])
 
     def test_apply_coupled_unavailable_blocks_the_lock(self):
         result = self.evaluate(readiness=lambda name: "unavailable (CalledProcessError)")
@@ -85,13 +84,12 @@ class PlanTests(unittest.TestCase):
     def test_apply_coupled_probe_runs_only_for_active_watchers(self):
         seen = []
         self.evaluate(probe=lambda attribute: (seen.append(attribute), (True, ""))[1])
-        self.assertEqual(sorted(seen), sorted(["nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package",
-                                               "nixosConfigurations.alpha.pkgs.gamescope"]))
+        self.assertEqual(seen, ["nixosConfigurations.alpha.config.containers.qbittorrent.config.services.qbittorrent.package"])
 
     def test_apply_coupled_entries_declare_probes(self):
         apply_names = sorted(name for name, spec in self.registry.items()
                              if spec.get("coupling") == "apply")
-        self.assertEqual(apply_names, ["gamescope-vkroots", "qbittorrent"])
+        self.assertEqual(apply_names, ["qbittorrent"])
         for name in apply_names:
             self.assertTrue(self.registry[name]["probe"], name)
 
@@ -110,7 +108,7 @@ class PlanTests(unittest.TestCase):
         with patch.object(planner, "_candidate_readiness", side_effect=statuses):
             planner.plan(lock("old"), lock("new"), self.registry,
                          probe_fn=lambda _: (True, ""))
-        self.assertEqual(selected, [["qbittorrent", "gamescope-vkroots"]])
+        self.assertEqual(selected, [["qbittorrent"]])
 
     def test_real_probe_constructs_nix_expression_and_preserves_patch_phase(self):
         class Done:
@@ -187,7 +185,6 @@ class PlanTests(unittest.TestCase):
         declarative_prs = {k for k, v in self.registry.items() if "pr" in v and "repo" in v}
         expected = declarative_prs | {
             "qbittorrent", "wpaperd-fix",
-            "gamescope-vkroots",
             "moonshine-0-18",
             "t3code-0-1-13",
             "t3code-browser-libs",

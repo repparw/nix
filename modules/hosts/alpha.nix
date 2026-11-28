@@ -6,6 +6,7 @@
 {
   den.aspects.alpha = {
     includes = [
+      den.aspects.networking._.home
       den.aspects.backup
       den.aspects.btrfs-maintenance
       den.aspects.logid
@@ -324,9 +325,6 @@
           };
           networks = {
             "10-eth" = {
-              matchConfig.Name = "eth0";
-              address = [ "192.168.0.18/24" ];
-              routes = [ { Gateway = "192.168.0.1"; } ];
               dns = [
                 "1.1.1.1"
                 "1.0.0.1"
@@ -347,13 +345,14 @@
 
         services.resolved.settings.Resolve.DNSOverTLS = true;
 
-        networking.firewall.extraInputRules = ''
-          iifname "eth0" ip saddr ${config.modules.services.hostSshAddresses.pi} tcp dport { 3000, 8081 } accept comment "edge ingress -> native alpha listeners"
-        '';
-
-        networking.firewall.extraForwardRules = ''
-          iifname "eth0" ip saddr ${config.modules.services.hostSshAddresses.pi} oifname "ve-*" accept comment "edge ingress -> published container backends"
-        '';
+        networking.wireless.iwd = {
+          enable = true;
+          settings = {
+            General.AddressRandomization = "network";
+            Settings.AutoConnect = true;
+          };
+        };
+        systemd.services.iwd.wantedBy = lib.mkForce [ ];
 
       };
   };

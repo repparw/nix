@@ -5,6 +5,7 @@
 {
   den.aspects.pi = {
     includes = [
+      den.aspects.networking._.home
       den.aspects.managed-server
       den.aspects.host-backup
       den.aspects.pi-services-backup
@@ -318,23 +319,6 @@
                 ip saddr ${config.modules.services.bridgePrefix}.0/24 oifname "eth0" masquerade
               }
             '';
-          };
-
-          interfaces.eth0.ipv4.addresses = [
-            {
-              address = "192.168.0.4";
-              prefixLength = 24;
-            }
-          ];
-          defaultGateway = {
-            address = "192.168.0.1";
-            interface = "eth0";
-          };
-
-          firewall.interfaces.eth0 = {
-            allowedUDPPorts = [
-              60001
-            ];
           };
 
           firewall.extraInputRules = ''

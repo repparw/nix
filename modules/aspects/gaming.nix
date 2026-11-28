@@ -28,28 +28,18 @@
 
         boot.kernelModules = [ "ntsync" ];
         hardware.xpadneo.enable = true;
-        programs = {
-          steam = {
-            enable = true;
-            remotePlay.openFirewall = true;
-            localNetworkGameTransfers.openFirewall = true;
-            package = pkgs.steam.override {
-              extraEnv = gamingEnvironment;
-              extraBwrapArgs = [
-                "--tmpfs /mnt"
-                "--tmpfs /home/containers/media"
-              ];
-            };
-            extraPackages = [ heroicSteam ];
+        programs.steam = {
+          enable = true;
+          remotePlay.openFirewall = true;
+          localNetworkGameTransfers.openFirewall = true;
+          package = pkgs.steam.override {
+            extraEnv = gamingEnvironment;
+            extraBwrapArgs = [
+              "--tmpfs /mnt"
+              "--tmpfs /home/containers/media"
+            ];
           };
-
-          gamescope = {
-            enable = true;
-            # Lets gamescope renice itself to -20 and ask for realtime priority
-            # Vulkan queues. gamescope 3.17 retries with regular priority queues
-            # when the driver refuses them (VK_ERROR_NOT_PERMITTED_KHR).
-            capSysNice = true;
-          };
+          extraPackages = [ heroicSteam ];
         };
         environment.systemPackages = with pkgs; [
           heroic

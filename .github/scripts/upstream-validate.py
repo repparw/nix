@@ -85,17 +85,6 @@ def validate(name, architecture):
                 evaluate("alpha.pkgs.moonshine.outPath"),
                 "Moonshine service still has a package override")
         build("alpha.config.services.moonshine.package")
-    elif name == "gamescope-vkroots":
-        # Same raw-package source predicate as readiness, after removing the
-        # local override. Then build the real WSI package, without stubs.
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("readiness", ROOT / ".github/scripts/upstream-readiness.py")
-        detector = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(detector)
-        require(detector.gamescope_fixed(), "flagged queue fix absent from patched upstream source")
-        expression = 'let f = builtins.getFlake (builtins.getEnv "UPSTREAM_WATCH_ROOT"); in f.inputs.nixpkgs.legacyPackages.x86_64-linux.gamescope.override { enableWsi = true; }'
-        subprocess.run(["nix", "build", "--impure", "--no-link", "--no-write-lock-file", "--expr", expression],
-                       env={**os.environ, "UPSTREAM_WATCH_ROOT": str(ROOT)}, check=True)
     elif name == "paperless-torch":
         # Verify the real Paperless package in its container without the override.
         build("epsilon.config.containers.paperless.config.services.paperless.package")
